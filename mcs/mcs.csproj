@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>29e3884e-3eed-4a26-8155-bd93e576e2cd</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>mcs</RootNamespace>
+    <AssemblyName>mcs</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System"/>
+    <Reference Include="System.Core"/>
+    <Reference Include="System.Xml.Linq"/>
+    <Reference Include="System.Data.DataSetExtensions"/>
+    <Reference Include="Microsoft.CSharp"/>
+    <Reference Include="System.Data"/>
+    <Reference Include="System.Net.Http"/>
+    <Reference Include="System.Xml"/>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\3rdparty\zlib\crc32.cs" />
+    <Compile Include="src\3rdparty\zlib\zlib.cs" />
+    <Compile Include="src\build\generated\emu\cpu\m6502\m6502.cs" />
+    <Compile Include="src\build\generated\emu\layout\dualhsxs.cs" />
+    <Compile Include="src\build\generated\emu\layout\noscreens.cs" />
+    <Compile Include="src\build\generated\emu\layout\quadhsxs.cs" />
+    <Compile Include="src\build\generated\emu\layout\triphsxs.cs" />
+    <Compile Include="src\build\generated\emu\uismall.cs" />
+    <Compile Include="src\build\generated\emu\ui\uicmd14.cs" />
+    <Compile Include="src\build\generated\mame\mame\drivlist.cs" />
+    <Compile Include="src\build\generated\version.cs" />
+    <Compile Include="src\src\devices\cpu\m6502\m6502.cs" />
+    <Compile Include="src\src\devices\cpu\mb88xx\mb88xx.cs" />
+    <Compile Include="src\src\devices\cpu\z80\z80.cs" />
+    <Compile Include="src\src\devices\cpu\z80\z80daisy.cs" />
+    <Compile Include="src\src\devices\imagedev\cassette.cs" />
+    <Compile Include="src\src\devices\machine\74259.cs" />
+    <Compile Include="src\src\devices\machine\eeprom.cs" />
+    <Compile Include="src\src\devices\machine\eepromser.cs" />
+    <Compile Include="src\src\devices\machine\er2055.cs" />
+    <Compile Include="src\src\devices\machine\gen_latch.cs" />
+    <Compile Include="src\src\devices\machine\i8255.cs" />
+    <Compile Include="src\src\devices\machine\netlist.cs" />
+    <Compile Include="src\src\devices\machine\rescap.cs" />
+    <Compile Include="src\src\devices\machine\watchdog.cs" />
+    <Compile Include="src\src\devices\sound\ay8910.cs" />
+    <Compile Include="src\src\devices\sound\dac.cs" />
+    <Compile Include="src\src\devices\sound\digitalk.cs" />
+    <Compile Include="src\src\devices\sound\discrete.cs" />
+    <Compile Include="src\src\devices\sound\disc_cls.cs" />
+    <Compile Include="src\src\devices\sound\disc_dev.cs" />
+    <Compile Include="src\src\devices\sound\disc_flt.cs" />
+    <Compile Include="src\src\devices\sound\disc_inp.cs" />
+    <Compile Include="src\src\devices\sound\disc_mth.cs" />
+    <Compile Include="src\src\devices\sound\disc_wav.cs" />
+    <Compile Include="src\src\devices\sound\namco.cs" />
+    <Compile Include="src\src\devices\sound\pokey.cs" />
+    <Compile Include="src\src\devices\sound\samples.cs" />
+    <Compile Include="src\src\devinithelpers.cs" />
+    <Compile Include="src\src\emu\addrmap.cs" />
+    <Compile Include="src\src\emu\attotime.cs" />
+    <Compile Include="src\src\emu\bookkeeping.cs" />
+    <Compile Include="src\src\emu\cliopts.cs" />
+    <Compile Include="src\src\emu\config.cs" />
+    <Compile Include="src\src\emu\crsshair.cs" />
+    <Compile Include="src\src\emu\debugger.cs" />
+    <Compile Include="src\src\emu\debug\debugcpu.cs" />
+    <Compile Include="src\src\emu\debug\debugvw.cs" />
+    <Compile Include="src\src\emu\devcb.cs" />
+    <Compile Include="src\src\emu\devcpu.cs" />
+    <Compile Include="src\src\emu\devdelegate.cs" />
+    <Compile Include="src\src\emu\devfind.cs" />
+    <Compile Include="src\src\emu\device.cs" />
+    <Compile Include="src\src\emu\didisasm.cs" />
+    <Compile Include="src\src\emu\diexec.cs" />
+    <Compile Include="src\src\emu\digfx.cs" />
+    <Compile Include="src\src\emu\diimage.cs" />
+    <Compile Include="src\src\emu\dimemory.cs" />
+    <Compile Include="src\src\emu\dinvram.cs" />
+    <Compile Include="src\src\emu\dipalette.cs" />
+    <Compile Include="src\src\emu\dislot.cs" />
+    <Compile Include="src\src\emu\disound.cs" />
+    <Compile Include="src\src\emu\distate.cs" />
+    <Compile Include="src\src\emu\drawgfx.cs" />
+    <Compile Include="src\src\emu\drawgfxm.cs" />
+    <Compile Include="src\src\emu\drivenum.cs" />
+    <Compile Include="src\src\emu\driver.cs" />
+    <Compile Include="src\src\emu\drivers\empty.cs" />
+    <Compile Include="src\src\emu\emualloc.cs" />
+    <Compile Include="src\src\emu\emumem_hea.cs" />
+    <Compile Include="src\src\emu\emumem_hedp.cs" />
+    <Compile Include="src\src\emu\emumem_hedr.cs" />
+    <Compile Include="src\src\emu\emumem_hedw.cs" />
+    <Compile Include="src\src\emu\emumem_hem.cs" />
+    <Compile Include="src\src\emu\emumem_heun.cs" />
+    <Compile Include="src\src\emu\xtal.cs" />
+    <Compile Include="src\src\emu\emu.cs" />
+    <Compile Include="src\src\emu\emucore.cs" />
+    <Compile Include="src\src\emu\emumem.cs" />
+    <Compile Include="src\src\emu\emuopts.cs" />
+    <Compile Include="src\src\emu\emupal.cs" />
+    <Compile Include="src\src\emu\fileio.cs" />
+    <Compile Include="src\src\emu\gamedrv.cs" />
+    <Compile Include="src\src\emu\http.cs" />
+    <Compile Include="src\src\emu\image.cs" />
+    <Compile Include="src\src\emu\inpttype.cs" />
+    <Compile Include="src\src\emu\input.cs" />
+    <Compile Include="src\src\emu\inputdev.cs" />
+    <Compile Include="src\src\emu\ioport.cs" />
+    <Compile Include="src\src\emu\logmacro.cs" />
+    <Compile Include="src\src\emu\machine.cs" />
+    <Compile Include="src\src\emu\main.cs" />
+    <Compile Include="src\src\emu\mconfig.cs" />
+    <Compile Include="src\src\emu\memarray.cs" />
+    <Compile Include="src\src\emu\natkeyboard.cs" />
+    <Compile Include="src\src\emu\network.cs" />
+    <Compile Include="src\src\emu\output.cs" />
+    <Compile Include="src\src\emu\parameters.cs" />
+    <Compile Include="src\src\emu\profiler.cs" />
+    <Compile Include="src\src\emu\render.cs" />
+    <Compile Include="src\src\emu\rendersw.cs" />
+    <Compile Include="src\src\emu\rendfont.cs" />
+    <Compile Include="src\src\emu\rendlay.cs" />
+    <Compile Include="src\src\emu\rendutil.cs" />
+    <Compile Include="src\src\emu\romentry.cs" />
+    <Compile Include="src\src\emu\romload.cs" />
+    <Compile Include="src\src\emu\save.cs" />
+    <Compile Include="src\src\emu\schedule.cs" />
+    <Compile Include="src\src\emu\screen.cs" />
+    <Compile Include="src\src\emu\softlist.cs" />
+    <Compile Include="src\src\emu\softlist_dev.cs" />
+    <Compile Include="src\src\emu\sound.cs" />
+    <Compile Include="src\src\emu\speaker.cs" />
+    <Compile Include="src\src\emu\tilemap.cs" />
+    <Compile Include="src\src\emu\timer.cs" />
+    <Compile Include="src\src\emu\uiinput.cs" />
+    <Compile Include="src\src\emu\ui\uimain.cs" />
+    <Compile Include="src\src\emu\validity.cs" />
+    <Compile Include="src\src\emu\video.cs" />
+    <Compile Include="src\src\emu\video\resnet.cs" />
+    <Compile Include="src\src\emu\video\rgbgen.cs" />
+    <Compile Include="src\src\Extensions.cs" />
+    <Compile Include="src\src\frontend\mame\language.cs" />
+    <Compile Include="src\src\frontend\mame\audit.cs" />
+    <Compile Include="src\src\frontend\mame\cheat.cs" />
+    <Compile Include="src\src\frontend\mame\clifront.cs" />
+    <Compile Include="src\src\frontend\mame\info.cs" />
+    <Compile Include="src\src\frontend\mame\luaengine.cs" />
+    <Compile Include="src\src\frontend\mame\mame.cs" />
+    <Compile Include="src\src\frontend\mame\mameopts.cs" />
+    <Compile Include="src\src\emu\ui\cmddata.cs" />
+    <Compile Include="src\src\frontend\mame\pluginopts.cs" />
+    <Compile Include="src\src\frontend\mame\ui\auditmenu.cs" />
+    <Compile Include="src\src\frontend\mame\ui\defimg.cs" />
+    <Compile Include="src\src\frontend\mame\ui\filemngr.cs" />
+    <Compile Include="src\src\frontend\mame\ui\info.cs" />
+    <Compile Include="src\src\frontend\mame\ui\inifile.cs" />
+    <Compile Include="src\src\frontend\mame\ui\inputmap.cs" />
+    <Compile Include="src\src\frontend\mame\ui\mainmenu.cs" />
+    <Compile Include="src\src\frontend\mame\ui\menu.cs" />
+    <Compile Include="src\src\frontend\mame\ui\menuitem.cs" />
+    <Compile Include="src\src\frontend\mame\ui\miscmenu.cs" />
+    <Compile Include="src\src\frontend\mame\ui\moptions.cs" />
+    <Compile Include="src\src\frontend\mame\ui\selgame.cs" />
+    <Compile Include="src\src\frontend\mame\ui\selmenu.cs" />
+    <Compile Include="src\src\frontend\mame\ui\selsoft.cs" />
+    <Compile Include="src\src\frontend\mame\ui\simpleselgame.cs" />
+    <Compile Include="src\src\frontend\mame\ui\slider.cs" />
+    <Compile Include="src\src\frontend\mame\ui\sliders.cs" />
+    <Compile Include="src\src\frontend\mame\ui\starimg.cs" />
+    <Compile Include="src\src\frontend\mame\ui\text.cs" />
+    <Compile Include="src\src\frontend\mame\ui\toolbar.cs" />
+    <Compile Include="src\src\frontend\mame\ui\ui.cs" />
+    <Compile Include="src\src\frontend\mame\ui\utils.cs" />
+    <Compile Include="src\src\frontend\mame\ui\viewgfx.cs" />
+    <Compile Include="src\src\frontend\mame\ui\widgets.cs" />
+    <Compile Include="src\src\global.cs" />
+    <Compile Include="src\src\lib\netlist\nl_base.cs" />
+    <Compile Include="src\src\lib\netlist\nl_setup.cs" />
+    <Compile Include="src\src\lib\util\aviio.cs" />
+    <Compile Include="src\src\lib\util\bitmap.cs" />
+    <Compile Include="src\src\lib\util\chd.cs" />
+    <Compile Include="src\src\lib\util\corealloc.cs" />
+    <Compile Include="src\src\lib\util\corefile.cs" />
+    <Compile Include="src\src\lib\util\corestr.cs" />
+    <Compile Include="src\src\lib\util\coretmpl.cs" />
+    <Compile Include="src\src\lib\util\coreutil.cs" />
+    <Compile Include="src\src\lib\util\disasmintf.cs" />
+    <Compile Include="src\src\lib\util\flac.cs" />
+    <Compile Include="src\src\lib\util\hash.cs" />
+    <Compile Include="src\src\lib\util\hashing.cs" />
+    <Compile Include="src\src\lib\util\options.cs" />
+    <Compile Include="src\src\lib\util\palette.cs" />
+    <Compile Include="src\src\lib\util\png.cs" />
+    <Compile Include="src\src\lib\util\sha1.cs" />
+    <Compile Include="src\src\lib\util\unicode.cs" />
+    <Compile Include="src\src\lib\util\unzip.cs" />
+    <Compile Include="src\src\lib\util\wavwrite.cs" />
+    <Compile Include="src\src\lib\util\xmlfile.cs" />
+    <Compile Include="src\src\mame\audio\galaga.cs" />
+    <Compile Include="src\src\mame\audio\galaxian.cs" />
+    <Compile Include="src\src\mame\audio\namco54.cs" />
+    <Compile Include="src\src\mame\drivers\1942.cs" />
+    <Compile Include="src\src\mame\drivers\centiped.cs" />
+    <Compile Include="src\src\mame\drivers\galaga.cs" />
+    <Compile Include="src\src\mame\drivers\galaxian.cs" />
+    <Compile Include="src\src\mame\drivers\pacman.cs" />
+    <Compile Include="src\src\mame\includes\1942.cs" />
+    <Compile Include="src\src\mame\includes\centiped.cs" />
+    <Compile Include="src\src\mame\includes\digdug.cs" />
+    <Compile Include="src\src\mame\includes\galaga.cs" />
+    <Compile Include="src\src\mame\includes\galaxian.cs" />
+    <Compile Include="src\src\mame\includes\pacman.cs" />
+    <Compile Include="src\src\mame\includes\xevious.cs" />
+    <Compile Include="src\src\mame\machine\namco06.cs" />
+    <Compile Include="src\src\mame\machine\namco50.cs" />
+    <Compile Include="src\src\mame\machine\namco51.cs" />
+    <Compile Include="src\src\mame\machine\namco53.cs" />
+    <Compile Include="src\src\mame\machine\pacplus.cs" />
+    <Compile Include="src\src\mame\mame.cs" />
+    <Compile Include="src\src\mame\video\1942.cs" />
+    <Compile Include="src\src\mame\video\centiped.cs" />
+    <Compile Include="src\src\mame\video\digdug.cs" />
+    <Compile Include="src\src\mame\video\galaga.cs" />
+    <Compile Include="src\src\mame\video\galaxian.cs" />
+    <Compile Include="src\src\mame\video\pacman.cs" />
+    <Compile Include="src\src\mame\video\xevious.cs" />
+    <Compile Include="src\src\osd\eminline.cs" />
+    <Compile Include="src\src\osd\modules\debugger\debug_module.cs" />
+    <Compile Include="src\src\osd\modules\font\font_module.cs" />
+    <Compile Include="src\src\osd\modules\font\font_none.cs" />
+    <Compile Include="src\src\osd\modules\input\input_module.cs" />
+    <Compile Include="src\src\osd\modules\input\input_none.cs" />
+    <Compile Include="src\src\osd\modules\lib\osdobj_common.cs" />
+    <Compile Include="src\src\osd\modules\midi\midi_module.cs" />
+    <Compile Include="src\src\osd\modules\midi\none.cs" />
+    <Compile Include="src\src\osd\modules\monitor\monitor_common.cs" />
+    <Compile Include="src\src\osd\modules\monitor\monitor_module.cs" />
+    <Compile Include="src\src\osd\modules\monitor\monitor_win32.cs" />
+    <Compile Include="src\src\osd\modules\netdev\netdev_module.cs" />
+    <Compile Include="src\src\osd\modules\osdmodule.cs" />
+    <Compile Include="src\src\osd\modules\output\none.cs" />
+    <Compile Include="src\src\osd\modules\output\output_module.cs" />
+    <Compile Include="src\src\osd\modules\sound\sound_module.cs" />
+    <Compile Include="src\src\osd\osdcomm.cs" />
+    <Compile Include="src\src\osd\osdcore.cs" />
+    <Compile Include="src\src\osd\osdepend.cs" />
+    <Compile Include="src\src\osd\osdsync.cs" />
+    <Compile Include="src\src\osd\watchdog.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+ </Project>
