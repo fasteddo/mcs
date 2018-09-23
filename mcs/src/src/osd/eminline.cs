@@ -1,0 +1,93 @@
+// license:BSD-3-Clause
+// copyright-holders:Edward Fast
+
+using System;
+using System.Collections.Generic;
+
+using int32_t = System.Int32;
+using int64_t = System.Int64;
+using uint8_t = System.Byte;
+using uint32_t = System.UInt32;
+using uint64_t = System.UInt64;
+
+
+namespace mame
+{
+    public static class eminline_global
+    {
+        /*-------------------------------------------------
+            mulu_32x32 - perform an unsigned 32 bit x
+            32 bit multiply and return the full 64 bit
+            result
+        -------------------------------------------------*/
+        public static uint64_t mulu_32x32(uint32_t a, uint32_t b)
+        {
+            return (uint64_t)a * (uint64_t)b;
+        }
+
+
+        /*-------------------------------------------------
+            mul_32x32_hi - perform a signed 32 bit x 32 bit
+            multiply and return the upper 32 bits of the
+            result
+        -------------------------------------------------*/
+        //#ifndef mul_32x32_hi
+        public static int32_t mul_32x32_hi(int32_t a, int32_t b)
+        {
+            return (int32_t)((uint32_t)(((int64_t)a * (int64_t)b) >> 32));
+        }
+
+
+        /*-------------------------------------------------
+            div_32x32_shift - perform a signed divide of
+            two 32 bit values, shifting the first before
+            division, and returning the 32 bit quotient
+        -------------------------------------------------*/
+
+        //#ifndef div_32x32_shift
+        public static int32_t div_32x32_shift(int32_t a, int32_t b, uint8_t shift)
+        {
+            return (int32_t)(((int64_t)a << shift) / (int64_t)b);
+        }
+
+
+        /*-------------------------------------------------
+            divu_64x32 - perform an unsigned 64 bit x 32 bit
+            divide and return the 32 bit quotient
+        -------------------------------------------------*/
+        public static uint32_t divu_64x32(uint64_t a, uint32_t b)
+        {
+            return (uint32_t)(a / (uint64_t)b);
+        }
+
+        /*-------------------------------------------------
+            divu_64x32_rem - perform an unsigned 64 bit x
+            32 bit divide and return the 32 bit quotient
+            and 32 bit remainder
+        -------------------------------------------------*/
+        public static uint32_t divu_64x32_rem(uint64_t a, uint32_t b, out uint32_t remainder)
+        {
+            uint32_t res = divu_64x32(a, b);
+            remainder = (uint32_t)(a - ((uint64_t)b * res));
+            return res;
+        }
+
+
+        /***************************************************************************
+            INLINE TIMING FUNCTIONS
+        ***************************************************************************/
+
+        /*-------------------------------------------------
+            get_profile_ticks - return a tick counter
+            from the processor that can be used for
+            profiling. It does not need to run at any
+            particular rate.
+        -------------------------------------------------*/
+        //#ifndef get_profile_ticks
+        public static int64_t get_profile_ticks()
+        {
+            return (int64_t)osdcore_global.m_osdcore.osd_ticks();
+        }
+        //#endif
+    }
+}
