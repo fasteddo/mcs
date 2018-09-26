@@ -5,3 +5,10 @@ mcsForm/.vs
 mcsForm/bin
 mcsForm/obj
 mcsForm/roms
+mcsUnity/.vs
+mcsUnity/build
+mcsUnity/Library
+mcsUnity/obj
+mcsUnity/Assembly-CSharp.csproj
+mcsUnity/mcsUnity.sln
+mcsUnity/runUnity.bat
