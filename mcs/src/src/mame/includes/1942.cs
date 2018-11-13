@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using device_type = mame.emu.detail.device_type_impl_base;
+using offs_t = System.UInt32;
+using u8 = System.Byte;
 
 
 namespace mame
@@ -71,5 +73,36 @@ namespace mame
         //TIMER_DEVICE_CALLBACK_MEMBER(_1942_scanline);
         //uint32_t screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
         //virtual void draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect);
+
+
+        // wrappers because I don't know how to find the correct device during construct_ startup
+
+        //READ8_MEMBER( generic_latch_8_device::read )
+        public byte generic_latch_8_device_read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        {
+            generic_latch_8_device device = (generic_latch_8_device)subdevice("soundlatch");
+            return device.read(space, offset, mem_mask);
+        }
+
+        //WRITE8_MEMBER( generic_latch_8_device::write )
+        public void generic_latch_8_device_write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        {
+            generic_latch_8_device device = (generic_latch_8_device)subdevice("soundlatch");
+            device.write(space, offset, data, mem_mask);
+        }
+
+        //WRITE8_MEMBER( ay8910_device::data_w )
+        public void ay8910_device_address_data_w_ay1(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        {
+            ay8910_device device = (ay8910_device)subdevice("ay1");
+            device.data_w(space, offset, data, mem_mask);
+        }
+
+        //WRITE8_MEMBER( ay8910_device::data_w )
+        public void ay8910_device_address_data_w_ay2(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        {
+            ay8910_device device = (ay8910_device)subdevice("ay2");
+            device.data_w(space, offset, data, mem_mask);
+        }
     }
 }

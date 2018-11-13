@@ -354,9 +354,11 @@ namespace mame
         //-------------------------------------------------
         public void entry_set_color(uint32_t index, rgb_t rgb)
         {
-            // if out of range, or unchanged, ignore
-            if (index >= m_numcolors || m_entry_color[index] == rgb)
+            // if unchanged, ignore
+            if (m_entry_color[index] == rgb)
                 return;
+
+            global.assert(index < m_numcolors);
 
             // set the color
             m_entry_color[index] = rgb;
@@ -378,9 +380,11 @@ namespace mame
         //-------------------------------------------------
         public void entry_set_contrast(uint32_t index, float contrast)
         {
-            // if out of range, or unchanged, ignore
-            if (index >= m_numcolors || m_entry_contrast[index] == contrast)
+            // if unchanged, ignore
+            if (m_entry_contrast[index] == contrast)
                 return;
+
+            global.assert(index < m_numcolors);
 
             // set the contrast
             m_entry_contrast[index] = contrast;
@@ -407,9 +411,11 @@ namespace mame
         //-------------------------------------------------
         public void group_set_contrast(uint32_t group, float contrast)
         {
-            // if out of range, or unchanged, ignore
-            if (group >= m_numgroups || m_group_contrast[group] == contrast)
+            // if unchanged, ignore
+            if (m_group_contrast[group] == contrast)
                 return;
+
+            global.assert(group < m_numgroups);
 
             // set the contrast
             m_group_contrast[group] = contrast;

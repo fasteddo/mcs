@@ -1,12 +1,18 @@
+// license:BSD-3-Clause
+// copyright-holders:Edward Fast
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 using ListBytes = mame.ListBase<System.Byte>;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using u32 = System.UInt32;
+
+//#define ASSERT_SLOW
 
 
 namespace mame
@@ -47,7 +53,8 @@ namespace mame
 
         // emucore_global
         public static void fatalerror(string format, params object [] args) { throw new emu_fatalerror(format, args); }
-        public static void assert(bool condition) { emucore_global.assert(condition); }
+        [Conditional("DEBUG")] public static void assert(bool condition) { emucore_global.assert(condition); }
+        [Conditional("ASSERT_SLOW")][Conditional("DEBUG")] public static void assert_slow(bool condition) { emucore_global.assert(condition); }
         public static void assert_always(bool condition, string message) { emucore_global.assert_always(condition, message); }
 
 
@@ -216,6 +223,15 @@ namespace mame
     }
 
 
+    public class std_stack<T> : Stack<T>
+    {
+
+        // std::stack functions
+        public bool empty() { return Count == 0; }
+        public T top() { return Peek(); }
+    }
+
+
     public class std_unordered_map<K, V> : Dictionary<K, V>
     {
         public std_unordered_map() : base() { }
@@ -279,14 +295,15 @@ namespace mame
 
         public virtual void Add(T item) { m_list.Add(item); }
         public virtual void Clear() { m_list.Clear(); }
-        //public virtual bool Contains(T item) { return m_list.Contains(item); }
+        public virtual bool Contains(T item) { return m_list.Contains(item); }
         //public virtual void CopyTo(T[] array, int arrayIndex) { m_list.CopyTo(array, arrayIndex); }
         public virtual void CopyTo(int index, T[] array, int arrayIndex, int count) { m_list.CopyTo(index, array, arrayIndex, count); }
         public virtual int IndexOf(T item, int index, int count) { return m_list.IndexOf(item, index, count); }
         public virtual int IndexOf(T item, int index) { return m_list.IndexOf(item, index); }
         public virtual int IndexOf(T item) { return m_list.IndexOf(item); }
         public virtual void Insert(int index, T item) { m_list.Insert(index, item); }
-        //public virtual bool Remove(T item) { return m_list.Remove(item); }
+        public virtual bool Remove(T item) { return m_list.Remove(item); }
+        public virtual int RemoveAll(Predicate<T> match) { return m_list.RemoveAll(match); }
         public virtual void RemoveAt(int index) { m_list.RemoveAt(index); }
         public virtual void RemoveRange(int index, int count) { m_list.RemoveRange(index, count); }
         public virtual void Sort(Comparison<T> comparison) { m_list.Sort(comparison); }
@@ -319,6 +336,8 @@ namespace mame
 
         public virtual void resize(int count, T data = default(T))
         {
+            global.assert(typeof(T).IsValueType ? true : (data == null || data.Equals(default(T))) ? true : false);  // this function doesn't do what you'd expect for ref classes since it doesn't new() for each item.  Manually Add() in this case.
+
             int current = Count;
             if (count < current)
             {
@@ -514,7 +533,7 @@ namespace mame
 
         public override void Clear() { m_bufferData.m_byte = new byte [0];  m_actualLength = 0; }
 
-        //public override bool Contains(T item) { return m_list.Contains(item); }
+        public override bool Contains(byte item) { throw new emu_unimplemented(); }
 
         //public override void CopyTo(T[] array, int arrayIndex) { m_list.CopyTo(array, arrayIndex); }
 
@@ -529,7 +548,8 @@ namespace mame
 
         public override void Insert(int index, byte item) { throw new emu_unimplemented(); }
 
-        //public override bool Remove(T item) { return m_list.Remove(item); }
+        public override bool Remove(byte item) { throw new emu_unimplemented(); }
+        public override int RemoveAll(Predicate<byte> match) { throw new emu_unimplemented(); }
 
         public override void RemoveAt(int index)
         {
@@ -596,14 +616,14 @@ namespace mame
 
         public void set_uint8(int offset8, byte value)
         {
-            global.assert(offset8 < Count);
+            global.assert_slow(offset8 < Count);
 
             m_bufferData.m_byte[offset8] = value;
         }
 
         public void set_uint16(int offset16, UInt16 value)
         {
-            global.assert(offset16 * 2 < Count);
+            global.assert_slow(offset16 * 2 < Count);
 
             //this[offset16 * 2]     = (byte)(value >> 8);
             //this[offset16 * 2 + 1] = (byte)value;
@@ -612,7 +632,7 @@ namespace mame
 
         public void set_uint32(int offset32, UInt32 value)
         {
-            global.assert(offset32 * 4 < Count);
+            global.assert_slow(offset32 * 4 < Count);
 
             //this[offset32 * 4]     = (byte)(value >> 24);
             //this[offset32 * 4 + 1] = (byte)(value >> 16);
@@ -623,7 +643,7 @@ namespace mame
 
         public void set_uint64(int offset64, UInt64 value)
         {
-            global.assert(offset64 * 8 < Count);
+            global.assert_slow(offset64 * 8 < Count);
 
             //this[offset64 * 8]     = (byte)(value >> 56);
             //this[offset64 * 8 + 1] = (byte)(value >> 48);
@@ -638,14 +658,14 @@ namespace mame
 
         public byte get_uint8(int offset8 = 0)
         {
-            global.assert(offset8 < Count);
+            global.assert_slow(offset8 < Count);
 
             return m_bufferData.m_byte[offset8];
         }
 
         public UInt16 get_uint16(int offset16 = 0)
         {
-            global.assert(offset16 * 2 < Count);
+            global.assert_slow(offset16 * 2 < Count);
 
             //return (UInt16)(this[offset16 * 2] << 8 | 
             //       (UInt16) this[offset16 * 2 + 1]);
@@ -654,7 +674,7 @@ namespace mame
 
         public UInt32 get_uint32(int offset32 = 0)
         {
-            global.assert(offset32 * 4 < Count);
+            global.assert_slow(offset32 * 4 < Count);
 
             //return (UInt32)this[offset32 * 4]     << 24 | 
             //       (UInt32)this[offset32 * 4 + 1] << 16 | 
@@ -665,7 +685,7 @@ namespace mame
 
         public UInt64 get_uint64(int offset64 = 0)
         {
-            global.assert(offset64 * 8 < Count);
+            global.assert_slow(offset64 * 8 < Count);
 
             //return (UInt64)this[offset64 * 8]     << 56 | 
             //       (UInt64)this[offset64 * 8 + 1] << 48 | 

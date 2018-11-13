@@ -2629,7 +2629,8 @@ namespace mame
                 }
 
                 // Check the parent of the parent to cover bios based artwork
-                if (cloneof != -1) {
+                if (cloneof != -1)
+                {
                     game_driver clone = driver_list.driver((UInt32)cloneof);
                     int cloneofclone = driver_list.clone(clone);
                     if (cloneofclone != -1 && cloneofclone != cloneof)
@@ -2656,16 +2657,6 @@ namespace mame
             std_vector<load_additional_layout_files_screen_info> screens = new std_vector<load_additional_layout_files_screen_info>();  //std::vector<screen_info> const screens(std::begin(iter), std::end(iter));
             foreach (var screen in iter)
                 screens.push_back(new load_additional_layout_files_screen_info(screen));
-
-            if (!have_default && !have_artwork)
-            {
-                if (screens.size() == 2U)
-                {
-                    load_layout_file(null, dualhsxs_global.layout_dualhsxs_string());
-                    if (m_filelist.empty())
-                        throw new emu_fatalerror("Couldn't parse default layout??");
-                }
-            }
 
             if (screens.empty()) // ensure the fallback view for systems with no screens is loaded if necessary
             {

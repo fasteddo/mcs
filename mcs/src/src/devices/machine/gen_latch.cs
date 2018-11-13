@@ -128,7 +128,7 @@ namespace mame
 
 
         //READ8_MEMBER( generic_latch_8_device::read )
-        public byte read(address_space space, offs_t offset, byte mem_mask = 0xff)
+        public u8 read(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             if (!has_separate_acknowledge() && !machine().side_effects_disabled())
                 set_latch_written(false);

@@ -418,7 +418,7 @@ namespace mame
 
             PALETTE(config, pacman_state.palette, 128*4);
             pacman_state.palette.target.set_indirect_entries(32);
-            pacman_state.palette.target.set_init(DEVICE_SELF_OWNER, pacman_state.palette_init_pacman);
+            pacman_state.palette.target.set_init(DEVICE_SELF, pacman_state.palette_init_pacman);
 
             screen_device screen = SCREEN(config, "screen", SCREEN_TYPE_RASTER);
             screen.set_raw(PIXEL_CLOCK, (u16)HTOTAL, (u16)HBEND, (u16)HBSTART, (u16)VTOTAL, (u16)VBEND, (u16)VBSTART);

@@ -450,18 +450,15 @@ namespace mame
             }
 
             // go down the path until we're done with it
-            string part;
             while (tag.IndexOf(':', 0) != -1)  //while (global.strchr(tag, ':'))
             {
                 string next = tag.Substring(tag.IndexOf(':', 0));  //const char *next = strchr(tag, ':');
                 global.assert(next != tag);
-                part = next;  //part.assign(tag, next - tag);
+                string part = tag.Substring(0, tag.IndexOf(':', 0));  //std::string part(tag, next-tag);
                 owner = owner.subdevices().find(part);
                 if (owner == null)
                     throw new emu_fatalerror("Could not find {0} when looking up path for device {1}\n", part.c_str(), orig_tag);
                 tag = next.Substring(1);  //tag = next + 1;
-
-                throw new emu_fatalerror("TODO - test this to make sure it works");
             }
             global.assert(!string.IsNullOrEmpty(tag));  //global.assert(tag[0] != '\0');
 

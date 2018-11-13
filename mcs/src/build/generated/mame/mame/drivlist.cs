@@ -21,7 +21,7 @@ namespace mame
             galaga.driver_galaga,
             galaga.driver_xevious,
             galaga.driver_digdug,
-            //_1942.driver_1942,
+            _1942.driver_1942,
             centiped.driver_centipede,
             galaxian.driver_galaxian,
             galaxian.driver_frogger,

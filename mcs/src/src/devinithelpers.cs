@@ -1,3 +1,6 @@
+// license:BSD-3-Clause
+// copyright-holders:Edward Fast
+
 using System;
 using System.Collections.Generic;
 
@@ -19,6 +22,7 @@ namespace mame
         address_map_entry m_helper_curentry = null;
         address_map m_helper_map = null;
         ioport_configurer m_helper_configurer = null;
+        netlist.setup_t m_helper_setup = null;
 
         protected machine_config helper_config { set { m_helper_config = value; } }
         protected device_t helper_owner { get { return m_helper_owner; } private set { m_helper_owner = value; } }
@@ -84,6 +88,7 @@ namespace mame
         protected static write8_delegate WRITE8(string tag, write8_delegate func) { return devcb_global.DEVCB_WRITE8(tag, func); }
         protected static write8_delegate WRITE8(write8_delegate func) { return devcb_global.DEVCB_WRITE8(func); }
         // device
+        protected const string DEVICE_SELF = device_global.DEVICE_SELF;
         protected const string DEVICE_SELF_OWNER = device_global.DEVICE_SELF_OWNER;
         protected static u32 DERIVED_CLOCK(u32 num, u32 den) { return device_global.DERIVED_CLOCK(num, den); }
         protected static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname) { return device_global.DEFINE_DEVICE_TYPE(func, shortname, fullname); }
@@ -188,6 +193,13 @@ namespace mame
         }
         protected void MCFG_GENERIC_LATCH_8_ADD(string tag) { gen_latch_global.MCFG_GENERIC_LATCH_8_ADD(out m_helper_device, m_helper_config, m_helper_owner, tag); }
         // i8255
+        protected static i8255_device I8255A(machine_config mconfig, string tag, u32 clock = 0) { return (i8255_device)mconfig.device_add(tag, i8255_device.I8255A, clock); }
+        protected static i8255_device I8255A(machine_config mconfig, device_finder<i8255_device> finder, u32 clock = 0)
+        {
+            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
+            finder.target = I8255A(mconfig, target.second(), clock);
+            return finder.target;
+        }
         protected void MCFG_I8255_IN_PORTA_CB(DEVCB_IOPORT cb) { i8255_global.MCFG_I8255_IN_PORTA_CB(m_helper_device, cb); }
         protected void MCFG_I8255_IN_PORTB_CB(DEVCB_IOPORT cb) { i8255_global.MCFG_I8255_IN_PORTB_CB(m_helper_device, cb); }
         protected void MCFG_I8255_IN_PORTC_CB(DEVCB_IOPORT cb) { i8255_global.MCFG_I8255_IN_PORTC_CB(m_helper_device, cb); }
@@ -250,11 +262,25 @@ namespace mame
         protected void MCFG_NAMCO_54XX_ADD(string tag, XTAL clock) { namco54_global.MCFG_NAMCO_54XX_ADD(out m_helper_device, m_helper_config, m_helper_owner, tag, clock); }
         protected void MCFG_NAMCO_54XX_DISCRETE(string tag) { namco54_global.MCFG_NAMCO_54XX_DISCRETE(m_helper_device, tag); }
         protected void MCFG_NAMCO_54XX_BASENODE(int node) { namco54_global.MCFG_NAMCO_54XX_BASENODE(m_helper_device, node); }
+        // net_lib
+        protected void SOLVER(string name, int freq) { netlist.devices.net_lib_global.SOLVER(m_helper_setup, name, freq); }
         // netlist
-        protected void MCFG_NETLIST_SETUP(setup_func_delegate setup) { netlist_global.MCFG_NETLIST_SETUP(m_helper_device, setup); }
+        protected void MCFG_NETLIST_SETUP(setup_func setup) { netlist_global.MCFG_NETLIST_SETUP(m_helper_device, setup); }
         protected void MCFG_NETLIST_ANALOG_MULT_OFFSET(double mult, double offset) { netlist_global.MCFG_NETLIST_ANALOG_MULT_OFFSET(m_helper_device, mult, offset); }
         protected void MCFG_NETLIST_STREAM_INPUT(string basetag, int chan, string name) { netlist_global.MCFG_NETLIST_STREAM_INPUT(out m_helper_device, m_helper_config, m_helper_owner, basetag, chan, name); }
         protected void MCFG_NETLIST_STREAM_OUTPUT(string basetag, int chan, string name) { netlist_global.MCFG_NETLIST_STREAM_OUTPUT(out m_helper_device, m_helper_config, m_helper_owner, basetag, chan, name); }
+        // nl_setup
+        protected void NET_C(params string [] term1) { netlist.nl_setup_global.NET_C(m_helper_setup, term1); }
+        protected void PARAM(string name, int val) { netlist.nl_setup_global.PARAM(m_helper_setup, name, val); }
+        protected void PARAM(string name, double val) { netlist.nl_setup_global.PARAM(m_helper_setup, name, val); }
+        protected void NETLIST_START(netlist.setup_t setup) { m_helper_setup = setup;  netlist.nl_setup_global.NETLIST_START(); }
+        protected void NETLIST_END() { m_helper_setup = null;  netlist.nl_setup_global.NETLIST_END(); }
+        // nld_system
+        protected void ANALOG_INPUT(string name, int v) { netlist.devices.nld_system_global.ANALOG_INPUT(m_helper_setup, name, v); }
+        // nld_twoterm
+        protected void RES(string name, int p_R) { netlist.nld_twoterm_global.RES(m_helper_setup, name, p_R); }
+        protected void POT(string name, int p_R) { netlist.nld_twoterm_global.POT(m_helper_setup, name, p_R); }
+        protected void CAP(string name, double p_C) { netlist.nld_twoterm_global.CAP(m_helper_setup, name, p_C); }
         // pokey
         protected void MCFG_POKEY_OUTPUT_OPAMP_LOW_PASS(double _R, double _C, double _V) { pokey_global.MCFG_POKEY_OUTPUT_OPAMP_LOW_PASS(m_helper_device, _R, _C, _V); }
         // rescap
@@ -299,8 +325,6 @@ namespace mame
             finder.target = WATCHDOG_TIMER(mconfig, target.second());
             return finder.target;
         }
-        protected void MCFG_WATCHDOG_ADD(string tag) { watchdog_global.MCFG_WATCHDOG_ADD(out m_helper_device, m_helper_config, m_helper_owner, tag); }
-        protected void MCFG_WATCHDOG_VBLANK_INIT(string screen, int count) { watchdog_global.MCFG_WATCHDOG_VBLANK_INIT(m_helper_device, screen, count); }
         // z80
         protected static cpu_device Z80(machine_config mconfig, string tag, u32 clock) { return (cpu_device)mconfig.device_add(tag, z80_device.Z80, clock); }
         protected static cpu_device Z80(machine_config mconfig, device_finder<cpu_device> finder, u32 clock)

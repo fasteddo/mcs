@@ -16,26 +16,37 @@ namespace mame
 {
     partial class galaxian_state : driver_device
     {
-        /* we scale horizontally by 3 to render stars correctly */
-        public const UInt16 GALAXIAN_XSCALE         = 3;
-
         /* master clocks */
-        public static readonly XTAL GALAXIAN_MASTER_CLOCK   = new XTAL(18432000);
-        public static readonly XTAL GALAXIAN_PIXEL_CLOCK    = GALAXIAN_XSCALE*GALAXIAN_MASTER_CLOCK/3;
+        public static readonly XTAL GALAXIAN_MASTER_CLOCK = XTAL_global.op("18.432_MHz_XTAL");
+        public static readonly XTAL KONAMI_SOUND_CLOCK = XTAL_global.op("14.318181_MHz_XTAL");
+        //static constexpr XTAL SIDAM_MASTER_CLOCK(12_MHz_XTAL);
+
+        /* we scale horizontally by 3 to render stars correctly */
+        public const int GALAXIAN_XSCALE = 3;
+        /* the Sidam bootlegs have a 12 MHz XTAL instead */
+        //static constexpr int SIDAM_XSCALE    = 2;
+
+        public static readonly XTAL GALAXIAN_PIXEL_CLOCK = (GALAXIAN_XSCALE*GALAXIAN_MASTER_CLOCK / 3);
+        //static constexpr XTAL SIDAM_PIXEL_CLOCK(SIDAM_XSCALE*SIDAM_MASTER_CLOCK / 2);
 
         /* H counts from 128->511, HBLANK starts at 130 and ends at 250 */
         /* we normalize this here so that we count 0->383 with HBLANK */
         /* from 264-383 */
-        public const UInt16 GALAXIAN_HTOTAL         = 384*GALAXIAN_XSCALE;
-        public const UInt16 GALAXIAN_HBEND          = 0*GALAXIAN_XSCALE;
-        //#define GALAXIAN_H0START      (6*GALAXIAN_XSCALE)
-        //#define GALAXIAN_HBSTART      (264*GALAXIAN_XSCALE)
-        public const UInt16 GALAXIAN_H0START        = 0*GALAXIAN_XSCALE;
-        public const UInt16 GALAXIAN_HBSTART        = 256*GALAXIAN_XSCALE;
+        public const int GALAXIAN_HTOTAL  = (384 * GALAXIAN_XSCALE);
+        public const int GALAXIAN_HBEND   = (0 * GALAXIAN_XSCALE);
+        //static constexpr int GALAXIAN_H0START = (6*GALAXIAN_XSCALE);
+        //static constexpr int GALAXIAN_HBSTART = (264*GALAXIAN_XSCALE)
+        const int GALAXIAN_H0START = (0 * GALAXIAN_XSCALE);
+        public const int GALAXIAN_HBSTART = (256 * GALAXIAN_XSCALE);
 
-        public const UInt16 GALAXIAN_VTOTAL         = 264;
-        public const UInt16 GALAXIAN_VBEND          = 16;
-        public const UInt16 GALAXIAN_VBSTART        = 224+16;
+        public const int GALAXIAN_VTOTAL  = (264);
+        public const int GALAXIAN_VBEND   = (16);
+        public const int GALAXIAN_VBSTART = (224 + 16);
+
+        //static constexpr int SIDAM_HTOTAL     = (384 * SIDAM_XSCALE);
+        //static constexpr int SIDAM_HBEND      = (0 * SIDAM_XSCALE);
+        //static constexpr int SIDAM_H0START    = (0 * SIDAM_XSCALE);
+        //static constexpr int SIDAM_HBSTART    = (256 * SIDAM_XSCALE);
 
 
         required_device<cpu_device> m_maincpu;
@@ -79,6 +90,8 @@ namespace mame
         int m_irq_line;
         //int m_tenspot_current_game;
         uint8_t m_frogger_adjust;
+        uint8_t m_x_scale;
+        uint8_t m_h0_start;
         uint8_t m_sfx_tilemap;
 
         /* video extension callbacks */
@@ -142,6 +155,9 @@ namespace mame
         }
 
 
+        public optional_device_array_i8255_device ppi8255 { get { return m_ppi8255; } }
+
+
         //DECLARE_WRITE8_MEMBER(galaxian_videoram_w);
         //DECLARE_WRITE8_MEMBER(galaxian_objram_w);
         //DECLARE_WRITE8_MEMBER(galaxian_flip_screen_x_w);
@@ -153,7 +169,6 @@ namespace mame
         //DECLARE_WRITE8_MEMBER(scramble_background_green_w);
         //DECLARE_WRITE8_MEMBER(scramble_background_blue_w);
         //DECLARE_WRITE8_MEMBER(galaxian_gfxbank_w);
-        //DECLARE_CUSTOM_INPUT_MEMBER(scramble_protection_alt_r);
         //DECLARE_CUSTOM_INPUT_MEMBER(gmgalax_port_r);
         //DECLARE_CUSTOM_INPUT_MEMBER(azurian_port_r);
         //DECLARE_CUSTOM_INPUT_MEMBER(kingball_muxbit_r);
@@ -169,6 +184,9 @@ namespace mame
         //DECLARE_WRITE8_MEMBER(konami_sound_filter_w);
         //DECLARE_READ8_MEMBER(theend_ppi8255_r);
         //DECLARE_WRITE8_MEMBER(theend_ppi8255_w);
+        //DECLARE_WRITE8_MEMBER(theend_protection_w);
+        //DECLARE_READ8_MEMBER(theend_protection_r);
+        //DECLARE_CUSTOM_INPUT_MEMBER(theend_protection_alt_r);
         //DECLARE_WRITE8_MEMBER(explorer_sound_control_w);
         //DECLARE_READ8_MEMBER(sfx_sample_io_r);
         //DECLARE_WRITE8_MEMBER(sfx_sample_io_w);
@@ -216,8 +234,6 @@ namespace mame
         //DECLARE_WRITE8_MEMBER(konami_portc_0_w);
         //DECLARE_WRITE8_MEMBER(konami_portc_1_w);
         //DECLARE_WRITE8_MEMBER(theend_coin_counter_w);
-        //DECLARE_WRITE8_MEMBER(scramble_protection_w);
-        //DECLARE_READ8_MEMBER(scramble_protection_r);
         //DECLARE_READ8_MEMBER(explorer_sound_latch_r);
         //DECLARE_WRITE8_MEMBER(sfx_sample_control_w);
         //DECLARE_WRITE8_MEMBER(monsterz_porta_1_w);
@@ -257,10 +273,11 @@ namespace mame
         //void init_timefgtr();
         //void init_kingball();
         //void init_scorpnmc();
-        //void init_thepitm();
         //void init_theend();
         //void init_scramble();
+        //void init_sidam();
         //void init_explorer();
+        //void init_amigo2();
         //void init_mandinga();
         //void init_sfx();
         //void init_atlantis();
@@ -283,12 +300,13 @@ namespace mame
         //void init_warofbugg();
         //void init_jungsub();
         //void init_victoryc();
-        //void init_victorycb();
         //TILE_GET_INFO_MEMBER(bg_get_tile_info);
         //DECLARE_PALETTE_INIT(galaxian);
         //DECLARE_PALETTE_INIT(moonwar);
         //void tenspot_set_game_bank(int bank, int from_game);
         //uint32_t screen_update_galaxian(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
+        //DECLARE_WRITE_LINE_MEMBER(vblank_interrupt_w);
+        //DECLARE_WRITE_LINE_MEMBER(tenspot_interrupt_w);
         //INTERRUPT_GEN_MEMBER(interrupt_gen);
         //INTERRUPT_GEN_MEMBER(fakechange_interrupt_gen);
         //TIMER_DEVICE_CALLBACK_MEMBER(checkmaj_irq0_gen);
@@ -300,6 +318,7 @@ namespace mame
         //void stars_init();
         //void stars_update_origin();
         //void stars_draw_row(bitmap_rgb32 &bitmap, int maxx, int y, uint32_t star_offs, uint8_t starmask);
+        //void null_draw_background(bitmap_rgb32 &bitmap, const rectangle &cliprect);
         //void galaxian_draw_background(bitmap_rgb32 &bitmap, const rectangle &cliprect);
         //void background_draw_colorsplit(bitmap_rgb32 &bitmap, const rectangle &cliprect, rgb_t color, int split, int split_flipped);
         //void scramble_draw_stars(bitmap_rgb32 &bitmap, const rectangle &cliprect, int maxx);
@@ -307,8 +326,8 @@ namespace mame
         //void anteater_draw_background(bitmap_rgb32 &bitmap, const rectangle &cliprect);
         //void jumpbug_draw_background(bitmap_rgb32 &bitmap, const rectangle &cliprect);
         //void turtles_draw_background(bitmap_rgb32 &bitmap, const rectangle &cliprect);
+        //void sfx_draw_background(bitmap_rgb32 &bitmap, const rectangle &cliprect);
         //void frogger_draw_background(bitmap_rgb32 &bitmap, const rectangle &cliprect);
-        //void quaak_draw_background(bitmap_rgb32 &bitmap, const rectangle &cliprect);
         //inline void galaxian_draw_pixel(bitmap_rgb32 &bitmap, const rectangle &cliprect, int y, int x, rgb_t color);
         //void galaxian_draw_bullet(bitmap_rgb32 &bitmap, const rectangle &cliprect, int offs, int x, int y);
         //void mshuttle_draw_bullet(bitmap_rgb32 &bitmap, const rectangle &cliprect, int offs, int x, int y);
@@ -347,6 +366,7 @@ namespace mame
         //void common_init(galaxian_draw_bullet_func draw_bullet,galaxian_draw_background_func draw_background,
         //                 galaxian_extend_tile_info_func extend_tile_info,galaxian_extend_sprite_info_func extend_sprite_info);
         //void galaxian_base(machine_config &config);
+        //void sidam_bootleg_base(machine_config &config);
         //void konami_base(machine_config &config);
         //void konami_sound_1x_ay8910(machine_config &config);
         //void konami_sound_2x_ay8910(machine_config &config);
@@ -366,6 +386,7 @@ namespace mame
         //void gmgalax(machine_config &config);
         //void tenspot(machine_config &config);
         //void froggers(machine_config &config);
+        //void froggervd(machine_config &config);
         //void mshuttle(machine_config &config);
         //void anteateruk(machine_config &config);
         //void monsterz(machine_config &config);
@@ -389,6 +410,14 @@ namespace mame
         //void zigzag(machine_config &config);
         //void checkman(machine_config &config);
         //void jungsub(machine_config &config);
+        //void victoryc(machine_config &config);
+        //void frogg(machine_config &config);
+        //void mandingarf(machine_config &config);
+        //void thepitm(machine_config &config);
+        //void skybase(machine_config &config);
+        //void kong(machine_config &config);
+        //void scorpnmc(machine_config &config);
+
         //void galaxian_audio(machine_config &config);
         //void mooncrst_audio(machine_config &config);
         //void amigo2_map(address_map &map);
@@ -401,10 +430,13 @@ namespace mame
         //void explorer_map(address_map &map);
         //void fantastc_map(address_map &map);
         //void frogf_map(address_map &map);
+        //void frogg_map(address_map &map);
         //void frogger_map(address_map &map);
+        //void froggervd_map(address_map &map);
         //void frogger_sound_map(address_map &map);
         //void frogger_sound_portmap(address_map &map);
         //void froggeram_map(address_map &map);
+        //void froggermc_map(address_map &map);
         //void galaxian_map(address_map &map);
         //void galaxian_map_base(address_map &map);
         //void galaxian_map_discrete(address_map &map);
@@ -415,6 +447,8 @@ namespace mame
         //void kingball_sound_portmap(address_map &map);
         //void konami_sound_map(address_map &map);
         //void konami_sound_portmap(address_map &map);
+        //void kong_map(address_map &map);
+        //void mandingarf_map(address_map &map);
         //void monsterz_map(address_map &map);
         //void mooncrst_map(address_map &map);
         //void mooncrst_map_base(address_map &map);
@@ -424,18 +458,25 @@ namespace mame
         //void mshuttle_map(address_map &map);
         //void mshuttle_portmap(address_map &map);
         //void scobra_map(address_map &map);
+        //void scorpion_map(address_map &map);
+        //void scorpion_sound_map(address_map &map);
+        //void scorpion_sound_portmap(address_map &map);
+        //void scorpnmc_map(address_map &map);
         //void sfx_map(address_map &map);
         //void sfx_sample_map(address_map &map);
         //void sfx_sample_portmap(address_map &map);
+        //void skybase_map(address_map &map);
         //void spactrai_map(address_map &map);
         //void takeoff_sound_map(address_map &map);
         //void takeoff_sound_portmap(address_map &map);
         //void tenspot_select_map(address_map &map);
         //void theend_map(address_map &map);
+        //void thepitm_map(address_map &map);
         //void timefgtr_map(address_map &map);
         //void turpins_map(address_map &map);
         //void turpins_sound_map(address_map &map);
         //void turtles_map(address_map &map);
+        //void victoryc_map(address_map &map);
         //void zigzag_map(address_map &map);
 
 

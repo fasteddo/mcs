@@ -308,7 +308,34 @@ namespace mame
         // device_state_entry overrides
         protected override object entry_baseptr() { return m_data; }
         protected override u64 entry_value() { return (u64)m_data; }
-        protected override void entry_set_value(UInt64 value) { m_data = (int)value; }
+        protected override void entry_set_value(u64 value) { m_data = (int)value; }
+    }
+
+
+    // class template representing a state register of a specific width
+    //template<class ItemType>
+    class device_state_register_uint : device_state_entry
+    {
+        object m_data;                 // reference to where the data lives
+
+
+        // construction/destruction
+        public device_state_register_uint(int index, string symbol, object data, device_state_interface dev)
+            : base(index, symbol, sizeof(int), int.MaxValue, 0, dev)
+        {
+            m_data = data;
+
+
+#if false
+            static_assert(std::is_integral<ItemType>().value, "Registration of non-integer types is not currently supported");
+#endif
+        }
+
+
+        // device_state_entry overrides
+        protected override object entry_baseptr() { return m_data; }
+        protected override u64 entry_value() { return Convert.ToUInt64(m_data); }
+        protected override void entry_set_value(u64 value) { m_data = (int)value; }
     }
 
 
@@ -501,6 +528,7 @@ namespace mame
 
             // TODO - we need to pass in a intref, doubleref, ushortref, etc.  need to change all variables.  this is because C# numeric types are not references and these classes want references to these variables.
             if (data is int)         return state_add(new device_state_register_int(index, symbol, data, this));
+            if (data is uint)        return state_add(new device_state_register_uint(index, symbol, data, this));
             else if (data is byte)   return state_add(new device_state_register_byte(index, symbol, data, this));
             else if (data is ushort) return state_add(new device_state_register_ushort(index, symbol, data, this));
             else if (data is double) return state_add(new device_state_register_double(index, symbol, data, this));

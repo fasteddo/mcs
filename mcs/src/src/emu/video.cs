@@ -446,7 +446,7 @@ namespace mame
                 partials += screen.partial_updates();
 
             if (partials > 1)
-                str += string.Format("\n{0} partial updates", partials);
+                str += string.Format("  {0} partial updates", partials);
 
             return str;
         }

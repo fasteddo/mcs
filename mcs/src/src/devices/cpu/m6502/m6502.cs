@@ -108,7 +108,9 @@ namespace mame
 
         public override void state_export(device_state_entry entry)
         {
-            throw new emu_unimplemented();
+            m6502_device m6502 = (m6502_device)device();
+
+            m6502.device_state_interface_state_export(entry);
         }
 
         public override void state_string_export(device_state_entry entry, out string str)
@@ -312,8 +314,6 @@ namespace mame
 
             m_distate.state_add((int)STATE.STATE_GENPC,     "GENPC",     XPC).callexport().noshow();
             m_distate.state_add((int)STATE.STATE_GENPCBASE, "CURPC",     XPC).callexport().noshow();
-            m_distate.state_add((int)STATE.STATE_GENPC,     "GENPC",     NPC).noshow();
-            m_distate.state_add((int)STATE.STATE_GENPCBASE, "CURPC",     PPC).noshow();
             m_distate.state_add((int)STATE.STATE_GENSP,     "GENSP",     SP).noshow();
             m_distate.state_add((int)STATE.STATE_GENFLAGS,  "GENFLAGS",  P).callimport().formatstr("%6s").noshow();
             m_distate.state_add((int)M6502_REG.M6502_PC,        "PC",        NPC).callimport();
@@ -367,6 +367,7 @@ namespace mame
             inst_state_base = 0;
             sync = false;
             inhibit_interrupts = false;
+            count_before_instruction_step = 0;
         }
 
 
@@ -424,6 +425,29 @@ namespace mame
 
         // device_disasm_interface overrides
         //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
+
+
+        public void device_state_interface_state_export(device_state_entry entry)
+        {
+            switch (entry.index())
+            {
+                case (int)STATE.STATE_GENFLAGS:
+                case (int)M6502_REG.M6502_P:
+                    P = (uint8_t)(P | (uint8_t)(F.F_B|F.F_E));
+                    break;
+
+                case (int)M6502_REG.M6502_PC:
+                    PC = NPC;
+                    irq_taken = false;
+                    prefetch();
+                    PPC = NPC;
+                    inst_state = IR | inst_state_base;
+                    break;
+
+                default:
+                    break;
+            }
+        }
 
 
         uint8_t read(uint16_t adr) { return mintf.read(adr); }

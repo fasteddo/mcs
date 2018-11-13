@@ -25,6 +25,13 @@ namespace mame
         //constexpr XTAL operator ""_Hz_XTAL(unsigned long long clock) { return XTAL(double(clock)); }
         //constexpr XTAL operator ""_kHz_XTAL(unsigned long long clock) { return XTAL(double(clock) * 1e3); }
         //constexpr XTAL operator ""_MHz_XTAL(unsigned long long clock) { return XTAL(double(clock) * 1e6); }
+        public static XTAL op(string clock)
+        {
+            if (clock.EndsWith("_Hz_XTAL")) return new XTAL(Convert.ToDouble(clock.Replace("_Hz_XTAL", "")));
+            else if (clock.EndsWith("_kHz_XTAL")) return new XTAL(Convert.ToDouble(clock.Replace("_kHz_XTAL", "")) * 1e3);
+            else if (clock.EndsWith("_MHz_XTAL")) return new XTAL(Convert.ToDouble(clock.Replace("_MHz_XTAL", "")) * 1e6);
+            else throw new emu_unimplemented();
+        }
     }
 
 
@@ -203,9 +210,10 @@ namespace mame
             17064000, /* 17.064_MHz_XTAL        Memorex 1377 */
             17360000, /* 17.36_MHz_XTAL         OMTI Series 10 SCSI controller */
             17550000, /* 17.55_MHz_XTAL         HP 264x display clock (50 Hz configuration) */
+            17600000, /* 17.6_MHz_XTAL          LSI Octopus */
             17734470, /* 17.73447_MHz_XTAL      (~4x PAL subcarrier) */
             17734472, /* 17.734472_MHz_XTAL     actually ~4x PAL subcarrier */
-            17971200, /* 17.9712_MHz_XTAL       - */
+            17971200, /* 17.9712_MHz_XTAL       Compucolor II, Hazeltine Esprit III */
             18000000, /* 18_MHz_XTAL            S.A.R, Ikari Warriors 3 */
             18432000, /* 18.432_MHz_XTAL        Extremely common, used on 100's of PCBs (48000 * 384) */
             18480000, /* 18.48_MHz_XTAL         Wyse WY-100 video */
@@ -214,6 +222,7 @@ namespace mame
             18869600, /* 18.8696_MHz_XTAL       Memorex 2178 */
             19339600, /* 19.3396_MHz_XTAL       TeleVideo TVI-955 80-column display clock */
             19600000, /* 19.6_MHz_XTAL          Universal Mr. Do - Model 8021 PCB */
+            19602000, /* 19.602_MHz_XTAL        Ampex 210+ 80-column display clock */
             19660800, /* 19.6608_MHz_XTAL       Euro League (bootleg), labeled as "UKI 19.6608 20PF" */
             19661400, /* 19.6614_MHz_XTAL       Wyse WY-30 */
             19923000, /* 19.923_MHz_XTAL        Cinematronics vectors */
@@ -231,6 +240,7 @@ namespace mame
             21300000, /* 21.3_MHz_XTAL          - */
             21477272, /* 21.477272_MHz_XTAL     BMC bowling, some Data East 90's games, Vtech Socrates; (6x NTSC subcarrier) */
             22000000, /* 22_MHz_XTAL            - */
+            22032000, /* 22.032_MHz_XTAL        Intellec Series II I/O controller */
             22096000, /* 22.096_MHz_XTAL        ADDS Viewpoint 122 */
             22118400, /* 22.1184_MHz_XTAL       Amusco Poker */
             22321000, /* 22.321_MHz_XTAL        Apple LaserWriter II NT */
@@ -282,6 +292,7 @@ namespace mame
             31684000, /* 31.684_MHz_XTAL        TeleVideo TVI-955 132-column display clock */
             31948800, /* 31.9488_MHz_XTAL       NEC PC-88xx, PC-98xx */
             32000000, /* 32_MHz_XTAL            - */
+            32147000, /* 32.147_MHz_XTAL        Ampex 210+ 132-column display clock */
             32220000, /* 32.22_MHz_XTAL         Typically used on 90's Data East PCBs (close to 9x NTSC subcarrier which is 32.215905Mhz */
             32317400, /* 32.3174_MHz_XTAL       DEC VT330, VT340 */
             32530400, /* 32.5304_MHz_XTAL       Seta 2 */

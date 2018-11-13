@@ -793,8 +793,9 @@ namespace mame
         //  subtag - create a fully resolved path relative
         //  to our device based on the provided tag
         //-------------------------------------------------
-        public string subtag(string tag)
+        public string subtag(string _tag)
         {
+            string tag = _tag.c_str();
             string result;
 
             // if the tag begins with a colon, ignore our path and start from the root
@@ -856,8 +857,9 @@ namespace mame
         public memory_region memregion(string _tag)
         {
             // build a fully-qualified name and look it up
-            if (_tag != null)
-                return machine().memory().regions().find(subtag(_tag).c_str());
+            var search = machine().memory().regions().find(subtag(_tag).c_str());
+            if (search != null)
+                return search;
             else
                 return null;
         }
@@ -869,8 +871,9 @@ namespace mame
         public memory_share memshare(string _tag)
         {
             // build a fully-qualified name and look it up
-            if (!string.IsNullOrEmpty(_tag))
-                return machine().memory().shares().find(subtag(_tag).c_str());
+            var search = machine().memory().shares().find(subtag(_tag).c_str());
+            if (search != null)
+                return search;
             else
                 return null;
         }
@@ -881,8 +884,9 @@ namespace mame
         //-------------------------------------------------
         public memory_bank membank(string _tag)
         {
-            if (!string.IsNullOrEmpty(_tag))
-                return machine().memory().banks().find(subtag(_tag).c_str());
+            var search = machine().memory().banks().find(subtag(_tag).c_str());
+            if (search != null)
+                return search;
             else
                 return null;
         }
@@ -894,7 +898,7 @@ namespace mame
         public ioport_port ioport(string tag)
         {
             // build a fully-qualified name and look it up
-            return machine().ioport().port(subtag(tag));
+            return machine().ioport().port(subtag(tag).c_str());
         }
 
         //-------------------------------------------------

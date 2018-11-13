@@ -2293,19 +2293,6 @@ namespace mame.ui
                             rendutil_global.render_load_jpeg(out tmp_bitmap, snapfile, null, fullname.c_str());
                         }
                     }
-                    else if (ui_globals.curimage_view == (byte)VIEW.TITLES_VIEW)
-                    {
-                        // First attempt from name list
-                        string pathname = software.listname + "_titles";
-                        string fullname = software.shortname + ".png";
-                        rendutil_global.render_load_png(out tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
-
-                        if (!tmp_bitmap.valid())
-                        {
-                            fullname = software.shortname + ".jpg";
-                            rendutil_global.render_load_jpeg(out tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
-                        }
-                    }
                     else
                     {
                         // First attempt from name list

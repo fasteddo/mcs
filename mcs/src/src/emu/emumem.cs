@@ -2550,11 +2550,11 @@ namespace mame
 
 
         // install ports, banks, RAM (with mirror/mask)
-        //void install_read_port(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *rtag) { install_readwrite_port(addrstart, addrend, addrmirror, rtag, nullptr); }
-        //void install_write_port(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *wtag) { install_readwrite_port(addrstart, addrend, addrmirror, nullptr, wtag); }
+        //void install_read_port(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *rtag) { install_readwrite_port(addrstart, addrend, addrmirror, rtag, ""); }
+        //void install_write_port(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *wtag) { install_readwrite_port(addrstart, addrend, addrmirror, "", wtag); }
         protected abstract void install_readwrite_port(offs_t addrstart, offs_t addrend, offs_t addrmirror, string rtag, string wtag);
-        //void install_read_bank(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *tag) { install_bank_generic(addrstart, addrend, addrmirror, tag, nullptr); }
-        //void install_write_bank(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *tag) { install_bank_generic(addrstart, addrend, addrmirror, nullptr, tag); }
+        //void install_read_bank(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *tag) { install_bank_generic(addrstart, addrend, addrmirror, tag, ""); }
+        //void install_write_bank(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *tag) { install_bank_generic(addrstart, addrend, addrmirror, "", tag); }
         //void install_readwrite_bank(offs_t addrstart, offs_t addrend, offs_t addrmirror, const char *tag)  { install_bank_generic(addrstart, addrend, addrmirror, tag, tag); }
         //void install_read_bank(offs_t addrstart, offs_t addrend, offs_t addrmirror, memory_bank *bank) { install_bank_generic(addrstart, addrend, addrmirror, bank, nullptr); }
         //void install_write_bank(offs_t addrstart, offs_t addrend, offs_t addrmirror, memory_bank *bank) { install_bank_generic(addrstart, addrend, addrmirror, nullptr, bank); }
@@ -3157,14 +3157,14 @@ namespace mame
 
                 case map_handler_type.AMH_PORT:
                     install_readwrite_port(entry.addrstart, entry.addrend, entry.addrmirror,
-                                    (readorwrite == read_or_write.READ) ? data.tag : null,
-                                    (readorwrite == read_or_write.WRITE) ? data.tag : null);
+                                    (readorwrite == read_or_write.READ) ? entry.devbase.subtag(data.tag) : "",
+                                    (readorwrite == read_or_write.WRITE) ? entry.devbase.subtag(data.tag) : "");
                     break;
 
                 case map_handler_type.AMH_BANK:
                     install_bank_generic(entry.addrstart, entry.addrend, entry.addrmirror,
-                                    (readorwrite == read_or_write.READ) ? data.tag : null,
-                                    (readorwrite == read_or_write.WRITE) ? data.tag : null);
+                                    (readorwrite == read_or_write.READ) ? entry.devbase.subtag(data.tag) : "",
+                                    (readorwrite == read_or_write.WRITE) ? entry.devbase.subtag(data.tag) : "");
                     break;
 
                 case map_handler_type.AMH_DEVICE_SUBMAP:
@@ -3790,7 +3790,12 @@ namespace mame
         public void configure_entries(int startentry, int numentries, ListBytesPointer base_, offs_t stride)  // void *base_, offs_t stride)
         {
             if (startentry + numentries >= (int)m_entries.size())
-                m_entries.resize(startentry + numentries+1, new ListBytesPointerRef());
+            {
+                //m_entries.resize(startentry + numentries+1);
+                m_entries.clear();
+                for (int i = 0; i < startentry + numentries+1; i++)
+                    m_entries.Add(new ListBytesPointerRef());
+            }
 
             // fill in the requested bank entries
             for (int entrynum = 0; entrynum < numentries; entrynum ++)
@@ -4358,7 +4363,7 @@ namespace mame
             emumem_global.VPRINTF("address_space::install_readwrite_bank({0}-{1} mirror={2}, read=\"{3}\" / write=\"{4}\")\n",
                         emumem_global.core_i64_hex_format(addrstart, m_addrchars), emumem_global.core_i64_hex_format(addrend, m_addrchars),
                         emumem_global.core_i64_hex_format(addrmirror, m_addrchars),
-                        (rtag != null) ? rtag : "(none)", (wtag != null) ? wtag : "(none)");
+                        rtag.empty() ? "(none)" : rtag.c_str(), wtag.empty() ? "(none)" : wtag.c_str());
 
             offs_t nstart;
             offs_t nend;
@@ -4367,7 +4372,7 @@ namespace mame
             check_optimize_mirror("install_bank_generic", addrstart, addrend, addrmirror, out nstart, out nend, out nmask, out nmirror);
 
             // map the read bank
-            if (rtag != null)
+            if (rtag != "")
             {
                 string fulltag = device().siblingtag(rtag);
                 memory_bank bank = bank_find_or_allocate(fulltag.c_str(), addrstart, addrend, addrmirror, read_or_write.READ);
@@ -4378,7 +4383,7 @@ namespace mame
             }
 
             // map the write bank
-            if (wtag != null)
+            if (wtag != "")
             {
                 string fulltag = device().siblingtag(wtag);
                 memory_bank bank = bank_find_or_allocate(fulltag.c_str(), addrstart, addrend, addrmirror, read_or_write.WRITE);
@@ -4388,7 +4393,7 @@ namespace mame
                 m_root_write.populate(nstart, nend, nmirror, hand_w);
             }
 
-            invalidate_caches(rtag != null ? wtag != null ? read_or_write.READWRITE : read_or_write.READ : read_or_write.WRITE);
+            invalidate_caches(rtag != "" ? wtag != "" ? read_or_write.READWRITE : read_or_write.READ : read_or_write.WRITE);
         }
 
 
@@ -4404,7 +4409,7 @@ namespace mame
             emumem_global.VPRINTF("address_space::install_readwrite_port({0}-{1} mirror={2}, read=\"{3}\" / write=\"{4}\")\n",
                         emumem_global.core_i64_hex_format(addrstart, m_addrchars), emumem_global.core_i64_hex_format(addrend, m_addrchars),
                         emumem_global.core_i64_hex_format(addrmirror, m_addrchars),
-                        (rtag != null) ? rtag : "(none)", (wtag != null) ? wtag : "(none)");
+                        rtag.empty() ? "(none)" : rtag.c_str(), wtag.empty() ? "(none)" : wtag.c_str());
 
             offs_t nstart;
             offs_t nend;
@@ -4413,31 +4418,31 @@ namespace mame
             check_optimize_mirror("install_readwrite_port", addrstart, addrend, addrmirror, out nstart, out nend, out nmask, out nmirror);
 
             // read handler
-            if (rtag != null)
+            if (rtag != "")
             {
                 // find the port
                 ioport_port port = device().owner().ioport(rtag);
                 if (port == null)
-                    throw new emu_fatalerror("Attempted to map non-existent port '{0}' for read in space {1} of device '{2}'\n", rtag, name(), device().tag());
+                    throw new emu_fatalerror("Attempted to map non-existent port '{0}' for read in space {1} of device '{2}'\n", rtag.c_str(), name(), device().tag());
 
                 // map the range and set the ioport
                 var hand_r = new handler_entry_read_ioport(Width, AddrShift, (int)Endian, this, port);
                 m_root_read.populate(nstart, nend, nmirror, hand_r);
             }
 
-            if (wtag != null)
+            if (wtag != "")
             {
                 // find the port
                 ioport_port port = device().owner().ioport(wtag);
                 if (port == null)
-                    global.fatalerror("Attempted to map non-existent port '{0}' for write in space {1} of device '{2}'\n", wtag, name(), device().tag());
+                    global.fatalerror("Attempted to map non-existent port '{0}' for write in space {1} of device '{2}'\n", wtag.c_str(), name(), device().tag());
 
                 // map the range and set the ioport
                 var hand_w = new handler_entry_write_ioport(Width, AddrShift, (int)Endian, this, port);
                 m_root_write.populate(nstart, nend, nmirror, hand_w);
             }
 
-            invalidate_caches(rtag != null ? wtag != null ? read_or_write.READWRITE : read_or_write.READ : read_or_write.WRITE);
+            invalidate_caches(rtag != "" ? wtag != "" ? read_or_write.READWRITE : read_or_write.READ : read_or_write.WRITE);
         }
 
 

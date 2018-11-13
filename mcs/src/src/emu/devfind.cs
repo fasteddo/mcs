@@ -195,6 +195,7 @@ namespace mame
         /// \param [in] index Index of desired element (zero-based).
         /// \return Reference to element at specified index.
         //T &operator[](unsigned index) { assert(index < Count); return m_array[index]; }
+        public virtual T op(int index) { return at(index); }
 
         /// \brief Checked element accesor
         ///
@@ -206,7 +207,6 @@ namespace mame
         /// \throw std::out_of_range
         //T const &at(unsigned index) const { if (Count > index) return m_array[index]; else throw std::out_of_range("Index out of range"); }
         //T &at(unsigned index) { if (Count > index) return m_array[index]; else throw std::out_of_range("Index out of range"); }
-
         public virtual T at(int index) { return m_array[index]; }
     }
 

@@ -44,7 +44,7 @@ namespace mame
 
     public class device_execute_interface_z80 : device_execute_interface
     {
-        int opcount = 0;  // for debugging purposes
+        static int opcount = 0;  // for debugging purposes
 
 
         public device_execute_interface_z80(machine_config mconfig, device_t device) : base(mconfig, device) { }
@@ -65,35 +65,35 @@ namespace mame
 
             do
             {
-                if (z80.wait_state() != 0)
+                if (z80.wait_state != 0)
                 {
                     // stalled
-                    z80.icount_set(0);
+                    z80.icount = 0;
                     return;
                 }
 
                 // check for interrupts before each instruction
-                if (z80.nmi_pending())
+                if (z80.nmi_pending)
                     z80.take_nmi();
-                else if (z80.irq_state() != (byte)line_state.CLEAR_LINE && z80.iff1() != 0 && !z80.after_ei())
+                else if (z80.irq_state != (byte)line_state.CLEAR_LINE && z80.iff1 != 0 && !z80.after_ei)
                     z80.take_interrupt();
 
-                z80.after_ei_set(false);
-                z80.after_ldair_set(false);
+                z80.after_ei = false;
+                z80.after_ldair = false;
 
                 z80.PRVPC = z80.PCD;
                 debugger_instruction_hook(z80.PCD);
-                z80.r_set((byte)(z80.r() + 1)); //z80.m_r++;
+                z80.r++;
 
 
-                byte r = z80.rop();
+                uint8_t r = z80.rop();
 
 
                 if (opcount % 200000 == 0)
-                    global.osd_printf_debug("z80.execute_run() - {0}: op_{1:x2}() - A: {2,3} B: {3,3}\n", opcount, r, z80.A, z80.B);
+                    global.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", z80.tag(), opcount, r, z80.A, z80.B, z80.C, z80.F, z80.HL);
 
                 //if (opcount >= 0 && opcount < 500)
-                //    osd_printf_global.osd_printf_debug("{0}: op_{1:x2}() - A: {2,3} B: {3,3} rm(20412): {4,3} rm(20413): {5,3} - rm(20480): {6,3}\n", opcount, r, z80.A, z80.B, z80.rm(20412), z80.rm(20413), z80.rm(20480));
+                //    global.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", z80.tag(), opcount, r, z80.A, z80.B, z80.C, z80.F, z80.HL);
 
 
                 opcount++;
@@ -101,7 +101,7 @@ namespace mame
 
                 z80.EXEC_op(r);
 
-            } while (z80.icount() > 0);
+            } while (z80.icount > 0);
         }
 
 
@@ -112,27 +112,27 @@ namespace mame
             switch (inputnum)
             {
                 case (int)Z80EXECUTE.Z80_INPUT_LINE_BUSRQ:
-                    z80.busrq_state_set(state);
+                    z80.busrq_state = state;
                     break;
 
                 case (int)INPUT_LINE.INPUT_LINE_NMI:
                     /* mark an NMI pending on the rising edge */
-                    if (z80.nmi_state() == (byte)line_state.CLEAR_LINE && state != (int)line_state.CLEAR_LINE)
-                        z80.nmi_pending_set(true);
-                    z80.nmi_state_set((byte)state);
+                    if (z80.nmi_state == (byte)line_state.CLEAR_LINE && state != (int)line_state.CLEAR_LINE)
+                        z80.nmi_pending = true;
+                    z80.nmi_state = (byte)state;
                     break;
 
                 case (int)INPUT_LINE.INPUT_LINE_IRQ0:
                     /* update the IRQ state via the daisy chain */
-                    z80.irq_state_set((byte)state);
+                    z80.irq_state = (byte)state;
                     if (z80.m_daisy.daisy_chain_present())
-                        z80.irq_state_set((z80.m_daisy.daisy_update_irq_state() == (int)line_state.ASSERT_LINE) ? (byte)line_state.ASSERT_LINE : z80.irq_state());
+                        z80.irq_state = (z80.m_daisy.daisy_update_irq_state() == (int)line_state.ASSERT_LINE) ? (byte)line_state.ASSERT_LINE : z80.irq_state;
 
                     /* the main execute loop will take the interrupt */
                     break;
 
                 case (int)Z80EXECUTE.Z80_INPUT_LINE_WAIT:
-                    z80.wait_state_set(state);
+                    z80.wait_state = state;
                     break;
 
                 default:
@@ -155,17 +155,17 @@ namespace mame
             {
                 return new space_config_vector()
                 {
-                    global.make_pair(emumem_global.AS_PROGRAM, z80.program_config()),
-                    global.make_pair(emumem_global.AS_OPCODES, z80.opcodes_config()),
-                    global.make_pair(emumem_global.AS_IO,      z80.io_config())
+                    global.make_pair(emumem_global.AS_PROGRAM, z80.program_config),
+                    global.make_pair(emumem_global.AS_OPCODES, z80.opcodes_config),
+                    global.make_pair(emumem_global.AS_IO,      z80.io_config)
                 };
             }
             else
             {
                 return new space_config_vector()
                 {
-                    global.make_pair(emumem_global.AS_PROGRAM, z80.program_config()),
-                    global.make_pair(emumem_global.AS_IO,      z80.io_config())
+                    global.make_pair(emumem_global.AS_PROGRAM, z80.program_config),
+                    global.make_pair(emumem_global.AS_IO,      z80.io_config)
                 };
             }
         }
@@ -184,8 +184,8 @@ namespace mame
             switch (entry.index())
             {
                 case (int)Z80STATE.Z80_R:
-                    z80.r_set((byte)(z80.rtemp() & 0x7f));
-                    z80.r2_set((byte)(z80.rtemp() & 0x80));
+                    z80.r = (byte)(z80.rtemp & 0x7f);
+                    z80.r2 = (byte)(z80.rtemp & 0x80);
                     break;
 
                 default:
@@ -200,7 +200,7 @@ namespace mame
             switch (entry.index())
             {
                 case (int)Z80STATE.Z80_R:
-                    z80.rtemp_set((byte)((z80.r() & 0x7f) | (z80.r2() & 0x80)));
+                    z80.rtemp = (byte)((z80.r & 0x7f) | (z80.r2 & 0x80));
                     break;
 
                 default:
@@ -260,16 +260,16 @@ namespace mame
 
 
         static bool tables_initialised = false;
-        static byte [] SZ = new byte[256];       /* zero and sign flags */
-        static byte [] SZ_BIT = new byte[256];   /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
-        public static byte [] SZP = new byte[256];      /* zero, sign and parity flags */
-        static byte [] SZHV_inc = new byte[256]; /* zero, sign, half carry and overflow flags INC r8 */
-        static byte [] SZHV_dec = new byte[256]; /* zero, sign, half carry and overflow flags DEC r8 */
+        static uint8_t [] SZ = new uint8_t[256];       /* zero and sign flags */
+        static uint8_t [] SZ_BIT = new uint8_t[256];   /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
+        public static uint8_t [] SZP = new uint8_t[256];      /* zero, sign and parity flags */
+        static uint8_t [] SZHV_inc = new uint8_t[256]; /* zero, sign, half carry and overflow flags INC r8 */
+        static uint8_t [] SZHV_dec = new uint8_t[256]; /* zero, sign, half carry and overflow flags DEC r8 */
 
-        static byte [] SZHVC_add = new byte[2*256*256];
-        static byte [] SZHVC_sub = new byte[2*256*256];
+        static uint8_t [] SZHVC_add = new uint8_t[2*256*256];
+        static uint8_t [] SZHVC_sub = new uint8_t[2*256*256];
 
-        static readonly byte [] cc_op = new byte[0x100]
+        static readonly uint8_t [] cc_op = new uint8_t[0x100]
         {
             4,10, 7, 6, 4, 4, 7, 4, 4,11, 7, 6, 4, 4, 7, 4,
             8,10, 7, 6, 4, 4, 7, 4,12,11, 7, 6, 4, 4, 7, 4,
@@ -289,7 +289,7 @@ namespace mame
             5,10,10, 4,10,11, 7,11, 5, 6,10, 4,10, 0, 7,11  /* fd -> cc_xy */
         };
 
-        static readonly byte [] cc_cb = new byte[0x100]
+        static readonly uint8_t [] cc_cb = new uint8_t[0x100]
         {
             8, 8, 8, 8, 8, 8,15, 8, 8, 8, 8, 8, 8, 8,15, 8,
             8, 8, 8, 8, 8, 8,15, 8, 8, 8, 8, 8, 8, 8,15, 8,
@@ -309,7 +309,7 @@ namespace mame
             8, 8, 8, 8, 8, 8,15, 8, 8, 8, 8, 8, 8, 8,15, 8
         };
 
-        static readonly byte [] cc_ed = new byte[0x100]
+        static readonly uint8_t [] cc_ed = new uint8_t[0x100]
         {
             8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
             8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -330,7 +330,7 @@ namespace mame
         };
 
         /* ix/iy: with the exception of (i+offset) opcodes, t-states are main_opcode_table + 4 */
-        static readonly byte [] cc_xy = new byte[0x100]
+        static readonly uint8_t [] cc_xy = new uint8_t[0x100]
         {
             4+4,10+4, 7+4, 6+4, 4+4, 4+4, 7+4, 4+4, 4+4,11+4, 7+4, 6+4, 4+4, 4+4, 7+4, 4+4,
             8+4,10+4, 7+4, 6+4, 4+4, 4+4, 7+4, 4+4,12+4,11+4, 7+4, 6+4, 4+4, 4+4, 7+4, 4+4,
@@ -350,7 +350,7 @@ namespace mame
             5+4,10+4,10+4, 4+4,10+4,11+4, 7+4,11+4, 5+4, 6+4,10+4, 4+4,10+4, 4  , 7+4,11+4  /* fd -> cc_xy again */
         };
 
-        static readonly byte [] cc_xycb = new byte[0x100]
+        static readonly uint8_t [] cc_xycb = new uint8_t[0x100]
         {
             23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,
             23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,
@@ -371,7 +371,7 @@ namespace mame
         };
 
         /* extra cycles if jr/jp/call taken and 'interrupt latency' on rst 0-7 */
-        static readonly byte [] cc_ex = new byte[0x100]
+        static readonly uint8_t [] cc_ex = new uint8_t[0x100]
         {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* DJNZ */
@@ -462,60 +462,60 @@ namespace mame
         /* register is calculated as follows: refresh=(r&127)|(r2&128)    */
         /****************************************************************************/
 
-        public const byte CF      = 0x01;
-        public const byte NF      = 0x02;
-        public const byte PF      = 0x04;
-        public const byte VF      = PF;
-        public const byte XF      = 0x08;
-        public const byte HF      = 0x10;
-        public const byte YF      = 0x20;
-        public const byte ZF      = 0x40;
-        public const byte SF      = 0x80;
+        public const uint8_t CF      = 0x01;
+        public const uint8_t NF      = 0x02;
+        public const uint8_t PF      = 0x04;
+        public const uint8_t VF      = PF;
+        public const uint8_t XF      = 0x08;
+        public const uint8_t HF      = 0x10;
+        public const uint8_t YF      = 0x20;
+        public const uint8_t ZF      = 0x40;
+        public const uint8_t SF      = 0x80;
 
         //#define INT_IRQ 0x01
         //#define NMI_IRQ 0x02
 
-        public UInt32 PRVPC { get { return m_prvpc.d; } set { m_prvpc.d = value; } }     /* previous program counter */
+        public uint32_t PRVPC { get { return m_prvpc.d; } set { m_prvpc.d = value; } }     /* previous program counter */
 
-        public UInt32 PCD { get { return m_pc.d; } set { m_pc.d = value; } }
-        public UInt16 PC { get { return m_pc.w.l; } set { m_pc.w.l = value; } }
+        public uint32_t PCD { get { return m_pc.d; } set { m_pc.d = value; } }
+        public uint16_t PC { get { return m_pc.w.l; } set { m_pc.w.l = value; } }
 
-        public UInt32 SPD { get { return m_sp.d; } set { m_sp.d = value; } }
-        public UInt16 SP { get { return m_sp.w.l; } set { m_sp.w.l = value; } }
+        public uint32_t SPD { get { return m_sp.d; } set { m_sp.d = value; } }
+        public uint16_t SP { get { return m_sp.w.l; } set { m_sp.w.l = value; } }
 
-        public UInt32 AFD { get { return m_af.d; } set { m_af.d = value; } }
-        public UInt16 AF { get { return m_af.w.l; } set { m_af.w.l = value; } }
-        public byte A { get { return m_af.b.h; } set { m_af.b.h = value; } }
-        public byte F { get { return m_af.b.l; } set { m_af.b.l = value; } }
+        public uint32_t AFD { get { return m_af.d; } set { m_af.d = value; } }
+        public uint16_t AF { get { return m_af.w.l; } set { m_af.w.l = value; } }
+        public uint8_t A { get { return m_af.b.h; } set { m_af.b.h = value; } }
+        public uint8_t F { get { return m_af.b.l; } set { m_af.b.l = value; } }
 
-        public UInt32 BCD { get { return m_bc.d; } set { m_bc.d = value; } }
-        public UInt16 BC { get { return m_bc.w.l; } set { m_bc.w.l = value; } }
-        public byte B { get { return m_bc.b.h; } set { m_bc.b.h = value; } }
-        public byte C { get { return m_bc.b.l; } set { m_bc.b.l = value; } }
+        public uint32_t BCD { get { return m_bc.d; } set { m_bc.d = value; } }
+        public uint16_t BC { get { return m_bc.w.l; } set { m_bc.w.l = value; } }
+        public uint8_t B { get { return m_bc.b.h; } set { m_bc.b.h = value; } }
+        public uint8_t C { get { return m_bc.b.l; } set { m_bc.b.l = value; } }
 
-        public UInt32 DED { get { return m_de.d; } set { m_de.d = value; } }
-        public UInt16 DE { get { return m_de.w.l; } set { m_de.w.l = value; } }
-        public byte D { get { return m_de.b.h; } set { m_de.b.h = value; } }
-        public byte E { get { return m_de.b.l; } set { m_de.b.l = value; } }
+        public uint32_t DED { get { return m_de.d; } set { m_de.d = value; } }
+        public uint16_t DE { get { return m_de.w.l; } set { m_de.w.l = value; } }
+        public uint8_t D { get { return m_de.b.h; } set { m_de.b.h = value; } }
+        public uint8_t E { get { return m_de.b.l; } set { m_de.b.l = value; } }
 
-        public UInt32 HLD { get { return m_hl.d; } set { m_hl.d = value; } }
-        public UInt16 HL { get { return m_hl.w.l; } set { m_hl.w.l = value; } }
-        public byte H { get { return m_hl.b.h; } set { m_hl.b.h = value; } }
-        public byte L { get { return m_hl.b.l; } set { m_hl.b.l = value; } }
+        public uint32_t HLD { get { return m_hl.d; } set { m_hl.d = value; } }
+        public uint16_t HL { get { return m_hl.w.l; } set { m_hl.w.l = value; } }
+        public uint8_t H { get { return m_hl.b.h; } set { m_hl.b.h = value; } }
+        public uint8_t L { get { return m_hl.b.l; } set { m_hl.b.l = value; } }
 
-        public UInt32 IXD { get { return m_ix.d; } set { m_ix.d = value; } }
-        public UInt16 IX { get { return m_ix.w.l; } set { m_ix.w.l = value; } }
-        public byte HX { get { return m_ix.b.h; } set { m_ix.b.h = value; } }
-        public byte LX { get { return m_ix.b.l; } set { m_ix.b.l = value; } }
+        public uint32_t IXD { get { return m_ix.d; } set { m_ix.d = value; } }
+        public uint16_t IX { get { return m_ix.w.l; } set { m_ix.w.l = value; } }
+        public uint8_t HX { get { return m_ix.b.h; } set { m_ix.b.h = value; } }
+        public uint8_t LX { get { return m_ix.b.l; } set { m_ix.b.l = value; } }
 
-        public UInt32 IYD { get { return m_iy.d; } set { m_iy.d = value; } }
-        public UInt16 IY { get { return m_iy.w.l; } set { m_iy.w.l = value; } }
-        public byte HY { get { return m_iy.b.h; } set { m_iy.b.h = value; } }
-        public byte LY { get { return m_iy.b.l; } set { m_iy.b.l = value; } }
+        public uint32_t IYD { get { return m_iy.d; } set { m_iy.d = value; } }
+        public uint16_t IY { get { return m_iy.w.l; } set { m_iy.w.l = value; } }
+        public uint8_t HY { get { return m_iy.b.h; } set { m_iy.b.h = value; } }
+        public uint8_t LY { get { return m_iy.b.l; } set { m_iy.b.l = value; } }
 
-        public UInt16 WZ { get { return m_wz.w.l; } set { m_wz.w.l = value; } }
-        public byte WZ_H { get { return m_wz.b.h; } set { m_wz.b.h = value; } }
-        public byte WZ_L { get { return m_wz.b.l; } set { m_wz.b.l = value; } }
+        public uint16_t WZ { get { return m_wz.w.l; } set { m_wz.w.l = value; } }
+        public uint8_t WZ_H { get { return m_wz.b.h; } set { m_wz.b.h = value; } }
+        public uint8_t WZ_L { get { return m_wz.b.l; } set { m_wz.b.l = value; } }
 
 
         public z80_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -544,40 +544,36 @@ namespace mame
         }
 
 
-        // getters
-        public address_space_config program_config() { return m_program_config; }
-        public address_space_config io_config() { return m_io_config; }
-        public address_space_config opcodes_config() { return m_opcodes_config; }
+        public address_space_config program_config { get { return m_program_config; } }
+        public address_space_config opcodes_config { get { return m_opcodes_config; } }
+        public address_space_config io_config { get { return m_io_config; } }
 
-        public PAIR pc() { return m_pc; }
-        public byte r() { return m_r; }
-        public byte r2() { return m_r2; }
-        public byte iff1() { return m_iff1; }
-        public int icount() { return m_icountRef.i; }
-        public intref icountRef() { return m_icountRef; }
-        public byte rtemp() { return m_rtemp; }
-        public byte nmi_state() { return m_nmi_state; }
-        public bool nmi_pending() { return m_nmi_pending; }
-        public byte irq_state() { return m_irq_state; }
-        public int wait_state() { return m_wait_state; }
-        public int busrq_state() { return m_busrq_state; }
-        public bool after_ei() { return m_after_ei; }
-        public bool after_ldair() { return m_after_ldair; }
+        public uint8_t r { get { return m_r; } set { m_r = value; } }
+        public uint8_t r2 { get { return m_r2; } set { m_r2 = value; } }
+        public uint8_t iff1 { get { return m_iff1; } }
+        public uint8_t nmi_state { get { return m_nmi_state; } set { m_nmi_state = value; } }
+        public bool nmi_pending { get { return m_nmi_pending; } set { m_nmi_pending = value; } }
+        public uint8_t irq_state { get { return m_irq_state; } set { m_irq_state = value; } }
+        public int wait_state { get { return m_wait_state; } set { m_wait_state = value; } }
+        public int busrq_state { get { return m_busrq_state; } set { m_busrq_state = value; } }
+        public bool after_ei { get { return m_after_ei; } set { m_after_ei = value; } }
+        public bool after_ldair { get { return m_after_ldair; } set { m_after_ldair = value; } }
+
+        public int icount { get { return m_icountRef.i; } set { m_icountRef.i = value; } }
+        public intref icountRef { get { return m_icountRef; } }
+        public uint8_t rtemp { get { return m_rtemp; } set { m_rtemp = value; } }
 
 
-        // setters
-        public void r_set(byte value) { m_r = value; }
-        public void r2_set(byte value) { m_r2 = value; }
-        public void iff1_set(byte value) { m_iff1 = value; }
-        public void icount_set(int value) { m_icountRef.i = value; }
-        public void rtemp_set(byte value) { m_rtemp = value; }
-        public void nmi_state_set(byte value) { m_nmi_state = value; }
-        public void nmi_pending_set(bool value) { m_nmi_pending = value; }
-        public void irq_state_set(byte value) { m_irq_state = value; }
-        public void wait_state_set(int value) { m_wait_state = value; }
-        public void busrq_state_set(int value) { m_busrq_state = value; }
-        public void after_ei_set(bool value) { m_after_ei = value; }
-        public void after_ldair_set(bool value) { m_after_ldair = value; }
+        //void z80_set_cycle_tables(const uint8_t *op, const uint8_t *cb, const uint8_t *ed, const uint8_t *xy, const uint8_t *xycb, const uint8_t *ex);
+        //template <typename... T> void set_memory_map(T &&... args) { set_addrmap(AS_PROGRAM, std::forward<T>(args)...); }
+        //template <typename... T> void set_m1_map(T &&... args) { set_addrmap(AS_OPCODES, std::forward<T>(args)...); }
+        //template <typename... T> void set_io_map(T &&... args) { set_addrmap(AS_IO, std::forward<T>(args)...); }
+        //template<class Object> devcb_base &set_irqack_cb(Object &&cb) { return m_irqack_cb.set_callback(std::forward<Object>(cb)); }
+        //template<class Object> devcb_base &set_refresh_cb(Object &&cb) { return m_refresh_cb.set_callback(std::forward<Object>(cb)); }
+        //template<class Object> devcb_base &set_halt_cb(Object &&cb) { return m_halt_cb.set_callback(std::forward<Object>(cb)); }
+        //auto irqack_cb() { return m_irqack_cb.bind(); }
+        //auto refresh_cb() { return m_refresh_cb.bind(); }
+        //auto halt_cb() { return m_halt_cb.bind(); }
 
 
         // device-level overrides
@@ -774,7 +770,7 @@ namespace mame
             m_distate.state_add((int)Z80STATE.Z80_HALT,        "HALT",      m_halt).mask(0x1);
 
             // set our instruction counter
-            execute().set_icountptr(icountRef());
+            execute().set_icountptr(icountRef);
 
             /* setup cycle tables */
             m_cc_op = cc_op;

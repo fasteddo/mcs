@@ -2560,6 +2560,31 @@ namespace mame
             //            [&item = m_devbase.machine().output().find_or_create_item(m_tag.c_str(), 0), exor = this->exor(), mask = this->mask()] (address_space &space, offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
             //            { item.set((data ^ exor) & mask); };
             //}
+            public override write8_delegate build_w8()
+            {
+                global.assert(m_consumed);
+                built();
+
+                var item = m_devbase.machine().output().find_or_create_item(m_tag.c_str(), 0);
+                var exor_ = exor();
+                var mask_ = mask();
+                return
+                        (address_space space, offs_t offset, u8 data, u8 mem_mask) => //[&item = m_devbase.machine().output().find_or_create_item(m_tag.c_str(), 0), exor = this->exor(), mask = this->mask()] (address_space &space, offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                        { item.set((s32)((data ^ exor_) & mask_)); };  //{ item.set((data ^ exor) & mask); };
+            }
+
+            public override write_line_delegate build_wl()
+            {
+                global.assert(m_consumed);
+                built();
+
+                var item = m_devbase.machine().output().find_or_create_item(m_tag.c_str(), 0);
+                var exor_ = exor();
+                var mask_ = mask();
+                return
+                        (int param) => //[&item = m_devbase.machine().output().find_or_create_item(m_tag.c_str(), 0), exor = this->exor(), mask = this->mask()] (address_space &space, offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                        { item.set((s32)((param ^ exor_) & mask_)); };  //{ item.set((data ^ exor) & mask); };
+            }
         }
 
 #if false
@@ -3045,7 +3070,7 @@ namespace mame
 
     class devcb_read8 : devcb_read/*<u8>*/
     {
-        const byte DefaultMask = byte.MaxValue;  // std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>
+        const byte DefaultMask = byte.MaxValue;  //std::make_unsigned_t<Result> DefaultMask = std::make_unsigned_t<Result>(~std::make_unsigned_t<Result>(0))>
 
         public devcb_read8(device_t owner) : base(owner) { }
 
@@ -3054,7 +3079,7 @@ namespace mame
         //Result operator()();
         public byte op(address_space space, offs_t offset = 0, byte mem_mask = DefaultMask)
         {
-            global.assert(m_creators.empty() && !m_functions_r8.empty() && !m_functions_rl.empty());
+            global.assert(m_creators.empty() && !m_functions_r8.empty());  //assert(m_creators.empty() && !m_functions.empty());
 
             //typename std::vector<func_t>::const_iterator it(m_functions.begin());
             //std::make_unsigned_t<Result> result((*it)(space, offset, mem_mask));
@@ -3098,7 +3123,7 @@ namespace mame
         //void operator()(Input data);
         public void op(address_space space, offs_t offset, u8 data, u8 mem_mask = DefaultMask)
         {
-            global.assert(m_creators.empty() && !m_functions_w8.empty() && !m_functions_wl.empty());
+            global.assert(m_creators.empty() && !m_functions_w8.empty());  //assert(m_creators.empty() && !m_functions.empty());
 
             //typename std::vector<func_t>::const_iterator it(m_functions.begin());
             //(*it)(space, offset, data, mem_mask);
@@ -3126,7 +3151,7 @@ namespace mame
         //void operator()(Input data);
         public void op(address_space space, offs_t offset, int data, u32 mem_mask = DefaultMask)
         {
-            global.assert(m_creators.empty() && !m_functions_w8.empty() && !m_functions_wl.empty());
+            global.assert(m_creators.empty() && !m_functions_wl.empty());  //assert(m_creators.empty() && !m_functions.empty());
 
             //typename std::vector<func_t>::const_iterator it(m_functions.begin());
             //(*it)(space, offset, data, mem_mask);

@@ -102,6 +102,7 @@ namespace mame
         //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("Fatal error: %s (%s:%d)", msg, __FILE__, __LINE__); } while (0)
         //#endif
 
+        [Conditional("DEBUG")]
         public static void assert(bool condition)
         {
             Debug.Assert(condition);

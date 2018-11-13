@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 
 using device_type = mame.emu.detail.device_type_impl_base;
+using ListBytesPointer = mame.ListPointer<System.Byte>;
+using offs_t = System.UInt32;
+using u8 = System.Byte;
 using u32 = System.UInt32;
 
 
@@ -12,6 +15,16 @@ namespace mame
 {
     public partial class _1942_state : driver_device
     {
+        //WRITE8_MEMBER(_1942_state::_1942_bankswitch_w)
+        public void _1942_bankswitch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        {
+            throw new emu_unimplemented();
+#if false
+            membank("bank1")->set_entry(data & 0x03);
+#endif
+        }
+
+
         //TIMER_DEVICE_CALLBACK_MEMBER(_1942_state::_1942_scanline)
         public void _1942_scanline(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
         {
@@ -43,119 +56,126 @@ namespace mame
         //#define AUDIO_CLOCK_1942P     (MASTER_CLOCK_1942P/16)
 
 
+        void NLFILT(string RA, string R1, string C1, string R2)
+        {
+            NET_C(RA+".1", "V5");
+            NET_C(RA+".2", R1+".1");
+            NET_C(R1+".2", "GND");
+            NET_C(R1+".1", C1+".1");
+            NET_C(C1+".2", R2+".1");
+        }
+
+
         //static NETLIST_START(nl_1942)
         void netlist_nl_1942(netlist.setup_t setup)
         {
-            throw new emu_unimplemented();
-#if false
+            NETLIST_START(setup);
+
             /* Standard stuff */
 
-            SOLVER(Solver, 48000)
-            ANALOG_INPUT(V5, 5)
-            PARAM(Solver.ACCURACY, 1e-6)
-            PARAM(Solver.GS_LOOPS, 6)
-            PARAM(Solver.SOR_FACTOR, 1.0)
+            SOLVER("Solver", 48000);
+            ANALOG_INPUT("V5", 5);
+            PARAM("Solver"+".ACCURACY", 1e-6);
+            PARAM("Solver"+".GS_LOOPS", 6);
+            PARAM("Solver"+".SOR_FACTOR", 1.0);
             //PARAM(Solver.DYNAMIC_TS, 1)
             //PARAM(Solver.LTE, 5e-8)
 
             /* AY 8910 internal resistors */
 
-            RES(R_AY1_1, 1000);
-            RES(R_AY1_2, 1000);
-            RES(R_AY1_3, 1000);
-            RES(R_AY2_1, 1000);
-            RES(R_AY2_2, 1000);
-            RES(R_AY2_3, 1000);
+            RES("R_AY1_1", 1000);
+            RES("R_AY1_2", 1000);
+            RES("R_AY1_3", 1000);
+            RES("R_AY2_1", 1000);
+            RES("R_AY2_2", 1000);
+            RES("R_AY2_3", 1000);
 
-            RES(R2, 220000)
-            RES(R3, 220000)
-            RES(R4, 220000)
-            RES(R5, 220000)
-            RES(R6, 220000)
-            RES(R7, 220000)
+            RES("R2", 220000);
+            RES("R3", 220000);
+            RES("R4", 220000);
+            RES("R5", 220000);
+            RES("R6", 220000);
+            RES("R7", 220000);
 
-            RES(R11, 10000)
-            RES(R12, 10000)
-            RES(R13, 10000)
-            RES(R14, 10000)
-            RES(R15, 10000)
-            RES(R16, 10000)
+            RES("R11", 10000);
+            RES("R12", 10000);
+            RES("R13", 10000);
+            RES("R14", 10000);
+            RES("R15", 10000);
+            RES("R16", 10000);
 
-            CAP(CC7, 10e-6)
-            CAP(CC8, 10e-6)
-            CAP(CC9, 10e-6)
-            CAP(CC10, 10e-6)
-            CAP(CC11, 10e-6)
-            CAP(CC12, 10e-6)
+            CAP("CC7", 10e-6);
+            CAP("CC8", 10e-6);
+            CAP("CC9", 10e-6);
+            CAP("CC10", 10e-6);
+            CAP("CC11", 10e-6);
+            CAP("CC12", 10e-6);
 
-            NLFILT(R_AY2_3, R13, CC7, R2)
-            NLFILT(R_AY2_2, R15, CC8, R3)
-            NLFILT(R_AY2_1, R11, CC9, R4)
+            NLFILT("R_AY2_2", "R15", "CC8", "R3");
+            NLFILT("R_AY2_3", "R13", "CC7", "R2");
+            NLFILT("R_AY2_1", "R11", "CC9", "R4");
 
-            NLFILT(R_AY1_3, R12, CC10, R5)
-            NLFILT(R_AY1_2, R14, CC11, R6)
-            NLFILT(R_AY1_1, R16, CC12, R7)
+            NLFILT("R_AY1_2", "R14", "CC11", "R6");
+            NLFILT("R_AY1_3", "R12", "CC10", "R5");
+            NLFILT("R_AY1_1", "R16", "CC12", "R7");
 
-            POT(VR, 2000)
-            NET_C(VR.3, GND)
+            POT("VR", 2000);
+            NET_C("VR"+".3", "GND");
 
-            NET_C(R2.2, VR.1)
-            NET_C(R3.2, VR.1)
-            NET_C(R4.2, VR.1)
-            NET_C(R5.2, VR.1)
-            NET_C(R6.2, VR.1)
-            NET_C(R7.2, VR.1)
+            NET_C("R2"+".2", "VR"+".1");
+            NET_C("R3"+".2", "VR"+".1");
+            NET_C("R4"+".2", "VR"+".1");
+            NET_C("R5"+".2", "VR"+".1");
+            NET_C("R6"+".2", "VR"+".1");
+            NET_C("R7"+".2", "VR"+".1");
 
-            CAP(CC6, 10e-6)
-            RES(R1, 100000)
+            CAP("CC6", 10e-6);
+            RES("R1", 100000);
 
-            NET_C(CC6.1, VR.2)
-            NET_C(CC6.2, R1.1)
-            CAP(CC3, 220e-6)
-            NET_C(R1.2, CC3.1)
-            NET_C(CC3.2, GND)
+            NET_C("CC6"+".1", "VR"+".2");
+            NET_C("CC6"+".2", "R1"+".1");
+            CAP("CC3", 220e-6);
+            NET_C("R1"+".2", "CC3"+".1");
+            NET_C("CC3"+".2", "GND");
 
-            NETLIST_END()
-#endif
+            NETLIST_END();
         }
 
 
         //void _1942_state::_1942_map(address_map &map)
-        void _1942_state__1942_map(address_map map, device_t owner)
+        void _1942_state__1942_map(address_map map, device_t device)
         {
-            throw new emu_unimplemented();
-#if false
-            map(0x0000, 0x7fff).rom();
-            map(0x8000, 0xbfff).bankr("bank1");
-            map(0xc000, 0xc000).portr("SYSTEM");
-            map(0xc001, 0xc001).portr("P1");
-            map(0xc002, 0xc002).portr("P2");
-            map(0xc003, 0xc003).portr("DSWA");
-            map(0xc004, 0xc004).portr("DSWB");
-            map(0xc800, 0xc800).w(m_soundlatch, FUNC(generic_latch_8_device::write));
-            map(0xc802, 0xc803).w(FUNC(_1942_state::_1942_scroll_w));
-            map(0xc804, 0xc804).w(FUNC(_1942_state::_1942_c804_w));
-            map(0xc805, 0xc805).w(FUNC(_1942_state::_1942_palette_bank_w));
-            map(0xc806, 0xc806).w(FUNC(_1942_state::_1942_bankswitch_w));
-            map(0xcc00, 0xcc7f).ram().share("spriteram");
-            map(0xd000, 0xd7ff).ram().w(FUNC(_1942_state::_1942_fgvideoram_w)).share("fg_videoram");
-            map(0xd800, 0xdbff).ram().w(FUNC(_1942_state::_1942_bgvideoram_w)).share("bg_videoram");
-            map(0xe000, 0xefff).ram();
-#endif
+            _1942_state _1942_state = (_1942_state)device;
+
+            map.op(0x0000, 0x7fff).rom();
+            map.op(0x8000, 0xbfff).bankr("bank1");
+            map.op(0xc000, 0xc000).portr("SYSTEM");
+            map.op(0xc001, 0xc001).portr("P1");
+            map.op(0xc002, 0xc002).portr("P2");
+            map.op(0xc003, 0xc003).portr("DSWA");
+            map.op(0xc004, 0xc004).portr("DSWB");
+            map.op(0xc800, 0xc800).w(_1942_state.soundlatch.target, _1942_state.generic_latch_8_device_write);
+            map.op(0xc802, 0xc803).w(_1942_state._1942_scroll_w);
+            map.op(0xc804, 0xc804).w(_1942_state._1942_c804_w);
+            map.op(0xc805, 0xc805).w(_1942_state._1942_palette_bank_w);
+            map.op(0xc806, 0xc806).w(_1942_state._1942_bankswitch_w);
+            map.op(0xcc00, 0xcc7f).ram().share("spriteram");
+            map.op(0xd000, 0xd7ff).ram().w(_1942_state._1942_fgvideoram_w).share("fg_videoram");
+            map.op(0xd800, 0xdbff).ram().w(_1942_state._1942_bgvideoram_w).share("bg_videoram");
+            map.op(0xe000, 0xefff).ram();
         }
 
 
         //void _1942_state::sound_map(address_map &map)
-        void _1942_state_sound_map(address_map map, device_t owner)
+        void _1942_state_sound_map(address_map map, device_t device)
         {
-            throw new emu_unimplemented();
-#if false
-            map(0x0000, 0x3fff).rom();
-            map(0x4000, 0x47ff).ram();
-            map(0x6000, 0x6000).r(m_soundlatch, FUNC(generic_latch_8_device::read));
-            map(0x8000, 0x8001).w("ay1", FUNC(ay8910_device::address_data_w));
-            map(0xc000, 0xc001).w("ay2", FUNC(ay8910_device::address_data_w));
-#endif
+            _1942_state _1942_state = (_1942_state)device;
+
+            map.op(0x0000, 0x3fff).rom();
+            map.op(0x4000, 0x47ff).ram();
+            map.op(0x6000, 0x6000).r(_1942_state.soundlatch.target, _1942_state.generic_latch_8_device_read);
+            map.op(0x8000, 0x8001).w("ay1", _1942_state.ay8910_device_address_data_w_ay1);
+            map.op(0xc000, 0xc001).w("ay2", _1942_state.ay8910_device_address_data_w_ay2);
         }
 
 
@@ -349,7 +369,7 @@ namespace mame
             /* Minimize resampling between ay8910 and netlist */
             MCFG_DEVICE_ADD("snd_nl", netlist_mame_sound_device.NETLIST_SOUND, AUDIO_CLOCK / 8 / 2);
             MCFG_NETLIST_SETUP(netlist_nl_1942);
-            MCFG_SOUND_ROUTE(disound_global.ALL_OUTPUTS, "mono", 5.0);
+            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 5.0);
             MCFG_NETLIST_STREAM_INPUT("snd_nl", 0, "R_AY1_1.R");
             MCFG_NETLIST_STREAM_INPUT("snd_nl", 1, "R_AY1_2.R");
             MCFG_NETLIST_STREAM_INPUT("snd_nl", 2, "R_AY1_3.R");
@@ -419,11 +439,8 @@ namespace mame
 
         static void _1942_state_driver_init(running_machine machine, device_t owner)
         {
-            throw new emu_unimplemented();
-#if false
-            UINT8 *ROM = memregion("maincpu")->base();
-            membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x4000);
-#endif
+            ListBytesPointer ROM = new ListBytesPointer(owner.memregion("gfx1").base_());  //uint8_t *ROM = memregion("maincpu")->base();
+            owner.membank("bank1").configure_entries(0, 4, new ListBytesPointer(ROM, 0x10000), 0x4000);  //membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x4000);
         }
 
 

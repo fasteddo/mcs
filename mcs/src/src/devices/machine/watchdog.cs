@@ -13,16 +13,6 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    public static class watchdog_global
-    {
-        //#define MCFG_WATCHDOG_ADD(_tag)         MCFG_DEVICE_ADD(_tag, WATCHDOG_TIMER, 0)
-        public static void MCFG_WATCHDOG_ADD(out device_t device, machine_config config, device_t owner, string tag) { mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
-        //#define MCFG_WATCHDOG_MODIFY(_tag)         MCFG_DEVICE_MODIFY(_tag)
-        public static void MCFG_WATCHDOG_VBLANK_INIT(device_t device, string screen, int count) { ((watchdog_timer_device)device).set_vblank_count(screen, count); }
-        //#define MCFG_WATCHDOG_TIME_INIT(_time)         watchdog_timer_device::static_set_time(*device, _time);
-    }
-
-
     // ======================> watchdog_timer_device
     public class watchdog_timer_device : device_t
     {
@@ -34,7 +24,7 @@ namespace mame
         // configuration data
         int m_vblank_count; // number of VBLANKs until resetting the machine
         attotime m_time;         // length of time until resetting the machine
-        string m_screen_tag;   // the tag of the screen this timer tracks
+        optional_device<screen_device> m_screen; // the tag of the screen this timer tracks
 
         // internal state
         bool m_enabled;      // is the watchdog enabled?
@@ -51,7 +41,7 @@ namespace mame
         {
             m_vblank_count = 0;
             m_time = attotime.zero;
-            m_screen_tag = null;
+            m_screen = new optional_device<screen_device>(this, finder_base.DUMMY_TAG);
         }
 
 
@@ -60,7 +50,9 @@ namespace mame
         //  static_set_vblank_count - configuration helper
         //  to set the number of VBLANKs
         //-------------------------------------------------
-        public void set_vblank_count(string screen_tag, int count) { m_screen_tag = screen_tag; m_vblank_count = count; }
+        //template <typename T>
+        public void set_vblank_count(string screen_tag, int count) { m_screen.set_tag(screen_tag); m_vblank_count = count; }  //void set_vblank_count(T &&screen_tag, int32_t count) { m_screen.set_tag(std::forward<T>(screen_tag)); m_vblank_count = count; }
+        public void set_vblank_count(finder_base screen, int count) { m_screen.set_tag(screen); m_vblank_count = count; }  //void set_vblank_count(T &&screen_tag, int32_t count) { m_screen.set_tag(std::forward<T>(screen_tag)); m_vblank_count = count; }
         //void set_time(attotime time) { m_time = time; }
 
 
@@ -126,9 +118,8 @@ namespace mame
             if (m_vblank_count != 0)
             {
                 // fetch the screen
-                screen_device screen = siblingdevice<screen_device>(m_screen_tag);
-                if (screen != null)
-                    screen.register_vblank_callback(watchdog_vblank);
+                if (m_screen != null)
+                    m_screen.target.register_vblank_callback(watchdog_vblank);
             }
 
             save_item(m_enabled, "m_enabled");

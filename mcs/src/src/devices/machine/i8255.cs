@@ -148,12 +148,12 @@ namespace mame
         public devcb_base set_out_pc_callback(write8_delegate cb)  { return m_out_pc_cb.set_callback(this, cb); }
         //template <class Object> devcb_base &set_tri_pa_callback(Object &&cb) { return m_tri_pa_cb.set_callback(std::forward<Object>(cb)); }
         //template <class Object> devcb_base &set_tri_pb_callback(Object &&cb) { return m_tri_pb_cb.set_callback(std::forward<Object>(cb)); }
-        //auto in_pa_callback()  { return m_in_pa_cb.bind(); }
-        //auto in_pb_callback()  { return m_in_pb_cb.bind(); }
-        //auto in_pc_callback()  { return m_in_pc_cb.bind(); }
-        //auto out_pa_callback() { return m_out_pa_cb.bind(); }
-        //auto out_pb_callback() { return m_out_pb_cb.bind(); }
-        //auto out_pc_callback() { return m_out_pc_cb.bind(); }
+        public devcb_read8.binder in_pa_callback() { return m_in_pa_cb.bind(); }
+        public devcb_read8.binder in_pb_callback() { return m_in_pb_cb.bind(); }
+        public devcb_read8.binder in_pc_callback() { return m_in_pc_cb.bind(); }
+        public devcb_write8.binder out_pa_callback() { return m_out_pa_cb.bind(); }
+        public devcb_write8.binder out_pb_callback() { return m_out_pb_cb.bind(); }
+        public devcb_write8.binder out_pc_callback() { return m_out_pc_cb.bind(); }
         //auto tri_pa_callback() { return m_tri_pa_cb.bind(); }
         //auto tri_pb_callback() { return m_tri_pb_cb.bind(); }
 
@@ -161,8 +161,7 @@ namespace mame
         //-------------------------------------------------
         //  read -
         //-------------------------------------------------
-        //READ8_MEMBER( i8255_device::read )
-        public byte read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        public uint8_t read(offs_t offset)
         {
             byte data = 0;
 
@@ -205,8 +204,7 @@ namespace mame
         //-------------------------------------------------
         //  write -
         //-------------------------------------------------
-        //WRITE8_MEMBER( i8255_device::write )
-        public void write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void write(offs_t offset, uint8_t data)
         {
             switch (offset & 0x03)
             {
@@ -259,13 +257,11 @@ namespace mame
         }
 
 
-        //DECLARE_READ8_MEMBER( pa_r );
-        //uint8_t read_pa();
-        //DECLARE_READ8_MEMBER( acka_r );
+        //uint8_t pa_r();
+        //uint8_t acka_r();
 
-        //DECLARE_READ8_MEMBER( pb_r );
-        //uint8_t read_pb();
-        //DECLARE_READ8_MEMBER( ackb_r );
+        //uint8_t pb_r();
+        //uint8_t ackb_r();
 
         //DECLARE_WRITE_LINE_MEMBER( pc2_w );
         //DECLARE_WRITE_LINE_MEMBER( pc4_w );

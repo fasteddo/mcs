@@ -515,7 +515,7 @@ namespace mame
             centiped_state.outlatch.target.q_out_cb(3).set_output("led0").invert().reg(); // LED 1
             centiped_state.outlatch.target.q_out_cb(4).set_output("led1").invert().reg(); // LED 2
 
-            MCFG_WATCHDOG_ADD("watchdog");
+            WATCHDOG_TIMER(config, "watchdog");
 
             /* timer */
             MCFG_TIMER_DRIVER_ADD_SCANLINE("32v", centiped_state.generate_interrupt, "screen", 0, 16);

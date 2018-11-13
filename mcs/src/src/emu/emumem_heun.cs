@@ -27,17 +27,14 @@ namespace mame
         //uX read(offs_t offset, uX mem_mask) override;
         public override u8 read(offs_t offset, u8 mem_mask)
         {
-            throw new emu_unimplemented();
-#if false
-            if (inh::m_space->log_unmap() && !inh::m_space->m_manager.machine().side_effects_disabled())
-                inh::m_space->device().logerror(inh::m_space->is_octal()
-                                                ? "%s: unmapped %s memory read from %0*o & %0*o\n"
-                                                : "%s: unmapped %s memory read from %0*X & %0*X\n",
-                                                inh::m_space->m_manager.machine().describe_context(), inh::m_space->name(),
-                                                inh::m_space->addrchars(), offset,
+            if (m_space.log_unmap() && !m_space.manager().machine().side_effects_disabled())
+                m_space.device().logerror(m_space.is_octal()
+                                                ? "{0}: unmapped {1} memory read from {2} & {3}\n"  //? "%s: unmapped %s memory read from %0*o & %0*o\n"
+                                                : "{0}: unmapped {1} memory read from {2} & {3}\n",  //: "%s: unmapped %s memory read from %0*X & %0*X\n",
+                                                m_space.manager().machine().describe_context(), m_space.name(),
+                                                m_space.addrchars(), offset,
                                                 2 << Width, mem_mask);
-            return inh::m_space->unmap();
-#endif
+            return (u8)m_space.unmap();
         }
 
 
