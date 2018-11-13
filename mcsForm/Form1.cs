@@ -22,6 +22,7 @@ namespace mameForm
 
 
         Bitmap m_bitmap;
+        BitmapHelper m_bitmapHelper;
         Random m_random = new Random();
         Graphics m_graphics;
         int m_bitmapXOffset = 15;
@@ -54,6 +55,7 @@ namespace mameForm
                 backgroundPath = Path.Combine(path, @"..\..\Background01.png");
 
             m_bitmap = new Bitmap(backgroundPath);
+            m_bitmapHelper = new BitmapHelper(m_bitmap);
 
 
             Timer updateTimer = new Timer();
@@ -529,8 +531,7 @@ namespace mameForm
 #if true
             lock (osd.osdlock)
             {
-                BitmapHelper fp = new BitmapHelper(m_bitmap);
-                fp.Lock();
+                m_bitmapHelper.Lock();
 
                 //int stride = 640;
                 int stride = 400;
@@ -559,25 +560,33 @@ namespace mameForm
                     framedata.set_uint32(i + 200 + 160 * stride, mame.rgb_t.greenyellow);
 #endif
 
+                BitmapHelper.SetPixelRawFunc setPixelFunc = m_bitmapHelper.IsAlphaBitmap ? m_bitmapHelper.SetPixelRawAlpha : (BitmapHelper.SetPixelRawFunc)m_bitmapHelper.SetPixelRawNoAlpha;
+                int destPixelSize = m_bitmapHelper.GetRawPixelSize();
+
+                const int scale = 3;
                 for (int y = 0; y < 400; y++)
                 {
-                    for (int x = 0; x < 400; x++)
-                    {
-                        Color color = Color.FromArgb((int)framedata.get_uint32((y*stride) + x));
+                    int sourceArrayIndex = y * stride;
 
-                        int xsize = 3;
-                        for (int i = 0; i < xsize; i++)
+                    for (int j = 0; j < scale; j++)
+                    {
+                        int destArrayIndex = m_bitmapHelper.GetRawYIndex((y * scale) + j);
+
+                        for (int x = 0; x < 400; x++)
                         {
-                            for (int j = 0; j < xsize; j++)
+                            UInt32 color = framedata.get_uint32(sourceArrayIndex + x);
+
+                            for (int i = 0; i < scale; i++)
                             {
-                                fp.SetPixel((x*xsize) + j, (y*xsize) + i, color);
+                                setPixelFunc(destArrayIndex, color);
+                                destArrayIndex += destPixelSize;
                             }
                         }
                     }
                 }
 
 
-                fp.Unlock(true);
+                m_bitmapHelper.Unlock(true);
             }
 #endif
 

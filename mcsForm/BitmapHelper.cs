@@ -13,7 +13,7 @@ public class BitmapHelper
     int m_width;
     int m_height;
     bool m_isAlpha;
-    Byte [] m_rgbValues;
+    byte [] m_rgbValues;
     BitmapData m_bitmapData;
     IntPtr m_bitmapPtr;
     bool m_locked = false;
@@ -41,6 +41,8 @@ public class BitmapHelper
         if (m_locked)
             throw new Exception("Bitmap already locked.");
 
+        // https://stackoverflow.com/questions/1563038/fast-work-with-bitmaps-in-c-sharp
+
         Rectangle rect = new Rectangle(0, 0, Width, Height);
         m_bitmapData = BitmapRef.LockBits(rect, ImageLockMode.ReadWrite, BitmapRef.PixelFormat);
         m_bitmapPtr = m_bitmapData.Scan0;
@@ -48,7 +50,9 @@ public class BitmapHelper
         int rgbValueLength = IsAlphaBitmap ? 4 : 3;
 
         int bytes = (Width * Height) * rgbValueLength;
-        m_rgbValues = new Byte [bytes - 1];
+        if (m_rgbValues == null || m_rgbValues.Length != (bytes - 1))
+            m_rgbValues = new byte [bytes - 1];
+
         Marshal.Copy(m_bitmapPtr, m_rgbValues, 0, m_rgbValues.Length);
 
         m_locked = true;
@@ -66,7 +70,7 @@ public class BitmapHelper
         // Unlock the bitmap
         BitmapRef.UnlockBits(m_bitmapData);
 
-        m_rgbValues = null;
+        //m_rgbValues = null;  // keep this memory around for re-use
         m_bitmapData = null;
         m_bitmapPtr = (IntPtr)0;
 
@@ -121,6 +125,46 @@ public class BitmapHelper
             m_rgbValues[index + 1] = color.G;
             m_rgbValues[index + 2] = color.R;
         }
+    }
+
+    const int ARGBAlphaShift  = 24;
+    const int ARGBRedShift    = 16;
+    const int ARGBGreenShift  = 8;
+    const int ARGBBlueShift   = 0;
+
+    public delegate void SetPixelRawFunc(int arrayIndex, UInt32 color);
+
+    public void SetPixelRawNoAlpha(int arrayIndex, UInt32 color)
+    {
+        // note: no lock check for perf
+        //if (!m_locked)
+        //    throw new Exception("Bitmap not locked.");
+
+        m_rgbValues[arrayIndex]     = (byte)((color >> ARGBBlueShift) & 0xFF);
+        m_rgbValues[arrayIndex + 1] = (byte)((color >> ARGBGreenShift) & 0xFF);
+        m_rgbValues[arrayIndex + 2] = (byte)((color >> ARGBRedShift) & 0xFF);
+    }
+
+    public void SetPixelRawAlpha(int arrayIndex, UInt32 color)
+    {
+        // note: no lock check for perf
+        //if (!m_locked)
+        //    throw new Exception("Bitmap not locked.");
+
+        m_rgbValues[arrayIndex]     = (byte)((color >> ARGBBlueShift) & 0xFF);
+        m_rgbValues[arrayIndex + 1] = (byte)((color >> ARGBGreenShift) & 0xFF);
+        m_rgbValues[arrayIndex + 2] = (byte)((color >> ARGBRedShift) & 0xFF);
+        m_rgbValues[arrayIndex + 3] = (byte)((color >> ARGBAlphaShift) & 0xFF);
+    }
+
+    public int GetRawPixelSize()
+    {
+        return IsAlphaBitmap ? 4 : 3;
+    }
+
+    public int GetRawYIndex(int y)
+    {
+        return ((y * Width) * GetRawPixelSize());
     }
 
     public Color GetPixel(Point location) { return GetPixel(location.X, location.Y); }
