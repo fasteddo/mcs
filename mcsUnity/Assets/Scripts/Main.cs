@@ -38,7 +38,7 @@ public class Main : MonoBehaviour
 
     [NonSerialized] public static DeferredSynchronizeInvoke m_synchronizeInvoke;
 
-    List<Color> m_colorCacheList = new List<Color>(0xffffff + 1);
+    List<Color32> m_colorCacheList = new List<Color32>(0xffffff + 1);
     List<bool> m_colorCacheListUsed = new List<bool>(0xffffff + 1);
 
     int m_audioUpdateCount = 0;
@@ -106,7 +106,7 @@ public class Main : MonoBehaviour
 
         for (int i = 0; i < 0xffffff + 1; i++)
         {
-            m_colorCacheList.Add(new Color());
+            m_colorCacheList.Add(new Color32());
             m_colorCacheListUsed.Add(false);
         }
     }
@@ -240,9 +240,7 @@ public class Main : MonoBehaviour
                     {
                         // https://docs.unity3d.com/ScriptReference/Texture2D.GetPixels.html
 
-                        // TODO - use GetPixels32()
-                        // TODO - in ToColor(), return a ref, to avoid copies
-                        var pixels = m_win_video_window_unity.GetPixels();
+                        var pixels = m_win_video_window_unity.GetPixels32();
                         int texw = m_win_video_window_unity.width;
                         int texh = m_win_video_window_unity.height;
 
@@ -259,15 +257,18 @@ public class Main : MonoBehaviour
 
                         for (int y = 0; y < 400; y++)
                         {
+                            int sourceArrayIndex = y * stride;
+                            int destArrayIndex = (texh - (y + 1)) * texw;
+
                             for (int x = 0; x < 400; x++)
                             {
-                                Color color = ToColor((int)screenbuffer.get_uint32((y * stride) + x));
-                                pixels[x + ((texh - (y + 1)) * texw)] = color;
+                                UInt32 color = screenbuffer.get_uint32(sourceArrayIndex + x);
+                                pixels[destArrayIndex + x] = ToColor32((int)color);
                             }
                         }
 
 
-                        m_win_video_window_unity.SetPixels(pixels);
+                        m_win_video_window_unity.SetPixels32(pixels);
 
                         m_win_video_window_unity.Apply();
 
@@ -585,7 +586,7 @@ public class Main : MonoBehaviour
     }
 
 
-    public Color ToColor(int hexVal)
+    public Color32 ToColor32(int hexVal)
     {
         int index = hexVal & 0xFFFFFF;
         if (m_colorCacheListUsed[index])
@@ -597,7 +598,7 @@ public class Main : MonoBehaviour
 
         Color32 color = new Color32(R, G, B, 255);
 
-        m_colorCacheList[index] = (Color)color;
+        m_colorCacheList[index] = color;
         m_colorCacheListUsed[index] = true;
 
         return color;
