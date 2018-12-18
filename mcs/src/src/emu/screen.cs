@@ -261,9 +261,11 @@ namespace mame
         float m_yscale;         // default X/Y scale factor
         screen_update_ind16_delegate m_screen_update_ind16; // screen update callback (16-bit palette)
         screen_update_rgb32_delegate m_screen_update_rgb32; // screen update callback (32-bit RGB)
-        devcb_write_line m_screen_vblank;         // screen vblank callback
+        devcb_write_line m_screen_vblank;         // screen vblank line callback
+        devcb_write32 m_scanline_cb;              // screen scanline callback
         optional_device<palette_device> m_paletteDevice;  //optional_device<device_palette_interface> m_palette;      // our palette
         u32 m_video_attributes;         // flags describing the video system
+        //const char *        m_svg_region;               // the region in which the svg data is in
 
         // internal state
         render_container m_container;                // pointer to our container
@@ -329,6 +331,7 @@ namespace mame
             m_xscale = 1.0f;
             m_yscale = 1.0f;
             m_screen_vblank = new devcb_write_line(this);
+            m_scanline_cb = new devcb_write32(this);
             m_paletteDevice = new optional_device<palette_device>(this, finder_base.DUMMY_TAG);
             m_video_attributes = 0;
             m_container = null;
@@ -526,6 +529,7 @@ namespace mame
         //template<class Object>
         public devcb_base set_screen_vblank(write_line_delegate obj) { return m_screen_vblank.set_callback(this, obj); }
         public devcb_write.binder screen_vblank() { return m_screen_vblank.bind(); }  //auto screen_vblank() { return m_screen_vblank.bind(); }
+        //auto scanline() { m_video_attributes |= VIDEO_UPDATE_SCANLINE; return m_scanline_cb.bind(); }
 
         //template<typename T>
         public void set_palette(string tag) { m_paletteDevice.set_tag(tag); }
@@ -541,7 +545,7 @@ namespace mame
         public bitmap_ind8 priority() { return m_priority; }
         public device_palette_interface palette() { global.assert(m_paletteDevice != null); return m_paletteDevice.target.device_palette_interface; }
         public bool has_palette() { return m_paletteDevice != null; }
-
+        //screen_bitmap &curbitmap() { return m_bitmap[m_curtexture]; }
 
 
         // dynamic configuration
@@ -711,6 +715,11 @@ namespace mame
         public u64 frame_number() { return m_frame_number; }
 
 
+        // pixel-level access
+        //u32 pixel(s32 x, s32 y);
+        //void pixels(u32* buffer);
+
+
         // updating
         public UInt32 partial_updates() { return m_partial_updates_this_frame; }
 
@@ -721,9 +730,6 @@ namespace mame
         //-----------------------------------------------*/
         public bool update_partial(int scanline)
         {
-            // validate arguments
-            //assert(scanline >= 0);
-
             if (machine().video().frame_update_count() % 400 == 0)
             {
                 LOG_PARTIAL_UPDATES("Partial: update_partial({0}, {1}): ", tag(), scanline);
@@ -1028,6 +1034,7 @@ namespace mame
             m_screen_update_rgb32.bind_relative_to(*owner());
 #endif
             m_screen_vblank.resolve_safe();
+            m_scanline_cb.resolve();
 
             // assign our format to the palette before it starts
             if (m_paletteDevice != null && m_paletteDevice.target != null)
@@ -1081,7 +1088,7 @@ namespace mame
             m_scanline0_timer = timer_alloc((device_timer_id)TID.TID_SCANLINE0);
 
             // allocate a timer to generate per-scanline updates
-            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0)
+            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb.op())
                 m_scanline_timer = timer_alloc((device_timer_id)TID.TID_SCANLINE);
 
             // configure the screen with the default parameters
@@ -1092,7 +1099,7 @@ namespace mame
             m_vblank_end_time = new attotime(0, m_vblank_period);
 
             // start the timer to generate per-scanline updates
-            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0)
+            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb.op())
                 m_scanline_timer.adjust(time_until_pos(0));
 
             // create burn-in bitmap
@@ -1193,9 +1200,14 @@ namespace mame
 
                 // subsequent scanlines when scanline updates are enabled
                 case (device_timer_id)TID.TID_SCANLINE:
+                    if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0)
+                    {
+                        // force a partial update to the current scanline
+                        update_partial(param);
+                    }
 
-                    // force a partial update to the current scanline
-                    update_partial(param);
+                    if (m_scanline_cb != null)
+                        m_scanline_cb.op((UInt32)param);
 
                     // compute the next visible scanline
                     param++;

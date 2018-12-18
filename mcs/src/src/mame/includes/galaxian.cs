@@ -155,7 +155,9 @@ namespace mame
         }
 
 
+        public optional_device_array_ay8910_device ay8910 { get { return m_ay8910; } }
         public optional_device_array_i8255_device ppi8255 { get { return m_ppi8255; } }
+        public optional_device<generic_latch_8_device> soundlatch { get { return m_soundlatch; } }
 
 
         //DECLARE_WRITE8_MEMBER(galaxian_videoram_w);
@@ -418,8 +420,6 @@ namespace mame
         //void kong(machine_config &config);
         //void scorpnmc(machine_config &config);
 
-        //void galaxian_audio(machine_config &config);
-        //void mooncrst_audio(machine_config &config);
         //void amigo2_map(address_map &map);
         //void anteaterg_map(address_map &map);
         //void anteatergg_map(address_map &map);

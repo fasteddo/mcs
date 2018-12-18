@@ -142,6 +142,7 @@ namespace mame
             10816000, /* 10.816_MHz_XTAL        Universal 1979-1980 (Cosmic Alien, etc) */
             10920000, /* 10.92_MHz_XTAL         ADDS Viewpoint 60, Viewpoint A2 */
             11000000, /* 11_MHz_XTAL            Mario I8039 sound */
+            11004000, /* 11.004_MHz_XTAL        TI 911 VDT */
             11059200, /* 11.0592_MHz_XTAL       Used with MCS-51 to generate common baud rates */
             11200000, /* 11.2_MHz_XTAL          New York, New York */
             11289000, /* 11.289_MHz_XTAL        Vanguard */
@@ -169,6 +170,7 @@ namespace mame
             13400000, /* 13.4_MHz_XTAL          TNK3, Ikari Warriors h/w */
             13478400, /* 13.4784_MHz_XTAL       TeleVideo 970 80-column display clock */
             13495200, /* 13.4952_MHz_XTAL       Used on Shadow Force pcb and maybe other Technos pcbs? */
+            13500000, /* 13.5_MHz_XTAL          Microbee */
             13516800, /* 13.5168_MHz_XTAL       Kontron KDT6 */
             13608000, /* 13.608_MHz_XTAL        TeleVideo 910 & 925 */
             13824000, /* 13.824_MHz_XTAL        Robotron PC-1715 display circuit */
@@ -186,6 +188,7 @@ namespace mame
             14976000, /* 14.976_MHz_XTAL        CIT-101 80-column display clock */
             15000000, /* 15_MHz_XTAL            Sinclair QL, Amusco Poker */
             15148800, /* 15.1488_MHz_XTAL       Zentec 9002/9003 */
+            15206400, /* 15.2064_MHz_XTAL       Falco TS-1 */
             15288000, /* 15.288_MHz_XTAL        DEC VT220 80-column display clock */
             15300720, /* 15.30072_MHz_XTAL      Microterm 420 */
             15360000, /* 15.36_MHz_XTAL         Visual 1050 */
@@ -208,6 +211,7 @@ namespace mame
             16777216, /* 16.777216_MHz_XTAL     Nintendo Game Boy Advance */
             16934400, /* 16.9344_MHz_XTAL       Usually used to drive 90's Yamaha OPL/FM chips (44100 * 384) */
             17064000, /* 17.064_MHz_XTAL        Memorex 1377 */
+            17350000, /* 17.35_MHz_XTAL         ITT Courier 1700 */
             17360000, /* 17.36_MHz_XTAL         OMTI Series 10 SCSI controller */
             17550000, /* 17.55_MHz_XTAL         HP 264x display clock (50 Hz configuration) */
             17600000, /* 17.6_MHz_XTAL          LSI Octopus */
@@ -306,6 +310,7 @@ namespace mame
             34846000, /* 34.846_MHz_XTAL        Visual 550 */
             35904000, /* 35.904_MHz_XTAL        Used on HP98543 graphics board */
             36000000, /* 36_MHz_XTAL            Sega Model 1 video board */
+            37980000, /* 37.98_MHz_XTAL         Falco 5220 */
             38769220, /* 38.76922_MHz_XTAL      Namco System 21 video board */
             38863630, /* 38.86363_MHz_XTAL      Sharp X68000 15.98kHz video */
             39321600, /* 39.3216_MHz_XTAL       Sun 2/120 */
@@ -317,6 +322,7 @@ namespace mame
             42954545, /* 42.954545_MHz_XTAL     CPS3 (12x NTSC subcarrier)*/
             43320000, /* 43.32_MHz_XTAL         DEC VT420 */
             44100000, /* 44.1_MHz_XTAL          Subsino's Bishou Jan */
+            44236800, /* 44.2368_MHz_XTAL       ReCo6502 */
             44452800, /* 44.4528_MHz_XTAL       TeleVideo 965 */
             45000000, /* 45_MHz_XTAL            Eolith with Hyperstone CPUs */
             45158000, /* 45.158_MHz_XTAL        Sega Model 2A video board, Model 3 CPU board */
@@ -334,6 +340,7 @@ namespace mame
             50000000, /* 50_MHz_XTAL            Williams/Midway T/W/V-unit system */
             50113000, /* 50.113_MHz_XTAL        Namco NA-1 (14x NTSC subcarrier)*/
             50349000, /* 50.349_MHz_XTAL        Sega System 18 (~3200x NTSC line rate) */
+            51200000, /* 51.2_MHz_XTAL          Namco Super System 22 video clock */
             52000000, /* 52_MHz_XTAL            Cojag */
             52832000, /* 52.832_MHz_XTAL        Wang PC TIG video controller */
             53203400, /* 53.2034_MHz_XTAL       Master System, Mega Drive PAL (~12x PAL subcarrier) */
@@ -346,6 +353,7 @@ namespace mame
             60000000, /* 60_MHz_XTAL            - */
             61440000, /* 61.44_MHz_XTAL         Donkey Kong */
             64000000, /* 64_MHz_XTAL            BattleToads */
+            64108800, /* 64.108.800_Mhz_XTAL    HP Topcat high-res */
             66666700, /* 66.6667_MHz_XTAL       Later Midway games */
             67737600, /* 67.7376_MHz_XTAL       PSX-based h/w, Sony ZN1-2-based */
             68850000, /* 68.85_MHz_XTAL         Wyse WY-50 */
@@ -353,10 +361,12 @@ namespace mame
             72000000, /* 72_MHz_XTAL            Aristocrat MKV */
             72576000, /* 72.576_MHz_XTAL        Centipede, Millipede, Missile Command, Let's Go Bowling "Multipede" */
             73728000, /* 73.728_MHz_XTAL        Ms. Pac-Man/Galaga 20th Anniversary */
+            77414400, /* 77.4144_MHz_XTAL       NCD17c */
             80000000, /* 80_MHz_XTAL            ARM710 */
             87183360, /* 87.18336_MHz_XTAL      AT&T 630 MTG */
            100000000, /* 100_MHz_XTAL           PSX-based Namco System 12, Vegas, Sony ZN1-2-based */
            101491200, /* 101.4912_MHz_XTAL      PSX-based Namco System 10 */
+           108108000, /* 108.108_MHz_XTAL       HP 98550 high-res color card */
            200000000  /* 200_MHz_XTAL           Base SH4 CPU (Naomi, Hikaru etc.) */
         };
 

@@ -67,6 +67,12 @@ namespace mameForm
         const string WINOPTION_FLOOR                     = "floor";
         const string WINOPTION_PHOSPHOR                  = "phosphor_life";
         const string WINOPTION_SATURATION                = "saturation";
+        const string WINOPTION_CHROMA_MODE               = "chroma_mode";
+        const string WINOPTION_CHROMA_CONVERSION_GAIN    = "chroma_conversion_gain";
+        const string WINOPTION_CHROMA_A                  = "chroma_a";
+        const string WINOPTION_CHROMA_B                  = "chroma_b";
+        const string WINOPTION_CHROMA_C                  = "chroma_c";
+        const string WINOPTION_CHROMA_Y_GAIN             = "chroma_y_gain";
         const string WINOPTION_YIQ_ENABLE                = "yiq_enable";
         const string WINOPTION_YIQ_CCVALUE               = "yiq_cc";
         const string WINOPTION_YIQ_AVALUE                = "yiq_a";
@@ -93,8 +99,10 @@ namespace mameForm
         const string WINOPTION_BLOOM_LEVEL6_WEIGHT       = "bloom_lvl6_weight";
         const string WINOPTION_BLOOM_LEVEL7_WEIGHT       = "bloom_lvl7_weight";
         const string WINOPTION_BLOOM_LEVEL8_WEIGHT       = "bloom_lvl8_weight";
-        const string WINOPTION_BLOOM_LEVEL9_WEIGHT       = "bloom_lvl9_weight";
-        const string WINOPTION_BLOOM_LEVEL10_WEIGHT      = "bloom_lvl10_weight";
+        const string WINOPTION_LUT_TEXTURE               = "lut_texture";
+        const string WINOPTION_LUT_ENABLE                = "lut_enable";
+        const string WINOPTION_UI_LUT_TEXTURE            = "ui_lut_texture";
+        const string WINOPTION_UI_LUT_ENABLE             = "ui_lut_enable";
 
         // full screen options
         const string WINOPTION_TRIPLEBUFFER          = "triplebuffer";
@@ -171,6 +179,12 @@ namespace mameForm
             new options_entry(WINOPTION_POWER + ";fs_power",                            "0.8,0.8,0.8",options_global.OPTION_STRING,    "signal power value (exponential)"),
             new options_entry(WINOPTION_FLOOR + ";fs_floor",                            "0.05,0.05,0.05",options_global.OPTION_STRING, "signal floor level"),
             new options_entry(WINOPTION_PHOSPHOR + ";fs_phosphor",                      "0.4,0.4,0.4",options_global.OPTION_STRING,    "phosphorescence decay rate (0.0 is instant, 1.0 is forever)"),
+            new options_entry(WINOPTION_CHROMA_MODE,                                    "3",                 options_global.OPTION_INTEGER,    "Number of phosphors to use: 1 - monochrome, 2 - dichrome, 3 - trichrome (color)"),
+            new options_entry(WINOPTION_CHROMA_CONVERSION_GAIN,                         "0.299,0.587,0.114", options_global.OPTION_STRING,     "Gain to be applied when summing RGB signal for monochrome and dichrome modes"),
+            new options_entry(WINOPTION_CHROMA_A,                                       "0.64,0.33",         options_global.OPTION_STRING,     "Chromaticity coordinate for first phosphor"),
+            new options_entry(WINOPTION_CHROMA_B,                                       "0.30,0.60",         options_global.OPTION_STRING,     "Chromaticity coordinate for second phosphor"),
+            new options_entry(WINOPTION_CHROMA_C,                                       "0.15,0.06",         options_global.OPTION_STRING,     "Chromaticity coordinate for third phosphor"),
+            new options_entry(WINOPTION_CHROMA_Y_GAIN,                                  "0.2126,0.7152,0.0722", options_global.OPTION_STRING,  "Gain to be applied for each phosphor"),
             /* NTSC simulation below this line */
             new options_entry(null,                                                     null,        options_global.OPTION_HEADER,     "NTSC POST-PROCESSING OPTIONS"),
             new options_entry(WINOPTION_YIQ_ENABLE + ";yiq",                            "0",         options_global.OPTION_BOOLEAN,    "enable YIQ-space HLSL post-processing"),
@@ -204,8 +218,10 @@ namespace mameForm
             new options_entry(WINOPTION_BLOOM_LEVEL6_WEIGHT,                            "0.13",      options_global.OPTION_FLOAT,      "Bloom level 6  (.) weight"),
             new options_entry(WINOPTION_BLOOM_LEVEL7_WEIGHT,                            "0.12",      options_global.OPTION_FLOAT,      "Bloom level 7  (.) weight"),
             new options_entry(WINOPTION_BLOOM_LEVEL8_WEIGHT,                            "0.11",      options_global.OPTION_FLOAT,      "Bloom level 8  (.) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL9_WEIGHT,                            "0.10",      options_global.OPTION_FLOAT,      "Bloom level 9  (.) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL10_WEIGHT,                           "0.09",      options_global.OPTION_FLOAT,      "Bloom level 10 (1x1 target) weight"),
+            new options_entry(WINOPTION_LUT_TEXTURE,                                    "",                  options_global.OPTION_STRING,     "3D LUT texture filename for screen, PNG format"),
+            new options_entry(WINOPTION_LUT_ENABLE,                                     "0",                 options_global.OPTION_BOOLEAN,    "Enables 3D LUT to be applied to screen after post-processing"),
+            new options_entry(WINOPTION_UI_LUT_TEXTURE,                                 "",                  options_global.OPTION_STRING,     "3D LUT texture filename of UI, PNG format"),
+            new options_entry(WINOPTION_UI_LUT_ENABLE,                                  "0",                 options_global.OPTION_BOOLEAN,    "Enables 3D LUT to be applied to UI and artwork after post-processing"),
 
             // full screen options
             new options_entry(null,                                             null,       options_global.OPTION_HEADER,     "FULL SCREEN OPTIONS"),
@@ -320,6 +336,16 @@ namespace mameForm
         //const char *screen_floor() const { return value(WINOPTION_FLOOR); }
         //const char *screen_phosphor() const { return value(WINOPTION_PHOSPHOR); }
         //float screen_saturation() const { return float_value(WINOPTION_SATURATION); }
+        //int screen_chroma_mode() const { return int_value(WINOPTION_CHROMA_MODE); }
+        //const char *screen_chroma_a() const { return value(WINOPTION_CHROMA_A); }
+        //const char *screen_chroma_b() const { return value(WINOPTION_CHROMA_B); }
+        //const char *screen_chroma_c() const { return value(WINOPTION_CHROMA_C); }
+        //const char *screen_chroma_conversion_gain() const { return value(WINOPTION_CHROMA_CONVERSION_GAIN); }
+        //const char *screen_chroma_y_gain() const { return value(WINOPTION_CHROMA_Y_GAIN); }
+        //const char *screen_lut_texture() const { return value(WINOPTION_LUT_TEXTURE); }
+        //bool screen_lut_enable() const { return bool_value(WINOPTION_LUT_ENABLE); }
+        //const char *ui_lut_texture() const { return value(WINOPTION_UI_LUT_TEXTURE); }
+        //bool ui_lut_enable() const { return bool_value(WINOPTION_UI_LUT_ENABLE); }
 
 
         // full screen options

@@ -14,25 +14,6 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    public static class i8255_global
-    {
-        //**************************************************************************
-        //  INTERFACE CONFIGURATION MACROS
-        //**************************************************************************
-
-        public static void MCFG_I8255_IN_PORTA_CB(device_t device, DEVCB_IOPORT cb) { ((i8255_device)device).set_in_pa_callback(cb); }
-        public static void MCFG_I8255_IN_PORTB_CB(device_t device, DEVCB_IOPORT cb) { ((i8255_device)device).set_in_pb_callback(cb); }
-        public static void MCFG_I8255_IN_PORTC_CB(device_t device, DEVCB_IOPORT cb) { ((i8255_device)device).set_in_pc_callback(cb); }
-        public static void MCFG_I8255_OUT_PORTA_CB(device_t device, write8_delegate cb) { ((i8255_device)device).set_out_pa_callback(cb); }
-        public static void MCFG_I8255_OUT_PORTB_CB(device_t device, write8_delegate cb) { ((i8255_device)device).set_out_pb_callback(cb); }
-        public static void MCFG_I8255_OUT_PORTC_CB(device_t device, write8_delegate cb) { ((i8255_device)device).set_out_pc_callback(cb); }
-
-        // output state when pins are in tri-state, default 0xff
-        //#define MCFG_I8255_TRISTATE_PORTA_CB(_devcb)             devcb = &i8255_device::set_tri_pa_callback(*device, DEVCB_##_devcb);
-        //#define MCFG_I8255_TRISTATE_PORTB_CB(_devcb)             devcb = &i8255_device::set_tri_pb_callback(*device, DEVCB_##_devcb);
-    }
-
-
     // ======================> i8255_device
     public class i8255_device : device_t
     {
@@ -139,15 +120,6 @@ namespace mame
         }
 
 
-        //template <class Object>
-        public devcb_base set_in_pa_callback(DEVCB_IOPORT cb)  { return m_in_pa_cb.set_callback(this, cb); }
-        public devcb_base set_in_pb_callback(DEVCB_IOPORT cb)  { return m_in_pb_cb.set_callback(this, cb); }
-        public devcb_base set_in_pc_callback(DEVCB_IOPORT cb)  { return m_in_pc_cb.set_callback(this, cb); }
-        public devcb_base set_out_pa_callback(write8_delegate cb)  { return m_out_pa_cb.set_callback(this, cb); }
-        public devcb_base set_out_pb_callback(write8_delegate cb)  { return m_out_pb_cb.set_callback(this, cb); }
-        public devcb_base set_out_pc_callback(write8_delegate cb)  { return m_out_pc_cb.set_callback(this, cb); }
-        //template <class Object> devcb_base &set_tri_pa_callback(Object &&cb) { return m_tri_pa_cb.set_callback(std::forward<Object>(cb)); }
-        //template <class Object> devcb_base &set_tri_pb_callback(Object &&cb) { return m_tri_pb_cb.set_callback(std::forward<Object>(cb)); }
         public devcb_read8.binder in_pa_callback() { return m_in_pa_cb.bind(); }
         public devcb_read8.binder in_pb_callback() { return m_in_pb_cb.bind(); }
         public devcb_read8.binder in_pc_callback() { return m_in_pc_cb.bind(); }

@@ -68,6 +68,7 @@ namespace mame
         const string OSDOPTION_BGFX_DEBUG           = "bgfx_debug";
         const string OSDOPTION_BGFX_SCREEN_CHAINS   = "bgfx_screen_chains";
         const string OSDOPTION_BGFX_SHADOW_MASK     = "bgfx_shadow_mask";
+        const string OSDOPTION_BGFX_LUT             = "bgfx_lut";
         const string OSDOPTION_BGFX_AVI_NAME        = "bgfx_avi_name";
 
 
@@ -213,6 +214,7 @@ namespace mame
             new options_entry(OSDOPTION_BGFX_DEBUG,                   "0",               options_global.OPTION_BOOLEAN, "enable BGFX debugging statistics"),
             new options_entry(OSDOPTION_BGFX_SCREEN_CHAINS,           "default",         options_global.OPTION_STRING,  "comma-delimited list of screen chain JSON names, colon-delimited per-window"),
             new options_entry(OSDOPTION_BGFX_SHADOW_MASK,             "slot-mask.png",   options_global.OPTION_STRING,  "shadow mask texture name"),
+            new options_entry(OSDOPTION_BGFX_LUT,                     "",                options_global.OPTION_STRING, "LUT texture name"),
             new options_entry(OSDOPTION_BGFX_AVI_NAME,                OSDOPTVAL_AUTO,    options_global.OPTION_STRING,  "filename for BGFX output logging"),
 
             // End of list
@@ -297,6 +299,7 @@ namespace mame
         //bool bgfx_debug() const { return bool_value(OSDOPTION_BGFX_DEBUG); }
         //const char *bgfx_screen_chains() const { return value(OSDOPTION_BGFX_SCREEN_CHAINS); }
         //const char *bgfx_shadow_mask() const { return value(OSDOPTION_BGFX_SHADOW_MASK); }
+        //const char *bgfx_lut() const { return value(OSDOPTION_BGFX_LUT); }
         //const char *bgfx_avi_name() const { return value(OSDOPTION_BGFX_AVI_NAME); }
 
         // PortAudio options

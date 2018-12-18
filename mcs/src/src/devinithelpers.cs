@@ -70,10 +70,10 @@ namespace mame
         }
         // ay8910
         protected const int AY8910_INTERNAL_RESISTANCE = ay8910_global.AY8910_INTERNAL_RESISTANCE;
-        protected void MCFG_AY8910_OUTPUT_TYPE(int flag) { ay8910_global.MCFG_AY8910_OUTPUT_TYPE(m_helper_device, flag); }
-        protected void MCFG_AY8910_RES_LOADS(int res0, int res1, int res2) { ay8910_global.MCFG_AY8910_RES_LOADS(m_helper_device, res0, res1, res2); }
-        protected void MCFG_AY8910_PORT_A_READ_CB(read8_delegate cb) { ay8910_global.MCFG_AY8910_PORT_A_READ_CB(m_helper_device, cb); }
-        protected void MCFG_AY8910_PORT_B_READ_CB(read8_delegate cb) { ay8910_global.MCFG_AY8910_PORT_B_READ_CB(m_helper_device, cb); }
+        protected static ay8910_device AY8910(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
+        protected static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
+        protected static ay8910_device AY8910(machine_config mconfig, device_finder<ay8910_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
+        protected static ay8910_device AY8910(machine_config mconfig, device_finder<ay8910_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
         // coretmpl
         protected static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B7, B6, B5, B4, B3, B2, B1, B0); }
         protected static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B15, B14, B13, B12, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
@@ -143,15 +143,15 @@ namespace mame
         // drawgfx
         protected static gfxdecode_device GFXDECODE(machine_config mconfig, string tag, string palette_tag, gfx_decode_entry [] gfxinfo)
         {
-            var device = (gfxdecode_device)mconfig.device_add(tag, gfxdecode_device.GFXDECODE, 0);
+            var device = emu.detail.device_type_impl.op<gfxdecode_device>(mconfig, tag, gfxdecode_device.GFXDECODE, 0);
             device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
             return device;
         }
         protected static gfxdecode_device GFXDECODE(machine_config mconfig, device_finder<gfxdecode_device> finder, string palette_tag, gfx_decode_entry [] gfxinfo)
         {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            finder.target = GFXDECODE(mconfig, target.second(), palette_tag, gfxinfo);
-            return finder.target;
+            var device = emu.detail.device_type_impl.op(mconfig, finder, gfxdecode_device.GFXDECODE, 0);
+            device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
+            return device;
         }
         // driver
         protected void MCFG_MACHINE_START_OVERRIDE(driver_callback_delegate func) { driver_global.MCFG_MACHINE_START_OVERRIDE(m_helper_config, func); }
@@ -164,15 +164,15 @@ namespace mame
         // emupal
         protected static palette_device PALETTE(machine_config mconfig, string tag, u32 entries)
         {
-            var device = (palette_device)mconfig.device_add(tag, palette_device.PALETTE, 0);
+            var device = emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0);
             device.palette_device_after_ctor(entries);
             return device;
         }
         protected static palette_device PALETTE(machine_config mconfig, device_finder<palette_device> finder, u32 entries)
         {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            finder.target = PALETTE(mconfig, target.second(), entries);
-            return finder.target;
+            var device = emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0);
+            device.palette_device_after_ctor(entries);
+            return device;
         }
         protected void MCFG_PALETTE_ADD(string tag, u32 entries) { emupal_global.MCFG_PALETTE_ADD(out m_helper_device, m_helper_config, m_helper_owner, tag, entries); }
         protected void MCFG_PALETTE_ADD(device_finder<palette_device> finder, u32 entries) { emupal_global.MCFG_PALETTE_ADD(out m_helper_device, m_helper_config, m_helper_owner, finder, entries); }
@@ -184,28 +184,11 @@ namespace mame
         protected const UInt64 MACHINE_IMPERFECT_GRAPHICS = gamedrv_global.MACHINE_IMPERFECT_GRAPHICS;
         protected static game_driver GAME(device_type.create_func creator, List<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, UInt32 MONITOR, string COMPANY, string FULLNAME, UInt64 FLAGS) { return gamedrv_global.GAME(creator, roms, YEAR, NAME, PARENT, MACHINE, INPUT, INIT, MONITOR, COMPANY, FULLNAME, FLAGS); }
         // gen_latch
-        protected static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, string tag, u32 clock = 0) { return (generic_latch_8_device)mconfig.device_add(tag, generic_latch_8_device.GENERIC_LATCH_8, clock); }
-        protected static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, device_finder<generic_latch_8_device> finder, u32 clock = 0)
-        {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            finder.target = GENERIC_LATCH_8(mconfig, target.second(), clock);
-            return finder.target;
-        }
-        protected void MCFG_GENERIC_LATCH_8_ADD(string tag) { gen_latch_global.MCFG_GENERIC_LATCH_8_ADD(out m_helper_device, m_helper_config, m_helper_owner, tag); }
+        protected static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<generic_latch_8_device>(mconfig, tag, generic_latch_8_device.GENERIC_LATCH_8, clock); }
+        protected static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, device_finder<generic_latch_8_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, generic_latch_8_device.GENERIC_LATCH_8, clock); }
         // i8255
-        protected static i8255_device I8255A(machine_config mconfig, string tag, u32 clock = 0) { return (i8255_device)mconfig.device_add(tag, i8255_device.I8255A, clock); }
-        protected static i8255_device I8255A(machine_config mconfig, device_finder<i8255_device> finder, u32 clock = 0)
-        {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            finder.target = I8255A(mconfig, target.second(), clock);
-            return finder.target;
-        }
-        protected void MCFG_I8255_IN_PORTA_CB(DEVCB_IOPORT cb) { i8255_global.MCFG_I8255_IN_PORTA_CB(m_helper_device, cb); }
-        protected void MCFG_I8255_IN_PORTB_CB(DEVCB_IOPORT cb) { i8255_global.MCFG_I8255_IN_PORTB_CB(m_helper_device, cb); }
-        protected void MCFG_I8255_IN_PORTC_CB(DEVCB_IOPORT cb) { i8255_global.MCFG_I8255_IN_PORTC_CB(m_helper_device, cb); }
-        protected void MCFG_I8255_OUT_PORTA_CB(write8_delegate cb) { i8255_global.MCFG_I8255_OUT_PORTA_CB(m_helper_device, cb); }
-        protected void MCFG_I8255_OUT_PORTB_CB(write8_delegate cb) { i8255_global.MCFG_I8255_OUT_PORTB_CB(m_helper_device, cb); }
-        protected void MCFG_I8255_OUT_PORTC_CB(write8_delegate cb) { i8255_global.MCFG_I8255_OUT_PORTC_CB(m_helper_device, cb); }
+        protected static i8255_device I8255A(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<i8255_device>(mconfig, tag, i8255_device.I8255A, clock); }
+        protected static i8255_device I8255A(machine_config mconfig, device_finder<i8255_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255A, clock); }
         // mb88xx
         protected void MCFG_MB88XX_READ_K_CB(read8_delegate read8_devcb) { mb88xx_global.MCFG_MB88XX_READ_K_CB(m_helper_device, read8_devcb); }
         protected void MCFG_MB88XX_WRITE_O_CB(write8_delegate write8_devcb) { mb88xx_global.MCFG_MB88XX_WRITE_O_CB(m_helper_device, write8_devcb); }
@@ -224,18 +207,15 @@ namespace mame
         protected speaker_device SPEAKER(machine_config mconfig, string tag) { mconfig_global.MCFG_DEVICE_ADD(out m_helper_device, mconfig, m_helper_owner, tag, speaker_device.SPEAKER, 0); return (speaker_device)m_helper_device; }  // alias for device_type_impl<DeviceClass>::operator()
         protected void MCFG_DEVICE_MODIFY(string tag) { mconfig_global.MCFG_DEVICE_MODIFY(out m_helper_device, m_helper_config, m_helper_owner, tag); }
         // namco
-        protected static namco_device NAMCO(machine_config mconfig, string tag, u32 clock) { return (namco_device)mconfig.device_add(tag, namco_device.NAMCO, clock); }
-        protected static namco_device NAMCO(machine_config mconfig, device_finder<namco_device> finder, u32 clock)
-        {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            finder.target = NAMCO(mconfig, target.second(), clock);
-            return finder.target;
-        }
-        protected static namco_device NAMCO(machine_config mconfig, device_finder<namco_device> finder, XTAL clock) { return NAMCO(mconfig, finder, clock.value()); }
-        protected static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, u32 clock) { return (namco_50xx_device)mconfig.device_add(tag, namco_50xx_device.NAMCO_50XX, clock); }
-        protected static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, XTAL clock) { return NAMCO_50XX(mconfig, tag, clock.value()); }
-        protected static namco_53xx_device NAMCO_53XX(machine_config mconfig, string tag, u32 clock) { return (namco_53xx_device)mconfig.device_add(tag, namco_53xx_device.NAMCO_53XX, clock); }
-        protected static namco_53xx_device NAMCO_53XX(machine_config mconfig, string tag, XTAL clock) { return NAMCO_53XX(mconfig, tag, clock.value()); }
+        protected static namco_device NAMCO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_device>(mconfig, tag, namco_device.NAMCO, clock); }
+        protected static namco_device NAMCO(machine_config mconfig, device_finder<namco_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
+        protected static namco_device NAMCO(machine_config mconfig, device_finder<namco_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
+        protected static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_50xx_device>(mconfig, tag, namco_50xx_device.NAMCO_50XX, clock); }
+        protected static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_50xx_device>(mconfig, tag, namco_50xx_device.NAMCO_50XX, clock); }
+        protected static namco_53xx_device NAMCO_53XX(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_53xx_device>(mconfig, tag, namco_53xx_device.NAMCO_53XX, clock); }
+        protected static namco_53xx_device NAMCO_53XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_53xx_device>(mconfig, tag, namco_53xx_device.NAMCO_53XX, clock); }
+        protected static namco_54xx_device NAMCO_54XX(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_54xx_device>(mconfig, tag, namco_54xx_device.NAMCO_54XX, clock); }
+        protected static namco_54xx_device NAMCO_54XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_54xx_device>(mconfig, tag, namco_54xx_device.NAMCO_54XX, clock); }
         protected void MCFG_NAMCO_AUDIO_VOICES(int voices) { namco_global.MCFG_NAMCO_AUDIO_VOICES(m_helper_device, voices); }
         protected void MCFG_NAMCO_06XX_ADD(string tag, XTAL clock) { namco06_global.MCFG_NAMCO_06XX_ADD(out m_helper_device, m_helper_config, m_helper_owner, tag, clock); }
         protected void MCFG_NAMCO_06XX_MAINCPU(string tag) { namco06_global.MCFG_NAMCO_06XX_MAINCPU(m_helper_device, tag); }
@@ -259,9 +239,6 @@ namespace mame
         protected void MCFG_NAMCO_51XX_INPUT_3_CB(DEVCB_IOPORT ioport_desc_devcb) { namco51_global.MCFG_NAMCO_51XX_INPUT_3_CB(m_helper_device, ioport_desc_devcb); }
         protected void MCFG_NAMCO_51XX_OUTPUT_0_CB(write8_delegate write8_devcb) { namco51_global.MCFG_NAMCO_51XX_OUTPUT_0_CB(m_helper_device, write8_devcb); }
         protected void MCFG_NAMCO_51XX_OUTPUT_1_CB(write8_delegate write8_devcb) { namco51_global.MCFG_NAMCO_51XX_OUTPUT_1_CB(m_helper_device, write8_devcb); }
-        protected void MCFG_NAMCO_54XX_ADD(string tag, XTAL clock) { namco54_global.MCFG_NAMCO_54XX_ADD(out m_helper_device, m_helper_config, m_helper_owner, tag, clock); }
-        protected void MCFG_NAMCO_54XX_DISCRETE(string tag) { namco54_global.MCFG_NAMCO_54XX_DISCRETE(m_helper_device, tag); }
-        protected void MCFG_NAMCO_54XX_BASENODE(int node) { namco54_global.MCFG_NAMCO_54XX_BASENODE(m_helper_device, node); }
         // net_lib
         protected void SOLVER(string name, int freq) { netlist.devices.net_lib_global.SOLVER(m_helper_setup, name, freq); }
         // netlist
@@ -294,15 +271,15 @@ namespace mame
         protected const screen_type_enum SCREEN_TYPE_INVALID = screen_type_enum.SCREEN_TYPE_INVALID;
         protected screen_device SCREEN(machine_config mconfig, string tag, screen_type_enum type)
         {
-            var screen = (screen_device)mconfig.device_add(tag, screen_device.SCREEN, 0);
+            var screen = emu.detail.device_type_impl.op<screen_device>(mconfig, tag, screen_device.SCREEN, 0);
             screen.screen_device_after_ctor(type);
             return screen;
         }
         protected screen_device SCREEN(machine_config mconfig, device_finder<screen_device> finder, screen_type_enum type)
         {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            finder.target = SCREEN(mconfig, target.second(), type);
-            return finder.target;
+            var screen = emu.detail.device_type_impl.op(mconfig, finder, screen_device.SCREEN, 0);
+            screen.screen_device_after_ctor(type);
+            return screen;
         }
         protected void MCFG_SCREEN_ADD(string tag, screen_type_enum type) { screen_global.MCFG_SCREEN_ADD(out m_helper_device, m_helper_config, m_helper_owner, tag, type); }
         protected void MCFG_SCREEN_ADD(device_finder<screen_device> finder, screen_type_enum type) { screen_global.MCFG_SCREEN_ADD(out m_helper_device, m_helper_config, m_helper_owner, finder, type); }
@@ -318,22 +295,12 @@ namespace mame
         // timer
         protected void MCFG_TIMER_DRIVER_ADD_SCANLINE(string tag, timer_device.expired_delegate callback, string screen, int first_vpos, int increment) { timer_global.MCFG_TIMER_DRIVER_ADD_SCANLINE(out m_helper_device, m_helper_config, m_helper_owner, tag, callback, screen, first_vpos, increment); }
         // watchdog
-        protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return (watchdog_timer_device)mconfig.device_add(tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
-        protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, device_finder<watchdog_timer_device> finder)
-        {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            finder.target = WATCHDOG_TIMER(mconfig, target.second());
-            return finder.target;
-        }
+        protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
+        protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, device_finder<watchdog_timer_device> finder) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, finder, watchdog_timer_device.WATCHDOG_TIMER, 0); }
         // z80
-        protected static cpu_device Z80(machine_config mconfig, string tag, u32 clock) { return (cpu_device)mconfig.device_add(tag, z80_device.Z80, clock); }
-        protected static cpu_device Z80(machine_config mconfig, device_finder<cpu_device> finder, u32 clock)
-        {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            finder.target = Z80(mconfig, target.second(), clock);
-            return finder.target;
-        }
-        protected static cpu_device Z80(machine_config mconfig, device_finder<cpu_device> finder, XTAL clock) { return Z80(mconfig, finder, clock.value()); }
+        protected static cpu_device Z80(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<cpu_device>(mconfig, tag, z80_device.Z80, clock); }
+        protected static cpu_device Z80(machine_config mconfig, device_finder<cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op<cpu_device>(mconfig, finder, z80_device.Z80, clock); }
+        protected static cpu_device Z80(machine_config mconfig, device_finder<cpu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op<cpu_device>(mconfig, finder, z80_device.Z80, clock); }
 
 
         // rom helpers

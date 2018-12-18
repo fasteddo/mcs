@@ -207,6 +207,9 @@ namespace mame
             public void set_value_changed_handler(value_changed_handler handler) { m_value_changed_handler = handler; }  //std::function<void(const char *)> &&handler) { m_value_changed_handler = std::move(handler); }
 
 
+            public virtual void revert(int priority_hi, int priority_lo) { }
+
+
             protected abstract void internal_set_value(string newvalue);
 
 
@@ -290,6 +293,20 @@ namespace mame
             {
                 // only MewUI seems to need this; please don't use
                 return m_defdata;
+            }
+
+            //-------------------------------------------------
+            //  revert - revert back to our default if we are
+            //  within the given priority range
+            //-------------------------------------------------
+            public override void revert(int priority_hi, int priority_lo)
+            {
+                // if our priority is within the range, revert to the default
+                if (priority() <= priority_hi && priority() >= priority_lo)
+                {
+                    set_value(default_value(), priority(), true);
+                    set_priority(options_global.OPTION_PRIORITY_DEFAULT);
+                }
             }
 
             //-------------------------------------------------
@@ -550,6 +567,20 @@ namespace mame
         protected void set_value_changed_handler(string name, value_changed_handler handler)  // std::function<void(const char *)> &&handler);
         {
             get_entry(name).set_value_changed_handler(handler);
+        }
+
+
+        //-------------------------------------------------
+        //  revert - revert options at or below a certain
+        //  priority back to their defaults
+        //-------------------------------------------------
+        public void revert(int priority_hi = options_global.OPTION_PRIORITY_MAXIMUM, int priority_lo = options_global.OPTION_PRIORITY_DEFAULT)
+        {
+            foreach (entry curentry in m_entries)
+            {
+                if (curentry.type() != option_type.HEADER)
+                    curentry.revert(priority_hi, priority_lo);
+            }
         }
 
 

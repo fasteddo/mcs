@@ -37,7 +37,7 @@ namespace mame
     public enum INPUT_LINE
     {
         // input lines
-        MAX_INPUT_LINES = 32+3,
+        MAX_INPUT_LINES = 64+3,
         INPUT_LINE_IRQ0 = 0,
         INPUT_LINE_IRQ1 = 1,
         INPUT_LINE_IRQ2 = 2,
@@ -914,6 +914,7 @@ namespace mame
         //bool debugger_enabled() const { return bool(device().machine().debug_flags & DEBUG_FLAG_ENABLED); }
         public void debugger_instruction_hook(offs_t curpc) { if ((device().machine().debug_flags_get & running_machine.DEBUG_FLAG_CALL_HOOK) != 0) device().debug().instruction_hook(curpc); }
         //void debugger_exception_hook(int exception) { if (device().machine().debug_flags & DEBUG_FLAG_ENABLED) device().debug()->exception_hook(exception); }
+        //void debugger_privilege_hook() { if (device().machine().debug_flags & DEBUG_FLAG_ENABLED) device().debug()->privilege_hook(); }
 
 
         // internal debugger hooks

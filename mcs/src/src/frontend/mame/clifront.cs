@@ -1481,12 +1481,12 @@ namespace mame
                             "other media which run on that hardware are also required.\n\n");
             global.osd_printf_info("Usage:  {0} [machine] [media] [software] [options]", exename);
             global.osd_printf_info("\n\n" +
-                    "        {0} -showusage    for a brief list of options\n" +
-                    "        {1} -showconfig   for a list of configuration options\n" +
-                    "        {2} -listmedia    for a full list of supported media\n" +
-                    "        {3} -createconfig to create a {4}.ini\n\n" +
+                    "        {0} -showusage    for a list of options\n" +
+                    "        {1} -showconfig   to show your current {2}.ini\n" +
+                    "        {3} -listmedia    for a full list of supported media\n" +
+                    "        {4} -createconfig to create a {5}.ini\n\n" +
                     "For usage instructions, please consult the files config.txt and windows.txt.\n", exename,
-                    exename, exename, exename, emulator_info.get_configname());
+                    exename, emulator_info.get_configname(), exename, exename, emulator_info.get_configname());
         }
 
 

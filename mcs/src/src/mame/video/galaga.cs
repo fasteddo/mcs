@@ -35,7 +35,7 @@ namespace mame
         There are 63 stars in each set, 126 displayed at any one time
         */
 
-        static readonly star [] m_star_seed_tab = new star[252]
+        static readonly star [] s_star_seed_tab = new star[252]
         {
             /* also shared by Bosconian */
 
@@ -532,10 +532,10 @@ namespace mame
                     int x;
                     int y;
 
-                    if ( (set_a == m_star_seed_tab[star_cntr].set) || ( set_b == m_star_seed_tab[star_cntr].set) )
+                    if ( (set_a == s_star_seed_tab[star_cntr].set) || ( set_b == s_star_seed_tab[star_cntr].set) )
                     {
-                        x = (int)((m_star_seed_tab[star_cntr].x + m_stars_scrollx) % 256 + 16);
-                        y = (int)((112 + m_star_seed_tab[star_cntr].y + m_stars_scrolly) % 256);
+                        x = (int)((s_star_seed_tab[star_cntr].x + m_stars_scrollx) % 256 + 16);
+                        y = (int)((112 + s_star_seed_tab[star_cntr].y + m_stars_scrolly) % 256);
                         /* 112 is a tweak to get alignment about perfect */
 
                         if (cliprect.contains(x, y))
@@ -543,7 +543,7 @@ namespace mame
                             //bitmap.pix16(y, x) = STARS_COLOR_BASE + m_star_seed_tab[ star_cntr ].col;
                             RawBuffer bitmapBuffer;
                             UInt32 bitmapBufferOffset = bitmap.pix16(out bitmapBuffer, y, x);
-                            bitmapBuffer.set_uint16((int)bitmapBufferOffset, (UInt16)(STARS_COLOR_BASE + m_star_seed_tab[ star_cntr ].col));
+                            bitmapBuffer.set_uint16((int)bitmapBufferOffset, (UInt16)(STARS_COLOR_BASE + s_star_seed_tab[ star_cntr ].col));
                         }
                     }
 

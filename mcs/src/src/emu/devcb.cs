@@ -1065,14 +1065,21 @@ namespace mame
             //binder &operator=(binder const &) = delete;
             //binder &operator=(binder &&) = delete;
 
-#if false
-            template <typename T>
-            std::enable_if_t<is_read<Result, T>::value, functoid_builder<std::remove_reference_t<T> > > set(T &&cb)
+            //template <typename T>
+            //std::enable_if_t<is_read<Result, T>::value, functoid_builder<std::remove_reference_t<T> > > set(T &&cb)
+            public delegate_builder set(read_line_delegate func)
             {
                 set_used();
-                return functoid_builder<std::remove_reference_t<T> >(m_target, m_append, std::forward<T>(cb));
+                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), device_global.DEVICE_SELF, func);
             }
 
+            public delegate_builder set(read8_delegate func)
+            {
+                set_used();
+                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), device_global.DEVICE_SELF, func);
+            }
+
+#if false
             template <typename T>
             std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(T &&func, char const *name)
             {
@@ -1102,23 +1109,18 @@ namespace mame
                 set_used();
                 return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner(), devcb_read::cast_reference<delegate_device_class_t<T> >(obj), std::forward<T>(func), name);
             }
-
-            template <typename T, typename U, bool R>
-            std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
-            }
-
-            template <typename T, typename U, bool R>
-            std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
-            }
 #endif
+
+            //template <typename T, typename U, bool R>
+            //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
+            //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
+            public delegate_builder set<U>(device_finder<U> finder, read8_delegate func) where U : class //, char const *name)
+            {
+                set_used();
+                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
+                return new delegate_builder(m_target, m_append, target.first(), target.second(), func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+            }
+
 
             //template <typename... Params>
             //auto append(Params &&... args)
@@ -1327,12 +1329,10 @@ namespace mame
         //}
 
 
-        public bool isnull()
-        {
-            return m_functions_r8.empty() && m_functions_rl.empty() && m_creators.empty();
-        }
+        public bool isnull() { return m_functions_r8.empty() && m_functions_rl.empty() && m_creators.empty(); }
 
         //explicit operator bool() const { return !m_functions.empty(); }
+        public bool op() { return !m_functions_r8.empty() || !m_functions_rl.empty(); }
     }
 
 
@@ -1356,6 +1356,7 @@ namespace mame
 
             //protected abstract void validity_check(validity_checker valid);
             public abstract write8_delegate create_w8();
+            public abstract write32_delegate create_w32();
             public abstract write_line_delegate create_wl();
         }
 
@@ -1374,6 +1375,12 @@ namespace mame
             {
                 var cb = m_builder.build_w8();
                 return (address_space space, offs_t offset, u8 data, u8 mem_mask) => { cb(space, offset, data, mem_mask); };  //return [cb = m_builder.build()] (address_space space, offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(space, offset, data, mem_mask); };
+            }
+
+            public override write32_delegate create_w32()
+            {
+                var cb = m_builder.build_w32();
+                return (address_space space, offs_t offset, u32 data, u32 mem_mask) => { cb(space, offset, data, mem_mask); };  //return [cb = m_builder.build()] (address_space space, offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(space, offset, data, mem_mask); };
             }
 
             public override write_line_delegate create_wl()
@@ -1449,6 +1456,7 @@ namespace mame
             //builder_base &operator=(builder_base &&) = default;
 
             public virtual write8_delegate build_w8() { return null; }
+            public virtual write32_delegate build_w32() { return null; }
             public virtual write_line_delegate build_wl() { return null; }
 
             void consume() { m_consumed = true; }
@@ -2738,23 +2746,18 @@ namespace mame
                 set_used();
                 return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner(), devcb_write::cast_reference<delegate_device_class_t<T> >(obj), std::forward<T>(func), name);
             }
-
-            template <typename T, typename U, bool R>
-            std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
-            }
-
-            template <typename T, typename U, bool R>
-            std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
-            }
 #endif
+
+            //template <typename T, typename U, bool R>
+            //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
+            //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
+            public delegate_builder set<U>(device_finder<U> finder, write8_delegate func) where U : class //, string name)
+            {
+                set_used();
+                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
+                return new delegate_builder(m_target, m_append, target.first(), target.second(), func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+            }
+
 
             //template <typename... Params>
             //auto append(Params &&... args)
@@ -2939,6 +2942,7 @@ namespace mame
 
 
         protected std_vector<write8_delegate> m_functions_w8 = new std_vector<write8_delegate>();  //std::vector<func_t> m_functions;
+        protected std_vector<write32_delegate> m_functions_w32 = new std_vector<write32_delegate>();  //std::vector<func_t> m_functions;
         protected std_vector<write_line_delegate> m_functions_wl = new std_vector<write_line_delegate>();  //std::vector<func_t> m_functions;
         protected std_vector<creator_impl> m_creators = new std_vector<creator_impl>();  //std::vector<typename creator::ptr> m_creators;
 
@@ -2994,17 +2998,21 @@ namespace mame
         public new void resolve()
         {
             global.assert(m_functions_w8.empty());
+            global.assert(m_functions_w32.empty());
             global.assert(m_functions_wl.empty());
 
             base.resolve();
 
             m_functions_w8.reserve(m_creators.size());
+            m_functions_w32.reserve(m_creators.size());
             m_functions_wl.reserve(m_creators.size());
 
             foreach (var c in m_creators)
             {
                 var create_w8 = c.create_w8();
                 if (create_w8 != null) m_functions_w8.emplace_back(create_w8);
+                var create_w32 = c.create_w32();
+                if (create_w32 != null) m_functions_w32.emplace_back(create_w32);
                 var create_wl = c.create_wl();
                 if (create_wl != null) m_functions_wl.emplace_back(create_wl);
             }
@@ -3021,6 +3029,8 @@ namespace mame
 
             if (m_functions_w8.empty())
                 m_functions_w8.emplace_back((address_space space, offs_t offset, byte data, byte mem_mask) => { });
+            if (m_functions_w32.empty())
+                m_functions_w32.emplace_back((address_space space, offs_t offset, u32 data, u32 mem_mask) => { });
             if (m_functions_wl.empty())
                 m_functions_wl.emplace_back((int data) => { });
         }
@@ -3059,12 +3069,10 @@ namespace mame
         //}
 
 
-        public bool isnull()
-        {
-            return m_functions_w8.empty() && m_functions_wl.empty() && m_creators.empty();
-        }
+        public bool isnull() { return m_functions_w8.empty() && m_functions_w32.empty() && m_functions_wl.empty() && m_creators.empty(); }
 
         //explicit operator bool() const { return !m_functions.empty(); }
+        public bool op() { return !m_functions_w8.empty() || !m_functions_w32.empty() || !m_functions_wl.empty(); }
     }
 
 
@@ -3136,9 +3144,37 @@ namespace mame
         public void op(offs_t offset, u8 data, u8 mem_mask = DefaultMask) { op(default_space(), offset, data, mem_mask); }
         public void op(u8 data) { op(default_space(), 0U, data, DefaultMask); }
     }
+
     //using devcb_write16 = devcb_write<u16>;
-    //using devcb_write32 = devcb_write<u32>;
+
+    class devcb_write32 : devcb_write/*<u32>*/
+    {
+        const u32 DefaultMask = u32.MaxValue;  // std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>
+
+        public devcb_write32(device_t owner) : base(owner) { }
+
+        //void operator()(address_space &space, offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask = DefaultMask);
+        //void operator()(address_space &space, Input data);
+        //void operator()(offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask = DefaultMask);
+        //void operator()(Input data);
+        public void op(address_space space, offs_t offset, u32 data, u32 mem_mask = DefaultMask)
+        {
+            global.assert(m_creators.empty() && !m_functions_w32.empty());  //assert(m_creators.empty() && !m_functions.empty());
+
+            //typename std::vector<func_t>::const_iterator it(m_functions.begin());
+            //(*it)(space, offset, data, mem_mask);
+            //while (m_functions.end() != ++it)
+            //    (*it)(space, offset, data, mem_mask);
+            foreach (var func in m_functions_w32)
+                func(space, offset, data, mem_mask);
+        }
+        public void op(address_space space, u32 data) { op(space, 0U, data, DefaultMask); }
+        public void op(offs_t offset, u32 data, u32 mem_mask = DefaultMask) { op(default_space(), offset, data, mem_mask); }
+        public void op(u32 data) { op(default_space(), 0U, data, DefaultMask); }
+    }
+
     //using devcb_write64 = devcb_write<u64>;
+
     public class devcb_write_line : devcb_write/*<int, 1U>*/
     {
         const u32 DefaultMask = 1;  // std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>

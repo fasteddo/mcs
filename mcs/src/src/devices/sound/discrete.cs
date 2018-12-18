@@ -10,6 +10,7 @@ using offs_t = System.UInt32;
 using osd_ticks_t = System.UInt64;
 using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 
@@ -1416,8 +1417,7 @@ namespace mame
         //-------------------------------------------------
         //  read - read from the chip's registers and internal RAM
         //-------------------------------------------------
-        //READ8_MEMBER( discrete_device::read )
-        public byte read(address_space space, offs_t offset, byte mem_mask = 0xff)
+        public uint8_t read(offs_t offset)
         {
             discrete_base_node node = discrete_find_node((int)offset);
 
@@ -1442,8 +1442,7 @@ namespace mame
         //-------------------------------------------------
         //  write - write to the chip's registers and internal RAM
         //-------------------------------------------------
-        //WRITE8_MEMBER( discrete_device::write )
-        public void write(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        public void write(offs_t offset, uint8_t data)
         {
             discrete_base_node node = discrete_find_node((int)offset);
 

@@ -40,6 +40,7 @@ namespace mame
         public static attoseconds_t HZ_TO_ATTOSECONDS(attoseconds_t x) { return ATTOSECONDS_PER_SECOND / (attoseconds_t)x; }
         public static attoseconds_t HZ_TO_ATTOSECONDS(u64 x) { return ATTOSECONDS_PER_SECOND / (attoseconds_t)x; }
         public static attoseconds_t HZ_TO_ATTOSECONDS(XTAL x) { return ATTOSECONDS_PER_SECOND / x; }
+        public static attoseconds_t HZ_TO_ATTOSECONDS(double x) { return (attoseconds_t)((double)ATTOSECONDS_PER_SECOND / x); }
 
         // macros for converting other seconds types to attoseconds
         public static attoseconds_t ATTOSECONDS_IN_SEC(u32 x) { return (attoseconds_t)x * ATTOSECONDS_PER_SECOND; }
@@ -91,6 +92,8 @@ namespace mame
                     (m_seconds > 0) ? ATTOSECONDS_PER_SECOND :                      // out-of-range positive values
                     -ATTOSECONDS_PER_SECOND;                                        // out-of-range negative values
         }
+
+        public double as_hz() { return m_seconds == 0 ? ATTOSECONDS_TO_HZ(m_attoseconds) : is_never() ? 0.0 : 1.0 / as_double(); }
 
         //-------------------------------------------------
         //  as_ticks - convert to ticks at the given
@@ -168,10 +171,29 @@ namespace mame
         public static attotime from_msec(s64 msec) { return new attotime((int)(msec / 1000), (msec % 1000) * (ATTOSECONDS_PER_SECOND / 1000)); }
         public static attotime from_usec(s64 usec) { return new attotime((int)(usec / 1000000), (usec % 1000000) * (ATTOSECONDS_PER_SECOND / 1000000)); }
         //static attotime from_nsec(INT64 nsec) { return attotime(nsec / 1000000000, (nsec % 1000000000) * (ATTOSECONDS_PER_SECOND / 1000000000)); }
-        public static attotime from_hz(double frequency) { global.assert(frequency > 0); double d = 1 / frequency; return new attotime((seconds_t)Math.Floor(d), (attoseconds_t)((d - Math.Truncate(d)) * (double)ATTOSECONDS_PER_SECOND)); }
-        public static attotime from_hz(u32 frequency) { return from_hz((double)frequency); }
-        public static attotime from_hz(int frequency) { return from_hz((double)frequency); }
-        public static attotime from_hz(XTAL xtal) { return from_hz(xtal.dvalue()); }
+
+        public static attotime from_hz(u32 frequency) { return (frequency > 1) ? new attotime(0, HZ_TO_ATTOSECONDS(frequency)) : (frequency == 1) ? new attotime(1, 0) : never; }
+        public static attotime from_hz(int frequency) { return (frequency > 0) ? from_hz((u32)frequency) : never; }
+        public static attotime from_hz(XTAL xtal) { return (xtal.dvalue() > 1.0) ? new attotime(0, HZ_TO_ATTOSECONDS(xtal)) : from_hz(xtal.dvalue()); }
+        public static attotime from_hz(double frequency)
+        {
+            if (frequency > 1.0)
+            {
+                return new attotime(0, HZ_TO_ATTOSECONDS(frequency));
+            }
+            else if (frequency > 0.0)
+            {
+                //f = modf(1.0 / frequency, &i);
+                double d = 1.0 / frequency;
+                double i = (int)d;                double f = d % 1;
+
+                return new attotime((seconds_t)i, (attoseconds_t)(f * ATTOSECONDS_PER_SECOND));
+            }
+            else
+            {
+                return attotime.never;
+            }
+        }
 
 
         //-------------------------------------------------

@@ -12,16 +12,6 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public static class gen_latch_global
-    {
-        //define MCFG_GENERIC_LATCH_8_ADD(_tag)             MCFG_DEVICE_ADD(_tag, GENERIC_LATCH_8, 0)
-        public static void MCFG_GENERIC_LATCH_8_ADD(out device_t device, machine_config config, device_t owner, string tag) { mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, generic_latch_8_device.GENERIC_LATCH_8, 0); }
-        //define MCFG_GENERIC_LATCH_16_ADD(_tag)             MCFG_DEVICE_ADD(_tag, GENERIC_LATCH_16, 0)
-        //define MCFG_GENERIC_LATCH_DATA_PENDING_CB(_devcb)             devcb = &generic_latch_base_device::set_data_pending_callback(*device, DEVCB_##_devcb);
-        //define MCFG_GENERIC_LATCH_SEPARATE_ACKNOWLEDGE(_ack)             generic_latch_base_device::set_separate_acknowledge(*device, _ack);
-    }
-
-
     // ======================> generic_latch_base_device
     public class generic_latch_base_device : device_t
     {
@@ -44,7 +34,6 @@ namespace mame
 
 
         // configuration
-        //template <class Object> devcb_base &set_data_pending_callback(Object &&cb) { return m_data_pending_cb.set_callback(std::forward<Object>(cb)); }
         //auto data_pending_callback() { return m_data_pending_cb.bind(); }
         //void set_separate_acknowledge(bool ack) { m_separate_acknowledge = ack; }
 

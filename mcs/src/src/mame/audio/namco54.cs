@@ -14,11 +14,6 @@ namespace mame
 {
     public static class namco54_global
     {
-        public static void MCFG_NAMCO_54XX_ADD(out device_t device, machine_config config, device_t owner, string tag, XTAL clock) { mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, namco_54xx_device.NAMCO_54XX, clock); }
-        public static void MCFG_NAMCO_54XX_DISCRETE(device_t device, string tag) { ((namco_54xx_device)device).set_discrete(tag); }
-        public static void MCFG_NAMCO_54XX_BASENODE(device_t device, int node) { ((namco_54xx_device)device).set_basenote(node); }
-
-
         /* discrete nodes */
         public static NODE NAMCO_54XX_0_DATA(NODE base_node) { return discrete_global.NODE_RELATIVE(base_node, 0); }
         public static NODE NAMCO_54XX_1_DATA(NODE base_node) { return discrete_global.NODE_RELATIVE(base_node, 1); }
@@ -27,7 +22,7 @@ namespace mame
     }
 
 
-    class namco_54xx_device : device_t
+    public class namco_54xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_54XX, namco_54xx_device, "namco54", "Namco 54xx")
         static device_t device_creator_namco_54xx_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_54xx_device(mconfig, tag, owner, clock); }
@@ -62,6 +57,7 @@ namespace mame
         }
 
 
+        //template <typename T> void set_discrete(T &&tag) { m_discrete.set_tag(std::forward<T>(tag)); }
         public void set_discrete(string tag) { m_discrete.set_tag(tag); }
         public void set_basenote(int node) { m_basenode = node; }
 
@@ -83,9 +79,9 @@ namespace mame
         {
             byte out_ = (byte)(data & 0x0f);
             if ((data & 0x10) != 0)
-                m_discrete.target.write(space, (offs_t)namco54_global.NAMCO_54XX_1_DATA((NODE)m_basenode), out_);
+                m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_1_DATA((NODE)m_basenode), out_);
             else
-                m_discrete.target.write(space, (offs_t)namco54_global.NAMCO_54XX_0_DATA((NODE)m_basenode), out_);
+                m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_0_DATA((NODE)m_basenode), out_);
         }
 
         //WRITE8_MEMBER( namco_54xx_device::R1_w )
@@ -93,7 +89,7 @@ namespace mame
         {
             byte out_ = (byte)(data & 0x0f);
 
-            m_discrete.target.write(space, (offs_t)namco54_global.NAMCO_54XX_2_DATA((NODE)m_basenode), out_);
+            m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_2_DATA((NODE)m_basenode), out_);
         }
 
         //WRITE8_MEMBER( namco_54xx_device::write )

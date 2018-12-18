@@ -510,7 +510,7 @@ namespace mame
             case (UInt32)POT.POT0_C: case (UInt32)POT.POT1_C: case (UInt32)POT.POT2_C: case (UInt32)POT.POT3_C:
             case (UInt32)POT.POT4_C: case (UInt32)POT.POT5_C: case (UInt32)POT.POT6_C: case (UInt32)POT.POT7_C:
                 pot = (int)(offset & 7);
-                if(( m_ALLPOT & (1 << pot) ) != 0)
+                if ((m_ALLPOT & (1 << pot)) != 0)
                 {
                     /* we have a value measured */
                     data = m_POTx[pot];
@@ -528,14 +528,15 @@ namespace mame
                  * If the 2 least significant bits of SKCTL are 0, the ALLPOTs
                  * are disabled (SKRESET). Thanks to MikeJ for pointing this out.
                  ****************************************************************/
-                if( (m_SKCTL & SK_RESET) == 0)
+                if ((m_SKCTL & SK_RESET) == 0)
                 {
-                    data = 0;
+                    data = m_ALLPOT;
                     LOG("POKEY '{0}' ALLPOT internal {1} (reset)\n", tag(), data);
                 }
-                else if( !m_allpot_r_cb.isnull() )
+                else if (!m_allpot_r_cb.isnull())
                 {
                     data = m_allpot_r_cb.op(offset);
+                    m_ALLPOT = (uint8_t)data;
                     LOG("{0}: POKEY '{1}' ALLPOT callback {2}\n", machine().describe_context(), tag(), data);
                 }
                 else
@@ -550,7 +551,7 @@ namespace mame
                 break;
 
             case (UInt32)POT.RANDOM_C:
-                if(( m_AUDCTL & POLY9 ) != 0)
+                if ((m_AUDCTL & POLY9) != 0)
                 {
                     data = (int)(m_poly9[m_p9] & 0xff);
                     LOG_RAND("POKEY '{0}' rand9[{1}]: {2}\n", tag(), m_p9, data);  // $%05x  $%02x
@@ -563,7 +564,7 @@ namespace mame
                 break;
 
             case (UInt32)POT.SERIN_C:
-                if( !m_serin_r_cb.isnull() )
+                if (!m_serin_r_cb.isnull())
                     m_SERIN = m_serin_r_cb.op(offset);
                 data = m_SERIN;
                 LOG("POKEY '{0}' SERIN  {1}\n", tag(), data);
@@ -598,7 +599,7 @@ namespace mame
         //WRITE8_MEMBER( pokey_device::write )
         public void write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
-            synchronize((UInt32)SYNC.SYNC_WRITE, (int)((offset<<8) | data));
+            synchronize((UInt32)SYNC.SYNC_WRITE, (int)((offset << 8) | data));
         }
 
 
@@ -868,14 +869,13 @@ namespace mame
          */
         public uint32_t step_one_clock()
         {
-            int ch;
-            int clk;
-            UInt32 sum = 0;
-            int [] clock_triggered = new int[3] {0,0,0};
             int base_clock = (m_AUDCTL & CLK_15KHZ) != 0 ? CLK_114 : CLK_28;
 
-            if( (m_SKCTL & SK_RESET) != 0 )
+            if ((m_SKCTL & SK_RESET) != 0)
             {
+                int [] clock_triggered = new int[3] {0,0,0};
+                int clk;
+
                 /* Clocks only count if we are not in a reset */
                 for (clk = 0; clk < 3; clk++)
                 {
@@ -920,8 +920,8 @@ namespace mame
             /* do CHAN2 before CHAN1 because CHAN1 may set borrow! */
             if (m_channel[CHAN2].check_borrow() != 0)
             {
-                int isJoined = (m_AUDCTL & CH12_JOINED);
-                if (isJoined != 0)
+                bool isJoined = (m_AUDCTL & CH12_JOINED) != 0;
+                if (isJoined)
                     m_channel[CHAN1].reset_channel();
                 m_channel[CHAN2].reset_channel();
                 process_channel(CHAN2);
@@ -933,8 +933,8 @@ namespace mame
 
             if (m_channel[CHAN1].check_borrow() != 0)
             {
-                int isJoined = (m_AUDCTL & CH12_JOINED);
-                if (isJoined != 0)
+                bool isJoined = (m_AUDCTL & CH12_JOINED) != 0;
+                if (isJoined)
                     m_channel[CHAN2].inc_chan();
                 else
                     m_channel[CHAN1].reset_channel();
@@ -947,8 +947,8 @@ namespace mame
             /* do CHAN4 before CHAN3 because CHAN3 may set borrow! */
             if (m_channel[CHAN4].check_borrow() != 0)
             {
-                int isJoined = (m_AUDCTL & CH34_JOINED);
-                if (isJoined != 0)
+                bool isJoined = (m_AUDCTL & CH34_JOINED) != 0;
+                if (isJoined)
                     m_channel[CHAN3].reset_channel();
                 m_channel[CHAN4].reset_channel();
                 process_channel(CHAN4);
@@ -963,8 +963,8 @@ namespace mame
 
             if (m_channel[CHAN3].check_borrow() != 0)
             {
-                int isJoined = (m_AUDCTL & CH34_JOINED);
-                if (isJoined != 0)
+                bool isJoined = (m_AUDCTL & CH34_JOINED) != 0;
+                if (isJoined)
                     m_channel[CHAN4].inc_chan();
                 else
                     m_channel[CHAN3].reset_channel();
@@ -976,7 +976,8 @@ namespace mame
                     m_channel[CHAN1].m_filter_sample = 1;
             }
 
-            for (ch = 0; ch < 4; ch++)
+            uint32_t sum = 0;
+            for (int ch = 0; ch < 4; ch++)
             {
                 sum |= (((((m_channel[ch].m_output ^ m_channel[ch].m_filter_sample) != 0 || (m_channel[ch].m_AUDC & VOLUME_ONLY) != 0) ? ((UInt32)m_channel[ch].m_AUDC & VOLUME_MASK) : 0 )) << (ch * 4));
             }
@@ -1043,7 +1044,7 @@ namespace mame
                             if ((m_IRQEN & IRQ_KEYBD) != 0)
                             {
                                 /* last interrupt not acknowledged ? */
-                                if((m_IRQST & IRQ_KEYBD) != 0)
+                                if ((m_IRQST & IRQ_KEYBD) != 0)
                                     m_SKSTAT |= SK_KBERR;
                                 m_IRQST |= IRQ_KEYBD;
                                 if (m_irq_f != null)
@@ -1083,14 +1084,16 @@ namespace mame
 
         void step_pot()
         {
-            int pot;
+            if ((m_SKCTL & SK_RESET) == 0)
+                return;
+
             byte upd = 0;
             m_pot_counter++;
-            for (pot = 0; pot < 8; pot++)
+            for (int pot = 0; pot < 8; pot++)
             {
                 if ((m_POTx[pot]<m_pot_counter) || (m_pot_counter == 228))
                 {
-                    upd |= (byte)(1<<pot);
+                    upd |= (byte)(1 << pot);
                     /* latching is emulated in read */
                 }
             }
@@ -1200,7 +1203,7 @@ namespace mame
                 rTot = 0;
                 for (int i = 0; i < 4; i++)
                 {
-                    rTot += 1.0 / r_chan[(j>>(i*4)) & 0x0f];
+                    rTot += 1.0 / r_chan[(j >> (i*4)) & 0x0f];
                 }
                 rTot = 1.0 / rTot;
                 m_voltab[j] = (UInt32)rTot;
@@ -1227,6 +1230,9 @@ namespace mame
         void pokey_potgo()
         {
             int pot;
+
+            if( (m_SKCTL & SK_RESET) == 0)
+                return;
 
             LOG("POKEY #{0} pokey_potgo\n", this);  // #%p
 

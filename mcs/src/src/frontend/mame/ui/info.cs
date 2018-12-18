@@ -409,7 +409,7 @@ namespace mame.ui
                         detail = string.Format("{0} X {1} ({2}) {3} Hz",  //"%d " UTF8_MULTIPLY " %d (%s) %f" UTF8_NBSP "Hz",
                                 visarea.width(), visarea.height(),
                                 (screen.orientation() & emucore_global.ORIENTATION_SWAP_XY) != 0 ? "V" : "H",
-                                attotime.ATTOSECONDS_TO_HZ(screen.frame_period().attoseconds()));
+                                screen.frame_period().as_hz());
                     }
 
                     buf += string.Format(

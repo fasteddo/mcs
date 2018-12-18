@@ -618,9 +618,9 @@ namespace mame
             MCFG_NAMCO_51XX_OUTPUT_0_CB(WRITE8(galaga_state.out_0));
             MCFG_NAMCO_51XX_OUTPUT_1_CB(WRITE8(galaga_state.out_1));
 
-            MCFG_NAMCO_54XX_ADD("54xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
-            MCFG_NAMCO_54XX_DISCRETE("discrete");
-            MCFG_NAMCO_54XX_BASENODE((int)NODE.NODE_01);
+            namco_54xx_device n54xx = NAMCO_54XX(config, "54xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
+            n54xx.set_discrete("discrete");
+            n54xx.set_basenote((int)NODE.NODE_01);
 
             MCFG_NAMCO_06XX_ADD("06xx", MASTER_CLOCK/6/64);
             MCFG_NAMCO_06XX_MAINCPU("maincpu");
@@ -703,9 +703,9 @@ namespace mame
             MCFG_NAMCO_51XX_OUTPUT_0_CB(WRITE8(galaga_state.out_0));
             MCFG_NAMCO_51XX_OUTPUT_1_CB(WRITE8(galaga_state.out_1));
 
-            MCFG_NAMCO_54XX_ADD("54xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
-            MCFG_NAMCO_54XX_DISCRETE("discrete");
-            MCFG_NAMCO_54XX_BASENODE((int)NODE.NODE_01);
+            namco_54xx_device n54xx = NAMCO_54XX(config, "54xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
+            n54xx.set_discrete("discrete");
+            n54xx.set_basenote((int)NODE.NODE_01);
 
             MCFG_NAMCO_06XX_ADD("06xx", MASTER_CLOCK/6/64);
             MCFG_NAMCO_06XX_MAINCPU("maincpu");

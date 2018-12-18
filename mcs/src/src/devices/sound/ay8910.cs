@@ -40,14 +40,6 @@ namespace mame
          * netlist interfacing.
          */
         public const int AY8910_RESISTOR_OUTPUT = 0x08;
-
-
-        public static void MCFG_AY8910_OUTPUT_TYPE(device_t device, int flag) { ((ay8910_device)device).set_flags(flag); }
-        public static void MCFG_AY8910_RES_LOADS(device_t device, int res0, int res1, int res2) { ((ay8910_device)device).set_resistors_load(res0, res1, res2); }
-        public static void MCFG_AY8910_PORT_A_READ_CB(device_t device, read8_delegate cb) { ((ay8910_device)device).set_port_a_read_callback(cb); }
-        public static void MCFG_AY8910_PORT_B_READ_CB(device_t device, read8_delegate cb) { ((ay8910_device)device).set_port_b_read_callback(cb); }
-        //define MCFG_AY8910_PORT_A_WRITE_CB(_devcb)             devcb = &ay8910_device::set_port_a_write_callback(*device, DEVCB_##_devcb);
-        //define MCFG_AY8910_PORT_B_WRITE_CB(_devcb)             devcb = &ay8910_device::set_port_b_write_callback(*device, DEVCB_##_devcb);
     }
 
 
@@ -461,12 +453,8 @@ namespace mame
         //void set_psg_type(psg_type_t psg_type) { set_type(psg_type); }
         public void set_resistors_load(int res_load0, int res_load1, int res_load2) { m_res_load[0] = res_load0; m_res_load[1] = res_load1; m_res_load[2] = res_load2; }
 
-        public devcb_base set_port_a_read_callback(read8_delegate cb)  { return m_port_a_read_cb.set_callback(this, cb); }
-        public devcb_base set_port_b_read_callback(read8_delegate cb)  { return m_port_b_read_cb.set_callback(this, cb); }
-        //template <class Object> devcb_base &set_port_a_write_callback(Object &&cb) { return m_port_a_write_cb.set_callback(std::forward<Object>(cb)); }
-        //template <class Object> devcb_base &set_port_b_write_callback(Object &&cb) { return m_port_b_write_cb.set_callback(std::forward<Object>(cb)); }
-        //auto port_a_read_callback() { return m_port_a_read_cb.bind(); }
-        //auto port_b_read_callback() { return m_port_b_read_cb.bind(); }
+        public devcb_read.binder port_a_read_callback() { return m_port_a_read_cb.bind(); }
+        public devcb_read.binder port_b_read_callback() { return m_port_b_read_cb.bind(); }
         //auto port_a_write_callback() { return m_port_a_write_cb.bind(); }
         //auto port_b_write_callback() { return m_port_b_write_cb.bind(); }
 

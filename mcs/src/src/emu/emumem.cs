@@ -4643,6 +4643,7 @@ namespace mame
         }
 
         //virtual void remove_passthrough(std::unordered_set<handler_entry *> &handlers) override {
+        //    invalidate_caches(read_or_write::READWRITE);
         //    m_root_read->detach(handlers);
         //    m_root_write->detach(handlers);
         //}

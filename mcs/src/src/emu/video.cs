@@ -29,8 +29,6 @@ namespace mame
         const int FRAMESKIP_LEVELS = 12;
         public const int MAX_FRAMESKIP = FRAMESKIP_LEVELS - 2;
 
-        //#define LCD_FRAMES_PER_SECOND   30
-
         // frameskipping tables
         static readonly bool [,] s_skiptable =
         {

@@ -192,7 +192,7 @@ namespace mame
 
                             /* low bit goes to 0.22uF capacitor = 220000pF  */
                             /* high bit goes to 0.047uF capacitor = 47000pF */
-                            m_discrete.target.write(space, (offs_t)discrete_global.NODE_GET(3 * which + chan + 11), bits);
+                            m_discrete.target.write((offs_t)discrete_global.NODE_GET(3 * which + chan + 11), bits);
                         }
                     }
                 }
@@ -926,7 +926,7 @@ namespace mame
             galaxian_state.ppi8255.op(0).target.out_pc_callback().set(galaxian_state.konami_portc_0_w).reg();
 
             I8255A(config, galaxian_state.ppi8255.op(1));
-            galaxian_state.ppi8255.op(1).target.out_pa_callback().set("soundlatch", galaxian_state.generic_latch_8_device_write).reg();
+            galaxian_state.ppi8255.op(1).target.out_pa_callback().set(galaxian_state.soundlatch, galaxian_state.generic_latch_8_device_write).reg();
             galaxian_state.ppi8255.op(1).target.out_pb_callback().set(galaxian_state.konami_sound_control_w).reg();
             galaxian_state.ppi8255.op(1).target.in_pc_callback().set_ioport("IN3").reg();
             galaxian_state.ppi8255.op(1).target.out_pc_callback().set(galaxian_state.konami_portc_1_w).reg();
@@ -947,17 +947,17 @@ namespace mame
             MCFG_DEVICE_PROGRAM_MAP(galaxian_state_frogger_sound_map);
             MCFG_DEVICE_IO_MAP(galaxian_state_frogger_sound_portmap);
 
-            MCFG_GENERIC_LATCH_8_ADD("soundlatch");
+            GENERIC_LATCH_8(config, galaxian_state.soundlatch);
 
             /* sound hardware */
-            MCFG_DEVICE_ADD("8910.0", ay8910_device.AY8910, galaxian_state.KONAMI_SOUND_CLOCK/8);
-            MCFG_AY8910_OUTPUT_TYPE(ay8910_global.AY8910_DISCRETE_OUTPUT);
-            MCFG_AY8910_RES_LOADS((int)RES_K(5.1), (int)RES_K(5.1), (int)RES_K(5.1));
-            MCFG_AY8910_PORT_A_READ_CB(READ8("soundlatch", galaxian_state.generic_latch_8_device_read));
-            MCFG_AY8910_PORT_B_READ_CB(READ8(galaxian_state.frogger_sound_timer_r));
-            MCFG_SOUND_ROUTE(0, "konami", 1.0, 0);
-            MCFG_SOUND_ROUTE(1, "konami", 1.0, 1);
-            MCFG_SOUND_ROUTE(2, "konami", 1.0, 2);
+            AY8910(config, galaxian_state.ay8910.op(0), galaxian_state.KONAMI_SOUND_CLOCK/8);
+            galaxian_state.ay8910.op(0).target.set_flags(ay8910_global.AY8910_DISCRETE_OUTPUT);
+            galaxian_state.ay8910.op(0).target.set_resistors_load((int)RES_K(5.1), (int)RES_K(5.1), (int)RES_K(5.1));
+            galaxian_state.ay8910.op(0).target.port_a_read_callback().set(galaxian_state.soundlatch, galaxian_state.generic_latch_8_device_read).reg();
+            galaxian_state.ay8910.op(0).target.port_b_read_callback().set(galaxian_state.frogger_sound_timer_r).reg();
+            galaxian_state.ay8910.op(0).target.GetClassInterface<device_sound_interface>().add_route(0, "konami", 1.0, 0);
+            galaxian_state.ay8910.op(0).target.GetClassInterface<device_sound_interface>().add_route(1, "konami", 1.0, 1);
+            galaxian_state.ay8910.op(0).target.GetClassInterface<device_sound_interface>().add_route(2, "konami", 1.0, 2);
 
             MCFG_DEVICE_ADD("konami", discrete_sound_device.DISCRETE);//, konami_sound_discrete);
             MCFG_DEVICE_ADD_discrete_sound_device(konami_sound_discrete);
@@ -977,9 +977,14 @@ namespace mame
         void galaxian_state_galaxian(machine_config config, device_t owner, device_t device)
         {
             galaxian_state_galaxian_base(config, owner, device);
-            galaxian_state_galaxian_audio(config, owner, device);
 
             MACHINE_CONFIG_START(config, owner, device);
+
+            MCFG_DEVICE_ADD("cust", galaxian_sound_device.GALAXIAN, 0);
+            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 0.4);
+
+            MCFG_DEVICE_ADD(GAL_AUDIO, discrete_sound_device.DISCRETE);//, galaxian_discrete);
+            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 1.0);
 
             MACHINE_CONFIG_END();
         }

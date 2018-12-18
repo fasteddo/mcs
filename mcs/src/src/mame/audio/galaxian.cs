@@ -92,35 +92,35 @@ namespace mame
         //WRITE8_MEMBER( galaxian_sound_device::pitch_w )
         public void pitch_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
-            m_discrete.target.write(space, (UInt32)galaxian.GAL_INP_PITCH, data );
+            m_discrete.target.write((UInt32)galaxian.GAL_INP_PITCH, data );
         }
 
 
         //WRITE8_MEMBER( galaxian_sound_device::vol_w )
         public void vol_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
-            m_discrete.target.write(space, (UInt32)discrete_global.NODE_RELATIVE(galaxian.GAL_INP_VOL1, (int)offset), (byte)(data & 0x01));
+            m_discrete.target.write((UInt32)discrete_global.NODE_RELATIVE(galaxian.GAL_INP_VOL1, (int)offset), (byte)(data & 0x01));
         }
 
 
         //WRITE8_MEMBER( galaxian_sound_device::noise_enable_w )
         public void noise_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
-            m_discrete.target.write(space, (UInt32)galaxian.GAL_INP_HIT, (byte)(data & 0x01));
+            m_discrete.target.write((UInt32)galaxian.GAL_INP_HIT, (byte)(data & 0x01));
         }
 
 
         //WRITE8_MEMBER( galaxian_sound_device::background_enable_w )
         public void background_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
-            m_discrete.target.write(space, (UInt32)discrete_global.NODE_RELATIVE(galaxian.GAL_INP_FS1, (int)offset), (byte)(data & 0x01));
+            m_discrete.target.write((UInt32)discrete_global.NODE_RELATIVE(galaxian.GAL_INP_FS1, (int)offset), (byte)(data & 0x01));
         }
 
 
         //WRITE8_MEMBER( galaxian_sound_device::fire_enable_w )
         public void fire_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
-            m_discrete.target.write(space, (UInt32)galaxian.GAL_INP_FIRE, (byte)(data & 0x01));
+            m_discrete.target.write((UInt32)galaxian.GAL_INP_FIRE, (byte)(data & 0x01));
         }
 
 
@@ -132,13 +132,9 @@ namespace mame
             if (m_lfo_val != lfo_val_new)
             {
                 m_lfo_val = lfo_val_new;
-                m_discrete.target.write(space, (UInt32)galaxian.GAL_INP_BG_DAC, m_lfo_val);
+                m_discrete.target.write((UInt32)galaxian.GAL_INP_BG_DAC, m_lfo_val);
             }
         }
-
-
-        //void mooncrst_audio(machine_config &config);
-        //void galaxian_audio(machine_config &config);
 
 
         // device-level overrides
@@ -377,8 +373,8 @@ namespace mame
          *
          *************************************/
 
-        //static DISCRETE_SOUND_START(galaxian_discrete)
-        public static readonly discrete_block [] galaxian_discrete = new discrete_block []
+        //DISCRETE_SOUND_START(galaxian_discrete)
+        public readonly discrete_block [] galaxian_discrete = new discrete_block []
         {
             /************************************************/
             /* Input register mapping for galaxian          */
@@ -509,47 +505,5 @@ namespace mame
 
             DISCRETE_SOUND_END(),
         };
-
-
-        /*************************************
-         *
-         *  Driver definitions
-         *
-         *************************************/
-
-        //MACHINE_CONFIG_START(galaxold_state::galaxian_audio)
-        void galaxold_state_galaxian_audio(machine_config config, device_t owner, device_t device)
-        {
-            MACHINE_CONFIG_START(config, owner, device);
-
-            galaxian_state state = (galaxian_state)helper_owner;
-
-            MCFG_DEVICE_ADD("cust", galaxian_sound_device.GALAXIAN, 0);
-            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 0.4);
-
-            MCFG_DEVICE_ADD(GAL_AUDIO, discrete_sound_device.DISCRETE);//, galaxian_discrete);
-            MCFG_DEVICE_ADD_discrete_sound_device(galaxian_discrete);
-            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 1.0);
-
-            MACHINE_CONFIG_END();
-        }
-
-
-        //MACHINE_CONFIG_START(galaxian_state::galaxian_audio)
-        void galaxian_state_galaxian_audio(machine_config config, device_t owner, device_t device)
-        {
-            MACHINE_CONFIG_START(config, owner, device);
-
-            galaxian_state state = (galaxian_state)helper_owner;
-
-            MCFG_DEVICE_ADD("cust", galaxian_sound_device.GALAXIAN, 0);
-            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 0.4);
-
-            MCFG_DEVICE_ADD(GAL_AUDIO, discrete_sound_device.DISCRETE);//, galaxian_discrete);
-            MCFG_DEVICE_ADD_discrete_sound_device(galaxian_discrete);
-            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 1.0);
-
-            MACHINE_CONFIG_END();
-        }
     }
 }

@@ -296,35 +296,52 @@ namespace mame
             //template <typename Exposed, bool Required, typename... Params> DeviceClass &operator()(machine_config_replace replace, device_finder<Exposed, Required> &finder, Params &&... args) const;
 
 
-            //template <class DeviceClass> template <typename... Params>
-            //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, char const *tag, Params &&... args) const
-            //{
-            //    return dynamic_cast<DeviceClass &>(*mconfig.device_add(tag, *this, std::forward<Params>(args)...));
-            //}
-
-            //template <class DeviceClass> template <typename Exposed, bool Required, typename... Params>
-            //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
-            //{
-            //    std::pair<device_t &, char const *> const target(finder.finder_target());
-            //    assert(&mconfig.current_device() == &target.first);
-            //    DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
-            //    return finder = result;
-            //}
+            //**************************************************************************
+            //  MEMBER TEMPLATES
+            //**************************************************************************
 
             //template <class DeviceClass> template <typename... Params>
-            //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config_replace replace, char const *tag, Params &&... args) const
-            //{
-            //    return dynamic_cast<DeviceClass &>(*replace.config.device_replace(tag, *this, std::forward<Params>(args)...));
-            //}
+            public static DeviceClass op<DeviceClass>(machine_config mconfig, string tag, device_type type, u32 clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, char const *tag, Params &&... args) const
+            {
+                return (DeviceClass)mconfig.device_add(tag, type, clock);//, std::forward<Params>(args)...));
+            }
+
+            public static DeviceClass op<DeviceClass>(machine_config mconfig, string tag, device_type type, XTAL clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, char const *tag, Params &&... args) const
+            {
+                return op<DeviceClass>(mconfig, tag, type, clock.value());//, std::forward<Params>(args)...));
+            }
 
             //template <class DeviceClass> template <typename Exposed, bool Required, typename... Params>
-            //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config_replace replace, device_finder<Exposed, Required> &finder, Params &&... args) const
-            //{
-            //    std::pair<device_t &, char const *> const target(finder.finder_target());
-            //    assert(&replace.config.current_device() == &target.first);
-            //    DeviceClass &result(dynamic_cast<DeviceClass &>(*replace.config.device_replace(target.second, *this, std::forward<Params>(args)...)));
-            //    return finder = result;
-            //}
+            public static DeviceClass op<DeviceClass>(machine_config mconfig, device_finder<DeviceClass> finder, device_type type, u32 clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
+            {
+                var target = finder.finder_target();  // std::pair<device_t &, char const *> const target(finder.finder_target());
+                global.assert(mconfig.current_device() == target.first());
+                DeviceClass result = (DeviceClass)mconfig.device_add(target.second(), type, clock);//, std::forward<Params>(args)...)));  //DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
+                finder.target = result;
+                return result;  //return finder = result;
+            }
+
+            public static DeviceClass op<DeviceClass>(machine_config mconfig, device_finder<DeviceClass> finder, device_type type, XTAL clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
+            {
+                return op(mconfig, finder, type, clock.value());//, std::forward<Params>(args)...));
+            }
+
+#if false
+            template <class DeviceClass> template <typename... Params>
+            inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config_replace replace, char const *tag, Params &&... args) const
+            {
+                return dynamic_cast<DeviceClass &>(*replace.config.device_replace(tag, *this, std::forward<Params>(args)...));
+            }
+
+            template <class DeviceClass> template <typename Exposed, bool Required, typename... Params>
+            inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config_replace replace, device_finder<Exposed, Required> &finder, Params &&... args) const
+            {
+                std::pair<device_t &, char const *> const target(finder.finder_target());
+                assert(&replace.config.current_device() == &target.first);
+                DeviceClass &result(dynamic_cast<DeviceClass &>(*replace.config.device_replace(target.second, *this, std::forward<Params>(args)...)));
+                return finder = result;
+            }
+#endif
         }
     }
 
