@@ -22,7 +22,7 @@ namespace mame
             m_audio_latency = 1;
         }
 
-        ~sound_module() { }
+        //~sound_module() { }
 
 
         public abstract void update_audio_stream(bool is_throttled, ListPointer<Int16> buffer, int samples_this_frame);  //const int16_t *buffer, int samples_this_frame)

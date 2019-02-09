@@ -79,7 +79,7 @@ namespace mame
         //const std::string &description() { if (!m_parsed) parse(); return m_description; }
         //bool valid() { if (!m_parsed) parse(); return !m_infolist.empty(); }
         //const char *errors_string() { if (!m_parsed) parse(); return m_errors.c_str(); }
-        public std_list<software_info> get_info() { throw new emu_unimplemented(); }  //{ if (!m_parsed) parse(); return m_infolist; }
+        public std.list<software_info> get_info() { throw new emu_unimplemented(); }  //{ if (!m_parsed) parse(); return m_infolist; }
 
 
         // operations

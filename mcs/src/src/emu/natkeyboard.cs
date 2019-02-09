@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using keycode_map = mame.std_unordered_map<System.UInt32, mame.natural_keyboard.keycode_map_entry>;  //typedef std::unordered_map<char32_t, keycode_map_entry> keycode_map;
+using keycode_map = mame.std.unordered_map<System.UInt32, mame.natural_keyboard.keycode_map_entry>;  //typedef std::unordered_map<char32_t, keycode_map_entry> keycode_map;
 using u32 = System.UInt32;
 
 
@@ -13,7 +13,7 @@ namespace mame
 {
     // ======================> natural_keyboard
     // buffer to handle copy/paste/insert of keys
-    public class natural_keyboard
+    public class natural_keyboard : global_object
     {
         //DISABLE_COPYING(natural_keyboard);
 
@@ -29,17 +29,17 @@ namespace mame
         delegate bool ioport_charqueue_empty_delegate();
 
 
-        enum SHIFT
-        {
-            SHIFT_COUNT = (int)(ioport_global.UCHAR_SHIFT_END - ioport_global.UCHAR_SHIFT_BEGIN + 1),
-            SHIFT_STATES = 1 << SHIFT_COUNT
-        }
+        //enum
+        //{
+        const int SHIFT_COUNT  = (int)(ioport_global.UCHAR_SHIFT_END - ioport_global.UCHAR_SHIFT_BEGIN + 1);
+        const int SHIFT_STATES = 1 << SHIFT_COUNT;
+        //}
 
 
         // internal keyboard code information
         public class keycode_map_entry
         {
-            public ioport_field [] field = new ioport_field[(int)SHIFT.SHIFT_COUNT + 1];
+            public ioport_field [] field = new ioport_field[SHIFT_COUNT + 1];
             public UInt32 shift;
         }
         //typedef std::unordered_map<char32_t, keycode_map_entry> keycode_map;
@@ -55,7 +55,7 @@ namespace mame
         bool m_in_use;           // is natural keyboard in use?
         u32 m_bufbegin;         // index of starting character
         u32 m_bufend;           // index of ending character
-        std_vector<char32_t> m_buffer;           // actual buffer
+        std.vector<char32_t> m_buffer;           // actual buffer
         UInt32 m_fieldnum;         // current step in multi-key sequence
         bool m_status_keydown;   // current keydown status
         bool m_last_cr;          // was the last char a CR?
@@ -168,7 +168,7 @@ namespace mame
         {
             // find all shift keys
             UInt32 mask = 0;
-            ioport_field [] shift = new ioport_field[(int)SHIFT.SHIFT_COUNT];
+            ioport_field [] shift = new ioport_field[SHIFT_COUNT];
             for (int i = 0; i < shift.Length; i++) shift[i] = null;  //std::fill(std::begin(shift), std::end(shift), nullptr);
             foreach (var port in manager.ports())
             {
@@ -197,7 +197,7 @@ namespace mame
                     if (field.type() == ioport_type.IPT_KEYBOARD)
                     {
                         // iterate over all shift states
-                        for (UInt32 curshift = 0; curshift < (UInt32)SHIFT.SHIFT_STATES; ++curshift)
+                        for (UInt32 curshift = 0; curshift < SHIFT_STATES; ++curshift)
                         {
                             if ((curshift & ~mask) == 0)
                             {
@@ -218,13 +218,13 @@ namespace mame
                                             newcode.shift = curshift;
 
                                             UInt32 fieldnum = 0;
-                                            for (UInt32 i = 0, bits = curshift; (i < (UInt32)SHIFT.SHIFT_COUNT) && bits != 0; ++i, bits >>= 1)
+                                            for (UInt32 i = 0, bits = curshift; (i < SHIFT_COUNT) && bits != 0; ++i, bits >>= 1)
                                             {
-                                                if (global.BIT(bits, 0) != 0)
+                                                if (BIT(bits, 0) != 0)
                                                     newcode.field[fieldnum++] = shift[i];
                                             }
 
-                                            global.assert(fieldnum < newcode.field.Length);
+                                            assert(fieldnum < newcode.field.Length);
                                             newcode.field[fieldnum] = field;
                                             if (null == found)
                                                 m_keycode_map.emplace(code, newcode);
@@ -300,7 +300,7 @@ namespace mame
                 {
                     do
                     {
-                        global.assert(m_fieldnum < code.field.Length);
+                        assert(m_fieldnum < code.field.Length);
 
                         ioport_field field = code.field[m_fieldnum];
                         if (field != null)

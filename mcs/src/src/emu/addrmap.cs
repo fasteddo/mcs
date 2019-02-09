@@ -54,7 +54,7 @@ namespace mame
 
     // ======================> address_map_entry
     // address_map_entry is a linked list element describing one address range in a map
-    public class address_map_entry : simple_list_item<address_map_entry>
+    public class address_map_entry : global_object, simple_list_item<address_map_entry>
     {
         //friend class address_map;
 
@@ -244,7 +244,7 @@ namespace mame
         public address_map_entry unmaprw() { m_read.type = map_handler_type.AMH_UNMAP; m_write.type = map_handler_type.AMH_UNMAP; return this; }
         //address_map_entry &unmapr() { m_read.m_type = AMH_UNMAP; return *this; }
         //address_map_entry &unmapw() { m_write.m_type = AMH_UNMAP; return *this; }
-        address_map_entry noprw() { m_read.type = map_handler_type.AMH_NOP; m_write.type = map_handler_type.AMH_NOP; return this; }
+        public address_map_entry noprw() { m_read.type = map_handler_type.AMH_NOP; m_write.type = map_handler_type.AMH_NOP; return this; }
         public address_map_entry nopr() { m_read.type = map_handler_type.AMH_NOP; return this; }
         public address_map_entry nopw() { m_write.type = map_handler_type.AMH_NOP; return this; }
 
@@ -470,9 +470,9 @@ namespace mame
 #endif
 
         // device pointer/finder -> delegate converter
-        public address_map_entry r(device_init_helpers device, read8_delegate func) { return r(func); }
-        public address_map_entry w(device_init_helpers tag, write8_delegate func) { return w(func); }
-        public address_map_entry rw(device_init_helpers tag, read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry r(global_object device, read8_delegate func) { return r(func); }
+        public address_map_entry w(global_object tag, write8_delegate func) { return w(func); }
+        public address_map_entry rw(global_object tag, read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
 
 
         // handler setters for 8-bit delegates
@@ -483,7 +483,7 @@ namespace mame
 
         public address_map_entry r(read8_delegate func)
         {
-            global.assert(func != null);
+            assert(func != null);
             m_read.type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_read.bits = 8;
             m_read.name = func.Method.Name;
@@ -494,7 +494,7 @@ namespace mame
 
         public address_map_entry w(write8_delegate func)
         {
-            global.assert(func != null);
+            assert(func != null);
             m_write.type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_write.bits = 8;
             m_write.name = func.Method.Name;
@@ -523,7 +523,7 @@ namespace mame
 
         address_map_entry r(read16_delegate func)
         {
-            global.assert(func != null);
+            assert(func != null);
             m_read.type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_read.bits = 16;
             m_read.name = func.Method.Name;
@@ -534,7 +534,7 @@ namespace mame
 
         address_map_entry w(write16_delegate func)
         {
-            global.assert(func != null);
+            assert(func != null);
             m_write.type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_write.bits = 16;
             m_write.name = func.Method.Name;
@@ -563,7 +563,7 @@ namespace mame
 
         address_map_entry r(read32_delegate func)
         {
-            global.assert(func != null);
+            assert(func != null);
             m_read.type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_read.bits = 32;
             m_read.name = func.Method.Name;
@@ -574,7 +574,7 @@ namespace mame
 
         address_map_entry w(write32_delegate func)
         {
-            global.assert(func != null);
+            assert(func != null);
             m_write.type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_write.bits = 32;
             m_write.name = func.Method.Name;
@@ -603,7 +603,7 @@ namespace mame
 
         address_map_entry r(read64_delegate func)
         {
-            global.assert(func != null);
+            assert(func != null);
             m_read.type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_read.bits = 64;
             m_read.name = func.Method.Name;
@@ -614,7 +614,7 @@ namespace mame
 
         address_map_entry w(write64_delegate func)
         {
-            global.assert(func != null);
+            assert(func != null);
             m_write.type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_write.bits = 64;
             m_write.name = func.Method.Name;
@@ -713,7 +713,7 @@ namespace mame
 
     // ======================> address_map
     // address_map holds global map parameters plus the head of the list of entries
-    public class address_map
+    public class address_map : global_object
     {
         // public data
         int m_spacenum;         // space number of the map
@@ -771,7 +771,7 @@ namespace mame
         //-------------------------------------------------
         public address_map(device_t device, address_map_entry entry)
         {
-            m_spacenum = emumem_global.AS_PROGRAM;
+            m_spacenum = AS_PROGRAM;
             m_device = device;
             m_unmapval = 0;
             m_globalmask = 0;
@@ -793,7 +793,7 @@ namespace mame
             m_globalmask = space.addrmask();
 
 
-            op(start, end).m(device_global.DEVICE_SELF, submap_delegate).umask64(unitmask).cswidth(cswidth);
+            op(start, end).m(DEVICE_SELF, submap_delegate).umask64(unitmask).cswidth(cswidth);
         }
 
 
@@ -914,7 +914,7 @@ namespace mame
                                 }
                                 subentry_ratio = data_width / subentry_ratio;
                                 if (ratio * subentry_ratio > data_width / 8)
-                                    global.fatalerror("import_submap: In range {0}-{1} mask {2} mirror {3} select {4} of device {5}, the import unitmask of {6} combined with an entry unitmask of {7} does not fit in {8} bits.\n", subentry.addrstart, subentry.addrend, subentry.addrmask, subentry.addrmirror, subentry.addrselect, entry.read.tag, emumem_global.core_i64_hex_format(entry.mask, (byte)(data_width / 4)), emumem_global.core_i64_hex_format(subentry.mask, (byte)(data_width / 4)), data_width);
+                                    fatalerror("import_submap: In range {0}-{1} mask {2} mirror {3} select {4} of device {5}, the import unitmask of {6} combined with an entry unitmask of {7} does not fit in {8} bits.\n", subentry.addrstart, subentry.addrend, subentry.addrmask, subentry.addrmirror, subentry.addrselect, entry.read.tag, core_i64_hex_format(entry.mask, (byte)(data_width / 4)), core_i64_hex_format(subentry.mask, (byte)(data_width / 4)), data_width);
 
                                 // Regenerate the unitmask
                                 u64 newmask = 0;

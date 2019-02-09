@@ -127,7 +127,7 @@ namespace mame
 
     // ======================> bitmap_t
     // bitmaps describe a rectangular array of pixels
-    public class bitmap_t
+    public class bitmap_t : global_object
     {
         // internal state
         RawBuffer m_alloc;  //std::unique_ptr<uint8_t []> m_alloc;        // pointer to allocated pixel memory
@@ -227,23 +227,16 @@ namespace mame
             m_cliprect = new rectangle(0, subrect.width() - 1, 0, subrect.height() - 1);
 
 
-            global.assert(format == source.m_format);
-            global.assert(bpp == source.m_bpp);
-            global.assert(source.cliprect().contains(subrect));
+            assert(format == source.m_format);
+            assert(bpp == source.m_bpp);
+            assert(source.cliprect().contains(subrect));
         }
 
-        /**
-         * @fn  bitmap_t::~bitmap_t()
-         *
-         * @brief   -------------------------------------------------
-         *            ~bitmap_t - basic destructor
-         *          -------------------------------------------------.
-         */
-        ~bitmap_t()
-        {
-            // delete any existing stuff
-            reset();
-        }
+        //~bitmap_t()
+        //{
+        //    // delete any existing stuff
+        //    reset();
+        //}
 
 
         // allocation/deallocation
@@ -299,8 +292,8 @@ namespace mame
          */
         public void allocate(int width, int height, int xslop = 0, int yslop = 0)
         {
-            global.assert(m_format != bitmap_format.BITMAP_FORMAT_INVALID);
-            global.assert(m_bpp == 8 || m_bpp == 16 || m_bpp == 32 || m_bpp == 64);
+            assert(m_format != bitmap_format.BITMAP_FORMAT_INVALID);
+            assert(m_bpp == 8 || m_bpp == 16 || m_bpp == 32 || m_bpp == 64);
 
             // delete any existing stuff
             reset();
@@ -320,7 +313,7 @@ namespace mame
             m_alloc = new RawBuffer(m_allocbytes);  //m_alloc = new byte[m_allocbytes];
 
             // clear to 0 by default
-            global.memset(m_alloc, (uint8_t)0, m_allocbytes);  //memset(m_alloc, 0, m_allocbytes);
+            memset(m_alloc, (uint8_t)0, m_allocbytes);  //memset(m_alloc, 0, m_allocbytes);
 
             // compute the base
             compute_base(xslop, yslop);
@@ -428,7 +421,7 @@ namespace mame
                     // 8bpp always uses memset
                     for (int y = fill.top(); y <= fill.bottom(); y++)
                     {
-                        global.memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width());  //memset(raw_pixptr(y, fill.get_min_x()), (byte)color, fill.width());
+                        memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width());  //memset(raw_pixptr(y, fill.get_min_x()), (byte)color, fill.width());
                     }
                     break;
 
@@ -438,7 +431,7 @@ namespace mame
                     {
                         for (int y = fill.top(); y <= fill.bottom(); y++)
                         {
-                            global.memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 2);  //memset(raw_pixptr(y, fill.get_min_x()), (byte)color, fill.width() * 2);
+                            memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 2);  //memset(raw_pixptr(y, fill.get_min_x()), (byte)color, fill.width() * 2);
                         }
                     }
                     else
@@ -453,7 +446,7 @@ namespace mame
                         for (int y = fill.top() + 1; y <= fill.bottom(); y++)
                         {
                             destrow = pixt(y, fill.left());  //destrow = &pixt<UInt16>(y, fill.get_min_x());
-                            global.memcpy(destrow, destrow0, (UInt32)fill.width() * 2);  //memcpy(destrow, destrow0, fill.width() * 2);
+                            memcpy(destrow, destrow0, (UInt32)fill.width() * 2);  //memcpy(destrow, destrow0, fill.width() * 2);
                         }
                     }
                     break;
@@ -464,7 +457,7 @@ namespace mame
                     {
                         for (int y = fill.top(); y <= fill.bottom(); y++)
                         {
-                            global.memset(pixt(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 4);  //memset(&pixt<UInt32>(y, fill.get_min_x()), (byte)color, fill.width() * 4);
+                            memset(pixt(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 4);  //memset(&pixt<UInt32>(y, fill.get_min_x()), (byte)color, fill.width() * 4);
                         }
                     }
                     else
@@ -479,7 +472,7 @@ namespace mame
                         for (int y = fill.top() + 1; y <= fill.bottom(); y++)
                         {
                             destrow = pixt(y, fill.left());  //destrow = &pixt<UInt32>(y, fill.get_min_x());
-                            global.memcpy(destrow, destrow0, (UInt32)fill.width() * 4);  //memcpy(destrow, destrow0, fill.width() * 4);
+                            memcpy(destrow, destrow0, (UInt32)fill.width() * 4);  //memcpy(destrow, destrow0, fill.width() * 4);
                         }
                     }
                     break;
@@ -490,7 +483,7 @@ namespace mame
                     {
                         for (int y = fill.top(); y <= fill.bottom(); y++)
                         {
-                            global.memset(pixt(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 8);  //memset(&pixt<UInt64>(y, fill.get_min_x()), (byte)color, fill.width() * 8);
+                            memset(pixt(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 8);  //memset(&pixt<UInt64>(y, fill.get_min_x()), (byte)color, fill.width() * 8);
                         }
                     }
                     else
@@ -509,7 +502,7 @@ namespace mame
                             //destrow = &pixt<UInt64>(y, fill.get_min_x());
                             //destrowBufOffset = pixt(out destrowBuf, y, fill.get_min_x());
                             destrow = pixt(y, fill.left());  //destrow = &pixt<UInt64>(y, fill.get_min_x());
-                            global.memcpy(destrow, destrow0, (UInt32)fill.width() * 8);  //memcpy(destrow, destrow0, fill.width() * 8);
+                            memcpy(destrow, destrow0, (UInt32)fill.width() * 8);  //memcpy(destrow, destrow0, fill.width() * 8);
                         }
                     }
                     break;

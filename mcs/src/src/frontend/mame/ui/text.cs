@@ -9,7 +9,7 @@ using char32_t = System.UInt32;
 
 namespace mame.ui
 {
-    public class text_layout
+    public class text_layout : global_object
     {
         // justification options for text
         public enum text_justify
@@ -62,7 +62,7 @@ namespace mame.ui
         // class to represent a line
         class line
         {
-            std_vector<positioned_char> m_characters = new std_vector<positioned_char>();
+            std.vector<positioned_char> m_characters = new std.vector<positioned_char>();
             text_layout m_layout;
             text_justify m_justify;
             float m_yoffset;
@@ -115,7 +115,7 @@ namespace mame.ui
             //-------------------------------------------------
             public void truncate(UInt32 position)
             {
-                global.assert(position <= m_characters.size());
+                assert(position <= m_characters.size());
 
                 // are we actually truncating?
                 if (position < m_characters.size())
@@ -171,7 +171,7 @@ namespace mame.ui
         float m_calculated_actual_width;
         text_justify m_justify;
         word_wrapping m_wrap;
-        std_vector<line> m_lines = new std_vector<line>();
+        std.vector<line> m_lines = new std.vector<line>();
         line m_current_line;
         UInt32 m_last_break;
         UInt32 m_text_position;
@@ -212,7 +212,7 @@ namespace mame.ui
             m_calculated_actual_width = that.m_calculated_actual_width;
             m_justify = that.m_justify;
             m_wrap = that.m_wrap;
-            m_lines = new std_vector<line>(that.m_lines);
+            m_lines = new std.vector<line>(that.m_lines);
             m_current_line = that.m_current_line;
             m_last_break = that.m_last_break;
             m_text_position = that.m_text_position;
@@ -305,10 +305,10 @@ namespace mame.ui
         //-------------------------------------------------
         //  get_wrap_info
         //-------------------------------------------------
-        public int get_wrap_info(out std_vector<int> xstart, out std_vector<int> xend)
+        public int get_wrap_info(out std.vector<int> xstart, out std.vector<int> xend)
         {
-            xstart = new std_vector<int>();
-            xend = new std_vector<int>();
+            xstart = new std.vector<int>();
+            xend = new std.vector<int>();
 
             // this is a hacky method (tailored to the need to implement
             // mame_ui_manager::wrap_text) but so be it
@@ -358,7 +358,7 @@ namespace mame.ui
 
                     // render the background of the character (if present)
                     if (ch.style.bgcolor.a() != 0)
-                        container.add_rect(char_x, char_y, char_x + char_width, char_y + char_height, ch.style.bgcolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+                        container.add_rect(char_x, char_y, char_x + char_width, char_y + char_height, ch.style.bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                     // render the foreground
                     container.add_char(
@@ -413,7 +413,7 @@ namespace mame.ui
                 if (m_current_line == null)
                 {
                     // get the current character
-                    char32_t schar;
+                    char schar;  //char32_t schar;
                     int scharcount = unicode_global.uchar_from_utf8(out schar, text.Substring((int)position), (int)(text_length - position));  //  &text[position]
                     if (scharcount < 0)
                         break;
@@ -432,7 +432,7 @@ namespace mame.ui
 
                 {
                     // get the current character
-                    char32_t ch;
+                    char ch;  //char32_t ch;
                     int scharcount = unicode_global.uchar_from_utf8(out ch, text.Substring((int)position), (int)(text_length - position));  // &text[position], text_length - position);
                     if (scharcount < 0)
                         break;
@@ -477,7 +477,7 @@ namespace mame.ui
                                     break;
 
                                 default:
-                                    global.fatalerror("invalid word wrapping value");
+                                    fatalerror("invalid word wrapping value");
                                     break;
                             }
                         }

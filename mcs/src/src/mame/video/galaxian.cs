@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
+using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
@@ -32,23 +33,11 @@ namespace mame
          *
          *************************************/
 
-        static readonly int [] palette_init_galaxian_rgb_resistances3 = new int[3] { 1000, 470, 220 };
-        static readonly int [] palette_init_galaxian_rgb_resistances2 = new int[2] { 470, 220 };
-
-        //PALETTE_INIT_MEMBER(galaxian_state, galaxian)
-        public void palette_init_galaxian(palette_device palette)
+        public void galaxian_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
-            //static const int rgb_resistances[3] = { 1000, 470, 220 };
-            double [] rweights = new double[3];
-            double [] gweights = new double[3];
-            double [] bweights = new double[2];
-            int i;
-            int minval;
-            int midval;
-            int maxval;
-            int len;
-            byte [] starmap = new byte[4];
+            int [] rgb_resistances3 = new int [3] { 1000, 470, 220 };
+            int [] rgb_resistances2 = new int [2] { 470, 220 };
 
             /*
                 Sprite/tilemap colors are mapped through a color PROM as follows:
@@ -80,40 +69,40 @@ namespace mame
                 of the main game would be very low to allow for all the oversaturation
                 of the stars and shells/missiles.
             */
-            resnet_global.compute_resistor_weights(0, RGB_MAXIMUM, -1.0,
-                    3, palette_init_galaxian_rgb_resistances3, out rweights, 470, 0,
-                    3, palette_init_galaxian_rgb_resistances3, out gweights, 470, 0,
-                    2, palette_init_galaxian_rgb_resistances2, out bweights, 470, 0);
+            double [] rweights = new double[3];
+            double [] gweights = new double[3];
+            double [] bweights = new double[2];
+            compute_resistor_weights(0, RGB_MAXIMUM, -1.0,
+                    3, rgb_resistances3, out rweights, 470, 0,
+                    3, rgb_resistances3, out gweights, 470, 0,
+                    2, rgb_resistances2, out bweights, 470, 0);
 
-            /* decode the palette first */
-            len = (int)memregion("proms").bytes();
-            for (i = 0; i < len; i++)
+            // decode the palette first
+            int len = (int)memregion("proms").bytes();
+            for (int i = 0; i < len; i++)
             {
                 byte bit0;
                 byte bit1;
                 byte bit2;
-                byte r;
-                byte g;
-                byte b;
 
                 /* red component */
-                bit0 = (byte)global.BIT(color_prom[i],0);
-                bit1 = (byte)global.BIT(color_prom[i],1);
-                bit2 = (byte)global.BIT(color_prom[i],2);
-                r = (byte)resnet_global.combine_3_weights(rweights, bit0, bit1, bit2);
+                bit0 = (byte)BIT(color_prom[i], 0);
+                bit1 = (byte)BIT(color_prom[i], 1);
+                bit2 = (byte)BIT(color_prom[i], 2);
+                int r = (byte)combine_3_weights(rweights, bit0, bit1, bit2);
 
                 /* green component */
-                bit0 = (byte)global.BIT(color_prom[i],3);
-                bit1 = (byte)global.BIT(color_prom[i],4);
-                bit2 = (byte)global.BIT(color_prom[i],5);
-                g = (byte)resnet_global.combine_3_weights(gweights, bit0, bit1, bit2);
+                bit0 = (byte)BIT(color_prom[i], 3);
+                bit1 = (byte)BIT(color_prom[i], 4);
+                bit2 = (byte)BIT(color_prom[i], 5);
+                int g = (byte)combine_3_weights(gweights, bit0, bit1, bit2);
 
                 /* blue component */
-                bit0 = (byte)global.BIT(color_prom[i],6);
-                bit1 = (byte)global.BIT(color_prom[i],7);
-                b = (byte)resnet_global.combine_2_weights(bweights, bit0, bit1);
+                bit0 = (byte)BIT(color_prom[i], 6);
+                bit1 = (byte)BIT(color_prom[i], 7);
+                int b = (byte)combine_2_weights(bweights, bit0, bit1);
 
-                palette.palette_interface().set_pen_color((UInt32)i, new rgb_t(r,g,b));
+                palette.palette_interface.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
             }
 
             /*
@@ -131,48 +120,48 @@ namespace mame
                 Since we can't saturate that high, we instead approximate this
                 by compressing the values proportionally into the 194->255 range.
             */
-            minval = RGB_MAXIMUM * 130 / 150;
-            midval = RGB_MAXIMUM * 130 / 100;
-            maxval = RGB_MAXIMUM * 130 / 60;
+            int minval = RGB_MAXIMUM * 130 / 150;
+            int midval = RGB_MAXIMUM * 130 / 100;
+            int maxval = RGB_MAXIMUM * 130 / 60;
 
-            /* compute the values for each of 4 possible star values */
-            starmap[0] = 0;
-            starmap[1] = (byte)minval;
-            starmap[2] = (byte)(minval + (255 - minval) * (midval - minval) / (maxval - minval));
-            starmap[3] = 255;
+            // compute the values for each of 4 possible star values
+            uint8_t [] starmap = new uint8_t [4]
+            {
+                    0,
+                    (uint8_t)minval,
+                    (uint8_t)(minval + (255 - minval) * (midval - minval) / (maxval - minval)),
+                    255
+            };
 
-            /* generate the colors for the stars */
-            for (i = 0; i < 64; i++)
+            // generate the colors for the stars
+            for (int i = 0; i < 64; i++)
             {
                 byte bit0;
                 byte bit1;
-                byte r;
-                byte g;
-                byte b;
 
-                /* bit 5 = red @ 150 Ohm, bit 4 = red @ 100 Ohm */
-                bit0 = (byte)global.BIT(i,5);
-                bit1 = (byte)global.BIT(i,4);
-                r = starmap[(bit1 << 1) | bit0];
+                // bit 5 = red @ 150 Ohm, bit 4 = red @ 100 Ohm
+                bit0 = (byte)BIT(i,5);
+                bit1 = (byte)BIT(i,4);
+                int r = starmap[(bit1 << 1) | bit0];
 
-                /* bit 3 = green @ 150 Ohm, bit 2 = green @ 100 Ohm */
-                bit0 = (byte)global.BIT(i,3);
-                bit1 = (byte)global.BIT(i,2);
-                g = starmap[(bit1 << 1) | bit0];
+                // bit 3 = green @ 150 Ohm, bit 2 = green @ 100 Ohm
+                bit0 = (byte)BIT(i,3);
+                bit1 = (byte)BIT(i,2);
+                int g = starmap[(bit1 << 1) | bit0];
 
-                /* bit 1 = blue @ 150 Ohm, bit 0 = blue @ 100 Ohm */
-                bit0 = (byte)global.BIT(i,1);
-                bit1 = (byte)global.BIT(i,0);
-                b = starmap[(bit1 << 1) | bit0];
+                // bit 1 = blue @ 150 Ohm, bit 0 = blue @ 100 Ohm
+                bit0 = (byte)BIT(i,1);
+                bit1 = (byte)BIT(i,0);
+                int b = starmap[(bit1 << 1) | bit0];
 
-                /* set the RGB color */
-                m_star_color[i] = new rgb_t(r, g, b);
+                // set the RGB color
+                m_star_color[i] = new rgb_t((u8)r, (u8)g, (u8)b);
             }
 
-            /* default bullet colors are white for the first 7, and yellow for the last one */
-            for (i = 0; i < 7; i++)
-                m_bullet_color[i] = new rgb_t(0xff,0xff,0xff);
-            m_bullet_color[7] = new rgb_t(0xff,0xff,0x00);
+            // default bullet colors are white for the first 7, and yellow for the last one
+            for (int i = 0; i < 7; i++)
+                m_bullet_color[i] = new rgb_t(0xff, 0xff, 0xff);
+            m_bullet_color[7] = new rgb_t(0xff, 0xff, 0x00);
         }
 
 
@@ -464,7 +453,7 @@ namespace mame
                 stars_update_origin();
 
                 m_flipscreen_x = (byte)(data & 0x01);
-                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? tilemap_global.TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? tilemap_global.TILEMAP_FLIPY : 0));
+                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? TILEMAP_FLIPY : 0));
             }
         }
 
@@ -477,7 +466,7 @@ namespace mame
                 m_screen.target.update_partial(m_screen.target.vpos());
 
                 m_flipscreen_y = (byte)(data & 0x01);
-                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? tilemap_global.TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? tilemap_global.TILEMAP_FLIPY : 0));
+                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? TILEMAP_FLIPY : 0));
             }
         }
 

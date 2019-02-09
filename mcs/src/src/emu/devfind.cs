@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using u8 = System.Byte;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -217,7 +218,7 @@ namespace mame
     /// Abstract non-template base class for object auto-discovery helpers.
     /// Provides the interface that the device_t uses to manage discovery at
     /// resolution time.
-    public abstract class finder_base
+    public abstract class finder_base : global_object
     {
         /// \brief Dummy tag always treated as not found
         public const string DUMMY_TAG = "finder_dummy_tag";
@@ -277,7 +278,7 @@ namespace mame
         /// Returns the search base device and tag.
         /// \return a pair consisting of a reference to the device to search
         ///   relative to and the relative tag.
-        public KeyValuePair<device_t, string> finder_target() { return global.make_pair(m_base, m_tag); }  // std::pair<device_t &, char const *>
+        public KeyValuePair<device_t, string> finder_target() { return std.make_pair(m_base, m_tag); }  // std::pair<device_t &, char const *>
 
         public virtual device_t base_() { return m_base; }
         public virtual string tag() { return m_tag; }
@@ -295,7 +296,7 @@ namespace mame
         /// \param [in] tag Updated search tag.  This is not copied, it is
         ///   the caller's responsibility to ensure this pointer remains
         ///   valid until resolution time.
-        public void set_tag(device_t base_, string tag) { global.assert(!m_resolved); m_base = base_; m_tag = tag; }
+        public void set_tag(device_t base_, string tag) { assert(!m_resolved); m_base = base_; m_tag = tag; }
 
         /// \brief Set search tag
         ///
@@ -314,7 +315,7 @@ namespace mame
         /// this must be done before resolution time to take effect.
         /// \param [in] finder Object finder to take the search base and tag
         ///   from.
-        public void set_tag(finder_base finder) { global.assert(!m_resolved); var kvp = finder.finder_target(); m_base = kvp.Key; m_tag = kvp.Value; }  //std::tie(m_base, m_tag) = finder.finder_target(); }
+        public void set_tag(finder_base finder) { assert(!m_resolved); var kvp = finder.finder_target(); m_base = kvp.Key; m_tag = kvp.Value; }  //std::tie(m_base, m_tag) = finder.finder_target(); }
 
 
         // helpers
@@ -330,9 +331,9 @@ namespace mame
             // look for the region
             foreach (device_t dev in new device_iterator(m_base.get().mconfig().root_device()))
             {
-                foreach (romload.region region in new romload.entries(dev.rom_region()).get_regions())
+                foreach (tiny_rom_entry region in new romload.entries(dev.rom_region()).get_regions())
                 {
-                    if (dev.subtag(region.get_tag()) == region_fulltag)
+                    if (dev.subtag(romload.region.get_tag(region)) == region_fulltag)
                     {
                         bytes_found = region.get_length();
                         break;
@@ -346,14 +347,20 @@ namespace mame
             // check the length and warn if other than specified
             if ((bytes_found != 0) && (bytes != 0) && (bytes != bytes_found))
             {
-                global.osd_printf_warning("Region '{0}' found but has {1} bytes, not {2} as requested\n", m_tag, bytes_found, bytes);
+                osd_printf_warning("Region '{0}' found but has {1} bytes, not {2} as requested\n", m_tag, bytes_found, bytes);
                 bytes_found = 0;
             }
 
             return report_missing(bytes_found != 0, "memory region", required);
         }
 
+
         //void *find_memshare(UINT8 width, size_t &bytes, bool required);  // moved to object_finder_base below
+
+
+        //address_space *find_addrspace(int spacenum, u8 width, bool required) const;
+        //bool validate_addrspace(int spacenum, u8 width, bool required) const;
+
 
         //-------------------------------------------------
         //  report_missing - report missing objects and
@@ -363,7 +370,7 @@ namespace mame
         {
             if (required && m_tag == DUMMY_TAG)
             {
-                global.osd_printf_error("Tag not defined for required {0}\n", objname);
+                osd_printf_error("Tag not defined for required {0}\n", objname);
                 return false;
             }
 
@@ -374,9 +381,9 @@ namespace mame
             // otherwise, report
             string region_fulltag = m_base.get().subtag(m_tag);
             if (required)
-                global.osd_printf_error("Required {0} '{1}' not found\n", objname, region_fulltag);
+                osd_printf_error("Required {0} '{1}' not found\n", objname, region_fulltag);
             else
-                global.osd_printf_verbose("Optional {0} '{1}' not found\n", objname, region_fulltag);
+                osd_printf_verbose("Optional {0} '{1}' not found\n", objname, region_fulltag);
 
             return !required;
         }
@@ -384,7 +391,7 @@ namespace mame
 
         public virtual void printf_warning(string format, params object [] args)
         {
-            global.osd_printf_warning(format, args);
+            osd_printf_warning(format, args);
         }
     }
 
@@ -421,7 +428,7 @@ namespace mame
         /// target during configuration.  This needs to be cleared to ensure
         /// the correct target is found if a device further up the hierarchy
         /// subsequently removes or replaces devices.
-        public override void end_configuration() { global.assert(!resolved); m_target = null; }
+        public override void end_configuration() { assert(!resolved); m_target = null; }
 
         // setter for setting the object
         public virtual ObjectClass target { get { return m_target; } set { m_target = value; } }
@@ -511,7 +518,7 @@ namespace mame
         {
             if (!isvalidation)
             {
-                global.assert(!this.resolved);
+                assert(!this.resolved);
                 this.resolved = true;
             }
 
@@ -629,7 +636,7 @@ namespace mame
             if (isvalidation)
                 return validate_memregion(0, Required);
 
-            global.assert(!this.resolved);
+            assert(!this.resolved);
             this.resolved = true;
             target = base_().get().memregion(tag());
             return report_missing("memory region");
@@ -709,7 +716,7 @@ namespace mame
             if (isvalidation)
                 return true;
 
-            global.assert(!this.resolved);
+            assert(!this.resolved);
             this.resolved = true;
             target = base_().get().ioport(tag());
             return report_missing("I/O port");
@@ -828,12 +835,12 @@ namespace mame
         public override bool findit(bool isvalidation = false)
         {
             if (isvalidation)
-                return validate_memregion((UInt32)global.sizeof_(typeof(PointerType)) * m_length, Required);
+                return validate_memregion((UInt32)sizeof_(typeof(PointerType)) * m_length, Required);
 
-            global.assert(!this.resolved);
+            assert(!this.resolved);
             this.resolved = true;
             m_length = m_desired_length;
-            target = find_memregion((byte)global.sizeof_(typeof(PointerType)), ref m_length, Required);  //reinterpret_cast<PointerType *>(find_memregion(sizeof(PointerType), m_length, m_required));
+            target = find_memregion((byte)sizeof_(typeof(PointerType)), ref m_length, Required);  //reinterpret_cast<PointerType *>(find_memregion(sizeof(PointerType), m_length, m_required));
             return report_missing(target != null, "memory region", Required);
         }
 
@@ -850,9 +857,9 @@ namespace mame
     }
 
 
-    class optional_region_ptr_byte : optional_region_ptr<byte/*, false*/>
+    class optional_region_ptr_uint8_t : optional_region_ptr<uint8_t/*, false*/>
     {
-        public optional_region_ptr_byte(device_t basedevice, string tag, UInt32 length = 0) : base(basedevice, tag, length) { }
+        public optional_region_ptr_uint8_t(device_t basedevice, string tag, UInt32 length = 0) : base(basedevice, tag, length) { }
 
 
         //-------------------------------------------------
@@ -872,7 +879,7 @@ namespace mame
             if (region.bytewidth() != width)
             {
                 if (required)
-                    global.osd_printf_warning("Region '{0}' found but is width {1}, not {2} as requested\n", tag(), region.bitwidth(), width*8);
+                    osd_printf_warning("Region '{0}' found but is width {1}, not {2} as requested\n", tag(), region.bitwidth(), width*8);
                 length = 0;
                 return null;
             }
@@ -882,7 +889,7 @@ namespace mame
             if (length != 0 && length != length_found)
             {
                 if (required)
-                    global.osd_printf_warning("Region '{0}' found but has {1} bytes, not {2} as requested\n", tag(), region.bytes(), (int)length*width);
+                    osd_printf_warning("Region '{0}' found but has {1} bytes, not {2} as requested\n", tag(), region.bytes(), (int)length*width);
                 length = 0;
                 return null;
             }
@@ -923,7 +930,7 @@ namespace mame
         {
             Required = required;
             if (width == 255)
-                width = (u8)(global.sizeof_(typeof(PointerType)) * 8);
+                width = (u8)(sizeof_(typeof(PointerType)) * 8);
 
             m_width = width;
             m_bytes = 0;
@@ -958,7 +965,7 @@ namespace mame
             if (isvalidation)
                 return true;
 
-            global.assert(!this.resolved);
+            assert(!this.resolved);
             this.resolved = true;
             target = find_memshare(0, out m_bytes, Required);  // reinterpret_cast<_PointerType *>(this.find_memshare(m_width, m_bytes, _Required));
             return report_missing(this.target != null, "shared pointer", Required);
@@ -973,9 +980,9 @@ namespace mame
             : base(false, basedevice, tag, width) { }
     }
 
-    public class optional_shared_ptr_byte : optional_shared_ptr<byte/*, false*/>
+    public class optional_shared_ptr_uint8_t : optional_shared_ptr<uint8_t/*, false*/>
     {
-        public optional_shared_ptr_byte(device_t basedevice, string tag, u8 width = 255)//, UINT8 width = sizeof(PointerType) * 8)
+        public optional_shared_ptr_uint8_t(device_t basedevice, string tag, u8 width = 255)//, UINT8 width = sizeof(PointerType) * 8)
             : base(basedevice, tag, width) { }
 
         //-------------------------------------------------
@@ -994,7 +1001,7 @@ namespace mame
             if (width != 0 && share.bitwidth() != width)
             {
                 if (required)
-                    global.osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", tag(), share.bitwidth(), width);
+                    osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", tag(), share.bitwidth(), width);
                 return null;
             }
 
@@ -1015,9 +1022,9 @@ namespace mame
             : base(true, basedevice, tag, width) { }
     }
 
-    class required_shared_ptr_byte : required_shared_ptr<u8/*, true*/>
+    class required_shared_ptr_uint8_t : required_shared_ptr<uint8_t/*, true*/>
     {
-        public required_shared_ptr_byte(device_t basedevice, string tag, u8 width = 255)  //, UINT8 width = sizeof(PointerType) * 8)
+        public required_shared_ptr_uint8_t(device_t basedevice, string tag, u8 width = 255)  //, UINT8 width = sizeof(PointerType) * 8)
             : base(basedevice, tag, width) { }
 
         //-------------------------------------------------
@@ -1036,7 +1043,7 @@ namespace mame
             if (width != 0 && share.bitwidth() != width)
             {
                 if (required)
-                    global.osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", tag(), share.bitwidth(), width);
+                    osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", tag(), share.bitwidth(), width);
                 return null;
             }
 

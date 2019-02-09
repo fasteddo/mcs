@@ -13,7 +13,7 @@ using u32 = System.UInt32;
 namespace mame
 {
     // ======================> video_manager
-    public class video_manager
+    public class video_manager : global_object
     {
         // movie format options
         enum movie_format
@@ -114,7 +114,7 @@ namespace mame
                 m_mng_frame = 0;
             }
         }
-        std_vector<mng_info_t> m_mngs = new std_vector<mng_info_t>();
+        std.vector<mng_info_t> m_mngs = new std.vector<mng_info_t>();
 
 
         // movie recording - AVI
@@ -133,7 +133,7 @@ namespace mame
                 m_avi_frame = 0;
             }
         }
-        std_vector<avi_info_t> m_avis = new std_vector<avi_info_t>();
+        std.vector<avi_info_t> m_avis = new std.vector<avi_info_t>();
 
 
         bool m_timecode_enabled;     // inp.timecode record enabled
@@ -199,7 +199,7 @@ namespace mame
 
             // create a render target for snapshots
             string viewname = machine.options().snap_view();
-            m_snap_native = !no_screens && (viewname[0] == 0 || global.strcmp(viewname, "native") == 0);
+            m_snap_native = !no_screens && (viewname[0] == 0 || strcmp(viewname, "native") == 0);
 
             // the native target is hard-coded to our internal layout and has all options disabled
             if (m_snap_native)
@@ -399,7 +399,7 @@ namespace mame
             {
                 // reset partial updates if we're paused or if the debugger is active
                 screen_device screen = new screen_device_iterator(machine().root_device()).first();
-                bool debugger_enabled = (machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) != 0;
+                bool debugger_enabled = (machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0;
                 bool within_instruction_hook = debugger_enabled && machine().debugger().within_instruction_hook();
                 if (screen != null && (machine().paused() || from_debugger || within_instruction_hook))
                     screen.reset_partial_updates();
@@ -603,7 +603,7 @@ namespace mame
                 osd_ticks_t tps = osdcore_global.m_osdcore.osd_ticks_per_second();
                 double final_real_time = (double)m_overall_real_seconds + (double)m_overall_real_ticks / (double)tps;
                 double final_emu_time = m_overall_emutime.as_double();
-                global.osd_printf_info("Average speed: {0}%% ({1} seconds)\n", 100 * final_emu_time / final_real_time, (m_overall_emutime + new attotime(0, attotime.ATTOSECONDS_PER_SECOND / 2)).seconds());  // %.2f%% (%d seconds)\n
+                osd_printf_info("Average speed: {0}%% ({1} seconds)\n", 100 * final_emu_time / final_real_time, (m_overall_emutime + new attotime(0, attotime.ATTOSECONDS_PER_SECOND / 2)).seconds());  // %.2f%% (%d seconds)\n
             }
         }
 
@@ -1018,7 +1018,7 @@ namespace mame
                     // if we changed, log that verbosely
                     if (target_speed != m_speed)
                     {
-                        global.osd_printf_verbose("Adjusting target speed to {0}%% (hw={1}Hz, game={2}Hz, adjusted={3}Hz)\n", target_speed / 10.0, minrefresh, attotime.ATTOSECONDS_TO_HZ((UInt32)min_frame_period), attotime.ATTOSECONDS_TO_HZ((UInt32)(min_frame_period * 1000.0 / target_speed)));
+                        osd_printf_verbose("Adjusting target speed to {0}%% (hw={1}Hz, game={2}Hz, adjusted={3}Hz)\n", target_speed / 10.0, minrefresh, attotime.ATTOSECONDS_TO_HZ((UInt32)min_frame_period), attotime.ATTOSECONDS_TO_HZ((UInt32)(min_frame_period * 1000.0 / target_speed)));
                         m_speed = target_speed;
                     }
                 }
@@ -1076,10 +1076,12 @@ namespace mame
             if (m_seconds_to_run != 0 && emutime.seconds() >= m_seconds_to_run)
             {
                 // create a final screenshot
-                emu_file file = new emu_file(machine().options().snapshot_directory(), osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
-                osd_file.error filerr = file.open(machine().basename(), osdcore_global.PATH_SEPARATOR + "final.png");
+                emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                osd_file.error filerr = file.open(machine().basename(), PATH_SEPARATOR + "final.png");
                 if (filerr == osd_file.error.NONE)
                     save_snapshot(null, file);
+
+                file.close();
 
                 //printf("Scheduled exit at %f\n", emutime.as_double());
 
@@ -1106,7 +1108,7 @@ namespace mame
             {
                 screen_device_iterator iter = new screen_device_iterator(machine().root_device());
                 int view_index = iter.indexof(screen);
-                global.assert(view_index != -1);
+                assert(view_index != -1);
                 m_snap_target.set_view(view_index);
             }
 

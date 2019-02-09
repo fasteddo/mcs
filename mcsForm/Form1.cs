@@ -595,7 +595,7 @@ namespace mameForm
             {
                 m_graphics.DrawImage(m_bitmap, m_bitmapXOffset, m_bitmapYOffset);
 
-                if (mame.mame_machine_manager.instance().machine() == null || mame.mame_machine_manager.instance().machine().video() == null)
+                if (mame.mame_machine_manager.instance().machine() == null || mame.mame_machine_manager.instance().machine().phase() != mame.machine_phase.RUNNING)
                     return;
 
                 var video = mame.mame_machine_manager.instance().machine().video();

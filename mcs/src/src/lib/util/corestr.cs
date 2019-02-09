@@ -116,5 +116,93 @@ namespace mame
         //std::string &strmakeupper(std::string& str);
         //std::string &strmakelower(std::string& str);
         //int strreplace(std::string &str, const std::string& search, const std::string& replace);
+
+
+        /**
+         * @fn  double edit_distance(std::u32string const &lhs, std::u32string const &rhs)
+         *
+         * @brief   Compares strings and returns prefix-weighted similarity score (smaller is more similar).
+         *
+         * @param   lhs         First input.
+         * @param   rhs         Second input.
+         *
+         * @return  Similarity score ranging from 0.0 (totally dissimilar) to 1.0 (identical).
+         */
+        // based on Jaro-Winkler distance - returns value from 0.0 (totally dissimilar) to 1.0 (identical)
+        public static double edit_distance(string lhs, string rhs)
+        {
+            // based on Jaro-Winkler distance
+            // TODO: this breaks if the lengths don't fit in a long int, but that's not a big limitation
+            long MAX_PREFIX = 4;
+            double PREFIX_WEIGHT = 0.1;
+            double PREFIX_THRESHOLD = 0.7;
+
+            string longer = (lhs.length() >= rhs.length()) ? lhs : rhs;
+            string shorter = (lhs.length() < rhs.length()) ? lhs : rhs;
+
+            // find matches
+            long range = std.max((long)(longer.length() / 2) - 1, 0L);
+            long [] match_idx = new long [shorter.length()];  //std::unique_ptr<long []> match_idx(std::make_unique<long []>(shorter.length()));
+            bool [] match_flg = new bool [longer.length()];
+            match_idx.Fill(-1);  //std::fill_n(match_idx.get(), shorter.length(), -1);
+            match_flg.Fill(false);  //std::fill_n(match_flg.get(), longer.length(), false);
+            long match_cnt = 0;
+            for (int i = 0; shorter.length() > i; ++i)
+            {
+                char ch = shorter[i];
+                long n = std.min(i + range + 1L, (long)longer.length());
+                for (int j = std.max(i - (int)range, 0); n > j; ++j)
+                {
+                    if (!match_flg[j] && (ch == longer[j]))
+                    {
+                        match_idx[i] = j;
+                        match_flg[j] = true;
+                        ++match_cnt;
+                        break;
+                    }
+                }
+            }
+
+            // early exit if strings are very dissimilar
+            if (match_cnt == 0)
+                return 1.0;
+
+            // now find transpositions
+            char [] ms = new char [2 * match_cnt];  //std::unique_ptr<char32_t []> ms(std::make_unique<char32_t []>(2 * match_cnt));
+            ms.Fill((char)0);  //std::fill_n(ms.get(), 2 * match_cnt, char32_t(0));
+            int ms1Idx = 0;  //char32_t *const ms1(&ms[0]);
+            int ms2Idx = (int)match_cnt;  //char32_t *const ms2(&ms[match_cnt]);
+            for (int i = 0, j = 0; shorter.length() > i; ++i)
+            {
+                if (0 <= match_idx[i])
+                    ms[ms1Idx + j++] = shorter[i];  //ms1[j++] = shorter[i];
+            }
+            match_idx = null;  //match_idx.reset();
+            for (int i = 0, j = 0; longer.length() > i; ++i)
+            {
+                if (match_flg[i])
+                    ms[ms2Idx + j++] = longer[i];  //ms2[j++] = longer[i];
+            }
+            match_flg = null;  //match_flg.reset();
+            long halftrans_cnt = 0;
+            for (int i = 0; match_cnt > i; ++i)
+            {
+                if (ms[ms1Idx + i] != ms[ms2Idx + i])  //if (ms1[i] != ms2[i])
+                    ++halftrans_cnt;
+            }
+            ms = null;  //ms.reset();
+
+            // simple prefix detection
+            long prefix_len = 0;
+            for (int i = 0; (std.min((long)shorter.length(), MAX_PREFIX) > i) && (lhs[i] == rhs[i]); ++i)
+                ++prefix_len;
+
+            // do the weighting
+            double m = match_cnt;
+            double t = (double)halftrans_cnt / 2;
+            double jaro = ((m / lhs.length()) + (m / rhs.length()) + ((m - t) / m)) / 3;
+            double jaro_winkler = (PREFIX_THRESHOLD > jaro) ? jaro : (jaro + (PREFIX_WEIGHT * prefix_len * (1.0 - jaro)));
+            return 1.0 - jaro_winkler;
+        }
     }
 }

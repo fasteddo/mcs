@@ -27,10 +27,11 @@ namespace mame.netlist
 
             //#define NETLIB_DEVICE_DECL(chip) extern factory::constructor_ptr_t decl_ ## chip;
 
-            //#define ENTRYX1(nic, name, defparam, decl) factory.register_device( decl (pstring(# name), pstring(xstr(nic)), pstring(defparam)) );
-            static void ENTRYX1(string nic, string name, string defparam, factory.constructor_ptr_t decl) { initialize_factory_factory.register_device(decl(name, nic, defparam)); }
-            //#define ENTRYX(nic, name, defparam) { NETLIB_DEVICE_DECL(nic) ENTRYX1(NETLIB_NAME(nic), name, defparam, decl_ ## nic) }
-            static void ENTRYX(factory.constructor_ptr_t decl, string nic, string name, string defparam) { ENTRYX1("nld_" + nic, name, defparam, decl); }
+            static void ENTRYX1(string nic, string name, string defparam, factory.constructor_ptr_t decl) { initialize_factory_factory.register_device(decl(name, nic, defparam)); }  //#define ENTRYX1(nic, name, defparam, decl) factory.register_device( decl (pstring(# name), pstring(xstr(nic)), pstring(defparam)) );
+            static void ENTRYX(factory.constructor_ptr_t decl, string nic, string name, string defparam) { ENTRYX1("nld_" + nic, name, defparam, decl); }  //#define ENTRYX(nic, name, defparam) { NETLIB_DEVICE_DECL(nic) ENTRYX1(NETLIB_NAME(nic), name, defparam, decl_ ## nic) }
+
+            //#define ENTRYX1_N(nic, decl) factory.register_device( decl (pstring(""), pstring(xstr(nic)), pstring("")) );
+            //#define ENTRYX_N(nic) { NETLIB_DEVICE_DECL(nic); ENTRYX1_N(NETLIB_NAME(nic), decl_ ## nic) }
 
             public static void initialize_factory(factory.list_t factory)
             {

@@ -7,16 +7,17 @@ using System.Collections.Generic;
 using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
+using uint8_t = System.Byte;
 
 
 namespace mame
 {
-    public partial class _1942_state : driver_device
+    partial class _1942_state : driver_device
     {
         /* memory pointers */
-        required_shared_ptr_byte m_spriteram;
-        required_shared_ptr_byte m_fg_videoram;
-        required_shared_ptr_byte m_bg_videoram;
+        required_shared_ptr_uint8_t m_spriteram;
+        required_shared_ptr_uint8_t m_fg_videoram;
+        required_shared_ptr_uint8_t m_bg_videoram;
 
         required_device<cpu_device> m_audiocpu;
         required_device<cpu_device> m_maincpu;
@@ -25,18 +26,18 @@ namespace mame
         required_device<generic_latch_8_device> m_soundlatch;
 
         /* video-related */
-        //tilemap_t *m_fg_tilemap;
-        //tilemap_t *m_bg_tilemap;
-        //int m_palette_bank;
-        //UINT8 m_scroll[2];
+        tilemap_t m_fg_tilemap;
+        tilemap_t m_bg_tilemap;
+        int m_palette_bank;
+        uint8_t [] m_scroll = new uint8_t[2];
 
 
         public _1942_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_spriteram = new required_shared_ptr_byte(this, "spriteram");
-            m_fg_videoram = new required_shared_ptr_byte(this, "fg_videoram");
-            m_bg_videoram = new required_shared_ptr_byte(this, "bg_videoram");
+            m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
+            m_fg_videoram = new required_shared_ptr_uint8_t(this, "fg_videoram");
+            m_bg_videoram = new required_shared_ptr_uint8_t(this, "bg_videoram");
             m_audiocpu = new required_device<cpu_device>(this, "audiocpu");
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
@@ -69,7 +70,7 @@ namespace mame
         //DECLARE_WRITE8_MEMBER(_1942_palette_bank_w);
         //DECLARE_WRITE8_MEMBER(_1942_scroll_w);
         //DECLARE_WRITE8_MEMBER(_1942_c804_w);
-        //DECLARE_PALETTE_INIT(1942);
+        //void _1942_palette(palette_device &palette) const;
         //TIMER_DEVICE_CALLBACK_MEMBER(_1942_scanline);
         //uint32_t screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
         //virtual void draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect);

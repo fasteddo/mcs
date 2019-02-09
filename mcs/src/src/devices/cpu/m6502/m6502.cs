@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using space_config_vector = mame.std_vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
+using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -16,18 +16,6 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    enum M6502_REG
-    {
-        M6502_PC = 1,
-        M6502_A,
-        M6502_X,
-        M6502_Y,
-        M6502_P,
-        M6502_S,
-        M6502_IR
-    }
-
-
     public class device_execute_interface_m6502 : device_execute_interface
     {
         public device_execute_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
@@ -35,36 +23,10 @@ namespace mame
         // device_execute_interface overrides
         public override uint32_t execute_min_cycles() { return 1; }
         public override uint32_t execute_max_cycles() { return 10; }
-        public override uint32_t execute_input_lines() { return (uint32_t)m6502_device.LINE.NMI_LINE + 1; }
-
-        public override void execute_run()
-        {
-            m6502_device m6502 = (m6502_device)device();
-
-            m6502.device_execute_interface_execute_run();
-        }
-
-        public override void execute_set_input(int inputnum, int state)
-        {
-            m6502_device m6502 = (m6502_device)device();
-
-            switch (inputnum)
-            {
-            case (int)m6502_device.LINE.IRQ_LINE: m6502.irq_state = state == (int)line_state.ASSERT_LINE; break;
-            case (int)m6502_device.LINE.APU_IRQ_LINE: m6502.apu_irq_state = state == (int)line_state.ASSERT_LINE; break;
-            case (int)m6502_device.LINE.NMI_LINE: m6502.nmi_state = m6502.nmi_state || (state == (int)line_state.ASSERT_LINE); break;
-            case (int)m6502_device.LINE.V_LINE:
-                if (!m6502.v_state && state == (int)line_state.ASSERT_LINE)
-                    m6502.P |= (byte)m6502_device.F.F_V;
-                m6502.v_state = state == (int)line_state.ASSERT_LINE;
-                break;
-            }
-        }
-
-        public override bool execute_input_edge_triggered(int inputnum)
-        {
-            return inputnum == (int)m6502_device.LINE.NMI_LINE;
-        }
+        public override uint32_t execute_input_lines() { m6502_device m6502 = (m6502_device)device(); return m6502.device_execute_interface_execute_input_lines(); }
+        public override void execute_run() { m6502_device m6502 = (m6502_device)device(); m6502.device_execute_interface_execute_run(); }
+        public override void execute_set_input(int inputnum, int state) { m6502_device m6502 = (m6502_device)device(); m6502.device_execute_interface_execute_set_input(inputnum, state); }
+        public override bool execute_input_edge_triggered(int inputnum) { m6502_device m6502 = (m6502_device)device(); return m6502.device_execute_interface_execute_input_edge_triggered(inputnum); }
     }
 
 
@@ -73,26 +35,7 @@ namespace mame
         public device_memory_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_memory_interface overrides
-        public override space_config_vector memory_space_config()
-        {
-            m6502_device m6502 = (m6502_device)device();
-
-            if (has_configured_map(emumem_global.AS_OPCODES))
-            {
-                return new space_config_vector()
-                {
-                    global.make_pair(emumem_global.AS_PROGRAM, m6502.program_config),
-                    global.make_pair(emumem_global.AS_OPCODES, m6502.sprogram_config)
-                };
-            }
-            else
-            {
-                return new space_config_vector()
-                {
-                    global.make_pair(emumem_global.AS_PROGRAM, m6502.program_config)
-                };
-            }
-        }
+        public override space_config_vector memory_space_config() { m6502_device m6502 = (m6502_device)device(); return m6502.device_memory_interface_memory_space_config(); }
     }
 
 
@@ -101,22 +44,9 @@ namespace mame
         public device_state_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_state_interface overrides
-        public override void state_import(device_state_entry entry)
-        {
-            throw new emu_unimplemented();
-        }
-
-        public override void state_export(device_state_entry entry)
-        {
-            m6502_device m6502 = (m6502_device)device();
-
-            m6502.device_state_interface_state_export(entry);
-        }
-
-        public override void state_string_export(device_state_entry entry, out string str)
-        {
-            throw new emu_unimplemented();
-        }
+        public override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
+        public override void state_export(device_state_entry entry) { m6502_device m6502 = (m6502_device)device(); m6502.device_state_interface_state_export(entry); }
+        public override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
     }
 
 
@@ -125,10 +55,7 @@ namespace mame
         public device_disasm_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler()
-        {
-            throw new emu_unimplemented();
-        }
+        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
     }
 
 
@@ -139,33 +66,45 @@ namespace mame
         public static readonly device_type M6502 = DEFINE_DEVICE_TYPE(device_creator_mb6502_cpu_device, "m6502", "MOS Technology M6502");
 
 
-        public enum LINE
-        {
-            IRQ_LINE = INPUT_LINE.INPUT_LINE_IRQ0,
-            APU_IRQ_LINE = INPUT_LINE.INPUT_LINE_IRQ1,
-            NMI_LINE = INPUT_LINE.INPUT_LINE_NMI,
-            V_LINE   = INPUT_LINE.INPUT_LINE_IRQ0 + 16
-        }
+        //enum
+        //{
+        const int M6502_PC = 1;
+        const int M6502_A  = 2;
+        const int M6502_X  = 3;
+        const int M6502_Y  = 4;
+        const int M6502_P  = 5;
+        const int M6502_S  = 6;
+        const int M6502_IR = 7; 
+        //}
 
 
-        enum M6502_STATE
-        {
-            STATE_RESET = 0xff00
-        }
+        //enum
+        //{
+        const int IRQ_LINE = device_execute_interface.INPUT_LINE_IRQ0;
+        const int APU_IRQ_LINE = device_execute_interface.INPUT_LINE_IRQ1;
+        const int NMI_LINE = device_execute_interface.INPUT_LINE_NMI;
+        const int V_LINE   = device_execute_interface.INPUT_LINE_IRQ0 + 16;
+        //}
 
 
-        public enum F
-        {
-            F_N = 0x80,
-            F_V = 0x40,
-            F_E = 0x20, // 65ce02
-            F_T = 0x20, // M740: replaces A with $00,X in some opcodes when set
-            F_B = 0x10,
-            F_D = 0x08,
-            F_I = 0x04,
-            F_Z = 0x02,
-            F_C = 0x01
-        }
+        //enum
+        //{
+        const int STATE_RESET = 0xff00;
+        //}
+
+
+        //enum
+        //{
+        const uint8_t F_N = 0x80;
+        const uint8_t F_V = 0x40;
+        const uint8_t F_E = 0x20; // 65ce02
+        const uint8_t F_T = 0x20; // M740: replaces A with $00,X in some opcodes when set
+        const uint8_t F_B = 0x10;
+        const uint8_t F_D = 0x08;
+        const uint8_t F_I = 0x04;
+        const uint8_t F_Z = 0x02;
+        const uint8_t F_C = 0x01;
+        //}
 
 
         abstract class memory_interface
@@ -211,8 +150,8 @@ namespace mame
 
         devcb_write_line sync_w;
 
-        public address_space_config program_config;
-        public address_space_config sprogram_config;
+        address_space_config program_config;
+        address_space_config sprogram_config;
 
         uint16_t PPC;                    /* previous program counter */
         uint16_t NPC;                    /* next start-of-instruction program counter */
@@ -297,13 +236,13 @@ namespace mame
         //bool get_sync() const { return sync; }
         //void disable_direct() { direct_disabled = true; }
 
-        //template<class Object> devcb_base &set_sync_callback(Object &&cb) { return sync_w.set_callback(std::forward<Object>(cb)); }
+        //auto sync_cb() { return sync_w.bind(); }
 
 
         protected virtual void init()
         {
-            mintf.program  = m_dimemory.space(emumem_global.AS_PROGRAM);
-            mintf.sprogram = m_dimemory.has_space(emumem_global.AS_OPCODES) ? m_dimemory.space(emumem_global.AS_OPCODES) : mintf.program;
+            mintf.program  = m_dimemory.space(AS_PROGRAM);
+            mintf.sprogram = m_dimemory.has_space(AS_OPCODES) ? m_dimemory.space(AS_OPCODES) : mintf.program;
 
             mintf.cache  = mintf.program.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
             mintf.scache = mintf.sprogram.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
@@ -312,17 +251,17 @@ namespace mame
 
             sync_w.resolve_safe();
 
-            m_distate.state_add((int)STATE.STATE_GENPC,     "GENPC",     XPC).callexport().noshow();
-            m_distate.state_add((int)STATE.STATE_GENPCBASE, "CURPC",     XPC).callexport().noshow();
-            m_distate.state_add((int)STATE.STATE_GENSP,     "GENSP",     SP).noshow();
-            m_distate.state_add((int)STATE.STATE_GENFLAGS,  "GENFLAGS",  P).callimport().formatstr("%6s").noshow();
-            m_distate.state_add((int)M6502_REG.M6502_PC,        "PC",        NPC).callimport();
-            m_distate.state_add((int)M6502_REG.M6502_A,         "A",         A);
-            m_distate.state_add((int)M6502_REG.M6502_X,         "X",         X);
-            m_distate.state_add((int)M6502_REG.M6502_Y,         "Y",         Y);
-            m_distate.state_add((int)M6502_REG.M6502_P,         "P",         P).callimport();
-            m_distate.state_add((int)M6502_REG.M6502_S,         "SP",        SP);
-            m_distate.state_add((int)M6502_REG.M6502_IR,        "IR",        IR);
+            m_distate.state_add(STATE_GENPC,     "GENPC",     XPC).callexport().noshow();
+            m_distate.state_add(STATE_GENPCBASE, "CURPC",     XPC).callexport().noshow();
+            m_distate.state_add(STATE_GENSP,     "GENSP",     SP).noshow();
+            m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  P).callimport().formatstr("%6s").noshow();
+            m_distate.state_add(M6502_PC,        "PC",        NPC).callimport();
+            m_distate.state_add(M6502_A,         "A",         A);
+            m_distate.state_add(M6502_X,         "X",         X);
+            m_distate.state_add(M6502_Y,         "Y",         Y);
+            m_distate.state_add(M6502_P,         "P",         P).callimport();
+            m_distate.state_add(M6502_S,         "SP",        SP);
+            m_distate.state_add(M6502_IR,        "IR",        IR);
 
             save_item(PC, "PC");
             save_item(NPC, "NPC");
@@ -345,7 +284,7 @@ namespace mame
             save_item(irq_taken, "irq_taken");
             save_item(inhibit_interrupts, "inhibit_interrupts");
 
-            execute().set_icountptr(icountRef);
+            set_icountptr(icountRef);
 
             PC = 0x0000;
             NPC = 0x0000;
@@ -362,7 +301,7 @@ namespace mame
             apu_irq_state = false;
             irq_taken = false;
             v_state = false;
-            inst_state = (int)M6502_STATE.STATE_RESET;
+            inst_state = STATE_RESET;
             inst_substate = 0;
             inst_state_base = 0;
             sync = false;
@@ -388,9 +327,18 @@ namespace mame
         }
 
 
+        protected override void device_stop()
+        {
+            if (mintf.scache != null) mintf.scache.Dispose();
+            if (mintf.cache != null) mintf.cache.Dispose();
+            if (mintf.sprogram != null) mintf.sprogram.Dispose();
+            if (mintf.program != null) mintf.program.Dispose();
+        }
+
+
         protected override void device_reset()
         {
-            inst_state = (int)M6502_STATE.STATE_RESET;
+            inst_state = STATE_RESET;
             inst_substate = 0;
             inst_state_base = 0;
             nmi_state = false;
@@ -399,7 +347,7 @@ namespace mame
             irq_taken = false;
             v_state = false;
             sync = false;
-            sync_w.op((int)line_state.CLEAR_LINE);
+            sync_w.op(CLEAR_LINE);
             inhibit_interrupts = false;
         }
 
@@ -407,47 +355,83 @@ namespace mame
         // device_execute_interface overrides
         //virtual uint32_t execute_min_cycles() const override;
         //virtual uint32_t execute_max_cycles() const override;
-        //virtual uint32_t execute_input_lines() const override;
-        //virtual void execute_run() override;
-        //virtual void execute_set_input(int inputnum, int state) override;
-        //virtual bool execute_input_edge_triggered(int inputnum) const override;
+        public uint32_t device_execute_interface_execute_input_lines() { return NMI_LINE + 1; }
+
+        public void device_execute_interface_execute_run()
+        {
+            if (inst_substate != 0)
+                do_exec_partial();
+
+            while (icountRef.i > 0)
+            {
+                if (inst_state < 0xff00)
+                {
+                    PPC = NPC;
+                    inst_state = IR | inst_state_base;
+                    if ((machine().debug_flags_get & DEBUG_FLAG_ENABLED) != 0)
+                        debugger_instruction_hook(pc_to_external(NPC));
+                }
+
+                do_exec_full();
+            }
+        }
+
+        public void device_execute_interface_execute_set_input(int inputnum, int state)
+        {
+            switch (inputnum)
+            {
+            case IRQ_LINE: irq_state = state == ASSERT_LINE; break;
+            case APU_IRQ_LINE: apu_irq_state = state == ASSERT_LINE; break;
+            case NMI_LINE: nmi_state = nmi_state || (state == ASSERT_LINE); break;
+            case V_LINE:
+                if (!v_state && state == ASSERT_LINE)
+                    P |= F_V;
+                v_state = state == ASSERT_LINE;
+                break;
+            }
+        }
+
+        public bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == NMI_LINE; }
 
 
         // device_memory_interface overrides
-        //virtual space_config_vector memory_space_config() const override;
+        public space_config_vector device_memory_interface_memory_space_config()
+        {
+            if (memory().has_configured_map(AS_OPCODES))
+            {
+                return new space_config_vector()
+                {
+                    std.make_pair(AS_PROGRAM, program_config),
+                    std.make_pair(AS_OPCODES, sprogram_config)
+                };
+            }
+            else
+            {
+                return new space_config_vector()
+                {
+                    std.make_pair(AS_PROGRAM, program_config)
+                };
+            }
+        }
 
 
         // device_state_interface overrides
         //virtual void state_import(const device_state_entry &entry) override;
-        //virtual void state_export(const device_state_entry &entry) override;
-        //virtual void state_string_export(const device_state_entry &entry, std::string &str) const override;
-
-
-        // device_disasm_interface overrides
-        //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
-
 
         public void device_state_interface_state_export(device_state_entry entry)
         {
             switch (entry.index())
             {
-                case (int)STATE.STATE_GENFLAGS:
-                case (int)M6502_REG.M6502_P:
-                    P = (uint8_t)(P | (uint8_t)(F.F_B|F.F_E));
-                    break;
-
-                case (int)M6502_REG.M6502_PC:
-                    PC = NPC;
-                    irq_taken = false;
-                    prefetch();
-                    PPC = NPC;
-                    inst_state = IR | inst_state_base;
-                    break;
-
-                default:
-                    break;
+                case STATE_GENPC:     XPC = pc_to_external(PPC); break;
+                case STATE_GENPCBASE: XPC = pc_to_external(NPC); break;
             }
         }
+
+        //virtual void state_string_export(const device_state_entry &entry, std::string &str) const override;
+
+
+        // device_disasm_interface overrides
+        //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
 
         uint8_t read(uint16_t adr) { return mintf.read(adr); }
@@ -461,13 +445,13 @@ namespace mame
         void prefetch()
         {
             sync = true;
-            sync_w.op((int)line_state.ASSERT_LINE);
+            sync_w.op(ASSERT_LINE);
             NPC = PC;
             IR = mintf.read_sync(PC);
             sync = false;
-            sync_w.op((int)line_state.CLEAR_LINE);
+            sync_w.op(CLEAR_LINE);
 
-            if ((nmi_state || ((irq_state || apu_irq_state) && (P & (byte)F.F_I) == 0)) && !inhibit_interrupts)
+            if ((nmi_state || ((irq_state || apu_irq_state) && (P & F_I) == 0)) && !inhibit_interrupts)
             {
                 irq_taken = true;
                 IR = 0x00;
@@ -484,11 +468,11 @@ namespace mame
 
         void set_nz(byte v)
         {
-            P &= unchecked((byte)(~(F.F_Z|F.F_N)));
+            P = (uint8_t)(P & ~(F_Z | F_N));
             if ((v & 0x80) != 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if (v == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
         }
 
 
@@ -511,58 +495,58 @@ namespace mame
 
         void do_adc_d(uint8_t val)
         {
-            byte c = (P & (byte)F.F_C) != 0 ? (byte)1 : (byte)0;
-            P &= unchecked((byte)(~(F.F_N|F.F_V|F.F_Z|F.F_C)));
+            byte c = (P & F_C) != 0 ? (byte)1 : (byte)0;
+            P = (uint8_t)(P & ~(F_N | F_V | F_Z | F_C));
             byte al = (byte)((A & 15) + (val & 15) + c);
             if(al > 9)
                 al += 6;
             byte ah = (byte)((A >> 4) + (val >> 4) + ((al > 15) ? 1 : 0));
             if((byte)(A + val + c) == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((ah & 8) != 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if((~(A^val) & (A^(ah << 4)) & 0x80) != 0)
-                P |= (byte)F.F_V;
+                P |= F_V;
             if(ah > 9)
                 ah += 6;
             if(ah > 15)
-                P |= (byte)F.F_C;
+                P |= F_C;
             A = (byte)((ah << 4) | (al & 15));
         }
 
         void do_adc_nd(uint8_t val)
         {
             UInt16 sum;
-            sum = (UInt16)(A + val + ((P & (byte)F.F_C) != 0 ? 1 : 0));
-            P &= unchecked((byte)(~(F.F_N|F.F_V|F.F_Z|F.F_C)));
+            sum = (UInt16)(A + val + ((P & F_C) != 0 ? 1 : 0));
+            P = (uint8_t)(P & ~(F_N | F_V | F_Z | F_C));
             if((byte)(sum) == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((sbyte)(sum) < 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if((~(A^val) & (A^sum) & 0x80) != 0)
-                P |= (byte)F.F_V;
+                P |= F_V;
             if((sum & 0xff00) != 0)
-                P |= (byte)F.F_C;
+                P |= F_C;
             A = (byte)sum;
         }
 
         void do_sbc_d(uint8_t val)
         {
-            byte c = (P & (byte)F.F_C) != 0 ? (byte)0 : (byte)1;
-            P &= unchecked((byte)(~(F.F_N|F.F_V|F.F_Z|F.F_C)));
+            byte c = (P & F_C) != 0 ? (byte)0 : (byte)1;
+            P = (uint8_t)(P & ~(F_N | F_V | F_Z | F_C));
             UInt16 diff = (UInt16)(A - val - c);
             byte al = (byte)((A & 15) - (val & 15) - c);
             if((sbyte)(al) < 0)
                 al -= 6;
             byte ah = (byte)((A >> 4) - (val >> 4) - (((sbyte)(al) < 0) ? 1 : 0));
             if((byte)(diff) == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((diff & 0x80) != 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if(((A^val) & (A^diff) & 0x80) != 0)
-                P |= (byte)F.F_V;
+                P |= F_V;
             if((diff & 0xff00) == 0)
-                P |= (byte)F.F_C;
+                P |= F_C;
             if((sbyte)(ah) < 0)
                 ah -= 6;
             A = (byte)((ah << 4) | (al & 15));
@@ -570,64 +554,64 @@ namespace mame
 
         void do_sbc_nd(uint8_t val)
         {
-            UInt16 diff = (UInt16)(A - val - ((P & (byte)F.F_C) != 0 ? 0 : 1));
-            P &= unchecked((byte)(~(F.F_N|F.F_V|F.F_Z|F.F_C)));
+            UInt16 diff = (UInt16)(A - val - ((P & F_C) != 0 ? 0 : 1));
+            P = (uint8_t)(P & ~(F_N | F_V | F_Z | F_C));
             if((byte)(diff) == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((sbyte)(diff) < 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if(((A^val) & (A^diff) & 0x80) != 0)
-                P |= (byte)F.F_V;
+                P |= F_V;
             if((diff & 0xff00) == 0)
-                P |= (byte)F.F_C;
+                P |= F_C;
             A = (byte)diff;
         }
 
         void do_arr_d()
         {
             // The adc/ror interaction gives an extremely weird result
-            bool c = (P & (byte)F.F_C) != 0;
-            P &= unchecked((byte)(~(F.F_N|F.F_Z|F.F_C|F.F_V)));
+            bool c = (P & F_C) != 0;
+            P = (uint8_t)(P & ~(F_N | F_Z | F_C | F_V));
             byte a = (byte)(A >> 1);
             if(c)
                 a |= 0x80;
             if(a == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((sbyte)(a) < 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if(((a ^ A) & 0x40) != 0)
-                P |= (byte)F.F_V;
+                P |= F_V;
 
             if((A & 0x0f) >= 0x05)
                 a = (byte)(((a + 6) & 0x0f) | (a & 0xf0));
 
             if((A & 0xf0) >= 0x50) {
                 a += 0x60;
-                P |= (byte)F.F_C;
+                P |= F_C;
             }
             A = a;
         }
 
         void do_arr_nd()
         {
-            bool c = (P & (byte)F.F_C) != 0;
-            P &= unchecked((byte)(~(F.F_N|F.F_Z|F.F_C|F.F_V)));
+            bool c = (P & F_C) != 0;
+            P = (uint8_t)(P & ~(F_N | F_Z | F_C | F_V));
             A >>= 1;
             if(c)
                 A |= 0x80;
             if(A == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((sbyte)(A)<0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if((A & 0x40) != 0)
-                P |= (byte)(F.F_V|F.F_C);
+                P |= (F_V | F_C);
             if((A & 0x20) != 0)
-                P ^= (byte)F.F_V;
+                P ^= F_V;
         }
 
         void do_adc(uint8_t val)
         {
-            if((P & (byte)F.F_D) != 0)
+            if((P & F_D) != 0)
                 do_adc_d(val);
             else
                 do_adc_nd(val);
@@ -635,19 +619,19 @@ namespace mame
 
         void do_cmp(uint8_t val1, uint8_t val2)
         {
-            P &= unchecked((byte)(~(F.F_N|F.F_Z|F.F_C)));
+            P = (uint8_t)(P & ~(F_N | F_Z | F_C));
             UInt16 r = (UInt16)(val1-val2);
             if(r == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((byte)(r) < 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if((r & 0xff00) == 0)
-                P |= (byte)F.F_C;
+                P |= F_C;
         }
 
         void do_sbc(uint8_t val)
         {
-            if((P & (byte)F.F_D) != 0)
+            if((P & F_D) != 0)
                 do_sbc_d(val);
             else
                 do_sbc_nd(val);
@@ -655,19 +639,19 @@ namespace mame
 
         void do_bit(uint8_t val)
         {
-            P &= unchecked((byte)(~(F.F_N|F.F_Z|F.F_V)));
+            P = (uint8_t)(P & ~(F_N | F_Z | F_V));
             byte r = (byte)(A & val);
             if(r == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             if((val & 0x80) != 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if((val & 0x40) != 0)
-                P |= (byte)F.F_V;
+                P |= F_V;
         }
 
         void do_arr()
         {
-            if((P & (byte)F.F_D) != 0)
+            if((P & F_D) != 0)
                 do_arr_d();
             else
                 do_arr_nd();
@@ -675,57 +659,57 @@ namespace mame
 
         uint8_t do_asl(uint8_t v)
         {
-            P &= unchecked((byte)(~(F.F_N|F.F_Z|F.F_C)));
+            P = (uint8_t)(P & ~(F_N | F_Z | F_C));
             byte r = (byte)(v<<1);
             if(r == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((sbyte)(r) < 0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             if((v & 0x80) != 0)
-                P |= (byte)F.F_C;
+                P |= F_C;
             return r;
         }
 
         uint8_t do_lsr(uint8_t v)
         {
-            P &= unchecked((byte)(~(F.F_N|F.F_Z|F.F_C)));
+            P = (uint8_t)(P & ~(F_N | F_Z | F_C));
             if((v & 1) != 0)
-                P |= (byte)F.F_C;
+                P |= F_C;
             v >>= 1;
             if(v == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             return v;
         }
 
         uint8_t do_ror(uint8_t v)
         {
-            bool c = (P & (byte)F.F_C) != 0;
-            P &= unchecked((byte)(~(F.F_N|F.F_Z|F.F_C)));
+            bool c = (P & F_C) != 0;
+            P = (uint8_t)(P & ~(F_N | F_Z | F_C));
             if((v & 1) != 0)
-                P |= (byte)F.F_C;
+                P |= F_C;
             v >>= 1;
             if(c)
                 v |= 0x80;
             if(v == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((sbyte)(v)<0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             return v;
         }
 
         uint8_t do_rol(uint8_t v)
         {
-            bool c = (P & (byte)F.F_C) != 0;
-            P &= unchecked((byte)(~(F.F_N|F.F_Z|F.F_C)));
+            bool c = (P & F_C) != 0;
+            P = (uint8_t)(P & ~(F_N | F_Z | F_C));
             if((v & 0x80) != 0)
-                P |= (byte)F.F_C;
+                P |= F_C;
             v <<= 1;
             if(c)
                 v |= 0x01;
             if(v == 0)
-                P |= (byte)F.F_Z;
+                P |= F_Z;
             else if((sbyte)(v)<0)
-                P |= (byte)F.F_N;
+                P |= F_N;
             return v;
         }
 
@@ -828,25 +812,5 @@ namespace mame
         //O(kil_non);
 
         //#undef O
-
-
-        public void device_execute_interface_execute_run()
-        {
-            if (inst_substate != 0)
-                do_exec_partial();
-
-            while (icountRef.i > 0)
-            {
-                if (inst_state < 0xff00)
-                {
-                    PPC = NPC;
-                    inst_state = IR | inst_state_base;
-                    if ((machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) != 0)
-                        execute().debugger_instruction_hook(pc_to_external(NPC));
-                }
-
-                do_exec_full();
-            }
-        }
     }
 }

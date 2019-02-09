@@ -46,7 +46,7 @@ namespace mame.util
             name from a filename; note that this makes
             assumptions about path separators
         -------------------------------------------------*/
-        public static string core_filename_extract_base(string name, bool strip_extension = false)  // (astring &result, const char *name, bool strip_extension = false);
+        public static string core_filename_extract_base(string name, bool strip_extension = false)
         {
             if (strip_extension)
                 return Path.GetFileNameWithoutExtension(name);
@@ -71,14 +71,18 @@ namespace mame.util
             a directory separator? The following logic
             works for most platforms
         -------------------------------------------------*/
-        //inline int is_directory_separator(char c)
-        //{
-        //    return (c == '\\' || c == '/' || c == ':');
-        //}
+        public static bool is_directory_separator(char c)
+        {
+//#if defined(WIN32)
+            return ('\\' == c) || ('/' == c) || (':' == c);
+//#else
+//            return '/' == c;
+//#endif
+        }
     }
 
 
-    public abstract class core_file
+    public abstract class core_file : global_object
     {
         //typedef std::unique_ptr<core_file> ptr;
 
@@ -121,7 +125,7 @@ namespace mame.util
             file = null;
 
             // can only do this for read access
-            if ((openflags & osdcore_global.OPEN_FLAG_WRITE) != 0 || (openflags & osdcore_global.OPEN_FLAG_CREATE) != 0)
+            if ((openflags & OPEN_FLAG_WRITE) != 0 || (openflags & OPEN_FLAG_CREATE) != 0)
                 return osd_file.error.INVALID_ACCESS;
 
             //try
@@ -144,7 +148,7 @@ namespace mame.util
         //static osd_file::error open_proxy(core_file &file, ptr &proxy);
 
         // close an open file
-        ~core_file() { }
+        //~core_file() { }
 
         // enable/disable streaming file compression via zlib; level is 0 to disable compression, or up to 9 for max compression
         public abstract osd_file.error compress(int level);
@@ -198,7 +202,7 @@ namespace mame.util
             core_file file;
 
             // attempt to open the file
-            var err = open(filename, osdcore_global.OPEN_FLAG_READ, out file);
+            var err = open(filename, OPEN_FLAG_READ, out file);
             if (err != osd_file.error.NONE)
                 return err;
 
@@ -576,8 +580,8 @@ namespace mame.util
         }
 
 
-        protected bool read_access() { return 0U != (m_openflags & osdcore_global.OPEN_FLAG_READ); }
-        protected bool write_access() { return 0U != (m_openflags & osdcore_global.OPEN_FLAG_WRITE); }
+        protected bool read_access() { return 0U != (m_openflags & OPEN_FLAG_READ); }
+        protected bool write_access() { return 0U != (m_openflags & OPEN_FLAG_WRITE); }
         //bool no_bom() { return 0U != (m_openflags & osdcore_global.OPEN_FLAG_NO_BOM); }
 
 
@@ -607,12 +611,11 @@ namespace mame.util
             {
                 ListBytes buf = allocate();  // void *const buf = allocate();
                 if (buf != null)
-                    global.memcpy(new ListBytesPointer(buf), new ListBytesPointer(data), length);  // std::memcpy(buf, data, length);
+                    memcpy(new ListBytesPointer(buf), new ListBytesPointer(data), length);  // std::memcpy(buf, data, length);
             }
         }
 
-
-        ~core_in_memory_file() { purge(); }
+        //~core_in_memory_file() { purge(); }
 
 
         public override osd_file.error compress(int level) { return osd_file.error.INVALID_ACCESS; }
@@ -740,7 +743,7 @@ namespace mame.util
                 //        reinterpret_cast<std::uint8_t *>(dest) + destoffs,
                 //        reinterpret_cast<std::uint8_t const *>(source) + sourceoffs,
                 //        bytes_to_copy);
-                global.memcpy(new ListBytesPointer(dest, (int)destoffs), new ListBytesPointer(source, (int)sourceoffs), bytes_to_copy);
+                memcpy(new ListBytesPointer(dest, (int)destoffs), new ListBytesPointer(source, (int)sourceoffs), bytes_to_copy);
             }
 
             return bytes_to_copy;
@@ -748,7 +751,7 @@ namespace mame.util
     }
 
 
-    class core_osd_file : core_in_memory_file
+    class core_osd_file : core_in_memory_file, IDisposable
     {
         const int FILE_BUFFER_SIZE = 512;
 
@@ -769,15 +772,19 @@ namespace mame.util
             m_bufferbytes = 0;
         }
 
-
-        /*-------------------------------------------------
-            closes a file
-        -------------------------------------------------*/
         ~core_osd_file()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             // close files and free memory
             if (m_zdata != null)
                 compress(corefile_global.FCOMPRESS_NONE);
+
+            m_isDisposed = true;
         }
 
 

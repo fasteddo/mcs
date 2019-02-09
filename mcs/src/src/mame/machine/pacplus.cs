@@ -9,7 +9,7 @@ using ListBytesPointer = mame.ListPointer<System.Byte>;
 
 namespace mame
 {
-    public partial class pacman_state : driver_device
+    partial class pacman_state : driver_device
     {
         static readonly byte [,] swap_xor_table = new byte[6, 9]
         {

@@ -132,16 +132,13 @@ namespace mame
         //-------------------------------------------------
         //  device_add_mconfig - add device configuration
         //-------------------------------------------------
-        protected override void device_add_mconfig(machine_config config, device_t owner, device_t device)
+        protected override void device_add_mconfig(machine_config config)
         {
-            //MACHINE_CONFIG_START(namco_50xx_device::device_add_mconfig)
-            MACHINE_CONFIG_START(config, owner, device);
-                MCFG_DEVICE_ADD("mcu", mb8842_cpu_device.MB8842, DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
-                MCFG_MB88XX_READ_K_CB(READ8(K_r));
-                MCFG_MB88XX_WRITE_O_CB(WRITE8(O_w));
-                MCFG_MB88XX_READ_R0_CB(READ8(R0_r));
-                MCFG_MB88XX_READ_R2_CB(READ8(R2_r));
-            MACHINE_CONFIG_END();
+            MB8842(config, m_cpu, DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
+            m_cpu.target.read_k().set(K_r).reg();
+            m_cpu.target.write_o().set(O_w).reg();
+            m_cpu.target.read_r(0).set(R0_r).reg();
+            m_cpu.target.read_r(2).set(R2_r).reg();
         }
 
         //TIMER_CALLBACK_MEMBER( namco_50xx_device::latch_callback )
@@ -160,12 +157,12 @@ namespace mame
         //TIMER_CALLBACK_MEMBER( namco_50xx_device::irq_clear )
         void irq_clear(object ptr, int param)
         {
-            m_cpu.target.execute().set_input_line(0, line_state.CLEAR_LINE);
+            m_cpu.target.set_input_line(0, CLEAR_LINE);
         }
 
         void irq_set()
         {
-            m_cpu.target.execute().set_input_line(0, line_state.ASSERT_LINE);
+            m_cpu.target.set_input_line(0, ASSERT_LINE);
 
             // The execution time of one instruction is ~4us, so we must make sure to
             // give the cpu time to poll the /IRQ input before we clear it.

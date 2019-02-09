@@ -53,7 +53,7 @@ namespace mameForm
                 Thread.CurrentThread.IsBackground = true; 
                 Thread.CurrentThread.Name = "machine_manager.execute()";
 
-                int ret = frontend.execute(new std_vector<string>(Environment.GetCommandLineArgs()));
+                int ret = frontend.execute(new std.vector<string>(Environment.GetCommandLineArgs()));
 
                 // tell form that it should close
                 form.Invoke((MethodInvoker)delegate { form.Close(); });
@@ -61,6 +61,9 @@ namespace mameForm
 
 
             Application.Run(form);
+
+            mame_machine_manager.close_instance();
+            osd.Dispose();
         }
     }
 }

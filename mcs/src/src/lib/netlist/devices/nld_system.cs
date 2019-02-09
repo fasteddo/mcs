@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using netlist_time = mame.netlist.ptime_u64;  //using netlist_time = ptime<std::uint64_t, NETLIST_INTERNAL_RES>;
+
 
 namespace mame.netlist
 {
@@ -104,9 +106,10 @@ namespace mame.netlist
             }
 
             //NETLIB_UPDATEI();
+            //NETLIB_UPDATE(logic_input)
             protected override void update()
             {
-                throw new emu_unimplemented();
+                m_Q.push((m_IN.op() ? 1U : 0U) & 1, netlist_time.from_nsec(1));
             }
 
             //NETLIB_RESETI();
@@ -128,9 +131,10 @@ namespace mame.netlist
             public override bool needs_update_after_param_change() { return true; }
 
             //NETLIB_UPDATEI();
+            //NETLIB_UPDATE(analog_input)
             protected override void update()
             {
-                throw new emu_unimplemented();
+                m_Q.push(m_IN.op());
             }
 
             //NETLIB_RESETI();

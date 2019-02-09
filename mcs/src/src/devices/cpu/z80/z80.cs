@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using space_config_vector = mame.std_vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
+using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -21,32 +21,8 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    enum Z80EXECUTE
-    {
-        NSC800_RSTA = INPUT_LINE.INPUT_LINE_IRQ0 + 1,
-        NSC800_RSTB,
-        NSC800_RSTC,
-        Z80_INPUT_LINE_WAIT,
-        Z80_INPUT_LINE_BOGUSWAIT, /* WAIT pin implementation used to be nonexistent, please remove this when all drivers are updated with Z80_INPUT_LINE_WAIT */
-        Z80_INPUT_LINE_BUSRQ
-    };
-
-    enum Z80STATE
-    {
-        Z80_PC = STATE.STATE_GENPC, Z80_SP = 1,
-        Z80_A, Z80_B, Z80_C, Z80_D, Z80_E, Z80_H, Z80_L,
-        Z80_AF, Z80_BC, Z80_DE, Z80_HL,
-        Z80_IX, Z80_IY, Z80_AF2, Z80_BC2, Z80_DE2, Z80_HL2,
-        Z80_R, Z80_I, Z80_IM, Z80_IFF1, Z80_IFF2, Z80_HALT,
-        Z80_DC0, Z80_DC1, Z80_DC2, Z80_DC3, Z80_WZ,
-    }
-
-
     public class device_execute_interface_z80 : device_execute_interface
     {
-        static int opcount = 0;  // for debugging purposes
-
-
         public device_execute_interface_z80(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_execute_interface overrides
@@ -54,91 +30,9 @@ namespace mame
         public override uint32_t execute_max_cycles() { return 16; }
         public override uint32_t execute_input_lines() { return 4; }
         public override uint32_t execute_default_irq_vector(int inputnum) { return 0xff; }
-        public override bool execute_input_edge_triggered(int inputnum) { return inputnum == (int)INPUT_LINE.INPUT_LINE_NMI; }
-
-        /****************************************************************************
-         * Execute 'cycles' T-states.
-         ****************************************************************************/
-        public override void execute_run()
-        {
-            z80_device z80 = (z80_device)device();
-
-            do
-            {
-                if (z80.wait_state != 0)
-                {
-                    // stalled
-                    z80.icount = 0;
-                    return;
-                }
-
-                // check for interrupts before each instruction
-                if (z80.nmi_pending)
-                    z80.take_nmi();
-                else if (z80.irq_state != (byte)line_state.CLEAR_LINE && z80.iff1 != 0 && !z80.after_ei)
-                    z80.take_interrupt();
-
-                z80.after_ei = false;
-                z80.after_ldair = false;
-
-                z80.PRVPC = z80.PCD;
-                debugger_instruction_hook(z80.PCD);
-                z80.r++;
-
-
-                uint8_t r = z80.rop();
-
-
-                if (opcount % 200000 == 0)
-                    global.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", z80.tag(), opcount, r, z80.A, z80.B, z80.C, z80.F, z80.HL);
-
-                //if (opcount >= 0 && opcount < 500)
-                //    global.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", z80.tag(), opcount, r, z80.A, z80.B, z80.C, z80.F, z80.HL);
-
-
-                opcount++;
-
-
-                z80.EXEC_op(r);
-
-            } while (z80.icount > 0);
-        }
-
-
-        public override void execute_set_input(int inputnum, int state)
-        {
-            z80_device z80 = (z80_device)device();
-
-            switch (inputnum)
-            {
-                case (int)Z80EXECUTE.Z80_INPUT_LINE_BUSRQ:
-                    z80.busrq_state = state;
-                    break;
-
-                case (int)INPUT_LINE.INPUT_LINE_NMI:
-                    /* mark an NMI pending on the rising edge */
-                    if (z80.nmi_state == (byte)line_state.CLEAR_LINE && state != (int)line_state.CLEAR_LINE)
-                        z80.nmi_pending = true;
-                    z80.nmi_state = (byte)state;
-                    break;
-
-                case (int)INPUT_LINE.INPUT_LINE_IRQ0:
-                    /* update the IRQ state via the daisy chain */
-                    z80.irq_state = (byte)state;
-                    if (z80.m_daisy.daisy_chain_present())
-                        z80.irq_state = (z80.m_daisy.daisy_update_irq_state() == (int)line_state.ASSERT_LINE) ? (byte)line_state.ASSERT_LINE : z80.irq_state;
-
-                    /* the main execute loop will take the interrupt */
-                    break;
-
-                case (int)Z80EXECUTE.Z80_INPUT_LINE_WAIT:
-                    z80.wait_state = state;
-                    break;
-
-                default:
-                    break;
-            }
-        }
+        public override bool execute_input_edge_triggered(int inputnum) { z80_device z80 = (z80_device)device(); return z80.device_execute_interface_execute_input_edge_triggered(inputnum); }
+        public override void execute_run() { z80_device z80 = (z80_device)device(); z80.device_execute_interface_execute_run(); }
+        public override void execute_set_input(int inputnum, int state) { z80_device z80 = (z80_device)device(); z80.device_execute_interface_execute_set_input(inputnum, state); }
     }
 
 
@@ -147,28 +41,7 @@ namespace mame
         public device_memory_interface_z80(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_memory_interface overrides
-        public override space_config_vector memory_space_config()
-        {
-            z80_device z80 = (z80_device)device();
-
-            if (has_configured_map(emumem_global.AS_OPCODES))
-            {
-                return new space_config_vector()
-                {
-                    global.make_pair(emumem_global.AS_PROGRAM, z80.program_config),
-                    global.make_pair(emumem_global.AS_OPCODES, z80.opcodes_config),
-                    global.make_pair(emumem_global.AS_IO,      z80.io_config)
-                };
-            }
-            else
-            {
-                return new space_config_vector()
-                {
-                    global.make_pair(emumem_global.AS_PROGRAM, z80.program_config),
-                    global.make_pair(emumem_global.AS_IO,      z80.io_config)
-                };
-            }
-        }
+        public override space_config_vector memory_space_config() { z80_device z80 = (z80_device)device(); return z80.device_memory_interface_memory_space_config(); }
     }
 
 
@@ -177,58 +50,9 @@ namespace mame
         public device_state_interface_z80(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_state_interface overrides
-        public override void state_import(device_state_entry entry)
-        {
-            z80_device z80 = (z80_device)device();
-
-            switch (entry.index())
-            {
-                case (int)Z80STATE.Z80_R:
-                    z80.r = (byte)(z80.rtemp & 0x7f);
-                    z80.r2 = (byte)(z80.rtemp & 0x80);
-                    break;
-
-                default:
-                    throw new emu_fatalerror("CPU_IMPORT_STATE() called for unexpected value\n");
-            }
-        }
-
-        public override void state_export(device_state_entry entry)
-        {
-            z80_device z80 = (z80_device)device();
-
-            switch (entry.index())
-            {
-                case (int)Z80STATE.Z80_R:
-                    z80.rtemp = (byte)((z80.r & 0x7f) | (z80.r2 & 0x80));
-                    break;
-
-                default:
-                    throw new emu_fatalerror("CPU_EXPORT_STATE() called for unexpected value\n");
-            }
-        }
-
-        public override void state_string_export(device_state_entry entry, out string str)
-        {
-            z80_device z80 = (z80_device)device();
-
-            str = "";
-
-            switch (entry.index())
-            {
-                case (int)STATE.STATE_GENFLAGS:
-                    str = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}",  // %c%c%c%c%c%c%c%c
-                        (z80.F & 0x80) > 0 ? 'S':'.',
-                        (z80.F & 0x40) > 0 ? 'Z':'.',
-                        (z80.F & 0x20) > 0 ? 'Y':'.',
-                        (z80.F & 0x10) > 0 ? 'H':'.',
-                        (z80.F & 0x08) > 0 ? 'X':'.',
-                        (z80.F & 0x04) > 0 ? 'P':'.',
-                        (z80.F & 0x02) > 0 ? 'N':'.',
-                        (z80.F & 0x01) > 0 ? 'C':'.');
-                    break;
-            }
-        }
+        public override void state_import(device_state_entry entry) { z80_device z80 = (z80_device)device(); z80.device_state_interface_state_import(entry); }
+        public override void state_export(device_state_entry entry) { z80_device z80 = (z80_device)device(); z80.device_state_interface_state_export(entry); }
+        public override void state_string_export(device_state_entry entry, out string str) { z80_device z80 = (z80_device)device(); z80.device_state_interface_state_string_export(entry, out str); }
     }
 
 
@@ -237,13 +61,7 @@ namespace mame
         public device_disasm_interface_z80(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler()
-        {
-            throw new emu_unimplemented();
-#if false
-            return new z80_disassembler;
-#endif
-        }
+        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
     }
 
 
@@ -255,6 +73,52 @@ namespace mame
         public static readonly device_type Z80 = DEFINE_DEVICE_TYPE(device_creator_z80_device, "z80", "Zilog Z80");
 
 
+        //enum
+        //{
+        const int NSC800_RSTA = device_execute_interface.INPUT_LINE_IRQ0 + 1;
+        const int NSC800_RSTB = device_execute_interface.INPUT_LINE_IRQ0 + 2;
+        const int NSC800_RSTC = device_execute_interface.INPUT_LINE_IRQ0 + 3;
+        const int Z80_INPUT_LINE_WAIT  = device_execute_interface.INPUT_LINE_IRQ0 + 4;
+        const int Z80_INPUT_LINE_BOGUSWAIT = device_execute_interface.INPUT_LINE_IRQ0 + 5; /* WAIT pin implementation used to be nonexistent, please remove this when all drivers are updated with Z80_INPUT_LINE_WAIT */
+        public const int Z80_INPUT_LINE_BUSRQ = device_execute_interface.INPUT_LINE_IRQ0 + 6;
+        //}
+
+
+        //enum
+        //{
+        const int Z80_PC   =  STATE_GENPC;
+        const int Z80_SP   =  1;
+        const int Z80_A    =  2;
+        const int Z80_B    =  3;
+        const int Z80_C    =  4;
+        const int Z80_D    =  5;
+        const int Z80_E    =  6;
+        const int Z80_H    =  7;
+        const int Z80_L    =  8;
+        const int Z80_AF   =  9;
+        const int Z80_BC   = 10;
+        const int Z80_DE   = 11;
+        const int Z80_HL   = 12;
+        const int Z80_IX   = 13;
+        const int Z80_IY   = 14;
+        const int Z80_AF2  = 15;
+        const int Z80_BC2  = 16;
+        const int Z80_DE2  = 17;
+        const int Z80_HL2  = 18;
+        const int Z80_R    = 19;
+        const int Z80_I    = 20;
+        const int Z80_IM   = 21;
+        const int Z80_IFF1 = 22;
+        const int Z80_IFF2 = 23;
+        const int Z80_HALT = 24;
+        const int Z80_DC0  = 25;
+        const int Z80_DC1  = 26;
+        const int Z80_DC2  = 27;
+        const int Z80_DC3  = 28;
+        const int Z80_WZ   = 29;
+        //}
+
+
         const bool VERBOSE = false;
         void LOG(string format, params object [] args) { if (VERBOSE) logerror(format, args); }
 
@@ -262,7 +126,7 @@ namespace mame
         static bool tables_initialised = false;
         static uint8_t [] SZ = new uint8_t[256];       /* zero and sign flags */
         static uint8_t [] SZ_BIT = new uint8_t[256];   /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
-        public static uint8_t [] SZP = new uint8_t[256];      /* zero, sign and parity flags */
+        static uint8_t [] SZP = new uint8_t[256];      /* zero, sign and parity flags */
         static uint8_t [] SZHV_inc = new uint8_t[256]; /* zero, sign, half carry and overflow flags INC r8 */
         static uint8_t [] SZHV_dec = new uint8_t[256]; /* zero, sign, half carry and overflow flags DEC r8 */
 
@@ -397,7 +261,7 @@ namespace mame
         device_state_interface_z80 m_distate;
 
 
-        public z80_daisy_chain_interface m_daisy;
+        z80_daisy_chain_interface m_daisy;
 
 
         // address spaces
@@ -462,60 +326,60 @@ namespace mame
         /* register is calculated as follows: refresh=(r&127)|(r2&128)    */
         /****************************************************************************/
 
-        public const uint8_t CF      = 0x01;
-        public const uint8_t NF      = 0x02;
-        public const uint8_t PF      = 0x04;
-        public const uint8_t VF      = PF;
-        public const uint8_t XF      = 0x08;
-        public const uint8_t HF      = 0x10;
-        public const uint8_t YF      = 0x20;
-        public const uint8_t ZF      = 0x40;
-        public const uint8_t SF      = 0x80;
+        const uint8_t CF      = 0x01;
+        const uint8_t NF      = 0x02;
+        const uint8_t PF      = 0x04;
+        const uint8_t VF      = PF;
+        const uint8_t XF      = 0x08;
+        const uint8_t HF      = 0x10;
+        const uint8_t YF      = 0x20;
+        const uint8_t ZF      = 0x40;
+        const uint8_t SF      = 0x80;
 
         //#define INT_IRQ 0x01
         //#define NMI_IRQ 0x02
 
-        public uint32_t PRVPC { get { return m_prvpc.d; } set { m_prvpc.d = value; } }     /* previous program counter */
+        uint32_t PRVPC { get { return m_prvpc.d; } set { m_prvpc.d = value; } }     /* previous program counter */
 
-        public uint32_t PCD { get { return m_pc.d; } set { m_pc.d = value; } }
-        public uint16_t PC { get { return m_pc.w.l; } set { m_pc.w.l = value; } }
+        uint32_t PCD { get { return m_pc.d; } set { m_pc.d = value; } }
+        uint16_t PC { get { return m_pc.w.l; } set { m_pc.w.l = value; } }
 
-        public uint32_t SPD { get { return m_sp.d; } set { m_sp.d = value; } }
-        public uint16_t SP { get { return m_sp.w.l; } set { m_sp.w.l = value; } }
+        uint32_t SPD { get { return m_sp.d; } set { m_sp.d = value; } }
+        uint16_t SP { get { return m_sp.w.l; } set { m_sp.w.l = value; } }
 
-        public uint32_t AFD { get { return m_af.d; } set { m_af.d = value; } }
-        public uint16_t AF { get { return m_af.w.l; } set { m_af.w.l = value; } }
-        public uint8_t A { get { return m_af.b.h; } set { m_af.b.h = value; } }
-        public uint8_t F { get { return m_af.b.l; } set { m_af.b.l = value; } }
+        uint32_t AFD { get { return m_af.d; } set { m_af.d = value; } }
+        uint16_t AF { get { return m_af.w.l; } set { m_af.w.l = value; } }
+        uint8_t A { get { return m_af.b.h; } set { m_af.b.h = value; } }
+        uint8_t F { get { return m_af.b.l; } set { m_af.b.l = value; } }
 
-        public uint32_t BCD { get { return m_bc.d; } set { m_bc.d = value; } }
-        public uint16_t BC { get { return m_bc.w.l; } set { m_bc.w.l = value; } }
-        public uint8_t B { get { return m_bc.b.h; } set { m_bc.b.h = value; } }
-        public uint8_t C { get { return m_bc.b.l; } set { m_bc.b.l = value; } }
+        uint32_t BCD { get { return m_bc.d; } set { m_bc.d = value; } }
+        uint16_t BC { get { return m_bc.w.l; } set { m_bc.w.l = value; } }
+        uint8_t B { get { return m_bc.b.h; } set { m_bc.b.h = value; } }
+        uint8_t C { get { return m_bc.b.l; } set { m_bc.b.l = value; } }
 
-        public uint32_t DED { get { return m_de.d; } set { m_de.d = value; } }
-        public uint16_t DE { get { return m_de.w.l; } set { m_de.w.l = value; } }
-        public uint8_t D { get { return m_de.b.h; } set { m_de.b.h = value; } }
-        public uint8_t E { get { return m_de.b.l; } set { m_de.b.l = value; } }
+        uint32_t DED { get { return m_de.d; } set { m_de.d = value; } }
+        uint16_t DE { get { return m_de.w.l; } set { m_de.w.l = value; } }
+        uint8_t D { get { return m_de.b.h; } set { m_de.b.h = value; } }
+        uint8_t E { get { return m_de.b.l; } set { m_de.b.l = value; } }
 
-        public uint32_t HLD { get { return m_hl.d; } set { m_hl.d = value; } }
-        public uint16_t HL { get { return m_hl.w.l; } set { m_hl.w.l = value; } }
-        public uint8_t H { get { return m_hl.b.h; } set { m_hl.b.h = value; } }
-        public uint8_t L { get { return m_hl.b.l; } set { m_hl.b.l = value; } }
+        uint32_t HLD { get { return m_hl.d; } set { m_hl.d = value; } }
+        uint16_t HL { get { return m_hl.w.l; } set { m_hl.w.l = value; } }
+        uint8_t H { get { return m_hl.b.h; } set { m_hl.b.h = value; } }
+        uint8_t L { get { return m_hl.b.l; } set { m_hl.b.l = value; } }
 
-        public uint32_t IXD { get { return m_ix.d; } set { m_ix.d = value; } }
-        public uint16_t IX { get { return m_ix.w.l; } set { m_ix.w.l = value; } }
-        public uint8_t HX { get { return m_ix.b.h; } set { m_ix.b.h = value; } }
-        public uint8_t LX { get { return m_ix.b.l; } set { m_ix.b.l = value; } }
+        uint32_t IXD { get { return m_ix.d; } set { m_ix.d = value; } }
+        uint16_t IX { get { return m_ix.w.l; } set { m_ix.w.l = value; } }
+        uint8_t HX { get { return m_ix.b.h; } set { m_ix.b.h = value; } }
+        uint8_t LX { get { return m_ix.b.l; } set { m_ix.b.l = value; } }
 
-        public uint32_t IYD { get { return m_iy.d; } set { m_iy.d = value; } }
-        public uint16_t IY { get { return m_iy.w.l; } set { m_iy.w.l = value; } }
-        public uint8_t HY { get { return m_iy.b.h; } set { m_iy.b.h = value; } }
-        public uint8_t LY { get { return m_iy.b.l; } set { m_iy.b.l = value; } }
+        uint32_t IYD { get { return m_iy.d; } set { m_iy.d = value; } }
+        uint16_t IY { get { return m_iy.w.l; } set { m_iy.w.l = value; } }
+        uint8_t HY { get { return m_iy.b.h; } set { m_iy.b.h = value; } }
+        uint8_t LY { get { return m_iy.b.l; } set { m_iy.b.l = value; } }
 
-        public uint16_t WZ { get { return m_wz.w.l; } set { m_wz.w.l = value; } }
-        public uint8_t WZ_H { get { return m_wz.b.h; } set { m_wz.b.h = value; } }
-        public uint8_t WZ_L { get { return m_wz.b.l; } set { m_wz.b.l = value; } }
+        uint16_t WZ { get { return m_wz.w.l; } set { m_wz.w.l = value; } }
+        uint8_t WZ_H { get { return m_wz.b.h; } set { m_wz.b.h = value; } }
+        uint8_t WZ_L { get { return m_wz.b.l; } set { m_wz.b.l = value; } }
 
 
         public z80_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -544,33 +408,10 @@ namespace mame
         }
 
 
-        public address_space_config program_config { get { return m_program_config; } }
-        public address_space_config opcodes_config { get { return m_opcodes_config; } }
-        public address_space_config io_config { get { return m_io_config; } }
-
-        public uint8_t r { get { return m_r; } set { m_r = value; } }
-        public uint8_t r2 { get { return m_r2; } set { m_r2 = value; } }
-        public uint8_t iff1 { get { return m_iff1; } }
-        public uint8_t nmi_state { get { return m_nmi_state; } set { m_nmi_state = value; } }
-        public bool nmi_pending { get { return m_nmi_pending; } set { m_nmi_pending = value; } }
-        public uint8_t irq_state { get { return m_irq_state; } set { m_irq_state = value; } }
-        public int wait_state { get { return m_wait_state; } set { m_wait_state = value; } }
-        public int busrq_state { get { return m_busrq_state; } set { m_busrq_state = value; } }
-        public bool after_ei { get { return m_after_ei; } set { m_after_ei = value; } }
-        public bool after_ldair { get { return m_after_ldair; } set { m_after_ldair = value; } }
-
-        public int icount { get { return m_icountRef.i; } set { m_icountRef.i = value; } }
-        public intref icountRef { get { return m_icountRef; } }
-        public uint8_t rtemp { get { return m_rtemp; } set { m_rtemp = value; } }
-
-
         //void z80_set_cycle_tables(const uint8_t *op, const uint8_t *cb, const uint8_t *ed, const uint8_t *xy, const uint8_t *xycb, const uint8_t *ex);
         //template <typename... T> void set_memory_map(T &&... args) { set_addrmap(AS_PROGRAM, std::forward<T>(args)...); }
         //template <typename... T> void set_m1_map(T &&... args) { set_addrmap(AS_OPCODES, std::forward<T>(args)...); }
         //template <typename... T> void set_io_map(T &&... args) { set_addrmap(AS_IO, std::forward<T>(args)...); }
-        //template<class Object> devcb_base &set_irqack_cb(Object &&cb) { return m_irqack_cb.set_callback(std::forward<Object>(cb)); }
-        //template<class Object> devcb_base &set_refresh_cb(Object &&cb) { return m_refresh_cb.set_callback(std::forward<Object>(cb)); }
-        //template<class Object> devcb_base &set_halt_cb(Object &&cb) { return m_halt_cb.set_callback(std::forward<Object>(cb)); }
         //auto irqack_cb() { return m_irqack_cb.bind(); }
         //auto refresh_cb() { return m_refresh_cb.bind(); }
         //auto halt_cb() { return m_halt_cb.bind(); }
@@ -729,48 +570,48 @@ namespace mame
             m_after_ldair = false;
             m_ea = 0;
 
-            m_program = m_dimemory.space(emumem_global.AS_PROGRAM);
-            m_opcodes = m_dimemory.has_space(emumem_global.AS_OPCODES) ? m_dimemory.space(emumem_global.AS_OPCODES) : m_program;
+            m_program = m_dimemory.space(AS_PROGRAM);
+            m_opcodes = m_dimemory.has_space(AS_OPCODES) ? m_dimemory.space(AS_OPCODES) : m_program;
             m_cache = m_program.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
             m_opcodes_cache = m_opcodes.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
-            m_io = m_dimemory.space(emumem_global.AS_IO);
+            m_io = m_dimemory.space(AS_IO);
 
             IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
             F = ZF;           /* Zero flag is set */
 
             /* set up the state table */
-            m_distate.state_add((int)STATE.STATE_GENPC,        "PC",        m_pc.w.l).callimport();
-            m_distate.state_add((int)STATE.STATE_GENPCBASE,    "CURPC",     m_prvpc.w.l).callimport().noshow();
-            m_distate.state_add((int)Z80STATE.Z80_SP,          "SP",        SP);
-            m_distate.state_add((int)STATE.STATE_GENSP,        "GENSP",     SP).noshow();
-            m_distate.state_add((int)STATE.STATE_GENFLAGS,     "GENFLAGS",  F).noshow().formatstr("%8s");
-            m_distate.state_add((int)Z80STATE.Z80_A,           "A",         A).noshow();
-            m_distate.state_add((int)Z80STATE.Z80_B,           "B",         B).noshow();
-            m_distate.state_add((int)Z80STATE.Z80_C,           "C",         C).noshow();
-            m_distate.state_add((int)Z80STATE.Z80_D,           "D",         D).noshow();
-            m_distate.state_add((int)Z80STATE.Z80_E,           "E",         E).noshow();
-            m_distate.state_add((int)Z80STATE.Z80_H,           "H",         H).noshow();
-            m_distate.state_add((int)Z80STATE.Z80_L,           "L",         L).noshow();
-            m_distate.state_add((int)Z80STATE.Z80_AF,          "AF",        AF);
-            m_distate.state_add((int)Z80STATE.Z80_BC,          "BC",        BC);
-            m_distate.state_add((int)Z80STATE.Z80_DE,          "DE",        DE);
-            m_distate.state_add((int)Z80STATE.Z80_HL,          "HL",        HL);
-            m_distate.state_add((int)Z80STATE.Z80_IX,          "IX",        IX);
-            m_distate.state_add((int)Z80STATE.Z80_IY,          "IY",        IY);
-            m_distate.state_add((int)Z80STATE.Z80_AF2,         "AF2",       m_af2.w.l);
-            m_distate.state_add((int)Z80STATE.Z80_BC2,         "BC2",       m_bc2.w.l);
-            m_distate.state_add((int)Z80STATE.Z80_DE2,         "DE2",       m_de2.w.l);
-            m_distate.state_add((int)Z80STATE.Z80_HL2,         "HL2",       m_hl2.w.l);
-            m_distate.state_add((int)Z80STATE.Z80_WZ,          "WZ",        WZ);
-            m_distate.state_add((int)Z80STATE.Z80_R,           "R",         m_rtemp).callimport().callexport();
-            m_distate.state_add((int)Z80STATE.Z80_I,           "I",         m_i);
-            m_distate.state_add((int)Z80STATE.Z80_IM,          "IM",        m_im).mask(0x3);
-            m_distate.state_add((int)Z80STATE.Z80_IFF1,        "IFF1",      m_iff1).mask(0x1);
-            m_distate.state_add((int)Z80STATE.Z80_IFF2,        "IFF2",      m_iff2).mask(0x1);
-            m_distate.state_add((int)Z80STATE.Z80_HALT,        "HALT",      m_halt).mask(0x1);
+            m_distate.state_add(STATE_GENPC,     "PC",        m_pc.w.l).callimport();
+            m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_prvpc.w.l).callimport().noshow();
+            m_distate.state_add(Z80_SP,          "SP",        SP);
+            m_distate.state_add(STATE_GENSP,     "GENSP",     SP).noshow();
+            m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  F).noshow().formatstr("%8s");
+            m_distate.state_add(Z80_A,           "A",         A).noshow();
+            m_distate.state_add(Z80_B,           "B",         B).noshow();
+            m_distate.state_add(Z80_C,           "C",         C).noshow();
+            m_distate.state_add(Z80_D,           "D",         D).noshow();
+            m_distate.state_add(Z80_E,           "E",         E).noshow();
+            m_distate.state_add(Z80_H,           "H",         H).noshow();
+            m_distate.state_add(Z80_L,           "L",         L).noshow();
+            m_distate.state_add(Z80_AF,          "AF",        AF);
+            m_distate.state_add(Z80_BC,          "BC",        BC);
+            m_distate.state_add(Z80_DE,          "DE",        DE);
+            m_distate.state_add(Z80_HL,          "HL",        HL);
+            m_distate.state_add(Z80_IX,          "IX",        IX);
+            m_distate.state_add(Z80_IY,          "IY",        IY);
+            m_distate.state_add(Z80_AF2,         "AF2",       m_af2.w.l);
+            m_distate.state_add(Z80_BC2,         "BC2",       m_bc2.w.l);
+            m_distate.state_add(Z80_DE2,         "DE2",       m_de2.w.l);
+            m_distate.state_add(Z80_HL2,         "HL2",       m_hl2.w.l);
+            m_distate.state_add(Z80_WZ,          "WZ",        WZ);
+            m_distate.state_add(Z80_R,           "R",         m_rtemp).callimport().callexport();
+            m_distate.state_add(Z80_I,           "I",         m_i);
+            m_distate.state_add(Z80_IM,          "IM",        m_im).mask(0x3);
+            m_distate.state_add(Z80_IFF1,        "IFF1",      m_iff1).mask(0x1);
+            m_distate.state_add(Z80_IFF2,        "IFF2",      m_iff2).mask(0x1);
+            m_distate.state_add(Z80_HALT,        "HALT",      m_halt).mask(0x1);
 
             // set our instruction counter
-            execute().set_icountptr(icountRef);
+            set_icountptr(m_icountRef);
 
             /* setup cycle tables */
             m_cc_op = cc_op;
@@ -786,6 +627,17 @@ namespace mame
             m_refresh_cb.resolve_safe();
             m_halt_cb.resolve_safe();
         }
+
+
+        protected override void device_stop()
+        {
+            if (m_io != null) m_io.Dispose();
+            if (m_opcodes_cache != null) m_opcodes_cache.Dispose();
+            if (m_cache != null) m_cache.Dispose();
+            if (m_opcodes != null) m_opcodes.Dispose();
+            if (m_program != null) m_program.Dispose();
+        }
+
 
         /****************************************************************************
          * Do a reset
@@ -813,19 +665,157 @@ namespace mame
         //virtual UINT32 execute_max_cycles() const { return 16; }
         //virtual UINT32 execute_input_lines() const { return 4; }
         //virtual uint32_t execute_default_irq_vector(int inputnum) const override { return 0xff; }
-        //virtual bool execute_input_edge_triggered(int inputnum) const override { return inputnum == INPUT_LINE_NMI; }
-        //virtual void execute_run();
-        //virtual void execute_set_input(int inputnum, int state);
+        public bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == device_execute_interface.INPUT_LINE_NMI; }
+
+        static int opcount = 0;  // for debugging purposes
+
+        public void device_execute_interface_execute_run()
+        {
+            do
+            {
+                if (m_wait_state != 0)
+                {
+                    // stalled
+                    m_icountRef.i = 0;
+                    return;
+                }
+
+                // check for interrupts before each instruction
+                if (m_nmi_pending)
+                    take_nmi();
+                else if (m_irq_state != CLEAR_LINE && m_iff1 != 0 && !m_after_ei)
+                    take_interrupt();
+
+                m_after_ei = false;
+                m_after_ldair = false;
+
+                PRVPC = PCD;
+                debugger_instruction_hook(PCD);
+                m_r++;
+
+
+                uint8_t r = rop();
+
+
+                if (opcount % 200000 == 0)
+                    osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, r, A, B, C, F, HL);
+
+                //if (opcount >= 0 && opcount < 500)
+                //    global.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, r, A, B, C, F, HL);
+
+
+                opcount++;
+
+
+                EXEC_op(r);
+
+            } while (m_icountRef.i > 0);
+        }
+
+        public void device_execute_interface_execute_set_input(int inputnum, int state)
+        {
+            switch (inputnum)
+            {
+                case Z80_INPUT_LINE_BUSRQ:
+                    m_busrq_state = state;
+                    break;
+
+                case device_execute_interface.INPUT_LINE_NMI:
+                    /* mark an NMI pending on the rising edge */
+                    if (m_nmi_state == CLEAR_LINE && state != CLEAR_LINE)
+                        m_nmi_pending = true;
+                    m_nmi_state = (byte)state;
+                    break;
+
+                case device_execute_interface.INPUT_LINE_IRQ0:
+                    /* update the IRQ state via the daisy chain */
+                    m_irq_state = (byte)state;
+                    if (m_daisy.daisy_chain_present())
+                        m_irq_state = (m_daisy.daisy_update_irq_state() == ASSERT_LINE) ? (byte)ASSERT_LINE : m_irq_state;
+
+                    /* the main execute loop will take the interrupt */
+                    break;
+
+                case Z80_INPUT_LINE_WAIT:
+                    m_wait_state = state;
+                    break;
+
+                default:
+                    break;
+            }
+        }
 
 
         // device_memory_interface overrides
-        //virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const { return (spacenum == AS_PROGRAM) ? &m_program_config : ( (spacenum == AS_IO) ? &m_io_config : NULL ); }
+        public space_config_vector device_memory_interface_memory_space_config()
+        {
+            if (memory().has_configured_map(AS_OPCODES))
+            {
+                return new space_config_vector()
+                {
+                    std.make_pair(AS_PROGRAM, m_program_config),
+                    std.make_pair(AS_OPCODES, m_opcodes_config),
+                    std.make_pair(AS_IO,      m_io_config)
+                };
+            }
+            else
+            {
+                return new space_config_vector()
+                {
+                    std.make_pair(AS_PROGRAM, m_program_config),
+                    std.make_pair(AS_IO,      m_io_config)
+                };
+            }
+        }
 
 
         // device_state_interface overrides
-        //virtual void state_import(const device_state_entry &entry);
-        //virtual void state_export(const device_state_entry &entry);
-        //virtual void state_string_export(const device_state_entry &entry, astring &string);
+        public void device_state_interface_state_import(device_state_entry entry)
+        {
+            switch (entry.index())
+            {
+                case Z80_R:
+                    m_r = (byte)(m_rtemp & 0x7f);
+                    m_r2 = (byte)(m_rtemp & 0x80);
+                    break;
+
+                default:
+                    throw new emu_fatalerror("CPU_IMPORT_STATE() called for unexpected value\n");
+            }
+        }
+
+        public void device_state_interface_state_export(device_state_entry entry)
+        {
+            switch (entry.index())
+            {
+                case Z80_R:
+                    m_rtemp = (byte)((m_r & 0x7f) | (m_r2 & 0x80));
+                    break;
+
+                default:
+                    throw new emu_fatalerror("CPU_EXPORT_STATE() called for unexpected value\n");
+            }
+        }
+
+        public void device_state_interface_state_string_export(device_state_entry entry, out string str)
+        {
+            str = "";
+
+            switch (entry.index())
+            {
+                case STATE_GENFLAGS:
+                    str = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}",  // %c%c%c%c%c%c%c%c
+                        (F & 0x80) > 0 ? 'S':'.',
+                        (F & 0x40) > 0 ? 'Z':'.',
+                        (F & 0x20) > 0 ? 'Y':'.',
+                        (F & 0x10) > 0 ? 'H':'.',
+                        (F & 0x08) > 0 ? 'X':'.',
+                        (F & 0x04) > 0 ? 'P':'.',
+                        (F & 0x02) > 0 ? 'N':'.',
+                        (F & 0x01) > 0 ? 'C':'.');
+                    break;
+            }
+        }
 
 
         // device_disasm_interface overrides
@@ -1538,7 +1528,7 @@ namespace mame
         void op_d0() { ret_cond((F & CF) == 0, 0xd0);                                            } /* RET  NC          */
         void op_d1() { pop(ref m_de);                                                            } /* POP  DE          */
         void op_d2() { jp_cond((F & CF) == 0);                                                   } /* JP   NC,a        */
-        void op_d3() { UInt32 n = (UInt32)(arg() | (A << 8)); out_port((UInt16)n, A); WZ_L = (byte)(((n & 0xff) + 1) & 0xff);  WZ_H = A;   } /* OUT  (n),A       */
+        void op_d3() { UInt32 n = (UInt32)(arg() | (A << 8)); out_((UInt16)n, A); WZ_L = (byte)(((n & 0xff) + 1) & 0xff);  WZ_H = A;   } /* OUT  (n),A       */
         void op_d4() { call_cond((F & CF) == 0, 0xd4);                                           } /* CALL NC,a        */
         void op_d5() { push(m_de);                                                           } /* PUSH DE          */
         void op_d6() { sub(arg());                                                           } /* SUB  n           */
@@ -1547,7 +1537,7 @@ namespace mame
         void op_d8() { ret_cond((F & CF) > 0, 0xd8);                                               } /* RET  C           */
         void op_d9() { exx();                                                                } /* EXX              */
         void op_da() { jp_cond((F & CF) > 0);                                                      } /* JP   C,a         */
-        void op_db() { UInt32 n = (UInt32)(arg() | (A << 8)); A = in_port((UInt16)n); WZ = (UInt16)(n + 1);                 } /* IN   A,(n)  */
+        void op_db() { UInt32 n = (UInt32)(arg() | (A << 8)); A = in_((UInt16)n); WZ = (UInt16)(n + 1);                 } /* IN   A,(n)  */
         void op_dc() { call_cond((F & CF) > 0, 0xdc);                                              } /* CALL C,a         */
         void op_dd() { m_r++; EXEC_dd(rop());                                                } /* **** DD xx       */
         void op_de() { sbc_a(arg());                                                         } /* SBC  A,n         */
@@ -2259,8 +2249,8 @@ namespace mame
         void ed_3e() { illegal_2();                                     } /* DB   ED          */
         void ed_3f() { illegal_2();                                     } /* DB   ED          */
 
-        void ed_40() { B = in_port(BC); F = (byte)((F & CF) | SZP[B]);               } /* IN   B,(C)       */
-        void ed_41() { out_port(BC, B);                                      } /* OUT  (C),B       */
+        void ed_40() { B = in_(BC); F = (byte)((F & CF) | SZP[B]);               } /* IN   B,(C)       */
+        void ed_41() { out_(BC, B);                                      } /* OUT  (C),B       */
         void ed_42() { sbc_hl(m_bc);                                    } /* SBC  HL,BC       */
         void ed_43() { m_ea = arg16(); wm16((UInt16)m_ea, m_bc); WZ = (UInt16)(m_ea + 1); } /* LD   (w),BC      */
         void ed_44() { neg();                                           } /* NEG              */
@@ -2268,8 +2258,8 @@ namespace mame
         void ed_46() { m_im = 0;                                        } /* IM   0           */
         void ed_47() { ld_i_a();                                        } /* LD   i,A         */
 
-        void ed_48() { C = in_port(BC); F = (byte)((F & CF) | SZP[C]);               } /* IN   C,(C)       */
-        void ed_49() { out_port(BC, C);                                      } /* OUT  (C),C       */
+        void ed_48() { C = in_(BC); F = (byte)((F & CF) | SZP[C]);               } /* IN   C,(C)       */
+        void ed_49() { out_(BC, C);                                      } /* OUT  (C),C       */
         void ed_4a() { adc_hl(m_bc);                                    } /* ADC  HL,BC       */
         void ed_4b() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_bc); WZ = (UInt16)(m_ea + 1); } /* LD   BC,(w)      */
         void ed_4c() { neg();                                           } /* NEG              */
@@ -2277,8 +2267,8 @@ namespace mame
         void ed_4e() { m_im = 0;                                        } /* IM   0           */
         void ed_4f() { ld_r_a();                                        } /* LD   r,A         */
 
-        void ed_50() { D = in_port(BC); F = (byte)((F & CF) | SZP[D]);               } /* IN   D,(C)       */
-        void ed_51() { out_port(BC, D);                                      } /* OUT  (C),D       */
+        void ed_50() { D = in_(BC); F = (byte)((F & CF) | SZP[D]);               } /* IN   D,(C)       */
+        void ed_51() { out_(BC, D);                                      } /* OUT  (C),D       */
         void ed_52() { sbc_hl(m_de);                                    } /* SBC  HL,DE       */
         void ed_53() { m_ea = arg16(); wm16((UInt16)m_ea, m_de); WZ = (UInt16)(m_ea + 1); } /* LD   (w),DE      */
         void ed_54() { neg();                                           } /* NEG              */
@@ -2286,8 +2276,8 @@ namespace mame
         void ed_56() { m_im = 1;                                        } /* IM   1           */
         void ed_57() { ld_a_i();                                        } /* LD   A,i         */
 
-        void ed_58() { E = in_port(BC); F = (byte)((F & CF) | SZP[E]);               } /* IN   E,(C)       */
-        void ed_59() { out_port(BC, E);                                      } /* OUT  (C),E       */
+        void ed_58() { E = in_(BC); F = (byte)((F & CF) | SZP[E]);               } /* IN   E,(C)       */
+        void ed_59() { out_(BC, E);                                      } /* OUT  (C),E       */
         void ed_5a() { adc_hl(m_de);                                    } /* ADC  HL,DE       */
         void ed_5b() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_de); WZ = (UInt16)(m_ea + 1); } /* LD   DE,(w)      */
         void ed_5c() { neg();                                           } /* NEG              */
@@ -2295,8 +2285,8 @@ namespace mame
         void ed_5e() { m_im = 2;                                        } /* IM   2           */
         void ed_5f() { ld_a_r();                                        } /* LD   A,r         */
 
-        void ed_60() { H = in_port(BC); F = (byte)((F & CF) | SZP[H]);               } /* IN   H,(C)       */
-        void ed_61() { out_port(BC, H);                                      } /* OUT  (C),H       */
+        void ed_60() { H = in_(BC); F = (byte)((F & CF) | SZP[H]);               } /* IN   H,(C)       */
+        void ed_61() { out_(BC, H);                                      } /* OUT  (C),H       */
         void ed_62() { sbc_hl(m_hl);                                    } /* SBC  HL,HL       */
         void ed_63() { m_ea = arg16(); wm16((UInt16)m_ea, m_hl); WZ = (UInt16)(m_ea + 1); } /* LD   (w),HL      */
         void ed_64() { neg();                                           } /* NEG              */
@@ -2304,8 +2294,8 @@ namespace mame
         void ed_66() { m_im = 0;                                        } /* IM   0           */
         void ed_67() { rrd();                                           } /* RRD  (HL)        */
 
-        void ed_68() { L = in_port(BC); F = (byte)((F & CF) | SZP[L]);               } /* IN   L,(C)       */
-        void ed_69() { out_port(BC, L);                                      } /* OUT  (C),L       */
+        void ed_68() { L = in_(BC); F = (byte)((F & CF) | SZP[L]);               } /* IN   L,(C)       */
+        void ed_69() { out_(BC, L);                                      } /* OUT  (C),L       */
         void ed_6a() { adc_hl(m_hl);                                    } /* ADC  HL,HL       */
         void ed_6b() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_hl); WZ = (UInt16)(m_ea + 1); } /* LD   HL,(w)      */
         void ed_6c() { neg();                                           } /* NEG              */
@@ -2313,8 +2303,8 @@ namespace mame
         void ed_6e() { m_im = 0;                                        } /* IM   0           */
         void ed_6f() { rld();                                           } /* RLD  (HL)        */
 
-        void ed_70() { byte res = in_port(BC); F = (byte)((F & CF) | SZP[res]);     } /* IN   0,(C)       */
-        void ed_71() { out_port(BC, 0);                                      } /* OUT  (C),0       */
+        void ed_70() { byte res = in_(BC); F = (byte)((F & CF) | SZP[res]);     } /* IN   0,(C)       */
+        void ed_71() { out_(BC, 0);                                      } /* OUT  (C),0       */
         void ed_72() { sbc_hl(m_sp);                                    } /* SBC  HL,SP       */
         void ed_73() { m_ea = arg16(); wm16((UInt16)m_ea, m_sp); WZ = (UInt16)(m_ea + 1); } /* LD   (w),SP      */
         void ed_74() { neg();                                           } /* NEG              */
@@ -2322,8 +2312,8 @@ namespace mame
         void ed_76() { m_im = 1;                                        } /* IM   1           */
         void ed_77() { illegal_2();                                     } /* DB   ED,77       */
 
-        void ed_78() { A = in_port(BC); F = (byte)((F & CF) | SZP[A]); WZ = (UInt16)(BC + 1);  } /* IN   A,(C)       */
-        void ed_79() { out_port(BC, A);  WZ = (UInt16)(BC + 1);                        } /* OUT  (C),A       */
+        void ed_78() { A = in_(BC); F = (byte)((F & CF) | SZP[A]); WZ = (UInt16)(BC + 1);  } /* IN   A,(C)       */
+        void ed_79() { out_(BC, A);  WZ = (UInt16)(BC + 1);                        } /* OUT  (C),A       */
         void ed_7a() { adc_hl(m_sp);                                    } /* ADC  HL,SP       */
         void ed_7b() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_sp); WZ = (UInt16)(m_ea + 1); } /* LD   SP,(w)      */
         void ed_7c() { neg();                                           } /* NEG              */
@@ -3087,7 +3077,7 @@ namespace mame
         /***************************************************************
          * Input a byte from given I/O port
          ***************************************************************/
-        byte in_port(UInt16 port)
+        byte in_(uint16_t port)
         {
             return m_io.read_byte(port);
         }
@@ -3095,7 +3085,7 @@ namespace mame
         /***************************************************************
          * Output a byte to given I/O port
          ***************************************************************/
-        void out_port(UInt16 port, byte value)
+        void out_(uint16_t port, uint8_t value)
         {
             m_io.write_byte(port, value);
         }
@@ -3103,7 +3093,7 @@ namespace mame
         /***************************************************************
          * Read a byte from given memory location
          ***************************************************************/
-        public byte rm(UInt16 addr)
+        public uint8_t rm(uint16_t addr)
         {
             return m_program.read_byte(addr);
         }
@@ -3111,16 +3101,16 @@ namespace mame
         /***************************************************************
          * Read a word from given memory location
          ***************************************************************/
-        void rm16(UInt16 addr, ref PAIR r)
+        void rm16(uint16_t addr, ref PAIR r)
         {
             r.b.l = rm(addr);
-            r.b.h = rm((UInt16)(addr+1));
+            r.b.h = rm((uint16_t)(addr+1));
         }
 
         /***************************************************************
         * Write a byte to given memory location
         ***************************************************************/
-        public void wm(UInt16 addr, byte value)
+        public void wm(uint16_t addr, uint8_t value)
         {
             m_program.write_byte(addr, value);
         }
@@ -3128,10 +3118,10 @@ namespace mame
         /***************************************************************
          * Write a word to given memory location
          ***************************************************************/
-        void wm16(UInt16 addr, PAIR r)
+        void wm16(uint16_t addr, PAIR r)
         {
             wm(addr, r.b.l);
-            wm((UInt16)(addr+1), r.b.h);
+            wm((uint16_t)(addr+1), r.b.h);
         }
 
         /***************************************************************
@@ -3242,7 +3232,7 @@ namespace mame
         /***************************************************************
          * JR_COND
          ***************************************************************/
-        void jr_cond(bool cond, byte opcode)
+        void jr_cond(bool cond, uint8_t opcode)
         {
             if (cond)
             {
@@ -3269,7 +3259,7 @@ namespace mame
         /***************************************************************
          * CALL_COND
          ***************************************************************/
-        void call_cond(bool cond, byte opcode)
+        void call_cond(bool cond, uint8_t opcode)
         {
             if (cond)
             {
@@ -3288,7 +3278,7 @@ namespace mame
         /***************************************************************
          * RET_COND
          ***************************************************************/
-        void ret_cond(bool cond, byte opcode)
+        void ret_cond(bool cond, uint8_t opcode)
         {
             if (cond)
             {
@@ -3360,7 +3350,7 @@ namespace mame
         /***************************************************************
          * RST
          ***************************************************************/
-        void rst(UInt16 addr)
+        void rst(uint16_t addr)
         {
             push(m_pc);
             PCD = addr;
@@ -3370,7 +3360,7 @@ namespace mame
         /***************************************************************
          * INC  r8
          ***************************************************************/
-        byte inc(byte value)
+        byte inc(uint8_t value)
         {
             byte res = (byte)(value + 1);
             F = (byte)((F & CF) | SZHV_inc[res]);
@@ -3380,7 +3370,7 @@ namespace mame
         /***************************************************************
          * DEC  r8
          ***************************************************************/
-        byte dec(byte value)
+        byte dec(uint8_t value)
         {
             byte res = (byte)(value - 1);
             F = (byte)((F & CF) | SZHV_dec[res]);
@@ -3456,7 +3446,7 @@ namespace mame
         /***************************************************************
          * ADD  A,n
          ***************************************************************/
-        void add_a(byte value)
+        void add_a(uint8_t value)
         {
             UInt32 ah = AFD & 0xff00;
             UInt32 res = (byte)((ah >> 8) + value);
@@ -3467,7 +3457,7 @@ namespace mame
         /***************************************************************
          * ADC  A,n
          ***************************************************************/
-        void adc_a(byte value)
+        void adc_a(uint8_t value)
         {
             UInt32 ah = AFD & 0xff00, c = AFD & 1;
             UInt32 res = (byte)((ah >> 8) + value + c);
@@ -3478,7 +3468,7 @@ namespace mame
         /***************************************************************
          * SUB  n
          ***************************************************************/
-        void sub(byte value)
+        void sub(uint8_t value)
         {
             UInt32 ah = AFD & 0xff00;
             UInt32 res = (byte)((ah >> 8) - value);
@@ -3489,7 +3479,7 @@ namespace mame
         /***************************************************************
          * SBC  A,n
          ***************************************************************/
-        void sbc_a(byte value)
+        void sbc_a(uint8_t value)
         {
             UInt32 ah = AFD & 0xff00, c = AFD & 1;
             UInt32 res = (byte)((ah >> 8) - value - c);
@@ -3531,7 +3521,7 @@ namespace mame
         /***************************************************************
          * AND  n
          ***************************************************************/
-        void and_a(byte value)
+        void and_a(uint8_t value)
         {
             A &= value;
             F = (byte)(SZP[A] | HF);
@@ -3540,7 +3530,7 @@ namespace mame
         /***************************************************************
          * OR   n
          ***************************************************************/
-        void or_a(byte value)
+        void or_a(uint8_t value)
         {
             A |= value;
             F = SZP[A];
@@ -3549,7 +3539,7 @@ namespace mame
         /***************************************************************
          * XOR  n
          ***************************************************************/
-        void xor_a(byte value)
+        void xor_a(uint8_t value)
         {
             A ^= value;
             F = SZP[A];
@@ -3558,7 +3548,7 @@ namespace mame
         /***************************************************************
          * CP   n
          ***************************************************************/
-        void cp(byte value)
+        void cp(uint8_t value)
         {
             UInt32 val = value;
             UInt32 ah = AFD & 0xff00;
@@ -3653,7 +3643,7 @@ namespace mame
         /***************************************************************
          * RLC  r8
          ***************************************************************/
-        byte rlc(byte value)
+        byte rlc(uint8_t value)
         {
             UInt32 res = value;
             UInt32 c = (res & 0x80) != 0 ? CF : 0U;
@@ -3665,7 +3655,7 @@ namespace mame
         /***************************************************************
          * RRC  r8
          ***************************************************************/
-        byte rrc(byte value)
+        byte rrc(uint8_t value)
         {
             UInt32 res = value;
             UInt32 c = (res & 0x01) != 0 ? CF : 0U;
@@ -3677,7 +3667,7 @@ namespace mame
         /***************************************************************
          * RL   r8
          ***************************************************************/
-        byte rl(byte value)
+        byte rl(uint8_t value)
         {
             UInt32 res = value;
             UInt32 c = (res & 0x80) != 0 ? CF : 0U;
@@ -3689,7 +3679,7 @@ namespace mame
         /***************************************************************
          * RR   r8
          ***************************************************************/
-        byte rr(byte value)
+        byte rr(uint8_t value)
         {
             UInt32 res = value;
             UInt32 c = (res & 0x01) != 0 ? CF : 0U;
@@ -3701,7 +3691,7 @@ namespace mame
         /***************************************************************
          * SLA  r8
          ***************************************************************/
-        byte sla(byte value)
+        byte sla(uint8_t value)
         {
             UInt32 res = value;
             UInt32 c = (res & 0x80) != 0 ? CF : 0U;
@@ -3713,7 +3703,7 @@ namespace mame
         /***************************************************************
          * SRA  r8
          ***************************************************************/
-        byte sra(byte value)
+        byte sra(uint8_t value)
         {
             UInt32 res = value;
             UInt32 c = (res & 0x01) != 0 ? CF : 0U;
@@ -3725,7 +3715,7 @@ namespace mame
         /***************************************************************
          * SLL  r8
          ***************************************************************/
-        byte sll(byte value)
+        byte sll(uint8_t value)
         {
             UInt32 res = value;
             UInt32 c = (res & 0x80) != 0 ? CF : 0U;
@@ -3737,7 +3727,7 @@ namespace mame
         /***************************************************************
          * SRL  r8
          ***************************************************************/
-        byte srl(byte value)
+        byte srl(uint8_t value)
         {
             UInt32 res = value;
             UInt32 c = (res & 0x01) != 0 ? CF : 0U;
@@ -3749,7 +3739,7 @@ namespace mame
         /***************************************************************
          * BIT  bit,r8
          ***************************************************************/
-        void bit(int bit, byte value)
+        void bit(int bit, uint8_t value)
         {
             F = (byte)((F & CF) | HF | (SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | (value & (YF | XF)));
         }
@@ -3757,7 +3747,7 @@ namespace mame
         /***************************************************************
          * BIT  bit,(HL)
          ***************************************************************/
-        void bit_hl(int bit, byte value)
+        void bit_hl(int bit, uint8_t value)
         {
             F = (byte)((F & CF) | HF | (SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | (WZ_H & (YF | XF)));
         }
@@ -3765,7 +3755,7 @@ namespace mame
         /***************************************************************
          * BIT  bit,(IX/Y+o)
          ***************************************************************/
-        void bit_xy(int bit, byte value)
+        void bit_xy(int bit, uint8_t value)
         {
             F = (byte)((F & CF) | HF | (SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | ((m_ea >> 8) & (YF | XF)));
         }
@@ -3773,7 +3763,7 @@ namespace mame
         /***************************************************************
          * RES  bit,r8
          ***************************************************************/
-        byte res(int bit, byte value)
+        byte res(int bit, uint8_t value)
         {
             return (byte)(value & ~(1 << bit));
         }
@@ -3781,7 +3771,7 @@ namespace mame
         /***************************************************************
          * SET  bit,r8
          ***************************************************************/
-        byte set(int bit, byte value)
+        byte set(int bit, uint8_t value)
         {
             return (byte)(value | (1 << bit));
         }
@@ -3805,8 +3795,8 @@ namespace mame
          ***************************************************************/
         void cpi()
         {
-            byte val = rm(HL);
-            byte res = (byte)(A - val);
+            uint8_t val = rm(HL);
+            uint8_t res = (byte)(A - val);
             WZ++;
             HL++; BC--;
             F = (byte)((F & CF) | (SZ[res]&~(YF|XF)) | ((A^val^res)&HF) | NF);
@@ -3822,7 +3812,7 @@ namespace mame
         void ini()
         {
             UInt32 t;
-            byte io = in_port(BC);
+            uint8_t io = in_(BC);
             WZ = (UInt16)(BC + 1);
             B--;
             wm(HL, io);
@@ -3840,10 +3830,10 @@ namespace mame
         void outi()
         {
             UInt32 t;
-            byte io = rm(HL);
+            uint8_t io = rm(HL);
             B--;
             WZ = (UInt16)(BC + 1);
-            out_port(BC, io);
+            out_(BC, io);
             HL++;
             F = SZ[B];
             t = (UInt32)L + (UInt32)io;
@@ -3857,7 +3847,7 @@ namespace mame
          ***************************************************************/
         void ldd()
         {
-            byte io = rm(HL);
+            uint8_t io = rm(HL);
             wm(DE, io);
             F &= SF | ZF | CF;
             if (((A + io) & 0x02) != 0) F |= YF; /* bit 1 -> flag 5 */
@@ -3871,8 +3861,8 @@ namespace mame
          ***************************************************************/
         void cpd()
         {
-            byte val = rm(HL);
-            byte res = (byte)(A - val);
+            uint8_t val = rm(HL);
+            uint8_t res = (byte)(A - val);
             WZ--;
             HL--; BC--;
             F = (byte)((F & CF) | (SZ[res]&~(YF|XF)) | ((A^val^res)&HF) | NF);
@@ -3888,7 +3878,7 @@ namespace mame
         void ind()
         {
             UInt32 t;
-            byte io = in_port(BC);
+            uint8_t io = in_(BC);
             WZ = (UInt16)(BC - 1);
             B--;
             wm(HL, io);
@@ -3906,10 +3896,10 @@ namespace mame
         void outd()
         {
             UInt32 t;
-            byte io = rm(HL);
+            uint8_t io = rm(HL);
             B--;
             WZ = (UInt16)(BC - 1);
-            out_port(BC, io);
+            out_(BC, io);
             HL--;
             F = SZ[B];
             t = (UInt32)L + (UInt32)io;

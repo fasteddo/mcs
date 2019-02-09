@@ -7,8 +7,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
+using int32_t = System.Int32;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using osd_ticks_t = System.UInt64;
+using uint32_t = System.UInt32;
 
 
 namespace mameForm
@@ -59,6 +61,7 @@ namespace mameForm
         -----------------------------------------------------------------------------*/
         public override error open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
         {
+            m_file = null;
             file = this;
             try
             {
@@ -80,12 +83,21 @@ namespace mameForm
                         // try the path two folders up, if eg, we're running from the \bin\Release folder
                         newPath = Path.Combine(exePath, @"..\..\");
                         newPath = Path.Combine(newPath, path);
-                        m_file = File.OpenRead(newPath);
+                        if (File.Exists(newPath))
+                        {
+                            m_file = File.OpenRead(newPath);
+                        }
+                        else
+                        {
+                            filesize = 0;
+                            return osd_file.error.NOT_FOUND;
+                        }
                     }
                 }
             }
             catch (Exception)
             {
+                m_file = null;
                 filesize = 0;
                 return osd_file.error.NOT_FOUND;
             }
@@ -189,6 +201,9 @@ namespace mameForm
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
         public override error remove(string filename) { throw new emu_unimplemented(); }
+
+
+        public override Stream stream { get { return m_file; } }
     }
 
 
@@ -631,7 +646,7 @@ namespace mameForm
                 On single-threaded systems, this function may actually execute the
                 work item immediately before returning.
         -----------------------------------------------------------------------------*/
-        public override osd_work_item osd_work_item_queue_multiple(osd_work_queue queue, osd_work_callback callback, int numitems, List<Object> parambase, /*int paramstep,*/ UInt32 flags)
+        public override osd_work_item osd_work_item_queue_multiple(osd_work_queue queue, osd_work_callback callback, int32_t numitems, List<Object> parambase, /*int paramstep,*/ uint32_t flags)
         {
             return osdsync_global.osd_work_item_queue_multiple(queue, callback, numitems, parambase, /*paramstep,*/ flags);
         }

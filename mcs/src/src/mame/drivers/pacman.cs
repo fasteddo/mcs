@@ -15,8 +15,22 @@ using uint8_t = System.Byte;
 
 namespace mame
 {
-    public partial class pacman_state : driver_device
+    partial class pacman_state : driver_device
     {
+        static readonly XTAL MASTER_CLOCK       = new XTAL(18432000);
+
+        static readonly XTAL PIXEL_CLOCK        = MASTER_CLOCK/3;
+
+        /* H counts from 128->511, HBLANK starts at 144 and ends at 240 */
+        const UInt32 HTOTAL             = 384;
+        const UInt32 HBEND              = 0;     /*(96+16)*/
+        const UInt32 HBSTART            = 288;   /*(16)*/
+
+        const UInt32 VTOTAL             = 264;
+        const UInt32 VBEND              = 0;     /*(16)*/
+        const UInt32 VBSTART            = 224;   /*(224+16)*/
+
+
         /*************************************
          *
          *  Interrupts
@@ -27,7 +41,7 @@ namespace mame
         public void vblank_irq(int state)
         {
             if (state != 0 && m_irq_mask != 0)
-                m_maincpu.target.execute().set_input_line(0, line_state.HOLD_LINE);
+                m_maincpu.target.set_input_line(0, HOLD_LINE);
         }
 
         //INTERRUPT_GEN_MEMBER(periodic_irq);
@@ -44,8 +58,8 @@ namespace mame
         //WRITE8_MEMBER(pacman_state::pacman_interrupt_vector_w)
         public void pacman_interrupt_vector_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
-            m_maincpu.target.execute().set_input_line_vector(0, data);
-            m_maincpu.target.execute().set_input_line(0, line_state.CLEAR_LINE);
+            m_maincpu.target.set_input_line_vector(0, data);
+            m_maincpu.target.set_input_line(0, CLEAR_LINE);
         }
 
 
@@ -108,23 +122,6 @@ namespace mame
             // tests on exactly what determines the value returned have thus far proved inconclusive
             return 0xbf;
         }
-    }
-
-
-    public class pacman : device_init_helpers
-    {
-        static readonly XTAL MASTER_CLOCK       = new XTAL(18432000);
-
-        static readonly XTAL PIXEL_CLOCK        = MASTER_CLOCK/3;
-
-        /* H counts from 128->511, HBLANK starts at 144 and ends at 240 */
-        const UInt32 HTOTAL             = 384;
-        const UInt32 HBEND              = 0;     /*(96+16)*/
-        const UInt32 HBSTART            = 288;   /*(16)*/
-
-        const UInt32 VTOTAL             = 264;
-        const UInt32 VBEND              = 0;     /*(16)*/
-        const UInt32 VBSTART            = 224;   /*(224+16)*/
 
 
         /*************************************
@@ -133,8 +130,7 @@ namespace mame
          *
          *************************************/
 
-        //void pacman_state::pacman_map(address_map &map)
-        void pacman_state_pacman_map(address_map map, device_t device)
+        void pacman_map(address_map map, device_t device)
         {
             pacman_state pacman_state = (pacman_state)device;
 
@@ -158,8 +154,7 @@ namespace mame
         }
 
 
-        //void pacman_state::mspacman_map(address_map &map)
-        void pacman_state_mspacman_map(address_map map, device_t device)
+        void mspacman_map(address_map map, device_t device)
         {
             pacman_state pacman_state = (pacman_state)device;
 
@@ -201,16 +196,18 @@ namespace mame
          *
          *************************************/
 
-        //void pacman_state::writeport(address_map &map)
-        void pacman_state_writeport(address_map map, device_t device)
+        void writeport(address_map map, device_t device)
         {
             pacman_state state = (pacman_state)device;
 
             map.global_mask(0xff);
             map.op(0x00, 0x00).w(state.pacman_interrupt_vector_w);    /* Pac-Man only */
         }
+    }
 
 
+    partial class pacman : global_object
+    {
         /*************************************
          *
          *  Port definitions
@@ -333,8 +330,11 @@ namespace mame
 
             INPUT_PORTS_END();
         }
+    }
 
 
+    partial class pacman_state : driver_device
+    {
         /*************************************
          *
          *  Graphics layouts
@@ -381,27 +381,22 @@ namespace mame
          *
          *************************************/
 
-        //void pacman_state::pacman(machine_config &config, bool latch)
-        void pacman_state_pacman(machine_config config, device_t owner, device_t device)  //, bool latch = true)
+        public void pacman(machine_config config, bool latch = true)
         {
-            bool latch = true;
-
-            helper_config = config;
-
-            pacman_state pacman_state = (pacman_state)device;
+            m_globals.helper_config = config;
 
             /* basic machine hardware */
-            Z80(config, pacman_state.maincpu, MASTER_CLOCK/6);
-            pacman_state.maincpu.target.memory().set_addrmap(emumem_global.AS_PROGRAM, pacman_state_pacman_map);
-            pacman_state.maincpu.target.memory().set_addrmap(emumem_global.AS_IO, pacman_state_writeport);
+            Z80(config, maincpu, MASTER_CLOCK/6);
+            maincpu.target.memory().set_addrmap(AS_PROGRAM, pacman_map);
+            maincpu.target.memory().set_addrmap(AS_IO, writeport);
 
             if (latch)
             {
-                LS259(config, pacman_state.mainlatch); // 74LS259 at 8K or 4099 at 7K
-                pacman_state.mainlatch.target.q_out_cb(0).set(pacman_state.irq_mask_w).reg();
-                pacman_state.mainlatch.target.q_out_cb(1).set("namco", pacman_state.namco_audio_device_sound_enable_w).reg();
-                pacman_state.mainlatch.target.q_out_cb(3).set(pacman_state.flipscreen_w).reg();
-                pacman_state.mainlatch.target.q_out_cb(7).set(pacman_state.coin_counter_w).reg();
+                LS259(config, mainlatch); // 74LS259 at 8K or 4099 at 7K
+                mainlatch.target.q_out_cb(0).set(irq_mask_w).reg();
+                mainlatch.target.q_out_cb(1).set("namco", namco_audio_device_sound_enable_w).reg();
+                mainlatch.target.q_out_cb(3).set(flipscreen_w).reg();
+                mainlatch.target.q_out_cb(7).set(coin_counter_w).reg();
 
                 // NOTE(dwidel): The Pacman code uses $5004 and $5005 for LEDs and $5007 for coin lockout.  This hardware does not
                 // exist on any Pacman or Puckman board I have seen.
@@ -410,52 +405,53 @@ namespace mame
                 //m_mainlatch->q_out_cb<6>().set(FUNC(pacman_state::coin_lockout_global_w));
             }
 
-            WATCHDOG_TIMER(config, pacman_state.watchdog);
-            pacman_state.watchdog.target.set_vblank_count("screen", 16);
+            WATCHDOG_TIMER(config, watchdog);
+            watchdog.target.set_vblank_count("screen", 16);
 
             /* video hardware */
-            GFXDECODE(config, pacman_state.gfxdecode, "palette", gfx_pacman);
+            GFXDECODE(config, m_gfxdecode, m_palette, gfx_pacman);
 
-            PALETTE(config, pacman_state.palette, 128*4);
-            pacman_state.palette.target.set_indirect_entries(32);
-            pacman_state.palette.target.set_init(DEVICE_SELF, pacman_state.palette_init_pacman);
+            PALETTE(config, m_palette, pacman_palette, 128*4, 32);
 
             screen_device screen = SCREEN(config, "screen", SCREEN_TYPE_RASTER);
             screen.set_raw(PIXEL_CLOCK, (u16)HTOTAL, (u16)HBEND, (u16)HBSTART, (u16)VTOTAL, (u16)VBEND, (u16)VBSTART);
-            screen.set_screen_update(pacman_state.screen_update_pacman);
+            screen.set_screen_update(screen_update_pacman);
             screen.set_palette("palette");
-            screen.screen_vblank().set(pacman_state.vblank_irq).reg();
+            screen.screen_vblank().set(vblank_irq).reg();
 
-            MCFG_VIDEO_START_OVERRIDE(pacman_state.video_start_pacman);
+            MCFG_VIDEO_START_OVERRIDE(config, video_start_pacman);
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();
 
-            NAMCO(config, pacman_state.namco_sound, MASTER_CLOCK/6/32);
-            pacman_state.namco_sound.target.set_voices(3);
-            pacman_state.namco_sound.target.disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+            NAMCO(config, namco_sound, MASTER_CLOCK/6/32);
+            namco_sound.target.set_voices(3);
+            namco_sound.target.disound.add_route(ALL_OUTPUTS, "mono", 1.0);
         }
 
 
         //MACHINE_CONFIG_START(pacman_state::mspacman)
-        void pacman_state_mspacman(machine_config config, device_t owner, device_t device)
+        public void mspacman(machine_config config)
         {
-            pacman_state_pacman(config, owner, device);
+            pacman(config);
 
-            MACHINE_CONFIG_START(config, owner, device);
+            MACHINE_CONFIG_START(config, this);
 
-            pacman_state pacman_state = (pacman_state)helper_owner;
+            pacman_state pacman_state = (pacman_state)m_globals.helper_owner;
 
             /* basic machine hardware */
             MCFG_DEVICE_MODIFY("maincpu");
-            MCFG_DEVICE_PROGRAM_MAP(pacman_state_mspacman_map);
+            MCFG_DEVICE_PROGRAM_MAP(mspacman_map);
 
             pacman_state.mainlatch.target.q_out_cb(6).set(pacman_state.coin_lockout_global_w).reg();
 
             MACHINE_CONFIG_END();
         }
+    }
 
 
+    partial class pacman : global_object
+    {
         /*************************************
          *
          *  ROM definitions
@@ -569,8 +565,11 @@ namespace mame
 
             ROM_END(),
         };
+    }
 
 
+    partial class pacman_state : driver_device
+    {
         /*************************************
          *
          *  Driver initialization
@@ -582,7 +581,7 @@ namespace mame
         static int BITSWAP11(int val, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return bitswap(val,15,14,13,12,11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0); }
 
 
-        static void mspacman_install_patches(ListBytesPointer ROM)  //uint8_t *ROM)
+        void mspacman_install_patches(ListBytesPointer ROM)  //uint8_t *ROM)
         {
             int i;
 
@@ -635,15 +634,15 @@ namespace mame
         }
 
 
-        static void pacman_state_init_mspacman(running_machine machine, device_t owner)
+        public void init_mspacman()
         {
             /* CPU ROMs */
 
             /* Pac-Man code is in low bank */
-            ListBytesPointer ROM = new ListBytesPointer(owner.memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
+            ListBytesPointer ROM = new ListBytesPointer(memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
 
             /* decrypted Ms. Pac-Man code is in high bank */
-            ListBytesPointer DROM = new ListBytesPointer(owner.memregion("maincpu").base_(), 0x10000);  // uint8_t *DROM = &memregion("maincpu")->base()[0x10000];
+            ListBytesPointer DROM = new ListBytesPointer(memregion("maincpu").base_(), 0x10000);  // uint8_t *DROM = &memregion("maincpu")->base()[0x10000];
 
             /* copy ROMs into decrypted bank */
             for (int i = 0; i < 0x1000; i++)
@@ -681,19 +680,24 @@ namespace mame
             }
 
             /* initialize the banks */
-            owner.membank("bank1").configure_entries(0, 2, new ListBytesPointer(ROM), 0x10000);
-            owner.membank("bank1").set_entry(1);
+            membank("bank1").configure_entries(0, 2, new ListBytesPointer(ROM), 0x10000);
+            membank("bank1").set_entry(1);
         }
 
 
-        static void pacman_state_init_pacplus(running_machine machine, device_t owner)
+        public void init_pacplus()
         {
-            pacman_state pacman_state = (pacman_state)owner;
-
-            pacman_state.pacplus_decode();
+            pacplus_decode();
         }
+    }
 
 
+    partial class pacman : global_object
+    {
+        static void pacman_state_pacman(machine_config config, device_t device) { pacman_state pacman_state = (pacman_state)device; pacman_state.pacman(config); }
+        static void pacman_state_mspacman(machine_config config, device_t device) { pacman_state pacman_state = (pacman_state)device; pacman_state.mspacman(config); }
+        static void pacman_state_init_mspacman(device_t owner) { pacman_state pacman_state = (pacman_state)owner; pacman_state.init_mspacman(); }
+        static void pacman_state_init_pacplus(device_t owner) { pacman_state pacman_state = (pacman_state)owner; pacman_state.init_pacplus(); }
 
 
         static pacman m_pacman = new pacman();
@@ -705,10 +709,10 @@ namespace mame
         static device_t device_creator_pacplus(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
 
 
-        //                                                                                                        rom         parent     machine                         inp                                 init
-        public static readonly game_driver driver_puckman  = GAME( device_creator_puckman,  rom_puckman,  "1980", "puckman",  null,      m_pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   driver_device.empty_init,   ROT90,  "Namco", "Puck Man (Japan set 1)", MACHINE_SUPPORTS_SAVE );
-        public static readonly game_driver driver_pacman   = GAME( device_creator_pacman,   rom_pacman,   "1980", "pacman",   "puckman", m_pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   driver_device.empty_init,   ROT90,  "Namco (Midway license)", "Pac-Man (Midway)", MACHINE_SUPPORTS_SAVE );
-        public static readonly game_driver driver_mspacman = GAME( device_creator_mspacman, rom_mspacman, "1981", "mspacman", null,      m_pacman.pacman_state_mspacman, m_pacman.construct_ioport_mspacman, pacman_state_init_mspacman, ROT90,  "Midway / General Computer Corporation", "Ms. Pac-Man", MACHINE_SUPPORTS_SAVE );
-        public static readonly game_driver driver_pacplus  = GAME( device_creator_pacplus,  rom_pacplus,  "1982", "pacplus",  null,      m_pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   pacman_state_init_pacplus,  ROT90,  "Namco (Midway license)", "Pac-Man Plus", MACHINE_SUPPORTS_SAVE );
+        //                                                                                                        rom         parent     machine                       inp                                 init
+        public static readonly game_driver driver_puckman  = GAME( device_creator_puckman,  rom_puckman,  "1980", "puckman",  null,      pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   driver_device.empty_init,          ROT90,  "Namco", "Puck Man (Japan set 1)", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_pacman   = GAME( device_creator_pacman,   rom_pacman,   "1980", "pacman",   "puckman", pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   driver_device.empty_init,          ROT90,  "Namco (Midway license)", "Pac-Man (Midway)", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_mspacman = GAME( device_creator_mspacman, rom_mspacman, "1981", "mspacman", null,      pacman.pacman_state_mspacman, m_pacman.construct_ioport_mspacman, pacman.pacman_state_init_mspacman, ROT90,  "Midway / General Computer Corporation", "Ms. Pac-Man", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_pacplus  = GAME( device_creator_pacplus,  rom_pacplus,  "1982", "pacplus",  null,      pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   pacman.pacman_state_init_pacplus,  ROT90,  "Namco (Midway license)", "Pac-Man Plus", MACHINE_SUPPORTS_SAVE );
     }
 }

@@ -16,7 +16,7 @@ namespace mame
 {
     // ======================> path_iterator
     // helper class for iterating over configured paths
-    class path_iterator
+    class path_iterator : global_object
     {
         // internal state
         string m_searchpath;
@@ -61,8 +61,8 @@ namespace mame
             if (name != null)
             {
                 // compute the full pathname
-                if (!buffer.empty() && !buffer.EndsWith(osdcore_global.PATH_SEPARATOR))  //(*buffer.rbegin() != *osdcore_global.PATH_SEPARATOR))
-                    buffer += osdcore_global.PATH_SEPARATOR;
+                if (!buffer.empty() && !is_directory_separator(buffer.back()))
+                    buffer += PATH_SEPARATOR;
 
                 buffer += name;
             }
@@ -139,7 +139,7 @@ namespace mame
 
 
     // ======================> emu_file
-    public class emu_file
+    public class emu_file : global_object, IDisposable
     {
         // from stdio.h
         public const int SEEK_CUR = 1;
@@ -161,7 +161,7 @@ namespace mame
         util.hash_collection m_hashes = new util.hash_collection();                       // collection of hashes
 
         util.archive_file m_zipfile;  //std::unique_ptr<util::archive_file> m_zipfile;  // ZIP file pointer
-        std_vector<u8> m_zipdata = new std_vector<u8>();  // ZIP file data
+        std.vector<u8> m_zipdata = new std.vector<u8>();  // ZIP file data
         u64 m_ziplength;                    // ZIP file length
 
         bool m_remove_on_close;              // flag: remove the file when closing
@@ -187,7 +187,7 @@ namespace mame
 
 
             // sanity check the open flags
-            if ((m_openflags & OPEN_FLAG_HAS_CRC) > 0 && (m_openflags & osdcore_global.OPEN_FLAG_WRITE) > 0)
+            if ((m_openflags & OPEN_FLAG_HAS_CRC) > 0 && (m_openflags & OPEN_FLAG_WRITE) > 0)
                 throw new emu_fatalerror("Attempted to open a file for write with OPEN_FLAG_HAS_CRC");
         }
 
@@ -205,17 +205,25 @@ namespace mame
 
 
             // sanity check the open flags
-            if ((m_openflags & OPEN_FLAG_HAS_CRC) > 0 && (m_openflags & osdcore_global.OPEN_FLAG_WRITE) > 0)
+            if ((m_openflags & OPEN_FLAG_HAS_CRC) > 0 && (m_openflags & OPEN_FLAG_WRITE) > 0)
                 throw new emu_fatalerror("Attempted to open a file for write with OPEN_FLAG_HAS_CRC");
         }
 
-        //-------------------------------------------------
-        //  ~emu_file - destructor
-        //-------------------------------------------------
         ~emu_file()
+        {
+            //throw new emu_unimplemented();
+#if false
+            global.assert(m_isDisposed);  // can remove
+#endif
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             // close in the standard way
             close();
+
+            m_isDisposed = true;
         }
 
 
@@ -293,7 +301,7 @@ namespace mame
             m_mediapaths.reset();
             while (m_mediapaths.next(out mediapath, null) && !result)
             {
-                if (path.CompareTo(mediapath.Substring(0, mediapath.Length)) != 0)
+                if (path.compare(mediapath.substr(0, mediapath.length())) != 0)
                     result = true;
             }
 
@@ -366,7 +374,7 @@ namespace mame
                     break;
 
                 // if we're opening for read-only we have other options
-                if ((m_openflags & (osdcore_global.OPEN_FLAG_READ | osdcore_global.OPEN_FLAG_WRITE)) == osdcore_global.OPEN_FLAG_READ)
+                if ((m_openflags & (OPEN_FLAG_READ | OPEN_FLAG_WRITE)) == OPEN_FLAG_READ)
                 {
                     filerr = attempt_zipped();
                     if (filerr == osd_file.error.NONE)
@@ -400,6 +408,8 @@ namespace mame
         public void close()
         {
             // close files and free memory
+            if (m_zipfile != null)
+                m_zipfile.Dispose();
             m_zipfile = null;
             m_file = null;
 
@@ -602,13 +612,13 @@ namespace mame
             // loop over archive types
             string savepath = m_fullpath;
             string filename = "";
-            for (UInt32 i = 0; i < suffixes.Length; i++, m_fullpath = savepath, filename = "")
+            for (int i = 0; i < suffixes.Length; i++, m_fullpath = savepath, filename = "")
             {
                 // loop over directory parts up to the start of filename
                 while (true)
                 {
                     // find the final path separator
-                    var dirsep = m_fullpath.LastIndexOf(osdcore_global.PATH_SEPARATOR[0]);
+                    var dirsep = m_fullpath.find_last_of(PATH_SEPARATOR[0]);
                     if (dirsep == -1)
                         break;
 
@@ -616,8 +626,8 @@ namespace mame
                         break;
 
                     // insert the part from the right of the separator into the head of the filename
-                    if (!string.IsNullOrEmpty(filename)) filename.Insert(0, "/");
-                    filename.Insert(0, m_fullpath.Substring(dirsep + 1));
+                    if (!filename.empty()) filename = filename.Insert(0, "/");
+                    filename = filename.Insert(0, m_fullpath.substr(dirsep + 1));
 
                     // remove this part of the filename and append an archive extension
                     m_fullpath = m_fullpath.Substring(0, dirsep);
@@ -628,7 +638,7 @@ namespace mame
                     util.archive_file.error ziperr = open_funcs[i](m_fullpath, out zip);
 
                     // chop the archive suffix back off the filename before continuing
-                    m_fullpath = m_fullpath.Substring(0, dirsep);
+                    m_fullpath = m_fullpath.substr(0, dirsep);
 
                     // if we failed to open this file, continue scanning
                     if (ziperr != util.archive_file.error.NONE)
@@ -657,10 +667,11 @@ namespace mame
                         // build a hash with just the CRC
                         m_hashes.reset();
                         m_hashes.add_crc(m_zipfile.current_crc());
-                        return ((m_openflags & osdcore_global.OPEN_FLAG_NO_PRELOAD) != 0) ? osd_file.error.NONE : load_zipped_file();
+                        return ((m_openflags & OPEN_FLAG_NO_PRELOAD) != 0) ? osd_file.error.NONE : load_zipped_file();
                     }
 
                     // close up the archive file and try the next level
+                    zip.Dispose();
                     zip = null;  //.reset();
                 }
             }
@@ -674,9 +685,9 @@ namespace mame
         //-------------------------------------------------
         osd_file.error load_zipped_file()
         {
-            global.assert(m_file == null);
-            global.assert(m_zipdata.empty());
-            global.assert(m_zipfile != null);
+            assert(m_file == null);
+            assert(m_zipdata.empty());
+            assert(m_zipfile != null);
 
             // allocate some memory
             m_zipdata.resize((int)m_ziplength);
@@ -698,6 +709,7 @@ namespace mame
             }
 
             // close out the ZIP file
+            m_zipfile.Dispose();
             m_zipfile = null;
             return osd_file.error.NONE;
         }

@@ -13,8 +13,9 @@ using u32 = System.UInt32;
 namespace mame
 {
     // ======================> speaker_device
-    public class speaker_device : device_t
-                           // public device_mixer_interface
+    public class speaker_device : device_t,
+                                  IDisposable
+                                  // public device_mixer_interface
     {
         //DEFINE_DEVICE_TYPE(SPEAKER, speaker_device, "speaker", "Speaker")
         static device_t device_creator_speaker_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new speaker_device(mconfig, tag, owner, clock); }
@@ -49,7 +50,7 @@ namespace mame
         public speaker_device(machine_config mconfig, string tag, device_t owner, u32 clock = 0)
             : base(mconfig, SPEAKER, tag, owner, clock)
         {
-            m_class_interfaces.Add(new device_mixer_interface(mconfig, this));  //m_class_interfaces.Add(new device_mixer_interface(mconfig, this));
+            m_class_interfaces.Add(new device_mixer_interface(mconfig, this));
 
 
             m_x = 0;
@@ -63,17 +64,26 @@ namespace mame
 #endif
         }
 
-        //-------------------------------------------------
-        //  ~speaker_device - destructor
-        //-------------------------------------------------
         ~speaker_device()
+        {
+            //throw new emu_unimplemented();
+#if false
+            global.assert(m_isDisposed);  // can remove
+#endif
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
 #if MAME_DEBUG
             // log the maximum sample values for all speakers
             if (m_max_sample > 0)
                 osd_printf_global.osd_printf_debug("Speaker \"{0}\" - max = {1} (gain *= {2}) - {3}%% samples clipped\n", tag(), m_max_sample, 32767.0 / (m_max_sample != 0 ? m_max_sample : 1), (int)((double)m_clipped_samples * 100.0 / m_total_samples));
 #endif
+
+            m_isDisposed = true;
         }
+
 
         // inline configuration helpers
 
@@ -116,7 +126,7 @@ namespace mame
                 }
             }
 
-            global.assert(samples_this_update == numsamples);
+            assert(samples_this_update == numsamples);
 
 #if MAME_DEBUG
             // debug version: keep track of the maximum sample

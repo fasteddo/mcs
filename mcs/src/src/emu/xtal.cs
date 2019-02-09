@@ -35,7 +35,7 @@ namespace mame
     }
 
 
-    public class XTAL
+    public class XTAL : global_object
     {
         // This array *must* stay in order, it's binary-searched
         static readonly double [] known_xtals =
@@ -92,11 +92,13 @@ namespace mame
              5000000, /* 5_MHz_XTAL             Mutant Night */
              5068800, /* 5.0688_MHz_XTAL        Usually used as MC2661 or COM8116 baud rate clock */
              5185000, /* 5.185_MHz_XTAL         Intel INTELLEC® 4 */
+             5370000, /* 5.37_MHz_XTAL          HP 95LX */
              5460000, /* 5.46_MHz_XTAL          ec1840 and ec1841 keyboard */
              5529600, /* 5.5296_MHz_XTAL        Kontron PSI98 keyboard */
              5626000, /* 5.626_MHz_XTAL         RCA CDP1869 PAL dot clock */
              5670000, /* 5.67_MHz_XTAL          RCA CDP1869 NTSC dot clock */
              5714300, /* 5.7143_MHz_XTAL        Cidelsa Destroyer, TeleVideo serial keyboards */
+             5856000, /* 5.856_MHz_XTAL         HP 3478A Multimeter */
              5911000, /* 5.911_MHz_XTAL         Philips Videopac Plus G7400 */
              5990400, /* 5.9904_MHz_XTAL        Luxor ABC 800 keyboard (Keytronic custom part #48-300-008 is equivalent) */
              6000000, /* 6_MHz_XTAL             American Poker II, Taito SJ System */
@@ -110,6 +112,7 @@ namespace mame
              7372800, /* 7.3728_MHz_XTAL        - */
              7864300, /* 7.8643_MHz_XTAL        Used on InterFlip games as video clock */
              7987000, /* 7.987_MHz_XTAL         PC9801-86 YM2608 clock */
+             7995500, /* 7.9955_MHz_XTAL        Used on Electronic Devices Italy Galaxy Gunners sound board */
              8000000, /* 8_MHz_XTAL             Extremely common, used on 100's of PCBs */
              8200000, /* 8.2_MHz_XTAL           Universal Mr. Do - Model 8021 PCB */
              8388000, /* 8.388_MHz_XTAL         Nintendo Game Boy Color */
@@ -121,6 +124,7 @@ namespace mame
              8867238, /* 8.867238_MHz_XTAL      ETI-660 (~2x PAL subcarrier) */
              8945000, /* 8.945_MHz_XTAL         Hit Me */
              9216000, /* 9.216_MHz_XTAL         Conitec PROF-180X */
+             9600000, /* 9.6_MHz_XTAL           WD37C65 second clock (for 300 KB/sec rate) */
              9828000, /* 9.828_MHz_XTAL         Universal PCBs */
              9830400, /* 9.8304_MHz_XTAL        Epson PX-8 */
              9832000, /* 9.832_MHz_XTAL         Robotron A7150 */
@@ -181,7 +185,9 @@ namespace mame
             14300000, /* 14.3_MHz_XTAL          Agat-7 */
             14314000, /* 14.314_MHz_XTAL        Taito TTL Board  */
             14318181, /* 14.318181_MHz_XTAL     Extremely common, used on 100's of PCBs (4x NTSC subcarrier) */
+            14580000, /* 14.58_MHz_XTAL         Fortune 32:16 Video Controller */
             14705882, /* 14.705882_MHz_XTAL     Aleck64 */
+            14742800, /* 14.7428_MHz_XTAL       ADM 23 */
             14745600, /* 14.7456_MHz_XTAL       Namco System 12 & System Super 22/23 for JVS */
             14784000, /* 14.784_MHz_XTAL        Zenith Z-29 */
             14916000, /* 14.916_MHz_XTAL        ADDS Viewpoint 122 */
@@ -195,6 +201,7 @@ namespace mame
             15400000, /* 15.4_MHz_XTAL          DVK KSM */
             15468480, /* 15.46848_MHz_XTAL      Bank Panic h/w, Sega G80 */
             15582000, /* 15.582_MHz_XTAL        Zentec Zephyr */
+            15667200, /* 15.6672_MHz_XTAL       Apple Macintosh */
             15700000, /* 15.700_MHz_XTAL        Motogonki */
             15897600, /* 15.8976_MHz_XTAL       IAI Swyft */
             15920000, /* 15.92_MHz_XTAL         HP Integral PC */
@@ -202,6 +209,8 @@ namespace mame
             16000000, /* 16_MHz_XTAL            Extremely common, used on 100's of PCBs */
             16097280, /* 16.09728_MHz_XTAL      DEC VT240 (1024 * 262 * 60) */
             16128000, /* 16.128_MHz_XTAL        Fujitsu FM-7 */
+            16257000, /* 16.257_MHz_XTAL        IBM PC MDA & EGA */
+            16364000, /* 16.364_MHz_XTAL        Corvus Concept */
             16384000, /* 16.384_MHz_XTAL        - */
             16400000, /* 16.4_MHz_XTAL          MS 6102 */
             16572000, /* 16.572_MHz_XTAL        Micro-Term ACT-5A */
@@ -210,6 +219,7 @@ namespace mame
             16670000, /* 16.67_MHz_XTAL         - */
             16777216, /* 16.777216_MHz_XTAL     Nintendo Game Boy Advance */
             16934400, /* 16.9344_MHz_XTAL       Usually used to drive 90's Yamaha OPL/FM chips (44100 * 384) */
+            17010000, /* 17.01_MHz_XTAL         Epic 14E */
             17064000, /* 17.064_MHz_XTAL        Memorex 1377 */
             17350000, /* 17.35_MHz_XTAL         ITT Courier 1700 */
             17360000, /* 17.36_MHz_XTAL         OMTI Series 10 SCSI controller */
@@ -259,6 +269,7 @@ namespace mame
             24883200, /* 24.8832_MHz_XTAL       DEC VT100 */
             25000000, /* 25_MHz_XTAL            Namco System 22, Taito GNET, Dogyuun h/w */
             25174800, /* 25.1748_MHz_XTAL       Sega System 16A/16B (1600x NTSC line rate) */
+            25175000, /* 25.175_MHz_XTAL        IBM MCGA/VGA 320/640-pixel graphics */
             25200000, /* 25.2_MHz_XTAL          Tektronix 4404 video clock */
             25398360, /* 25.39836_MHz_XTAL      Tandberg TDV 2324 */
             25400000, /* 25.4_MHz_XTAL          PC9801-86 PCM base clock */
@@ -317,13 +328,15 @@ namespace mame
             39710000, /* 39.71_MHz_XTAL         Wyse WY-60 132-column display clock */
             40000000, /* 40_MHz_XTAL            - */
             40210000, /* 40.21_MHz_XTAL         Fairlight CMI IIx */
+            41539000, /* 41.539_MHz_XTAL        IBM PS/2 132-column text mode */
             42000000, /* 42_MHz_XTAL            BMC A-00211 - Popo Bear */
             42105200, /* 42.1052_MHz_XTAL       NEC PC-88xx */
             42954545, /* 42.954545_MHz_XTAL     CPS3 (12x NTSC subcarrier)*/
             43320000, /* 43.32_MHz_XTAL         DEC VT420 */
             44100000, /* 44.1_MHz_XTAL          Subsino's Bishou Jan */
-            44236800, /* 44.2368_MHz_XTAL       ReCo6502 */
+            44236800, /* 44.2368_MHz_XTAL       ReCo6502, Fortune 32:16 */
             44452800, /* 44.4528_MHz_XTAL       TeleVideo 965 */
+            44900000, /* 44.9_MHz_XTAL          IBM 8514 1024x768 43.5Hz graphics */
             45000000, /* 45_MHz_XTAL            Eolith with Hyperstone CPUs */
             45158000, /* 45.158_MHz_XTAL        Sega Model 2A video board, Model 3 CPU board */
             45619200, /* 45.6192_MHz_XTAL       DEC VK100 */
@@ -343,7 +356,7 @@ namespace mame
             51200000, /* 51.2_MHz_XTAL          Namco Super System 22 video clock */
             52000000, /* 52_MHz_XTAL            Cojag */
             52832000, /* 52.832_MHz_XTAL        Wang PC TIG video controller */
-            53203400, /* 53.2034_MHz_XTAL       Master System, Mega Drive PAL (~12x PAL subcarrier) */
+            53203424, /* 53.203424_MHz_XTAL     Master System, Mega Drive PAL (12x PAL subcarrier) */
             53693175, /* 53.693175_MHz_XTAL     PSX-based h/w, Sony ZN1-2-based (15x NTSC subcarrier) */
             54000000, /* 54_MHz_XTAL            Taito JC */
             55000000, /* 55_MHz_XTAL            Eolith Vega */
@@ -364,6 +377,7 @@ namespace mame
             77414400, /* 77.4144_MHz_XTAL       NCD17c */
             80000000, /* 80_MHz_XTAL            ARM710 */
             87183360, /* 87.18336_MHz_XTAL      AT&T 630 MTG */
+            92940500, /* 92.9405_MHz_XTAL       Sun cgthree */
            100000000, /* 100_MHz_XTAL           PSX-based Namco System 12, Vegas, Sony ZN1-2-based */
            101491200, /* 101.4912_MHz_XTAL      PSX-based Namco System 10 */
            108108000, /* 108.108_MHz_XTAL       HP 98550 high-res color card */
@@ -411,16 +425,16 @@ namespace mame
 
         static void fail(double base_clock, string message)
         {
-            string full_message = global.string_format("Unknown crystal value {0}. ", base_clock);
+            string full_message = string_format("Unknown crystal value {0}. ", base_clock);
 
             if (xtal_error_low != 0 && xtal_error_high != 0)
-                full_message += global.string_format(" Did you mean {0} or {1}?", xtal_error_low, xtal_error_high);
+                full_message += string_format(" Did you mean {0} or {1}?", xtal_error_low, xtal_error_high);
             else
-                full_message += global.string_format(" Did you mean {0}?", xtal_error_low != 0 ? xtal_error_low : xtal_error_high);
+                full_message += string_format(" Did you mean {0}?", xtal_error_low != 0 ? xtal_error_low : xtal_error_high);
 
-            full_message += global.string_format(" Context: {0}\n", message);
+            full_message += string_format(" Context: {0}\n", message);
 
-            global.fatalerror("{0}\n", full_message.c_str());
+            fatalerror("{0}\n", full_message.c_str());
         }
 
 
@@ -451,7 +465,7 @@ namespace mame
                 {
                     double sfreq = known_xtals[slot];
                     double diff = Math.Abs((base_clock - sfreq) / base_clock);
-                    if (diff <= (2 * global.DBL_EPSILON))
+                    if (diff <= (2 * DBL_EPSILON))
                     {
                         last_correct_value = base_clock;
                         return true;

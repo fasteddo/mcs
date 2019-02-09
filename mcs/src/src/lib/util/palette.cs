@@ -106,13 +106,13 @@ namespace mame
 
     // ======================> palette_client
     // a single palette client
-    public class palette_client
+    public class palette_client : global_object, IDisposable
     {
         // internal object to track dirty states
         class dirty_state
         {
             // internal state
-            std_vector<uint32_t> m_dirty = new std_vector<uint32_t>();   // bitmap of dirty entries
+            std.vector<uint32_t> m_dirty = new std.vector<uint32_t>();   // bitmap of dirty entries
             uint32_t m_mindirty;             // minimum dirty entry
             uint32_t m_maxdirty;             // minimum dirty entry
 
@@ -224,11 +224,13 @@ namespace mame
             palette.client_list = this;
         }
 
-
-        //-------------------------------------------------
-        //  ~palette_client - destructor
-        //-------------------------------------------------
         ~palette_client()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             //throw new emu_unimplemented();
 #if false
@@ -245,6 +247,8 @@ namespace mame
 
             // now deref the palette
             m_palette.deref();
+
+            m_isDisposed = true;
         }
 
 
@@ -283,7 +287,7 @@ namespace mame
 
     // ======================> palette_t
     // a palette object
-    public class palette_t
+    public class palette_t : global_object
     {
         // friend class palette_client;
 
@@ -297,13 +301,13 @@ namespace mame
         float m_gamma;                      // overall gamma value
         uint8_t [] m_gamma_map = new uint8_t[256];             // gamma map
 
-        std_vector<rgb_t> m_entry_color;           // array of raw colors
-        std_vector<float> m_entry_contrast;        // contrast value for each entry
-        std_vector<rgb_t> m_adjusted_color;        // array of adjusted colors
-        std_vector<rgb15_t> m_adjusted_rgb15;  //std::vector<rgb_t> m_adjusted_rgb15;        // array of adjusted colors as RGB15
+        std.vector<rgb_t> m_entry_color;           // array of raw colors
+        std.vector<float> m_entry_contrast;        // contrast value for each entry
+        std.vector<rgb_t> m_adjusted_color;        // array of adjusted colors
+        std.vector<rgb15_t> m_adjusted_rgb15;  //std::vector<rgb_t> m_adjusted_rgb15;        // array of adjusted colors as RGB15
 
-        std_vector<float> m_group_bright;          // brightness value for each group
-        std_vector<float> m_group_contrast;        // contrast value for each group
+        std.vector<float> m_group_bright;          // brightness value for each group
+        std.vector<float> m_group_contrast;        // contrast value for each group
 
         palette_client m_client_list;                // list of clients for this palette
 
@@ -358,7 +362,7 @@ namespace mame
             if (m_entry_color[index] == rgb)
                 return;
 
-            global.assert(index < m_numcolors);
+            assert(index < m_numcolors);
 
             // set the color
             m_entry_color[index] = rgb;
@@ -384,7 +388,7 @@ namespace mame
             if (m_entry_contrast[index] == contrast)
                 return;
 
-            global.assert(index < m_numcolors);
+            assert(index < m_numcolors);
 
             // set the contrast
             m_entry_contrast[index] = contrast;
@@ -415,7 +419,7 @@ namespace mame
             if (m_group_contrast[group] == contrast)
                 return;
 
-            global.assert(group < m_numgroups);
+            assert(group < m_numgroups);
 
             // set the contrast
             m_group_contrast[group] = contrast;
@@ -427,7 +431,41 @@ namespace mame
 
 
         // utilities
-        //void normalize_range(UINT32 start, UINT32 end, int lum_min = 0, int lum_max = 255);
+        public void normalize_range(uint32_t start, uint32_t end, int lum_min = 0, int lum_max = 255)
+        {
+            // clamp within range
+            // start = std::max(start, 0U); ==> reduces to start = start
+            end = Math.Min(end, m_numcolors - 1);
+
+            // find the minimum and maximum brightness of all the colors in the range
+            int32_t ymin = 1000 * 255;
+            int32_t ymax = 0;
+            for (uint32_t index = start; index <= end; index++)
+            {
+                rgb_t rgb = m_entry_color[index];
+                uint32_t y = (uint32_t)(299 * rgb.r() + 587 * rgb.g() + 114 * rgb.b());
+                ymin = (int32_t)Math.Min((uint32_t)ymin, y);
+                ymax = (int32_t)Math.Max((uint32_t)ymax, y);
+            }
+
+            // determine target minimum/maximum
+            int32_t tmin = (lum_min < 0) ? ((ymin + 500) / 1000) : lum_min;
+            int32_t tmax = (lum_max < 0) ? ((ymax + 500) / 1000) : lum_max;
+
+            // now normalize the palette
+            for (uint32_t index = start; index <= end; index++)
+            {
+                rgb_t rgb = m_entry_color[index];
+                int32_t y = 299 * rgb.r() + 587 * rgb.g() + 114 * rgb.b();
+                int32_t u = ((int32_t)rgb.b()-y /1000)*492 / 1000;
+                int32_t v = ((int32_t)rgb.r()-y / 1000)*877 / 1000;
+                int32_t target = tmin + ((y - ymin) * (tmax - tmin + 1)) / (ymax - ymin);
+                uint8_t r = rgb_t.clamp(target + 1140 * v / 1000);
+                uint8_t g = rgb_t.clamp(target -  395 * u / 1000 - 581 * v / 1000);
+                uint8_t b = rgb_t.clamp(target + 2032 * u / 1000);
+                entry_set_color(index, new rgb_t(r, g, b));
+            }
+        }
 
 
         // construction/destruction
@@ -442,12 +480,12 @@ namespace mame
             m_brightness = 0.0f;
             m_contrast = 1.0f;
             m_gamma = 1.0f;
-            m_entry_color = new std_vector<rgb_t>((int)numcolors);
-            m_entry_contrast = new std_vector<float>((int)numcolors);
-            m_adjusted_color = new std_vector<rgb_t>((int)(numcolors * numgroups + 2));
-            m_adjusted_rgb15 = new std_vector<rgb15_t>((int)(numcolors * numgroups + 2));
-            m_group_bright = new std_vector<float>((int)numgroups);
-            m_group_contrast = new std_vector<float>((int)numgroups);
+            m_entry_color = new std.vector<rgb_t>((int)numcolors);
+            m_entry_contrast = new std.vector<float>((int)numcolors);
+            m_adjusted_color = new std.vector<rgb_t>((int)(numcolors * numgroups + 2));
+            m_adjusted_rgb15 = new std.vector<rgb15_t>((int)(numcolors * numgroups + 2));
+            m_group_bright = new std.vector<float>((int)numgroups);
+            m_group_contrast = new std.vector<float>((int)numgroups);
             m_client_list = null;
 
 
@@ -550,6 +588,19 @@ namespace mame
             if (_NumBits == 7) { bits &= 0x7f; return (byte)((bits << 1) | (bits >> 6)); }
             return bits;
         }
+
+
+        //-------------------------------------------------
+        //  palxbit - convert an x-bit value to 8 bits
+        //-------------------------------------------------
+
+        static uint8_t pal1bit(uint8_t bits) { return palexpand(1, bits); }
+        static uint8_t pal2bit(uint8_t bits) { return palexpand(2, bits); }
+        static uint8_t pal3bit(uint8_t bits) { return palexpand(3, bits); }
+        static uint8_t pal4bit(uint8_t bits) { return palexpand(4, bits); }
+        public static uint8_t pal5bit(uint8_t bits) { return palexpand(5, bits); }
+        static uint8_t pal6bit(uint8_t bits) { return palexpand(6, bits); }
+        static uint8_t pal7bit(uint8_t bits) { return palexpand(7, bits); }
 
 
         //-------------------------------------------------

@@ -15,7 +15,7 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public class gfx_element
+    public class gfx_element : global_object
     {
         // internal state
         device_palette_interface m_palette;    // palette used for drawing (optional when used as a pure decoder)
@@ -40,17 +40,17 @@ namespace mame
         u32 m_dirtyseq;             // sequence number; incremented each time a tile is dirtied
 
         ListBytesPointer m_gfxdata;  //u8 *         m_gfxdata;              // pointer to decoded pixel data, 8bpp
-        std_vector<u8> m_gfxdata_allocated = new std_vector<u8>();   // allocated decoded pixel data, 8bpp
-        std_vector<u8> m_dirty = new std_vector<u8>();   // dirty array for detecting chars that need decoding
-        std_vector<u32> m_pen_usage = new std_vector<u32>();   // bitmask of pens that are used (pens 0-31 only)
+        std.vector<u8> m_gfxdata_allocated = new std.vector<u8>();   // allocated decoded pixel data, 8bpp
+        std.vector<u8> m_dirty = new std.vector<u8>();   // dirty array for detecting chars that need decoding
+        std.vector<u32> m_pen_usage = new std.vector<u32>();   // bitmask of pens that are used (pens 0-31 only)
 
         bool m_layout_is_raw;        // raw layout?
         u8 m_layout_planes;        // bit planes in the layout
         u32 m_layout_xormask;       // xor mask applied to each bit offset
         u32 m_layout_charincrement; // per-character increment in source data
-        std_vector<u32> m_layout_planeoffset = new std_vector<u32>();   // plane offsets
-        std_vector<u32> m_layout_xoffset = new std_vector<u32>();   // X offsets
-        std_vector<u32> m_layout_yoffset = new std_vector<u32>();   // Y offsets
+        std.vector<u32> m_layout_planeoffset = new std.vector<u32>();   // plane offsets
+        std.vector<u32> m_layout_xoffset = new std.vector<u32>();   // X offsets
+        std.vector<u32> m_layout_yoffset = new std.vector<u32>();   // Y offsets
 
 
         // construction/destruction
@@ -196,7 +196,7 @@ namespace mame
 
             // mark everything dirty
             m_dirty.resize((int)m_total_elements);
-            global.memset(m_dirty, (u8)1, m_total_elements);
+            memset(m_dirty, (u8)1, m_total_elements);
 
             // allocate a pen usage array for entries with 32 pens or less
             if (m_color_depth <= 32)
@@ -254,7 +254,8 @@ namespace mame
             code %= elements();
             //DECLARE_NO_PRIORITY;
             bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
-            drawgfxm_global.DRAWGFX_CORE<UInt16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_OPAQUE, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, 0, null, 2);
+            //DRAWGFX_CORE(u16, PIXEL_OP_REBASE_OPAQUE, NO_PRIORITY);
+            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_OPAQUE, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, 0, null, 2);
         }
 
         void opaque(bitmap_rgb32 dest, rectangle cliprect,
@@ -266,12 +267,51 @@ namespace mame
             bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
             throw new emu_unimplemented();
 #if false
-            DRAWGFX_CORE(UInt32, PIXEL_OP_REMAP_OPAQUE, NO_PRIORITY);
+            DRAWGFX_CORE(u32, PIXEL_OP_REMAP_OPAQUE, NO_PRIORITY);
 #endif
         }
 
 
-        //void transpen(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 transpen);
+        /*-------------------------------------------------
+            transpen - render a gfx element with
+            a single transparent pen
+        -------------------------------------------------*/
+
+        public void transpen(bitmap_ind16 dest, rectangle cliprect,
+                u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty,
+                u32 trans_pen)
+        {
+            // special case invalid pens to opaque
+            if (trans_pen > 0xff)
+            {
+                opaque(dest, cliprect, code, color, flipx, flipy, destx, desty);
+                return;
+            }
+
+            // use pen usage to optimize
+            code %= elements();
+            if (has_pen_usage())
+            {
+                // fully transparent; do nothing
+                u32 usage = pen_usage(code);
+                if ((usage & ~(1 << (int)trans_pen)) == 0)
+                    return;
+
+                // fully opaque; draw as such
+                if ((usage & (1 << (int)trans_pen)) == 0)
+                {
+                    opaque(dest, cliprect, code, color, flipx, flipy, destx, desty);
+                    return;
+                }
+            }
+
+            // render
+            color = colorbase() + granularity() * (color % colors());
+            //DECLARE_NO_PRIORITY;
+            bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
+            //DRAWGFX_CORE(u16, PIXEL_OP_REBASE_TRANSPEN, NO_PRIORITY);
+            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_TRANSPEN, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, trans_pen, null, 2);
+        }
 
 
         public void transpen(bitmap_rgb32 dest, rectangle cliprect,
@@ -307,7 +347,7 @@ namespace mame
             //DECLARE_NO_PRIORITY;
             bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
             //DRAWGFX_CORE(u32, PIXEL_OP_REMAP_TRANSPEN, NO_PRIORITY);
-            drawgfxm_global.DRAWGFX_CORE<UInt32, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REMAP_TRANSPEN, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, trans_pen, paldata, 2);
+            drawgfxm_global.DRAWGFX_CORE<u32, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REMAP_TRANSPEN, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, trans_pen, paldata, 2);
         }
 
 
@@ -461,7 +501,7 @@ namespace mame
             {
                 // zap the data to 0
                 ListBytesPointer decode_base = new ListBytesPointer(m_gfxdata, (int)(code * m_char_modulo));  //u8 *decode_base = m_gfxdata + code * m_char_modulo;
-                global.memset(decode_base, (u8)0, m_char_modulo);  //memset(decode_base, 0, m_char_modulo);
+                memset(decode_base, (u8)0, m_char_modulo);  //memset(decode_base, 0, m_char_modulo);
 
                 // iterate over planes
                 int plane;
@@ -526,7 +566,8 @@ namespace mame
 
         // construction/destruction
         //template <typename T>
-        public void gfxdecode_device_after_ctor(string palette_tag, gfx_decode_entry [] gfxinfo)  // call this after _ADD() because can't figure out how to port the crazy device_add_impl
+        public gfxdecode_device(machine_config mconfig, string tag, device_t owner, string palette_tag, gfx_decode_entry [] gfxinfo)
+            : this(mconfig, tag, owner, 0)
         {
             m_digfx = GetClassInterface<device_gfx_interface>();
             m_digfx.set_palette(palette_tag);
@@ -537,6 +578,21 @@ namespace mame
             : base(mconfig, GFXDECODE, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_gfx_interface(mconfig, this));
+        }
+
+        //template <typename T>
+        public void gfxdecode_device_after_ctor(string palette_tag, gfx_decode_entry [] gfxinfo)
+        {
+            m_digfx = GetClassInterface<device_gfx_interface>();
+            m_digfx.set_palette(palette_tag);
+            m_digfx.set_info(gfxinfo);
+        }
+
+        public void gfxdecode_device_after_ctor(finder_base palette, gfx_decode_entry [] gfxinfo)
+        {
+            m_digfx = GetClassInterface<device_gfx_interface>();
+            m_digfx.set_palette(palette);
+            m_digfx.set_info(gfxinfo);
         }
 
 

@@ -273,7 +273,7 @@ namespace mame
 
     // ======================> input_device
     // a logical device of a given class that can provide input
-    public abstract class input_device
+    public abstract class input_device : global_object
     {
         //friend class input_class;
 
@@ -332,10 +332,10 @@ namespace mame
         //-------------------------------------------------
         public input_item_id add_item(string name, input_item_id itemid, item_get_state_func getstate, object internal_obj = null)
         {
-            global.assert_always(machine().phase() == machine_phase.INIT, "Can only call input_device::add_item at init time!");
-            global.assert(name != null);
-            global.assert(itemid > input_item_id.ITEM_ID_INVALID && itemid < input_item_id.ITEM_ID_MAXIMUM);
-            global.assert(getstate != null);
+            assert_always(machine().phase() == machine_phase.INIT, "Can only call input_device::add_item at init time!");
+            assert(name != null);
+            assert(itemid > input_item_id.ITEM_ID_INVALID && itemid < input_item_id.ITEM_ID_MAXIMUM);
+            assert(getstate != null);
 
             // if we have a generic ID, pick a new internal one
             input_item_id originalid = itemid;
@@ -348,10 +348,10 @@ namespace mame
                 }
             }
 
-            global.assert(itemid <= input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
+            assert(itemid <= input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
 
             // make sure we don't have any overlap
-            global.assert(m_item[(int)itemid] == null);
+            assert(m_item[(int)itemid] == null);
 
             // determine the class and create the appropriate item class
             switch (m_manager.device_class(devclass()).standard_item_class(originalid))
@@ -370,7 +370,7 @@ namespace mame
 
                 default:
                     m_item[(int)itemid] = null;
-                    global.assert(false);
+                    assert(false);
                     break;
             }
 
@@ -517,7 +517,7 @@ namespace mame
 
     // ======================> input_class
     // a class of device that provides input
-    public abstract class input_class
+    public abstract class input_class : global_object
     {
         // internal state
         input_manager m_manager;              // reference to our manager
@@ -543,7 +543,7 @@ namespace mame
             m_multi = multi;
 
 
-            global.assert(m_name != null);
+            assert(m_name != null);
         }
 
 
@@ -569,9 +569,9 @@ namespace mame
         //-------------------------------------------------
         public input_device add_device(string name, string id, object internal_object = null)
         {
-            global.assert_always(machine().phase() == machine_phase.INIT, "Can only call input_class::add_device at init time!");
-            global.assert(name != null);
-            global.assert(id != null);
+            assert_always(machine().phase() == machine_phase.INIT, "Can only call input_class::add_device at init time!");
+            assert(name != null);
+            assert(id != null);
 
             // allocate a new device and add it to the index
             return add_device(make_device(name, id, internal_object));
@@ -580,7 +580,7 @@ namespace mame
 
         public input_device add_device(input_device new_device)
         {
-            global.assert(new_device.devclass() == m_devclass);
+            assert(new_device.devclass() == m_devclass);
 
             // find the next empty index
             for (int devindex = 0; devindex < input_global.DEVICE_INDEX_MAXIMUM; devindex++)
@@ -592,9 +592,9 @@ namespace mame
                     m_maxindex = Math.Max(m_maxindex, devindex);
 
                     if (new_device.id()[0] == 0)
-                        global.osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
+                        osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
                     else
-                        global.osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
+                        osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
 
                     m_device[devindex] = new_device;
                     return m_device[devindex];
@@ -754,7 +754,7 @@ namespace mame
             if (!map.parse(mapstring))
                 return false;
 
-            global.osd_printf_verbose("Input: Changing default joystick map = {0}\n", map.to_string().c_str());
+            osd_printf_verbose("Input: Changing default joystick map = {0}\n", map.to_string().c_str());
 
             // iterate over joysticks and set the map
             for (int joynum = 0; joynum <= maxindex(); joynum++)

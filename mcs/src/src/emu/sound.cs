@@ -27,12 +27,12 @@ namespace mame
 
         public const bool VERBOSE = false;
 
-        public static void VPRINTF(string format, params object [] args) { if (VERBOSE) global.osd_printf_debug(format, args); }
+        public static void VPRINTF(string format, params object [] args) { if (VERBOSE) global_object.osd_printf_debug(format, args); }
     }
 
 
     // ======================> sound_stream
-    public class sound_stream : simple_list_item<sound_stream>
+    public class sound_stream : global_object, simple_list_item<sound_stream>
     {
         //friend class sound_manager;
 
@@ -44,7 +44,7 @@ namespace mame
         class stream_output
         {
             public sound_stream m_stream;               // owning stream
-            public std_vector<stream_sample_t> m_buffer = new std_vector<stream_sample_t>();    // output buffer
+            public std.vector<stream_sample_t> m_buffer = new std.vector<stream_sample_t>();    // output buffer
             public int m_dependents;           // number of dependents
             public s16 m_gain;                 // gain to apply to the output
 
@@ -69,7 +69,7 @@ namespace mame
         class stream_input
         {
             public stream_output m_source;               // pointer to the sound_output for this source
-            public std_vector<stream_sample_t> m_resample = new std_vector<stream_sample_t>();  // buffer for resampling to the stream's sample rate
+            public std.vector<stream_sample_t> m_resample = new std.vector<stream_sample_t>();  // buffer for resampling to the stream's sample rate
             public attoseconds_t m_latency_attoseconds;  // latency between this stream and the input stream
             public s16 m_gain;                 // gain to apply to this input
             public s16 m_user_gain;            // user-controlled gain to apply to this input
@@ -114,14 +114,14 @@ namespace mame
         emu_timer m_sync_timer;                 // update timer for synchronous streams
 
         // input information
-        std_vector<stream_input> m_input = new std_vector<stream_input>();              // list of streams we directly depend upon
+        std.vector<stream_input> m_input = new std.vector<stream_input>();              // list of streams we directly depend upon
         ListPointer<stream_sample_t> [] m_input_array;  //std::vector<stream_sample_t *> m_input_array;   // array of inputs for passing to the callback
 
         // resample buffer information
         u32 m_resample_bufalloc;          // allocated size of each resample buffer
 
         // output information
-        std_vector<stream_output> m_output = new std_vector<stream_output>();            // list of streams which directly depend upon us
+        std.vector<stream_output> m_output = new std.vector<stream_output>();            // list of streams which directly depend upon us
         ListPointer<stream_sample_t> [] m_output_array;  //std::vector<stream_sample_t *> m_output_array;  // array of outputs for passing to the callback
 
         // output buffer information
@@ -146,11 +146,11 @@ namespace mame
             m_new_sample_rate = 0xffffffff;
             m_attoseconds_per_sample = 0;
             m_max_samples_per_update = 0;
-            m_input = new std_vector<stream_input>();  //(inputs)
+            m_input = new std.vector<stream_input>();  //(inputs)
             for (int i = 0; i < inputs; i++) m_input.Add(new stream_input());
             m_input_array = new ListPointer<stream_sample_t>[inputs];
             m_resample_bufalloc = 0;
-            m_output = new std_vector<stream_output>();  //(outputs)
+            m_output = new std.vector<stream_output>();  //(outputs)
             for (int i = 0; i < outputs; i++) m_output.Add(new stream_output());
             m_output_array = new ListPointer<stream_sample_t>[outputs];
             m_output_bufalloc = 0;
@@ -237,11 +237,11 @@ namespace mame
 
             // make sure it's a valid input
             if (index >= m_input.size())
-                throw new emu_fatalerror("stream_set_input attempted to configure non-existant input {0} ({1} max)\n", index, m_input.size());
+                throw new emu_fatalerror("stream_set_input attempted to configure nonexistant input {0} ({1} max)\n", index, m_input.size());
 
             // make sure it's a valid output
             if (input_stream != null && output_index >= input_stream.m_output.size())
-                throw new emu_fatalerror("stream_set_input attempted to use a non-existant output {0} ({1} max)\n", output_index, m_output.size());
+                throw new emu_fatalerror("stream_set_input attempted to use a nonexistant output {0} ({1} max)\n", output_index, m_output.size());
 
             // if this input is already wired, update the dependent info
             stream_input input = m_input[index];
@@ -278,14 +278,14 @@ namespace mame
             attotime last_update = m_device.machine().sound().last_update();
             if (time.seconds() > last_update.seconds())
             {
-                global.assert(time.seconds() == last_update.seconds() + 1);
+                assert(time.seconds() == last_update.seconds() + 1);
                 update_sampindex += (int)m_sample_rate;
             }
 
             // if we're behind the last update, then adjust downwards
             if (time.seconds() < last_update.seconds())
             {
-                global.assert(time.seconds() == last_update.seconds() - 1);
+                assert(time.seconds() == last_update.seconds() - 1);
                 update_sampindex -= (int)m_sample_rate;
             }
 
@@ -427,7 +427,7 @@ namespace mame
                 for (int outputnum = 0; outputnum < m_output.size(); outputnum++)  // for (auto & elem : m_output)
                 {
                     var elem = m_output[outputnum];
-                    global.memset(elem.m_buffer, 0, (UInt32)m_max_samples_per_update);  //memset(&elem.m_buffer[0], 0, m_max_samples_per_update * sizeof(elem.m_buffer[0]));
+                    memset(elem.m_buffer, 0, (UInt32)m_max_samples_per_update);  //memset(&elem.m_buffer[0], 0, m_max_samples_per_update * sizeof(elem.m_buffer[0]));
                 }
             }
         }
@@ -583,7 +583,7 @@ namespace mame
             for (int outputnum = 0; outputnum < m_output.size(); outputnum++)  //for (auto & elem : m_output)
             {
                 var elem = m_output[outputnum];
-                global.memset(elem.m_buffer, 0, m_output_bufalloc);  //memset(&elem.m_buffer[0], 0, m_output_bufalloc * sizeof(elem.m_buffer[0]));
+                memset(elem.m_buffer, 0, m_output_bufalloc);  //memset(&elem.m_buffer[0], 0, m_output_bufalloc * sizeof(elem.m_buffer[0]));
             }
 
             // recompute the sample indexes to make sense
@@ -604,7 +604,7 @@ namespace mame
             ListPointer<stream_sample_t> [] outputs = null;  //stream_sample_t **outputs = nullptr;
 
             sound_global.VPRINTF("generate_samples({0}, {1})\n", this, samples);
-            global.assert(samples > 0);
+            assert(samples > 0);
 
             // ensure all inputs are up to date and generate resampled data
             for (int inputnum = 0; inputnum < m_input.size(); inputnum++)
@@ -651,7 +651,7 @@ namespace mame
             ListPointer<stream_sample_t> dest = new ListPointer<stream_sample_t>(input.m_resample);  // stream_sample_t *dest = input.m_resample;
             if (input.m_source == null || input.m_source.m_stream.m_attoseconds_per_sample == 0)
             {
-                global.memset(dest, 0, numsamples);  //memset(dest, 0, numsamples * sizeof(*dest));
+                memset(dest, 0, numsamples);  //memset(dest, 0, numsamples * sizeof(*dest));
                 return new ListPointer<stream_sample_t>(input.m_resample);
             }
 
@@ -672,13 +672,13 @@ namespace mame
                 basesample = (int)(-(-basetime / input_stream.m_attoseconds_per_sample) - 1);
 
             // compute a source pointer to the first sample
-            global.assert(basesample >= input_stream.m_output_base_sampindex);
+            assert(basesample >= input_stream.m_output_base_sampindex);
             ListPointer<stream_sample_t> source = new ListPointer<stream_sample_t>(output.m_buffer, basesample - input_stream.m_output_base_sampindex);  // stream_sample_t *source = &output.m_buffer[basesample - input_stream.m_output_base_sampindex];
 
             // determine the current fraction of a sample, expressed as a fraction of FRAC_ONE
             // (Note: this formula is valid as long as input_stream.m_attoseconds_per_sample signficantly exceeds FRAC_ONE > attoseconds = 4.2E-12 s)
             u32 basefrac = (u32)((basetime - basesample * input_stream.m_attoseconds_per_sample) / ((input_stream.m_attoseconds_per_sample + FRAC_ONE - 1) >> (int)FRAC_BITS));
-            global.assert(basefrac < FRAC_ONE);
+            assert(basefrac < FRAC_ONE);
 
             // compute the stepping fraction
             u32 step = (u32)(((u64)(input_stream.m_sample_rate) << (int)FRAC_BITS) / m_sample_rate);
@@ -776,7 +776,7 @@ namespace mame
 
 
     // ======================> sound_manager
-    public class sound_manager
+    public class sound_manager : global_object
     {
         //friend class sound_stream;
 
@@ -798,9 +798,9 @@ namespace mame
         emu_timer m_update_timer;         // timer to drive periodic updates
 
         u32 m_finalmix_leftover;
-        std_vector<s16> m_finalmix = new std_vector<s16>();
-        std_vector<s32> m_leftmix = new std_vector<s32>();
-        std_vector<s32> m_rightmix = new std_vector<s32>();
+        std.vector<s16> m_finalmix = new std.vector<s16>();
+        std.vector<s32> m_leftmix = new std.vector<s32>();
+        std.vector<s32> m_rightmix = new std.vector<s32>();
 
         u8 m_muted;
         int m_attenuation;
@@ -809,7 +809,7 @@ namespace mame
         wav_file m_wavfile;
 
         // streams data
-        std_vector<sound_stream> m_stream_list = new std_vector<sound_stream>();  //std::vector<std::unique_ptr<sound_stream>> m_stream_list;    // list of streams
+        std.vector<sound_stream> m_stream_list = new std.vector<sound_stream>();  //std::vector<std::unique_ptr<sound_stream>> m_stream_list;    // list of streams
         attoseconds_t m_update_attoseconds;   // attoseconds between global updates
         attotime m_last_update;          // last update time
 
@@ -824,9 +824,9 @@ namespace mame
             m_machine = machine;
             m_update_timer = null;
             m_finalmix_leftover = 0;
-            m_finalmix = new std_vector<s16>(machine.sample_rate());
-            m_leftmix = new std_vector<s32>(machine.sample_rate());
-            m_rightmix = new std_vector<s32>(machine.sample_rate());
+            m_finalmix = new std.vector<s16>(machine.sample_rate());
+            m_leftmix = new std.vector<s32>(machine.sample_rate());
+            m_rightmix = new std.vector<s32>(machine.sample_rate());
             m_nosound_mode = machine.osd().no_sound() ? 1 : 0;
             m_wavfile = null;
             m_update_attoseconds = STREAMS_UPDATE_ATTOTIME.attoseconds();
@@ -866,17 +866,13 @@ namespace mame
             m_update_timer.adjust(STREAMS_UPDATE_ATTOTIME, 0, STREAMS_UPDATE_ATTOTIME);
         }
 
-
-        //-------------------------------------------------
-        //  sound_manager - destructor
-        //-------------------------------------------------
-        ~sound_manager() { }
+        //~sound_manager() { }
 
 
         // getters
         running_machine machine() { return m_machine; }
         //int attenuation() const { return m_attenuation; }
-        public std_vector<sound_stream> streams() { return m_stream_list; }
+        public std.vector<sound_stream> streams() { return m_stream_list; }
         public attotime last_update() { return m_last_update; }
         public attoseconds_t update_attoseconds() { return m_update_attoseconds; }
 
@@ -1112,7 +1108,7 @@ namespace mame
             bool second_tick = false;
             if (curtime.seconds() != m_last_update.seconds())
             {
-                global.assert(curtime.seconds() == m_last_update.seconds() + 1);
+                assert(curtime.seconds() == m_last_update.seconds() + 1);
                 second_tick = true;
             }
 

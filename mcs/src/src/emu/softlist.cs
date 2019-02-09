@@ -156,7 +156,7 @@ namespace mame
         //simple_list<feature_list_item> m_other_info;   // Here we store info like developer, serial #, etc. which belong to the software entry as a whole
         //simple_list<feature_list_item> m_shared_info;  // Here we store info like TV standard compatibility, or add-on requirements, etc. which get inherited
                                                     // by each part of this software entry (after loading these are stored in partdata->featurelist)
-        std_list<software_part> m_partdata = new std_list<software_part>();
+        std.list<software_part> m_partdata = new std.list<software_part>();
 
 
         // construction/destruction
@@ -192,7 +192,7 @@ namespace mame
         //const simple_list<feature_list_item> &other_info() const { return m_other_info; }
         //const simple_list<feature_list_item> &shared_info() const { return m_shared_info; }
         //UINT32 supported() const { return m_supported; }
-        public std_list<software_part> parts() { return m_partdata; }
+        public std.list<software_part> parts() { return m_partdata; }
 
 
         // additional operations

@@ -34,7 +34,7 @@ namespace mame
         //  output_mame_xml - print the XML information
         //  for all known games
         //-------------------------------------------------
-        public void output(object output, std_vector<string> patterns)  //FILE *out)
+        public void output(object output, std.vector<string> patterns)  //FILE *out)
         {
             throw new emu_unimplemented();
         }

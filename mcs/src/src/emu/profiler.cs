@@ -64,7 +64,7 @@ namespace mame
     //**************************************************************************
 
     // ======================> real_profiler_state
-    public class real_profiler_state
+    public class real_profiler_state : global_object
     {
         // an entry in the FILO
         struct filo_entry
@@ -264,7 +264,7 @@ namespace mame
             }
 
             // reset data set to 0
-            global.memset<osd_ticks_t>(m_data, 0, (UInt32)m_data.Length);
+            memset<osd_ticks_t>(m_data, 0, (UInt32)m_data.Length);
             m_text = stream.str();
         }
 
@@ -279,7 +279,7 @@ namespace mame
                 throw new emu_fatalerror("Profiler FILO overflow (type = {0})\n", type);
 
             // get current tick count
-            osd_ticks_t curticks = (UInt64)eminline_global.get_profile_ticks();
+            osd_ticks_t curticks = (UInt64)get_profile_ticks();
 
             // update previous entry
             m_data[m_filo[m_filoptrIdx].type] += curticks - m_filo[m_filoptrIdx].start;
@@ -302,7 +302,7 @@ namespace mame
                 return;
 
             // get current tick count
-            osd_ticks_t curticks = (UInt64)eminline_global.get_profile_ticks();
+            osd_ticks_t curticks = (UInt64)get_profile_ticks();
 
             // account for the time taken
             m_data[m_filo[m_filoptrIdx].type] += curticks - m_filo[m_filoptrIdx].start;

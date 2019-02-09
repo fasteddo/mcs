@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    public class lua_engine
+    public class lua_engine : global_object, IDisposable
     {
         struct menu_item
         {
@@ -197,13 +197,16 @@ namespace mame
 #endif
         }
 
-
-        //-------------------------------------------------
-        //  ~lua_engine - destructor
-        //-------------------------------------------------
         ~lua_engine()
         {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
             close();
+            m_isDisposed = true;
         }
 
 

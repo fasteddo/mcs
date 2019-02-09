@@ -10,10 +10,10 @@ using device_type = mame.emu.detail.device_type_impl_base;
 namespace mame
 {
     //typedef void (*machine_creator_wrapper)(machine_config &, device_t &);
-    public delegate void machine_creator_wrapper(machine_config config, device_t owner, device_t device);
+    public delegate void machine_creator_wrapper(machine_config config, device_t device);
 
     //typedef void (*driver_init_wrapper)(device_t &);
-    public delegate void driver_init_wrapper(running_machine machine, device_t owner);
+    public delegate void driver_init_wrapper(device_t owner);
 
 
     public static class gamedrv_global
@@ -113,7 +113,21 @@ namespace mame
 
             device_type game_device = new device_type(new driver_device_creator(creator, traits.shortname, traits.fullname, traits.source, game_driver.unemulated_features(FLAGS), game_driver.imperfect_features(FLAGS), driver_device.unemulated_features(), driver_device.imperfect_features()).driver_tag());
 
-            return new game_driver(game_device, PARENT, YEAR, COMPANY, MACHINE, INPUT, INIT, roms, MONITOR, FLAGS, NAME, FULLNAME);
+            return new game_driver
+            (
+                game_device,
+                PARENT,
+                YEAR,
+                COMPANY,
+                (config, owner) => { MACHINE(config, owner); },
+                INPUT,
+                (owner) => { INIT(owner); },
+                roms,
+                MONITOR,
+                FLAGS,
+                NAME,
+                FULLNAME
+            );
         }
 
 
@@ -231,7 +245,7 @@ namespace mame
     //DECLARE_ENUM_BITWISE_OPERATORS(machine_flags::type);
 
 
-    public class game_driver
+    public class game_driver : global_object
     {
         public device_type type;               // static type info for driver class
         public string parent;                     // if this is a clone, the name of the parent
@@ -259,7 +273,7 @@ namespace mame
             this.rom = rom;
             this.compatible_with = null;
             this.default_layout = null;
-            this.flags = (machine_flags.type)(monitor | flags | gamedrv_global.MACHINE_TYPE_ARCADE);
+            this.flags = (machine_flags.type)(monitor | flags | MACHINE_TYPE_ARCADE);
             this.name = name;
         }
 
@@ -267,22 +281,22 @@ namespace mame
         public static emu.detail.device_feature.type unemulated_features(UInt64 flags)
         {
             return
-                    ((flags & gamedrv_global.MACHINE_WRONG_COLORS) != 0             ? emu.detail.device_feature.type.PALETTE    : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_NO_SOUND) != 0                 ? emu.detail.device_feature.type.SOUND      : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_NODEVICE_MICROPHONE) != 0      ? emu.detail.device_feature.type.MICROPHONE : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_NODEVICE_PRINTER) != 0         ? emu.detail.device_feature.type.PRINTER    : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_NODEVICE_LAN) != 0             ? emu.detail.device_feature.type.LAN        : emu.detail.device_feature.type.NONE);
+                    ((flags & MACHINE_WRONG_COLORS) != 0             ? emu.detail.device_feature.type.PALETTE    : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_NO_SOUND) != 0                 ? emu.detail.device_feature.type.SOUND      : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_NODEVICE_MICROPHONE) != 0      ? emu.detail.device_feature.type.MICROPHONE : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_NODEVICE_PRINTER) != 0         ? emu.detail.device_feature.type.PRINTER    : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_NODEVICE_LAN) != 0             ? emu.detail.device_feature.type.LAN        : emu.detail.device_feature.type.NONE);
         }
 
         public static emu.detail.device_feature.type imperfect_features(UInt64 flags)
         {
             return
-                    ((flags & gamedrv_global.MACHINE_UNEMULATED_PROTECTION) != 0    ? emu.detail.device_feature.type.PROTECTION : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_IMPERFECT_COLORS) != 0         ? emu.detail.device_feature.type.PALETTE    : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_IMPERFECT_GRAPHICS) != 0       ? emu.detail.device_feature.type.GRAPHICS   : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_IMPERFECT_SOUND) != 0          ? emu.detail.device_feature.type.SOUND      : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_IMPERFECT_CONTROLS) != 0       ? emu.detail.device_feature.type.CONTROLS   : emu.detail.device_feature.type.NONE) |
-                    ((flags & gamedrv_global.MACHINE_IMPERFECT_TIMING) != 0         ? emu.detail.device_feature.type.TIMING     : emu.detail.device_feature.type.NONE);
+                    ((flags & MACHINE_UNEMULATED_PROTECTION) != 0    ? emu.detail.device_feature.type.PROTECTION : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_IMPERFECT_COLORS) != 0         ? emu.detail.device_feature.type.PALETTE    : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_IMPERFECT_GRAPHICS) != 0       ? emu.detail.device_feature.type.GRAPHICS   : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_IMPERFECT_SOUND) != 0          ? emu.detail.device_feature.type.SOUND      : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_IMPERFECT_CONTROLS) != 0       ? emu.detail.device_feature.type.CONTROLS   : emu.detail.device_feature.type.NONE) |
+                    ((flags & MACHINE_IMPERFECT_TIMING) != 0         ? emu.detail.device_feature.type.TIMING     : emu.detail.device_feature.type.NONE);
         }
     }
 }

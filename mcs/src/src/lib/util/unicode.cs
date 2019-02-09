@@ -60,7 +60,7 @@ namespace mame
         //#define UTF8_UP                 "\xe2\x86\x91"      /* cursor up */
         //#define UTF8_DOWN               "\xe2\x86\x93"      /* cursor down */
 
-        //enum class unicode_normalization_form { C, D, KC, KD };
+        public enum unicode_normalization_form { C, D, KC, KD };
 
 
         /* tests to see if a unicode char is a valid code point */
@@ -101,113 +101,37 @@ namespace mame
             uchar_from_utf8 - convert a UTF-8 sequence
             into a unicode character
         -------------------------------------------------*/
-        public static int uchar_from_utf8(out char32_t uchar, string utf8char, int count)
+        public static int uchar_from_utf8(out char uchar, string utf8char, int count)
         {
-            uchar = 0;
+            //throw new emu_unimplemented();
+#if false
+#endif
 
-            char32_t c;
-            char32_t minchar;
-            int auxlen;
-            int i;
-            char auxchar;
-
-            /* validate parameters */
-            if (utf8char == null || count == 0)
-                return 0;
-
-            int utf8charIdx = 0;
-
-            /* start with the first byte */
-            c = utf8char[utf8charIdx];
-            count--;
-            utf8charIdx++;
-
-            /* based on that, determine how many additional bytes we need */
-            if (c < 0x80)
-            {
-                /* unicode char 0x00000000 - 0x0000007F */
-                c &= 0x7f;
-                auxlen = 0;
-                minchar = 0x00000000;
-            }
-            else if (c >= 0xc0 && c < 0xe0)
-            {
-                /* unicode char 0x00000080 - 0x000007FF */
-                c &= 0x1f;
-                auxlen = 1;
-                minchar = 0x00000080;
-            }
-            else if (c >= 0xe0 && c < 0xf0)
-            {
-                /* unicode char 0x00000800 - 0x0000FFFF */
-                c &= 0x0f;
-                auxlen = 2;
-                minchar = 0x00000800;
-            }
-            else if (c >= 0xf0 && c < 0xf8)
-            {
-                /* unicode char 0x00010000 - 0x001FFFFF */
-                c &= 0x07;
-                auxlen = 3;
-                minchar = 0x00010000;
-            }
-            else if (c >= 0xf8 && c < 0xfc)
-            {
-                /* unicode char 0x00200000 - 0x03FFFFFF */
-                c &= 0x03;
-                auxlen = 4;
-                minchar = 0x00200000;
-            }
-            else if (c >= 0xfc && c < 0xfe)
-            {
-                /* unicode char 0x04000000 - 0x7FFFFFFF */
-                c &= 0x01;
-                auxlen = 5;
-                minchar = 0x04000000;
-            }
-            else
-            {
-                /* invalid */
-                return -1;
-            }
-
-            /* exceeds the count? */
-            if (auxlen > (int)count)
-                return -1;
-
-            /* we now know how long the char is, now compute it */
-            for (i = 0; i < auxlen; i++)
-            {
-                auxchar = utf8char[i];
-
-                /* all auxillary chars must be between 0x80-0xbf */
-                if ((auxchar & 0xc0) != 0x80)
-                    return -1;
-
-                c = c << 6;
-                c |= (UInt32)(auxchar & 0x3f);
-            }
-
-            /* make sure that this char is above the minimum */
-            if (c < minchar)
-                return -1;
-
-            uchar = c;
-            return auxlen + 1;
+            uchar = utf8char[0];
+            return 1;
         }
-
 
         //int uchar_from_utf16(unicode_char *uchar, const utf16_char *utf16char, size_t count);
         //int uchar_from_utf16f(unicode_char *uchar, const utf16_char *utf16char, size_t count);
+
+        //-------------------------------------------------
+        //  ustr_from_utf8 - convert a UTF-8 sequence into
+        //  into a Unicode string
+        //-------------------------------------------------
+        public static string ustr_from_utf8(string utf8str) { return utf8str; }
 
         // converting UTF-8 strings to/from "wide" strings
         //std::wstring wstring_from_utf8(const std::string &utf8string);
         //std::string utf8_from_wstring(const std::wstring &string);
 
         // unicode normalization
-        //std::string normalize_unicode(const std::string &s, unicode_normalization_form normalization_form);
-        //std::string normalize_unicode(const char *s, unicode_normalization_form normalization_form);
-        //std::string normalize_unicode(const char *s, size_t length, unicode_normalization_form normalization_form);
+        //-------------------------------------------------
+        //  normalize_unicode - uses utf8proc to normalize
+        //  unicode
+        //-------------------------------------------------
+        public static string normalize_unicode(string s, unicode_normalization_form normalization_form, bool fold_case = false) { return s; }
+        //std::string normalize_unicode(const char *s, unicode_normalization_form normalization_form, bool fold_case = false);
+        //std::string normalize_unicode(const char *s, size_t length, unicode_normalization_form normalization_form, bool fold_case = false);
 
 
         /* converting 32-bit Unicode chars to strings */
@@ -365,7 +289,7 @@ namespace mame
             int utf8stringIdx = 0;
             while (utf8string[utf8stringIdx] != 0)
             {
-                char32_t uchar = 0;
+                char uchar = (char)0;  //char32_t uchar = 0;
                 int charlen;
 
                 /* extract the current character and verify it */

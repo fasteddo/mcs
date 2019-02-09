@@ -11,22 +11,32 @@ using System.Collections.Generic;
 
 namespace mame.plib
 {
-    class state_manager_t
+    public class state_manager_t
     {
-        //struct datatype_t
-        //{
-        //    datatype_t(std::size_t bsize, bool bintegral, bool bfloat)
-        //    : size(bsize), is_integral(bintegral), is_float(bfloat), is_custom(false)
-        //    {}
-        //    explicit datatype_t(bool bcustom)
-        //    : size(0), is_integral(false), is_float(false), is_custom(bcustom)
-        //    {}
-        //
-        //    const std::size_t size;
-        //    const bool is_integral;
-        //    const bool is_float;
-        //    const bool is_custom;
-        //};
+        public struct datatype_t
+        {
+            int size;
+            bool is_integral;
+            bool is_float;
+            bool is_custom;
+
+            public datatype_t(int bsize, bool bintegral, bool bfloat)
+            {
+                size = bsize;
+                is_integral = bintegral;
+                is_float = bfloat;
+                is_custom = false;
+            }
+
+            public datatype_t(bool bcustom)
+            {
+                size = 0;
+                is_integral = false;
+                is_float = false;
+                is_custom = bcustom;
+            }
+        }
+
 
         //template<typename T> struct datatype_f
         //{
@@ -46,46 +56,60 @@ namespace mame.plib
             //virtual ~callback_t();
 
             //virtual void register_state(state_manager_t &manager, const pstring &module) = 0;
-            //virtual void on_pre_save() = 0;
-            //virtual void on_post_load() = 0;
+            void on_pre_save();
+            void on_post_load();
         }
 
 
-        //struct entry_t
-        //{
-        //    using list_t = std::vector<std::unique_ptr<entry_t>>;
-        //
-        //    entry_t(const pstring &stname, const datatype_t &dt, const void *owner,
-        //            const std::size_t count, void *ptr)
-        //    : m_name(stname), m_dt(dt), m_owner(owner), m_callback(nullptr), m_count(count), m_ptr(ptr) { }
-        //
-        //    entry_t(const pstring &stname, const void *owner, callback_t *callback)
-        //    : m_name(stname), m_dt(datatype_t(true)), m_owner(owner), m_callback(callback), m_count(0), m_ptr(nullptr) { }
-        //
-        //    ~entry_t() { }
-        //
-        //    pstring             m_name;
-        //    const datatype_t    m_dt;
-        //    const void *        m_owner;
-        //    callback_t *        m_callback;
-        //    const std::size_t   m_count;
-        //    void *              m_ptr;
-        //};
+        class entry_t
+        {
+            //using list_t = std::vector<std::unique_ptr<entry_t>>;
+
+            string             m_name;
+            datatype_t    m_dt;
+            object m_owner;  //const void *        m_owner;
+            public callback_t m_callback;  //callback_t *        m_callback;
+            int m_count;
+            object m_ptr;  //void *              m_ptr;
+
+        
+            entry_t(string stname, datatype_t dt, object owner, int count, object ptr)
+            {
+                m_name = stname;
+                m_dt = dt;
+                m_owner = owner;
+                m_callback = null;
+                m_count = count;
+                m_ptr = ptr;
+            }
+
+            entry_t(string stname, object owner, callback_t callback)
+            {
+                m_name = stname;
+                m_dt = new datatype_t(true);
+                m_owner = owner;
+                m_callback = callback;
+                m_count = 0;
+                m_ptr = null;
+            }
+
+            //~entry_t() { }
+        }
 
 
         //entry_t::list_t m_save;
-        //entry_t::list_t m_custom;
+        std.vector<entry_t> m_custom;  //entry_t::list_t m_custom;  //entry_t::list_t m_custom;
 
 
         public state_manager_t()
         {
         }
 
-
-        ~state_manager_t()
-        {
-            throw new emu_unimplemented();
-        }
+        //~state_manager_t()
+        //{
+        //    m_save.clear();
+        //    m_custom.clear();
+        //}
 
 
         //template<typename C>
@@ -93,7 +117,7 @@ namespace mame.plib
         {
             //throw new emu_unimplemented();
 #if false
-            save_state_ptr( owner, stname, datatype_f<C>::f(), 1, &state);
+            save_state_ptr(owner, stname, datatype_f<C>::f(), v.size(), v.data());
 #endif
         }
 
@@ -113,13 +137,31 @@ namespace mame.plib
         //    save_state(v.data(), owner, stname, v.size());
         //}
 
-        //void pre_save();
-        //void post_load();
+
+        public void pre_save()
+        {
+            foreach (var s in m_custom)
+                s.m_callback.on_pre_save();
+        }
+
+
+        public void post_load()
+        {
+            foreach (var s in m_custom)
+                s.m_callback.on_post_load();
+        }
+
+
         //void remove_save_items(const void *owner);
 
         //const entry_t::list_t &save_list() const { return m_save; }
 
-        //void save_state_ptr(const void *owner, const pstring &stname, const datatype_t &dt, const std::size_t count, void *ptr);
+        public void save_state_ptr(object owner, string stname, object dt, UInt32 count, object ptr)  //void save_state_ptr(const void *owner, const pstring &stname, const datatype_t &dt, const std::size_t count, void *ptr);
+        {
+            //throw new emu_unimplemented();
+#if false
+#endif
+        }
     }
 
 

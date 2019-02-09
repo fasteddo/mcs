@@ -91,19 +91,19 @@ namespace mame
         //-------------------------------------------------
         public void set_game_driver(game_driver game)
         {
-            global.assert(m_system == null);
+            assert(m_system == null);
 
             // set the system
             m_system = game;
 
             // and set the search path to include all parents
             m_searchpath = game.name;
-            std_set<game_driver> seen = new std_set<game_driver>();
-            for (int parent = driver_list.clone(game); parent != -1; parent = driver_list.clone((UInt32)parent))
+            std.set<game_driver> seen = new std.set<game_driver>();
+            for (int parent = driver_list.clone(game); parent != -1; parent = driver_list.clone(parent))
             {
-                if (!seen.insert(driver_list.driver((UInt32)parent)))  //.second)
+                if (!seen.insert(driver_list.driver(parent)))  //.second)
                     throw new emu_fatalerror("driver_device::set_game_driver({0}): parent/clone relationships form a loop", game.name);
-                m_searchpath += ";" + driver_list.driver((UInt32)parent).name;
+                m_searchpath += ";" + driver_list.driver(parent).name;
             }
         }
 
@@ -122,7 +122,7 @@ namespace mame
         //  empty_init - default implementation which
         //  calls driver init
         //-------------------------------------------------
-        public static void empty_init(running_machine machine, device_t owner)
+        public static void empty_init(device_t owner)
         {
             ((driver_device)owner).driver_init();
         }
@@ -140,13 +140,14 @@ namespace mame
         //  NMI callbacks
         //-------------------------------------------------
         //INTERRUPT_GEN_MEMBER( driver_device::nmi_line_pulse )   { device.execute().pulse_input_line(INPUT_LINE_NMI, attotime::zero); }
-        public void nmi_line_pulse(device_t device) { device.execute().pulse_input_line((int)INPUT_LINE.INPUT_LINE_NMI, attotime.zero); }
+        public void nmi_line_pulse(device_t device) { device.execute().pulse_input_line(device_execute_interface.INPUT_LINE_NMI, attotime.zero); }
 
-        void nmi_line_assert(device_t device) { device.execute().set_input_line((int)INPUT_LINE.INPUT_LINE_NMI, line_state.ASSERT_LINE); }
+        //INTERRUPT_GEN_MEMBER( driver_device::nmi_line_assert )  { device.execute().set_input_line(INPUT_LINE_NMI, ASSERT_LINE); }
+        void nmi_line_assert(device_t device) { device.execute().set_input_line(device_execute_interface.INPUT_LINE_NMI, ASSERT_LINE); }
 
 
         //INTERRUPT_GEN_MEMBER( driver_device::irq0_line_hold )   { device.execute().set_input_line(0, HOLD_LINE); }
-        public void irq0_line_hold(device_t device) { device.execute().set_input_line(0, line_state.HOLD_LINE); }
+        public void irq0_line_hold(device_t device) { device.execute().set_input_line(0, HOLD_LINE); }
 
         //void irq0_line_assert(device_t &device);
 
@@ -170,10 +171,6 @@ namespace mame
 
         //void irq7_line_hold(device_t &device);
         //void irq7_line_assert(device_t &device);
-
-
-        // generic input port helpers
-        //DECLARE_CUSTOM_INPUT_MEMBER( custom_port_read );
 
 
         protected virtual void driver_init() { }
@@ -201,7 +198,7 @@ namespace mame
         //-------------------------------------------------
         protected override List<tiny_rom_entry> device_rom_region()
         {
-            global.assert(m_system != null);
+            assert(m_system != null);
             return m_system.rom;
         }
 
@@ -209,10 +206,10 @@ namespace mame
         //-------------------------------------------------
         //  device_add_mconfig - add machine configuration
         //-------------------------------------------------
-        protected override void device_add_mconfig(machine_config config, device_t owner, device_t device)
+        protected override void device_add_mconfig(machine_config config)
         {
-            global.assert(m_system != null);
-            m_system.machine_creator(config, owner, device);
+            assert(m_system != null);
+            m_system.machine_creator(config, this);
         }
 
 
@@ -240,7 +237,7 @@ namespace mame
 
             // call the game-specific init
             if (m_system.driver_init != null)
-                m_system.driver_init(machine(), this);
+                m_system.driver_init(this);
 
             // finish image devices init process
             machine().image().postdevice_init();
@@ -329,7 +326,7 @@ namespace mame
         void updateflip()
         {
             // push the flip state to all tilemaps
-            machine().tilemap().set_flip_all((tilemap_global.TILEMAP_FLIPX & m_flip_screen_x) | (tilemap_global.TILEMAP_FLIPY & m_flip_screen_y));
+            machine().tilemap().set_flip_all((TILEMAP_FLIPX & m_flip_screen_x) | (TILEMAP_FLIPY & m_flip_screen_y));
         }
     }
 }

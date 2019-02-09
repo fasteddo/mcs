@@ -105,7 +105,7 @@ namespace mame
         //WRITE_LINE_MEMBER(namco_53xx_device::read_request)
         public void read_request(int state)
         {
-            m_cpu.target.execute().set_input_line(0, line_state.ASSERT_LINE);
+            m_cpu.target.set_input_line(0, ASSERT_LINE);
 
             // The execution time of one instruction is ~4us, so we must make sure to
             // give the cpu time to poll the /IRQ input before we clear it.
@@ -158,26 +158,23 @@ namespace mame
         //-------------------------------------------------
         //  device_add_mconfig - add device configuration
         //-------------------------------------------------
-        protected override void device_add_mconfig(machine_config config, device_t owner, device_t device)
+        protected override void device_add_mconfig(machine_config config)
         {
-            //MACHINE_CONFIG_START(namco_53xx_device::device_add_mconfig)
-            MACHINE_CONFIG_START(config, owner, device);
-                MCFG_DEVICE_ADD("mcu", mb8843_cpu_device.MB8843, DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
-                MCFG_MB88XX_READ_K_CB(READ8(K_r));
-                MCFG_MB88XX_WRITE_O_CB(WRITE8(O_w));
-                MCFG_MB88XX_WRITE_P_CB(WRITE8(P_w));
-                MCFG_MB88XX_READ_R0_CB(READ8(R0_r));
-                MCFG_MB88XX_READ_R1_CB(READ8(R1_r));
-                MCFG_MB88XX_READ_R2_CB(READ8(R2_r));
-                MCFG_MB88XX_READ_R3_CB(READ8(R3_r));
-            MACHINE_CONFIG_END();
+            MB8843(config, m_cpu, DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
+            m_cpu.target.read_k().set(K_r).reg();
+            m_cpu.target.write_o().set(O_w).reg();
+            m_cpu.target.write_p().set(P_w).reg();
+            m_cpu.target.read_r(0).set(R0_r).reg();
+            m_cpu.target.read_r(1).set(R1_r).reg();
+            m_cpu.target.read_r(2).set(R2_r).reg();
+            m_cpu.target.read_r(3).set(R3_r).reg();
         }
 
 
         //TIMER_CALLBACK_MEMBER( namco_53xx_device::irq_clear )
         void irq_clear(object ptr, int param)
         {
-            m_cpu.target.execute().set_input_line(0, line_state.CLEAR_LINE);
+            m_cpu.target.set_input_line(0, CLEAR_LINE);
         }
     }
 }

@@ -74,34 +74,34 @@ namespace mame
         public const int TILEMAP_NUM_GROUPS              = 256;
 
         // these flags control tilemap_t::draw() behavior
-        public const UInt32 TILEMAP_DRAW_CATEGORY_MASK = 0x0f;     // specify the category to draw
-        public const UInt32 TILEMAP_DRAW_LAYER0 = 0x10;            // draw layer 0
-        public const UInt32 TILEMAP_DRAW_LAYER1 = 0x20;            // draw layer 1
-        public const UInt32 TILEMAP_DRAW_LAYER2 = 0x40;            // draw layer 2
-        public const UInt32 TILEMAP_DRAW_OPAQUE = 0x80;            // draw everything, even transparent stuff
-        public const UInt32 TILEMAP_DRAW_ALPHA_FLAG = 0x100;       // draw with alpha blending (in the upper 8 bits)
-        public const UInt32 TILEMAP_DRAW_ALL_CATEGORIES = 0x200;   // draw all categories
+        public const u32 TILEMAP_DRAW_CATEGORY_MASK = 0x0f;     // specify the category to draw
+        public const u32 TILEMAP_DRAW_LAYER0 = 0x10;            // draw layer 0
+        public const u32 TILEMAP_DRAW_LAYER1 = 0x20;            // draw layer 1
+        public const u32 TILEMAP_DRAW_LAYER2 = 0x40;            // draw layer 2
+        public const u32 TILEMAP_DRAW_OPAQUE = 0x80;            // draw everything, even transparent stuff
+        public const u32 TILEMAP_DRAW_ALPHA_FLAG = 0x100;       // draw with alpha blending (in the upper 8 bits)
+        public const u32 TILEMAP_DRAW_ALL_CATEGORIES = 0x200;   // draw all categories
 
         // per-pixel flags in the transparency_bitmap
-        public const byte TILEMAP_PIXEL_CATEGORY_MASK = 0x0f;     // category is stored in the low 4 bits
-        public const byte TILEMAP_PIXEL_TRANSPARENT = 0x00;       // transparent if in none of the layers below
-        public const byte TILEMAP_PIXEL_LAYER0 = 0x10;            // pixel is opaque in layer 0
-        public const byte TILEMAP_PIXEL_LAYER1 = 0x20;            // pixel is opaque in layer 1
-        public const byte TILEMAP_PIXEL_LAYER2 = 0x40;            // pixel is opaque in layer 2
+        public const u8 TILEMAP_PIXEL_CATEGORY_MASK = 0x0f;     // category is stored in the low 4 bits
+        public const u8 TILEMAP_PIXEL_TRANSPARENT = 0x00;       // transparent if in none of the layers below
+        public const u8 TILEMAP_PIXEL_LAYER0 = 0x10;            // pixel is opaque in layer 0
+        public const u8 TILEMAP_PIXEL_LAYER1 = 0x20;            // pixel is opaque in layer 1
+        public const u8 TILEMAP_PIXEL_LAYER2 = 0x40;            // pixel is opaque in layer 2
 
         // per-tile flags, set by get_tile_info callback
-        public const byte TILE_FLIPX = 0x01;                      // draw this tile horizontally flipped
-        public const byte TILE_FLIPY = 0x02;                      // draw this tile vertically flipped
-        public const byte TILE_FORCE_LAYER0 = TILEMAP_PIXEL_LAYER0; // force all pixels to be layer 0 (no transparency)
-        public const byte TILE_FORCE_LAYER1 = TILEMAP_PIXEL_LAYER1; // force all pixels to be layer 1 (no transparency)
-        public const byte TILE_FORCE_LAYER2 = TILEMAP_PIXEL_LAYER2; // force all pixels to be layer 2 (no transparency)
+        public const u8 TILE_FLIPX = 0x01;                      // draw this tile horizontally flipped
+        public const u8 TILE_FLIPY = 0x02;                      // draw this tile vertically flipped
+        public const u8 TILE_FORCE_LAYER0 = TILEMAP_PIXEL_LAYER0; // force all pixels to be layer 0 (no transparency)
+        public const u8 TILE_FORCE_LAYER1 = TILEMAP_PIXEL_LAYER1; // force all pixels to be layer 1 (no transparency)
+        public const u8 TILE_FORCE_LAYER2 = TILEMAP_PIXEL_LAYER2; // force all pixels to be layer 2 (no transparency)
 
         // tilemap global flags, used by tilemap_t::set_flip()
-        public const UInt32 TILEMAP_FLIPX = TILE_FLIPX;            // draw the tilemap horizontally flipped
-        public const UInt32 TILEMAP_FLIPY = TILE_FLIPY;            // draw the tilemap vertically flipped
+        public const u32 TILEMAP_FLIPX = TILE_FLIPX;            // draw the tilemap horizontally flipped
+        public const u32 TILEMAP_FLIPY = TILE_FLIPY;            // draw the tilemap vertically flipped
 
         // set this value for a scroll row/column to fully disable it
-        public const UInt32 TILE_LINE_DISABLED = 0x80000000;
+        public const u32 TILE_LINE_DISABLED = 0x80000000;
 
 
         //**************************************************************************
@@ -131,7 +131,7 @@ namespace mame
 
     // ======================> tilemap_t
     // core tilemap structure
-    public class tilemap_t : simple_list_item<tilemap_t>
+    public class tilemap_t : global_object, simple_list_item<tilemap_t>
     {
         // global types
         //typedef UINT32 tilemap_memory_index;
@@ -188,8 +188,8 @@ namespace mame
 
         // logical <-> memory mappings
         tilemap_mapper_delegate m_mapper;               // callback to map a row/column to a memory index
-        std_vector<logical_index> m_memory_to_logical = new std_vector<logical_index>();   // map from memory index to logical index
-        std_vector<tilemap_memory_index> m_logical_to_memory = new std_vector<tilemap_memory_index>();   // map from logical index to memory index
+        std.vector<logical_index> m_memory_to_logical = new std.vector<logical_index>();   // map from memory index to logical index
+        std.vector<tilemap_memory_index> m_logical_to_memory = new std.vector<tilemap_memory_index>();   // map from logical index to memory index
 
         // callback to interpret video RAM for the tilemap
         tilemap_get_info_delegate m_tile_get_info;        // callback to get information about a tile
@@ -207,8 +207,8 @@ namespace mame
         // scroll information
         u32 m_scrollrows;           // number of independently scrolled rows
         u32 m_scrollcols;           // number of independently scrolled columns
-        std_vector<s32> m_rowscroll = new std_vector<s32>();   // array of rowscroll values
-        std_vector<s32> m_colscroll = new std_vector<s32>();   // array of colscroll values
+        std.vector<s32> m_rowscroll = new std.vector<s32>();   // array of rowscroll values
+        std.vector<s32> m_colscroll = new std.vector<s32>();   // array of colscroll values
         s32 m_dx;                   // global horizontal scroll offset
         s32 m_dx_flipped;           // global horizontal scroll offset when flipped
         s32 m_dy;                   // global vertical scroll offset
@@ -219,7 +219,7 @@ namespace mame
 
         // transparency mapping
         bitmap_ind8 m_flagsmap = new bitmap_ind8();             // per-pixel flags
-        std_vector<u8> m_tileflags = new std_vector<u8>();   // per-tile flags
+        std.vector<u8> m_tileflags = new std.vector<u8>();   // per-tile flags
         u8 [] m_pen_to_flags = new u8[MAX_PEN_TO_FLAGS * tilemap_global.TILEMAP_NUM_GROUPS]; // mapping of pens to flags
 
 
@@ -365,8 +365,8 @@ namespace mame
         public void set_scrolly(int which, int value) { if (which < m_scrollcols) m_colscroll[which] = value; }
         public void set_scrollx(int value) { set_scrollx(0, value); }
         public void set_scrolly(int value) { set_scrolly(0, value); }
-        public void set_scroll_rows(u32 scroll_rows) { global.assert(scroll_rows <= m_height); m_scrollrows = scroll_rows; }
-        public void set_scroll_cols(u32 scroll_cols) { global.assert(scroll_cols <= m_width); m_scrollcols = scroll_cols; }
+        public void set_scroll_rows(u32 scroll_rows) { assert(scroll_rows <= m_height); m_scrollrows = scroll_rows; }
+        public void set_scroll_cols(u32 scroll_cols) { assert(scroll_cols <= m_width); m_scrollcols = scroll_cols; }
         public void set_flip(u32 attributes) { if (m_attributes != attributes) { m_attributes = (byte)attributes; mappings_update(); } }
 
 
@@ -471,7 +471,7 @@ namespace mame
         //-------------------------------------------------
         public void configure_groups(gfx_element gfx, indirect_pen_t transcolor)
         {
-            global.assert(gfx.colors() <= tilemap_global.TILEMAP_NUM_GROUPS);
+            assert(gfx.colors() <= tilemap_global.TILEMAP_NUM_GROUPS);
 
             // iterate over all colors in the tilemap
             for (UInt32 color = 0; color < gfx.colors(); color++)
@@ -942,7 +942,7 @@ namespace mame
         void mappings_update()
         {
             // initialize all the mappings to invalid values
-            global.memset(m_memory_to_logical, (UInt32)0xff, (UInt32)m_memory_to_logical.size());  //memset(&m_memory_to_logical[0], 0xff, m_memory_to_logical.size() * sizeof(m_memory_to_logical[0]));
+            memset(m_memory_to_logical, (UInt32)0xff, (UInt32)m_memory_to_logical.size());  //memset(&m_memory_to_logical[0], 0xff, m_memory_to_logical.size() * sizeof(m_memory_to_logical[0]));
 
             // now iterate over all logical indexes and populate the memory index
             for (logical_index logindex = 0; logindex < m_logical_to_memory.size(); logindex++)
@@ -976,7 +976,7 @@ namespace mame
             // flush the dirty status to all tiles
             if (m_all_tiles_dirty || gfx_elements_changed())
             {
-                global.memset(m_tileflags, TILE_FLAG_DIRTY, (UInt32)m_tileflags.size());  //memset(&m_tileflags[0], TILE_FLAG_DIRTY, m_tileflags.size());
+                memset(m_tileflags, TILE_FLAG_DIRTY, (UInt32)m_tileflags.size());  //memset(&m_tileflags[0], TILE_FLAG_DIRTY, m_tileflags.size());
                 m_all_tiles_dirty = false;
                 m_gfx_used = 0;
             }
@@ -1152,7 +1152,7 @@ namespace mame
             blit.cliprect = cliprect;
 
             // set the priority code and alpha
-            blit.tilemap_priority_code = (UInt32)(priority | (priority_mask << 8) | (m_palette_offset << 16));
+            blit.tilemap_priority_code = (UInt32)priority | ((UInt32)priority_mask << 8) | (m_palette_offset << 16);
             blit.alpha = (flags & tilemap_global.TILEMAP_DRAW_ALPHA_FLAG) != 0 ? (byte)(flags >> 24) : (byte)0xff;
 
             // tile priority; unless otherwise specified, draw anything in layer 0
@@ -1164,21 +1164,21 @@ namespace mame
                 flags |= tilemap_global.TILEMAP_DRAW_LAYER0;
 
             // OR in the bits from the draw masks
-            blit.mask |= (byte)(flags & (tilemap_global.TILEMAP_DRAW_LAYER0 | tilemap_global.TILEMAP_DRAW_LAYER1 | tilemap_global.TILEMAP_DRAW_LAYER2));
-            blit.value |= (byte)(flags & (tilemap_global.TILEMAP_DRAW_LAYER0 | tilemap_global.TILEMAP_DRAW_LAYER1 | tilemap_global.TILEMAP_DRAW_LAYER2));
+            blit.mask |= (u8)(flags & (tilemap_global.TILEMAP_DRAW_LAYER0 | tilemap_global.TILEMAP_DRAW_LAYER1 | tilemap_global.TILEMAP_DRAW_LAYER2));
+            blit.value |= (u8)(flags & (tilemap_global.TILEMAP_DRAW_LAYER0 | tilemap_global.TILEMAP_DRAW_LAYER1 | tilemap_global.TILEMAP_DRAW_LAYER2));
 
             // for all-opaque rendering, don't check any of the layer bits
             if ((flags & tilemap_global.TILEMAP_DRAW_OPAQUE) != 0)
             {
-                blit.mask = (byte)(blit.mask & ~(tilemap_global.TILEMAP_PIXEL_LAYER0 | tilemap_global.TILEMAP_PIXEL_LAYER1 | tilemap_global.TILEMAP_PIXEL_LAYER2));
-                blit.value = (byte)(blit.value & ~(tilemap_global.TILEMAP_PIXEL_LAYER0 | tilemap_global.TILEMAP_PIXEL_LAYER1 | tilemap_global.TILEMAP_PIXEL_LAYER2));
+                blit.mask = (u8)(blit.mask & ~(tilemap_global.TILEMAP_PIXEL_LAYER0 | tilemap_global.TILEMAP_PIXEL_LAYER1 | tilemap_global.TILEMAP_PIXEL_LAYER2));
+                blit.value = (u8)(blit.value & ~(tilemap_global.TILEMAP_PIXEL_LAYER0 | tilemap_global.TILEMAP_PIXEL_LAYER1 | tilemap_global.TILEMAP_PIXEL_LAYER2));
             }
 
             // don't check category if requested
             if ((flags & tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES) != 0)
             {
-                blit.mask = (byte)(blit.mask & ~tilemap_global.TILEMAP_PIXEL_CATEGORY_MASK);
-                blit.value = (byte)(blit.value & ~tilemap_global.TILEMAP_PIXEL_CATEGORY_MASK);
+                blit.mask = (u8)(blit.mask & ~tilemap_global.TILEMAP_PIXEL_CATEGORY_MASK);
+                blit.value = (u8)(blit.value & ~tilemap_global.TILEMAP_PIXEL_CATEGORY_MASK);
             }
         }
 
@@ -1494,7 +1494,7 @@ namespace mame
 
     // ======================> tilemap_manager
     // tilemap manager
-    public class tilemap_manager
+    public class tilemap_manager : global_object, IDisposable
     {
         // internal state
         running_machine m_machine;
@@ -1512,10 +1512,13 @@ namespace mame
             m_machine = machine;
         }
 
-        //-------------------------------------------------
-        //  ~tilemap_manager - destructor
-        //-------------------------------------------------
         ~tilemap_manager()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             // detach all device tilemaps since they will be destroyed
             // as subdevices elsewhere
@@ -1533,31 +1536,14 @@ namespace mame
                     }
                 }
             }
+
+            m_isDisposed = true;
         }
 
 
         // getters
         public running_machine machine() { return m_machine; }
 
-
-        //delegate tilemap_memory_index standard_mappers_func(driver_device device, UInt32 col, UInt32 row, UInt32 num_cols, UInt32 num_rows);
-
-        struct standard_mappers
-        {
-            public tilemap_mapper_delegate func;
-            public string name;
-        }
-
-        standard_mappers [] s_standard_mappers = new standard_mappers[(int)tilemap_standard_mapper.TILEMAP_STANDARD_COUNT] {
-            new standard_mappers() { func = tilemap_t.scan_rows,         name = "tilemap_t.scan_rows" },
-            new standard_mappers() { func = tilemap_t.scan_rows_flip_x,  name = "tilemap_t.scan_rows_flip_x" },
-            new standard_mappers() { func = tilemap_t.scan_rows_flip_y,  name = "tilemap_t.scan_rows_flip_y" },
-            new standard_mappers() { func = tilemap_t.scan_rows_flip_xy, name = "tilemap_t.scan_rows_flip_xy" },
-            new standard_mappers() { func = tilemap_t.scan_cols,         name = "tilemap_t.scan_cols" },
-            new standard_mappers() { func = tilemap_t.scan_cols_flip_x,  name = "tilemap_t.scan_cols_flip_x" },
-            new standard_mappers() { func = tilemap_t.scan_cols_flip_y,  name = "tilemap_t.scan_cols_flip_y" },
-            new standard_mappers() { func = tilemap_t.scan_cols_flip_xy, name = "tilemap_t.scan_cols_flip_xy" },
-        };
 
         // tilemap creation
         public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_mapper_delegate mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, tilemap_t allocated = null)
@@ -1573,7 +1559,18 @@ namespace mame
             if (allocated == null)
                 allocated = new tilemap_t();
 
-            return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, s_standard_mappers[(int)mapper].func, /*machine().driver_data(),*/ tilewidth, tileheight, cols, rows));
+            switch (mapper)
+            {
+                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS:         return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_rows, tilewidth, tileheight, cols, rows));
+                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_X:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_rows_flip_x, tilewidth, tileheight, cols, rows));
+                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_Y:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_rows_flip_y, tilewidth, tileheight, cols, rows));
+                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_XY: return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_rows_flip_xy, tilewidth, tileheight, cols, rows));
+                case tilemap_standard_mapper.TILEMAP_SCAN_COLS:         return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols, tilewidth, tileheight, cols, rows));
+                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_X:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_x, tilewidth, tileheight, cols, rows));
+                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_Y:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_y, tilewidth, tileheight, cols, rows));
+                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_XY: return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_xy, tilewidth, tileheight, cols, rows));
+                default: throw new emu_fatalerror("Tilemap manager create unknown mapper {0}", mapper);
+            }
         }
 
 

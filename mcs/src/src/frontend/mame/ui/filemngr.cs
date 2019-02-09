@@ -35,7 +35,7 @@ namespace mame.ui
             m_curr_selected = false;
         }
 
-        ~menu_file_manager() { }
+        //~menu_file_manager() { }
 
 
         // force file manager menu
@@ -56,10 +56,6 @@ namespace mame.ui
         }
 
 
-        //virtual void populate();
-        //virtual void handle();
-        //virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
-
         //-------------------------------------------------
         //  populate
         //-------------------------------------------------
@@ -76,6 +72,9 @@ namespace mame.ui
         {
             throw new emu_unimplemented();
         }
+
+
+        //virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 
         //void fill_image_line(device_image_interface *img, astring &instance, astring &filename);

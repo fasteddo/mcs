@@ -6,7 +6,9 @@ using System.Collections.Generic;
 
 using ListBytes = mame.ListBase<System.Byte>;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
+using s32 = System.Int32;
 using u8 = System.Byte;
+using u32 = System.UInt32;
 
 
 namespace mame
@@ -87,7 +89,7 @@ namespace mame
             //u32 srcdata = (SOURCE);                                                         \
             //if (srcdata != trans_pen)                                                       \
             //    (DEST) = paldata[srcdata];                                                  \
-            UInt32 srcdata = SOURCE;
+            u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
             {
                 if (PIXEL_TYPE_SIZE == 1)
@@ -103,6 +105,65 @@ namespace mame
             }
         }
 
+#if false
+        define PIXEL_OP_REMAP_TRANSPEN_PRIORITY(DEST, PRIORITY, SOURCE)                    \
+        do                                                                                  \
+        {                                                                                   \
+            u32 srcdata = (SOURCE);                                                         \
+            if (srcdata != trans_pen)                                                       \
+            {                                                                               \
+                if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+                    (DEST) = paldata[srcdata];                                              \
+                (PRIORITY) = 31;                                                            \
+            }                                                                               \
+        }                                                                                   \
+        while (0)
+#endif
+
+
+        /*-------------------------------------------------
+            PIXEL_OP_REBASE_TRANSPEN - render all pixels
+            except those matching 'transpen', adding
+            'color' to the pen value
+        -------------------------------------------------*/
+
+        //#define PIXEL_OP_REBASE_TRANSPEN(DEST, PRIORITY, SOURCE)                            \
+        public static void PIXEL_OP_REBASE_TRANSPEN(RawBuffer DEST, UInt32 DESTOffset, ListBytes PRIORITY, UInt32 PRIORITYOffset, byte SOURCE, UInt32 color, UInt32 trans_pen, ListPointer<rgb_t> paldata, int PIXEL_TYPE_SIZE)
+        {
+            //u32 srcdata = (SOURCE);                                                         \
+            //if (srcdata != trans_pen)                                                       \
+            //    (DEST) = color + srcdata;                                                   \
+            u32 srcdata = SOURCE;
+            if (srcdata != trans_pen)
+            {
+                if (PIXEL_TYPE_SIZE == 1)
+                    DEST[DESTOffset] = (byte)(color + srcdata);
+                else if (PIXEL_TYPE_SIZE == 2)
+                    DEST.set_uint16((int)DESTOffset, (UInt16)(color + srcdata));
+                else if (PIXEL_TYPE_SIZE == 4)
+                    DEST.set_uint32((int)DESTOffset, color + srcdata);
+                else if (PIXEL_TYPE_SIZE == 8)
+                    DEST.set_uint64((int)DESTOffset, color + srcdata);
+                else
+                    throw new emu_fatalerror("PIXEL_OP_REBASE_TRANSPEN() - wrong PIXEL_TYPE_SIZE: {0}", PIXEL_TYPE_SIZE);
+            }
+        }
+
+#if false
+        define PIXEL_OP_REBASE_TRANSPEN_PRIORITY(DEST, PRIORITY, SOURCE)                   \
+        do                                                                                  \
+        {                                                                                   \
+            u32 srcdata = (SOURCE);                                                         \
+            if (srcdata != trans_pen)                                                       \
+            {                                                                               \
+                if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+                    (DEST) = color + srcdata;                                               \
+                (PRIORITY) = 31;                                                            \
+            }                                                                               \
+        }                                                                                   \
+        while (0)
+#endif
+
 
         /*-------------------------------------------------
             PIXEL_OP_REBASE_TRANSMASK - render all pixels
@@ -112,10 +173,10 @@ namespace mame
         //public static void PIXEL_OP_REBASE_TRANSMASK(ref int DEST, int PRIORITY, int SOURCE, int color)
         public static void PIXEL_OP_REBASE_TRANSMASK(RawBuffer DEST, UInt32 DESTOffset, ListBytes PRIORITY, UInt32 PRIORITYOffset, byte SOURCE, UInt32 color, UInt32 trans_mask, ListPointer<rgb_t> paldata, int PIXEL_TYPE_SIZE)
         {
-            //UInt32 srcdata = SOURCE;
+            //u32 srcdata = SOURCE;
             //if (((trans_mask >> srcdata) & 1) == 0)
             //    DEST = color + srcdata;
-            UInt32 srcdata = SOURCE;
+            u32 srcdata = SOURCE;
             if (((trans_mask >> (int)srcdata) & 1) == 0)
             {
                 if (PIXEL_TYPE_SIZE == 1)
@@ -135,7 +196,7 @@ namespace mame
         define PIXEL_OP_REBASE_TRANSMASK_PRIORITY(DEST, PRIORITY, SOURCE)          
         do                                                                         
         {                                                                          
-            UINT32 srcdata = (SOURCE);                                             
+            u32 srcdata = (SOURCE);                                             
             if (((trans_mask >> srcdata) & 1) == 0)                                
             {                                                                      
                 if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                     
@@ -174,13 +235,13 @@ namespace mame
 
 
             ListBytesPointer srcdata;  //const u8 *srcdata;
-            int destendx;
-            int destendy;
-            int srcx;
-            int srcy;
-            int curx;
-            int cury;
-            int dy;
+            s32 destendx;
+            s32 destendy;
+            s32 srcx;
+            s32 srcy;
+            s32 curx;
+            s32 cury;
+            s32 dy;
 
             //assert(dest.valid());
             //assert(!PRIORITY_VALID(PRIORITY_TYPE) || priority.valid());
@@ -241,8 +302,8 @@ namespace mame
             srcdata = get_data(code);
 
             /* compute how many blocks of 4 pixels we have */
-            UInt32 numblocks = (UInt32)((destendx + 1 - destx) / 4);
-            UInt32 leftovers = (UInt32)((destendx + 1 - destx) - 4 * numblocks);
+            u32 numblocks = (UInt32)((destendx + 1 - destx) / 4);
+            u32 leftovers = (UInt32)((destendx + 1 - destx) - 4 * numblocks);
 
             /* adjust srcdata to point to the first source pixel of the row */
             srcdata += (srcy * (int)rowbytes + srcx);

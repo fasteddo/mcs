@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using s64 = System.Int64;
-using space_config_vector = mame.std_vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
+using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using time_t = System.Int64;
 using u32 = System.UInt32;
 
@@ -43,15 +43,27 @@ namespace mame
 
     public static class machine_global
     {
-        // a giant string buffer for temporary strings
-        public static string giant_string_buffer = ""; // [65536] = { 0 };
+        // debug flags
+        public const int DEBUG_FLAG_ENABLED        = 0x00000001;       // debugging is enabled
+        public const int DEBUG_FLAG_CALL_HOOK      = 0x00000002;       // CPU cores must call instruction hook
+        public const int DEBUG_FLAG_WPR_PROGRAM    = 0x00000010;       // watchpoints are enabled for PROGRAM memory reads
+        public const int DEBUG_FLAG_WPR_DATA       = 0x00000020;       // watchpoints are enabled for DATA memory reads
+        public const int DEBUG_FLAG_WPR_IO         = 0x00000040;       // watchpoints are enabled for IO memory reads
+        public const int DEBUG_FLAG_WPW_PROGRAM    = 0x00000100;       // watchpoints are enabled for PROGRAM memory writes
+        public const int DEBUG_FLAG_WPW_DATA       = 0x00000200;       // watchpoints are enabled for DATA memory writes
+        public const int DEBUG_FLAG_WPW_IO         = 0x00000400;       // watchpoints are enabled for IO memory writes
+        public const int DEBUG_FLAG_OSD_ENABLED    = 0x00001000;       // The OSD debugger is enabled
 
+
+        //**************************************************************************
+        //  MACROS
+        //**************************************************************************
 
         // global allocation helpers
         //#define auto_alloc(m, t)                pool_alloc(static_cast<running_machine &>(m).respool(), t)
         //#define auto_alloc_clear(m, t)          pool_alloc_clear(static_cast<running_machine &>(m).respool(), t)
-        public static ListBase<T> auto_alloc_array<T>(running_machine m, UInt32 c) where T : new() { return global.pool_alloc_array<T>(c); }  //#define auto_alloc_array(m, t, c)       pool_alloc_array(static_cast<running_machine &>(m).respool(), t, c)
-        public static ListBase<T> auto_alloc_array_clear<T>(running_machine m, UInt32 c) where T : new() { return global.pool_alloc_array_clear<T>(c); }  //#define auto_alloc_array_clear(m, t, c) pool_alloc_array_clear(static_cast<running_machine &>(m).respool(), t, c)
+        public static ListBase<T> auto_alloc_array<T>(running_machine m, UInt32 c) where T : new() { return global_object.pool_alloc_array<T>(c); }  //#define auto_alloc_array(m, t, c)       pool_alloc_array(static_cast<running_machine &>(m).respool(), t, c)
+        public static ListBase<T> auto_alloc_array_clear<T>(running_machine m, UInt32 c) where T : new() { return global_object.pool_alloc_array_clear<T>(c); }  //#define auto_alloc_array_clear(m, t, c) pool_alloc_array_clear(static_cast<running_machine &>(m).respool(), t, c)
         //#define auto_free(m, v)                 pool_free(static_cast<running_machine &>(m).respool(), v)
     }
 
@@ -127,7 +139,7 @@ namespace mame
             dummy_space_device dummy = (dummy_space_device)device();
             return new space_config_vector()
             {
-                global.make_pair(0, dummy.m_space_config)
+                std.make_pair(0, dummy.m_space_config)
             };
         }
     }
@@ -192,7 +204,7 @@ namespace mame
 
     // ======================> running_machine
     // description of the currently-running machine
-    public class running_machine
+    public class running_machine : global_object, IDisposable
     {
         //DISABLE_COPYING(running_machine);
 
@@ -225,18 +237,6 @@ namespace mame
             //side_effect_disabler(const side_effect_disabler &) = delete;
             //side_effect_disabler(side_effect_disabler &&) = default;
         }
-
-
-        // debug flags
-        public const int DEBUG_FLAG_ENABLED        = 0x00000001;       // debugging is enabled
-        public const int DEBUG_FLAG_CALL_HOOK      = 0x00000002;       // CPU cores must call instruction hook
-        public const int DEBUG_FLAG_WPR_PROGRAM    = 0x00000010;       // watchpoints are enabled for PROGRAM memory reads
-        public const int DEBUG_FLAG_WPR_DATA       = 0x00000020;       // watchpoints are enabled for DATA memory reads
-        public const int DEBUG_FLAG_WPR_IO         = 0x00000040;       // watchpoints are enabled for IO memory reads
-        public const int DEBUG_FLAG_WPW_PROGRAM    = 0x00000100;       // watchpoints are enabled for PROGRAM memory writes
-        public const int DEBUG_FLAG_WPW_DATA       = 0x00000200;       // watchpoints are enabled for DATA memory writes
-        public const int DEBUG_FLAG_WPW_IO         = 0x00000400;       // watchpoints are enabled for IO memory writes
-        public const int DEBUG_FLAG_OSD_ENABLED    = 0x00001000;       // The OSD debugger is enabled
 
 
         // must be at top of member variables
@@ -306,7 +306,7 @@ namespace mame
             public notifier_callback_item(machine_notify_delegate func) { m_func = func; }
         }
 
-        std_list<notifier_callback_item> [] m_notifier_list = new std_list<notifier_callback_item>[(int)machine_notification.MACHINE_NOTIFY_COUNT];  //std::list<std::unique_ptr<notifier_callback_item>> m_notifier_list[MACHINE_NOTIFY_COUNT];
+        std.list<notifier_callback_item> [] m_notifier_list = new std.list<notifier_callback_item>[(int)machine_notification.MACHINE_NOTIFY_COUNT];  //std::list<std::unique_ptr<notifier_callback_item>> m_notifier_list[MACHINE_NOTIFY_COUNT];
 
 
         // logerror callbacks
@@ -317,7 +317,7 @@ namespace mame
             public logerror_callback_item(logerror_callback func) { m_func = func; }
         }
 
-        std_list<logerror_callback_item> m_logerror_list = new std_list<logerror_callback_item>();  //std::list<std::unique_ptr<logerror_callback_item>> m_logerror_list;
+        std.list<logerror_callback_item> m_logerror_list = new std.list<logerror_callback_item>();  //std::list<std::unique_ptr<logerror_callback_item>> m_logerror_list;
 
 
         // embedded managers and objects
@@ -368,7 +368,7 @@ namespace mame
 
 
             for (int i = 0; i < m_notifier_list.Length; i++)
-                m_notifier_list[i] = new std_list<notifier_callback_item>();
+                m_notifier_list[i] = new std.list<notifier_callback_item>();
 
             m_base_time = 0;
 
@@ -382,7 +382,34 @@ namespace mame
 
             // fetch core options
             if (options().debug())
-                debug_flags = (DEBUG_FLAG_ENABLED | DEBUG_FLAG_CALL_HOOK) | (DEBUG_FLAG_OSD_ENABLED);
+                debug_flags = (machine_global.DEBUG_FLAG_ENABLED | machine_global.DEBUG_FLAG_CALL_HOOK) | (machine_global.DEBUG_FLAG_OSD_ENABLED);
+        }
+
+        ~running_machine()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
+            if (m_scheduler != null)
+                m_scheduler.Dispose();
+            m_scheduler = null;
+
+            if (m_debugger != null)
+                m_debugger.Dispose();
+            m_debugger = null;
+
+            if (m_tilemap != null)
+                m_tilemap.Dispose();
+            m_tilemap = null;
+
+            if (m_render != null)
+                m_render.Dispose();
+            m_render = null;
+
+            m_isDisposed = true;
         }
 
 
@@ -401,22 +428,22 @@ namespace mame
         public memory_manager memory() { return m_memory; }
         public ioport_manager ioport() { return m_ioport; }
         public parameters_manager parameters() { return m_parameters; }
-        public render_manager render() { global.assert(m_render != null); return m_render; }
-        public input_manager input() { global.assert(m_input != null); return m_input; }
+        public render_manager render() { assert(m_render != null); return m_render; }
+        public input_manager input() { assert(m_input != null); return m_input; }
         public sound_manager sound() { return m_sound; }
-        public video_manager video() { global.assert(m_video != null); return m_video; }
-        network_manager network() { global.assert(m_network != null); return m_network; }
-        public bookkeeping_manager bookkeeping() { global.assert(m_network != null); return m_bookkeeping; }
-        public configuration_manager configuration() { global.assert(m_configuration != null); return m_configuration; }
-        public output_manager output() { global.assert(m_output != null); return m_output; }
-        public ui_manager ui() { global.assert(m_ui != null); return m_ui; }
-        public ui_input_manager ui_input() { global.assert(m_ui_input != null); return m_ui_input; }
-        public crosshair_manager crosshair() { global.assert(m_crosshair != null); return m_crosshair; }
-        public image_manager image() { global.assert(m_image != null); return m_image; }
-        public rom_load_manager rom_load() { global.assert(m_rom_load != null); return m_rom_load; }
-        public tilemap_manager tilemap() { global.assert(m_tilemap != null); return m_tilemap; }
+        public video_manager video() { assert(m_video != null); return m_video; }
+        network_manager network() { assert(m_network != null); return m_network; }
+        public bookkeeping_manager bookkeeping() { assert(m_network != null); return m_bookkeeping; }
+        public configuration_manager configuration() { assert(m_configuration != null); return m_configuration; }
+        public output_manager output() { assert(m_output != null); return m_output; }
+        public ui_manager ui() { assert(m_ui != null); return m_ui; }
+        public ui_input_manager ui_input() { assert(m_ui_input != null); return m_ui_input; }
+        public crosshair_manager crosshair() { assert(m_crosshair != null); return m_crosshair; }
+        public image_manager image() { assert(m_image != null); return m_image; }
+        public rom_load_manager rom_load() { assert(m_rom_load != null); return m_rom_load; }
+        public tilemap_manager tilemap() { assert(m_tilemap != null); return m_tilemap; }
         //debug_view_manager &debug_view() const { assert(m_debug_view != NULL); return *m_debug_view; }
-        public debugger_manager debugger() { global.assert(m_debugger != null); return m_debugger; }
+        public debugger_manager debugger() { assert(m_debugger != null); return m_debugger; }
         public driver_device driver_data() { return (driver_device)root_device(); }  //template<class _DriverClass> _DriverClass *driver_data() const { return &downcast<_DriverClass &>(root_device()); }
         public machine_phase phase() { return m_current_phase; }
         public bool paused() { return m_paused || (m_current_phase != machine_phase.RUNNING); }
@@ -455,7 +482,7 @@ namespace mame
         //-------------------------------------------------
         public int run(bool quiet)
         {
-            int error = (int)EMU_ERR.EMU_ERR_NONE;
+            int error = EMU_ERR_NONE;
 
             // use try/catch for deep error recovery
             try
@@ -468,9 +495,9 @@ namespace mame
                 // if we have a logfile, set up the callback
                 if (options().log() && !quiet)
                 {
-                    m_logfile = new emu_file(osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
+                    m_logfile = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                     osd_file.error filerr = m_logfile.open("error.log");
-                    global.assert_always(filerr == osd_file.error.NONE, "unable to open log file");
+                    assert_always(filerr == osd_file.error.NONE, "unable to open log file");
 
                     //using namespace std::placeholders;
                     add_logerror_callback(logfile_callback);
@@ -596,6 +623,8 @@ namespace mame
             util.archive_file.cache_clear();
 
             // close the logfile
+            if (m_logfile != null)
+                m_logfile.close();
             m_logfile = null;
 
             return error;
@@ -653,7 +682,7 @@ namespace mame
         //-------------------------------------------------
         public void add_notifier(machine_notification notification_event, machine_notify_delegate callback, bool first = false)
         {
-            global.assert_always(m_current_phase == machine_phase.INIT, "Can only call add_notifier at init time!");
+            assert_always(m_current_phase == machine_phase.INIT, "Can only call add_notifier at init time!");
 
             if (first)
                 m_notifier_list[(int)notification_event].push_front(new notifier_callback_item(callback));
@@ -683,7 +712,7 @@ namespace mame
         //-------------------------------------------------
         public void add_logerror_callback(logerror_callback callback)
         {
-            global.assert_always(m_current_phase == machine_phase.INIT, "Can only call add_logerror_callback at init time!");
+            assert_always(m_current_phase == machine_phase.INIT, "Can only call add_logerror_callback at init time!");
             //m_string_buffer.reserve(1024);
             m_logerror_list.push_back(new logerror_callback_item(callback));
         }
@@ -758,7 +787,7 @@ namespace mame
             m_scheduler.eat_all_cycles();
 
             // if we're autosaving on exit, schedule a save as well
-            if (options().autosave() && ((UInt64)m_system.flags & gamedrv_global.MACHINE_SUPPORTS_SAVE) != 0 && this.time() > attotime.zero)
+            if (options().autosave() && ((UInt64)m_system.flags & MACHINE_SUPPORTS_SAVE) != 0 && this.time() > attotime.zero)
                 schedule_save("auto");
         }
 
@@ -867,7 +896,7 @@ namespace mame
         // misc
 
         public dummy_space_device dummy() { return m_dummy_space; }
-        public address_space dummy_space() { return m_dummy_space.dummy_memory().space(emumem_global.AS_PROGRAM); }
+        public address_space dummy_space() { return m_dummy_space.dummy_memory().space(AS_PROGRAM); }
 
 
         /*-------------------------------------------------
@@ -971,7 +1000,7 @@ namespace mame
                 {
                     device_memory_interface memory = cpu.memory();
                     device_state_interface state = cpu.state();
-                    address_space prg = memory.space(emumem_global.AS_PROGRAM);
+                    address_space prg = memory.space(AS_PROGRAM);
                     return string.Format(prg.is_octal() ? "'{0}' ({1})" :  "'{0}' ({1})", cpu.tag(), prg.logaddrchars(), state.pc());  // "'%s' (%0*o)" :  "'%s' (%0*X)"
                 }
             }
@@ -1057,7 +1086,7 @@ namespace mame
             m_network = new network_manager(this);
 
             // initialize the debugger
-            if ((debug_flags & DEBUG_FLAG_ENABLED) != 0)
+            if ((debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0)
             {
                 m_debug_view = new debug_view_manager(this);
                 m_debugger = new debugger_manager(this);
@@ -1085,7 +1114,7 @@ namespace mame
                 schedule_load(savegame);
 
             // if we're in autosave mode, schedule a load
-            else if (options().autosave() && ((UInt64)m_system.flags & gamedrv_global.MACHINE_SUPPORTS_SAVE) != 0)
+            else if (options().autosave() && ((UInt64)m_system.flags & MACHINE_SUPPORTS_SAVE) != 0)
                 schedule_load("auto");
 
             manager().update_machine();
@@ -1148,12 +1177,12 @@ namespace mame
                 }
 
                 if (!string.IsNullOrEmpty(software))
-                    result += osdcore_global.PATH_SEPARATOR + software;
+                    result += PATH_SEPARATOR + software;
 
                 string tag = device.tag();
                 tag = tag.Remove(0, 1);
                 tag = tag.Replace(':', '_');
-                result += osdcore_global.PATH_SEPARATOR + tag;
+                result += PATH_SEPARATOR + tag;
             }
 
             return result;
@@ -1167,7 +1196,7 @@ namespace mame
         {
             foreach (device_nvram_interface nvram in new nvram_interface_iterator(root_device()))
             {
-                emu_file file = new emu_file(options().nvram_directory(), osdcore_global.OPEN_FLAG_READ);
+                emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_READ);
                 if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
                 {
                     nvram.nvram_load(file);
@@ -1187,7 +1216,7 @@ namespace mame
         {
             foreach (device_nvram_interface nvram in new nvram_interface_iterator(root_device()))
             {
-                emu_file file = new emu_file(options().nvram_directory(), osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
+                emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                 if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
                 {
                     nvram.nvram_save(file);
@@ -1243,13 +1272,13 @@ namespace mame
                                 device.set_machine(this);
 
                             // now start the device
-                            global.osd_printf_verbose("Starting {0} '{1}'\n", device.name(), device.tag());
+                            osd_printf_verbose("Starting {0} '{1}'\n", device.name(), device.tag());
                             device.start();
                         }
                         catch (device_missing_dependencies)  // handle missing dependencies by moving the device to the end
                         {
                             // if we're the end, fail
-                            global.osd_printf_verbose("  (missing dependencies; rescheduling)\n");
+                            osd_printf_verbose("  (missing dependencies; rescheduling)\n");
                             failed_starts++;
                         }
                     }
@@ -1290,6 +1319,8 @@ namespace mame
             // iterate over devices and stop them
             foreach (device_t device in new device_iterator(root_device()))
                 device.stop();
+
+            m_dummy_space.stop();
         }
 
         //-------------------------------------------------

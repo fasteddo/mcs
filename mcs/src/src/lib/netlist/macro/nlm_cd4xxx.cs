@@ -51,7 +51,7 @@ namespace mame
          */
 
         //static NETLIST_START(CD4001_DIP)
-        public static void nld_CD4001_DIP(netlist.setup_t setup)
+        public static void netlist_CD4001_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -98,7 +98,7 @@ namespace mame
          */
 
         //static NETLIST_START(CD4020_DIP)
-        public static void nld_CD4020_DIP(netlist.setup_t setup)
+        public static void netlist_CD4020_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -140,7 +140,7 @@ namespace mame
          *
          */
         //static NETLIST_START(CD4066_DIP)
-        public static void nld_CD4066_DIP(netlist.setup_t setup)
+        public static void netlist_CD4066_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -173,7 +173,7 @@ namespace mame
 
 
         //static NETLIST_START(CD4016_DIP)
-        public static void nld_CD4016_DIP(netlist.setup_t setup)
+        public static void netlist_CD4016_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -206,7 +206,7 @@ namespace mame
 
 
         //static NETLIST_START(CD4316_DIP)
-        public static void nld_CD4316_DIP(netlist.setup_t setup)
+        public static void netlist_CD4316_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -241,7 +241,7 @@ namespace mame
 
 
         //NETLIST_START(CD4XXX_lib)
-        public static void nld_CD4XXX_lib(netlist.setup_t setup)
+        public static void netlist_CD4XXX_lib(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -253,13 +253,13 @@ namespace mame
                 netlist.nl_setup_global.TT_FAMILY("CD4XXX");
             netlist.nl_setup_global.TRUTHTABLE_END(setup);
 
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4001_DIP", nld_CD4001_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4001_DIP", netlist_CD4001_DIP);
 
             /* DIP ONLY */
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4020_DIP", nld_CD4020_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4016_DIP", nld_CD4016_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4066_DIP", nld_CD4066_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4316_DIP", nld_CD4316_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4020_DIP", netlist_CD4020_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4016_DIP", netlist_CD4016_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4066_DIP", netlist_CD4066_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4316_DIP", netlist_CD4316_DIP);
 
             netlist.nl_setup_global.NETLIST_END();
         }

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using notify_vector = mame.std_vector<mame.output_manager.output_notify>;
+using notify_vector = mame.std.vector<mame.output_manager.output_notify>;
 using s32 = System.Int32;
 using u32 = System.UInt32;
 
@@ -16,7 +16,7 @@ namespace mame
 
 
     // ======================> output_manager
-    public class output_manager
+    public class output_manager : global_object
     {
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask> friend class devcb_write;
 
@@ -89,7 +89,7 @@ namespace mame
         }
 
 
-        public class item_proxy
+        public class item_proxy : global_object
         {
             output_item m_item = null;
 
@@ -100,7 +100,7 @@ namespace mame
             //**************************************************************************
             public void resolve(device_t device, string name)
             {
-                global.assert(m_item == null);
+                assert(m_item == null);
                 m_item = device.machine().output().find_or_create_item(name.c_str(), 0);
             }
 
@@ -203,7 +203,7 @@ namespace mame
 
         // internal state
         running_machine m_machine;                  // reference to our machine
-        std_unordered_map<string, output_item> m_itemtable = new std_unordered_map<string, output_item>();
+        std.unordered_map<string, output_item> m_itemtable = new std.unordered_map<string, output_item>();
         notify_vector m_global_notifylist = new notify_vector();
         u32 m_uniqueid;
 
@@ -356,7 +356,7 @@ namespace mame
                     //std::piecewise_construct,
                     outname,  //std::forward_as_tuple(outname),
                     output_item);  // std::forward_as_tuple(this, outname, m_uniqueid++, value));
-            global.assert(ins);  //ins.second);
+            assert(ins);  //ins.second);
             return output_item;  //ins.first.second;
         }
 

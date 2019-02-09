@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using netlist_base_t = mame.netlist.netlist_state_t;
 using nl_double = System.Double;
 
 
@@ -14,6 +15,29 @@ namespace mame.netlist
 {
     namespace analog
     {
+        static class nlid_twoterm_global
+        {
+            //template <class C>
+            //inline core_device_t &bselect(bool b, C &d1, core_device_t &d2)
+            //{
+            //    core_device_t *h = dynamic_cast<core_device_t *>(&d1);
+            //    return b ? *h : d2;
+            //}
+            public static core_device_t bselect(bool b, object d1, core_device_t d2)
+            {
+                core_device_t h = (d1 is core_device_t) ? (core_device_t)d1 : null;
+                return b ? h : d2;
+            }
+            //template<>
+            public static core_device_t bselect(bool b, netlist_base_t d1, core_device_t d2)
+            {
+                if (b)
+                    throw new nl_exception("bselect with netlist and b==true");
+                return d2;
+            }
+        }
+
+
         // -----------------------------------------------------------------------------
         // nld_twoterm
         // -----------------------------------------------------------------------------
@@ -30,8 +54,8 @@ namespace mame.netlist
             public nld_twoterm(object owner, string name, bool terminals_owned = false)
                 : base(owner, name)
             {
-                m_P = new terminal_t(bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "1");
-                m_N = new terminal_t(bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "2");
+                m_P = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "1");
+                m_N = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "2");
 
 
                 m_P.otherterm = m_N;
@@ -80,20 +104,6 @@ namespace mame.netlist
                 m_P.set(-a12, a11, r1);
                 m_N.set(-a21, a22, r2);
             }
-
-
-            //template <class C>
-            //static core_device_t &bselect(bool b, C &d1, core_device_t &d2)
-            //{
-            //    core_device_t *h = dynamic_cast<core_device_t *>(&d1);
-            //    return b ? *h : d2;
-            //}
-            //template <class C>
-            static core_device_t bselect(bool b, object d1, core_device_t d2)
-            {
-                core_device_t h = (d1 is core_device_t) ? (core_device_t)d1 : null;
-                return b ? h : d2;
-            }
         }
 
 
@@ -125,7 +135,7 @@ namespace mame.netlist
             protected override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
-                set_R(1.0 / netlist().gmin());
+                set_R(1.0 / exec().gmin());
             }
 
             //NETLIB_UPDATEI();
@@ -164,7 +174,7 @@ namespace mame.netlist
             protected override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
-                set_R(Math.Max(m_R.op(), netlist().gmin()));
+                set_R(Math.Max(m_R.op(), exec().gmin()));
             }
 
             //NETLIB_UPDATEI() { }
@@ -174,7 +184,7 @@ namespace mame.netlist
             public override void update_param()
             {
                 update_dev();
-                set_R(Math.Max(m_R.op(), netlist().gmin()));
+                set_R(std.max(m_R.op(), exec().gmin()));
             }
 
             /* protect set_R ... it's a recipe to desaster when used to bypass the parameter */
@@ -230,16 +240,25 @@ namespace mame.netlist
             {
                 nl_double v = m_Dial.op();
                 if (m_DialIsLog.op())
-                    v = (Math.Exp(v) - 1.0) / (Math.Exp(1.0) - 1.0);
+                    v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
 
-                m_R1.set_R(Math.Max(m_R.op() * v, netlist().gmin()));
-                m_R2.set_R(Math.Max(m_R.op() * (nl_config_global.NL_FCONST(1.0) - v), netlist().gmin()));
+                m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
+                m_R2.set_R(std.max(m_R.op() * (nl_config_global.NL_FCONST(1.0) - v), exec().gmin()));
             }
 
             //NETLIB_UPDATE_PARAMI();
+            //NETLIB_UPDATE_PARAM(POT)
             public override void update_param()
             {
-                throw new emu_unimplemented();
+                m_R1.update_dev();
+                m_R2.update_dev();
+
+                nl_double v = m_Dial.op();
+                if (m_DialIsLog.op())
+                    v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
+
+                m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
+                m_R2.set_R(std.max(m_R.op() * (nl_config_global.NL_FCONST(1.0) - v), exec().gmin()));
             }
         }
 
@@ -264,7 +283,7 @@ namespace mame.netlist
             //NETLIB_CONSTRUCTOR_DERIVED(C, twoterm)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            public nld_C(netlist_t owner, string name)
+            public nld_C(netlist_state_t owner, string name)
                 : base(owner, name)
             {
                 m_C = new param_double_t(this, "C", 1e-6);
@@ -280,7 +299,7 @@ namespace mame.netlist
             public override bool is_timestep() { return true; }
 
             //NETLIB_TIMESTEPI();
-            protected override void timestep(nl_double step)
+            public override void timestep(nl_double step)
             {
                 throw new emu_unimplemented();
             }
@@ -290,20 +309,22 @@ namespace mame.netlist
             protected override void reset()
             {
                 // FIXME: Startup conditions
-                set(netlist().gmin(), 0.0, -5.0 / netlist().gmin());
-                //set(netlist().gmin(), 0.0, 0.0);
+                set(exec().gmin(), 0.0, -5.0 / exec().gmin());
+                //set(exec().gmin(), 0.0, 0.0);
             }
 
             //NETLIB_UPDATEI();
+            //NETLIB_UPDATE(C)
             protected override void update()
             {
-                throw new emu_unimplemented();
+                base.update();  //NETLIB_NAME(twoterm)::update();
             }
 
             //NETLIB_UPDATE_PARAMI();
+            //NETLIB_UPDATE_PARAM(C)
             public override void update_param()
             {
-                throw new emu_unimplemented();
+                m_GParallel = exec().gmin();
             }
         }
     } //namespace analog

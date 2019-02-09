@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
+using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;
+using uint32_t = System.UInt32;
 
 
 namespace mame
@@ -365,13 +367,13 @@ error:
         //============================================================
         //  osd_work_item_queue_multiple
         //============================================================
-        public static osd_work_item osd_work_item_queue_multiple(osd_work_queue queue, osd_work_callback callback, int numitems, List<Object> parambase, /*int paramstep,*/ UInt32 flags)
+        public static osd_work_item osd_work_item_queue_multiple(osd_work_queue queue, osd_work_callback callback, int32_t numitems, List<Object> parambase, /*int paramstep,*/ uint32_t flags)
         {
-            int paramstep = 0;
+            int32_t paramstep = 0;
 
-            osd_work_item itemlist = null;
+            osd_work_item itemlist = null;  // osd_work_item *itemlist = nullptr, *lastitem = nullptr;
             osd_work_item lastitem = null;
-            osd_work_item item_tailptr = itemlist;
+            osd_work_item item_tailptr = itemlist;  // osd_work_item **item_tailptr = &itemlist;
             int itemnum;
 
             // loop over items, building up a local list of work
@@ -381,8 +383,7 @@ error:
 
                 // first allocate a new work item; try the free list first
                 {
-                    //std::lock_guard<std::mutex> lock(queue->lock);
-                    lock (queue.lockObj)
+                    lock (queue.lockObj)  //std::lock_guard<std::mutex> lock(queue->lock);
                     {
                         do
                         {
@@ -413,19 +414,42 @@ error:
 
                 // advance to the next
                 lastitem = item;
-                item_tailptr = item;  // *item_tailptr = item;
-                item_tailptr = item.next;  // item_tailptr = &item->next;
+                // *item_tailptr = item;
+                // item_tailptr = &item->next;
+                if (item_tailptr == null)
+                {
+                    itemlist = item;
+                    item_tailptr = item;
+                }
+                else
+                {
+                    item_tailptr.next = item;
+                    item_tailptr = item;
+                }
 
                 paramstep++;  //parambase = (uint8_t *)parambase + paramstep;
             }
 
+
             // enqueue the whole thing within the critical section
             {
-                //std::lock_guard<std::mutex> lock(queue->lock);
-                lock (queue.lockObj)
+                lock (queue.lockObj)  //std::lock_guard<std::mutex> lock(queue->lock);
                 {
-                    queue.tailptr = itemlist;  //*queue->tailptr = itemlist;
-                    queue.tailptr = item_tailptr;  //queue->tailptr = item_tailptr;
+                    //*queue->tailptr = itemlist;
+                    //queue->tailptr = item_tailptr;
+                    if (queue.tailptr == null)
+                    {
+                        queue.tailptr = itemlist;
+                        if (queue.list == null)
+                        {
+                            queue.list = queue.tailptr;
+                        }
+                    }
+                    else
+                    {
+                        queue.tailptr.next = itemlist;
+                        queue.tailptr = item_tailptr;
+                    }
                 }
             }
 
@@ -491,7 +515,7 @@ error:
             {
                 //std::lock_guard<std::mutex> lock(item->queue.lock);
                 lock (item.queue.lockObj)
-                item.eventObj = new osd_event(1, 0);  // true, false);     // manual reset, not signalled
+                    item.eventObj = new osd_event(1, 0);  // true, false);     // manual reset, not signalled
             }
             else
             {
@@ -528,15 +552,17 @@ error:
             osd_work_item_wait(item, 100 * osdcore_global.m_osdcore.osd_ticks_per_second());
 
             // add us to the free list on our queue
-            //std::lock_guard<std::mutex> lock(item->queue.lock);
-            lock (item.queue.lockObj)
+            //throw new emu_unimplemented();
+#if false
+            lock (item.queue.lockObj)  //std::lock_guard<std::mutex> lock(item->queue.lock);
             {
                 do
                 {
                     next = item.queue.free;  //(osd_work_item *) item->queue.free;
                     item.next = next;
-                } while (Interlocked.CompareExchange(ref item.queue.free, next, item) == item.queue.free);  //(!item.queue.free.compare_exchange_weak(next, item, std::memory_order_release, std::memory_order_relaxed));
+                } while (false/* doesn't work Interlocked.CompareExchange(ref item.queue.free, next, item) == item.queue.free*/);  //(!item.queue.free.compare_exchange_weak(next, item, std::memory_order_release, std::memory_order_relaxed));
             }
+#endif
         }
 
 
@@ -952,7 +978,7 @@ error:
         public int exiting;  //std::atomic<int32_t>  exiting;        // should the threads exit on their next opportunity?
         public UInt32 threads;        // number of threads in this queue
         public UInt32 flags;          // creation flags
-        public std_vector<work_thread_info> thread = new std_vector<work_thread_info>();   // array of thread information
+        public std.vector<work_thread_info> thread = new std.vector<work_thread_info>();   // array of thread information
         public osd_event doneevent;      // event signalled when work is complete
 
 #if KEEP_STATISTICS

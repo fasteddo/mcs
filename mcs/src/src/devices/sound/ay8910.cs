@@ -74,7 +74,7 @@ namespace mame
                 for (chan = 0; chan < ay8910_device.NUM_CHANNELS; chan++)
                 {
                     if (buf[chan] != null)
-                        global.memset(buf[chan], 0, (UInt32)samples);  //memset(buf[chan], 0, samples * sizeof_(*buf[chan]));
+                        memset(buf[chan], 0, (UInt32)samples);  //memset(buf[chan], 0, samples * sizeof_(*buf[chan]));
                 }
             }
 
@@ -242,7 +242,7 @@ namespace mame
          * cross channel mixing if outputs are tied together.
          * The driver will only provide one stream in this case.
          */
-        const int AY8910_SINGLE_OUTPUT        = 0x02;
+        public const int AY8910_SINGLE_OUTPUT        = 0x02;
 
         /*
          * The following define causes the driver to output
@@ -436,12 +436,12 @@ namespace mame
             m_port_b_write_cb = new devcb_write8(this);
 
 
-            global.memset(m_regs, (byte)0);
-            global.memset(m_count, 0);
-            global.memset(m_output, (byte)0);
-            global.memset(m_vol_enabled, (byte)0);
-            global.memset(m_vol_table, 0);
-            global.memset(m_env_table, 0);
+            memset(m_regs, (byte)0);
+            memset(m_count, 0);
+            memset(m_output, (byte)0);
+            memset(m_vol_enabled, (byte)0);
+            memset(m_vol_table, 0);
+            memset(m_env_table, 0);
             m_res_load[0] = m_res_load[1] = m_res_load[2] = 1000; //Default values for resistor loads
 
             set_type(psg_type);
@@ -455,8 +455,8 @@ namespace mame
 
         public devcb_read.binder port_a_read_callback() { return m_port_a_read_cb.bind(); }
         public devcb_read.binder port_b_read_callback() { return m_port_b_read_cb.bind(); }
-        //auto port_a_write_callback() { return m_port_a_write_cb.bind(); }
-        //auto port_b_write_callback() { return m_port_b_write_cb.bind(); }
+        public devcb_write.binder port_a_write_callback() { return m_port_a_write_cb.bind(); }
+        public devcb_write.binder port_b_write_callback() { return m_port_b_write_cb.bind(); }
 
 
         //READ8_MEMBER( ay8910_device::data_r )
@@ -675,10 +675,10 @@ namespace mame
             int master_clock = (int)clock();
 
             if (m_ioports < 1 && !(m_port_a_read_cb.isnull() && m_port_a_write_cb.isnull()))
-                global.fatalerror("Device '{0}' is a {1} and has no port A!", tag(), name());
+                fatalerror("Device '{0}' is a {1} and has no port A!", tag(), name());
 
             if (m_ioports < 2 && !(m_port_b_read_cb.isnull() && m_port_b_write_cb.isnull()))
-                global.fatalerror("Device '{0}' is a {1} and has no port B!", tag(), name());
+                fatalerror("Device '{0}' is a {1} and has no port B!", tag(), name());
 
             m_port_a_read_cb.resolve();
             m_port_b_read_cb.resolve();
@@ -804,7 +804,7 @@ namespace mame
                     break;
                 case AY_ECOARSE:
                     if ( (v & 0x0f) > 0)
-                        global.osd_printf_verbose("ECoarse\n");
+                        osd_printf_verbose("ECoarse\n");
                     /* No action required */
                     break;
                 case AY_ENABLE:
@@ -827,7 +827,7 @@ namespace mame
                     break;
                 case AY_ESHAPE:
                     if ( (v & 0x0f) > 0)
-                        global.osd_printf_verbose("EShape\n");
+                        osd_printf_verbose("EShape\n");
                     m_attack = (m_regs[AY_ESHAPE] & 0x04) != 0 ? m_env_step_mask : (byte)0x00;
                     if ((m_regs[AY_ESHAPE] & 0x08) == 0)
                     {
@@ -892,7 +892,7 @@ namespace mame
             if ((m_flags & AY8910_RESISTOR_OUTPUT) != 0)
             {
                 if (m_type != psg_type_t.PSG_TYPE_AY)
-                    global.fatalerror("AY8910_RESISTOR_OUTPUT currently only supported for AY8910 devices.");
+                    fatalerror("AY8910_RESISTOR_OUTPUT currently only supported for AY8910 devices.");
 
                 for (chan=0; chan < NUM_CHANNELS; chan++)
                 {
@@ -949,7 +949,7 @@ namespace mame
             double min = 10.0;
             double max = 0.0;
 
-            std_vector<double> temp = new std_vector<double>(8*32*32*32, 0);
+            std.vector<double> temp = new std.vector<double>(8*32*32*32, 0);
 
             for (int e=0; e < 8; e++)
             {

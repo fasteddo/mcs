@@ -4,12 +4,89 @@
 using System;
 using System.Collections.Generic;
 
+using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;
 using stream_sample_t = System.Int32;
 
 
 namespace mame
 {
+    //class DISCRETE_CLASS_NAME(dss_adjustment): public discrete_base_node, public discrete_step_interface
+    partial class discrete_dss_adjustment_node : discrete_base_node,
+                                                 discrete_step_interface
+    {
+        double DSS_ADJUSTMENT__MIN { get { return DISCRETE_INPUT(0); } }
+        double DSS_ADJUSTMENT__MAX { get { return DISCRETE_INPUT(1); } }
+        double DSS_ADJUSTMENT__LOG { get { return DISCRETE_INPUT(2); } }
+        //#define DSS_ADJUSTMENT__PORT    DISCRETE_INPUT(3)
+        double DSS_ADJUSTMENT__PMIN { get { return DISCRETE_INPUT(4); } }
+        double DSS_ADJUSTMENT__PMAX { get { return DISCRETE_INPUT(5); } }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dss_adjustment)
+        public override void reset()
+        {
+            double min;
+            double max;
+
+            m_port = m_device.machine().root_device().ioport(m_device.siblingtag((string)this.custom_data()).c_str());
+            if (m_port == null)
+                fatalerror("DISCRETE_ADJUSTMENT - NODE_{0} has invalid tag\n", this.index());
+
+            m_lastpval = 0x7fffffff;
+            m_pmin     = (int32_t)DSS_ADJUSTMENT__PMIN;
+            m_pscale   = 1.0 / (double)(DSS_ADJUSTMENT__PMAX - DSS_ADJUSTMENT__PMIN);
+
+            /* linear scale */
+            if (DSS_ADJUSTMENT__LOG == 0)
+            {
+                m_min   = DSS_ADJUSTMENT__MIN;
+                m_scale = DSS_ADJUSTMENT__MAX - DSS_ADJUSTMENT__MIN;
+            }
+
+            /* logarithmic scale */
+            else
+            {
+                /* force minimum and maximum to be > 0 */
+                min = (DSS_ADJUSTMENT__MIN > 0) ? DSS_ADJUSTMENT__MIN : 1;
+                max = (DSS_ADJUSTMENT__MAX > 0) ? DSS_ADJUSTMENT__MAX : 1;
+                m_min   = Math.Log10(min);
+                m_scale = Math.Log10(max) - Math.Log10(min);
+            }
+
+            this.step();
+        }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dss_adjustment)
+        public void step()
+        {
+            int32_t  rawportval = (int32_t)m_port.read();
+
+            /* only recompute if the value changed from last time */
+            if (rawportval != m_lastpval)
+            {
+                double portval   = (double)(rawportval - m_pmin) * m_pscale;
+                double scaledval = portval * m_scale + m_min;
+
+                m_lastpval = rawportval;
+                if (DSS_ADJUSTMENT__LOG == 0)
+                    set_output(0,  scaledval);
+                else
+                    set_output(0,  Math.Pow(10, scaledval));
+            }
+        }
+    }
+
+
     // moved to discrete_base_node
     //#define DSS_INPUT__GAIN     DISCRETE_INPUT(0)
     //#define DSS_INPUT__OFFSET   DISCRETE_INPUT(1)
@@ -32,6 +109,7 @@ namespace mame
          ************************************************************************/
 
         // discrete_base_node
+
         //DISCRETE_RESET(dss_input_data)
         public override void reset()
         {
@@ -44,6 +122,7 @@ namespace mame
 
 
         // discrete_input_interface
+
         //void DISCRETE_CLASS_FUNC(dss_input_data, input_write)(int sub_node, UINT8 data )
         public void input_write(int sub_node, byte data )
         {
@@ -69,6 +148,8 @@ namespace mame
     partial class discrete_dss_input_logic_node : discrete_base_node,
                                                   discrete_input_interface
     {
+        // discrete_base_node
+
         //DISCRETE_RESET(dss_input_logic)
         public override void reset()
         {
@@ -79,6 +160,8 @@ namespace mame
             set_output(0,  m_data * m_gain + m_offset);
         }
 
+
+        // discrete_input_interface
 
         //void DISCRETE_CLASS_FUNC(dss_input_logic, input_write)(int sub_node, uint8_t data )
         public void input_write(int sub_node, byte data)
@@ -102,9 +185,9 @@ namespace mame
 
 
     //class DISCRETE_CLASS_NAME(dss_input_stream): public discrete_base_node, public discrete_input_interface, public discrete_step_interface
-    partial class discrete_dss_input_stream_node : discrete_base_node,
-                                                   discrete_input_interface,
-                                                   discrete_step_interface
+    public partial class discrete_dss_input_stream_node : discrete_base_node,
+                                                          discrete_input_interface,
+                                                          discrete_step_interface
     {
         /************************************************************************
          *
@@ -120,34 +203,7 @@ namespace mame
         public double DSS_INPUT_STREAM__OFFSET { get { return DISCRETE_INPUT(2); } }
 
 
-        void stream_generate(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
-        {
-            ListPointer<stream_sample_t> ptr = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t *ptr = outputs[0];
-            int samplenum = samples;
-
-            while (samplenum-- > 0)
-            {
-                ptr[0] = m_data;
-                ptr++;
-            }
-        }
-
-
-        //DISCRETE_STEP(dss_input_stream)
-        public void step()
-        {
-            /* the context pointer is set to point to the current input stream data in discrete_stream_update */
-            if (m_ptr != null)
-            {
-                set_output(0, m_ptr[0] * m_gain + m_offset);
-                m_ptr++;
-            }
-            else
-            {
-                set_output(0,  0);
-            }
-        }
-
+        // discrete_base_node
 
         //DISCRETE_RESET(dss_input_stream)
         public override void reset()
@@ -157,7 +213,24 @@ namespace mame
         }
 
 
+        //DISCRETE_START(dss_input_stream)
+        public override void start()
+        {
+            base.start();
+
+            /* Stream out number is set during start */
+            m_stream_in_number = (UInt32)DSS_INPUT_STREAM__STREAM;
+            m_gain = DSS_INPUT_STREAM__GAIN;
+            m_offset = DSS_INPUT_STREAM__OFFSET;
+            m_ptr = null;
+
+            m_is_buffered = is_buffered() ? (byte)1 : (byte)0;
+            m_buffer_stream = null;
+        }
+
+
         // discrete_input_interface
+
         //void DISCRETE_CLASS_FUNC(dss_input_stream, input_write)(int sub_node, UINT8 data )
         public void input_write(int sub_node, byte data )
         {
@@ -188,19 +261,34 @@ namespace mame
         }
 
 
-        //DISCRETE_START(dss_input_stream)
-        public override void start()
+        // discrete_step_interface
+
+        //DISCRETE_STEP(dss_input_stream)
+        public void step()
         {
-            base.start();
+            /* the context pointer is set to point to the current input stream data in discrete_stream_update */
+            if (m_ptr != null)
+            {
+                set_output(0, m_ptr[0] * m_gain + m_offset);
+                m_ptr++;
+            }
+            else
+            {
+                set_output(0,  0);
+            }
+        }
 
-            /* Stream out number is set during start */
-            m_stream_in_number = (UInt32)DSS_INPUT_STREAM__STREAM;
-            m_gain = DSS_INPUT_STREAM__GAIN;
-            m_offset = DSS_INPUT_STREAM__OFFSET;
-            m_ptr = null;
 
-            m_is_buffered = is_buffered() ? (byte)1 : (byte)0;
-            m_buffer_stream = null;
+        void stream_generate(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        {
+            ListPointer<stream_sample_t> ptr = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t *ptr = outputs[0];
+            int samplenum = samples;
+
+            while (samplenum-- > 0)
+            {
+                ptr[0] = m_data;
+                ptr++;
+            }
         }
 
 

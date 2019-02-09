@@ -13,7 +13,7 @@ using u8 = System.Byte;
 
 namespace mame
 {
-    public partial class xevious_state : galaga_state
+    partial class xevious_state : galaga_state
     {
         /***************************************************************************
 
@@ -31,52 +31,54 @@ namespace mame
 
         ***************************************************************************/
 
-        int TOTAL_COLORS(int gfxn) { return (int)(m_gfxdecode.target.digfx.gfx(gfxn).colors() * m_gfxdecode.target.digfx.gfx(gfxn).granularity()); }
+        int TOTAL_COLORS(int gfxn) { return (int)(gfxdecode.target.digfx.gfx(gfxn).colors() * gfxdecode.target.digfx.gfx(gfxn).granularity()); }
 
-        //PALETTE_INIT_MEMBER(xevious_state,xevious)
-        public void palette_init_xevious(palette_device palette)
+        public void xevious_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
-            int i;
 
-            for (i = 0; i < 128; i++)
+            for (int i = 0; i < 128; i++)
             {
-                int bit0,bit1,bit2,bit3,r,g,b;
+                int bit0;
+                int bit1;
+                int bit2;
+                int bit3;
 
-                /* red component */
-                bit0 = (color_prom[0] >> 0) & 0x01;
-                bit1 = (color_prom[0] >> 1) & 0x01;
-                bit2 = (color_prom[0] >> 2) & 0x01;
-                bit3 = (color_prom[0] >> 3) & 0x01;
-                r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-                /* green component */
-                bit0 = (color_prom[256] >> 0) & 0x01;
-                bit1 = (color_prom[256] >> 1) & 0x01;
-                bit2 = (color_prom[256] >> 2) & 0x01;
-                bit3 = (color_prom[256] >> 3) & 0x01;
-                g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-                /* blue component */
-                bit0 = (color_prom[2*256] >> 0) & 0x01;
-                bit1 = (color_prom[2*256] >> 1) & 0x01;
-                bit2 = (color_prom[2*256] >> 2) & 0x01;
-                bit3 = (color_prom[2*256] >> 3) & 0x01;
-                b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+                // red component
+                bit0 = BIT(color_prom[0], 0);
+                bit1 = BIT(color_prom[0], 1);
+                bit2 = BIT(color_prom[0], 2);
+                bit3 = BIT(color_prom[0], 3);
+                int r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+                // green component
+                bit0 = BIT(color_prom[256], 0);
+                bit1 = BIT(color_prom[256], 1);
+                bit2 = BIT(color_prom[256], 2);
+                bit3 = BIT(color_prom[256], 3);
+                int g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+                // blue component
+                bit0 = BIT(color_prom[2*256], 0);
+                bit1 = BIT(color_prom[2*256], 1);
+                bit2 = BIT(color_prom[2*256], 2);
+                bit3 = BIT(color_prom[2*256], 3);
+                int b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-                palette.palette_interface().set_indirect_color(i, new rgb_t((byte)r,(byte)g,(byte)b));
+                palette.palette_interface.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
                 color_prom++;
             }
 
-            /* color 0x80 is used by sprites to mark transparency */
-            palette.palette_interface().set_indirect_color(0x80, new rgb_t(0,0,0));
+            // color 0x80 is used by sprites to mark transparency
+            palette.palette_interface.set_indirect_color(0x80, new rgb_t(0, 0, 0));
 
-            color_prom += 128;  /* the bottom part of the PROM is unused */
+            color_prom += 128;  // the bottom part of the PROM is unused
             color_prom += 2*256;
-            /* color_prom now points to the beginning of the lookup table */
+            // color_prom now points to the beginning of the lookup table
 
-            /* background tiles */
-            for (i = 0; i < TOTAL_COLORS(1); i++)
+            // background tiles
+            for (int i = 0; i < TOTAL_COLORS(1); i++)
             {
-                palette.palette_interface().set_pen_indirect((pen_t)(m_gfxdecode.target.digfx.gfx(1).colorbase() + i),
+                palette.palette_interface.set_pen_indirect(
+                        (pen_t)(gfxdecode.target.digfx.gfx(1).colorbase() + i),
                         (UInt16)((color_prom[0] & 0x0f) | ((color_prom[TOTAL_COLORS(1)] & 0x0f) << 4)));
 
                 color_prom++;
@@ -84,12 +86,13 @@ namespace mame
 
             color_prom += TOTAL_COLORS(1);
 
-            /* sprites */
-            for (i = 0; i < TOTAL_COLORS(2); i++)
+            // sprites
+            for (int i = 0; i < TOTAL_COLORS(2); i++)
             {
                 int c = (color_prom[0] & 0x0f) | ((color_prom[TOTAL_COLORS(2)] & 0x0f) << 4);
 
-                palette.palette_interface().set_pen_indirect((pen_t)(m_gfxdecode.target.digfx.gfx(2).colorbase() + i),
+                palette.palette_interface.set_pen_indirect(
+                        (pen_t)(gfxdecode.target.digfx.gfx(2).colorbase() + i),
                         (c & 0x80) != 0 ? (UInt16)(c & 0x7f) : (UInt16)0x80);
 
                 color_prom++;
@@ -97,11 +100,12 @@ namespace mame
 
             color_prom += TOTAL_COLORS(2);
 
-            /* foreground characters */
-            for (i = 0; i < TOTAL_COLORS(0); i++)
+            // foreground characters
+            for (int i = 0; i < TOTAL_COLORS(0); i++)
             {
-                palette.palette_interface().set_pen_indirect((pen_t)(m_gfxdecode.target.digfx.gfx(0).colorbase() + i),
-                        (i % 2 != 0) ? (UInt16)(i / 2) : (UInt16)0x80);
+                palette.palette_interface.set_pen_indirect(
+                        (pen_t)(gfxdecode.target.digfx.gfx(0).colorbase() + i),
+                        BIT(i, 0) != 0 ? (UInt16)(i >> 1) : (UInt16)0x80);
             }
         }
 
@@ -148,8 +152,8 @@ namespace mame
         //VIDEO_START_MEMBER(xevious_state,xevious)
         public void video_start_xevious()
         {
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_bg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_fg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
+            m_bg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_bg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
+            m_fg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_fg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
 
             m_bg_tilemap.set_scrolldx(-20,288+27);
             m_bg_tilemap.set_scrolldy(-16,-16);
@@ -203,41 +207,41 @@ namespace mame
                         flipy = flipy == 0 ? 1 : 0;
                     }
 
-                    transmask = m_palette.target.palette_interface().transpen_mask(m_gfxdecode.target.digfx.gfx(bank), (UInt32)color, 0x80);
+                    transmask = palette.target.palette_interface.transpen_mask(gfxdecode.target.digfx.gfx(bank), (UInt32)color, 0x80);
 
                     if ((spriteram_3[offs] & 2) != 0)  /* double height (?) */
                     {
                         if ((spriteram_3[offs] & 1) != 0)  /* double width, double height */
                         {
                             code &= ~3;
-                            m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                            gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
                                     (UInt32)(code+3),(UInt32)color,flipx,flipy,
                                     (flipx != 0) ? sx : sx+16, (flipy != 0) ? sy-16 : sy,transmask);
-                            m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                            gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
                                     (UInt32)(code+1),(UInt32)color,flipx,flipy,
                                     (flipx != 0) ? sx : sx+16, (flipy != 0) ? sy : sy-16,transmask);
                         }
                         code &= ~2;
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)(code+2),(UInt32)color,flipx,flipy,
                                 (flipx != 0) ? sx+16 : sx, (flipy != 0) ? sy-16 : sy,transmask);
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)code,(UInt32)color,flipx,flipy,
                                 (flipx != 0) ? sx+16 : sx, (flipy != 0) ? sy : sy-16,transmask);
                     }
                     else if ((spriteram_3[offs] & 1) != 0) /* double width */
                     {
                         code &= ~1;
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)code,(UInt32)color,flipx,flipy,
                                 (flipx != 0) ? sx+16 : sx, (flipy != 0) ? sy-16 : sy,transmask);
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)(code+1),(UInt32)color,flipx,flipy,
                                 (flipx != 0) ? sx : sx+16, (flipy != 0) ? sy-16 : sy,transmask);
                     }
                     else    /* normal */
                     {
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)code,(UInt32)color,flipx,flipy,sx,sy,transmask);
                     }
                 }

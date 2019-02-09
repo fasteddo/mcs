@@ -22,12 +22,10 @@ namespace mame
 
     // ======================> cpu_device
     public class cpu_device : device_t
-#if false
-        public device_execute_interface,
-        public device_memory_interface,
-        public device_state_interface,
-        public device_disasm_interface
-#endif
+                              //public device_execute_interface,
+                              //public device_memory_interface,
+                              //public device_state_interface,
+                              //public device_disasm_interface
     {
         // configured state
         bool m_force_no_drc;             // whether or not to force DRC off
@@ -52,7 +50,7 @@ namespace mame
             m_force_no_drc = false;
         }
 
-        ~cpu_device() { }
+        //~cpu_device() { }
 
 
         // configuration helpers

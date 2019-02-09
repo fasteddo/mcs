@@ -14,7 +14,7 @@ namespace mame
          */
 
         //static NETLIST_START(opamp_layout_4_4_11)
-        public static void nld_opamp_layout_4_4_11(netlist.setup_t setup)
+        public static void netlist_opamp_layout_4_4_11(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -40,7 +40,7 @@ namespace mame
          */
 
         //static NETLIST_START(opamp_layout_2_8_4)
-        public static void nld_opamp_layout_2_8_4(netlist.setup_t setup)
+        public static void netlist_opamp_layout_2_8_4(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -63,7 +63,7 @@ namespace mame
          */
 
         //static NETLIST_START(opamp_layout_2_13_9_4)
-        public static void nld_opamp_layout_2_13_9_4(netlist.setup_t setup)
+        public static void netlist_opamp_layout_2_13_9_4(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -88,7 +88,7 @@ namespace mame
          */
 
         //static NETLIST_START(opamp_layout_1_7_4)
-        public static void nld_opamp_layout_1_7_4(netlist.setup_t setup)
+        public static void netlist_opamp_layout_1_7_4(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -114,7 +114,7 @@ namespace mame
          */
 
         //static NETLIST_START(opamp_layout_1_8_5)
-        public static void nld_opamp_layout_1_8_5(netlist.setup_t setup)
+        public static void netlist_opamp_layout_1_8_5(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -141,7 +141,7 @@ namespace mame
          */
 
         //static NETLIST_START(opamp_layout_1_11_6)
-        public static void nld_opamp_layout_1_11_6(netlist.setup_t setup)
+        public static void netlist_opamp_layout_1_11_6(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -166,7 +166,7 @@ namespace mame
 
 
         //static NETLIST_START(MB3614_DIP)
-        public static void nld_MB3614_DIP(netlist.setup_t setup)
+        public static void netlist_MB3614_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -182,7 +182,7 @@ namespace mame
 
 
         //static NETLIST_START(LM324_DIP)
-        public static void nld_LM324_DIP(netlist.setup_t setup)
+        public static void netlist_LM324_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -198,7 +198,7 @@ namespace mame
 
 
         //static NETLIST_START(LM358_DIP)
-        public static void nld_LM358_DIP(netlist.setup_t setup)
+        public static void netlist_LM358_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -212,7 +212,7 @@ namespace mame
 
 
         //static NETLIST_START(UA741_DIP8)
-        public static void nld_UA741_DIP8(netlist.setup_t setup)
+        public static void netlist_UA741_DIP8(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -225,7 +225,7 @@ namespace mame
 
 
         //static NETLIST_START(UA741_DIP10)
-        public static void nld_UA741_DIP10(netlist.setup_t setup)
+        public static void netlist_UA741_DIP10(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -238,7 +238,7 @@ namespace mame
 
 
         //static NETLIST_START(UA741_DIP14)
-        public static void nld_UA741_DIP14(netlist.setup_t setup)
+        public static void netlist_UA741_DIP14(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -251,7 +251,7 @@ namespace mame
 
 
         //static NETLIST_START(LM747_DIP)
-        public static void nld_LM747_DIP(netlist.setup_t setup)
+        public static void netlist_LM747_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -266,7 +266,7 @@ namespace mame
 
 
         //static NETLIST_START(LM747A_DIP)
-        public static void nld_LM747A_DIP(netlist.setup_t setup)
+        public static void netlist_LM747A_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -281,7 +281,7 @@ namespace mame
 
 
         //static NETLIST_START(LM3900)
-        public static void nld_LM3900(netlist.setup_t setup)
+        public static void netlist_LM3900(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -317,16 +317,16 @@ namespace mame
 
 
         //NETLIST_START(OPAMP_lib)
-        public static void nld_OPAMP_lib(netlist.setup_t setup)
+        public static void netlist_OPAMP_lib(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_4_4_11", nld_opamp_layout_4_4_11);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_2_8_4", nld_opamp_layout_2_8_4);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_2_13_9_4", nld_opamp_layout_2_13_9_4);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_7_4", nld_opamp_layout_1_7_4);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_8_5", nld_opamp_layout_1_8_5);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_11_6", nld_opamp_layout_1_11_6);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_4_4_11", netlist_opamp_layout_4_4_11);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_2_8_4", netlist_opamp_layout_2_8_4);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_2_13_9_4", netlist_opamp_layout_2_13_9_4);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_7_4", netlist_opamp_layout_1_7_4);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_8_5", netlist_opamp_layout_1_8_5);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_11_6", netlist_opamp_layout_1_11_6);
 
             netlist.nl_setup_global.NET_MODEL(setup, "LM324       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.00075)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM358       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.001)");
@@ -335,15 +335,15 @@ namespace mame
             netlist.nl_setup_global.NET_MODEL(setup, "LM747       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=50 DAB=0.0017)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM747A      OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=1000k SLEW=0.7M RI=6000k RO=50 DAB=0.0015)");
 
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MB3614_DIP", nld_MB3614_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM324_DIP", nld_LM324_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM358_DIP", nld_LM358_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP8", nld_UA741_DIP8);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP10", nld_UA741_DIP10);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP14", nld_UA741_DIP14);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747_DIP", nld_LM747_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747A_DIP", nld_LM747A_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM3900", nld_LM3900);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MB3614_DIP", netlist_MB3614_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM324_DIP", netlist_LM324_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM358_DIP", netlist_LM358_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP8", netlist_UA741_DIP8);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP10", netlist_UA741_DIP10);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP14", netlist_UA741_DIP14);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747_DIP", netlist_LM747_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747A_DIP", netlist_LM747A_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM3900", netlist_LM3900);
 
             netlist.nl_setup_global.NETLIST_END();
         }

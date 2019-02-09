@@ -318,7 +318,7 @@ namespace mame
 
     // ======================> input_code
     // a combined code that describes a particular input on a particular device
-    public class input_code
+    public class input_code : global_object
     {
         public static readonly input_code INPUT_CODE_INVALID = new input_code();
 
@@ -332,11 +332,11 @@ namespace mame
         {
             m_internal = ((((UInt32)devclass & 0xf) << 28) | (((UInt32)devindex & 0xff) << 20) | (((UInt32)itemclass & 0xf) << 16) | (((UInt32)modifier & 0xf) << 12) | ((UInt32)itemid & 0xfff));
 
-            global.assert(devclass >= 0 && devclass < input_device_class.DEVICE_CLASS_MAXIMUM);
-            global.assert(devindex >= 0 && devindex < input_global.DEVICE_INDEX_MAXIMUM);
-            global.assert(itemclass >= 0 && itemclass < input_item_class.ITEM_CLASS_MAXIMUM);
-            global.assert(modifier >= 0 && modifier < input_item_modifier.ITEM_MODIFIER_MAXIMUM);
-            global.assert(itemid >= 0 && itemid < input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
+            assert(devclass >= 0 && devclass < input_device_class.DEVICE_CLASS_MAXIMUM);
+            assert(devindex >= 0 && devindex < input_global.DEVICE_INDEX_MAXIMUM);
+            assert(itemclass >= 0 && itemclass < input_item_class.ITEM_CLASS_MAXIMUM);
+            assert(modifier >= 0 && modifier < input_item_modifier.ITEM_MODIFIER_MAXIMUM);
+            assert(itemid >= 0 && itemid < input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
         }
 
         public input_code(input_code src)
@@ -507,7 +507,7 @@ namespace mame
 
     // ======================> input_manager
     // global machine-level information about devices
-    public class input_manager
+    public class input_manager : global_object
     {
         // internal state
         running_machine m_machine;
@@ -551,7 +551,7 @@ namespace mame
 
         // getters
         public running_machine machine() { return m_machine; }
-        public input_class device_class(input_device_class devclass) { global.assert(devclass >= input_device_class.DEVICE_CLASS_FIRST_VALID && devclass <= input_device_class.DEVICE_CLASS_LAST_VALID); return m_class[(int)devclass]; }
+        public input_class device_class(input_device_class devclass) { assert(devclass >= input_device_class.DEVICE_CLASS_FIRST_VALID && devclass <= input_device_class.DEVICE_CLASS_LAST_VALID); return m_class[(int)devclass]; }
 
 
         // input code readers
@@ -1168,20 +1168,20 @@ namespace mame
         public string m_string;
 
 #if false
-        UINT32 operator[](const char string) const
+        u32 operator[](const char *string) const
         {
-            for (const code_string_table current = this; current->m_code != ~0; current++)
+            for (const code_string_table *current = this; current->m_code != ~0; current++)
                 if (strcmp(current->m_string, string) == 0)
                     return current->m_code;
             return ~0;
         }
 
-        const char operator[](UINT32 code) const
+        const char *operator[](u32 code) const
         {
-            for (const code_string_table current = this; current->m_code != ~0; current++)
+            for (const code_string_table *current = this; current->m_code != ~0; current++)
                 if (current->m_code == code)
                     return current->m_string;
-            return NULL;
+            return nullptr;
         }
 #endif
 

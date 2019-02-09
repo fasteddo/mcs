@@ -13,7 +13,7 @@ namespace mame
          *  Diode Models
          * ---------------------------------------------------------------------------*/
         //static NETLIST_START(diode_models)
-        public static void nld_diode_models(netlist.setup_t setup)
+        public static void netlist_diode_models(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -23,6 +23,9 @@ namespace mame
             netlist.nl_setup_global.NET_MODEL(setup, "1N4001 D(Is=14.11n N=1.984 Rs=33.89m Ikf=94.81 Xti=3 Eg=1.11 Cjo=25.89p M=.44 Vj=.3245 Fc=.5 Bv=75 Ibv=10u Tt=5.7u Iave=1 Vpk=50 mfg=GI type=silicon)");
             netlist.nl_setup_global.NET_MODEL(setup, "1N4148 D(Is=2.52n Rs=.568 N=1.752 Cjo=4p M=.4 tt=20n Iave=200m Vpk=75 mfg=OnSemi type=silicon)");
             netlist.nl_setup_global.NET_MODEL(setup, "1S1588 D(Is=2.52n Rs=.568 N=1.752 Cjo=4p M=.4 tt=20n Iave=200m Vpk=75)");
+
+            netlist.nl_setup_global.NET_MODEL(setup, "1N34A D( Bv=75 Cjo=0.5e-12 Eg=0.67 Ibv=18e-3 Is=2e-7 Rs=7 N=1.3 Vj=0.1 M=0.27 type=germanium)");
+
             netlist.nl_setup_global.NET_MODEL(setup, "LedRed D(IS=93.2p RS=42M N=3.73 BV=4 IBV=10U CJO=2.97P VJ=.75 M=.333 TT=4.32U Iave=40m Vpk=4 type=LED)");
             netlist.nl_setup_global.NET_MODEL(setup, "LedGreen D(IS=93.2p RS=42M N=4.61 BV=4 IBV=10U CJO=2.97P VJ=.75 M=.333 TT=4.32U Iave=40m Vpk=4 type=LED)");
             netlist.nl_setup_global.NET_MODEL(setup, "LedBlue D(IS=93.2p RS=42M N=7.47 BV=5 IBV=10U CJO=2.97P VJ=.75 M=.333 TT=4.32U Iave=40m Vpk=5 type=LED)");
@@ -36,7 +39,7 @@ namespace mame
          *  BJT Models
          * ---------------------------------------------------------------------------*/
         //static NETLIST_START(bjt_models)
-        public static void nld_bjt_models(netlist.setup_t setup)
+        public static void netlist_bjt_models(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -68,7 +71,7 @@ namespace mame
          *  Family models
          * ---------------------------------------------------------------------------*/
         //static NETLIST_START(family_models)
-        public static void nld_family_models(netlist.setup_t setup)
+        public static void netlist_family_models(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -88,7 +91,7 @@ namespace mame
          *  Always included
          * ---------------------------------------------------------------------------*/
         //NETLIST_START(base)
-        public static void nld_base(netlist.setup_t setup)
+        public static void netlist_base(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -97,13 +100,13 @@ namespace mame
             netlist.nl_setup_global.NET_REGISTER_DEV(setup, "GND", "GND");
             netlist.nl_setup_global.NET_REGISTER_DEV(setup, "PARAMETER", "NETLIST");
 
-            netlist.nl_setup_global.LOCAL_SOURCE(setup, "diode_models", nld_diode_models);
-            netlist.nl_setup_global.LOCAL_SOURCE(setup, "bjt_models", nld_bjt_models);
-            netlist.nl_setup_global.LOCAL_SOURCE(setup, "family_models", nld_family_models);
-            netlist.nl_setup_global.LOCAL_SOURCE(setup, "TTL74XX_lib", nlm_ttl74xx_global.nld_TTL74XX_lib);
-            netlist.nl_setup_global.LOCAL_SOURCE(setup, "CD4XXX_lib", nlm_cd4xxx_global.nld_CD4XXX_lib);
-            netlist.nl_setup_global.LOCAL_SOURCE(setup, "OPAMP_lib", nlm_opamp_global.nld_OPAMP_lib);
-            netlist.nl_setup_global.LOCAL_SOURCE(setup, "otheric_lib", nlm_other_global.nld_otheric_lib);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "diode_models", netlist_diode_models);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "bjt_models", netlist_bjt_models);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "family_models", netlist_family_models);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "TTL74XX_lib", nlm_ttl74xx_global.netlist_TTL74XX_lib);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "CD4XXX_lib", nlm_cd4xxx_global.netlist_CD4XXX_lib);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "OPAMP_lib", nlm_opamp_global.netlist_OPAMP_lib);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "otheric_lib", nlm_other_global.netlist_otheric_lib);
 
             netlist.nl_setup_global.INCLUDE(setup, "diode_models");
             netlist.nl_setup_global.INCLUDE(setup, "bjt_models");

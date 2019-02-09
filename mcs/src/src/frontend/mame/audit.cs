@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using record_list = mame.std_list<mame.audit_record>;
+using record_list = mame.std.list<mame.audit_record>;
 
 
 namespace mame
@@ -66,19 +66,19 @@ namespace mame
         //-------------------------------------------------
         //  audit_record - constructor
         //-------------------------------------------------
-        public audit_record(device_t device, int romOffset, rom_entry media, media_type type)
+        public audit_record(ListPointer<rom_entry> media, media_type type)
         {
             m_next = null;
             m_type = type;
             m_status = audit_status.STATUS_ERROR;
             m_substatus = audit_substatus.SUBSTATUS_ERROR;
-            m_name = romload_global.ROM_GETNAME(media);
-            m_explength = romload_global.rom_file_size(device, romOffset);
+            m_name = romload_global.ROM_GETNAME(media[0]);
+            m_explength = romload_global.rom_file_size(media);
             m_length = 0;
             m_shared_device = null;
 
 
-            m_exphashes.from_internal_string(romload_global.ROM_GETHASHDATA(media));
+            m_exphashes.from_internal_string(romload_global.ROM_GETHASHDATA(media[0]));
         }
 
         public audit_record(string name, media_type type)
@@ -135,7 +135,7 @@ namespace mame
 
     // ======================> media_auditor
     // class which manages auditing of items
-    class media_auditor
+    class media_auditor : global_object
     {
         //using record_list = std::list<audit_record>;
 
@@ -209,8 +209,7 @@ string driverpath = m_enumerator.config().root_device().searchpath();
                 m_searchpath = device.searchpath();
 
                 // now iterate over regions and ROMs within
-                int regionOffset = 0;
-                for (rom_entry region = romload_global.rom_first_region(device, ref regionOffset); region != null; region = romload_global.rom_next_region(device, ref regionOffset))
+                for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
 // temporary hack: add the driver path & region name
 string combinedpath = device.searchpath() + ";" + driverpath;
@@ -218,15 +217,14 @@ if (!string.IsNullOrEmpty(device.shortname()))
     combinedpath += ";" + device.shortname();
 m_searchpath = combinedpath;
 
-                    int romOffset = regionOffset;
-                    for (rom_entry rom = romload_global.rom_first_file(device, ref romOffset); rom != null; rom = romload_global.rom_next_file(device, ref romOffset))
+                    for (ListPointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
-                        string name = romload_global.ROM_GETNAME(rom);
-                        util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom));
-                        device_t shared_device = find_shared_device(device, name, hashes, romload_global.ROM_GETLENGTH(rom));
+                        string name = romload_global.ROM_GETNAME(rom[0]);
+                        util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
+                        device_t shared_device = find_shared_device(device, name, hashes, romload_global.ROM_GETLENGTH(rom[0]));
 
                         // count the number of files with hashes
-                        if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP) && !romload_global.ROM_ISOPTIONAL(rom))
+                        if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP) && !romload_global.ROM_ISOPTIONAL(rom[0]))
                         {
                             required++;
                             if (shared_device != null)
@@ -235,12 +233,12 @@ m_searchpath = combinedpath;
 
                         // audit a file
                         audit_record record = null;
-                        if (romload_global.ROMREGION_ISROMDATA(region))
-                            record = audit_one_rom(device, romOffset, rom);
+                        if (romload_global.ROMREGION_ISROMDATA(region[0]))
+                            record = audit_one_rom(rom);
 
                         // audit a disk
-                        else if (romload_global.ROMREGION_ISDISKDATA(region))
-                            record = audit_one_disk(device, romOffset, rom);
+                        else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
+                            record = audit_one_disk(rom);
 
                         if (record != null)
                         {
@@ -287,27 +285,25 @@ m_searchpath = combinedpath;
             int required = 0;
 
             // now iterate over regions and ROMs within
-            int regionOffset = 0;
-            for (rom_entry region = romload_global.rom_first_region(device, ref regionOffset); region != null; region = romload_global.rom_next_region(device, ref regionOffset))
+            for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
             {
-                int romOffset = regionOffset;
-                for (rom_entry rom = romload_global.rom_first_file(device, ref romOffset); rom != null; rom = romload_global.rom_next_file(device, ref romOffset))
+                for (ListPointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                 {
-                    util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom));
+                    util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
 
                     // count the number of files with hashes
-                    if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP) && !romload_global.ROM_ISOPTIONAL(rom))
+                    if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP) && !romload_global.ROM_ISOPTIONAL(rom[0]))
                     {
                         required++;
                     }
 
                     // audit a file
                     audit_record record = null;
-                    if (romload_global.ROMREGION_ISROMDATA(region))
-                        record = audit_one_rom(device, romOffset, rom);
+                    if (romload_global.ROMREGION_ISROMDATA(region[0]))
+                        record = audit_one_rom(rom);
                     // audit a disk
-                    else if (romload_global.ROMREGION_ISDISKDATA(region))
-                        record = audit_one_disk(device, romOffset, rom);
+                    else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
+                        record = audit_one_disk(rom);
 
                     // count the number of files that are found.
                     if (record != null && (record.status() == audit_record.audit_status.STATUS_GOOD || record.status() == audit_record.audit_status.STATUS_FOUND_INVALID))
@@ -424,6 +420,8 @@ m_searchpath = combinedpath;
                             record.set_status(audit_record.audit_status.STATUS_NOT_FOUND, audit_record.audit_substatus.SUBSTATUS_NOT_FOUND);
                         }
                     }
+
+                    file.close();
                 }
             }
 
@@ -520,7 +518,7 @@ m_searchpath = combinedpath;
                         break;
 
                     default:
-                        global.assert(false);
+                        assert(false);
                         break;
                 }
 
@@ -537,10 +535,10 @@ m_searchpath = combinedpath;
         //-------------------------------------------------
         //  audit_one_rom - validate a single ROM entry
         //-------------------------------------------------
-        audit_record audit_one_rom(device_t device, int romOffset, rom_entry rom)
+        audit_record audit_one_rom(ListPointer<rom_entry> rom)  //(const rom_entry *rom)
         {
             // allocate and append a new record
-            audit_record record = m_record_list.emplace_back(new audit_record(device, romOffset, rom, audit_record.media_type.MEDIA_ROM)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), *rom, media_type::ROM);
+            audit_record record = m_record_list.emplace_back(new audit_record(rom, audit_record.media_type.MEDIA_ROM)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), *rom, media_type::ROM);
 
             // see if we have a CRC and extract it if so
             UInt32 crc;
@@ -568,8 +566,10 @@ m_searchpath = combinedpath;
                 }
             }
 
+            file.close();
+
             // compute the final status
-            compute_status(record, rom, record.actual_length() != 0);
+            compute_status(record, rom[0], record.actual_length() != 0);
             return record;
         }
 
@@ -577,14 +577,14 @@ m_searchpath = combinedpath;
         //-------------------------------------------------
         //  audit_one_disk - validate a single disk entry
         //-------------------------------------------------
-        audit_record audit_one_disk(device_t device, int romOffset, rom_entry rom, string locationtag = null)
+        audit_record audit_one_disk(ListPointer<rom_entry> rom, string locationtag = null)  //const rom_entry *rom
         {
             // allocate and append a new record
-            audit_record record = m_record_list.emplace_back(new audit_record(device, romOffset, rom, audit_record.media_type.MEDIA_DISK)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), *rom, media_type::DISK);
+            audit_record record = m_record_list.emplace_back(new audit_record(rom, audit_record.media_type.MEDIA_DISK)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), *rom, media_type::DISK);
 
             // open the disk
             chd_file source = new chd_file();
-            chd_error err = (chd_error)romload_global.open_disk_image(m_enumerator.options(), m_enumerator.driver(), rom, source, locationtag);
+            chd_error err = (chd_error)romload_global.open_disk_image(m_enumerator.options(), m_enumerator.driver(), rom[0], source, locationtag);
 
             // if we succeeded, get the hashes
             if (err == chd_error.CHDERR_NONE)
@@ -600,7 +600,7 @@ m_searchpath = combinedpath;
             }
 
             // compute the final status
-            compute_status(record, rom, err == chd_error.CHDERR_NONE);
+            compute_status(record, rom[0], err == chd_error.CHDERR_NONE);
             return record;
         }
 
@@ -665,16 +665,14 @@ m_searchpath = combinedpath;
             device_t highest_device = null;
             if (device.owner() != null)
             {
-                int regionOffset = 0;
-                for (rom_entry region = romload_global.rom_first_region(device, ref regionOffset); region != null; region = romload_global.rom_next_region(device, ref regionOffset))
+                for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
-                    int romOffset = regionOffset;
-                    for (rom_entry rom = romload_global.rom_first_file(device, ref romOffset); rom != null; rom = romload_global.rom_next_file(device, ref romOffset))
+                    for (ListPointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
-                        if (romload_global.ROM_GETLENGTH(rom) == romlength)
+                        if (romload_global.ROM_GETLENGTH(rom[0]) == romlength)
                         {
-                            util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom));
-                            if ((dumped && hashes == romhashes) || (!dumped && romload_global.ROM_GETNAME(rom) == name))
+                            util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
+                            if ((dumped && hashes == romhashes) || (!dumped && romload_global.ROM_GETNAME(rom[0]) == name))
                                 highest_device = device;
                         }
                     }
@@ -683,20 +681,18 @@ m_searchpath = combinedpath;
             else
             {
                 // iterate up the parent chain
-                for (int drvindex = driver_enumerator.find(m_enumerator.driver().parent); drvindex != -1; drvindex = driver_enumerator.find(driver_enumerator.driver((UInt32)drvindex).parent))
+                for (int drvindex = driver_enumerator.find(m_enumerator.driver().parent); drvindex != -1; drvindex = driver_enumerator.find(driver_enumerator.driver(drvindex).parent))
                 {
-                    foreach (device_t scandevice in new device_iterator(m_enumerator.config((UInt32)drvindex).root_device()))
+                    foreach (device_t scandevice in new device_iterator(m_enumerator.config(drvindex).root_device()))
                     {
-                        int regionOffset = 0;
-                        for (rom_entry region = romload_global.rom_first_region(scandevice, ref regionOffset); region != null; region = romload_global.rom_next_region(scandevice, ref regionOffset))
+                        for (ListPointer<rom_entry> region = romload_global.rom_first_region(scandevice); region != null; region = romload_global.rom_next_region(region))
                         {
-                            int romOffset = regionOffset;
-                            for (rom_entry rom = romload_global.rom_first_file(scandevice, ref romOffset); rom != null; rom = romload_global.rom_next_file(scandevice, ref romOffset))
+                            for (ListPointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                             {
-                                if (romload_global.ROM_GETLENGTH(rom) == romlength)
+                                if (romload_global.ROM_GETLENGTH(rom[0]) == romlength)
                                 {
-                                    util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom));
-                                    if ((dumped && hashes == romhashes) || (!dumped && romload_global.ROM_GETNAME(rom) == name))
+                                    util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
+                                    if ((dumped && hashes == romhashes) || (!dumped && romload_global.ROM_GETNAME(rom[0]) == name))
                                         highest_device = scandevice;
                                 }
                             }

@@ -16,14 +16,14 @@ namespace mame.util
         // use these to define compile-time internal-format hash strings
         public static string CRC(string x) { return "R" + x; }  //#define CRC(x)              "R" #x
         public static string SHA1(string x) { return "S" + x; }  //#define SHA1(x)             "S" #x
-        //#define NO_DUMP             "!"
+        public const string NO_DUMP = "!";
         //#define BAD_DUMP            "^"
     }
 
 
     // ======================> hash_collection
     // a collection of the various supported hashes and flags
-    public class hash_collection
+    public class hash_collection : global_object
     {
         // hash types are identified by non-hex alpha values (G-Z)
         public const char HASH_CRC = 'R';
@@ -164,7 +164,7 @@ namespace mame.util
         //-------------------------------------------------
         public bool from_internal_string(string str)
         {
-            global.assert(str != null);
+            assert(str != null);
 
             // start fresh
             reset();
@@ -254,7 +254,7 @@ namespace mame.util
         //-------------------------------------------------
         void buffer(ListBytesPointer data, uint32_t length)  //const uint8_t *data
         {
-            global.assert(m_creator != null);
+            assert(m_creator != null);
 
             // append to each active hash
             if (m_creator.m_doing_crc32)

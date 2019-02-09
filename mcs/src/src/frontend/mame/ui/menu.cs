@@ -5,14 +5,17 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using cleanup_callback_vector = mame.std_vector<mame.ui.menu.cleanup_callback>;
-using global_state_map = mame.std_map<mame.running_machine, mame.ui.menu.global_state>;
+using cleanup_callback_vector = mame.std.vector<mame.ui.menu.cleanup_callback>;
+using global_state_map = mame.std.map<mame.running_machine, mame.ui.menu.global_state>;
 using osd_ticks_t = System.UInt64;
+using texture_ptr = mame.render_texture;
+using uint32_t = System.UInt32;
 
 
 namespace mame.ui
 {
-    public abstract class menu
+    public abstract class menu : global_object,
+                                 IDisposable
     {
         //using cleanup_callback = std::function<void(running_machine &)>;
         public delegate void cleanup_callback(running_machine machine);
@@ -23,31 +26,30 @@ namespace mame.ui
 
 
         // flags for menu items
-        public enum FLAG
-        {
-            FLAG_LEFT_ARROW     = (1 << 0),
-            FLAG_RIGHT_ARROW    = (1 << 1),
-            FLAG_INVERT         = (1 << 2),
-            FLAG_MULTILINE      = (1 << 3),
-            FLAG_REDTEXT        = (1 << 4),
-            FLAG_DISABLE        = (1 << 5),
-            FLAG_UI_DATS        = (1 << 6),
-            FLAG_UI_FAVORITE    = (1 << 7),
-            FLAG_UI_HEADING     = (1 << 8),
-            FLAG_COLOR_BOX      = (1 << 9)
-        }
+        //enum : unsigned
+        //{
+        public const uint32_t FLAG_LEFT_ARROW     = 1 << 0;
+        public const uint32_t FLAG_RIGHT_ARROW    = 1 << 1;
+        protected const uint32_t FLAG_INVERT         = 1 << 2;
+        const uint32_t FLAG_MULTILINE      = 1 << 3;
+        const uint32_t FLAG_REDTEXT        = 1 << 4;
+        protected const uint32_t FLAG_DISABLE        = 1 << 5;
+        const uint32_t FLAG_UI_DATS        = 1 << 6;
+        const uint32_t FLAG_UI_HEADING     = 1 << 7;
+        const uint32_t FLAG_COLOR_BOX      = 1 << 8;
+        //}
 
 
         // flags to pass to process
-        protected enum PROCESS
-        {
-            PROCESS_NOKEYS      = 1,
-            PROCESS_LR_REPEAT   = 2,
-            PROCESS_CUSTOM_ONLY = 4,
-            PROCESS_ONLYCHAR    = 8,
-            PROCESS_NOINPUT     = 16,
-            PROCESS_NOIMAGE     = 32
-        }
+        //enum
+        //{
+        const uint32_t PROCESS_NOKEYS      = 1;
+        protected const uint32_t PROCESS_LR_REPEAT   = 2;
+        protected const uint32_t PROCESS_CUSTOM_ONLY = 4;
+        const uint32_t PROCESS_ONLYCHAR    = 8;
+        protected const uint32_t PROCESS_NOINPUT     = 16;
+        const uint32_t PROCESS_NOIMAGE     = 32;
+        //}
 
 
         // options for reset
@@ -59,7 +61,7 @@ namespace mame.ui
         }
 
 
-        public class global_state : widgets_manager
+        public class global_state : widgets_manager, IDisposable
         {
             //using cleanup_callback_vector = std::vector<cleanup_callback>;
             //using bitmap_ptr = widgets_manager::bitmap_ptr;
@@ -81,26 +83,25 @@ namespace mame.ui
                 m_machine = machine;
                 m_cleanup_callbacks = new cleanup_callback_vector();
                 m_bgrnd_bitmap = null;
+                //, m_bgrnd_texture(nullptr, machine.render())
                 m_stack = null;
                 m_free = null;
 
 
                 render_manager render = machine.render();
 
-#if false
-                auto const texture_free([&render](render_texture *texture) { render.texture_free(texture); });
-#endif
-
                 // create a texture for main menu background
-                m_bgrnd_texture = render.texture_alloc(render_texture.hq_scale);  //, texture_free);
+                m_bgrnd_texture = render.texture_alloc(render_texture.hq_scale);  //m_bgrnd_texture.reset(render.texture_alloc(render_texture::hq_scale));
                 if (options.use_background_image() && (machine.system() == ___empty.driver____empty))
                 {
                     m_bgrnd_bitmap = new bitmap_argb32(0, 0);
-                    emu_file backgroundfile = new emu_file(".", osdcore_global.OPEN_FLAG_READ);
-                    rendutil_global.render_load_jpeg(out m_bgrnd_bitmap, backgroundfile, null, "background.jpg");
+                    emu_file backgroundfile = new emu_file(".", OPEN_FLAG_READ);
+                    render_load_jpeg(out m_bgrnd_bitmap, backgroundfile, null, "background.jpg");
 
                     if (!m_bgrnd_bitmap.valid())
-                        rendutil_global.render_load_png(out m_bgrnd_bitmap, backgroundfile, null, "background.png");
+                        render_load_png(out m_bgrnd_bitmap, backgroundfile, null, "background.png");
+
+                    backgroundfile.close();
 
                     if (m_bgrnd_bitmap.valid())
                         m_bgrnd_texture.set_bitmap(m_bgrnd_bitmap, m_bgrnd_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
@@ -109,8 +110,13 @@ namespace mame.ui
                 }
             }
 
-
             ~global_state()
+            {
+                assert(m_isDisposed);  // can remove
+            }
+
+            bool m_isDisposed = false;
+            public void Dispose()
             {
                 //throw new emu_unimplemented();
 #if false
@@ -124,6 +130,8 @@ namespace mame.ui
 
                 foreach (var callback in m_cleanup_callbacks)
                     callback(m_machine);
+
+                m_isDisposed = true;
             }
 
 
@@ -133,10 +141,9 @@ namespace mame.ui
             }
 
 
-            //bitmap_argb32 *bgrnd_bitmap() { return m_bgrnd_bitmap.get(); }
-            //render_texture *bgrnd_texture() { return m_bgrnd_texture.get(); }
+            public bitmap_argb32 bgrnd_bitmap() { return m_bgrnd_bitmap; }
+            public render_texture bgrnd_texture() { return m_bgrnd_texture; }
 
-            //void reset_topmost(reset_options options) { if (m_stack) m_stack->reset(options); }
 
             //template <typename T>
             public T topmost_menu<T>() where T : menu { return (T)m_stack; }
@@ -159,6 +166,7 @@ namespace mame.ui
                     m_stack = menu.m_parent;
                     menu.m_parent = m_free;
                     m_free = menu;
+                    m_free.Dispose();
                     m_machine.ui_input().reset();
                 }
             }
@@ -174,7 +182,9 @@ namespace mame.ui
             public void clear_free_list()
             {
                 while (m_free != null)
+                {
                     m_free = m_free.m_parent;
+                }
             }
 
 
@@ -212,7 +222,7 @@ namespace mame.ui
 
 
         protected int hover;        // which item is being hovered over
-        protected std_vector<menu_item> item = new std_vector<menu_item>();         // array of items
+        protected std.vector<menu_item> item = new std.vector<menu_item>();         // array of items
 
         protected int top_line;           // main box top line
         protected int skip_main_items;
@@ -269,7 +279,7 @@ namespace mame.ui
             m_mouse_x = -1.0f;
             m_mouse_y = -1.0f;
 
-            global.assert(m_global_state != null); // not calling init is bad
+            assert(m_global_state != null); // not calling init is bad
 
 
             reset(reset_options.SELECT_FIRST);
@@ -277,19 +287,26 @@ namespace mame.ui
             top_line = 0;
         }
 
+        //~menu()
+        //{
+        //    // free the pools
+        //    while (m_pool != null)
+        //    {
+        //        pool ppool = m_pool;
+        //        m_pool = m_pool.next;
+        //        ppool = null;  // global_free_array(ppool);
+        //    }
+        //}
 
-        //-------------------------------------------------
-        //  ~ui_menu - menu destructor
-        //-------------------------------------------------
         ~menu()
         {
-            // free the pools
-            while (m_pool != null)
-            {
-                pool ppool = m_pool;
-                m_pool = m_pool.next;
-                ppool = null;  // global_free_array(ppool);
-            }
+            assert(m_isDisposed);  // can remove
+        }
+
+        protected bool m_isDisposed = false;
+        public virtual void Dispose()
+        {
+            m_isDisposed = true;
         }
 
 
@@ -298,18 +315,18 @@ namespace mame.ui
         //  item_append - append a new item to the
         //  end of the menu
         //-------------------------------------------------
-        public void item_append(string text, string subtext, UInt32 flags, object refobj, menu_item_type type = menu_item_type.UNKNOWN)  // void *ref
+        public void item_append(string text, string subtext, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN)  // void *ref
         {
             // only allow multiline as the first item
-            if ((flags & (UInt32)FLAG.FLAG_MULTILINE) != 0)
+            if ((flags & FLAG_MULTILINE) != 0)
             {
-                global.assert(item.size() == 1);
+                assert(item.size() == 1);
             }
 
             // only allow a single multi-line item
             else if (item.size() >= 2)
             {
-                global.assert((item[0].flags & (UInt32)FLAG.FLAG_MULTILINE) == 0);
+                assert((item[0].flags & FLAG_MULTILINE) == 0);
             }
 
             // allocate a new item and populate it
@@ -317,7 +334,7 @@ namespace mame.ui
             pitem.text = string.Copy(text);
             pitem.subtext = string.Copy(subtext);
             pitem.flags = flags;
-            pitem.refobj = refobj;
+            pitem.ref_ = ref_;
             pitem.type = type;
 
             // append to array
@@ -333,7 +350,7 @@ namespace mame.ui
             }
 
             // update the selection if we need to
-            if (m_resetpos == index || (m_resetref != null && m_resetref == refobj))
+            if (m_resetpos == index || (m_resetref != null && m_resetref == ref_))
                 selected = index;
             if (m_resetpos == item.size() - 1)
                 selected = item.size() - 1;
@@ -346,7 +363,7 @@ namespace mame.ui
         //-------------------------------------------------
         public void item_append(menu_item item)
         {
-            item_append(item.text, item.subtext, item.flags, item.refobj, item.type);
+            item_append(item.text, item.subtext, item.flags, item.ref_, item.type);
         }
 
 
@@ -354,7 +371,7 @@ namespace mame.ui
         //  item_append - append a new item to the
         //  end of the menu
         //-------------------------------------------------
-        public void item_append(menu_item_type type, UInt32 flags = 0)
+        public void item_append(menu_item_type type, uint32_t flags = 0)
         {
             if (type == menu_item_type.SEPARATOR)
                 item_append(menu_item.MENU_SEPARATOR_ITEM, "", flags, null, menu_item_type.SEPARATOR);
@@ -378,7 +395,7 @@ namespace mame.ui
 #endif
                 var state = new global_state(machine, mopt);
                 var ins = s_global_states.emplace(machine, state);
-                global.assert(ins); // calling init twice is bad
+                assert(ins); // calling init twice is bad
 
                 if (ins)
                     machine.add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit); // add an exit callback to free memory
@@ -420,7 +437,7 @@ namespace mame.ui
         //  ui_menu_ui_handler - displays the current menu
         //  and calls the menu handler
         //-------------------------------------------------
-        public static UInt32 ui_handler(render_container container, mame_ui_manager mui)
+        public static uint32_t ui_handler(render_container container, mame_ui_manager mui)
         {
             global_state state = get_global_state(mui.machine());
 
@@ -437,7 +454,7 @@ namespace mame.ui
 
             // if the menus are to be hidden, return a cancel here
             if (mui.is_menu_active() && ((mui.machine().ui_input().pressed((int)ioport_type.IPT_UI_CONFIGURE) && !state.stack_has_special_main_menu()) || state.topmost_menu<menu>() == null))
-                return ui_global.UI_HANDLER_CANCEL;
+                return UI_HANDLER_CANCEL;
 
             return 0;
         }
@@ -474,7 +491,7 @@ namespace mame.ui
         //-------------------------------------------------
         //  draw - draw a menu
         //-------------------------------------------------
-        protected virtual void draw(UInt32 flags)
+        protected virtual void draw(uint32_t flags)
         {
             // first draw the FPS counter
             if (mame_machine_manager.instance().ui().show_fps_counter())
@@ -485,19 +502,16 @@ namespace mame.ui
                     text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out unused1, out unused2);
             }
 
-            bool customonly = (flags & (UInt32)PROCESS.PROCESS_CUSTOM_ONLY) != 0;
-            bool noimage = (flags & (UInt32)PROCESS.PROCESS_NOIMAGE) != 0;
-            bool noinput = (flags & (UInt32)PROCESS.PROCESS_NOINPUT) != 0;
+            bool customonly = (flags & PROCESS_CUSTOM_ONLY) != 0;
+            bool noimage = (flags & PROCESS_NOIMAGE) != 0;
+            bool noinput = (flags & PROCESS_NOINPUT) != 0;
             float line_height = ui().get_line_height();
             float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
             float ud_arrow_width = line_height * machine().render().ui_aspect();
             float gutter_width = lr_arrow_width * 1.3f;
 
-            throw new emu_unimplemented();
-#if false
-            if (&machine().system() == &GAME_NAME(___empty) && !noimage)
+            if (machine().system() == ___empty.driver____empty && !noimage)
                 draw_background();
-#endif
 
             // compute the width and height of the full menu
             float visible_width = 0;
@@ -527,12 +541,12 @@ namespace mame.ui
             visible_main_menu_height += 0.01f;
 
             // if we are too wide or too tall, clamp it down
-            if (visible_width + 2.0f * ui_global.UI_BOX_LR_BORDER > 1.0f)
-                visible_width = 1.0f - 2.0f * ui_global.UI_BOX_LR_BORDER;
+            if (visible_width + 2.0f * UI_BOX_LR_BORDER > 1.0f)
+                visible_width = 1.0f - 2.0f * UI_BOX_LR_BORDER;
 
             // if the menu and extra menu won't fit, take away part of the regular menu, it will scroll
-            if (visible_main_menu_height + visible_extra_menu_height + 2.0f * ui_global.UI_BOX_TB_BORDER > 1.0f)
-                visible_main_menu_height = 1.0f - 2.0f * ui_global.UI_BOX_TB_BORDER - visible_extra_menu_height;
+            if (visible_main_menu_height + visible_extra_menu_height + 2.0f * UI_BOX_TB_BORDER > 1.0f)
+                visible_main_menu_height = 1.0f - 2.0f * UI_BOX_TB_BORDER - visible_extra_menu_height;
 
             m_visible_lines = Math.Min((int)(Math.Floor(visible_main_menu_height / line_height)), (int)item.size());
             visible_main_menu_height = (float)m_visible_lines * line_height;
@@ -542,12 +556,12 @@ namespace mame.ui
             float visible_top = ((1.0f - visible_main_menu_height - visible_extra_menu_height) * 0.5f) + m_customtop;
 
             // first add us a box
-            float x1 = visible_left - ui_global.UI_BOX_LR_BORDER;
-            float y1 = visible_top - ui_global.UI_BOX_TB_BORDER;
-            float x2 = visible_left + visible_width + ui_global.UI_BOX_LR_BORDER;
-            float y2 = visible_top + visible_main_menu_height + ui_global.UI_BOX_TB_BORDER;
+            float x1 = visible_left - UI_BOX_LR_BORDER;
+            float y1 = visible_top - UI_BOX_TB_BORDER;
+            float x2 = visible_left + visible_width + UI_BOX_LR_BORDER;
+            float y2 = visible_top + visible_main_menu_height + UI_BOX_TB_BORDER;
             if (!customonly)
-                ui().draw_outlined_box(container(), x1, y1, x2, y2, ui_global.UI_BACKGROUND_COLOR);
+                ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
             // determine the first visible line based on the current selection
             if (top_line < 0 || is_first_selected())
@@ -577,8 +591,8 @@ namespace mame.ui
             // loop over visible lines
             hover = item.size() + 1;
             bool selected_subitem_too_big = false;
-            float line_x0 = x1 + 0.5f * ui_global.UI_LINE_WIDTH;
-            float line_x1 = x2 - 0.5f * ui_global.UI_LINE_WIDTH;
+            float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
+            float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
             if (!customonly)
             {
                 for (int linenum = 0; linenum < m_visible_lines; linenum++)
@@ -586,10 +600,10 @@ namespace mame.ui
                     var itemnum = top_line + linenum;
                     menu_item pitem = item[itemnum];
                     string itemtext = pitem.text;
-                    rgb_t fgcolor = ui_global.UI_TEXT_COLOR;
-                    rgb_t bgcolor = ui_global.UI_TEXT_BG_COLOR;
-                    rgb_t fgcolor2 = ui_global.UI_SUBITEM_COLOR;
-                    rgb_t fgcolor3 = ui_global.UI_CLONE_COLOR;
+                    rgb_t fgcolor = UI_TEXT_COLOR;
+                    rgb_t bgcolor = UI_TEXT_BG_COLOR;
+                    rgb_t fgcolor2 = UI_SUBITEM_COLOR;
+                    rgb_t fgcolor3 = UI_CLONE_COLOR;
                     float line_y0 = visible_top + (float)linenum * line_height;
                     float line_y1 = line_y0 + line_height;
 
@@ -600,19 +614,19 @@ namespace mame.ui
                     // if we're selected, draw with a different background
                     if (is_selected(itemnum))
                     {
-                        fgcolor = fgcolor2 = fgcolor3 = ui_global.UI_SELECTED_COLOR;
-                        bgcolor = ui_global.UI_SELECTED_BG_COLOR;
+                        fgcolor = fgcolor2 = fgcolor3 = UI_SELECTED_COLOR;
+                        bgcolor = UI_SELECTED_BG_COLOR;
                     }
 
                     // else if the mouse is over this item, draw with a different background
                     else if (itemnum == hover)
                     {
-                        fgcolor = fgcolor2 = fgcolor3 = ui_global.UI_MOUSEOVER_COLOR;
-                        bgcolor = ui_global.UI_MOUSEOVER_BG_COLOR;
+                        fgcolor = fgcolor2 = fgcolor3 = UI_MOUSEOVER_COLOR;
+                        bgcolor = UI_MOUSEOVER_BG_COLOR;
                     }
 
                     // if we have some background hilighting to do, add a quad behind everything else
-                    if (bgcolor != ui_global.UI_TEXT_BG_COLOR)
+                    if (bgcolor != UI_TEXT_BG_COLOR)
                         highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
 
                     if (linenum == 0 && show_top_arrow)
@@ -624,9 +638,9 @@ namespace mame.ui
                                     0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
                                     line_y0 + 0.75f * line_height,
                                     fgcolor,
-                                    emucore_global.ROT0);
+                                    ROT0);
                         if (hover == itemnum)
-                            hover = (int)HOVER.HOVER_ARROW_UP;
+                            hover = utils_global.HOVER_ARROW_UP;
                     }
                     else if (linenum == m_visible_lines - 1 && show_bottom_arrow)
                     {
@@ -637,23 +651,23 @@ namespace mame.ui
                                     0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
                                     line_y0 + 0.75f * line_height,
                                     fgcolor,
-                                    emucore_global.ROT0 ^ emucore_global.ORIENTATION_FLIP_Y);
+                                    ROT0 ^ ORIENTATION_FLIP_Y);
                         if (hover == itemnum)
-                            hover = (int)HOVER.HOVER_ARROW_DOWN;
+                            hover = utils_global.HOVER_ARROW_DOWN;
                     }
                     else if (itemtext == menu_item.MENU_SEPARATOR_ITEM)
                     {
                         // if we're just a divider, draw a line
-                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, ui_global.UI_LINE_WIDTH, ui_global.UI_BORDER_COLOR, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                     }
                     else if (pitem.subtext == null)
                     {
                         // if we don't have a subitem, just draw the string centered
-                        if ((pitem.flags & (UInt32)FLAG.FLAG_UI_HEADING) != 0)
+                        if ((pitem.flags & FLAG_UI_HEADING) != 0)
                         {
                             float heading_width = ui().get_string_width(itemtext);
-                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - ui_global.UI_BOX_LR_BORDER, line_y0 + 0.5f * line_height, ui_global.UI_LINE_WIDTH, ui_global.UI_BORDER_COLOR, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + ui_global.UI_BOX_LR_BORDER, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, ui_global.UI_LINE_WIDTH, ui_global.UI_BORDER_COLOR, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - UI_BOX_LR_BORDER, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + UI_BOX_LR_BORDER, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                         }
 
                         float unused1;
@@ -664,7 +678,7 @@ namespace mame.ui
                     else
                     {
                         // otherwise, draw the item on the left and the subitem text on the right
-                        bool subitem_invert = (pitem.flags & (UInt32)FLAG.FLAG_INVERT) != 0;
+                        bool subitem_invert = (pitem.flags & FLAG_INVERT) != 0;
                         string subitem_text = pitem.subtext;
                         float item_width;
                         float subitem_width;
@@ -674,7 +688,7 @@ namespace mame.ui
                         ui().draw_text_full(container(), itemtext, effective_left, line_y0, effective_width,
                                     text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out item_width, out unused);
 
-                        if ((pitem.flags & (UInt32)FLAG.FLAG_COLOR_BOX) != 0)
+                        if ((pitem.flags & FLAG_COLOR_BOX) != 0)
                         {
                             rgb_t color = new rgb_t((UInt32)Convert.ToInt64(subitem_text, 16));  //(UInt32)global.strtoul(subitem_text, null, 16));
 
@@ -698,13 +712,13 @@ namespace mame.ui
                             }
 
                             // customize subitem text color
-                            if (global.core_stricmp(subitem_text, "On") == 0)
+                            if (core_stricmp(subitem_text, "On") == 0)
                                 fgcolor2 = new rgb_t(0x00,0xff,0x00);
 
-                            if (global.core_stricmp(subitem_text, "Off") == 0)
+                            if (core_stricmp(subitem_text, "Off") == 0)
                                 fgcolor2 = new rgb_t(0xff,0x00,0x00);
 
-                            if (global.core_stricmp(subitem_text, "Auto") == 0)
+                            if (core_stricmp(subitem_text, "Auto") == 0)
                                 fgcolor2 = new rgb_t(0xff,0xff,0x00);
 
                             // draw the subitem right-justified
@@ -714,7 +728,7 @@ namespace mame.ui
                         }
 
                         // apply arrows
-                        if (is_selected(itemnum) && (pitem.flags & (UInt32)FLAG.FLAG_LEFT_ARROW) != 0)
+                        if (is_selected(itemnum) && (pitem.flags & FLAG_LEFT_ARROW) != 0)
                         {
                             draw_arrow(
                                         effective_left + effective_width - subitem_width - gutter_width,
@@ -722,9 +736,9 @@ namespace mame.ui
                                         effective_left + effective_width - subitem_width - gutter_width + lr_arrow_width,
                                         line_y0 + 0.9f * line_height,
                                         fgcolor,
-                                        emucore_global.ROT90 ^ emucore_global.ORIENTATION_FLIP_X);
+                                        ROT90 ^ ORIENTATION_FLIP_X);
                         }
-                        if (is_selected(itemnum) && (pitem.flags & (UInt32)FLAG.FLAG_RIGHT_ARROW) != 0)
+                        if (is_selected(itemnum) && (pitem.flags & FLAG_RIGHT_ARROW) != 0)
                         {
                             draw_arrow(
                                         effective_left + effective_width + gutter_width - lr_arrow_width,
@@ -732,7 +746,7 @@ namespace mame.ui
                                         effective_left + effective_width + gutter_width,
                                         line_y0 + 0.9f * line_height,
                                         fgcolor,
-                                        emucore_global.ROT90);
+                                        ROT90);
                         }
                     }
                 }
@@ -742,7 +756,7 @@ namespace mame.ui
             if (selected_subitem_too_big)
             {
                 menu_item pitem = selected_item();
-                bool subitem_invert = (pitem.flags & (UInt32)FLAG.FLAG_INVERT) != 0;
+                bool subitem_invert = (pitem.flags & FLAG_INVERT) != 0;
                 var linenum = selected - top_line;
                 float line_y = visible_top + (float)linenum * line_height;
                 float target_width, target_height;
@@ -752,22 +766,22 @@ namespace mame.ui
                             text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out target_width, out target_height);
 
                 // determine the target location
-                float target_x = visible_left + visible_width - target_width - ui_global.UI_BOX_LR_BORDER;
-                float target_y = line_y + line_height + ui_global.UI_BOX_TB_BORDER;
-                if (target_y + target_height + ui_global.UI_BOX_TB_BORDER > visible_main_menu_height)
-                    target_y = line_y - target_height - ui_global.UI_BOX_TB_BORDER;
+                float target_x = visible_left + visible_width - target_width - UI_BOX_LR_BORDER;
+                float target_y = line_y + line_height + UI_BOX_TB_BORDER;
+                if (target_y + target_height + UI_BOX_TB_BORDER > visible_main_menu_height)
+                    target_y = line_y - target_height - UI_BOX_TB_BORDER;
 
                 // add a box around that
-                ui().draw_outlined_box(container(), target_x - ui_global.UI_BOX_LR_BORDER,
-                                    target_y - ui_global.UI_BOX_TB_BORDER,
-                                    target_x + target_width + ui_global.UI_BOX_LR_BORDER,
-                                    target_y + target_height + ui_global.UI_BOX_TB_BORDER,
-                                    subitem_invert ? ui_global.UI_SELECTED_BG_COLOR : ui_global.UI_BACKGROUND_COLOR);
+                ui().draw_outlined_box(container(), target_x - UI_BOX_LR_BORDER,
+                                    target_y - UI_BOX_TB_BORDER,
+                                    target_x + target_width + UI_BOX_LR_BORDER,
+                                    target_y + target_height + UI_BOX_TB_BORDER,
+                                    subitem_invert ? UI_SELECTED_BG_COLOR : UI_BACKGROUND_COLOR);
 
                 float unused1;
                 float unused2;
                 ui().draw_text_full(container(), pitem.subtext, target_x, target_y, target_width,
-                            text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui_global.UI_SELECTED_COLOR, ui_global.UI_SELECTED_BG_COLOR, out unused1, out unused2);
+                            text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, UI_SELECTED_COLOR, UI_SELECTED_BG_COLOR, out unused1, out unused2);
             }
 
             // if there is something special to add, do it by calling the virtual method
@@ -794,11 +808,11 @@ namespace mame.ui
             float target_y;
 
             // compute the multi-line target width/height
-            ui().draw_text_full(container(), text, 0, 0, 1.0f - 2.0f * ui_global.UI_BOX_LR_BORDER - 2.0f * gutter_width,
+            ui().draw_text_full(container(), text, 0, 0, 1.0f - 2.0f * UI_BOX_LR_BORDER - 2.0f * gutter_width,
                         text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out target_width, out target_height);
             target_height += 2.0f * line_height;
-            if (target_height > 1.0f - 2.0f * ui_global.UI_BOX_TB_BORDER)
-                target_height = (float)Math.Floor((1.0f - 2.0f * ui_global.UI_BOX_TB_BORDER) / line_height) * line_height;
+            if (target_height > 1.0f - 2.0f * UI_BOX_TB_BORDER)
+                target_height = (float)Math.Floor((1.0f - 2.0f * UI_BOX_TB_BORDER) / line_height) * line_height;
 
             // maximum against "return to prior menu" text
             prior_width = ui().get_string_width(backtext) + 2.0f * gutter_width;
@@ -809,36 +823,36 @@ namespace mame.ui
             target_y = 0.5f - 0.5f * target_height;
 
             // make sure we stay on-screen
-            if (target_x < ui_global.UI_BOX_LR_BORDER + gutter_width)
-                target_x = ui_global.UI_BOX_LR_BORDER + gutter_width;
-            if (target_x + target_width + gutter_width + ui_global.UI_BOX_LR_BORDER > 1.0f)
-                target_x = 1.0f - ui_global.UI_BOX_LR_BORDER - gutter_width - target_width;
-            if (target_y < ui_global.UI_BOX_TB_BORDER)
-                target_y = ui_global.UI_BOX_TB_BORDER;
-            if (target_y + target_height + ui_global.UI_BOX_TB_BORDER > 1.0f)
-                target_y = 1.0f - ui_global.UI_BOX_TB_BORDER - target_height;
+            if (target_x < UI_BOX_LR_BORDER + gutter_width)
+                target_x = UI_BOX_LR_BORDER + gutter_width;
+            if (target_x + target_width + gutter_width + UI_BOX_LR_BORDER > 1.0f)
+                target_x = 1.0f - UI_BOX_LR_BORDER - gutter_width - target_width;
+            if (target_y < UI_BOX_TB_BORDER)
+                target_y = UI_BOX_TB_BORDER;
+            if (target_y + target_height + UI_BOX_TB_BORDER > 1.0f)
+                target_y = 1.0f - UI_BOX_TB_BORDER - target_height;
 
             // add a box around that
-            ui().draw_outlined_box(container(), target_x - ui_global.UI_BOX_LR_BORDER - gutter_width,
-                                target_y - ui_global.UI_BOX_TB_BORDER,
-                                target_x + target_width + gutter_width + ui_global.UI_BOX_LR_BORDER,
-                                target_y + target_height + ui_global.UI_BOX_TB_BORDER, (item[0].flags & (UInt32)FLAG.FLAG_REDTEXT) != 0 ? ui_global.UI_RED_COLOR : ui_global.UI_BACKGROUND_COLOR);
+            ui().draw_outlined_box(container(), target_x - UI_BOX_LR_BORDER - gutter_width,
+                                target_y - UI_BOX_TB_BORDER,
+                                target_x + target_width + gutter_width + UI_BOX_LR_BORDER,
+                                target_y + target_height + UI_BOX_TB_BORDER, (item[0].flags & FLAG_REDTEXT) != 0 ? UI_RED_COLOR : UI_BACKGROUND_COLOR);
 
             float unused1;
             float unused2;
             ui().draw_text_full(container(), text, target_x, target_y, target_width,
-                        text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui_global.UI_TEXT_COLOR, ui_global.UI_TEXT_BG_COLOR, out unused1, out unused2);
+                        text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, out unused1, out unused2);
 
             // draw the "return to prior menu" text with a hilight behind it
             highlight(
-                        target_x + 0.5f * ui_global.UI_LINE_WIDTH,
+                        target_x + 0.5f * UI_LINE_WIDTH,
                         target_y + target_height - line_height,
-                        target_x + target_width - 0.5f * ui_global.UI_LINE_WIDTH,
+                        target_x + target_width - 0.5f * UI_LINE_WIDTH,
                         target_y + target_height,
-                        ui_global.UI_SELECTED_BG_COLOR);
+                        UI_SELECTED_BG_COLOR);
 
             ui().draw_text_full(container(), backtext, target_x, target_y + target_height - line_height, target_width,
-                        text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, ui_global.UI_SELECTED_COLOR, ui_global.UI_SELECTED_BG_COLOR, out unused1, out unused2);
+                        text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, UI_SELECTED_COLOR, UI_SELECTED_BG_COLOR, out unused1, out unused2);
 
             // artificially set the hover to the last item so a double-click exits
             hover = item.size() - 1;
@@ -890,12 +904,12 @@ namespace mame.ui
                 if (machine().options().ui() == emu_options.ui_option.UI_SIMPLE)
                     item_append("Exit", "", 0, null);
                 else
-                    item_append("Exit", "", (UInt32)(FLAG.FLAG_LEFT_ARROW | FLAG.FLAG_RIGHT_ARROW), null);
+                    item_append("Exit", "", FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW, null);
             }
             else
             {
                 if (machine().options().ui() != emu_options.ui_option.UI_SIMPLE && stack_has_special_main_menu())
-                    item_append("Return to Previous Menu", "", (UInt32)(FLAG.FLAG_LEFT_ARROW | FLAG.FLAG_RIGHT_ARROW), null);
+                    item_append("Return to Previous Menu", "", FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW, null);
                 else
                     item_append("Return to Previous Menu", "", 0, null);
             }
@@ -903,7 +917,6 @@ namespace mame.ui
 
 
         //void reset_parent(reset_options options) { m_parent->reset(options); }
-        //void reset_topmost(reset_options options) { m_global_state->reset_topmost(options); }
 
 
         //template <typename T> T *topmost_menu() const { return m_global_state->topmost_menu<T>(); }
@@ -934,13 +947,13 @@ namespace mame.ui
             validate_selection(1);
 
             // draw the menu
-            if (item.size() > 1 && (item[0].flags & (UInt32)FLAG.FLAG_MULTILINE) != 0)
+            if (item.size() > 1 && (item[0].flags & FLAG_MULTILINE) != 0)
                 draw_text_box();
             else
                 draw(flags);
 
             // process input
-            if ((flags & (UInt32)PROCESS.PROCESS_NOKEYS) == 0 && (flags & (UInt32)PROCESS.PROCESS_NOINPUT) == 0)
+            if ((flags & PROCESS_NOKEYS) == 0 && (flags & PROCESS_NOINPUT) == 0)
             {
                 // read events
                 handle_events(flags, m_event);
@@ -968,7 +981,7 @@ namespace mame.ui
 
 
         // retrieves the ref of the currently selected menu item or nullptr
-        protected object get_selection_ref() { return selection_valid() ? item[selected].refobj : null; }
+        protected object get_selection_ref() { return selection_valid() ? item[selected].ref_ : null; }
 
 
         protected menu_item selected_item() { return item[selected]; }
@@ -1018,7 +1031,7 @@ namespace mame.ui
         //-------------------------------------------------
         public void highlight(float x0, float y0, float x1, float y1, rgb_t bgcolor)
         {
-            container().add_quad(x0, y0, x1, y1, bgcolor, m_global_state.hilight_texture(), global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXWRAP(1) | render_global.PRIMFLAG_PACKABLE);
+            container().add_quad(x0, y0, x1, y1, bgcolor, m_global_state.hilight_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXWRAP(1) | render_global.PRIMFLAG_PACKABLE);
         }
 
 
@@ -1031,7 +1044,7 @@ namespace mame.ui
         //-------------------------------------------------
         protected void draw_arrow(float x0, float y0, float x1, float y1, rgb_t fgcolor, UInt32 orientation)
         {
-            container().add_quad(x0, y0, x1, y1, fgcolor, m_global_state.arrow_texture(), global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(orientation) | render_global.PRIMFLAG_PACKABLE);
+            container().add_quad(x0, y0, x1, y1, fgcolor, m_global_state.arrow_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(orientation) | render_global.PRIMFLAG_PACKABLE);
         }
 
 
@@ -1059,7 +1072,7 @@ namespace mame.ui
                         0.0f, 0.0f, 1.0f, justify, wrap,
                         mame_ui_manager.draw_mode.NONE, rgb_t.black(), rgb_t.white(),
                         out width, out unused1, text_size);
-                width += 2.0f * ui_global.UI_BOX_LR_BORDER;
+                width += 2.0f * UI_BOX_LR_BORDER;
                 maxwidth = Math.Max(maxwidth, width);
             }
 
@@ -1075,10 +1088,10 @@ namespace mame.ui
             ui().draw_outlined_box(container(), x1, y1, x2, y2, bgcolor);
 
             // inset box and draw content
-            x1 += ui_global.UI_BOX_LR_BORDER;
-            x2 -= ui_global.UI_BOX_LR_BORDER;
-            y1 += ui_global.UI_BOX_TB_BORDER;
-            y2 -= ui_global.UI_BOX_TB_BORDER;
+            x1 += UI_BOX_LR_BORDER;
+            x2 -= UI_BOX_LR_BORDER;
+            y1 += UI_BOX_TB_BORDER;
+            y2 -= UI_BOX_TB_BORDER;
             foreach (var it in iter)  //for (Iter it = begin; it != end; ++it)
             {
                 float unused1;
@@ -1086,7 +1099,7 @@ namespace mame.ui
                 ui().draw_text_full(
                         container(), get_c_str(it),
                         x1, y1, x2 - x1, justify, wrap,
-                        mame_ui_manager.draw_mode.NORMAL, fgcolor, ui_global.UI_TEXT_BG_COLOR,
+                        mame_ui_manager.draw_mode.NORMAL, fgcolor, UI_TEXT_BG_COLOR,
                         out unused1, out unused2, text_size);
                 y1 += ui().get_line_height();
             }
@@ -1096,7 +1109,12 @@ namespace mame.ui
         }
 
 
-        //void draw_background();
+        void draw_background()
+        {
+            // draw background image if available
+            if (ui().options().use_background_image() && m_global_state.bgrnd_bitmap() != null && m_global_state.bgrnd_bitmap().valid())
+                container().add_quad(0.0f, 0.0f, 1.0f, 1.0f, rgb_t.white(), m_global_state.bgrnd_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+        }
 
 
         // draw additional menu content
@@ -1152,7 +1170,7 @@ namespace mame.ui
         //  handle_events - generically handle
         //  input events for a menu
         //-------------------------------------------------
-        protected virtual void handle_events(UInt32 flags, menu_event ev)
+        protected virtual void handle_events(uint32_t flags, menu_event ev)
         {
             bool stop = false;
             ui_event local_menu_event;
@@ -1167,13 +1185,13 @@ namespace mame.ui
                         if (custom_mouse_down())
                             return;
 
-                        if ((flags & (UInt32)PROCESS.PROCESS_ONLYCHAR) == 0)
+                        if ((flags & PROCESS_ONLYCHAR) == 0)
                         {
                             if (hover >= 0 && hover < item.size())
                                 selected = hover;
-                            else if (hover == (int)HOVER.HOVER_ARROW_UP)
+                            else if (hover == utils_global.HOVER_ARROW_UP)
                             {
-                                if ((flags & (UInt32)FLAG.FLAG_UI_DATS) != 0)
+                                if ((flags & FLAG_UI_DATS) != 0)
                                 {
                                     top_line -= m_visible_items - (last_item_visible() ? 1 : 0);
                                     return;
@@ -1183,9 +1201,9 @@ namespace mame.ui
                                     selected = 0;
                                 top_line -= m_visible_items - (last_item_visible() ? 1 : 0);
                             }
-                            else if (hover == (int)HOVER.HOVER_ARROW_DOWN)
+                            else if (hover == utils_global.HOVER_ARROW_DOWN)
                             {
-                                if ((flags & (UInt32)FLAG.FLAG_UI_DATS) != 0)
+                                if ((flags & FLAG_UI_DATS) != 0)
                                 {
                                     top_line += m_visible_lines - 2;
                                     return;
@@ -1200,7 +1218,7 @@ namespace mame.ui
 
                     // if we are hovering over a valid item, fake a UI_SELECT with a double-click
                     case ui_event.type.MOUSE_DOUBLE_CLICK:
-                        if ((flags & (UInt32)PROCESS.PROCESS_ONLYCHAR) == 0 && hover >= 0 && hover < item.size())
+                        if ((flags & PROCESS_ONLYCHAR) == 0 && hover >= 0 && hover < item.size())
                         {
                             selected = hover;
                             ev.iptkey = (int)ioport_type.IPT_UI_SELECT;
@@ -1215,11 +1233,11 @@ namespace mame.ui
 
                     // caught scroll event
                     case ui_event.type.MOUSE_WHEEL:
-                        if ((flags & (UInt32)PROCESS.PROCESS_ONLYCHAR) == 0)
+                        if ((flags & PROCESS_ONLYCHAR) == 0)
                         {
                             if (local_menu_event.zdelta > 0)
                             {
-                                if ((flags & (UInt32)FLAG.FLAG_UI_DATS) != 0)
+                                if ((flags & FLAG_UI_DATS) != 0)
                                 {
                                     top_line -= local_menu_event.num_lines;
                                     return;
@@ -1232,7 +1250,7 @@ namespace mame.ui
                             }
                             else
                             {
-                                if ((flags & (UInt32)FLAG.FLAG_UI_DATS) != 0)
+                                if ((flags & FLAG_UI_DATS) != 0)
                                 {
                                     top_line += local_menu_event.num_lines;
                                     return;
@@ -1265,7 +1283,7 @@ namespace mame.ui
         //  handle_keys - generically handle
         //  keys for a menu
         //-------------------------------------------------
-        protected virtual void handle_keys(UInt32 flags, ref int iptkey)
+        protected virtual void handle_keys(uint32_t flags, ref int iptkey)
         {
             bool ignorepause = stack_has_special_main_menu();
             int code;
@@ -1286,7 +1304,7 @@ namespace mame.ui
             }
 
             // bail out
-            if ((flags & (UInt32)PROCESS.PROCESS_ONLYCHAR) != 0)
+            if ((flags & PROCESS_ONLYCHAR) != 0)
                 return;
 
             // hitting cancel also pops the stack
@@ -1301,22 +1319,22 @@ namespace mame.ui
             validate_selection(1);
 
             // swallow left/right keys if they are not appropriate
-            bool ignoreleft = (selected_item().flags & (UInt32)FLAG.FLAG_LEFT_ARROW) == 0;
-            bool ignoreright = (selected_item().flags & (UInt32)FLAG.FLAG_RIGHT_ARROW) == 0;
+            bool ignoreleft = (selected_item().flags & FLAG_LEFT_ARROW) == 0;
+            bool ignoreright = (selected_item().flags & FLAG_RIGHT_ARROW) == 0;
 
-            if ((item[0].flags & (UInt32)FLAG.FLAG_UI_DATS) != 0)
+            if ((item[0].flags & FLAG_UI_DATS) != 0)
                 ignoreleft = ignoreright = false;
 
             // accept left/right keys as-is with repeat
-            if (ignoreleft && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_LEFT, (flags & (UInt32)PROCESS.PROCESS_LR_REPEAT) != 0 ? 6 : 0))
+            if (ignoreleft && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_LEFT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
                 return;
-            if (ignoreright && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_RIGHT, (flags & (UInt32)PROCESS.PROCESS_LR_REPEAT) != 0 ? 6 : 0))
+            if (ignoreright && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_RIGHT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
                 return;
 
             // up backs up by one item
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_UP, 6))
             {
-                if ((item[0].flags & (UInt32)FLAG.FLAG_UI_DATS) != 0)
+                if ((item[0].flags & FLAG_UI_DATS) != 0)
                 {
                     top_line--;
                     return;
@@ -1331,7 +1349,7 @@ namespace mame.ui
             // down advances by one item
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_DOWN, 6))
             {
-                if ((item[0].flags & (UInt32)FLAG.FLAG_UI_DATS) != 0)
+                if ((item[0].flags & FLAG_UI_DATS) != 0)
                 {
                     top_line++;
                     return;
@@ -1414,7 +1432,7 @@ namespace mame.ui
         protected virtual bool menu_has_search_active() { return false; }
 
 
-        protected static bool is_selectable(menu_item item) { return ((item.flags & (UInt32)(menu.FLAG.FLAG_MULTILINE | menu.FLAG.FLAG_DISABLE)) == 0 && item.type != menu_item_type.SEPARATOR); }
+        protected static bool is_selectable(menu_item item) { return (item.flags & (FLAG_MULTILINE | FLAG_DISABLE)) == 0 && item.type != menu_item_type.SEPARATOR; }
 
 
         // get arrows status
@@ -1470,6 +1488,7 @@ namespace mame.ui
             global_state state = get_global_state(machine);
             state.stack_reset();
             state.clear_free_list();
+            state.Dispose();
 
             //throw new emu_unimplemented();
 #if false

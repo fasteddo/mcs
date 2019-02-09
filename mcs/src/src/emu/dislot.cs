@@ -48,7 +48,7 @@ namespace mame
 
 
         // internal state
-        std_unordered_map<string, slot_option> m_options = new std_unordered_map<string, slot_option>();  //std::unordered_map<std::string,std::unique_ptr<slot_option>> m_options;
+        std.unordered_map<string, slot_option> m_options = new std.unordered_map<string, slot_option>();  //std::unordered_map<std::string,std::unique_ptr<slot_option>> m_options;
         u32 m_default_clock;
         string m_default_option;
         bool m_fixed;
@@ -59,7 +59,7 @@ namespace mame
         public device_slot_interface(machine_config mconfig, device_t device)
             : base(device, "slot")
         {
-            m_default_clock = device_global.DERIVED_CLOCK(1, 1);
+            m_default_clock = DERIVED_CLOCK(1, 1);
             m_default_option = null;
             m_fixed = false;
             m_card_device = null;
@@ -81,6 +81,7 @@ namespace mame
         public device_t get_card_device() { return m_card_device; }
         public void set_card_device(device_t dev) { m_card_device = dev; }
         public string slot_name() { return device().tag().Substring(1); }  // + 1; }
+        //slot_option &option_set(const char *tag, const device_type &devtype) { m_default_option = tag; m_fixed = true; return option_add_internal(tag, devtype); }
 
         void set_default_clock(u32 clock) { m_default_clock = clock; }
 

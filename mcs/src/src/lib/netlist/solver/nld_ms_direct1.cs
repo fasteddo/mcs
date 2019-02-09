@@ -4,15 +4,22 @@
 using System;
 using System.Collections.Generic;
 
+using netlist_base_t = mame.netlist.netlist_state_t;
+
 
 namespace mame.netlist
 {
     namespace devices
     {
-        class matrix_solver_direct1_t : matrix_solver_direct_t//<1,1>
+        //template <typename FT>
+        class matrix_solver_direct1_t : matrix_solver_direct_t//<FT, 1>
         {
-            public matrix_solver_direct1_t(netlist_t anetlist, string name, solver_parameters_t params_)
-                : base(1, 1, anetlist, name, params_, 1)
+            //typedef FT float_type;
+            //typedef matrix_solver_direct_t<FT, 1> base_type;
+
+
+            public matrix_solver_direct1_t(netlist_base_t anetlist, string name, solver_parameters_t params_)
+                : base(1, anetlist, name, params_, 1)
                 {}
 
 
@@ -22,17 +29,6 @@ namespace mame.netlist
             protected override UInt32 vsolve_non_dynamic(bool newton_raphson)
             {
                 throw new emu_unimplemented();
-#if false
-                build_LE_A<matrix_solver_direct1_t>();
-                build_LE_RHS<matrix_solver_direct1_t>();
-                //NL_VERBOSE_OUT(("{1} {2}\n", new_val, m_RHS[0] / m_A[0][0]);
-
-                nl_double new_V[1] = { RHS(0) / A(0,0) };
-
-                const nl_double err = (newton_raphson ? delta(new_V) : 0.0);
-                store(new_V);
-                return (err > this->m_params.m_accuracy) ? 2 : 1;
-#endif
             }
         }
     } //namespace devices

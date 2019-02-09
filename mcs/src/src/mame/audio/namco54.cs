@@ -15,10 +15,10 @@ namespace mame
     public static class namco54_global
     {
         /* discrete nodes */
-        public static NODE NAMCO_54XX_0_DATA(NODE base_node) { return discrete_global.NODE_RELATIVE(base_node, 0); }
-        public static NODE NAMCO_54XX_1_DATA(NODE base_node) { return discrete_global.NODE_RELATIVE(base_node, 1); }
-        public static NODE NAMCO_54XX_2_DATA(NODE base_node) { return discrete_global.NODE_RELATIVE(base_node, 2); }
-        public static NODE NAMCO_54XX_P_DATA(NODE base_node) { return discrete_global.NODE_RELATIVE(base_node, 3); }
+        public static int NAMCO_54XX_0_DATA(int base_node) { return global_object.NODE_RELATIVE(base_node, 0); }
+        public static int NAMCO_54XX_1_DATA(int base_node) { return global_object.NODE_RELATIVE(base_node, 1); }
+        public static int NAMCO_54XX_2_DATA(int base_node) { return global_object.NODE_RELATIVE(base_node, 2); }
+        public static int NAMCO_54XX_P_DATA(int base_node) { return global_object.NODE_RELATIVE(base_node, 3); }
     }
 
 
@@ -79,9 +79,9 @@ namespace mame
         {
             byte out_ = (byte)(data & 0x0f);
             if ((data & 0x10) != 0)
-                m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_1_DATA((NODE)m_basenode), out_);
+                m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_1_DATA(m_basenode), out_);
             else
-                m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_0_DATA((NODE)m_basenode), out_);
+                m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_0_DATA(m_basenode), out_);
         }
 
         //WRITE8_MEMBER( namco_54xx_device::R1_w )
@@ -89,7 +89,7 @@ namespace mame
         {
             byte out_ = (byte)(data & 0x0f);
 
-            m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_2_DATA((NODE)m_basenode), out_);
+            m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_2_DATA(m_basenode), out_);
         }
 
         //WRITE8_MEMBER( namco_54xx_device::write )
@@ -97,7 +97,7 @@ namespace mame
         {
             machine().scheduler().synchronize(latch_callback, data);  //timer_expired_delegate(FUNC(namco_54xx_device::latch_callback),this), data);
 
-            m_cpu.target.execute().set_input_line(0, line_state.ASSERT_LINE);
+            m_cpu.target.set_input_line(0, ASSERT_LINE);
 
             // The execution time of one instruction is ~4us, so we must make sure to
             // give the cpu time to poll the /IRQ input before we clear it.
@@ -130,16 +130,13 @@ namespace mame
         //-------------------------------------------------
         // device_add_mconfig - add device configuration
         //-------------------------------------------------
-        protected override void device_add_mconfig(machine_config config, device_t owner, device_t device)
+        protected override void device_add_mconfig(machine_config config)
         {
-            //MACHINE_CONFIG_START(namco_54xx_device::device_add_mconfig)
-            MACHINE_CONFIG_START(config, owner, device);
-                MCFG_DEVICE_ADD("mcu", mb8844_cpu_device.MB8844, DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
-                MCFG_MB88XX_READ_K_CB(K_r);
-                MCFG_MB88XX_WRITE_O_CB(O_w);
-                MCFG_MB88XX_READ_R0_CB(R0_r);
-                MCFG_MB88XX_WRITE_R1_CB(R1_w);
-            MACHINE_CONFIG_END();
+            MB8844(config, m_cpu, DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
+            m_cpu.target.read_k().set(K_r).reg();
+            m_cpu.target.write_o().set(O_w).reg();
+            m_cpu.target.read_r(0).set(R0_r).reg();
+            m_cpu.target.write_r(1).set(R1_w).reg();
         }
 
 
@@ -152,7 +149,7 @@ namespace mame
         //TIMER_CALLBACK_MEMBER( namco_54xx_device::irq_clear )
         void irq_clear(object ptr, int param)
         {
-            m_cpu.target.execute().set_input_line(0, line_state.CLEAR_LINE);
+            m_cpu.target.set_input_line(0, CLEAR_LINE);
         }
     }
 }

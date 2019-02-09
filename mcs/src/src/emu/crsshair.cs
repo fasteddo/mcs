@@ -29,7 +29,7 @@ namespace mame
 
 
     // ======================> render_crosshair
-    class render_crosshair
+    class render_crosshair : global_object, IDisposable
     {
         /* raw bitmap */
         static readonly byte [] crosshair_raw_top =
@@ -126,7 +126,7 @@ namespace mame
             m_machine = machine;
             m_player = player;
             m_used = false;
-            m_mode = crsshair_global.CROSSHAIR_VISIBILITY_OFF;
+            m_mode = CROSSHAIR_VISIBILITY_OFF;
             m_visible = false;
             m_texture = null;
             m_x = 0.0f;
@@ -140,13 +140,16 @@ namespace mame
             m_screen = new screen_device_iterator(machine.root_device()).first();
         }
 
-
-        //-------------------------------------------------
-        //  render_crosshair - destructor
-        //-------------------------------------------------
         ~render_crosshair()
         {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
             m_machine.render().texture_free(m_texture);
+            m_isDisposed = true;
         }
 
 
@@ -204,33 +207,35 @@ namespace mame
                 m_texture = m_machine.render().texture_alloc(render_texture.hq_scale);
             }
 
-            emu_file crossfile = new emu_file(m_machine.options().crosshair_path(), osdcore_global.OPEN_FLAG_READ);
+            emu_file crossfile = new emu_file(m_machine.options().crosshair_path(), OPEN_FLAG_READ);
             if (!m_name.empty())
             {
                 // look for user specified file
                 string filename = m_name + ".png";
-                rendutil_global.render_load_png(out m_bitmap, crossfile, null, filename.c_str());
+                render_load_png(out m_bitmap, crossfile, null, filename.c_str());
             }
             else
             {
                 // look for default cross?.png in crsshair/game dir
                 string filename = string.Format("cross{0}.png", m_player + 1);
-                rendutil_global.render_load_png(out m_bitmap, crossfile, m_machine.system().name, filename.c_str());
+                render_load_png(out m_bitmap, crossfile, m_machine.system().name, filename.c_str());
 
                 // look for default cross?.png in crsshair dir
                 if (!m_bitmap.valid())
-                    rendutil_global.render_load_png(out m_bitmap, crossfile, null, filename.c_str());
+                    render_load_png(out m_bitmap, crossfile, null, filename.c_str());
             }
+
+            crossfile.close();
 
             /* if that didn't work, use the built-in one */
             if (!m_bitmap.valid())
             {
                 /* allocate a blank bitmap to start with */
-                m_bitmap.allocate(crsshair_global.CROSSHAIR_RAW_SIZE, crsshair_global.CROSSHAIR_RAW_SIZE);
+                m_bitmap.allocate(CROSSHAIR_RAW_SIZE, CROSSHAIR_RAW_SIZE);
                 m_bitmap.fill(new rgb_t(0x00,0xff,0xff,0xff));
 
                 /* extract the raw source data to it */
-                for (y = 0; y < crsshair_global.CROSSHAIR_RAW_SIZE / 2; y++)
+                for (y = 0; y < CROSSHAIR_RAW_SIZE / 2; y++)
                 {
                     /* assume it is mirrored vertically */
                     //u32 *dest0 = &m_bitmap->pix32(y);
@@ -238,12 +243,12 @@ namespace mame
                     UInt32 dest0Offset = m_bitmap.pix32(out dest0Buf, y);
                     //u32 *dest1 = &m_bitmap->pix32(CROSSHAIR_RAW_SIZE - 1 - y);
                     RawBuffer dest1Buf;
-                    UInt32 dest1Offset = m_bitmap.pix32(out dest1Buf, crsshair_global.CROSSHAIR_RAW_SIZE - 1 - y);
+                    UInt32 dest1Offset = m_bitmap.pix32(out dest1Buf, CROSSHAIR_RAW_SIZE - 1 - y);
 
                     /* extract to two rows simultaneously */
-                    for (x = 0; x < crsshair_global.CROSSHAIR_RAW_SIZE; x++)
+                    for (x = 0; x < CROSSHAIR_RAW_SIZE; x++)
                     {
-                        if (((crosshair_raw_top[y * crsshair_global.CROSSHAIR_RAW_ROWBYTES + x / 8] << (x % 8)) & 0x80) != 0)
+                        if (((crosshair_raw_top[y * CROSSHAIR_RAW_ROWBYTES + x / 8] << (x % 8)) & 0x80) != 0)
                         {
                             //dest0[x] = dest1[x] = new rgb_t(0xff,0x00,0x00,0x00) | color;
                             dest0Buf.set_uint32((int)dest0Offset + x, new rgb_t(0xff,0x00,0x00,0x00) | color);
@@ -260,13 +265,13 @@ namespace mame
 
 
     // ======================> crosshair_manager
-    public class crosshair_manager
+    public class crosshair_manager : global_object
     {
         // internal state
         running_machine m_machine;                  // reference to our machine
 
         bool m_usage;                    // true if any crosshairs are used
-        render_crosshair [] m_crosshair = new render_crosshair[ioport_global.MAX_PLAYERS];  //std::unique_ptr<render_crosshair> m_crosshair[MAX_PLAYERS]; // per-player crosshair state
+        render_crosshair [] m_crosshair = new render_crosshair[MAX_PLAYERS];  //std::unique_ptr<render_crosshair> m_crosshair[MAX_PLAYERS]; // per-player crosshair state
         //u8                  m_fade;                     // color fading factor
         u8 m_animation_counter;        // animation frame index
         u16 m_auto_time;                // time in seconds to turn invisible
@@ -281,13 +286,13 @@ namespace mame
             m_machine = machine;
             m_usage = false;
             m_animation_counter = 0;
-            m_auto_time = crsshair_global.CROSSHAIR_VISIBILITY_AUTOTIME_DEFAULT;
+            m_auto_time = CROSSHAIR_VISIBILITY_AUTOTIME_DEFAULT;
 
 
             /* request a callback upon exiting */
             machine.add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit);
 
-            for (int player = 0; player < ioport_global.MAX_PLAYERS; player++)
+            for (int player = 0; player < MAX_PLAYERS; player++)
                 m_crosshair[player] = new render_crosshair(machine, player);
 
             /* determine who needs crosshairs */
@@ -299,13 +304,13 @@ namespace mame
                     {
                         int player = field.player();
 
-                        global.assert(player < ioport_global.MAX_PLAYERS);
+                        assert(player < MAX_PLAYERS);
 
                         /* mark as used and set the default visibility and mode */
                         m_usage = true;
                         m_crosshair[player].set_used(true);
-                        m_crosshair[player].set_mode(crsshair_global.CROSSHAIR_VISIBILITY_DEFAULT);
-                        m_crosshair[player].set_visible(crsshair_global.CROSSHAIR_VISIBILITY_DEFAULT != crsshair_global.CROSSHAIR_VISIBILITY_OFF);
+                        m_crosshair[player].set_mode(CROSSHAIR_VISIBILITY_DEFAULT);
+                        m_crosshair[player].set_visible(CROSSHAIR_VISIBILITY_DEFAULT != CROSSHAIR_VISIBILITY_OFF);
                         m_crosshair[player].set_default_bitmap();
                     }
                 }
@@ -346,8 +351,11 @@ namespace mame
         void exit(running_machine machine)
         {
             /* free bitmaps and textures for each player */
-            for (int player = 0; player < ioport_global.MAX_PLAYERS; player++)
+            for (int player = 0; player < MAX_PLAYERS; player++)
+            {
+                m_crosshair[player].Dispose();
                 m_crosshair[player] = null;
+            }
         }
 
 

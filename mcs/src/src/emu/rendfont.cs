@@ -16,12 +16,13 @@ namespace mame
 {
     // ======================> render_font
     // a render_font describes and provides an interface to a font
-    public partial class render_font
+    public class render_font : global_object,
+                               IDisposable
     {
         //friend class render_manager;
 
         const bool VERBOSE = false;
-        static void LOG(string format, params object [] args) { if (VERBOSE) global.osd_printf_verbose(format, args); }
+        static void LOG(string format, params object [] args) { if (VERBOSE) osd_printf_verbose(format, args); }
 
 
         // internal format
@@ -75,14 +76,14 @@ namespace mame
         int m_defchar;          // default substitute character
         float m_scale;            // 1 / height precomputed
         List<glyph> [] m_glyphs = new List<glyph>[17 * 256];  //glyph               *m_glyphs[17*256];  // array of glyph subtables
-        std_vector<u8> m_rawdata = new std_vector<u8>();  //std::vector<char>   m_rawdata;          // pointer to the raw data for the font
+        std.vector<u8> m_rawdata = new std.vector<u8>();  //std::vector<char>   m_rawdata;          // pointer to the raw data for the font
         u64 m_rawsize;          // size of the raw font data
         osd_font m_osdfont;  //std::unique_ptr<osd_font> m_osdfont;    // handle to the OSD font
 
         int m_height_cmd;       // height of the font, from ascent to descent
         int m_yoffs_cmd;        // y offset from baseline to descent
         List<glyph> [] m_glyphs_cmd = new List<glyph>[17 * 256];  //EQUIVALENT_ARRAY(m_glyphs, glyph *) m_glyphs_cmd; // array of glyph subtables
-        std_vector<u8> m_rawdata_cmd = new std_vector<u8>();  //std::vector<char>   m_rawdata_cmd;      // pointer to the raw data for the font
+        std.vector<u8> m_rawdata_cmd = new std.vector<u8>();  //std::vector<char>   m_rawdata_cmd;      // pointer to the raw data for the font
 
 
         // construction/destruction
@@ -126,7 +127,7 @@ namespace mame
             }
 
             // if the filename is 'default' default to 'ui.bdf' for backwards compatibility
-            if (filename != null && global.core_stricmp(filename, "default") == 0)
+            if (filename != null && core_stricmp(filename, "default") == 0)
                 filename = "ui.bdf";
 
             // attempt to load an external BDF font first
@@ -138,19 +139,23 @@ namespace mame
             }
 
             // load the compiled in data instead
-            emu_file ramfile = new emu_file(osdcore_global.OPEN_FLAG_READ);
+            emu_file ramfile = new emu_file(OPEN_FLAG_READ);
             osd_file.error filerr = ramfile.open_ram(new ListBytes(uismall_global.font_uismall), (UInt32)uismall_global.font_uismall.Length);//, sizeof(font_uismall));
             if (osd_file.error.NONE == filerr)
                 load_cached(ramfile, 0, 0);
 
+            ramfile.close();
+
             render_font_command_glyph();
         }
 
-
-        //-------------------------------------------------
-        //  ~render_font - destructor
-        //-------------------------------------------------
         ~render_font()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             //throw new emu_unimplemented();
 #if false
@@ -181,6 +186,8 @@ namespace mame
                 }
             }
 #endif
+
+            m_isDisposed = true;
         }
 
 
@@ -223,10 +230,10 @@ namespace mame
 
             // loop over the string and accumulate widths
             int count;
-            int totwidth = 0;
+            s32 totwidth = 0;
             for (int offset = 0; offset < length; offset += count)
             {
-                char32_t uchar;
+                char uchar;  //char32_t uchar;
                 count = unicode_global.uchar_from_utf8(out uchar, utf8string.Substring(offset), length - offset);
                 if (count < 0)
                     break;
@@ -550,10 +557,12 @@ namespace mame
             UInt64 bytes;
 
             // first try to open the BDF itself
-            emu_file file = new emu_file(manager().machine().options().font_path(), osdcore_global.OPEN_FLAG_READ);
+            emu_file file = new emu_file(manager().machine().options().font_path(), OPEN_FLAG_READ);
             filerr = file.open(filename);
             if (filerr != osd_file.error.NONE)
                 return false;
+
+            file.close();
 
             throw new emu_unimplemented();
 #if false
@@ -984,7 +993,7 @@ namespace mame
             bdc_header header = new bdc_header();
             if (!header.read(file))
             {
-                global.osd_printf_warning("render_font::load_cached: error reading BDC header\n");
+                osd_printf_warning("render_font::load_cached: error reading BDC header\n");
                 return false;
             }
             else if (!header.check_magic() || (bdc_header.MAJVERSION != header.get_major_version()) || (bdc_header.MINVERSION != header.get_minor_version()))
@@ -1018,14 +1027,14 @@ namespace mame
             }
             catch (Exception )
             {
-                global.osd_printf_error("render_font::load_cached: allocation error\n");
+                osd_printf_error("render_font::load_cached: allocation error\n");
             }
             for (UInt64 bytes_read = 0; remaining > bytes_read; )
             {
                 UInt32 chunk = (UInt32)Math.Min(UInt32.MaxValue, remaining);
                 if (file.read(new ListBytesPointer(m_rawdata, (int)bytes_read), chunk) != chunk)  // &m_rawdata[bytes_read], chunk) != chunk)
                 {
-                    global.osd_printf_error("render_font::load_cached: error reading BDC data\n");
+                    osd_printf_error("render_font::load_cached: error reading BDC data\n");
                     m_rawdata.clear();
                     return false;
                 }
@@ -1069,7 +1078,7 @@ namespace mame
                 offset += (UInt32)((gl.bmwidth * gl.bmheight + 7) / 8);
                 if (m_rawdata.size() < offset)
                 {
-                    global.osd_printf_verbose("render_font::load_cached: BDC file too small to hold all glyphs\n");
+                    osd_printf_verbose("render_font::load_cached: BDC file too small to hold all glyphs\n");
                     m_rawdata.clear();
                     return false;
                 }
@@ -1094,7 +1103,7 @@ namespace mame
         void render_font_command_glyph()
         {
             // FIXME: this is copy/pasta from the BDC loading, and it shouldn't be injected into every font
-            emu_file file = new emu_file(osdcore_global.OPEN_FLAG_READ);
+            emu_file file = new emu_file(OPEN_FLAG_READ);
             if (file.open_ram(new ListBytes(uicmd14_global.font_uicmd14), (UInt32)uicmd14_global.font_uicmd14.Length) == osd_file.error.NONE)
             {
                 // get the file size, read the header, and check that it looks good
@@ -1102,12 +1111,14 @@ namespace mame
                 bdc_header header = new bdc_header();
                 if (!header.read(file))
                 {
-                    global.osd_printf_warning("render_font::render_font_command_glyph: error reading BDC header\n");
+                    osd_printf_warning("render_font::render_font_command_glyph: error reading BDC header\n");
+                    file.close();
                     return;
                 }
                 else if (!header.check_magic() || (bdc_header.MAJVERSION != header.get_major_version()) || (bdc_header.MINVERSION != header.get_minor_version()))
                 {
                     LOG("render_font::render_font_command_glyph: incompatible BDC file\n");
+                    file.close();
                     return;
                 }
 
@@ -1118,6 +1129,7 @@ namespace mame
                 if ((file.tell() + ((UInt64)numchars * bdc_table_entry.size())) > filesize)
                 {
                     LOG("render_font::render_font_command_glyph: BDC file is too small to hold glyph table\n");
+                    file.close();
                     return;
                 }
 
@@ -1137,12 +1149,15 @@ namespace mame
                     UInt32 chunk = (UInt32)Math.Min(UInt32.MaxValue, remaining);
                     if (file.read(new ListBytesPointer(m_rawdata_cmd, (int)bytes_read), chunk) != chunk)
                     {
-                        global.osd_printf_error("render_font::render_font_command_glyph: error reading BDC data\n");
+                        osd_printf_error("render_font::render_font_command_glyph: error reading BDC data\n");
                         m_rawdata_cmd.clear();
+                        file.close();
                         return;
                     }
                     bytes_read += chunk;
                 }
+
+                file.close();
 
                 // extract the data from the data
                 UInt32 offset = (UInt32)numchars * bdc_table_entry.size();
@@ -1181,7 +1196,7 @@ namespace mame
                     offset += (UInt32)((gl.bmwidth * gl.bmheight + 7) / 8);
                     if (m_rawdata_cmd.size() < offset)
                     {
-                        global.osd_printf_verbose("render_font::render_font_command_glyph: BDC file too small to hold all glyphs\n");
+                        osd_printf_verbose("render_font::render_font_command_glyph: BDC file too small to hold all glyphs\n");
                         m_rawdata_cmd.clear();
                         return;
                     }
@@ -1215,15 +1230,18 @@ namespace mame
 
         public static void convert_command_glyph(ref string str)
         {
+            // TODO check accuracy
+            //throw new emu_unimplemented();
+
             //str.c_str(); // force NUL-termination - we depend on it later
             UInt32 len = (UInt32)str.length();
-            std_vector<char> buf = new std_vector<char>(2 * ((int)len + 1));
+            std.vector<char> buf = new std.vector<char>(2 * ((int)len + 1));
             buf.resize(2 * ((int)len + 1));
             UInt32 j = 0;
             for (UInt32 i = 0; len > i; )
             {
                 // decode UTF-8
-                char32_t uchar;
+                char uchar;  //char32_t uchar;
                 int codelen = unicode_global.uchar_from_utf8(out uchar, str.Substring((int)i), (int)(len - i));
                 if (0 >= codelen)
                     break;
@@ -1240,12 +1258,12 @@ namespace mame
                     for (; fixtext[fixtextOffset].glyph_code != 0; ++fixtextOffset)
                     {
                         if (fixtext[fixtextOffset].glyph_str_len == 0)
-                            fixtext[fixtextOffset].glyph_str_len = (UInt32)global.strlen(fixtext[fixtextOffset].glyph_str);
+                            fixtext[fixtextOffset].glyph_str_len = (UInt32)strlen(fixtext[fixtextOffset].glyph_str);
 
-                        if (global.strncmp(fixtext[fixtextOffset].glyph_str, str.Substring((int)i), (int)fixtext[fixtextOffset].glyph_str_len) == 0)
+                        if (strncmp(fixtext[fixtextOffset].glyph_str, str.Substring((int)i), (int)fixtext[fixtextOffset].glyph_str_len) == 0)
                         {
-                            uchar = (char32_t)fixtext[fixtextOffset].glyph_code + cmddata_global.COMMAND_UNICODE;
-                            i += (UInt32)global.strlen(fixtext[fixtextOffset].glyph_str);
+                            uchar = (char)(fixtext[fixtextOffset].glyph_code + cmddata_global.COMMAND_UNICODE);  //uchar = fixtext->glyph_code + COMMAND_UNICODE;
+                            i += (UInt32)strlen(fixtext[fixtextOffset].glyph_str);
                             break;
                         }
                     }
@@ -1274,7 +1292,7 @@ namespace mame
 
                         if (fixcmd[fixcmdOffset].glyph_code != 0)
                         {
-                            uchar = cmddata_global.COMMAND_UNICODE + fixcmd[fixcmdOffset].glyph_code;
+                            uchar = (char)(cmddata_global.COMMAND_UNICODE + fixcmd[fixcmdOffset].glyph_code);
                             ++i;
                         }
                     }
@@ -1298,7 +1316,7 @@ namespace mame
     }
 
 
-    class bdc_header
+    class bdc_header : global_object
     {
         public const UInt32 MAJVERSION = 1;
         public const UInt32 MINVERSION = 0;
@@ -1344,7 +1362,7 @@ namespace mame
                 MAGIC[5] = Convert.ToByte('t');
             }
 
-            return global.memcmp(new ListBytesPointer(MAGIC), new ListBytesPointer(m_data, (int)OFFS_MAGIC), OFFS_MAJVERSION - OFFS_MAGIC) == 0;
+            return memcmp(new ListBytesPointer(MAGIC), new ListBytesPointer(m_data, (int)OFFS_MAGIC), OFFS_MAJVERSION - OFFS_MAGIC) == 0;
         }
         public UInt32 get_major_version()
         {

@@ -18,57 +18,6 @@ namespace mame
     public delegate UInt32 handler_callback(render_container container, mame_ui_manager mui);
 
 
-    enum SLIDER_ID
-    {
-        SLIDER_ID_VOLUME                = 0,
-        SLIDER_ID_MIXERVOL,
-        SLIDER_ID_MIXERVOL_LAST         = SLIDER_ID_MIXERVOL + ui_global.SLIDER_DEVICE_SPACING,
-        SLIDER_ID_ADJUSTER,
-        SLIDER_ID_ADJUSTER_LAST         = SLIDER_ID_ADJUSTER + ui_global.SLIDER_DEVICE_SPACING,
-        SLIDER_ID_OVERCLOCK,
-        SLIDER_ID_OVERCLOCK_LAST        = SLIDER_ID_OVERCLOCK + ui_global.SLIDER_DEVICE_SPACING,
-        SLIDER_ID_REFRESH,
-        SLIDER_ID_REFRESH_LAST          = SLIDER_ID_REFRESH + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_BRIGHTNESS,
-        SLIDER_ID_BRIGHTNESS_LAST       = SLIDER_ID_BRIGHTNESS + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_CONTRAST,
-        SLIDER_ID_CONTRAST_LAST         = SLIDER_ID_CONTRAST + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_GAMMA,
-        SLIDER_ID_GAMMA_LAST            = SLIDER_ID_GAMMA + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_XSCALE,
-        SLIDER_ID_XSCALE_LAST           = SLIDER_ID_XSCALE + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_YSCALE,
-        SLIDER_ID_YSCALE_LAST           = SLIDER_ID_YSCALE + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_XOFFSET,
-        SLIDER_ID_XOFFSET_LAST          = SLIDER_ID_XOFFSET + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_YOFFSET,
-        SLIDER_ID_YOFFSET_LAST          = SLIDER_ID_YOFFSET + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_OVERLAY_XSCALE,
-        SLIDER_ID_OVERLAY_XSCALE_LAST   = SLIDER_ID_OVERLAY_XSCALE + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_OVERLAY_YSCALE,
-        SLIDER_ID_OVERLAY_YSCALE_LAST   = SLIDER_ID_OVERLAY_YSCALE + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_OVERLAY_XOFFSET,
-        SLIDER_ID_OVERLAY_XOFFSET_LAST  = SLIDER_ID_OVERLAY_XOFFSET + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_OVERLAY_YOFFSET,
-        SLIDER_ID_OVERLAY_YOFFSET_LAST  = SLIDER_ID_OVERLAY_YOFFSET + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_FLICKER,
-        SLIDER_ID_FLICKER_LAST          = SLIDER_ID_FLICKER + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_BEAM_WIDTH_MIN,
-        SLIDER_ID_BEAM_WIDTH_MIN_LAST   = SLIDER_ID_BEAM_WIDTH_MIN + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_BEAM_WIDTH_MAX,
-        SLIDER_ID_BEAM_WIDTH_MAX_LAST   = SLIDER_ID_BEAM_WIDTH_MAX + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_BEAM_INTENSITY,
-        SLIDER_ID_BEAM_INTENSITY_LAST   = SLIDER_ID_BEAM_INTENSITY + ui_global.SLIDER_SCREEN_SPACING,
-        SLIDER_ID_CROSSHAIR_SCALE,
-        SLIDER_ID_CROSSHAIR_SCALE_LAST  = SLIDER_ID_CROSSHAIR_SCALE + ui_global.SLIDER_INPUT_SPACING,
-        SLIDER_ID_CROSSHAIR_OFFSET,
-        SLIDER_ID_CROSSHAIR_OFFSET_LAST = SLIDER_ID_CROSSHAIR_OFFSET + ui_global.SLIDER_INPUT_SPACING,
-
-        SLIDER_ID_CORE_LAST         = SLIDER_ID_CROSSHAIR_OFFSET,
-        SLIDER_ID_CORE_COUNT
-    }
-
-
     enum ui_callback_type
     {
         GENERAL,
@@ -78,16 +27,67 @@ namespace mame
     }
 
 
-    enum LOADSAVE
-    {
-        LOADSAVE_NONE,
-        LOADSAVE_LOAD,
-        LOADSAVE_SAVE
-    }
-
-
     public static class ui_global
     {
+        //enum
+        //{
+        //SLIDER_ID_VOLUME                = 0,
+        //SLIDER_ID_MIXERVOL,
+        //SLIDER_ID_MIXERVOL_LAST         = SLIDER_ID_MIXERVOL + ui_global.SLIDER_DEVICE_SPACING,
+        //SLIDER_ID_ADJUSTER,
+        //SLIDER_ID_ADJUSTER_LAST         = SLIDER_ID_ADJUSTER + ui_global.SLIDER_DEVICE_SPACING,
+        //SLIDER_ID_OVERCLOCK,
+        //SLIDER_ID_OVERCLOCK_LAST        = SLIDER_ID_OVERCLOCK + ui_global.SLIDER_DEVICE_SPACING,
+        //SLIDER_ID_REFRESH,
+        //SLIDER_ID_REFRESH_LAST          = SLIDER_ID_REFRESH + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_BRIGHTNESS,
+        //SLIDER_ID_BRIGHTNESS_LAST       = SLIDER_ID_BRIGHTNESS + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_CONTRAST,
+        //SLIDER_ID_CONTRAST_LAST         = SLIDER_ID_CONTRAST + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_GAMMA,
+        //SLIDER_ID_GAMMA_LAST            = SLIDER_ID_GAMMA + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_XSCALE,
+        //SLIDER_ID_XSCALE_LAST           = SLIDER_ID_XSCALE + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_YSCALE,
+        //SLIDER_ID_YSCALE_LAST           = SLIDER_ID_YSCALE + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_XOFFSET,
+        //SLIDER_ID_XOFFSET_LAST          = SLIDER_ID_XOFFSET + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_YOFFSET,
+        //SLIDER_ID_YOFFSET_LAST          = SLIDER_ID_YOFFSET + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_OVERLAY_XSCALE,
+        //SLIDER_ID_OVERLAY_XSCALE_LAST   = SLIDER_ID_OVERLAY_XSCALE + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_OVERLAY_YSCALE,
+        //SLIDER_ID_OVERLAY_YSCALE_LAST   = SLIDER_ID_OVERLAY_YSCALE + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_OVERLAY_XOFFSET,
+        //SLIDER_ID_OVERLAY_XOFFSET_LAST  = SLIDER_ID_OVERLAY_XOFFSET + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_OVERLAY_YOFFSET,
+        //SLIDER_ID_OVERLAY_YOFFSET_LAST  = SLIDER_ID_OVERLAY_YOFFSET + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_FLICKER,
+        //SLIDER_ID_FLICKER_LAST          = SLIDER_ID_FLICKER + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_BEAM_WIDTH_MIN,
+        //SLIDER_ID_BEAM_WIDTH_MIN_LAST   = SLIDER_ID_BEAM_WIDTH_MIN + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_BEAM_WIDTH_MAX,
+        //SLIDER_ID_BEAM_WIDTH_MAX_LAST   = SLIDER_ID_BEAM_WIDTH_MAX + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_BEAM_INTENSITY,
+        //SLIDER_ID_BEAM_INTENSITY_LAST   = SLIDER_ID_BEAM_INTENSITY + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_CROSSHAIR_SCALE,
+        //SLIDER_ID_CROSSHAIR_SCALE_LAST  = SLIDER_ID_CROSSHAIR_SCALE + ui_global.SLIDER_INPUT_SPACING,
+        //SLIDER_ID_CROSSHAIR_OFFSET,
+        //SLIDER_ID_CROSSHAIR_OFFSET_LAST = SLIDER_ID_CROSSHAIR_OFFSET + ui_global.SLIDER_INPUT_SPACING,
+
+        //SLIDER_ID_CORE_LAST         = SLIDER_ID_CROSSHAIR_OFFSET,
+        //SLIDER_ID_CORE_COUNT
+        //}
+
+
+        //enum
+        //{
+        //LOADSAVE_NONE,
+        //LOADSAVE_LOAD,
+        //LOADSAVE_SAVE
+        //}
+
+
         /* preferred font height; use ui_get_line_height() to get actual height */
         public static int UI_TARGET_FONT_ROWS      { get { return get_font_rows(); } }
         public static float UI_TARGET_FONT_HEIGHT  { get { return 1.0f / (float)UI_TARGET_FONT_ROWS; } }
@@ -303,7 +303,7 @@ namespace mame
         static string messagebox_poptext;
         static rgb_t messagebox_backcolor;
 
-        static std_vector<ui.menu_item> slider_list;
+        static std.vector<ui.menu_item> slider_list;
         static slider_state slider_current;  //static slider_state     *slider_current;
 
 
@@ -348,7 +348,7 @@ namespace mame
             //using namespace std::placeholders;
             set_handler(ui_callback_type.GENERAL, handler_messagebox);
             m_non_char_keys_down = new byte [(ui_global.non_char_keys.Length + 7) / 8]; // auto_alloc_array(machine, UINT8, (ARRAY_LENGTH(non_char_keys) + 7) / 8);
-            m_mouse_show = ((UInt64)machine().system().flags & gamedrv_global.MACHINE_CLICKABLE_ARTWORK) == gamedrv_global.MACHINE_CLICKABLE_ARTWORK ? true : false;
+            m_mouse_show = ((UInt64)machine().system().flags & MACHINE_CLICKABLE_ARTWORK) == MACHINE_CLICKABLE_ARTWORK ? true : false;
 
             // request a callback upon exiting
             machine().add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit);
@@ -368,7 +368,7 @@ namespace mame
         public  running_machine machine() { return m_machine; }
         bool single_step() { return m_single_step; }
         public ui_options options() { return m_ui_options; }
-        public ui.machine_info machine_info() { global.assert(m_machine_info != null); return m_machine_info; }
+        public ui.machine_info machine_info() { assert(m_machine_info != null); return m_machine_info; }
 
 
         // setters
@@ -388,7 +388,7 @@ namespace mame
             slider_list = slider_init(machine);
             if (slider_list.Count > 0)
             {
-                slider_current = (slider_state)slider_list[0].refobj;
+                slider_current = (slider_state)slider_list[0].ref_;
             }
             else
             {
@@ -403,7 +403,7 @@ namespace mame
                 {
                     foreach (ioport_field field in port.Value.fields())
                     {
-                        if (field.type() == ioport_type.IPT_DIPSWITCH && global.strcmp(field.name(), service_mode_dipname) == 0)
+                        if (field.type() == ioport_type.IPT_DIPSWITCH && strcmp(field.name(), service_mode_dipname) == 0)
                             field.set_defseq(machine.ioport().type_seq(ioport_type.IPT_SERVICE));
                     }
                 }
@@ -415,7 +415,7 @@ namespace mame
         //  mame_ui_manager::slider_init - initialize the list of slider
         //  controls
         //----------------------------------------------------------
-        std_vector<ui.menu_item> slider_init(running_machine machine)
+        std.vector<ui.menu_item> slider_init(running_machine machine)
         {
             //throw new emu_unimplemented();
 #if false
@@ -556,7 +556,7 @@ namespace mame
             }
 #endif
 
-            std_vector<ui.menu_item> items = new std_vector<ui.menu_item>();
+            std.vector<ui.menu_item> items = new std.vector<ui.menu_item>();
 
             //throw new emu_unimplemented();
 #if false
@@ -600,7 +600,7 @@ namespace mame
 
             // disable everything if we are using -str for 300 or fewer seconds, or if we're the empty driver,
             // or if we are debugging
-            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) != 0)
+            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0)
                 show_gameinfo = show_warnings = show_mandatory_fileman = false;
 
 #if EMSCRIPTEN
@@ -619,7 +619,7 @@ namespace mame
             for (int state = 0; state < maxstate && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(machine()); state++)
             {
                 // default to standard colors
-                messagebox_backcolor = ui_global.UI_BACKGROUND_COLOR;
+                messagebox_backcolor = UI_BACKGROUND_COLOR;
                 messagebox_text = "";
 
                 // pick the next state
@@ -692,7 +692,7 @@ namespace mame
 
             // copy in the new text
             messagebox_text = text;
-            messagebox_backcolor = ui_global.UI_BACKGROUND_COLOR;
+            messagebox_backcolor = UI_BACKGROUND_COLOR;
 
             // don't update more than 4 times/second
             if (force || (curtime - lastupdatetime_set_startup_text) > osdcore_global.m_osdcore.osd_ticks_per_second() / 4)
@@ -720,7 +720,7 @@ namespace mame
                 if (alpha > 255)
                     alpha = 255;
                 if (alpha >= 0)
-                    container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t(alpha,0x00,0x00,0x00), global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t(alpha,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
             }
 
             // render any cheat stuff at the bottom
@@ -751,13 +751,13 @@ namespace mame
                     if (mouse_target.map_point_container(mouse_target_x, mouse_target_y, container, out mouse_x, out mouse_y))
                     {
                         float cursor_size = 0.6f * get_line_height();
-                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, ui_global.UI_TEXT_COLOR, m_mouse_arrow_texture, render_global.PRIMFLAG_ANTIALIAS(1) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, UI_TEXT_COLOR, m_mouse_arrow_texture, render_global.PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                     }
                 }
             }
 
             // cancel takes us back to the ingame handler
-            if (m_handler_param == ui_global.UI_HANDLER_CANCEL)
+            if (m_handler_param == UI_HANDLER_CANCEL)
             {
                 //using namespace std::placeholders;
                 set_handler(ui_callback_type.GENERAL, handler_ingame);
@@ -792,7 +792,7 @@ namespace mame
             one_to_one_line_height = (float)raw_font_pixel_height / (float)target_pixel_height;
 
             // determine the scale factor
-            scale_factor = ui_global.UI_TARGET_FONT_HEIGHT / one_to_one_line_height;
+            scale_factor = UI_TARGET_FONT_HEIGHT / one_to_one_line_height;
 
             // if our font is small-ish, do integral scaling
             if (raw_font_pixel_height < 24)
@@ -800,7 +800,7 @@ namespace mame
                 // do we want to scale smaller? only do so if we exceed the threshold
                 if (scale_factor <= 1.0f)
                 {
-                    if (one_to_one_line_height < ui_global.UI_MAX_FONT_HEIGHT || raw_font_pixel_height < 12)
+                    if (one_to_one_line_height < UI_MAX_FONT_HEIGHT || raw_font_pixel_height < 12)
                         scale_factor = 1.0f;
                 }
 
@@ -847,15 +847,15 @@ namespace mame
         //  an outlined box with the given background
         //  color
         //-------------------------------------------------
-        public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor) { draw_outlined_box(container, x0, y0, x1, y1, ui_global.UI_BORDER_COLOR, backcolor); }
+        public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor) { draw_outlined_box(container, x0, y0, x1, y1, UI_BORDER_COLOR, backcolor); }
 
         public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t fgcolor, rgb_t bgcolor)
         {
-            container.add_rect(x0, y0, x1, y1, bgcolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-            container.add_line(x0, y0, x1, y0, ui_global.UI_LINE_WIDTH, fgcolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, ui_global.UI_LINE_WIDTH, fgcolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, ui_global.UI_LINE_WIDTH, fgcolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, ui_global.UI_LINE_WIDTH, fgcolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+            container.add_rect(x0, y0, x1, y1, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
         }
 
         //-------------------------------------------------
@@ -865,7 +865,7 @@ namespace mame
         {
             float unused1;
             float unused2;
-            draw_text_full(container, buf, x, y, 1.0f - x, ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD, draw_mode.NORMAL, ui_global.UI_TEXT_COLOR, ui_global.UI_TEXT_BG_COLOR, out unused1, out unused2);
+            draw_text_full(container, buf, x, y, 1.0f - x, ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD, draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, out unused1, out unused2);
         }
 
         //-------------------------------------------------
@@ -904,7 +904,7 @@ namespace mame
         public void draw_text_box(render_container container, string text, ui.text_layout.text_justify justify, float xpos, float ypos, rgb_t backcolor)
         {
             // cap the maximum width
-            float maximum_width = 1.0f - ui_global.UI_BOX_LR_BORDER * 2;
+            float maximum_width = 1.0f - UI_BOX_LR_BORDER * 2;
 
             // create a layout
             ui.text_layout layout = create_layout(container, maximum_width, justify);
@@ -927,15 +927,15 @@ namespace mame
             var actual_left = layout.actual_left();
             var actual_width = layout.actual_width();
             var actual_height = layout.actual_height();
-            var x = Math.Min(Math.Max(xpos - actual_width / 2, ui_global.UI_BOX_LR_BORDER), 1.0f - actual_width - ui_global.UI_BOX_LR_BORDER);
-            var y = Math.Min(Math.Max(ypos - actual_height / 2, ui_global.UI_BOX_TB_BORDER), 1.0f - actual_height - ui_global.UI_BOX_TB_BORDER);
+            var x = Math.Min(Math.Max(xpos - actual_width / 2, UI_BOX_LR_BORDER), 1.0f - actual_width - UI_BOX_LR_BORDER);
+            var y = Math.Min(Math.Max(ypos - actual_height / 2, UI_BOX_TB_BORDER), 1.0f - actual_height - UI_BOX_TB_BORDER);
 
             // add a box around that
             draw_outlined_box(container,
-                    x - ui_global.UI_BOX_LR_BORDER,
-                    y - ui_global.UI_BOX_TB_BORDER,
-                    x + actual_width + ui_global.UI_BOX_LR_BORDER,
-                    y + actual_height + ui_global.UI_BOX_TB_BORDER, backcolor);
+                    x - UI_BOX_LR_BORDER,
+                    y - UI_BOX_TB_BORDER,
+                    x + actual_width + UI_BOX_LR_BORDER,
+                    y + actual_height + UI_BOX_TB_BORDER, backcolor);
 
             // emit the text
             layout.emit(container, x - actual_left, y);
@@ -956,7 +956,7 @@ namespace mame
         public void save_ui_options()
         {
             // attempt to open the output file
-            emu_file file = new emu_file(machine().options().ini_path(), osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
+            emu_file file = new emu_file(machine().options().ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
             if (file.open("ui.ini") == osd_file.error.NONE)
             {
                 // generate the updated INI
@@ -983,7 +983,7 @@ namespace mame
         {
             // extract the text
             messagebox_poptext = text;
-            messagebox_backcolor = ui_global.UI_BACKGROUND_COLOR;
+            messagebox_backcolor = UI_BACKGROUND_COLOR;
 
             // set a timer
             m_popup_text_end = osdcore_global.m_osdcore.osd_ticks() + osdcore_global.m_osdcore.osd_ticks_per_second() * (UInt64)seconds;
@@ -1106,8 +1106,8 @@ namespace mame
                 if (!layout.empty())
                 {
                     float x = 0.2f;
-                    float y = 0.5f * get_line_height() + 2.0f * ui_global.UI_BOX_TB_BORDER;
-                    draw_text_box(machine().render().ui_container(), layout, x, y, ui_global.UI_BACKGROUND_COLOR);
+                    float y = 0.5f * get_line_height() + 2.0f * UI_BOX_TB_BORDER;
+                    draw_text_box(machine().render().ui_container(), layout, x, y, UI_BACKGROUND_COLOR);
                 }
             }
         }
@@ -1213,7 +1213,7 @@ namespace mame
         //-------------------------------------------------
         //  ui_get_slider_list - get the list of sliders
         //-------------------------------------------------
-        public std_vector<ui.menu_item> get_slider_list()
+        public std.vector<ui.menu_item> get_slider_list()
         {
             return slider_list;
         }
@@ -1248,7 +1248,7 @@ namespace mame
         //-------------------------------------------------
         //  wrap_text
         //-------------------------------------------------
-        public int wrap_text(render_container container, string origs, float x, float y, float origwrapwidth, out std_vector<int> xstart, out std_vector<int> xend, float text_size = 1.0f)
+        public int wrap_text(render_container container, string origs, float x, float y, float origwrapwidth, out std.vector<int> xstart, out std.vector<int> xend, float text_size = 1.0f)
         {
             // create the layout
             var layout = create_layout(container, origwrapwidth, ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD);
@@ -1274,10 +1274,10 @@ namespace mame
         public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture, UInt32 flags)  // render_texture texture = null, UInt32 flags = render_global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA))
         {
             container.add_quad(x0, y0, x1, y1, backcolor, texture, flags);
-            container.add_line(x0, y0, x1, y0, ui_global.UI_LINE_WIDTH, linecolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, ui_global.UI_LINE_WIDTH, linecolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, ui_global.UI_LINE_WIDTH, linecolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, ui_global.UI_LINE_WIDTH, linecolor, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
         }
 
 
@@ -1285,7 +1285,7 @@ namespace mame
         {
             // extract the text
             messagebox_poptext = message;
-            messagebox_backcolor = ui_global.UI_BACKGROUND_COLOR;
+            messagebox_backcolor = UI_BACKGROUND_COLOR;
 
             // set a timer
             m_popup_text_end = osdcore_global.m_osdcore.osd_ticks() + osdcore_global.m_osdcore.osd_ticks_per_second() * (osd_ticks_t)seconds;
@@ -1326,12 +1326,12 @@ namespace mame
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL))
             {
                 machine().schedule_exit();
-                state = ui_global.UI_HANDLER_CANCEL;
+                state = UI_HANDLER_CANCEL;
             }
 
             // if any key is pressed, just exit
             else if (machine().input().poll_switches() != input_code.INPUT_CODE_INVALID)
-                state = ui_global.UI_HANDLER_CANCEL;
+                state = UI_HANDLER_CANCEL;
 
             return state;
         }
@@ -1437,7 +1437,7 @@ namespace mame
             }
 
             // if the on-screen display isn't up and the user has toggled it, turn it on
-            if ((machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
+            if ((machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
             {
                 //using namespace std::placeholders;
                 set_handler(ui_callback_type.MENU, ui.menu_sliders.ui_handler);  //, _1, std::ref_(*this)));
@@ -1600,7 +1600,7 @@ namespace mame
                                                 "Press ''{0}'' to quit,\n" + 
                                                 "Press ''{1}'' to return to emulation.", ui_select_text, ui_cancel_text);
 
-            draw_text_box(container, quit_message, ui.text_layout.text_justify.CENTER, 0.5f, 0.5f, ui_global.UI_RED_COLOR);
+            draw_text_box(container, quit_message, ui.text_layout.text_justify.CENTER, 0.5f, 0.5f, UI_RED_COLOR);
             machine().pause();
 
             // if the user press ENTER, quit the game
@@ -1611,7 +1611,7 @@ namespace mame
             else if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL))
             {
                 machine().resume();
-                state = ui_global.UI_HANDLER_CANCEL;
+                state = UI_HANDLER_CANCEL;
             }
 
             return state;
@@ -1711,17 +1711,19 @@ namespace mame
         {
             // parse the file
             // attempt to open the output file
-            emu_file file = new emu_file(machine.options().ini_path(), osdcore_global.OPEN_FLAG_READ);
+            emu_file file = new emu_file(machine.options().ini_path(), OPEN_FLAG_READ);
             if (file.open("ui.ini") == osd_file.error.NONE)
             {
                 try
                 {
-                    options().parse_ini_file(file.core_file_get(), (int)OPTION_PRIORITY.OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY.OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY.OPTION_PRIORITY_DRIVER_INI, true);
+                    options().parse_ini_file(file.core_file_get(), mame_options.OPTION_PRIORITY_MAME_INI, mame_options.OPTION_PRIORITY_MAME_INI < mame_options.OPTION_PRIORITY_DRIVER_INI, true);
                 }
                 catch (options_exception )
                 {
-                    global.osd_printf_error("**Error loading ui.ini**\n");
+                    osd_printf_error("**Error loading ui.ini**\n");
                 }
+
+                file.close();
             }
         }
 

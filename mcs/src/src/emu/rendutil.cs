@@ -238,7 +238,7 @@ namespace mame
             if (dirname == null)
                 fname = filename;
             else
-                fname = dirname + osdcore_global.PATH_SEPARATOR + filename;
+                fname = dirname + global_object.PATH_SEPARATOR + filename;
 
             if (file.open(fname) != osd_file.error.NONE)
                 return;
@@ -262,7 +262,7 @@ namespace mame
             // open the file
             string fname;
             if (dirname != null)
-                fname = dirname + osdcore_global.PATH_SEPARATOR + filename;
+                fname = dirname + global_object.PATH_SEPARATOR + filename;
             else
                 fname = filename;
             osd_file.error filerr = file.open(fname);
@@ -353,9 +353,9 @@ namespace mame
         -------------------------------------------------*/
         public static int orientation_swap_flips(int orientation)
         {
-            return (int)((orientation & emucore_global.ORIENTATION_SWAP_XY) |
-                        ((orientation & emucore_global.ORIENTATION_FLIP_X) != 0 ? emucore_global.ORIENTATION_FLIP_Y : 0) |
-                        ((orientation & emucore_global.ORIENTATION_FLIP_Y) != 0 ? emucore_global.ORIENTATION_FLIP_X : 0));
+            return (int)((orientation & global_object.ORIENTATION_SWAP_XY) |
+                        ((orientation & global_object.ORIENTATION_FLIP_X) != 0 ? global_object.ORIENTATION_FLIP_Y : 0) |
+                        ((orientation & global_object.ORIENTATION_FLIP_Y) != 0 ? global_object.ORIENTATION_FLIP_X : 0));
         }
 
 
@@ -366,7 +366,7 @@ namespace mame
         public static int orientation_reverse(int orientation)
         {
             /* if not swapping X/Y, then just apply the same transform to reverse */
-            if ((orientation & emucore_global.ORIENTATION_SWAP_XY) == 0)
+            if ((orientation & global_object.ORIENTATION_SWAP_XY) == 0)
                 return orientation;
 
             /* if swapping X/Y, then swap X/Y flip bits to get the reverse */
@@ -382,7 +382,7 @@ namespace mame
         public static int orientation_add(int orientation1, int orientation2)
         {
             /* if the 2nd transform doesn't swap, just XOR together */
-            if ((orientation2 & emucore_global.ORIENTATION_SWAP_XY) == 0)
+            if ((orientation2 & global_object.ORIENTATION_SWAP_XY) == 0)
                 return orientation1 ^ orientation2;
 
             /* otherwise, we need to effectively swap the flip bits on the first transform */

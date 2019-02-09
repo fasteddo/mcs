@@ -14,7 +14,7 @@ namespace mame.ui
             input groups menu
         -------------------------------------------------*/
         public menu_input_groups(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_input_groups() { }
+        //~menu_input_groups() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
@@ -85,7 +85,7 @@ namespace mame.ui
             throw new emu_unimplemented();
         }
 
-        ~menu_input() { }
+        //~menu_input() { }
 
 
         protected override void handle()
@@ -99,8 +99,6 @@ namespace mame.ui
 
         //virtual void handle() override;
         protected abstract void update_input(input_item_data seqchangeditem);
-
-        //static int compare_items(const void *i1, const void *i2);
     }
 
 
@@ -119,7 +117,7 @@ namespace mame.ui
             group = _group;
         }
 
-        ~menu_input_general() { }
+        //~menu_input_general() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
@@ -142,7 +140,7 @@ namespace mame.ui
             input menu
         -------------------------------------------------*/
         public menu_input_specific(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_input_specific() { }
+        //~menu_input_specific() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
@@ -189,7 +187,7 @@ namespace mame.ui
             type = (int)_type;
         }
 
-        ~menu_settings() { }
+        //~menu_settings() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
@@ -216,7 +214,7 @@ namespace mame.ui
             switches menu
         -------------------------------------------------*/
         public menu_settings_dip_switches(mame_ui_manager mui, render_container container) : base(mui, container, (UInt32)ioport_type.IPT_DIPSWITCH) { }
-        ~menu_settings_dip_switches() { }
+        //~menu_settings_dip_switches() { }
 
 
         //virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
@@ -232,7 +230,7 @@ namespace mame.ui
             driver config menu
         -------------------------------------------------*/
         public menu_settings_driver_config(mame_ui_manager mui, render_container container) : base(mui, container, (UInt32)ioport_type.IPT_CONFIG) { }
-        ~menu_settings_driver_config() { }
+        //~menu_settings_driver_config() { }
     }
 
 
@@ -269,7 +267,7 @@ namespace mame.ui
         -------------------------------------------------*/
 
         public menu_analog(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_analog() { }
+        //~menu_analog() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)

@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using uint8_t = System.Byte;
+
 
 namespace mame
 {
@@ -1497,7 +1499,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_C) == 0) {
+            if((P & F_C) == 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
                 read_pc_noinc();
@@ -1532,7 +1534,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_C) == 0) {
+            if((P & F_C) == 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
         //case 2:
@@ -1601,7 +1603,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_C) != 0) {
+            if((P & F_C) != 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
                 read_pc_noinc();
@@ -1636,7 +1638,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_C) != 0) {
+            if((P & F_C) != 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
         //case 2:
@@ -1705,7 +1707,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_Z) != 0) {
+            if((P & F_Z) != 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
                 read_pc_noinc();
@@ -1740,7 +1742,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_Z) != 0) {
+            if((P & F_Z) != 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
         //case 2:
@@ -1909,7 +1911,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_N) != 0) {
+            if((P & F_N) != 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
                 read_pc_noinc();
@@ -1944,7 +1946,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_N) != 0) {
+            if((P & F_N) != 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
         //case 2:
@@ -2013,7 +2015,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_Z) == 0) {
+            if((P & F_Z) == 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
                 read_pc_noinc();
@@ -2048,7 +2050,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_Z) == 0) {
+            if((P & F_Z) == 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
         //case 2:
@@ -2117,7 +2119,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_N) == 0) {
+            if((P & F_N) == 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
                 read_pc_noinc();
@@ -2152,7 +2154,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_N) == 0) {
+            if((P & F_N) == 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
         //case 2:
@@ -2246,7 +2248,7 @@ namespace mame
             dec_SP();
 
             if(icount == 0) { inst_substate = 5; return; }
-            write(SP, irq_taken ? (byte)(P & ~(byte)F.F_B) : P);
+            write(SP, irq_taken ? (byte)(P & ~F_B) : P);
             icount--;
 
             dec_SP();
@@ -2263,7 +2265,7 @@ namespace mame
 
                 nmi_state = false;
 
-                m_diexec.standard_irq_callback((int)LINE.NMI_LINE);
+                m_diexec.standard_irq_callback(NMI_LINE);
 
             } else {
 
@@ -2277,13 +2279,13 @@ namespace mame
 
                 if(irq_taken)
 
-                    m_diexec.standard_irq_callback((int)LINE.IRQ_LINE);
+                    m_diexec.standard_irq_callback(IRQ_LINE);
 
             }
 
             irq_taken = false;
 
-            P |= (byte)F.F_I; // Do *not* move after the prefetch
+            P |= F_I; // Do *not* move after the prefetch
 
             if(icount == 0) { inst_substate = 10; return; }
             prefetch();
@@ -2360,7 +2362,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            write(SP, irq_taken ? (byte)(P & ~(byte)F.F_B) : P);
+            write(SP, irq_taken ? (byte)(P & ~F_B) : P);
             icount--;
 
             dec_SP();
@@ -2379,7 +2381,7 @@ namespace mame
 
                 nmi_state = false;
 
-                m_diexec.standard_irq_callback((int)LINE.NMI_LINE);
+                m_diexec.standard_irq_callback(NMI_LINE);
 
             } else {
 
@@ -2395,13 +2397,13 @@ namespace mame
 
                 if(irq_taken)
 
-                    m_diexec.standard_irq_callback((int)LINE.IRQ_LINE);
+                    m_diexec.standard_irq_callback(IRQ_LINE);
 
             }
 
             irq_taken = false;
 
-            P |= (byte)F.F_I; // Do *not* move after the prefetch
+            P |= F_I; // Do *not* move after the prefetch
 
             if(icount == 0) { inst_substate = 10; return; }
             goto case 10;
@@ -2416,7 +2418,7 @@ namespace mame
 
                 nmi_state = false;
 
-                m_diexec.standard_irq_callback((int)LINE.NMI_LINE);
+                m_diexec.standard_irq_callback(NMI_LINE);
 
 #if false
             } else {
@@ -2440,7 +2442,7 @@ namespace mame
 
             irq_taken = false;
 
-            P |= (byte)F.F_I; // Do *not* move after the prefetch
+            P |= F_I; // Do *not* move after the prefetch
 
             if(icount == 0) { inst_substate = 10; return; }
             goto case 10;
@@ -2450,7 +2452,7 @@ namespace mame
 
                 nmi_state = false;
 
-                m_diexec.standard_irq_callback((int)LINE.NMI_LINE);
+                m_diexec.standard_irq_callback(NMI_LINE);
 
 #if false
             } else {
@@ -2474,7 +2476,7 @@ namespace mame
 
             irq_taken = false;
 
-            P |= (byte)F.F_I; // Do *not* move after the prefetch
+            P |= F_I; // Do *not* move after the prefetch
 
             if(icount == 0) { inst_substate = 10; return; }
             goto case 10;
@@ -2489,13 +2491,13 @@ namespace mame
 
                 if(irq_taken)
 
-                    m_diexec.standard_irq_callback((int)LINE.IRQ_LINE);
+                    m_diexec.standard_irq_callback(IRQ_LINE);
 
             //}
 
             irq_taken = false;
 
-            P |= (byte)F.F_I; // Do *not* move after the prefetch
+            P |= F_I; // Do *not* move after the prefetch
 
             if(icount == 0) { inst_substate = 10; return; }
             goto case 10;
@@ -2505,13 +2507,13 @@ namespace mame
 
                 if(irq_taken)
 
-                    m_diexec.standard_irq_callback((int)LINE.IRQ_LINE);
+                    m_diexec.standard_irq_callback(IRQ_LINE);
 
             //}
 
             irq_taken = false;
 
-            P |= (byte)F.F_I; // Do *not* move after the prefetch
+            P |= F_I; // Do *not* move after the prefetch
 
             if(icount == 0) { inst_substate = 10; return; }
             goto case 10;
@@ -2533,7 +2535,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_V) == 0) {
+            if((P & F_V) == 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
                 read_pc_noinc();
@@ -2568,7 +2570,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_V) == 0) {
+            if((P & F_V) == 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
         //case 2:
@@ -2637,7 +2639,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_V) != 0) {
+            if((P & F_V) != 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
                 read_pc_noinc();
@@ -2672,7 +2674,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            if((P & (byte)F.F_V) != 0) {
+            if((P & F_V) != 0) {
 
             if(icount == 0) { inst_substate = 2; return; }
         //case 2:
@@ -2741,7 +2743,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P &= unchecked((byte)~F.F_C);
+            P = (uint8_t)(P & ~F_C);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -2760,7 +2762,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P &= unchecked((byte)~F.F_C);
+            P = (uint8_t)(P & ~F_C);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -2780,7 +2782,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P &= unchecked((byte)~F.F_D);
+            P = (uint8_t)(P & ~F_D);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -2799,7 +2801,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P &= unchecked((byte)~F.F_D);
+            P = (uint8_t)(P & ~F_D);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -2823,7 +2825,7 @@ namespace mame
             prefetch();
             icount--;
 
-            P &= unchecked((byte)~F.F_I); // Do *not* move it before the prefetch
+            P = (uint8_t)(P & ~F_I); // Do *not* move it before the prefetch
 
         }
 
@@ -2844,7 +2846,7 @@ namespace mame
             prefetch();
             icount--;
 
-            P &= unchecked((byte)~F.F_I); // Do *not* move it before the prefetch
+            P = (uint8_t)(P & ~F_I); // Do *not* move it before the prefetch
             break;
         }
             inst_substate = 0;
@@ -2858,7 +2860,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P &= unchecked((byte)~F.F_V);
+            P = (uint8_t)(P & ~F_V);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -2877,7 +2879,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P &= unchecked((byte)~F.F_V);
+            P = (uint8_t)(P & ~F_V);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -7628,7 +7630,7 @@ namespace mame
             inc_SP();
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = (UInt16)(read(SP) | (byte)(F.F_B|F.F_E));
+            TMP = (UInt16)(read(SP) | (F_B | F_E));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -7661,7 +7663,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = (UInt16)(read(SP) | (byte)(F.F_B|F.F_E));
+            TMP = (UInt16)(read(SP) | (F_B | F_E));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -8417,7 +8419,7 @@ namespace mame
             inc_SP();
 
             if(icount == 0) { inst_substate = 3; return; }
-            P = (byte)(read(SP) | (byte)(F.F_B|F.F_E));
+            P = (byte)(read(SP) | (F_B | F_E));
             icount--;
 
             inc_SP();
@@ -8460,7 +8462,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            P = (byte)(read(SP) | (byte)(F.F_B|F.F_E));
+            P = (byte)(read(SP) | (F_B | F_E));
             icount--;
 
             inc_SP();
@@ -9135,7 +9137,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P |= (byte)F.F_C;
+            P |= F_C;
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -9154,7 +9156,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P |= (byte)F.F_C;
+            P |= F_C;
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -9174,7 +9176,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P |= (byte)F.F_D;
+            P |= F_D;
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -9193,7 +9195,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            P |= (byte)F.F_D;
+            P |= F_D;
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -9217,7 +9219,7 @@ namespace mame
             prefetch();
             icount--;
 
-            P |= (byte)F.F_I; // Do *not* move it before the prefetch
+            P |= F_I; // Do *not* move it before the prefetch
 
         }
 
@@ -9238,7 +9240,7 @@ namespace mame
             prefetch();
             icount--;
 
-            P |= (byte)F.F_I; // Do *not* move it before the prefetch
+            P |= F_I; // Do *not* move it before the prefetch
             break;
         }
             inst_substate = 0;
@@ -13626,11 +13628,11 @@ namespace mame
 
             if(X < TMP2)
 
-                P &= unchecked((byte)~F.F_C);
+                P = (uint8_t)(P & ~F_C);
 
             else
 
-                P |= (byte)F.F_C;
+                P |= F_C;
 
             X -= TMP2;
 
@@ -13657,11 +13659,11 @@ namespace mame
 
             if(X < TMP2)
 
-                P &= unchecked((byte)~F.F_C);
+                P = (uint8_t)(P & ~F_C);
 
             else
 
-                P |= (byte)F.F_C;
+                P |= F_C;
 
             X -= TMP2;
 
@@ -15486,11 +15488,11 @@ namespace mame
 
             if ((A & 0x80) != 0)
 
-                P |= (byte)F.F_C;
+                P |= F_C;
 
             else
 
-                P &= unchecked((byte)~F.F_C);
+                P = (uint8_t)(P & ~F_C);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -15513,11 +15515,11 @@ namespace mame
 
             if ((A & 0x80) != 0)
 
-                P |= (byte)F.F_C;
+                P |= F_C;
 
             else
 
-                P &= unchecked((byte)~F.F_C);
+                P = (uint8_t)(P & ~F_C);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -16388,7 +16390,7 @@ namespace mame
             case 0xfd: sbc_abx_full(); break;
             case 0xfe: inc_abx_full(); break;
             case 0xff: isb_abx_full(); break;
-            case (int)M6502_STATE.STATE_RESET: reset_full(); break;
+            case STATE_RESET: reset_full(); break;
             }
         }
 
@@ -16653,7 +16655,7 @@ namespace mame
             case 0xfd: sbc_abx_partial(); break;
             case 0xfe: inc_abx_partial(); break;
             case 0xff: isb_abx_partial(); break;
-            case (int)M6502_STATE.STATE_RESET: reset_partial(); break;
+            case STATE_RESET: reset_partial(); break;
             }
         }
     }

@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using netlist_base_t = mame.netlist.netlist_state_t;
+
 
 namespace mame.netlist
 {
@@ -67,7 +69,7 @@ namespace mame.netlist
 
         abstract class netlist_base_factory_truthtable_t : factory.element_t
         {
-            std_vector<string> m_desc;
+            std.vector<string> m_desc;
             logic_family_desc_t m_family;
 
 
@@ -77,10 +79,10 @@ namespace mame.netlist
                 m_family = nl_base_global.family_TTL();
             }
 
-            ~netlist_base_factory_truthtable_t() { }
+            //~netlist_base_factory_truthtable_t() { }
 
 
-            public std_vector<string> desc { get { return m_desc; } set { m_desc = value; } }
+            public std.vector<string> desc { get { return m_desc; } set { m_desc = value; } }
             public logic_family_desc_t family { get { return m_family; } set { m_family = value; } }
         }
 
@@ -107,18 +109,9 @@ namespace mame.netlist
             }
 
 
-            public override device_t Create(netlist_t anetlist, string name)
+            public override device_t Create(netlist_base_t anetlist, string name)
             {
                 throw new emu_unimplemented();
-#if false
-                typedef nld_truthtable_t<m_NI, m_NO> tt_type;
-                truthtable_parser desc_s(m_NO, m_NI, &m_ttbl.m_initialized,
-                        packed_int(m_ttbl.m_outs, sizeof(m_ttbl.m_outs[0]) * 8),
-                        m_ttbl.m_timing, m_ttbl.m_timing_nt);
-
-                desc_s.parse(m_desc);
-                return plib::owned_ptr<device_t>::Create<tt_type>(anetlist, name, m_family, m_ttbl, m_desc);
-#endif
             }
         }
     } //namespace devices

@@ -20,12 +20,7 @@ namespace mame
         {
         }
 
-        //-------------------------------------------------
-        //  ~device_nvram_interface - destructor
-        //-------------------------------------------------
-        ~device_nvram_interface()
-        {
-        }
+        //~device_nvram_interface() { }
 
 
         // public accessors... for now

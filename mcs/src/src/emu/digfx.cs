@@ -18,8 +18,8 @@ namespace mame
         public const int MAX_GFX_PLANES = 8;
         public const int MAX_GFX_SIZE = 32;
 
-        //#define EXTENDED_XOFFS          { 0 }
-        //#define EXTENDED_YOFFS          { 0 }
+        public static readonly u32 [] EXTENDED_XOFFS = new u32[] { 0 };  //#define EXTENDED_XOFFS          { 0 }
+        public static readonly u32 [] EXTENDED_YOFFS = new u32[] { 0 };  //#define EXTENDED_YOFFS          { 0 }
 
         public const UInt32 GFX_RAW                 = 0x12345678;
         //define GFXLAYOUT_RAW( name, width, height, linemod, charmod ) \
@@ -45,23 +45,14 @@ namespace mame
 
         // these macros are useful in gfx_layouts
 
-        public static UInt32[] ArrayCombineUInt32(params object [] objects)
+        public static UInt32 [] ArrayCombineUInt32(params object [] objects)
         {
             List<UInt32> output = new List<UInt32>();
             for (int i = 0; i < objects.Length; i++)
             {
-                if (objects[i] is UInt32)
-                {
-                    output.Add((UInt32)objects[i]);
-                }
-                else if (objects[i] is UInt32[])
-                {
-                    output.AddRange((UInt32[])objects[i]);
-                }
-                else if (objects[i] is int)
-                {
-                    output.Add((UInt32)((int)objects[i]));
-                }
+                if (objects[i] is UInt32)        { output.Add((UInt32)objects[i]); }
+                else if (objects[i] is UInt32[]) { output.AddRange((UInt32 [])objects[i]); }
+                else if (objects[i] is int)      { output.Add((UInt32)((int)objects[i])); }
             }
 
             return output.ToArray();
@@ -70,8 +61,8 @@ namespace mame
         public static UInt32 [] STEP2(int START, int STEP) { return ArrayCombineUInt32(START, START + STEP); }  //#define STEP2(START,STEP)       (START),(START)+(STEP)
         public static UInt32 [] STEP4(int START, int STEP) { return ArrayCombineUInt32(STEP2(START, STEP), STEP2(START + 2 * STEP, STEP)); }  //#define STEP4(START,STEP)       STEP2(START,STEP),STEP2((START)+2*(STEP),STEP)
         public static UInt32 [] STEP8(int START, int STEP) { return ArrayCombineUInt32(STEP4(START, STEP), STEP4(START + 4 * STEP, STEP)); }  //#define STEP8(START,STEP)       STEP4(START,STEP),STEP4((START)+4*(STEP),STEP)
-        //#define STEP16(START,STEP)      STEP8(START,STEP),STEP8((START)+8*(STEP),STEP)
-        //#define STEP32(START,STEP)      STEP16(START,STEP),STEP16((START)+16*(STEP),STEP)
+        public static UInt32 [] STEP16(int START, int STEP) { return ArrayCombineUInt32(STEP8(START, STEP), STEP8(START + 8 * STEP, STEP)); }  //#define STEP16(START,STEP)      STEP8(START,STEP),STEP8((START)+8*(STEP),STEP)
+        public static UInt32 [] STEP32(int START, int STEP) { return ArrayCombineUInt32(STEP16(START, STEP), STEP16(START + 16 * STEP, STEP)); }  //#define STEP32(START,STEP)      STEP16(START,STEP),STEP16((START)+16*(STEP),STEP)
         //#define STEP64(START,STEP)      STEP32(START,STEP),STEP32((START)+32*(STEP),STEP)
         //#define STEP128(START,STEP)     STEP64(START,STEP),STEP64((START)+64*(STEP),STEP)
         //#define STEP256(START,STEP)     STEP128(START,STEP),STEP128((START)+128*(STEP),STEP)
@@ -96,7 +87,7 @@ namespace mame
         const UInt32 GFXENTRY_ROM          = 0x00000000;
         const UInt32 GFXENTRY_RAM          = 0x00010000;
         public static bool GFXENTRY_ISROM(UInt32 x) { return (x & GFXENTRY_RAM) == 0; }
-        public static bool GFXENTRY_ISRAM(UInt32 x) {return (x & GFXENTRY_RAM) != 0; }
+        public static bool GFXENTRY_ISRAM(UInt32 x) { return (x & GFXENTRY_RAM) != 0; }
 
         // GFXENTRY_DEVICE means region tag is relative to this device instead of its owner
         const UInt32 GFXENTRY_DEVICE       = 0x00020000;
@@ -116,29 +107,14 @@ namespace mame
         //#define GFXDECODE_MEMBER( name ) const gfx_decode_entry name[] = {
         // common gfx_decode_entry macros
         //#define GFXDECODE_ENTRYX(region,offset,layout,start,colors,flags) { region, offset, &layout, start, colors, flags },
-        public static gfx_decode_entry GFXDECODE_ENTRY(string region, UInt32 offset, gfx_layout layout, UInt16 start, UInt16 colors) { return new gfx_decode_entry() { memory_region = region, start = offset, gfxlayout = layout, color_codes_start = start, total_color_codes = colors, flags = 0 }; }
+        public static gfx_decode_entry GFXDECODE_ENTRY(string region, u32 offset, gfx_layout layout, u16 start, u16 colors) { return new gfx_decode_entry() { memory_region = region, start = offset, gfxlayout = layout, color_codes_start = start, total_color_codes = colors, flags = 0 }; }
 
         // specialized gfx_decode_entry macros
         //#define GFXDECODE_RAM(region,offset,layout,start,colors) { region, offset, &layout, start, colors, GFXENTRY_RAM },
         //#define GFXDECODE_DEVICE(region,offset,layout,start,colors) { region, offset, &layout, start, colors, GFXENTRY_DEVICE },
         //#define GFXDECODE_DEVICE_RAM(region,offset,layout,start,colors) { region, offset, &layout, start, colors, GFXENTRY_DEVICE | GFXENTRY_RAM },
-        public static gfx_decode_entry GFXDECODE_SCALE(string region, UInt32 offset, gfx_layout layout, UInt16 start, UInt16 colors, UInt32 x, UInt32 y) { return new gfx_decode_entry() { memory_region = region, start = offset, gfxlayout = layout, color_codes_start = start, total_color_codes = colors, flags = GFXENTRY_XSCALE(x) | GFXENTRY_YSCALE(y) }; }
+        public static gfx_decode_entry GFXDECODE_SCALE(string region, u32 offset, gfx_layout layout, u16 start, u16 colors, u32 x, u32 y) { return new gfx_decode_entry() { memory_region = region, start = offset, gfxlayout = layout, color_codes_start = start, total_color_codes = colors, flags = GFXENTRY_XSCALE(x) | GFXENTRY_YSCALE(y) }; }
         //#define GFXDECODE_REVERSEBITS(region,offset,layout,start,colors) { region, offset, &layout, start, colors, GFXENTRY_REVERSE },
-
-
-        //**************************************************************************
-        //  INTERFACE CONFIGURATION MACROS
-        //**************************************************************************
-
-        static void MCFG_GFX_PALETTE(device_t device, string palette_tag) { device.GetClassInterface<device_gfx_interface>().set_palette(palette_tag); }
-        static void MCFG_GFX_INFO(device_t device, gfx_decode_entry [] info) { device.GetClassInterface<device_gfx_interface>().set_info(info); }
-
-
-        //**************************************************************************
-        //  DEVICE CONFIGURATION MACROS
-        //**************************************************************************
-
-        //define MCFG_GFXDECODE_MODIFY(_tag, _info)             MCFG_DEVICE_MODIFY(_tag)             MCFG_GFX_INFO(_info)
     }
 
 
@@ -165,7 +141,9 @@ namespace mame
                 u32 [] planeoffset,
                 u32 [] xoffset,
                 u32 [] yoffset,
-                u32 charincrement
+                u32 charincrement,
+                ListBase<u32> extxoffs = null,
+                ListBase<u32> extyoffs = null
             )
         {
             this.width = width;
@@ -176,9 +154,11 @@ namespace mame
             Array.Copy(xoffset, this.xoffset, xoffset.Length);
             Array.Copy(yoffset, this.yoffset, yoffset.Length);
             this.charincrement = charincrement;
+            this.extxoffs = extxoffs;
+            this.extyoffs = extyoffs;
         }
 
-        public gfx_layout(gfx_layout rhs) : this(rhs.width, rhs.height, rhs.total, rhs.planes, rhs.planeoffset, rhs.xoffset, rhs.yoffset, rhs.charincrement) { }
+        public gfx_layout(gfx_layout rhs) : this(rhs.width, rhs.height, rhs.total, rhs.planes, rhs.planeoffset, rhs.xoffset, rhs.yoffset, rhs.charincrement, rhs.extxoffs, rhs.extyoffs) { }
 
         public u32 xoffs(int x) { return extxoffs != null ? extxoffs[x] : xoffset[x]; }
         public u32 yoffs(int y) { return extyoffs != null ? extyoffs[y] : yoffset[y]; }
@@ -232,6 +212,7 @@ namespace mame
         public void set_info(gfx_decode_entry [] gfxinfo) { m_gfxdecodeinfo = gfxinfo; }
         //template <typename T> void set_palette(T &&tag) { m_palette.set_tag(std::forward<T>(tag)); }
         public void set_palette(string tag) { m_paletteDevice.set_tag(tag); }
+        public void set_palette(finder_base tag) { m_paletteDevice.set_tag(tag); }
 
 
         //-------------------------------------------------
@@ -245,8 +226,8 @@ namespace mame
 
 
         // getters
-        public device_palette_interface palette() { global.assert(m_paletteDevice != null); return m_paletteDevice.target.palette_interface(); }  //{ assert(m_palette); return *m_palette; }
-        public gfx_element gfx(int index) { global.assert(index < digfx_global.MAX_GFX_ELEMENTS); return m_gfx[index]; }
+        public device_palette_interface palette() { assert(m_paletteDevice != null); return m_paletteDevice.target.palette_interface; }  //{ assert(m_palette); return *m_palette; }
+        public gfx_element gfx(int index) { assert(index < digfx_global.MAX_GFX_ELEMENTS); return m_gfx[index]; }
 
 
         // decoding
@@ -262,8 +243,8 @@ namespace mame
 
             // local variables to hold mutable copies of gfx layout data
             gfx_layout glcopy;
-            std_vector<u32> extxoffs = new std_vector<u32>(0);
-            std_vector<u32> extyoffs = new std_vector<u32>(0);
+            std.vector<u32> extxoffs = new std.vector<u32>(0);
+            std.vector<u32> extyoffs = new std.vector<u32>(0);
 
             // loop over all elements
             for (u8 curgfx = 0; curgfx < digfx_global.MAX_GFX_ELEMENTS && curgfx < gfxdecodeinfo.Length && gfxdecodeinfo[curgfx].gfxlayout != null; curgfx++)
@@ -271,9 +252,9 @@ namespace mame
                 gfx_decode_entry gfx = gfxdecodeinfo[curgfx];
 
                 // extract the scale factors and xormask
-                u32 xscale = digfx_global.GFXENTRY_GETXSCALE(gfx.flags);
-                u32 yscale = digfx_global.GFXENTRY_GETYSCALE(gfx.flags);
-                u32 xormask = digfx_global.GFXENTRY_ISREVERSE(gfx.flags) ? 7U : 0U;
+                u32 xscale = GFXENTRY_GETXSCALE(gfx.flags);
+                u32 yscale = GFXENTRY_GETYSCALE(gfx.flags);
+                u32 xormask = GFXENTRY_ISREVERSE(gfx.flags) ? 7U : 0U;
 
                 // resolve the region
                 u32 region_length;
@@ -283,8 +264,8 @@ namespace mame
 
                 if (gfx.memory_region != null)
                 {
-                    device_t basedevice = (digfx_global.GFXENTRY_ISDEVICE(gfx.flags)) ? device() : device().owner();
-                    if (digfx_global.GFXENTRY_ISRAM(gfx.flags))
+                    device_t basedevice = (GFXENTRY_ISDEVICE(gfx.flags)) ? device() : device().owner();
+                    if (GFXENTRY_ISRAM(gfx.flags))
                     {
                         memory_share share = basedevice.memshare(gfx.memory_region);
                         //assert(share != NULL);
@@ -308,10 +289,10 @@ namespace mame
                     region_length = 0;
                     region_base = null;
                     region_width = 1;
-                    region_endianness = emucore_global.ENDIANNESS_NATIVE;
+                    region_endianness = ENDIANNESS_NATIVE;
                 }
 
-                if (region_endianness != emucore_global.ENDIANNESS_NATIVE)
+                if (region_endianness != ENDIANNESS_NATIVE)
                 {
                     switch (region_width)
                     {
@@ -333,10 +314,10 @@ namespace mame
 
 
                 // if the character count is a region fraction, compute the effective total
-                if (digfx_global.IS_FRAC(glcopy.total))
+                if (IS_FRAC(glcopy.total))
                 {
                     //assert(region_length != 0);
-                    glcopy.total = region_length / glcopy.charincrement * digfx_global.FRAC_NUM(glcopy.total) / digfx_global.FRAC_DEN(glcopy.total);
+                    glcopy.total = region_length / glcopy.charincrement * FRAC_NUM(glcopy.total) / FRAC_DEN(glcopy.total);
                 }
 
                 // for non-raw graphics, decode the X and Y offsets
@@ -376,10 +357,10 @@ namespace mame
                     for (int j = 0; j < glcopy.planes; j++)
                     {
                         u32 value1 = glcopy.planeoffset[j];
-                        if (digfx_global.IS_FRAC(value1))
+                        if (IS_FRAC(value1))
                         {
                             //assert(region_length != 0);
-                            glcopy.planeoffset[j] = digfx_global.FRAC_OFFSET(value1) + region_length * digfx_global.FRAC_NUM(value1) / digfx_global.FRAC_DEN(value1);
+                            glcopy.planeoffset[j] = FRAC_OFFSET(value1) + region_length * FRAC_NUM(value1) / FRAC_DEN(value1);
                         }
                     }
 
@@ -390,17 +371,17 @@ namespace mame
                         if (digfx_global.IS_FRAC(value2))
                         {
                             //assert(region_length != 0);
-                            extxoffs[j] = digfx_global.FRAC_OFFSET(value2) + region_length * digfx_global.FRAC_NUM(value2) / digfx_global.FRAC_DEN(value2);
+                            extxoffs[j] = FRAC_OFFSET(value2) + region_length * FRAC_NUM(value2) / FRAC_DEN(value2);
                         }
                     }
 
                     for (int j = 0; j < glcopy.height; j++)
                     {
                         u32 value3 = extyoffs[j];
-                        if (digfx_global.IS_FRAC(value3))
+                        if (IS_FRAC(value3))
                         {
                             //assert(region_length != 0);
-                            extyoffs[j] = digfx_global.FRAC_OFFSET(value3) + region_length * digfx_global.FRAC_NUM(value3) / digfx_global.FRAC_DEN(value3);
+                            extyoffs[j] = FRAC_OFFSET(value3) + region_length * FRAC_NUM(value3) / FRAC_DEN(value3);
                         }
                     }
                 }
@@ -423,7 +404,7 @@ namespace mame
 
                 // allocate the graphics
                 //m_gfx[curgfx] = new gfx_element(m_palette, glcopy, region_base != null ? region_base + gfx.start : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
-                m_gfx[curgfx] = new gfx_element(m_paletteDevice.target.palette_interface(), glcopy, region_base != null ? new ListBytesPointer(region_base, (int)gfx.start) : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
+                m_gfx[curgfx] = new gfx_element(m_paletteDevice.target.palette_interface, glcopy, region_base != null ? new ListBytesPointer(region_base, (int)gfx.start) : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
             }
 
             m_decoded = true;
@@ -448,11 +429,11 @@ namespace mame
                 KeyValuePair<device_t, string> target = m_paletteDevice.finder_target();
                 if (target.second() == finder_base.DUMMY_TAG)
                 {
-                    global.osd_printf_error("No palette specified for device '{0}'\n", device().tag());
+                    osd_printf_error("No palette specified for device '{0}'\n", device().tag());
                 }
                 else
                 {
-                    global.osd_printf_error(
+                    osd_printf_error(
                             "Device '{0}' specifies nonexistent device '{1}' relative to '{2}' as palette\n",
                             device().tag(),
                             target.second(),
@@ -471,21 +452,21 @@ namespace mame
 
                 // currently we are unable to validate RAM-based entries
                 string region = gfx.memory_region;
-                if (region != null && digfx_global.GFXENTRY_ISROM(gfx.flags))
+                if (region != null && GFXENTRY_ISROM(gfx.flags))
                 {
                     // resolve the region
                     string gfxregion;
-                    if (digfx_global.GFXENTRY_ISDEVICE(gfx.flags))
+                    if (GFXENTRY_ISDEVICE(gfx.flags))
                         gfxregion = device().subtag(region);
                     else
                         gfxregion = device().owner().subtag(region);
 
                     UInt32 region_length = (UInt32)valid.region_length(gfxregion);
                     if (region_length == 0)
-                        global.osd_printf_error("gfx[{0}] references nonexistent region '{1}'\n", gfxnum, gfxregion);
+                        osd_printf_error("gfx[{0}] references nonexistent region '{1}'\n", gfxnum, gfxregion);
 
                     // if we have a valid region, and we're not using auto-sizing, check the decode against the region length
-                    else if (!digfx_global.IS_FRAC(layout.total))
+                    else if (!IS_FRAC(layout.total))
                     {
                         // determine which plane is at the largest offset
                         int start = 0;
@@ -504,20 +485,20 @@ namespace mame
 
                         // if not, this is an error
                         if ((start + len) / 8 > avail)
-                            global.osd_printf_error("gfx[{0}] extends past allocated memory of region '{1}'\n", gfxnum, region);
+                            osd_printf_error("gfx[{0}] extends past allocated memory of region '{1}'\n", gfxnum, region);
                     }
                 }
 
-                int xscale = (int)digfx_global.GFXENTRY_GETXSCALE(gfx.flags);
-                int yscale = (int)digfx_global.GFXENTRY_GETYSCALE(gfx.flags);
+                int xscale = (int)GFXENTRY_GETXSCALE(gfx.flags);
+                int yscale = (int)GFXENTRY_GETYSCALE(gfx.flags);
 
                 // verify raw decode, which can only be full-region and have no scaling
                 if (layout.planeoffset[0] == digfx_global.GFX_RAW)
                 {
-                    if (layout.total != digfx_global.RGN_FRAC(1,1))
-                        global.osd_printf_error("gfx[{0}] RAW layouts can only be RGN_FRAC(1,1)\n", gfxnum);
+                    if (layout.total != RGN_FRAC(1,1))
+                        osd_printf_error("gfx[{0}] RAW layouts can only be RGN_FRAC(1,1)\n", gfxnum);
                     if (xscale != 1 || yscale != 1)
-                        global.osd_printf_error("gfx[{0}] RAW layouts do not support xscale/yscale\n", gfxnum);
+                        osd_printf_error("gfx[{0}] RAW layouts do not support xscale/yscale\n", gfxnum);
                 }
 
                 // verify traditional decode doesn't have too many planes,
@@ -540,11 +521,11 @@ namespace mame
                 KeyValuePair<device_t, string> target = m_paletteDevice.finder_target();
                 if (target.second() == finder_base.DUMMY_TAG)
                 {
-                    global.fatalerror("No palette specified for device {0}\n", device().tag());
+                    fatalerror("No palette specified for device {0}\n", device().tag());
                 }
                 else
                 {
-                    global.fatalerror(
+                    fatalerror(
                             "Device '{0}' specifies nonexistent device '{1}' relative to '{2}' as palette\n",
                             device().tag(),
                             target.second(),

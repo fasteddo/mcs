@@ -28,7 +28,7 @@ namespace mame
 
             /* IRQ is clocked on the rising edge of 16V, equal to the previous 32V */
             if ((scanline & 16) != 0)
-                m_maincpu.target.execute().set_input_line(0, ((scanline - 1) & 32) != 0 ? line_state.ASSERT_LINE : line_state.CLEAR_LINE);
+                m_maincpu.target.set_input_line(0, ((scanline - 1) & 32) != 0 ? ASSERT_LINE : CLEAR_LINE);
 
             /* do a partial update now to handle sprite multiplexing (Maze Invaders) */
             m_screen.target.update_partial(scanline);
@@ -48,7 +48,7 @@ namespace mame
         //MACHINE_RESET_MEMBER(centiped_state,centiped)
         public void machine_reset_centiped()
         {
-            m_maincpu.target.execute().set_input_line(0, line_state.CLEAR_LINE);
+            m_maincpu.target.set_input_line(0, CLEAR_LINE);
             m_prg_bank = 0;
 
             if (m_earom.found())
@@ -59,7 +59,7 @@ namespace mame
         //WRITE8_MEMBER(centiped_state::irq_ack_w)
         public void irq_ack_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
-            m_maincpu.target.execute().set_input_line(0, line_state.CLEAR_LINE);
+            m_maincpu.target.set_input_line(0, CLEAR_LINE);
         }
 
 
@@ -284,57 +284,51 @@ namespace mame
         public void earom_control_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             // CK = DB0, C1 = /DB1, C2 = DB2, CS1 = DB3, /CS2 = GND
-            m_earom.target.set_control((uint8_t)global.BIT(data, 3), 1, global.BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)global.BIT(data, 2));
-            m_earom.target.set_clk(global.BIT(data, 0));
+            m_earom.target.set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
+            m_earom.target.set_clk(BIT(data, 0));
         }
-    }
 
 
-    public class centiped : device_init_helpers
-    {
         /*************************************
          *
          *  Centipede CPU memory handlers
          *
          *************************************/
 
-        //void centiped_state::centiped_base_map(address_map &map)
-        void centiped_state_centiped_base_map(address_map map, device_t device)
+        void centiped_base_map(address_map map, device_t device)
         {
-            centiped_state centiped_state = (centiped_state)device;
-
             map.global_mask(0x3fff);
             map.op(0x0000, 0x03ff).ram().share("rambase");
-            map.op(0x0400, 0x07bf).ram().w(centiped_state.centiped_videoram_w).share("videoram");
+            map.op(0x0400, 0x07bf).ram().w(centiped_videoram_w).share("videoram");
             map.op(0x07c0, 0x07ff).ram().share("spriteram");
             map.op(0x0800, 0x0800).portr("DSW1");
             map.op(0x0801, 0x0801).portr("DSW2");
-            map.op(0x0c00, 0x0c00).r(centiped_state.centiped_IN0_r);
+            map.op(0x0c00, 0x0c00).r(centiped_IN0_r);
             map.op(0x0c01, 0x0c01).portr("IN1");
-            map.op(0x0c02, 0x0c02).r(centiped_state.centiped_IN2_r);
+            map.op(0x0c02, 0x0c02).r(centiped_IN2_r);
             map.op(0x0c03, 0x0c03).portr("IN3");
-            map.op(0x1400, 0x140f).w(centiped_state.centiped_paletteram_w).share("paletteram");
-            map.op(0x1600, 0x163f).nopr().w(centiped_state.earom_write);
-            map.op(0x1680, 0x1680).w(centiped_state.earom_control_w);
-            map.op(0x1700, 0x173f).r(centiped_state.earom_read);
-            map.op(0x1800, 0x1800).w(centiped_state.irq_ack_w);
-            map.op(0x1c00, 0x1c07).nopr().w("outlatch", centiped_state.ls259_device_write_d7_outlatch);
-            map.op(0x2000, 0x2000).w("watchdog", centiped_state.watchdog_timer_device_reset_w);
+            map.op(0x1400, 0x140f).w(centiped_paletteram_w).share("paletteram");
+            map.op(0x1600, 0x163f).nopr().w(earom_write);
+            map.op(0x1680, 0x1680).w(earom_control_w);
+            map.op(0x1700, 0x173f).r(earom_read);
+            map.op(0x1800, 0x1800).w(irq_ack_w);
+            map.op(0x1c00, 0x1c07).nopr().w("outlatch", ls259_device_write_d7_outlatch);
+            map.op(0x2000, 0x2000).w("watchdog", watchdog_timer_device_reset_w);
             map.op(0x2000, 0x3fff).rom();
         }
 
 
-        //void centiped_state::centiped_map(address_map &map)
-        void centiped_state_centiped_map(address_map map, device_t device)
+        void centiped_map(address_map map, device_t device)
         {
-            centiped_state state = (centiped_state)device;
+            centiped_base_map(map, device);
 
-            centiped_state_centiped_base_map(map, device);
-
-            map.op(0x1000, 0x100f).rw("pokey", state.pokey_device_read, state.pokey_device_write);
+            map.op(0x1000, 0x100f).rw("pokey", pokey_device_read, pokey_device_write);
         }
+    }
 
 
+    partial class centiped : global_object
+    {
         /*************************************
          *
          *  Port definitions
@@ -442,8 +436,11 @@ namespace mame
 
             INPUT_PORTS_END();
         }
+    }
 
 
+    partial class centiped_state : driver_device
+    {
         /*************************************
          *
          *  Graphics layouts: Centipede/Millipede
@@ -454,9 +451,9 @@ namespace mame
             8,8,
             RGN_FRAC(1,2),
             2,
-            digfx_global.ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
-            digfx_global.ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
-            digfx_global.ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ),
+            ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
+            ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
+            ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ),
             8*8
         );
 
@@ -464,9 +461,9 @@ namespace mame
             8,16,
             RGN_FRAC(1,2),
             2,
-            digfx_global.ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
-            digfx_global.ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
-            digfx_global.ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+            ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
+            ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
+            ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
                     8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 ),
             16*8
         );
@@ -493,77 +490,64 @@ namespace mame
          *
          *************************************/
 
-        //MACHINE_CONFIG_START(centiped_state::centiped_base)
-        void centiped_state_centiped_base(machine_config config, device_t owner, device_t device)
+        void centiped_base(machine_config config)
         {
-            MACHINE_CONFIG_START(config, owner, device);
-
-            centiped_state centiped_state = (centiped_state)helper_owner;
-
             /* basic machine hardware */
-            MCFG_DEVICE_ADD("maincpu", m6502_device.M6502, 12096000/8);  /* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
+            M6502(config, maincpu, 12096000/8);  /* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
 
-            MCFG_MACHINE_START_OVERRIDE(centiped_state.machine_start_centiped);
-            MCFG_MACHINE_RESET_OVERRIDE(centiped_state.machine_reset_centiped);
+            MCFG_MACHINE_START_OVERRIDE(config, machine_start_centiped);
+            MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_centiped);
 
-            MCFG_DEVICE_ADD("earom", er2055_device.ER2055);
+            ER2055(config, earom);
 
-            LS259(config, centiped_state.outlatch);
-            centiped_state.outlatch.target.q_out_cb(0).set(centiped_state.coin_counter_left_w).reg();
-            centiped_state.outlatch.target.q_out_cb(1).set(centiped_state.coin_counter_center_w).reg();
-            centiped_state.outlatch.target.q_out_cb(2).set(centiped_state.coin_counter_right_w).reg();
-            centiped_state.outlatch.target.q_out_cb(3).set_output("led0").invert().reg(); // LED 1
-            centiped_state.outlatch.target.q_out_cb(4).set_output("led1").invert().reg(); // LED 2
+            LS259(config, outlatch);
+            outlatch.target.q_out_cb(0).set(coin_counter_left_w).reg();
+            outlatch.target.q_out_cb(1).set(coin_counter_center_w).reg();
+            outlatch.target.q_out_cb(2).set(coin_counter_right_w).reg();
+            outlatch.target.q_out_cb(3).set_output("led0").invert().reg(); // LED 1
+            outlatch.target.q_out_cb(4).set_output("led1").invert().reg(); // LED 2
 
             WATCHDOG_TIMER(config, "watchdog");
 
             /* timer */
-            MCFG_TIMER_DRIVER_ADD_SCANLINE("32v", centiped_state.generate_interrupt, "screen", 0, 16);
+            TIMER(config, "32v").configure_scanline(generate_interrupt, "screen", 0, 16);
 
             /* video hardware */
-            MCFG_SCREEN_ADD("screen", screen_type_enum.SCREEN_TYPE_RASTER);
-            MCFG_SCREEN_REFRESH_RATE(60);
-            MCFG_SCREEN_SIZE(32*8, 32*8);
-            MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1);
-            MCFG_SCREEN_UPDATE_DRIVER(centiped_state.screen_update_centiped);
-            MCFG_SCREEN_PALETTE("palette");
+            SCREEN(config, screen, SCREEN_TYPE_RASTER);
+            screen.target.set_refresh_hz(60);
+            screen.target.set_size(32*8, 32*8);
+            screen.target.set_visarea(0*8, 32*8-1, 0*8, 30*8-1);
+            screen.target.set_screen_update(screen_update_centiped);
+            screen.target.set_palette(palette);
 
-            MCFG_DEVICE_ADD("gfxdecode", gfxdecode_device.GFXDECODE);//, "palette", gfx_centiped);
-            MCFG_DEVICE_ADD_gfxdecode_device("palette", gfx_centiped);
-            MCFG_PALETTE_ADD("palette", 4+4*4*4*4);
+            GFXDECODE(config, gfxdecode, palette, gfx_centiped);
+            PALETTE(config, palette).set_entries(4+4*4*4*4);
 
-            MCFG_VIDEO_START_OVERRIDE(centiped_state.video_start_centiped);
-
-            MACHINE_CONFIG_END();
+            MCFG_VIDEO_START_OVERRIDE(config, video_start_centiped);
         }
 
 
-        //MACHINE_CONFIG_START(centiped_state::centiped)
-        void centiped_state_centiped(machine_config config, device_t owner, device_t device)
+        public void centiped(machine_config config)
         {
-            centiped_state_centiped_base(config, owner, device);
+            centiped_base(config);
 
-            MACHINE_CONFIG_START(config, owner, device);
-
-            centiped_state centiped_state = (centiped_state)helper_owner;
-
-            MCFG_DEVICE_MODIFY("maincpu");
-            MCFG_DEVICE_PROGRAM_MAP(centiped_state_centiped_map);
+            maincpu.target.memory().set_addrmap(AS_PROGRAM, centiped_map);
 
             // M10
-            centiped_state.outlatch.target.q_out_cb(7).set(centiped_state.flip_screen_w).reg();
+            outlatch.target.q_out_cb(7).set(flip_screen_w).reg();
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();
 
-            MCFG_DEVICE_ADD("pokey", pokey_device.POKEY, 12096000/8);
-            MCFG_POKEY_OUTPUT_OPAMP_LOW_PASS(RES_K(3.3), CAP_U(0.01), 5.0);
-            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5);
-
-            MACHINE_CONFIG_END();
+            pokey_device pokey = POKEY(config, "pokey", 12096000/8);
+            pokey.set_output_opamp_low_pass(RES_K(3.3), CAP_U(0.01), 5.0);
+            pokey.GetClassInterface<device_sound_interface>().add_route(ALL_OUTPUTS, "mono", 0.5);
         }
+    }
 
 
+    partial class centiped : global_object
+    {
         /*************************************
          *
          *  ROM definitions
@@ -601,15 +585,17 @@ namespace mame
         };
 
 
+        static void centiped_state_centiped(machine_config config, device_t device) { centiped_state centiped_state = (centiped_state)device; centiped_state.centiped(config); }
 
-        static centiped m_centipede = new centiped();
+
+        static centiped m_centiped = new centiped();
 
 
         static device_t device_creator_centipede(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new centiped_state(mconfig, type, tag); }
 
 
         // Centipede, Millipede, and clones
-        //                                                          creator,                  rom           YEAR,   NAME,       PARENT,  MACHINE,                              INPUT,                                  INIT,                      MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_centipede = GAME( device_creator_centipede, rom_centiped, "1980", "centiped", null,    m_centipede.centiped_state_centiped,  m_centipede.construct_ioport_centiped,  driver_device.empty_init,  ROT270, "Atari", "Centipede (revision 4)", MACHINE_SUPPORTS_SAVE );  /* 1 Player Only with Timer Options */
+        //                                                          creator,                  rom           YEAR,   NAME,       PARENT,  MACHINE,                           INPUT,                                 INIT,                      MONITOR,COMPANY, FULLNAME,FLAGS
+        public static readonly game_driver driver_centipede = GAME( device_creator_centipede, rom_centiped, "1980", "centiped", null,    centiped.centiped_state_centiped,  m_centiped.construct_ioport_centiped,  driver_device.empty_init,  ROT270, "Atari", "Centipede (revision 4)", MACHINE_SUPPORTS_SAVE );  /* 1 Player Only with Timer Options */
     }
 }

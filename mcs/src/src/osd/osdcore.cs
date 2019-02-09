@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.IO;
 using int32_t = System.Int32;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using osd_ticks_t = System.UInt64;
@@ -152,7 +152,7 @@ namespace mame
         /*-----------------------------------------------------------------------------
             osd_file::~osd_file: close an open file
         -----------------------------------------------------------------------------*/
-        ~osd_file() { }
+        //~osd_file() { }
 
 
         /*-----------------------------------------------------------------------------
@@ -243,6 +243,9 @@ namespace mame
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
         public abstract error remove(string filename);
+
+
+        public abstract Stream stream { get; }
     }
 
 
@@ -918,7 +921,7 @@ namespace mame
 
 
     /* ----- output management ----- */
-    public abstract class osd_output
+    public abstract class osd_output : global_object
     {
         const int MAXSTACK = 10;
 

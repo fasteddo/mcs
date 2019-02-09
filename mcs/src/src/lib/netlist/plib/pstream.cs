@@ -23,7 +23,7 @@ namespace mame.plib
 
         public pstream(UInt32 flags) { m_flags = flags; }
 
-        ~pstream() { }
+        //~pstream() { }
 
 
         //bool seekable() const { return ((m_flags & FLAG_SEEKABLE) != 0); }
@@ -64,7 +64,7 @@ namespace mame.plib
     {
         pistream(UInt32 flags) : base(flags) { }
 
-        ~pistream() { }
+        //~pistream() { }
 
         //bool eof() const { return ((flags() & FLAG_EOF) != 0); }
 

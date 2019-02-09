@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using categoryindex = mame.std_vector<System.Collections.Generic.KeyValuePair<string, System.Int64>>;
+using categoryindex = mame.std.vector<System.Collections.Generic.KeyValuePair<string, System.Int64>>;
+using favorites_set = mame.std.set<mame.ui_software_info>;//, favorite_compare>;
+using sorted_favorites = mame.std.vector<mame.ui_software_info>;
 
 
 namespace mame
@@ -13,7 +15,7 @@ namespace mame
     //  INIFILE MANAGER
     //-------------------------------------------------
 
-    public class inifile_manager
+    public class inifile_manager : global_object
     {
         // ini file structure
         //using categoryindex = std::vector<std::pair<std::string, int64_t>>;
@@ -24,17 +26,17 @@ namespace mame
 
         // internal state
         ui_options m_options;
-        std_vector<KeyValuePair<string, categoryindex>> m_ini_index;  //std::vector<std::pair<std::string, categoryindex> > m_ini_index;
+        std.vector<KeyValuePair<string, categoryindex>> m_ini_index;  //std::vector<std::pair<std::string, categoryindex> > m_ini_index;
 
 
         // construction/destruction
         //-------------------------------------------------
         //  ctor
         //-------------------------------------------------
-        public inifile_manager(running_machine machine, ui_options moptions)
+        public inifile_manager(ui_options moptions)
         {
             m_options = moptions;
-            m_ini_index = new std_vector<KeyValuePair<string, categoryindex>>();
+            m_ini_index = new std.vector<KeyValuePair<string, categoryindex>>();
 
 
             // scan directories and create index
@@ -42,9 +44,9 @@ namespace mame
             for (osd.directory.entry dir = path.next(); dir != null; dir = path.next())
             {
                 string name = dir.name;
-                if (global.core_filename_ends_with(name, ".ini"))
+                if (core_filename_ends_with(name, ".ini"))
                 {
-                    emu_file file = new emu_file(m_options.categoryini_path(), osdcore_global.OPEN_FLAG_READ);
+                    emu_file file = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
                     if (file.open(name) == osd_file.error.NONE)
                     {
                         init_category(name, file);
@@ -54,18 +56,18 @@ namespace mame
             }
 
             //std::stable_sort(m_ini_index.begin(), m_ini_index.end());//, [] (auto const &x, auto const &y) { return 0 > core_stricmp(x.first.c_str(), y.first.c_str()); });
-            m_ini_index.Sort((x, y) => { return global.core_stricmp(x.Key.c_str(), y.Key.c_str()); });
+            m_ini_index.Sort((x, y) => { return core_stricmp(x.Key.c_str(), y.Key.c_str()); });
         }
 
 
         // load games from category
-        public void load_ini_category(UInt32 file, UInt32 category, std_unordered_set<game_driver> result)
+        public void load_ini_category(UInt32 file, UInt32 category, std.unordered_set<game_driver> result)
         {
             string filename = m_ini_index[(int)file].Key;
-            emu_file fp = new emu_file(m_options.categoryini_path(), osdcore_global.OPEN_FLAG_READ);
+            emu_file fp = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
             if (fp.open(filename) != osd_file.error.NONE)
             {
-                global.osd_printf_error("Failed to open category file {0} for reading\n", filename.c_str());
+                osd_printf_error("Failed to open category file {0} for reading\n", filename.c_str());
                 return;
             }
 
@@ -73,7 +75,7 @@ namespace mame
             if (fp.seek(offset, emu_file.SEEK_SET) != 0 || (fp.tell() != (UInt64)offset))
             {
                 fp.close();
-                global.osd_printf_error("Failed to seek to category offset in file {0}\n", filename.c_str());
+                osd_printf_error("Failed to seek to category offset in file {0}\n", filename.c_str());
                 return;
             }
 
@@ -86,7 +88,7 @@ namespace mame
                 rbuf = rbuf.Substring(tail);
                 int dfind = driver_list.find(rbuf);
                 if (0 <= dfind)
-                    result.emplace(driver_list.driver((UInt32)dfind));
+                    result.emplace(driver_list.driver(dfind));
             }
 
             fp.close();
@@ -111,147 +113,163 @@ namespace mame
     //-------------------------------------------------
     //  FAVORITE MANAGER
     //-------------------------------------------------
-    public class favorite_manager
+    public class favorite_manager : global_object
     {
-        // favorite indices
-        std_multimap<string, ui_software_info> m_list = new std_multimap<string, ui_software_info>();  // std::multimap<std::string, ui_software_info, ci_less> m_list;
+        //using running_software_key = std::tuple<game_driver const &, char const *, std::string const &>;
 
 
-        //const char *favorite_filename = "favorites.ini";
+        static class favorite_compare
+        {
+            //using is_transparent = std::true_type;
 
-        // current
-        List<ui_software_info> m_current;  //std::multimap<std::string, ui_software_info>::iterator m_current;
+            //bool operator()(ui_software_info const &lhs, ui_software_info const &rhs) const;
+
+            //bool operator()(ui_software_info const &lhs, game_driver const &rhs) const;
+            //bool operator()(game_driver const &lhs, ui_software_info const &rhs) const;
+            public static bool op(game_driver lhs, ui_software_info rhs)
+            {
+                global_object.assert(rhs.driver != null);
+
+                if (rhs.startempty == 0)
+                    return true;
+                else
+                    return 0 > std.strncmp(lhs.name, rhs.driver.name, lhs.name.Length);
+            }
+
+            //bool operator()(ui_software_info const &lhs, running_software_key const &rhs) const;
+            //bool operator()(running_software_key const &lhs, ui_software_info const &rhs) const;
+        }
+
+        //using favorites_set = std::set<ui_software_info, favorite_compare>;
+        //using sorted_favorites = std::vector<std::reference_wrapper<ui_software_info const> >;
+
+
+        const string FAVORITE_FILENAME = "favorites.ini";
 
 
         // internal state
-        running_machine m_machine;  // reference to our machine
         ui_options m_options;
+        favorites_set m_favorites;
+        sorted_favorites m_sorted;
+        bool m_need_sort;
 
 
         // construction/destruction
         //-------------------------------------------------
         //  ctor
         //-------------------------------------------------
-        public favorite_manager(running_machine machine, ui_options moptions)
+        public favorite_manager(ui_options options)
         {
-            m_machine = machine;
-            m_options = moptions;
+            m_options = options;
+            m_favorites = new favorites_set();
+            m_sorted = new sorted_favorites();
+            m_need_sort = true;
 
 
-            parse_favorite();
+            emu_file file = new emu_file(m_options.ui_path(), OPEN_FLAG_READ);
+            if (file.open(FAVORITE_FILENAME) == osd_file.error.NONE)
+            {
+                string readbuf;
+                file.gets(out readbuf, 1024);
+
+                while (readbuf[0] == '[')
+                    file.gets(out readbuf, 1024);
+
+                while (file.gets(out readbuf, 1024) != null)
+                {
+                    ui_software_info tmpmatches = new ui_software_info();
+                    tmpmatches.shortname = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.longname = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.parentname = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.year = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.publisher = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.supported = Convert.ToByte(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.part = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    utils_global.chartrimcarriage(readbuf);
+                    var dx = driver_list.find(readbuf);
+                    if (0 > dx)
+                        continue;
+                    tmpmatches.driver = driver_list.driver(dx);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.listname = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.interface_ = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.instance = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.startempty = Convert.ToByte(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.parentlongname = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.usage = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.devicetype = utils_global.chartrimcarriage(readbuf);
+                    file.gets(out readbuf, 1024);
+                    tmpmatches.available = Convert.ToInt32(readbuf) != 0;
+                    m_favorites.emplace(tmpmatches);
+                }
+                file.close();
+            }
         }
-
-
-        // getters
-        running_machine machine() { return m_machine; }
-        public std_multimap<string, ui_software_info> list() { return m_list; }
 
 
         // add
-        public void add_favorite_game() { throw new emu_unimplemented(); }
-        public void add_favorite_game(game_driver driver) { throw new emu_unimplemented(); }
-        public void add_favorite_game(ui_software_info swinfo) { throw new emu_unimplemented(); }
+        //void add_favorite_system(game_driver const &driver);
+        //void add_favorite_software(ui_software_info const &swinfo);
+        //void add_favorite(running_machine &machine);
 
 
         // check
-
-        //-------------------------------------------------
-        //  check if game is already in favorite list
-        //-------------------------------------------------
-        public bool isgame_favorite()
-        {
-            if ((machine().system().flags & machine_flags.type.MASK_TYPE) == machine_flags.type.TYPE_ARCADE)
-                return isgame_favorite(machine().system());
-
-            var image_loaded = false;
-
-            foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
-            {
-                software_info swinfo = image.software_entry();
-                if (image.exists() && swinfo != null)
-                {
-                    image_loaded = true;
-                    foreach (var current in m_list)  //for (var current = m_list.begin(); current != m_list.end(); ++current)
-                    {
-                        if (current.Value[0].shortname == swinfo.shortname() &&
-                            current.Value[0].listname == image.software_list_name())
-                        {
-                            m_current = current.Value;
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            if (!image_loaded)
-                return isgame_favorite(machine().system());
-
-            m_current = null;  //m_list.begin();
-            return false;
-        }
-
-
-        //-------------------------------------------------
-        //  check if game is already in favorite list
-        //-------------------------------------------------
-        public bool isgame_favorite(game_driver driver)
-        {
-            foreach (var current in m_list)  //for (var current = m_list.begin(); current != m_list.end(); ++current)
-            {
-                if (current.Value[0].driver == driver && current.Value[0].shortname == driver.name)
-                {
-                    m_current = current.Value;
-                    return true;
-                }
-            }
-
-            m_current = null;  //m_list.begin();
-            return false;
-        }
-
-
-        //-------------------------------------------------
-        //  check if game is already in favorite list
-        //-------------------------------------------------
-        public bool isgame_favorite(ui_software_info swinfo)
-        {
-            foreach (var current in m_list)  //for (var current = m_list.begin(); current != m_list.end(); ++current)
-            {
-                if (current.Value[0] == swinfo)
-                {
-                    m_current = current.Value;
-                    return true;
-                }
-            }
-
-            m_current = null;  //m_list.begin();
-            return false;
-        }
-
-
-        // save
-        //void save_favorite_games();
+        public bool is_favorite_system(game_driver driver) { return check_impl(driver); }
+        public bool is_favorite_software(ui_software_info swinfo) { throw new emu_unimplemented(); }
+        public bool is_favorite_system_software(ui_software_info swinfo) { throw new emu_unimplemented(); }
+        //bool is_favorite(running_machine &machine) const;
 
 
         // remove
-        public void remove_favorite_game()
-        {
-            throw new emu_unimplemented();
-        }
-
-        public void remove_favorite_game(ui_software_info swinfo)
-        {
-            throw new emu_unimplemented();
-        }
+        //void remove_favorite_system(game_driver const &driver);
+        //void remove_favorite_software(ui_software_info const &swinfo);
+        //void remove_favorite(running_machine &machine);
 
 
-        // parse file ui_favorite
-        //-------------------------------------------------
-        //  parse favorite file
-        //-------------------------------------------------
-        void parse_favorite()
+        // walk
+
+        public delegate void apply_action(ui_software_info info);
+
+        //template <typename T>
+        public void apply(apply_action action) { throw new emu_unimplemented(); }
+
+        //template <typename T>
+        public void apply_sorted(apply_action action) { throw new emu_unimplemented(); }
+
+
+        // implementation
+        //template <typename T> static void apply_running_machine(running_machine &machine, T &&action);
+        //template <typename T> void add_impl(T &&key);
+
+        //template <typename T>
+        bool check_impl(object key)  //bool check_impl(T const &key) const;
         {
-            //throw new emu_unimplemented();
+            //return m_favorites.find(key) != m_favorites.end();
+            if (key is game_driver)
+            {
+                return m_favorites.ContainsIf((item) => { return favorite_compare.op((game_driver)key, item); });
+            }
+            else  // add new type as needed
+            {
+                throw new emu_unimplemented();
+            }
         }
+
+        //template <typename T> bool remove_impl(T const &key);
+        //void update_sorted();
+        //void save_favorites();
     }
 }

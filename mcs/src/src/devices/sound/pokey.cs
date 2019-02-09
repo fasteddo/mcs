@@ -163,20 +163,14 @@ namespace mame
 
 
     // ======================> pokey_device
-    class pokey_device : device_t
-                         //device_sound_interface,
-                         //device_execute_interface,
-                         //device_state_interface
+    public class pokey_device : device_t
+                                //device_sound_interface,
+                                //device_execute_interface,
+                                //device_state_interface
     {
         //DEFINE_DEVICE_TYPE(POKEY, pokey_device, "pokey", "Atari C012294 POKEY")
         static device_t device_creator_pokey_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pokey_device(mconfig, tag, owner, clock); }
         public static readonly device_type POKEY = DEFINE_DEVICE_TYPE(device_creator_pokey_device, "pokey", "Atari C012294 POKEY");
-
-
-        //typedef device_delegate<uint8_t (uint8_t k543210)> kb_cb_delegate;
-        delegate byte kb_cb_delegate(byte k543210);
-        //typedef device_delegate<void (int mask)> int_cb_delegate;
-        delegate void int_cb_delegate(int mask);
 
 
         /* CONSTANT DEFINITIONS */
@@ -185,59 +179,59 @@ namespace mame
         //static constexpr unsigned FREQ_17_EXACT = 1789790;
 
 
-        enum POK
-        {
-            POK_KEY_BREAK = 0x30,
-            POK_KEY_SHIFT = 0x20,
-            POK_KEY_CTRL  = 0x00
-        }
+        //enum
+        //{
+        const uint8_t POK_KEY_BREAK = 0x30;
+        const uint8_t POK_KEY_SHIFT = 0x20;
+        const uint8_t POK_KEY_CTRL  = 0x00;
+        //}
 
-        enum WRITE
-        {
-            /* POKEY WRITE LOGICALS */
-            AUDF1_C  =   0x00,
-            AUDC1_C  =   0x01,
-            AUDF2_C  =   0x02,
-            AUDC2_C  =   0x03,
-            AUDF3_C  =   0x04,
-            AUDC3_C  =   0x05,
-            AUDF4_C  =   0x06,
-            AUDC4_C  =   0x07,
-            AUDCTL_C =   0x08,
-            STIMER_C =   0x09,
-            SKREST_C =   0x0A,
-            POTGO_C  =   0x0B,
-            SEROUT_C =   0x0D,
-            IRQEN_C  =   0x0E,
-            SKCTL_C  =   0x0F
-        }
+        //enum
+        //{
+        /* POKEY WRITE LOGICALS */
+        const int AUDF1_C  =   0x00;
+        const int AUDC1_C  =   0x01;
+        const int AUDF2_C  =   0x02;
+        const int AUDC2_C  =   0x03;
+        const int AUDF3_C  =   0x04;
+        const int AUDC3_C  =   0x05;
+        const int AUDF4_C  =   0x06;
+        const int AUDC4_C  =   0x07;
+        const int AUDCTL_C =   0x08;
+        const int STIMER_C =   0x09;
+        const int SKREST_C =   0x0A;
+        const int POTGO_C  =   0x0B;
+        const int SEROUT_C =   0x0D;
+        const int IRQEN_C  =   0x0E;
+        const int SKCTL_C  =   0x0F;
+        //}
 
-        enum POT
-        {
-            /* POKEY READ LOGICALS */
-            POT0_C   =  0x00,
-            POT1_C   =  0x01,
-            POT2_C   =  0x02,
-            POT3_C   =  0x03,
-            POT4_C   =  0x04,
-            POT5_C   =  0x05,
-            POT6_C   =  0x06,
-            POT7_C   =  0x07,
-            ALLPOT_C =  0x08,
-            KBCODE_C =  0x09,
-            RANDOM_C =  0x0A,
-            SERIN_C  =  0x0D,
-            IRQST_C  =  0x0E,
-            SKSTAT_C =  0x0F
-        }
+        //enum
+        //{
+        /* POKEY READ LOGICALS */
+        const int POT0_C   =  0x00;
+        const int POT1_C   =  0x01;
+        const int POT2_C   =  0x02;
+        const int POT3_C   =  0x03;
+        const int POT4_C   =  0x04;
+        const int POT5_C   =  0x05;
+        const int POT6_C   =  0x06;
+        const int POT7_C   =  0x07;
+        const int ALLPOT_C =  0x08;
+        const int KBCODE_C =  0x09;
+        const int RANDOM_C =  0x0A;
+        const int SERIN_C  =  0x0D;
+        const int IRQST_C  =  0x0E;
+        const int SKSTAT_C =  0x0F;
+        //}
 
-        enum SYNC  /* sync-operations */
-        {
-            SYNC_NOOP       = 11,
-            SYNC_SET_IRQST  = 12,
-            SYNC_POT        = 13,
-            SYNC_WRITE      = 14
-        }
+        //enum  /* sync-operations */
+        //{
+        const int SYNC_NOOP       = 11;
+        const int SYNC_SET_IRQST  = 12;
+        const int SYNC_POT        = 13;
+        const int SYNC_WRITE      = 14;
+        //}
 
 
         public enum output_type
@@ -285,7 +279,7 @@ namespace mame
                     if ((m_parent.m_IRQEN & m_INTMask) != 0)
                     {
                         /* Exposed state has changed: This should only be updated after a resync ... */
-                        m_parent.synchronize((UInt32)SYNC.SYNC_SET_IRQST, m_INTMask);
+                        m_parent.synchronize(SYNC_SET_IRQST, m_INTMask);
                     }
                 }
             }
@@ -399,14 +393,6 @@ namespace mame
         device_state_interface_pokey m_distate;
 
 
-        // analog output configuration
-
-        public output_type m_output_type;
-        public double m_r_pullup;
-        public double m_cap;
-        public double m_v_ref;
-
-
         // other internal states
         public intref m_icountRef = new intref();  //int m_icount;
 
@@ -457,6 +443,11 @@ namespace mame
         uint32_t [] m_poly17 = new uint32_t[0x1ffff];
         public uint32_t [] m_voltab = new uint32_t[0x10000];
 
+        public output_type m_output_type;
+        public double m_r_pullup;
+        public double m_cap;
+        public double m_v_ref;
+
 
         // construction/destruction
         //-------------------------------------------------
@@ -470,7 +461,6 @@ namespace mame
             m_class_interfaces.Add(new device_state_interface_pokey(mconfig, this));  //device_state_interface(mconfig, *this),
 
 
-            m_output_type = output_type.LEGACY_LINEAR;
             m_icountRef.i = 0;  //m_icount = 0;
             m_stream = null;
             for (int i = 0; i < m_pot_r_cb.Length; i++)  //m_pot_r_cb{ {*this}, {*this}, {*this}, {*this}, {*this}, {*this}, {*this}, {*this} },
@@ -478,20 +468,44 @@ namespace mame
             m_allpot_r_cb = new devcb_read8(this);
             m_serin_r_cb = new devcb_read8(this);
             m_serout_w_cb = new devcb_write8(this);
+            m_output_type = output_type.LEGACY_LINEAR;
         }
 
 
-        //template <unsigned N, class Object> devcb_base &set_pot_r_callback(Object &&cb) { return m_pot_r_cb[N].set_callback(std::forward<Object>(cb)); }
-        //template <class Object> devcb_base &set_allpot_r_callback(Object &&cb) { return m_allpot_r_cb.set_callback(std::forward<Object>(cb)); }
-        //template <class Object> devcb_base &set_serin_r_callback(Object &&cb) { return m_serin_r_cb.set_callback(std::forward<Object>(cb)); }
-        //template <class Object> devcb_base &set_serout_w_callback(Object &&cb) { return m_serout_w_cb.set_callback(std::forward<Object>(cb)); }
         //template <unsigned N> auto pot_r() { return m_pot_r_cb[N].bind(); }
         //auto allpot_r() { return m_allpot_r_cb.bind(); }
         //auto serin_r() { return m_serin_r_cb.bind(); }
         //auto serout_w() { return m_serout_w_cb.bind(); }
 
-        //template <typename Object> void set_keyboard_callback(Object &&cb) { m_keyboard_r = std::forward<Object>(cb); }
-        //template <typename Object> void set_interrupt_callback(Object &&cb) { m_irq_f = std::forward<Object>(cb); }
+
+        /* k543210 = k5 ... k0 returns bit0: kr1, bit1: kr2 */
+        /* all are, in contrast to actual hardware, ACTIVE_HIGH */
+
+        //typedef device_delegate<uint8_t (uint8_t k543210)> kb_cb_delegate;
+        delegate byte kb_cb_delegate(uint8_t k543210);
+
+        //void set_keyboard_callback(kb_cb_delegate callback) { m_keyboard_r = callback; }
+        //template <class FunctionClass> void set_keyboard_callback(const char *devname, uint8_t (FunctionClass::*callback)(uint8_t), const char *name)
+        //{
+        //    set_keyboard_callback(kb_cb_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
+        //}
+        //template <class FunctionClass> void set_keyboard_callback(uint8_t (FunctionClass::*callback)(uint8_t), const char *name)
+        //{
+        //    set_keyboard_callback(kb_cb_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
+        //}
+
+        //typedef device_delegate<void (int mask)> int_cb_delegate;
+        delegate void int_cb_delegate(int mask);
+
+        //void set_interrupt_callback(int_cb_delegate callback) { m_irq_f = callback; }
+        //template <class FunctionClass> void set_interrupt_callback(const char *devname, void (FunctionClass::*callback)(int), const char *name)
+        //{
+        //    set_interrupt_callback(int_cb_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
+        //}
+        //template <class FunctionClass> void set_interrupt_callback(void (FunctionClass::*callback)(int), const char *name)
+        //{
+        //    set_interrupt_callback(int_cb_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
+        //}
 
 
         //-------------------------------------------------
@@ -503,12 +517,12 @@ namespace mame
             int data;
             int pot;
 
-            synchronize((UInt32)SYNC.SYNC_NOOP); /* force resync */
+            synchronize(SYNC_NOOP); /* force resync */
 
             switch (offset & 15)
             {
-            case (UInt32)POT.POT0_C: case (UInt32)POT.POT1_C: case (UInt32)POT.POT2_C: case (UInt32)POT.POT3_C:
-            case (UInt32)POT.POT4_C: case (UInt32)POT.POT5_C: case (UInt32)POT.POT6_C: case (UInt32)POT.POT7_C:
+            case POT0_C: case POT1_C: case POT2_C: case POT3_C:
+            case POT4_C: case POT5_C: case POT6_C: case POT7_C:
                 pot = (int)(offset & 7);
                 if ((m_ALLPOT & (1 << pot)) != 0)
                 {
@@ -523,7 +537,7 @@ namespace mame
                 }
                 break;
 
-            case (UInt32)POT.ALLPOT_C:
+            case ALLPOT_C:
                 /****************************************************************
                  * If the 2 least significant bits of SKCTL are 0, the ALLPOTs
                  * are disabled (SKRESET). Thanks to MikeJ for pointing this out.
@@ -546,11 +560,11 @@ namespace mame
                 }
                 break;
 
-            case (UInt32)POT.KBCODE_C:
+            case KBCODE_C:
                 data = m_KBCODE;
                 break;
 
-            case (UInt32)POT.RANDOM_C:
+            case RANDOM_C:
                 if ((m_AUDCTL & POLY9) != 0)
                 {
                     data = (int)(m_poly9[m_p9] & 0xff);
@@ -563,21 +577,21 @@ namespace mame
                 }
                 break;
 
-            case (UInt32)POT.SERIN_C:
+            case SERIN_C:
                 if (!m_serin_r_cb.isnull())
                     m_SERIN = m_serin_r_cb.op(offset);
                 data = m_SERIN;
                 LOG("POKEY '{0}' SERIN  {1}\n", tag(), data);
                 break;
 
-            case (UInt32)POT.IRQST_C:
+            case IRQST_C:
                 /* IRQST is an active low input port; we keep it active high */
                 /* internally to ease the (un-)masking of bits */
                 data = m_IRQST ^ 0xff;
                 LOG("POKEY '{0}' IRQST  {1}\n", tag(), data);
                 break;
 
-            case (UInt32)POT.SKSTAT_C:
+            case SKSTAT_C:
                 /* SKSTAT is also an active low input port */
                 data = m_SKSTAT ^ 0xff;
                 LOG("POKEY '{0}' SKSTAT {1}\n", tag(), data);
@@ -599,12 +613,44 @@ namespace mame
         //WRITE8_MEMBER( pokey_device::write )
         public void write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
-            synchronize((UInt32)SYNC.SYNC_WRITE, (int)((offset << 8) | data));
+            synchronize(SYNC_WRITE, (int)((offset << 8) | data));
         }
 
 
         //DECLARE_WRITE_LINE_MEMBER( sid_w ); // pin 24
         //void serin_ready(int after);
+
+
+        // analog output configuration
+        //void set_output_rc(double r, double c, double v)
+        //{
+        //    m_output_type = pokey_device::RC_LOWPASS;
+        //    m_r_pullup = r;
+        //    m_cap = c;
+        //    m_v_ref = v;
+        //}
+
+        /* C ignored, please see pokey.c */
+        //void set_output_opamp(double r, double c, double v)
+        //{
+        //    m_output_type = pokey_device::OPAMP_C_TO_GROUND;
+        //    m_r_pullup = r;
+        //    m_cap = c;
+        //    m_v_ref = v;
+        //}
+
+        public void set_output_opamp_low_pass(double r, double c, double v)
+        {
+            m_output_type = pokey_device.output_type.OPAMP_LOW_PASS;
+            m_r_pullup = r;
+            m_cap = c;
+            m_v_ref = v;
+        }
+
+        //void set_output_discrete()
+        //{
+        //    m_output_type = pokey_device::DISCRETE_VAR_R;
+        //}
 
 
         // device-level overrides
@@ -700,10 +746,10 @@ namespace mame
 
             m_stream = m_disound.stream_alloc(0, 1, (int)clock());
 
-            timer_alloc((UInt32)SYNC.SYNC_WRITE);    /* timer for sync operation */
-            timer_alloc((UInt32)SYNC.SYNC_NOOP);
-            timer_alloc((UInt32)SYNC.SYNC_POT);
-            timer_alloc((UInt32)SYNC.SYNC_SET_IRQST);
+            timer_alloc(SYNC_WRITE);    /* timer for sync operation */
+            timer_alloc(SYNC_NOOP);
+            timer_alloc(SYNC_POT);
+            timer_alloc(SYNC_SET_IRQST);
 
             for (i=0; i<POKEY_CHANNELS; i++)
             {
@@ -742,26 +788,26 @@ namespace mame
 
             // State support
 
-            m_distate.state_add((int)WRITE.AUDF1_C, "AUDF1", m_channel[0].m_AUDF);
-            m_distate.state_add((int)WRITE.AUDC1_C, "AUDC1", m_channel[0].m_AUDC);
-            m_distate.state_add((int)WRITE.AUDF2_C, "AUDF2", m_channel[1].m_AUDF);
-            m_distate.state_add((int)WRITE.AUDC2_C, "AUDC2", m_channel[1].m_AUDC);
-            m_distate.state_add((int)WRITE.AUDF3_C, "AUDF3", m_channel[2].m_AUDF);
-            m_distate.state_add((int)WRITE.AUDC3_C, "AUDC3", m_channel[2].m_AUDC);
-            m_distate.state_add((int)WRITE.AUDF4_C, "AUDF4", m_channel[3].m_AUDF);
-            m_distate.state_add((int)WRITE.AUDC4_C, "AUDC4", m_channel[3].m_AUDC);
-            m_distate.state_add((int)WRITE.AUDCTL_C, "AUDCTL", m_AUDCTL);
+            m_distate.state_add(AUDF1_C, "AUDF1", m_channel[0].m_AUDF);
+            m_distate.state_add(AUDC1_C, "AUDC1", m_channel[0].m_AUDC);
+            m_distate.state_add(AUDF2_C, "AUDF2", m_channel[1].m_AUDF);
+            m_distate.state_add(AUDC2_C, "AUDC2", m_channel[1].m_AUDC);
+            m_distate.state_add(AUDF3_C, "AUDF3", m_channel[2].m_AUDF);
+            m_distate.state_add(AUDC3_C, "AUDC3", m_channel[2].m_AUDC);
+            m_distate.state_add(AUDF4_C, "AUDF4", m_channel[3].m_AUDF);
+            m_distate.state_add(AUDC4_C, "AUDC4", m_channel[3].m_AUDC);
+            m_distate.state_add(AUDCTL_C, "AUDCTL", m_AUDCTL);
 #if false
             state_add(STIMER_C, "STIMER", m_STIMER);
             state_add(SKREST_C, "SKREST_C", m_SKREST);
             state_add(POTGO_C, "POTGO", m_POTGO_C);
 #endif
-            m_distate.state_add((int)WRITE.SEROUT_C, "SEROUT", m_SEROUT);
-            m_distate.state_add((int)WRITE.IRQEN_C, "IRQEN", m_IRQEN);
-            m_distate.state_add((int)WRITE.SKCTL_C, "SKCTL", m_SKCTL);
+            m_distate.state_add(SEROUT_C, "SEROUT", m_SEROUT);
+            m_distate.state_add(IRQEN_C, "IRQEN", m_IRQEN);
+            m_distate.state_add(SKCTL_C, "SKCTL", m_SKCTL);
 
             // set our instruction counter
-            execute().set_icountptr(m_icountRef);
+            set_icountptr(m_icountRef);
         }
 
 
@@ -795,7 +841,7 @@ namespace mame
         }
 
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)  /*, void *ptr)*/
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
         {
             switch (id)
             {
@@ -826,25 +872,25 @@ namespace mame
                         m_irq_f(IRQ_SERIN);
                 }
                 break;
-            case (UInt32)SYNC.SYNC_WRITE:
+            case SYNC_WRITE:
                 {
                     offs_t offset = (offs_t)((param >> 8) & 0xff);
                     byte data = (byte)(param & 0xff);
                     write_internal(offset, data);
                 }
                 break;
-            case (UInt32)SYNC.SYNC_NOOP:
+            case SYNC_NOOP:
                 /* do nothing, caused by a forced resync */
                 break;
-            case (UInt32)SYNC.SYNC_POT:
+            case SYNC_POT:
                 //logerror("x %02x \n", (param & 0x20));
                 m_ALLPOT |= (byte)(param & 0xff);
                 break;
-            case (UInt32)SYNC.SYNC_SET_IRQST:
+            case SYNC_SET_IRQST:
                 m_IRQST |=  (byte)(param & 0xff);
                 break;
             default:
-                global.assert_always(false, "Unknown id in pokey_device::device_timer");
+                assert_always(false, "Unknown id in pokey_device::device_timer");
                 break;
             }
         }
@@ -1000,7 +1046,7 @@ namespace mame
 
                 switch (m_kbd_cnt)
                 {
-                case (byte)POK.POK_KEY_BREAK:
+                case POK_KEY_BREAK:
                     if ((ret & 2) != 0)
                     {
                         /* check if the break IRQ is enabled */
@@ -1012,7 +1058,7 @@ namespace mame
                         }
                     }
                     break;
-                case (byte)POK.POK_KEY_SHIFT:
+                case POK_KEY_SHIFT:
                     m_kbd_latch = (byte)((m_kbd_latch & 0xbf) | ((ret & 2) << 5));
                     if ((m_kbd_latch & 0x40) != 0)
                         m_SKSTAT |= SK_SHIFT;
@@ -1020,7 +1066,7 @@ namespace mame
                         m_SKSTAT &= unchecked((byte)~SK_SHIFT);
                     /* FIXME: sync ? */
                     break;
-                case (byte)POK.POK_KEY_CTRL:
+                case POK_KEY_CTRL:
                     m_kbd_latch = (byte)((m_kbd_latch & 0x7f) | ((ret & 2) << 6));
                     break;
                 }
@@ -1097,7 +1143,7 @@ namespace mame
                     /* latching is emulated in read */
                 }
             }
-            synchronize((UInt32)SYNC.SYNC_POT, upd);
+            synchronize(SYNC_POT, upd);
         }
 
 
@@ -1324,47 +1370,47 @@ namespace mame
             /* determine which address was changed */
             switch (offset & 15)
             {
-            case (UInt32)WRITE.AUDF1_C:
+            case AUDF1_C:
                 LOG_SOUND("POKEY '{0}' AUDF1  {1}\n", tag(), data);  // $%02x
                 m_channel[CHAN1].m_AUDF = data;
                 break;
 
-            case (UInt32)WRITE.AUDC1_C:
+            case AUDC1_C:
                 LOG_SOUND("POKEY '{0}' AUDC1  {1} ({2})\n", tag(), data, audc2str(data));  // $%02x (%s)
                 m_channel[CHAN1].m_AUDC = data;
                 break;
 
-            case (UInt32)WRITE.AUDF2_C:
+            case AUDF2_C:
                 LOG_SOUND("POKEY '{0}' AUDF2  {1}\n", tag(), data);
                 m_channel[CHAN2].m_AUDF = data;
                 break;
 
-            case (UInt32)WRITE.AUDC2_C:
+            case AUDC2_C:
                 LOG_SOUND("POKEY '{0}' AUDC2  {1} ({2})\n", tag(), data, audc2str(data));
                 m_channel[CHAN2].m_AUDC = data;
                 break;
 
-            case (UInt32)WRITE.AUDF3_C:
+            case AUDF3_C:
                 LOG_SOUND("POKEY '{0}' AUDF3  {1}\n", tag(), data);
                 m_channel[CHAN3].m_AUDF = data;
                 break;
 
-            case (UInt32)WRITE.AUDC3_C:
+            case AUDC3_C:
                 LOG_SOUND("POKEY '{0}' AUDC3  {1} ({2})\n", tag(), data, audc2str(data));
                 m_channel[CHAN3].m_AUDC = data;
                 break;
 
-            case (UInt32)WRITE.AUDF4_C:
+            case AUDF4_C:
                 LOG_SOUND("POKEY '{0}' AUDF4  {1}\n", tag(), data);
                 m_channel[CHAN4].m_AUDF = data;
                 break;
 
-            case (UInt32)WRITE.AUDC4_C:
+            case AUDC4_C:
                 LOG_SOUND("POKEY '{0}' AUDC4  {1} ({2})\n", tag(), data, audc2str(data));
                 m_channel[CHAN4].m_AUDC = data;
                 break;
 
-            case (UInt32)WRITE.AUDCTL_C:
+            case AUDCTL_C:
                 if( data == m_AUDCTL )
                     return;
                 LOG_SOUND("POKEY '{0}' AUDCTL {1} ({2})\n", tag(), data, audctl2str(data));
@@ -1372,7 +1418,7 @@ namespace mame
 
                 break;
 
-            case (UInt32)WRITE.STIMER_C:
+            case STIMER_C:
                 LOG_TIMER("POKEY '{0}' STIMER {1}\n", tag(), data);
 
                 /* From the pokey documentation:
@@ -1389,18 +1435,18 @@ namespace mame
 
                 break;
 
-            case (UInt32)WRITE.SKREST_C:
+            case SKREST_C:
                 /* reset SKSTAT */
                 LOG("POKEY '{0}' SKREST {1}\n", tag(), data);
                 m_SKSTAT &= unchecked((byte)~(SK_FRAME|SK_OVERRUN|SK_KBERR));
                 break;
 
-            case (UInt32)WRITE.POTGO_C:
+            case POTGO_C:
                 LOG("POKEY '{0}' POTGO  {1}\n", tag(), data);
                 pokey_potgo();
                 break;
 
-            case (UInt32)WRITE.SEROUT_C:
+            case SEROUT_C:
                 LOG("POKEY '{0}' SEROUT {1}\n", tag(), data);
                 m_serout_w_cb.op(offset, data);
                 m_SKSTAT |= SK_SEROUT;
@@ -1414,7 +1460,7 @@ namespace mame
                 timer_set(attotime.from_usec(2000), 4);// FUNC(pokey_serout_complete), 0, p);
                 break;
 
-            case (UInt32)WRITE.IRQEN_C:
+            case IRQEN_C:
                 LOG("POKEY '{0}' IRQEN  {1}\n", tag(), data);
 
                 /* acknowledge one or more IRQST bits ? */
@@ -1433,15 +1479,15 @@ namespace mame
                 }
                 break;
 
-            case (UInt32)WRITE.SKCTL_C:
+            case SKCTL_C:
                 if( data == m_SKCTL )
                     return;
                 LOG("POKEY '{0}' SKCTL  {1}\n", tag(), data);
                 m_SKCTL = data;
                 if( (data & SK_RESET) == 0 )
                 {
-                    write_internal((UInt32)WRITE.IRQEN_C,  0);
-                    write_internal((UInt32)WRITE.SKREST_C, 0);
+                    write_internal(IRQEN_C,  0);
+                    write_internal(SKREST_C, 0);
                     /****************************************************************
                      * If the 2 least significant bits of SKCTL are 0, the random
                      * number generator is disabled (SKRESET). Thanks to Eric Smith

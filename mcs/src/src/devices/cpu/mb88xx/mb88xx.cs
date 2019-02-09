@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using space_config_vector = mame.std_vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
+using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -16,64 +16,6 @@ using uint64_t = System.UInt64;
 
 namespace mame
 {
-    enum MB88_REG
-    {
-        MB88_PC=1,
-        MB88_PA,
-        MB88_FLAGS,
-        MB88_SI,
-        MB88_A,
-        MB88_X,
-        MB88_Y,
-        MB88_PIO,
-        MB88_TH,
-        MB88_TL,
-        MB88_SB
-    }
-
-
-    public static class mb88xx_global
-    {
-        /***************************************************************************
-            PORT CONFIGURATION
-        ***************************************************************************/
-
-        // K (K3-K0): input-only port
-        public static void MCFG_MB88XX_READ_K_CB(device_t device, read8_delegate read8_devcb) { ((mb88_cpu_device)device).set_read_k_callback(read8_devcb); }
-
-        // O (O7-O4 = OH, O3-O0 = OL): output through PLA
-        public static void MCFG_MB88XX_WRITE_O_CB(device_t device, write8_delegate write8_devcb) { ((mb88_cpu_device)device).set_write_o_callback(write8_devcb); }
-
-        // P (P3-P0): output-only port
-        public static void MCFG_MB88XX_WRITE_P_CB(device_t device, write8_delegate write8_devcb) { ((mb88_cpu_device)device).set_write_p_callback(write8_devcb); }
-
-        // R0 (R3-R0): input/output port
-        public static void MCFG_MB88XX_READ_R0_CB(device_t device, read8_delegate read8_devcb) { ((mb88_cpu_device)device).set_read_r_callback(0, read8_devcb); }
-        //#define MCFG_MB88XX_WRITE_R0_CB(_devcb)             devcb = &mb88_cpu_device::set_write_r_callback(*device, 0, DEVCB_##_devcb);
-
-        // R1 (R7-R4): input/output port
-        public static void MCFG_MB88XX_READ_R1_CB(device_t device, read8_delegate read8_devcb) { ((mb88_cpu_device)device).set_read_r_callback(1, read8_devcb); }
-        public static void MCFG_MB88XX_WRITE_R1_CB(device_t device, write8_delegate write8_devcb) { ((mb88_cpu_device)device).set_write_r_callback(1, write8_devcb); }
-
-        // R2 (R11-R8): input/output port
-        public static void MCFG_MB88XX_READ_R2_CB(device_t device, read8_delegate read8_devcb) { ((mb88_cpu_device)device).set_read_r_callback(2, read8_devcb); }
-        //#define MCFG_MB88XX_WRITE_R2_CB(_devcb)             devcb = &mb88_cpu_device::set_write_r_callback(*device, 2, DEVCB_##_devcb);
-
-        // R3 (R15-R12): input/output port
-        public static void MCFG_MB88XX_READ_R3_CB(device_t device, read8_delegate read8_devcb) { ((mb88_cpu_device)device).set_read_r_callback(3, read8_devcb); }
-        //#define MCFG_MB88XX_WRITE_R3_CB(_devcb)             devcb = &mb88_cpu_device::set_write_r_callback(*device, 3, DEVCB_##_devcb);
-
-        // SI: serial input
-        //#define MCFG_MB88XX_READ_SI_CB(_devcb)             devcb = &mb88_cpu_device::set_read_si_callback(*device, DEVCB_##_devcb);
-
-        // SO: serial output
-        //#define MCFG_MB88XX_WRITE_SO_CB(_devcb)             devcb = &mb88_cpu_device::set_write_so_callback(*device, DEVCB_##_devcb);
-
-        // Configure 32 byte PLA; if nullptr (default) assume direct output
-        //#define MCFG_MB88XX_OUTPUT_PLA(_pla)             mb88_cpu_device::set_pla(*device, _pla);
-    }
-
-
     public class device_execute_interface_mb88 : device_execute_interface
     {
         public device_execute_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
@@ -82,21 +24,8 @@ namespace mame
         public override uint32_t execute_min_cycles() { return 1; }
         public override uint32_t execute_max_cycles() { return 3; }
         public override uint32_t execute_input_lines() { return 1; }
-
-        public override void execute_run()
-        {
-            mb88_cpu_device mb88 = (mb88_cpu_device)device();
-
-            mb88.device_execute_interface_execute_run();
-        }
-
-        public override void execute_set_input(int inputnum, int state)
-        {
-            mb88_cpu_device mb88 = (mb88_cpu_device)device();
-
-            mb88.device_execute_interface_execute_set_input(state);
-        }
-
+        public override void execute_run() { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_execute_interface_execute_run(); }
+        public override void execute_set_input(int inputnum, int state) { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_execute_interface_execute_set_input(state); }
         public override uint64_t execute_clocks_to_cycles(uint64_t clocks) { return (clocks + 6 - 1) / 6; }
         public override uint64_t execute_cycles_to_clocks(uint64_t cycles) { return (cycles * 6); }
     }
@@ -107,16 +36,7 @@ namespace mame
         public device_memory_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_memory_interface overrides
-        public override space_config_vector memory_space_config()
-        {
-            mb88_cpu_device mb88 = (mb88_cpu_device)device();
-
-            return new space_config_vector()
-            {
-                global.make_pair(emumem_global.AS_PROGRAM, mb88.program_config()),
-                global.make_pair(emumem_global.AS_DATA,    mb88.data_config())
-            };
-        }
+        public override space_config_vector memory_space_config() { mb88_cpu_device mb88 = (mb88_cpu_device)device(); return mb88.device_memory_interface_memory_space_config(); }
     }
 
 
@@ -125,26 +45,9 @@ namespace mame
         public device_state_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_state_interface overrides
-        public override void state_import(device_state_entry entry)
-        {
-            mb88_cpu_device mb88 = (mb88_cpu_device)device();
-
-            mb88.device_state_interface_state_import(entry);
-        }
-
-        public override void state_export(device_state_entry entry)
-        {
-            mb88_cpu_device mb88 = (mb88_cpu_device)device();
-
-            mb88.device_state_interface_state_export(entry);
-        }
-
-        public override void state_string_export(device_state_entry entry, out string str)
-        {
-            mb88_cpu_device mb88 = (mb88_cpu_device)device();
-
-            mb88.device_state_interface_state_string_export(entry, out str);
-        }
+        public override void state_import(device_state_entry entry) { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_state_interface_state_import(entry); }
+        public override void state_export(device_state_entry entry) { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_state_interface_state_export(entry); }
+        public override void state_string_export(device_state_entry entry, out string str) { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_state_interface_state_string_export(entry, out str); }
     }
 
 
@@ -153,15 +56,28 @@ namespace mame
         public device_disasm_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
         // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler()
-        {
-            throw new emu_unimplemented();
-        }
+        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
     }
 
 
-    class mb88_cpu_device : cpu_device
+    public class mb88_cpu_device : cpu_device
     {
+        //enum
+        //{
+        const int MB88_PC  = 1;
+        const int MB88_PA  = 2;
+        const int MB88_FLAGS = 3;
+        const int MB88_SI  = 4;
+        const int MB88_A   = 5;
+        const int MB88_X   = 6;
+        const int MB88_Y   = 7;
+        const int MB88_PIO = 8;
+        const int MB88_TH  = 9;
+        const int MB88_TL  = 10;
+        const int MB88_SB  = 11;
+        //}
+
+
         /***************************************************************************
             ADDRESS MAPS
         ***************************************************************************/
@@ -324,26 +240,28 @@ namespace mame
 
 
         // configuration helpers
-        //template <class Object> devcb_base &set_read_k_callback(Object &&cb) { return m_read_k.set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_read_k_callback(read8_delegate cb) { return m_read_k.set_callback(this, cb); }
-        //template <class Object> devcb_base &set_write_o_callback(Object &&cb) { return m_write_o.set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_write_o_callback(write8_delegate cb) { return m_write_o.set_callback(this, cb); }
-        //template <class Object> devcb_base &set_write_p_callback(Object &&cb) { return m_write_p.set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_write_p_callback(write8_delegate cb) { return m_write_p.set_callback(this, cb); }
-        //template <class Object> devcb_base &set_read_r_callback(int n, Object &&cb) { assert(n >= 0 && n < 4); return m_read_r[n].set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_read_r_callback(int n, read8_delegate cb) { global.assert(n >= 0 && n < 4); return m_read_r[n].set_callback(this, cb); }
-        //template <class Object> devcb_base &set_write_r_callback(int n, Object &&cb) { assert(n >= 0 && n < 4); return m_write_r[n].set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_write_r_callback(int n, write8_delegate cb) { global.assert(n >= 0 && n < 4); return m_write_r[n].set_callback(this, cb); }
-        //template <class Object> devcb_base &set_read_si_callback(Object &&cb) { return m_read_si.set_callback(std::forward<Object>(cb)); }
-        //template <class Object> devcb_base &set_write_so_callback(Object &&cb) { return m_write_so.set_callback(std::forward<Object>(cb)); }
+
+        // K (K3-K0): input-only port
+        public devcb_read.binder read_k() { return m_read_k.bind(); }  //auto read_k() { return m_read_k.bind(); }
+
+        // O (O7-O4 = OH, O3-O0 = OL): output through PLA
+        public devcb_write.binder write_o() { return m_write_o.bind(); }  //auto write_o() { return m_write_o.bind(); }
+
+        // P (P3-P0): output-only port
+        public devcb_write.binder write_p() { return m_write_p.bind(); }  //auto write_p() { return m_write_p.bind(); }
+
+        // R0 (R3-R0): input/output port
+        public devcb_read.binder read_r(int Port) { return m_read_r[Port].bind(); }  //template <std::size_t Port> auto read_r() { return m_read_r[Port].bind(); }
+        public devcb_write.binder write_r(int Port) { return m_write_r[Port].bind(); }  //template <std::size_t Port> auto write_r() { return m_write_r[Port].bind(); }
+
+        // SI: serial input
+        //auto read_si() { return m_read_si.bind(); }
+
+        // SO: serial output
+        //auto write_so() { return m_write_so.bind(); }
+
+
         //static void set_pla(device_t &device, UINT8 *pla) { downcast<mb88_cpu_device &>(device).m_PLA = pla; }
-
-
-        // getters
-        public address_space_config program_config() { return m_program_config; }
-        public address_space_config data_config() { return m_data_config; }
-        public int icount() { return m_icountRef.i; }
-        public intref icountRef() { return m_icountRef; }
 
 
         //DECLARE_WRITE_LINE_MEMBER( clock_w );
@@ -370,9 +288,9 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_mb88>();
 
 
-            m_program = m_dimemory.space(emumem_global.AS_PROGRAM);
+            m_program = m_dimemory.space(AS_PROGRAM);
             m_cache = m_program.cache(0, 0, (int)endianness_t.ENDIANNESS_BIG);
-            m_data = m_dimemory.space(emumem_global.AS_DATA);
+            m_data = m_dimemory.space(AS_DATA);
 
             m_read_k.resolve_safe(0);
             m_write_o.resolve_safe();
@@ -413,23 +331,32 @@ namespace mame
             save_item(m_SBcount, "m_SBcount");
             save_item(m_pending_interrupt, "m_pending_interrupt");
 
-            m_distate.state_add( (int)MB88_REG.MB88_PC,  "PC",  m_PC).formatstr("%02X");
-            m_distate.state_add( (int)MB88_REG.MB88_PA,  "PA",  m_PA).formatstr("%02X");
-            m_distate.state_add( (int)MB88_REG.MB88_SI,  "SI",  m_SI).formatstr("%01X");
-            m_distate.state_add( (int)MB88_REG.MB88_A,   "A",   m_A).formatstr("%01X");
-            m_distate.state_add( (int)MB88_REG.MB88_X,   "X",   m_X).formatstr("%01X");
-            m_distate.state_add( (int)MB88_REG.MB88_Y,   "Y",   m_Y).formatstr("%01X");
-            m_distate.state_add( (int)MB88_REG.MB88_PIO, "PIO", m_pio).formatstr("%02X");
-            m_distate.state_add( (int)MB88_REG.MB88_TH,  "TH",  m_TH).formatstr("%01X");
-            m_distate.state_add( (int)MB88_REG.MB88_TL,  "TL",  m_TL).formatstr("%01X");
-            m_distate.state_add( (int)MB88_REG.MB88_SB,  "SB",  m_SB).formatstr("%01X");
+            m_distate.state_add( MB88_PC,  "PC",  m_PC).formatstr("%02X");
+            m_distate.state_add( MB88_PA,  "PA",  m_PA).formatstr("%02X");
+            m_distate.state_add( MB88_SI,  "SI",  m_SI).formatstr("%01X");
+            m_distate.state_add( MB88_A,   "A",   m_A).formatstr("%01X");
+            m_distate.state_add( MB88_X,   "X",   m_X).formatstr("%01X");
+            m_distate.state_add( MB88_Y,   "Y",   m_Y).formatstr("%01X");
+            m_distate.state_add( MB88_PIO, "PIO", m_pio).formatstr("%02X");
+            m_distate.state_add( MB88_TH,  "TH",  m_TH).formatstr("%01X");
+            m_distate.state_add( MB88_TL,  "TL",  m_TL).formatstr("%01X");
+            m_distate.state_add( MB88_SB,  "SB",  m_SB).formatstr("%01X");
 
-            m_distate.state_add( (int)STATE.STATE_GENPC, "GENPC", m_debugger_pc).callimport().callexport().noshow();
-            m_distate.state_add( (int)STATE.STATE_GENPCBASE, "CURPC", m_debugger_pc ).callimport().callexport().noshow();
-            m_distate.state_add( (int)STATE.STATE_GENFLAGS, "GENFLAGS", m_debugger_flags).callimport().callexport().formatstr("%6s").noshow();
+            m_distate.state_add( STATE_GENPC, "GENPC", m_debugger_pc).callimport().callexport().noshow();
+            m_distate.state_add( STATE_GENPCBASE, "CURPC", m_debugger_pc ).callimport().callexport().noshow();
+            m_distate.state_add( STATE_GENFLAGS, "GENFLAGS", m_debugger_flags).callimport().callexport().formatstr("%6s").noshow();
 
-            execute().set_icountptr(icountRef());
+            set_icountptr(m_icountRef);
         }
+
+
+        protected override void device_stop()
+        {
+            if (m_data != null) m_data.Dispose();
+            if (m_cache != null) m_cache.Dispose();
+            if (m_program != null) m_program.Dispose();
+        }
+
 
         protected override void device_reset()
         {
@@ -457,158 +384,21 @@ namespace mame
         }
 
 
-        // moved to device_execute_interface_mb88
         // device_execute_interface overrides
         //virtual UINT32 execute_min_cycles() const { return 1; }
         //virtual UINT32 execute_max_cycles() const { return 3; }
         //virtual UINT32 execute_input_lines() const { return 1; }
-        //virtual void execute_run();
-        //virtual void execute_set_input(int inputnum, int state);
-        //virtual UINT64 execute_clocks_to_cycles(UINT64 clocks) const { return (clocks + 6 - 1) / 6; }
-        //virtual UINT64 execute_cycles_to_clocks(UINT64 cycles) const { return (cycles * 6); }
-
-
-        // moved to device_memory_interface_mb88
-        // device_memory_interface overrides
-        //virtual const space_config_vector memory_space_config(address_spacenum spacenum = AS_0) const;
-
-
-        // moved to device_state_interface_mb88
-        // device_state_interface overrides
-        //virtual void state_string_export(const device_state_entry &entry, astring &string);
-        //virtual void state_import(const device_state_entry &entry);
-        //virtual void state_export(const device_state_entry &entry);
-
-
-        // moved to device_disasm_interface_mb88
-        // device_disasm_interface overrides
-        //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
-
-
-        //TIMER_CALLBACK_MEMBER( mb88_cpu_device::serial_timer )
-        void serial_timer(object ptr, int param)
-        {
-            m_SBcount++;
-
-            /* if we get too many interrupts with no servicing, disable the timer
-               until somebody does something */
-            if (m_SBcount >= SERIAL_DISABLE_THRESH)
-                m_serial.adjust(attotime.never);
-
-            /* only read if not full; this is needed by the Namco 52xx to ensure that
-               the program can write to S and recover the value even if serial is enabled */
-            if (m_sf == 0)
-            {
-                m_SB = (byte)((m_SB >> 1) | (m_read_si.op() != 0 ? 8 : 0));
-
-                if (m_SBcount >= 4)
-                {
-                    m_sf = 1;
-                    m_pending_interrupt |= INT_CAUSE_SERIAL;
-                }
-            }
-        }
-
-        int pla(int inA, int inB)
-        {
-            int index = ((inB&1) << 4) | (inA&0x0f);
-
-            if (m_PLA != null)
-                return m_PLA[index];
-
-            return index;
-        }
-
-        void update_pio_enable( uint8_t newpio )
-        {
-            /* if the serial state has changed, configure the timer */
-            if (((m_pio ^ newpio) & 0x30) != 0)
-            {
-                if ((newpio & 0x30) == 0)
-                    m_serial.adjust(attotime.never);
-                else if ((newpio & 0x30) == 0x20)
-                    m_serial.adjust(attotime.from_hz(clock() / SERIAL_PRESCALE), 0, attotime.from_hz(clock() / SERIAL_PRESCALE));
-                else
-                    throw new emu_fatalerror("mb88xx: update_pio_enable set serial enable to unsupported value {0}\n", newpio & 0x30);
-            }
-
-            m_pio = newpio;
-        }
-
-        void increment_timer()
-        {
-            m_TL = (byte)((m_TL + 1) & 0x0f);
-            if (m_TL == 0)
-            {
-                m_TH = (byte)((m_TH + 1) & 0x0f);
-                if (m_TH == 0)
-                {
-                    m_vf = 1;
-                    m_pending_interrupt |= INT_CAUSE_TIMER;
-                }
-            }
-        }
-
-        void update_pio( int cycles )
-        {
-            /* TODO: improve/validate serial and timer support */
-
-            /* internal clock enable */
-            if (( m_pio & 0x80 ) != 0)
-            {
-                m_TP += (byte)cycles;
-                while (m_TP >= TIMER_PRESCALE)
-                {
-                    m_TP -= TIMER_PRESCALE;
-                    increment_timer();
-                }
-            }
-
-            /* process pending interrupts */
-            if ((m_pending_interrupt & m_pio) != 0)
-            {
-                m_SP[m_SI] = GETPC();
-                m_SP[m_SI] |= (UInt16)(TEST_CF() << 15);
-                m_SP[m_SI] |= (UInt16)(TEST_ZF() << 14);
-                m_SP[m_SI] |= (UInt16)(TEST_ST() << 13);
-                m_SI = (byte)(( m_SI + 1 ) & 3);
-
-                /* the datasheet doesn't mention interrupt vectors but
-                the Arabian MCU program expects the following */
-                if ((m_pending_interrupt & m_pio & INT_CAUSE_EXTERNAL) != 0)
-                {
-                    /* if we have a live external source, call the irqcallback */
-                    m_diexec.standard_irq_callback( 0 );
-                    m_PC = 0x02;
-                }
-                else if ((m_pending_interrupt & m_pio & INT_CAUSE_TIMER) != 0)
-                {
-                    m_PC = 0x04;
-                }
-                else if ((m_pending_interrupt & m_pio & INT_CAUSE_SERIAL) != 0)
-                {
-                    m_PC = 0x06;
-                }
-
-                m_PA = 0x00;
-                m_st = 1;
-                m_pending_interrupt = 0;
-
-                CYCLES(3); /* ? */
-            }
-        }
-
 
         public void device_execute_interface_execute_run()
         {
-            while (icount() > 0)
+            while (m_icountRef.i > 0)
             {
                 byte opcode;
                 byte arg;
                 byte oc;
 
                 /* fetch the opcode */
-                execute().debugger_instruction_hook(GETPC());
+                debugger_instruction_hook(GETPC());
                 opcode = READOP(GETPC());
 
                 /* increment the PC */
@@ -1124,19 +914,35 @@ namespace mame
         public void device_execute_interface_execute_set_input(int state)
         {
             /* on falling edge trigger interrupt */
-            if ( (m_pio & 0x04) != 0 && m_nf != 0 && state == (int)line_state.CLEAR_LINE )
+            if ( (m_pio & 0x04) != 0 && m_nf != 0 && state == CLEAR_LINE )
             {
                 m_pending_interrupt |= INT_CAUSE_EXTERNAL;
             }
 
-            m_nf = (state != (int)line_state.CLEAR_LINE) ? (byte)1 : (byte)0;
+            m_nf = (state != CLEAR_LINE) ? (byte)1 : (byte)0;
         }
 
+        //virtual UINT64 execute_clocks_to_cycles(UINT64 clocks) const { return (clocks + 6 - 1) / 6; }
+        //virtual UINT64 execute_cycles_to_clocks(UINT64 cycles) const { return (cycles * 6); }
+
+
+        // device_memory_interface overrides
+        public space_config_vector device_memory_interface_memory_space_config()
+        {
+            return new space_config_vector()
+            {
+                std.make_pair(AS_PROGRAM, m_program_config),
+                std.make_pair(AS_DATA,    m_data_config)
+            };
+        }
+
+
+        // device_state_interface overrides
         public void device_state_interface_state_import(device_state_entry entry)
         {
             switch (entry.index())
             {
-                case (int)STATE.STATE_GENFLAGS:
+                case STATE_GENFLAGS:
                     m_st = (m_debugger_flags & 0x01) != 0 ? (byte)1 : (byte)0;
                     m_zf = (m_debugger_flags & 0x02) != 0 ? (byte)1 : (byte)0;
                     m_cf = (m_debugger_flags & 0x04) != 0 ? (byte)1 : (byte)0;
@@ -1145,8 +951,8 @@ namespace mame
                     m_nf = (m_debugger_flags & 0x20) != 0 ? (byte)1 : (byte)0;
                     break;
 
-                case (int)STATE.STATE_GENPC:
-                case (int)STATE.STATE_GENPCBASE:
+                case STATE_GENPC:
+                case STATE_GENPCBASE:
                     m_PC = (byte)(m_debugger_pc & 0x3f);
                     m_PA = (byte)(( m_debugger_pc >> 6 ) & 0x1f);
                     break;
@@ -1157,7 +963,7 @@ namespace mame
         {
             switch (entry.index())
             {
-                case (int)STATE.STATE_GENFLAGS:
+                case STATE_GENFLAGS:
                     m_debugger_flags = 0;
                     if (TEST_ST() != 0) m_debugger_flags |= 0x01;
                     if (TEST_ZF() != 0) m_debugger_flags |= 0x02;
@@ -1167,8 +973,8 @@ namespace mame
                     if (TEST_NF() != 0) m_debugger_flags |= 0x20;
                     break;
 
-                case (int)STATE.STATE_GENPC:
-                case (int)STATE.STATE_GENPCBASE:
+                case STATE_GENPC:
+                case STATE_GENPCBASE:
                     m_debugger_pc = GETPC();
                     break;
             }
@@ -1179,7 +985,7 @@ namespace mame
             str = "";
             switch (entry.index())
             {
-                case (int)STATE.STATE_GENFLAGS:
+                case STATE_GENFLAGS:
                     str = string.Format("{0}{1}{2}{3}{4}{5}",
                             TEST_ST() != 0 ? 'T' : 't',
                             TEST_ZF() != 0 ? 'Z' : 'z',
@@ -1188,6 +994,125 @@ namespace mame
                             TEST_SF() != 0 ? 'S' : 's',
                             TEST_NF() != 0 ? 'I' : 'i');
                     break;
+            }
+        }
+
+
+        // moved to device_disasm_interface_mb88
+        // device_disasm_interface overrides
+        //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
+
+
+        //TIMER_CALLBACK_MEMBER( mb88_cpu_device::serial_timer )
+        void serial_timer(object ptr, int param)
+        {
+            m_SBcount++;
+
+            /* if we get too many interrupts with no servicing, disable the timer
+               until somebody does something */
+            if (m_SBcount >= SERIAL_DISABLE_THRESH)
+                m_serial.adjust(attotime.never);
+
+            /* only read if not full; this is needed by the Namco 52xx to ensure that
+               the program can write to S and recover the value even if serial is enabled */
+            if (m_sf == 0)
+            {
+                m_SB = (byte)((m_SB >> 1) | (m_read_si.op() != 0 ? 8 : 0));
+
+                if (m_SBcount >= 4)
+                {
+                    m_sf = 1;
+                    m_pending_interrupt |= INT_CAUSE_SERIAL;
+                }
+            }
+        }
+
+        int pla(int inA, int inB)
+        {
+            int index = ((inB&1) << 4) | (inA&0x0f);
+
+            if (m_PLA != null)
+                return m_PLA[index];
+
+            return index;
+        }
+
+        void update_pio_enable( uint8_t newpio )
+        {
+            /* if the serial state has changed, configure the timer */
+            if (((m_pio ^ newpio) & 0x30) != 0)
+            {
+                if ((newpio & 0x30) == 0)
+                    m_serial.adjust(attotime.never);
+                else if ((newpio & 0x30) == 0x20)
+                    m_serial.adjust(attotime.from_hz(clock() / SERIAL_PRESCALE), 0, attotime.from_hz(clock() / SERIAL_PRESCALE));
+                else
+                    throw new emu_fatalerror("mb88xx: update_pio_enable set serial enable to unsupported value {0}\n", newpio & 0x30);
+            }
+
+            m_pio = newpio;
+        }
+
+        void increment_timer()
+        {
+            m_TL = (byte)((m_TL + 1) & 0x0f);
+            if (m_TL == 0)
+            {
+                m_TH = (byte)((m_TH + 1) & 0x0f);
+                if (m_TH == 0)
+                {
+                    m_vf = 1;
+                    m_pending_interrupt |= INT_CAUSE_TIMER;
+                }
+            }
+        }
+
+        void update_pio( int cycles )
+        {
+            /* TODO: improve/validate serial and timer support */
+
+            /* internal clock enable */
+            if (( m_pio & 0x80 ) != 0)
+            {
+                m_TP += (byte)cycles;
+                while (m_TP >= TIMER_PRESCALE)
+                {
+                    m_TP -= TIMER_PRESCALE;
+                    increment_timer();
+                }
+            }
+
+            /* process pending interrupts */
+            if ((m_pending_interrupt & m_pio) != 0)
+            {
+                m_SP[m_SI] = GETPC();
+                m_SP[m_SI] |= (UInt16)(TEST_CF() << 15);
+                m_SP[m_SI] |= (UInt16)(TEST_ZF() << 14);
+                m_SP[m_SI] |= (UInt16)(TEST_ST() << 13);
+                m_SI = (byte)(( m_SI + 1 ) & 3);
+
+                /* the datasheet doesn't mention interrupt vectors but
+                the Arabian MCU program expects the following */
+                if ((m_pending_interrupt & m_pio & INT_CAUSE_EXTERNAL) != 0)
+                {
+                    /* if we have a live external source, call the irqcallback */
+                    m_diexec.standard_irq_callback( 0 );
+                    m_PC = 0x02;
+                }
+                else if ((m_pending_interrupt & m_pio & INT_CAUSE_TIMER) != 0)
+                {
+                    m_PC = 0x04;
+                }
+                else if ((m_pending_interrupt & m_pio & INT_CAUSE_SERIAL) != 0)
+                {
+                    m_PC = 0x06;
+                }
+
+                m_PA = 0x00;
+                m_st = 1;
+                m_pending_interrupt = 0;
+
+                CYCLES(3); /* ? */
             }
         }
     }

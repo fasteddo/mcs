@@ -36,6 +36,7 @@ namespace mame
         // general overridables
         void init(running_machine machine);
         void update(bool skip_redraw);
+        void set_verbose(bool print_verbose);
 
         // debugger overridables
         //virtual void init_debugger() = 0;
@@ -51,7 +52,7 @@ namespace mame
 
         // video overridables
         void add_audio_to_recording(ListPointer<int16_t> buffer, int samples_this_frame);  //const int16_t *buffer, int samples_this_frame) = 0;
-        std_vector<ui.menu_item> get_slider_list();
+        std.vector<ui.menu_item> get_slider_list();
 
         // font interface
         osd_font font_alloc();

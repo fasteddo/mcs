@@ -4,36 +4,45 @@
 using System;
 using System.Collections.Generic;
 
+using bitmap_ptr = mame.bitmap_argb32;
+using texture_ptr = mame.render_texture;
+
 
 namespace mame.ui
 {
     public class widgets_manager
     {
         //using bitmap_ptr = std::unique_ptr<bitmap_argb32>;
-        //using texture_ptr = std::unique_ptr<render_texture, std::function<void(render_texture *)> >;
+        //using texture_ptr = std::unique_ptr<render_texture, texture_destroyer>;
 
 
-        bitmap_argb32 m_hilight_bitmap;  // bitmap_ptr  m_hilight_bitmap;
-        render_texture m_hilight_texture;  // texture_ptr m_hilight_texture;
-        bitmap_argb32 m_hilight_main_bitmap;  // bitmap_ptr  m_hilight_main_bitmap;
-        render_texture m_hilight_main_texture;  // texture_ptr m_hilight_main_texture;
-        render_texture m_arrow_texture;  // texture_ptr m_arrow_texture;
+        //class texture_destroyer
+        //{
+        //public:
+        //    texture_destroyer(render_manager &manager) : m_manager(manager) { }
+        //    void operator()(render_texture *texture) const { m_manager.get().texture_free(texture); }
+        //private:
+        //    std::reference_wrapper<render_manager> m_manager;
+        //};
+
+
+        bitmap_ptr m_hilight_bitmap;
+        texture_ptr m_hilight_texture;
+        bitmap_ptr  m_hilight_main_bitmap;
+        texture_ptr m_hilight_main_texture;
+        texture_ptr m_arrow_texture;
 
 
         public widgets_manager(running_machine machine)
         {
-            m_hilight_bitmap = new bitmap_argb32(256, 1);
-            m_hilight_texture = null;
-            m_hilight_main_bitmap = new bitmap_argb32(1, 128);
-            m_hilight_main_texture = null;
+            m_hilight_bitmap = new bitmap_ptr(256, 1);
+            m_hilight_texture = null;  //, m_hilight_texture(nullptr, machine.render())
+            m_hilight_main_bitmap = new bitmap_ptr(1, 128);
+            m_hilight_main_texture = null;  //, m_hilight_main_texture(nullptr, machine.render())
+            m_arrow_texture = null;  //, m_arrow_texture(nullptr, machine.render())
 
 
             render_manager render = machine.render();
-
-            //throw new emu_unimplemented();
-#if false
-            auto const texture_free([&render](render_texture *texture) { render.texture_free(texture); });
-#endif
 
             // create a texture for hilighting items
             for (UInt32 x = 0; x < 256; ++x)
@@ -45,7 +54,7 @@ namespace mame.ui
                 m_hilight_bitmapBuf.set_uint32((int)m_hilight_bitmapOffset, new rgb_t((byte)alpha,0xff,0xff,0xff));
             }
 
-            m_hilight_texture = render.texture_alloc();  // texture_ptr(render.texture_alloc(), texture_free);
+            m_hilight_texture = render.texture_alloc();  //m_hilight_texture.reset(render.texture_alloc());
             m_hilight_texture.set_bitmap(m_hilight_bitmap, m_hilight_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
 
             // create a texture for hilighting items in main menu
@@ -66,11 +75,11 @@ namespace mame.ui
                 m_hilight_main_bitmapBuf.set_uint32((int)m_hilight_main_bitmapOffset, new rgb_t((byte)r, (byte)g, (byte)b));
             }
 
-            m_hilight_main_texture = render.texture_alloc();  // texture_ptr(render.texture_alloc(), texture_free);
+            m_hilight_main_texture = render.texture_alloc();  //m_hilight_main_texture.reset(render.texture_alloc());
             m_hilight_main_texture.set_bitmap(m_hilight_main_bitmap, m_hilight_main_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
 
             // create a texture for arrow icons
-            m_arrow_texture = render.texture_alloc(render_triangle);  // texture_ptr(render.texture_alloc(render_triangle), texture_free);
+            m_arrow_texture = render.texture_alloc(render_triangle);  //m_arrow_texture.reset(render.texture_alloc(render_triangle));
         }
 
 

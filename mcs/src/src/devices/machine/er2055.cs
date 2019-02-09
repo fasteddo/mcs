@@ -61,8 +61,8 @@ namespace mame
 
 
     // ======================> er2055_device
-    class er2055_device : device_t
-                          //public device_nvram_interface
+    public class er2055_device : device_t
+                                 //public device_nvram_interface
     {
         // device type definition
         //DEFINE_DEVICE_TYPE(ER2055, er2055_device, "er2055", "ER2055 EAROM (64x8)")
@@ -93,7 +93,7 @@ namespace mame
             : base(mconfig, ER2055, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_nvram_interface_er2055(mconfig, this));  //device_nvram_interface(mconfig, *this),
-            m_default_data = new optional_region_ptr<byte>(this, device_global.DEVICE_SELF, SIZE_DATA);
+            m_default_data = new optional_region_ptr<byte>(this, DEVICE_SELF, SIZE_DATA);
             m_control_state = 0;
             m_address = 0;
             m_data = 0;
@@ -151,7 +151,7 @@ namespace mame
                 if ((m_control_state & C1) == C1)
                 {
                     m_data = m_rom_data[m_address];
-                    global.LOG(this, "Read {0} = {1}\n", m_address, m_data);  // %02X = %02X
+                    LOG("Read {0} = {1}\n", m_address, m_data);  // %02X = %02X
                 }
 
                 update_state();
@@ -197,13 +197,13 @@ namespace mame
                 // data to simulate incorrect behavior if erasing was not done
                 case 0:
                     m_rom_data[m_address] &= m_data;
-                    global.LOG(this, "Write {0} = {1}\n", m_address, m_data);  // %02X = %02X
+                    LOG("Write {0} = {1}\n", m_address, m_data);  // %02X = %02X
                     break;
 
                 // erase mode
                 case C2:
                     m_rom_data[m_address] = 0xff;
-                    global.LOG(this, "Erase {0}\n", m_address);  // %02X
+                    LOG("Erase {0}\n", m_address);  // %02X
                     break;
             }
         }

@@ -14,11 +14,11 @@ namespace mame
 {
     partial class centiped_state : driver_device
     {
-        optional_shared_ptr_byte m_rambase;
-        required_shared_ptr_byte m_videoram;
-        required_shared_ptr_byte m_spriteram;
-        optional_shared_ptr_byte m_paletteram;
-        optional_shared_ptr_byte m_bullsdrt_tiles_bankram;
+        optional_shared_ptr_uint8_t m_rambase;
+        required_shared_ptr_uint8_t m_videoram;
+        required_shared_ptr_uint8_t m_spriteram;
+        optional_shared_ptr_uint8_t m_paletteram;
+        optional_shared_ptr_uint8_t m_bullsdrt_tiles_bankram;
 
         required_device<cpu_device> m_maincpu;
         required_device<ls259_device> m_outlatch;
@@ -44,11 +44,11 @@ namespace mame
         public centiped_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_rambase = new optional_shared_ptr_byte(this, "rambase");
-            m_videoram = new required_shared_ptr_byte(this, "videoram");
-            m_spriteram = new required_shared_ptr_byte(this, "spriteram");
-            m_paletteram = new optional_shared_ptr_byte(this, "paletteram");
-            m_bullsdrt_tiles_bankram = new optional_shared_ptr_byte(this, "bullsdrt_bank");
+            m_rambase = new optional_shared_ptr_uint8_t(this, "rambase");
+            m_videoram = new required_shared_ptr_uint8_t(this, "videoram");
+            m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
+            m_paletteram = new optional_shared_ptr_uint8_t(this, "paletteram");
+            m_bullsdrt_tiles_bankram = new optional_shared_ptr_uint8_t(this, "bullsdrt_bank");
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_outlatch = new required_device<ls259_device>(this, "outlatch");
             m_earom = new optional_device<er2055_device>(this, "earom");
@@ -60,7 +60,12 @@ namespace mame
         }
 
 
+        public required_device<cpu_device> maincpu { get { return m_maincpu; } }
         public required_device<ls259_device> outlatch { get { return m_outlatch; } }
+        public optional_device<er2055_device> earom { get { return m_earom; } }
+        public required_device<gfxdecode_device> gfxdecode { get { return m_gfxdecode; } }
+        public required_device<screen_device> screen { get { return m_screen; } }
+        public required_device<palette_device> palette { get { return m_palette; } }
 
 
         //void centiped_base(machine_config &config);

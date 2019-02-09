@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    class osd_watchdog
+    class osd_watchdog : global_object
     {
         //osd_ticks_t                     m_timeout;
         //osd_event                       m_event;
@@ -28,8 +28,13 @@ namespace mame
 #endif
         }
 
-
         ~osd_watchdog()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             //throw new emu_unimplemented();
 #if false
@@ -37,6 +42,8 @@ namespace mame
             m_event.set();
             m_thread->join();
 #endif
+
+            m_isDisposed = true;
         }
 
 

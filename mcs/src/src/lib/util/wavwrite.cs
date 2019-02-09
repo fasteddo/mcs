@@ -63,33 +63,33 @@ namespace mame
             wav.writer.Write("fmt ".ToCharArray());  //fwrite("fmt ", 1, 4, wav.file);
 
             /* write the format length */
-            temp32 = (UInt32)osdcomm_global.little_endianize_int32(16);
+            temp32 = (UInt32)global_object.little_endianize_int32(16);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             /* write the format (PCM) */
-            temp16 = (UInt16)osdcomm_global.little_endianize_int16(1);
+            temp16 = (UInt16)global_object.little_endianize_int16(1);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             /* write the channels */
-            temp16 = (UInt16)osdcomm_global.little_endianize_int16((Int16)channels);
+            temp16 = (UInt16)global_object.little_endianize_int16((Int16)channels);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             /* write the sample rate */
-            temp32 = (UInt32)osdcomm_global.little_endianize_int32(sample_rate);
+            temp32 = (UInt32)global_object.little_endianize_int32(sample_rate);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             /* write the bytes/second */
             bps = (UInt32)(sample_rate * 2 * channels);
-            temp32 = (UInt32)osdcomm_global.little_endianize_int32((int)bps);
+            temp32 = (UInt32)global_object.little_endianize_int32((int)bps);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             /* write the block align */
             align = (UInt16)(2 * channels);
-            temp16 = (UInt16)osdcomm_global.little_endianize_int16((Int16)align);
+            temp16 = (UInt16)global_object.little_endianize_int16((Int16)align);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             /* write the bits/sample */
-            temp16 = (UInt16)osdcomm_global.little_endianize_int16(16);
+            temp16 = (UInt16)global_object.little_endianize_int16(16);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             /* write the 'data' tag */
@@ -116,13 +116,13 @@ namespace mame
             /* update the total file size */
             wav.writer.Seek((int)wav.total_offs, SeekOrigin.Begin);  //fseek(wav.file, wav.total_offs, SEEK_SET);
             temp32 = total - (wav.total_offs + 4);
-            temp32 = (UInt32)osdcomm_global.little_endianize_int32((int)temp32);
+            temp32 = (UInt32)global_object.little_endianize_int32((int)temp32);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             /* update the data size */
             wav.writer.Seek((int)wav.data_offs, SeekOrigin.Begin);  //fseek(wav.file, wav.data_offs, SEEK_SET);
             temp32 = total - (wav.data_offs + 4);
-            temp32 = (UInt32)osdcomm_global.little_endianize_int32((int)temp32);
+            temp32 = (UInt32)global_object.little_endianize_int32((int)temp32);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             //fclose(wav.file);
@@ -144,7 +144,7 @@ namespace mame
 
         public static void wav_add_data_32(wav_file wav, ListPointer<int32_t> data, int samples, int shift)  //wav_file *wav, int32_t *data, int samples, int shift)
         {
-            std_vector<int16_t> temp = new std_vector<int16_t>();
+            std.vector<int16_t> temp = new std.vector<int16_t>();
             int i;
 
             if (wav == null || samples == 0)
@@ -165,7 +165,7 @@ namespace mame
 
         public static void wav_add_data_16lr(wav_file wav, ListPointer<int16_t> left, ListPointer<int16_t> right, int samples)  //wav_file *wav, int16_t *left, int16_t *right, int samples)
         {
-            std_vector<int16_t> temp = new std_vector<int16_t>();
+            std.vector<int16_t> temp = new std.vector<int16_t>();
             int i;
 
             if (wav == null || samples == 0)
@@ -183,7 +183,7 @@ namespace mame
 
         public static void wav_add_data_32lr(wav_file wav, ListPointer<int32_t> left, ListPointer<int32_t> right, int samples, int shift)  //wav_file *wav, int32_t *left, int32_t *right, int samples, int shift)
         {
-            std_vector<int16_t> temp = new std_vector<int16_t>();
+            std.vector<int16_t> temp = new std.vector<int16_t>();
             int i;
 
             if (wav == null || samples == 0)

@@ -133,6 +133,17 @@ namespace mame
 
         // endian-based value: first value is if 'endian' matches native, second is if 'endian' doesn't match native
         //#define ENDIAN_VALUE_NE_NNE(endian,neval,nneval) (((endian) == ENDIANNESS_NATIVE) ? (neval) : (nneval))
+
+
+        public static void fatalerror(string format, params object [] args)
+        {
+            //va_list ap;
+            //va_start(ap, format);
+            //emu_fatalerror error(format, ap);
+            //va_end(ap);
+            //throw error;
+            throw new emu_fatalerror(format, args);
+        }
     }
 
 

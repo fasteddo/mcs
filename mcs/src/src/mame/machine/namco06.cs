@@ -12,29 +12,8 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public static class namco06_global
-    {
-        public static void MCFG_NAMCO_06XX_ADD(out device_t device, machine_config config, device_t owner, string tag, XTAL clock) { mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, namco_06xx_device.NAMCO_06XX, clock); }
-        public static void MCFG_NAMCO_06XX_MAINCPU(device_t device, string tag) { ((namco_06xx_device)device).set_maincpu(tag); }
-        public static void MCFG_NAMCO_06XX_READ_0_CB(device_t device, read8_delegate read8_devcb) { ((namco_06xx_device)device).set_read_callback(0, read8_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_READ_1_CB(device_t device, read8_delegate read8_devcb) { ((namco_06xx_device)device).set_read_callback(1, read8_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_READ_2_CB(device_t device, read8_delegate read8_devcb) { ((namco_06xx_device)device).set_read_callback(2, read8_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_READ_3_CB(device_t device, read8_delegate read8_devcb) { ((namco_06xx_device)device).set_read_callback(3, read8_devcb); }  //DEVCB_##_devcb);
-
-        public static void MCFG_NAMCO_06XX_READ_REQUEST_0_CB(device_t device, write_line_delegate write_line_devcb) { ((namco_06xx_device)device).set_read_request_callback(0, write_line_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_READ_REQUEST_1_CB(device_t device, write_line_delegate write_line_devcb) { ((namco_06xx_device)device).set_read_request_callback(1, write_line_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_READ_REQUEST_2_CB(device_t device, write_line_delegate write_line_devcb) { ((namco_06xx_device)device).set_read_request_callback(2, write_line_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_READ_REQUEST_3_CB(device_t device, write_line_delegate write_line_devcb) { ((namco_06xx_device)device).set_read_request_callback(3, write_line_devcb); }  //DEVCB_##_devcb);
-
-        public static void MCFG_NAMCO_06XX_WRITE_0_CB(device_t device, write8_delegate write8_devcb) { ((namco_06xx_device)device).set_write_callback(0, write8_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_WRITE_1_CB(device_t device, write8_delegate write8_devcb) { ((namco_06xx_device)device).set_write_callback(1, write8_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_WRITE_2_CB(device_t device, write8_delegate write8_devcb) { ((namco_06xx_device)device).set_write_callback(2, write8_devcb); }  //DEVCB_##_devcb);
-        public static void MCFG_NAMCO_06XX_WRITE_3_CB(device_t device, write8_delegate write8_devcb) { ((namco_06xx_device)device).set_write_callback(3, write8_devcb); }  //DEVCB_##_devcb);
-    }
-
-
     /* device get info callback */
-    class namco_06xx_device : device_t
+    public class namco_06xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_06XX, namco_06xx_device, "namco06", "Namco 06xx")
         static device_t device_creator_namco_06xx_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_06xx_device(mconfig, tag, owner, clock); }
@@ -73,11 +52,12 @@ namespace mame
         }
 
 
-        public void set_maincpu(string tag) { m_nmicpu.set_tag(tag); }  //downcast <namco_06xx_device &>(device).m_nmicpu.set_tag(tag);
+        public void set_maincpu(string tag) { m_nmicpu.set_tag(tag); }  //template <typename T> void set_maincpu(T &&tag) { m_nmicpu.set_tag(std::forward<T>(tag)); }
+        public void set_maincpu(finder_base tag) { m_nmicpu.set_tag(tag); }  //template <typename T> void set_maincpu(T &&tag) { m_nmicpu.set_tag(std::forward<T>(tag)); }
 
-        public devcb_base set_read_callback(int N, read8_delegate cb) { return m_read[N].set_callback(this, cb); }  //template <unsigned N, class Object> devcb_base &set_read_callback(Object &&cb) { return m_read[N].set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_read_request_callback(int N, write_line_delegate cb) { return m_readreq[N].set_callback(this, cb); }  //template <unsigned N, class Object> devcb_base &set_read_request_callback(Object &&cb) { return m_readreq[N].set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_write_callback(int N, write8_delegate cb) { return m_write[N].set_callback(this, cb); }  //template <unsigned N, class Object> devcb_base &set_write_callback(Object &&cb) { return m_write[N].set_callback(std::forward<Object>(cb)); }
+        public devcb_read.binder read_callback(int N) { return m_read[N].bind(); }  //template <unsigned N> auto read_callback() { return m_read[N].bind(); }
+        public devcb_write.binder read_request_callback(int N) { return m_readreq[N].bind(); }  //template <unsigned N> auto read_request_callback() { return m_readreq[N].bind(); }
+        public devcb_write.binder write_callback(int N) { return m_write[N].bind(); }  //template <unsigned N> auto write_callback() { return m_write[N].bind(); }
 
 
         //READ8_MEMBER( namco_06xx_device::data_r )
@@ -93,10 +73,10 @@ namespace mame
                 return 0;
             }
 
-            if (global.BIT(m_control, 0) != 0) result &= m_read[0].op(space, 0);
-            if (global.BIT(m_control, 1) != 0) result &= m_read[1].op(space, 0);
-            if (global.BIT(m_control, 2) != 0) result &= m_read[2].op(space, 0);
-            if (global.BIT(m_control, 3) != 0) result &= m_read[3].op(space, 0);
+            if (BIT(m_control, 0) != 0) result &= m_read[0].op(space, 0);
+            if (BIT(m_control, 1) != 0) result &= m_read[1].op(space, 0);
+            if (BIT(m_control, 2) != 0) result &= m_read[2].op(space, 0);
+            if (BIT(m_control, 3) != 0) result &= m_read[3].op(space, 0);
 
             return result;
         }
@@ -112,10 +92,10 @@ namespace mame
                 return;
             }
 
-            if (global.BIT(m_control, 0) != 0) m_write[0].op(space, 0, data);
-            if (global.BIT(m_control, 1) != 0) m_write[1].op(space, 0, data);
-            if (global.BIT(m_control, 2) != 0) m_write[2].op(space, 0, data);
-            if (global.BIT(m_control, 3) != 0) m_write[3].op(space, 0, data);
+            if (BIT(m_control, 0) != 0) m_write[0].op(space, 0, data);
+            if (BIT(m_control, 1) != 0) m_write[1].op(space, 0, data);
+            if (BIT(m_control, 2) != 0) m_write[2].op(space, 0, data);
+            if (BIT(m_control, 3) != 0) m_write[3].op(space, 0, data);
         }
 
         //READ8_MEMBER( namco_06xx_device::ctrl_r )
@@ -149,10 +129,10 @@ namespace mame
 
                 if ((m_control & 0x10) != 0)
                 {
-                    if (global.BIT(m_control, 0) != 0) m_readreq[0].op(space, 0);
-                    if (global.BIT(m_control, 1) != 0) m_readreq[1].op(space, 0);
-                    if (global.BIT(m_control, 2) != 0) m_readreq[2].op(space, 0);
-                    if (global.BIT(m_control, 3) != 0) m_readreq[3].op(space, 0);
+                    if (BIT(m_control, 0) != 0) m_readreq[0].op(space, 0);
+                    if (BIT(m_control, 1) != 0) m_readreq[1].op(space, 0);
+                    if (BIT(m_control, 2) != 0) m_readreq[2].op(space, 0);
+                    if (BIT(m_control, 3) != 0) m_readreq[3].op(space, 0);
                 }
             }
         }
@@ -191,10 +171,10 @@ namespace mame
 
         void nmi_generate(object o, int param)
         {
-            if (!m_nmicpu.target.execute().suspended(device_execute_interface.SUSPEND_REASON_HALT | device_execute_interface.SUSPEND_REASON_RESET | device_execute_interface.SUSPEND_REASON_DISABLE))
+            if (!m_nmicpu.target.suspended(device_execute_interface.SUSPEND_REASON_HALT | device_execute_interface.SUSPEND_REASON_RESET | device_execute_interface.SUSPEND_REASON_DISABLE))
             {
                 LOG("NMI cpu '{0}'\n", m_nmicpu.tag());
-                m_nmicpu.target.execute().pulse_input_line((int)INPUT_LINE.INPUT_LINE_NMI, attotime.zero);
+                m_nmicpu.target.pulse_input_line(device_execute_interface.INPUT_LINE_NMI, attotime.zero);
             }
             else
             {

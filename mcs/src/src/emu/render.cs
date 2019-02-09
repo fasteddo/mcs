@@ -1,17 +1,23 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
+using SharpCompress.Archives.Zip;
+using SharpCompress.Archives;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
+using element_map = mame.std.unordered_map<string, mame.layout_element>;
+using environment = mame.emu.render.detail.layout_environment;
 using ioport_value = System.UInt32;
-using item_list = mame.std_list<mame.layout_view.item>;
+using item_list = mame.std.list<mame.layout_view.item>;
+using make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
-using view_list = mame.std_list<mame.layout_view>;
+using view_list = mame.std.list<mame.layout_view>;
 
 
 namespace mame
@@ -19,46 +25,6 @@ namespace mame
     // texture scaling callback
     //typedef void (*texture_scaler_func)(bitmap_argb32 &dest, bitmap_argb32 &source, const rectangle &sbounds, void *param);
     public delegate void texture_scaler_func(bitmap_argb32 dest, bitmap_argb32 source, rectangle sbounds, layout_element.texture param); //, void *param);
-
-
-    // blending modes
-    enum BLENDMODE
-    {
-        BLENDMODE_NONE = 0,                                 // no blending
-        BLENDMODE_ALPHA,                                    // standard alpha blend
-        BLENDMODE_RGB_MULTIPLY,                             // apply source alpha to source pix, then multiply RGB values
-        BLENDMODE_ADD,                                       // apply source alpha to source pix, then add to destination
-
-        BLENDMODE_COUNT,
-    }
-
-
-    // render scaling modes
-    enum SCALE
-    {
-        SCALE_FRACTIONAL = 0,                               // compute fractional scaling factors for both axes
-        SCALE_FRACTIONAL_X,                                 // compute fractional scaling factor for x-axis, and integer factor for y-axis
-        SCALE_FRACTIONAL_Y,                                 // compute fractional scaling factor for y-axis, and integer factor for x-axis
-        SCALE_FRACTIONAL_AUTO,                              // automatically compute fractional scaling for x/y-axes based on source native orientation
-        SCALE_INTEGER                                       // compute integer scaling factors for both axes, based on target dimensions
-    }
-
-
-    enum COMPONENT_TYPE
-    {
-        COMPONENT_TYPE_IMAGE = 0,
-        COMPONENT_TYPE_RECT,
-        COMPONENT_TYPE_DISK,
-        COMPONENT_TYPE_MAX
-    }
-
-
-    enum CONTAINER_ITEM
-    {
-        CONTAINER_ITEM_LINE = 0,
-        CONTAINER_ITEM_QUAD,
-        CONTAINER_ITEM_MAX
-    }
 
 
     public enum item_layer
@@ -77,6 +43,46 @@ namespace mame
 
     public static class render_global
     {
+        // blending modes
+        //enum
+        //{
+        public const int BLENDMODE_NONE  = 0;                                 // no blending
+        public const int BLENDMODE_ALPHA = 1;                                 // standard alpha blend
+        public const int BLENDMODE_RGB_MULTIPLY = 2;                          // apply source alpha to source pix, then multiply RGB values
+        public const int BLENDMODE_ADD   = 3;                                 // apply source alpha to source pix, then add to destination
+
+        const int BLENDMODE_COUNT = 4;
+        //}
+
+
+        // render scaling modes
+        //enum
+        //{
+        public const int SCALE_FRACTIONAL      = 0;                              // compute fractional scaling factors for both axes
+        public const int SCALE_FRACTIONAL_X    = 1;                              // compute fractional scaling factor for x-axis, and integer factor for y-axis
+        public const int SCALE_FRACTIONAL_Y    = 2;                              // compute fractional scaling factor for y-axis, and integer factor for x-axis
+        public const int SCALE_FRACTIONAL_AUTO = 3;                              // automatically compute fractional scaling for x/y-axes based on source native orientation
+        public const int SCALE_INTEGER         = 4;                              // compute integer scaling factors for both axes, based on target dimensions
+        //}
+
+
+        //enum
+        //{
+        const int COMPONENT_TYPE_IMAGE = 0;
+        const int COMPONENT_TYPE_RECT  = 1;
+        const int COMPONENT_TYPE_DISK  = 2;
+        const int COMPONENT_TYPE_MAX   = 3;
+        //}
+
+
+        //enum
+        //{
+        public const u8 CONTAINER_ITEM_LINE = 0;
+        public const u8 CONTAINER_ITEM_QUAD = 1;
+        const u8 CONTAINER_ITEM_MAX  = 2;
+        //}
+
+
         public const UInt32 INTERNAL_FLAG_CHAR      = 0x00000001;
 
         // render creation flags
@@ -167,18 +173,18 @@ namespace mame
         // layer orders
         static readonly KeyValuePair<item_layer, int> [] layer_order_standard = new KeyValuePair<item_layer, int> [] {
                 new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_SCREEN,    -1 ), // FIXME: invalid blend mode - we're relying on the goodness of the OSD
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_OVERLAY,   (int)BLENDMODE.BLENDMODE_RGB_MULTIPLY ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BACKDROP,  (int)BLENDMODE.BLENDMODE_ADD ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BEZEL,     (int)BLENDMODE.BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_CPANEL,    (int)BLENDMODE.BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_MARQUEE,   (int)BLENDMODE.BLENDMODE_ALPHA ) };
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_OVERLAY,   BLENDMODE_RGB_MULTIPLY ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BACKDROP,  BLENDMODE_ADD ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BEZEL,     BLENDMODE_ALPHA ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_CPANEL,    BLENDMODE_ALPHA ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_MARQUEE,   BLENDMODE_ALPHA ) };
         static readonly KeyValuePair<item_layer, int> [] layer_order_alternate = new KeyValuePair<item_layer, int> [] {
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BACKDROP,  (int)BLENDMODE.BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_SCREEN,    (int)BLENDMODE.BLENDMODE_ADD ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_OVERLAY,   (int)BLENDMODE.BLENDMODE_RGB_MULTIPLY ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BEZEL,     (int)BLENDMODE.BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_CPANEL,    (int)BLENDMODE.BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_MARQUEE,   (int)BLENDMODE.BLENDMODE_ALPHA ) };
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BACKDROP,  BLENDMODE_ALPHA ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_SCREEN,    BLENDMODE_ADD ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_OVERLAY,   BLENDMODE_RGB_MULTIPLY ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BEZEL,     BLENDMODE_ALPHA ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_CPANEL,    BLENDMODE_ALPHA ),
+                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_MARQUEE,   BLENDMODE_ALPHA ) };
 
 
         //-------------------------------------------------
@@ -188,21 +194,21 @@ namespace mame
         public static void apply_orientation(render_bounds bounds, int orientation)
         {
             // swap first
-            if ((orientation & emucore_global.ORIENTATION_SWAP_XY) != 0)
+            if ((orientation & global_object.ORIENTATION_SWAP_XY) != 0)
             {
-                global.swap(ref bounds.x0, ref bounds.y0);
-                global.swap(ref bounds.x1, ref bounds.y1);
+                std.swap(ref bounds.x0, ref bounds.y0);
+                std.swap(ref bounds.x1, ref bounds.y1);
             }
 
             // apply X flip
-            if ((orientation & emucore_global.ORIENTATION_FLIP_X) != 0)
+            if ((orientation & global_object.ORIENTATION_FLIP_X) != 0)
             {
                 bounds.x0 = 1.0f - bounds.x0;
                 bounds.x1 = 1.0f - bounds.x1;
             }
 
             // apply Y flip
-            if ((orientation & emucore_global.ORIENTATION_FLIP_Y) != 0)
+            if ((orientation & global_object.ORIENTATION_FLIP_Y) != 0)
             {
                 bounds.y0 = 1.0f - bounds.y0;
                 bounds.y1 = 1.0f - bounds.y1;
@@ -217,9 +223,9 @@ namespace mame
         public static void normalize_bounds(render_bounds bounds)
         {
             if (bounds.x0 > bounds.x1)
-                global.swap(ref bounds.x0, ref bounds.x1);
+                std.swap(ref bounds.x0, ref bounds.x1);
             if (bounds.y0 > bounds.y1)
-                global.swap(ref bounds.y0, ref bounds.y1);
+                std.swap(ref bounds.y0, ref bounds.y1);
         }
 
 
@@ -500,7 +506,7 @@ namespace mame
 
     // ======================> render_primitive_list
     // render_primitive_list - an object containing a list head plus a lock
-    public class render_primitive_list : IEnumerable<render_primitive>
+    public class render_primitive_list : IEnumerable<render_primitive>, IDisposable
     {
         // a reference is an abstract reference to an internal object of some sort
         class reference : simple_list_item<reference>
@@ -532,12 +538,19 @@ namespace mame
         {
         }
 
-        //-------------------------------------------------
-        //  ~render_primitive_list - destructor
-        //-------------------------------------------------
         ~render_primitive_list()
         {
+            //throw new emu_unimplemented();
+#if false
+            global.assert(m_isDisposed);  // can remove
+#endif
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
             release_all();
+            m_isDisposed = true;
         }
 
 
@@ -659,7 +672,7 @@ namespace mame
 
     // ======================> render_texture
     // a render_texture is used to track transformations when building an object list
-    public class render_texture : simple_list_item<render_texture>
+    public class render_texture : global_object, simple_list_item<render_texture>
     {
         const int MAX_TEXTURE_SCALES = 16;
 
@@ -708,13 +721,10 @@ namespace mame
             //memset(m_scaled, 0, sizeof(m_scaled));
         }
 
-        //-------------------------------------------------
-        //  ~render_texture - destructor
-        //-------------------------------------------------
-        ~render_texture()
-        {
-            release();
-        }
+        //~render_texture()
+        //{
+        //    release();
+        //}
 
 
         // reset before re-use
@@ -933,7 +943,7 @@ namespace mame
                 case texture_format.TEXFORMAT_PALETTE16:
                 case texture_format.TEXFORMAT_PALETTEA16:
 
-                    global.assert(m_bitmap.palette() != null);
+                    assert(m_bitmap.palette() != null);
 
                     // return our adjusted palette
                     return container.bcg_lookup_table(m_format, m_bitmap.palette());
@@ -948,7 +958,7 @@ namespace mame
                     return container.bcg_lookup_table(m_format);
 
                 default:
-                    global.assert(false);
+                    assert(false);
                     break;
             }
 
@@ -959,7 +969,9 @@ namespace mame
 
     // ======================> render_container
     // a render_container holds a list of items and an orientation for the entire collection
-    public class render_container : simple_list_item<render_container>
+    public class render_container : global_object,
+                                    simple_list_item<render_container>,
+                                    IDisposable
     {
         // user settings describes the collected user-controllable settings
         public class user_settings
@@ -1022,19 +1034,19 @@ namespace mame
             public item m_next_get() { return m_next; }
             public void m_next_set(item value) { m_next = value; }
 
-            public byte type() { return m_type; }
+            public u8 type() { return m_type; }
             public render_bounds bounds() { return m_bounds; }
             public render_color color() { return m_color; }
-            public UInt32 flags() { return m_flags; }
-            public UInt32 internal_flags() { return m_internal; }
+            public u32 flags() { return m_flags; }
+            public u32 internal_flags() { return m_internal; }
             public float width() { return m_width; }
             public render_texture texture() { return m_texture; }
 
-            public byte type_set { set { m_type = value; } }
+            public u8 type_set { set { m_type = value; } }
             public render_bounds bounds_set { set { m_bounds = value; } }
             public render_color color_set { set { m_color = value; } }
-            public UInt32 flags_set { set { m_flags = value; } }
-            public UInt32 internal_flags_set { set { m_internal = value; } }
+            public u32 flags_set { set { m_flags = value; } }
+            public u32 internal_flags_set { set { m_internal = value; } }
             public float width_set { set { m_width = value; } }
             public render_texture texture_set { set { m_texture = value; } }
         }
@@ -1050,8 +1062,8 @@ namespace mame
         bitmap_argb32 m_overlaybitmap;        // overlay bitmap
         render_texture m_overlaytexture;       // overlay texture
         palette_client m_palclient;       // client to the screen palette
-        std_vector<rgb_t> m_bcglookup = new std_vector<rgb_t>();   // full palette lookup with bcg adjustments
-        std_vector<rgb_t> m_bcglookup256 = new std_vector<rgb_t>(0x400);         // lookup table for brightness/contrast/gamma
+        std.vector<rgb_t> m_bcglookup = new std.vector<rgb_t>();   // full palette lookup with bcg adjustments
+        std.vector<rgb_t> m_bcglookup256 = new std.vector<rgb_t>(0x400);         // lookup table for brightness/contrast/gamma
 
 
         // construction/destruction
@@ -1085,16 +1097,24 @@ namespace mame
             recompute_lookups();
         }
 
-        //-------------------------------------------------
-        //  ~render_container - destructor
-        //-------------------------------------------------
         ~render_container()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             // free all the container items
             empty();
 
             // free the overlay texture
             m_manager.texture_free(m_overlaytexture);
+
+            if (m_palclient != null)
+                m_palclient.Dispose();
+
+            m_isDisposed = true;
         }
 
 
@@ -1157,7 +1177,7 @@ namespace mame
         //-------------------------------------------------
         public void add_line(float x0, float y0, float x1, float y1, float width, rgb_t argb, UInt32 flags)
         {
-            item newitem = add_generic((byte)CONTAINER_ITEM.CONTAINER_ITEM_LINE, x0, y0, x1, y1, argb);
+            item newitem = add_generic(render_global.CONTAINER_ITEM_LINE, x0, y0, x1, y1, argb);
             newitem.width_set = width;
             newitem.flags_set = flags;
         }
@@ -1167,7 +1187,7 @@ namespace mame
         //-------------------------------------------------
         public void add_quad(float x0, float y0, float x1, float y1, rgb_t argb, render_texture texture, UInt32 flags)
         {
-            item newitem = add_generic((byte)CONTAINER_ITEM.CONTAINER_ITEM_QUAD, x0, y0, x1, y1, argb);
+            item newitem = add_generic(render_global.CONTAINER_ITEM_QUAD, x0, y0, x1, y1, argb);
             newitem.texture_set = texture;
             newitem.flags_set = flags;
         }
@@ -1184,9 +1204,9 @@ namespace mame
             render_texture texture = font.get_char_texture_and_bounds(height, aspect, ch, ref bounds);
 
             // add it like a quad
-            item newitem = add_generic((byte)CONTAINER_ITEM.CONTAINER_ITEM_QUAD, bounds.x0, bounds.y0, bounds.x1, bounds.y1, argb);
+            item newitem = add_generic(render_global.CONTAINER_ITEM_QUAD, bounds.x0, bounds.y0, bounds.x1, bounds.y1, argb);
             newitem.texture_set = texture;
-            newitem.flags_set = render_global.PRIMFLAG_TEXORIENT(emucore_global.ROT0) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA) | render_global.PRIMFLAG_PACKABLE;
+            newitem.flags_set = render_global.PRIMFLAG_TEXORIENT(emucore_global.ROT0) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | render_global.PRIMFLAG_PACKABLE;
             newitem.internal_flags_set = render_global.INTERNAL_FLAG_CHAR;
         }
 
@@ -1280,7 +1300,7 @@ namespace mame
         //  add_generic - add a generic item to a
         //  container
         //-------------------------------------------------
-        item add_generic(byte type, float x0, float y0, float x1, float y1, rgb_t argb)
+        item add_generic(u8 type, float x0, float y0, float x1, float y1, rgb_t argb)
         {
             item newitem = m_item_allocator.alloc();
 
@@ -1344,7 +1364,7 @@ namespace mame
                 }
                 else
                 {
-                    global.memcpy(m_bcglookup, adjusted_palette, (UInt32)colors);  //memcpy(&m_bcglookup[0], adjusted_palette, colors * sizeof(rgb_t));
+                    memcpy(m_bcglookup, adjusted_palette, (UInt32)colors);  //memcpy(&m_bcglookup[0], adjusted_palette, colors * sizeof(rgb_t));
                 }
             }
         }
@@ -1396,7 +1416,7 @@ namespace mame
                 }
                 else
                 {
-                    global.memcpy(new ListPointer<rgb_t>(m_bcglookup, (int)mindirty), new ListPointer<rgb_t>(adjusted_palette, (int)mindirty), (maxdirty - mindirty + 1));  //memcpy(&m_bcglookup[mindirty], &adjusted_palette[mindirty], (maxdirty - mindirty + 1) * sizeof(rgb_t));
+                    memcpy(new ListPointer<rgb_t>(m_bcglookup, (int)mindirty), new ListPointer<rgb_t>(adjusted_palette, (int)mindirty), (maxdirty - mindirty + 1));  //memcpy(&m_bcglookup[mindirty], &adjusted_palette[mindirty], (maxdirty - mindirty + 1) * sizeof(rgb_t));
                 }
             }
         }
@@ -1411,7 +1431,7 @@ namespace mame
     /// multiple times within a layout.  Even though an element can contain
     /// a number of components, they are treated as if they were a single
     /// bitmap.
-    public partial class layout_element
+    public partial class layout_element : global_object
     {
         //using environment = emu::render::detail::layout_environment;
 
@@ -1423,7 +1443,7 @@ namespace mame
         /// primitive. Each component also has a "state" associated with it,
         /// which controls whether or not the component is visible (if the
         /// owning item has the same state, it is visible).
-        abstract partial class component
+        public abstract partial class component
         {
             // component types
             enum component_type
@@ -1467,7 +1487,7 @@ namespace mame
 
             // getters
             //int state() { return m_state; }
-            protected virtual int maxstate() { return m_state; }
+            public virtual int maxstate() { return m_state; }
             public render_bounds bounds() { return m_bounds; }
             //const render_color &color() const { return m_color; }
 
@@ -1496,7 +1516,7 @@ namespace mame
 
 
         // a texture encapsulates a texture for a given element in a given state
-        public partial class texture
+        public partial class texture : IDisposable
         {
             public layout_element m_element;      // pointer back to the element
             public render_texture m_texture;      // texture for this state
@@ -1517,6 +1537,7 @@ namespace mame
 
 
         //typedef component::ptr (*make_component_func)(environment &env, util::xml::data_node const &compnode, const char *dirname);
+        public delegate component make_component_func(environment env, util.xml.data_node compnode, string dirname);
         //typedef std::map<std::string, make_component_func> make_component_map;
 
 
@@ -1525,10 +1546,10 @@ namespace mame
 
         // internal state
         running_machine m_machine;          // reference to the owning machine
-        std_vector<component> m_complist = new std_vector<component>();      // list of components
+        std.vector<component> m_complist = new std.vector<component>();      // list of components
         int m_defstate;         // default state of this element
         int m_maxstate;         // maximum state value for all components
-        std_vector<texture> m_elemtex;       // array of element textures used for managing the scaled bitmaps
+        std.vector<texture> m_elemtex;       // array of element textures used for managing the scaled bitmaps
 
 
         // rendlay.cs
@@ -1537,7 +1558,7 @@ namespace mame
 
         // getters
         public running_machine machine() { return m_machine; }
-        //int default_state() const { return m_defstate; }
+        public int default_state() { return m_defstate; }
         public int maxstate() { return m_maxstate; }
 
 
@@ -1564,7 +1585,7 @@ namespace mame
     /// within a view if it could be parameterised.  Groups only exist while
     /// parsing a layout file - no information about element grouping is
     /// preserved.
-    public partial class layout_group
+    public partial class layout_group : global_object
     {
         //using environment = emu::render::detail::layout_environment;
         //using group_map = std::unordered_map<std::string, layout_group>;
@@ -1579,7 +1600,7 @@ namespace mame
         // rendlay.cs
         //layout_group(util::xml::data_node const &groupnode);
 
-        //util::xml::data_node const &get_groupnode() const { return m_groupnode; }
+        public util.xml.data_node get_groupnode() { return m_groupnode; }
 
         //transform make_transform(int orientation, render_bounds const &dest) const;
         //transform make_transform(int orientation, transform const &trans) const;
@@ -1604,7 +1625,7 @@ namespace mame
     /// The view is described using arbitrary coordinates that are scaled to
     /// fit within the render target.  Pixels within a view are assumed to
     /// be square.
-    public partial class layout_view
+    public partial class layout_view : global_object
     {
         //using environment = emu::render::detail::layout_environment;
         //using group_map = std::unordered_map<std::string, layout_group>;
@@ -1619,7 +1640,7 @@ namespace mame
         /// can also have an optional name, and can be set at runtime into
         /// different "states", which control how the embedded elements are
         /// displayed.
-        public partial class item
+        public partial class item : global_object
         {
             //friend class layout_view;
 
@@ -1672,7 +1693,7 @@ namespace mame
         render_screen_list m_screens = new render_screen_list();          // list of active screens
         render_bounds m_bounds = new render_bounds();           // computed bounds of the view
         render_bounds m_scrbounds = new render_bounds();        // computed bounds of the screens within the view
-        render_bounds m_expbounds;        // explicit bounds of the view
+        render_bounds m_expbounds = new render_bounds();        // explicit bounds of the view
         bool [] m_layenabled = new bool[(int)item_layer.ITEM_LAYER_MAX]; // is this layer enabled?
         item_list m_backdrop_list = new item_list();    // list of backdrop items
         item_list m_screen_list = new item_list();      // list of screen items
@@ -1747,7 +1768,7 @@ namespace mame
 
 
         // internal state
-        Dictionary<string, layout_element> m_elemmap = new Dictionary<string, layout_element>(); // list of shared layout elements
+        element_map m_elemmap = new element_map();    // list of shared layout elements
         view_list m_viewlist = new view_list();    // list of views
 
 
@@ -1775,7 +1796,7 @@ namespace mame
 
     // ======================> render_target
     // a render_target describes a surface that is being rendered to
-    public class render_target : simple_list_item<render_target>
+    public class render_target : global_object, simple_list_item<render_target>
     {
         // constants
         const int NUM_PRIMLISTS = 3;
@@ -1789,7 +1810,7 @@ namespace mame
         render_target m_next;                     // link to next target
         render_manager m_manager;                  // reference to our owning manager
         layout_view m_curview;                  // current view
-        std_list<layout_file> m_filelist = new std_list<layout_file>();                // list of layout files
+        std.list<layout_file> m_filelist = new std.list<layout_file>();                // list of layout files
         u32 m_flags;                    // creation flags
         render_primitive_list [] m_primlist = new render_primitive_list[NUM_PRIMLISTS];  // list of primitives
         int m_listindex;                // index of next primlist to use
@@ -1862,15 +1883,15 @@ namespace mame
             m_int_scale_x = manager.machine().options().int_scale_x();
             m_int_scale_y = manager.machine().options().int_scale_y();
             if (m_manager.machine().options().auto_stretch_xy())
-                m_scale_mode = (int)SCALE.SCALE_FRACTIONAL_AUTO;
+                m_scale_mode = render_global.SCALE_FRACTIONAL_AUTO;
             else if (manager.machine().options().uneven_stretch_x())
-                m_scale_mode = (int)SCALE.SCALE_FRACTIONAL_X;
+                m_scale_mode = render_global.SCALE_FRACTIONAL_X;
             else if (manager.machine().options().uneven_stretch_y())
-                m_scale_mode = (int)SCALE.SCALE_FRACTIONAL_Y;
+                m_scale_mode = render_global.SCALE_FRACTIONAL_Y;
             else if (manager.machine().options().uneven_stretch())
-                m_scale_mode = (int)SCALE.SCALE_FRACTIONAL;
+                m_scale_mode = render_global.SCALE_FRACTIONAL;
             else
-                m_scale_mode = (int)SCALE.SCALE_INTEGER;
+                m_scale_mode = render_global.SCALE_INTEGER;
 
             // determine the base orientation based on options
             if (!manager.machine().options().rotate())
@@ -2103,7 +2124,7 @@ namespace mame
         {
             switch (m_scale_mode)
             {
-                case (int)SCALE.SCALE_FRACTIONAL:
+                case render_global.SCALE_FRACTIONAL:
                 {
                     float width;
                     float height;
@@ -2118,7 +2139,7 @@ namespace mame
 
                         // first apply target orientation
                         if ((target_orientation & emucore_global.ORIENTATION_SWAP_XY) != 0)
-                            global.swap(ref width, ref height);
+                            std.swap(ref width, ref height);
 
                         // apply the target pixel aspect ratio
                         height *= target_pixel_aspect;
@@ -2162,15 +2183,15 @@ namespace mame
 
                     // apply automatic axial stretching if required
                     int scale_mode = m_scale_mode;
-                    if (m_scale_mode == (int)SCALE.SCALE_FRACTIONAL_AUTO)
+                    if (m_scale_mode == render_global.SCALE_FRACTIONAL_AUTO)
                     {
                         bool is_rotated = (((UInt32)m_manager.machine().system().flags & emucore_global.ORIENTATION_SWAP_XY) ^ (target_orientation & emucore_global.ORIENTATION_SWAP_XY)) != 0;
-                        scale_mode = is_rotated ^ target_is_portrait ? (int)SCALE.SCALE_FRACTIONAL_Y : (int)SCALE.SCALE_FRACTIONAL_X;
+                        scale_mode = is_rotated ^ target_is_portrait ? render_global.SCALE_FRACTIONAL_Y : render_global.SCALE_FRACTIONAL_X;
                     }
 
                     // determine the scale mode for each axis
-                    bool x_is_integer = !((!target_is_portrait && scale_mode == (int)SCALE.SCALE_FRACTIONAL_X) || (target_is_portrait && scale_mode == (int)SCALE.SCALE_FRACTIONAL_Y));
-                    bool y_is_integer = !((target_is_portrait && scale_mode == (int)SCALE.SCALE_FRACTIONAL_X) || (!target_is_portrait && scale_mode == (int)SCALE.SCALE_FRACTIONAL_Y));
+                    bool x_is_integer = !((!target_is_portrait && scale_mode == render_global.SCALE_FRACTIONAL_X) || (target_is_portrait && scale_mode == render_global.SCALE_FRACTIONAL_Y));
+                    bool y_is_integer = !((target_is_portrait && scale_mode == render_global.SCALE_FRACTIONAL_X) || (!target_is_portrait && scale_mode == render_global.SCALE_FRACTIONAL_Y));
 
                     // first compute scale factors to fit the screen
                     float xscale = (float)target_width / src_width;
@@ -2359,7 +2380,7 @@ namespace mame
                 rendutil_global.set_render_color(prim.color, 1.0f, 1.0f, 1.0f, 1.0f);
                 prim.texture.base_ = null;
                 prim.texture.baseOffset = 0;
-                prim.flags = global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA);
+                prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
                 list.append(prim);
 
                 if (m_width > 1 && m_height > 1)
@@ -2370,7 +2391,7 @@ namespace mame
                     rendutil_global.set_render_color(prim.color, 1.0f, 0.0f, 0.0f, 0.0f);
                     prim.texture.base_ = null;
                     prim.texture.baseOffset = 0;
-                    prim.flags = global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA);
+                    prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
                     list.append(prim);
                 }
             }
@@ -2390,7 +2411,7 @@ namespace mame
                 ui_xform.no_center = true;
 
                 // add UI elements
-                add_container_primitives(list, root_xform, ui_xform, debug, (int)BLENDMODE.BLENDMODE_ALPHA);
+                add_container_primitives(list, root_xform, ui_xform, debug, BLENDMODE_ALPHA);
             }
 
             // process the UI if we are the UI target
@@ -2408,7 +2429,7 @@ namespace mame
                 ui_xform.no_center = false;
 
                 // add UI elements
-                add_container_primitives(list, root_xform, ui_xform, m_manager.ui_container(), (int)BLENDMODE.BLENDMODE_ALPHA);
+                add_container_primitives(list, root_xform, ui_xform, m_manager.ui_container(), BLENDMODE_ALPHA);
             }
 
             // optimize the list before handing it off
@@ -2553,7 +2574,7 @@ namespace mame
 
                 UInt32 tempFirst = m_native.first();
                 UInt32 tempSecond = m_native.second();
-                global.reduce_fraction(ref tempFirst, ref tempSecond);
+                reduce_fraction(ref tempFirst, ref tempSecond);
                 m_native = new KeyValuePair<unsigned, unsigned>(tempFirst, tempSecond);
 
                 if (m_rotated)
@@ -2590,7 +2611,7 @@ namespace mame
             bool have_override = false;
 
             // if override_artwork defined, load that and skip artwork other than default
-            if (!string.IsNullOrEmpty(m_manager.machine().options().override_artwork()))
+            if (m_manager.machine().options().override_artwork() != null)
             {
                 if (load_layout_file(m_manager.machine().options().override_artwork(), m_manager.machine().options().override_artwork()))
                     have_override = true;
@@ -2622,8 +2643,8 @@ namespace mame
                 int cloneof = driver_list.clone(system);
                 if (cloneof != -1)
                 {
-                    if (!load_layout_file(driver_list.driver((UInt32)cloneof).name, driver_list.driver((UInt32)cloneof).name))
-                        have_artwork |= load_layout_file(driver_list.driver((UInt32)cloneof).name, "default");
+                    if (!load_layout_file(driver_list.driver(cloneof).name, driver_list.driver(cloneof).name))
+                        have_artwork |= load_layout_file(driver_list.driver(cloneof).name, "default");
                     else
                         have_artwork = true;
                 }
@@ -2631,12 +2652,12 @@ namespace mame
                 // Check the parent of the parent to cover bios based artwork
                 if (cloneof != -1)
                 {
-                    game_driver clone = driver_list.driver((UInt32)cloneof);
+                    game_driver clone = driver_list.driver(cloneof);
                     int cloneofclone = driver_list.clone(clone);
                     if (cloneofclone != -1 && cloneofclone != cloneof)
                     {
-                        if (!load_layout_file(driver_list.driver((UInt32)cloneofclone).name, driver_list.driver((UInt32)cloneofclone).name))
-                            have_artwork |= load_layout_file(driver_list.driver((UInt32)cloneofclone).name, "default");
+                        if (!load_layout_file(driver_list.driver(cloneofclone).name, driver_list.driver(cloneofclone).name))
+                            have_artwork |= load_layout_file(driver_list.driver(cloneofclone).name, "default");
                         else
                             have_artwork = true;
                     }
@@ -2654,7 +2675,7 @@ namespace mame
             }
 
             screen_device_iterator iter = new screen_device_iterator(m_manager.machine().root_device());
-            std_vector<load_additional_layout_files_screen_info> screens = new std_vector<load_additional_layout_files_screen_info>();  //std::vector<screen_info> const screens(std::begin(iter), std::end(iter));
+            std.vector<load_additional_layout_files_screen_info> screens = new std.vector<load_additional_layout_files_screen_info>();  //std::vector<screen_info> const screens(std::begin(iter), std::end(iter));
             foreach (var screen in iter)
                 screens.push_back(new load_additional_layout_files_screen_info(screen));
 
@@ -2662,7 +2683,7 @@ namespace mame
             {
                 if (view_by_index(0) == null)
                 {
-                    load_layout_file(null, noscreens_global.layout_noscreens_string());
+                    load_layout_file(null, noscreens_global.layout_noscreens);
                     if (m_filelist.empty())
                         throw new emu_fatalerror("Couldn't parse default layout??");
                 }
@@ -2828,113 +2849,55 @@ namespace mame
         //  load_layout_file - load a single layout file
         //  and append it to our list
         //-------------------------------------------------
-        bool load_layout_file(string dirname, string filename)
-        {
-            util.xml.file rootnode;
-
-#if false
-            <?xml version=\"1.0\"?>
-            <mamelayout version=\"2\">
-                <view name=\"Standard (4:3)\">
-                    <screen index=\"0\">
-                        <bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />
-                    </screen>
-                </view>
-                <view name=\"Pixel Aspect (~scr0nativexaspect~:~scr0nativeyaspect~)\">
-                    <screen index=\"0\">
-                        <bounds left=\"0\" top=\"0\" right=\"~scr0width~\" bottom=\"~scr0height~\" />
-                    </screen>
-                </view>
-                <view name=\"Cocktail\">
-                    <screen index=\"0\">
-                        <bounds x=\"0\" y=\"-3.03\" width=\"4\" height=\"3\" />
-                        <orientation rotate=\"180\" />
-                    </screen>
-                    <screen index=\"0\">
-                        <bounds x=\"0\" y=\"0\" width=\"4\" height=\"3\" />
-                    </screen>
-                </view>
-            </mamelayout>
-#endif
-
-            if (filename[0] == '<')
-            {
-                // HACK instead of xml parsing
-                m_filelist.push_back(new layout_file(m_manager.machine().root_device(), null, dirname));
-                return true;
-            }
-
-            //throw new emu_unimplemented();
-#if false
-            // otherwise, assume it is a file
-            else
-            {
-                // build the path and optionally prepend the directory
-                astring fname(filename, ".lay");
-                if (dirname != NULL)
-                    fname.ins(0, PATH_SEPARATOR).ins(0, dirname);
-
-                // attempt to open the file; bail if we can't
-                emu_file layoutfile(manager().machine().options().art_path(), OPEN_FLAG_READ);
-                file_error filerr = layoutfile.open(fname);
-                if (filerr != FILERR_NONE)
-                    return false;
-
-                // read the file
-                rootnode = xml_file_read(layoutfile, NULL);
-            }
-
-            // if we didn't get a properly-formatted XML file, record a warning and exit
-            if (rootnode == NULL)
-            {
-                if (filename[0] != '<')
-                    osd_printf_warning("Improperly formatted XML file '%s', ignoring\n", filename);
-                else
-                    osd_printf_warning("Improperly formatted XML string, ignoring\n");
-                return false;
-            }
-
-            // parse and catch any errors
-            bool result = true;
-            try
-            {
-                m_filelist.append(*global_alloc(layout_file(m_manager.machine(), *rootnode, dirname)));
-            }
-            catch (emu_fatalerror &err)
-            {
-                if (filename[0] != '<')
-                    osd_printf_warning("Error in XML file '%s': %s\n", filename, err.string());
-                else
-                    osd_printf_warning("Error in XML string: %s\n", err.string());
-                result = false;
-            }
-
-            emulator_info::layout_file_cb(*rootnode);
-
-            // free the root node
-            rootnode->file_free();
-            return result;
-#endif
-            return false;
-        }
-
-
-        //-------------------------------------------------
-        //  load_layout_file - load a single layout file
-        //  and append it to our list
-        //-------------------------------------------------
         bool load_layout_file(string dirname, internal_layout layout_data, device_t device = null)
         {
             throw new emu_unimplemented();
         }
 
 
+        bool load_layout_file(string dirname, string filename)
+        {
+            // build the path and optionally prepend the directory
+            string fname = filename.append(".lay");
+            if (dirname != null)
+                fname.insert(0, PATH_SEPARATOR).insert(0, dirname);
+
+            // attempt to open the file; bail if we can't
+            emu_file layoutfile = new emu_file(m_manager.machine().options().art_path(), OPEN_FLAG_READ);
+            osd_file.error filerr = layoutfile.open(fname.c_str());
+            if (filerr != osd_file.error.NONE)
+                return false;
+
+            // read the file
+            util.xml.file rootnode = util.xml.file.read(layoutfile.core_file_get(), null);
+
+            // if we didn't get a properly-formatted XML file, record a warning and exit
+            if (!load_layout_file(m_manager.machine().root_device(), dirname, rootnode))
+            {
+                osd_printf_warning("Improperly formatted XML file '{0}', ignoring\n", filename);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
         bool load_layout_file(device_t device, string dirname, util.xml.data_node rootnode)
         {
-            //throw new emu_unimplemented();
+            // parse and catch any errors
+            try
+            {
+                m_filelist.emplace_back(new layout_file(device, rootnode, dirname));
+            }
+            catch (emu_fatalerror)
+            {
+                return false;
+            }
 
-            // HACK instead of xml parsing
-            m_filelist.push_back(new layout_file(m_manager.machine().root_device(), null, dirname));
+            emulator_info.layout_file_cb(rootnode);
+
             return true;
         }
 
@@ -3046,7 +3009,7 @@ namespace mame
                 bool clipped = true;
                 switch (curitem.type())
                 {
-                    case (byte)CONTAINER_ITEM.CONTAINER_ITEM_LINE:
+                    case render_global.CONTAINER_ITEM_LINE:
                         // adjust the color for brightness/contrast/gamma
                         prim.color.a = container.apply_brightness_contrast_gamma_fp(prim.color.a);
                         prim.color.r = container.apply_brightness_contrast_gamma_fp(prim.color.r);
@@ -3072,7 +3035,7 @@ namespace mame
                         }
                         break;
 
-                    case (byte)CONTAINER_ITEM.CONTAINER_ITEM_QUAD:
+                    case render_global.CONTAINER_ITEM_QUAD:
                         // set the quad type
                         prim.type = render_primitive.primitive_type.QUAD;
                         prim.flags |= render_global.PRIMFLAG_TYPE_QUAD;
@@ -3108,8 +3071,8 @@ namespace mame
                                 | render_global.PRIMFLAG_TEXORIENT((UInt32)finalorient)
                                 | render_global.PRIMFLAG_TEXFORMAT((UInt32)curitem.texture().format());
                             prim.flags |= blendmode != -1
-                                ? global.PRIMFLAG_BLENDMODE((UInt32)blendmode)
-                                : global.PRIMFLAG_BLENDMODE(render_global.PRIMFLAG_GET_BLENDMODE(curitem.flags()));
+                                ? PRIMFLAG_BLENDMODE((UInt32)blendmode)
+                                : PRIMFLAG_BLENDMODE(render_global.PRIMFLAG_GET_BLENDMODE(curitem.flags()));
                         }
                         else
                         {
@@ -3167,14 +3130,14 @@ namespace mame
                                 prim.flags |= (curitem.flags() & ~(render_global.PRIMFLAG_TEXORIENT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK | render_global.PRIMFLAG_TEXFORMAT_MASK))
                                     | render_global.PRIMFLAG_TEXORIENT((UInt32)finalorient);
                                 prim.flags |= blendmode != -1
-                                    ? global.PRIMFLAG_BLENDMODE((UInt32)blendmode)
-                                    : global.PRIMFLAG_BLENDMODE(render_global.PRIMFLAG_GET_BLENDMODE(curitem.flags()));
+                                    ? PRIMFLAG_BLENDMODE((UInt32)blendmode)
+                                    : PRIMFLAG_BLENDMODE(render_global.PRIMFLAG_GET_BLENDMODE(curitem.flags()));
                             }
                             else
                             {
                                 // set the basic flags
                                 prim.flags |= (curitem.flags() & ~render_global.PRIMFLAG_BLENDMODE_MASK)
-                                    | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA);
+                                    | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
 
                                 // apply clipping
                                 clipped = rendutil_global.render_clip_quad(prim.bounds, cliprect, null);
@@ -3210,7 +3173,7 @@ namespace mame
 
                 // set the flags and add it to the list
                 prim.flags = render_global.PRIMFLAG_TEXORIENT((UInt32)container_xform.orientation)
-                    | render_global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_RGB_MULTIPLY)
+                    | render_global.PRIMFLAG_BLENDMODE(render_global.BLENDMODE_RGB_MULTIPLY)
                     | render_global.PRIMFLAG_TEXFORMAT((UInt32)container.overlay().format())
                     | render_global.PRIMFLAG_TEXSHADE(1);
 
@@ -3238,7 +3201,7 @@ namespace mame
 
                 // configure the basics
                 prim.color = xform.color;
-                prim.flags = render_global.PRIMFLAG_TEXORIENT((UInt32)xform.orientation) | global.PRIMFLAG_BLENDMODE((UInt32)blendmode) | render_global.PRIMFLAG_TEXFORMAT((UInt32)texture.format());
+                prim.flags = render_global.PRIMFLAG_TEXORIENT((UInt32)xform.orientation) | PRIMFLAG_BLENDMODE((UInt32)blendmode) | render_global.PRIMFLAG_TEXFORMAT((UInt32)texture.format());
 
                 // compute the bounds
                 int width = (int)rendutil_global.render_round_nearest(xform.xscale);
@@ -3246,7 +3209,7 @@ namespace mame
                 rendutil_global.set_render_bounds_wh(prim.bounds, rendutil_global.render_round_nearest(xform.xoffs), rendutil_global.render_round_nearest(xform.yoffs), (float)width, (float)height);
                 prim.full_bounds = prim.bounds;
                 if ((xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0)
-                    global.swap(ref width, ref height);
+                    std.swap(ref width, ref height);
                 width = Math.Min(width, m_maxtexwidth);
                 height = Math.Min(height, m_maxtexheight);
 
@@ -3605,7 +3568,7 @@ namespace mame
                         rendutil_global.set_render_color(prim.color, 1.0f, 1.0f, 1.0f, 0.0f);
                         prim.texture.base_ = null;
                         prim.texture.baseOffset = 0;
-                        prim.flags = global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA);
+                        prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
                         clearlist.append(prim);
                     }
 
@@ -3653,18 +3616,18 @@ namespace mame
                             goto done;
 
                         // change the blendmode on the first primitive to be NONE
-                        if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == (UInt32)BLENDMODE.BLENDMODE_RGB_MULTIPLY)
+                        if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == render_global.BLENDMODE_RGB_MULTIPLY)
                         {
                             // RGB multiply will multiply against 0, leaving nothing
                             rendutil_global.set_render_color(prim.color, 1.0f, 0.0f, 0.0f, 0.0f);
                             prim.texture.base_ = null;
                             prim.texture.baseOffset = 0;
-                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_NONE);
+                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE);
                         }
                         else
                         {
                             // for alpha or add modes, we will blend against 0 or add to 0; treat it like none
-                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_NONE);
+                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE);
                         }
 
                         // since alpha is disabled, premultiply the RGB values and reset the alpha to 1.0
@@ -3689,7 +3652,7 @@ namespace mame
 
     // ======================> render_manager
     // contains machine-global information and operations
-    public class render_manager
+    public class render_manager : global_object, IDisposable
     {
         // internal state
         running_machine m_machine;          // reference back to the machine
@@ -3730,13 +3693,19 @@ namespace mame
                 screen.set_container(container_alloc(screen));
         }
 
-        //-------------------------------------------------
-        //  ~render_manager - destructor
-        //-------------------------------------------------
         ~render_manager()
         {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
             // free all the containers since they may own textures
+            m_ui_container.Dispose();
             container_free(m_ui_container);
+            foreach (var container in m_screen_container_list)
+                container.Dispose();
             m_screen_container_list.reset();
 
             //throw new emu_unimplemented();
@@ -3744,6 +3713,8 @@ namespace mame
             // better not be any outstanding textures when we die
             global.assert(m_live_textures == 0);
 #endif
+
+            m_isDisposed = true;
         }
 
 
@@ -3893,7 +3864,7 @@ namespace mame
 
 
         // UI containers
-        public render_container ui_container() { global.assert(m_ui_container != null);  return m_ui_container; }
+        public render_container ui_container() { assert(m_ui_container != null);  return m_ui_container; }
 
 
         // textures
@@ -3937,6 +3908,7 @@ namespace mame
         public void font_free(render_font font)
         {
             //global_free(font);
+            font.Dispose();
         }
 
 

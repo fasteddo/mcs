@@ -18,7 +18,7 @@ namespace mame
     //typedef Int64 attoseconds_t;
     //typedef int seconds_t;
 
-    public class attotime
+    public class attotime : global_object
     {
         // core definitions
         public const attoseconds_t ATTOSECONDS_PER_SECOND_SQRT = 1000000000;
@@ -102,7 +102,7 @@ namespace mame
         u64 as_ticks(u32 frequency)
         {
             u32 fracticks = (u32)((new attotime(0, m_attoseconds) * frequency).m_seconds);
-            return eminline_global.mulu_32x32((u32)m_seconds, frequency) + fracticks;
+            return mulu_32x32((u32)m_seconds, frequency) + fracticks;
         }
 
 
@@ -145,7 +145,7 @@ namespace mame
             else
             {
                 UInt32 lower;
-                UInt32 upper = eminline_global.divu_64x32_rem((UInt64)m_attoseconds, (UInt32)ATTOSECONDS_PER_SECOND_SQRT, out lower);
+                UInt32 upper = divu_64x32_rem((UInt64)m_attoseconds, (UInt32)ATTOSECONDS_PER_SECOND_SQRT, out lower);
                 int temp = precision;
                 while (temp < 18)
                 {
@@ -170,7 +170,7 @@ namespace mame
         public static attotime from_seconds(int seconds) { return new attotime(seconds, 0); }
         public static attotime from_msec(s64 msec) { return new attotime((int)(msec / 1000), (msec % 1000) * (ATTOSECONDS_PER_SECOND / 1000)); }
         public static attotime from_usec(s64 usec) { return new attotime((int)(usec / 1000000), (usec % 1000000) * (ATTOSECONDS_PER_SECOND / 1000000)); }
-        //static attotime from_nsec(INT64 nsec) { return attotime(nsec / 1000000000, (nsec % 1000000000) * (ATTOSECONDS_PER_SECOND / 1000000000)); }
+        public static attotime from_nsec(s64 nsec) { return new attotime((int)(nsec / 1000000000), (nsec % 1000000000) * (ATTOSECONDS_PER_SECOND / 1000000000)); }
 
         public static attotime from_hz(u32 frequency) { return (frequency > 1) ? new attotime(0, HZ_TO_ATTOSECONDS(frequency)) : (frequency == 1) ? new attotime(1, 0) : never; }
         public static attotime from_hz(int frequency) { return (frequency > 0) ? from_hz((u32)frequency) : never; }

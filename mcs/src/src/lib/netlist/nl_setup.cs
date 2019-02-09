@@ -5,9 +5,11 @@ using System;
 using System.Collections.Generic;
 
 using link_t = System.Collections.Generic.KeyValuePair<string, string>;  //using link_t = std::pair<pstring, pstring>;
-using model_map_t = mame.std_unordered_map<string, string>;
+using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
+using model_map_t = mame.std.unordered_map<string, string>;
+using netlist_base_t = mame.netlist.netlist_state_t;
 using nl_double = System.Double;
-using source_t_list_t = mame.std_vector<mame.netlist.source_t>;  //using list_t = std::vector<std::unique_ptr<source_t>>;
+using source_t_list_t = mame.std.vector<mame.netlist.source_t>;  //using list_t = std::vector<std::unique_ptr<source_t>>;
 
 
 namespace mame.netlist
@@ -73,7 +75,7 @@ namespace mame.netlist
 
         //#define LOCAL_SOURCE(name)                                                     \
         //        setup.register_source(plib::make_unique_base<netlist::source_t, netlist::source_proc_t>(setup, # name, &NETLIST_NAME(name)));
-        public static void LOCAL_SOURCE(setup_t setup, string name, source_proc_t.setup_func_delegate nld_name) { setup.register_source(new netlist.source_proc_t(setup, name, nld_name)); }
+        public static void LOCAL_SOURCE(setup_t setup, string name, source_proc_t.setup_func_delegate netlist_name) { setup.register_source(new netlist.source_proc_t(setup, name, netlist_name)); }
 
         //#define LOCAL_LIB_ENTRY(name)                                                  \
         //        LOCAL_SOURCE(name)                                                     \
@@ -154,7 +156,7 @@ namespace mame.netlist
         public UInt32 ni;  //unsigned long ni;
         public UInt32 no;  //unsigned long no;
         public string def_param;
-        public std_vector<string> desc = new std_vector<string>();
+        public std.vector<string> desc = new std.vector<string>();
         public string family;
     }
 
@@ -203,7 +205,7 @@ namespace mame.netlist
             m_type = type;
         }
 
-        ~source_t() { }
+        //~source_t() { }
 
 
         public virtual bool parse(string name)
@@ -240,20 +242,20 @@ namespace mame.netlist
         //using link_t = std::pair<pstring, pstring>;
 
 
-        std_vector<KeyValuePair<string, factory.element_t>> m_device_factory = new std_vector<KeyValuePair<string, factory.element_t>>();  //std::vector<std::pair<pstring, factory::element_t *>> m_device_factory;
+        std.unordered_map<string, factory.element_t> m_device_factory = new std.unordered_map<string, factory.element_t>();
 
-        std_unordered_map<string, string> m_alias = new std_unordered_map<string, string>();
-        std_unordered_map<string, string> m_param_values = new std_unordered_map<string, string>();
-        std_unordered_map<string, detail.core_terminal_t> m_terminals = new std_unordered_map<string, detail.core_terminal_t>();
+        std.unordered_map<string, string> m_alias = new std.unordered_map<string, string>();
+        std.unordered_map<string, string> m_param_values = new std.unordered_map<string, string>();
+        std.unordered_map<string, detail.core_terminal_t> m_terminals = new std.unordered_map<string, detail.core_terminal_t>();
 
 
         netlist_t m_netlist;
-        std_unordered_map<string, param_ref_t> m_params = new std_unordered_map<string, param_ref_t>();
-        std_vector<link_t> m_links = new std_vector<link_t>();
+        std.unordered_map<string, param_ref_t> m_params = new std.unordered_map<string, param_ref_t>();
+        std.vector<link_t> m_links = new std.vector<link_t>();
         factory.list_t m_factory;
-        std_unordered_map<string, string> m_models = new std_unordered_map<string, string>();
+        std.unordered_map<string, string> m_models = new std.unordered_map<string, string>();
 
-        std_stack<string> m_namespace_stack = new std_stack<string>();  //std::stack<pstring>                         m_namespace_stack;
+        std.stack<string> m_namespace_stack = new std.stack<string>();  //std::stack<pstring>                         m_namespace_stack;
         source_t_list_t m_sources = new source_t_list_t();
         //std::vector<plib::ppreprocessor::define_t>  m_defines;
 
@@ -267,25 +269,24 @@ namespace mame.netlist
             m_factory = new factory.list_t(this);
             m_proxy_cnt = 0;
             m_frontier_cnt = 0;
-
-
-            devices.net_lib_global.initialize_factory(m_factory);
         }
 
+        //~setup_t()
+        //{
+        //    m_links.clear();
+        //    m_alias.clear();
+        //    m_params.clear();
+        //    m_terminals.clear();
+        //    m_param_values.clear();
+        //
+        //    m_sources.clear();
+        //}
 
-        ~setup_t()
-        {
-            throw new emu_unimplemented();
-        }
+
+        netlist_state_t netlist() { return m_netlist.nlstate(); }
 
 
-        public std_vector<KeyValuePair<string, factory.element_t>> device_factory { get { return m_device_factory; } }
-        public std_unordered_map<string, string> param_values { get { return m_param_values; } }
-
-
-        //netlist_t &netlist() { return m_netlist; }
-        //const netlist_t &netlist() const { return m_netlist; }
-        netlist_t netlist() { return m_netlist; }
+        public netlist_t exec() { return m_netlist; }
 
 
         string build_fqn(string obj_name)
@@ -314,40 +315,6 @@ namespace mame.netlist
                 return def;
         }
 
-        public double get_initial_param_val(string name, double def)
-        {
-            var i = m_param_values.find(name);
-            if (i != null)  //m_param_values.end())
-            {
-                //double vald = 0;
-                //if (sscanf(i->second.c_str(), "%lf", &vald) != 1)
-                //    log().fatal(MF_2_INVALID_NUMBER_CONVERSION_1_2, name, i->second);
-                //return vald;
-                return Convert.ToDouble(i);
-            }
-            else
-            {
-                return def;
-            }
-        }
-
-        public int get_initial_param_val(string name, int def)
-        {
-            var i = m_param_values.find(name);
-            if (i != null)  //m_param_values.end())
-            {
-                //double vald = 0;
-                //if (sscanf(i->second.c_str(), "%lf", &vald) != 1)
-                //    log().fatal(MF_2_INVALID_NUMBER_CONVERSION_1_2, name, i->second);
-                //return static_cast<int>(vald);
-                return Convert.ToInt32(Convert.ToDouble(i));
-            }
-            else
-            {
-                return def;
-            }
-        }
-
 
         public void register_term(detail.core_terminal_t term)
         {
@@ -364,7 +331,10 @@ namespace mame.netlist
                 log().fatal.op(nl_errstr_global.MF_1_CLASS_1_NOT_FOUND, classname);
             /* make sure we parse macro library entries */
             f.macro_actions(netlist(), name);
-            m_device_factory.push_back(new KeyValuePair<string, factory.element_t>(build_fqn(name), f));
+            string key = build_fqn(name);
+            if (device_exists(key))
+                log().fatal.op(nl_errstr_global.MF_1_DEVICE_ALREADY_EXISTS_1, name);
+            m_device_factory[key] = f;
         }
 
 
@@ -379,8 +349,10 @@ namespace mame.netlist
             var pos = model_in.find(" ");
             if (pos == -1)
                 log().fatal.op(nl_errstr_global.MF_1_UNABLE_TO_PARSE_MODEL_1, model_in);
-            string model = model_in.left(pos).trim().ucase();
-            string def = model_in.substr(pos + 1).trim();
+            string model = plib.pstring_global.ucase(plib.pstring_global.trim(plib.pstring_global.left(model_in, pos)));
+            string def = plib.pstring_global.trim(model_in.substr(pos + 1));
+            string modelOLD = model_in.left(pos).trim().ucase();
+            string defOLD = model_in.substr(pos + 1).trim();
             if (!m_models.insert(model, def))
                 log().fatal.op(nl_errstr_global.MF_1_MODEL_ALREADY_EXISTS_1, model_in);
         }
@@ -419,7 +391,7 @@ namespace mame.netlist
 
         public void register_link_arr(string terms)
         {
-            std_vector<string> list = new std_vector<string>(terms.Split(new string[] { ", " }, StringSplitOptions.None));  //plib::psplit(terms, ", ");
+            std.vector<string> list = new std.vector<string>(terms.Split(new string[] { ", " }, StringSplitOptions.None));  //plib::psplit(terms, ", ");
             if (list.size() < 2)
                 log().fatal.op(nl_errstr_global.MF_2_NET_C_NEEDS_AT_LEAST_2_TERMINAL);
             for (int i = 1; i < list.size(); i++)
@@ -459,7 +431,10 @@ namespace mame.netlist
 
         public void register_param(string param, double value)
         {
-            register_param(param, string.Format("{0:f9}", value));  //register_param(param, plib::pfmt("{1:.9}").e(value));
+            if (std.abs(value - std.floor(value)) > 1e-30 || std.abs(value) > 1e9)
+                register_param(param, string.Format("{0:f9}", value));  //register_param(param, plib::pfmt("{1:.9}").e(value));
+            else
+                register_param(param, string.Format("{0}", (long)value));
         }
 
 
@@ -520,12 +495,7 @@ namespace mame.netlist
 
         public bool device_exists(string name)
         {
-            foreach (var e in m_device_factory)
-            {
-                if (e.first() == name)
-                    return true;
-            }
-            return false;
+            return m_device_factory.find(name) != null;
         }
 
 
@@ -543,7 +513,7 @@ namespace mame.netlist
         }
 
 
-        public void start_devices()
+        void register_dynamic_log_devices()
         {
             string env = ""; //plib::util::environment("NL_LOGS", "");
 
@@ -557,7 +527,7 @@ namespace mame.netlist
                     var nc = factory().factory_by_name("LOG").Create(netlist(), name);
                     register_link(name + ".I", ll);
                     log().debug.op("    dynamic link {0}: <{1}>\n", ll, name);
-                    netlist().register_dev(nc);
+                    m_netlist.nlstate().add_dev(nc);
                 }
             }
         }
@@ -608,21 +578,7 @@ namespace mame.netlist
 
             // delete empty nets
 
-            //netlist().m_nets.erase(
-            //        std::remove_if(netlist().m_nets.begin(), netlist().m_nets.end(),
-            //                [](plib::owned_ptr<detail::net_t> &x)
-            netlist().nets.RemoveAll(x =>  
-            {
-                if (x.num_cons() == 0)
-                {
-                    x.netlist().log().verbose.op("Deleting net {0} ...", x.name());
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            });  //, netlist().m_nets.end());
+            delete_empty_nets();
 
             string errstr = "";
 
@@ -688,7 +644,7 @@ namespace mame.netlist
         {
             string ret = "";
 
-            if (entity != entity.ucase())
+            if (entity != plib.pstring_global.ucase(entity))
                 log().fatal.op(nl_errstr_global.MF_2_MODEL_PARAMETERS_NOT_UPPERCASE_1_2, entity, model_string(map));
             if (map.find(entity) == null)
                 log().fatal.op(nl_errstr_global.MF_2_ENTITY_1_NOT_FOUND_IN_MODEL_2, entity, model_string(map));
@@ -704,7 +660,7 @@ namespace mame.netlist
             string tmp = model_value_str(map, entity);
 
             nl_double factor = nl_config_global.NL_FCONST(1.0);
-            var p = tmp[tmp.Length - 1];  //auto p = std::next(tmp.begin(), static_cast<pstring::difference_type>(tmp.length() - 1));
+            var p = tmp[tmp.Length - 1];  //auto p = std::next(tmp.begin(), static_cast<pstring::difference_type>(tmp.size() - 1));
             switch (p)
             {
                 case 'M': factor = 1e6; break;
@@ -722,9 +678,10 @@ namespace mame.netlist
             }
 
             if (factor != nl_config_global.NL_FCONST(1.0))
-                tmp = tmp.left(tmp.length() - 1);
+                tmp = plib.pstring_global.left(tmp, tmp.Length - 1);
 
-            return tmp.as_double() * factor;
+            // FIXME: check for errors
+            return plib.pstring_global.pstonum_double(tmp) * factor;
         }
 
 
@@ -749,16 +706,16 @@ namespace mame.netlist
                 pos = model.find("(");
                 if (pos != -1) break;
 
-                key = model.ucase();
+                key = plib.pstring_global.ucase(model);
                 var i = m_models.find(key);
                 if (i == null)
                     log().fatal.op(nl_errstr_global.MF_1_MODEL_NOT_FOUND, model);
                 model = i;
             }
 
-            string xmodel = model.left(pos);
+            string xmodel = plib.pstring_global.left(model, pos);
 
-            if (xmodel.equals("_"))
+            if (xmodel == "_")
             {
                 map["COREMODEL"] = key;
             }
@@ -771,11 +728,11 @@ namespace mame.netlist
                     log().fatal.op(nl_errstr_global.MF_1_MODEL_NOT_FOUND, model_in);
             }
 
-            string remainder = model.substr(pos + 1).trim();
-            if (!remainder.endsWith(")"))
+            string remainder = plib.pstring_global.trim(model.substr(pos + 1));
+            if (!plib.pstring_global.endsWith(remainder, ")"))
                 log().fatal.op(nl_errstr_global.MF_1_MODEL_ERROR_1, model);
             // FIMXE: Not optimal
-            remainder = remainder.left(remainder.length() - 1);
+            remainder = plib.pstring_global.left(remainder, remainder.Length - 1);
 
             var pairs = remainder.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             foreach (string pe in pairs)
@@ -783,7 +740,7 @@ namespace mame.netlist
                 var pose = pe.find("=");
                 if (pose == -1)
                     log().fatal.op(nl_errstr_global.MF_1_MODEL_ERROR_ON_PAIR_1, model);
-                map[pe.left(pose).ucase()] = pe.substr(pose + 1);
+                map[plib.pstring_global.ucase(plib.pstring_global.left(pe, pose))] = pe.substr(pose + 1);
             }
         }
 
@@ -846,9 +803,7 @@ namespace mame.netlist
         }
 
 
-        //plib::plog_base<netlist_t, NL_DEBUG> &log();
-        //const plib::plog_base<netlist_t, NL_DEBUG> &log() const;
-        public plib.plog_base<netlist_t> log() { return netlist().log(); }
+        public log_type log() { return netlist().log(); }
 
 
         /* needed by proxy */
@@ -874,6 +829,141 @@ namespace mame.netlist
                 log().debug.op("Found input {0}\n", tname);
 
             return term;
+        }
+
+
+        /* core net handling */
+        // ----------------------------------------------------------------------------------------
+        // Device handling
+        // ----------------------------------------------------------------------------------------
+        void delete_empty_nets()
+        {
+            //netlist().nets().erase(
+            //    std::remove_if(netlist().nets().begin(), netlist().nets().end(),
+            //        [](plib::owned_ptr<detail::net_t> &x)
+            //        {
+            //            if (x->num_cons() == 0)
+            //            {
+            //                x->state().log().verbose("Deleting net {1} ...", x->name());
+            //                return true;
+            //            }
+            //            else
+            //                return false;
+            //        }), netlist().nets().end());
+            netlist().nets().RemoveAll(x =>
+            {
+                if (x.num_cons() == 0)
+                {
+                    x.state().log().verbose.op("Deleting net {0} ...", x.name());
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            });
+        }
+
+
+        // ----------------------------------------------------------------------------------------
+        // Run preparation
+        // ----------------------------------------------------------------------------------------
+        public void prepare_to_run()
+        {
+            register_dynamic_log_devices();
+
+            /* load the library ... */
+
+            /* make sure the solver and parameters are started first! */
+
+            foreach (var e in m_device_factory)
+            {
+                if (factory().is_class<devices.nld_solver>(e.second()) || factory().is_class<devices.nld_netlistparams>(e.second()))
+                {
+                    var dev = e.second().Create(netlist(), e.first());
+                    m_netlist.nlstate().add_dev(dev);
+                }
+            }
+
+            log().debug.op("Searching for solver and parameters ...\n");
+
+            var solver = netlist().get_single_device<devices.nld_solver>("solver");
+            netlist().params_ = netlist().get_single_device<devices.nld_netlistparams>("parameter");
+
+            /* create devices */
+
+            log().debug.op("Creating devices ...\n");
+            foreach (var e in m_device_factory)
+            {
+                if (!factory().is_class<devices.nld_solver>(e.second()) && !factory().is_class<devices.nld_netlistparams>(e.second()))
+                {
+                    var dev = e.second().Create(netlist(), e.first());
+                    m_netlist.nlstate().add_dev(dev);
+                }
+            }
+
+            bool use_deactivate = netlist().params_.use_deactivate.op() ? true : false;
+
+            foreach (var d in netlist().devices())
+            {
+                if (use_deactivate)
+                {
+                    var p = m_param_values.find(d.name() + ".HINT_NO_DEACTIVATE");
+                    if (p != null)
+                    {
+                        //FIXME: check for errors ...
+                        double v = plib.pstring_global.pstonum_double(p);
+                        if (std.abs(v - std.floor(v)) > 1e-6 )
+                            log().fatal.op(nl_errstr_global.MF_1_HND_VAL_NOT_SUPPORTED, p);
+                        d.set_hint_deactivate(v == 0.0);
+                    }
+                }
+                else
+                {
+                    d.set_hint_deactivate(false);
+                }
+            }
+
+            /* resolve inputs */
+            resolve_inputs();
+
+            log().verbose.op("looking for two terms connected to rail nets ...");
+            foreach (var t in m_netlist.nlstate().get_device_list<analog.nld_twoterm>())
+            {
+                if (t.N.net().isRailNet() && t.P.net().isRailNet())
+                {
+                    log().warning.op(nl_errstr_global.MW_3_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3,
+                        t.name(), t.N.net().name(), t.P.net().name());
+                    t.N.net().remove_terminal(t.N);
+                    t.P.net().remove_terminal(t.P);
+                    m_netlist.nlstate().remove_dev(t);
+                }
+            }
+
+            log().verbose.op("initialize solver ...\n");
+
+            if (solver == null)
+            {
+                foreach (var p in netlist().nets())
+                {
+                    if (p.is_analog())
+                        log().fatal.op(nl_errstr_global.MF_0_NO_SOLVER);
+                }
+            }
+            else
+            {
+                solver.post_start();
+            }
+
+            foreach (var n in netlist().nets())
+            {
+                foreach (var term in n.core_terms)
+                {
+                    //core_device_t *dev = reinterpret_cast<core_device_t *>(term->m_delegate.object());
+                    core_device_t dev = term.device();
+                    dev.set_default_delegate(term);
+                }
+            }
         }
 
 
@@ -923,7 +1013,7 @@ namespace mame.netlist
                 log().debug.op("adding analog net ...\n");
                 // FIXME: Nets should have a unique name
                 var anet = new analog_net_t(netlist(), "net." + t1.name());  //plib::palloc<analog_net_t>(netlist(),"net." + t1.name());
-                netlist().nets.push_back(anet);  //plib::owned_ptr<analog_net_t>(anet, true));
+                netlist().register_net(anet);  //plib::owned_ptr<analog_net_t>(anet, true));
                 t1.set_net(anet);
                 anet.add_terminal(t2);
                 anet.add_terminal(t1);
@@ -1106,7 +1196,7 @@ namespace mame.netlist
 
                 proxy = new_proxy;
 
-                netlist().register_dev(new_proxy);
+                m_netlist.nlstate().add_dev(new_proxy);
             }
             return proxy;
         }
@@ -1147,7 +1237,7 @@ namespace mame.netlist
                     inp.net().core_terms.clear(); // clear the list
                 }
                 ret.out_().net().add_terminal(inp);
-                netlist().register_dev(new_proxy);
+                m_netlist.nlstate().add_dev(new_proxy);
                 return ret;
             }
         }
@@ -1249,11 +1339,11 @@ namespace mame.netlist
         public logic_family_std_proxy_t get() { return this; }  // for smart ptr
 
 
-        public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_t anetlist, string name, logic_output_t proxied)
+        public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_base_t anetlist, string name, logic_output_t proxied)
         {
             return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return plib::owned_ptr<devices::nld_base_d_to_a_proxy>::Create<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
         }
-        public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_t anetlist, string name, logic_input_t proxied)
+        public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_base_t anetlist, string name, logic_input_t proxied)
         {
             return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return plib::owned_ptr<devices::nld_base_a_to_d_proxy>::Create<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
         }

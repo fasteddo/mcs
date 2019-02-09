@@ -20,19 +20,10 @@ namespace mame
             103, 252, 221, 140, 191, 215, 111, 188, 126,  45, 241,  20,  72,  28, 135, 151, 240, 249,  94, 187, 120,   0,  25,  77, 126, 181
         };
 
-        static readonly internal_layout layout_noscreens = new internal_layout
+
+        public static readonly internal_layout layout_noscreens = new internal_layout
         (
             385, layout_noscreens_data.Length, 1, layout_noscreens_data
         );
-
-
-        public static string layout_noscreens_string()
-        {
-            string s = "";
-            foreach (var c in layout_noscreens.data)
-                s += Convert.ToChar(c);
-
-            return s;
-        }
     }
 }

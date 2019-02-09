@@ -13,7 +13,7 @@ namespace mame.ui
             ui_menu_keyboard_mode - menu that
         -------------------------------------------------*/
         public menu_keyboard_mode(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_keyboard_mode() { }
+        //~menu_keyboard_mode() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
@@ -32,7 +32,7 @@ namespace mame.ui
     class menu_network_devices : menu
     {
         public menu_network_devices(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_network_devices() { }
+        //~menu_network_devices() { }
 
 
         /*-------------------------------------------------
@@ -65,7 +65,7 @@ namespace mame.ui
             information menu
         -------------------------------------------------*/
         public menu_bookkeeping(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_bookkeeping() { }
+        //~menu_bookkeeping() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
@@ -110,7 +110,7 @@ namespace mame.ui
             menu
         -------------------------------------------------*/
         public menu_crosshair(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_crosshair() { }
+        //~menu_crosshair() { }
 
 
         /*-------------------------------------------------
@@ -137,7 +137,7 @@ namespace mame.ui
             quitting the game
         -------------------------------------------------*/
         public menu_quit_game(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_quit_game() { }
+        //~menu_quit_game() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
@@ -163,7 +163,7 @@ namespace mame.ui
             bios selection menu
         -------------------------------------------------*/
         public menu_bios_selection(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        ~menu_bios_selection() { }
+        //~menu_bios_selection() { }
 
 
         protected override void populate(ref float customtop, ref float custombottom)

@@ -13,14 +13,6 @@ using u8 = System.Byte;
 
 namespace mame
 {
-    enum SEQ_PRESSED
-    {
-        SEQ_PRESSED_FALSE = 0,      /* not pressed */
-        SEQ_PRESSED_TRUE,           /* pressed */
-        SEQ_PRESSED_RESET           /* reset -- converted to FALSE once detected as not pressed */
-    }
-
-
     public class ui_event
     {
         public enum type
@@ -51,8 +43,16 @@ namespace mame
 
 
     // ======================> ui_input_manager
-    public class ui_input_manager
+    public class ui_input_manager : global_object
     {
+        //enum
+        //{
+        const u8 SEQ_PRESSED_FALSE = 0;      /* not pressed */
+        const u8 SEQ_PRESSED_TRUE  = 1;      /* pressed */
+        const u8 SEQ_PRESSED_RESET = 2;      /* reset -- converted to FALSE once detected as not pressed */
+        //}
+
+
         const int EVENT_QUEUE_SIZE = 128;
 
 
@@ -110,7 +110,7 @@ namespace mame
             for (ioport_type code = (ioport_type)(ioport_type.IPT_UI_FIRST + 1); code < ioport_type.IPT_UI_LAST; ++code)
             {
                 bool pressed = machine.ioport().type_pressed(code);
-                if (!pressed || m_seqpressed[(int)code] != (byte)SEQ_PRESSED.SEQ_PRESSED_RESET)
+                if (!pressed || m_seqpressed[(int)code] != SEQ_PRESSED_RESET)
                     m_seqpressed[(int)code] = pressed ? (byte)1 : (byte)0;
             }
 
@@ -217,7 +217,7 @@ namespace mame
             m_events_end = 0;
             for (code = (int)ioport_type.IPT_UI_FIRST + 1; code < (int)ioport_type.IPT_UI_LAST; code++)
             {
-                m_seqpressed[code] = (byte)SEQ_PRESSED.SEQ_PRESSED_RESET;
+                m_seqpressed[code] = SEQ_PRESSED_RESET;
                 m_next_repeat[code] = 0;
             }
         }
@@ -290,8 +290,8 @@ namespace mame
             profiler_global.g_profiler.start(profile_type.PROFILER_INPUT);
 
             /* get the status of this key (assumed to be only in the defaults) */
-            global.assert(code >= (int)ioport_type.IPT_UI_CONFIGURE && code <= (int)ioport_type.IPT_OSD_16);
-            pressed = m_seqpressed[code] == (byte)SEQ_PRESSED.SEQ_PRESSED_TRUE;
+            assert(code >= (int)ioport_type.IPT_UI_CONFIGURE && code <= (int)ioport_type.IPT_OSD_16);
+            pressed = m_seqpressed[code] == SEQ_PRESSED_TRUE;
 
             /* if down, handle it specially */
             if (pressed)
@@ -309,7 +309,7 @@ namespace mame
                     // In the autorepeatcase, we need to double check the key is still pressed
                     // as there can be a delay between the key polling and our processing of the event
                     m_seqpressed[code] = machine().ioport().type_pressed((ioport_type)code) ? (byte)1 : (byte)0;
-                    pressed = (m_seqpressed[code] == (byte)SEQ_PRESSED.SEQ_PRESSED_TRUE);
+                    pressed = (m_seqpressed[code] == SEQ_PRESSED_TRUE);
                     if (pressed)
                         m_next_repeat[code] += 1 * (osd_ticks_t)speed * tps / 60;
                 }

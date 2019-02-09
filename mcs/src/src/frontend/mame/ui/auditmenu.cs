@@ -18,7 +18,7 @@ namespace mame.ui
             //    if (c1 == 0 || c1 != c2)
             //        return c1 - c2;
             //}
-            return global.core_stricmp(s1, s2);
+            return global_object.core_stricmp(s1, s2);
         }
 
 
@@ -34,14 +34,14 @@ namespace mame.ui
             if (clonex)
             {
                 cx = driver_list.find(x.parent);
-                if (cx == -1 || ((UInt64)driver_list.driver((UInt32)cx).flags & gamedrv_global.MACHINE_IS_BIOS_ROOT) != 0)
+                if (cx == -1 || ((UInt64)driver_list.driver(cx).flags & global_object.MACHINE_IS_BIOS_ROOT) != 0)
                     clonex = false;
             }
 
             if (cloney)
             {
                 cy = driver_list.find(y.parent);
-                if (cy == -1 || ((UInt64)driver_list.driver((UInt32)cy).flags & gamedrv_global.MACHINE_IS_BIOS_ROOT) != 0)
+                if (cy == -1 || ((UInt64)driver_list.driver(cy).flags & global_object.MACHINE_IS_BIOS_ROOT) != 0)
                     cloney = false;
             }
 
@@ -54,21 +54,21 @@ namespace mame.ui
                 if (cs_stricmp(x.parent, y.parent) == 0)
                     return cs_stricmp(x.type.fullname(), y.type.fullname()); // < 0);
                 else
-                    return cs_stricmp(driver_list.driver((UInt32)cx).type.fullname(), driver_list.driver((UInt32)cy).type.fullname()); // < 0);
+                    return cs_stricmp(driver_list.driver(cx).type.fullname(), driver_list.driver(cy).type.fullname()); // < 0);
             }
             else if (!clonex && cloney)
             {
                 if (cs_stricmp(x.name, y.parent) == 0)
                     return cs_stricmp(x.name, y.parent);
                 else
-                    return cs_stricmp(x.type.fullname(), driver_list.driver((UInt32)cy).type.fullname()); // < 0);
+                    return cs_stricmp(x.type.fullname(), driver_list.driver(cy).type.fullname()); // < 0);
             }
             else
             {
                 if (cs_stricmp(x.parent, y.name) == 0)
                     return cs_stricmp(x.parent, y.name);
                 else
-                    return cs_stricmp(driver_list.driver((UInt32)cx).type.fullname(), y.type.fullname()); // < 0);
+                    return cs_stricmp(driver_list.driver(cx).type.fullname(), y.type.fullname()); // < 0);
             }
         }
     }

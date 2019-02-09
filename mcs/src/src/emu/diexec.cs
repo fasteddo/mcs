@@ -33,29 +33,6 @@ namespace mame
     }
 
 
-    // I/O line definitions
-    public enum INPUT_LINE
-    {
-        // input lines
-        MAX_INPUT_LINES = 64+3,
-        INPUT_LINE_IRQ0 = 0,
-        INPUT_LINE_IRQ1 = 1,
-        INPUT_LINE_IRQ2 = 2,
-        INPUT_LINE_IRQ3 = 3,
-        INPUT_LINE_IRQ4 = 4,
-        INPUT_LINE_IRQ5 = 5,
-        INPUT_LINE_IRQ6 = 6,
-        INPUT_LINE_IRQ7 = 7,
-        INPUT_LINE_IRQ8 = 8,
-        INPUT_LINE_IRQ9 = 9,
-        INPUT_LINE_NMI = MAX_INPUT_LINES - 3,
-
-        // special input lines that are implemented in the core
-        INPUT_LINE_RESET = MAX_INPUT_LINES - 2,
-        INPUT_LINE_HALT = MAX_INPUT_LINES - 1
-    }
-
-
     public static class diexec_global
     {
         //**************************************************************************
@@ -89,12 +66,35 @@ namespace mame
     // ======================> device_execute_interface
     public abstract class device_execute_interface : device_interface
     {
+        // I/O line definitions
+        //enum
+        //{
+        // input lines
+        const int MAX_INPUT_LINES = 64 + 3;
+        public const int INPUT_LINE_IRQ0 = 0;
+        public const int INPUT_LINE_IRQ1 = 1;
+        const int INPUT_LINE_IRQ2 = 2;
+        const int INPUT_LINE_IRQ3 = 3;
+        const int INPUT_LINE_IRQ4 = 4;
+        const int INPUT_LINE_IRQ5 = 5;
+        const int INPUT_LINE_IRQ6 = 6;
+        const int INPUT_LINE_IRQ7 = 7;
+        const int INPUT_LINE_IRQ8 = 8;
+        const int INPUT_LINE_IRQ9 = 9;
+        public const int INPUT_LINE_NMI = MAX_INPUT_LINES - 3;
+
+        // special input lines that are implemented in the core
+        public const int INPUT_LINE_RESET = MAX_INPUT_LINES - 2;
+        public const int INPUT_LINE_HALT = MAX_INPUT_LINES - 1;
+        //}
+
+
         const bool VERBOSE = false;
         const bool TEMPLOG = false;
 
 
         // internal information about the state of inputs
-        class device_input
+        class device_input : global_object
         {
             void LOG(string format, params object [] args) { if (VERBOSE) m_execute.device().logerror(format, args); }
 
@@ -105,10 +105,10 @@ namespace mame
             device_execute_interface m_execute;// pointer to the execute interface
             int m_linenum;          // which input line we are
 
-            int m_stored_vector;    // most recently written vector
-            int m_curvector;        // most recently processed vector
-            line_state m_curstate;         // most recently processed state
-            int [] m_queue = new int[32];        // queue of pending events
+            s32 m_stored_vector;    // most recently written vector
+            s32 m_curvector;        // most recently processed vector
+            u8 m_curstate;         // most recently processed state
+            s32 [] m_queue = new s32 [32];        // queue of pending events
             int m_qindex;           // index within the queue
 
 
@@ -121,7 +121,7 @@ namespace mame
                 m_linenum = 0;
                 m_stored_vector = 0;
                 m_curvector = 0;
-                m_curstate = line_state.CLEAR_LINE;
+                m_curstate = (u8)line_state.CLEAR_LINE;
                 m_qindex = 0;
 
 
@@ -129,7 +129,7 @@ namespace mame
             }
 
 
-            public line_state curstate { get { return m_curstate; } }
+            public u8 curstate { get { return m_curstate; } }
 
 
             //-------------------------------------------------
@@ -165,13 +165,13 @@ namespace mame
             //  set_state_synced - enqueue an event for later
             //  execution via timer
             //-------------------------------------------------
-            public void set_state_synced(line_state state, UInt32 vector = USE_STORED_VECTOR)
+            public void set_state_synced(int state, UInt32 vector = USE_STORED_VECTOR)
             {
                 LOG("set_state_synced('{0}',{1},{2},{3})\n", m_execute.device().tag(), m_linenum, state, vector);
 
-                if (TEMPLOG) global.osd_printf_info("setline({0},{1},{2},{3})\n", m_execute.device().tag(), m_linenum, state, (vector == USE_STORED_VECTOR) ? 0 : vector);
+                if (TEMPLOG) osd_printf_info("setline({0},{1},{2},{3})\n", m_execute.device().tag(), m_linenum, state, (vector == USE_STORED_VECTOR) ? 0 : vector);
 
-                global.assert(state == line_state.ASSERT_LINE || state == line_state.HOLD_LINE || state == line_state.CLEAR_LINE);
+                assert(state == (int)line_state.ASSERT_LINE || state == (int)line_state.HOLD_LINE || state == (int)line_state.CLEAR_LINE);
 
                 // if we're full of events, flush the queue and log a message
                 int event_index = m_qindex++;
@@ -207,11 +207,11 @@ namespace mame
                 int vector = m_curvector;
 
                 // if the IRQ state is HOLD_LINE, clear it
-                if (m_curstate == line_state.HOLD_LINE)
+                if (m_curstate == (u8)line_state.HOLD_LINE)
                 {
                     LOG("->set_irq_line('{0}',{1},{2})\n", m_execute.device().tag(), m_linenum, line_state.CLEAR_LINE);
                     m_execute.execute_set_input(m_linenum, (int)line_state.CLEAR_LINE);
-                    m_curstate = line_state.CLEAR_LINE;
+                    m_curstate = (u8)line_state.CLEAR_LINE;
                 }
                 return vector;
             }
@@ -223,7 +223,7 @@ namespace mame
             //TIMER_CALLBACK_MEMBER(empty_event_queue);
             void empty_event_queue(object ptr = null, int param = 0)
             {
-                if (TEMPLOG) global.osd_printf_info("empty_queue({0},{1},{2})\n", m_execute.device().tag(), m_linenum, m_qindex);
+                if (TEMPLOG) osd_printf_info("empty_queue({0},{1},{2})\n", m_execute.device().tag(), m_linenum, m_qindex);
 
                 // loop over all events
                 for (int curevent = 0; curevent < m_qindex; curevent++)
@@ -231,19 +231,19 @@ namespace mame
                     int input_event = m_queue[curevent];
 
                     // set the input line state and vector
-                    m_curstate = (line_state)(input_event & 0xff);
+                    m_curstate = (u8)(input_event & 0xff);
                     m_curvector = input_event >> 8;
 
-                    if (TEMPLOG) global.osd_printf_info(" ({0},{1})\n", m_curstate, m_curvector);
+                    if (TEMPLOG) osd_printf_info(" ({0},{1})\n", m_curstate, m_curvector);
 
-                    global.assert(m_curstate == line_state.ASSERT_LINE || m_curstate == line_state.HOLD_LINE || m_curstate == line_state.CLEAR_LINE);
+                    assert(m_curstate == (u8)line_state.ASSERT_LINE || m_curstate == (u8)line_state.HOLD_LINE || m_curstate == (u8)line_state.CLEAR_LINE);
 
                     // special case: RESET
-                    if (m_linenum == (int)INPUT_LINE.INPUT_LINE_RESET)
+                    if (m_linenum == INPUT_LINE_RESET)
                     {
                         // if we're asserting the line, just halt the device
                         // FIXME: outputs of onboard peripherals also need to be deactivated at this time
-                        if (m_curstate == line_state.ASSERT_LINE)
+                        if (m_curstate == (u8)line_state.ASSERT_LINE)
                             m_execute.suspend(SUSPEND_REASON_RESET, true);
 
                         // if we're clearing the line that was previously asserted, reset the device
@@ -255,14 +255,14 @@ namespace mame
                     }
 
                     // special case: HALT
-                    else if (m_linenum == (int)INPUT_LINE.INPUT_LINE_HALT)
+                    else if (m_linenum == INPUT_LINE_HALT)
                     {
                         // if asserting, halt the device
-                        if (m_curstate == line_state.ASSERT_LINE)
+                        if (m_curstate == (u8)line_state.ASSERT_LINE)
                             m_execute.suspend(SUSPEND_REASON_HALT, true);
 
                         // if clearing, unhalt the device
-                        else if (m_curstate == line_state.CLEAR_LINE)
+                        else if (m_curstate == (u8)line_state.CLEAR_LINE)
                             m_execute.resume(SUSPEND_REASON_HALT);
                     }
 
@@ -272,12 +272,12 @@ namespace mame
                         // switch off the requested state
                         switch (m_curstate)
                         {
-                            case line_state.HOLD_LINE:
-                            case line_state.ASSERT_LINE:
+                            case (u8)line_state.HOLD_LINE:
+                            case (u8)line_state.ASSERT_LINE:
                                 m_execute.execute_set_input(m_linenum, (int)line_state.ASSERT_LINE);
                                 break;
 
-                            case line_state.CLEAR_LINE:
+                            case (u8)line_state.CLEAR_LINE:
                                 m_execute.execute_set_input(m_linenum, (int)line_state.CLEAR_LINE);
                                 break;
 
@@ -287,7 +287,7 @@ namespace mame
                         }
 
                         // generate a trigger to unsuspend any devices waiting on the interrupt
-                        if (m_curstate != line_state.CLEAR_LINE)
+                        if (m_curstate != (u8)line_state.CLEAR_LINE)
                             m_execute.signal_interrupt_trigger();
                     }
                 }
@@ -328,7 +328,7 @@ namespace mame
 
         // input states and IRQ callbacks
         device_irq_acknowledge_delegate m_driver_irq;       // driver-specific IRQ callback
-        device_input [] m_input = new device_input[(int)INPUT_LINE.MAX_INPUT_LINES];   // data about inputs
+        device_input [] m_input = new device_input[MAX_INPUT_LINES];   // data about inputs
         emu_timer m_timedint_timer;           // reference to this device's periodic interrupt timer
 
         // cycle counting and executing
@@ -390,7 +390,7 @@ namespace mame
 
 
             // configure the fast accessor
-            global.assert(device.interfaces().m_execute == null);
+            assert(device.interfaces().m_execute == null);
             device.interfaces().m_execute = this;
         }
 
@@ -423,7 +423,7 @@ namespace mame
         u64 cycles_to_clocks(u64 cycles) { return execute_cycles_to_clocks(cycles); }
         u32 min_cycles() { return execute_min_cycles(); }
         //u32 max_cycles() const { return execute_max_cycles(); }
-        attotime cycles_to_attotime(u64 cycles) { return device().clocks_to_attotime(cycles_to_clocks(cycles)); }
+        public attotime cycles_to_attotime(u64 cycles) { return device().clocks_to_attotime(cycles_to_clocks(cycles)); }
         //UINT64 attotime_to_cycles(const attotime &duration) const { return clocks_to_cycles(device().attotime_to_clocks(duration)); }
         //UINT32 input_lines() const { return execute_input_lines(); }
         u32 default_irq_vector(int linenum) { return execute_default_irq_vector(linenum); }
@@ -489,7 +489,7 @@ namespace mame
 
 
         // execution management
-        device_scheduler scheduler() { global.assert(m_scheduler != null); return m_scheduler; }
+        device_scheduler scheduler() { assert(m_scheduler != null); return m_scheduler; }
         bool executing() { return scheduler().currently_executing() == this; }
         s32 cycles_remaining() { return executing() ? m_icountptrRef.i : 0; }  // *m_icountptr : 0; } // cycles remaining in this timeslice
         public void eat_cycles(int cycles) { if (executing()) m_icountptrRef.i = (cycles > m_icountptrRef.i) ? 0 : (m_icountptrRef.i - cycles); }  // *m_icountptr = (cycles > *m_icountptr) ? 0 : (*m_icountptr - cycles); }
@@ -519,11 +519,13 @@ namespace mame
 
 
         // input and interrupt management
-        public void set_input_line(int linenum, line_state state) { m_input[linenum].set_state_synced(state); }
+        public void set_input_line(int linenum, int state) { m_input[linenum].set_state_synced(state); }
         public void set_input_line_vector(int linenum, int vector) { m_input[linenum].set_vector(vector); }
 
-        //void set_input_line_and_vector(int linenum, int state, int vector) { m_input[linenum].set_state_synced(state, vector); }
+        public void set_input_line_and_vector(int linenum, int state, int vector) { m_input[linenum].set_state_synced(state, (UInt32)vector); }
+
         //int input_state(int linenum) { return m_input[linenum].m_curstate; }
+
 
         //-------------------------------------------------
         //  pulse_input_line - "pulse" an input line by
@@ -534,15 +536,15 @@ namespace mame
             // treat instantaneous pulses as ASSERT+CLEAR
             if (duration == attotime.zero)
             {
-                if (irqline != (int)INPUT_LINE.INPUT_LINE_RESET && !input_edge_triggered(irqline))
+                if (irqline != INPUT_LINE_RESET && !input_edge_triggered(irqline))
                     throw new emu_fatalerror("device '{0}': zero-width pulse is not allowed for input line {1}\n", device().tag(), irqline);
 
-                set_input_line(irqline, line_state.ASSERT_LINE);
-                set_input_line(irqline, line_state.CLEAR_LINE);
+                set_input_line(irqline, (int)line_state.ASSERT_LINE);
+                set_input_line(irqline, (int)line_state.CLEAR_LINE);
             }
             else
             {
-                set_input_line(irqline, line_state.ASSERT_LINE);
+                set_input_line(irqline, (int)line_state.ASSERT_LINE);
 
                 attotime target_time = local_time() + duration;
                 m_scheduler.timer_set(target_time - m_scheduler.time(), irq_pulse_clear, irqline);
@@ -559,7 +561,7 @@ namespace mame
         //-------------------------------------------------
         void suspend(u32 reason, bool eatcycles)
         {
-            if (TEMPLOG) global.osd_printf_info("suspend {0} ({1})\n", device().tag(), reason);
+            if (TEMPLOG) osd_printf_info("suspend {0} ({1})\n", device().tag(), reason);
 
             // set the suspend reason and eat cycles flag
             m_nextsuspend |= reason;
@@ -573,7 +575,7 @@ namespace mame
         //-------------------------------------------------
         void resume(u32 reason)
         {
-            if (TEMPLOG) global.osd_printf_info("resume {0} ({1})\n", device().tag(), reason);
+            if (TEMPLOG) osd_printf_info("resume {0} ({1})\n", device().tag(), reason);
 
             // clear the suspend reason and eat cycles flag
             m_nextsuspend &= ~reason;
@@ -590,12 +592,24 @@ namespace mame
 
         // triggers
 
-        //void suspend_until_trigger(int trigid, bool eatcycles);
+        //-------------------------------------------------
+        //  suspend_until_trigger - suspend execution
+        //  until the given trigger fires
+        //-------------------------------------------------
+        public void suspend_until_trigger(int trigid, bool eatcycles)
+        {
+            // suspend the device immediately if it's not already
+            suspend(SUSPEND_REASON_TRIGGER, eatcycles);
+
+            // set the trigger
+            m_trigger = trigid;
+        }
+
 
         //-------------------------------------------------
         //  trigger - respond to a trigger event
         //-------------------------------------------------
-        void trigger(int trigid)
+        public void trigger(int trigid)
         {
             // if we're executing, for an immediate abort
             abort_timeslice();
@@ -638,7 +652,7 @@ namespace mame
         {
             if (executing())
             {
-                global.assert(m_cycles_running >= m_icountptrRef.i);
+                assert(m_cycles_running >= m_icountptrRef.i);
                 return m_totalcycles + (u64)m_cycles_running - (u64)m_icountptrRef.i;
             }
             else
@@ -734,15 +748,15 @@ namespace mame
             {
                 screen_device_iterator iter = new screen_device_iterator(device().mconfig().root_device());
                 if (iter.first() == null)
-                    global.osd_printf_error("VBLANK interrupt specified, but the driver is screenless\n");
+                    osd_printf_error("VBLANK interrupt specified, but the driver is screenless\n");
                 else if (m_vblank_interrupt_screen != null && device().siblingdevice(m_vblank_interrupt_screen) == null)
-                    global.osd_printf_error("VBLANK interrupt references a non-existant screen tag '{0}'\n", m_vblank_interrupt_screen);
+                    osd_printf_error("VBLANK interrupt references a nonexistant screen tag '{0}'\n", m_vblank_interrupt_screen);
             }
 
             if (m_timed_interrupt != null && m_timed_interrupt_period == attotime.zero)
-                global.osd_printf_error("Timed interrupt handler specified with 0 period\n");
+                osd_printf_error("Timed interrupt handler specified with 0 period\n");
             else if (m_timed_interrupt == null && m_timed_interrupt_period != attotime.zero)
-                global.osd_printf_error("No timer interrupt handler specified, but has a non-0 period given\n");
+                osd_printf_error("No timer interrupt handler specified, but has a non-0 period given\n");
         }
 
         //-------------------------------------------------
@@ -878,7 +892,7 @@ namespace mame
         // for use by devcpu for now...
 
         int current_input_state(UInt32 i) { return (int)m_input[i].curstate; }
-        public void set_icountptr(intref icountptrRef) { global.assert(m_icountptrRef == null); m_icountptrRef = icountptrRef; }
+        public void set_icountptr(intref icountptrRef) { assert(m_icountptrRef == null); m_icountptrRef = icountptrRef; }
 
         //IRQ_CALLBACK_MEMBER(standard_irq_callback_member);
         //int standard_irq_callback(int irqline);
@@ -903,7 +917,7 @@ namespace mame
                 vector = m_driver_irq(device(), irqline);
 
             // notify the debugger
-            if ((device().machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) != 0)
+            if ((device().machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0)
                 device().debug().interrupt_hook(irqline);
 
             return vector;
@@ -912,14 +926,14 @@ namespace mame
 
         // debugger hooks
         //bool debugger_enabled() const { return bool(device().machine().debug_flags & DEBUG_FLAG_ENABLED); }
-        public void debugger_instruction_hook(offs_t curpc) { if ((device().machine().debug_flags_get & running_machine.DEBUG_FLAG_CALL_HOOK) != 0) device().debug().instruction_hook(curpc); }
+        public void debugger_instruction_hook(offs_t curpc) { if ((device().machine().debug_flags_get & machine_global.DEBUG_FLAG_CALL_HOOK) != 0) device().debug().instruction_hook(curpc); }
         //void debugger_exception_hook(int exception) { if (device().machine().debug_flags & DEBUG_FLAG_ENABLED) device().debug()->exception_hook(exception); }
         //void debugger_privilege_hook() { if (device().machine().debug_flags & DEBUG_FLAG_ENABLED) device().debug()->privilege_hook(); }
 
 
         // internal debugger hooks
-        public void debugger_start_cpu_hook(attotime endtime) { if ((device().machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) != 0) device().debug().start_hook(endtime); }
-        public void debugger_stop_cpu_hook() { if ((device().machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) != 0) device().debug().stop_hook(); }
+        public void debugger_start_cpu_hook(attotime endtime) { if ((device().machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0) device().debug().start_hook(endtime); }
+        public void debugger_stop_cpu_hook() { if ((device().machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0) device().debug().stop_hook(); }
 
 
         // callbacks
@@ -959,7 +973,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(irq_pulse_clear) { set_input_line(int(param), CLEAR_LINE); }
-        void irq_pulse_clear(object ptr, s32 param) { set_input_line((int)param, line_state.CLEAR_LINE); }
+        void irq_pulse_clear(object ptr, s32 param) { set_input_line((int)param, (int)line_state.CLEAR_LINE); }
 
 
         //-------------------------------------------------

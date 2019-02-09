@@ -34,7 +34,7 @@ namespace mame
         public const string MF_1_UNHANDLED_ELEMENT_1_FOUND          = "setup_base:unhandled element <{0}> found";
         public const string MF_1_FOUND_TERM_WITH_MISSING_OTHERNET   = "found term with missing othernet {0}";
 
-        //#define MW_1_NEWTON_LOOPS_EXCEEDED_ON_NET_1     "NEWTON_LOOPS exceeded on net {1}... reschedule"
+        public const string MW_1_NEWTON_LOOPS_EXCEEDED_ON_NET_1     = "NEWTON_LOOPS exceeded on net {0}... reschedule";
 
         // nld_solver.cpp
 
@@ -58,10 +58,11 @@ namespace mame
         //#define MF_1_CLASS_1_NOT_FOUND    "Class {1} not found!"
         public const string MF_1_UNABLE_TO_PARSE_MODEL_1            = "Unable to parse model: {0}";
         public const string MF_1_MODEL_ALREADY_EXISTS_1             = "Model already exists: {0}";
-        public const string MF_1_ADDING_ALI1_TO_ALIAS_LIST       = "Error adding alias {0} to alias list";
+        public const string MF_1_DEVICE_ALREADY_EXISTS_1            = "Device already exists: {0}";
+        public const string MF_1_ADDING_ALI1_TO_ALIAS_LIST          = "Error adding alias {0} to alias list";
         //#define MF_1_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1 "You must pass an equal number of pins to DIPPINS {1}"
         public const string MF_1_UNKNOWN_OBJECT_TYPE_1              = "Unknown object type {0}";
-        //#define MF_2_INVALID_NUMBER_CONVERSION_1_2      "Invalid number conversion {1} : {2}"
+        public const string MF_2_INVALID_NUMBER_CONVERSION_1_2      = "Invalid number conversion {0} : {1}";
         public const string MF_1_ADDING_PARAMETER_1_TO_PARAMETER_LIST = "Error adding parameter {0} to parameter list";
         public const string MF_2_ADDING_1_2_TO_TERMINAL_LIST        = "Error adding {0} {1} to terminal list";
         public const string MF_2_NET_C_NEEDS_AT_LEAST_2_TERMINAL    = "You must pass at least 2 terminals to NET_C";

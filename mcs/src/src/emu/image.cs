@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace mame
 {
     // ======================> image_manager
-    public class image_manager
+    public class image_manager : global_object
     {
         // internal state
         running_machine m_machine;                  // reference to our machine
@@ -71,7 +71,7 @@ namespace mame
                     /* unload all images */
                     unload_all(machine());
 
-                    throw new emu_fatalerror((int)EMU_ERR.EMU_ERR_DEVICE, "Device {0} load failed: {1}",
+                    throw new emu_fatalerror(EMU_ERR_DEVICE, "Device {0} load failed: {1}",
                         image.device().name(),
                         image_err);
                 }
@@ -181,7 +181,7 @@ namespace mame
                 filename = buffer;
             }
 
-            emu_file file = new emu_file(options.ini_path(), osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE);
+            emu_file file = new emu_file(options.ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
             osd_file.error filerr = file.open(filename);
             if (filerr == osd_file.error.NONE)
             {
@@ -189,6 +189,7 @@ namespace mame
                 file.puts(inistring);
                 retval = 0;
             }
+            file.close();
 
             return retval;
         }

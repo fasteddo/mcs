@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using attoseconds_t = System.Int64;
 using device_timer_id = System.UInt32;
 using device_type = mame.emu.detail.device_type_impl_base;
+using offs_t = System.UInt32;
 using seconds_t = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -20,6 +21,92 @@ namespace mame
 
     //typedef emu::detail::device_type_impl_base const &device_type;
 
+    //typedef device_delegate<void (u32)> clock_update_delegate;
+    public delegate void clock_update_delegate(u32 param);
+
+
+    public static class device_global
+    {
+        // macro for specifying a clock derived from an owning device
+        public static u32 DERIVED_CLOCK(u32 num, u32 den) { return 0xff000000 | (num << 12) | (den << 0); }
+
+
+        //**************************************************************************
+        //  DEVICE CONFIGURATION MACROS
+        //**************************************************************************
+
+        // configure devices
+        //#define MCFG_DEVICE_CLOCK(_clock)    device->set_clock(_clock);
+        //#define MCFG_DEVICE_INPUT_DEFAULTS(_config)    device->set_input_default(DEVICE_INPUT_DEFAULTS_NAME(_config));
+        //#define MCFG_DEVICE_BIOS(...)     device->set_default_bios_tag(__VA_ARGS__);
+
+        //#define DECLARE_READ_LINE_MEMBER(name)      int  name()
+        //#define READ_LINE_MEMBER(name)              int  name()
+        //#define DECLARE_WRITE_LINE_MEMBER(name)     void name(ATTR_UNUSED int state)
+        //#define WRITE_LINE_MEMBER(name)             void name(ATTR_UNUSED int state)
+
+
+        //**************************************************************************
+        //  GLOBAL VARIABLES
+        //**************************************************************************
+
+        // use this to refer to the owning device when providing a device tag
+        public const string DEVICE_SELF = "";
+
+        // use this to refer to the owning device's owner when providing a device tag
+        public const string DEVICE_SELF_OWNER = "^";
+
+
+        public static emu.detail.device_registrar registered_device_types = new emu.detail.device_registrar();
+
+
+        //#define DECLARE_DEVICE_TYPE(Type, Class) \
+        //        class Class; \
+        //        extern emu::detail::device_type_impl<Class> const &Type; \
+        //        extern template class device_finder<Class, false>; \
+        //        extern template class device_finder<Class, true>;
+
+        //#define DECLARE_DEVICE_TYPE_NS(Type, Namespace, Class) \
+        //        extern emu::detail::device_type_impl<Namespace::Class> const &Type; \
+        //        extern template class device_finder<Namespace::Class, false>; \
+        //        extern template class device_finder<Namespace::Class, true>;
+
+        //#define DEFINE_DEVICE_TYPE(Type, Class, ShortName, FullName) \
+        //        namespace { \
+        //            struct Class##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
+        //            constexpr char const Class##_device_traits::shortname[], Class##_device_traits::fullname[], Class##_device_traits::source[]; \
+        //        } \
+        //        emu::detail::device_type_impl<Class> const &Type = device_creator<Class, (Class##_device_traits::shortname), (Class##_device_traits::fullname), (Class##_device_traits::source)>; \
+        //        template class device_finder<Class, false>; \
+        //        template class device_finder<Class, true>;
+        public static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname)
+        {
+            var traits = new gamedrv_global.game_traits(shortname, fullname);
+
+            return new device_type(new device_creator(func, traits.shortname, traits.fullname, traits.source, device_t.unemulated_features(), device_t.imperfect_features()).device_tag());
+        }
+
+        //#define DEFINE_DEVICE_TYPE_PRIVATE(Type, Base, Class, ShortName, FullName) \
+        //        namespace { \
+        //            struct Class##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
+        //            constexpr char const Class##_device_traits::shortname[], Class##_device_traits::fullname[], Class##_device_traits::source[]; \
+        //        } \
+        //        emu::detail::device_type_impl<Base> const &Type = device_creator<Class, (Class##_device_traits::shortname), (Class##_device_traits::fullname), (Class##_device_traits::source)>;
+
+        //#define DEFINE_DEVICE_TYPE_NS(Type, Namespace, Class, ShortName, FullName) \
+        //        namespace { \
+        //            struct Class##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
+        //            constexpr char const Class##_device_traits::shortname[], Class##_device_traits::fullname[], Class##_device_traits::source[]; \
+        //        } \
+        //        emu::detail::device_type_impl<Namespace::Class> const &Type = device_creator<Namespace::Class, (Class##_device_traits::shortname), (Class##_device_traits::fullname), (Class##_device_traits::source)>; \
+        //        template class device_finder<Namespace::Class, false>; \
+        //        template class device_finder<Namespace::Class, true>;
+    }
+
+
+    //**************************************************************************
+    //  TYPE DEFINITIONS
+    //**************************************************************************
 
     namespace emu.detail
     {
@@ -155,7 +242,7 @@ namespace mame
         //template <class DriverClass, char const *ShortName, char const *FullName, char const *Source, device_feature::type Unemulated, device_feature::type Imperfect> auto driver_tag_func() { return driver_tag_struct<DriverClass, ShortName, FullName, Source>{ }; };
 
 
-        public class device_type_impl_base
+        public class device_type_impl_base : global_object
         {
             //friend class device_registrar;
 
@@ -315,7 +402,7 @@ namespace mame
             public static DeviceClass op<DeviceClass>(machine_config mconfig, device_finder<DeviceClass> finder, device_type type, u32 clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
             {
                 var target = finder.finder_target();  // std::pair<device_t &, char const *> const target(finder.finder_target());
-                global.assert(mconfig.current_device() == target.first());
+                assert(mconfig.current_device() == target.first());
                 DeviceClass result = (DeviceClass)mconfig.device_add(target.second(), type, clock);//, std::forward<Params>(args)...)));  //DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
                 finder.target = result;
                 return result;  //return finder = result;
@@ -416,83 +503,9 @@ namespace mame
     class device_missing_dependencies : emu_exception { }
 
 
-    public static class device_global
-    {
-        // use this to refer to the owning device when providing a device tag
-        public const string DEVICE_SELF = "";
-
-        // use this to refer to the owning device's owner when providing a device tag
-        public const string DEVICE_SELF_OWNER = "^";
-
-
-        // macro for specifying a clock derived from an owning device
-        public static u32 DERIVED_CLOCK(u32 num, u32 den) { return 0xff000000 | (num << 12) | (den << 0); }
-
-
-        //**************************************************************************
-        //  DEVICE CONFIGURATION MACROS
-        //**************************************************************************
-
-        // configure devices
-        //#define MCFG_DEVICE_CLOCK(_clock)    device->set_clock(_clock);
-        //#define MCFG_DEVICE_INPUT_DEFAULTS(_config)    device->set_input_default(DEVICE_INPUT_DEFAULTS_NAME(_config));
-        //#define MCFG_DEVICE_BIOS(...)     device->set_default_bios_tag(__VA_ARGS__);
-
-        //#define DECLARE_READ_LINE_MEMBER(name)      int  name()
-        //#define READ_LINE_MEMBER(name)              int  name()
-        //#define DECLARE_WRITE_LINE_MEMBER(name)     void name(ATTR_UNUSED int state)
-        //#define WRITE_LINE_MEMBER(name)             void name(ATTR_UNUSED int state)
-
-
-        public static emu.detail.device_registrar registered_device_types = new emu.detail.device_registrar();
-
-
-        //#define DECLARE_DEVICE_TYPE(Type, Class) \
-        //        class Class; \
-        //        extern emu::detail::device_type_impl<Class> const &Type; \
-        //        extern template class device_finder<Class, false>; \
-        //        extern template class device_finder<Class, true>;
-
-        //#define DECLARE_DEVICE_TYPE_NS(Type, Namespace, Class) \
-        //        extern emu::detail::device_type_impl<Namespace::Class> const &Type; \
-        //        extern template class device_finder<Namespace::Class, false>; \
-        //        extern template class device_finder<Namespace::Class, true>;
-
-        //#define DEFINE_DEVICE_TYPE(Type, Class, ShortName, FullName) \
-        //        namespace { \
-        //            struct Class##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
-        //            constexpr char const Class##_device_traits::shortname[], Class##_device_traits::fullname[], Class##_device_traits::source[]; \
-        //        } \
-        //        emu::detail::device_type_impl<Class> const &Type = device_creator<Class, (Class##_device_traits::shortname), (Class##_device_traits::fullname), (Class##_device_traits::source)>; \
-        //        template class device_finder<Class, false>; \
-        //        template class device_finder<Class, true>;
-        public static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname)
-        {
-            var traits = new gamedrv_global.game_traits(shortname, fullname);
-
-            return new device_type(new device_creator(func, traits.shortname, traits.fullname, traits.source, device_t.unemulated_features(), device_t.imperfect_features()).device_tag());
-        }
-
-        //#define DEFINE_DEVICE_TYPE_PRIVATE(Type, Base, Class, ShortName, FullName) \
-        //        namespace { \
-        //            struct Class##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
-        //            constexpr char const Class##_device_traits::shortname[], Class##_device_traits::fullname[], Class##_device_traits::source[]; \
-        //        } \
-        //        emu::detail::device_type_impl<Base> const &Type = device_creator<Class, (Class##_device_traits::shortname), (Class##_device_traits::fullname), (Class##_device_traits::source)>;
-
-        //#define DEFINE_DEVICE_TYPE_NS(Type, Namespace, Class, ShortName, FullName) \
-        //        namespace { \
-        //            struct Class##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
-        //            constexpr char const Class##_device_traits::shortname[], Class##_device_traits::fullname[], Class##_device_traits::source[]; \
-        //        } \
-        //        emu::detail::device_type_impl<Namespace::Class> const &Type = device_creator<Namespace::Class, (Class##_device_traits::shortname), (Class##_device_traits::fullname), (Class##_device_traits::source)>; \
-        //        template class device_finder<Namespace::Class, false>; \
-        //        template class device_finder<Namespace::Class, true>;
-    }
-
-
-    public class device_t : device_init_helpers,
-                            simple_list_item<device_t> //: public delegate_late_bind
+    public class device_t : global_object,
+                            simple_list_item<device_t>, //: public delegate_late_bind
+                            netlist.detail.netlist_name_interface
     {
         //friend class simple_list<device_t>;
         //friend class running_machine;
@@ -508,7 +521,7 @@ namespace mame
 
             // private state
             public simple_list<device_t> m_list = new simple_list<device_t>();         // list of sub-devices we own
-            public std_unordered_map<string, device_t> m_tagmap = new std_unordered_map<string, device_t>();   // map of devices looked up and found by subtag
+            public std.unordered_map<string, device_t> m_tagmap = new std.unordered_map<string, device_t>();   // map of devices looked up and found by subtag
 
 
             // construction/destruction
@@ -627,21 +640,8 @@ namespace mame
         // keep list of interfaces, to account for lack of multiple inheritance
         public List<device_interface> m_class_interfaces = new List<device_interface>();
 
-        public bool IsA<T>() where T : device_interface
-        {
-            return GetClassInterface<T>() != null;
-        }
-
-        public T GetClassInterface<T>() where T : device_interface
-        {
-            foreach (var i in m_class_interfaces)
-            {
-                if (i is T)
-                    return (T)i;
-            }
-
-            return null;
-        }
+        public bool IsA<T>() where T : device_interface { return GetClassInterface<T>() != null; }
+        public T GetClassInterface<T>() where T : device_interface { foreach (var i in m_class_interfaces) { if (i is T) return (T)i; } return null; }
 
 
         //using feature = emu::detail::device_feature;
@@ -681,8 +681,8 @@ namespace mame
         bool m_config_complete;      // have we completed our configuration?
         bool m_started;              // true if the start function has succeeded
         finder_base m_auto_finder_list;     // list of objects to auto-find
-        std_vector<rom_entry> m_rom_entries = new std_vector<rom_entry>();
-        std_list<devcb_base> m_callbacks = new std_list<devcb_base>();
+        std.vector<rom_entry> m_rom_entries = new std.vector<rom_entry>();
+        std.list<devcb_base> m_callbacks = new std.list<devcb_base>();
 
         // string formatting buffer for logerror
         string m_string_buffer;  //mutable util::ovectorstream m_string_buffer;
@@ -764,7 +764,7 @@ namespace mame
         {
             if (m_rom_entries.empty())
             {
-                m_rom_entries = romload_global.rom_build_entries(device_rom_region());
+                m_rom_entries = rom_build_entries(device_rom_region());
             }
             return m_rom_entries;
         }
@@ -772,7 +772,7 @@ namespace mame
         public List<tiny_rom_entry> rom_region() { return device_rom_region(); }
         public ioport_constructor input_ports() { return device_input_ports(); }
         //string get_default_bios_tag() { return m_default_bios_tag; }
-        public u8 default_bios() { global.assert(configured());  return m_default_bios; }
+        public u8 default_bios() { assert(configured());  return m_default_bios; }
         public u8 system_bios() { return m_system_bios; }
 
 
@@ -790,9 +790,9 @@ namespace mame
 
         public bool interface_<T>(out T intf) where T : device_interface { intf = GetClassInterface<T>(); return intf != null; }
 
-        public device_execute_interface execute() { global.assert(m_interfaces.m_execute != null);  return m_interfaces.m_execute; }
-        public device_memory_interface memory() { global.assert(m_interfaces.m_memory != null);  return m_interfaces.m_memory; }
-        public device_state_interface state() { global.assert(m_interfaces.m_state != null); return m_interfaces.m_state; }
+        public device_execute_interface execute() { assert(m_interfaces.m_execute != null);  return m_interfaces.m_execute; }
+        public device_memory_interface memory() { assert(m_interfaces.m_memory != null);  return m_interfaces.m_memory; }
+        public device_state_interface state() { assert(m_interfaces.m_state != null); return m_interfaces.m_state; }
 
 
         public void execute_set(device_execute_interface execute) { m_interfaces.m_execute = execute; }
@@ -974,10 +974,10 @@ namespace mame
         //-------------------------------------------------
         public void add_machine_configuration(machine_config config)
         {
-            global.assert(config == m_machine_config);
+            assert(config == m_machine_config);
             using (machine_config.token tok = config.begin_configuration(this))  // machine_config::token const tok(config.begin_configuration(*this));
             {
-                device_add_mconfig(config, m_owner, this);
+                device_add_mconfig(config);
                 for (finder_base autodev = m_auto_finder_list; autodev != null; autodev = autodev.next())
                     autodev.end_configuration();
             }
@@ -1027,22 +1027,22 @@ namespace mame
                 u8 firstbios = 0;
                 {
                     int romIdx = 0;
-                    for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !romload_global.ROMENTRY_ISEND(rom); rom = roms[++romIdx])  //  for (tiny_rom_entry rom = roms; !m_default_bios && !ROMENTRY_ISEND(rom); ++rom)
+                    for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])  //  for (tiny_rom_entry rom = roms; !m_default_bios && !ROMENTRY_ISEND(rom); ++rom)
                     {
-                        if (romload_global.ROMENTRY_ISSYSTEM_BIOS(rom))
+                        if (ROMENTRY_ISSYSTEM_BIOS(rom))
                         {
                             if (!havebios)
                             {
                                 havebios = true;
-                                firstbios = (u8)romload_global.ROM_GETBIOSFLAGS(rom);
+                                firstbios = (u8)ROM_GETBIOSFLAGS(rom);
                             }
 
                             if (string.IsNullOrEmpty(defbios))
                                 twopass = true;
-                            else if (global.strcmp(rom.name, defbios) == 0)
-                                m_default_bios = (u8)romload_global.ROM_GETBIOSFLAGS(rom);
+                            else if (strcmp(rom.name, defbios) == 0)
+                                m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
                         }
-                        else if (string.IsNullOrEmpty(defbios) && romload_global.ROMENTRY_ISDEFAULT_BIOS(rom))
+                        else if (string.IsNullOrEmpty(defbios) && ROMENTRY_ISDEFAULT_BIOS(rom))
                         {
                             defbios = rom.name;
                         }
@@ -1055,10 +1055,10 @@ namespace mame
                     if (!string.IsNullOrEmpty(defbios) && twopass)
                     {
                         int romIdx = 0;
-                        for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !romload_global.ROMENTRY_ISEND(rom); rom = roms[++romIdx])
+                        for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])
                         {
-                            if (romload_global.ROMENTRY_ISSYSTEM_BIOS(rom) && global.strcmp(rom.name, defbios) == 0)
-                                m_default_bios = (u8)romload_global.ROM_GETBIOSFLAGS(rom);
+                            if (ROMENTRY_ISSYSTEM_BIOS(rom) && strcmp(rom.name, defbios) == 0)
+                                m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
                         }
                     }
 
@@ -1114,7 +1114,7 @@ namespace mame
         // clock/timing accessors
         public u32 clock() { return m_clock; }
         public void clock_set(u32 value) { m_clock = value; }
-        //UINT32 unscaled_clock() const { return m_unscaled_clock; }
+        //u32 unscaled_clock() const { return m_unscaled_clock; }
 
 
         //-------------------------------------------------
@@ -1164,12 +1164,12 @@ namespace mame
             else
             {
                 UInt32 remainder;
-                UInt32 quotient = eminline_global.divu_64x32_rem(numclocks, m_clock, out remainder);
+                UInt32 quotient = divu_64x32_rem(numclocks, m_clock, out remainder);
                 return new attotime((seconds_t)quotient, (attoseconds_t)((UInt64)remainder * (UInt64)m_attoseconds_per_clock));
             }
         }
 
-        //UINT64 attotime_to_clocks(const attotime &duration) const;
+        //u64 attotime_to_clocks(const attotime &duration) const;
 
 
         // timer interfaces
@@ -1191,12 +1191,12 @@ namespace mame
         }
 
         protected void synchronize(device_timer_id id = 0, int param = 0, object ptr = null) { timer_set(attotime.zero, id, param, ptr); }
-        public void timer_expired(emu_timer timer, device_timer_id id, int param/*, void *ptr*/) { device_timer(timer, id, param/*, ptr*/); }
+        public void timer_expired(emu_timer timer, device_timer_id id, int param, object ptr) { device_timer(timer, id, param, ptr); }
 
 
         // state saving interfaces
         //template<typename _ItemType>
-        public void save_item<ItemType>(ItemType value, string valname, int index = 0) { global.assert(m_save != null);  m_save.save_item(this, name(), tag(), index, value, valname); }
+        public void save_item<ItemType>(ItemType value, string valname, int index = 0) { assert(m_save != null);  m_save.save_item(this, name(), tag(), index, value, valname); }
         //template<typename ItemType> void save_pointer<ItemType>(ItemType value, string valname, UInt32 count, int index = 0) { /*assert(m_save != NULL);*/ m_save.save_pointer(this, name(), tag(), index, value, valname, count); }
 
 
@@ -1221,13 +1221,13 @@ namespace mame
                     string tag = autodev.finder_tag();
                     if (tag == null)
                     {
-                        global.osd_printf_error("Finder tag is null!\n");
+                        osd_printf_error("Finder tag is null!\n");
                         allfound = false;
                         continue;
                     }
                     if (tag[0] == '^' && tag[1] == ':')
                     {
-                        global.osd_printf_error("Malformed finder tag: {0}\n", tag);
+                        osd_printf_error("Malformed finder tag: {0}\n", tag);
                         allfound = false;
                         continue;
                     }
@@ -1341,7 +1341,7 @@ namespace mame
 #if false
                 logerror("Device did not register any state to save!\n");
                 if (((UInt64)machine().system().flags & gamedrv_global.MACHINE_SUPPORTS_SAVE) != 0)
-                    global.fatalerror("Device '{0}' did not register any state to save!\n", tag());
+                    fatalerror("Device '{0}' did not register any state to save!\n", tag());
 #endif
             }
 
@@ -1353,7 +1353,7 @@ namespace mame
             notify_clock_changed();
 
             // if we're debugging, create a device_debug object
-            if ((machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) != 0)
+            if ((machine().debug_flags_get & DEBUG_FLAG_ENABLED) != 0)
             {
                 m_debug = new device_debug(this);
                 debug_setup();
@@ -1438,7 +1438,7 @@ namespace mame
         //  notify_clock_changed - notify all interfaces
         //  that the clock has changed
         //-------------------------------------------------
-        void notify_clock_changed()
+        protected void notify_clock_changed()
         {
             // first notify interfaces
             foreach (device_interface intf in interfaces())
@@ -1481,7 +1481,7 @@ namespace mame
         //  device_add_mconfig - add device-specific
         //  machine configuration
         //-------------------------------------------------
-        protected virtual void device_add_mconfig(machine_config config, device_t owner, device_t device) { }
+        protected virtual void device_add_mconfig(machine_config config) { }
 
         //-------------------------------------------------
         //  input_ports - return a pointer to the implicit
@@ -1564,7 +1564,7 @@ namespace mame
         //  device_timer - called whenever a device timer
         //  fires
         //-------------------------------------------------
-        protected virtual void device_timer(emu_timer timer, device_timer_id id, int param)  /*void *ptr)*/ { }
+        protected virtual void device_timer(emu_timer timer, device_timer_id id, int param, object ptr) { }
 
         //------------------- end derived class overrides
 
@@ -1582,8 +1582,8 @@ namespace mame
 
             // we presume the result is a rooted path; also doubled colons mess up our
             // tree walk, so catch them early
-            global.assert(fulltag[0] == ':');
-            global.assert(!fulltag.Contains("::"));
+            assert(fulltag[0] == ':');
+            assert(!fulltag.Contains("::"));
 
             // walk the device list to the final path
             device_t curdevice = mconfig().root_device();
@@ -1612,16 +1612,36 @@ namespace mame
         {
             if ((m_configured_clock & 0xff000000) == 0xff000000)
             {
-                global.assert(m_owner != null);
+                assert(m_owner != null);
                 set_unscaled_clock(m_owner.m_clock * ((m_configured_clock >> 12) & 0xfff) / ((m_configured_clock >> 0) & 0xfff));
             }
         }
+
+
+        // device_execute_interface_helpers
+        public attotime cycles_to_attotime(u64 cycles) { return execute().cycles_to_attotime(cycles); }
+        public void set_disable() { execute().set_disable(); }
+        public void set_input_line(int linenum, int state) { execute().set_input_line(linenum, state); }
+        public void set_input_line_vector(int linenum, int vector) { execute().set_input_line_vector(linenum, vector); }
+        public void set_input_line_and_vector(int linenum, int state, int vector) { execute().set_input_line_and_vector(linenum, state, vector); }
+        public void pulse_input_line(int irqline, attotime duration) { execute().pulse_input_line(irqline, duration); }
+        public bool suspended(u32 reason = device_execute_interface.SUSPEND_ANY_REASON) { return execute().suspended(reason); }
+        public void suspend_until_trigger(int trigid, bool eatcycles) { execute().suspend_until_trigger(trigid, eatcycles); }
+        public void trigger(int trigid) { execute().trigger(trigid); }
+        public u64 total_cycles() { return execute().total_cycles(); }
+        public void set_icountptr(intref icountptrRef) { execute().set_icountptr(icountptrRef); }
+        public int standard_irq_callback(int irqline) { return execute().standard_irq_callback(irqline); }
+        public void debugger_instruction_hook(offs_t curpc) { execute().debugger_instruction_hook(curpc); }
+
+
+        protected void LOGMASKED(int mask, string format, params object [] args) { LOGMASKED(mask, this, format, args); }
+        protected void LOG(string format, params object [] args) { LOG(this, format, args); }
     }
 
 
     // ======================> device_interface
     // device_interface represents runtime information for a particular device interface
-    public class device_interface
+    public class device_interface : global_object
     {
         // internal state
         device_interface m_interface_next;

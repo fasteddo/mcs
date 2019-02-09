@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using uint32_t = System.UInt32;
+
 
 namespace mame.ui
 {
@@ -23,8 +25,8 @@ namespace mame.ui
 
         public string text;
         public string subtext;
-        public UInt32 flags;
-        public object refobj;  //void            *ref;
+        public uint32_t flags;
+        public object ref_;  //void            *ref;
         public menu_item_type type;   // item type (eventually will go away when itemref is proper ui_menu_item class rather than void*)
 
 

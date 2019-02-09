@@ -11,12 +11,12 @@ using uint8_t = System.Byte;
 
 namespace mame
 {
-    public partial class digdug_state : galaga_state
+    partial class digdug_state : galaga_state
     {
         required_device<er2055_device> m_earom;
-        required_shared_ptr_byte m_digdug_objram;
-        required_shared_ptr_byte m_digdug_posram;
-        required_shared_ptr_byte m_digdug_flpram;
+        required_shared_ptr_uint8_t m_digdug_objram;
+        required_shared_ptr_uint8_t m_digdug_posram;
+        required_shared_ptr_uint8_t m_digdug_flpram;
 
         uint8_t m_bg_select;
         uint8_t m_tx_color_mode;
@@ -28,10 +28,13 @@ namespace mame
             : base(mconfig, type, tag)
         {
             m_earom = new required_device<er2055_device>(this, "earom");
-            m_digdug_objram = new required_shared_ptr_byte(this, "digdug_objram");
-            m_digdug_posram = new required_shared_ptr_byte(this, "digdug_posram");
-            m_digdug_flpram = new required_shared_ptr_byte(this, "digdug_flpram");
+            m_digdug_objram = new required_shared_ptr_uint8_t(this, "digdug_objram");
+            m_digdug_posram = new required_shared_ptr_uint8_t(this, "digdug_posram");
+            m_digdug_flpram = new required_shared_ptr_uint8_t(this, "digdug_flpram");
         }
+
+
+        public required_device<er2055_device> earom { get { return m_earom; } }
 
 
         //void dzigzag(machine_config &config);

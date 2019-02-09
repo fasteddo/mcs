@@ -57,7 +57,7 @@ namespace mame
 
 
         // internal state
-        std_vector<sound_route> m_route_list = new std_vector<sound_route>();      // list of sound routes
+        std.vector<sound_route> m_route_list = new std.vector<sound_route>();      // list of sound routes
         int m_outputs;                  // number of outputs from this instance
         protected int m_auto_allocated_inputs;    // number of auto-allocated inputs targeting us
 
@@ -84,24 +84,33 @@ namespace mame
         //-------------------------------------------------
         //  add_route - send sound output to a consumer
         //-------------------------------------------------
-        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = disound_global.AUTO_ALLOC_INPUT, u32 mixoutput = 0)
+
+        //template <typename T, bool R>
+        //device_sound_interface &add_route(u32 output, const device_finder<T, R> &target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0)
+        //{
+        //    const std::pair<device_t &, const char *> ft(target.finder_target());
+        //    return add_route(output, ft.first, ft.second, gain, input, mixoutput);
+        //}
+
+        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0)
         {
-            global.assert(!device().started());
-            m_route_list.emplace_back(new sound_route(output, input, mixoutput, (float)gain, device().mconfig().current_device(), target));
-            return this;
+            return add_route(output, device().mconfig().current_device(), target, gain, input, mixoutput);
         }
 
-        public device_sound_interface add_route(u32 output, device_sound_interface target, double gain, u32 input = disound_global.AUTO_ALLOC_INPUT, u32 mixoutput = 0)
+        public device_sound_interface add_route(u32 output, device_sound_interface target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0)
         {
-            global.assert(!device().started());
-            m_route_list.emplace_back(new sound_route(output, input, mixoutput, (float)gain, target.device(), device_global.DEVICE_SELF));
-            return this;
+            return add_route(output, target.device(), DEVICE_SELF, gain, input, mixoutput);
         }
 
-        public device_sound_interface add_route(u32 output, speaker_device target, double gain, u32 input = disound_global.AUTO_ALLOC_INPUT, u32 mixoutput = 0)
+        public device_sound_interface add_route(u32 output, speaker_device target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0)
         {
-            global.assert(!device().started());
-            m_route_list.emplace_back(new sound_route(output, input, mixoutput, (float)gain, target, device_global.DEVICE_SELF));
+            return add_route(output, target, DEVICE_SELF, gain, input, mixoutput);
+        }
+
+        public device_sound_interface add_route(u32 output, device_t base_, string target, double gain, u32 input, u32 mixoutput)
+        {
+            assert(!device().started());
+            m_route_list.emplace_back(new sound_route(output, input, mixoutput, (float)gain, base_, target));
             return this;
         }
 
@@ -167,7 +176,7 @@ namespace mame
         //-------------------------------------------------
         sound_stream input_to_stream_input(int inputnum, out int stream_inputnum)
         {
-            global.assert(inputnum >= 0);
+            assert(inputnum >= 0);
 
             stream_inputnum = -1;
 
@@ -197,7 +206,7 @@ namespace mame
         //-------------------------------------------------
         sound_stream output_to_stream_output(int outputnum, out int stream_outputnum)
         {
-            global.assert(outputnum >= 0);
+            assert(outputnum >= 0);
 
             stream_outputnum = -1;
 
@@ -247,12 +256,12 @@ namespace mame
                 // find a device with the requested tag
                 device_t target = route.m_base.get().subdevice(route.m_target.c_str());
                 if (target == null)
-                    global.osd_printf_error("Attempting to route sound to non-existent device '{0}'\n", route.m_base.get().subtag(route.m_target.c_str()).c_str());
+                    osd_printf_error("Attempting to route sound to non-existent device '{0}'\n", route.m_base.get().subtag(route.m_target.c_str()).c_str());
 
                 // if it's not a speaker or a sound device, error
                 device_sound_interface sound;
                 if (target != null && (target.type() != speaker_device.SPEAKER) && !target.interface_(out sound))
-                    global.osd_printf_error("Attempting to route sound to a non-sound device '{0}' ({1})\n", target.tag(), target.name());
+                    osd_printf_error("Attempting to route sound to a non-sound device '{0}' ({1})\n", target.tag(), target.name());
             }
         }
 
@@ -285,10 +294,10 @@ namespace mame
                 {
                     // see if we are the target of this route
                     device_t target_device = route.m_base.get().subdevice(route.m_target.c_str());
-                    if ((target_device == device()) && (route.m_input == disound_global.AUTO_ALLOC_INPUT))
+                    if ((target_device == device()) && (route.m_input == AUTO_ALLOC_INPUT))
                     {
                         route.m_input = (UInt32)m_auto_allocated_inputs;
-                        m_auto_allocated_inputs += (route.m_output == disound_global.ALL_OUTPUTS) ? sound.outputs() : 1;
+                        m_auto_allocated_inputs += (route.m_output == ALL_OUTPUTS) ? sound.outputs() : 1;
                     }
                 }
             }
@@ -315,19 +324,19 @@ namespace mame
                         int numoutputs = sound.outputs();
                         for (int outputnum = 0; outputnum < numoutputs; outputnum++)
                         {
-                            if ((route.m_output == outputnum) || (route.m_output == disound_global.ALL_OUTPUTS))
+                            if ((route.m_output == outputnum) || (route.m_output == ALL_OUTPUTS))
                             {
                                 // find the output stream to connect from
                                 int streamoutputnum;
                                 sound_stream outputstream = sound.output_to_stream_output(outputnum, out streamoutputnum);
                                 if (outputstream == null)
-                                    global.fatalerror("Sound device '{0}' specifies route for non-existent output #{1}\n", sound.device().tag(), outputnum);
+                                    fatalerror("Sound device '{0}' specifies route for nonexistent output #{1}\n", sound.device().tag(), outputnum);
 
                                 // find the input stream to connect to
                                 int streaminputnum;
                                 sound_stream inputstream = input_to_stream_input(inputnum++, out streaminputnum);
                                 if (inputstream == null)
-                                    global.fatalerror("Sound device '{0}' targeted output #{1} to non-existant device '{2}' input {3}\n", sound.device().tag(), outputnum, device().tag(), inputnum - 1);
+                                    fatalerror("Sound device '{0}' targeted output #{1} to nonexistant device '{2}' input {3}\n", sound.device().tag(), outputnum, device().tag(), inputnum - 1);
 
                                 // set the input
                                 inputstream.set_input(streaminputnum, outputstream, streamoutputnum, route.m_gain);
@@ -367,7 +376,7 @@ namespace mame
     {
         // internal state
         u8 m_outputs;              // number of outputs
-        std_vector<u8> m_outputmap = new std_vector<u8>();   // map of inputs to outputs
+        std.vector<u8> m_outputmap = new std.vector<u8>();   // map of inputs to outputs
         sound_stream m_mixer_stream;         // mixing stream
 
 
@@ -417,7 +426,7 @@ namespace mame
                     device_t target_device = route.m_base.get().subdevice(route.m_target.c_str());
                     if ((target_device == device()) && (route.m_input < m_auto_allocated_inputs))
                     {
-                        int count = (route.m_output == disound_global.ALL_OUTPUTS) ? sound.outputs() : 1;
+                        int count = (route.m_output == ALL_OUTPUTS) ? sound.outputs() : 1;
                         for (int output = 0; output < count; output++)
                             m_outputmap[(int)(route.m_input + output)] = (byte)route.m_mixoutput;
                     }
@@ -454,7 +463,7 @@ namespace mame
             // clear output buffers
             for (int output = 0; output < m_outputs; output++)
             {
-                global.memset(outputs[output], 0, (UInt32)samples);  //memset(outputs[output], 0, samples * sizeof(outputs[0][0]));
+                memset(outputs[output], 0, (UInt32)samples);  //memset(outputs[output], 0, samples * sizeof(outputs[0][0]));
             }
 
             // loop over samples

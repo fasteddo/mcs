@@ -13,16 +13,16 @@ namespace mame
 
     public enum config_type
     {
-        INIT = 0,                   /* opportunity to initialize things first */
-        CONTROLLER,                 /* loading from controller file */
-        DEFAULT,                    /* loading from default.cfg */
-        GAME,                   /* loading from game.cfg */
-        FINAL                   /* opportunity to finish initialization */
+        INIT = 0,       // opportunity to initialize things first
+        CONTROLLER,     // loading from controller file
+        DEFAULT,        // loading from default.cfg
+        GAME,           // loading from game.cfg
+        FINAL           // opportunity to finish initialization
     }
 
 
     // ======================> configuration_manager
-    public class configuration_manager
+    public class configuration_manager : global_object
     {
         class config_element
         {
@@ -34,7 +34,7 @@ namespace mame
 
         // internal state
         running_machine m_machine;                  // reference to our machine
-        std_vector<config_element> m_typelist = new std_vector<config_element>();
+        std.vector<config_element> m_typelist = new std.vector<config_element>();
 
 
         // construction/destruction
@@ -82,8 +82,8 @@ namespace mame
             if (!string.IsNullOrEmpty(controller))
             {
                 /* open the config file */
-                emu_file file = new emu_file(machine().options().ctrlr_path(), osdcore_global.OPEN_FLAG_READ);
-                global.osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
+                emu_file file = new emu_file(machine().options().ctrlr_path(), OPEN_FLAG_READ);
+                osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
                 osd_file.error filerr = file.open(controller, ".cfg");
 
                 if (filerr != osd_file.error.NONE)
@@ -92,21 +92,25 @@ namespace mame
                 /* load the XML */
                 if (load_xml(file, config_type.CONTROLLER) == 0)
                     throw new emu_fatalerror("Could not load controller file {0}.cfg", controller);
+
+                file.close();
             }
 
             {
                 /* next load the defaults file */
-                emu_file file = new emu_file(machine().options().cfg_directory(), osdcore_global.OPEN_FLAG_READ);
+                emu_file file = new emu_file(machine().options().cfg_directory(), OPEN_FLAG_READ);
                 osd_file.error filerr = file.open("default.cfg");
-                global.osd_printf_verbose("Attempting to parse: default.cfg\n");
+                osd_printf_verbose("Attempting to parse: default.cfg\n");
                 if (filerr == osd_file.error.NONE)
                     load_xml(file, config_type.DEFAULT);
 
                 /* finally, load the game-specific file */
                 filerr = file.open(machine().basename(), ".cfg");
-                global.osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
+                osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
                 if (filerr == osd_file.error.NONE)
                     loaded = load_xml(file, config_type.GAME);
+
+                file.close();
             }
 
             /* loop over all registrants and call their final function */
@@ -126,7 +130,7 @@ namespace mame
                 type.save(config_type.INIT, null);
 
             /* save the defaults file */
-            emu_file file = new emu_file(machine().options().cfg_directory(), osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
+            emu_file file = new emu_file(machine().options().cfg_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
             osd_file.error filerr = file.open("default.cfg");
             if (filerr == osd_file.error.NONE)
                 save_xml(file, config_type.DEFAULT);
@@ -135,6 +139,8 @@ namespace mame
             filerr = file.open(machine().basename(), ".cfg");
             if (filerr == osd_file.error.NONE)
                 save_xml(file, config_type.GAME);
+
+            file.close();
 
             /* loop over all registrants and call their final function */
             foreach (var type in m_typelist)

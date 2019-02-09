@@ -22,7 +22,7 @@ namespace mame
                 ui.menu_select_game.force_game_select(mui, container);
         }
 
-        public static int start_frontend(emu_options options, osd_interface osd, std_vector<string> args)
+        public static int start_frontend(emu_options options, osd_interface osd, std.vector<string> args)
         {
             cli_frontend frontend = new cli_frontend(options, osd);
             return frontend.execute(args);
@@ -36,7 +36,18 @@ namespace mame
 
         public static void layout_file_cb(util.xml.data_node layout)
         {
-            throw new emu_unimplemented();
+            util.xml.data_node mamelayout = layout.get_child("mamelayout");
+            if (mamelayout != null)
+            {
+                util.xml.data_node script = mamelayout.get_child("script");
+                if (script != null)
+                {
+                    throw new emu_unimplemented();
+#if false
+                    mame_machine_manager.instance().lua().call_plugin_set("layout", script.get_value());
+#endif
+                }
+            }
         }
 
         public static bool standalone() { return false; }
@@ -77,6 +88,11 @@ namespace mame
             m_autoboot_timer = null;
         }
 
+        //mame_machine_manager(mame_machine_manager const &) = delete;
+        //mame_machine_manager(mame_machine_manager &&) = delete;
+        //mame_machine_manager &operator=(mame_machine_manager const &) = delete;
+        //mame_machine_manager &operator=(mame_machine_manager &&) = delete;
+
 
         public static mame_machine_manager instance(emu_options options, osd_interface osd)
         {
@@ -88,10 +104,19 @@ namespace mame
         public static mame_machine_manager instance() { return m_manager; }
 
 
-        ~mame_machine_manager()
+        //~mame_machine_manager()
+        //{
+        //    m_lua = null;  //global_free(m_lua);
+        //    m_manager = null;
+        //}
+
+        public static void close_instance()
         {
-            m_lua = null;  //global_free(m_lua);
-            m_manager = null;
+            if (m_manager != null)
+            {
+                m_manager.m_lua.Dispose();
+                m_manager = null;
+            }
         }
 
 
@@ -158,13 +183,13 @@ namespace mame
         public override void create_custom(running_machine machine)
         {
             // start the inifile manager
-            m_inifile = new inifile_manager(machine, m_ui.options());
+            m_inifile = new inifile_manager(m_ui.options());
 
             // allocate autoboot timer
             m_autoboot_timer = machine.scheduler().timer_alloc(autoboot_callback);
 
             // start favorite manager
-            m_favorite = new favorite_manager(machine, m_ui.options());
+            m_favorite = new favorite_manager(m_ui.options());
         }
 
 
@@ -187,9 +212,9 @@ namespace mame
 
             // loop across multiple hard resets
             bool exit_pending = false;
-            int error = (int)EMU_ERR.EMU_ERR_NONE;
+            int error = EMU_ERR_NONE;
 
-            while (error == (int)EMU_ERR.EMU_ERR_NONE && !exit_pending)
+            while (error == EMU_ERR_NONE && !exit_pending)
             {
                 m_new_driver_pending = null;
 
@@ -208,7 +233,7 @@ namespace mame
                 if (m_options.read_config())
                 {
                     // but first, revert out any potential game-specific INI settings from previous runs via the internal UI
-                    m_options.revert((int)OPTION_PRIORITY.OPTION_PRIORITY_INI);
+                    m_options.revert(mame_options.OPTION_PRIORITY_INI);
 
                     string errors;
                     mame_options.parse_standard_inis(m_options, out errors);
@@ -221,6 +246,7 @@ namespace mame
                     validity_checker valid = new validity_checker(m_options);
                     valid.set_verbose(false);
                     valid.check_shared_source(system);
+                    valid.Dispose();
                 }
 
                 // create the machine configuration
@@ -252,6 +278,7 @@ namespace mame
                     exit_pending = true;
 
                 // machine will go away when we exit scope
+                machine.Dispose();
                 set_machine(null);
             }
 
@@ -277,17 +304,19 @@ namespace mame
                 {
                     // parse the file
                     // attempt to open the output file
-                    emu_file file = new emu_file(options().ini_path(), osdcore_global.OPEN_FLAG_READ);
+                    emu_file file = new emu_file(options().ini_path(), OPEN_FLAG_READ);
                     if (file.open("plugin.ini") == osd_file.error.NONE)
                     {
                         try
                         {
-                            m_plugins.parse_ini_file(file.core_file_get(), (int)OPTION_PRIORITY.OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY.OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY.OPTION_PRIORITY_DRIVER_INI, false);
+                            m_plugins.parse_ini_file(file.core_file_get(), mame_options.OPTION_PRIORITY_MAME_INI, mame_options.OPTION_PRIORITY_MAME_INI < mame_options.OPTION_PRIORITY_DRIVER_INI, false);
                         }
                         catch (options_exception )
                         {
-                            global.osd_printf_error("**Error loading plugin.ini**\n");
+                            osd_printf_error("**Error loading plugin.ini**\n");
                         }
+
+                        file.close();
                     }
                 }
 
@@ -317,20 +346,21 @@ namespace mame
                 }
                 else
                 {
-                    global.fatalerror("Console plugin not found.\n");
+                    fatalerror("Console plugin not found.\n");
                 }
             }
 
             m_lua.initialize();
 
             {
-                emu_file file = new emu_file(options().plugins_path(), osdcore_global.OPEN_FLAG_READ);
+                emu_file file = new emu_file(options().plugins_path(), OPEN_FLAG_READ);
                 osd_file.error filerr = file.open("boot.lua");
                 if (filerr == osd_file.error.NONE)
                 {
                     string exppath;
                     osdcore_global.m_osdcore.osd_subst_env(out exppath, file.fullpath());
                     m_lua.load_script(file.fullpath());
+                    file.close();
                 }
             }
         }
@@ -346,9 +376,9 @@ namespace mame
         }
 
 
-        public mame_ui_manager ui() { global.assert(m_ui != null); return m_ui; }
-        public cheat_manager cheat() { global.assert(m_cheat != null); return m_cheat; }
-        public inifile_manager inifile() { global.assert(m_inifile != null); return m_inifile; }
-        public favorite_manager favorite() { global.assert(m_favorite != null); return m_favorite; }
+        public mame_ui_manager ui() { assert(m_ui != null); return m_ui; }
+        public cheat_manager cheat() { assert(m_cheat != null); return m_cheat; }
+        public inifile_manager inifile() { assert(m_inifile != null); return m_inifile; }
+        public favorite_manager favorite() { assert(m_favorite != null); return m_favorite; }
     }
 }

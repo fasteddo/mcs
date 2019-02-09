@@ -5,12 +5,16 @@ using System;
 using System.Collections.Generic;
 
 using ListBytesPointer = mame.ListPointer<System.Byte>;
+using s32 = System.Int32;
+using u8 = System.Byte;
+using u16 = System.UInt16;
+using u32 = System.UInt32;
 
 
 namespace mame
 {
     //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-    public static class software_renderer<_PixelType>
+    public class software_renderer<_PixelType> : global_object
     {
         // set template parameters
         static int _bbp;
@@ -30,16 +34,16 @@ namespace mame
         // internal structs
         struct quad_setup_data
         {
-            public int dudx;
-            public int dvdx;
-            public int dudy;
-            public int dvdy;
-            public int startu;
-            public int startv;
-            public int startx;
-            public int starty;
-            public int endx;
-            public int endy;
+            public s32 dudx;
+            public s32 dvdx;
+            public s32 dudy;
+            public s32 dvdy;
+            public s32 startu;
+            public s32 startv;
+            public s32 startx;
+            public s32 starty;
+            public s32 endx;
+            public s32 endy;
         }
 
 
@@ -51,46 +55,46 @@ namespace mame
 
 
         // destination pixels are written based on the values of the template parameters
-        //static _PixelType dest_assemble_rgb(UInt32 r, UInt32 g, UInt32 b) { return (_PixelType)((r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB)); }
-        //static _PixelType dest_rgb_to_pixel(UInt32 r, UInt32 g, UInt32 b) { return dest_assemble_rgb(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
-        static byte dest_assemble_rgb8(UInt32 r, UInt32 g, UInt32 b) { return (byte)((r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB)); }
-        static UInt16 dest_assemble_rgb16(UInt32 r, UInt32 g, UInt32 b) { return (UInt16)((r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB)); }
-        static UInt32 dest_assemble_rgb32(UInt32 r, UInt32 g, UInt32 b) { return (r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB); }
-        static byte dest_rgb_to_pixel8(UInt32 r, UInt32 g, UInt32 b) { return dest_assemble_rgb8(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
-        static UInt16 dest_rgb_to_pixel16(UInt32 r, UInt32 g, UInt32 b) { return dest_assemble_rgb16(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
-        static UInt32 dest_rgb_to_pixel32(UInt32 r, UInt32 g, UInt32 b) { return dest_assemble_rgb32(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
+        //static inline _PixelType dest_assemble_rgb(u32 r, u32 g, u32 b) { return (r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB); }
+        //static inline _PixelType dest_rgb_to_pixel(u32 r, u32 g, u32 b) { return dest_assemble_rgb(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
+        static u8 dest_assemble_rgb8(u32 r, u32 g, u32 b) { return (u8)((r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB)); }
+        static u16 dest_assemble_rgb16(u32 r, u32 g, u32 b) { return (u16)((r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB)); }
+        static u32 dest_assemble_rgb32(u32 r, u32 g, u32 b) { return (r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB); }
+        static u8 dest_rgb_to_pixel8(u32 r, u32 g, u32 b) { return dest_assemble_rgb8(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
+        static u16 dest_rgb_to_pixel16(u32 r, u32 g, u32 b) { return dest_assemble_rgb16(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
+        static u32 dest_rgb_to_pixel32(u32 r, u32 g, u32 b) { return dest_assemble_rgb32(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
 
 
         // source 32-bit pixels are in MAME standardized format
-        static UInt32 source32_r(UInt32 pixel) { return (UInt32)((pixel >> (16 + _SrcShiftR)) & (0xff >> _SrcShiftR)); }
-        static UInt32 source32_g(UInt32 pixel) { return (UInt32)((pixel >> ( 8 + _SrcShiftG)) & (0xff >> _SrcShiftG)); }
-        static UInt32 source32_b(UInt32 pixel) { return (UInt32)((pixel >> ( 0 + _SrcShiftB)) & (0xff >> _SrcShiftB)); }
+        static u32 source32_r(u32 pixel) { return (u32)((pixel >> (16 + _SrcShiftR)) & (0xff >> _SrcShiftR)); }
+        static u32 source32_g(u32 pixel) { return (u32)((pixel >> ( 8 + _SrcShiftG)) & (0xff >> _SrcShiftG)); }
+        static u32 source32_b(u32 pixel) { return (u32)((pixel >> ( 0 + _SrcShiftB)) & (0xff >> _SrcShiftB)); }
 
 
         // destination pixel masks are based on the template parameters as well
-        //static UInt32 dest_r(_PixelType pixel) { return (pixel >> _DstShiftR) & (0xff >> _SrcShiftR); }
-        static UInt32 dest_r8(byte pixel) { return ((UInt32)pixel >> _DstShiftR) & ((UInt32)0xff >> _SrcShiftR); }
-        static UInt32 dest_r16(UInt16 pixel) { return ((UInt32)pixel >> _DstShiftR) & ((UInt32)0xff >> _SrcShiftR); }
-        static UInt32 dest_r32(UInt32 pixel) { return ((UInt32)pixel >> _DstShiftR) & ((UInt32)0xff >> _SrcShiftR); }
-        //static UInt32 dest_g(_PixelType pixel) { return (pixel >> _DstShiftG) & (0xff >> _SrcShiftG); }
-        static UInt32 dest_g8(byte pixel) { return ((UInt32)pixel >> _DstShiftG) & ((UInt32)0xff >> _SrcShiftG); }
-        static UInt32 dest_g16(UInt16 pixel) { return ((UInt32)pixel >> _DstShiftG) & ((UInt32)0xff >> _SrcShiftG); }
-        static UInt32 dest_g32(UInt32 pixel) { return ((UInt32)pixel >> _DstShiftG) & ((UInt32)0xff >> _SrcShiftG); }
-        //static UInt32 dest_b(_PixelType pixel) { return (pixel >> _DstShiftB) & (0xff >> _SrcShiftB); }
-        static UInt32 dest_b8(byte pixel) { return ((UInt32)pixel >> _DstShiftB) & ((UInt32)0xff >> _SrcShiftB); }
-        static UInt32 dest_b16(UInt16 pixel) { return ((UInt32)pixel >> _DstShiftB) & ((UInt32)0xff >> _SrcShiftB); }
-        static UInt32 dest_b32(UInt32 pixel) { return ((UInt32)pixel >> _DstShiftB) & ((UInt32)0xff >> _SrcShiftB); }
+        //static inline u32 dest_r(_PixelType pixel) { return (pixel >> _DstShiftR) & (0xff >> _SrcShiftR); }
+        static u32 dest_r8(u8 pixel) { return ((u32)pixel >> _DstShiftR) & ((u32)0xff >> _SrcShiftR); }
+        static u32 dest_r16(u16 pixel) { return ((u32)pixel >> _DstShiftR) & ((u32)0xff >> _SrcShiftR); }
+        static u32 dest_r32(u32 pixel) { return ((u32)pixel >> _DstShiftR) & ((u32)0xff >> _SrcShiftR); }
+        //static inline u32 dest_g(_PixelType pixel) { return (pixel >> _DstShiftG) & (0xff >> _SrcShiftG); }
+        static u32 dest_g8(u8 pixel) { return ((u32)pixel >> _DstShiftG) & ((u32)0xff >> _SrcShiftG); }
+        static u32 dest_g16(u16 pixel) { return ((u32)pixel >> _DstShiftG) & ((u32)0xff >> _SrcShiftG); }
+        static u32 dest_g32(u32 pixel) { return ((u32)pixel >> _DstShiftG) & ((u32)0xff >> _SrcShiftG); }
+        //static inline u32 dest_b(_PixelType pixel) { return (pixel >> _DstShiftB) & (0xff >> _SrcShiftB); }
+        static u32 dest_b8(u8 pixel) { return ((u32)pixel >> _DstShiftB) & ((u32)0xff >> _SrcShiftB); }
+        static u32 dest_b16(u16 pixel) { return ((u32)pixel >> _DstShiftB) & ((u32)0xff >> _SrcShiftB); }
+        static u32 dest_b32(u32 pixel) { return ((u32)pixel >> _DstShiftB) & ((u32)0xff >> _SrcShiftB); }
 
 
         // generic conversion with special optimization for destinations in the standard format
-        //static inline _PixelType source32_to_dest(UINT32 pixel)
+        //static inline _PixelType source32_to_dest(u32 pixel)
         //{
         //    if (_SrcShiftR == 0 && _SrcShiftG == 0 && _SrcShiftB == 0 && _DstShiftR == 16 && _DstShiftG == 8 && _DstShiftB == 0)
         //        return pixel;
         //    else
         //        return dest_assemble_rgb(source32_r(pixel), source32_g(pixel), source32_b(pixel));
         //}
-        static UInt32 source32_to_dest32(UInt32 pixel)
+        static u32 source32_to_dest32(u32 pixel)
         {
             if (_SrcShiftR == 0 && _SrcShiftG == 0 && _SrcShiftB == 0 && _DstShiftR == 16 && _DstShiftG == 8 && _DstShiftB == 0)
                 return pixel;
@@ -107,13 +111,13 @@ namespace mame
         //  http://softwarecommunity.intel.com/isn/downloads/softwareproducts/pdfs/346495.pdf
         //  The document also contains the constants below as floats.
         //-------------------------------------------------
-        static UInt32 clamp16_shift8(UInt32 x)
+        static u32 clamp16_shift8(u32 x)
         {
-            return (((int)x < 0) ? 0 : (x > 65535 ? 255: x >> 8));
+            return (((s32)x < 0) ? 0 : (x > 65535 ? 255: x >> 8));
         }
 
 
-        static UInt32 ycc_to_rgb(UInt32 ycc)
+        static u32 ycc_to_rgb(u32 ycc)
         {
             // original equations:
             //
@@ -150,17 +154,17 @@ namespace mame
             //  B = clip(( common + 516 * Cb            - 13696) >> 8)
             //
 
-            byte y = (byte)ycc;
-            byte cb = (byte)(ycc >> 8);
-            byte cr = (byte)(ycc >> 16);
+            u8 y = (u8)ycc;
+            u8 cb = (u8)(ycc >> 8);
+            u8 cr = (u8)(ycc >> 16);
 
-            UInt32 common = 298U * y - 56992;
-            UInt32 r = (common +            409U * cr);
-            UInt32 g = (common - 100U * cb - 208U * cr + 91776);
-            UInt32 b = (common + 516U * cb - 13696);
+            u32 common = 298U * y - 56992;
+            u32 r = (common +            409U * cr);
+            u32 g = (common - 100U * cb - 208U * cr + 91776);
+            u32 b = (common + 516U * cb - 13696);
 
             // Now clamp and shift back
-            return new rgb_t((byte)clamp16_shift8(r), (byte)clamp16_shift8(g), (byte)clamp16_shift8(b));
+            return new rgb_t((u8)clamp16_shift8(r), (u8)clamp16_shift8(g), (u8)clamp16_shift8(b));
         }
 
 
@@ -168,13 +172,13 @@ namespace mame
         //  get_texel_palette16 - return a texel from a
         //  palettized 16bpp source
         //-------------------------------------------------
-        static UInt32 get_texel_palette16(render_texinfo texture, int curu, int curv)
+        static u32 get_texel_palette16(render_texinfo texture, s32 curu, s32 curv)
         {
             ListBase<rgb_t> palbase = texture.palette;  //const rgb_t *palbase = texture.palette();
             if (_BilinearFilter)
             {
-                int u0 = curu >> 16;
-                int u1 = 1;
+                s32 u0 = curu >> 16;
+                s32 u1 = 1;
                 if (u0 < 0)
                 {
                     u0 = 0;
@@ -186,8 +190,8 @@ namespace mame
                     u1 = 0;
                 }
 
-                int v0 = curv >> 16;
-                int v1 = (int)texture.rowpixels;
+                s32 v0 = curv >> 16;
+                s32 v1 = (int)texture.rowpixels;
                 if (v0 < 0)
                 {
                     v0 = 0;
@@ -201,22 +205,22 @@ namespace mame
 
                 //const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base);
                 RawBuffer texbaseBuf = texture.base_;
-                UInt32 texbaseOffset = texture.baseOffset / 2; // since we're going to use 16-bit indexing below
+                u32 texbaseOffset = texture.baseOffset / 2; // since we're going to use 16-bit indexing below
                 //texbase += v0 * texture.rowpixels + u0;
-                texbaseOffset += (UInt32)v0 * texture.rowpixels + (UInt32)u0;
+                texbaseOffset += (u32)v0 * texture.rowpixels + (u32)u0;
 
-                UInt32 pix00 = palbase[texbaseBuf.get_uint16((int)texbaseOffset + 0)];
-                UInt32 pix01 = palbase[texbaseBuf.get_uint16((int)texbaseOffset + u1)];
-                UInt32 pix10 = palbase[texbaseBuf.get_uint16((int)texbaseOffset + v1)];
-                UInt32 pix11 = palbase[texbaseBuf.get_uint16((int)texbaseOffset + u1 + v1)];
+                u32 pix00 = palbase[texbaseBuf.get_uint16((int)texbaseOffset + 0)];
+                u32 pix01 = palbase[texbaseBuf.get_uint16((int)texbaseOffset + u1)];
+                u32 pix10 = palbase[texbaseBuf.get_uint16((int)texbaseOffset + v1)];
+                u32 pix11 = palbase[texbaseBuf.get_uint16((int)texbaseOffset + u1 + v1)];
                 return rgbaint_t.bilinear_filter(pix00, pix01, pix10, pix11, (byte)(curu >> 8), (byte)(curv >> 8));
             }
             else
             {
                 //const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
                 RawBuffer texbaseBuf = texture.base_;
-                UInt32 texbaseOffset = texture.baseOffset / 2; // since we're going to use 16-bit indexing below
-                texbaseOffset += (UInt32)((curv >> 16) * texture.rowpixels + (curu >> 16));
+                u32 texbaseOffset = texture.baseOffset / 2; // since we're going to use 16-bit indexing below
+                texbaseOffset += (u32)((curv >> 16) * texture.rowpixels + (curu >> 16));
                 //return palbase[texbase[0]];
                 return palbase[texbaseBuf.get_uint16((int)texbaseOffset + 0)];
             }
@@ -322,12 +326,12 @@ namespace mame
         //  get_texel_rgb32 - return a texel from a 32bpp
         //  RGB source
         //-------------------------------------------------
-        static UInt32 get_texel_rgb32(render_texinfo texture, int curu, int curv)
+        static u32 get_texel_rgb32(render_texinfo texture, s32 curu, s32 curv)
         {
             if (_BilinearFilter)
             {
-                int u0 = curu >> 16;
-                int u1 = 1;
+                s32 u0 = curu >> 16;
+                s32 u1 = 1;
                 if (u0 < 0)
                 {
                     u0 = u1 = 0;
@@ -337,8 +341,8 @@ namespace mame
                     u0 = (int)texture.width - 1;
                     u1 = 0;
                 }
-                int v0 = curv >> 16;
-                int v1 = (int)texture.rowpixels;
+                s32 v0 = curv >> 16;
+                s32 v1 = (int)texture.rowpixels;
                 if (v0 < 0)
                 {
                     v0 = v1 = 0;
@@ -352,10 +356,10 @@ namespace mame
                 RawBufferPointer texbase = new RawBufferPointer(texture.base_);  //const UINT32 *texbase = reinterpret_cast<const UINT32 *>(texture.base);
                 texbase += v0 * (int)texture.rowpixels + u0;  //texbase += v0 * texture.rowpixels + u0;
 
-                UInt32 pix00 = texbase.get_uint32(0);
-                UInt32 pix01 = texbase.get_uint32(u1);
-                UInt32 pix10 = texbase.get_uint32(v1);
-                UInt32 pix11 = texbase.get_uint32(u1 + v1);
+                u32 pix00 = texbase.get_uint32(0);
+                u32 pix01 = texbase.get_uint32(u1);
+                u32 pix10 = texbase.get_uint32(v1);
+                u32 pix11 = texbase.get_uint32(u1 + v1);
 
                 return rgbaint_t.bilinear_filter(pix00, pix01, pix10, pix11, (byte)(curu >> 8), (byte)(curv >> 8));
             }
@@ -371,12 +375,12 @@ namespace mame
         //  get_texel_argb32 - return a texel from a 32bpp
         //  ARGB source
         //-------------------------------------------------
-        static UInt32 get_texel_argb32(render_texinfo texture, int curu, int curv)
+        static u32 get_texel_argb32(render_texinfo texture, s32 curu, s32 curv)
         {
             if (_BilinearFilter)
             {
-                int u0 = curu >> 16;
-                int u1 = 1;
+                s32 u0 = curu >> 16;
+                s32 u1 = 1;
                 if (u0 < 0)
                 {
                     u0 = u1 = 0;
@@ -386,8 +390,8 @@ namespace mame
                     u0 = (int)texture.width - 1;
                     u1 = 0;
                 }
-                int v0 = curv >> 16;
-                int v1 = (int)texture.rowpixels;
+                s32 v0 = curv >> 16;
+                s32 v1 = (int)texture.rowpixels;
                 if (v0 < 0)
                 {
                     v0 = v1 = 0;
@@ -401,10 +405,10 @@ namespace mame
                 RawBufferPointer texbase = new RawBufferPointer(texture.base_);  //const UINT32 *texbase = reinterpret_cast<const UINT32 *>(texture.base);
                 texbase += v0 * (int)texture.rowpixels + u0;  //texbase += v0 * texture.rowpixels + u0;
 
-                UInt32 pix00 = texbase.get_uint32(0);
-                UInt32 pix01 = texbase.get_uint32(u1);
-                UInt32 pix10 = texbase.get_uint32(v1);
-                UInt32 pix11 = texbase.get_uint32(u1 + v1);
+                u32 pix00 = texbase.get_uint32(0);
+                u32 pix01 = texbase.get_uint32(u1);
+                u32 pix10 = texbase.get_uint32(v1);
+                u32 pix11 = texbase.get_uint32(u1 + v1);
 
                 return rgbaint_t.bilinear_filter(pix00, pix01, pix10, pix11, (byte)(curu >> 8), (byte)(curv >> 8));
             }
@@ -420,31 +424,31 @@ namespace mame
         //  draw_aa_pixel - draw an antialiased pixel
         //-------------------------------------------------
         //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-        static void draw_aa_pixel(RawBufferPointer dstdata, UInt32 pitch, int x, int y, UInt32 col)  // _PixelType *dstdata
+        static void draw_aa_pixel(RawBufferPointer dstdata, u32 pitch, int x, int y, u32 col)  // _PixelType *dstdata
         {
             RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + x);  //_PixelType *dest = dstdata + y * pitch + x;
 
-            UInt32 dpix = _NoDestRead ? 0U : dest.get_uint32();  // *dest;
-            UInt32 dr = source32_r(col) + dest_r32(dpix);
-            UInt32 dg = source32_g(col) + dest_g32(dpix);
-            UInt32 db = source32_b(col) + dest_b32(dpix);
+            u32 dpix = _NoDestRead ? 0U : dest.get_uint32();  // *dest;
+            u32 dr = source32_r(col) + dest_r32(dpix);
+            u32 dg = source32_g(col) + dest_g32(dpix);
+            u32 db = source32_b(col) + dest_b32(dpix);
 
-            dr = (UInt32)((dr | -(dr >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR));
-            dg = (UInt32)((dg | -(dg >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG));
-            db = (UInt32)((db | -(db >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB));
+            dr = (u32)((dr | -(dr >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR));
+            dg = (u32)((dg | -(dg >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG));
+            db = (u32)((db | -(db >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB));
 
             dest.set_uint32(dest_assemble_rgb32(dr, dg, db));  //*dest = dest_assemble_rgb(dr, dg, db);
         }
 
 
         // internal tables
-        static UInt32 [] s_cosine_table = new UInt32[2049];
+        static u32 [] s_cosine_table = new u32[2049];
 
 
         //-------------------------------------------------
         //  draw_line - draw a line or point
         //-------------------------------------------------
-        static void draw_line(render_primitive prim, RawBufferPointer dstdata, int width, int height, UInt32 pitch)  // _PixelType *dstdata
+        static void draw_line(render_primitive prim, RawBufferPointer dstdata, s32 width, s32 height, u32 pitch)  // _PixelType *dstdata
         {
             // compute the start/end coordinates
             int x1 = (int)(prim.bounds.x0 * 65536.0f);
@@ -453,14 +457,14 @@ namespace mame
             int y2 = (int)(prim.bounds.y1 * 65536.0f);
 
             // handle color and intensity
-            UInt32 col = new rgb_t((byte)(255.0f * prim.color.r * prim.color.a), (byte)(255.0f * prim.color.g * prim.color.a), (byte)(255.0f * prim.color.b * prim.color.a));
+            u32 col = new rgb_t((byte)(255.0f * prim.color.r * prim.color.a), (byte)(255.0f * prim.color.g * prim.color.a), (byte)(255.0f * prim.color.b * prim.color.a));
 
             if (render_global.PRIMFLAG_GET_ANTIALIAS(prim.flags))
             {
                 // build up the cosine table if we haven't yet
                 if (s_cosine_table[0] == 0)
                     for (int entry = 0; entry <= 2048; entry++)
-                        s_cosine_table[entry] = (UInt32)((double)(1.0 / Math.Cos(Math.Atan((double)(entry) / 2048.0))) * 0x10000000 + 0.5);
+                        s_cosine_table[entry] = (u32)((double)(1.0 / Math.Cos(Math.Atan((double)(entry) / 2048.0))) * 0x10000000 + 0.5);
 
                 int beam = (int)(prim.width * 65536.0f);
                 if (beam < 0x00010000)
@@ -489,7 +493,7 @@ namespace mame
                                 draw_aa_pixel(dstdata, pitch, x1, dy, apply_intensity(0xff & (~y1 >> 8), new rgb_t(col)));
                             dy++;
                             dx -= 0x10000 - (0xffff & y1); // take off amount plotted
-                            byte a1 = (byte)((dx >> 8) & 0xff);   // calc remainder pixel
+                            u8 a1 = (byte)((dx >> 8) & 0xff);   // calc remainder pixel
                             dx >>= 16;                   // adjust to pixel (solid) count
                             while (dx-- != 0)                 // plot rest of pixels
                             {
@@ -525,7 +529,7 @@ namespace mame
                                 draw_aa_pixel(dstdata, pitch, dx, y1, apply_intensity(0xff & (~x1 >> 8), new rgb_t(col)));
                             dx++;
                             dy -= 0x10000 - (0xffff & x1); // take off amount plotted
-                            byte a1 = (byte)((dy >> 8) & 0xff);   // remainder pixel
+                            u8 a1 = (byte)((dy >> 8) & 0xff);   // remainder pixel
                             dy >>= 16;                   // adjust to pixel (solid) count
                             while (dy-- != 0)                 // plot rest of pixels
                             {
@@ -598,18 +602,18 @@ namespace mame
         //-------------------------------------------------
         //  draw_rect - draw a solid rectangle
         //-------------------------------------------------
-        static void draw_rect(render_primitive prim, RawBufferPointer dstdata, int width, int height, UInt32 pitch)  // _PixelType *dstdata
+        static void draw_rect(render_primitive prim, RawBufferPointer dstdata, s32 width, s32 height, u32 pitch)  // _PixelType *dstdata
         {
             render_bounds fpos = prim.bounds;
 
-            global.assert(fpos.x0 <= fpos.x1);
-            global.assert(fpos.y0 <= fpos.y1);
+            assert(fpos.x0 <= fpos.x1);
+            assert(fpos.y0 <= fpos.y1);
 
             // clamp to integers
-            int startx = (int)round_nearest(fpos.x0);
-            int starty = (int)round_nearest(fpos.y0);
-            int endx = (int)round_nearest(fpos.x1);
-            int endy = (int)round_nearest(fpos.y1);
+            s32 startx = (s32)round_nearest(fpos.x0);
+            s32 starty = (s32)round_nearest(fpos.y0);
+            s32 endx = (s32)round_nearest(fpos.x1);
+            s32 endy = (s32)round_nearest(fpos.y1);
 
             // ensure we fit
             if (startx < 0) startx = 0;
@@ -626,15 +630,15 @@ namespace mame
                 return;
 
             // only support alpha and "none" blendmodes
-            global.assert(render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == (UInt32)BLENDMODE.BLENDMODE_NONE || render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == (UInt32)BLENDMODE.BLENDMODE_ALPHA);
+            assert(render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == render_global.BLENDMODE_NONE || render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_ALPHA);
 
             // fast case: no alpha
-            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == (UInt32)BLENDMODE.BLENDMODE_NONE || is_opaque(prim.color.a))
+            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == render_global.BLENDMODE_NONE || is_opaque(prim.color.a))
             {
-                UInt32 r = (UInt32)(256.0f * prim.color.r);
-                UInt32 g = (UInt32)(256.0f * prim.color.g);
-                UInt32 b = (UInt32)(256.0f * prim.color.b);
-                UInt32 pix;
+                u32 r = (u32)(256.0f * prim.color.r);
+                u32 g = (u32)(256.0f * prim.color.g);
+                u32 b = (u32)(256.0f * prim.color.b);
+                u32 pix;
 
                 // clamp R,G,B to 0-256 range
                 if (r > 0xff) { if ((int)r < 0) r = 0; else r = 0xff; }
@@ -659,19 +663,19 @@ namespace mame
             // alpha and/or coloring case
             else if (!is_transparent(prim.color.a))
             {
-                UInt32 rmask = dest_rgb_to_pixel32(0xff,0x00,0x00);
-                UInt32 gmask = dest_rgb_to_pixel32(0x00,0xff,0x00);
-                UInt32 bmask = dest_rgb_to_pixel32(0x00,0x00,0xff);
-                UInt32 r = (UInt32)(256.0f * prim.color.r * prim.color.a);
-                UInt32 g = (UInt32)(256.0f * prim.color.g * prim.color.a);
-                UInt32 b = (UInt32)(256.0f * prim.color.b * prim.color.a);
-                UInt32 inva = (UInt32)(256.0f * (1.0f - prim.color.a));
+                u32 rmask = dest_rgb_to_pixel32(0xff,0x00,0x00);
+                u32 gmask = dest_rgb_to_pixel32(0x00,0xff,0x00);
+                u32 bmask = dest_rgb_to_pixel32(0x00,0x00,0xff);
+                u32 r = (u32)(256.0f * prim.color.r * prim.color.a);
+                u32 g = (u32)(256.0f * prim.color.g * prim.color.a);
+                u32 b = (u32)(256.0f * prim.color.b * prim.color.a);
+                u32 inva = (u32)(256.0f * (1.0f - prim.color.a));
 
                 // clamp R,G,B and inverse A to 0-256 range
-                if (r > 0xff) { if ((int)(r) < 0) r = 0; else r = 0xff; }
-                if (g > 0xff) { if ((int)(g) < 0) g = 0; else g = 0xff; }
-                if (b > 0xff) { if ((int)(b) < 0) b = 0; else b = 0xff; }
-                if (inva > 0x100) { if ((int)(inva) < 0) inva = 0; else inva = 0x100; }
+                if (r > 0xff) { if ((s32)(r) < 0) r = 0; else r = 0xff; }
+                if (g > 0xff) { if ((s32)(g) < 0) g = 0; else g = 0xff; }
+                if (b > 0xff) { if ((s32)(b) < 0) b = 0; else b = 0xff; }
+                if (inva > 0x100) { if ((s32)(inva) < 0) inva = 0; else inva = 0x100; }
 
                 // pre-shift the RGBA pieces
                 r = dest_rgb_to_pixel32(r, 0, 0) << 8;
@@ -679,17 +683,17 @@ namespace mame
                 b = dest_rgb_to_pixel32(0, 0, b) << 8;
 
                 // loop over rows
-                for (int y = starty; y < endy; y++)
+                for (s32 y = starty; y < endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + startx);  //_PixelType *dest = dstdata + y * pitch + startx;
 
                     // loop over cols
-                    for (int x = startx; x < endx; x++)
+                    for (s32 x = startx; x < endx; x++)
                     {
-                        UInt32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
-                        UInt32 dr = (r + ((dpix & rmask) * inva)) & (rmask << 8);
-                        UInt32 dg = (g + ((dpix & gmask) * inva)) & (gmask << 8);
-                        UInt32 db = (b + ((dpix & bmask) * inva)) & (bmask << 8);
+                        u32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
+                        u32 dr = (r + ((dpix & rmask) * inva)) & (rmask << 8);
+                        u32 dg = (g + ((dpix & gmask) * inva)) & (gmask << 8);
+                        u32 db = (b + ((dpix & bmask) * inva)) & (bmask << 8);
 
                         dest.set_uint32((dr | dg | db) >> 8);  //*dest++ = (dr | dg | db) >> 8;
                         dest++;
@@ -707,29 +711,29 @@ namespace mame
         //  draw_quad_palette16_none - perform
         //  rasterization of a 16bpp palettized texture
         //-------------------------------------------------
-        static void draw_quad_palette16_none(render_primitive prim, RawBufferPointer dstdata, UInt32 pitch, quad_setup_data setup)  //_PixelType *dstdata
+        static void draw_quad_palette16_none(render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata
         {
             int dudx = setup.dudx;
             int dvdx = setup.dvdx;
             int endx = setup.endx;
 
             // ensure all parameters are valid
-            global.assert(prim.texture.palette != null);
+            assert(prim.texture.palette != null);
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
                 // loop over rows
-                for (int y = setup.starty; y < setup.endy; y++)
+                for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    int curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    int curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // loop over cols
-                    for (int x = setup.startx; x < endx; x++)
+                    for (s32 x = setup.startx; x < endx; x++)
                     {
-                        UInt32 pix = get_texel_palette16(prim.texture, curu, curv);
+                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
 
                         dest.set_uint32(source32_to_dest32(pix));  //*dest++ = source32_to_dest(pix);
                         dest++;
@@ -742,29 +746,29 @@ namespace mame
             // coloring-only case
             else if (is_opaque(prim.color.a))
             {
-                UInt32 sr = (UInt32)(256.0f * prim.color.r);
-                UInt32 sg = (UInt32)(256.0f * prim.color.g);
-                UInt32 sb = (UInt32)(256.0f * prim.color.b);
+                u32 sr = (u32)(256.0f * prim.color.r);
+                u32 sg = (u32)(256.0f * prim.color.g);
+                u32 sb = (u32)(256.0f * prim.color.b);
 
                 // clamp R,G,B to 0-256 range
-                if (sr > 0x100) { if ((int)sr < 0) sr = 0; else sr = 0x100; }
-                if (sg > 0x100) { if ((int)sg < 0) sg = 0; else sg = 0x100; }
-                if (sb > 0x100) { if ((int)sb < 0) sb = 0; else sb = 0x100; }
+                if (sr > 0x100) { if ((s32)sr < 0) sr = 0; else sr = 0x100; }
+                if (sg > 0x100) { if ((s32)sg < 0) sg = 0; else sg = 0x100; }
+                if (sb > 0x100) { if ((s32)sb < 0) sb = 0; else sb = 0x100; }
 
                 // loop over rows
-                for (int y = setup.starty; y < setup.endy; y++)
+                for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    int curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    int curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // loop over cols
-                    for (int x = setup.startx; x < endx; x++)
+                    for (s32 x = setup.startx; x < endx; x++)
                     {
-                        UInt32 pix = get_texel_palette16(prim.texture, curu, curv);
-                        UInt32 r = (source32_r(pix) * sr) >> 8;
-                        UInt32 g = (source32_g(pix) * sg) >> 8;
-                        UInt32 b = (source32_b(pix) * sb) >> 8;
+                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
+                        u32 r = (source32_r(pix) * sr) >> 8;
+                        u32 g = (source32_g(pix) * sg) >> 8;
+                        u32 b = (source32_b(pix) * sb) >> 8;
 
                         dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                         dest++;
@@ -777,32 +781,32 @@ namespace mame
             // alpha and/or coloring case
             else if (!is_transparent(prim.color.a))
             {
-                UInt32 sr = (UInt32)(256.0f * prim.color.r * prim.color.a);
-                UInt32 sg = (UInt32)(256.0f * prim.color.g * prim.color.a);
-                UInt32 sb = (UInt32)(256.0f * prim.color.b * prim.color.a);
-                UInt32 invsa = (UInt32)(256.0f * (1.0f - prim.color.a));
+                u32 sr = (u32)(256.0f * prim.color.r * prim.color.a);
+                u32 sg = (u32)(256.0f * prim.color.g * prim.color.a);
+                u32 sb = (u32)(256.0f * prim.color.b * prim.color.a);
+                u32 invsa = (u32)(256.0f * (1.0f - prim.color.a));
 
                 // clamp R,G,B and inverse A to 0-256 range
-                if (sr > 0x100) { if ((int)sr < 0) sr = 0; else sr = 0x100; }
-                if (sg > 0x100) { if ((int)sg < 0) sg = 0; else sg = 0x100; }
-                if (sb > 0x100) { if ((int)sb < 0) sb = 0; else sb = 0x100; }
-                if (invsa > 0x100) { if ((int)invsa < 0) invsa = 0; else invsa = 0x100; }
+                if (sr > 0x100) { if ((s32)sr < 0) sr = 0; else sr = 0x100; }
+                if (sg > 0x100) { if ((s32)sg < 0) sg = 0; else sg = 0x100; }
+                if (sb > 0x100) { if ((s32)sb < 0) sb = 0; else sb = 0x100; }
+                if (invsa > 0x100) { if ((s32)invsa < 0) invsa = 0; else invsa = 0x100; }
 
                 // loop over rows
-                for (int y = setup.starty; y < setup.endy; y++)
+                for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    int curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    int curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // loop over cols
-                    for (int x = setup.startx; x < endx; x++)
+                    for (s32 x = setup.startx; x < endx; x++)
                     {
-                        UInt32 pix = get_texel_palette16(prim.texture, curu, curv);
-                        UInt32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
-                        UInt32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
-                        UInt32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
-                        UInt32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
+                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
+                        u32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
+                        u32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
+                        u32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
+                        u32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
 
                         dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                         dest++;
@@ -818,14 +822,14 @@ namespace mame
         //  draw_quad_palette16_add - perform
         //  rasterization of a 16bpp palettized texture
         //-------------------------------------------------
-        static void draw_quad_palette16_add(render_primitive prim, ListBytesPointer dstdata, UInt32 pitch, quad_setup_data setup)  // _PixelType *dstdata,
+        static void draw_quad_palette16_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata,
         {
-            int dudx = setup.dudx;
-            int dvdx = setup.dvdx;
-            int endx = setup.endx;
+            s32 dudx = setup.dudx;
+            s32 dvdx = setup.dvdx;
+            s32 endx = setup.endx;
 
             // ensure all parameters are valid
-            global.assert(prim.texture.palette != null);
+            assert(prim.texture.palette != null);
 
             throw new emu_unimplemented();
 #if false
@@ -912,14 +916,14 @@ namespace mame
         //  draw_quad_palettea16_alpha - perform
         //  rasterization using standard alpha blending
         //-------------------------------------------------
-        static void draw_quad_palettea16_alpha(render_primitive prim, ListBytesPointer dstdata, UInt32 pitch, quad_setup_data setup)  //_PixelType *dstdata,
+        static void draw_quad_palettea16_alpha(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata,
         {
-            int dudx = setup.dudx;
-            int dvdx = setup.dvdx;
-            int endx = setup.endx;
+            s32 dudx = setup.dudx;
+            s32 dvdx = setup.dvdx;
+            s32 endx = setup.endx;
 
             // ensure all parameters are valid
-            global.assert(prim.texture.palette != null);
+            assert(prim.texture.palette != null);
 
             throw new emu_unimplemented();
 #if false
@@ -1009,7 +1013,7 @@ namespace mame
         //  draw_quad_yuy16_none - perform
         //  rasterization of a 16bpp YUY image
         //-------------------------------------------------
-        static void draw_quad_yuy16_none(render_primitive prim, ListBytesPointer dstdata, UInt32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_yuy16_none(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
         {
             throw new emu_unimplemented();
 #if false
@@ -1178,7 +1182,7 @@ namespace mame
         //  rasterization by using RGB add after YUY
         //  conversion
         //-------------------------------------------------
-        static void draw_quad_yuy16_add(render_primitive prim, ListBytesPointer dstdata, UInt32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_yuy16_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
         {
             throw new emu_unimplemented();
 #if false
@@ -1268,22 +1272,22 @@ namespace mame
         //  draw_quad_rgb32 - perform rasterization of
         //  a 32bpp RGB texture
         //-------------------------------------------------
-        static void draw_quad_rgb32(render_primitive prim, RawBufferPointer dstdata, UInt32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_rgb32(render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
         {
             ListBase<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
-            int dudx = setup.dudx;
-            int dvdx = setup.dvdx;
-            int endx = setup.endx;
+            s32 dudx = setup.dudx;
+            s32 dvdx = setup.dvdx;
+            s32 endx = setup.endx;
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
                 // loop over rows
-                for (int y = setup.starty; y < setup.endy; y++)
+                for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    int curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    int curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // no lookup case
                     if (palbase == null)
@@ -1291,7 +1295,7 @@ namespace mame
                         // loop over cols
                         for (int x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
 
                             dest.set_uint32(source32_to_dest32(pix));  //*dest++ = source32_to_dest(pix);
                             dest++;
@@ -1305,12 +1309,12 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_rgb32(prim.texture, curu, curv);
-                            UInt32 r = palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR;
-                            UInt32 g = palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG;
-                            UInt32 b = palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB;
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 r = palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR;
+                            u32 g = palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG;
+                            u32 b = palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB;
 
                             dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             dest++;
@@ -1325,32 +1329,32 @@ namespace mame
             // coloring-only case
             else if (is_opaque(prim.color.a))
             {
-                UInt32 sr = (UInt32)(256.0f * prim.color.r);
-                UInt32 sg = (UInt32)(256.0f * prim.color.g);
-                UInt32 sb = (UInt32)(256.0f * prim.color.b);
+                u32 sr = (u32)(256.0f * prim.color.r);
+                u32 sg = (u32)(256.0f * prim.color.g);
+                u32 sb = (u32)(256.0f * prim.color.b);
 
                 // clamp R,G,B to 0-256 range
-                if (sr > 0x100) { if ((int)sr < 0) sr = 0; else sr = 0x100; }
-                if (sg > 0x100) { if ((int)sg < 0) sg = 0; else sg = 0x100; }
-                if (sb > 0x100) { if ((int)sb < 0) sb = 0; else sb = 0x100; }
+                if (sr > 0x100) { if ((s32)sr < 0) sr = 0; else sr = 0x100; }
+                if (sg > 0x100) { if ((s32)sg < 0) sg = 0; else sg = 0x100; }
+                if (sb > 0x100) { if ((s32)sb < 0) sb = 0; else sb = 0x100; }
 
                 // loop over rows
-                for (int y = setup.starty; y < setup.endy; y++)
+                for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    int curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    int curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // no lookup case
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_rgb32(prim.texture, curu, curv);
-                            UInt32 r = (source32_r(pix) * sr) >> 8;
-                            UInt32 g = (source32_g(pix) * sg) >> 8;
-                            UInt32 b = (source32_b(pix) * sb) >> 8;
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 r = (source32_r(pix) * sr) >> 8;
+                            u32 g = (source32_g(pix) * sg) >> 8;
+                            u32 b = (source32_b(pix) * sb) >> 8;
 
                             dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             dest++;
@@ -1364,12 +1368,12 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_rgb32(prim.texture, curu, curv);
-                            UInt32 r = (palbase[(int)((pix >> 16) & 0xff)] * sr) >> (8 + _SrcShiftR);
-                            UInt32 g = (palbase[(int)((pix >> 8) & 0xff)] * sg) >> (8 + _SrcShiftG);
-                            UInt32 b = (palbase[(int)((pix >> 0) & 0xff)] * sb) >> (8 + _SrcShiftB);
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 r = (palbase[(int)((pix >> 16) & 0xff)] * sr) >> (8 + _SrcShiftR);
+                            u32 g = (palbase[(int)((pix >> 8) & 0xff)] * sg) >> (8 + _SrcShiftG);
+                            u32 b = (palbase[(int)((pix >> 0) & 0xff)] * sb) >> (8 + _SrcShiftB);
 
                             dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             dest++;
@@ -1384,35 +1388,35 @@ namespace mame
             // alpha and/or coloring case
             else if (!is_transparent(prim.color.a))
             {
-                UInt32 sr = (UInt32)(256.0f * prim.color.r * prim.color.a);
-                UInt32 sg = (UInt32)(256.0f * prim.color.g * prim.color.a);
-                UInt32 sb = (UInt32)(256.0f * prim.color.b * prim.color.a);
-                UInt32 invsa = (UInt32)(256.0f * (1.0f - prim.color.a));
+                u32 sr = (u32)(256.0f * prim.color.r * prim.color.a);
+                u32 sg = (u32)(256.0f * prim.color.g * prim.color.a);
+                u32 sb = (u32)(256.0f * prim.color.b * prim.color.a);
+                u32 invsa = (u32)(256.0f * (1.0f - prim.color.a));
 
                 // clamp R,G,B and inverse A to 0-256 range
-                if (sr > 0x100) { if ((int)sr < 0) sr = 0; else sr = 0x100; }
-                if (sg > 0x100) { if ((int)sg < 0) sg = 0; else sg = 0x100; }
-                if (sb > 0x100) { if ((int)sb < 0) sb = 0; else sb = 0x100; }
-                if (invsa > 0x100) { if ((int)invsa < 0) invsa = 0; else invsa = 0x100; }
+                if (sr > 0x100) { if ((s32)sr < 0) sr = 0; else sr = 0x100; }
+                if (sg > 0x100) { if ((s32)sg < 0) sg = 0; else sg = 0x100; }
+                if (sb > 0x100) { if ((s32)sb < 0) sb = 0; else sb = 0x100; }
+                if (invsa > 0x100) { if ((s32)invsa < 0) invsa = 0; else invsa = 0x100; }
 
                 // loop over rows
-                for (int y = setup.starty; y < setup.endy; y++)
+                for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    int curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    int curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // no lookup case
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_rgb32(prim.texture, curu, curv);
-                            UInt32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
-                            UInt32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
-                            UInt32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
-                            UInt32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
+                            u32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
+                            u32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
+                            u32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
 
                             dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             dest++;
@@ -1426,13 +1430,13 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_rgb32(prim.texture, curu, curv);
-                            UInt32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
-                            UInt32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * sr + dest_r32(dpix) * invsa) >> 8;
-                            UInt32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * sg + dest_g32(dpix) * invsa) >> 8;
-                            UInt32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * sb + dest_b32(dpix) * invsa) >> 8;
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
+                            u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * sr + dest_r32(dpix) * invsa) >> 8;
+                            u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * sg + dest_g32(dpix) * invsa) >> 8;
+                            u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * sb + dest_b32(dpix) * invsa) >> 8;
 
                             dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             dest++;
@@ -1450,7 +1454,7 @@ namespace mame
         //  draw_quad_rgb32_add - perform
         //  rasterization by using RGB add
         //-------------------------------------------------
-        static void draw_quad_rgb32_add(render_primitive prim, ListBytesPointer dstdata, UInt32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_rgb32_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
         {
             throw new emu_unimplemented();
 #if false
@@ -1589,38 +1593,38 @@ namespace mame
         //  draw_quad_argb32_alpha - perform
         //  rasterization using standard alpha blending
         //-------------------------------------------------
-        static void draw_quad_argb32_alpha(render_primitive prim, RawBufferPointer dstdata, UInt32 pitch, quad_setup_data setup)  // _PixelType *dstdata,
+        static void draw_quad_argb32_alpha(render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata,
         {
             ListBase<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
-            int dudx = setup.dudx;
-            int dvdx = setup.dvdx;
-            int endx = setup.endx;
+            s32 dudx = setup.dudx;
+            s32 dvdx = setup.dvdx;
+            s32 endx = setup.endx;
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
                 // loop over rows
-                for (int y = setup.starty; y < setup.endy; y++)
+                for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    int curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    int curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // no lookup case
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_argb32(prim.texture, curu, curv);
-                            UInt32 ta = pix >> 24;
+                            u32 pix = get_texel_argb32(prim.texture, curu, curv);
+                            u32 ta = pix >> 24;
                             if (ta != 0)
                             {
-                                UInt32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
-                                UInt32 invta = 0x100 - ta;
-                                UInt32 r = (source32_r(pix) * ta + dest_r32(dpix) * invta) >> 8;
-                                UInt32 g = (source32_g(pix) * ta + dest_g32(dpix) * invta) >> 8;
-                                UInt32 b = (source32_b(pix) * ta + dest_b32(dpix) * invta) >> 8;
+                                u32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
+                                u32 invta = 0x100 - ta;
+                                u32 r = (source32_r(pix) * ta + dest_r32(dpix) * invta) >> 8;
+                                u32 g = (source32_g(pix) * ta + dest_g32(dpix) * invta) >> 8;
+                                u32 b = (source32_b(pix) * ta + dest_b32(dpix) * invta) >> 8;
 
                                 dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
                             }
@@ -1636,17 +1640,17 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_argb32(prim.texture, curu, curv);
-                            UInt32 ta = pix >> 24;
+                            u32 pix = get_texel_argb32(prim.texture, curu, curv);
+                            u32 ta = pix >> 24;
                             if (ta != 0)
                             {
-                                UInt32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
-                                UInt32 invta = 0x100 - ta;
-                                UInt32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * ta + dest_r32(dpix) * invta) >> 8;
-                                UInt32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * ta + dest_g32(dpix) * invta) >> 8;
-                                UInt32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * ta + dest_b32(dpix) * invta) >> 8;
+                                u32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
+                                u32 invta = 0x100 - ta;
+                                u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * ta + dest_r32(dpix) * invta) >> 8;
+                                u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * ta + dest_g32(dpix) * invta) >> 8;
+                                u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * ta + dest_b32(dpix) * invta) >> 8;
 
                                 dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
                             }
@@ -1663,39 +1667,39 @@ namespace mame
             // alpha and/or coloring case
             else
             {
-                UInt32 sr = (UInt32)(256.0f * prim.color.r);
-                UInt32 sg = (UInt32)(256.0f * prim.color.g);
-                UInt32 sb = (UInt32)(256.0f * prim.color.b);
-                UInt32 sa = (UInt32)(256.0f * prim.color.a);
+                u32 sr = (u32)(256.0f * prim.color.r);
+                u32 sg = (u32)(256.0f * prim.color.g);
+                u32 sb = (u32)(256.0f * prim.color.b);
+                u32 sa = (u32)(256.0f * prim.color.a);
 
                 // clamp R,G,B and inverse A to 0-256 range
-                if (sr > 0x100) { if ((int)(sr) < 0) sr = 0; else sr = 0x100; }
-                if (sg > 0x100) { if ((int)(sg) < 0) sg = 0; else sg = 0x100; }
-                if (sb > 0x100) { if ((int)(sb) < 0) sb = 0; else sb = 0x100; }
-                if (sa > 0x100) { if ((int)(sa) < 0) sa = 0; else sa = 0x100; }
+                if (sr > 0x100) { if ((s32)(sr) < 0) sr = 0; else sr = 0x100; }
+                if (sg > 0x100) { if ((s32)(sg) < 0) sg = 0; else sg = 0x100; }
+                if (sb > 0x100) { if ((s32)(sb) < 0) sb = 0; else sb = 0x100; }
+                if (sa > 0x100) { if ((s32)(sa) < 0) sa = 0; else sa = 0x100; }
 
                 // loop over rows
-                for (int y = setup.starty; y < setup.endy; y++)
+                for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     RawBufferPointer dest = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    int curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    int curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // no lookup case
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_argb32(prim.texture, curu, curv);
-                            UInt32 ta = (pix >> 24) * sa;
+                            u32 pix = get_texel_argb32(prim.texture, curu, curv);
+                            u32 ta = (pix >> 24) * sa;
                             if (ta != 0)
                             {
-                                UInt32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
-                                UInt32 invsta = (0x10000 - ta) << 8;
-                                UInt32 r = (source32_r(pix) * sr * ta + dest_r32(dpix) * invsta) >> 24;
-                                UInt32 g = (source32_g(pix) * sg * ta + dest_g32(dpix) * invsta) >> 24;
-                                UInt32 b = (source32_b(pix) * sb * ta + dest_b32(dpix) * invsta) >> 24;
+                                u32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
+                                u32 invsta = (0x10000 - ta) << 8;
+                                u32 r = (source32_r(pix) * sr * ta + dest_r32(dpix) * invsta) >> 24;
+                                u32 g = (source32_g(pix) * sg * ta + dest_g32(dpix) * invsta) >> 24;
+                                u32 b = (source32_b(pix) * sb * ta + dest_b32(dpix) * invsta) >> 24;
 
                                 dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
                             }
@@ -1712,17 +1716,17 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < endx; x++)
                         {
-                            UInt32 pix = get_texel_argb32(prim.texture, curu, curv);
-                            UInt32 ta = (pix >> 24) * sa;
+                            u32 pix = get_texel_argb32(prim.texture, curu, curv);
+                            u32 ta = (pix >> 24) * sa;
                             if (ta != 0)
                             {
-                                UInt32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
-                                UInt32 invsta = (0x10000 - ta) << 8;
-                                UInt32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * sr * ta + dest_r32(dpix) * invsta) >> 24;
-                                UInt32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * sg * ta + dest_g32(dpix) * invsta) >> 24;
-                                UInt32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * sb * ta + dest_b32(dpix) * invsta) >> 24;
+                                u32 dpix = _NoDestRead ? 0 : dest.get_uint32();  // *dest;
+                                u32 invsta = (0x10000 - ta) << 8;
+                                u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * sr * ta + dest_r32(dpix) * invsta) >> 24;
+                                u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * sg * ta + dest_g32(dpix) * invsta) >> 24;
+                                u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * sb * ta + dest_b32(dpix) * invsta) >> 24;
 
                                 dest.set_uint32(dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
                             }
@@ -1742,7 +1746,7 @@ namespace mame
         //  draw_quad_argb32_multiply - perform
         //  rasterization using RGB multiply
         //-------------------------------------------------
-        static void draw_quad_argb32_multiply(render_primitive prim, ListBytesPointer dstdata, UInt32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_argb32_multiply(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
         {
             throw new emu_unimplemented();
 #if false
@@ -1863,7 +1867,7 @@ namespace mame
         //  draw_quad_argb32_add - perform
         //  rasterization by using RGB add
         //-------------------------------------------------
-        static void draw_quad_argb32_add(render_primitive prim, ListBytesPointer dstdata, UInt32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_argb32_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
         {
             throw new emu_unimplemented();
 #if false
@@ -2023,10 +2027,10 @@ namespace mame
         //  and then dispatch to a texture-mode-specific
         //  drawing routine
         //-------------------------------------------------
-        static void setup_and_draw_textured_quad(render_primitive prim, RawBufferPointer dstdata, int width, int height, UInt32 pitch)  //_PixelType *dstdata
+        static void setup_and_draw_textured_quad(render_primitive prim, RawBufferPointer dstdata, s32 width, s32 height, u32 pitch)  //_PixelType *dstdata
         {
-            global.assert(prim.bounds.x0 <= prim.bounds.x1);
-            global.assert(prim.bounds.y0 <= prim.bounds.y1);
+            assert(prim.bounds.x0 <= prim.bounds.x1);
+            assert(prim.bounds.y0 <= prim.bounds.y1);
 
             // determine U/V deltas
             float fdudx = (prim.texcoords.tr.u - prim.texcoords.tl.u) / (prim.bounds.x1 - prim.bounds.x0);
@@ -2071,45 +2075,45 @@ namespace mame
             }
 
             // render based on the texture coordinates
-            UInt32 primflags = prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK);
+            u32 primflags = prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK);
             //switch (prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK))
             {
-                if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_PALETTE16) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_NONE)) ||
-                    primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_PALETTE16) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA)))
+                if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)) ||
+                    primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_palette16_none(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_PALETTE16) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
                     draw_quad_palette16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_PALETTEA16) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTEA16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_palettea16_alpha(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_YUY16) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_NONE)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_YUY16) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_yuy16_none(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_YUY16) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
                     draw_quad_yuy16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_RGB32) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_NONE)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_RGB32) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_ARGB32) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_NONE)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)))
                     draw_quad_rgb32(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_RGB32) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
                     draw_quad_rgb32_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_ARGB32) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_argb32_alpha(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_ARGB32) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_RGB_MULTIPLY)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_RGB_MULTIPLY)))
                     draw_quad_argb32_multiply(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((UInt32)texture_format.TEXFORMAT_ARGB32) | global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
                     draw_quad_argb32_add(prim, dstdata, pitch, setup);
 
                 else
-                    throw new emu_fatalerror("Unknown texformat({0})/blendmode({1}) combo\n", render_global.PRIMFLAG_GET_TEXFORMAT(prim.flags), render_global.PRIMFLAG_GET_BLENDMODE(prim.flags));
+                    fatalerror("Unknown texformat({0})/blendmode({1}) combo\n", render_global.PRIMFLAG_GET_TEXFORMAT(prim.flags), render_global.PRIMFLAG_GET_BLENDMODE(prim.flags));
             }
         }
 
@@ -2123,7 +2127,7 @@ namespace mame
         //  using a software rasterizer
         //-------------------------------------------------
         //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-        public static void draw_primitives(render_primitive_list primlist, RawBufferPointer dstdata, UInt32 width, UInt32 height, UInt32 pitch)  // void *dstdata
+        public static void draw_primitives(render_primitive_list primlist, RawBufferPointer dstdata, u32 width, u32 height, u32 pitch)  // void *dstdata
         {
             // loop over the list and render each element
             for (render_primitive prim = primlist.first(); prim != null; prim = prim.next())
@@ -2131,17 +2135,14 @@ namespace mame
                 switch (prim.type)
                 {
                     case render_primitive.primitive_type.LINE:
-                        //draw_line(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
-                        draw_line(prim, dstdata, (int)width, (int)height, pitch);
+                        draw_line(prim, dstdata, (int)width, (int)height, pitch);  //draw_line(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
                         break;
 
                     case render_primitive.primitive_type.QUAD:
                         if (prim.texture.base_ == null)
-                            //draw_rect(prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
-                            draw_rect(prim, dstdata, (int)width, (int)height, pitch);
+                            draw_rect(prim, dstdata, (int)width, (int)height, pitch);  //draw_rect(prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
                         else
-                            //setup_and_draw_textured_quad(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
-                            setup_and_draw_textured_quad(prim, dstdata, (int)width, (int)height, pitch);
+                            setup_and_draw_textured_quad(prim, dstdata, (int)width, (int)height, pitch);  //setup_and_draw_textured_quad(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
                         break;
 
                     default:

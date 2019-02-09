@@ -32,7 +32,7 @@ namespace mame.plib
 
         //pfmt(const pfmt &rhs) : m_str(rhs.m_str), m_arg(rhs.m_arg) { }
 
-        ~pfmt() { }
+        //~pfmt() { }
 
 
         //operator pstring() const { return m_str; }
@@ -86,7 +86,7 @@ namespace mame.plib
 
         public pfmt_writer_t(bool build_enabled = true) { this.build_enabled = build_enabled;  m_enabled = true; }
 
-        ~pfmt_writer_t() { }
+        //~pfmt_writer_t() { }
 
 
         protected abstract void vdowrite(string ls);
@@ -139,7 +139,7 @@ namespace mame.plib
 
 
     //template <class T, plog_level::E L, bool build_enabled = true>
-    public class plog_channel<T> : pfmt_writer_t<plog_channel<T>> where T : netlist.netlist_t  //pfmt_writer_t<plog_channel<T, L, build_enabled>, build_enabled>
+    public class plog_channel<T> : pfmt_writer_t<plog_channel<T>> where T : netlist.callbacks_t  //pfmt_writer_t<plog_channel<T, L, build_enabled>, build_enabled>
     {
         //friend class pfmt_writer_t<plog_channel<T, L, build_enabled>, build_enabled>;
 
@@ -153,7 +153,7 @@ namespace mame.plib
 
         public plog_channel(T b, plog_level L, bool build_enabled = true) : base(build_enabled) {this.L = L;  this.build_enabled = build_enabled;  m_base = b; }
 
-        ~plog_channel() { }
+        //~plog_channel() { }
 
 
         protected override void vdowrite(string ls)
@@ -164,7 +164,7 @@ namespace mame.plib
 
 
     //template<class T, bool debug_enabled>
-    public class plog_base<T> where T : netlist.netlist_t
+    public class plog_base<T> where T : netlist.callbacks_t
     {
         // template parameter
         bool debug_enabled;
@@ -188,6 +188,6 @@ namespace mame.plib
             fatal = new plog_channel<T>(proxy, plog_level.FATAL);
         }
 
-        ~plog_base() {}
+        //~plog_base() {}
     }
 }

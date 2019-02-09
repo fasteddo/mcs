@@ -273,7 +273,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7400_DIP)
-        public static void nld_TTL_7400_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7400_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -318,7 +318,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7402_DIP)
-        public static void nld_TTL_7402_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7402_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -361,7 +361,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7404_DIP)
-        public static void nld_TTL_7404_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7404_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -409,7 +409,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7408_DIP)
-        public static void nld_TTL_7408_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7408_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -454,7 +454,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7410_DIP)
-        public static void nld_TTL_7410_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7410_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -498,7 +498,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7411_DIP)
-        public static void nld_TTL_7411_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7411_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -531,7 +531,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7414_GATE)
-        public static void nld_TTL_7414_GATE(netlist.setup_t setup)
+        public static void netlist_TTL_7414_GATE(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -545,7 +545,7 @@ namespace mame
 
 
         //static NETLIST_START(TTL_74LS14_GATE)
-        public static void nld_TTL_74LS14_GATE(netlist.setup_t setup)
+        public static void netlist_TTL_74LS14_GATE(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -559,7 +559,7 @@ namespace mame
 
 
         //static NETLIST_START(TTL_7414_DIP)
-        public static void nld_TTL_7414_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7414_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -589,7 +589,7 @@ namespace mame
 
 
         //static NETLIST_START(TTL_74LS14_DIP)
-        public static void nld_TTL_74LS14_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74LS14_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -625,7 +625,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7416_DIP)
-        public static void nld_TTL_7416_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7416_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -673,7 +673,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7420_DIP)
-        public static void nld_TTL_7420_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7420_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -722,7 +722,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7425_DIP)
-        public static void nld_TTL_7425_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7425_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -767,7 +767,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7427_DIP)
-        public static void nld_TTL_7427_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7427_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -815,7 +815,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7430_DIP)
-        public static void nld_TTL_7430_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7430_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -859,7 +859,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7432_DIP)
-        public static void nld_TTL_7432_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7432_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -907,7 +907,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7437_DIP)
-        public static void nld_TTL_7437_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7437_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -952,7 +952,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7486_DIP)
-        public static void nld_TTL_7486_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7486_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1009,7 +1009,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_74155_DIP)
-        public static void nld_TTL_74155_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74155_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1039,7 +1039,7 @@ namespace mame
 
 
         //static NETLIST_START(TTL_74156_DIP)
-        public static void nld_TTL_74156_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74156_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1088,7 +1088,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_74260_DIP)
-        public static void nld_TTL_74260_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74260_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1142,7 +1142,7 @@ namespace mame
         public static void TTL_74279B(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74279B", name); }
 
         //static NETLIST_START(TTL_74279_DIP)
-        public static void nld_TTL_74279_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74279_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1209,7 +1209,7 @@ namespace mame
         public static void DM9312_TT(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "DM9312_TT", name); }
 
         //static NETLIST_START(DM9312_DIP)
-        public static void nld_DM9312_DIP(netlist.setup_t setup)
+        public static void netlist_DM9312_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1235,7 +1235,7 @@ namespace mame
 
 
         //NETLIST_START(TTL74XX_lib)
-        public static void nld_TTL74XX_lib(netlist.setup_t setup)
+        public static void netlist_TTL74XX_lib(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1598,29 +1598,29 @@ namespace mame
                 netlist.nl_setup_global.TT_FAMILY("74XX");
             netlist.nl_setup_global.TRUTHTABLE_END(setup);
 
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7400_DIP", nld_TTL_7400_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7402_DIP", nld_TTL_7402_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7404_DIP", nld_TTL_7404_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7408_DIP", nld_TTL_7408_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7410_DIP", nld_TTL_7410_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7411_DIP", nld_TTL_7411_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7414_GATE", nld_TTL_7414_GATE);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74LS14_GATE", nld_TTL_74LS14_GATE);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7414_DIP", nld_TTL_7414_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74LS14_DIP", nld_TTL_74LS14_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7416_DIP", nld_TTL_7416_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7420_DIP", nld_TTL_7420_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7425_DIP", nld_TTL_7425_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7427_DIP", nld_TTL_7427_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7430_DIP", nld_TTL_7430_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7432_DIP", nld_TTL_7432_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7437_DIP", nld_TTL_7437_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7486_DIP", nld_TTL_7486_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74155_DIP", nld_TTL_74155_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74156_DIP", nld_TTL_74156_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74260_DIP", nld_TTL_74260_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74279_DIP", nld_TTL_74279_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "DM9312_DIP", nld_DM9312_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7400_DIP", netlist_TTL_7400_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7402_DIP", netlist_TTL_7402_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7404_DIP", netlist_TTL_7404_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7408_DIP", netlist_TTL_7408_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7410_DIP", netlist_TTL_7410_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7411_DIP", netlist_TTL_7411_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7414_GATE", netlist_TTL_7414_GATE);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74LS14_GATE", netlist_TTL_74LS14_GATE);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7414_DIP", netlist_TTL_7414_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74LS14_DIP", netlist_TTL_74LS14_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7416_DIP", netlist_TTL_7416_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7420_DIP", netlist_TTL_7420_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7425_DIP", netlist_TTL_7425_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7427_DIP", netlist_TTL_7427_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7430_DIP", netlist_TTL_7430_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7432_DIP", netlist_TTL_7432_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7437_DIP", netlist_TTL_7437_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7486_DIP", netlist_TTL_7486_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74155_DIP", netlist_TTL_74155_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74156_DIP", netlist_TTL_74156_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74260_DIP", netlist_TTL_74260_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74279_DIP", netlist_TTL_74279_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "DM9312_DIP", netlist_DM9312_DIP);
 
             netlist.nl_setup_global.NETLIST_END();
         }

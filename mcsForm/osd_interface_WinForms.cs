@@ -31,28 +31,36 @@ namespace mameForm
         const string WINOPTION_FILTER                = "filter";
 
         // core post-processing options
-        const string WINOPTION_HLSL_ENABLE               = "hlsl_enable";
         const string WINOPTION_HLSLPATH                  = "hlslpath";
-        const string WINOPTION_HLSL_PRESCALE_X           = "hlsl_prescale_x";
-        const string WINOPTION_HLSL_PRESCALE_Y           = "hlsl_prescale_y";
-        const string WINOPTION_HLSL_PRESET               = "hlsl_preset";
+        const string WINOPTION_HLSL_ENABLE               = "hlsl_enable";
+        const string WINOPTION_HLSL_OVERSAMPLING         = "hlsl_oversampling";
         const string WINOPTION_HLSL_WRITE                = "hlsl_write";
         const string WINOPTION_HLSL_SNAP_WIDTH           = "hlsl_snap_width";
         const string WINOPTION_HLSL_SNAP_HEIGHT          = "hlsl_snap_height";
+        const string WINOPTION_SHADOW_MASK_TILE_MODE     = "shadow_mask_tile_mode";
         const string WINOPTION_SHADOW_MASK_ALPHA         = "shadow_mask_alpha";
         const string WINOPTION_SHADOW_MASK_TEXTURE       = "shadow_mask_texture";
         const string WINOPTION_SHADOW_MASK_COUNT_X       = "shadow_mask_x_count";
         const string WINOPTION_SHADOW_MASK_COUNT_Y       = "shadow_mask_y_count";
         const string WINOPTION_SHADOW_MASK_USIZE         = "shadow_mask_usize";
         const string WINOPTION_SHADOW_MASK_VSIZE         = "shadow_mask_vsize";
-        const string WINOPTION_PINCUSHION                = "pincushion";
-        const string WINOPTION_CURVATURE                 = "curvature";
+        const string WINOPTION_SHADOW_MASK_UOFFSET       = "shadow_mask_uoffset";
+        const string WINOPTION_SHADOW_MASK_VOFFSET       = "shadow_mask_voffset";
+        const string WINOPTION_REFLECTION                = "reflection";
+        const string WINOPTION_DISTORTION                = "distortion";
+        const string WINOPTION_CUBIC_DISTORTION          = "cubic_distortion";
+        const string WINOPTION_DISTORT_CORNER            = "distort_corner";
+        const string WINOPTION_ROUND_CORNER              = "round_corner";
+        const string WINOPTION_SMOOTH_BORDER             = "smooth_border";
+        const string WINOPTION_VIGNETTING                = "vignetting";
         const string WINOPTION_SCANLINE_AMOUNT           = "scanline_alpha";
         const string WINOPTION_SCANLINE_SCALE            = "scanline_size";
         const string WINOPTION_SCANLINE_HEIGHT           = "scanline_height";
+        const string WINOPTION_SCANLINE_VARIATION        = "scanline_variation";
         const string WINOPTION_SCANLINE_BRIGHT_SCALE     = "scanline_bright_scale";
         const string WINOPTION_SCANLINE_BRIGHT_OFFSET    = "scanline_bright_offset";
-        const string WINOPTION_SCANLINE_OFFSET           = "scanline_jitter";
+        const string WINOPTION_SCANLINE_JITTER           = "scanline_jitter";
+        const string WINOPTION_HUM_BAR_ALPHA             = "hum_bar_alpha";
         const string WINOPTION_DEFOCUS                   = "defocus";
         const string WINOPTION_CONVERGE_X                = "converge_x";
         const string WINOPTION_CONVERGE_Y                = "converge_y";
@@ -74,6 +82,7 @@ namespace mameForm
         const string WINOPTION_CHROMA_C                  = "chroma_c";
         const string WINOPTION_CHROMA_Y_GAIN             = "chroma_y_gain";
         const string WINOPTION_YIQ_ENABLE                = "yiq_enable";
+        const string WINOPTION_YIQ_JITTER                = "yiq_jitter";
         const string WINOPTION_YIQ_CCVALUE               = "yiq_cc";
         const string WINOPTION_YIQ_AVALUE                = "yiq_a";
         const string WINOPTION_YIQ_BVALUE                = "yiq_b";
@@ -85,11 +94,12 @@ namespace mameForm
         const string WINOPTION_YIQ_QVALUE                = "yiq_q";
         const string WINOPTION_YIQ_SCAN_TIME             = "yiq_scan_time";
         const string WINOPTION_YIQ_PHASE_COUNT           = "yiq_phase_count";
+        const string WINOPTION_VECTOR_BEAM_SMOOTH        = "vector_beam_smooth";
         const string WINOPTION_VECTOR_LENGTH_SCALE       = "vector_length_scale";
         const string WINOPTION_VECTOR_LENGTH_RATIO       = "vector_length_ratio";
-        const string WINOPTION_VECTOR_BLOOM_SCALE        = "vector_bloom_scale";
-        const string WINOPTION_VECTOR_TIME_PERIOD        = "vector_time_period";
-        const string WINOPTION_RASTER_BLOOM_SCALE        = "raster_bloom_scale";
+        const string WINOPTION_BLOOM_BLEND_MODE          = "bloom_blend_mode";
+        const string WINOPTION_BLOOM_SCALE               = "bloom_scale";
+        const string WINOPTION_BLOOM_OVERDRIVE           = "bloom_overdrive";
         const string WINOPTION_BLOOM_LEVEL0_WEIGHT       = "bloom_lvl0_weight";
         const string WINOPTION_BLOOM_LEVEL1_WEIGHT       = "bloom_lvl1_weight";
         const string WINOPTION_BLOOM_LEVEL2_WEIGHT       = "bloom_lvl2_weight";
@@ -111,128 +121,139 @@ namespace mameForm
         const string WINOPTION_FULLSCREENGAMMA       = "full_screen_gamma";
 
         // input options
+        const string WINOPTION_GLOBAL_INPUTS         = "global_inputs";
         const string WINOPTION_DUAL_LIGHTGUN         = "dual_lightgun";
 
 
         static readonly options_entry [] s_option_entries = new options_entry []
         {
             // debugging options
-            new options_entry(null,                                           null,       options_global.OPTION_HEADER,     "WINDOWS DEBUGGING OPTIONS"),
-            new options_entry(WINOPTION_DEBUGGER_FONT + ";dfont",             "Lucida Console", options_global.OPTION_STRING,"specifies the font to use for debugging; defaults to Lucida Console"),
-            new options_entry(WINOPTION_DEBUGGER_FONT_SIZE + ";dfontsize",    "9",        options_global.OPTION_FLOAT,      "specifies the font size to use for debugging; defaults to 9 pt"),
+            new options_entry(null,                                           null,       OPTION_HEADER,     "WINDOWS DEBUGGING OPTIONS"),
+            new options_entry(WINOPTION_DEBUGGER_FONT + ";dfont",             "Lucida Console", OPTION_STRING,"specifies the font to use for debugging; defaults to Lucida Console"),
+            new options_entry(WINOPTION_DEBUGGER_FONT_SIZE + ";dfontsize",    "9",        OPTION_FLOAT,      "specifies the font size to use for debugging; defaults to 9 pt"),
 
             // performance options
-            new options_entry(null,                                           null,       options_global.OPTION_HEADER,     "WINDOWS PERFORMANCE OPTIONS"),
-            new options_entry(WINOPTION_PRIORITY + "(-15-1)",                 "0",        options_global.OPTION_INTEGER,    "thread priority for the main game thread; range from -15 to 1"),
-            new options_entry(WINOPTION_PROFILE,                              "0",        options_global.OPTION_INTEGER,    "enable profiling, specifying the stack depth to track"),
+            new options_entry(null,                                           null,       OPTION_HEADER,     "WINDOWS PERFORMANCE OPTIONS"),
+            new options_entry(WINOPTION_PRIORITY + "(-15-1)",                 "0",        OPTION_INTEGER,    "thread priority for the main game thread; range from -15 to 1"),
+            new options_entry(WINOPTION_PROFILE,                              "0",        OPTION_INTEGER,    "enable profiling, specifying the stack depth to track"),
 
             // video options
-            new options_entry(null,                                           null,       options_global.OPTION_HEADER,     "WINDOWS VIDEO OPTIONS"),
-            new options_entry(WINOPTION_PRESCALE,                             "1",        options_global.OPTION_INTEGER,    "scale screen rendering by this amount in software"),
-            new options_entry(WINOPTION_MENU,                                 "0",        options_global.OPTION_BOOLEAN,    "enable menu bar if available by UI implementation"),
+            new options_entry(null,                                           null,       OPTION_HEADER,     "WINDOWS VIDEO OPTIONS"),
+            new options_entry(WINOPTION_PRESCALE,                             "1",        OPTION_INTEGER,    "scale screen rendering by this amount in software"),
+            new options_entry(WINOPTION_MENU,                                 "0",        OPTION_BOOLEAN,    "enable menu bar if available by UI implementation"),
 
             // DirectDraw-specific options
-            new options_entry(null,                                           null,       options_global.OPTION_HEADER,     "DIRECTDRAW-SPECIFIC OPTIONS"),
-            new options_entry(WINOPTION_HWSTRETCH + ";hws",                   "1",        options_global.OPTION_BOOLEAN,    "enable hardware stretching"),
+            new options_entry(null,                                           null,       OPTION_HEADER,     "DIRECTDRAW-SPECIFIC OPTIONS"),
+            new options_entry(WINOPTION_HWSTRETCH + ";hws",                   "1",        OPTION_BOOLEAN,    "enable hardware stretching"),
 
             // Direct3D-specific options
-            new options_entry(null,                                           null,       options_global.OPTION_HEADER,     "DIRECT3D-SPECIFIC OPTIONS"),
-            new options_entry(WINOPTION_FILTER + ";d3dfilter;flt",            "1",        options_global.OPTION_BOOLEAN,    "enable bilinear filtering on screen output"),
+            new options_entry(null,                                           null,       OPTION_HEADER,     "DIRECT3D-SPECIFIC OPTIONS"),
+            new options_entry(WINOPTION_FILTER + ";d3dfilter;flt",            "1",        OPTION_BOOLEAN,    "enable bilinear filtering on screen output"),
 
             // post-processing options
-            new options_entry(null,                                                     null,        options_global.OPTION_HEADER,     "DIRECT3D POST-PROCESSING OPTIONS"),
-            new options_entry(WINOPTION_HLSL_ENABLE + ";hlsl",                          "0",         options_global.OPTION_BOOLEAN,    "enable HLSL post-processing (PS3.0 required)"),
-            new options_entry(WINOPTION_HLSLPATH,                                       "hlsl",      options_global.OPTION_STRING,     "path to hlsl files"),
-            new options_entry(WINOPTION_HLSL_PRESCALE_X,                                "0",         options_global.OPTION_INTEGER,    "HLSL pre-scale override factor for X (0 for auto)"),
-            new options_entry(WINOPTION_HLSL_PRESCALE_Y,                                "0",         options_global.OPTION_INTEGER,    "HLSL pre-scale override factor for Y (0 for auto)"),
-            new options_entry(WINOPTION_HLSL_PRESET + ";(-1-3)",                        "-1",        options_global.OPTION_INTEGER,    "HLSL preset to use (0-3)"),
-            new options_entry(WINOPTION_HLSL_WRITE,                                     null,        options_global.OPTION_STRING,     "enable HLSL AVI writing (huge disk bandwidth suggested)"),
-            new options_entry(WINOPTION_HLSL_SNAP_WIDTH,                                "2048",      options_global.OPTION_STRING,     "HLSL upscaled-snapshot width"),
-            new options_entry(WINOPTION_HLSL_SNAP_HEIGHT,                               "1536",      options_global.OPTION_STRING,     "HLSL upscaled-snapshot height"),
-            new options_entry(WINOPTION_SHADOW_MASK_ALPHA + ";fs_shadwa(0.0-1.0)",      "0.0",       options_global.OPTION_FLOAT,      "shadow mask alpha-blend value (1.0 is fully blended, 0.0 is no mask)"),
-            new options_entry(WINOPTION_SHADOW_MASK_TEXTURE + ";fs_shadwt(0.0-1.0)",    "aperture.png", options_global.OPTION_STRING,  "shadow mask texture name"),
-            new options_entry(WINOPTION_SHADOW_MASK_COUNT_X + ";fs_shadww",             "320",       options_global.OPTION_INTEGER,    "shadow mask width, in phosphor dots"),
-            new options_entry(WINOPTION_SHADOW_MASK_COUNT_Y + ";fs_shadwh",             "240",       options_global.OPTION_INTEGER,    "shadow mask height, in phosphor dots"),
-            new options_entry(WINOPTION_SHADOW_MASK_USIZE + ";fs_shadwu(0.0-1.0)",      "0.09375",   options_global.OPTION_FLOAT,      "shadow mask texture size in U direction"),
-            new options_entry(WINOPTION_SHADOW_MASK_VSIZE + ";fs_shadwv(0.0-1.0)",      "0.109375",  options_global.OPTION_FLOAT,      "shadow mask texture size in V direction"),
-            new options_entry(WINOPTION_CURVATURE + ";fs_curv(0.0-4.0)",                "0.03",      options_global.OPTION_FLOAT,      "screen curvature amount"),
+            new options_entry(null,                                                     null,        OPTION_HEADER,     "DIRECT3D POST-PROCESSING OPTIONS"),
+            new options_entry(WINOPTION_HLSLPATH,                                       "hlsl",      OPTION_STRING,     "path to hlsl files"),
+            new options_entry(WINOPTION_HLSL_ENABLE + ";hlsl",                          "0",         OPTION_BOOLEAN,    "enable HLSL post-processing (PS3.0 required)"),
+            new options_entry(WINOPTION_HLSL_OVERSAMPLING,                              "0",         OPTION_BOOLEAN,    "enable HLSL oversampling"),
+            new options_entry(WINOPTION_HLSL_WRITE,                                     OSDOPTVAL_AUTO,OPTION_STRING,   "enable HLSL AVI writing (huge disk bandwidth suggested)"),
+            new options_entry(WINOPTION_HLSL_SNAP_WIDTH,                                "2048",      OPTION_STRING,     "HLSL upscaled-snapshot width"),
+            new options_entry(WINOPTION_HLSL_SNAP_HEIGHT,                               "1536",      OPTION_STRING,     "HLSL upscaled-snapshot height"),
+            new options_entry(WINOPTION_SHADOW_MASK_TILE_MODE,                          "0",         OPTION_INTEGER,    "shadow mask tile mode (0 for screen based, 1 for source based)"),
+            new options_entry(WINOPTION_SHADOW_MASK_ALPHA + ";fs_shadwa(0.0-1.0)",      "0.0",       OPTION_FLOAT,      "shadow mask alpha-blend value (1.0 is fully blended, 0.0 is no mask)"),
+            new options_entry(WINOPTION_SHADOW_MASK_TEXTURE + ";fs_shadwt(0.0-1.0)",    "aperture.png", OPTION_STRING,  "shadow mask texture name"),
+            new options_entry(WINOPTION_SHADOW_MASK_COUNT_X + ";fs_shadww",             "320",       OPTION_INTEGER,    "shadow mask width, in phosphor dots"),
+            new options_entry(WINOPTION_SHADOW_MASK_COUNT_Y + ";fs_shadwh",             "240",       OPTION_INTEGER,    "shadow mask height, in phosphor dots"),
+            new options_entry(WINOPTION_SHADOW_MASK_USIZE + ";fs_shadwu(0.0-1.0)",      "0.09375",   OPTION_FLOAT,      "shadow mask texture size in U direction"),
+            new options_entry(WINOPTION_SHADOW_MASK_VSIZE + ";fs_shadwv(0.0-1.0)",      "0.109375",  OPTION_FLOAT,      "shadow mask texture size in V direction"),
+            new options_entry(WINOPTION_SHADOW_MASK_UOFFSET + ";fs_shadwou(-1.0-1.0)",  "0.0",       OPTION_FLOAT,      "shadow mask texture offset, in U direction"),
+            new options_entry(WINOPTION_SHADOW_MASK_VOFFSET + ";fs_shadwov(-1.0-1.0)",  "0.0",       OPTION_FLOAT,      "shadow mask texture offset, in V direction"),
+            new options_entry(WINOPTION_DISTORTION + ";fs_dist(-1.0-1.0)",              "0.0",       OPTION_FLOAT,      "screen distortion amount"),
+            new options_entry(WINOPTION_CUBIC_DISTORTION + ";fs_cubedist(-1.0-1.0)",    "0.0",       OPTION_FLOAT,      "screen cubic distortion amount"),
+            new options_entry(WINOPTION_DISTORT_CORNER + ";fs_distc(0.0-1.0)",          "0.0",       OPTION_FLOAT,      "screen distort corner amount"),
+            new options_entry(WINOPTION_ROUND_CORNER + ";fs_rndc(0.0-1.0)",             "0.0",       OPTION_FLOAT,      "screen round corner amount"),
+            new options_entry(WINOPTION_SMOOTH_BORDER + ";fs_smob(0.0-1.0)",            "0.0",       OPTION_FLOAT,      "screen smooth border amount"),
+            new options_entry(WINOPTION_REFLECTION + ";fs_ref(0.0-1.0)",                "0.0",       OPTION_FLOAT,      "screen reflection amount"),
+            new options_entry(WINOPTION_VIGNETTING + ";fs_vig(0.0-1.0)",                "0.0",       OPTION_FLOAT,      "image vignetting amount"),
             /* Beam-related values below this line*/
-            new options_entry(WINOPTION_PINCUSHION + ";fs_pin(0.0-4.0)",                "0.03",      options_global.OPTION_FLOAT,      "pincushion amount"),
-            new options_entry(WINOPTION_SCANLINE_AMOUNT + ";fs_scanam(0.0-4.0)",        "1.0",       options_global.OPTION_FLOAT,      "overall alpha scaling value for scanlines"),
-            new options_entry(WINOPTION_SCANLINE_SCALE + ";fs_scansc(0.0-4.0)",         "1.0",       options_global.OPTION_FLOAT,      "overall height scaling value for scanlines"),
-            new options_entry(WINOPTION_SCANLINE_HEIGHT + ";fs_scanh(0.0-4.0)",         "1.0",       options_global.OPTION_FLOAT,      "individual height scaling value for scanlines"),
-            new options_entry(WINOPTION_SCANLINE_BRIGHT_SCALE + ";fs_scanbs(0.0-2.0)",  "1.0",       options_global.OPTION_FLOAT,      "overall brightness scaling value for scanlines (multiplicative)"),
-            new options_entry(WINOPTION_SCANLINE_BRIGHT_OFFSET + ";fs_scanbo(0.0-1.0)", "0.0",       options_global.OPTION_FLOAT,      "overall brightness offset value for scanlines (additive)"),
-            new options_entry(WINOPTION_SCANLINE_OFFSET + ";fs_scanjt(0.0-4.0)",        "0.0",       options_global.OPTION_FLOAT,      "overall interlace jitter scaling value for scanlines"),
-            new options_entry(WINOPTION_DEFOCUS + ";fs_focus",                          "0.0,0.0",   options_global.OPTION_STRING,     "overall defocus value in screen-relative coords"),
-            new options_entry(WINOPTION_CONVERGE_X + ";fs_convx",                       "0.3,0.0,-0.3",options_global.OPTION_STRING,   "convergence in screen-relative X direction"),
-            new options_entry(WINOPTION_CONVERGE_Y + ";fs_convy",                       "0.0,0.3,-0.3",options_global.OPTION_STRING,   "convergence in screen-relative Y direction"),
-            new options_entry(WINOPTION_RADIAL_CONVERGE_X + ";fs_rconvx",               "0.0,0.0,0.0",options_global.OPTION_STRING,    "radial convergence in screen-relative X direction"),
-            new options_entry(WINOPTION_RADIAL_CONVERGE_Y + ";fs_rconvy",               "0.0,0.0,0.0",options_global.OPTION_STRING,    "radial convergence in screen-relative Y direction"),
+            new options_entry(WINOPTION_SCANLINE_AMOUNT + ";fs_scanam(0.0-4.0)",        "0.0",       OPTION_FLOAT,      "overall alpha scaling value for scanlines"),
+            new options_entry(WINOPTION_SCANLINE_SCALE + ";fs_scansc(0.0-4.0)",         "1.0",       OPTION_FLOAT,      "overall height scaling value for scanlines"),
+            new options_entry(WINOPTION_SCANLINE_HEIGHT + ";fs_scanh(0.0-4.0)",         "1.0",       OPTION_FLOAT,      "individual height scaling value for scanlines"),
+            new options_entry(WINOPTION_SCANLINE_VARIATION + ";fs_scanv(0.0-4.0)",      "1.0",       OPTION_FLOAT,      "individual height varying value for scanlines"),
+            new options_entry(WINOPTION_SCANLINE_BRIGHT_SCALE + ";fs_scanbs(0.0-2.0)",  "1.0",       OPTION_FLOAT,      "overall brightness scaling value for scanlines (multiplicative)"),
+            new options_entry(WINOPTION_SCANLINE_BRIGHT_OFFSET + ";fs_scanbo(0.0-1.0)", "0.0",       OPTION_FLOAT,      "overall brightness offset value for scanlines (additive)"),
+            new options_entry(WINOPTION_SCANLINE_JITTER + ";fs_scanjt(0.0-4.0)",        "0.0",       OPTION_FLOAT,      "overall interlace jitter scaling value for scanlines"),
+            new options_entry(WINOPTION_HUM_BAR_ALPHA + ";fs_humba(0.0-1.0)",           "0.0",       OPTION_FLOAT,      "overall alpha scaling value for hum bar"),
+            new options_entry(WINOPTION_DEFOCUS + ";fs_focus",                          "0.0,0.0",   OPTION_STRING,     "overall defocus value in screen-relative coords"),
+            new options_entry(WINOPTION_CONVERGE_X + ";fs_convx",                       "0.0,0.0,0.0",OPTION_STRING,    "convergence in screen-relative X direction"),
+            new options_entry(WINOPTION_CONVERGE_Y + ";fs_convy",                       "0.0,0.0,0.0",OPTION_STRING,    "convergence in screen-relative Y direction"),
+            new options_entry(WINOPTION_RADIAL_CONVERGE_X + ";fs_rconvx",               "0.0,0.0,0.0",OPTION_STRING,    "radial convergence in screen-relative X direction"),
+            new options_entry(WINOPTION_RADIAL_CONVERGE_Y + ";fs_rconvy",               "0.0,0.0,0.0",OPTION_STRING,    "radial convergence in screen-relative Y direction"),
             /* RGB colorspace convolution below this line */
-            new options_entry(WINOPTION_RED_RATIO + ";fs_redratio",                     "1.0,0.0,0.0",options_global.OPTION_STRING,    "red output signal generated by input signal"),
-            new options_entry(WINOPTION_GRN_RATIO + ";fs_grnratio",                     "0.0,1.0,0.0",options_global.OPTION_STRING,    "green output signal generated by input signal"),
-            new options_entry(WINOPTION_BLU_RATIO + ";fs_bluratio",                     "0.0,0.0,1.0",options_global.OPTION_STRING,    "blue output signal generated by input signal"),
-            new options_entry(WINOPTION_SATURATION + ";fs_sat(0.0-4.0)",                "1.4",        options_global.OPTION_FLOAT,     "saturation scaling value"),
-            new options_entry(WINOPTION_OFFSET + ";fs_offset",                          "0.0,0.0,0.0",options_global.OPTION_STRING,    "signal offset value (additive)"),
-            new options_entry(WINOPTION_SCALE + ";fs_scale",                            "0.95,0.95,0.95",options_global.OPTION_STRING, "signal scaling value (multiplicative)"),
-            new options_entry(WINOPTION_POWER + ";fs_power",                            "0.8,0.8,0.8",options_global.OPTION_STRING,    "signal power value (exponential)"),
-            new options_entry(WINOPTION_FLOOR + ";fs_floor",                            "0.05,0.05,0.05",options_global.OPTION_STRING, "signal floor level"),
-            new options_entry(WINOPTION_PHOSPHOR + ";fs_phosphor",                      "0.4,0.4,0.4",options_global.OPTION_STRING,    "phosphorescence decay rate (0.0 is instant, 1.0 is forever)"),
-            new options_entry(WINOPTION_CHROMA_MODE,                                    "3",                 options_global.OPTION_INTEGER,    "Number of phosphors to use: 1 - monochrome, 2 - dichrome, 3 - trichrome (color)"),
-            new options_entry(WINOPTION_CHROMA_CONVERSION_GAIN,                         "0.299,0.587,0.114", options_global.OPTION_STRING,     "Gain to be applied when summing RGB signal for monochrome and dichrome modes"),
-            new options_entry(WINOPTION_CHROMA_A,                                       "0.64,0.33",         options_global.OPTION_STRING,     "Chromaticity coordinate for first phosphor"),
-            new options_entry(WINOPTION_CHROMA_B,                                       "0.30,0.60",         options_global.OPTION_STRING,     "Chromaticity coordinate for second phosphor"),
-            new options_entry(WINOPTION_CHROMA_C,                                       "0.15,0.06",         options_global.OPTION_STRING,     "Chromaticity coordinate for third phosphor"),
-            new options_entry(WINOPTION_CHROMA_Y_GAIN,                                  "0.2126,0.7152,0.0722", options_global.OPTION_STRING,  "Gain to be applied for each phosphor"),
+            new options_entry(WINOPTION_RED_RATIO + ";fs_redratio",                     "1.0,0.0,0.0",OPTION_STRING,    "red output signal generated by input signal"),
+            new options_entry(WINOPTION_GRN_RATIO + ";fs_grnratio",                     "0.0,1.0,0.0",OPTION_STRING,    "green output signal generated by input signal"),
+            new options_entry(WINOPTION_BLU_RATIO + ";fs_bluratio",                     "0.0,0.0,1.0",OPTION_STRING,    "blue output signal generated by input signal"),
+            new options_entry(WINOPTION_SATURATION + ";fs_sat(0.0-4.0)",                "1.4",        OPTION_FLOAT,     "saturation scaling value"),
+            new options_entry(WINOPTION_OFFSET + ";fs_offset",                          "0.0,0.0,0.0",OPTION_STRING,    "signal offset value (additive)"),
+            new options_entry(WINOPTION_SCALE + ";fs_scale",                            "0.95,0.95,0.95",OPTION_STRING, "signal scaling value (multiplicative)"),
+            new options_entry(WINOPTION_POWER + ";fs_power",                            "0.8,0.8,0.8",OPTION_STRING,    "signal power value (exponential)"),
+            new options_entry(WINOPTION_FLOOR + ";fs_floor",                            "0.05,0.05,0.05",OPTION_STRING, "signal floor level"),
+            new options_entry(WINOPTION_PHOSPHOR + ";fs_phosphor",                      "0.4,0.4,0.4",OPTION_STRING,    "phosphorescence decay rate (0.0 is instant, 1.0 is forever)"),
+            new options_entry(WINOPTION_CHROMA_MODE,                                    "3",                 OPTION_INTEGER,    "number of phosphors to use: 1 - monochrome, 2 - dichrome, 3 - trichrome (color)"),
+            new options_entry(WINOPTION_CHROMA_CONVERSION_GAIN,                         "0.299,0.587,0.114", OPTION_STRING,     "gain to be applied when summing RGB signal for monochrome and dichrome modes"),
+            new options_entry(WINOPTION_CHROMA_A,                                       "0.64,0.33",         OPTION_STRING,     "chromaticity coordinate for first phosphor"),
+            new options_entry(WINOPTION_CHROMA_B,                                       "0.30,0.60",         OPTION_STRING,     "chromaticity coordinate for second phosphor"),
+            new options_entry(WINOPTION_CHROMA_C,                                       "0.15,0.06",         OPTION_STRING,     "chromaticity coordinate for third phosphor"),
+            new options_entry(WINOPTION_CHROMA_Y_GAIN,                                  "0.2126,0.7152,0.0722", OPTION_STRING,  "gain to be applied for each phosphor"),
             /* NTSC simulation below this line */
-            new options_entry(null,                                                     null,        options_global.OPTION_HEADER,     "NTSC POST-PROCESSING OPTIONS"),
-            new options_entry(WINOPTION_YIQ_ENABLE + ";yiq",                            "0",         options_global.OPTION_BOOLEAN,    "enable YIQ-space HLSL post-processing"),
-            new options_entry(WINOPTION_YIQ_CCVALUE + ";yiqcc",                         "3.59754545",options_global.OPTION_FLOAT,      "Color Carrier frequency for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_AVALUE + ";yiqa",                           "0.5",       options_global.OPTION_FLOAT,      "A value for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_BVALUE + ";yiqb",                           "0.5",       options_global.OPTION_FLOAT,      "B value for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_OVALUE + ";yiqo",                           "1.570796325",options_global.OPTION_FLOAT,     "Outgoing Color Carrier phase offset for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_PVALUE + ";yiqp",                           "1.0",       options_global.OPTION_FLOAT,      "Incoming Pixel Clock scaling value for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_NVALUE + ";yiqn",                           "1.0",       options_global.OPTION_FLOAT,      "Y filter notch width for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_YVALUE + ";yiqy",                           "6.0",       options_global.OPTION_FLOAT,      "Y filter cutoff frequency for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_IVALUE + ";yiqi",                           "1.2",       options_global.OPTION_FLOAT,      "I filter cutoff frequency for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_QVALUE + ";yiqq",                           "0.6",       options_global.OPTION_FLOAT,      "Q filter cutoff frequency for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_SCAN_TIME + ";yiqsc",                       "52.6",      options_global.OPTION_FLOAT,      "Horizontal scanline duration for NTSC signal processing (in usec)"),
-            new options_entry(WINOPTION_YIQ_PHASE_COUNT + ";yiqp",                      "2",         options_global.OPTION_INTEGER,    "Phase Count value for NTSC signal processing"),
-            new options_entry(WINOPTION_YIQ_SCAN_TIME + ";yiqsc",                       "52.6",      options_global.OPTION_FLOAT,      "Horizontal scanline duration for NTSC signal processing (in usec)"),
-            new options_entry(WINOPTION_YIQ_PHASE_COUNT + ";yiqp",                      "2",         options_global.OPTION_INTEGER,    "Phase Count value for NTSC signal processing"),
+            new options_entry(null,                                                     null,        OPTION_HEADER,     "NTSC POST-PROCESSING OPTIONS"),
+            new options_entry(WINOPTION_YIQ_ENABLE + ";yiq",                            "0",         OPTION_BOOLEAN,    "enable YIQ-space HLSL post-processing"),
+            new options_entry(WINOPTION_YIQ_JITTER + ";yiqj",                           "0.0",       OPTION_FLOAT,      "jitter for the NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_CCVALUE + ";yiqcc",                         "3.59754545",OPTION_FLOAT,      "color Carrier frequency for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_AVALUE + ";yiqa",                           "0.5",       OPTION_FLOAT,      "A value for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_BVALUE + ";yiqb",                           "0.5",       OPTION_FLOAT,      "B value for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_OVALUE + ";yiqo",                           "1.570796325",OPTION_FLOAT,     "outgoing Color Carrier phase offset for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_PVALUE + ";yiqp",                           "1.0",       OPTION_FLOAT,      "incoming Pixel Clock scaling value for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_NVALUE + ";yiqn",                           "1.0",       OPTION_FLOAT,      "Y filter notch width for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_YVALUE + ";yiqy",                           "6.0",       OPTION_FLOAT,      "Y filter cutoff frequency for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_IVALUE + ";yiqi",                           "1.2",       OPTION_FLOAT,      "I filter cutoff frequency for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_QVALUE + ";yiqq",                           "0.6",       OPTION_FLOAT,      "Q filter cutoff frequency for NTSC signal processing"),
+            new options_entry(WINOPTION_YIQ_SCAN_TIME + ";yiqsc",                       "52.6",      OPTION_FLOAT,      "horizontal scanline duration for NTSC signal processing (in usec)"),
+            new options_entry(WINOPTION_YIQ_PHASE_COUNT + ";yiqp",                      "2",         OPTION_INTEGER,    "phase count value for NTSC signal processing"),
             /* Vector simulation below this line */
-            new options_entry(null,                                                     null,        options_global.OPTION_HEADER,     "VECTOR POST-PROCESSING OPTIONS"),
-            new options_entry(WINOPTION_VECTOR_LENGTH_SCALE + ";veclength",             "0.8",       options_global.OPTION_FLOAT,      "How much length affects vector fade"),
-            new options_entry(WINOPTION_VECTOR_LENGTH_RATIO + ";vecsize",               "500.0",     options_global.OPTION_FLOAT,      "Vector fade length (4.0 - vectors fade the most at and above 4 pixels, etc.)"),
+            new options_entry(null,                                                     null,        OPTION_HEADER,     "VECTOR POST-PROCESSING OPTIONS"),
+            new options_entry(WINOPTION_VECTOR_BEAM_SMOOTH + ";vecsmooth",              "0.0",       OPTION_FLOAT,      "vector beam smoothness"),
+            new options_entry(WINOPTION_VECTOR_LENGTH_SCALE + ";veclength",             "0.8",       OPTION_FLOAT,      "maximum vector attenuation"),
+            new options_entry(WINOPTION_VECTOR_LENGTH_RATIO + ";vecsize",               "500.0",     OPTION_FLOAT,      "minimum vector length affected by attenuation (vector length to screen size ratio)"),
             /* Bloom below this line */
-            new options_entry(null,                                                     null,        options_global.OPTION_HEADER,     "BLOOM POST-PROCESSING OPTIONS"),
-            new options_entry(WINOPTION_VECTOR_BLOOM_SCALE,                             "0.3",       options_global.OPTION_FLOAT,      "Intensity factor for vector bloom"),
-            new options_entry(WINOPTION_RASTER_BLOOM_SCALE,                             "0.225",     options_global.OPTION_FLOAT,      "Intensity factor for raster bloom"),
-            new options_entry(WINOPTION_BLOOM_LEVEL0_WEIGHT,                            "1.0",       options_global.OPTION_FLOAT,      "Bloom level 0  (full-size target) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL1_WEIGHT,                            "0.21",      options_global.OPTION_FLOAT,      "Bloom level 1  (half-size target) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL2_WEIGHT,                            "0.19",      options_global.OPTION_FLOAT,      "Bloom level 2  (quarter-size target) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL3_WEIGHT,                            "0.17",      options_global.OPTION_FLOAT,      "Bloom level 3  (.) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL4_WEIGHT,                            "0.15",      options_global.OPTION_FLOAT,      "Bloom level 4  (.) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL5_WEIGHT,                            "0.14",      options_global.OPTION_FLOAT,      "Bloom level 5  (.) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL6_WEIGHT,                            "0.13",      options_global.OPTION_FLOAT,      "Bloom level 6  (.) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL7_WEIGHT,                            "0.12",      options_global.OPTION_FLOAT,      "Bloom level 7  (.) weight"),
-            new options_entry(WINOPTION_BLOOM_LEVEL8_WEIGHT,                            "0.11",      options_global.OPTION_FLOAT,      "Bloom level 8  (.) weight"),
-            new options_entry(WINOPTION_LUT_TEXTURE,                                    "",                  options_global.OPTION_STRING,     "3D LUT texture filename for screen, PNG format"),
-            new options_entry(WINOPTION_LUT_ENABLE,                                     "0",                 options_global.OPTION_BOOLEAN,    "Enables 3D LUT to be applied to screen after post-processing"),
-            new options_entry(WINOPTION_UI_LUT_TEXTURE,                                 "",                  options_global.OPTION_STRING,     "3D LUT texture filename of UI, PNG format"),
-            new options_entry(WINOPTION_UI_LUT_ENABLE,                                  "0",                 options_global.OPTION_BOOLEAN,    "Enables 3D LUT to be applied to UI and artwork after post-processing"),
+            new options_entry(null,                                                     null,        OPTION_HEADER,     "BLOOM POST-PROCESSING OPTIONS"),
+            new options_entry(WINOPTION_BLOOM_BLEND_MODE,                               "0",                 OPTION_INTEGER,    "bloom blend mode (0 for brighten, 1 for darken)"),
+            new options_entry(WINOPTION_BLOOM_SCALE,                                    "0.0",               OPTION_FLOAT,      "intensity factor for bloom"),
+            new options_entry(WINOPTION_BLOOM_OVERDRIVE,                                "1.0,1.0,1.0",       OPTION_STRING,     "overdrive factor for bloom"),
+            new options_entry(WINOPTION_BLOOM_LEVEL0_WEIGHT,                            "1.0",               OPTION_FLOAT,      "bloom level 0 weight (full-size target)"),
+            new options_entry(WINOPTION_BLOOM_LEVEL1_WEIGHT,                            "0.64",              OPTION_FLOAT,      "bloom level 1 weight (1/4 smaller that level 0 target)"),
+            new options_entry(WINOPTION_BLOOM_LEVEL2_WEIGHT,                            "0.32",              OPTION_FLOAT,      "bloom level 2 weight (1/4 smaller that level 1 target)"),
+            new options_entry(WINOPTION_BLOOM_LEVEL3_WEIGHT,                            "0.16",              OPTION_FLOAT,      "bloom level 3 weight (1/4 smaller that level 2 target)"),
+            new options_entry(WINOPTION_BLOOM_LEVEL4_WEIGHT,                            "0.08",              OPTION_FLOAT,      "bloom level 4 weight (1/4 smaller that level 3 target)"),
+            new options_entry(WINOPTION_BLOOM_LEVEL5_WEIGHT,                            "0.06",              OPTION_FLOAT,      "bloom level 5 weight (1/4 smaller that level 4 target)"),
+            new options_entry(WINOPTION_BLOOM_LEVEL6_WEIGHT,                            "0.04",              OPTION_FLOAT,      "bloom level 6 weight (1/4 smaller that level 5 target)"),
+            new options_entry(WINOPTION_BLOOM_LEVEL7_WEIGHT,                            "0.02",              OPTION_FLOAT,      "bloom level 7 weight (1/4 smaller that level 6 target)"),
+            new options_entry(WINOPTION_BLOOM_LEVEL8_WEIGHT,                            "0.01",              OPTION_FLOAT,      "bloom level 8 weight (1/4 smaller that level 7 target)"),
+            new options_entry(WINOPTION_LUT_TEXTURE,                                    "",                  OPTION_STRING,     "3D LUT texture filename for screen, PNG format"),
+            new options_entry(WINOPTION_LUT_ENABLE,                                     "0",                 OPTION_BOOLEAN,    "Enables 3D LUT to be applied to screen after post-processing"),
+            new options_entry(WINOPTION_UI_LUT_TEXTURE,                                 "",                  OPTION_STRING,     "3D LUT texture filename of UI, PNG format"),
+            new options_entry(WINOPTION_UI_LUT_ENABLE,                                  "0",                 OPTION_BOOLEAN,    "enable 3D LUT to be applied to UI and artwork after post-processing"),
 
             // full screen options
-            new options_entry(null,                                             null,       options_global.OPTION_HEADER,     "FULL SCREEN OPTIONS"),
-            new options_entry(WINOPTION_TRIPLEBUFFER + ";tb",                   "0",        options_global.OPTION_BOOLEAN,    "enable triple buffering"),
-            new options_entry(WINOPTION_FULLSCREENBRIGHTNESS + ";fsb(0.1-2.0)", "1.0",      options_global.OPTION_FLOAT,      "brightness value in full screen mode"),
-            new options_entry(WINOPTION_FULLSCREENCONTRAST + ";fsc(0.1-2.0)",   "1.0",      options_global.OPTION_FLOAT,      "contrast value in full screen mode"),
-            new options_entry(WINOPTION_FULLSCREENGAMMA + ";fsg(0.1-3.0)",      "1.0",      options_global.OPTION_FLOAT,      "gamma value in full screen mode"),
+            new options_entry(null,                                             null,       OPTION_HEADER,     "FULL SCREEN OPTIONS"),
+            new options_entry(WINOPTION_TRIPLEBUFFER + ";tb",                   "0",        OPTION_BOOLEAN,    "enable triple buffering"),
+            new options_entry(WINOPTION_FULLSCREENBRIGHTNESS + ";fsb(0.1-2.0)", "1.0",      OPTION_FLOAT,      "brightness value in full screen mode"),
+            new options_entry(WINOPTION_FULLSCREENCONTRAST + ";fsc(0.1-2.0)",   "1.0",      OPTION_FLOAT,      "contrast value in full screen mode"),
+            new options_entry(WINOPTION_FULLSCREENGAMMA + ";fsg(0.1-3.0)",      "1.0",      OPTION_FLOAT,      "gamma value in full screen mode"),
 
             // input options
-            new options_entry(null,                                             null,       options_global.OPTION_HEADER,     "INPUT DEVICE OPTIONS"),
-            new options_entry(WINOPTION_DUAL_LIGHTGUN + ";dual",                "0",        options_global.OPTION_BOOLEAN,    "enable dual lightgun input"),
+            new options_entry(null,                                             null,       OPTION_HEADER,     "INPUT DEVICE OPTIONS"),
+            new options_entry(WINOPTION_GLOBAL_INPUTS,                          "0",        OPTION_BOOLEAN,    "enable global inputs"),
+            new options_entry(WINOPTION_DUAL_LIGHTGUN + ";dual",                "0",        OPTION_BOOLEAN,    "enable dual lightgun input"),
 
             new options_entry(null),
         };
@@ -398,18 +419,18 @@ namespace mameForm
             int bench = options.bench();
             if (bench > 0)
             {
-                options.set_value(emu_options.OPTION_THROTTLE, 0, options_global.OPTION_PRIORITY_MAXIMUM);
-                options.set_value(osd_options.OSDOPTION_SOUND, "none", options_global.OPTION_PRIORITY_MAXIMUM);
-                options.set_value(osd_options.OSDOPTION_VIDEO, "none", options_global.OPTION_PRIORITY_MAXIMUM);
-                options.set_value(emu_options.OPTION_SECONDS_TO_RUN, bench, options_global.OPTION_PRIORITY_MAXIMUM);
+                options.set_value(emu_options.OPTION_THROTTLE, 0, OPTION_PRIORITY_MAXIMUM);
+                options.set_value(osd_options.OSDOPTION_SOUND, "none", OPTION_PRIORITY_MAXIMUM);
+                options.set_value(osd_options.OSDOPTION_VIDEO, "none", OPTION_PRIORITY_MAXIMUM);
+                options.set_value(emu_options.OPTION_SECONDS_TO_RUN, bench, OPTION_PRIORITY_MAXIMUM);
             }
 
             // determine if we are profiling, and adjust options appropriately
             int profile = options.profile();
             if (profile > 0)
             {
-                options.set_value(emu_options.OPTION_THROTTLE, 0, options_global.OPTION_PRIORITY_MAXIMUM);
-                options.set_value(osd_options.OSDOPTION_NUMPROCESSORS, 1, options_global.OPTION_PRIORITY_MAXIMUM);
+                options.set_value(emu_options.OPTION_THROTTLE, 0, OPTION_PRIORITY_MAXIMUM);
+                options.set_value(osd_options.OSDOPTION_NUMPROCESSORS, 1, OPTION_PRIORITY_MAXIMUM);
             }
 
 #if false
@@ -506,7 +527,8 @@ namespace mameForm
             string sysname = machine.options().system_name();
             bool result = valid.check_all_matching(string.IsNullOrEmpty(sysname) ? "*" : sysname);
             if (!result)
-                throw new emu_fatalerror((int)EMU_ERR.EMU_ERR_FAILED_VALIDITY, "Validity check failed ({0} errors, {1} warnings in total)\n", valid.errors(), valid.warnings());
+                throw new emu_fatalerror(main_global.EMU_ERR_FAILED_VALIDITY, "Validity check failed ({0} errors, {1} warnings in total)\n", valid.errors(), valid.warnings());
+            valid.Dispose();
 
             /**
              *  Save away the machine, we'll need it in osd_customize_input_type_list
@@ -605,7 +627,7 @@ namespace mameForm
             //System.Windows.Forms.Application.DoEvents();
 
             if (updateCount++ % 100 == 0)
-                global.osd_printf_verbose("osd_interface.update() - {0}\n", updateCount);
+                osd_printf_verbose("osd_interface.update() - {0}\n", updateCount);
 
 
             if (!skip_redraw)
@@ -635,7 +657,7 @@ namespace mameForm
             base.update_audio_stream(buffer, samples_this_frame);
 
             if (audioUpdateCount++ % 10 == 0)
-                global.osd_printf_info("osd_interface.update_audio_stream() - {0} - samples: {1}\n", audioUpdateCount, samples_this_frame);
+                osd_printf_info("osd_interface.update_audio_stream() - {0} - samples: {1}\n", audioUpdateCount, samples_this_frame);
 
             lock (osdlock_audio)
             {
@@ -663,7 +685,7 @@ namespace mameForm
         }
 
 
-        public override std_vector<mame.ui.menu_item> get_slider_list()
+        public override std.vector<mame.ui.menu_item> get_slider_list()
         {
             return base.get_slider_list();
         }

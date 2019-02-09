@@ -4,16 +4,19 @@
 using System;
 using System.Collections.Generic;
 
+using int32_t = System.Int32;
+using uint32_t = System.UInt32;
+
 
 namespace mame.ui
 {
     class menu_sliders : menu
     {
-        enum INPUT
-        {
-            INPUT_GROUPS,
-            INPUT_SPECIFIC,
-        }
+        //enum
+        //{
+        //const unknown INPUT_GROUPS   = 0;
+        //const unknown INPUT_SPECIFIC = 1;
+        //}
 
 
         bool m_menuless_mode;
@@ -37,18 +40,18 @@ namespace mame.ui
             string tempstring;
 
             /* add UI sliders */
-            std_vector<menu_item> ui_sliders = ui().get_slider_list();
+            std.vector<menu_item> ui_sliders = ui().get_slider_list();
             foreach (menu_item item in ui_sliders)
             {
                 if (item.type == menu_item_type.SLIDER)
                 {
-                    slider_state slider = (slider_state)item.refobj;
-                    int curval = slider.update(machine(), slider.arg, slider.id, out tempstring, slider_state.SLIDER_NOCHANGE);
-                    UInt32 flags = 0;
+                    slider_state slider = (slider_state)item.ref_;
+                    int32_t curval = slider.update(machine(), slider.arg, slider.id, out tempstring, slider_state.SLIDER_NOCHANGE);
+                    uint32_t flags = 0;
                     if (curval > slider.minval)
-                        flags |= (UInt32)FLAG.FLAG_LEFT_ARROW;
+                        flags |= FLAG_LEFT_ARROW;
                     if (curval < slider.maxval)
-                        flags |= (UInt32)FLAG.FLAG_RIGHT_ARROW;
+                        flags |= FLAG_RIGHT_ARROW;
                     item_append(slider.description, tempstring, flags, slider, menu_item_type.SLIDER);
                 }
                 else
@@ -60,18 +63,18 @@ namespace mame.ui
             item_append(menu_item_type.SEPARATOR);
 
             /* add OSD sliders */
-            std_vector<menu_item> osd_sliders = machine().osd().get_slider_list();
+            std.vector<menu_item> osd_sliders = machine().osd().get_slider_list();
             foreach (menu_item item in osd_sliders)
             {
                 if (item.type == menu_item_type.SLIDER)
                 {
-                    slider_state slider = (slider_state)item.refobj;
-                    int curval = slider.update(machine(), slider.arg, slider.id, out tempstring, slider_state.SLIDER_NOCHANGE);
-                    UInt32 flags = 0;
+                    slider_state slider = (slider_state)item.ref_;
+                    int32_t curval = slider.update(machine(), slider.arg, slider.id, out tempstring, slider_state.SLIDER_NOCHANGE);
+                    uint32_t flags = 0;
                     if (curval > slider.minval)
-                        flags |= (UInt32)FLAG.FLAG_LEFT_ARROW;
+                        flags |= FLAG_LEFT_ARROW;
                     if (curval < slider.maxval)
-                        flags |= (UInt32)FLAG.FLAG_RIGHT_ARROW;
+                        flags |= FLAG_RIGHT_ARROW;
                     item_append(slider.description, tempstring, flags, slider);
                 }
                 else
@@ -80,7 +83,7 @@ namespace mame.ui
                 }
             }
 
-            custombottom = 2.0f * ui().get_line_height() + 2.0f * ui_global.UI_BOX_TB_BORDER;
+            custombottom = 2.0f * ui().get_line_height() + 2.0f * UI_BOX_TB_BORDER;
         }
 
 
@@ -92,7 +95,7 @@ namespace mame.ui
             menu_event menu_event;
 
             /* process the menu */
-            menu_event = process((UInt32)(PROCESS.PROCESS_LR_REPEAT | (m_hidden ? PROCESS.PROCESS_CUSTOM_ONLY : 0)));
+            menu_event = process(PROCESS_LR_REPEAT | (m_hidden ? PROCESS_CUSTOM_ONLY : 0));
             if (menu_event != null)
             {
                 /* handle keys if there is a valid item selected */
@@ -223,24 +226,24 @@ namespace mame.ui
                 tempstring = string.Format("{0} ", curslider.description);  //.ins(0, " ").ins(0, curslider.description);
 
                 /* move us to the bottom of the screen, and expand to full width */
-                y2 = 1.0f - ui_global.UI_BOX_TB_BORDER;
+                y2 = 1.0f - UI_BOX_TB_BORDER;
                 y1 = y2 - bottom;
-                x1 = ui_global.UI_BOX_LR_BORDER;
-                x2 = 1.0f - ui_global.UI_BOX_LR_BORDER;
+                x1 = UI_BOX_LR_BORDER;
+                x2 = 1.0f - UI_BOX_LR_BORDER;
 
                 /* draw extra menu area */
-                ui().draw_outlined_box(container(), x1, y1, x2, y2, ui_global.UI_BACKGROUND_COLOR);
-                y1 += ui_global.UI_BOX_TB_BORDER;
+                ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+                y1 += UI_BOX_TB_BORDER;
 
                 /* determine the text height */
                 float unused;
-                ui().draw_text_full(container(), tempstring, 0, 0, x2 - x1 - 2.0f * ui_global.UI_BOX_LR_BORDER,
+                ui().draw_text_full(container(), tempstring, 0, 0, x2 - x1 - 2.0f * UI_BOX_LR_BORDER,
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out unused, out text_height);
 
                 /* draw the thermometer */
-                bar_left = x1 + ui_global.UI_BOX_LR_BORDER;
+                bar_left = x1 + UI_BOX_LR_BORDER;
                 bar_area_top = y1;
-                bar_width = x2 - x1 - 2.0f * ui_global.UI_BOX_LR_BORDER;
+                bar_width = x2 - x1 - 2.0f * UI_BOX_LR_BORDER;
                 bar_area_height = line_height;
 
                 /* compute positions */
@@ -250,19 +253,19 @@ namespace mame.ui
                 current_x = bar_left + bar_width * percentage;
 
                 /* fill in the percentage */
-                container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui_global.UI_SLIDER_COLOR, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+                container().add_rect(bar_left, bar_top, current_x, bar_bottom, UI_SLIDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                 /* draw the top and bottom lines */
-                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, ui_global.UI_LINE_WIDTH, ui_global.UI_BORDER_COLOR, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, ui_global.UI_LINE_WIDTH, ui_global.UI_BORDER_COLOR, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                 /* draw default marker */
-                container().add_line(default_x, bar_area_top, default_x, bar_top, ui_global.UI_LINE_WIDTH, ui_global.UI_BORDER_COLOR, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
-                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, ui_global.UI_LINE_WIDTH, ui_global.UI_BORDER_COLOR, global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_area_top, default_x, bar_top, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                 /* draw the actual text */
-                mame_machine_manager.instance().ui().draw_text_full(container(), tempstring, x1 + ui_global.UI_BOX_LR_BORDER, y1 + line_height, x2 - x1 - 2.0f * ui_global.UI_BOX_LR_BORDER,
-                            text_layout.text_justify.CENTER, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui_global.UI_TEXT_COLOR, ui_global.UI_TEXT_BG_COLOR, out unused, out text_height);
+                mame_machine_manager.instance().ui().draw_text_full(container(), tempstring, x1 + UI_BOX_LR_BORDER, y1 + line_height, x2 - x1 - 2.0f * UI_BOX_LR_BORDER,
+                            text_layout.text_justify.CENTER, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, out unused, out text_height);
             }
         }
 

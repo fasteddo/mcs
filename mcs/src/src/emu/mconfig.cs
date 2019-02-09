@@ -104,7 +104,7 @@ namespace mame
     }
 
 
-    public class machine_config
+    public class machine_config : global_object
     {
         //class current_device_stack;
         //typedef std::map<char const *, internal_layout const *, bool (*)(char const *, char const *)> default_layout_map;
@@ -122,7 +122,7 @@ namespace mame
                 m_device = device;
 
 
-                global.assert(m_device == m_host.m_current_device);
+                assert(m_device == m_host.m_current_device);
             }
 
             token(token that)
@@ -132,7 +132,7 @@ namespace mame
 
 
                 that.m_device = null;
-                global.assert(m_device == null || (m_device == m_host.m_current_device));
+                assert(m_device == null || (m_device == m_host.m_current_device));
             }
 
             //token(token const &) = delete;
@@ -141,21 +141,20 @@ namespace mame
 
             ~token()
             {
-                if (m_device != null)
-                {
-                    global.assert(m_device == m_host.m_current_device);
-                    m_host.m_current_device = null;
-                }
+                assert(m_isDisposed);  // can remove
             }
 
+            bool m_isDisposed = false;
             public void Dispose()
             {
                 if (m_device != null)
                 {
-                    global.assert(m_device == m_host.m_current_device);
+                    assert(m_device == m_host.m_current_device);
                     m_host.m_current_device = null;
                     m_device = null;
                 }
+
+                m_isDisposed = true;
             }
         }
 
@@ -178,7 +177,7 @@ namespace mame
 
             public void Dispose()
             {
-                global.assert(m_host.m_current_device == null);
+                assert(m_host.m_current_device == null);
 
                 m_host.m_current_device = m_device;
             }
@@ -257,7 +256,7 @@ namespace mame
 
                             var additions = option.machine_config();
                             if (additions != null)
-                                additions(this, new_dev, new_dev);
+                                additions(this, new_dev);
 
                             input_device_default [] input_device_defaults = option.input_device_defaults();
                             if (input_device_defaults != null)
@@ -283,8 +282,8 @@ namespace mame
         // getters
         public string perfect_cpu_quantum() { return m_perfect_cpu_quantum; }
         public game_driver gamedrv() { return m_gamedrv; }
-        public device_t root_device() { global.assert(m_root_device != null); return m_root_device; }
-        public device_t current_device() { global.assert(m_current_device != null); return m_current_device; }
+        public device_t root_device() { assert(m_root_device != null); return m_root_device; }
+        public device_t current_device() { assert(m_current_device != null); return m_current_device; }
         public emu_options options() { return m_options; }
         device_t device(string tag) { return root_device().subdevice(tag); }
         //template<class DeviceClass> inline DeviceClass *device(const char *tag) const { return downcast<DeviceClass *>(device(tag)); }
@@ -310,7 +309,7 @@ namespace mame
 
         public token begin_configuration(device_t device)
         {
-            global.assert(m_current_device == null);
+            assert(m_current_device == null);
             m_current_device = device;
             return new token(this, device);
         }
@@ -385,17 +384,17 @@ namespace mame
         public device_t device_remove(string tag)
         {
             // find the original device by relative tag (must exist)
-            global.assert(m_current_device != null);
+            assert(m_current_device != null);
             device_t device = m_current_device.subdevice(tag);
             if (device == null)
             {
-                global.osd_printf_warning("Warning: attempting to remove non-existent device '{0}'\n", tag);
+                osd_printf_warning("Warning: attempting to remove non-existent device '{0}'\n", tag);
             }
             else
             {
                 // make sure we have the old device's actual owner
                 device_t owner = device.owner();
-                global.assert(owner != null);
+                assert(owner != null);
 
                 // remove references to the old device
                 remove_references(device);
@@ -415,7 +414,7 @@ namespace mame
         public device_t device_find(device_t owner, string tag)
         {
             // find the original device by relative tag (must exist)
-            global.assert(owner != null);
+            assert(owner != null);
             device_t device = owner.subdevice(tag);
             if (device == null)
                 throw new emu_fatalerror("Unable to find device '{0}'\n", tag);
@@ -453,16 +452,16 @@ namespace mame
             while (tag.IndexOf(':', 0) != -1)  //while (global.strchr(tag, ':'))
             {
                 string next = tag.Substring(tag.IndexOf(':', 0));  //const char *next = strchr(tag, ':');
-                global.assert(next != tag);
+                assert(next != tag);
                 string part = tag.Substring(0, tag.IndexOf(':', 0));  //std::string part(tag, next-tag);
                 owner = owner.subdevices().find(part);
                 if (owner == null)
                     throw new emu_fatalerror("Could not find {0} when looking up path for device {1}\n", part.c_str(), orig_tag);
                 tag = next.Substring(1);  //tag = next + 1;
             }
-            global.assert(!string.IsNullOrEmpty(tag));  //global.assert(tag[0] != '\0');
+            assert(!string.IsNullOrEmpty(tag));  //global.assert(tag[0] != '\0');
 
-            return global.make_pair(tag, owner);
+            return std.make_pair(tag, owner);
         }
 
 
@@ -487,7 +486,7 @@ namespace mame
                 else
                 {
                     // allocate the root device directly
-                    global.assert(m_root_device == null);
+                    assert(m_root_device == null);
                     m_root_device = device;
                     driver_device driver = (driver_device)m_root_device.get();
                     if (driver != null)
@@ -510,7 +509,7 @@ namespace mame
         {
             // remove default layouts for subdevices
             string tag = device.tag();
-            int taglen = global.strlen(tag);
+            int taglen = strlen(tag);
 
             throw new emu_unimplemented();
 #if false

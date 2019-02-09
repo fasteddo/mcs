@@ -56,6 +56,7 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MameWaveProvider16.cs" />
     <Compile Include="osdcore_WinForms.cs" />
     <Compile Include="osd_interface_WinForms.cs" />

@@ -17,7 +17,7 @@ namespace mame
 
 
     // ======================> debugger_manager
-    public class debugger_manager
+    public class debugger_manager : global_object, IDisposable
     {
         // internal state
         running_machine m_machine;                  // reference to our machine
@@ -55,16 +55,20 @@ namespace mame
 #endif
         }
 
-
-        /*-------------------------------------------------
-        //  debugger_manager - destructor
-        -------------------------------------------------*/
         ~debugger_manager()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             //throw new emu_unimplemented();
 #if false
             g_machine = null;
 #endif
+
+            m_isDisposed = true;
         }
 
 

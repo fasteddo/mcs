@@ -131,6 +131,8 @@ namespace mame.netlist
     public class ptime_u64 : ptime
     {
         const uint64_t RES = nl_config_global.NETLIST_INTERNAL_RES;
+        const double inv_res = 1.0 / RES;
+
 
         uint64_t m_time;  //internal_type m_time;
 
@@ -139,13 +141,26 @@ namespace mame.netlist
         protected ptime_u64(uint64_t time) : base() { m_time = time; }  //constexpr explicit ptime(const internal_type &time) : m_time(time) {}
 
 
+        public static ptime_u64 operator+(ptime_u64 lhs, ptime_u64 rhs) { return new ptime_u64(lhs.m_time + rhs.m_time); }
+        public static ptime_u64 operator-(ptime_u64 lhs, ptime_u64 rhs) { return new ptime_u64(lhs.m_time - rhs.m_time); }
+
+        public static ptime_u64 operator*(ptime_u64 lhs, UInt64 rhs) { return new ptime_u64(lhs.m_time * rhs); }
+        public static ptime_u64 operator*(ptime_u64 lhs, int rhs) { return new ptime_u64(lhs.m_time * (UInt64)rhs); }
+        public static ptime_u64 operator/(ptime_u64 lhs, ptime_u64 rhs) { return new ptime_u64(lhs.m_time / rhs.m_time); }
+
         public static bool operator <(ptime_u64 lhs, ptime_u64 rhs) { return lhs.m_time < rhs.m_time; }
+        public static bool operator <=(ptime_u64 lhs, ptime_u64 rhs) { return lhs.m_time <= rhs.m_time; }
         public static bool operator >(ptime_u64 lhs, ptime_u64 rhs) { return rhs < lhs; }
+        public static bool operator >=(ptime_u64 lhs, ptime_u64 rhs) { return rhs <= lhs; }
         public static bool operator ==(ptime_u64 lhs, ptime_u64 rhs) { return lhs.m_time == rhs.m_time; }
         public static bool operator !=(ptime_u64 lhs, ptime_u64 rhs) { return !(lhs == rhs); }
 
 
-        public double as_double() { return (double)m_time / (double)RES; }
+        public static ptime_u64 Max(ptime_u64 lhs, ptime_u64 rhs) { return lhs > rhs ? lhs : rhs; }
+
+
+        public uint64_t as_raw() { return m_time; }
+        public double as_double() { return (double)m_time * inv_res; }
 
 
         public static ptime_u64 from_nsec(uint64_t ns) { return new ptime_u64(ns, 1000000000); }
@@ -156,7 +171,7 @@ namespace mame.netlist
         public static ptime_u64 from_double(double t) { return new ptime_u64((uint64_t)(t * RES), RES); }
 
         public static ptime_u64 zero() { return new ptime_u64(0); }
-        static ptime_u64 quantum() { return new ptime_u64(1, RES); }
+        public static ptime_u64 quantum() { return new ptime_u64(1, RES); }
         public static ptime_u64 never() { return new ptime_u64(uint64_t.MaxValue, RES); }  //{ return ptime(plib::numeric_limits<internal_type>::max(), RES); }
         static ptime_u64 resolution() { return new netlist_time(RES); }
 

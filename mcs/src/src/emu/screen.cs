@@ -85,6 +85,7 @@ namespace mame
         //define MCFG_SCREEN_UPDATE_DEVICE(_device, _class, _method)             screen_device::static_set_screen_update(*device, screen_update_delegate_smart(&_class::_method, #_class "::" #_method, _device));
         public static void MCFG_SCREEN_VBLANK_CALLBACK(device_t device, write_line_delegate method) { ((screen_device)device).set_screen_vblank(method); }  //downcast<screen_device &>(*device).set_screen_vblank(DEVCB_##_devcb);
         public static void MCFG_SCREEN_PALETTE(device_t device, string palette_tag) { ((screen_device)device).set_palette(palette_tag); }
+        public static void MCFG_SCREEN_PALETTE(device_t device, finder_base palette) { ((screen_device)device).set_palette(palette); }
         //define MCFG_SCREEN_NO_PALETTE             downcast<screen_device &>(*device).set_palette(finder_base::DUMMY_TAG);
         //define MCFG_SCREEN_VIDEO_ATTRIBUTES(_flags)             screen_device::static_set_video_attributes(*device, _flags);
     }
@@ -186,13 +187,13 @@ namespace mame
 
 
         // timer IDs
-        enum TID
-        {
-            TID_VBLANK_START,
-            TID_VBLANK_END,
-            TID_SCANLINE0,
-            TID_SCANLINE
-        }
+        //enum
+        //{
+        const int TID_VBLANK_START = 0;
+        const int TID_VBLANK_END   = 1;
+        const int TID_SCANLINE0    = 2;
+        const int TID_SCANLINE     = 3;
+        //}
 
 
         // VBLANK callbacks
@@ -308,8 +309,8 @@ namespace mame
 
         bool m_is_primary_screen;
 
-        std_vector<callback_item> m_callback_list = new std_vector<callback_item>();     // list of VBLANK callbacks
-        std_vector<auto_bitmap_item> m_auto_bitmap_list = new std_vector<auto_bitmap_item>(); // list of registered bitmaps
+        std.vector<callback_item> m_callback_list = new std.vector<callback_item>();     // list of VBLANK callbacks
+        std.vector<auto_bitmap_item> m_auto_bitmap_list = new std.vector<auto_bitmap_item>(); // list of registered bitmaps
 
 
         // construction/destruction
@@ -321,7 +322,7 @@ namespace mame
             : base(mconfig, SCREEN, tag, owner, clock)
         {
             m_type = screen_type_enum.SCREEN_TYPE_RASTER;
-            m_orientation = (int)emucore_global.ROT0;
+            m_orientation = (int)ROT0;
             m_phys_aspect = new KeyValuePair<UInt32, UInt32>(0U, 0U);
             m_oldstyle_vblank_supplied = false;
             m_refresh = 0;
@@ -369,23 +370,25 @@ namespace mame
             //memset(m_texture, 0, sizeof(m_texture));
         }
 
-        public screen_device(machine_config mconfig, string tag, device_t owner)//, screen_type_enum type)
+
+        public screen_device(machine_config mconfig, string tag, device_t owner, screen_type_enum type)
             : this(mconfig, tag, owner, (u32)0)
         {
-            //set_type(type);
+            set_type(type);
         }
+
 
         public void screen_device_after_ctor(screen_type_enum type)
         {
             set_type(type);
         }
 
-        ~screen_device() { }
+        //~screen_device() { }
 
 
         // configuration readers
         public screen_type_enum screen_type() { return m_type; }
-        public int orientation() { global.assert(configured()); return m_orientation; }
+        public int orientation() { assert(configured()); return m_orientation; }
 
         //-------------------------------------------------
         //  physical_aspect - determine the physical
@@ -393,7 +396,7 @@ namespace mame
         //-------------------------------------------------
         public KeyValuePair<UInt32, UInt32> physical_aspect()  //std::pair<unsigned, unsigned> physical_aspect() const;
         {
-            global.assert(configured());
+            assert(configured());
 
             KeyValuePair<UInt32, UInt32> phys_aspect = m_phys_aspect;
 
@@ -404,11 +407,11 @@ namespace mame
                 {
                 case SCREEN_TYPE_RASTER:
                 case SCREEN_TYPE_VECTOR:
-                    phys_aspect = global.make_pair(4U, 3U); // assume standard CRT
+                    phys_aspect = std.make_pair(4U, 3U); // assume standard CRT
                     break;
                 case SCREEN_TYPE_LCD:
                 case SCREEN_TYPE_SVG:
-                    phys_aspect = global.make_pair(~0U, ~0U); // assume square pixels
+                    phys_aspect = std.make_pair(~0U, ~0U); // assume square pixels
                     break;
                 case SCREEN_TYPE_INVALID:
                 default:
@@ -427,7 +430,7 @@ namespace mame
             // always keep this in reduced form
             UInt32 tempFirst = phys_aspect.first();
             UInt32 tempSecond = phys_aspect.second();
-            global.reduce_fraction(ref tempFirst, ref tempSecond);
+            reduce_fraction(ref tempFirst, ref tempSecond);
             phys_aspect = new KeyValuePair<UInt32, UInt32>(tempFirst, tempSecond);
 
             return phys_aspect;
@@ -450,7 +453,7 @@ namespace mame
 
         // inline configuration helpers
 
-        public void set_type(screen_type_enum type) { global.assert(!configured()); m_type = type; }
+        public void set_type(screen_type_enum type) { assert(!configured()); m_type = type; }
         //void set_orientation(int orientation) { assert(!configured()); m_orientation = orientation; }
         //void set_physical_aspect(unsigned x, unsigned y) { assert(!configured()); m_phys_aspect = std::make_pair(x, y); }
         //void set_native_aspect() { assert(!configured()); m_phys_aspect = std::make_pair(~0U, ~0U); }
@@ -543,7 +546,7 @@ namespace mame
         // information getters
         public render_container container() { /*assert(m_container != NULL);*/ return m_container; }
         public bitmap_ind8 priority() { return m_priority; }
-        public device_palette_interface palette() { global.assert(m_paletteDevice != null); return m_paletteDevice.target.device_palette_interface; }
+        public device_palette_interface palette() { assert(m_paletteDevice != null); return m_paletteDevice.target.device_palette_interface; }
         public bool has_palette() { return m_paletteDevice != null; }
         //screen_bitmap &curbitmap() { return m_bitmap[m_curtexture]; }
 
@@ -556,15 +559,15 @@ namespace mame
         void configure(int width, int height, rectangle visarea, attoseconds_t frame_period)
         {
             // validate arguments
-            global.assert(width > 0);
-            global.assert(height > 0);
-            global.assert(visarea.left() >= 0);
-            global.assert(visarea.top() >= 0);
+            assert(width > 0);
+            assert(height > 0);
+            assert(visarea.left() >= 0);
+            assert(visarea.top() >= 0);
             //global.assert(visarea.right() < width);
             //global.assert(visarea.bottom() < height);
-            global.assert(m_type == screen_type_enum.SCREEN_TYPE_VECTOR || m_type == screen_type_enum.SCREEN_TYPE_SVG || visarea.left() < width);
-            global.assert(m_type == screen_type_enum.SCREEN_TYPE_VECTOR || m_type == screen_type_enum.SCREEN_TYPE_SVG || visarea.top() < height);
-            global.assert(frame_period > 0);
+            assert(m_type == screen_type_enum.SCREEN_TYPE_VECTOR || m_type == screen_type_enum.SCREEN_TYPE_SVG || visarea.left() < width);
+            assert(m_type == screen_type_enum.SCREEN_TYPE_VECTOR || m_type == screen_type_enum.SCREEN_TYPE_SVG || visarea.top() < height);
+            assert(frame_period > 0);
 
             // fill in the new parameters
             m_width = width;
@@ -657,7 +660,7 @@ namespace mame
         }
 
 
-        public int vblank() { return (machine().time() < m_vblank_end_time) ? (int)line_state.ASSERT_LINE : (int)line_state.CLEAR_LINE; }  //DECLARE_READ_LINE_MEMBER(vblank) const { return (machine().time() < m_vblank_end_time) ? 1 : 0; }
+        public int vblank() { return (machine().time() < m_vblank_end_time) ? 1 : 0; }  //DECLARE_READ_LINE_MEMBER(vblank) const { return (machine().time() < m_vblank_end_time) ? 1 : 0; }
         //DECLARE_READ_LINE_MEMBER(hblank) const { int const curpos = hpos(); return (curpos < m_visarea.left() || curpos > m_visarea.right()) ? 1 : 0; }
 
 
@@ -671,8 +674,8 @@ namespace mame
         public attotime time_until_pos(int vpos, int hpos = 0)
         {
             // validate arguments
-            global.assert(vpos >= 0);
-            global.assert(hpos >= 0);
+            assert(vpos >= 0);
+            assert(hpos >= 0);
 
             // since we measure time relative to VBLANK, compute the scanline offset from VBLANK
             vpos += m_height - (m_visarea.bottom() + 1);
@@ -850,7 +853,7 @@ namespace mame
         //  register_screen_bitmap - registers a bitmap
         //  that should track the screen size
         //-------------------------------------------------
-        void register_screen_bitmap(bitmap_t bitmap)
+        public void register_screen_bitmap(bitmap_t bitmap)
         {
             // append to the list
             m_auto_bitmap_list.push_back(new auto_bitmap_item(bitmap));
@@ -858,7 +861,7 @@ namespace mame
             // if allocating now, just do it
             bitmap.allocate(width(), height());
             if (m_paletteDevice != null && m_paletteDevice.target != null)
-                bitmap.set_palette(m_paletteDevice.target.palette_interface().palette());
+                bitmap.set_palette(m_paletteDevice.target.palette_interface.palette());
         }
 
 
@@ -889,7 +892,7 @@ namespace mame
 
                     // create an empty container with a single quad
                     m_container.empty();
-                    m_container.add_quad(0.0f, 0.0f, 1.0f, 1.0f, color, m_texture[m_curtexture], global.PRIMFLAG_BLENDMODE((int)BLENDMODE.BLENDMODE_NONE) | render_global.PRIMFLAG_SCREENTEX(1));
+                    m_container.add_quad(0.0f, 0.0f, 1.0f, 1.0f, color, m_texture[m_curtexture], PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE) | render_global.PRIMFLAG_SCREENTEX(1));
                 }
             }
 
@@ -976,35 +979,35 @@ namespace mame
         {
             // sanity check dimensions
             if (m_width <= 0 || m_height <= 0)
-                global.osd_printf_error("Invalid display dimensions\n");
+                osd_printf_error("Invalid display dimensions\n");
 
             // sanity check display area
             if (m_type != screen_type_enum.SCREEN_TYPE_VECTOR)
             {
                 if (m_visarea.empty() || m_visarea.right() >= m_width || m_visarea.bottom() >= m_height)
-                    global.osd_printf_error("Invalid display area\n");
+                    osd_printf_error("Invalid display area\n");
 
                 // sanity check screen formats
                 if (m_screen_update_ind16 == null && m_screen_update_rgb32 == null)
-                    global.osd_printf_error("Missing SCREEN_UPDATE function\n");
+                    osd_printf_error("Missing SCREEN_UPDATE function\n");
             }
 
             // check for zero frame rate
             if (m_refresh == 0)
-                global.osd_printf_error("Invalid (zero) refresh rate\n");
+                osd_printf_error("Invalid (zero) refresh rate\n");
 
             texture_format texformat = m_screen_update_ind16 != null ? texture_format.TEXFORMAT_PALETTE16 : texture_format.TEXFORMAT_RGB32;
             if (m_paletteDevice.finder_tag() != finder_base.DUMMY_TAG)
             {
                 if (m_paletteDevice == null)
-                    global.osd_printf_error("Screen references non-existent palette tag {0}\n", m_paletteDevice.finder_tag());
+                    osd_printf_error("Screen references non-existent palette tag {0}\n", m_paletteDevice.finder_tag());
 
                 if (texformat == texture_format.TEXFORMAT_RGB32)
-                    global.osd_printf_warning("Screen does not need palette defined\n");
+                    osd_printf_warning("Screen does not need palette defined\n");
             }
             else if (texformat == texture_format.TEXFORMAT_PALETTE16)
             {
-                global.osd_printf_error("Screen does not have palette defined\n");
+                osd_printf_error("Screen does not have palette defined\n");
             }
         }
 
@@ -1081,15 +1084,15 @@ namespace mame
             m_container.set_user_settings(settings);
 
             // allocate the VBLANK timers
-            m_vblank_begin_timer = timer_alloc((device_timer_id)TID.TID_VBLANK_START);
-            m_vblank_end_timer = timer_alloc((device_timer_id)TID.TID_VBLANK_END);
+            m_vblank_begin_timer = timer_alloc(TID_VBLANK_START);
+            m_vblank_end_timer = timer_alloc(TID_VBLANK_END);
 
             // allocate a timer to reset partial updates
-            m_scanline0_timer = timer_alloc((device_timer_id)TID.TID_SCANLINE0);
+            m_scanline0_timer = timer_alloc(TID_SCANLINE0);
 
             // allocate a timer to generate per-scanline updates
             if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb.op())
-                m_scanline_timer = timer_alloc((device_timer_id)TID.TID_SCANLINE);
+                m_scanline_timer = timer_alloc(TID_SCANLINE);
 
             // configure the screen with the default parameters
             configure(m_width, m_height, m_visarea, m_refresh);
@@ -1179,34 +1182,34 @@ namespace mame
         //  device_timer - called whenever a device timer
         //  fires
         //-------------------------------------------------
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param) /*, void *ptr)*/
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
         {
             switch (id)
             {
                 // signal VBLANK start
-                case (device_timer_id)TID.TID_VBLANK_START:
+                case TID_VBLANK_START:
                     vblank_begin();
                     break;
 
                 // signal VBLANK end
-                case (device_timer_id)TID.TID_VBLANK_END:
+                case TID_VBLANK_END:
                     vblank_end();
                     break;
 
                 // first scanline
-                case (device_timer_id)TID.TID_SCANLINE0:
+                case TID_SCANLINE0:
                     reset_partial_updates();
                     break;
 
                 // subsequent scanlines when scanline updates are enabled
-                case (device_timer_id)TID.TID_SCANLINE:
+                case TID_SCANLINE:
                     if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0)
                     {
                         // force a partial update to the current scanline
                         update_partial(param);
                     }
 
-                    if (m_scanline_cb != null)
+                    if (m_scanline_cb.op())
                         m_scanline_cb.op((UInt32)param);
 
                     // compute the next visible scanline

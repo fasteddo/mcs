@@ -104,8 +104,6 @@ namespace mame
     struct rw_device_class<D, Ret (T::*)(Params...) const, std::enable_if_t<std::is_constructible<D, Ret (T::*)(Params...) const, const char *, const char *, T *>::value> > { using type = T; };
     template <typename D, typename T, typename Ret, typename... Params>
     struct rw_device_class<D, Ret (*)(T &, Params...), std::enable_if_t<std::is_constructible<D, Ret (*)(T &, Params...), const char *, const char *, T *>::value> > { using type = T; };
-    template <typename D, typename T, typename Ret, typename... Params>
-    struct rw_device_class<D, Ret (*)(T *, Params...), std::enable_if_t<std::is_constructible<D, Ret (*)(T *, Params...), const char *, const char *, T *>::value> > { using type = T; };
 
     template <typename D, typename T> using rw_device_class_t  = typename rw_device_class <D, T>::type;
 
@@ -530,7 +528,7 @@ namespace mame
         public static void COMBINE_DATA(ref UInt32 varptr, UInt32 data, UInt32 mem_mask) { varptr = (varptr & ~mem_mask) | (data & mem_mask); }
 
 
-        public static void VPRINTF(string format, params object [] args) { if (VERBOSE) global.osd_printf_info(format, args); }
+        public static void VPRINTF(string format, params object [] args) { if (VERBOSE) global_object.osd_printf_info(format, args); }
 
 
         // =====================-> Width -> types
@@ -543,7 +541,7 @@ namespace mame
 
         // ======================> address offset -> byte offset
 
-        public static offs_t memory_offset_to_byte(offs_t offset, int AddrShift) { return AddrShift < 0 ? offset << global.iabs(AddrShift) : offset >> global.iabs(AddrShift); }
+        public static offs_t memory_offset_to_byte(offs_t offset, int AddrShift) { return AddrShift < 0 ? offset << global_object.iabs(AddrShift) : offset >> global_object.iabs(AddrShift); }
 
 
         // ======================> generic read/write decomposition routines
@@ -574,7 +572,7 @@ namespace mame
             u32 TARGET_BITS = 8 * TARGET_BYTES;
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
 
             // equal to native size and aligned; simple pass-through to the native reader
@@ -713,7 +711,7 @@ namespace mame
             u32 TARGET_BITS = 8 * TARGET_BYTES;
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
 
             // equal to native size and aligned; simple pass-through to the native reader
@@ -852,7 +850,7 @@ namespace mame
             u32 TARGET_BITS = 8 * TARGET_BYTES;
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
 
             // equal to native size and aligned; simple pass-through to the native reader
@@ -991,7 +989,7 @@ namespace mame
             u32 TARGET_BITS = 8 * TARGET_BYTES;
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
 
             // equal to native size and aligned; simple pass-through to the native reader
@@ -1129,7 +1127,7 @@ namespace mame
             u32 TARGET_BITS = 8 * TARGET_BYTES;
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
 
             // equal to native size and aligned; simple pass-through to the native writer
@@ -1262,7 +1260,7 @@ namespace mame
             u32 TARGET_BITS = 8 * TARGET_BYTES;
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
 
             // equal to native size and aligned; simple pass-through to the native writer
@@ -1395,7 +1393,7 @@ namespace mame
             u32 TARGET_BITS = 8 * TARGET_BYTES;
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
 
             // equal to native size and aligned; simple pass-through to the native writer
@@ -1528,7 +1526,7 @@ namespace mame
             u32 TARGET_BITS = 8 * TARGET_BYTES;
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
 
             // equal to native size and aligned; simple pass-through to the native writer
@@ -1653,7 +1651,7 @@ namespace mame
         -------------------------------------------------*/
         static string [] core_i64_hex_format_buffer = new string[16];
         static int core_i64_hex_format_index;
-        public static string core_i64_hex_format(UInt64 value, byte mindigits)
+        public static string core_i64_hex_format(u64 value, u8 mindigits)
         {
             //static char [,] buffer = new char[16, 64];
 
@@ -1664,13 +1662,13 @@ namespace mame
             //char *bufptr = bufbase;
             core_i64_hex_format_buffer[bufbaseIdx] = "";
 
-            sbyte curdigit;
+            s8 curdigit;
             for (curdigit = 15; curdigit >= 0; curdigit--)
             {
                 int nibble = (int)((value >> (curdigit * 4)) & 0xf);
                 if (nibble != 0 || curdigit < mindigits)
                 {
-                    mindigits = (byte)curdigit;
+                    mindigits = (u8)curdigit;
                     //*bufptr++ = "0123456789ABCDEF"[nibble];
                     core_i64_hex_format_buffer[bufbaseIdx] += "0123456789ABCDEF"[nibble];
                 }
@@ -1743,7 +1741,7 @@ namespace mame
 
     // Handlers the refcounting as part of the interface
 
-    public class handler_entry
+    public class handler_entry : global_object, IDisposable
     {
         //DISABLE_COPYING(handler_entry);
 
@@ -1802,11 +1800,13 @@ namespace mame
 
 
         protected handler_entry(address_space space, u32 flags) { m_space = space; m_refcount = 1; m_flags = flags; }
-        ~handler_entry() {}
+        //~handler_entry() {}
+
+        public virtual void Dispose() { }
 
 
         public void ref_(int count = 1) { m_refcount += (u32)count; }
-        public void unref(int count = 1) { m_refcount -= (u32)count; /*if (m_refcount == 0) delete this;*/ }
+        public void unref(int count = 1) { m_refcount -= (u32)count;  if (m_refcount == 0) this.Dispose(); /*delete this;*/ }
         //inline u32 flags() const { return m_flags; }
 
         public bool is_dispatch() { return (m_flags & F_DISPATCH) != 0; }
@@ -1846,7 +1846,7 @@ namespace mame
 
 
         public handler_entry_read(int Width, int AddrShift, int Endian, address_space space, u32 flags) : base(space, flags) { this.Width = Width; this.AddrShift = AddrShift; this.Endian = Endian; }
-        ~handler_entry_read() {}
+        //~handler_entry_read() {}
 
 
         //virtual uX read(offs_t offset, uX mem_mask) = 0;
@@ -1858,7 +1858,7 @@ namespace mame
 
         public virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_read handler)
         {
-            global.fatalerror("lookup called on non-dispatching class\n");
+            fatalerror("lookup called on non-dispatching class\n");
         }
 
 
@@ -1873,12 +1873,12 @@ namespace mame
 
         public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read handler)
         {
-            global.fatalerror("populate called on non-dispatching class\n");
+            fatalerror("populate called on non-dispatching class\n");
         }
 
         public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read handler)
         {
-            global.fatalerror("populate called on non-dispatching class\n");
+            fatalerror("populate called on non-dispatching class\n");
         }
 
 
@@ -1934,7 +1934,7 @@ namespace mame
 
 
         public handler_entry_write(int Width, int AddrShift, int Endian, address_space space, u32 flags) : base(space, flags) { this.Width = Width; this.AddrShift = AddrShift; this.Endian = Endian; }
-        ~handler_entry_write() {}
+        //~handler_entry_write() {}
 
 
         public abstract void write(offs_t offset, u8 data, u8 mem_mask);
@@ -1955,12 +1955,12 @@ namespace mame
 
         public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write handler)
         {
-            global.fatalerror("populate called on non-dispatching class\n");
+            fatalerror("populate called on non-dispatching class\n");
         }
 
         public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write handler)
         {
-            global.fatalerror("populate called on non-dispatching class\n");
+            fatalerror("populate called on non-dispatching class\n");
         }
 
 
@@ -2022,7 +2022,7 @@ namespace mame
 
     // memory_access_cache contains state data for cached access
     //template<int Width, int AddrShift, int Endian>
-    public class memory_access_cache
+    public class memory_access_cache : global_object, IDisposable
     {
         //using NativeType = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -2099,8 +2099,16 @@ namespace mame
 
         ~memory_access_cache()
         {
-            m_space.remove_change_notifier(m_notifier_id);
+            assert(m_isDisposed);  // can remove
         }
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
+            m_space.remove_change_notifier(m_notifier_id);
+            m_isDisposed = true;
+        }
+
 
         // getters
         //address_space &space() const { return m_space; }
@@ -2129,7 +2137,7 @@ namespace mame
         //}
 
 
-        public u8 read_byte(offs_t address) { address &= m_addrmask; return Width == 0 ? read_native8(address & ~NATIVE_MASK) : emumem_global.memory_read_generic8(Width, AddrShift, Endian, 0, true, (offs_t offset, u8 mask) => { return read_native8(offset, mask); }, address, 0xff); }
+        public u8 read_byte(offs_t address) { address &= m_addrmask; return Width == 0 ? read_native8(address & ~NATIVE_MASK) : memory_read_generic8(Width, AddrShift, Endian, 0, true, (offs_t offset, u8 mask) => { return read_native8(offset, mask); }, address, 0xff); }
         //u16 read_word(offs_t address) { address &= m_addrmask; return Width == 1 ? read_native(address & ~NATIVE_MASK) : memory_read_generic<Width, AddrShift, Endian, 1, true>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, 0xffff); }
         //u16 read_word(offs_t address, u16 mask) { address &= m_addrmask; return memory_read_generic<Width, AddrShift, Endian, 1, true>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
         //u16 read_word_unaligned(offs_t address) { address &= m_addrmask; return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, 0xffff); }
@@ -2207,7 +2215,7 @@ namespace mame
 
     // ======================> address_space_config
     // describes an address space and provides basic functions to map addresses to bytes
-    public class address_space_config
+    public class address_space_config : global_object
     {
         //friend class address_map;
 
@@ -2234,7 +2242,7 @@ namespace mame
         public address_space_config()
         {
             m_name = "unknown";
-            m_endianness = emucore_global.ENDIANNESS_NATIVE;
+            m_endianness = ENDIANNESS_NATIVE;
             m_data_width = 0;
             m_addr_width = 0;
             m_addr_shift = 0;
@@ -2245,7 +2253,7 @@ namespace mame
             m_default_map = null;
         }
 
-        public address_space_config(string name, endianness_t endian, byte datawidth, byte addrwidth, sbyte addrshift = 0, address_map_constructor internal_ctor = null, address_map_constructor defmap = null)
+        public address_space_config(string name, endianness_t endian, u8 datawidth, u8 addrwidth, s8 addrshift = 0, address_map_constructor internal_ctor = null, address_map_constructor defmap = null)
         {
             m_name = name;
             m_endianness = endian;
@@ -2259,7 +2267,7 @@ namespace mame
             m_default_map = defmap;
         }
 
-        public address_space_config(string name, endianness_t endian, byte datawidth, byte addrwidth, sbyte addrshift, byte logwidth, byte pageshift, address_map_constructor internal_ctor = null, address_map_constructor defmap = null)
+        public address_space_config(string name, endianness_t endian, u8 datawidth, u8 addrwidth, s8 addrshift, u8 logwidth, u8 pageshift, address_map_constructor internal_ctor = null, address_map_constructor defmap = null)
         {
             m_name = name;
             m_endianness = endian;
@@ -2303,7 +2311,7 @@ namespace mame
 
     // ======================> address_space
     // address_space holds live information about an address space
-    public abstract class address_space
+    public abstract class address_space : global_object, IDisposable
     {
         //friend class memory_bank;
         //friend class memory_block;
@@ -2343,7 +2351,7 @@ namespace mame
 
         //std::vector<std::unique_ptr<memory_passthrough_handler>> m_mphs;
 
-        std_vector<notifier_t> m_notifiers = new std_vector<notifier_t>();        // notifier list for address map change
+        std.vector<notifier_t> m_notifiers = new std.vector<notifier_t>();        // notifier list for address map change
         int m_notifier_id;      // next notifier id
         u32 m_in_notification;  // notification(s) currently being done
 
@@ -2359,8 +2367,8 @@ namespace mame
         {
             m_config = memory.space_config(spacenum);
             m_device = memory.device();
-            m_addrmask = global.make_bitmask32((u32)m_config.addr_width());
-            m_logaddrmask = global.make_bitmask32(m_config.logaddr_width());
+            m_addrmask = make_bitmask32((u32)m_config.addr_width());
+            m_logaddrmask = make_bitmask32(m_config.logaddr_width());
             m_unmap = 0;
             m_spacenum = spacenum;
             m_log_unmap = true;
@@ -2375,10 +2383,21 @@ namespace mame
 
         ~address_space()
         {
-            m_unmap_r.unref();
-            m_unmap_w.unref();
-            m_nop_r.unref();
-            m_nop_w.unref();
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
+            if (!m_isDisposed)
+            {
+                m_unmap_r.unref();
+                m_unmap_w.unref();
+                m_nop_r.unref();
+                m_nop_w.unref();
+            }
+
+            m_isDisposed = true;
         }
 
 
@@ -2393,12 +2412,12 @@ namespace mame
         public memory_access_cache cache(int Width, int AddrShift, int Endian)
         {
             if (AddrShift != m_config.addr_shift())
-                global.fatalerror("Requesting cache() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
+                fatalerror("Requesting cache() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
             if (8 << Width != m_config.data_width())
-                global.fatalerror("Requesting cache() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
+                fatalerror("Requesting cache() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
             if (Endian != (int)m_config.endianness())
-                global.fatalerror("Requesting cache() with endianness {0} while the config says {1}\n",
-                           emucore_global.endianness_names[Endian], emucore_global.endianness_names[(int)m_config.endianness()]);
+                fatalerror("Requesting cache() with endianness {0} while the config says {1}\n",
+                           endianness_names[Endian], endianness_names[(int)m_config.endianness()]);
 
             return create_cache();  //static_cast<memory_access_cache<Width, AddrShift, Endian> *>(create_cache());
         }
@@ -2425,7 +2444,7 @@ namespace mame
                 }
             }
 
-            global.fatalerror("Unknown notifier id {0}, double remove?\n", id);
+            fatalerror("Unknown notifier id {0}, double remove?\n", id);
         }
 
 
@@ -2773,7 +2792,7 @@ namespace mame
         //-------------------------------------------------
         public void prepare_map()
         {
-            memory_region devregion = (m_spacenum == 0) ? m_device.memregion(device_global.DEVICE_SELF) : null;
+            memory_region devregion = (m_spacenum == 0) ? m_device.memregion(DEVICE_SELF) : null;
             u32 devregionsize = (devregion != null) ? devregion.bytes() : 0;
 
             // allocate the address map
@@ -2787,7 +2806,7 @@ namespace mame
             if (m_map.globalmask != 0)
             {
                 if ((m_map.globalmask & ~m_addrmask) != 0)
-                    global.fatalerror("Can't set a global address mask of {0} on a {1}-bits address width bus.\n", m_map.globalmask, addr_width());  //%08x
+                    fatalerror("Can't set a global address mask of {0} on a {1}-bits address width bus.\n", m_map.globalmask, addr_width());  //%08x
 
                 m_addrmask = m_map.globalmask;
             }
@@ -2838,11 +2857,11 @@ namespace mame
                     // find the region
                     memory_region region = m_manager.machine().root_device().memregion(fulltag);
                     if (region == null)
-                        global.fatalerror("device '{0}' {1} space memory map entry {2}-{3} references non-existant region \"{4}\"\n", m_device.tag(), m_name, entry.addrstart, entry.addrend, entry.region);
+                        fatalerror("device '{0}' {1} space memory map entry {2}-{3} references nonexistant region \"{4}\"\n", m_device.tag(), m_name, entry.addrstart, entry.addrend, entry.region);
 
                     // validate the region
                     if (entry.rgnoffs + m_config.addr2byte(entry.addrend - entry.addrstart + 1) > region.bytes())
-                        global.fatalerror("device '{0}' {1} space memory map entry {2}-{3} extends beyond region \"{4}\" size ({5})\n", m_device.tag(), m_name, entry.addrstart, entry.addrend, entry.region, region.bytes());
+                        fatalerror("device '{0}' {1} space memory map entry {2}-{3} extends beyond region \"{4}\" size ({5})\n", m_device.tag(), m_name, entry.addrstart, entry.addrend, entry.region, region.bytes());
                 }
 
                 // convert any region-relative entries to their memory pointers
@@ -3195,15 +3214,15 @@ namespace mame
         protected void check_optimize_all(string function, int width, offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, out offs_t nstart, out offs_t nend, out offs_t nmask, out offs_t nmirror, out u64 nunitmask, out int ncswidth)
         {
             if (addrstart > addrend)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is after the end address.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is after the end address.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect);
             if ((addrstart & ~m_addrmask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrstart & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrstart & m_addrmask);
             if ((addrend & ~m_addrmask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrend & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrend & m_addrmask);
 
             // Check the relative data widths
             if (width > m_config.data_width())
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, cannot install a {6}-bits wide handler in a {7}-bits wide address space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, width, m_config.data_width());
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, cannot install a {6}-bits wide handler in a {7}-bits wide address space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, width, m_config.data_width());
 
             // Check the validity of the addresses given their intrinsic width
             // We assume that busses with non-zero address shift have a data width matching the shift (reality says yes)
@@ -3211,9 +3230,9 @@ namespace mame
             offs_t lowbits_mask = (width != 0 && m_config.addr_shift() == 0) ? ((offs_t)width >> 3) - 1 : default_lowbits_mask;
 
             if ((addrstart & lowbits_mask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address has low bits set, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrstart & ~lowbits_mask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address has low bits set, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrstart & ~lowbits_mask);
             if (((~addrend) & lowbits_mask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address has low bits unset, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrend | lowbits_mask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address has low bits unset, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrend | lowbits_mask);
 
             offs_t set_bits = addrstart | addrend;
             offs_t changing_bits = addrstart ^ addrend;
@@ -3225,27 +3244,27 @@ namespace mame
             changing_bits |= changing_bits >> 16;
 
             if ((addrmask & ~m_addrmask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrmask & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrmask & m_addrmask);
             if ((addrselect & ~m_addrmask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrselect & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrselect & m_addrmask);
             if ((addrmask & ~changing_bits) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is trying to unmask an unchanging address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmask & changing_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is trying to unmask an unchanging address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmask & changing_bits);
             if ((addrmirror & changing_bits) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~changing_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~changing_bits);
             if ((addrselect & changing_bits) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~changing_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~changing_bits);
             if ((addrmirror & set_bits) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~set_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~set_bits);
             if ((addrselect & set_bits) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~set_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~set_bits);
             if ((addrmirror & addrselect) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a select bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~addrselect);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a select bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~addrselect);
 
             // Check the cswidth, if provided
             if (cswidth > m_config.data_width())
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is too large for a {7}-bit space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, m_config.data_width());
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is too large for a {7}-bit space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, m_config.data_width());
             if ((width != 0) && (cswidth % width) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is not a multiple of handler size {7}.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, width);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is not a multiple of handler size {7}.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, width);
             ncswidth = cswidth != 0 ? cswidth : width;
 
             // Check if the unitmask is structurally correct for the width
@@ -3261,7 +3280,7 @@ namespace mame
                     while (cmask != 0 && (cmask & block_mask) == 0)
                         cmask >>= width;
                     if (cmask != 0 && cmask != block_mask)
-                        global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the unitmask of {6} has incorrect granularity for {7}-bit chip selection.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, emumem_global.core_i64_hex_format(unitmask, 16), cswidth);
+                        fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the unitmask of {6} has incorrect granularity for {7}-bit chip selection.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, core_i64_hex_format(unitmask, 16), cswidth);
                 }
             }
 
@@ -3273,7 +3292,7 @@ namespace mame
             if ((addrstart & default_lowbits_mask) != 0 || ((~addrend) & default_lowbits_mask) != 0)
             {
                 if (((addrstart ^ addrend) & ~default_lowbits_mask) != 0)
-                    global.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start or end is unaligned while the range spans more than one slot (granularity = {6}).\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, default_lowbits_mask + 1);
+                    fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start or end is unaligned while the range spans more than one slot (granularity = {6}).\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, default_lowbits_mask + 1);
                 offs_t lowbyte = m_config.addr2byte(addrstart & default_lowbits_mask);
                 offs_t highbyte = m_config.addr2byte((addrend & default_lowbits_mask) + 1);
                 if (m_config.endianness() == endianness_t.ENDIANNESS_LITTLE)
@@ -3317,17 +3336,17 @@ namespace mame
         protected void check_optimize_mirror(string function, offs_t addrstart, offs_t addrend, offs_t addrmirror, out offs_t nstart, out offs_t nend, out offs_t nmask, out offs_t nmirror)
         {
             if (addrstart > addrend)
-                global.fatalerror("{0}: In range {1}-{2} mirror {3}, start address is after the end address.\n", function, addrstart, addrend, addrmirror);  // %x-%x
+                fatalerror("{0}: In range {1}-{2} mirror {3}, start address is after the end address.\n", function, addrstart, addrend, addrmirror);  // %x-%x
             if ((addrstart & ~m_addrmask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mirror {3}, start address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrstart & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, start address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrstart & m_addrmask);
             if ((addrend & ~m_addrmask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mirror {3}, end address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrend & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, end address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrend & m_addrmask);
 
             offs_t lowbits_mask = (offs_t)((m_config.data_width() >> (3 - m_config.addr_shift())) - 1);
             if ((addrstart & lowbits_mask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mirror {3}, start address has low bits set, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrstart & ~lowbits_mask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, start address has low bits set, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrstart & ~lowbits_mask);
             if (((~addrend) & lowbits_mask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mirror {3}, end address has low bits unset, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrend | lowbits_mask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, end address has low bits unset, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrend | lowbits_mask);
 
             offs_t set_bits = addrstart | addrend;
             offs_t changing_bits = addrstart ^ addrend;
@@ -3339,11 +3358,11 @@ namespace mame
             changing_bits |= changing_bits >> 16;
 
             if ((addrmirror & ~m_addrmask) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrmirror & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, mirror is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrmirror & m_addrmask);
             if ((addrmirror & changing_bits) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a changing address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~changing_bits);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a changing address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~changing_bits);
             if ((addrmirror & set_bits) != 0)
-                global.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a set address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~set_bits);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a set address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~set_bits);
 
             nstart = addrstart;
             nend = addrend;
@@ -3633,16 +3652,15 @@ namespace mame
 
         // internal state
         running_machine m_machine;              // need the machine to free our memory
-        ListBytesPointerRef m_baseptr;  //u8 *                    m_baseptr;              // pointer to our current base pointer
-        std_vector<ListBytesPointerRef> m_entries = new std_vector<ListBytesPointerRef>();  //std::vector<u8 *>       m_entries;              // the entries
+        std.vector<ListBytesPointerRef> m_entries = new std.vector<ListBytesPointerRef>();  //std::vector<u8 *>       m_entries;              // the entries
         bool m_anonymous;            // are we anonymous or explicit?
         offs_t m_addrstart;            // start offset
         offs_t m_addrend;              // end offset
         int m_curentry;             // current entry
         string m_name;                 // friendly name for this bank
         string m_tag;                  // tag for this bank
-        std_vector<bank_reference> m_reflist = new std_vector<bank_reference>();  // std::vector<std::unique_ptr<bank_reference>> m_reflist;     // list of address spaces referencing this bank
-        std_vector<alloc_notifier> m_alloc_notifier = new std_vector<alloc_notifier>();  //std::vector<std::function<void (void *)>> m_alloc_notifier; // list of notifier targets when allocating
+        std.vector<bank_reference> m_reflist = new std.vector<bank_reference>();  // std::vector<std::unique_ptr<bank_reference>> m_reflist;     // list of address spaces referencing this bank
+        std.vector<alloc_notifier> m_alloc_notifier = new std.vector<alloc_notifier>();  //std::vector<std::function<void (void *)>> m_alloc_notifier; // list of notifier targets when allocating
 
 
         public string m_uuid = Guid.NewGuid().ToString();  // used for generating a unique name (when the pointer is used), see bank_find_or_allocate() for example
@@ -3655,7 +3673,6 @@ namespace mame
         public memory_bank(address_space space, int index, offs_t addrstart, offs_t addrend, string tag = null)
         {
             m_machine = space.manager().machine();
-            m_baseptr = null;
             m_anonymous = tag == null;
             m_addrstart = addrstart;
             m_addrend = addrend;
@@ -3687,7 +3704,7 @@ namespace mame
         public int entry() { return m_curentry; }
         public bool anonymous() { return m_anonymous; }
         public offs_t addrstart() { return m_addrstart; }
-        public ListBytesPointerRef base_() { return m_baseptr; }  //void *base() const { return *m_baseptr; }
+        public ListBytesPointerRef base_() { return m_entries.empty() ? null : m_entries[m_curentry]; }
         public string tag() { return m_tag; }
         //const char *name() const { return m_name; }
 
@@ -3753,7 +3770,6 @@ namespace mame
 
             m_entries[m_curentry] = new ListBytesPointerRef();
             m_entries[m_curentry].m_listPtr = base_;  //reinterpret_cast<u8 *>(base_);
-            m_baseptr = m_entries[m_curentry];
 
             foreach (var cb in m_alloc_notifier)
                 cb(base_);
@@ -3778,10 +3794,6 @@ namespace mame
 
             // set the entry
             m_entries[entrynum] = new ListBytesPointerRef(base_);  // reinterpret_cast<u8 *>(base_);
-
-            // if the bank base is not configured, and we're the first entry, set us up
-            if (m_baseptr.m_listPtr == null && entrynum == 0)
-                m_baseptr = new ListBytesPointerRef(m_entries[0].m_listPtr);  // m_baseptr = m_entries[0];
         }
 
         //-------------------------------------------------
@@ -3800,9 +3812,6 @@ namespace mame
             // fill in the requested bank entries
             for (int entrynum = 0; entrynum < numentries; entrynum ++)
                 m_entries[entrynum + startentry].m_listPtr = new ListBytesPointer(base_, (int)(entrynum * (int)stride));  //reinterpret_cast<u8 *>(base_) +  entrynum * stride ;
-
-            if (m_baseptr == null && startentry == 0)
-                m_baseptr = new ListBytesPointerRef(base_);  //m_baseptr = reinterpret_cast<u8 *>(base_);
         }
 
 
@@ -3821,8 +3830,6 @@ namespace mame
                 throw new emu_fatalerror("memory_bank::set_entry called for bank '{0}' with invalid bank entry {1}", m_tag, entrynum);
 
             m_curentry = entrynum;
-            m_baseptr.m_listPtr = m_entries[entrynum].m_listPtr;  //m_baseptr = m_entries[entrynum];
-            //OLDm_baseptrBufferPtr.m_bufferPtr = m_entry[entrynum].m_ptr != null ? new dynamic_buffer_pointer(m_entry[entrynum].m_ptr) : null;  // *m_baseptr = m_entry[entrynum].m_ptr;
         }
 
 
@@ -3877,7 +3884,7 @@ namespace mame
         // internal data
         running_machine m_machine;
         string m_name;
-        std_vector<u8> m_buffer;
+        std.vector<u8> m_buffer;
         endianness_t m_endianness;
         u8 m_bitwidth;
         u8 m_bytewidth;
@@ -3891,7 +3898,7 @@ namespace mame
         {
             m_machine = machine;
             m_name = name;
-            m_buffer = new std_vector<u8>(length);
+            m_buffer = new std.vector<u8>(length);
             m_endianness = endian;
             m_bitwidth = (u8)(width * 8);
             m_bytewidth = width;
@@ -3903,7 +3910,7 @@ namespace mame
 
         // getters
         running_machine machine() { return m_machine; }
-        public std_vector<u8> base_() { return (this != null) ? m_buffer : null; }  //u8 *base() { return (m_buffer.size() > 0) ? &m_buffer[0] : nullptr; }
+        public std.vector<u8> base_() { return (this != null) ? m_buffer : null; }  //u8 *base() { return (m_buffer.size() > 0) ? &m_buffer[0] : nullptr; }
         //u8 *end() { return base() + m_buffer.size(); }
         public u32 bytes() { return (u32)m_buffer.size(); }
         //const char *name() const { return m_name; }
@@ -3923,7 +3930,7 @@ namespace mame
 
     // ======================> memory_manager
     // holds internal state for the memory system
-    public class memory_manager
+    public class memory_manager : global_object
     {
         //friend class address_space;
         //template<int Width, int AddrShift, endianness_t Endian> friend class address_space_specific;
@@ -3934,11 +3941,11 @@ namespace mame
         running_machine m_machine;              // reference to the machine
         bool m_initialized;          // have we completed initialization?
 
-        std_vector<memory_block> m_blocklist = new std_vector<memory_block>();  //std::vector<std::unique_ptr<memory_block>>   m_blocklist;            // head of the list of memory blocks
+        std.vector<memory_block> m_blocklist = new std.vector<memory_block>();  //std::vector<std::unique_ptr<memory_block>>   m_blocklist;            // head of the list of memory blocks
 
-        std_unordered_map<string, memory_bank> m_banklist = new std_unordered_map<string, memory_bank>();  //std::unordered_map<std::string, std::unique_ptr<memory_bank>>    m_banklist;             // data gathered for each bank
-        std_unordered_map<string, memory_share> m_sharelist = new std_unordered_map<string, memory_share>();            // map for share lookups
-        std_unordered_map<string, memory_region> m_regionlist = new std_unordered_map<string, memory_region>();           // list of memory regions
+        std.unordered_map<string, memory_bank> m_banklist = new std.unordered_map<string, memory_bank>();  //std::unordered_map<std::string, std::unique_ptr<memory_bank>>    m_banklist;             // data gathered for each bank
+        std.unordered_map<string, memory_share> m_sharelist = new std.unordered_map<string, memory_share>();            // map for share lookups
+        std.unordered_map<string, memory_region> m_regionlist = new std.unordered_map<string, memory_region>();           // list of memory regions
 
 
         // construction/destruction
@@ -3959,7 +3966,7 @@ namespace mame
         {
             // loop over devices and spaces within each device
             memory_interface_iterator iter = new memory_interface_iterator(machine().root_device());
-            std_vector<device_memory_interface> memories = new std_vector<device_memory_interface>();
+            std.vector<device_memory_interface> memories = new std.vector<device_memory_interface>();
             foreach (device_memory_interface memory in iter)
             {
                 memories.push_back(memory);
@@ -3985,7 +3992,7 @@ namespace mame
                 memory.locate_memory();
 
             // disable logging of unmapped access when no one receives it
-            if (!machine().options().log() && !machine().options().oslog() && !((machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) == running_machine.DEBUG_FLAG_ENABLED))
+            if (!machine().options().log() && !machine().options().oslog() && !((machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) == machine_global.DEBUG_FLAG_ENABLED))
                 foreach (var memory in memories)
                     memory.set_log_unmap(false);
 
@@ -3996,12 +4003,12 @@ namespace mame
 
         // getters
         public running_machine machine() { return m_machine; }
-        public std_unordered_map<string, memory_bank> banks() { return m_banklist; }
-        public std_unordered_map<string, memory_region> regions() { return m_regionlist; }
-        public std_unordered_map<string, memory_share> shares() { return m_sharelist; }
+        public std.unordered_map<string, memory_bank> banks() { return m_banklist; }
+        public std.unordered_map<string, memory_region> regions() { return m_regionlist; }
+        public std.unordered_map<string, memory_share> shares() { return m_sharelist; }
 
         public bool initialized { get { return m_initialized; } }
-        public std_vector<memory_block> blocklist { get { return m_blocklist; } }
+        public std.vector<memory_block> blocklist { get { return m_blocklist; } }
 
 
         // regions
@@ -4011,7 +4018,7 @@ namespace mame
         //-------------------------------------------------
         public memory_region region_alloc(string name, UInt32 length, byte width, endianness_t endian)
         {
-            global.osd_printf_verbose("Region '{0}' created\n", name);
+            osd_printf_verbose("Region '{0}' created\n", name);
             // make sure we don't have a region of the same name; also find the end of the list
             if (m_regionlist.find(name) != null)
                 throw new emu_fatalerror("region_alloc called with duplicate region name \"{0}\"\n", name);
@@ -4055,7 +4062,7 @@ namespace mame
             string temptag;
             if (string.IsNullOrEmpty(tag))
             {
-                temptag = global.string_format("anon_{0}", bank.get().uuid);  // %p
+                temptag = string_format("anon_{0}", bank.get().uuid);  // %p
                 tag = temptag.c_str();
             }
 
@@ -4191,14 +4198,14 @@ namespace mame
         handler_entry_read m_root_read;  //handler_entry_read <Width, AddrShift, Endian> *m_root_read;
         handler_entry_write m_root_write;  //handler_entry_write<Width, AddrShift, Endian> *m_root_write;
 
-        std_unordered_set<handler_entry> m_delayed_unrefs = new std_unordered_set<handler_entry>();
+        std.unordered_set<handler_entry> m_delayed_unrefs = new std.unordered_set<handler_entry>();
 
 
-        void printf(string format, params object [] args) { global.osd_printf_info(format, args); }
-        void assert(bool value) { global.assert(value); }
+        void printf(string format, params object [] args) { osd_printf_info(format, args); }
+        void assert(bool value) { assert(value); }
 
 
-        offs_t offset_to_byte(offs_t offset) { return AddrShift < 0 ? offset << global.iabs(AddrShift) : offset >> global.iabs(AddrShift); }
+        offs_t offset_to_byte(offs_t offset) { return AddrShift < 0 ? offset << iabs(AddrShift) : offset >> iabs(AddrShift); }
 
 
         //-------------------------------------------------
@@ -4216,8 +4223,8 @@ namespace mame
         protected override void unmap_generic(offs_t addrstart, offs_t addrend, offs_t addrmirror, read_or_write readorwrite, bool quiet)
         {
             emumem_global.VPRINTF("address_space::unmap({0}-{1} mirror={2}, {3}, {4})\n",
-                        emumem_global.core_i64_hex_format(addrstart, m_addrchars), emumem_global.core_i64_hex_format(addrend, m_addrchars),
-                        emumem_global.core_i64_hex_format(addrmirror, m_addrchars),
+                        core_i64_hex_format(addrstart, m_addrchars), core_i64_hex_format(addrend, m_addrchars),
+                        core_i64_hex_format(addrmirror, m_addrchars),
                         (readorwrite == read_or_write.READ) ? "read" : (readorwrite == read_or_write.WRITE) ? "write" : (readorwrite == read_or_write.READWRITE) ? "read/write" : "??",
                         quiet ? "quiet" : "normal");
 
@@ -4251,8 +4258,8 @@ namespace mame
         protected override void install_ram_generic(offs_t addrstart, offs_t addrend, offs_t addrmirror, read_or_write readorwrite, ListBytesPointer baseptr)  //void *baseptr)
         {
             emumem_global.VPRINTF("address_space::install_ram_generic({0}-{1} mirror={2}, {3}, {4})\n",
-                        emumem_global.core_i64_hex_format(addrstart, m_addrchars), emumem_global.core_i64_hex_format(addrend, m_addrchars),
-                        emumem_global.core_i64_hex_format(addrmirror, m_addrchars),
+                        core_i64_hex_format(addrstart, m_addrchars), core_i64_hex_format(addrend, m_addrchars),
+                        core_i64_hex_format(addrmirror, m_addrchars),
                         (readorwrite == read_or_write.READ) ? "read" : (readorwrite == read_or_write.WRITE) ? "write" : (readorwrite == read_or_write.READWRITE) ? "read/write" : "??",
                         baseptr == null ? "00000000" : baseptr.Count.ToString());
 
@@ -4284,7 +4291,7 @@ namespace mame
                 if (bank.base_() == null && m_manager.initialized)
                 {
                     if (m_manager.machine().phase() >= machine_phase.RESET)
-                        global.fatalerror("Attempted to call install_ram_generic() after initialization time without a baseptr!\n");
+                        fatalerror("Attempted to call install_ram_generic() after initialization time without a baseptr!\n");
 
                     var block = new memory_block(this, addrstart, addrend);
                     bank.set_base(block.get().data());
@@ -4328,7 +4335,7 @@ namespace mame
                 if (bank.base_() == null && m_manager.initialized)
                 {
                     if (m_manager.machine().phase() >= machine_phase.RESET)
-                        global.fatalerror("Attempted to call install_ram_generic() after initialization time without a baseptr!\n");
+                        fatalerror("Attempted to call install_ram_generic() after initialization time without a baseptr!\n");
 
                     var block = new memory_block(this, address_to_byte(addrstart), address_to_byte_end(addrend));
                     bank.set_base(block.get().data());
@@ -4361,8 +4368,8 @@ namespace mame
         protected override void install_bank_generic(offs_t addrstart, offs_t addrend, offs_t addrmirror, string rtag, string wtag)
         {
             emumem_global.VPRINTF("address_space::install_readwrite_bank({0}-{1} mirror={2}, read=\"{3}\" / write=\"{4}\")\n",
-                        emumem_global.core_i64_hex_format(addrstart, m_addrchars), emumem_global.core_i64_hex_format(addrend, m_addrchars),
-                        emumem_global.core_i64_hex_format(addrmirror, m_addrchars),
+                        core_i64_hex_format(addrstart, m_addrchars), core_i64_hex_format(addrend, m_addrchars),
+                        core_i64_hex_format(addrmirror, m_addrchars),
                         rtag.empty() ? "(none)" : rtag.c_str(), wtag.empty() ? "(none)" : wtag.c_str());
 
             offs_t nstart;
@@ -4407,8 +4414,8 @@ namespace mame
         protected override void install_readwrite_port(offs_t addrstart, offs_t addrend, offs_t addrmirror, string rtag, string wtag)
         {
             emumem_global.VPRINTF("address_space::install_readwrite_port({0}-{1} mirror={2}, read=\"{3}\" / write=\"{4}\")\n",
-                        emumem_global.core_i64_hex_format(addrstart, m_addrchars), emumem_global.core_i64_hex_format(addrend, m_addrchars),
-                        emumem_global.core_i64_hex_format(addrmirror, m_addrchars),
+                        core_i64_hex_format(addrstart, m_addrchars), core_i64_hex_format(addrend, m_addrchars),
+                        core_i64_hex_format(addrmirror, m_addrchars),
                         rtag.empty() ? "(none)" : rtag.c_str(), wtag.empty() ? "(none)" : wtag.c_str());
 
             offs_t nstart;
@@ -4435,7 +4442,7 @@ namespace mame
                 // find the port
                 ioport_port port = device().owner().ioport(wtag);
                 if (port == null)
-                    global.fatalerror("Attempted to map non-existent port '{0}' for write in space {1} of device '{2}'\n", wtag.c_str(), name(), device().tag());
+                    fatalerror("Attempted to map non-existent port '{0}' for write in space {1} of device '{2}'\n", wtag.c_str(), name(), device().tag());
 
                 // map the range and set the ioport
                 var hand_w = new handler_entry_write_ioport(Width, AddrShift, (int)Endian, this, port);
@@ -4553,7 +4560,7 @@ namespace mame
 
 
             NATIVE_BYTES = 1U << Width;
-            NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global.iabs(AddrShift) : NATIVE_BYTES >> global.iabs(AddrShift);
+            NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << iabs(AddrShift) : NATIVE_BYTES >> iabs(AddrShift);
             NATIVE_MASK = NATIVE_STEP - 1;
             NATIVE_BITS = 8 * NATIVE_BYTES;
 
@@ -4599,7 +4606,7 @@ namespace mame
                 case 30: m_root_read = new handler_entry_read_dispatch(30, Width, AddrShift, (int)Endian, this, r, null); m_root_write = new handler_entry_write_dispatch(30, Width, AddrShift, (int)Endian, this, r, null); break;
                 case 31: m_root_read = new handler_entry_read_dispatch(31, Width, AddrShift, (int)Endian, this, r, null); m_root_write = new handler_entry_write_dispatch(31, Width, AddrShift, (int)Endian, this, r, null); break;
                 case 32: m_root_read = new handler_entry_read_dispatch(32, Width, AddrShift, (int)Endian, this, r, null); m_root_write = new handler_entry_write_dispatch(32, Width, AddrShift, (int)Endian, this, r, null); break;
-                default: global.fatalerror("Unhandled address bus width {0}\n", address_width); break;
+                default: fatalerror("Unhandled address bus width {0}\n", address_width); break;
             }
         }
 
@@ -4961,33 +4968,33 @@ namespace mame
 
 
         // virtual access to these functions
-        public override u8 read_byte(offs_t address) { address &= addrmask(); return Width == 0 ? read_native8(address & ~NATIVE_MASK) : emumem_global.memory_read_generic8((int)Width, AddrShift, (int)Endian, 0, true, (offs_t offset, u8 mask) => { return read_native8(offset, mask); }, address, 0xff); }
-        public override u16 read_word(offs_t address) { address &= addrmask(); return Width == 1 ? read_native16(address & ~NATIVE_MASK) : emumem_global.memory_read_generic16((int)Width, AddrShift, (int)Endian, 1, true, (offs_t offset, u16 mask) => { return read_native16(offset, mask); }, address, 0xffff); }
-        public override u16 read_word(offs_t address, u16 mask) { address &= addrmask(); return emumem_global.memory_read_generic16((int)Width, AddrShift, (int)Endian, 1, true, (offs_t offset, u16 mask2) => { return read_native16(offset, mask2); }, address, mask); }
-        public override u16 read_word_unaligned(offs_t address) { address &= addrmask(); return emumem_global.memory_read_generic16((int)Width, AddrShift, (int)Endian, 1, false, (offs_t offset, u16 mask) => { return read_native16(offset, mask); }, address, 0xffff); }
-        public override u16 read_word_unaligned(offs_t address, u16 mask) { address &= addrmask(); return emumem_global.memory_read_generic16((int)Width, AddrShift, (int)Endian, 1, false, (offs_t offset, u16 mask2) => { return read_native16(offset, mask2); }, address, mask); }
-        public override u32 read_dword(offs_t address) { address &= addrmask(); return Width == 2 ? read_native32(address & ~NATIVE_MASK) : emumem_global.memory_read_generic32((int)Width, AddrShift, (int)Endian, 2, true, (offs_t offset, u32 mask) => { return read_native32(offset, mask); }, address, 0xffffffff); }
-        public override u32 read_dword(offs_t address, u32 mask) { address &= addrmask(); return emumem_global.memory_read_generic32((int)Width, AddrShift, (int)Endian, 2, true, (offs_t offset, u32 mask2) => { return read_native32(offset, mask2); }, address, mask); }
-        public override u32 read_dword_unaligned(offs_t address) { address &= addrmask(); return emumem_global.memory_read_generic32((int)Width, AddrShift, (int)Endian, 2, false, (offs_t offset, u32 mask) => { return read_native32(offset, mask); }, address, 0xffffffff); }
-        public override u32 read_dword_unaligned(offs_t address, u32 mask) { address &= addrmask(); return emumem_global.memory_read_generic32((int)Width, AddrShift, (int)Endian, 2, false, (offs_t offset, u32 mask2) => { return read_native32(offset, mask2); }, address, mask); }
-        public override u64 read_qword(offs_t address) { address &= addrmask(); return Width == 3 ? read_native64(address & ~NATIVE_MASK) : emumem_global.memory_read_generic64((int)Width, AddrShift, (int)Endian, 3, true, (offs_t offset, u64 mask) => { return read_native64(offset, mask); }, address, 0xffffffffffffffffU); }
-        public override u64 read_qword(offs_t address, u64 mask) { address &= addrmask(); return emumem_global.memory_read_generic64((int)Width, AddrShift, (int)Endian, 3, true, (offs_t offset, u64 mask2) => { return read_native64(offset, mask2); }, address, mask); }
-        public override u64 read_qword_unaligned(offs_t address) { address &= addrmask(); return emumem_global.memory_read_generic64((int)Width, AddrShift, (int)Endian, 3, false, (offs_t offset, u64 mask) => { return read_native64(offset, mask); }, address, 0xffffffffffffffffU); }
-        public override u64 read_qword_unaligned(offs_t address, u64 mask) { address &= addrmask(); return emumem_global.memory_read_generic64((int)Width, AddrShift, (int)Endian, 3, false, (offs_t offset, u64 mask2) => { return read_native64(offset, mask2); }, address, mask); }
+        public override u8 read_byte(offs_t address) { address &= addrmask(); return Width == 0 ? read_native8(address & ~NATIVE_MASK) : memory_read_generic8((int)Width, AddrShift, (int)Endian, 0, true, (offs_t offset, u8 mask) => { return read_native8(offset, mask); }, address, 0xff); }
+        public override u16 read_word(offs_t address) { address &= addrmask(); return Width == 1 ? read_native16(address & ~NATIVE_MASK) : memory_read_generic16((int)Width, AddrShift, (int)Endian, 1, true, (offs_t offset, u16 mask) => { return read_native16(offset, mask); }, address, 0xffff); }
+        public override u16 read_word(offs_t address, u16 mask) { address &= addrmask(); return memory_read_generic16((int)Width, AddrShift, (int)Endian, 1, true, (offs_t offset, u16 mask2) => { return read_native16(offset, mask2); }, address, mask); }
+        public override u16 read_word_unaligned(offs_t address) { address &= addrmask(); return memory_read_generic16((int)Width, AddrShift, (int)Endian, 1, false, (offs_t offset, u16 mask) => { return read_native16(offset, mask); }, address, 0xffff); }
+        public override u16 read_word_unaligned(offs_t address, u16 mask) { address &= addrmask(); return memory_read_generic16((int)Width, AddrShift, (int)Endian, 1, false, (offs_t offset, u16 mask2) => { return read_native16(offset, mask2); }, address, mask); }
+        public override u32 read_dword(offs_t address) { address &= addrmask(); return Width == 2 ? read_native32(address & ~NATIVE_MASK) : memory_read_generic32((int)Width, AddrShift, (int)Endian, 2, true, (offs_t offset, u32 mask) => { return read_native32(offset, mask); }, address, 0xffffffff); }
+        public override u32 read_dword(offs_t address, u32 mask) { address &= addrmask(); return memory_read_generic32((int)Width, AddrShift, (int)Endian, 2, true, (offs_t offset, u32 mask2) => { return read_native32(offset, mask2); }, address, mask); }
+        public override u32 read_dword_unaligned(offs_t address) { address &= addrmask(); return memory_read_generic32((int)Width, AddrShift, (int)Endian, 2, false, (offs_t offset, u32 mask) => { return read_native32(offset, mask); }, address, 0xffffffff); }
+        public override u32 read_dword_unaligned(offs_t address, u32 mask) { address &= addrmask(); return memory_read_generic32((int)Width, AddrShift, (int)Endian, 2, false, (offs_t offset, u32 mask2) => { return read_native32(offset, mask2); }, address, mask); }
+        public override u64 read_qword(offs_t address) { address &= addrmask(); return Width == 3 ? read_native64(address & ~NATIVE_MASK) : memory_read_generic64((int)Width, AddrShift, (int)Endian, 3, true, (offs_t offset, u64 mask) => { return read_native64(offset, mask); }, address, 0xffffffffffffffffU); }
+        public override u64 read_qword(offs_t address, u64 mask) { address &= addrmask(); return memory_read_generic64((int)Width, AddrShift, (int)Endian, 3, true, (offs_t offset, u64 mask2) => { return read_native64(offset, mask2); }, address, mask); }
+        public override u64 read_qword_unaligned(offs_t address) { address &= addrmask(); return memory_read_generic64((int)Width, AddrShift, (int)Endian, 3, false, (offs_t offset, u64 mask) => { return read_native64(offset, mask); }, address, 0xffffffffffffffffU); }
+        public override u64 read_qword_unaligned(offs_t address, u64 mask) { address &= addrmask(); return memory_read_generic64((int)Width, AddrShift, (int)Endian, 3, false, (offs_t offset, u64 mask2) => { return read_native64(offset, mask2); }, address, mask); }
 
-        public override void write_byte(offs_t address, u8 data) { address &= addrmask(); if (Width == 0) write_native8(address & ~NATIVE_MASK, data); else emumem_global.memory_write_generic8((int)Width, AddrShift, (int)Endian, 0, true, (offs_t offset, u8 data2, u8 mask) => { write_native8(offset, data2, mask); }, address, data, 0xff); }
-        public override void write_word(offs_t address, u16 data) { address &= addrmask(); if (Width == 1) write_native16(address & ~NATIVE_MASK, data); else emumem_global.memory_write_generic16((int)Width, AddrShift, (int)Endian, 1, true, (offs_t offset, u16 data2, u16 mask) => { write_native16(offset, data2, mask); }, address, data, 0xffff); }
-        public override void write_word(offs_t address, u16 data, u16 mask) { address &= addrmask(); emumem_global.memory_write_generic16((int)Width, AddrShift, (int)Endian, 1, true, (offs_t offset, u16 data2, u16 mask2) => { write_native16(offset, data2, mask2); }, address, data, mask); }
-        public override void write_word_unaligned(offs_t address, u16 data) { address &= addrmask(); emumem_global.memory_write_generic16((int)Width, AddrShift, (int)Endian, 1, false, (offs_t offset, u16 data2, u16 mask) => { write_native16(offset, data2, mask); }, address, data, 0xffff); }
-        public override void write_word_unaligned(offs_t address, u16 data, u16 mask) { address &= addrmask(); emumem_global.memory_write_generic16((int)Width, AddrShift, (int)Endian, 1, false, (offs_t offset, u16 data2, u16 mask2) => { write_native16(offset, data2, mask2); }, address, data, mask); }
-        public override void write_dword(offs_t address, u32 data) { address &= addrmask(); if (Width == 2) write_native32(address & ~NATIVE_MASK, data); else emumem_global.memory_write_generic32((int)Width, AddrShift, (int)Endian, 2, true, (offs_t offset, u32 data2, u32 mask) => { write_native32(offset, data2, mask); }, address, data, 0xffffffff); }
-        public override void write_dword(offs_t address, u32 data, u32 mask) { address &= addrmask(); emumem_global.memory_write_generic32((int)Width, AddrShift, (int)Endian, 2, true, (offs_t offset, u32 data2, u32 mask2) => { write_native32(offset, data2, mask2); }, address, data, mask); }
-        public override void write_dword_unaligned(offs_t address, u32 data) { address &= addrmask(); emumem_global.memory_write_generic32((int)Width, AddrShift, (int)Endian, 2, false, (offs_t offset, u32 data2, u32 mask) => { write_native32(offset, data2, mask); }, address, data, 0xffffffff); }
-        public override void write_dword_unaligned(offs_t address, u32 data, u32 mask) { address &= addrmask(); emumem_global.memory_write_generic32((int)Width, AddrShift, (int)Endian, 2, false, (offs_t offset, u32 data2, u32 mask2) => { write_native32(offset, data2, mask2); }, address, data, mask); }
-        public override void write_qword(offs_t address, u64 data) { address &= addrmask(); if (Width == 3) write_native64(address & ~NATIVE_MASK, data); else emumem_global.memory_write_generic64((int)Width, AddrShift, (int)Endian, 3, true, (offs_t offset, u64 data2, u64 mask) => { write_native64(offset, data2, mask); }, address, data, 0xffffffffffffffffU); }
-        public override void write_qword(offs_t address, u64 data, u64 mask) { address &= addrmask(); emumem_global.memory_write_generic64((int)Width, AddrShift, (int)Endian, 3, true, (offs_t offset, u64 data2, u64 mask2) => { write_native64(offset, data2, mask2); }, address, data, mask); }
-        public override void write_qword_unaligned(offs_t address, u64 data) { address &= addrmask(); emumem_global.memory_write_generic64((int)Width, AddrShift, (int)Endian, 3, false, (offs_t offset, u64 data2, u64 mask) => { write_native64(offset, data2, mask); }, address, data, 0xffffffffffffffffU); }
-        public override void write_qword_unaligned(offs_t address, u64 data, u64 mask) { address &= addrmask(); emumem_global.memory_write_generic64((int)Width, AddrShift, (int)Endian, 3, false, (offs_t offset, u64 data2, u64 mask2) => { write_native64(offset, data2, mask2); }, address, data, mask); }
+        public override void write_byte(offs_t address, u8 data) { address &= addrmask(); if (Width == 0) write_native8(address & ~NATIVE_MASK, data); else memory_write_generic8((int)Width, AddrShift, (int)Endian, 0, true, (offs_t offset, u8 data2, u8 mask) => { write_native8(offset, data2, mask); }, address, data, 0xff); }
+        public override void write_word(offs_t address, u16 data) { address &= addrmask(); if (Width == 1) write_native16(address & ~NATIVE_MASK, data); else memory_write_generic16((int)Width, AddrShift, (int)Endian, 1, true, (offs_t offset, u16 data2, u16 mask) => { write_native16(offset, data2, mask); }, address, data, 0xffff); }
+        public override void write_word(offs_t address, u16 data, u16 mask) { address &= addrmask(); memory_write_generic16((int)Width, AddrShift, (int)Endian, 1, true, (offs_t offset, u16 data2, u16 mask2) => { write_native16(offset, data2, mask2); }, address, data, mask); }
+        public override void write_word_unaligned(offs_t address, u16 data) { address &= addrmask(); memory_write_generic16((int)Width, AddrShift, (int)Endian, 1, false, (offs_t offset, u16 data2, u16 mask) => { write_native16(offset, data2, mask); }, address, data, 0xffff); }
+        public override void write_word_unaligned(offs_t address, u16 data, u16 mask) { address &= addrmask(); memory_write_generic16((int)Width, AddrShift, (int)Endian, 1, false, (offs_t offset, u16 data2, u16 mask2) => { write_native16(offset, data2, mask2); }, address, data, mask); }
+        public override void write_dword(offs_t address, u32 data) { address &= addrmask(); if (Width == 2) write_native32(address & ~NATIVE_MASK, data); else memory_write_generic32((int)Width, AddrShift, (int)Endian, 2, true, (offs_t offset, u32 data2, u32 mask) => { write_native32(offset, data2, mask); }, address, data, 0xffffffff); }
+        public override void write_dword(offs_t address, u32 data, u32 mask) { address &= addrmask(); memory_write_generic32((int)Width, AddrShift, (int)Endian, 2, true, (offs_t offset, u32 data2, u32 mask2) => { write_native32(offset, data2, mask2); }, address, data, mask); }
+        public override void write_dword_unaligned(offs_t address, u32 data) { address &= addrmask(); memory_write_generic32((int)Width, AddrShift, (int)Endian, 2, false, (offs_t offset, u32 data2, u32 mask) => { write_native32(offset, data2, mask); }, address, data, 0xffffffff); }
+        public override void write_dword_unaligned(offs_t address, u32 data, u32 mask) { address &= addrmask(); memory_write_generic32((int)Width, AddrShift, (int)Endian, 2, false, (offs_t offset, u32 data2, u32 mask2) => { write_native32(offset, data2, mask2); }, address, data, mask); }
+        public override void write_qword(offs_t address, u64 data) { address &= addrmask(); if (Width == 3) write_native64(address & ~NATIVE_MASK, data); else memory_write_generic64((int)Width, AddrShift, (int)Endian, 3, true, (offs_t offset, u64 data2, u64 mask) => { write_native64(offset, data2, mask); }, address, data, 0xffffffffffffffffU); }
+        public override void write_qword(offs_t address, u64 data, u64 mask) { address &= addrmask(); memory_write_generic64((int)Width, AddrShift, (int)Endian, 3, true, (offs_t offset, u64 data2, u64 mask2) => { write_native64(offset, data2, mask2); }, address, data, mask); }
+        public override void write_qword_unaligned(offs_t address, u64 data) { address &= addrmask(); memory_write_generic64((int)Width, AddrShift, (int)Endian, 3, false, (offs_t offset, u64 data2, u64 mask) => { write_native64(offset, data2, mask); }, address, data, 0xffffffffffffffffU); }
+        public override void write_qword_unaligned(offs_t address, u64 data, u64 mask) { address &= addrmask(); memory_write_generic64((int)Width, AddrShift, (int)Endian, 3, false, (offs_t offset, u64 data2, u64 mask2) => { write_native64(offset, data2, mask2); }, address, data, mask); }
 
 
         // static access to these functions
@@ -5012,10 +5019,10 @@ namespace mame
                                          read8_delegate handler_r)  //READ handler_r)
         {
             emumem_global.VPRINTF("address_space::install_read_handler({0}-{1} mask={2} mirror={3}, space width={4}, handler width={5}, {6}, {7})\n",
-                     emumem_global.core_i64_hex_format(addrstart, m_addrchars), emumem_global.core_i64_hex_format(addrend, m_addrchars),
-                     emumem_global.core_i64_hex_format(addrmask, m_addrchars), emumem_global.core_i64_hex_format(addrmirror, m_addrchars),
+                     core_i64_hex_format(addrstart, m_addrchars), core_i64_hex_format(addrend, m_addrchars),
+                     core_i64_hex_format(addrmask, m_addrchars), core_i64_hex_format(addrmirror, m_addrchars),
                      8 << Width, 8 << AccessWidth,
-                     ((read8_delegate)(handler_r.Target)).Method.Name, emumem_global.core_i64_hex_format(unitmask, (byte)(data_width() / 4)));
+                     ((read8_delegate)(handler_r.Target)).Method.Name, core_i64_hex_format(unitmask, (byte)(data_width() / 4)));
 
             offs_t nstart;
             offs_t nend;
@@ -5069,10 +5076,10 @@ namespace mame
                                           write8_delegate handler_w)  // WRITE handler_w)
         {
             emumem_global.VPRINTF("address_space::install_write_handler({0}-{1} mask={2} mirror={3}, space width={4}, handler width={5}, {6}, {7})\n",
-                     emumem_global.core_i64_hex_format(addrstart, m_addrchars), emumem_global.core_i64_hex_format(addrend, m_addrchars),
-                     emumem_global.core_i64_hex_format(addrmask, m_addrchars), emumem_global.core_i64_hex_format(addrmirror, m_addrchars),
+                     core_i64_hex_format(addrstart, m_addrchars), core_i64_hex_format(addrend, m_addrchars),
+                     core_i64_hex_format(addrmask, m_addrchars), core_i64_hex_format(addrmirror, m_addrchars),
                      8 << Width, 8 << AccessWidth,
-                     ((write8_delegate)(handler_w.Target)).Method.Name, emumem_global.core_i64_hex_format(unitmask, (byte)(data_width() / 4)));
+                     ((write8_delegate)(handler_w.Target)).Method.Name, core_i64_hex_format(unitmask, (byte)(data_width() / 4)));
 
             offs_t nstart;
             offs_t nend;

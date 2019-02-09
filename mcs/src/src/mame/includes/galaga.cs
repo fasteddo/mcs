@@ -15,7 +15,7 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    public partial class galaga_state : driver_device
+    partial class galaga_state : driver_device
     {
         struct star
         {
@@ -33,18 +33,18 @@ namespace mame
 
 
         /* memory pointers */
-        protected optional_shared_ptr_byte m_videoram;
-        optional_shared_ptr_byte m_galaga_ram1;
-        optional_shared_ptr_byte m_galaga_ram2;
-        optional_shared_ptr_byte m_galaga_ram3;
+        protected optional_shared_ptr_uint8_t m_videoram;
+        optional_shared_ptr_uint8_t m_galaga_ram1;
+        optional_shared_ptr_uint8_t m_galaga_ram2;
+        optional_shared_ptr_uint8_t m_galaga_ram3;
         optional_device<ls259_device> m_videolatch; // not present on Xevious
         required_device<cpu_device> m_maincpu;
         required_device<cpu_device> m_subcpu;
         required_device<cpu_device> m_subcpu2;
         required_device<namco_device> m_namco_sound;
-        protected required_device<gfxdecode_device> m_gfxdecode;
+        required_device<gfxdecode_device> m_gfxdecode;
         required_device<screen_device> m_screen;
-        protected required_device<palette_device> m_palette;
+        required_device<palette_device> m_palette;
         output_manager.output_finder/*<2>*/ m_leds;
         emu_timer m_cpu3_interrupt_timer;
 
@@ -70,10 +70,10 @@ namespace mame
         public galaga_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_videoram = new optional_shared_ptr_byte(this, "videoram");
-            m_galaga_ram1 = new optional_shared_ptr_byte(this, "galaga_ram1");
-            m_galaga_ram2 = new optional_shared_ptr_byte(this, "galaga_ram2");
-            m_galaga_ram3 = new optional_shared_ptr_byte(this, "galaga_ram3");
+            m_videoram = new optional_shared_ptr_uint8_t(this, "videoram");
+            m_galaga_ram1 = new optional_shared_ptr_uint8_t(this, "galaga_ram1");
+            m_galaga_ram2 = new optional_shared_ptr_uint8_t(this, "galaga_ram2");
+            m_galaga_ram3 = new optional_shared_ptr_uint8_t(this, "galaga_ram3");
             m_videolatch = new optional_device<ls259_device>(this, "videolatch");
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_subcpu = new required_device<cpu_device>(this, "sub");
@@ -87,8 +87,13 @@ namespace mame
 
 
         public optional_device<ls259_device> videolatch { get { return m_videolatch; } }
+        public required_device<cpu_device> maincpu { get { return m_maincpu; } }
+        public required_device<cpu_device> subcpu { get { return m_subcpu; } }
+        public required_device<cpu_device> subcpu2 { get { return m_subcpu2; } }
         public required_device<namco_device> namco_sound { get { return m_namco_sound; } }
+        public required_device<gfxdecode_device> gfxdecode { get { return m_gfxdecode; } }
         public required_device<screen_device> screen { get { return m_screen; } }
+        public required_device<palette_device> palette { get { return m_palette; } }
 
 
         //DECLARE_READ8_MEMBER(bosco_dsw_r);

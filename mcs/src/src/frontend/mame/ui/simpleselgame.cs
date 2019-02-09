@@ -15,7 +15,7 @@ namespace mame.ui
         //bool                    m_rerandomize;
         string m_search;  //char                    m_search[40];
         //int                     m_matchlist[VISIBLE_GAMES_IN_LIST];
-        std_vector<game_driver> m_driverlist;
+        std.vector<game_driver> m_driverlist;
         //std::unique_ptr<driver_enumerator> m_drivlist;
 
 
@@ -25,7 +25,7 @@ namespace mame.ui
         simple_menu_select_game(mame_ui_manager mui, render_container container, string gamename)
             : base(mui, container)
         {
-            m_driverlist = new std_vector<game_driver>(driver_list.total() + 1);
+            m_driverlist = new std.vector<game_driver>(driver_list.total() + 1);
 
 
             throw new emu_unimplemented();

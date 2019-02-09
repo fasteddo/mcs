@@ -20,7 +20,7 @@ namespace mame
         //}
         public static u32 make_bitmask32(u32 N)
         {
-            return (u32)((N < (8 * global.sizeof_(typeof(u32))) ? (1U << (int)N) : 0U) - 1);
+            return (u32)((N < (8 * global_object.sizeof_(typeof(u32))) ? (1U << (int)N) : 0U) - 1);
         }
 
 
@@ -151,7 +151,7 @@ namespace mame
 
         // construction/destruction
         public simple_list() { }
-        ~simple_list() { reset(); }
+        //~simple_list() { reset(); }
 
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
@@ -451,7 +451,7 @@ namespace mame
         // * copyable and swappable but not movable
         // * swap may invalidate past-the-end iterator, other iterators refer to new container
         //template <typename Key, typename T, typename Compare = std::less<Key>, class Allocator = std::allocator<std::pair<Key const, T> > >
-        class lru_cache_map<Key, T> : std_map<Key, T>
+        class lru_cache_map<Key, T> : std.map<Key, T>
         {
             public lru_cache_map(UInt32 max_size) : base()
             {

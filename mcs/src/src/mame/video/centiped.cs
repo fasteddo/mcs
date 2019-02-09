@@ -197,7 +197,7 @@ namespace mame
 
                 /* character colors, set directly */
                 if ((offset & 0x08) == 0)
-                    m_palette.target.palette_interface().set_pen_color(offset & 0x03, color);
+                    m_palette.target.palette_interface.set_pen_color(offset & 0x03, color);
 
                 /* sprite colors - set all the applicable ones */
                 else
@@ -209,13 +209,13 @@ namespace mame
                     for (i = 0; i < 0x100; i += 4)
                     {
                         if (offset == ((i >> 2) & 0x03))
-                            m_palette.target.palette_interface().set_pen_color((UInt32)i + 4 + 1, color);
+                            m_palette.target.palette_interface.set_pen_color((UInt32)i + 4 + 1, color);
 
                         if (offset == ((i >> 4) & 0x03))
-                            m_palette.target.palette_interface().set_pen_color((UInt32)i + 4 + 2, color);
+                            m_palette.target.palette_interface.set_pen_color((UInt32)i + 4 + 2, color);
 
                         if (offset == ((i >> 6) & 0x03))
-                            m_palette.target.palette_interface().set_pen_color((UInt32)i + 4 + 3, color);
+                            m_palette.target.palette_interface.set_pen_color((UInt32)i + 4 + 3, color);
                     }
                 }
             }

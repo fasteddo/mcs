@@ -45,12 +45,12 @@ namespace mame
             this.HighBits = HighBits;
 
 
-            LowBits  = (u32)emumem_global.handler_entry_dispatch_lowbits(HighBits, Width, AddrShift);
+            LowBits  = (u32)handler_entry_dispatch_lowbits(HighBits, Width, AddrShift);
             BITCOUNT = (u32)HighBits > LowBits ? (u32)HighBits - LowBits : 0;
             COUNT    = 1U << (int)BITCOUNT;
-            BITMASK  = global.make_bitmask32(BITCOUNT);
-            LOWMASK  = global.make_bitmask32(LowBits);
-            HIGHMASK = global.make_bitmask32((u32)HighBits) ^ LOWMASK;
+            BITMASK  = make_bitmask32(BITCOUNT);
+            LOWMASK  = make_bitmask32(LowBits);
+            HIGHMASK = make_bitmask32((u32)HighBits) ^ LOWMASK;
 
 
             if (handler == null)
@@ -69,8 +69,20 @@ namespace mame
 
         ~handler_entry_write_dispatch()
         {
+            //throw new emu_unimplemented();
+#if false
+            global.assert(m_isDisposed);  // can remove
+#endif
+        }
+
+        bool m_isDisposed = false;
+        public override void Dispose()
+        {
             for (UInt32 i = 0; i != COUNT; i++)
                 m_dispatch[i].unref();
+
+            m_isDisposed = true;
+            base.Dispose();
         }
 
 

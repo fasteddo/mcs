@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace mame.ui
 {
-    public class machine_static_info
+    public class machine_static_info : global_object
     {
         protected const machine_flags.type MACHINE_ERRORS    = machine_flags.type.NOT_WORKING | machine_flags.type.MECHANICAL;
         protected const machine_flags.type MACHINE_WARNINGS  = machine_flags.type.NO_COCKTAIL | machine_flags.type.REQUIRES_ARTWORK;
@@ -145,11 +145,11 @@ namespace mame.ui
         public rgb_t status_color()
         {
             if ((machine_flags_get() & MACHINE_ERRORS) != 0 || ((unemulated_features() | imperfect_features()) & emu.detail.device_feature.type.PROTECTION) != 0)
-                return ui_global.UI_RED_COLOR;
+                return UI_RED_COLOR;
             else if ((machine_flags_get() & MACHINE_WARNINGS) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
-                return ui_global.UI_YELLOW_COLOR;
+                return UI_YELLOW_COLOR;
             else
-                return ui_global.UI_GREEN_COLOR;
+                return UI_GREEN_COLOR;
         }
 
 
@@ -160,11 +160,11 @@ namespace mame.ui
         public rgb_t warnings_color()
         {
             if ((machine_flags_get() & MACHINE_ERRORS) != 0 || ((unemulated_features() | imperfect_features()) & emu.detail.device_feature.type.PROTECTION) != 0)
-                return ui_global.UI_RED_COLOR;
+                return UI_RED_COLOR;
             else if ((machine_flags_get() & MACHINE_WARNINGS) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
-                return ui_global.UI_YELLOW_COLOR;
+                return UI_YELLOW_COLOR;
             else
-                return ui_global.UI_BACKGROUND_COLOR;
+                return UI_BACKGROUND_COLOR;
         }
     }
 
@@ -266,7 +266,7 @@ namespace mame.ui
                 // find the parent of this driver
                 driver_enumerator drivlist = new driver_enumerator(m_machine.options());
                 int maindrv = driver_list.find(m_machine.system());
-                int clone_of = driver_list.non_bios_clone((UInt32)maindrv);
+                int clone_of = driver_list.non_bios_clone(maindrv);
                 if (clone_of != -1)
                     maindrv = clone_of;
 
@@ -312,11 +312,11 @@ namespace mame.ui
                     m_machine.system().type.fullname(),
                     m_machine.system().year,
                     m_machine.system().manufacturer,
-                    global.core_filename_extract_base(m_machine.system().type.source()));
+                    core_filename_extract_base(m_machine.system().type.source()));
 
             // loop over all CPUs
             execute_interface_iterator execiter = new execute_interface_iterator(m_machine.root_device());
-            std_unordered_set<string> exectags = new std_unordered_set<string>();
+            std.unordered_set<string> exectags = new std.unordered_set<string>();
             foreach (device_execute_interface exec in execiter)
             {
                 if (!exectags.insert(exec.device().tag()))  //.second)
@@ -330,7 +330,7 @@ namespace mame.ui
                 string name = exec.device().name();
                 foreach (device_execute_interface scan in execiter)
                 {
-                    if (exec.device().type() == scan.device().type() && global.strcmp(name, scan.device().name()) == 0 && exec.device().clock() == scan.device().clock())
+                    if (exec.device().type() == scan.device().type() && strcmp(name, scan.device().name()) == 0 && exec.device().clock() == scan.device().clock())
                         if (exectags.insert(scan.device().tag()))  //.second)
                             count++;
                 }
@@ -349,7 +349,7 @@ namespace mame.ui
 
             // loop over all sound chips
             sound_interface_iterator snditer = new sound_interface_iterator(m_machine.root_device());
-            std_unordered_set<string> soundtags = new std_unordered_set<string>();
+            std.unordered_set<string> soundtags = new std.unordered_set<string>();
             bool found_sound = false;
             foreach (device_sound_interface sound in snditer)
             {
@@ -408,7 +408,7 @@ namespace mame.ui
                         rectangle visarea = screen.visible_area();
                         detail = string.Format("{0} X {1} ({2}) {3} Hz",  //"%d " UTF8_MULTIPLY " %d (%s) %f" UTF8_NBSP "Hz",
                                 visarea.width(), visarea.height(),
-                                (screen.orientation() & emucore_global.ORIENTATION_SWAP_XY) != 0 ? "V" : "H",
+                                (screen.orientation() & ORIENTATION_SWAP_XY) != 0 ? "V" : "H",
                                 screen.frame_period().as_hz());
                     }
 

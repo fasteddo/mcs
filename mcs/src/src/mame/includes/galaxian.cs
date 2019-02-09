@@ -16,32 +16,42 @@ namespace mame
 {
     partial class galaxian_state : driver_device
     {
+        static galaxian_state()
+        {
+            // use a static ctor here to make sure GALAXIAN_MASTER_CLOCK is initialized properly across partial classes, see \audio\galaxian.cs
+            // https://stackoverflow.com/questions/29086844/static-field-initialization-order-with-partial-classes
+            GALAXIAN_MASTER_CLOCK = XTAL_global.op("18.432_MHz_XTAL");
+            SOUND_CLOCK           = GALAXIAN_MASTER_CLOCK/6/2;          /* 1.536 MHz */
+            RNG_RATE              = GALAXIAN_MASTER_CLOCK/3*2;          /* RNG clock is XTAL/3*2 see Aaron's note in video/galaxian.c */
+        }
+
+
         /* master clocks */
-        public static readonly XTAL GALAXIAN_MASTER_CLOCK = XTAL_global.op("18.432_MHz_XTAL");
-        public static readonly XTAL KONAMI_SOUND_CLOCK = XTAL_global.op("14.318181_MHz_XTAL");
+        static readonly XTAL GALAXIAN_MASTER_CLOCK = XTAL_global.op("18.432_MHz_XTAL");
+        static readonly XTAL KONAMI_SOUND_CLOCK = XTAL_global.op("14.318181_MHz_XTAL");
         //static constexpr XTAL SIDAM_MASTER_CLOCK(12_MHz_XTAL);
 
         /* we scale horizontally by 3 to render stars correctly */
-        public const int GALAXIAN_XSCALE = 3;
+        const int GALAXIAN_XSCALE = 3;
         /* the Sidam bootlegs have a 12 MHz XTAL instead */
         //static constexpr int SIDAM_XSCALE    = 2;
 
-        public static readonly XTAL GALAXIAN_PIXEL_CLOCK = (GALAXIAN_XSCALE*GALAXIAN_MASTER_CLOCK / 3);
+        static readonly XTAL GALAXIAN_PIXEL_CLOCK = (GALAXIAN_XSCALE*GALAXIAN_MASTER_CLOCK / 3);
         //static constexpr XTAL SIDAM_PIXEL_CLOCK(SIDAM_XSCALE*SIDAM_MASTER_CLOCK / 2);
 
         /* H counts from 128->511, HBLANK starts at 130 and ends at 250 */
         /* we normalize this here so that we count 0->383 with HBLANK */
         /* from 264-383 */
-        public const int GALAXIAN_HTOTAL  = (384 * GALAXIAN_XSCALE);
-        public const int GALAXIAN_HBEND   = (0 * GALAXIAN_XSCALE);
+        const int GALAXIAN_HTOTAL  = (384 * GALAXIAN_XSCALE);
+        const int GALAXIAN_HBEND   = (0 * GALAXIAN_XSCALE);
         //static constexpr int GALAXIAN_H0START = (6*GALAXIAN_XSCALE);
         //static constexpr int GALAXIAN_HBSTART = (264*GALAXIAN_XSCALE)
         const int GALAXIAN_H0START = (0 * GALAXIAN_XSCALE);
-        public const int GALAXIAN_HBSTART = (256 * GALAXIAN_XSCALE);
+        const int GALAXIAN_HBSTART = (256 * GALAXIAN_XSCALE);
 
-        public const int GALAXIAN_VTOTAL  = (264);
-        public const int GALAXIAN_VBEND   = (16);
-        public const int GALAXIAN_VBSTART = (224 + 16);
+        const int GALAXIAN_VTOTAL  = (264);
+        const int GALAXIAN_VBEND   = (16);
+        const int GALAXIAN_VBSTART = (224 + 16);
 
         //static constexpr int SIDAM_HTOTAL     = (384 * SIDAM_XSCALE);
         //static constexpr int SIDAM_HBEND      = (0 * SIDAM_XSCALE);
@@ -66,9 +76,9 @@ namespace mame
         optional_ioport m_fake_select;
         optional_ioport_array m_tenspot_game_dsw;  //optional_ioport_array<10> m_tenspot_game_dsw;
 
-        required_shared_ptr_byte m_spriteram;
-        required_shared_ptr_byte m_videoram;
-        optional_shared_ptr_byte m_decrypted_opcodes;
+        required_shared_ptr_uint8_t m_spriteram;
+        required_shared_ptr_uint8_t m_videoram;
+        optional_shared_ptr_uint8_t m_decrypted_opcodes;
         output_manager.output_finder/*<2>*/ m_lamps;
 
         int m_bullets_base;
@@ -148,9 +158,9 @@ namespace mame
             m_discrete = new optional_device<discrete_device>(this, "konami");
             m_fake_select = new optional_ioport(this, "FAKE_SELECT");
             m_tenspot_game_dsw = new optional_ioport_array(10, this, "IN2_GAME{0}", 0);  //{"IN2_GAME0", "IN2_GAME1", "IN2_GAME2", "IN2_GAME3", "IN2_GAME4", "IN2_GAME5", "IN2_GAME6", "IN2_GAME7", "IN2_GAME8", "IN2_GAME9"});
-            m_spriteram = new required_shared_ptr_byte(this, "spriteram");
-            m_videoram = new required_shared_ptr_byte(this, "videoram");
-            m_decrypted_opcodes = new optional_shared_ptr_byte(this, "decrypted_opcodes");
+            m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
+            m_videoram = new required_shared_ptr_uint8_t(this, "videoram");
+            m_decrypted_opcodes = new optional_shared_ptr_uint8_t(this, "decrypted_opcodes");
             m_lamps = new output_manager.output_finder(2, this, "lamp{0}", 0U);  //"lamp%u"
         }
 

@@ -12,10 +12,10 @@ namespace mame
         /* Little helpers for magnitude conversions */
         //#define RES_R(res) ((double)(res))
         public static double RES_K(double res) { return res * 1e3; }
-        //#define RES_M(res) ((double)(res) * 1e6)
+        public static double RES_M(double res) { return res * 1e6; }
         //#define RES_INF    (-1)
         public static double CAP_U(double cap) { return cap * 1e-6; }
-        //#define CAP_N(cap) ((double)(cap) * 1e-9)
+        public static double CAP_N(double cap) { return cap * 1e-9; }
         //#define CAP_P(cap) ((double)(cap) * 1e-12)
         //#define IND_U(ind) ((double)(ind) * 1e-6)
         //#define IND_N(ind) ((double)(ind) * 1e-9)

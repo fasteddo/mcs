@@ -24,12 +24,12 @@ namespace mame
             // if the [image|slot] entry was specified outside of the context of the options sytem, we need
             // to peg the priority of any associated core_options::entry at the maximum priority
             if (peg_priority)// && !entry.expired())
-                entry.set_priority(options_global.OPTION_PRIORITY_MAXIMUM);
+                entry.set_priority(global_object.OPTION_PRIORITY_MAXIMUM);
         }
     }
 
 
-    public class slot_option
+    public class slot_option : global_object
     {
         emu_options m_host;
         bool m_specified;
@@ -132,7 +132,7 @@ namespace mame
                 m_specified_bios = "";
             }
 
-            emuopts_global.conditionally_peg_priority(m_entry, peg_priority);
+            conditionally_peg_priority(m_entry, peg_priority);
 
             // we may have changed
             possibly_changed(old_value);
@@ -159,7 +159,7 @@ namespace mame
     }
 
 
-    public class image_option
+    public class image_option : global_object
     {
         emu_options m_host;
         string m_canonical_instance_name;
@@ -202,7 +202,7 @@ namespace mame
                 m_host.reevaluate_default_card_software();
 #endif
             }
-            emuopts_global.conditionally_peg_priority(m_entry, peg_priority);
+            conditionally_peg_priority(m_entry, peg_priority);
         }
 
         //void specify(std::string &&value, bool peg_priority = true);
@@ -241,7 +241,7 @@ namespace mame
         }
 
 
-        public const int OPTION_PRIORITY_CMDLINE = options_global.OPTION_PRIORITY_HIGH + 1;
+        public const int OPTION_PRIORITY_CMDLINE = OPTION_PRIORITY_HIGH + 1;
 
         // core options
         public static string OPTION_SYSTEMNAME   { get { return unadorned(0); } }
@@ -429,201 +429,201 @@ namespace mame
         static readonly options_entry [] s_option_entries = new options_entry []
         {
             // unadorned options - only a single one supported at the moment
-            new options_entry(OPTION_SYSTEMNAME,                                 null,        options_global.OPTION_STRING,     null),
-            new options_entry(OPTION_SOFTWARENAME,                               null,        options_global.OPTION_STRING,     null),
+            new options_entry(OPTION_SYSTEMNAME,                                 null,        OPTION_STRING,     null),
+            new options_entry(OPTION_SOFTWARENAME,                               null,        OPTION_STRING,     null),
 
             // config options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE CONFIGURATION OPTIONS"),
-            new options_entry(OPTION_READCONFIG + ";rc",                         "1",         options_global.OPTION_BOOLEAN,    "enable loading of configuration files"),
-            new options_entry(OPTION_WRITECONFIG + ";wc",                        "0",         options_global.OPTION_BOOLEAN,    "writes configuration to (driver).ini on exit"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE CONFIGURATION OPTIONS"),
+            new options_entry(OPTION_READCONFIG + ";rc",                         "1",         OPTION_BOOLEAN,    "enable loading of configuration files"),
+            new options_entry(OPTION_WRITECONFIG + ";wc",                        "0",         OPTION_BOOLEAN,    "write configuration to (driver).ini on exit"),
 
             // search path options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE SEARCH PATH OPTIONS"),
-            new options_entry(OPTION_HOMEPATH,                                   ".",         options_global.OPTION_STRING,     "path to home directory (read/write) location"),
-            new options_entry(OPTION_MEDIAPATH + ";rp;biospath;bp",              "roms",      options_global.OPTION_STRING,     "path to ROMsets and hard disk images"),
-            new options_entry(OPTION_HASHPATH + ";hash_directory;hash",          "hash",      options_global.OPTION_STRING,     "path to hash files"),
-            new options_entry(OPTION_SAMPLEPATH + ";sp",                         "samples",   options_global.OPTION_STRING,     "path to samplesets"),
-            new options_entry(OPTION_ARTPATH,                                    "artwork",   options_global.OPTION_STRING,     "path to artwork files"),
-            new options_entry(OPTION_CTRLRPATH,                                  "ctrlr",     options_global.OPTION_STRING,     "path to controller definitions"),
-            new options_entry(OPTION_INIPATH,                                    ".;ini;ini/presets", options_global.OPTION_STRING, "path to ini files"),
-            new options_entry(OPTION_FONTPATH,                                   ".",         options_global.OPTION_STRING,     "path to font files"),
-            new options_entry(OPTION_CHEATPATH,                                  "cheat",     options_global.OPTION_STRING,     "path to cheat files"),
-            new options_entry(OPTION_CROSSHAIRPATH,                              "crosshair", options_global.OPTION_STRING,     "path to crosshair files"),
-            new options_entry(OPTION_PLUGINSPATH,                                "plugins",   options_global.OPTION_STRING,     "path to plugin files"),
-            new options_entry(OPTION_LANGUAGEPATH,                               "language",  options_global.OPTION_STRING,     "path to language files"),
-            new options_entry(OPTION_SWPATH,                                     "software",  options_global.OPTION_STRING,     "path to loose software"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE SEARCH PATH OPTIONS"),
+            new options_entry(OPTION_HOMEPATH,                                   ".",         OPTION_STRING,     "path to base folder for plugin data (read/write)"),
+            new options_entry(OPTION_MEDIAPATH + ";rp;biospath;bp",              "roms",      OPTION_STRING,     "path to ROM sets and hard disk images"),
+            new options_entry(OPTION_HASHPATH + ";hash_directory;hash",          "hash",      OPTION_STRING,     "path to software definition files"),
+            new options_entry(OPTION_SAMPLEPATH + ";sp",                         "samples",   OPTION_STRING,     "path to audio sample sets"),
+            new options_entry(OPTION_ARTPATH,                                    "artwork",   OPTION_STRING,     "path to artwork files"),
+            new options_entry(OPTION_CTRLRPATH,                                  "ctrlr",     OPTION_STRING,     "path to controller definitions"),
+            new options_entry(OPTION_INIPATH,                                    ".;ini;ini/presets", OPTION_STRING, "path to ini files"),
+            new options_entry(OPTION_FONTPATH,                                   ".",         OPTION_STRING,     "path to font files"),
+            new options_entry(OPTION_CHEATPATH,                                  "cheat",     OPTION_STRING,     "path to cheat files"),
+            new options_entry(OPTION_CROSSHAIRPATH,                              "crosshair", OPTION_STRING,     "path to crosshair files"),
+            new options_entry(OPTION_PLUGINSPATH,                                "plugins",   OPTION_STRING,     "path to plugin files"),
+            new options_entry(OPTION_LANGUAGEPATH,                               "language",  OPTION_STRING,     "path to UI translation files"),
+            new options_entry(OPTION_SWPATH,                                     "software",  OPTION_STRING,     "path to loose software"),
 
             // output directory options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE OUTPUT DIRECTORY OPTIONS"),
-            new options_entry(OPTION_CFG_DIRECTORY,                              "cfg",       options_global.OPTION_STRING,     "directory to save configurations"),
-            new options_entry(OPTION_NVRAM_DIRECTORY,                            "nvram",     options_global.OPTION_STRING,     "directory to save NVRAM contents"),
-            new options_entry(OPTION_INPUT_DIRECTORY,                            "inp",       options_global.OPTION_STRING,     "directory to save input device logs"),
-            new options_entry(OPTION_STATE_DIRECTORY,                            "sta",       options_global.OPTION_STRING,     "directory to save states"),
-            new options_entry(OPTION_SNAPSHOT_DIRECTORY,                         "snap",      options_global.OPTION_STRING,     "directory to save/load screenshots"),
-            new options_entry(OPTION_DIFF_DIRECTORY,                             "diff",      options_global.OPTION_STRING,     "directory to save hard drive image difference files"),
-            new options_entry(OPTION_COMMENT_DIRECTORY,                          "comments",  options_global.OPTION_STRING,     "directory to save debugger comments"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE OUTPUT DIRECTORY OPTIONS"),
+            new options_entry(OPTION_CFG_DIRECTORY,                              "cfg",       OPTION_STRING,     "directory to save configurations"),
+            new options_entry(OPTION_NVRAM_DIRECTORY,                            "nvram",     OPTION_STRING,     "directory to save NVRAM contents"),
+            new options_entry(OPTION_INPUT_DIRECTORY,                            "inp",       OPTION_STRING,     "directory to save input device logs"),
+            new options_entry(OPTION_STATE_DIRECTORY,                            "sta",       OPTION_STRING,     "directory to save states"),
+            new options_entry(OPTION_SNAPSHOT_DIRECTORY,                         "snap",      OPTION_STRING,     "directory to save/load screenshots"),
+            new options_entry(OPTION_DIFF_DIRECTORY,                             "diff",      OPTION_STRING,     "directory to save hard drive image difference files"),
+            new options_entry(OPTION_COMMENT_DIRECTORY,                          "comments",  OPTION_STRING,     "directory to save debugger comments"),
 
             // state/playback options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE STATE/PLAYBACK OPTIONS"),
-            new options_entry(OPTION_STATE,                                      null,        options_global.OPTION_STRING,     "saved state to load"),
-            new options_entry(OPTION_AUTOSAVE,                                   "0",         options_global.OPTION_BOOLEAN,    "enable automatic restore at startup, and automatic save at exit time"),
-            new options_entry(OPTION_REWIND,                                     "0",         options_global.OPTION_BOOLEAN,    "enable rewind savestates"),
-            new options_entry(OPTION_REWIND_CAPACITY + "(1-2048)",               "100",       options_global.OPTION_INTEGER,    "rewind buffer size in megabytes"),
-            new options_entry(OPTION_PLAYBACK + ";pb",                           null,        options_global.OPTION_STRING,     "playback an input file"),
-            new options_entry(OPTION_RECORD + ";rec",                            null,        options_global.OPTION_STRING,     "record an input file"),
-            new options_entry(OPTION_RECORD_TIMECODE,                            "0",         options_global.OPTION_BOOLEAN,    "record an input timecode file (requires -record option)"),
-            new options_entry(OPTION_EXIT_AFTER_PLAYBACK,                        "0",         options_global.OPTION_BOOLEAN,    "close the program at the end of playback"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE STATE/PLAYBACK OPTIONS"),
+            new options_entry(OPTION_STATE,                                      null,        OPTION_STRING,     "saved state to load"),
+            new options_entry(OPTION_AUTOSAVE,                                   "0",         OPTION_BOOLEAN,    "automatically restore state on start and save on exit for supported systems"),
+            new options_entry(OPTION_REWIND,                                     "0",         OPTION_BOOLEAN,    "enable rewind savestates"),
+            new options_entry(OPTION_REWIND_CAPACITY + "(1-2048)",               "100",       OPTION_INTEGER,    "rewind buffer size in megabytes"),
+            new options_entry(OPTION_PLAYBACK + ";pb",                           null,        OPTION_STRING,     "playback an input file"),
+            new options_entry(OPTION_RECORD + ";rec",                            null,        OPTION_STRING,     "record an input file"),
+            new options_entry(OPTION_RECORD_TIMECODE,                            "0",         OPTION_BOOLEAN,    "record an input timecode file (requires -record option)"),
+            new options_entry(OPTION_EXIT_AFTER_PLAYBACK,                        "0",         OPTION_BOOLEAN,    "close the program at the end of playback"),
 
-            new options_entry(OPTION_MNGWRITE,                                   null,        options_global.OPTION_STRING,     "optional filename to write a MNG movie of the current session"),
-            new options_entry(OPTION_AVIWRITE,                                   null,        options_global.OPTION_STRING,     "optional filename to write an AVI movie of the current session"),
-            new options_entry(OPTION_WAVWRITE,                                   null,        options_global.OPTION_STRING,     "optional filename to write a WAV file of the current session"),
-            new options_entry(OPTION_SNAPNAME,                                   "%g/%i",     options_global.OPTION_STRING,     "override of the default snapshot/movie naming; %g == gamename, %i == index"),
-            new options_entry(OPTION_SNAPSIZE,                                   "auto",      options_global.OPTION_STRING,     "specify snapshot/movie resolution (<width>x<height>) or 'auto' to use minimal size "),
-            new options_entry(OPTION_SNAPVIEW,                                   "internal",  options_global.OPTION_STRING,     "specify snapshot/movie view or 'internal' to use internal pixel-aspect views"),
-            new options_entry(OPTION_SNAPBILINEAR,                               "1",         options_global.OPTION_BOOLEAN,    "specify if the snapshot/movie should have bilinear filtering applied"),
-            new options_entry(OPTION_STATENAME,                                  "%g",        options_global.OPTION_STRING,     "override of the default state subfolder naming; %g == gamename"),
-            new options_entry(OPTION_BURNIN,                                     "0",         options_global.OPTION_BOOLEAN,    "create burn-in snapshots for each screen"),
+            new options_entry(OPTION_MNGWRITE,                                   null,        OPTION_STRING,     "optional filename to write a MNG movie of the current session"),
+            new options_entry(OPTION_AVIWRITE,                                   null,        OPTION_STRING,     "optional filename to write an AVI movie of the current session"),
+            new options_entry(OPTION_WAVWRITE,                                   null,        OPTION_STRING,     "optional filename to write a WAV file of the current session"),
+            new options_entry(OPTION_SNAPNAME,                                   "%g/%i",     OPTION_STRING,     "override of the default snapshot/movie naming; %g == gamename, %i == index"),
+            new options_entry(OPTION_SNAPSIZE,                                   "auto",      OPTION_STRING,     "specify snapshot/movie resolution (<width>x<height>) or 'auto' to use minimal size "),
+            new options_entry(OPTION_SNAPVIEW,                                   "internal",  OPTION_STRING,     "specify snapshot/movie view or 'internal' to use internal pixel-aspect views"),
+            new options_entry(OPTION_SNAPBILINEAR,                               "1",         OPTION_BOOLEAN,    "specify if the snapshot/movie should have bilinear filtering applied"),
+            new options_entry(OPTION_STATENAME,                                  "%g",        OPTION_STRING,     "override of the default state subfolder naming; %g == gamename"),
+            new options_entry(OPTION_BURNIN,                                     "0",         OPTION_BOOLEAN,    "create burn-in snapshots for each screen"),
 
             // performance options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE PERFORMANCE OPTIONS"),
-            new options_entry(OPTION_AUTOFRAMESKIP + ";afs",                     "0",         options_global.OPTION_BOOLEAN,    "enable automatic frameskip selection"),
-            new options_entry(OPTION_FRAMESKIP + ";fs(0-10)",                    "0",         options_global.OPTION_INTEGER,    "set frameskip to fixed value, 0-10 (autoframeskip must be disabled)"),
-            new options_entry(OPTION_SECONDS_TO_RUN + ";str",                    "0",         options_global.OPTION_INTEGER,    "number of emulated seconds to run before automatically exiting"),
-            new options_entry(OPTION_THROTTLE,                                   "1",         options_global.OPTION_BOOLEAN,    "enable throttling to keep game running in sync with real time"),
-            new options_entry(OPTION_SLEEP,                                      "1",         options_global.OPTION_BOOLEAN,    "enable sleeping, which gives time back to other applications when idle"),
-            new options_entry(OPTION_SPEED + "(0.01-100)",                       "1.0",       options_global.OPTION_FLOAT,      "controls the speed of gameplay, relative to realtime; smaller numbers are slower"),
-            new options_entry(OPTION_REFRESHSPEED + ";rs",                       "0",         options_global.OPTION_BOOLEAN,    "automatically adjusts the speed of gameplay to keep the refresh rate lower than the screen"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE PERFORMANCE OPTIONS"),
+            new options_entry(OPTION_AUTOFRAMESKIP + ";afs",                     "0",         OPTION_BOOLEAN,    "enable automatic frameskip adjustment to maintain emulation speed"),
+            new options_entry(OPTION_FRAMESKIP + ";fs(0-10)",                    "0",         OPTION_INTEGER,    "set frameskip to fixed value, 0-10 (autoframeskip must be disabled)"),
+            new options_entry(OPTION_SECONDS_TO_RUN + ";str",                    "0",         OPTION_INTEGER,    "number of emulated seconds to run before automatically exiting"),
+            new options_entry(OPTION_THROTTLE,                                   "1",         OPTION_BOOLEAN,    "throttle emulation to keep system running in sync with real time"),
+            new options_entry(OPTION_SLEEP,                                      "1",         OPTION_BOOLEAN,    "enable sleeping, which gives time back to other applications when idle"),
+            new options_entry(OPTION_SPEED + "(0.01-100)",                       "1.0",       OPTION_FLOAT,      "controls the speed of gameplay, relative to realtime; smaller numbers are slower"),
+            new options_entry(OPTION_REFRESHSPEED + ";rs",                       "0",         OPTION_BOOLEAN,    "automatically adjust emulation speed to keep the emulated refresh rate slower than the host screen"),
 
             // render options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE RENDER OPTIONS"),
-            new options_entry(OPTION_KEEPASPECT + ";ka",                         "1",         options_global.OPTION_BOOLEAN,    "constrain to the proper aspect ratio"),
-            new options_entry(OPTION_UNEVENSTRETCH + ";ues",                     "1",         options_global.OPTION_BOOLEAN,    "allow non-integer stretch factors"),
-            new options_entry(OPTION_UNEVENSTRETCHX + ";uesx",                   "0",         options_global.OPTION_BOOLEAN,    "allow non-integer stretch factors only on horizontal axis"),
-            new options_entry(OPTION_UNEVENSTRETCHY + ";uesy",                   "0",         options_global.OPTION_BOOLEAN,    "allow non-integer stretch factors only on vertical axis"),
-            new options_entry(OPTION_AUTOSTRETCHXY + ";asxy",                    "0",         options_global.OPTION_BOOLEAN,    "automatically apply -unevenstretchx/y based on source native orientation"),
-            new options_entry(OPTION_INTOVERSCAN + ";ios",                       "0",         options_global.OPTION_BOOLEAN,    "allow overscan on integer scaled targets"),
-            new options_entry(OPTION_INTSCALEX + ";sx",                          "0",         options_global.OPTION_INTEGER,    "set horizontal integer scale factor."),
-            new options_entry(OPTION_INTSCALEY + ";sy",                          "0",         options_global.OPTION_INTEGER,    "set vertical integer scale."),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE RENDER OPTIONS"),
+            new options_entry(OPTION_KEEPASPECT + ";ka",                         "1",         OPTION_BOOLEAN,    "maintain aspect ratio when scaling to fill output screen/window"),
+            new options_entry(OPTION_UNEVENSTRETCH + ";ues",                     "1",         OPTION_BOOLEAN,    "allow non-integer ratios when scaling to fill output screen/window horizontally or vertically"),
+            new options_entry(OPTION_UNEVENSTRETCHX + ";uesx",                   "0",         OPTION_BOOLEAN,    "allow non-integer ratios when scaling to fill output screen/window horizontally"),
+            new options_entry(OPTION_UNEVENSTRETCHY + ";uesy",                   "0",         OPTION_BOOLEAN,    "allow non-integer ratios when scaling to fill otuput screen/window vertially"),
+            new options_entry(OPTION_AUTOSTRETCHXY + ";asxy",                    "0",         OPTION_BOOLEAN,    "automatically apply -unevenstretchx/y based on source native orientation"),
+            new options_entry(OPTION_INTOVERSCAN + ";ios",                       "0",         OPTION_BOOLEAN,    "allow overscan on integer scaled targets"),
+            new options_entry(OPTION_INTSCALEX + ";sx",                          "0",         OPTION_INTEGER,    "set horizontal integer scale factor"),
+            new options_entry(OPTION_INTSCALEY + ";sy",                          "0",         OPTION_INTEGER,    "set vertical integer scale factor"),
 
             // rotation options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE ROTATION OPTIONS"),
-            new options_entry(OPTION_ROTATE,                                     "1",         options_global.OPTION_BOOLEAN,    "rotate the game screen according to the game's orientation needs it"),
-            new options_entry(OPTION_ROR,                                        "0",         options_global.OPTION_BOOLEAN,    "rotate screen clockwise 90 degrees"),
-            new options_entry(OPTION_ROL,                                        "0",         options_global.OPTION_BOOLEAN,    "rotate screen counterclockwise 90 degrees"),
-            new options_entry(OPTION_AUTOROR,                                    "0",         options_global.OPTION_BOOLEAN,    "automatically rotate screen clockwise 90 degrees if vertical"),
-            new options_entry(OPTION_AUTOROL,                                    "0",         options_global.OPTION_BOOLEAN,    "automatically rotate screen counterclockwise 90 degrees if vertical"),
-            new options_entry(OPTION_FLIPX,                                      "0",         options_global.OPTION_BOOLEAN,    "flip screen left-right"),
-            new options_entry(OPTION_FLIPY,                                      "0",         options_global.OPTION_BOOLEAN,    "flip screen upside-down"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE ROTATION OPTIONS"),
+            new options_entry(OPTION_ROTATE,                                     "1",         OPTION_BOOLEAN,    "rotate the game screen according to the game's orientation when needed"),
+            new options_entry(OPTION_ROR,                                        "0",         OPTION_BOOLEAN,    "rotate screen clockwise 90 degrees"),
+            new options_entry(OPTION_ROL,                                        "0",         OPTION_BOOLEAN,    "rotate screen counterclockwise 90 degrees"),
+            new options_entry(OPTION_AUTOROR,                                    "0",         OPTION_BOOLEAN,    "automatically rotate screen clockwise 90 degrees if vertical"),
+            new options_entry(OPTION_AUTOROL,                                    "0",         OPTION_BOOLEAN,    "automatically rotate screen counterclockwise 90 degrees if vertical"),
+            new options_entry(OPTION_FLIPX,                                      "0",         OPTION_BOOLEAN,    "flip screen left-right"),
+            new options_entry(OPTION_FLIPY,                                      "0",         OPTION_BOOLEAN,    "flip screen upside-down"),
 
             // artwork options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE ARTWORK OPTIONS"),
-            new options_entry(OPTION_ARTWORK_CROP + ";artcrop",                  "0",         options_global.OPTION_BOOLEAN,    "crop artwork to game screen size"),
-            new options_entry(OPTION_USE_BACKDROPS + ";backdrop",                "1",         options_global.OPTION_BOOLEAN,    "enable backdrops if artwork is enabled and available"),
-            new options_entry(OPTION_USE_OVERLAYS + ";overlay",                  "1",         options_global.OPTION_BOOLEAN,    "enable overlays if artwork is enabled and available"),
-            new options_entry(OPTION_USE_BEZELS + ";bezel",                      "1",         options_global.OPTION_BOOLEAN,    "enable bezels if artwork is enabled and available"),
-            new options_entry(OPTION_USE_CPANELS + ";cpanel",                    "1",         options_global.OPTION_BOOLEAN,    "enable cpanels if artwork is enabled and available"),
-            new options_entry(OPTION_USE_MARQUEES + ";marquee",                  "1",         options_global.OPTION_BOOLEAN,    "enable marquees if artwork is enabled and available"),
-            new options_entry(OPTION_FALLBACK_ARTWORK,                           null,        options_global.OPTION_STRING,     "fallback artwork if no external artwork or internal driver layout defined"),
-            new options_entry(OPTION_OVERRIDE_ARTWORK,                           null,        options_global.OPTION_STRING,     "override artwork for external artwork and internal driver layout"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE ARTWORK OPTIONS"),
+            new options_entry(OPTION_ARTWORK_CROP + ";artcrop",                  "0",         OPTION_BOOLEAN,    "crop artwork so emulated screen image fills output screen/window in one axis"),
+            new options_entry(OPTION_USE_BACKDROPS + ";backdrop",                "1",         OPTION_BOOLEAN,    "enable backdrops if artwork is enabled and available"),
+            new options_entry(OPTION_USE_OVERLAYS + ";overlay",                  "1",         OPTION_BOOLEAN,    "enable overlays if artwork is enabled and available"),
+            new options_entry(OPTION_USE_BEZELS + ";bezel",                      "1",         OPTION_BOOLEAN,    "enable bezels if artwork is enabled and available"),
+            new options_entry(OPTION_USE_CPANELS + ";cpanel",                    "1",         OPTION_BOOLEAN,    "enable cpanels if artwork is enabled and available"),
+            new options_entry(OPTION_USE_MARQUEES + ";marquee",                  "1",         OPTION_BOOLEAN,    "enable marquees if artwork is enabled and available"),
+            new options_entry(OPTION_FALLBACK_ARTWORK,                           null,        OPTION_STRING,     "fallback artwork if no external artwork or internal driver layout defined"),
+            new options_entry(OPTION_OVERRIDE_ARTWORK,                           null,        OPTION_STRING,     "override artwork for external artwork and internal driver layout"),
 
             // screen options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE SCREEN OPTIONS"),
-            new options_entry(OPTION_BRIGHTNESS + "(0.1-2.0)",                   "1.0",       options_global.OPTION_FLOAT,      "default game screen brightness correction"),
-            new options_entry(OPTION_CONTRAST + "(0.1-2.0)",                     "1.0",       options_global.OPTION_FLOAT,      "default game screen contrast correction"),
-            new options_entry(OPTION_GAMMA + "(0.1-3.0)",                        "1.0",       options_global.OPTION_FLOAT,      "default game screen gamma correction"),
-            new options_entry(OPTION_PAUSE_BRIGHTNESS + "(0.0-1.0)",             "0.65",      options_global.OPTION_FLOAT,      "amount to scale the screen brightness when paused"),
-            new options_entry(OPTION_EFFECT,                                     "none",      options_global.OPTION_STRING,     "name of a PNG file to use for visual effects, or 'none'"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE SCREEN OPTIONS"),
+            new options_entry(OPTION_BRIGHTNESS + "(0.1-2.0)",                   "1.0",       OPTION_FLOAT,      "default game screen brightness correction"),
+            new options_entry(OPTION_CONTRAST + "(0.1-2.0)",                     "1.0",       OPTION_FLOAT,      "default game screen contrast correction"),
+            new options_entry(OPTION_GAMMA + "(0.1-3.0)",                        "1.0",       OPTION_FLOAT,      "default game screen gamma correction"),
+            new options_entry(OPTION_PAUSE_BRIGHTNESS + "(0.0-1.0)",             "0.65",      OPTION_FLOAT,      "amount to scale the screen brightness when paused"),
+            new options_entry(OPTION_EFFECT,                                     "none",      OPTION_STRING,     "name of a PNG file to use for visual effects, or 'none'"),
 
             // vector options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE VECTOR OPTIONS"),
-            new options_entry(OPTION_BEAM_WIDTH_MIN,                             "1.0",       options_global.OPTION_FLOAT,      "set vector beam width minimum"),
-            new options_entry(OPTION_BEAM_WIDTH_MAX,                             "1.0",       options_global.OPTION_FLOAT,      "set vector beam width maximum"),
-            new options_entry(OPTION_BEAM_INTENSITY_WEIGHT,                      "0",         options_global.OPTION_FLOAT,      "set vector beam intensity weight "),
-            new options_entry(OPTION_FLICKER,                                    "0",         options_global.OPTION_FLOAT,      "set vector flicker effect"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE VECTOR OPTIONS"),
+            new options_entry(OPTION_BEAM_WIDTH_MIN,                             "1.0",       OPTION_FLOAT,      "set vector beam width minimum"),
+            new options_entry(OPTION_BEAM_WIDTH_MAX,                             "1.0",       OPTION_FLOAT,      "set vector beam width maximum"),
+            new options_entry(OPTION_BEAM_INTENSITY_WEIGHT,                      "0",         OPTION_FLOAT,      "set vector beam intensity weight "),
+            new options_entry(OPTION_FLICKER,                                    "0",         OPTION_FLOAT,      "set vector flicker effect"),
 
             // sound options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE SOUND OPTIONS"),
-            new options_entry(OPTION_SAMPLERATE + ";sr(1000-1000000)",           "48000",     options_global.OPTION_INTEGER,    "set sound output sample rate"),
-            new options_entry(OPTION_SAMPLES,                                    "1",         options_global.OPTION_BOOLEAN,    "enable the use of external samples if available"),
-            new options_entry(OPTION_VOLUME + ";vol",                            "0",         options_global.OPTION_INTEGER,    "sound volume in decibels (-32 min, 0 max)"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE SOUND OPTIONS"),
+            new options_entry(OPTION_SAMPLERATE + ";sr(1000-1000000)",           "48000",     OPTION_INTEGER,    "set sound output sample rate"),
+            new options_entry(OPTION_SAMPLES,                                    "1",         OPTION_BOOLEAN,    "enable the use of external samples if available"),
+            new options_entry(OPTION_VOLUME + ";vol",                            "0",         OPTION_INTEGER,    "sound volume in decibels (-32 min, 0 max)"),
 
             // input options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE INPUT OPTIONS"),
-            new options_entry(OPTION_COIN_LOCKOUT + ";coinlock",                 "1",         options_global.OPTION_BOOLEAN,    "enable coin lockouts to actually lock out coins"),
-            new options_entry(OPTION_CTRLR,                                      null,        options_global.OPTION_STRING,     "preconfigure for specified controller"),
-            new options_entry(OPTION_MOUSE,                                      "0",         options_global.OPTION_BOOLEAN,    "enable mouse input"),
-            new options_entry(OPTION_JOYSTICK + ";joy",                          "1",         options_global.OPTION_BOOLEAN,    "enable joystick input"),
-            new options_entry(OPTION_LIGHTGUN + ";gun",                          "0",         options_global.OPTION_BOOLEAN,    "enable lightgun input"),
-            new options_entry(OPTION_MULTIKEYBOARD + ";multikey",                "0",         options_global.OPTION_BOOLEAN,    "enable separate input from each keyboard device (if present)"),
-            new options_entry(OPTION_MULTIMOUSE,                                 "0",         options_global.OPTION_BOOLEAN,    "enable separate input from each mouse device (if present)"),
-            new options_entry(OPTION_STEADYKEY + ";steady",                      "0",         options_global.OPTION_BOOLEAN,    "enable steadykey support"),
-            new options_entry(OPTION_UI_ACTIVE,                                  "0",         options_global.OPTION_BOOLEAN,    "enable user interface on top of emulated keyboard (if present)"),
-            new options_entry(OPTION_OFFSCREEN_RELOAD + ";reload",               "0",         options_global.OPTION_BOOLEAN,    "convert lightgun button 2 into offscreen reload"),
-            new options_entry(OPTION_JOYSTICK_MAP + ";joymap",                   "auto",      options_global.OPTION_STRING,     "explicit joystick map, or auto to auto-select"),
-            new options_entry(OPTION_JOYSTICK_DEADZONE + ";joy_deadzone;jdz(0.00-1)", "0.3",  options_global.OPTION_FLOAT,      "center deadzone range for joystick where change is ignored (0.0 center, 1.0 end)"),
-            new options_entry(OPTION_JOYSTICK_SATURATION + ";joy_saturation;jsat(0.00-1)", "0.85", options_global.OPTION_FLOAT, "end of axis saturation range for joystick where change is ignored (0.0 center, 1.0 end)"),
-            new options_entry(OPTION_NATURAL_KEYBOARD + ";nat",                  "0",         options_global.OPTION_BOOLEAN,    "specifies whether to use a natural keyboard or not"),
-            new options_entry(OPTION_JOYSTICK_CONTRADICTORY + ";joy_contradictory", "0",      options_global.OPTION_BOOLEAN,    "enable contradictory direction digital joystick input at the same time"),
-            new options_entry(OPTION_COIN_IMPULSE,                               "0",         options_global.OPTION_INTEGER,    "set coin impulse time (n<0 disable impulse, n==0 obey driver, 0<n set time n)"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE INPUT OPTIONS"),
+            new options_entry(OPTION_COIN_LOCKOUT + ";coinlock",                 "1",         OPTION_BOOLEAN,    "ignore coin inputs if coin lockout ouput is active"),
+            new options_entry(OPTION_CTRLR,                                      null,        OPTION_STRING,     "preconfigure for specified controller"),
+            new options_entry(OPTION_MOUSE,                                      "0",         OPTION_BOOLEAN,    "enable mouse input"),
+            new options_entry(OPTION_JOYSTICK + ";joy",                          "1",         OPTION_BOOLEAN,    "enable joystick input"),
+            new options_entry(OPTION_LIGHTGUN + ";gun",                          "0",         OPTION_BOOLEAN,    "enable lightgun input"),
+            new options_entry(OPTION_MULTIKEYBOARD + ";multikey",                "0",         OPTION_BOOLEAN,    "enable separate input from each keyboard device (if present)"),
+            new options_entry(OPTION_MULTIMOUSE,                                 "0",         OPTION_BOOLEAN,    "enable separate input from each mouse device (if present)"),
+            new options_entry(OPTION_STEADYKEY + ";steady",                      "0",         OPTION_BOOLEAN,    "enable steadykey support"),
+            new options_entry(OPTION_UI_ACTIVE,                                  "0",         OPTION_BOOLEAN,    "enable user interface on top of emulated keyboard (if present)"),
+            new options_entry(OPTION_OFFSCREEN_RELOAD + ";reload",               "0",         OPTION_BOOLEAN,    "convert lightgun button 2 into offscreen reload"),
+            new options_entry(OPTION_JOYSTICK_MAP + ";joymap",                   "auto",      OPTION_STRING,     "explicit joystick map, or auto to auto-select"),
+            new options_entry(OPTION_JOYSTICK_DEADZONE + ";joy_deadzone;jdz(0.00-1)", "0.3",  OPTION_FLOAT,      "center deadzone range for joystick where change is ignored (0.0 center, 1.0 end)"),
+            new options_entry(OPTION_JOYSTICK_SATURATION + ";joy_saturation;jsat(0.00-1)", "0.85", OPTION_FLOAT, "end of axis saturation range for joystick where change is ignored (0.0 center, 1.0 end)"),
+            new options_entry(OPTION_NATURAL_KEYBOARD + ";nat",                  "0",         OPTION_BOOLEAN,    "specifies whether to use a natural keyboard or not"),
+            new options_entry(OPTION_JOYSTICK_CONTRADICTORY + ";joy_contradictory", "0",      OPTION_BOOLEAN,    "enable contradictory direction digital joystick input at the same time"),
+            new options_entry(OPTION_COIN_IMPULSE,                               "0",         OPTION_INTEGER,    "set coin impulse time (n<0 disable impulse, n==0 obey driver, 0<n set time n)"),
 
             // input autoenable options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE INPUT AUTOMATIC ENABLE OPTIONS"),
-            new options_entry(OPTION_PADDLE_DEVICE + ";paddle",                  "keyboard",  options_global.OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a paddle control is present"),
-            new options_entry(OPTION_ADSTICK_DEVICE + ";adstick",                "keyboard",  options_global.OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if an analog joystick control is present"),
-            new options_entry(OPTION_PEDAL_DEVICE + ";pedal",                    "keyboard",  options_global.OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a pedal control is present"),
-            new options_entry(OPTION_DIAL_DEVICE + ";dial",                      "keyboard",  options_global.OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a dial control is present"),
-            new options_entry(OPTION_TRACKBALL_DEVICE + ";trackball",            "keyboard",  options_global.OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a trackball control is present"),
-            new options_entry(OPTION_LIGHTGUN_DEVICE,                            "keyboard",  options_global.OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a lightgun control is present"),
-            new options_entry(OPTION_POSITIONAL_DEVICE,                          "keyboard",  options_global.OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a positional control is present"),
-            new options_entry(OPTION_MOUSE_DEVICE,                               "mouse",     options_global.OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a mouse control is present"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE INPUT AUTOMATIC ENABLE OPTIONS"),
+            new options_entry(OPTION_PADDLE_DEVICE + ";paddle",                  "keyboard",  OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a paddle control is present"),
+            new options_entry(OPTION_ADSTICK_DEVICE + ";adstick",                "keyboard",  OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if an analog joystick control is present"),
+            new options_entry(OPTION_PEDAL_DEVICE + ";pedal",                    "keyboard",  OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a pedal control is present"),
+            new options_entry(OPTION_DIAL_DEVICE + ";dial",                      "keyboard",  OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a dial control is present"),
+            new options_entry(OPTION_TRACKBALL_DEVICE + ";trackball",            "keyboard",  OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a trackball control is present"),
+            new options_entry(OPTION_LIGHTGUN_DEVICE,                            "keyboard",  OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a lightgun control is present"),
+            new options_entry(OPTION_POSITIONAL_DEVICE,                          "keyboard",  OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a positional control is present"),
+            new options_entry(OPTION_MOUSE_DEVICE,                               "mouse",     OPTION_STRING,     "enable (none|keyboard|mouse|lightgun|joystick) if a mouse control is present"),
 
             // debugging options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE DEBUGGING OPTIONS"),
-            new options_entry(OPTION_VERBOSE + ";v",                             "0",         options_global.OPTION_BOOLEAN,    "display additional diagnostic information"),
-            new options_entry(OPTION_LOG,                                        "0",         options_global.OPTION_BOOLEAN,    "generate an error.log file"),
-            new options_entry(OPTION_OSLOG,                                      "1",         options_global.OPTION_BOOLEAN,    "output error.log data to the system debugger"),
-            new options_entry(OPTION_DEBUG + ";d",                               "0",         options_global.OPTION_BOOLEAN,    "enable/disable debugger"),
-            new options_entry(OPTION_UPDATEINPAUSE,                              "0",         options_global.OPTION_BOOLEAN,    "keep calling video updates while in pause"),
-            new options_entry(OPTION_DEBUGSCRIPT,                                null,        options_global.OPTION_STRING,     "script for debugger"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE DEBUGGING OPTIONS"),
+            new options_entry(OPTION_VERBOSE + ";v",                             "0",         OPTION_BOOLEAN,    "display additional diagnostic information"),
+            new options_entry(OPTION_LOG,                                        "0",         OPTION_BOOLEAN,    "generate an error.log file"),
+            new options_entry(OPTION_OSLOG,                                      "1",         OPTION_BOOLEAN,    "output error.log data to system diagnostic output (debugger or standard error)"),
+            new options_entry(OPTION_DEBUG + ";d",                               "0",         OPTION_BOOLEAN,    "enable/disable debugger"),
+            new options_entry(OPTION_UPDATEINPAUSE,                              "0",         OPTION_BOOLEAN,    "keep calling video updates while in pause"),
+            new options_entry(OPTION_DEBUGSCRIPT,                                null,        OPTION_STRING,     "script for debugger"),
 
             // comm options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE COMM OPTIONS"),
-            new options_entry(OPTION_COMM_LOCAL_HOST,                            "0.0.0.0",   options_global.OPTION_STRING,     "local address to bind to"),
-            new options_entry(OPTION_COMM_LOCAL_PORT,                            "15112",     options_global.OPTION_STRING,     "local port to bind to"),
-            new options_entry(OPTION_COMM_REMOTE_HOST,                           "127.0.0.1", options_global.OPTION_STRING,     "remote address to connect to"),
-            new options_entry(OPTION_COMM_REMOTE_PORT,                           "15112",     options_global.OPTION_STRING,     "remote port to connect to"),
-            new options_entry(OPTION_COMM_FRAME_SYNC,                            "0",         options_global.OPTION_BOOLEAN,    "sync frames"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE COMM OPTIONS"),
+            new options_entry(OPTION_COMM_LOCAL_HOST,                            "0.0.0.0",   OPTION_STRING,     "local address to bind to"),
+            new options_entry(OPTION_COMM_LOCAL_PORT,                            "15112",     OPTION_STRING,     "local port to bind to"),
+            new options_entry(OPTION_COMM_REMOTE_HOST,                           "127.0.0.1", OPTION_STRING,     "remote address to connect to"),
+            new options_entry(OPTION_COMM_REMOTE_PORT,                           "15112",     OPTION_STRING,     "remote port to connect to"),
+            new options_entry(OPTION_COMM_FRAME_SYNC,                            "0",         OPTION_BOOLEAN,    "sync frames"),
 
             // misc options
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "CORE MISC OPTIONS"),
-            new options_entry(OPTION_DRC,                                        "1",         options_global.OPTION_BOOLEAN,    "enable DRC cpu core if available"),
-            new options_entry(OPTION_DRC_USE_C,                                  "0",         options_global.OPTION_BOOLEAN,    "force DRC use C backend"),
-            new options_entry(OPTION_DRC_LOG_UML,                                "0",         options_global.OPTION_BOOLEAN,    "write DRC UML disassembly log"),
-            new options_entry(OPTION_DRC_LOG_NATIVE,                             "0",         options_global.OPTION_BOOLEAN,    "write DRC native disassembly log"),
-            new options_entry(OPTION_BIOS,                                       null,        options_global.OPTION_STRING,     "select the system BIOS to use"),
-            new options_entry(OPTION_CHEAT + ";c",                               "0",         options_global.OPTION_BOOLEAN,    "enable cheat subsystem"),
-            new options_entry(OPTION_SKIP_GAMEINFO,                              "0",         options_global.OPTION_BOOLEAN,    "skip displaying the information screen at startup"),
-            new options_entry(OPTION_UI_FONT,                                    "default",   options_global.OPTION_STRING,     "specify a font to use"),
-            new options_entry(OPTION_UI,                                         "cabinet",   options_global.OPTION_STRING,     "type of UI (simple|cabinet)"),
-            new options_entry(OPTION_RAMSIZE + ";ram",                           null,        options_global.OPTION_STRING,     "size of RAM (if supported by driver)"),
-            new options_entry(OPTION_CONFIRM_QUIT,                               "0",         options_global.OPTION_BOOLEAN,    "display confirm quit screen on exit"),
-            new options_entry(OPTION_UI_MOUSE,                                   "1",         options_global.OPTION_BOOLEAN,    "display ui mouse cursor"),
-            new options_entry(OPTION_LANGUAGE + ";lang",                         "English",   options_global.OPTION_STRING,     "display language"),
-            new options_entry(OPTION_NVRAM_SAVE + ";nvwrite",                    "1",         options_global.OPTION_BOOLEAN,    "save NVRAM on exit"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "CORE MISC OPTIONS"),
+            new options_entry(OPTION_DRC,                                        "1",         OPTION_BOOLEAN,    "enable DRC CPU core if available"),
+            new options_entry(OPTION_DRC_USE_C,                                  "0",         OPTION_BOOLEAN,    "force DRC to use C backend"),
+            new options_entry(OPTION_DRC_LOG_UML,                                "0",         OPTION_BOOLEAN,    "write DRC UML disassembly log"),
+            new options_entry(OPTION_DRC_LOG_NATIVE,                             "0",         OPTION_BOOLEAN,    "write DRC native disassembly log"),
+            new options_entry(OPTION_BIOS,                                       null,        OPTION_STRING,     "select the system BIOS to use"),
+            new options_entry(OPTION_CHEAT + ";c",                               "0",         OPTION_BOOLEAN,    "enable cheat subsystem"),
+            new options_entry(OPTION_SKIP_GAMEINFO,                              "0",         OPTION_BOOLEAN,    "skip displaying the system information screen at startup"),
+            new options_entry(OPTION_UI_FONT,                                    "default",   OPTION_STRING,     "specify a font to use"),
+            new options_entry(OPTION_UI,                                         "cabinet",   OPTION_STRING,     "type of UI (simple|cabinet)"),
+            new options_entry(OPTION_RAMSIZE + ";ram",                           null,        OPTION_STRING,     "size of RAM (if supported by driver)"),
+            new options_entry(OPTION_CONFIRM_QUIT,                               "0",         OPTION_BOOLEAN,    "ask for confirmation before exiting"),
+            new options_entry(OPTION_UI_MOUSE,                                   "1",         OPTION_BOOLEAN,    "display UI mouse cursor"),
+            new options_entry(OPTION_LANGUAGE + ";lang",                         "English",   OPTION_STRING,     "set UI display language"),
+            new options_entry(OPTION_NVRAM_SAVE + ";nvwrite",                    "1",         OPTION_BOOLEAN,    "save NVRAM data on exit"),
 
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "SCRIPTING OPTIONS"),
-            new options_entry(OPTION_AUTOBOOT_COMMAND + ";ab",                   null,        options_global.OPTION_STRING,     "command to execute after machine boot"),
-            new options_entry(OPTION_AUTOBOOT_DELAY,                             "0",         options_global.OPTION_INTEGER,    "timer delay in sec to trigger command execution on autoboot"),
-            new options_entry(OPTION_AUTOBOOT_SCRIPT + ";script",                null,        options_global.OPTION_STRING,     "lua script to execute after machine boot"),
-            new options_entry(OPTION_CONSOLE,                                    "0",         options_global.OPTION_BOOLEAN,    "enable emulator LUA console"),
-            new options_entry(OPTION_PLUGINS,                                    "1",         options_global.OPTION_BOOLEAN,    "enable LUA plugin support"),
-            new options_entry(OPTION_PLUGIN,                                     null,        options_global.OPTION_STRING,     "list of plugins to enable"),
-            new options_entry(OPTION_NO_PLUGIN,                                  null,        options_global.OPTION_STRING,     "list of plugins to disable"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "SCRIPTING OPTIONS"),
+            new options_entry(OPTION_AUTOBOOT_COMMAND + ";ab",                   null,        OPTION_STRING,     "command to execute after machine boot"),
+            new options_entry(OPTION_AUTOBOOT_DELAY,                             "0",         OPTION_INTEGER,    "delay before executing autoboot command (seconds)"),
+            new options_entry(OPTION_AUTOBOOT_SCRIPT + ";script",                null,        OPTION_STRING,     "Lua script to execute after machine boot"),
+            new options_entry(OPTION_CONSOLE,                                    "0",         OPTION_BOOLEAN,    "enable emulator Lua console"),
+            new options_entry(OPTION_PLUGINS,                                    "1",         OPTION_BOOLEAN,    "enable Lua plugin support"),
+            new options_entry(OPTION_PLUGIN,                                     null,        OPTION_STRING,     "list of plugins to enable"),
+            new options_entry(OPTION_NO_PLUGIN,                                  null,        OPTION_STRING,     "list of plugins to disable"),
 
-            new options_entry(null,                                              null,        options_global.OPTION_HEADER,     "HTTP SERVER OPTIONS"),
-            new options_entry(OPTION_HTTP,                                       "0",         options_global.OPTION_BOOLEAN,    "HTTP server enable"),
-            new options_entry(OPTION_HTTP_PORT,                                  "8080",      options_global.OPTION_INTEGER,    "HTTP server port"),
-            new options_entry(OPTION_HTTP_ROOT,                                  "web",       options_global.OPTION_STRING,     "HTTP server document root"),
+            new options_entry(null,                                              null,        OPTION_HEADER,     "HTTP SERVER OPTIONS"),
+            new options_entry(OPTION_HTTP,                                       "0",         OPTION_BOOLEAN,    "enable HTTP server"),
+            new options_entry(OPTION_HTTP_PORT,                                  "8080",      OPTION_INTEGER,    "HTTP server port"),
+            new options_entry(OPTION_HTTP_ROOT,                                  "web",       OPTION_STRING,     "HTTP server document root"),
 
             new options_entry(null),
         };
@@ -634,9 +634,9 @@ namespace mame
         game_driver m_system;
 
         // slots and devices
-        std_unordered_map<string, slot_option> m_slot_options = new std_unordered_map<string, slot_option>();
+        std.unordered_map<string, slot_option> m_slot_options = new std.unordered_map<string, slot_option>();
         //std::unordered_map<std::string, ::image_option>     m_image_options_cannonical;
-        std_unordered_map<string, image_option> m_image_options = new std_unordered_map<string, image_option>();
+        std.unordered_map<string, image_option> m_image_options = new std.unordered_map<string, image_option>();
 
 
         // cached options, for scenarios where parsing core_options is too slow
@@ -705,13 +705,13 @@ namespace mame
             {
                 // if so, first extract the base name (the reason for this is drag-and-drop on Windows; a side
                 // effect is a command line like 'mame pacman.foo' will work correctly, but so be it)
-                string new_system_base_name = global.core_filename_extract_base(m_attempted_system_name, true);
+                string new_system_base_name = core_filename_extract_base(m_attempted_system_name, true);
 
                 // perform the lookup (and error if it cannot be found)
                 int index = driver_list.find(new_system_base_name.c_str());
                 if (index < 0)
                     throw new options_error_exception("Unknown system '{0}'", m_attempted_system_name);
-                new_system = driver_list.driver((UInt32)index);
+                new_system = driver_list.driver(index);
             }
 
             // did we change anything?
@@ -941,7 +941,7 @@ namespace mame
         public slot_option slot_option(string device_name)
         {
             slot_option opt = find_slot_option(device_name);
-            global.assert(opt != null && "Attempt to access non-existent slot option" != null);
+            assert(opt != null && "Attempt to access non-existent slot option" != null);
             return opt;
         }
 
@@ -960,7 +960,7 @@ namespace mame
         public image_option image_option(string device_name)
         {
             var iter = m_image_options.find(device_name);
-            global.assert(iter != null && "Attempt to access non-existent image option" != null);
+            assert(iter != null && "Attempt to access non-existent image option" != null);
             return iter;
         }
         //::image_option &image_option(const std::string &device_name);
@@ -972,7 +972,7 @@ namespace mame
         protected override void command_argument_processed()
         {
             // some command line arguments require that the system name be set, so we can get slot options
-            if (command_arguments().size() == 1 && !global.core_iswildstr(command_arguments()[0].c_str()) &&
+            if (command_arguments().size() == 1 && !core_iswildstr(command_arguments()[0].c_str()) &&
                 (command() == "listdevices" || (command() == "listslots") || (command() == "listmedia")))
             {
                 set_system_name(command_arguments()[0]);
@@ -1122,7 +1122,7 @@ namespace mame
     {
         image_option m_host;
 
-        image_option_entry(std_vector<string> names, image_option host)
+        image_option_entry(std.vector<string> names, image_option host)
             : base(names)
         {
             m_host = host;
@@ -1144,9 +1144,9 @@ namespace mame
     //template<typename T>
     class existing_option_tracker<T>
     {
-        std_vector<string> m_vec = new std_vector<string>();
+        std.vector<string> m_vec = new std.vector<string>();
 
-        existing_option_tracker(std_unordered_map<string, T> map)
+        existing_option_tracker(std.unordered_map<string, T> map)
         {
             m_vec.reserve(map.size());
             foreach (var entry in map)

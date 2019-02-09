@@ -24,35 +24,35 @@ namespace mame
         public static readonly device_type I8255A = I8255;  //decltype(I8255) I8255A = I8255;
 
 
-        enum PORT
-        {
-            PORT_A = 0,
-            PORT_B,
-            PORT_C,
-            CONTROL
-        }
+        //enum
+        //{
+        const int PORT_A  = 0;
+        const int PORT_B  = 1;
+        const int PORT_C  = 2;
+        const int CONTROL = 3;
+        //}
 
 
-        enum GROUP
-        {
-            GROUP_A = 0,
-            GROUP_B
-        }
+        //enum
+        //{
+        const int GROUP_A = 0;
+        const int GROUP_B = 1;
+        //}
 
 
-        enum MODE_NUM
-        {
-            MODE_0 = 0,
-            MODE_1,
-            MODE_2
-        }
+        //enum
+        //{
+        const int MODE_0 = 0;
+        const int MODE_1 = 1;
+        const int MODE_2 = 2;
+        //}
 
 
-        enum MODE
-        {
-            MODE_OUTPUT = 0,
-            MODE_INPUT
-        }
+        //enum
+        //{
+        const int MODE_OUTPUT = 0;
+        const int MODE_INPUT  = 1;
+        //}
 
 
         const uint8_t CONTROL_PORT_C_LOWER_INPUT  = 0x01;
@@ -126,6 +126,8 @@ namespace mame
         public devcb_write8.binder out_pa_callback() { return m_out_pa_cb.bind(); }
         public devcb_write8.binder out_pb_callback() { return m_out_pb_cb.bind(); }
         public devcb_write8.binder out_pc_callback() { return m_out_pc_cb.bind(); }
+
+        // output state when pins are in tri-state, default 0xff
         //auto tri_pa_callback() { return m_tri_pa_cb.bind(); }
         //auto tri_pb_callback() { return m_tri_pb_cb.bind(); }
 
@@ -139,33 +141,33 @@ namespace mame
 
             switch (offset & 0x03)
             {
-            case (UInt32)PORT.PORT_A:
-                switch (group_mode((int)GROUP.GROUP_A))
+            case PORT_A:
+                switch (group_mode(GROUP_A))
                 {
-                case (int)MODE_NUM.MODE_0: data = read_mode0((int)PORT.PORT_A); break;
-                case (int)MODE_NUM.MODE_1: data = read_mode1((int)PORT.PORT_A); break;
-                case (int)MODE_NUM.MODE_2: data = read_mode2(); break;
+                case MODE_0: data = read_mode0(PORT_A); break;
+                case MODE_1: data = read_mode1(PORT_A); break;
+                case MODE_2: data = read_mode2(); break;
                 }
-                global.LOG(this, "I8255 Port A Read: {0}\n", data);  // %02x
+                LOG("I8255 Port A Read: {0}\n", data);  // %02x
                 break;
 
-            case (UInt32)PORT.PORT_B:
-                switch (group_mode((int)GROUP.GROUP_B))
+            case PORT_B:
+                switch (group_mode(GROUP_B))
                 {
-                case (int)MODE_NUM.MODE_0: data = read_mode0((int)PORT.PORT_B); break;
-                case (int)MODE_NUM.MODE_1: data = read_mode1((int)PORT.PORT_B); break;
+                case MODE_0: data = read_mode0(PORT_B); break;
+                case MODE_1: data = read_mode1(PORT_B); break;
                 }
-                global.LOG(this, "I8255 Port B Read: {0}\n", data);
+                LOG("I8255 Port B Read: {0}\n", data);
                 break;
 
-            case (UInt32)PORT.PORT_C:
+            case PORT_C:
                 data = read_pc();
-                global.LOG(this, "I8255 Port C Read: {0}\n", data);
+                LOG("I8255 Port C Read: {0}\n", data);
                 break;
 
-            case (UInt32)PORT.CONTROL:
+            case CONTROL:
                 data = m_control;
-                global.LOG(this, "I8255 Mode Control Word Read: {0}\n", data);
+                LOG("I8255 Mode Control Word Read: {0}\n", data);
                 break;
             }
 
@@ -180,47 +182,47 @@ namespace mame
         {
             switch (offset & 0x03)
             {
-            case (UInt32)PORT.PORT_A:
-                global.LOG(this, "I8255 Port A Write: {0}\n", data);  // %02x
+            case PORT_A:
+                LOG("I8255 Port A Write: {0}\n", data);  // %02x
 
-                switch (group_mode((int)GROUP.GROUP_A))
+                switch (group_mode(GROUP_A))
                 {
-                case (int)MODE_NUM.MODE_0: write_mode0((int)PORT.PORT_A, data); break;
-                case (int)MODE_NUM.MODE_1: write_mode1((int)PORT.PORT_A, data); break;
-                case (int)MODE_NUM.MODE_2: write_mode2(data); break;
+                case MODE_0: write_mode0(PORT_A, data); break;
+                case MODE_1: write_mode1(PORT_A, data); break;
+                case MODE_2: write_mode2(data); break;
                 }
                 break;
 
-            case (UInt32)PORT.PORT_B:
-                global.LOG(this, "I8255 Port B Write: {0}\n", data);
+            case PORT_B:
+                LOG("I8255 Port B Write: {0}\n", data);
 
-                switch (group_mode((int)GROUP.GROUP_B))
+                switch (group_mode(GROUP_B))
                 {
-                case (int)MODE_NUM.MODE_0: write_mode0((int)PORT.PORT_B, data); break;
-                case (int)MODE_NUM.MODE_1: write_mode1((int)PORT.PORT_B, data); break;
+                case MODE_0: write_mode0(PORT_B, data); break;
+                case MODE_1: write_mode1(PORT_B, data); break;
                 }
                 break;
 
-            case (UInt32)PORT.PORT_C:
-                global.LOG(this, "I8255 Port C Write: {0}\n", data);
+            case PORT_C:
+                LOG("I8255 Port C Write: {0}\n", data);
 
-                m_output[(int)PORT.PORT_C] = data;
+                m_output[PORT_C] = data;
                 output_pc();
                 break;
 
-            case (UInt32)PORT.CONTROL:
+            case CONTROL:
                 if ((data & CONTROL_MODE_SET) != 0)
                 {
-                    global.LOG(this, "I8255 Mode Control Word: {0}\n", data);
+                    LOG("I8255 Mode Control Word: {0}\n", data);
 
                     set_mode(data);
                 }
                 else
                 {
                     int bit = (data >> 1) & 0x07;
-                    int state = global.BIT(data, 0);
+                    int state = BIT(data, 0);
 
-                    global.LOG(this, "I8255 {0} Port C Bit {1}\n", state != 0 ? "Set" : "Reset", bit);  // %s %u
+                    LOG("I8255 {0} Port C Bit {1}\n", state != 0 ? "Set" : "Reset", bit);  // %s %u
 
                     set_pc_bit(bit, state);
                 }
@@ -290,20 +292,20 @@ namespace mame
         {
             switch (group_mode(port))
             {
-            case (int)MODE_NUM.MODE_1:
+            case MODE_1:
                 switch (port_mode(port))
                 {
-                case (int)MODE.MODE_INPUT:
+                case MODE_INPUT:
                     set_intr(port, (m_inte[port] != 0 && m_ibf[port] != 0) ? 1 : 0);
                     break;
 
-                case (int)MODE.MODE_OUTPUT:
+                case MODE_OUTPUT:
                     set_intr(port, (m_inte[port] != 0 && m_obf[port] != 0) ? 1 : 0);
                     break;
                 }
                 break;
 
-            case (int)MODE_NUM.MODE_2:
+            case MODE_2:
                 set_intr(port, ((m_inte1 != 0 && m_obf[port] != 0) || (m_inte2 != 0 && m_ibf[port] != 0)) ? 1 : 0);
                 break;
             }
@@ -315,7 +317,7 @@ namespace mame
         //-------------------------------------------------
         void set_ibf(int port, int state)
         {
-            global.LOG(this, "I8255 Port {0} IBF: {1}\n", 'A' + port, state);  // %c IBF: %u\n
+            LOG("I8255 Port {0} IBF: {1}\n", 'A' + port, state);  // %c IBF: %u\n
 
             m_ibf[port] = state;
 
@@ -328,7 +330,7 @@ namespace mame
         //-------------------------------------------------
         void set_obf(int port, int state)
         {
-            global.LOG(this, "I8255 Port {0} OBF: {1}\n", 'A' + port, state);  // %c OBF: %u\n
+            LOG("I8255 Port {0} OBF: {1}\n", 'A' + port, state);  // %c OBF: %u\n
 
             m_obf[port] = state;
 
@@ -341,7 +343,7 @@ namespace mame
         //-------------------------------------------------
         void set_inte(int port, int state)
         {
-            global.LOG(this, "I8255 Port {0} INTE: {1}\n", 'A' + port, state);
+            LOG("I8255 Port {0} INTE: {1}\n", 'A' + port, state);
 
             m_inte[port] = state;
 
@@ -354,11 +356,11 @@ namespace mame
         //-------------------------------------------------
         void set_inte1(int state)
         {
-            global.LOG(this, "I8255 Port A INTE1: {0}\n", state);
+            LOG("I8255 Port A INTE1: {0}\n", state);
 
             m_inte1 = state;
 
-            check_interrupt((int)PORT.PORT_A);
+            check_interrupt(PORT_A);
         }
 
 
@@ -367,11 +369,11 @@ namespace mame
         //-------------------------------------------------
         void set_inte2(int state)
         {
-            global.LOG(this, "I8255 Port A INTE2: {0}\n", state);
+            LOG("I8255 Port A INTE2: {0}\n", state);
 
             m_inte2 = state;
 
-            check_interrupt((int)PORT.PORT_A);
+            check_interrupt(PORT_A);
         }
 
 
@@ -381,7 +383,7 @@ namespace mame
 
         void set_intr(int port, int state)
         {
-            global.LOG(this, "I8255 Port {0} INTR: {1}\n", 'A' + port, state);
+            LOG("I8255 Port {0} INTR: {1}\n", 'A' + port, state);
 
             m_intr[port] = state;
 
@@ -398,17 +400,17 @@ namespace mame
 
             switch (group)
             {
-            case (int)GROUP.GROUP_A:
+            case GROUP_A:
                 switch ((m_control & CONTROL_GROUP_A_MODE_MASK) >> 5)
                 {
-                case 0: mode = (int)MODE_NUM.MODE_0; break;
-                case 1: mode = (int)MODE_NUM.MODE_1; break;
-                case 2: case 3: mode = (int)MODE_NUM.MODE_2; break;
+                case 0: mode = MODE_0; break;
+                case 1: mode = MODE_1; break;
+                case 2: case 3: mode = MODE_2; break;
                 }
                 break;
 
-            case (int)GROUP.GROUP_B:
-                mode = (m_control & CONTROL_GROUP_B_MODE_1) != 0 ? (int)MODE_NUM.MODE_1 : (int)MODE_NUM.MODE_0;
+            case GROUP_B:
+                mode = (m_control & CONTROL_GROUP_B_MODE_1) != 0 ? MODE_1 : MODE_0;
                 break;
             }
 
@@ -425,8 +427,8 @@ namespace mame
 
             switch (port)
             {
-            case (int)PORT.PORT_A: mode = (m_control & CONTROL_PORT_A_INPUT) != 0 ? (int)MODE.MODE_INPUT : (int)MODE.MODE_OUTPUT; break;
-            case (int)PORT.PORT_B: mode = (m_control & CONTROL_PORT_B_INPUT) != 0 ? (int)MODE.MODE_INPUT : (int)MODE.MODE_OUTPUT; break;
+            case PORT_A: mode = (m_control & CONTROL_PORT_A_INPUT) != 0 ? MODE_INPUT : MODE_OUTPUT; break;
+            case PORT_B: mode = (m_control & CONTROL_PORT_B_INPUT) != 0 ? MODE_INPUT : MODE_OUTPUT; break;
             }
 
             return mode;
@@ -438,7 +440,7 @@ namespace mame
         //-------------------------------------------------
         int port_c_lower_mode()
         {
-            return (m_control & CONTROL_PORT_C_LOWER_INPUT) != 0 ? (int)MODE.MODE_INPUT : (int)MODE.MODE_OUTPUT;
+            return (m_control & CONTROL_PORT_C_LOWER_INPUT) != 0 ? MODE_INPUT : MODE_OUTPUT;
         }
 
 
@@ -447,7 +449,7 @@ namespace mame
         //-------------------------------------------------
         int port_c_upper_mode()
         {
-            return (m_control & CONTROL_PORT_C_UPPER_INPUT) != 0 ? (int)MODE.MODE_INPUT : (int)MODE.MODE_OUTPUT;
+            return (m_control & CONTROL_PORT_C_UPPER_INPUT) != 0 ? MODE_INPUT : MODE_OUTPUT;
         }
 
 
@@ -459,7 +461,7 @@ namespace mame
         {
             byte data;
 
-            if (port_mode(port) == (int)MODE.MODE_OUTPUT)
+            if (port_mode(port) == MODE_OUTPUT)
             {
                 // read data from output latch
                 data = m_output[port];
@@ -467,7 +469,7 @@ namespace mame
             else
             {
                 // read data from port
-                data = (port == (int)PORT.PORT_A) ? m_in_pa_cb.op(0) : ((port == (int)PORT.PORT_B) ? m_in_pb_cb.op(0) : m_in_pc_cb.op(0));
+                data = (port == PORT_A) ? m_in_pa_cb.op(0) : ((port == PORT_B) ? m_in_pb_cb.op(0) : m_in_pc_cb.op(0));
             }
 
             return data;
@@ -502,13 +504,13 @@ namespace mame
             byte b_mask = 0x0f;
 
             // PC upper
-            switch (group_mode((int)GROUP.GROUP_A))
+            switch (group_mode(GROUP_A))
             {
-            case (int)MODE_NUM.MODE_0:
-                if (port_c_upper_mode() == (int)MODE.MODE_OUTPUT)
+            case MODE_0:
+                if (port_c_upper_mode() == MODE_OUTPUT)
                 {
                     // read data from output latch
-                    data |= (byte)(m_output[(int)PORT.PORT_C] & 0xf0);
+                    data |= (byte)(m_output[PORT_C] & 0xf0);
                 }
                 else
                 {
@@ -517,41 +519,41 @@ namespace mame
                 }
                 break;
 
-            case (int)MODE_NUM.MODE_1:
-                data |= m_intr[(int)PORT.PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
+            case MODE_1:
+                data |= m_intr[PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
 
-                if (port_mode((int)PORT.PORT_A) == (int)MODE.MODE_OUTPUT)
+                if (port_mode(PORT_A) == MODE_OUTPUT)
                 {
-                    data |= m_obf[(int)PORT.PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
-                    data |= m_inte[(int)PORT.PORT_A] != 0 ? (byte)0x40 : (byte)0x00;
+                    data |= m_obf[PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
+                    data |= m_inte[PORT_A] != 0 ? (byte)0x40 : (byte)0x00;
                     mask |= 0x30;
                 }
                 else
                 {
-                    data |= m_ibf[(int)PORT.PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
-                    data |= m_inte[(int)PORT.PORT_A] != 0 ? (byte)0x10 : (byte)0x00;
+                    data |= m_ibf[PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
+                    data |= m_inte[PORT_A] != 0 ? (byte)0x10 : (byte)0x00;
                     mask |= 0xc0;
                 }
                 break;
 
-            case (int)MODE_NUM.MODE_2:
+            case MODE_2:
                 b_mask = 0x07;
-                data |= m_intr[(int)PORT.PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
+                data |= m_intr[PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
                 data |= m_inte2 != 0 ? (byte)0x10 : (byte)0x00;
-                data |= m_ibf[(int)PORT.PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
+                data |= m_ibf[PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
                 data |= m_inte1 != 0 ? (byte)0x40 : (byte)0x00;
-                data |= m_obf[(int)PORT.PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
+                data |= m_obf[PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
                 break;
             }
 
             // PC lower
-            switch (group_mode((int)GROUP.GROUP_B))
+            switch (group_mode(GROUP_B))
             {
-            case (int)MODE_NUM.MODE_0:
-                if (port_c_lower_mode() == (int)MODE.MODE_OUTPUT)
+            case MODE_0:
+                if (port_c_lower_mode() == MODE_OUTPUT)
                 {
                     // read data from output latch
-                    data |= (byte)(m_output[(int)PORT.PORT_C] & b_mask);
+                    data |= (byte)(m_output[PORT_C] & b_mask);
                 }
                 else
                 {
@@ -560,17 +562,17 @@ namespace mame
                 }
                 break;
 
-            case (int)MODE_NUM.MODE_1:
-                data |= m_inte[(int)PORT.PORT_B] != 0 ? (byte)0x04 : (byte)0x00;
-                data |= m_intr[(int)PORT.PORT_B] != 0 ? (byte)0x01 : (byte)0x00;
+            case MODE_1:
+                data |= m_inte[PORT_B] != 0 ? (byte)0x04 : (byte)0x00;
+                data |= m_intr[PORT_B] != 0 ? (byte)0x01 : (byte)0x00;
 
-                if (port_mode((int)PORT.PORT_B) == (byte)MODE.MODE_OUTPUT)
+                if (port_mode(PORT_B) == MODE_OUTPUT)
                 {
-                    data |= m_obf[(int)PORT.PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
+                    data |= m_obf[PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
                 }
                 else
                 {
-                    data |= m_ibf[(int)PORT.PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
+                    data |= m_ibf[PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
                 }
                 break;
             }
@@ -590,15 +592,15 @@ namespace mame
         //-------------------------------------------------
         void write_mode0(int port, byte data)
         {
-            if (port_mode(port) == (int)MODE.MODE_OUTPUT)
+            if (port_mode(port) == MODE_OUTPUT)
             {
                 // latch output data
                 m_output[port] = data;
 
                 // write data to port
-                if (port == (int)PORT.PORT_A)
+                if (port == PORT_A)
                     m_out_pa_cb.op((offs_t)0, m_output[port]);
-                else if (port == (int)PORT.PORT_B)
+                else if (port == PORT_B)
                     m_out_pb_cb.op((offs_t)0, m_output[port]);
                 else
                     m_out_pc_cb.op((offs_t)0, m_output[port]);
@@ -611,15 +613,15 @@ namespace mame
         //-------------------------------------------------
         void write_mode1(int port, byte data)
         {
-            if (port_mode(port) == (int)MODE.MODE_OUTPUT)
+            if (port_mode(port) == MODE_OUTPUT)
             {
                 // latch output data
                 m_output[port] = data;
 
                 // write data to port
-                if (port == (int)PORT.PORT_A)
+                if (port == PORT_A)
                     m_out_pa_cb.op((offs_t)0, m_output[port]);
-                else if (port == (int)PORT.PORT_B)
+                else if (port == PORT_B)
                     m_out_pb_cb.op((offs_t)0, m_output[port]);
                 else
                     m_out_pc_cb.op((offs_t)0, m_output[port]);
@@ -639,16 +641,16 @@ namespace mame
         void write_mode2(uint8_t data)
         {
             // latch output data
-            m_output[(int)PORT.PORT_A] = data;
+            m_output[PORT_A] = data;
 
             // write data to port
             m_out_pa_cb.op((offs_t)0, data);
 
             // set output buffer full flag
-            set_obf((int)PORT.PORT_A, 0);
+            set_obf(PORT_A, 0);
 
             // clear interrupt
-            set_intr((int)PORT.PORT_A, 0);
+            set_intr(PORT_A, 0);
         }
 
 
@@ -662,10 +664,10 @@ namespace mame
             byte b_mask = 0x0f;
 
             // PC upper
-            switch (group_mode((int)GROUP.GROUP_A))
+            switch (group_mode(GROUP_A))
             {
-            case (int)MODE_NUM.MODE_0:
-                if (port_c_upper_mode() == (int)MODE.MODE_OUTPUT)
+            case MODE_0:
+                if (port_c_upper_mode() == MODE_OUTPUT)
                 {
                     mask |= 0xf0;
                 }
@@ -676,34 +678,34 @@ namespace mame
                 }
                 break;
 
-            case (int)MODE_NUM.MODE_1:
-                data |= m_intr[(int)PORT.PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
+            case MODE_1:
+                data |= m_intr[PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
 
-                if (port_mode((int)PORT.PORT_A) == (int)MODE.MODE_OUTPUT)
+                if (port_mode(PORT_A) == MODE_OUTPUT)
                 {
-                    data |= m_obf[(int)PORT.PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
+                    data |= m_obf[PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
                     mask |= 0x30;
                 }
                 else
                 {
-                    data |= m_ibf[(int)PORT.PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
+                    data |= m_ibf[PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
                     mask |= 0xc0;
                 }
                 break;
 
-            case (int)MODE_NUM.MODE_2:
+            case MODE_2:
                 b_mask = 0x07;
-                data |= m_intr[(int)PORT.PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
-                data |= m_ibf[(int)PORT.PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
-                data |= m_obf[(int)PORT.PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
+                data |= m_intr[PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
+                data |= m_ibf[PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
+                data |= m_obf[PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
                 break;
             }
 
             // PC lower
-            switch (group_mode((int)GROUP.GROUP_B))
+            switch (group_mode(GROUP_B))
             {
-            case (int)MODE_NUM.MODE_0:
-                if (port_c_lower_mode() == (int)MODE.MODE_OUTPUT)
+            case MODE_0:
+                if (port_c_lower_mode() == MODE_OUTPUT)
                 {
                     mask |= b_mask;
                 }
@@ -714,21 +716,21 @@ namespace mame
                 }
                 break;
 
-            case (int)MODE_NUM.MODE_1:
-                data |= m_intr[(int)PORT.PORT_B] != 0 ? (byte)0x01 : (byte)0x00;
+            case MODE_1:
+                data |= m_intr[PORT_B] != 0 ? (byte)0x01 : (byte)0x00;
 
-                if (port_mode((int)PORT.PORT_B) == (int)MODE.MODE_OUTPUT)
+                if (port_mode(PORT_B) == MODE_OUTPUT)
                 {
-                    data |= m_obf[(int)PORT.PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
+                    data |= m_obf[PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
                 }
                 else
                 {
-                    data |= m_ibf[(int)PORT.PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
+                    data |= m_ibf[PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
                 }
                 break;
             }
 
-            data |= (byte)(m_output[(int)PORT.PORT_C] & mask);
+            data |= (byte)(m_output[PORT_C] & mask);
 
             m_out_pc_cb.op((offs_t)0, data);
         }
@@ -749,17 +751,17 @@ namespace mame
 
             // group A
             if (!m_dont_clear_output_latches)
-                m_output[(int)PORT.PORT_A] = 0;
-            m_input[(int)PORT.PORT_A] = 0;
-            m_ibf[(int)PORT.PORT_A] = 0;
-            m_obf[(int)PORT.PORT_A] = 1;
-            m_inte[(int)PORT.PORT_A] = 0;
+                m_output[PORT_A] = 0;
+            m_input[PORT_A] = 0;
+            m_ibf[PORT_A] = 0;
+            m_obf[PORT_A] = 1;
+            m_inte[PORT_A] = 0;
             m_inte1 = 0;
             m_inte2 = 0;
 
-            if (port_mode((int)PORT.PORT_A) == (int)MODE.MODE_OUTPUT)
+            if (port_mode(PORT_A) == MODE_OUTPUT)
             {
-                m_out_pa_cb.op((offs_t)0, m_output[(int)PORT.PORT_A]);
+                m_out_pa_cb.op((offs_t)0, m_output[PORT_A]);
             }
             else
             {
@@ -767,24 +769,24 @@ namespace mame
                 m_out_pa_cb.op((offs_t)0, m_tri_pa_cb.op(0));
             }
 
-            global.LOG(this, "I8255 Group A Mode: {0}\n", group_mode((int)GROUP.GROUP_A));  // %u
-            global.LOG(this, "I8255 Port A Mode: {0}\n", (port_mode((int)PORT.PORT_A) == (int)MODE.MODE_OUTPUT) ? "output" : "input");
-            global.LOG(this, "I8255 Port C Upper Mode: {0}\n", (port_c_upper_mode() == (int)MODE.MODE_OUTPUT) ? "output" : "input");
-            global.LOG(this, "I8255 Group B Mode: {0}\n", group_mode((int)GROUP.GROUP_B));  // %u
-            global.LOG(this, "I8255 Port B Mode: {0}\n", (port_mode((int)PORT.PORT_B) == (int)MODE.MODE_OUTPUT) ? "output" : "input");
-            global.LOG(this, "I8255 Port C Lower Mode: {0}\n", (port_c_lower_mode() == (int)MODE.MODE_OUTPUT) ? "output" : "input");
+            LOG("I8255 Group A Mode: {0}\n", group_mode(GROUP_A));  // %u
+            LOG("I8255 Port A Mode: {0}\n", (port_mode(PORT_A) == MODE_OUTPUT) ? "output" : "input");
+            LOG("I8255 Port C Upper Mode: {0}\n", (port_c_upper_mode() == MODE_OUTPUT) ? "output" : "input");
+            LOG("I8255 Group B Mode: {0}\n", group_mode(GROUP_B));  // %u
+            LOG("I8255 Port B Mode: {0}\n", (port_mode(PORT_B) == MODE_OUTPUT) ? "output" : "input");
+            LOG("I8255 Port C Lower Mode: {0}\n", (port_c_lower_mode() == MODE_OUTPUT) ? "output" : "input");
 
             // group B
             if (!m_dont_clear_output_latches)
-                m_output[(int)PORT.PORT_B] = 0;
-            m_input[(int)PORT.PORT_B] = 0;
-            m_ibf[(int)PORT.PORT_B] = 0;
-            m_obf[(int)PORT.PORT_B] = 1;
-            m_inte[(int)PORT.PORT_B] = 0;
+                m_output[PORT_B] = 0;
+            m_input[PORT_B] = 0;
+            m_ibf[PORT_B] = 0;
+            m_obf[PORT_B] = 1;
+            m_inte[PORT_B] = 0;
 
-            if (port_mode((int)PORT.PORT_B) == (int)MODE.MODE_OUTPUT)
+            if (port_mode(PORT_B) == MODE_OUTPUT)
             {
-                m_out_pb_cb.op((offs_t)0, m_output[(int)PORT.PORT_B]);
+                m_out_pb_cb.op((offs_t)0, m_output[PORT_B]);
             }
             else
             {
@@ -793,8 +795,8 @@ namespace mame
             }
 
             if (!m_dont_clear_output_latches)
-                m_output[(int)PORT.PORT_C] = 0;
-            m_input[(int)PORT.PORT_C] = 0;
+                m_output[PORT_C] = 0;
+            m_input[PORT_C] = 0;
 
             output_pc();
         }
@@ -806,19 +808,19 @@ namespace mame
         void set_pc_bit(int bit, int state)
         {
             // set output latch bit
-            m_output[(int)PORT.PORT_C] &= (byte)(~(1 << bit));
-            m_output[(int)PORT.PORT_C] |= (byte)(state << bit);
+            m_output[PORT_C] &= (byte)(~(1 << bit));
+            m_output[PORT_C] |= (byte)(state << bit);
 
-            switch (group_mode((int)GROUP.GROUP_A))
+            switch (group_mode(GROUP_A))
             {
-            case (int)MODE_NUM.MODE_1:
-                if (port_mode((int)PORT.PORT_A) == (int)MODE.MODE_OUTPUT)
+            case MODE_1:
+                if (port_mode(PORT_A) == MODE_OUTPUT)
                 {
                     switch (bit)
                     {
-                    case 3: set_intr((int)PORT.PORT_A, state); break;
-                    case 6: set_inte((int)PORT.PORT_A, state); break;
-                    case 7: set_obf((int)PORT.PORT_A, state); break;
+                    case 3: set_intr(PORT_A, state); break;
+                    case 6: set_inte(PORT_A, state); break;
+                    case 7: set_obf(PORT_A, state); break;
                     default: break;
                     }
                 }
@@ -826,39 +828,39 @@ namespace mame
                 {
                     switch (bit)
                     {
-                    case 3: set_intr((int)PORT.PORT_A, state); break;
-                    case 4: set_inte((int)PORT.PORT_A, state); break;
-                    case 5: set_ibf((int)PORT.PORT_A, state); break;
+                    case 3: set_intr(PORT_A, state); break;
+                    case 4: set_inte(PORT_A, state); break;
+                    case 5: set_ibf(PORT_A, state); break;
                     default: break;
                     }
                 }
                 break;
 
-            case (int)MODE_NUM.MODE_2:
+            case MODE_2:
                 switch (bit)
                 {
-                case 3: set_intr((int)PORT.PORT_A, state); break;
+                case 3: set_intr(PORT_A, state); break;
                 case 4: set_inte2(state); break;
-                case 5: set_ibf((int)PORT.PORT_A, state); break;
+                case 5: set_ibf(PORT_A, state); break;
                 case 6: set_inte1(state); break;
-                case 7: set_obf((int)PORT.PORT_A, state); break;
+                case 7: set_obf(PORT_A, state); break;
                 default: break;
                 }
                 break;
             }
 
-            if (group_mode((int)GROUP.GROUP_B) == (int)MODE_NUM.MODE_1)
+            if (group_mode(GROUP_B) == MODE_1)
             {
                 switch (bit)
                 {
-                case 0: set_intr((int)PORT.PORT_B, state); break;
+                case 0: set_intr(PORT_B, state); break;
                 case 1:
-                    if (port_mode((int)PORT.PORT_B) == (int)MODE.MODE_OUTPUT)
-                        set_obf((int)PORT.PORT_B, state);
+                    if (port_mode(PORT_B) == MODE_OUTPUT)
+                        set_obf(PORT_B, state);
                     else
-                        set_ibf((int)PORT.PORT_B, state);
+                        set_ibf(PORT_B, state);
                     break;
-                case 2: set_inte((int)PORT.PORT_B, state); break;
+                case 2: set_inte(PORT_B, state); break;
                 default: break;
                 }
             }

@@ -9,29 +9,26 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    /* ----- type constants ----- */
-    //#define ROMENTRY_TYPEMASK           0x0000000f          /* type of entry */
-    public enum ROMENTRYTYPE
-    {
-        ROMENTRYTYPE_ROM = 0,       /* this entry is an actual ROM definition */
-        ROMENTRYTYPE_REGION,        /* this entry marks the start of a region */
-        ROMENTRYTYPE_END,           /* this entry marks the end of a region */
-        ROMENTRYTYPE_RELOAD,        /* this entry reloads the previous ROM */
-        ROMENTRYTYPE_CONTINUE,      /* this entry continues loading the previous ROM */
-        ROMENTRYTYPE_FILL,          /* this entry fills an area with a constant value */
-        ROMENTRYTYPE_COPY,          /* this entry copies data from another region/offset */
-        ROMENTRYTYPE_CARTRIDGE,     /* this entry specifies a cartridge (MESS) */
-        ROMENTRYTYPE_IGNORE,        /* this entry continues loading the previous ROM but throws the data away */
-        ROMENTRYTYPE_SYSTEM_BIOS,   /* this entry specifies a bios */
-        ROMENTRYTYPE_DEFAULT_BIOS,  /* this entry specifies a default bios */
-        ROMENTRYTYPE_PARAMETER,     /* this entry specifies a per-game parameter */
-        ROMENTRYTYPE_COUNT
-    }
-
-
     public static class romentry_global
     {
+        /* ----- type constants ----- */
         public const UInt32 ROMENTRY_TYPEMASK           = 0x0000000f;          /* type of entry */
+        //enum
+        //{
+        public const UInt32 ROMENTRYTYPE_ROM          =  0;     /* this entry is an actual ROM definition */
+        public const UInt32 ROMENTRYTYPE_REGION       =  1;     /* this entry marks the start of a region */
+        public const UInt32 ROMENTRYTYPE_END          =  2;     /* this entry marks the end of a region */
+        public const UInt32 ROMENTRYTYPE_RELOAD       =  3;     /* this entry reloads the previous ROM */
+        public const UInt32 ROMENTRYTYPE_CONTINUE     =  4;     /* this entry continues loading the previous ROM */
+        public const UInt32 ROMENTRYTYPE_FILL         =  5;     /* this entry fills an area with a constant value */
+        public const UInt32 ROMENTRYTYPE_COPY         =  6;     /* this entry copies data from another region/offset */
+        const UInt32 ROMENTRYTYPE_CARTRIDGE    =  7;     /* this entry specifies a cartridge (MESS) */
+        public const UInt32 ROMENTRYTYPE_IGNORE       =  8;     /* this entry continues loading the previous ROM but throws the data away */
+        public const UInt32 ROMENTRYTYPE_SYSTEM_BIOS  =  9;     /* this entry specifies a bios */
+        public const UInt32 ROMENTRYTYPE_DEFAULT_BIOS = 10;     /* this entry specifies a default bios */
+        public const UInt32 ROMENTRYTYPE_PARAMETER    = 11;     /* this entry specifies a per-game parameter */
+        const UInt32 ROMENTRYTYPE_COUNT        = 12;
+        //}
 
 
         /* ----- per-region constants ----- */
@@ -59,7 +56,7 @@ namespace mame
 
         public const UInt32 ROMREGION_ERASEVALMASK      = 0x00ff0000;          /* value to erase the region to */
         public static UInt32 ROMREGION_ERASEVAL(UInt32 x) { return ((x & 0xff) << 16) | ROMREGION_ERASE; }
-        //#define     ROMREGION_ERASE00       ROMREGION_ERASEVAL(0)
+        public static readonly UInt32 ROMREGION_ERASE00 = ROMREGION_ERASEVAL(0);
         public static readonly UInt32 ROMREGION_ERASEFF = ROMREGION_ERASEVAL(0xff);
 
 
@@ -109,11 +106,11 @@ namespace mame
         /* ----- start/stop macros ----- */
         //#define ROM_NAME(name)                              rom_##name
         //#define ROM_START(name)                             static const tiny_rom_entry ROM_NAME(name)[] = {
-        public static tiny_rom_entry ROM_END() { return new tiny_rom_entry(null, null, 0, 0, (UInt32)ROMENTRYTYPE.ROMENTRYTYPE_END); }
+        public static tiny_rom_entry ROM_END() { return new tiny_rom_entry(null, null, 0, 0, ROMENTRYTYPE_END); }
 
 
         /* ----- ROM region macros ----- */
-        public static tiny_rom_entry ROM_REGION(UInt32 length, string tag, UInt32 flags) { return new tiny_rom_entry(tag, null, 0, length, (UInt32)ROMENTRYTYPE.ROMENTRYTYPE_REGION | flags); }
+        public static tiny_rom_entry ROM_REGION(UInt32 length, string tag, UInt32 flags) { return new tiny_rom_entry(tag, null, 0, length, ROMENTRYTYPE_REGION | flags); }
         //#define ROM_REGION16_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_LE)
         //#define ROM_REGION16_BE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_BE)
         //#define ROM_REGION32_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_32BIT | ROMREGION_LE)
@@ -123,7 +120,7 @@ namespace mame
 
 
         /* ----- core ROM loading macros ----- */
-        public static tiny_rom_entry ROMX_LOAD(string name, UInt32 offset, UInt32 length, string hash, UInt32 flags) { return new tiny_rom_entry(name, hash, offset, length, (UInt32)ROMENTRYTYPE.ROMENTRYTYPE_ROM | flags); }
+        public static tiny_rom_entry ROMX_LOAD(string name, UInt32 offset, UInt32 length, string hash, UInt32 flags) { return new tiny_rom_entry(name, hash, offset, length, ROMENTRYTYPE_ROM | flags); }
         public static tiny_rom_entry ROM_LOAD(string name, UInt32 offset, UInt32 length, string hash) { return ROMX_LOAD(name, offset, length, hash, 0); }
         //#define ROM_LOAD_OPTIONAL(name,offset,length,hash)  ROMX_LOAD(name, offset, length, hash, ROM_OPTIONAL)
 
@@ -145,13 +142,13 @@ namespace mame
 
 
         /* ----- ROM_RELOAD related macros ----- */
-        //#define ROM_RELOAD(offset,length)                   { nullptr, nullptr, offset, length, ROMENTRYTYPE_RELOAD | ROM_INHERITFLAGS },
+        public static tiny_rom_entry ROM_RELOAD(UInt32 offset, UInt32 length) { return new tiny_rom_entry(null, null, offset, length, ROMENTRYTYPE_RELOAD | ROM_INHERITFLAGS); }
         //#define ROM_RELOAD_PLAIN(offset,length)             { nullptr, nullptr, offset, length, ROMENTRYTYPE_RELOAD },
 
         /* ----- additional ROM-related macros ----- */
         //#define ROM_CONTINUE(offset,length)                 { nullptr,  nullptr,                 (offset), (length), ROMENTRYTYPE_CONTINUE | ROM_INHERITFLAGS },
         //#define ROM_IGNORE(length)                          { nullptr,  nullptr,                 0,        (length), ROMENTRYTYPE_IGNORE | ROM_INHERITFLAGS },
-        public static tiny_rom_entry ROM_FILL(UInt32 offset, UInt32 length, byte value) { return new tiny_rom_entry(null, value.ToString(), offset, length, (UInt32)ROMENTRYTYPE.ROMENTRYTYPE_FILL); }
+        public static tiny_rom_entry ROM_FILL(UInt32 offset, UInt32 length, byte value) { return new tiny_rom_entry(null, value.ToString(), offset, length, ROMENTRYTYPE_FILL); }
         //#define ROMX_FILL(offset,length,value,flags)        { nullptr,  (const char *)(value),   (offset), (length), ROMENTRYTYPE_FILL | flags },
         //#define ROM_COPY(srctag,srcoffs,offset,length)      { (srctag), (const char *)(srcoffs), (offset), (length), ROMENTRYTYPE_COPY },
 
@@ -263,8 +260,8 @@ namespace mame
             string result = "";
             switch (ent.flags & romentry_global.ROMENTRY_TYPEMASK)
             {
-                case (UInt32)ROMENTRYTYPE.ROMENTRYTYPE_FILL:
-                case (UInt32)ROMENTRYTYPE.ROMENTRYTYPE_COPY:
+                case romentry_global.ROMENTRYTYPE_FILL:
+                case romentry_global.ROMENTRYTYPE_COPY:
                     // for these types, tiny_rom_entry::hashdata is an integer typecasted to a pointer
                     result = string.Format("0x{0}", ent.hashdata);  //(unsigned)(uintptr_t)ent.hashdata);  // 0x%x
                     break;

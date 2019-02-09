@@ -4,15 +4,17 @@
 using System;
 using System.Collections.Generic;
 
+using indirect_pen_t = System.UInt16;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
+using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
 
 
 namespace mame
 {
-    public partial class galaga_state : driver_device
+    partial class galaga_state : driver_device
     {
         const int MAX_STARS = 252;
         const int STARS_COLOR_BASE = 64*4+64*4;
@@ -325,67 +327,63 @@ namespace mame
 
         ***************************************************************************/
 
-        //PALETTE_INIT_MEMBER(galaga_state,galaga)
-        public void palette_init_galaga(palette_device palette)
+        public void galaga_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
-            int i;
 
-            /* core palette */
-            for (i = 0;i < 32;i++)
+            // core palette
+            for (int i = 0; i < 32; i++)
             {
-                int bit0,bit1,bit2,r,g,b;
+                int bit0;
+                int bit1;
+                int bit2;
 
-                bit0 = (color_prom[0] >> 0) & 0x01;
-                bit1 = (color_prom[0] >> 1) & 0x01;
-                bit2 = (color_prom[0] >> 2) & 0x01;
-                r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                bit0 = (color_prom[0] >> 3) & 0x01;
-                bit1 = (color_prom[0] >> 4) & 0x01;
-                bit2 = (color_prom[0] >> 5) & 0x01;
-                g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+                bit0 = BIT(color_prom[0], 0);
+                bit1 = BIT(color_prom[0], 1);
+                bit2 = BIT(color_prom[0], 2);
+                int r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+                bit0 = BIT(color_prom[0], 3);
+                bit1 = BIT(color_prom[0], 4);
+                bit2 = BIT(color_prom[0], 5);
+                int g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
                 bit0 = 0;
-                bit1 = (color_prom[0] >> 6) & 0x01;
-                bit2 = (color_prom[0] >> 7) & 0x01;
-                b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+                bit1 = BIT(color_prom[0], 6);
+                bit2 = BIT(color_prom[0], 7);
+                int b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-                palette.palette_interface().set_indirect_color(i,new rgb_t((byte)r,(byte)g,(byte)b));
+                palette.palette_interface.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
                 color_prom++;
             }
 
-            /* palette for the stars */
-            for (i = 0;i < 64;i++)
+            // palette for the stars
+            for (int i = 0; i < 64; i++)
             {
-                int bits,r,g,b;
-                int [] map = new int[4] { 0x00, 0x47, 0x97 ,0xde };
+                int [] map = new int[4] { 0x00, 0x47, 0x97, 0xde };
 
-                bits = (i >> 0) & 0x03;
-                r = map[bits];
-                bits = (i >> 2) & 0x03;
-                g = map[bits];
-                bits = (i >> 4) & 0x03;
-                b = map[bits];
+                int r = map[(i >> 0) & 0x03];
+                int g = map[(i >> 2) & 0x03];
+                int b = map[(i >> 4) & 0x03];
 
-                palette.palette_interface().set_indirect_color(32 + i, new rgb_t((byte)r,(byte)g,(byte)b));
+                palette.palette_interface.set_indirect_color(32 + i, new rgb_t((byte)r, (byte)g, (byte)b));
             }
 
-            /* characters */
-            for (i = 0;i < 64*4;i++)
+            // characters
+            for (int i = 0; i < 64*4; i++)
             {
-                palette.palette_interface().set_pen_indirect((UInt32)i, (UInt16)((color_prom[0] & 0x0f) + 0x10));   /* chars */
+                palette.palette_interface.set_pen_indirect((pen_t)i, (indirect_pen_t)((color_prom[0] & 0x0f) | 0x10));
                 color_prom++;
             }
 
-            /* sprites */
-            for (i = 0;i < 64*4;i++)
+            // sprites
+            for (int i = 0; i < 64*4; i++)
             {
-                palette.palette_interface().set_pen_indirect((UInt32)(64*4+i), (UInt16)((color_prom[0] & 0x0f)));
+                palette.palette_interface.set_pen_indirect((pen_t)(64*4 + i), (indirect_pen_t)((color_prom[0] & 0x0f)));
                 color_prom++;
             }
 
-            /* now the stars */
-            for (i = 0;i < 64;i++)
-                palette.palette_interface().set_pen_indirect((UInt32)(64*4+64*4+i), (UInt16)(32 + i));
+            // now the stars
+            for (int i = 0; i < 64; i++)
+                palette.palette_interface.set_pen_indirect((pen_t)(64*4 + 64*4 + i), (indirect_pen_t)(32 + i));
         }
 
 
@@ -506,7 +504,7 @@ namespace mame
                             (UInt32)color,
                             flipx,flipy,
                             sx + 16*x, sy + 16*y,
-                            m_palette.target.palette_interface().transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x0f));
+                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x0f));
                     }
                 }
             }
@@ -554,7 +552,7 @@ namespace mame
 
         public UInt32 screen_update_galaga(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            bitmap.fill(m_palette.target.palette_interface().black_pen(), cliprect);
+            bitmap.fill(m_palette.target.palette_interface.black_pen(), cliprect);
             draw_stars(bitmap,cliprect);
             draw_sprites(bitmap,cliprect);
             m_fg_tilemap.draw(screen, bitmap, cliprect, 0,0);

@@ -13,36 +13,7 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public partial class _1942_state : driver_device
-    {
-        //WRITE8_MEMBER(_1942_state::_1942_bankswitch_w)
-        public void _1942_bankswitch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
-        {
-            throw new emu_unimplemented();
-#if false
-            membank("bank1")->set_entry(data & 0x03);
-#endif
-        }
-
-
-        //TIMER_DEVICE_CALLBACK_MEMBER(_1942_state::_1942_scanline)
-        public void _1942_scanline(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
-        {
-            throw new emu_unimplemented();
-#if false
-            int scanline = param;
-
-            if(scanline == 240) // vblank-out irq
-                m_maincpu->set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* RST 10h - vblank */
-
-            if(scanline == 0) // unknown irq event, presumably vblank-in or a periodic one (writes to the soundlatch and drives freeze dip-switch)
-                m_maincpu->set_input_line_and_vector(0, HOLD_LINE, 0xcf);   /* RST 08h */
-#endif
-        }
-    }
-
-
-    public class _1942 : device_init_helpers
+    partial class _1942_state : driver_device
     {
         /* 12mhz OSC */
         static readonly XTAL MASTER_CLOCK     = new XTAL(12000000);
@@ -142,11 +113,28 @@ namespace mame
         }
 
 
-        //void _1942_state::_1942_map(address_map &map)
-        void _1942_state__1942_map(address_map map, device_t device)
+        //WRITE8_MEMBER(_1942_state::_1942_bankswitch_w)
+        public void _1942_bankswitch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
-            _1942_state _1942_state = (_1942_state)device;
+            membank("bank1").set_entry(data & 0x03);
+        }
 
+
+        //TIMER_DEVICE_CALLBACK_MEMBER(_1942_state::_1942_scanline)
+        public void _1942_scanline(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
+        {
+            int scanline = param;
+
+            if (scanline == 240) // vblank-out irq
+                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* RST 10h - vblank */
+
+            if (scanline == 0) // unknown irq event, presumably vblank-in or a periodic one (writes to the soundlatch and drives freeze dip-switch)
+                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xcf);   /* RST 08h */
+        }
+
+
+        void _1942_map(address_map map, device_t device)
+        {
             map.op(0x0000, 0x7fff).rom();
             map.op(0x8000, 0xbfff).bankr("bank1");
             map.op(0xc000, 0xc000).portr("SYSTEM");
@@ -154,31 +142,31 @@ namespace mame
             map.op(0xc002, 0xc002).portr("P2");
             map.op(0xc003, 0xc003).portr("DSWA");
             map.op(0xc004, 0xc004).portr("DSWB");
-            map.op(0xc800, 0xc800).w(_1942_state.soundlatch.target, _1942_state.generic_latch_8_device_write);
-            map.op(0xc802, 0xc803).w(_1942_state._1942_scroll_w);
-            map.op(0xc804, 0xc804).w(_1942_state._1942_c804_w);
-            map.op(0xc805, 0xc805).w(_1942_state._1942_palette_bank_w);
-            map.op(0xc806, 0xc806).w(_1942_state._1942_bankswitch_w);
+            map.op(0xc800, 0xc800).w(soundlatch.target, generic_latch_8_device_write);
+            map.op(0xc802, 0xc803).w(_1942_scroll_w);
+            map.op(0xc804, 0xc804).w(_1942_c804_w);
+            map.op(0xc805, 0xc805).w(_1942_palette_bank_w);
+            map.op(0xc806, 0xc806).w(_1942_bankswitch_w);
             map.op(0xcc00, 0xcc7f).ram().share("spriteram");
-            map.op(0xd000, 0xd7ff).ram().w(_1942_state._1942_fgvideoram_w).share("fg_videoram");
-            map.op(0xd800, 0xdbff).ram().w(_1942_state._1942_bgvideoram_w).share("bg_videoram");
+            map.op(0xd000, 0xd7ff).ram().w(_1942_fgvideoram_w).share("fg_videoram");
+            map.op(0xd800, 0xdbff).ram().w(_1942_bgvideoram_w).share("bg_videoram");
             map.op(0xe000, 0xefff).ram();
         }
 
 
-        //void _1942_state::sound_map(address_map &map)
-        void _1942_state_sound_map(address_map map, device_t device)
+        void sound_map(address_map map, device_t device)
         {
-            _1942_state _1942_state = (_1942_state)device;
-
             map.op(0x0000, 0x3fff).rom();
             map.op(0x4000, 0x47ff).ram();
-            map.op(0x6000, 0x6000).r(_1942_state.soundlatch.target, _1942_state.generic_latch_8_device_read);
-            map.op(0x8000, 0x8001).w("ay1", _1942_state.ay8910_device_address_data_w_ay1);
-            map.op(0xc000, 0xc001).w("ay2", _1942_state.ay8910_device_address_data_w_ay2);
+            map.op(0x6000, 0x6000).r(soundlatch.target, generic_latch_8_device_read);
+            map.op(0x8000, 0x8001).w("ay1", ay8910_device_address_data_w_ay1);
+            map.op(0xc000, 0xc001).w("ay2", ay8910_device_address_data_w_ay2);
         }
+    }
 
 
+    partial class _1942 : global_object
+    {
         //static INPUT_PORTS_START( 1942 )
         void construct_ioport_1942(device_t owner, ioport_list portlist, ref string errorbuf)
         {
@@ -260,8 +248,11 @@ namespace mame
 
             INPUT_PORTS_END();
         }
+    }
 
 
+    partial class _1942_state : driver_device
+    {
         static readonly gfx_layout charlayout = new gfx_layout(
             8,8,
             RGN_FRAC(1,1),
@@ -310,43 +301,54 @@ namespace mame
         };
 
 
-        //MACHINE_CONFIG_START(_1942_state::_1942)
-        void _1942_state__1942(machine_config config, device_t owner, device_t device)
+        protected override void machine_start()
         {
-            MACHINE_CONFIG_START(config, owner, device);
+            save_item(m_palette_bank, "m_palette_bank");
+            save_item(m_scroll, "m_scroll");
+        }
 
-            _1942_state _1942_state = (_1942_state)helper_owner;
+
+        protected override void machine_reset()
+        {
+            m_palette_bank = 0;
+            m_scroll[0] = 0;
+            m_scroll[1] = 0;
+        }
+
+
+        //MACHINE_CONFIG_START(_1942_state::_1942)
+        public void _1942(machine_config config)
+        {
+            MACHINE_CONFIG_START(config, this);
 
             /* basic machine hardware */
             MCFG_DEVICE_ADD("maincpu", z80_device.Z80, MAIN_CPU_CLOCK);    /* 4 MHz ??? */
-            MCFG_DEVICE_PROGRAM_MAP(_1942_state__1942_map);
-            MCFG_TIMER_DRIVER_ADD_SCANLINE("scantimer", _1942_state._1942_scanline, "screen", 0, 1);
+            MCFG_DEVICE_PROGRAM_MAP(_1942_map);
+            TIMER(config, "scantimer").configure_scanline(_1942_scanline, "screen", 0, 1);
 
             MCFG_DEVICE_ADD("audiocpu", z80_device.Z80, SOUND_CPU_CLOCK);  /* 3 MHz ??? */
-            MCFG_DEVICE_PROGRAM_MAP(_1942_state_sound_map);
-            MCFG_DEVICE_PERIODIC_INT_DRIVER(_1942_state.irq0_line_hold, 4*60);
+            MCFG_DEVICE_PROGRAM_MAP(sound_map);
+            MCFG_DEVICE_PERIODIC_INT_DRIVER(irq0_line_hold, 4*60);
 
 
             /* video hardware */
             MCFG_DEVICE_ADD("gfxdecode", gfxdecode_device.GFXDECODE);//, "palette", gfx_1942);
             MCFG_DEVICE_ADD_gfxdecode_device("palette", gfx_1942);
 
-            MCFG_PALETTE_ADD(_1942_state.palette, 64*4+4*32*8+16*16);
-            MCFG_PALETTE_INDIRECT_ENTRIES(256);
-            MCFG_PALETTE_INIT_OWNER(_1942_state.palette_init_1942);
+            PALETTE(config, m_palette, _1942_palette, 64*4+4*32*8+16*16, 256);
 
-            screen_device screen = SCREEN(config, "screen", screen_type_enum.SCREEN_TYPE_RASTER);
+            screen_device screen = SCREEN(config, "screen", SCREEN_TYPE_RASTER);
             screen.set_refresh_hz(60);
             screen.set_vblank_time(attotime.ATTOSECONDS_IN_USEC(0));
             screen.set_size(32*8, 32*8);
             screen.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
-            screen.set_screen_update(_1942_state.screen_update);
-            screen.set_palette(_1942_state.palette);
+            screen.set_screen_update(screen_update);
+            screen.set_palette(palette);
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();
 
-            GENERIC_LATCH_8(config, _1942_state.soundlatch);
+            GENERIC_LATCH_8(config, soundlatch);
 
             ay8910_device ay1 = AY8910(config, "ay1", AUDIO_CLOCK);  /* 1.5 MHz */
             ay1.set_flags(ay8910_global.AY8910_RESISTOR_OUTPUT);
@@ -381,8 +383,11 @@ namespace mame
 
             MACHINE_CONFIG_END();
         }
+    }
 
 
+    partial class _1942 : global_object
+    {
         /***************************************************************************
 
           Game driver(s)
@@ -392,7 +397,7 @@ namespace mame
         //ROM_START( 1942 )
         static readonly List<tiny_rom_entry> rom_1942 = new List<tiny_rom_entry>()
         {
-            ROM_REGION( 0x20000, "maincpu", romentry_global.ROMREGION_ERASEFF ), /* 64k for code + 3*16k for the banked ROMs images */
+            ROM_REGION( 0x20000, "maincpu", ROMREGION_ERASEFF ), /* 64k for code + 3*16k for the banked ROMs images */
             ROM_LOAD( "srb-03.m3", 0x00000, 0x4000, CRC("d9dafcc3") + SHA1("a089a9bc55fb7d6d0ac53f91b258396d5d62677a") ),
             ROM_LOAD( "srb-04.m4", 0x04000, 0x4000, CRC("da0cf924") + SHA1("856fbb302c9a4ec7850a26ab23dab8467f79bba4") ),
             ROM_LOAD( "srb-05.m5", 0x10000, 0x4000, CRC("d102911c") + SHA1("35ba1d82bd901940f61d8619273463d02fc0a952") ),
@@ -433,15 +438,23 @@ namespace mame
 
             ROM_END(),
         };
+    }
 
 
-        static void _1942_state_driver_init(running_machine machine, device_t owner)
+    partial class _1942_state : driver_device
+    {
+        public void driver_init()
         {
-            ListBytesPointer ROM = new ListBytesPointer(owner.memregion("gfx1").base_());  //uint8_t *ROM = memregion("maincpu")->base();
-            owner.membank("bank1").configure_entries(0, 4, new ListBytesPointer(ROM, 0x10000), 0x4000);  //membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x4000);
+            ListBytesPointer ROM = new ListBytesPointer(memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
+            membank("bank1").configure_entries(0, 4, new ListBytesPointer(ROM, 0x10000), 0x4000);  //membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x4000);
         }
+    }
 
 
+    partial class _1942 : global_object
+    {
+        static void _1942_state__1942(machine_config config, device_t device) { _1942_state _1942_state = (_1942_state)device; _1942_state._1942(config); }
+        static void _1942_state_driver_init(device_t owner) { _1942_state _1942_state = (_1942_state)owner; _1942_state.driver_init(); }
 
 
         static _1942 m_1942 = new _1942();
@@ -450,7 +463,7 @@ namespace mame
         static device_t device_creator_1942(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new _1942_state(mconfig, type, tag); }
 
 
-        //                                                     creator,             rom       YEAR,   NAME,       PARENT,  MACHINE,                        INPUT,                              INIT,                      MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_1942 = GAME( device_creator_1942, rom_1942, "1984", "1942",     null,    m_1942._1942_state__1942,       m_1942.construct_ioport_1942,       _1942_state_driver_init,   ROT270, "Capcom", "1942 (Revision B)", MACHINE_SUPPORTS_SAVE );
+        //                                                     creator,             rom       YEAR,   NAME,   PARENT,  MACHINE,                 INPUT,                        INIT,                          MONITOR,COMPANY, FULLNAME,FLAGS
+        public static readonly game_driver driver_1942 = GAME( device_creator_1942, rom_1942, "1984", "1942", null,    _1942._1942_state__1942, m_1942.construct_ioport_1942, _1942._1942_state_driver_init, ROT270, "Capcom", "1942 (Revision B)", MACHINE_SUPPORTS_SAVE );
     }
 }

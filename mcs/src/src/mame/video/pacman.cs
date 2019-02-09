@@ -8,12 +8,13 @@ using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 
 namespace mame
 {
-    public partial class pacman_state : driver_device
+    partial class pacman_state : driver_device
     {
         /*************************************************************************
 
@@ -74,71 +75,61 @@ namespace mame
 
         ***************************************************************************/
 
-        static readonly int [] palette_init_pacman_resistances3 = new int[3] { 1000, 470, 220 };
-        static readonly int [] palette_init_pacman_resistances2 = new int[2] { 470, 220 };
-
-        //PALETTE_INIT_MEMBER(pacman_state,pacman)
-        public void palette_init_pacman(palette_device palette)
+        public void pacman_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
-            //static const int resistances[3] = { 1000, 470, 220 };
+            int [] resistances3 = new int [3] { 1000, 470, 220 };
+            int [] resistances2 = new int [2] { 470, 220 };
+
+            // compute the color output resistor weights
             double [] rweights = new double[3];
             double [] gweights = new double[3];
             double [] bweights = new double[2];
-            int i;
+            compute_resistor_weights(0, 255, -1.0,
+                    3, resistances3, out rweights, 0, 0,
+                    3, resistances3, out gweights, 0, 0,
+                    2, resistances2, out bweights, 0, 0);
 
-            /* compute the color output resistor weights */
-            resnet_global.compute_resistor_weights(0, 255, -1.0,
-                    3, palette_init_pacman_resistances3, out rweights, 0, 0,
-                    3, palette_init_pacman_resistances3, out gweights, 0, 0,
-                    2, palette_init_pacman_resistances2, out bweights, 0, 0);
-
-            /* create a lookup table for the palette */
-            for (i = 0; i < 32; i++)
+            // create a lookup table for the palette
+            for (int i = 0; i < 32; i++)
             {
                 int bit0;
                 int bit1;
                 int bit2;
-                int r;
-                int g;
-                int b;
 
-                /* red component */
-                //bit0 = (color_prom[i] >> 0) & 0x01;
-                //bit1 = (color_prom[i] >> 1) & 0x01;
-                //bit2 = (color_prom[i] >> 2) & 0x01;
-                bit0 = (color_prom[i] >> 0) & 0x01;
-                bit1 = (color_prom[i] >> 1) & 0x01;
-                bit2 = (color_prom[i] >> 2) & 0x01;
-                r = resnet_global.combine_3_weights(rweights, bit0, bit1, bit2);
+                // red component
+                bit0 = BIT(color_prom[i], 0);
+                bit1 = BIT(color_prom[i], 1);
+                bit2 = BIT(color_prom[i], 2);
+                int r = combine_3_weights(rweights, bit0, bit1, bit2);
 
-                /* green component */
-                bit0 = (color_prom[i] >> 3) & 0x01;
-                bit1 = (color_prom[i] >> 4) & 0x01;
-                bit2 = (color_prom[i] >> 5) & 0x01;
-                g = resnet_global.combine_3_weights(gweights, bit0, bit1, bit2);
+                // green component
+                bit0 = BIT(color_prom[i], 3);
+                bit1 = BIT(color_prom[i], 4);
+                bit2 = BIT(color_prom[i], 5);
+                int g = combine_3_weights(gweights, bit0, bit1, bit2);
 
-                /* blue component */
-                bit0 = (color_prom[i] >> 6) & 0x01;
-                bit1 = (color_prom[i] >> 7) & 0x01;
-                b = resnet_global.combine_2_weights(bweights, bit0, bit1);
+                // blue component
+                bit0 = BIT(color_prom[i], 6);
+                bit1 = BIT(color_prom[i], 7);
+                int b = combine_2_weights(bweights, bit0, bit1);
 
-                palette.palette_interface().set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
+                palette.palette_interface.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
             }
 
-            /* color_prom now points to the beginning of the lookup table */
+            // color_prom now points to the beginning of the lookup table
             color_prom += 32;
 
-            /* allocate the colortable */
-            for (i = 0; i < 64 * 4; i++)
+            // allocate the colortable
+            for (int i = 0; i < 64 * 4; i++)
             {
-                byte ctabentry = (byte)(color_prom[i] & 0x0f);// color_prom[i] & 0x0f;
+                uint8_t ctabentry = (uint8_t)(color_prom[i] & 0x0f);
 
-                /* first palette bank */
-                palette.palette_interface().set_pen_indirect((UInt32)i, ctabentry);
+                // first palette bank
+                palette.palette_interface.set_pen_indirect((UInt32)i, ctabentry);
 
-                /* second palette bank */
-                palette.palette_interface().set_pen_indirect((UInt32)(i + 64 * 4), (UInt16)(0x10 + ctabentry));
+                // second palette bank
+                palette.palette_interface.set_pen_indirect((UInt32)(i + 64 * 4), (UInt16)(0x10 + ctabentry));
             }
         }
 
@@ -221,7 +212,7 @@ namespace mame
         public void flipscreen_w(int state)
         {
             m_flipscreen = (byte)state;
-            m_bg_tilemap.set_flip(m_flipscreen * ( tilemap_global.TILEMAP_FLIPX + tilemap_global.TILEMAP_FLIPY ) );
+            m_bg_tilemap.set_flip(m_flipscreen * ( TILEMAP_FLIPX + TILEMAP_FLIPY ) );
         }
 
 
@@ -272,7 +263,7 @@ namespace mame
                             (UInt32)color,
                             fx,fy,
                             sx,sy,
-                            m_palette.target.palette_interface().transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
                     m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip,
@@ -280,7 +271,7 @@ namespace mame
                             (UInt32)color,
                             fx,fy,
                             sx - 256,sy,
-                            m_palette.target.palette_interface().transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
                 }
 
                 /* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
@@ -314,7 +305,7 @@ namespace mame
                             (UInt32)color,
                             fx,fy,
                             sx,sy + m_xoffsethack,
-                            m_palette.target.palette_interface().transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
                     m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip,
@@ -322,7 +313,7 @@ namespace mame
                             (UInt32)color,
                             fx,fy,
                             sx - 256,sy + m_xoffsethack,
-                            m_palette.target.palette_interface().transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
                 }
             }
 

@@ -26,11 +26,6 @@ namespace mame
         /* 4 bits:  volume                  */
         /* 4 bits:  prom sample bits            */
         public const int MIXLEVEL = 1 << (16 - 4 - 4);
-
-
-        public static void MCFG_NAMCO_AUDIO_VOICES(device_t device, int voices) { ((namco_audio_device)device).set_voices(voices); }
-
-        //define MCFG_NAMCO_AUDIO_STEREO(_stereo)             namco_audio_device::set_stereo(*device, _stereo);
     }
 
 
@@ -64,7 +59,7 @@ namespace mame
 
 
         /* waveform region */
-        optional_region_ptr_byte m_wave_ptr;
+        optional_region_ptr_uint8_t m_wave_ptr;
 
         /* data about the sound system */
         public sound_channel [] m_channel_list = new sound_channel[MAX_VOICES];
@@ -81,7 +76,7 @@ namespace mame
         public int m_f_fracbits;
 
         protected int m_voices;     /* number of voices */
-        public int m_stereo;     /* set to 1 to indicate stereo (e.g., System 1) */
+        public bool m_stereo;     /* set to indicate stereo (e.g., System 1) */
 
         /* decoded waveform table */
         public ListBase<int16_t> [] m_waveform = new ListBase<int16_t>[MAX_VOLUME];  //int16_t *m_waveform[MAX_VOLUME];
@@ -92,7 +87,7 @@ namespace mame
         {
             //m_class_interfaces.Add(new device_sound_interface(mconfig, this));  // device_sound_interface(mconfig, *this),
 
-            m_wave_ptr = new optional_region_ptr_byte(this, device_global.DEVICE_SELF);
+            m_wave_ptr = new optional_region_ptr_uint8_t(this, DEVICE_SELF);
             m_last_channel = null;
             m_soundregs = null;
             m_wavedata = null;
@@ -103,7 +98,7 @@ namespace mame
             m_sample_rate = 0;
             m_f_fracbits = 0;
             m_voices = 0;
-            m_stereo = 0;
+            m_stereo = false;
 
             for (int i = 0; i < m_channel_list.Length; i++)
                 m_channel_list[i] = new sound_channel();
@@ -112,7 +107,7 @@ namespace mame
 
         // static configuration
         public void set_voices(int voices) { m_voices = voices; }
-        //void set_stereo(int stereo) { downcast<namco_audio_device &>(device).m_stereo = stereo; }
+        //void set_stereo(bool stereo) { m_stereo = stereo; }
 
 
         //WRITE_LINE_MEMBER(namco_audio_device::sound_enable_w)
@@ -140,7 +135,7 @@ namespace mame
             build_decoded_waveform(m_wave_ptr.target);
 
             /* get stream channels */
-            if (m_stereo != 0)
+            if (m_stereo)
                 m_stream = machine().sound().stream_alloc(this, 0, 2, 192000);
             else
                 m_stream = machine().sound().stream_alloc(this, 0, 1, 192000);
@@ -220,7 +215,7 @@ namespace mame
             int offset;
             int v;
 
-            m_wavedata = (rgnbase != null) ? new ListBytesPointer(rgnbase) : new ListBytesPointer(global.auto_alloc_array_clear<uint8_t>(machine(), 0x400));  //m_wavedata = (rgnbase != nullptr) ? rgnbase : auto_alloc_array_clear(machine(), uint8_t, 0x400);
+            m_wavedata = (rgnbase != null) ? new ListBytesPointer(rgnbase) : new ListBytesPointer(auto_alloc_array_clear<uint8_t>(machine(), 0x400));  //m_wavedata = (rgnbase != nullptr) ? rgnbase : auto_alloc_array_clear(machine(), uint8_t, 0x400);
 
             /* 20pacgal has waves in RAM but old sound system */
             if (rgnbase == null && m_voices != 3)
@@ -238,7 +233,7 @@ namespace mame
 
             for (v = 0; v < MAX_VOLUME; v++)
             {
-                p = global.auto_alloc_array<int16_t>(machine(), (UInt32)size * MAX_VOLUME);  //p = auto_alloc_array(machine(), int16_t, size * MAX_VOLUME);
+                p = auto_alloc_array<int16_t>(machine(), (UInt32)size * MAX_VOLUME);  //p = auto_alloc_array(machine(), int16_t, size * MAX_VOLUME);
                 m_waveform[v] = p;
                 //p += size;
             }
@@ -308,7 +303,7 @@ namespace mame
         {
             namco_device namco = (namco_device)device();
 
-            if (namco.m_stereo != 0)
+            if (namco.m_stereo)
             {
                 int voiceIdx;  // sound_channel *voice;
 

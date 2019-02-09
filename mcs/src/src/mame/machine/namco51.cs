@@ -12,27 +12,14 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public static class namco51_global
-    {
-        public const bool VERBOSE = false;
-
-
-        public static void MCFG_NAMCO_51XX_ADD(out device_t device, machine_config config, device_t owner, string tag, XTAL clock) { mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, namco_51xx_device.NAMCO_51XX, clock); }
-        public static void MCFG_NAMCO_51XX_SCREEN(device_t device, string screen_tag) { ((namco_51xx_device)device).set_screen_tag(screen_tag); }
-        public static void MCFG_NAMCO_51XX_INPUT_0_CB(device_t device, DEVCB_IOPORT ioport_desc_devcb) { ((namco_51xx_device)device).set_input_callback(0, ioport_desc_devcb); }  // DEVCB_##_devcb);
-        public static void MCFG_NAMCO_51XX_INPUT_1_CB(device_t device, DEVCB_IOPORT ioport_desc_devcb) { ((namco_51xx_device)device).set_input_callback(1, ioport_desc_devcb); }  // DEVCB_##_devcb);
-        public static void MCFG_NAMCO_51XX_INPUT_2_CB(device_t device, DEVCB_IOPORT ioport_desc_devcb) { ((namco_51xx_device)device).set_input_callback(2, ioport_desc_devcb); }  // DEVCB_##_devcb);
-        public static void MCFG_NAMCO_51XX_INPUT_3_CB(device_t device, DEVCB_IOPORT ioport_desc_devcb) { ((namco_51xx_device)device).set_input_callback(3, ioport_desc_devcb); }  // DEVCB_##_devcb);
-        public static void MCFG_NAMCO_51XX_OUTPUT_0_CB(device_t device, write8_delegate write8_devcb) { ((namco_51xx_device)device).set_output_callback(0, write8_devcb); }  // DEVCB_##_devcb);
-        public static void MCFG_NAMCO_51XX_OUTPUT_1_CB(device_t device, write8_delegate write8_devcb) { ((namco_51xx_device)device).set_output_callback(1, write8_devcb); }  // DEVCB_##_devcb);
-    }
-
-
-    class namco_51xx_device : device_t
+    public class namco_51xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_51XX, namco_51xx_device, "namco51", "Namco 51xx")
         static device_t device_creator_namco_51xx_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_51xx_device(mconfig, tag, owner, clock); }
         public static readonly device_type NAMCO_51XX = DEFINE_DEVICE_TYPE(device_creator_namco_51xx_device, "namco51", "Namco 51xx");
+
+
+        const bool VERBOSE = false;
 
 
         //ROM_START( namco_51xx )
@@ -83,11 +70,10 @@ namespace mame
 
 
         public void set_screen_tag(string tag) { m_screen.set_tag(tag); }  //template <typename T> void set_screen_tag(T &&tag) { m_screen.set_tag(std::forward<T>(tag)); }
+        public void set_screen_tag(finder_base tag) { m_screen.set_tag(tag); }  //template <typename T> void set_screen_tag(T &&tag) { m_screen.set_tag(std::forward<T>(tag)); }
 
-        public devcb_base set_input_callback(int N, DEVCB_IOPORT cb) { return m_in[N].set_callback(this, cb); }  //template <unsigned N, class Object> devcb_base &set_input_callback(Object &&cb) { return m_in[N].set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_output_callback(int N, write8_delegate cb) { return m_out[N].set_callback(this, cb); }  //template <unsigned N, class Object> devcb_base &set_output_callback(Object &&cb) { return m_out[N].set_callback(std::forward<Object>(cb)); }
-        //template <unsigned N> auto input_callback() { return m_in[N].bind(); }
-        //template <unsigned N> auto output_callback() { return m_out[N].bind(); }
+        public devcb_read.binder input_callback(int N) { return m_in[N].bind(); }  //template <unsigned N> auto input_callback() { return m_in[N].bind(); }
+        public devcb_write.binder output_callback(int N) { return m_out[N].bind(); }  //template <unsigned N> auto output_callback() { return m_out[N].bind(); }
 
 
         //#define READ_PORT(num)           m_in[num](space, 0)
@@ -105,7 +91,7 @@ namespace mame
         {
             data &= 0x07;
 
-            if (namco51_global.VERBOSE) logerror("{0}: custom 51XX write {1}\n", machine().describe_context(), data);
+            if (VERBOSE) logerror("{0}: custom 51XX write {1}\n", machine().describe_context(), data);
 
             if (m_coincred_mode != 0)
             {
@@ -202,7 +188,7 @@ namespace mame
         //READ8_MEMBER( namco_51xx_device::read )
         public u8 read(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
-            if (namco51_global.VERBOSE) logerror("{0}: custom 51XX read\n", machine().describe_context());
+            if (VERBOSE) logerror("{0}: custom 51XX read\n", machine().describe_context());
 
             if (m_mode == 0) /* switch mode */
             {
@@ -407,17 +393,14 @@ namespace mame
         //-------------------------------------------------
         //  device_add_mconfig - add device configuration
         //-------------------------------------------------
-        protected override void device_add_mconfig(machine_config config, device_t owner, device_t device)
+        protected override void device_add_mconfig(machine_config config)
         {
-            //MACHINE_CONFIG_START(namco_51xx_device::device_add_mconfig)
-            MACHINE_CONFIG_START(config, owner, device);
-                MCFG_DEVICE_ADD("mcu", mb8843_cpu_device.MB8843, DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
-                //  MCFG_MB88XX_READ_K_CB(READ8(*this, namco_51xx_device, namco_51xx_K_r))
-                //  MCFG_MB88XX_WRITE_O_CB(WRITE8(*this, namco_51xx_device, namco_51xx_O_w))
-                //  MCFG_MB88XX_READ_R0_CB(READ8(*this, namco_51xx_device, namco_51xx_R0_r))
-                //  MCFG_MB88XX_READ_R2_CB(READ8(*this, namco_51xx_device, namco_51xx_R2_r))
-                MCFG_DEVICE_DISABLE();
-            MACHINE_CONFIG_END();
+            MB8843(config, m_cpu, DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
+            //  m_cpu->read_k().set(FUNC(namco_51xx_device::namco_51xx_K_r));
+            //  m_cpu->write_o().set(FUNC(namco_51xx_device::namco_51xx_O_w));
+            //  m_cpu->read_r<0>().set(FUNC(namco_51xx_device::namco_51xx_R0_r));
+            //  m_cpu->read_r<2>().set(FUNC(namco_51xx_device::namco_51xx_R2_r));
+            m_cpu.target.set_disable();
         }
     }
 }

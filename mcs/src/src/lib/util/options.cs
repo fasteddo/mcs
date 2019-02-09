@@ -61,7 +61,8 @@ namespace mame
     }
 
 
-    public class core_options : IEnumerable<core_options.entry>
+    public class core_options : global_object,
+                                IEnumerable<core_options.entry>
     {
         public delegate void value_changed_handler(string param);
 
@@ -102,7 +103,7 @@ namespace mame
             //typedef std::weak_ptr<entry> weak_ptr;
 
 
-            std_vector<string> m_names;
+            std.vector<string> m_names;
             int m_priority;
             core_options.option_type m_type;
             string m_description;
@@ -110,19 +111,19 @@ namespace mame
 
 
             // construction/destruction
-            protected entry(std_vector<string> names, option_type type = option_type.STRING, string description = null)
+            protected entry(std.vector<string> names, option_type type = option_type.STRING, string description = null)
             {
                 m_names = names;
-                m_priority = options_global.OPTION_PRIORITY_DEFAULT;
+                m_priority = OPTION_PRIORITY_DEFAULT;
                 m_type = type;
                 m_description = description;
 
 
-                global.assert(m_names.empty() == (m_type == option_type.HEADER));
+                assert(m_names.empty() == (m_type == option_type.HEADER));
             }
 
             protected entry(string name, option_type type = option_type.STRING, string description = null)
-                : this(new std_vector<string>() { name }, type, description)
+                : this(new std.vector<string>() { name }, type, description)
             {
             }
 
@@ -169,7 +170,7 @@ namespace mame
             public void set_value(string newvalue, int priority_value, bool always_override = false)
             {
                 // it is invalid to set the value on a header
-                global.assert(type() != option_type.HEADER);
+                assert(type() != option_type.HEADER);
 
                 // only set the value if we have priority
                 if (always_override || priority_value >= priority())
@@ -227,7 +228,7 @@ namespace mame
 
 
             // construction/destruction
-            public simple_entry(std_vector<string> names, string description, option_type type, string defdata, string minimum, string maximum)
+            public simple_entry(std.vector<string> names, string description, option_type type, string defdata, string minimum, string maximum)
                 : base(names, type, description)
             {
                 m_defdata = defdata;
@@ -305,7 +306,7 @@ namespace mame
                 if (priority() <= priority_hi && priority() >= priority_lo)
                 {
                     set_value(default_value(), priority(), true);
-                    set_priority(options_global.OPTION_PRIORITY_DEFAULT);
+                    set_priority(OPTION_PRIORITY_DEFAULT);
                 }
             }
 
@@ -351,10 +352,10 @@ namespace mame
 
 
         // internal state
-        std_vector<entry> m_entries = new std_vector<entry>();  //std::vector<entry::shared_ptr>                      m_entries;              // cannonical list of entries
-        std_unordered_map<string, entry> m_entrymap = new std_unordered_map<string, entry>();  //std::unordered_map<std::string, entry::weak_ptr>    m_entrymap;             // map for fast lookup
+        std.vector<entry> m_entries = new std.vector<entry>();  //std::vector<entry::shared_ptr>                      m_entries;              // cannonical list of entries
+        std.unordered_map<string, entry> m_entrymap = new std.unordered_map<string, entry>();  //std::unordered_map<std::string, entry::weak_ptr>    m_entrymap;             // map for fast lookup
         string m_command;              // command found
-        std_vector<string> m_command_arguments;   // command arguments
+        std.vector<string> m_command_arguments;   // command arguments
 
 
         //-------------------------------------------------
@@ -380,7 +381,7 @@ namespace mame
 
         // getters
         public string command() { return m_command; }
-        public std_vector<string> command_arguments() { global.assert(!m_command.empty()); return m_command_arguments; }
+        public std.vector<string> command_arguments() { assert(!m_command.empty()); return m_command_arguments; }
 
         public entry get_entry(string name)
         {
@@ -423,7 +424,7 @@ namespace mame
         //-------------------------------------------------
         void add_entry(options_entry opt, bool override_existing = false)
         {
-            std_vector<string> names = new std_vector<string>();
+            std.vector<string> names = new std.vector<string>();
             string minimum = "";
             string maximum = "";
 
@@ -491,7 +492,7 @@ namespace mame
         //-------------------------------------------------
         //  add_entry
         //-------------------------------------------------
-        void add_entry(std_vector<string> names, string description, option_type type, string default_value = "", string minimum = "", string maximum = "")
+        void add_entry(std.vector<string> names, string description, option_type type, string default_value = "", string minimum = "", string maximum = "")
         {
             // create the entry
             entry new_entry = new simple_entry(
@@ -512,7 +513,7 @@ namespace mame
         //-------------------------------------------------
         void add_header(string description)
         {
-            add_entry(new std_vector<string>(), description, option_type.HEADER);
+            add_entry(new std.vector<string>(), description, option_type.HEADER);
         }
 
 
@@ -574,7 +575,7 @@ namespace mame
         //  revert - revert options at or below a certain
         //  priority back to their defaults
         //-------------------------------------------------
-        public void revert(int priority_hi = options_global.OPTION_PRIORITY_MAXIMUM, int priority_lo = options_global.OPTION_PRIORITY_DEFAULT)
+        public void revert(int priority_hi = OPTION_PRIORITY_MAXIMUM, int priority_lo = OPTION_PRIORITY_DEFAULT)
         {
             foreach (entry curentry in m_entries)
             {
@@ -589,7 +590,7 @@ namespace mame
         //  parse_command_line - parse a series of
         //  command line arguments
         //-------------------------------------------------
-        public void parse_command_line(std_vector<string> args, int priority, bool ignore_unknown_options = false)
+        public void parse_command_line(std.vector<string> args, int priority, bool ignore_unknown_options = false)
         {
             string error_stream = "";  //std::ostringstream error_stream;
             condition_type condition = condition_type.NONE;
@@ -603,7 +604,7 @@ namespace mame
                 if (!args[(int)arg].empty() && args[(int)arg][0] == '-')
                 {
                     var curentry = get_entry(args[arg].Substring(1));
-                    if (curentry != null && curentry.type() == options_global.OPTION_COMMAND)
+                    if (curentry != null && curentry.type() == OPTION_COMMAND)
                     {
                         // can only have one command
                         if (!m_command.empty())
@@ -641,12 +642,12 @@ namespace mame
                 }
 
                 // at this point, we've already processed commands
-                if (curentry.type() == options_global.OPTION_COMMAND)
+                if (curentry.type() == OPTION_COMMAND)
                     continue;
 
                 // get the data for this argument, special casing booleans
                 string newdata;
-                if (curentry.type() == options_global.OPTION_BOOLEAN)
+                if (curentry.type() == OPTION_BOOLEAN)
                 {
                     newdata = string.Compare(curarg.Remove(0, 1), 0, "no", 0, 2) == 0 ? "0" : "1";  //(strncmp(&curarg[1], "no", 2) == 0) ? "0" : "1";
                 }
@@ -727,7 +728,7 @@ namespace mame
                     if (value != null)
                     {
                         // look up counterpart in diff, if diff is specified
-                        if (diff == null || global.strcmp(value, diff.value(name.c_str())) != 0)
+                        if (diff == null || strcmp(value, diff.value(name.c_str())) != 0)
                         {
                             // output header, if we have one
                             if (last_header != null)
@@ -844,7 +845,7 @@ namespace mame
         void add_to_entry_map(string name, entry entry)
         {
             // it is illegal to call this method for something that already exists
-            global.assert(m_entrymap.find(name) == null);
+            assert(m_entrymap.find(name) == null);
 
             // append the entry
             m_entrymap.emplace(name, entry);

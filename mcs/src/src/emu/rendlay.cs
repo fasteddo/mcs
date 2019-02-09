@@ -3,78 +3,141 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
+using element_map = mame.std.unordered_map<string, mame.layout_element>;
+using entry_vector = mame.std.vector<mame.emu.render.detail.layout_environment.entry>;
 using environment = mame.emu.render.detail.layout_environment;
-using item_list = mame.std_list<mame.layout_view.item>;
-using view_list = mame.std_list<mame.layout_view>;
+using group_map = mame.std.unordered_map<string, mame.layout_group>;
+using ioport_value = System.UInt32;
+using item_list = mame.std.list<mame.layout_view.item>;
+using make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;
+using s64 = System.Int64;
+using view_list = mame.std.list<mame.layout_view>;
 
 
 namespace mame
 {
-    enum LINE_CAP
+    public static class rendlay_global
     {
-        LINE_CAP_NONE = 0,
-        LINE_CAP_START = 1,
-        LINE_CAP_END = 2
+        public const int LAYOUT_VERSION = 2;
+
+
+        //enum
+        //{
+        public const int LINE_CAP_NONE  = 0;
+        public const int LINE_CAP_START = 1;
+        public const int LINE_CAP_END   = 2;
+        //}
+
+
+        public static readonly float [,] identity_transform = new float[,] { { 1.0F, 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F }, { 0.0F, 0.0F, 1.0F } };  //layout_group.transform identity_transform {{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
+
+
+        public static void render_bounds_transform(ref render_bounds bounds, float [,] trans)  //inline void render_bounds_transform(render_bounds &bounds, layout_group::transform const &trans)
+        {
+            bounds = new render_bounds()
+            {
+                x0 = (bounds.x0 * trans[0, 0]) + (bounds.y0 * trans[0, 1]) + trans[0, 2],
+                y0 = (bounds.x0 * trans[1, 0]) + (bounds.y0 * trans[1, 1]) + trans[1, 2],
+                x1 = (bounds.x1 * trans[0, 0]) + (bounds.y1 * trans[0, 1]) + trans[0, 2],
+                y1 = (bounds.x1 * trans[1, 0]) + (bounds.y1 * trans[1, 1]) + trans[1, 2]
+            };
+        }
+
+
+        public static render_color render_color_multiply(render_color x, render_color y)
+        {
+            return new render_color() { a = x.a * y.a, r = x.r * y.r, g = x.g * y.g, b = x.b * y.b };
+        }
+
+
+        public class layout_syntax_error : ArgumentException { public layout_syntax_error(string format, params object [] args) : base(string.Format(format, args)) { } }
+        public class layout_reference_error : ArgumentOutOfRangeException { public layout_reference_error(string format, params object [] args) : base(string.Format(format, args)) { } }
     }
 
 
     namespace emu.render.detail
     {
-        public class layout_environment
+        public class layout_environment : global_object
         {
-            class entry
+            public class entry
             {
-#if false
-                entry(std::string &&name, std::string &&t)
-                    : m_name(std::move(name))
-                    , m_text(std::move(t))
-                    , m_text_valid(true)
-                { }
-                entry(std::string &&name, s64 i)
-                    : m_name(std::move(name))
-                    , m_int(i)
-                    , m_int_valid(true)
-                { }
-                entry(std::string &&name, double f)
-                    : m_name(std::move(name))
-                    , m_float(f)
-                    , m_float_valid(true)
-                { }
-                entry(std::string &&name, std::string &&t, s64 i, int s)
-                    : m_name(std::move(name))
-                    , m_text(std::move(t))
-                    , m_int_increment(i)
-                    , m_shift(s)
-                    , m_text_valid(true)
-                    , m_incrementing(true)
-                { }
-                entry(std::string &&name, std::string &&t, double i, int s)
-                    : m_name(std::move(name))
-                    , m_text(std::move(t))
-                    , m_float_increment(i)
-                    , m_shift(s)
-                    , m_text_valid(true)
-                    , m_incrementing(true)
-                { }
-                entry(entry &&) = default;
-                entry &operator=(entry &&) = default;
+                string m_name;
+                string m_text;
+                s64 m_int = 0;
+                s64 m_int_increment = 0;
+                double m_float = 0.0;
+                double m_float_increment = 0.0;
+                int m_shift = 0;
+                bool m_text_valid = false;
+                bool m_int_valid = false;
+                bool m_float_valid = false;
+                bool m_generator = false;
 
-                void set(std::string &&t)
+
+                public entry(string name, string t)
                 {
-                    m_text = std::move(t);
+                    m_name = name;
+                    m_text = t;
+                    m_text_valid = true;
+                }
+
+                public entry(string name, s64 i)
+                {
+                    m_name = name;
+                    m_int = i;
+                    m_int_valid = true;
+                }
+
+                public entry(string name, double f)
+                {
+                    m_name = name;
+                    m_float = f;
+                    m_float_valid = true;
+                }
+
+                public entry(string name, string t, s64 i, int s)
+                {
+                    m_name = name;
+                    m_text = t;
+                    m_int_increment = i;
+                    m_shift = s;
+                    m_text_valid = true;
+                    m_generator = true;
+                }
+
+                public entry(string name, string t, double i, int s)
+                {
+                    m_name = name;
+                    m_text = t;
+                    m_float_increment = i;
+                    m_shift = s;
+                    m_text_valid = true;
+                    m_generator = true;
+                }
+
+                //entry(entry &&) = default;
+                //entry &operator=(entry &&) = default;
+
+
+                public void set(string t)
+                {
+                    m_text = t;
                     m_text_valid = true;
                     m_int_valid = false;
                     m_float_valid = false;
                 }
-                void set(s64 i)
+
+                public void set(s64 i)
                 {
                     m_int = i;
                     m_text_valid = false;
                     m_int_valid = true;
                     m_float_valid = false;
                 }
-                void set(double f)
+
+                public void set(double f)
                 {
                     m_float = f;
                     m_text_valid = false;
@@ -82,186 +145,33 @@ namespace mame
                     m_float_valid = true;
                 }
 
-                std::string const &name() const { return m_name; }
-                bool is_incrementing() const { return m_incrementing; }
 
-                std::string const &get_text()
+                public string name() { return m_name; }
+                public bool is_generator() { return m_generator; }
+
+
+                public string get_text()
                 {
                     if (!m_text_valid)
                     {
                         if (m_float_valid)
                         {
-                            m_text = std::to_string(m_float);
+                            m_text = m_float.ToString();  //m_text = std::to_string(m_float);
                             m_text_valid = true;
                         }
                         else if (m_int_valid)
                         {
-                            m_text = std::to_string(m_int);
+                            m_text = m_int.ToString();  //m_text = std::to_string(m_int);
                             m_text_valid = true;
                         }
                     }
+
                     return m_text;
                 }
 
-                void increment()
-                {
-                    if (is_incrementing())
-                    {
-                        // apply increment
-                        if (m_float_increment)
-                        {
-                            if (m_int_valid && !m_float_valid)
-                            {
-                                m_float = m_int;
-                                m_float_valid = true;
-                            }
-                            if (m_text_valid && !m_float_valid)
-                            {
-                                std::istringstream stream(m_text);
-                                stream.imbue(f_portable_locale);
-                                m_text.c_str();
-                                if (m_text[0] == '$')
-                                {
-                                    stream.get();
-                                    u64 uvalue;
-                                    stream >> std::hex >> uvalue;
-                                    m_float = uvalue;
-                                }
-                                else if ((m_text[0] == '0') && ((m_text[1] == 'x') || (m_text[1] == 'X')))
-                                {
-                                    stream.get();
-                                    stream.get();
-                                    u64 uvalue;
-                                    stream >> std::hex >> uvalue;
-                                    m_float = uvalue;
-                                }
-                                else if (m_text[0] == '#')
-                                {
-                                    stream.get();
-                                    stream >> m_int;
-                                    m_float = m_int;
-                                }
-                                else
-                                {
-                                    stream >> m_float;
-                                }
-                                m_float_valid = bool(stream);
-                            }
-                            m_float += m_float_increment;
-                            m_int_valid = m_text_valid = false;
-                        }
-                        else
-                        {
-                            if (m_text_valid && !m_int_valid && !m_float_valid)
-                            {
-                                std::istringstream stream(m_text);
-                                stream.imbue(f_portable_locale);
-                                m_text.c_str();
-                                if (m_text[0] == '$')
-                                {
-                                    stream.get();
-                                    u64 uvalue;
-                                    stream >> std::hex >> uvalue;
-                                    m_int = s64(uvalue);
-                                    m_int_valid = bool(stream);
-                                }
-                                else if ((m_text[0] == '0') && ((m_text[1] == 'x') || (m_text[1] == 'X')))
-                                {
-                                    stream.get();
-                                    stream.get();
-                                    u64 uvalue;
-                                    stream >> std::hex >> uvalue;
-                                    m_int = s64(uvalue);
-                                    m_int_valid = bool(stream);
-                                }
-                                else if (m_text[0] == '#')
-                                {
-                                    stream.get();
-                                    stream >> m_int;
-                                    m_int_valid = bool(stream);
-                                }
-                                else if (m_text.find_first_of(".eE") != std::string::npos)
-                                {
-                                    stream >> m_float;
-                                    m_float_valid = bool(stream);
-                                }
-                                else
-                                {
-                                    stream >> m_int;
-                                    m_int_valid = bool(stream);
-                                }
-                            }
 
-                            if (m_float_valid)
-                            {
-                                m_float += m_int_increment;
-                                m_int_valid = m_text_valid = false;
-                            }
-                            else
-                            {
-                                m_int += m_int_increment;
-                                m_float_valid = m_text_valid = false;
-                            }
-                        }
-
-                        // apply shift
-                        if (m_shift)
-                        {
-                            if (m_float_valid && !m_int_valid)
-                            {
-                                m_int = s64(m_float);
-                                m_int_valid = true;
-                            }
-                            if (m_text_valid && !m_int_valid)
-                            {
-                                std::istringstream stream(m_text);
-                                stream.imbue(f_portable_locale);
-                                m_text.c_str();
-                                if (m_text[0] == '$')
-                                {
-                                    stream.get();
-                                    u64 uvalue;
-                                    stream >> std::hex >> uvalue;
-                                    m_int = s64(uvalue);
-                                }
-                                else if ((m_text[0] == '0') && ((m_text[1] == 'x') || (m_text[1] == 'X')))
-                                {
-                                    stream.get();
-                                    stream.get();
-                                    u64 uvalue;
-                                    stream >> std::hex >> uvalue;
-                                    m_int = s64(uvalue);
-                                }
-                                else
-                                {
-                                    if (m_text[0] == '#')
-                                        stream.get();
-                                    stream >> m_int;
-                                }
-                                m_int_valid = bool(stream);
-                            }
-                            if (0 > m_shift)
-                                m_int >>= -m_shift;
-                            else
-                                m_int <<= m_shift;
-                            m_text_valid = m_float_valid = false;
-                        }
-                    }
-                }
-
-                static bool name_less(entry const &lhs, entry const &rhs) { return lhs.name() < rhs.name(); }
-
-            private:
-                std::string m_name;
-                std::string m_text;
-                s64 m_int = 0, m_int_increment = 0;
-                double m_float = 0.0, m_float_increment = 0.0;
-                int m_shift = 0;
-                bool m_text_valid = false;
-                bool m_int_valid = false;
-                bool m_float_valid = false;
-                bool m_incrementing = false;
-#endif
+                //void increment()
+                //static bool name_less(entry const &lhs, entry const &rhs) { return lhs.name() < rhs.name(); }
             }
 
             //using entry_vector = std::vector<entry>;
@@ -279,473 +189,507 @@ namespace mame
                 if ((m_entries.end() == pos) || (pos->name() != name))
                     m_entries.emplace(pos, std::forward<T>(name), std::forward<U>(value));
             }
+#endif
 
-            template <typename T, typename U>
-            void set(T &&name, U &&value)
+
+            //template <typename T, typename U>
+            void set(string name, object value)  //void set(T &&name, U &&value)
             {
-                entry_vector::iterator const pos(
-                        std::lower_bound(
-                            m_entries.begin(),
-                            m_entries.end(),
-                            name,
-                            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
-                if ((m_entries.end() == pos) || (pos->name() != name))
-                    m_entries.emplace(pos, std::forward<T>(name), std::forward<U>(value));
+                //entry_vector::iterator const pos(
+                //        std::lower_bound(
+                //            m_entries.begin(),
+                //            m_entries.end(),
+                //            name,
+                //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
+                //if ((m_entries.end() == pos) || (pos->name() != name))
+                //    m_entries.emplace(pos, std::forward<T>(name), std::forward<U>(value));
+                //else
+                //    pos->set(std::forward<U>(value));
+                int pos = 0;
+                for (; pos < m_entries.Count; pos++)
+                {
+                    if (m_entries[pos].name().CompareTo(name) >= 0)
+                        break;
+                }
+
+                if ((m_entries.Count == pos) || (m_entries[pos].name() != name))
+                {
+                    if (value is string)      m_entries.emplace(pos, new entry(name, (string)value));
+                    else if (value is s64)    m_entries.emplace(pos, new entry(name, (s64)value));
+                    else if (value is double) m_entries.emplace(pos, new entry(name, (double)value));
+                    else throw new emu_unimplemented();
+                }
                 else
-                    pos->set(std::forward<U>(value));
+                {
+                    if (value is string)      m_entries[pos].set((string)value);
+                    else if (value is s64)    m_entries[pos].set((s64)value);
+                    else if (value is double) m_entries[pos].set((double)value);
+                    else throw new emu_unimplemented();
+                }
             }
+
 
             void cache_device_entries()
             {
-                if (!m_next && !m_cached)
-                {
-                    try_insert("devicetag", device().tag());
-                    try_insert("devicebasetag", device().basetag());
-                    try_insert("devicename", device().name());
-                    try_insert("deviceshortname", device().shortname());
-                    util::ovectorstream tmp;
-                    unsigned i(0U);
-                    for (screen_device const &screen : screen_device_iterator(machine().root_device()))
-                    {
-                        s64 const w(screen.visible_area().width()), h(screen.visible_area().height());
-                        s64 xaspect(w), yaspect(h);
-                        reduce_fraction(xaspect, yaspect);
-
-                        tmp.seekp(0);
-                        util::stream_format(tmp, "scr%unativexaspect", i);
-                        tmp.put('\0');
-                        try_insert(&tmp.vec()[0], xaspect);
-
-                        tmp.seekp(0);
-                        util::stream_format(tmp, "scr%unativeyaspect", i);
-                        tmp.put('\0');
-                        try_insert(&tmp.vec()[0], yaspect);
-
-                        tmp.seekp(0);
-                        util::stream_format(tmp, "scr%uwidth", i);
-                        tmp.put('\0');
-                        try_insert(&tmp.vec()[0], w);
-
-                        tmp.seekp(0);
-                        util::stream_format(tmp, "scr%uheight", i);
-                        tmp.put('\0');
-                        try_insert(&tmp.vec()[0], h);
-
-                        ++i;
-                    }
-                    m_cached = true;
-                }
+                throw new emu_unimplemented();
             }
 
-            entry *find_entry(char const *begin, char const *end)
+
+            entry find_entry(string name)  //entry *find_entry(char const *begin, char const *end)
             {
                 cache_device_entries();
-                entry_vector::iterator const pos(
-                        std::lower_bound(
-                            m_entries.begin(),
-                            m_entries.end(),
-                            std::make_pair(begin, end - begin),
-                            [] (entry const &lhs, std::pair<char const *, std::ptrdiff_t> const &rhs)
-                            { return 0 > std::strncmp(lhs.name().c_str(), rhs.first, rhs.second); }));
-                if ((m_entries.end() != pos) && (pos->name().length() == (end - begin)) && !std::strncmp(pos->name().c_str(), begin, end - begin))
-                    return &*pos;
+                //entry_vector::iterator const pos(
+                //        std::lower_bound(
+                //            m_entries.begin(),
+                //            m_entries.end(),
+                //            std::make_pair(begin, end - begin),
+                //            [] (entry const &lhs, std::pair<char const *, std::ptrdiff_t> const &rhs)
+                //            { return 0 > std::strncmp(lhs.name().c_str(), rhs.first, rhs.second); }));
+                //if ((m_entries.end() != pos) && (pos->name().length() == (end - begin)) && !std::strncmp(pos->name().c_str(), begin, end - begin))
+                //    return &*pos;
+                //else
+                //    return m_next ? m_next->find_entry(begin, end) : nullptr;
+                int pos = 0;
+                for (; pos < m_entries.Count; pos++)
+                {
+                    if (0 <= strcmp(m_entries[pos].name(), name))
+                        break;
+                }
+
+                if ((m_entries.Count != pos) && (m_entries[pos].name() == name))
+                    return m_entries[pos];
                 else
-                    return m_next ? m_next->find_entry(begin, end) : nullptr;
+                    return m_next != null ? m_next.find_entry(name) : null;
             }
 
-            template <typename... T>
-            std::tuple<char const *, char const *, bool> get_variable_text(T &&... args)
+
+            //template <typename... T>
+            KeyValuePair<string, bool> get_variable_text(string name)  //std::tuple<char const *, char const *, bool> get_variable_text(T &&... args)
             {
-                entry *const found(find_entry(std::forward<T>(args)...));
-                if (found)
+                entry found = find_entry(name);
+                if (found != null)
                 {
-                    std::string const &text(found->get_text());
-                    char const *const begin(text.c_str());
-                    return std::make_tuple(begin, begin + text.length(), true);
+                    string text = found.get_text();
+                    string begin = text.c_str();
+                    return new KeyValuePair<string, bool>(begin, true);  //return std::make_tuple(begin, begin + text.length(), true);
                 }
                 else
                 {
-                    return std::make_tuple(nullptr, nullptr, false);
+                    return new KeyValuePair<string, bool>(null, false);  //return std::make_tuple(nullptr, nullptr, false);
                 }
             }
 
-            std::pair<char const *, char const *> expand(char const *begin, char const *end)
+
+            string expand(string begin)  //std::pair<char const *, char const *> expand(char const *str)
             {
+                m_buffer = "";
+
                 // search for candidate variable references
-                char const *start(begin);
-                char const *pos(std::find_if(start, end, is_variable_start));
-                while (pos != end)
+                int startIdx = 0;  //char const *start(begin);
+                int i = begin.IndexOf(c => !char.IsWhiteSpace(c));
+                int posIdx = begin.IndexOf(is_variable_start);  //char const *pos(std::find_if(start, end, is_variable_start));
+                while (posIdx != -1)
                 {
-                    char const *const term(std::find_if(pos + 1, end, [] (char ch) { return !is_variable_char(ch); }));
-                    if ((term == end) || !is_variable_end(*term))
+                    int termIdx = begin.Substring(1).IndexOf(c => !is_variable_char(c));  //char const *const term(std::find_if(pos + 1, end, [] (char ch) { return !is_variable_char(ch); }));
+                    if ((termIdx == -1) || !is_variable_end(begin[termIdx]))
                     {
                         // not a valid variable name - keep searching
-                        pos = std::find_if(term, end, is_variable_start);
+                        posIdx = begin.Substring(termIdx).IndexOf(c => is_variable_start(c));  //pos = std::find_if(term, end, is_variable_start);
                     }
                     else
                     {
                         // looks like a variable reference - try to look it up
-                        std::tuple<char const *, char const *, bool> const text(get_variable_text(pos + 1, term));
-                        if (std::get<2>(text))
+                        var text = get_variable_text(begin.Substring(posIdx + 1, termIdx - (posIdx + 1)));  //std::tuple<char const *, char const *, bool> const text(get_variable_text(pos + 1, term));
+                        if (text.Key != null)  //if (std::get<2>(text))
                         {
                             // variable found
-                            if (begin == start)
-                                m_buffer.seekp(0);
-                            m_buffer.write(start, pos - start);
-                            m_buffer.write(std::get<0>(text), std::get<1>(text) - std::get<0>(text));
-                            start = term + 1;
-                            pos = std::find_if(start, end, is_variable_start);
+                            if (0 == startIdx)  //if (begin == start)
+                                m_buffer = "";  //m_buffer.seekp(0);
+                            m_buffer += begin.Substring(startIdx, posIdx - startIdx);  //m_buffer.write(start, pos - start);
+                            m_buffer += text.Key;  //m_buffer.write(std::get<0>(text), std::get<1>(text) - std::get<0>(text));
+                            startIdx = termIdx + 1;  //start = term + 1;
+                            posIdx = begin.Substring(startIdx).IndexOf(c => is_variable_start(c));  //pos = std::find_if(start, end, is_variable_start);
                         }
                         else
                         {
                             // variable not found - move on
-                            pos = std::find_if(pos + 1, end, is_variable_start);
+                            posIdx = begin.Substring(1).IndexOf(c => is_variable_start(c));  //pos = std::find_if(pos + 1, end, is_variable_start);
                         }
                     }
                 }
 
                 // short-circuit the case where no substitutions were made
-                if (start == begin)
+                if (startIdx == 0)  //if (start == begin)
                 {
-                    return std::make_pair(begin, end);
+                    return begin;  //return std::make_pair(begin, end);
                 }
                 else
                 {
-                    m_buffer.write(start, pos - start);
-                    m_buffer.put('\0');
-                    std::vector<char> const &vec(m_buffer.vec());
-                    if (vec.empty())
-                        return std::make_pair(nullptr, nullptr);
+                    m_buffer += begin.Substring(startIdx, posIdx - startIdx);  //m_buffer.write(start, pos - start);
+                    m_buffer += '\0';  //m_buffer.put('\0');
+                    //std.vector<char> vec = m_buffer.vec();
+                    if (m_buffer.empty())  //if (vec.empty())
+                        return null;  //return std::make_pair(nullptr, nullptr);
                     else
-                        return std::make_pair(&vec[0], &vec[0] + vec.size() - 1);
+                        return m_buffer;  //return std::make_pair(&vec[0], &vec[0] + vec.size() - 1);
                 }
             }
 
-            std::pair<char const *, char const *> expand(char const *str)
+
+            string parameter_name(util.xml.data_node node)
             {
-                return expand(str, str + strlen(str));
+                string attrib = node.get_attribute_string("name", null);
+                if (attrib == null)
+                    throw new rendlay_global.layout_syntax_error("parameter lacks name attribute");
+                var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
+                return expanded;  //return std::string(expanded.first, expanded.second);
             }
 
-            std::string parameter_name(util::xml::data_node const &node)
-            {
-                char const *const attrib(node.get_attribute_string("name", nullptr));
-                if (!attrib)
-                    throw layout_syntax_error("parameter lacks name attribute");
-                std::pair<char const *, char const *> const expanded(expand(attrib));
-                return std::string(expanded.first, expanded.second);
-            }
+            static bool is_variable_start(char ch) { return '~' == ch; }
+            static bool is_variable_end(char ch) { return '~' == ch; }
+            static bool is_variable_char(char ch) { return (('0' <= ch) && ('9' >= ch)) || (('A' <= ch) && ('Z' >= ch)) || (('a' <= ch) && ('z' >= ch)) || ('_' == ch); }
 
-            static constexpr bool is_variable_start(char ch)
-            {
-                return '~' == ch;
-            }
-            static constexpr bool is_variable_end(char ch)
-            {
-                return '~' == ch;
-            }
-            static constexpr bool is_variable_char(char ch)
-            {
-                return (('0' <= ch) && ('9' >= ch)) || (('A' <= ch) && ('Z' >= ch)) || (('a' <= ch) && ('z' >= ch)) || ('_' == ch);
-            }
-#endif
 
-            //entry_vector m_entries;
-            //util::ovectorstream m_buffer;
+            entry_vector m_entries = new entry_vector();
+            string m_buffer;  //util::ovectorstream m_buffer;
             device_t m_device;
-            //layout_environment *const m_next = nullptr;
+            layout_environment m_next = null;
             //bool m_cached = false;
 
 
             public layout_environment(device_t device) { m_device = device; }
-            //explicit layout_environment(layout_environment &next) : m_device(next.m_device), m_next(&next) { }
+            public layout_environment(layout_environment next) { m_device = next.m_device; m_next = next; }
             //layout_environment(layout_environment const &) = delete;
 
-            device_t device() { return m_device; }
+
+            public device_t device() { return m_device; }
             public running_machine machine() { return device().machine(); }
 
-#if false
-            bool is_root_device() { return &device() == &machine().root_device(); }
+            public bool is_root_device() { return device() == machine().root_device(); }
 
-            void set_parameter(std::string &&name, std::string &&value)
-            {
-                set(std::move(name), std::move(value));
-            }
+            public void set_parameter(string name, string value) { set(name, value); }
+            public void set_parameter(string name, s64 value) { set(name, value); }
+            public void set_parameter(string name, double value) { set(name, value); }
 
-            void set_parameter(std::string &&name, s64 value)
-            {
-                set(std::move(name), value);
-            }
-
-            void set_parameter(std::string &&name, double value)
-            {
-                set(std::move(name), value);
-            }
-
-            void set_parameter(util::xml::data_node const &node)
+            public void set_parameter(util.xml.data_node node)
             {
                 // do basic validation
-                std::string name(parameter_name(node));
+                string name = parameter_name(node);
                 if (node.has_attribute("start") || node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
-                    throw layout_syntax_error("start/increment/lshift/rshift attributes are only allowed for repeat parameters");
-                char const *const value(node.get_attribute_string("value", nullptr));
-                if (!value)
-                    throw layout_syntax_error("parameter lacks value attribute");
+                    throw new rendlay_global.layout_syntax_error("start/increment/lshift/rshift attributes are only allowed for repeat parameters");
+                string value = node.get_attribute_string("value", null);
+                if (value == null)
+                    throw new rendlay_global.layout_syntax_error("parameter lacks value attribute");
 
                 // expand value and stash
-                std::pair<char const *, char const *> const expanded(expand(value));
-                set(std::move(name), std::string(expanded.first, expanded.second));
+                var expanded = expand(value);  //std::pair<char const *, char const *> const expanded(expand(value));
+                set(name, expanded);  //set(std::move(name), std::string(expanded.first, expanded.second));
             }
 
-            void set_repeat_parameter(util::xml::data_node const &node, bool init)
+
+            public void set_repeat_parameter(util.xml.data_node node, bool init)
             {
                 // two types are allowed here - static value, and start/increment/lshift/rshift
-                std::string name(parameter_name(node));
-                char const *const start(node.get_attribute_string("start", nullptr));
-                if (start)
+                string name = parameter_name(node);
+                string start = node.get_attribute_string("start", null);
+                if (start != null)
                 {
                     // simple validity checks
                     if (node.has_attribute("value"))
-                        throw layout_syntax_error("start attribute may not be used in combination with value attribute");
-                    int const lshift(node.has_attribute("lshift") ? get_attribute_int(node, "lshift", -1) : 0);
-                    int const rshift(node.has_attribute("rshift") ? get_attribute_int(node, "rshift", -1) : 0);
+                        throw new rendlay_global.layout_syntax_error("start attribute may not be used in combination with value attribute");
+
+                    int lshift = node.has_attribute("lshift") ? get_attribute_int(node, "lshift", -1) : 0;
+                    int rshift = node.has_attribute("rshift") ? get_attribute_int(node, "rshift", -1) : 0;
                     if ((0 > lshift) || (0 > rshift))
-                        throw layout_syntax_error("lshift/rshift attributes must be non-negative integers");
+                        throw new rendlay_global.layout_syntax_error("lshift/rshift attributes must be non-negative integers");
 
                     // increment is more complex - it may be an integer or a floating-point number
-                    s64 intincrement(0);
-                    double floatincrement(0);
-                    char const *const increment(node.get_attribute_string("increment", nullptr));
-                    if (increment)
+                    s64 intincrement = 0;
+                    double floatincrement = 0;
+                    string increment = node.get_attribute_string("increment", null);
+                    if (increment != null)
                     {
-                        std::pair<char const *, char const *> const expanded(expand(increment));
-                        unsigned const hexprefix((expanded.first[0] == '$') ? 1U : ((expanded.first[0] == '0') && ((expanded.first[1] == 'x') || (expanded.first[1] == 'X'))) ? 2U : 0U);
-                        unsigned const decprefix((expanded.first[0] == '#') ? 1U : 0U);
-                        bool const floatchars(std::find_if(expanded.first, expanded.second, [] (char ch) { return ('.' == ch) || ('e' == ch) || ('E' == ch); }) != expanded.second);
-                        std::istringstream stream(std::string(expanded.first + hexprefix + decprefix, expanded.second));
-                        stream.imbue(f_portable_locale);
-                        if (!hexprefix && !decprefix && floatchars)
+                        var expanded = expand(increment);  //std::pair<char const *, char const *> const expanded(expand(increment));
+                        int hexprefix = (expanded[0] == '$') ? 1 : ((expanded[0] == '0') && ((expanded[1] == 'x') || (expanded[1] == 'X'))) ? 2 : 0;
+                        int decprefix = (expanded[0] == '#') ? 1 : 0;
+                        bool floatchars = expanded.Contains('.') || expanded.Contains('e') || expanded.Contains('E');  //bool floatchars = std.find_if(expanded.first, expanded.second, [] (char ch) { return ('.' == ch) || ('e' == ch) || ('E' == ch); }) != expanded.second;
+
+                        //std::istringstream stream(std::string(expanded.first + hexprefix + decprefix, expanded.second));
+                        //stream.imbue(f_portable_locale);
+                        string stream = expanded.Substring(hexprefix + decprefix);
+                        bool success = true;
+                        if (hexprefix == 0 && decprefix == 0 && floatchars)
                         {
-                            stream >> floatincrement;
+                            //stream >> floatincrement;
+                            success = double.TryParse(stream, out floatincrement);
                         }
-                        else if (hexprefix)
+                        else if (hexprefix != 0)
                         {
-                            u64 uvalue;
-                            stream >> std::hex >> uvalue;
-                            intincrement = s64(uvalue);
+                            //u64 uvalue;
+                            //stream >> std::hex >> uvalue;
+                            //intincrement = s64(uvalue);
+                            try { intincrement = Convert.ToInt64(stream, 16); }
+                            catch (Exception) { success = false; }
                         }
                         else
                         {
-                            stream >> intincrement;
+                            //stream >> intincrement;
+                            success = s64.TryParse(stream, out intincrement);
                         }
 
                         // reject obviously bad stuff
-                        if (!stream)
-                            throw layout_syntax_error("increment attribute must be a number");
+                        if (!success)
+                            throw new rendlay_global.layout_syntax_error("increment attribute must be a number");
                     }
 
-                    // don't allow incrementing parameters to be redefined
+                    // don't allow generator parameters to be redefined
                     if (init)
                     {
-                        entry_vector::iterator const pos(
-                                std::lower_bound(
-                                    m_entries.begin(),
-                                    m_entries.end(),
-                                    name,
-                                    [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
-                        if ((m_entries.end() != pos) && (pos->name() == name))
-                            throw layout_syntax_error("incrementing parameters must be defined exactly once per scope");
+                        //entry_vector::iterator const pos(
+                        //        std::lower_bound(
+                        //            m_entries.begin(),
+                        //            m_entries.end(),
+                        //            name,
+                        //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
+                        //if ((m_entries.end() != pos) && (pos->name() == name))
+                        //    throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+                        int pos = 0;
+                        for (; pos < m_entries.Count; pos++)
+                        {
+                            if (m_entries[pos].name().CompareTo(name) >= 0)
+                                break;
+                        }
 
-                        std::pair<char const *, char const *> const expanded(expand(start));
-                        if (floatincrement)
-                            m_entries.emplace(pos, std::move(name), std::string(expanded.first, expanded.second), floatincrement, lshift - rshift);
+                        if (pos != m_entries.Count && m_entries[pos].name() == name)
+                            throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+
+                        var expanded = expand(start);  //std::pair<char const *, char const *> const expanded(expand(start));
+                        if (floatincrement != 0)
+                            m_entries.emplace(pos, new entry(name, expanded, floatincrement, lshift - rshift));
                         else
-                            m_entries.emplace(pos, std::move(name), std::string(expanded.first, expanded.second), intincrement, lshift - rshift);
+                            m_entries.emplace(pos, new entry(name, expanded, intincrement, lshift - rshift));
                     }
                 }
                 else if (node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
                 {
-                    throw layout_syntax_error("increment/lshift/rshift attributes require start attribute");
+                    throw new rendlay_global.layout_syntax_error("increment/lshift/rshift attributes require start attribute");
                 }
                 else
                 {
-                    char const *const value(node.get_attribute_string("value", nullptr));
-                    if (!value)
-                        throw layout_syntax_error("parameter lacks value attribute");
-                    std::pair<char const *, char const *> const expanded(expand(value));
-                    entry_vector::iterator const pos(
-                            std::lower_bound(
-                                m_entries.begin(),
-                                m_entries.end(),
-                                name,
-                                [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
-                    if ((m_entries.end() == pos) || (pos->name() != name))
-                        m_entries.emplace(pos, std::move(name), std::string(expanded.first, expanded.second));
-                    else if (pos->is_incrementing())
-                        throw layout_syntax_error("incrementing parameters must be defined exactly once per scope");
+                    string value = node.get_attribute_string("value", null);
+                    if (value == null)
+                        throw new rendlay_global.layout_syntax_error("parameter lacks value attribute");
+                    var expanded = expand(value);  //std::pair<char const *, char const *> const expanded(expand(value));
+                    //entry_vector::iterator const pos(
+                    //        std::lower_bound(
+                    //            m_entries.begin(),
+                    //            m_entries.end(),
+                    //            name,
+                    //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
+                    //if ((m_entries.end() == pos) || (pos->name() != name))
+                    //    m_entries.emplace(pos, std::move(name), std::string(expanded.first, expanded.second));
+                    //else if (pos->is_generator())
+                    //    throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+                    //else
+                    //    pos->set(std::string(expanded.first, expanded.second));
+                    int pos = 0;
+                    for (; pos < m_entries.Count; pos++)
+                    {
+                        if (m_entries[pos].name().CompareTo(name) >= 0)
+                            break;
+                    }
+
+                    if (pos == m_entries.Count && m_entries[pos].name() != name)
+                        m_entries.emplace(pos, new entry(name, expanded));
+                    else if (m_entries[pos].is_generator())
+                        throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
                     else
-                        pos->set(std::string(expanded.first, expanded.second));
+                        m_entries[pos].set(expanded);
                 }
             }
 
-            void increment_parameters()
+
+            public void increment_parameters()
             {
-                for (entry &e : m_entries)
-                    e.increment();
+                throw new emu_unimplemented();
             }
 
-            char const *get_attribute_string(util::xml::data_node const &node, char const *name, char const *defvalue)
+
+            public string get_attribute_string(util.xml.data_node node, string name, string defvalue)
             {
-                char const *const attrib(node.get_attribute_string(name, nullptr));
-                return attrib ? expand(attrib).first : defvalue;
+                string attrib = node.get_attribute_string(name, null);
+                return attrib != null ? expand(attrib) : defvalue;
             }
 
-            int get_attribute_int(util::xml::data_node const &node, const char *name, int defvalue)
+
+            public int get_attribute_int(util.xml.data_node node, string name, int defvalue)
             {
-                char const *const attrib(node.get_attribute_string(name, nullptr));
-                if (!attrib)
+                string attrib = node.get_attribute_string(name, null);
+                if (attrib == null)
                     return defvalue;
 
                 // similar to what XML nodes do
-                std::pair<char const *, char const *> const expanded(expand(attrib));
-                std::istringstream stream;
-                stream.imbue(f_portable_locale);
-                int result;
-                if (expanded.first[0] == '$')
+                var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
+                //std::istringstream stream;
+                //stream.imbue(f_portable_locale);
+                int result = 0;
+                bool success = true;
+                if (expanded[0] == '$')
                 {
-                    stream.str(std::string(expanded.first + 1, expanded.second));
-                    unsigned uvalue;
-                    stream >> std::hex >> uvalue;
-                    result = int(uvalue);
+                    //stream.str(new string(expanded.first + 1, expanded.second));
+                    //unsigned uvalue;
+                    //stream >> std.hex >> uvalue;
+                    //result = (int)(uvalue);
+                    string stream = expanded.Substring(1);
+                    try { result = Convert.ToInt32(stream, 16); }
+                    catch (Exception) { success = false; }
                 }
-                else if ((expanded.first[0] == '0') && ((expanded.first[1] == 'x') || (expanded.first[1] == 'X')))
+                else if ((expanded[0] == '0') && (expanded.Length > 1 && ((expanded[1] == 'x') || (expanded[1] == 'X'))))
                 {
-                    stream.str(std::string(expanded.first + 2, expanded.second));
-                    unsigned uvalue;
-                    stream >> std::hex >> uvalue;
-                    result = int(uvalue);
+                    //stream.str(new string(expanded.first + 2, expanded.second));
+                    //unsigned uvalue;
+                    //stream >> std.hex >> uvalue;
+                    //result = (int)(uvalue);
+                    string stream = expanded.Substring(2);
+                    try { result = Convert.ToInt32(stream, 16); }
+                    catch (Exception) { success = false; }
                 }
-                else if (expanded.first[0] == '#')
+                else if (expanded[0] == '#')
                 {
-                    stream.str(std::string(expanded.first + 1, expanded.second));
-                    stream >> result;
+                    //stream.str(new string(expanded.first + 1, expanded.second));
+                    //stream >> result;
+                    string stream = expanded.Substring(1);
+                    success = int.TryParse(stream, out result);
                 }
                 else
                 {
-                    stream.str(std::string(expanded.first, expanded.second));
-                    stream >> result;
+                    //stream.str(new string(expanded.first, expanded.second));
+                    //stream >> result;
+                    string stream = expanded;
+                    success = int.TryParse(stream, out result);
                 }
 
-                return stream ? result : defvalue;
+                return success ? result : defvalue;
             }
 
-            float get_attribute_float(util::xml::data_node const &node, char const *name, float defvalue)
+
+            float get_attribute_float(util.xml.data_node node, string name, float defvalue)
             {
-                char const *const attrib(node.get_attribute_string(name, nullptr));
-                if (!attrib)
+                string attrib = node.get_attribute_string(name, null);
+                if (attrib == null)
                     return defvalue;
 
                 // similar to what XML nodes do
-                std::pair<char const *, char const *> const expanded(expand(attrib));
-                std::istringstream stream(std::string(expanded.first, expanded.second));
-                stream.imbue(f_portable_locale);
+                var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
+                //std::istringstream stream(std::string(expanded.first, expanded.second));
+                //stream.imbue(f_portable_locale);
+                //float result;
+                //return (stream >> result) ? result : defvalue;
+                string stream = expanded;
                 float result;
-                return (stream >> result) ? result : defvalue;
+                return float.TryParse(stream, out result) ? result : defvalue;
             }
 
-            void parse_bounds(util::xml::data_node const *node, render_bounds &result)
+
+            public void parse_bounds(util.xml.data_node node, out render_bounds result)
             {
+                result = new render_bounds();
+
                 // default to unit rectangle
-                if (!node)
+                if (node == null)
                 {
-                    result.x0 = result.y0 = 0.0F;
-                    result.x1 = result.y1 = 1.0F;
+                    result.x0 = 0.0F;
+                    result.y0 = 0.0F;
+                    result.x1 = 1.0F;
+                    result.y1 = 1.0F;
                 }
                 else
                 {
                     // parse attributes
-                    if (node->has_attribute("left"))
+                    if (node.has_attribute("left"))
                     {
                         // left/right/top/bottom format
-                        result.x0 = get_attribute_float(*node, "left", 0.0F);
-                        result.x1 = get_attribute_float(*node, "right", 1.0F);
-                        result.y0 = get_attribute_float(*node, "top", 0.0F);
-                        result.y1 = get_attribute_float(*node, "bottom", 1.0F);
+                        result.x0 = get_attribute_float(node, "left", 0.0F);
+                        result.x1 = get_attribute_float(node, "right", 1.0F);
+                        result.y0 = get_attribute_float(node, "top", 0.0F);
+                        result.y1 = get_attribute_float(node, "bottom", 1.0F);
                     }
-                    else if (node->has_attribute("x"))
+                    else if (node.has_attribute("x"))
                     {
                         // x/y/width/height format
-                        result.x0 = get_attribute_float(*node, "x", 0.0F);
-                        result.x1 = result.x0 + get_attribute_float(*node, "width", 1.0F);
-                        result.y0 = get_attribute_float(*node, "y", 0.0F);
-                        result.y1 = result.y0 + get_attribute_float(*node, "height", 1.0F);
+                        result.x0 = get_attribute_float(node, "x", 0.0F);
+                        result.x1 = result.x0 + get_attribute_float(node, "width", 1.0F);
+                        result.y0 = get_attribute_float(node, "y", 0.0F);
+                        result.y1 = result.y0 + get_attribute_float(node, "height", 1.0F);
                     }
                     else
                     {
-                        throw layout_syntax_error("bounds element requires either left or x attribute");
+                        throw new rendlay_global.layout_syntax_error("bounds element requires either left or x attribute");
                     }
 
                     // check for errors
                     if ((result.x0 > result.x1) || (result.y0 > result.y1))
-                        throw layout_syntax_error(util::string_format("illegal bounds (%f-%f)-(%f-%f)", result.x0, result.x1, result.y0, result.y1));
+                        throw new rendlay_global.layout_syntax_error(string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
                 }
             }
 
-            void parse_color(util::xml::data_node const *node, render_color &result)
+
+            public render_color parse_color(util.xml.data_node node)
             {
-                // default to white
-                if (!node)
-                {
-                    result.r = result.g = result.b = result.a = 1.0F;
-                }
-                else
-                {
-                    // parse attributes
-                    result.r = get_attribute_float(*node, "red", 1.0F);
-                    result.g = get_attribute_float(*node, "green", 1.0F);
-                    result.b = get_attribute_float(*node, "blue", 1.0F);
-                    result.a = get_attribute_float(*node, "alpha", 1.0F);
+                // default to opaque white
+                if (node == null)
+                    return new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F };
 
-                    // check for errors
-                    if ((0.0F > (std::min)({ result.r, result.g, result.b, result.a })) || (1.0F < (std::max)({ result.r, result.g, result.b, result.a })))
-                        throw layout_syntax_error(util::string_format("illegal RGBA color %f,%f,%f,%f", result.r, result.g, result.b, result.a));
-                }
+                // parse attributes
+                render_color result = new render_color()
+                {
+                    a = get_attribute_float(node, "alpha", 1.0F),
+                    r = get_attribute_float(node, "red", 1.0F),
+                    g = get_attribute_float(node, "green", 1.0F),
+                    b = get_attribute_float(node, "blue", 1.0F)
+                };
+
+                // check for errors
+                if ((0.0F > new [] { result.r, result.g, result.b, result.a }.Min()) || (1.0F < new [] { result.r, result.g, result.b, result.a }.Max()))
+                    throw new rendlay_global.layout_syntax_error(string_format("illegal RGBA color {0},{1},{2},{3}", result.r, result.g, result.b, result.a));
+
+                return result;
             }
 
-            void parse_orientation(util::xml::data_node const *node, int &result)
+
+            public int parse_orientation(util.xml.data_node node)
             {
                 // default to no transform
-                if (!node)
+                if (node == null)
+                    return (int)ROT0;
+
+                // parse attributes
+                int result;
+                int rotate = get_attribute_int(node, "rotate", 0);
+                switch (rotate)
                 {
-                    result = ROT0;
+                    case 0:     result = (int)ROT0;      break;
+                    case 90:    result = (int)ROT90;     break;
+                    case 180:   result = (int)ROT180;    break;
+                    case 270:   result = (int)ROT270;    break;
+                    default:    throw new rendlay_global.layout_syntax_error(string_format("invalid rotate attribute {0}", rotate));
                 }
-                else
-                {
-                    // parse attributes
-                    int const rotate(get_attribute_int(*node, "rotate", 0));
-                    switch (rotate)
-                    {
-                        case 0:     result = ROT0;      break;
-                        case 90:    result = ROT90;     break;
-                        case 180:   result = ROT180;    break;
-                        case 270:   result = ROT270;    break;
-                        default:    throw layout_syntax_error(util::string_format("invalid rotate attribute %d", rotate));
-                    }
-                    if (!std::strcmp("yes", get_attribute_string(*node, "swapxy", "no")))
-                        result ^= ORIENTATION_SWAP_XY;
-                    if (!std::strcmp("yes", get_attribute_string(*node, "flipx", "no")))
-                        result ^= ORIENTATION_FLIP_X;
-                    if (!std::strcmp("yes", get_attribute_string(*node, "flipy", "no")))
-                        result ^= ORIENTATION_FLIP_Y;
-                }
+                if (std.strcmp("yes", get_attribute_string(node, "swapxy", "no")) == 0)
+                    result ^= (int)ORIENTATION_SWAP_XY;
+                if (std.strcmp("yes", get_attribute_string(node, "flipx", "no")) == 0)
+                    result ^= (int)ORIENTATION_FLIP_X;
+                if (std.strcmp("yes", get_attribute_string(node, "flipy", "no")) == 0)
+                    result ^= (int)ORIENTATION_FLIP_Y;
+
+                return result;
             }
-#endif
         }
     } // namespace emu::render::detail
 
 
-    public partial class layout_element
+    public partial class layout_element : global_object
     {
-        abstract partial class component
+        public abstract partial class component
         {
             // construction/destruction
             //-------------------------------------------------
@@ -756,7 +700,7 @@ namespace mame
                 m_state = 0;
 
 
-                //throw new emu_unimplemented();
+                throw new emu_unimplemented();
 #if false
                 for (int i = 0; i < MAX_BITMAPS; i++)
                     m_hasalpha[i] = false;
@@ -902,6 +846,18 @@ namespace mame
             // helpers
 
             //-------------------------------------------------
+            //  normalize_bounds - normalize component bounds
+            //-------------------------------------------------
+            public void normalize_bounds(float xoffs, float yoffs, float xscale, float yscale)
+            {
+                m_bounds.x0 = (m_bounds.x0 - xoffs) * xscale;
+                m_bounds.x1 = (m_bounds.x1 - xoffs) * xscale;
+                m_bounds.y0 = (m_bounds.y0 - yoffs) * yscale;
+                m_bounds.y1 = (m_bounds.y1 - yoffs) * yscale;
+            }
+
+
+            //-------------------------------------------------
             //  draw_text - draw text in the specified color
             //-------------------------------------------------
             void draw_text(render_font font, bitmap_argb32 dest, rectangle bounds, string str, int align)
@@ -1029,7 +985,7 @@ namespace mame
             //-------------------------------------------------
             void draw_segment_horizontal(bitmap_argb32 dest, int minx, int maxx, int midy, int width, rgb_t color)
             {
-                draw_segment_horizontal_caps(dest, minx, maxx, midy, width, (int)(LINE_CAP.LINE_CAP_START | LINE_CAP.LINE_CAP_END), color);
+                draw_segment_horizontal_caps(dest, minx, maxx, midy, width, rendlay_global.LINE_CAP_START | rendlay_global.LINE_CAP_END, color);
             }
 
             //-------------------------------------------------
@@ -1061,7 +1017,7 @@ namespace mame
             //-------------------------------------------------
             void draw_segment_vertical(bitmap_argb32 dest, int miny, int maxy, int midx, int width, rgb_t color)
             {
-                draw_segment_vertical_caps(dest, miny, maxy, midx, width, (int)(LINE_CAP.LINE_CAP_START | LINE_CAP.LINE_CAP_END), color);
+                draw_segment_vertical_caps(dest, miny, maxy, midx, width, rendlay_global.LINE_CAP_START | rendlay_global.LINE_CAP_END, color);
             }
 
             //-------------------------------------------------
@@ -1178,7 +1134,7 @@ namespace mame
         }
 
 
-        public partial class texture
+        public partial class texture : global_object, IDisposable
         {
             //-------------------------------------------------
             //  texture - constructor
@@ -1193,35 +1149,56 @@ namespace mame
             //texture(texture const &that) = delete;
             //texture(texture &&that);
 
-            //-------------------------------------------------
-            //  ~texture - destructor
-            //-------------------------------------------------
             ~texture()
+            {
+                assert(m_isDisposed);  // can remove
+            }
+
+            bool m_isDisposed = false;
+            public void Dispose()
             {
                 if (m_element != null)
                     m_element.machine().render().texture_free(m_texture);
+
+                m_isDisposed = true;
             }
         }
 
 
-#if false
         // image
         class image_component : component
         {
             // internal state
             //bitmap_argb32       m_bitmap;                   // source bitmap for images
-            //std::string         m_dirname;                  // directory name of image file (for lazy loading)
-            //std::unique_ptr<emu_file> m_file;               // file object for reading image/alpha files
-            //std::string         m_imagefile;                // name of the image file (for lazy loading)
-            //std::string         m_alphafile;                // name of the alpha file (for lazy loading)
-            //bool                m_hasalpha;                 // is there any alpha component present?
+            string m_dirname;                  // directory name of image file (for lazy loading)
+            emu_file m_file;               // file object for reading image/alpha files
+            string m_imagefile;                // name of the image file (for lazy loading)
+            string m_alphafile;                // name of the alpha file (for lazy loading)
+            bool m_hasalpha;                 // is there any alpha component present?
 
 
             // construction/destruction
-            //image_component(running_machine machine, xml_data_node compnode, string dirname);
+            public image_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+                m_hasalpha = false;
+
+
+                if (dirname != null)
+                    m_dirname = dirname;
+
+                m_imagefile = env.get_attribute_string(compnode, "file", "");
+                m_alphafile = env.get_attribute_string(compnode, "alphafile", "");
+                m_file = new emu_file(env.machine().options().art_path(), OPEN_FLAG_READ);
+            }
+
 
             // overrides
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
+
 
             // internal helpers
             //void load_bitmap();
@@ -1232,10 +1209,17 @@ namespace mame
         class rect_component : component
         {
             // construction/destruction
-            //rect_component(running_machine machine, xml_data_node compnode, string dirname);
+            rect_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+            }
+
 
             // overrides
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1243,10 +1227,17 @@ namespace mame
         class disk_component : component
         {
             // construction/destruction
-            //disk_component(running_machine machine, xml_data_node compnode, string dirname);
+            disk_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+            }
+
 
             // overrides
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1254,15 +1245,24 @@ namespace mame
         class text_component : component
         {
             // internal state
-            //std::string         m_string;                   // string for text components
-            //int                 m_textalign;                // text alignment to box
+            string m_string;                   // string for text components
+            int m_textalign;                // text alignment to box
 
 
             // construction/destruction
-            //text_component(running_machine machine, xml_data_node compnode, string dirname);
+            text_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+                m_string = env.get_attribute_string(compnode, "string", "");
+                m_textalign = env.get_attribute_int(compnode, "align", 0);
+            }
+
 
             // overrides
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1270,11 +1270,20 @@ namespace mame
         class led7seg_component : component
         {
             // construction/destruction
-            //led7seg_component(running_machine machine, xml_data_node compnode, string dirname);
+            led7seg_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+            }
+
 
             // overrides
-            protected override int maxstate() { return 255; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return 255; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1282,11 +1291,20 @@ namespace mame
         class led8seg_gts1_component : component
         {
             // construction/destruction
-            //led8seg_gts1_component(running_machine machine, xml_data_node compnode, string dirname);
+            led8seg_gts1_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+            }
+
 
             // overrides
-            protected override int maxstate() { return 255; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return 255; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1294,11 +1312,20 @@ namespace mame
         class led14seg_component : component
         {
             // construction/destruction
-            //led14seg_component(running_machine machine, xml_data_node compnode, string dirname);
+            led14seg_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+            }
+
 
             // overrides
-            protected override int maxstate() { return 16383; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return 16383; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1306,11 +1333,20 @@ namespace mame
         class led16seg_component : component
         {
             // construction/destruction
-            //led16seg_component(running_machine machine, xml_data_node compnode, string dirname);
+            led16seg_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+            }
+
 
             // overrides
-            protected override int maxstate() { return 65535; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return 65535; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1318,11 +1354,20 @@ namespace mame
         class led14segsc_component : component
         {
             // construction/destruction
-            //led14segsc_component(running_machine machine, xml_data_node compnode, string dirname);
+            led14segsc_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+            }
+
 
             // overrides
-            protected override int maxstate() { return 65535; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return 65535; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1330,11 +1375,20 @@ namespace mame
         class led16segsc_component : component
         {
             // construction/destruction
-            //led16segsc_component(running_machine machine, xml_data_node compnode, string dirname);
+            led16segsc_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+            }
+
 
             // overrides
-            protected override int maxstate() { return 262143; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return 262143; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1342,14 +1396,25 @@ namespace mame
         class dotmatrix_component : component
         {
             // internal state
-            //int                 m_dots;
+            int m_dots;
+
 
             // construction/destruction
-            //dotmatrix_component(int dots, running_machine machine, xml_data_node compnode, string dirname);
+            public dotmatrix_component(int dots, environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+                m_dots = dots;
+            }
+
 
             // overrides
-            //protected override int maxstate() { return (1 << m_dots) - 1; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return (1 << m_dots) - 1; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
@@ -1357,52 +1422,142 @@ namespace mame
         class simplecounter_component : component
         {
             // internal state
-            //int                 m_digits;                   // number of digits for simple counters
-            //int                 m_textalign;                // text alignment to box
-            //int                 m_maxstate;
+            int m_digits;                   // number of digits for simple counters
+            int m_textalign;                // text alignment to box
+            int m_maxstate;
+
 
             // construction/destruction
-            //simplecounter_component(running_machine machine, xml_data_node compnode, string dirname);
+            simplecounter_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+                m_digits = env.get_attribute_int(compnode, "digits", 2);
+                m_textalign = env.get_attribute_int(compnode, "align", 0);
+                m_maxstate = env.get_attribute_int(compnode, "maxstate", 999);
+            }
+
 
             // overrides
-            //protected override int maxstate() { return m_maxstate; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return m_maxstate; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
         }
 
 
         // fruit machine reel
         class reel_component : component
         {
-            //static constexpr unsigned MAX_BITMAPS = 32;
+            const int MAX_BITMAPS = 32;
 
             // internal state
             //bitmap_argb32       m_bitmap[MAX_BITMAPS];      // source bitmap for images
-            //std::string         m_dirname;                  // directory name of image file (for lazy loading)
-            //std::unique_ptr<emu_file> m_file[MAX_BITMAPS];        // file object for reading image/alpha files
-            //std::string         m_imagefile[MAX_BITMAPS];   // name of the image file (for lazy loading)
+            string m_dirname;                  // directory name of image file (for lazy loading)
+            emu_file [] m_file = new emu_file [MAX_BITMAPS];        // file object for reading image/alpha files
+            string [] m_imagefile = new string [MAX_BITMAPS];   // name of the image file (for lazy loading)
             //std::string         m_alphafile[MAX_BITMAPS];   // name of the alpha file (for lazy loading)
-            //bool                m_hasalpha[MAX_BITMAPS];    // is there any alpha component present?
+            bool [] m_hasalpha = new bool [MAX_BITMAPS];    // is there any alpha component present?
 
             // basically made up of multiple text strings / gfx
-            //int                 m_numstops;
-            //std::string         m_stopnames[MAX_BITMAPS];
-            //int                 m_stateoffset;
-            //int                 m_reelreversed;
-            //int                 m_numsymbolsvisible;
-            //int                 m_beltreel;
+            int m_numstops;
+            string [] m_stopnames = new string [MAX_BITMAPS];
+            int m_stateoffset;
+            int m_reelreversed;
+            int m_numsymbolsvisible;
+            int m_beltreel;
+
 
             // construction/destruction
-            //reel_component(running_machine machine, xml_data_node compnode, string dirname);
+            reel_component(environment env, util.xml.data_node compnode, string dirname)
+                : base(env, compnode, dirname)
+            {
+                for (int i = 0; i < m_hasalpha.Length; i++)
+                    m_hasalpha[i] = false;
+
+                string symbollist = env.get_attribute_string(compnode, "symbollist", "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15");
+
+                // split out position names from string and figure out our number of symbols
+                int location;
+                m_numstops = 0;
+                location = symbollist.find(",");
+                while (location != -1)
+                {
+                    m_stopnames[m_numstops] = symbollist;
+                    m_stopnames[m_numstops] = m_stopnames[m_numstops].substr(0, location);
+                    symbollist = symbollist.substr(location+1, symbollist.length()-(location-1));
+                    m_numstops++;
+                    location=symbollist.find(",");
+                }
+                m_stopnames[m_numstops++] = symbollist;
+
+                // careful, dirname is nullptr if we're coming from internal layout, and our string assignment doesn't like that
+                if (dirname != null)
+                    m_dirname = dirname;
+
+                for (int i = 0; i < m_numstops; i++)
+                {
+                    location = m_stopnames[i].find(":");
+                    if (location != -1)
+                    {
+                        m_imagefile[i] = m_stopnames[i];
+                        m_stopnames[i] = m_stopnames[i].substr(0, location);
+                        m_imagefile[i] = m_imagefile[i].substr(location+1, m_imagefile[i].length()-(location-1));
+
+                        //m_alphafile[i] =
+                        m_file[i] = new emu_file(env.machine().options().art_path(), OPEN_FLAG_READ);
+                    }
+                    else
+                    {
+                        //m_imagefile[i] = 0;
+                        //m_alphafile[i] = 0;
+                        m_file[i] = null;  //m_file[i].reset();
+                    }
+                }
+
+                m_stateoffset = env.get_attribute_int(compnode, "stateoffset", 0);
+                m_numsymbolsvisible = env.get_attribute_int(compnode, "numsymbolsvisible", 3);
+                m_reelreversed = env.get_attribute_int(compnode, "reelreversed", 0);
+                m_beltreel = env.get_attribute_int(compnode, "beltreel", 0);
+            }
+
 
             // overrides
-            protected override int maxstate() { return 65535; }
-            //public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
+            public override int maxstate() { return 65535; }
+
+
+            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                throw new emu_unimplemented();
+            }
+
 
             // internal helpers
             //void draw_beltreel(running_machine &machine, bitmap_argb32 &dest, const rectangle &bounds, int state);
             //void load_reel_bitmap(int number);
         }
-#endif
+
+
+        make_component_map s_make_component = new make_component_map()
+        {
+            { "image",         make_component<image_component>         },
+            { "text",          make_component<text_component>          },
+            { "dotmatrix",     make_dotmatrix_component_8              },
+            { "dotmatrix5dot", make_dotmatrix_component_5              },
+            { "dotmatrixdot",  make_dotmatrix_component_1              },
+            { "simplecounter", make_component<simplecounter_component> },
+            { "reel",          make_component<reel_component>          },
+            { "led7seg",       make_component<led7seg_component>       },
+            { "led8seg_gts1",  make_component<led8seg_gts1_component>  },
+            { "led14seg",      make_component<led14seg_component>      },
+            { "led14segsc",    make_component<led14segsc_component>    },
+            { "led16seg",      make_component<led16seg_component>      },
+            { "led16segsc",    make_component<led16segsc_component>    },
+            { "rect",          make_component<rect_component>          },
+            { "disk",          make_component<disk_component>          }
+        };
 
 
         // construction/destruction
@@ -1415,56 +1570,36 @@ namespace mame
             m_defstate = 0;
             m_maxstate = 0;
 
-            //throw new emu_unimplemented();
-#if false
-            // extract the name
-            string name = xml_get_attribute_string_with_subst(machine, elemnode, "name", NULL);
-            if (name == NULL)
-                throw emu_fatalerror("All layout elements must have a name!\n");
-            m_name = name;
 
             // get the default state
-            m_defstate = xml_get_attribute_int_with_subst(machine, elemnode, "defstate", -1);
+            m_defstate = env.get_attribute_int(elemnode, "defstate", -1);
 
             // parse components in order
             bool first = true;
-            render_bounds bounds = { 0 };
-            for (xml_data_node *compnode = elemnode.child; compnode != NULL; compnode = compnode->next)
+            render_bounds bounds = new render_bounds() { x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f };
+            for (util.xml.data_node compnode = elemnode.get_first_child(); compnode != null; compnode = compnode.get_next_sibling())
             {
-                // allocate a new component
-                component &newcomp = m_complist.append(*global_alloc(component(machine, *compnode, dirname)));
+                var make_func = s_make_component.find(compnode.get_name());
+                if (make_func == null)
+                    throw new rendlay_global.layout_syntax_error(string_format("unknown element component {0}", compnode.get_name()));
+
+                // insert the new component into the list
+                //m_complist.emplace(m_complist.end(), make_func->second(env, compnode, dirname));
+                component newcomp = make_func(env, compnode, dirname);
+                m_complist.push_back(newcomp);
 
                 // accumulate bounds
                 if (first)
-                    bounds = newcomp.m_bounds;
+                    bounds = newcomp.bounds();
                 else
-                    union_render_bounds(&bounds, &newcomp.m_bounds);
+                    rendutil_global.union_render_bounds(bounds, newcomp.bounds());
                 first = false;
 
                 // determine the maximum state
-                if (newcomp.m_state > m_maxstate)
-                    m_maxstate = newcomp.m_state;
-                if (newcomp.m_type == component::CTYPE_LED7SEG || newcomp.m_type == component::CTYPE_LED8SEG_GTS1)
-                    m_maxstate = 255;
-                if (newcomp.m_type == component::CTYPE_LED14SEG)
-                    m_maxstate = 16383;
-                if (newcomp.m_type == component::CTYPE_LED14SEGSC || newcomp.m_type == component::CTYPE_LED16SEG)
-                    m_maxstate = 65535;
-                if (newcomp.m_type == component::CTYPE_LED16SEGSC)
-                    m_maxstate = 262143;
-                if (newcomp.m_type == component::CTYPE_DOTMATRIX)
-                    m_maxstate = 255;
-                if (newcomp.m_type == component::CTYPE_DOTMATRIX5DOT)
-                    m_maxstate = 31;
-                if (newcomp.m_type == component::CTYPE_DOTMATRIXDOT)
-                    m_maxstate = 1;
-                if (newcomp.m_type == component::CTYPE_SIMPLECOUNTER)
-                    m_maxstate = xml_get_attribute_int_with_subst(machine, *compnode, "maxstate", 999);
-                if (newcomp.m_type == component::CTYPE_REEL)
-                    m_maxstate = 65536;
+                m_maxstate = std.max(m_maxstate, newcomp.maxstate());
             }
 
-            if (m_complist.first() != NULL)
+            if (!m_complist.empty())
             {
                 // determine the scale/offset for normalization
                 float xoffs = bounds.x0;
@@ -1473,18 +1608,12 @@ namespace mame
                 float yscale = 1.0f / (bounds.y1 - bounds.y0);
 
                 // normalize all the component bounds
-                for (component *curcomp = m_complist.first(); curcomp != NULL; curcomp = curcomp->next())
-                {
-                    curcomp->m_bounds.x0 = (curcomp->m_bounds.x0 - xoffs) * xscale;
-                    curcomp->m_bounds.x1 = (curcomp->m_bounds.x1 - xoffs) * xscale;
-                    curcomp->m_bounds.y0 = (curcomp->m_bounds.y0 - yoffs) * yscale;
-                    curcomp->m_bounds.y1 = (curcomp->m_bounds.y1 - yoffs) * yscale;
-                }
+                foreach (var curcomp in m_complist)
+                    curcomp.normalize_bounds(xoffs, yoffs, xscale, yscale);
             }
 
             // allocate an array of element textures for the states
             m_elemtex.resize(m_maxstate + 1);
-#endif
         }
 
 
@@ -1535,26 +1664,267 @@ namespace mame
                 }
             }
         }
+
+
+        //-------------------------------------------------
+        //  make_component - create component of given type
+        //-------------------------------------------------
+        //template <typename T>
+        static component make_component<T>(environment env, util.xml.data_node compnode, string dirname) where T : component
+        {
+            // return std::make_unique<T>(env, compnode, dirname);
+            if (typeof(T) is image_component)
+                return new image_component(env, compnode, dirname);
+            else
+                throw new emu_unimplemented();
+        }
+
+
+        //template <int D>
+        static component make_dotmatrix_component(int D, environment env, util.xml.data_node compnode, string dirname)
+        {
+            return new dotmatrix_component(D, env, compnode, dirname);  //return std::make_unique<dotmatrix_component>(D, env, compnode, dirname);
+        }
+
+        static component make_dotmatrix_component_1(environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(1, env, compnode, dirname); }
+        static component make_dotmatrix_component_5(environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(5, env, compnode, dirname); }
+        static component make_dotmatrix_component_8(environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(8, env, compnode, dirname); }
     }
 
 
-    public partial class layout_group
+    public partial class layout_group : global_object
     {
         //-------------------------------------------------
         //  layout_group - constructor
         //-------------------------------------------------
-        layout_group(util.xml.data_node groupnode)
+        public layout_group(util.xml.data_node groupnode)
         {
             m_groupnode = groupnode;
             m_bounds = new render_bounds(0.0f, 0.0f, 0.0f, 0.0f);
             m_bounds_resolved = false;
         }
+
+
+        //-------------------------------------------------
+        //  make_transform - create abbreviated transform
+        //  matrix for given destination bounds
+        //-------------------------------------------------
+        public float [,] make_transform(int orientation, render_bounds dest)
+        {
+            assert(m_bounds_resolved);
+
+            // make orientation matrix
+            float [,] result = new float [,] { { 1.0F, 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F }, { 0.0F, 0.0F, 1.0F } };  //transform result{{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
+            if ((orientation & ORIENTATION_SWAP_XY) != 0)
+            {
+                std.swap(ref result[0, 0], ref result[0, 1]);
+                std.swap(ref result[1, 0], ref result[1, 1]);
+            }
+            if ((orientation & ORIENTATION_FLIP_X) != 0)
+            {
+                result[0, 0] = -result[0, 0];
+                result[0, 1] = -result[0, 1];
+            }
+            if ((orientation & ORIENTATION_FLIP_Y) != 0)
+            {
+                result[1, 0] = -result[1, 0];
+                result[1, 1] = -result[1, 1];
+            }
+
+            // apply to bounds and force into destination rectangle
+            render_bounds bounds = m_bounds;
+            rendlay_global.render_bounds_transform(ref bounds, result);
+            result[0, 0] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
+            result[0, 1] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
+            result[0, 2] = dest.x0 - (std.min(bounds.x0, bounds.x1) * (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0));
+            result[1, 0] *= (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0);
+            result[1, 1] *= (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0);
+            result[1, 2] = dest.y0 - (std.min(bounds.y0, bounds.y1) * (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0));
+            return result;
+        }
+
+
+        public float [,] make_transform(int orientation, float [,] trans)  //layout_group::transform layout_group::make_transform(int orientation, transform const &trans) const
+        {
+            assert(m_bounds_resolved);
+
+            render_bounds dest = new render_bounds()
+            {
+                x0 = m_bounds.x0,
+                y0 = m_bounds.y0,
+                x1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (m_bounds.x0 + m_bounds.y1 - m_bounds.y0) : m_bounds.x1,
+                y1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (m_bounds.y0 + m_bounds.x1 - m_bounds.x0) : m_bounds.y1
+            };
+            return make_transform(orientation, dest, trans);
+        }
+
+
+        public float [,] make_transform(int orientation, render_bounds dest, float [,] trans)  //layout_group::transform layout_group::make_transform(int orientation, render_bounds const &dest, transform const &trans) const
+        {
+            float [,] next = make_transform(orientation, dest);
+            float [,] result = new float [,] { { 0.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F } };  //transform result{{ {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }} }};
+            for (UInt32 y = 0; 3U > y; ++y)
+            {
+                for (UInt32 x = 0; 3U > x; ++x)
+                {
+                    for (UInt32 i = 0; 3U > i; ++i)
+                        result[y, x] += trans[y, i] * next[i, x];
+                }
+            }
+
+            return result;
+        }
+
+
+        public void set_bounds_unresolved()
+        {
+            m_bounds_resolved = false;
+        }
+
+
+        public void resolve_bounds(environment env, group_map groupmap)
+        {
+            if (!m_bounds_resolved)
+            {
+                std.vector<layout_group> seen = new std.vector<layout_group>();
+                resolve_bounds(env, groupmap, seen);
+            }
+        }
+
+
+        void resolve_bounds(environment env, group_map groupmap, std.vector<layout_group> seen)
+        {
+            if (seen.Contains(this))  //if (seen.end() != std::find(seen.begin(), seen.end(), this))
+            {
+                // a wild loop appears!
+                string path = "";  //std::ostringstream path;
+                foreach (layout_group group in seen)
+                    path += string.Format(" {0}", group.m_groupnode.get_attribute_string("name", null));  //path << ' ' << group->m_groupnode.get_attribute_string("name", nullptr);
+                path += string.Format(" {0}", m_groupnode.get_attribute_string("name", null));  //path << ' ' << m_groupnode.get_attribute_string("name", nullptr);
+                throw new rendlay_global.layout_syntax_error(string_format("recursively nested groups {0}", path.str()));
+            }
+
+            seen.push_back(this);
+            if (!m_bounds_resolved)
+            {
+                environment local = new environment(env);
+                resolve_bounds(local, m_groupnode, groupmap, seen, false, true);
+            }
+            seen.pop_back();
+        }
+
+
+        void resolve_bounds(
+                environment env,
+                util.xml.data_node parentnode,
+                group_map groupmap,
+                std.vector<layout_group> seen,
+                bool repeat,
+                bool init)
+        {
+            bool envaltered = false;
+            bool unresolved = true;
+            for (util.xml.data_node itemnode = parentnode.get_first_child(); !m_bounds_resolved && itemnode != null; itemnode = itemnode.get_next_sibling())
+            {
+                if (strcmp(itemnode.get_name(), "bounds") == 0)
+                {
+                    // use explicit bounds
+                    env.parse_bounds(itemnode, out m_bounds);
+                    m_bounds_resolved = true;
+                }
+                else if (strcmp(itemnode.get_name(), "param") == 0)
+                {
+                    envaltered = true;
+                    if (!unresolved)
+                    {
+                        unresolved = true;
+                        foreach (var group in groupmap)
+                            group.second().set_bounds_unresolved();
+                    }
+                    if (!repeat)
+                        env.set_parameter(itemnode);
+                    else
+                        env.set_repeat_parameter(itemnode, init);
+                }
+                else if (strcmp(itemnode.get_name(), "backdrop") == 0 ||
+                    strcmp(itemnode.get_name(), "screen") == 0 ||
+                    strcmp(itemnode.get_name(), "overlay") == 0 ||
+                    strcmp(itemnode.get_name(), "bezel") == 0 ||
+                    strcmp(itemnode.get_name(), "cpanel") == 0 ||
+                    strcmp(itemnode.get_name(), "marquee") == 0)
+                {
+                    render_bounds itembounds;
+                    env.parse_bounds(itemnode.get_child("bounds"), out itembounds);
+                    rendutil_global.union_render_bounds(m_bounds, itembounds);
+                }
+                else if (strcmp(itemnode.get_name(), "group") == 0)
+                {
+                    util.xml.data_node itemboundsnode = itemnode.get_child("bounds");
+                    if (itemboundsnode != null)
+                    {
+                        render_bounds itembounds;
+                        env.parse_bounds(itemboundsnode, out itembounds);
+                        rendutil_global.union_render_bounds(m_bounds, itembounds);
+                    }
+                    else
+                    {
+                        string ref_ = env.get_attribute_string(itemnode, "ref", null);
+                        if (ref_ == null)
+                            throw new rendlay_global.layout_syntax_error("nested group must have ref attribute");
+
+                        var found = groupmap.find(ref_);
+                        if (found == null)
+                            throw new rendlay_global.layout_syntax_error(string_format("unable to find group {0}", ref_));
+
+                        int orientation = env.parse_orientation(itemnode.get_child("orientation"));
+                        environment local = new environment(env);
+                        found.resolve_bounds(local, groupmap, seen);
+                        render_bounds itembounds = new render_bounds()
+                        {
+                            x0 = found.m_bounds.x0,
+                            y0 = found.m_bounds.y0,
+                            x1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.x0 + found.m_bounds.y1 - found.m_bounds.y0) : found.m_bounds.x1,
+                            y1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.y0 + found.m_bounds.x1 - found.m_bounds.x0) : found.m_bounds.y1
+                        };
+                        rendutil_global.union_render_bounds(m_bounds, itembounds);
+                    }
+                }
+                else if (strcmp(itemnode.get_name(), "repeat") == 0)
+                {
+                    int count = env.get_attribute_int(itemnode, "count", -1);
+                    if (0 >= count)
+                        throw new rendlay_global.layout_syntax_error("repeat must have positive integer count attribute");
+
+                    environment local = new environment(env);
+                    for (int i = 0; !m_bounds_resolved && (count > i); ++i)
+                    {
+                        resolve_bounds(local, itemnode, groupmap, seen, true, i == 0);
+                        local.increment_parameters();
+                    }
+                }
+                else
+                {
+                    throw new rendlay_global.layout_syntax_error(string_format("unknown group element {0}", itemnode.get_name()));
+                }
+            }
+
+            if (envaltered && !unresolved)
+            {
+                bool resolved = m_bounds_resolved;
+                foreach (var group in groupmap)
+                    group.second().set_bounds_unresolved();
+                m_bounds_resolved = resolved;
+            }
+
+            if (!repeat)
+                m_bounds_resolved = true;
+        }
     }
 
 
-    public partial class layout_view
+    public partial class layout_view : global_object
     {
-        public partial class item
+        public partial class item : global_object
         {
             // construction/destruction
             //-------------------------------------------------
@@ -1563,91 +1933,79 @@ namespace mame
             public item(
                     environment env,
                     util.xml.data_node itemnode,
-                    Dictionary<string, layout_element> elemmap,
-                    render_bounds transform)
+                    element_map elemmap,
+                    int orientation,
+                    float [,] trans,  //layout_group::transform const &trans,
+                    render_color color)
             {
                 m_element = null;
-                //m_output(env.device(), env.get_attribute_string(itemnode, "name", ""))
-                //m_have_output(env.get_attribute_string(itemnode, "name", "")[0])
-                //m_input_tag(env.get_attribute_string(itemnode, "inputtag", ""))
-                m_input_port = null;
-                m_input_mask = 0;
-                m_screen = null;
-                m_orientation = (int)emucore_global.ROT0;
 
                 //throw new emu_unimplemented();
 #if false
-                // allocate a copy of the output name
-                m_output_name = xml_get_attribute_string_with_subst(machine, itemnode, "name", "");
-
-                // allocate a copy of the input tag
-                m_input_tag = xml_get_attribute_string_with_subst(machine, itemnode, "inputtag", "");
-
-                // find the associated element
-                const char *name = xml_get_attribute_string_with_subst(machine, itemnode, "element", NULL);
-                if (name != NULL)
-                {
-                    // search the list of elements for a match
-                    for (m_element = elemlist.first(); m_element != NULL; m_element = m_element->next())
-                        if (strcmp(name, m_element->name()) == 0)
-                            break;
-
-                    // error if not found
-                    if (m_element == NULL)
-                        throw emu_fatalerror("Unable to find layout element %s", name);
-                }
-
-                // fetch common data
-                int index = xml_get_attribute_int_with_subst(machine, itemnode, "index", -1);
-                if (index != -1)
-                {
-                    screen_device_iterator iter(machine.root_device());
-                    m_screen = iter.byindex(index);
-                }
-                m_input_mask = xml_get_attribute_int_with_subst(machine, itemnode, "inputmask", 0);
-                if (m_output_name[0] != 0 && m_element != NULL)
-                    output_set_value(m_output_name, m_element->default_state());
-                parse_bounds(machine, xml_get_sibling(itemnode.child, "bounds"), m_rawbounds);
-                parse_color(machine, xml_get_sibling(itemnode.child, "color"), m_color);
-                parse_orientation(machine, xml_get_sibling(itemnode.child, "orientation"), m_orientation);
-
-                // sanity checks
-                if (strcmp(itemnode.name, "screen") == 0)
-                {
-                    if (m_screen == NULL)
-                        throw emu_fatalerror("Layout references invalid screen index %d", index);
-                }
-                else
-                {
-                    if (m_element == NULL)
-                        throw emu_fatalerror("Layout item of type %s require an element tag", itemnode.name);
-                }
-
-                if (has_input())
-                {
-                    m_input_port = m_element->machine().root_device().ioport(m_input_tag.c_str());
-                }
+                m_output(env.device(), env.get_attribute_string(itemnode, "name", ""))
 #endif
 
-                // HACK instead of xml parsing
-                //int index = xml_get_attribute_int_with_subst(machine, itemnode, "index", -1);
-                int index = 0;
-                screen_device_iterator iter = new screen_device_iterator(env.machine().root_device());
-                m_screen = iter.byindex(index);
-                //parse_bounds(machine, xml_get_sibling(itemnode.child, "bounds"), m_rawbounds);
-                m_rawbounds.x0 = 0;  //xml_get_attribute_float_with_subst(machine, *boundsnode, "left", 0.0f);
-                m_rawbounds.x1 = 3;  //xml_get_attribute_float_with_subst(machine, *boundsnode, "right", 1.0f);
-                m_rawbounds.y0 = 0;  //xml_get_attribute_float_with_subst(machine, *boundsnode, "top", 0.0f);
-                m_rawbounds.y1 = 4;  //xml_get_attribute_float_with_subst(machine, *boundsnode, "bottom", 1.0f);
-                //parse_color(machine, xml_get_sibling(itemnode.child, "color"), m_color);
-                m_color.r = m_color.g = m_color.b = m_color.a = 1.0f;
-                //parse_orientation(machine, xml_get_sibling(itemnode.child, "orientation"), m_orientation);
-                m_orientation = (int)emucore_global.ROT0;
+                m_have_output = env.get_attribute_string(itemnode, "name", "").Length != 0;
+                m_input_tag = env.get_attribute_string(itemnode, "inputtag", "");
+                m_input_port = null;
+                m_input_mask = 0;
+                m_screen = null;
+                m_orientation = rendutil_global.orientation_add(env.parse_orientation(itemnode.get_child("orientation")), orientation);
+                m_color = rendlay_global.render_color_multiply(env.parse_color(itemnode.get_child("color")), color);
+
+
+                // find the associated element
+                string name = env.get_attribute_string(itemnode, "element", null);
+                if (name != null)
+                {
+                    // search the list of elements for a match, error if not found
+                    var found = elemmap.find(name);
+                    if (found != null)
+                        m_element = found;
+                    else
+                        throw new rendlay_global.layout_syntax_error(string_format("unable to find element {0}", name));
+                }
+
+                // outputs need resolving
+                if (m_have_output)
+                    throw new emu_unimplemented();
+
+                // fetch common data
+                int index = env.get_attribute_int(itemnode, "index", -1);
+                if (index != -1)
+                    m_screen = new screen_device_iterator(env.machine().root_device()).byindex(index);
+                m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
+                if (m_have_output && m_element != null)
+                    throw new emu_unimplemented();
+                env.parse_bounds(itemnode.get_child("bounds"), out m_rawbounds);
+                rendlay_global.render_bounds_transform(ref m_rawbounds, trans);
+                if (m_rawbounds.x0 > m_rawbounds.x1)
+                    std.swap(ref m_rawbounds.x0, ref m_rawbounds.x1);
+                if (m_rawbounds.y0 > m_rawbounds.y1)
+                    std.swap(ref m_rawbounds.y0, ref m_rawbounds.y1);
+
+                // sanity checks
+                if (strcmp(itemnode.get_name(), "screen") == 0)
+                {
+                    if (itemnode.has_attribute("tag"))
+                    {
+                        string tag = env.get_attribute_string(itemnode, "tag", "");
+                        m_screen = (screen_device)env.device().subdevice(tag);
+                        if (m_screen == null)
+                            throw new rendlay_global.layout_reference_error(string_format("invalid screen tag '{0}'", tag));
+                    }
+                    else if (m_screen == null)
+                    {
+                        throw new rendlay_global.layout_reference_error(string_format("invalid screen index {0}", index));
+                    }
+                }
+                else if (m_element == null)
+                {
+                    throw new rendlay_global.layout_syntax_error(string_format("item of type {0} require an element tag", itemnode.get_name()));
+                }
 
                 if (has_input())
-                {
-                    m_input_port = m_element.machine().root_device().ioport(m_input_tag);
-                }
+                    m_input_port = env.device().ioport(m_input_tag.c_str());
             }
 
 
@@ -1657,7 +2015,7 @@ namespace mame
             //-------------------------------------------------
             public int state()
             {
-                global.assert(m_element != null);
+                assert(m_element != null);
 
                 if (m_have_output)
                 {
@@ -1703,100 +2061,24 @@ namespace mame
         public layout_view(
                 environment env,
                 util.xml.data_node viewnode,
-                int nodeIdx_HACK,
-                Dictionary<string, layout_element> elemmap,  //element_map elemmap,
-                Dictionary<string, layout_group> groupmap)  //group_map groupmap)
+                element_map elemmap,
+                group_map groupmap)
         {
-            //m_name(make_name(env, viewnode))
+            m_name = make_name(env, viewnode);
             m_aspect = 1.0f;
             m_scraspect = 1.0f;
 
 
-            // HACK instead of xml parsing
-            //throw new emu_unimplemented();
-#if false
-            <?xml version=\"1.0\"?>
-            <mamelayout version=\"2\">
-                <view name=\"Standard (4:3)\">
-                    <screen index=\"0\">
-                        <bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />
-                    </screen>
-                </view>
-                <view name=\"Pixel Aspect (~scr0nativexaspect~:~scr0nativeyaspect~)\">
-                    <screen index=\"0\">
-                        <bounds left=\"0\" top=\"0\" right=\"~scr0width~\" bottom=\"~scr0height~\" />
-                    </screen>
-                </view>
-                <view name=\"Cocktail\">
-                    <screen index=\"0\">
-                        <bounds x=\"0\" y=\"-3.03\" width=\"4\" height=\"3\" />
-                        <orientation rotate=\"180\" />
-                    </screen>
-                    <screen index=\"0\">
-                        <bounds x=\"0\" y=\"0\" width=\"4\" height=\"3\" />
-                    </screen>
-                </view>
-            </mamelayout>
-#endif
-
-            if (nodeIdx_HACK == 1)
-            {
-                m_name = "Standard (3:4)";
-                m_expbounds = new render_bounds();
-                //parse_bounds(machine, xml_get_sibling(boundsnode, "bounds"), m_expbounds);
-                m_expbounds.x0 = 0;  //xml_get_attribute_float_with_subst(machine, *boundsnode, "left", 0.0f);
-                m_expbounds.x1 = 3;  //xml_get_attribute_float_with_subst(machine, *boundsnode, "right", 1.0f);
-                m_expbounds.y0 = 0;  //xml_get_attribute_float_with_subst(machine, *boundsnode, "top", 0.0f);
-                m_expbounds.y1 = 4;  //xml_get_attribute_float_with_subst(machine, *boundsnode, "bottom", 1.0f);
-                //m_backdrop_list.append(new item(machine, *itemnode, elemlist));
-                m_screen_list.push_back(new item(env, new util.xml.data_node(), elemmap, m_expbounds));
-                //m_overlay_list.append(new item(machine, *itemnode, elemlist));
-                //m_bezel_list.append(new item(machine, *itemnode, elemlist));
-                //m_cpanel_list.append(new item(machine, *itemnode, elemlist));
-                //m_marquee_list.append(new item(machine, *itemnode, elemlist));
-            }
-
-            // recompute the data for the view based on a default layer config
+            m_expbounds.x0 = 0;
+            m_expbounds.y0 = 0;
+            m_expbounds.x1 = 0;
+            m_expbounds.y1 = 0;
+            environment local = new environment(env);
+            local.set_parameter("viewname", m_name);
+            add_items(local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
             recompute(new render_layer_config());
-
-            //throw new emu_unimplemented();
-#if false
-            // allocate a copy of the name
-            m_name = xml_get_attribute_string_with_subst(machine, viewnode, "name", "");
-
-            // if we have a bounds item, load it
-            xml_data_node *boundsnode = xml_get_sibling(viewnode.child, "bounds");
-            m_expbounds.x0 = m_expbounds.y0 = m_expbounds.x1 = m_expbounds.y1 = 0;
-            if (boundsnode != NULL)
-                parse_bounds(machine, xml_get_sibling(boundsnode, "bounds"), m_expbounds);
-
-            // load backdrop items
-            for (xml_data_node *itemnode = xml_get_sibling(viewnode.child, "backdrop"); itemnode != NULL; itemnode = xml_get_sibling(itemnode->next, "backdrop"))
-                m_backdrop_list.append(*global_alloc(item(machine, *itemnode, elemlist)));
-
-            // load screen items
-            for (xml_data_node *itemnode = xml_get_sibling(viewnode.child, "screen"); itemnode != NULL; itemnode = xml_get_sibling(itemnode->next, "screen"))
-                m_screen_list.append(*global_alloc(item(machine, *itemnode, elemlist)));
-
-            // load overlay items
-            for (xml_data_node *itemnode = xml_get_sibling(viewnode.child, "overlay"); itemnode != NULL; itemnode = xml_get_sibling(itemnode->next, "overlay"))
-                m_overlay_list.append(*global_alloc(item(machine, *itemnode, elemlist)));
-
-            // load bezel items
-            for (xml_data_node *itemnode = xml_get_sibling(viewnode.child, "bezel"); itemnode != NULL; itemnode = xml_get_sibling(itemnode->next, "bezel"))
-                m_bezel_list.append(*global_alloc(item(machine, *itemnode, elemlist)));
-
-            // load cpanel items
-            for (xml_data_node *itemnode = xml_get_sibling(viewnode.child, "cpanel"); itemnode != NULL; itemnode = xml_get_sibling(itemnode->next, "cpanel"))
-                m_cpanel_list.append(*global_alloc(item(machine, *itemnode, elemlist)));
-
-            // load marquee items
-            for (xml_data_node *itemnode = xml_get_sibling(viewnode.child, "marquee"); itemnode != NULL; itemnode = xml_get_sibling(itemnode->next, "marquee"))
-                m_marquee_list.append(*global_alloc(item(machine, *itemnode, elemlist)));
-
-            // recompute the data for the view based on a default layer config
-            recompute(render_layer_config());
-#endif
+            foreach (var group in groupmap)
+                group.second().set_bounds_unresolved();
         }
 
 
@@ -1943,10 +2225,163 @@ namespace mame
                 }
             }
         }
+
+
+        //-------------------------------------------------
+        //  add_items - add items, recursing for groups
+        //-------------------------------------------------
+        void add_items(
+                environment env,
+                util.xml.data_node parentnode,
+                element_map elemmap,
+                group_map groupmap,
+                int orientation,
+                float [,] trans,  //transform trans,
+                render_color color,
+                bool root,
+                bool repeat,
+                bool init)
+        {
+            bool envaltered = false;
+            bool unresolved = true;
+            for (util.xml.data_node itemnode = parentnode.get_first_child(); itemnode != null; itemnode = itemnode.get_next_sibling())
+            {
+                if (strcmp(itemnode.get_name(), "bounds") == 0)
+                {
+                    // set explicit bounds
+                    if (root)
+                        env.parse_bounds(itemnode, out m_expbounds);
+                }
+                else if (strcmp(itemnode.get_name(), "param") == 0)
+                {
+                    envaltered = true;
+                    if (!unresolved)
+                    {
+                        unresolved = true;
+                        foreach (var group in groupmap)
+                            group.second().set_bounds_unresolved();
+                    }
+
+                    if (!repeat)
+                        env.set_parameter(itemnode);
+                    else
+                        env.set_repeat_parameter(itemnode, init);
+                }
+                else if (strcmp(itemnode.get_name(), "backdrop") == 0)
+                {
+                    m_backdrop_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                }
+                else if (strcmp(itemnode.get_name(), "screen") == 0)
+                {
+                    m_screen_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                }
+                else if (strcmp(itemnode.get_name(), "overlay") == 0)
+                {
+                    m_overlay_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                }
+                else if (strcmp(itemnode.get_name(), "bezel") == 0)
+                {
+                    m_bezel_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                }
+                else if (strcmp(itemnode.get_name(), "cpanel") == 0)
+                {
+                    m_cpanel_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                }
+                else if (strcmp(itemnode.get_name(), "marquee") == 0)
+                {
+                    m_marquee_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                }
+                else if (strcmp(itemnode.get_name(), "group") == 0)
+                {
+                    string ref_ = env.get_attribute_string(itemnode, "ref", null);
+                    if (ref_ == null)
+                        throw new rendlay_global.layout_syntax_error("nested group must have ref attribute");
+
+                    var found = groupmap.find(ref_);
+                    if (found == null)
+                        throw new rendlay_global.layout_syntax_error(string_format("unable to find group {0}", ref_));
+
+                    unresolved = false;
+                    found.resolve_bounds(env, groupmap);
+
+                    float [,] grouptrans = trans;
+                    util.xml.data_node itemboundsnode = itemnode.get_child("bounds");
+                    util.xml.data_node itemorientnode = itemnode.get_child("orientation");
+                    int grouporient = env.parse_orientation(itemorientnode);
+                    if (itemboundsnode != null)
+                    {
+                        render_bounds itembounds;
+                        env.parse_bounds(itemboundsnode, out itembounds);
+                        grouptrans = found.make_transform(grouporient, itembounds, trans);
+                    }
+                    else if (itemorientnode != null)
+                    {
+                        grouptrans = found.make_transform(grouporient, trans);
+                    }
+
+                    environment local = new environment(env);
+                    add_items(
+                            local,
+                            found.get_groupnode(),
+                            elemmap,
+                            groupmap,
+                            rendutil_global.orientation_add(grouporient, orientation),
+                            grouptrans,
+                            rendlay_global.render_color_multiply(env.parse_color(itemnode.get_child("color")), color),
+                            false,
+                            false,
+                            true);
+                }
+                else if (strcmp(itemnode.get_name(), "repeat") == 0)
+                {
+                    int count = env.get_attribute_int(itemnode, "count", -1);
+                    if (0 >= count)
+                        throw new rendlay_global.layout_syntax_error("repeat must have positive integer count attribute");
+
+                    environment local = new environment(env);
+                    for (int i = 0; count > i; ++i)
+                    {
+                        add_items(local, itemnode, elemmap, groupmap, orientation, trans, color, false, true, i == 0);
+                        local.increment_parameters();
+                    }
+                }
+                else
+                {
+                    throw new rendlay_global.layout_syntax_error(string_format("unknown view item {0}", itemnode.get_name()));
+                }
+            }
+
+            if (envaltered && !unresolved)
+            {
+                foreach (var group in groupmap)
+                    group.second().set_bounds_unresolved();
+            }
+        }
+
+
+        string make_name(environment env, util.xml.data_node viewnode)
+        {
+            string name = env.get_attribute_string(viewnode, "name", null);
+            if (name == null)
+                throw new rendlay_global.layout_syntax_error("view must have name attribute");
+
+            if (env.is_root_device())
+            {
+                return name;
+            }
+            else
+            {
+                string tag = env.device().tag();
+                if (':' == tag[0])
+                    tag = tag.Substring(1);  //++tag;
+
+                return string_format("{0} {1}", tag, name);
+            }
+        }
     }
 
 
-    partial class layout_file
+    partial class layout_file : global_object
     {
         // construction/destruction
         //-------------------------------------------------
@@ -1954,68 +2389,107 @@ namespace mame
         //-------------------------------------------------
         public layout_file(device_t device, util.xml.data_node rootnode, string dirname)
         {
-            environment env = new environment(device);
-
-            m_elemmap = new Dictionary<string, layout_element>();
+            m_elemmap = new element_map();
             m_viewlist = new view_list();
 
 
-            // HACK instead of xml parsing
-            //throw new emu_unimplemented();
-#if false
-            <?xml version=\"1.0\"?>
-            <mamelayout version=\"2\">
-                <view name=\"Standard (4:3)\">
-                    <screen index=\"0\">
-                        <bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />
-                    </screen>
-                </view>
-                <view name=\"Pixel Aspect (~scr0nativexaspect~:~scr0nativeyaspect~)\">
-                    <screen index=\"0\">
-                        <bounds left=\"0\" top=\"0\" right=\"~scr0width~\" bottom=\"~scr0height~\" />
-                    </screen>
-                </view>
-                <view name=\"Cocktail\">
-                    <screen index=\"0\">
-                        <bounds x=\"0\" y=\"-3.03\" width=\"4\" height=\"3\" />
-                        <orientation rotate=\"180\" />
-                    </screen>
-                    <screen index=\"0\">
-                        <bounds x=\"0\" y=\"0\" width=\"4\" height=\"3\" />
-                    </screen>
-                </view>
-            </mamelayout>
-#endif
+            try
+            {
+                environment env = new environment(device);
 
-            //m_elemlist.append(*global_alloc(layout_element(machine, *elemnode, dirname)));
-            m_viewlist.push_back(new layout_view(env, rootnode, 1, m_elemmap, new Dictionary<string, layout_group>()));
-            //m_viewlist.append(new layout_view(machine, /*viewnode,*/ 2, m_elemlist));
-            //m_viewlist.append(new layout_view(machine, /*viewnode,*/ 3, m_elemlist));
+                // find the layout node
+                util.xml.data_node mamelayoutnode = rootnode.get_child("mamelayout");
+                if (mamelayoutnode == null)
+                    throw new rendlay_global.layout_syntax_error("missing mamelayout node");
+
+                // validate the config data version
+                int version = mamelayoutnode.get_attribute_int("version", 0);
+                if (version != rendlay_global.LAYOUT_VERSION)
+                    throw new rendlay_global.layout_syntax_error(string_format("unsupported version {0}", version));
+
+                // parse all the parameters, elements and groups
+                group_map groupmap = new group_map();
+                add_elements(dirname, env, mamelayoutnode, groupmap, false, true);
+
+                // parse all the views
+                for (util.xml.data_node viewnode = mamelayoutnode.get_child("view"); viewnode != null; viewnode = viewnode.get_next_sibling("view"))
+                {
+                    // the trouble with allowing errors to propagate here is that it wreaks havoc with screenless systems that use a terminal by default
+                    // e.g. intlc44 and intlc440 have a terminal on the tty port by default and have a view with the front panel with the terminal screen
+                    // however, they have a second view with just the front panel which is very useful if you're using e.g. -tty null_modem with a socket
+                    // if the error is allowed to propagate, the entire layout is dropped so you can't select the useful view
+                    try
+                    {
+                        m_viewlist.emplace_back(new layout_view(env, viewnode, m_elemmap, groupmap));
+                    }
+                    catch (rendlay_global.layout_reference_error err)
+                    {
+                        osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name", ""), err);
+                    }
+                }
+            }
+            catch (rendlay_global.layout_syntax_error err)
+            {
+                // syntax errors are always fatal
+                throw new emu_fatalerror("Error parsing XML layout: {0}", err);
+            }
+        }
 
 
-            //throw new emu_unimplemented();
-#if false
-            : m_next(NULL)
-
-
-            // find the layout node
-            xml_data_node *mamelayoutnode = xml_get_sibling(rootnode.child, "mamelayout");
-            if (mamelayoutnode == NULL)
-                throw emu_fatalerror("Invalid XML file: missing mamelayout node");
-
-            // validate the config data version
-            int version = xml_get_attribute_int(mamelayoutnode, "version", 0);
-            if (version != LAYOUT_VERSION)
-                throw emu_fatalerror("Invalid XML file: unsupported version");
-
-            // parse all the elements
-            for (xml_data_node *elemnode = xml_get_sibling(mamelayoutnode->child, "element"); elemnode != NULL; elemnode = xml_get_sibling(elemnode->next, "element"))
-                m_elemlist.append(*global_alloc(layout_element(machine, *elemnode, dirname)));
-
-            // parse all the views
-            for (xml_data_node *viewnode = xml_get_sibling(mamelayoutnode->child, "view"); viewnode != NULL; viewnode = xml_get_sibling(viewnode->next, "view"))
-                m_viewlist.append(*global_alloc(layout_view(machine, *viewnode, m_elemlist)));
-#endif
+        void add_elements(
+                string dirname,
+                environment env,
+                util.xml.data_node parentnode,
+                group_map groupmap,
+                bool repeat,
+                bool init)
+        {
+            for (util.xml.data_node childnode = parentnode.get_first_child(); childnode != null; childnode = childnode.get_next_sibling())
+            {
+                if (strcmp(childnode.get_name(), "param") == 0)
+                {
+                    if (!repeat)
+                        env.set_parameter(childnode);
+                    else
+                        env.set_repeat_parameter(childnode, init);
+                }
+                else if (strcmp(childnode.get_name(), "element") == 0)
+                {
+                    string name = env.get_attribute_string(childnode, "name", null);
+                    if (name == null)
+                        throw new rendlay_global.layout_syntax_error("element lacks name attribute");
+                    //if (!m_elemmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(env, childnode, dirname)).second)
+                    if (m_elemmap.ContainsKey(name))
+                        throw new rendlay_global.layout_syntax_error(string_format("duplicate element name {0}", name));
+                    m_elemmap.emplace(name, new layout_element(env, childnode, dirname));
+                }
+                else if (strcmp(childnode.get_name(), "group") == 0)
+                {
+                    string name = env.get_attribute_string(childnode, "name", null);
+                    if (name == null)
+                        throw new rendlay_global.layout_syntax_error("group lacks name attribute");
+                    //if (!groupmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(childnode)).second)
+                    if (groupmap.ContainsKey(name))
+                        throw new rendlay_global.layout_syntax_error(string_format("duplicate group name {0}", name));
+                    groupmap.emplace(name, new layout_group(childnode));
+                }
+                else if (strcmp(childnode.get_name(), "repeat") == 0)
+                {
+                    int count = env.get_attribute_int(childnode, "count", -1);
+                    if (0 >= count)
+                        throw new rendlay_global.layout_syntax_error("repeat must have positive integer count attribute");
+                    environment local = new environment(env);
+                    for (int i = 0; count > i; ++i)
+                    {
+                        add_elements(dirname, local, childnode, groupmap, true, i == 0);
+                        local.increment_parameters();
+                    }
+                }
+                else if (repeat || (strcmp(childnode.get_name(), "view") != 0 && strcmp(childnode.get_name(), "script") != 0))
+                {
+                    throw new rendlay_global.layout_syntax_error(string_format("unknown layout item {0}", childnode.get_name()));
+                }
+            }
         }
     }
 }

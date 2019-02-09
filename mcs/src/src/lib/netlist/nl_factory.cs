@@ -15,11 +15,21 @@ namespace mame.netlist
     {
         public static class nl_factory_global
         {
-            //#define NETLIB_DEVICE_IMPL(chip) \
+            // deprecated!
+            //#define NETLIB_DEVICE_IMPL_DEPRECATED(chip) \
             //    static std::unique_ptr<factory::element_t> NETLIB_NAME(chip ## _c)( \
             //            const pstring &name, const pstring &classname, const pstring &def_param) \
             //    { \
             //        return std::unique_ptr<factory::element_t>(plib::palloc<factory::device_element_t<NETLIB_NAME(chip)>>(name, classname, def_param, pstring(__FILE__))); \
+            //    } \
+            //    factory::constructor_ptr_t decl_ ## chip = NETLIB_NAME(chip ## _c);
+
+            // the new way ...
+            //#define NETLIB_DEVICE_IMPL(chip, p_name, p_def_param) \
+            //    static std::unique_ptr<factory::element_t> NETLIB_NAME(chip ## _c)( \
+            //            const pstring &name, const pstring &classname, const pstring &def_param) \
+            //    { \
+            //        return std::unique_ptr<factory::element_t>(plib::palloc<factory::device_element_t<NETLIB_NAME(chip)>>(p_name, classname, p_def_param, pstring(__FILE__))); \
             //    } \
             //    factory::constructor_ptr_t decl_ ## chip = NETLIB_NAME(chip ## _c);
 
@@ -60,14 +70,14 @@ namespace mame.netlist
                 m_sourcefile = sourcefile;
             }
 
-            ~element_t() { }
+            //~element_t() { }
 
 
             public element_t get() { return this; }
 
 
-            public abstract device_t Create(netlist_t anetlist, string name);  //virtual plib::owned_ptr<device_t> Create(netlist_t &anetlist, const pstring &name) = 0;
-            public virtual void macro_actions(netlist_t anetlist, string name) {}
+            public abstract device_t Create(netlist_state_t anetlist, string name);  //virtual plib::owned_ptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) = 0;
+            public virtual void macro_actions(netlist_state_t anetlist, string name) {}
 
             public string name() { return m_name; }
             //const pstring &classname() const { return m_classname; }
@@ -84,7 +94,7 @@ namespace mame.netlist
 
 
             //plib::owned_ptr<device_t> Create(netlist_t &anetlist, const pstring &name) override { return plib::owned_ptr<device_t>::Create<C>(anetlist, name); }
-            public override device_t Create(netlist_t anetlist, string name)
+            public override device_t Create(netlist_state_t anetlist, string name)
             {
                 Type type = typeof(C);
                 if      (type == typeof(nld_sound_in))              return new nld_sound_in(anetlist, name);
@@ -102,13 +112,13 @@ namespace mame.netlist
         }
 
 
-        public class list_t : std_vector<element_t>  //public std::vector<std::unique_ptr<element_t>>
+        public class list_t : std.vector<element_t>  //public std::vector<std::unique_ptr<element_t>>
         {
             setup_t m_setup;
 
 
             public list_t(setup_t setup) { m_setup = setup; }
-            ~list_t() { clear(); }
+            //~list_t() { clear(); }
 
 
             //template<class device_class>
@@ -171,7 +181,7 @@ namespace mame.netlist
                 : base(name, classname, def_param, source) {  }
 
 
-            public override device_t Create(netlist_t anetlist, string name)
+            public override device_t Create(netlist_state_t anetlist, string name)
             {
                 throw new emu_unimplemented();
 #if false
@@ -179,7 +189,7 @@ namespace mame.netlist
 #endif
             }
 
-            public override void macro_actions(netlist_t anetlist, string name)
+            public override void macro_actions(netlist_state_t anetlist, string name)
             {
                 throw new emu_unimplemented();
 #if false

@@ -12,12 +12,12 @@ namespace mame
         //static const options_entry s_option_entries[];
         static readonly options_entry [] s_option_entries = new options_entry[]
         {
-            new options_entry(null,  null,  options_global.OPTION_HEADER,  "PLUGINS OPTIONS"),
+            new options_entry(null,  null,  OPTION_HEADER,  "PLUGINS OPTIONS"),
             new options_entry(null),
         };
 
 
-        std_list<string> m_descriptions;
+        std.list<string> m_descriptions;
 
 
         // construction/destruction

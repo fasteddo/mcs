@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\3rdparty\zlib\crc32.cs" />
     <Compile Include="src\3rdparty\zlib\zlib.cs" />
@@ -54,7 +55,11 @@
     <Compile Include="src\build\generated\mame\mame\drivlist.cs" />
     <Compile Include="src\build\generated\version.cs" />
     <Compile Include="src\src\devices\cpu\m6502\m6502.cs" />
+    <Compile Include="src\src\devices\cpu\m6800\6800ops.cs" />
+    <Compile Include="src\src\devices\cpu\m6800\m6800.cs" />
+    <Compile Include="src\src\devices\cpu\m6800\m6801.cs" />
     <Compile Include="src\src\devices\cpu\mb88xx\mb88xx.cs" />
+    <Compile Include="src\src\devices\cpu\mcs48\mcs48.cs" />
     <Compile Include="src\src\devices\cpu\z80\z80.cs" />
     <Compile Include="src\src\devices\cpu\z80\z80daisy.cs" />
     <Compile Include="src\src\devices\imagedev\cassette.cs" />
@@ -64,6 +69,8 @@
     <Compile Include="src\src\devices\machine\er2055.cs" />
     <Compile Include="src\src\devices\machine\gen_latch.cs" />
     <Compile Include="src\src\devices\machine\i8255.cs" />
+    <Compile Include="src\src\devices\machine\i8257.cs" />
+    <Compile Include="src\src\devices\machine\latch8.cs" />
     <Compile Include="src\src\devices\machine\netlist.cs" />
     <Compile Include="src\src\devices\machine\rescap.cs" />
     <Compile Include="src\src\devices\machine\watchdog.cs" />
@@ -77,10 +84,10 @@
     <Compile Include="src\src\devices\sound\disc_inp.cs" />
     <Compile Include="src\src\devices\sound\disc_mth.cs" />
     <Compile Include="src\src\devices\sound\disc_wav.cs" />
+    <Compile Include="src\src\devices\sound\msm5205.cs" />
     <Compile Include="src\src\devices\sound\namco.cs" />
     <Compile Include="src\src\devices\sound\pokey.cs" />
     <Compile Include="src\src\devices\sound\samples.cs" />
-    <Compile Include="src\src\devinithelpers.cs" />
     <Compile Include="src\src\emu\addrmap.cs" />
     <Compile Include="src\src\emu\attotime.cs" />
     <Compile Include="src\src\emu\bookkeeping.cs" />
@@ -117,6 +124,7 @@
     <Compile Include="src\src\emu\emumem_hedw.cs" />
     <Compile Include="src\src\emu\emumem_hem.cs" />
     <Compile Include="src\src\emu\emumem_heun.cs" />
+    <Compile Include="src\src\emu\video\generic.cs" />
     <Compile Include="src\src\emu\xtal.cs" />
     <Compile Include="src\src\emu\emu.cs" />
     <Compile Include="src\src\emu\emucore.cs" />
@@ -227,8 +235,10 @@
     <Compile Include="src\src\lib\netlist\nl_time.cs" />
     <Compile Include="src\src\lib\netlist\plib\pdynlib.cs" />
     <Compile Include="src\src\lib\netlist\plib\pfmtlog.cs" />
+    <Compile Include="src\src\lib\netlist\plib\pomp.cs" />
     <Compile Include="src\src\lib\netlist\plib\pstate.cs" />
     <Compile Include="src\src\lib\netlist\plib\pstream.cs" />
+    <Compile Include="src\src\lib\netlist\plib\pstring.cs" />
     <Compile Include="src\src\lib\netlist\solver\mat_cr.cs" />
     <Compile Include="src\src\lib\netlist\solver\nld_matrix_solver.cs" />
     <Compile Include="src\src\lib\netlist\solver\nld_ms_direct.cs" />
@@ -252,23 +262,32 @@
     <Compile Include="src\src\lib\util\palette.cs" />
     <Compile Include="src\src\lib\util\png.cs" />
     <Compile Include="src\src\lib\util\sha1.cs" />
+    <Compile Include="src\src\lib\util\strformat.cs" />
+    <Compile Include="src\src\lib\util\un7z.cs" />
     <Compile Include="src\src\lib\util\unicode.cs" />
     <Compile Include="src\src\lib\util\unzip.cs" />
     <Compile Include="src\src\lib\util\wavwrite.cs" />
     <Compile Include="src\src\lib\util\xmlfile.cs" />
+    <Compile Include="src\src\mame\audio\dkong.cs" />
     <Compile Include="src\src\mame\audio\galaga.cs" />
     <Compile Include="src\src\mame\audio\galaxian.cs" />
+    <Compile Include="src\src\mame\audio\irem.cs" />
     <Compile Include="src\src\mame\audio\namco54.cs" />
     <Compile Include="src\src\mame\drivers\1942.cs" />
     <Compile Include="src\src\mame\drivers\centiped.cs" />
+    <Compile Include="src\src\mame\drivers\dkong.cs" />
     <Compile Include="src\src\mame\drivers\galaga.cs" />
     <Compile Include="src\src\mame\drivers\galaxian.cs" />
+    <Compile Include="src\src\mame\drivers\m52.cs" />
     <Compile Include="src\src\mame\drivers\pacman.cs" />
     <Compile Include="src\src\mame\includes\1942.cs" />
     <Compile Include="src\src\mame\includes\centiped.cs" />
     <Compile Include="src\src\mame\includes\digdug.cs" />
+    <Compile Include="src\src\mame\includes\dkong.cs" />
     <Compile Include="src\src\mame\includes\galaga.cs" />
     <Compile Include="src\src\mame\includes\galaxian.cs" />
+    <Compile Include="src\src\mame\includes\iremipt.cs" />
+    <Compile Include="src\src\mame\includes\m52.cs" />
     <Compile Include="src\src\mame\includes\pacman.cs" />
     <Compile Include="src\src\mame\includes\xevious.cs" />
     <Compile Include="src\src\mame\machine\namco06.cs" />
@@ -280,8 +299,10 @@
     <Compile Include="src\src\mame\video\1942.cs" />
     <Compile Include="src\src\mame\video\centiped.cs" />
     <Compile Include="src\src\mame\video\digdug.cs" />
+    <Compile Include="src\src\mame\video\dkong.cs" />
     <Compile Include="src\src\mame\video\galaga.cs" />
     <Compile Include="src\src\mame\video\galaxian.cs" />
+    <Compile Include="src\src\mame\video\m52.cs" />
     <Compile Include="src\src\mame\video\pacman.cs" />
     <Compile Include="src\src\mame\video\xevious.cs" />
     <Compile Include="src\src\osd\eminline.cs" />
@@ -306,6 +327,12 @@
     <Compile Include="src\src\osd\osdepend.cs" />
     <Compile Include="src\src\osd\osdsync.cs" />
     <Compile Include="src\src\osd\watchdog.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="3rdparty\SharpCompress\SharpCompress-mcs.csproj">
+      <Project>{044b4cdd-3e5c-49ea-89a5-ad1a43166025}</Project>
+      <Name>SharpCompress-mcs</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

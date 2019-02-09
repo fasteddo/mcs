@@ -801,11 +801,11 @@ namespace mame
         //define INPUT_PORTS_EXTERN(_name)             extern void INPUT_PORTS_NAME(_name)(device_t &owner, ioport_list &portlist, astring &errorbuf)
 
         // including
-        //define PORT_INCLUDE(_name)             INPUT_PORTS_NAME(_name)(owner, portlist, errorbuf);
+        public static void PORT_INCLUDE(ioport_constructor name, device_t owner, ioport_list portlist, ref string errorbuf) { name(owner, portlist, ref errorbuf); }  //INPUT_PORTS_NAME(_name)(owner, portlist, errorbuf);
         // start of a new input port (with included tag)
         public static void PORT_START(ioport_configurer configurer, string tag) { configurer.port_alloc(tag); }
         // modify an existing port
-        //define PORT_MODIFY(_tag)             configurer.port_modify(_tag);
+        public static void PORT_MODIFY(ioport_configurer configurer, string tag) { configurer.port_modify(tag); }
         // input bit definition
         public static void PORT_BIT(ioport_configurer configurer, ioport_value mask, ioport_value defval, ioport_type type) { configurer.field_alloc(type, defval, mask); }
         public static void PORT_SPECIAL_ONOFF(ioport_configurer configurer, ioport_value mask, ioport_value defval, INPUT_STRING strindex) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, defval, strindex, null); }
@@ -828,7 +828,7 @@ namespace mame
         public static void PORT_PLAYER(ioport_configurer configurer, int player) { configurer.field_set_player(player); }
         public static void PORT_COCKTAIL(ioport_configurer configurer) { configurer.field_set_cocktail(); }
         //define PORT_TOGGLE             configurer.field_set_toggle();
-        //define PORT_IMPULSE(_duration)             configurer.field_set_impulse(_duration);
+        public static void PORT_IMPULSE(ioport_configurer configurer, u8 duration) { configurer.field_set_impulse(duration); }
         public static void PORT_REVERSE(ioport_configurer configurer) { configurer.field_set_analog_reverse(); }
         //define PORT_RESET             configurer.field_set_analog_reset();
         //#define PORT_OPTIONAL     configurer.field_set_optional();
@@ -882,18 +882,18 @@ namespace mame
         //define PORT_WRITE_LINE_DEVICE_MEMBER(_device, _class, _member)             configurer.field_set_dynamic_write(ioport_field_write_delegate(&ioport_write_line_wrapper<_class, &_class::_member>, #_class "::" #_member, _device, (_class *)NULL));
 
         // dip switch definition
-        public static void PORT_DIPNAME(ioport_configurer configurer, ioport_value mask, ioport_value defval, string name) { configurer.field_alloc(ioport_type.IPT_DIPSWITCH, defval, mask, name); }
-        public static void PORT_DIPSETTING(ioport_configurer configurer, ioport_value defval, string name) { configurer.setting_alloc(defval, name); }
+        public static void PORT_DIPNAME(ioport_configurer configurer, ioport_value mask, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_DIPSWITCH, default_, mask, name); }
+        public static void PORT_DIPSETTING(ioport_configurer configurer, ioport_value default_, string name) { configurer.setting_alloc(default_, name); }
         // physical location, of the form: name:[!]sw,[name:][!]sw,...
         // note that these are specified LSB-first
         public static void PORT_DIPLOCATION(ioport_configurer configurer, string location) { configurer.field_set_diplocation(location); }
         // conditionals for dip switch settings
         public static void PORT_CONDITION(ioport_configurer configurer, string tag, ioport_value mask, ioport_condition.condition_t condition, ioport_value value) { configurer.set_condition(condition, tag, mask, value); }
         // analog adjuster definition
-        //define PORT_ADJUSTER(_default, _name)             configurer.field_alloc(IPT_ADJUSTER, (_default), 0xff, (_name));             configurer.field_set_min_max(0, 100);
+        public static void PORT_ADJUSTER(ioport_configurer configurer, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_ADJUSTER, default_, 0xff, name);  configurer.field_set_min_max(0, 100); }
         // config definition
-        //define PORT_CONFNAME(_mask, _default, _name)             configurer.field_alloc(IPT_CONFIG, (_default), (_mask), (_name));
-        //define PORT_CONFSETTING(_default, _name)             configurer.setting_alloc((_default), (_name));
+        public static void PORT_CONFNAME(ioport_configurer configurer, ioport_value mask, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_CONFIG, default_, mask, name); }
+        public static void PORT_CONFSETTING(ioport_configurer configurer, ioport_value default_, string name) { configurer.setting_alloc(default_, name); }
 
         // keyboard chars
         //define PORT_CHAR(...)     configurer.field_add_char({ __VA_ARGS__ });
@@ -920,12 +920,12 @@ namespace mame
         //  HELPER MACROS
         //**************************************************************************
 
-        public static void PORT_DIPUNUSED_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value defval, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, defval, INPUT_STRING.INPUT_STRING_Unused, diploc); }
-        public static void PORT_DIPUNUSED(ioport_configurer configurer, ioport_value mask, ioport_value defval) { PORT_SPECIAL_ONOFF(configurer, mask, defval, INPUT_STRING.INPUT_STRING_Unused); }
-        //define PORT_DIPUNKNOWN_DIPLOC(_mask, _default, _diploc)             PORT_SPECIAL_ONOFF_DIPLOC(_mask, _default, Unknown, _diploc)
+        public static void PORT_DIPUNUSED_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unused, diploc); }
+        public static void PORT_DIPUNUSED(ioport_configurer configurer, ioport_value mask, ioport_value default_) { PORT_SPECIAL_ONOFF(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unused); }
+        public static void PORT_DIPUNKNOWN_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unknown, diploc); }
         //define PORT_DIPUNKNOWN(_mask, _default)             PORT_SPECIAL_ONOFF(_mask, _default, Unknown)
-        public static void PORT_SERVICE_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value defval, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, defval, INPUT_STRING.INPUT_STRING_Service_Mode, diploc); }
-        public static void PORT_SERVICE(ioport_configurer configurer, ioport_value mask, ioport_value defval) { PORT_SPECIAL_ONOFF(configurer, mask, defval, INPUT_STRING.INPUT_STRING_Service_Mode); }
+        public static void PORT_SERVICE_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Service_Mode, diploc); }
+        public static void PORT_SERVICE(ioport_configurer configurer, ioport_value mask, ioport_value default_) { PORT_SPECIAL_ONOFF(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Service_Mode); }
         //define PORT_SERVICE_NO_TOGGLE(_mask, _default)             PORT_BIT( _mask, _mask & _default, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ))
         public static void PORT_VBLANK(ioport_configurer configurer, string screen, screen_device device) { PORT_READ_LINE_DEVICE_MEMBER(configurer, screen, device.vblank); }
         //define PORT_HBLANK(_screen)             PORT_READ_LINE_DEVICE_MEMBER(_screen, screen_device, hblank)
@@ -980,7 +980,7 @@ namespace mame
 
     // ======================> inp_header
     // header at the front of INP files
-    class inp_header
+    class inp_header : global_object
     {
         // parameters
         public const UInt32 MAJVERSION = 3;
@@ -1004,7 +1004,7 @@ namespace mame
         public bool read(emu_file f) { return f.read(new ListBytesPointer(m_data), (UInt32)m_data.Count) == m_data.Count; }
         public bool write(emu_file f) { return f.write(new ListBytesPointer(m_data), (UInt32)m_data.Count) == m_data.Count; }
 
-        public bool check_magic() { return 0 == global.memcmp(new ListBytesPointer(MAGIC), new ListBytesPointer(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
+        public bool check_magic() { return 0 == memcmp(new ListBytesPointer(MAGIC), new ListBytesPointer(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
         public UInt64 get_basetime()
         {
             return
@@ -1022,7 +1022,7 @@ namespace mame
         public string get_sysname() { return get_string(OFFS_SYSNAME, OFFS_APPDESC); }
         public string get_appdesc() { return get_string(OFFS_APPDESC, OFFS_END); }
 
-        public void set_magic() { global.memcpy(new ListBytesPointer(m_data, (int)OFFS_MAGIC), new ListBytesPointer(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
+        public void set_magic() { memcpy(new ListBytesPointer(m_data, (int)OFFS_MAGIC), new ListBytesPointer(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
         public void set_basetime(UInt64 time)
         {
             m_data[OFFS_BASETIME + 0] = (byte)((time >> (0 * 8)) & 0x00ff);
@@ -1048,9 +1048,9 @@ namespace mame
         {
             UInt32 used = Math.Min((UInt32)str.Length + 1, END - BEGIN);
             byte[] strBytes = System.Text.Encoding.ASCII.GetBytes(str);
-            global.memcpy(new ListBytesPointer(m_data, (int)BEGIN), new ListBytesPointer(new ListBytes(strBytes)), used);  // std::memcpy(m_data + BEGIN, str.c_str(), used);
+            memcpy(new ListBytesPointer(m_data, (int)BEGIN), new ListBytesPointer(new ListBytes(strBytes)), used);  // std::memcpy(m_data + BEGIN, str.c_str(), used);
             if ((END - BEGIN) > used)
-                global.memset(new ListBytesPointer(m_data, (int)BEGIN), (u8)0, (END - BEGIN) - used);  //std::memset(m_data + BEGIN + used, 0, (END - BEGIN) - used);
+                memset(new ListBytesPointer(m_data, (int)BEGIN), (u8)0, (END - BEGIN) - used);  //std::memset(m_data + BEGIN + used, 0, (END - BEGIN) - used);
         }
 
         //template <std::size_t BEGIN, std::size_t END> std::string get_string() const
@@ -1474,7 +1474,7 @@ namespace mame
 
     // ======================> ioport_field
     // a single bitfield within an input port
-    public class ioport_field : simple_list_item<ioport_field>
+    public class ioport_field : global_object, simple_list_item<ioport_field>
     {
         // flags for ioport_fields
         const int FIELD_FLAG_OPTIONAL = 0x0001;    // set if this field is not required but recognized by hw
@@ -1617,7 +1617,10 @@ namespace mame
         public u8 player() { return m_player; }
         public bool digital_value() { return m_digital_value; }
         public u32 flags { get { return m_flags; } set { m_flags = value; } }
+        public u8 impulse { get { return m_impulse; } set { m_impulse = value; } }
         public void set_value(ioport_value value) { m_digital_value = value != 0; }
+        public ioport_value min { get { return m_min; } set { m_min = value; } }
+        public ioport_value max { get { return m_max; } set { m_max = value; } }
         public s32 sensitivity { get { return m_sensitivity; } set { m_sensitivity = value; } }
         public s32 delta { get { return m_delta; } set { m_delta = value; } }
         public s32 centerdelta { get { return m_centerdelta; } set { m_centerdelta = value; } }
@@ -1723,12 +1726,12 @@ namespace mame
         //  keyboard_codes - accesses a particular keyboard
         //  code list
         //-------------------------------------------------
-        public std_vector<char32_t> keyboard_codes(int which)
+        public std.vector<char32_t> keyboard_codes(int which)
         {
             if (which >= m_chars.GetLength(0))  // ARRAY_LENGTH(m_chars))
                 throw new emu_fatalerror("Tried to access keyboard_code with out-of-range index {0}\n", which);
 
-            std_vector<char32_t> result = new std_vector<char32_t>();
+            std.vector<char32_t> result = new std.vector<char32_t>();
             for (int i = 0; i < m_chars.GetLength(which) && m_chars[which, i] != 0; i++)  //ARRAY_LENGTH(m_chars[which]) && m_chars[which][i] != 0; i++)
                 result.push_back(m_chars[which, i]);
 
@@ -1741,7 +1744,7 @@ namespace mame
         //-------------------------------------------------
         public string key_name(int which)
         {
-            std_vector<char32_t> codes = keyboard_codes(which);
+            std.vector<char32_t> codes = keyboard_codes(which);
             char32_t ch = codes.empty() ? 0 : codes[0];
 
             // attempt to get the string from the character info table
@@ -1870,7 +1873,7 @@ namespace mame
         void select_next_setting()
         {
             // only makes sense if we have settings
-            global.assert(!m_settinglist.empty());
+            assert(!m_settinglist.empty());
 
             // scan the list of settings looking for a match on the current value
             ioport_setting nextsetting = null;
@@ -2287,7 +2290,7 @@ namespace mame
                 // loop through each character on the field
                 for (int which = 0; which < 4; which++)
                 {
-                    std_vector<char32_t> codes = field.keyboard_codes(which);
+                    std.vector<char32_t> codes = field.keyboard_codes(which);
                     if (codes.empty())
                         break;
 
@@ -2307,7 +2310,7 @@ namespace mame
 
     // ======================> ioport_list
     // class that holds a list of I/O ports
-    public class ioport_list : std_map<string, ioport_port>
+    public class ioport_list : std.map<string, ioport_port>
     {
         public ioport_list() { }
 
@@ -2393,6 +2396,7 @@ namespace mame
 
 
         // setters
+        public void modcount_set(int value) { m_modcount = value; }
         public void active_set(ioport_value value) { m_active = value; }
 
 
@@ -2571,7 +2575,7 @@ namespace mame
 
     // ======================> analog_field
     // live analog field information
-    public class analog_field : simple_list_item<analog_field>
+    public class analog_field : global_object, simple_list_item<analog_field>
     {
         // internal state
         analog_field m_next;                 // link to the next analog state for this port
@@ -3088,7 +3092,7 @@ namespace mame
         //-------------------------------------------------
         int apply_sensitivity(int value)
         {
-            return global.lround(((Int64)value * m_sensitivity) / 100.0);
+            return lround(((Int64)value * m_sensitivity) / 100.0);
         }
 
         //-------------------------------------------------
@@ -3320,7 +3324,27 @@ namespace mame
             return this;
         }
 
-        //ioport_configurer port_modify(const char *tag);
+
+        //-------------------------------------------------
+        //  port_modify - find an existing port and
+        //  modify it
+        //-------------------------------------------------
+        public ioport_configurer port_modify(string tag)
+        {
+            // create the full tag
+            string fulltag = m_owner.subtag(tag);
+
+            // find the existing port
+            m_curport = m_portlist.find(fulltag.c_str());
+            if (m_curport == null)
+                throw new emu_fatalerror("Requested to modify nonexistent port '{0}'", fulltag.c_str());
+
+            // bump the modification count, and reset current field/setting
+            m_curport.modcount_set(m_curport.modcount() + 1);  //m_curport.m_modcount++;
+            m_curfield = null;
+            m_cursetting = null;
+            return this;
+        }
 
 
         // field helpers
@@ -3354,17 +3378,17 @@ namespace mame
 
         public ioport_configurer field_set_way(int way) { m_curfield.way = (byte)way; return this; }
         //ioport_configurer field_set_rotated() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_ROTATED; }
-        //ioport_configurer field_set_name(const char *name) const { m_curfield->m_name = string_from_token(name); }
+        //ioport_configurer& field_set_name(const char *name) { assert(m_curfield != nullptr); m_curfield->m_name = string_from_token(name); return *this; }
         public ioport_configurer field_set_player(int player) { m_curfield.set_player((byte)(player - 1)); return this; }
         public ioport_configurer field_set_cocktail() { m_curfield.flags |= ioport_field.FIELD_FLAG_COCKTAIL;  field_set_player(2); return this; }  //  m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL; field_set_player(2); }
         ioport_configurer field_set_toggle() { m_curfield.flags |= ioport_field.FIELD_FLAG_TOGGLE; return this; }  //{ m_curfield.m_flags |= ioport_field::FIELD_FLAG_TOGGLE; }
-        //ioport_configurer field_set_impulse(UINT8 impulse) const { m_curfield->m_impulse = impulse; }
+        public ioport_configurer field_set_impulse(u8 impulse) { m_curfield.impulse = impulse; return this; }
         public ioport_configurer field_set_analog_reverse() { m_curfield.flags |= ioport_field.ANALOG_FLAG_REVERSE; return this; }
         //ioport_configurer field_set_analog_reset() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_RESET; }
         //ioport_configurer field_set_optional() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_OPTIONAL; }
-        //ioport_configurer field_set_min_max(ioport_value minval, ioport_value maxval) const { m_curfield->m_min = minval; m_curfield->m_max = maxval; }
-        public ioport_configurer field_set_sensitivity(int sensitivity) { m_curfield.sensitivity = sensitivity; return this; }
-        public ioport_configurer field_set_delta(int delta) { m_curfield.centerdelta = m_curfield.delta = delta; return this; }
+        public ioport_configurer field_set_min_max(ioport_value minval, ioport_value maxval) { m_curfield.min = minval; m_curfield.max = maxval; return this; }
+        public ioport_configurer field_set_sensitivity(s32 sensitivity) { m_curfield.sensitivity = sensitivity; return this; }
+        public ioport_configurer field_set_delta(s32 delta) { m_curfield.centerdelta = m_curfield.delta = delta; return this; }
         //ioport_configurer field_set_centerdelta(INT32 delta) const { m_curfield->m_centerdelta = delta; }
         //ioport_configurer field_set_crosshair(crosshair_axis_t axis, double altaxis, double scale, double offset) const { m_curfield->m_crosshair_axis = axis; m_curfield->m_crosshair_altaxis = altaxis; m_curfield->m_crosshair_scale = scale; m_curfield->m_crosshair_offset = offset; }
         //ioport_configurer field_set_crossmapper(ioport_field_crossmap_delegate callback) const { m_curfield->m_crosshair_mapper = callback; }
@@ -3432,7 +3456,7 @@ namespace mame
 
     // ======================> ioport_manager
     // private input port state
-    public class ioport_manager
+    public class ioport_manager : global_object
     {
         // XML attributes for the different types
         static readonly string [] seqtypestrings = { "standard", "increment", "decrement" };
@@ -3514,7 +3538,7 @@ namespace mame
                 string errors;
                 m_portlist.append(device, out errors);
                 if (!string.IsNullOrEmpty(errors))
-                    global.osd_printf_error("Input port errors:\n{0}", errors);
+                    osd_printf_error("Input port errors:\n{0}", errors);
             }
 
             // renumber player numbers for controller ports
@@ -3591,7 +3615,7 @@ namespace mame
         running_machine machine() { return m_machine; }
         public ioport_list ports() { return m_portlist; }
         bool safe_to_read() { return m_safe_to_read; }
-        public natural_keyboard natkeyboard() { global.assert(m_natkeyboard != null);  return m_natkeyboard; }
+        public natural_keyboard natkeyboard() { assert(m_natkeyboard != null);  return m_natkeyboard; }
 
 
         // type helpers
@@ -3767,14 +3791,14 @@ namespace mame
         {
             // if nothing specified, ignore the option
             string stemp = machine().options().value(option);
-            if (string.IsNullOrEmpty(stemp) || global.strcmp(stemp, "none") == 0)
+            if (string.IsNullOrEmpty(stemp) || strcmp(stemp, "none") == 0)
                 return;
 
             // extract valid strings
             input_class autoenable_class = null;
             for (input_device_class devclass = input_device_class.DEVICE_CLASS_FIRST_VALID; devclass <= input_device_class.DEVICE_CLASS_LAST_VALID; ++devclass)
             {
-                if (global.strcmp(stemp, machine().input().device_class(devclass).name()) == 0)
+                if (strcmp(stemp, machine().input().device_class(devclass).name()) == 0)
                 {
                     autoenable_class = machine().input().device_class(devclass);
                     break;
@@ -3783,7 +3807,7 @@ namespace mame
 
             if (autoenable_class == null)
             {
-                global.osd_printf_error("Invalid {0} value {1}; reverting to keyboard\n", option, stemp);
+                osd_printf_error("Invalid {0} value {1}; reverting to keyboard\n", option, stemp);
                 autoenable_class = machine().input().device_class(input_device_class.DEVICE_CLASS_KEYBOARD);
             }
 
@@ -3797,7 +3821,7 @@ namespace mame
                         // if this port type is in use, apply the autoselect criteria
                         if ((type1 != 0 && (int)field.type() == type1) || (type2 != 0 && (int)field.type() == type2) || (type3 != 0 && (int)field.type() == type3))
                         {
-                            global.osd_printf_verbose("Input: Autoenabling {0} due to presence of a {1}\n", autoenable_class.name(), ananame);
+                            osd_printf_verbose("Input: Autoenabling {0} due to presence of a {1}\n", autoenable_class.name(), ananame);
                             autoenable_class.enable();
                             break;
                         }
@@ -3958,7 +3982,7 @@ namespace mame
 
             // open the playback file
             osd_file.error filerr = m_playback_file.open(filename);
-            global.assert_always(filerr == osd_file.error.NONE, "Failed to open file for playback");
+            assert_always(filerr == osd_file.error.NONE, "Failed to open file for playback");
 
             // read the header and verify that it is a modern version; if not, print an error
             inp_header header = new inp_header();
@@ -3970,16 +3994,16 @@ namespace mame
                 throw new emu_fatalerror("Input file format version mismatch\n");
 
             // output info to console
-            global.osd_printf_info("Input file: {0}\n", filename);
-            global.osd_printf_info("INP version {0}.{1}", header.get_majversion(), header.get_minversion());  // %u.%u\n
+            osd_printf_info("Input file: {0}\n", filename);
+            osd_printf_info("INP version {0}.{1}", header.get_majversion(), header.get_minversion());  // %u.%u\n
             time_t basetime = (time_t)header.get_basetime();
-            global.osd_printf_info("Created {0}\n", new DateTime(1970, 1, 1).ToLocalTime().AddSeconds(basetime).ToString());  //ctime(&basetime));
-            global.osd_printf_info("Recorded using {0}\n", header.get_appdesc());
+            osd_printf_info("Created {0}\n", new DateTime(1970, 1, 1).ToLocalTime().AddSeconds(basetime).ToString());  //ctime(&basetime));
+            osd_printf_info("Recorded using {0}\n", header.get_appdesc());
 
             // verify the header against the current game
             string sysname = header.get_sysname();
             if (sysname != machine().system().name)
-                global.osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
+                osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
 
             // enable compression
             m_playback_file.compress(util.corefile_global.FCOMPRESS_MEDIUM);
@@ -4005,13 +4029,13 @@ namespace mame
                 // display speed stats
                 if (m_playback_accumulated_speed > 0)
                     m_playback_accumulated_speed /= m_playback_accumulated_frames;
-                global.osd_printf_info("Total playback frames: {0}\n", m_playback_accumulated_frames);
-                global.osd_printf_info("Average recorded speed: {1}%%\n", (m_playback_accumulated_speed * 200 + 1) >> 21);
+                osd_printf_info("Total playback frames: {0}\n", m_playback_accumulated_frames);
+                osd_printf_info("Average recorded speed: {1}%%\n", (m_playback_accumulated_speed * 200 + 1) >> 21);
 
                 // close the program at the end of inp file playback
                 if (machine().options().exit_after_playback())
                 {
-                    global.osd_printf_info("Exiting MAME now...\n");
+                    osd_printf_info("Exiting MAME now...\n");
                     machine().schedule_exit();
                 }
             }
@@ -4071,7 +4095,7 @@ namespace mame
 
             // open the record file
             osd_file.error filerr = m_record_file.open(filename);
-            global.assert_always(filerr == osd_file.error.NONE, "Failed to open file for recording");
+            assert_always(filerr == osd_file.error.NONE, "Failed to open file for recording");
 
             // get the base time
             system_time systime;
@@ -4214,7 +4238,7 @@ namespace mame
                     timecode_key = string.Format("EXTRA_STOP_{0}", (m_timecode_count-4)/2);  //%03d
                 }
 
-                global.osd_printf_info("{0} \n", message);
+                osd_printf_info("{0} \n", message);
                 machine().popmessage("{0} \n", message);
 
                 m_timecode_file.printf(
@@ -4270,10 +4294,10 @@ namespace mame
             // open the record file
             string filename;
             filename = record_filename + ".timecode";
-            global.osd_printf_info("Record input timecode file: {0}\n", record_filename);
+            osd_printf_info("Record input timecode file: {0}\n", record_filename);
 
             osd_file.error filerr = m_timecode_file.open(filename);
-            global.assert_always(filerr == osd_file.error.NONE, "Failed to open file for input timecode recording");
+            assert_always(filerr == osd_file.error.NONE, "Failed to open file for input timecode recording");
 
             m_timecode_file.puts("# ==========================================\n");
             m_timecode_file.puts("# TIMECODE FILE FOR VIDEO PREVIEW GENERATION\n");

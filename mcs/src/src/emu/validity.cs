@@ -4,14 +4,14 @@
 using System;
 using System.Collections.Generic;
 
-using game_driver_map = mame.std_unordered_map<string, mame.game_driver>;
-using int_map = mame.std_unordered_map<string, object>;
+using game_driver_map = mame.std.unordered_map<string, mame.game_driver>;
+using int_map = mame.std.unordered_map<string, object>;
 
 
 namespace mame
 {
     // core validity checker class
-    public class validity_checker : osd_output
+    public class validity_checker : osd_output, IDisposable
     {
         // internal map types
         //typedef std::unordered_map<std::string,const game_driver *> game_driver_map;
@@ -44,7 +44,7 @@ namespace mame
         device_t m_current_device;
         string m_current_ioport;
         int_map m_region_map = new int_map();
-        std_unordered_set<string> m_already_checked = new std_unordered_set<string>();
+        std.unordered_set<string> m_already_checked = new std.unordered_set<string>();
         bool m_validate_all;
 
 
@@ -73,12 +73,16 @@ namespace mame
             }
         }
 
-        //-------------------------------------------------
-        //  validity_checker - destructor
-        //-------------------------------------------------
         ~validity_checker()
         {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
             validate_end();
+            m_isDisposed = true;
         }
 
 
@@ -110,7 +114,7 @@ namespace mame
             m_drivlist.reset();
             while (m_drivlist.next())
             {
-                if (global.strcmp(driver.type.source(), m_drivlist.driver().type.source()) == 0)
+                if (strcmp(driver.type.source(), m_drivlist.driver().type.source()) == 0)
                     validate_one(m_drivlist.driver());
             }
 
@@ -166,7 +170,7 @@ namespace mame
 
             // if we failed to match anything, it
             if (str != null && !validated_any)
-                throw new emu_fatalerror((int)EMU_ERR.EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", str);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", str);
 
             return !(m_errors > 0 || m_warnings > 0);
         }
@@ -294,7 +298,7 @@ namespace mame
         {
             // help verbose validation detect configuration-related crashes
             if (m_print_verbose)
-                output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "Validating driver {0} ({1})...\n", driver.name, global.core_filename_extract_base(driver.type.source()).c_str());
+                output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "Validating driver {0} ({1})...\n", driver.name, core_filename_extract_base(driver.type.source()).c_str());
 
             // set the current driver
             m_current_driver = driver;
@@ -323,7 +327,7 @@ namespace mame
             }
             catch (emu_fatalerror err)
             {
-                global.osd_printf_error("Fatal error {0}", err.str());
+                osd_printf_error("Fatal error {0}", err.str());
             }
 
 
@@ -331,7 +335,7 @@ namespace mame
             if (m_errors > start_errors || m_warnings > start_warnings || !string.IsNullOrEmpty(m_verbose_text))
             {
                 if (!m_print_verbose)
-                    output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "Driver {0} (file {1}): {2} errors, {3} warnings\n", driver.name, global.core_filename_extract_base(driver.type.source()), m_errors - start_errors, m_warnings - start_warnings);
+                    output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "Driver {0} (file {1}): {2} errors, {3} warnings\n", driver.name, core_filename_extract_base(driver.type.source()), m_errors - start_errors, m_warnings - start_warnings);
 
                 output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "{0} errors, {1} warnings\n", m_errors - start_errors, m_warnings - start_warnings);
 
@@ -368,17 +372,17 @@ namespace mame
 
             byte a = 0xff;
             byte b = (byte)(a + 1);
-            if (b > a) global.osd_printf_error("UINT8 must be 8 bits\n");
+            if (b > a) osd_printf_error("UINT8 must be 8 bits\n");
 
             // check size of core integer types
-            if (sizeof(sbyte)  != 1) global.osd_printf_error("INT8 must be 8 bits\n");
-            if (sizeof(byte)   != 1) global.osd_printf_error("UINT8 must be 8 bits\n");
-            if (sizeof(Int16)  != 2) global.osd_printf_error("INT16 must be 16 bits\n");
-            if (sizeof(UInt16) != 2) global.osd_printf_error("UINT16 must be 16 bits\n");
-            if (sizeof(int)    != 4) global.osd_printf_error("INT32 must be 32 bits\n");
-            if (sizeof(UInt32) != 4) global.osd_printf_error("UINT32 must be 32 bits\n");
-            if (sizeof(Int64)  != 8) global.osd_printf_error("INT64 must be 64 bits\n");
-            if (sizeof(UInt64) != 8) global.osd_printf_error("UINT64 must be 64 bits\n");
+            if (sizeof(sbyte)  != 1) osd_printf_error("INT8 must be 8 bits\n");
+            if (sizeof(byte)   != 1) osd_printf_error("UINT8 must be 8 bits\n");
+            if (sizeof(Int16)  != 2) osd_printf_error("INT16 must be 16 bits\n");
+            if (sizeof(UInt16) != 2) osd_printf_error("UINT16 must be 16 bits\n");
+            if (sizeof(int)    != 4) osd_printf_error("INT32 must be 32 bits\n");
+            if (sizeof(UInt32) != 4) osd_printf_error("UINT32 must be 32 bits\n");
+            if (sizeof(Int64)  != 8) osd_printf_error("INT64 must be 64 bits\n");
+            if (sizeof(UInt64) != 8) osd_printf_error("UINT64 must be 64 bits\n");
 
             //throw new emu_unimplemented();
 #if false

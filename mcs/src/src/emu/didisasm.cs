@@ -22,7 +22,7 @@ namespace mame
         {
         }
 
-        ~device_disasm_interface() { }
+        //~device_disasm_interface() { }
 
 
         // Override

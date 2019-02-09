@@ -13,7 +13,7 @@ using u8 = System.Byte;
 
 namespace mame
 {
-    public partial class digdug_state : galaga_state
+    partial class digdug_state : galaga_state
     {
         /***************************************************************************
 
@@ -34,50 +34,50 @@ namespace mame
 
         ***************************************************************************/
 
-        //PALETTE_INIT_MEMBER(digdug_state,digdug)
-        public void palette_init_digdug(palette_device palette)
+        public void digdug_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
-            int i;
 
-            for (i = 0;i < 32;i++)
+            for (int i = 0;i < 32;i++)
             {
-                int bit0,bit1,bit2,r,g,b;
+                int bit0;
+                int bit1;
+                int bit2;
 
-                bit0 = (color_prom[0] >> 0) & 0x01;
-                bit1 = (color_prom[0] >> 1) & 0x01;
-                bit2 = (color_prom[0] >> 2) & 0x01;
-                r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                bit0 = (color_prom[0] >> 3) & 0x01;
-                bit1 = (color_prom[0] >> 4) & 0x01;
-                bit2 = (color_prom[0] >> 5) & 0x01;
-                g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+                bit0 = BIT(color_prom[0], 0);
+                bit1 = BIT(color_prom[0], 1);
+                bit2 = BIT(color_prom[0], 2);
+                int r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+                bit0 = BIT(color_prom[0], 3);
+                bit1 = BIT(color_prom[0], 4);
+                bit2 = BIT(color_prom[0], 5);
+                int g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
                 bit0 = 0;
-                bit1 = (color_prom[0] >> 6) & 0x01;
-                bit2 = (color_prom[0] >> 7) & 0x01;
-                b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                palette.palette_interface().set_indirect_color(i, new rgb_t((byte)r,(byte)g,(byte)b));
+                bit1 = BIT(color_prom[0], 6);
+                bit2 = BIT(color_prom[0], 7);
+                int b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+                palette.palette_interface.set_indirect_color(i, new rgb_t((byte)r,(byte)g,(byte)b));
                 color_prom++;
             }
 
-            /* characters - direct mapping */
-            for (i = 0; i < 16; i++)
+            // characters - direct mapping
+            for (int i = 0; i < 16; i++)
             {
-                palette.palette_interface().set_pen_indirect((pen_t)(i*2+0), 0);
-                palette.palette_interface().set_pen_indirect((pen_t)(i*2+1), (UInt16)i);
+                palette.palette_interface.set_pen_indirect((pen_t)((i << 1) | 0), 0);
+                palette.palette_interface.set_pen_indirect((pen_t)((i << 1) | 1), (UInt16)i);
             }
 
-            /* sprites */
-            for (i = 0;i < 0x100;i++)
+            // sprites
+            for (int i = 0; i < 0x100; i++)
             {
-                palette.palette_interface().set_pen_indirect((pen_t)(16*2+i), (UInt16)((color_prom[0] & 0x0f) + 0x10));
+                palette.palette_interface.set_pen_indirect((pen_t)(16*2 + i), (UInt16)((color_prom[0] & 0x0f) | 0x10));
                 color_prom++;
             }
 
-            /* bg_select */
-            for (i = 0;i < 0x100;i++)
+            // bg_select
+            for (int i = 0; i < 0x100; i++)
             {
-                palette.palette_interface().set_pen_indirect((pen_t)(16*2+256+i), (UInt16)(color_prom[0] & 0x0f));
+                palette.palette_interface.set_pen_indirect((pen_t)(16*2 + 256 + i), (UInt16)(color_prom[0] & 0x0f));
                 color_prom++;
             }
         }
@@ -143,8 +143,8 @@ namespace mame
             m_bg_disable = 0;
             m_bg_color_bank = 0;
 
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //tilemap_get_info_delegate(FUNC(digdug_state::bg_get_tile_info),this),tilemap_mapper_delegate(FUNC(digdug_state::tilemap_scan),this),8,8,36,28);
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //tilemap_get_info_delegate(FUNC(digdug_state::tx_get_tile_info),this),tilemap_mapper_delegate(FUNC(digdug_state::tilemap_scan),this),8,8,36,28);
+            m_bg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //tilemap_get_info_delegate(FUNC(digdug_state::bg_get_tile_info),this),tilemap_mapper_delegate(FUNC(digdug_state::tilemap_scan),this),8,8,36,28);
+            m_fg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //tilemap_get_info_delegate(FUNC(digdug_state::tx_get_tile_info),this),tilemap_mapper_delegate(FUNC(digdug_state::tilemap_scan),this),8,8,36,28);
 
             m_fg_tilemap.set_transparent_pen(0);
 
@@ -204,14 +204,14 @@ namespace mame
                 {
                     for (x = 0;x <= size;x++)
                     {
-                        UInt32 transmask =  m_palette.target.palette_interface().transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x1f);
-                        m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
+                        UInt32 transmask =  palette.target.palette_interface.transpen_mask(gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x1f);
+                        gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
                             (UInt32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
                             (UInt32)color,
                             flipx,flipy,
                             ((sx + 16*x) & 0xff), sy + 16*y,transmask);
                         /* wraparound */
-                        m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
+                        gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
                             (UInt32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
                             (UInt32)color,
                             flipx,flipy,

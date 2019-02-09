@@ -22,7 +22,7 @@ namespace mame
         public static void MCFG_TIMER_DRIVER_ADD_SCANLINE(out device_t device, machine_config config, device_t owner, string tag, timer_device.expired_delegate callback, string screen, int first_vpos, int increment)
         {
             mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, timer_device.TIMER, 0);
-            timer_device.static_configure_scanline(device, callback, screen, first_vpos, increment);  //timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, NULL, (_class *)0), _screen, _first_vpos, _increment);
+            ((timer_device)device).configure_scanline(callback, screen, first_vpos, increment);  //timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, NULL, (_class *)0), _screen, _first_vpos, _increment);
         }
         //define MCFG_TIMER_DEVICE_ADD_SCANLINE(_tag, _devtag, _class, _callback, _screen, _first_vpos, _increment)             MCFG_DEVICE_ADD(_tag, TIMER, 0)             timer_device::static_configure_scanline(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, _devtag, (_class *)0), _screen, _first_vpos, _increment);
         //define MCFG_TIMER_MODIFY(_tag)             MCFG_DEVICE_MODIFY(_tag)
@@ -100,27 +100,53 @@ namespace mame
 
 
         // inline configuration helpers
-        //static void static_configure_generic(device_t &device, timer_device_expired_delegate callback);
-        //static void static_configure_periodic(device_t &device, timer_device_expired_delegate callback, const attotime &period);
 
-        //-------------------------------------------------
-        //  static_configure_scanline - configuration
-        //  helper to set up a scanline timer
-        //-------------------------------------------------
-        public static void static_configure_scanline(device_t device, expired_delegate callback, string screen, int first_vpos, int increment)
+        //template <typename Object> void configure_generic(Object &&cb)
+        //{
+        //    m_type = TIMER_TYPE_GENERIC;
+        //    m_callback = std::forward<Object>(cb);
+        //}
+        //template <class FunctionClass> void configure_generic(void (FunctionClass::*callback)(timer_device &, void *, s32), const char *name)
+        //{
+        //    configure_generic(expired_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
+        //}
+
+        //template <typename Object> void configure_periodic(Object &&cb, const attotime &period)
+        //{
+        //    m_type = TIMER_TYPE_PERIODIC;
+        //    m_callback = std::forward<Object>(cb);
+        //    m_period = period;
+        //}
+        //template <class FunctionClass> void configure_periodic(void (FunctionClass::*callback)(timer_device &, void *, s32), const char *name,
+        //    const attotime &period)
+        //{
+        //    configure_periodic(expired_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), period);
+        //}
+
+        //template <typename Object>
+        public void configure_scanline(expired_delegate cb, string screen, int first_vpos, int increment)
         {
-            timer_device timer = (timer_device)device;
-            timer.m_type = timer_type.TIMER_TYPE_SCANLINE;
-            timer.m_callback = callback;
-            timer.m_screen_tag = screen;
-            timer.m_first_vpos = (UInt32)first_vpos;
-            timer.m_increment = (UInt32)increment;
+            m_type = timer_type.TIMER_TYPE_SCANLINE;
+            m_callback = cb;  //std::forward<Object>(cb);
+            m_screen_tag = screen;
+            m_first_vpos = (u32)first_vpos;
+            m_increment = (u32)increment;
         }
 
-        //static void static_set_callback(device_t &device, timer_device_expired_delegate callback);
-        //static void static_set_start_delay(device_t &device, const attotime &delay);
-        //static void static_set_param(device_t &device, int param);
-        //static void static_set_ptr(device_t &device, void *ptr);
+        //template <class FunctionClass> void configure_scanline(void (FunctionClass::*callback)(timer_device &, void *, s32),
+        //    const char *name, const char *screen, int first_vpos, int increment)
+        //{
+        //    configure_scanline(expired_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), screen, first_vpos, increment);
+        //}
+
+        //template <typename Object> void set_callback(Object &&cb) { m_callback = std::forward<Object>(cb); }
+        //template <class FunctionClass> void set_callback(void (FunctionClass::*callback)(timer_device &, void *, s32), const char *name)
+        //{
+        //    set_callback(expired_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
+        //}
+
+        //void set_start_delay(const attotime &delay) { m_start_delay = delay; }
+        //void config_param(int param) { m_param = param; }
 
 
         // property getters
@@ -160,23 +186,23 @@ namespace mame
             {
                 case timer_type.TIMER_TYPE_GENERIC:
                     if (m_screen_tag != null || m_first_vpos != 0 || m_start_delay != attotime.zero)
-                        global.osd_printf_warning("Generic timer specified parameters for a scanline timer\n");
+                        osd_printf_warning("Generic timer specified parameters for a scanline timer\n");
                     if (m_period != attotime.zero || m_start_delay != attotime.zero)
-                        global.osd_printf_warning("Generic timer specified parameters for a periodic timer\n");
+                        osd_printf_warning("Generic timer specified parameters for a periodic timer\n");
                     break;
 
                 case timer_type.TIMER_TYPE_PERIODIC:
                     if (m_screen_tag != null || m_first_vpos != 0)
-                        global.osd_printf_warning("Periodic timer specified parameters for a scanline timer\n");
+                        osd_printf_warning("Periodic timer specified parameters for a scanline timer\n");
                     if (m_period <= attotime.zero)
-                        global.osd_printf_error("Periodic timer specified invalid period\n");
+                        osd_printf_error("Periodic timer specified invalid period\n");
                     break;
 
                 case timer_type.TIMER_TYPE_SCANLINE:
                     if (m_period != attotime.zero || m_start_delay != attotime.zero)
-                        global.osd_printf_warning("Scanline timer specified parameters for a periodic timer\n");
+                        osd_printf_warning("Scanline timer specified parameters for a periodic timer\n");
                     if (m_param != 0)
-                        global.osd_printf_warning("Scanline timer specified parameter which is ignored\n");
+                        osd_printf_warning("Scanline timer specified parameter which is ignored\n");
 //          if (m_first_vpos < 0)
 //              osd_printf_error("Scanline timer specified invalid initial position\n");
 //          if (m_increment < 0)
@@ -184,7 +210,7 @@ namespace mame
                     break;
 
                 default:
-                    global.osd_printf_error("Invalid type specified\n");
+                    osd_printf_error("Invalid type specified\n");
                     break;
             }
         }
@@ -243,7 +269,7 @@ namespace mame
 
                 case timer_type.TIMER_TYPE_SCANLINE:
                     if (m_screen == null)
-                        global.fatalerror("timer '{0}': unable to find screen '{1}'\n", tag(), m_screen_tag);
+                        fatalerror("timer '{0}': unable to find screen '{1}'\n", tag(), m_screen_tag);
 
                     // set the timer to fire immediately
                     m_first_time = true;
@@ -256,7 +282,7 @@ namespace mame
         //-------------------------------------------------
         //  device_timer - handle timer expiration events
         //-------------------------------------------------
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)  /*void *ptr)*/
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
         {
             switch (m_type)
             {

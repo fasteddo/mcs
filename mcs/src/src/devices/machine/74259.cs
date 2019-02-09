@@ -93,15 +93,15 @@ namespace mame
             if (LOG_MYSTERY_BITS && data != 0x00 && data != 0x01 && data != 0xff)
                 logerror("Mystery bits written to Q{0}:{1}{2}{3}{4}{5}{6}{7}\n",  // %d:%s%s%s%s%s%s%s\n",
                     offset,
-                    global.BIT(data, 7) != 0 ? " D7" : "",
-                    global.BIT(data, 6) != 0 ? " D6" : "",
-                    global.BIT(data, 5) != 0 ? " D5" : "",
-                    global.BIT(data, 4) != 0 ? " D4" : "",
-                    global.BIT(data, 3) != 0 ? " D3" : "",
-                    global.BIT(data, 2) != 0 ? " D2" : "",
-                    global.BIT(data, 1) != 0 ? " D1" : "");
+                    BIT(data, 7) != 0 ? " D7" : "",
+                    BIT(data, 6) != 0 ? " D6" : "",
+                    BIT(data, 5) != 0 ? " D5" : "",
+                    BIT(data, 4) != 0 ? " D4" : "",
+                    BIT(data, 3) != 0 ? " D3" : "",
+                    BIT(data, 2) != 0 ? " D2" : "",
+                    BIT(data, 1) != 0 ? " D1" : "");
 
-            write_bit(offset, global.BIT(data, 0) != 0);
+            write_bit(offset, BIT(data, 0) != 0);
         }
 
 
@@ -118,15 +118,15 @@ namespace mame
             if (LOG_MYSTERY_BITS && data != 0x00 && data != 0x80 && data != 0xff)
                 logerror("Mystery bits written to Q{0}:{1}{2}{3}{4}{5}{6}{7}\n",  // %d:%s%s%s%s%s%s%s\n",
                     offset,
-                    global.BIT(data, 6) != 0 ? " D6" : "",
-                    global.BIT(data, 5) != 0 ? " D5" : "",
-                    global.BIT(data, 4) != 0 ? " D4" : "",
-                    global.BIT(data, 3) != 0 ? " D3" : "",
-                    global.BIT(data, 2) != 0 ? " D2" : "",
-                    global.BIT(data, 1) != 0 ? " D1" : "",
-                    global.BIT(data, 0) != 0 ? " D0" : "");
+                    BIT(data, 6) != 0 ? " D6" : "",
+                    BIT(data, 5) != 0 ? " D5" : "",
+                    BIT(data, 4) != 0 ? " D4" : "",
+                    BIT(data, 3) != 0 ? " D3" : "",
+                    BIT(data, 2) != 0 ? " D2" : "",
+                    BIT(data, 1) != 0 ? " D1" : "",
+                    BIT(data, 0) != 0 ? " D0" : "");
 
-            write_bit(offset, global.BIT(data, 7) != 0);
+            write_bit(offset, BIT(data, 7) != 0);
         }
 
 
@@ -137,14 +137,14 @@ namespace mame
         //DECLARE_WRITE8_MEMBER(clear);
 
         // read handlers (inlined for the sake of optimization)
-        public int q0_r() { return global.BIT(m_q, 0); }  //DECLARE_READ_LINE_MEMBER(q0_r) { return BIT(m_q, 0); }
-        public int q1_r() { return global.BIT(m_q, 1); }  //DECLARE_READ_LINE_MEMBER(q1_r) { return BIT(m_q, 1); }
-        public int q2_r() { return global.BIT(m_q, 2); }  //DECLARE_READ_LINE_MEMBER(q2_r) { return BIT(m_q, 2); }
-        public int q3_r() { return global.BIT(m_q, 3); }  //DECLARE_READ_LINE_MEMBER(q3_r) { return BIT(m_q, 3); }
-        public int q4_r() { return global.BIT(m_q, 4); }  //DECLARE_READ_LINE_MEMBER(q4_r) { return BIT(m_q, 4); }
-        public int q5_r() { return global.BIT(m_q, 5); }  //DECLARE_READ_LINE_MEMBER(q5_r) { return BIT(m_q, 5); }
-        public int q6_r() { return global.BIT(m_q, 6); }  //DECLARE_READ_LINE_MEMBER(q6_r) { return BIT(m_q, 6); }
-        public int q7_r() { return global.BIT(m_q, 7); }  //DECLARE_READ_LINE_MEMBER(q7_r) { return BIT(m_q, 7); }
+        public int q0_r() { return BIT(m_q, 0); }  //DECLARE_READ_LINE_MEMBER(q0_r) { return BIT(m_q, 0); }
+        public int q1_r() { return BIT(m_q, 1); }  //DECLARE_READ_LINE_MEMBER(q1_r) { return BIT(m_q, 1); }
+        public int q2_r() { return BIT(m_q, 2); }  //DECLARE_READ_LINE_MEMBER(q2_r) { return BIT(m_q, 2); }
+        public int q3_r() { return BIT(m_q, 3); }  //DECLARE_READ_LINE_MEMBER(q3_r) { return BIT(m_q, 3); }
+        public int q4_r() { return BIT(m_q, 4); }  //DECLARE_READ_LINE_MEMBER(q4_r) { return BIT(m_q, 4); }
+        public int q5_r() { return BIT(m_q, 5); }  //DECLARE_READ_LINE_MEMBER(q5_r) { return BIT(m_q, 5); }
+        public int q6_r() { return BIT(m_q, 6); }  //DECLARE_READ_LINE_MEMBER(q6_r) { return BIT(m_q, 6); }
+        public int q7_r() { return BIT(m_q, 7); }  //DECLARE_READ_LINE_MEMBER(q7_r) { return BIT(m_q, 7); }
         //u8 output_state() const { return m_q; }
 
         // control inputs
@@ -213,7 +213,7 @@ namespace mame
         void update_bit()
         {
             // first verify that the selected bit is actually changing
-            if (global.BIT(m_q, m_address) == (m_data ? 1 : 0))
+            if (BIT(m_q, m_address) == (m_data ? 1 : 0))
                 return;
 
             if (!m_clear)
@@ -256,8 +256,8 @@ namespace mame
             // return any previously set output lines to clear state
             for (int bit = 0; bit < 8; bit++)
             {
-                if (global.BIT(bits_changed, bit) != 0 && !m_q_out_cb[bit].isnull())
-                    m_q_out_cb[bit].op(global.BIT(new_q, bit));
+                if (BIT(bits_changed, bit) != 0 && !m_q_out_cb[bit].isnull())
+                    m_q_out_cb[bit].op(BIT(new_q, bit));
             }
 
             // update parallel output

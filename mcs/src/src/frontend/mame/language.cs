@@ -13,7 +13,7 @@ namespace mame
 {
     public static class language_global
     {
-        static Dictionary<string, string> g_translation = new Dictionary<string, string>();
+        static std.unordered_map<string, string> g_translation = new std.unordered_map<string, string>();
 
 
         const UInt32 MO_MAGIC = 0x950412de;
@@ -34,12 +34,12 @@ namespace mame
         public static void load_translation(emu_options m_options)
         {
             g_translation.Clear();
-            emu_file file = new emu_file(m_options.language_path(), osdcore_global.OPEN_FLAG_READ);
+            emu_file file = new emu_file(m_options.language_path(), global_object.OPEN_FLAG_READ);
             var name = m_options.language();
             name = name.Replace(" ", "_");
             name = name.Replace("(", "");
             name = name.Replace(")", "");
-            if (file.open(name, osdcore_global.PATH_SEPARATOR + "strings.mo") == osd_file.error.NONE)
+            if (file.open(name, global_object.PATH_SEPARATOR + "strings.mo") == osd_file.error.NONE)
             {
                 uint64_t size = file.size();
                 RawBuffer buffer = new RawBuffer(4 * (int)size / 4 + 1); //uint32_t *buffer = global_alloc_array(uint32_t, size / 4 + 1);
@@ -69,7 +69,7 @@ namespace mame
                 {
                     string original = "TODO original";  //(const char *)data + buffer[original_table_offset + 2 * i + 1];
                     string translation = "TODO translation";  //(const char *)data + buffer[translation_table_offset + 2 * i + 1];
-                    g_translation.Add(original, translation);
+                    g_translation.emplace(original, translation);
                 }
 
                 buffer = null;  //global_free_array(buffer);

@@ -18,7 +18,7 @@ namespace mame
 
 
         //static NETLIST_START(MC14584B_DIP)
-        public static void nld_MC14584B_DIP(netlist.setup_t setup)
+        public static void netlist_MC14584B_DIP(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -48,7 +48,7 @@ namespace mame
 
 
         //NETLIST_START(otheric_lib)
-        public static void nld_otheric_lib(netlist.setup_t setup)
+        public static void netlist_otheric_lib(netlist.setup_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -60,7 +60,7 @@ namespace mame
                 netlist.nl_setup_global.TT_FAMILY("FAMILY(FV=0 IVL=0.42 IVH=0.54 OVL=0.05 OVH=0.05 ORL=10.0 ORH=10.0)");
             netlist.nl_setup_global.TRUTHTABLE_END(setup);
 
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MC14584B_DIP", nld_MC14584B_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MC14584B_DIP", netlist_MC14584B_DIP);
 
             netlist.nl_setup_global.NETLIST_END();
         }

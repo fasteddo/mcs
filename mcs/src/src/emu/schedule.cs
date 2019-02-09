@@ -141,7 +141,27 @@ namespace mame
 
 
         // setters
-        //bool enable(bool enable = true);
+
+        //-------------------------------------------------
+        //  enable - enable/disable a timer
+        //-------------------------------------------------
+        public bool enable(bool enable = true)
+        {
+            // reschedule only if the state has changed
+            bool old = m_enabled;
+            if (old != enable)
+            {
+                // set the enable flag
+                m_enabled = enable;
+
+                // remove the timer and insert back into the list
+                machine().scheduler().timer_list_remove(this);
+                machine().scheduler().timer_list_insert(this);
+            }
+
+            return old;
+        }
+
         //void set_param(int param) { m_param = param; }
         //void set_ptr(void *ptr) { m_ptr = ptr; }
         public void next_set(emu_timer value) { m_next = value; }
@@ -274,7 +294,7 @@ namespace mame
 
 
     // ======================> device_scheduler
-    public class device_scheduler
+    public class device_scheduler : global_object, IDisposable
     {
         const bool VERBOSE = true;
         void LOG(string format, params object [] args) { if (VERBOSE) machine().logerror(format, args); }
@@ -357,14 +377,19 @@ namespace mame
             m_timer_list.adjust(attotime.never);
         }
 
-        //-------------------------------------------------
-        //  device_scheduler - destructor
-        //-------------------------------------------------
         ~device_scheduler()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public void Dispose()
         {
             // remove all timers
             while (m_timer_list != null)
                 m_timer_allocator.reclaim(m_timer_list.release());
+
+            m_isDisposed = true;
         }
 
 
@@ -404,7 +429,7 @@ namespace mame
         //-------------------------------------------------
         public void timeslice()
         {
-            bool call_debugger = (machine().debug_flags_get & running_machine.DEBUG_FLAG_ENABLED) != 0;
+            bool call_debugger = (machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0;
 
             // build the execution list if we don't have one yet
             //if (UNEXPECTED(m_execute_list == null))
@@ -448,7 +473,7 @@ namespace mame
                         if (delta < 0 && target.seconds() > exec.localtime.seconds())
                             delta += attotime.ATTOSECONDS_PER_SECOND;
 
-                        global.assert(delta == (target - exec.localtime).as_attoseconds());
+                        assert(delta == (target - exec.localtime).as_attoseconds());
 
                         if (exec.attoseconds_per_cycle == 0)
                         {
@@ -458,7 +483,7 @@ namespace mame
                         else if (delta >= exec.attoseconds_per_cycle)
                         {
                             // compute how many cycles we want to execute
-                            int ran = exec.cycles_running = (int)eminline_global.divu_64x32((UInt64)delta >> exec.divshift, (UInt32)exec.divisor);
+                            int ran = exec.cycles_running = (int)divu_64x32((UInt64)delta >> exec.divshift, (UInt32)exec.divisor);
 
                             if (machine().video().frame_update_count() % 1000 == 0)
                             {
@@ -512,11 +537,11 @@ namespace mame
                             else
                             {
                                 UInt32 remainder;
-                                int secs = (int)eminline_global.divu_64x32_rem((UInt64)ran, exec.cycles_per_second, out remainder);
+                                int secs = (int)divu_64x32_rem((UInt64)ran, exec.cycles_per_second, out remainder);
                                 deltatime = new attotime(secs, remainder * exec.attoseconds_per_cycle);
                             }
 
-                            global.assert(deltatime >= attotime.zero);
+                            assert(deltatime >= attotime.zero);
                             exec.localtime += deltatime;
 
                             if (machine().video().frame_update_count() % 100 == 0)
@@ -557,8 +582,24 @@ namespace mame
                 m_executing_device.abort_timeslice();
         }
 
+
         //void trigger(int trigid, const attotime &after = attotime::zero);
-        //void boost_interleave(const attotime &timeslice_time, const attotime &boost_duration);
+
+
+        //-------------------------------------------------
+        //  boost_interleave - temporarily boosts the
+        //  interleave factor
+        //-------------------------------------------------
+        public void boost_interleave(attotime timeslice_time, attotime boost_duration)
+        {
+            // ignore timeslices > 1 second
+            if (timeslice_time.seconds() > 0)
+                return;
+
+            add_scheduling_quantum(timeslice_time, boost_duration);
+        }
+
+
         public void suspend_resume_changed() { m_suspend_changes_pending = true; }
 
 
@@ -740,11 +781,11 @@ namespace mame
                 {
                     device_t device = machine().root_device().subdevice(machine().config().perfect_cpu_quantum().c_str());
                     if (device == null)
-                        global.fatalerror("Device '{0}' specified for perfect interleave is not present!\n", machine().config().perfect_cpu_quantum());
+                        fatalerror("Device '{0}' specified for perfect interleave is not present!\n", machine().config().perfect_cpu_quantum());
 
                     device_execute_interface exec;
                     if (!device.interface_(out exec))
-                        global.fatalerror("Device '{0}' specified for perfect interleave is not an executing device!\n", machine().config().perfect_cpu_quantum());
+                        fatalerror("Device '{0}' specified for perfect interleave is not an executing device!\n", machine().config().perfect_cpu_quantum());
 
                     min_quantum = attotime.Min(new attotime(0, exec.minimum_quantum()), min_quantum);
                 }
@@ -836,7 +877,7 @@ namespace mame
         //-------------------------------------------------
         void add_scheduling_quantum(attotime quantum, attotime duration)
         {
-            global.assert(quantum.seconds() == 0);
+            assert(quantum.seconds() == 0);
 
             attotime curtime = time();
             attotime expire = curtime + duration;
@@ -973,7 +1014,7 @@ namespace mame
                         LOG("execute_timers: timer device {0} timer {1}\n", timer.device().tag(), timer.id());
                         }
 
-                        timer.device().timer_expired(timer, timer.id(), timer.param()); //, timer.m_ptr);
+                        timer.device().timer_expired(timer, timer.id(), timer.param(), timer.ptr());
                     }
                     else if (timer.callback() != null)
                     {
@@ -982,7 +1023,7 @@ namespace mame
                         LOG("execute_timers: timer callback {0}\n", timer.callback());
                         }
 
-                        timer.callback()(timer.ptr(), timer.param());  //timer.m_ptr, timer.param());
+                        timer.callback()(timer.ptr(), timer.param());
                     }
 
 

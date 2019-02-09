@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using space_config_vector = mame.std_vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
+using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 
 
 namespace mame
@@ -17,9 +17,9 @@ namespace mame
 
         static void MCFG_DEVICE_ADDRESS_MAP(device_t device, int space, address_map_constructor map) { device.memory().set_addrmap(space, map); }
         //#define MCFG_DEVICE_REMOVE_ADDRESS_MAP(_space)     device_memory_interface::static_set_addrmap(*device, _space, NULL);
-        public static void MCFG_DEVICE_PROGRAM_MAP(device_t device, address_map_constructor map) { MCFG_DEVICE_ADDRESS_MAP(device, emumem_global.AS_PROGRAM, map); }
+        public static void MCFG_DEVICE_PROGRAM_MAP(device_t device, address_map_constructor map) { MCFG_DEVICE_ADDRESS_MAP(device, global_object.AS_PROGRAM, map); }
         //define MCFG_DEVICE_DATA_MAP(_map)             MCFG_DEVICE_ADDRESS_MAP(AS_DATA, _map)
-        public static void MCFG_DEVICE_IO_MAP(device_t device, address_map_constructor map) { MCFG_DEVICE_ADDRESS_MAP(device, emumem_global.AS_IO, map); }
+        public static void MCFG_DEVICE_IO_MAP(device_t device, address_map_constructor map) { MCFG_DEVICE_ADDRESS_MAP(device, global_object.AS_IO, map); }
         //#define MCFG_DEVICE_OPCODES_MAP(_map)     MCFG_DEVICE_ADDRESS_MAP(AS_OPCODES, _map)
     }
 
@@ -38,11 +38,11 @@ namespace mame
 
 
         // configuration
-        std_vector<address_map_constructor> m_address_map = new std_vector<address_map_constructor>(); // address maps for each address space
+        std.vector<address_map_constructor> m_address_map = new std.vector<address_map_constructor>(); // address maps for each address space
 
         // internal state
-        std_vector<address_space_config> m_address_config = new std_vector<address_space_config>(); // configuration for each space
-        std_vector<address_space> m_addrspace = new std_vector<address_space>(); // reported address spaces
+        std.vector<address_space_config> m_address_config = new std.vector<address_space_config>(); // configuration for each space
+        std.vector<address_space> m_addrspace = new std.vector<address_space>(); // reported address spaces
 
 
         // construction/destruction
@@ -93,7 +93,7 @@ namespace mame
         // basic information getters
         public bool has_space(int index = 0) { return index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null; }
         public bool has_configured_map(int index = 0) { return index >= 0 && index < (int)m_address_map.size() && m_address_map[index] != null; }
-        public address_space space(int index = 0) { global.assert(index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null); return m_addrspace[index]; }
+        public address_space space(int index = 0) { assert(index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null); return m_addrspace[index]; }
 
 
         // address translation
@@ -108,9 +108,9 @@ namespace mame
         //template <typename Space>
         public void allocate(address_space Space, memory_manager manager, int spacenum)
         {
-            global.assert((0 <= spacenum) && (max_space_count() > spacenum));
+            assert((0 <= spacenum) && (max_space_count() > spacenum));
             m_addrspace.resize(Math.Max(m_addrspace.size(), spacenum + 1));
-            global.assert(m_addrspace[spacenum] == null);
+            assert(m_addrspace[spacenum] == null);
             m_addrspace[spacenum] = Space;  //std::make_unique<Space>(manager, *this, spacenum, space_config(spacenum)->addr_width());
         }
         public void prepare_maps() { foreach (var space in m_addrspace) { if (space != null) { space.prepare_map(); } } }
@@ -143,6 +143,13 @@ namespace mame
                     m_address_config.resize(entry.Key + 1);
                 m_address_config[entry.Key] = entry.Value;
             }
+        }
+
+
+        public override void interface_post_stop()
+        {
+            foreach (var space in m_addrspace)
+                if (space != null) space.Dispose();
         }
 
 

@@ -13,19 +13,9 @@ using u64 = System.UInt64;
 
 namespace mame
 {
-    // standard state indexes
-    enum STATE
-    {
-        STATE_GENPC = -1,               // generic program counter (live)
-        STATE_GENPCBASE = -2,           // generic program counter (base of current instruction)
-        STATE_GENSP = -3,               // generic stack pointer
-        STATE_GENFLAGS = -4             // generic flags
-    }
-
-
     // ======================> device_state_entry
     // class describing a single item of exposed device state
-    public class device_state_entry
+    public class device_state_entry : global_object
     {
         // device state flags
         const byte DSF_NOSHOW          = 0x01; // don't display this entry in the registers view
@@ -69,16 +59,16 @@ namespace mame
             m_sizemask = sizemask;
 
 
-            emucore_global.assert(size == 1 || size == 2 || size == 4 || size == 8 || (flags & DSF_FLOATING_POINT) != 0);
+            assert(size == 1 || size == 2 || size == 4 || size == 8 || (flags & DSF_FLOATING_POINT) != 0);
 
             format_from_mask();
 
             // override well-known symbols
-            if (index == (int)STATE.STATE_GENPCBASE)
+            if (index == device_state_interface.STATE_GENPCBASE)
                 m_symbol = "CURPC";
-            else if (index == (int)STATE.STATE_GENSP)
+            else if (index == device_state_interface.STATE_GENSP)
                 m_symbol = "CURSP";
-            else if (index == (int)STATE.STATE_GENFLAGS)
+            else if (index == device_state_interface.STATE_GENFLAGS)
                 m_symbol = "CURFLAGS";
         }
 
@@ -95,10 +85,7 @@ namespace mame
             m_sizemask = 0;
         }
 
-
-        ~device_state_entry()
-        {
-        }
+        //~device_state_entry() { }
 
 
         // post-construction modifiers
@@ -189,7 +176,7 @@ namespace mame
         //-------------------------------------------------
         void set_value(u64 value)
         {
-            emucore_global.assert((m_flags & DSF_READONLY) == 0);
+            assert((m_flags & DSF_READONLY) == 0);
 
             // apply the mask
             value &= m_datamask;
@@ -452,13 +439,23 @@ namespace mame
     // class representing interface-specific live state
     public class device_state_interface : device_interface
     {
+        // standard state indexes
+        //enum
+        //{
+        public const int STATE_GENPC     = -1;           // generic program counter (live)
+        public const int STATE_GENPCBASE = -2;           // generic program counter (base of current instruction)
+        public const int STATE_GENSP     = -3;           // generic stack pointer
+        public const int STATE_GENFLAGS  = -4;           // generic flags
+        //}
+
+
         // constants
         const int FAST_STATE_MIN = -4;                           // range for fast state
         const int FAST_STATE_MAX = 256;                          // lookups
 
 
         // state
-        std_vector<device_state_entry> m_state_list = new std_vector<device_state_entry>();  //std::vector<std::unique_ptr<device_state_entry>>       m_state_list;           // head of state list
+        std.vector<device_state_entry> m_state_list = new std.vector<device_state_entry>();  //std::vector<std::unique_ptr<device_state_entry>>       m_state_list;           // head of state list
         device_state_entry [] m_fast_state = new device_state_entry[FAST_STATE_MAX + 1 - FAST_STATE_MIN];  // fast access to common entries
 
 
@@ -503,7 +500,7 @@ namespace mame
 
         //astring &state_string(int index, astring &dest);
         //int state_string_max_length(int index);
-        public offs_t pc() { return (offs_t)state_int((int)STATE.STATE_GENPC); }
+        public offs_t pc() { return (offs_t)state_int(STATE_GENPC); }
         //offs_t pcbase() { return state_int(STATE_GENPCBASE); }
         //offs_t sp() { return state_int(STATE_GENSP); }
         //UINT64 flags() { return state_int(STATE_GENFLAGS); }
