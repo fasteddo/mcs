@@ -159,8 +159,8 @@ namespace mame
             map.op(0x0000, 0x3fff).rom();
             map.op(0x4000, 0x47ff).ram();
             map.op(0x6000, 0x6000).r(m_soundlatch.target, (space, offset, mem_mask) => { return m_soundlatch.target.read(); });  //r(m_soundlatch, FUNC(generic_latch_8_device::read));
-            map.op(0x8000, 0x8001).w("ay1", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay1")).address_data_w(space, offset, data, mem_mask); });  //w("ay1", FUNC(ay8910_device::address_data_w));
-            map.op(0xc000, 0xc001).w("ay2", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay2")).address_data_w(space, offset, data, mem_mask); });  //w("ay2", FUNC(ay8910_device::address_data_w));
+            map.op(0x8000, 0x8001).w("ay1", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay1")).address_data_w(offset, data); });  //w("ay1", FUNC(ay8910_device::address_data_w));
+            map.op(0xc000, 0xc001).w("ay2", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay2")).address_data_w(offset, data); });  //w("ay2", FUNC(ay8910_device::address_data_w));
         }
     }
 

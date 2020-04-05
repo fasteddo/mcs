@@ -343,11 +343,11 @@ namespace mame
             machine().add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit);
 
             // create mouse bitmap
-            RawBuffer dstBuf;
-            UInt32 dstOffset = m_mouse_bitmap.pix32(out dstBuf, 0);  //uint32_t *dst = &m_mouse_bitmap.pix32(0);
-            // memcpy(dst,mouse_bitmap,32*32*sizeof(UINT32));
+            UInt32BufferPointer dst = m_mouse_bitmap.pix32(0);  //uint32_t *dst = &m_mouse_bitmap.pix32(0);
+            //memcpy(dst,mouse_bitmap,32*32*sizeof(UINT32));
             for (int i = 0; i < 32*32; i++)
-                dstBuf.set_uint32((int)dstOffset + i, ui_global.mouse_bitmap[i]);
+                dst[i] = ui_global.mouse_bitmap[i];
+
             m_mouse_arrow_texture = machine().render().texture_alloc();
             m_mouse_arrow_texture.set_bitmap(m_mouse_bitmap, m_mouse_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
         }

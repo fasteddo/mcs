@@ -249,7 +249,7 @@ namespace mame.netlist
 
         public void register_model(string model_in)
         {
-            var pos = model_in.find(" ");
+            var pos = model_in.find(' ');
             if (pos == -1)
                 throw new nl_exception(nl_errstr_global.MF_UNABLE_TO_PARSE_MODEL_1(model_in));
             string model = plib.pstring_global.ucase(plib.pstring_global.trim(plib.pstring_global.left(model_in, pos)));
@@ -313,7 +313,7 @@ namespace mame.netlist
             // FIXME: check for errors
             //printf("%s %s %e %e\n", entity.c_str(), tmp.c_str(), plib::pstonum<nl_double>(tmp), factor);
             bool err = false;
-            nl_double val = plib.putil_global.pstonum_ne_double(true, tmp, out err);
+            var val = plib.putil_global.pstonum_ne_double(true, tmp, out err);
             if (err)
                 throw new nl_exception(nl_errstr_global.MF_MODEL_NUMBER_CONVERSION_ERROR(entity, tmp, "double", model));
 
@@ -332,7 +332,7 @@ namespace mame.netlist
 
             while (true)
             {
-                pos = model.find("(");
+                pos = model.find('(');
                 if (pos != -1) break;
 
                 key = plib.pstring_global.ucase(model);
@@ -366,7 +366,7 @@ namespace mame.netlist
             var pairs = remainder.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);  //(plib::psplit(remainder," ", true));
             foreach (string pe in pairs)
             {
-                var pose = pe.find("=");
+                var pose = pe.find('=');
                 if (pose == -1)
                     throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_ON_PAIR_1(model));
 
@@ -379,7 +379,7 @@ namespace mame.netlist
         {
             string ret = map["COREMODEL"] + "(";
             foreach (var i in map)
-                ret = ret + i.first() + "=" + i.second() + " ";
+                ret += (i.first() + '=' + i.second() + ' ');
 
             return ret + ")";
         }

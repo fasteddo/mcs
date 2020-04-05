@@ -287,9 +287,8 @@ namespace mame
             {
                 for (x = minx; x < maxx; x++)
                 {
-                    RawBuffer buffer;
-                    if ((m_sprite_sprite_collbitmap1.pix16(out buffer, y, x) != TRANSPARENT_PEN) &&
-                        (m_sprite_sprite_collbitmap2.pix16(out buffer, y, x) != TRANSPARENT_PEN))
+                    if ((m_sprite_sprite_collbitmap1.pix16(y, x)[0] != TRANSPARENT_PEN) &&
+                        (m_sprite_sprite_collbitmap2.pix16(y, x)[0] != TRANSPARENT_PEN))
                         return 1;  /* collided */
                 }
             }
@@ -444,16 +443,15 @@ namespace mame
             {
                 for (x = minx; x < maxx; x++)
                 {
-                    RawBuffer buffer;
-                    if (m_sprite_layer_collbitmap1.pix16(out buffer, y - miny, x - minx) != TRANSPARENT_PEN) /* is there anything to check for ? */
+                    if (m_sprite_layer_collbitmap1.pix16(y - miny, x - minx)[0] != TRANSPARENT_PEN) /* is there anything to check for ? */
                     {
-                        if (check_layer_1 != 0 && (m_sprite_layer_collbitmap2[0].pix16(out buffer, y, x) != TRANSPARENT_PEN))
+                        if (check_layer_1 != 0 && (m_sprite_layer_collbitmap2[0].pix16(y, x)[0] != TRANSPARENT_PEN))
                             result |= 0x01;  /* collided with layer 1 */
 
-                        if (check_layer_2 != 0 && (m_sprite_layer_collbitmap2[1].pix16(out buffer, y, x) != TRANSPARENT_PEN))
+                        if (check_layer_2 != 0 && (m_sprite_layer_collbitmap2[1].pix16(y, x)[0] != TRANSPARENT_PEN))
                             result |= 0x02;  /* collided with layer 2 */
 
-                        if (check_layer_3 != 0 && (m_sprite_layer_collbitmap2[2].pix16(out buffer, y, x) != TRANSPARENT_PEN))
+                        if (check_layer_3 != 0 && (m_sprite_layer_collbitmap2[2].pix16(y, x)[0] != TRANSPARENT_PEN))
                             result |= 0x04;  /* collided with layer 3 */
                     }
                 }

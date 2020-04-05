@@ -306,13 +306,13 @@ namespace mame
                 UInt32 left = SHA1_DATA_SIZE - ctx.index;
                 if (length < left)
                 {
-                    global_object.memcpy(new ListBytesPointer(ctx.block, (int)ctx.index), buffer, length);
+                    std.memcpy(new ListBytesPointer(ctx.block, (int)ctx.index), buffer, length);
                     ctx.index += length;
                     return; /* Finished */
                 }
                 else
                 {
-                    global_object.memcpy(new ListBytesPointer(ctx.block, (int)ctx.index), buffer, left);
+                    std.memcpy(new ListBytesPointer(ctx.block, (int)ctx.index), buffer, left);
                     sha1_block(ctx, new ListBytesPointer(ctx.block));
                     buffer += left;
                     length -= left;
@@ -329,7 +329,7 @@ namespace mame
             ctx.index = length;
             if (length != 0)
                 /* Buffer leftovers */
-                global_object.memcpy(new ListBytesPointer(ctx.block), buffer, length);
+                std.memcpy(new ListBytesPointer(ctx.block), buffer, length);
         }
 
 

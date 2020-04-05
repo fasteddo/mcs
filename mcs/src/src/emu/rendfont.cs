@@ -458,20 +458,16 @@ namespace mame
 
                 // extract the data
                 ListBytesPointer ptr = new ListBytesPointer(gl.rawdata);  //const char *ptr = gl.rawdata;
-                byte accum = 0;
-                byte accumbit = 7;
+                u8 accum = 0;
+                u8 accumbit = 7;
                 for (int y = 0; y < gl.bmheight; y++)
                 {
                     int desty = y + m_height + m_yoffs - gl.yoffs - gl.bmheight;
-                    //UINT32 *dest = (desty >= 0 && desty < m_height) ? &gl.bitmap.pix32(desty) : null;
-                    RawBuffer destBuf = null;
-                    UInt32 destBufOffset = 0;
-                    if (0 <= desty && m_height > desty)
-                        destBufOffset = gl.bitmap.pix32(out destBuf, desty);
+                    UInt32BufferPointer dest = ((0 <= desty) && (m_height > desty)) ? gl.bitmap.pix32(desty) : null;  //u32 *dest(((0 <= desty) && (m_height > desty)) ? &gl.bitmap.pix32(desty) : nullptr);
 
                     if (m_format == format.TEXT)
                     {
-                        if (destBuf != null)
+                        if (dest != null)
                         {
                             for (int x = 0; gl.bmwidth > x; )
                             {
@@ -501,18 +497,13 @@ namespace mame
                                 }
 
                                 // expand the four bits
-
-                                //*dest++ = (bits & 8) ? fgcol : bgcol;
-                                destBuf.set_uint32((int)destBufOffset++, (bits & 8) != 0 ? fgcol : bgcol);
+                                dest[0] = (bits & 8) != 0 ? fgcol : bgcol;  dest++;  //*dest++ = (bits & 8) ? fgcol : bgcol;
                                 if (gl.bmwidth > ++x)
-                                    //*dest++ = (bits & 4) ? fgcol : bgcol;
-                                    destBuf.set_uint32((int)destBufOffset++, (bits & 4) != 0 ? fgcol : bgcol);
+                                    { dest[0] = (bits & 4) != 0 ? fgcol : bgcol;  dest++; }  //*dest++ = (bits & 4) ? fgcol : bgcol;
                                 if (gl.bmwidth > ++x)
-                                    //*dest++ = (bits & 2) ? fgcol : bgcol;
-                                    destBuf.set_uint32((int)destBufOffset++, (bits & 2) != 0 ? fgcol : bgcol);
+                                    { dest[0] = (bits & 2) != 0 ? fgcol : bgcol;  dest++; }  //*dest++ = (bits & 2) ? fgcol : bgcol;
                                 if (gl.bmwidth > ++x)
-                                    //*dest++ = (bits & 1) ? fgcol : bgcol;
-                                    destBuf.set_uint32((int)destBufOffset++, (bits & 1) != 0 ? fgcol : bgcol);
+                                    { dest[0] = (bits & 1) != 0 ? fgcol : bgcol;  dest++; }  //*dest++ = (bits & 1) ? fgcol : bgcol;
 
                                 x++;
                             }
@@ -530,9 +521,10 @@ namespace mame
                                 accum = ptr[0];
                                 ptr++;
                             }
-                            if (destBuf != null)
-                                //*dest++ = (accum & (1 << accumbit)) ? fgcol : bgcol;
-                                destBuf.set_uint32((int)destBufOffset++, (accum & (1 << accumbit)) != 0 ? fgcol : bgcol);
+
+                            if (dest != null)
+                                { dest[0] = (accum & (1 << accumbit)) != 0 ? fgcol : bgcol;  dest++; }  //*dest++ = (accum & (1 << accumbit)) ? fgcol : bgcol;
+
                             accumbit = (byte)((accumbit - 1) & 7);
                         }
                     }

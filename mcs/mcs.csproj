@@ -118,7 +118,7 @@
     <Compile Include="src\src\emu\disound.cs" />
     <Compile Include="src\src\emu\distate.cs" />
     <Compile Include="src\src\emu\drawgfx.cs" />
-    <Compile Include="src\src\emu\drawgfxm.cs" />
+    <Compile Include="src\src\emu\drawgfxt.cs" />
     <Compile Include="src\src\emu\drivenum.cs" />
     <Compile Include="src\src\emu\driver.cs" />
     <Compile Include="src\src\emu\drivers\empty.cs" />

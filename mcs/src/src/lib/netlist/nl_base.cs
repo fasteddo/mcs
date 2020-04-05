@@ -164,8 +164,7 @@ namespace mame.netlist
         //#endif
         [Conditional("DEBUG")] public static void nl_assert(bool condition) { global_object.assert(condition); }
 
-        //#define nl_assert_always(x, msg)    do { if (!(x)) throw nl_exception(plib::pfmt("Fatal error: {1}\nCaused by assert: {2}:{3}: {4}")(msg)(__FILE__)(__LINE__)(#x)); } while (0)
-        public static void nl_assert_always(bool condition, string message) { global_object.assert_always(condition, message); }
+        public static void nl_assert_always(bool condition, string message) { if (!condition) throw new nl_exception("Fatal error: {0}\nCaused by assert.", message); }  //#define nl_assert_always(x, msg)    do { if (!(x)) throw nl_exception(plib::pfmt("Fatal error: {1}\nCaused by assert: {2}:{3}: {4}")(msg)(__FILE__)(__LINE__)(#x)); } while (0)
 
 
         static logic_family_ttl_t family_TTL_obj;

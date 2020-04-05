@@ -47,7 +47,7 @@ namespace mame
 
 
         //CUSTOM_INPUT_MEMBER(taitosj_state::input_port_4_f0_r)
-        public ioport_value input_port_4_f0_r(ioport_field field, object param)
+        public ioport_value input_port_4_f0_r()
         {
             return m_input_port_4_f0;
         }
@@ -77,7 +77,7 @@ namespace mame
             map.op(0xd40b, 0xd40b).mirror(0x00f0).portr("IN2");
             map.op(0xd40c, 0xd40c).mirror(0x00f0).portr("IN3");          /* Service */
             map.op(0xd40d, 0xd40d).mirror(0x00f0).portr("IN4");
-            map.op(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay1, (space, offset, data, mem_mask) => { m_ay1.target.address_data_w(space, offset, data, mem_mask); });  //m_ay1, FUNC(ay8910_device::address_data_w));
+            map.op(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay1, (space, offset, data, mem_mask) => { m_ay1.target.address_data_w(offset, data); });  //m_ay1, FUNC(ay8910_device::address_data_w));
             map.op(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay1, () => { return m_ay1.target.data_r(); });  //m_ay1, FUNC(ay8910_device::data_r));   /* DSW2 and DSW3 */
             map.op(0xd500, 0xd505).mirror(0x00f0).writeonly().share("scroll");
             map.op(0xd506, 0xd507).mirror(0x00f0).writeonly().share("colorbank");
@@ -325,7 +325,7 @@ namespace mame
 
             PORT_START("IN4");
             PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN );
-            PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, taitosj_state.input_port_4_f0_r, null);    // from sound CPU
+            PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, taitosj_state.input_port_4_f0_r);    // from sound CPU
 
             PORT_START("DSW1");
             PORT_DIPNAME( 0x03, 0x03, "Finish Bonus" );
@@ -398,7 +398,7 @@ namespace mame
 
             PORT_START("IN4");
             PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN );
-            PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, taitosj_state.input_port_4_f0_r, null);    // from sound CPU
+            PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, taitosj_state.input_port_4_f0_r);    // from sound CPU
 
             PORT_START("DSW1");
             PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) );    PORT_DIPLOCATION("SW1:1,2");

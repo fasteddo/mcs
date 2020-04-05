@@ -462,7 +462,6 @@ namespace mame
         [Conditional("DEBUG")] public static void assert(bool condition) { emucore_global.assert(condition); }
         [Conditional("DEBUG")] public static void assert(bool condition, string message) { emucore_global.assert(condition, message); }
         [Conditional("ASSERT_SLOW")] protected static void assert_slow(bool condition) { emucore_global.assert(condition); }
-        public static void assert_always(bool condition, string message) { emucore_global.assert_always(condition, message); }
         [Conditional("DEBUG")] public static void static_assert(bool condition, string message) { assert(condition, message); }
 
 
@@ -681,7 +680,7 @@ namespace mame
         protected void PORT_REVERSE() { ioport_global.PORT_REVERSE(m_globals.helper_configurer); }
         protected void PORT_SENSITIVITY(int sensitivity) { ioport_global.PORT_SENSITIVITY(m_globals.helper_configurer, sensitivity); }
         protected void PORT_KEYDELTA(int delta) { ioport_global.PORT_KEYDELTA(m_globals.helper_configurer, delta); }
-        protected void PORT_CUSTOM_MEMBER(string device, ioport_field_read_delegate callback, Object param) { ioport_global.PORT_CUSTOM_MEMBER(m_globals.helper_configurer, device, callback, param); }
+        protected void PORT_CUSTOM_MEMBER(string device, ioport_field_read_delegate callback) { ioport_global.PORT_CUSTOM_MEMBER(m_globals.helper_configurer, device, callback); }
         protected void PORT_READ_LINE_DEVICE_MEMBER(string device, ioport_global.PORT_READ_LINE_DEVICE_MEMBER_delegate _member) { ioport_global.PORT_READ_LINE_DEVICE_MEMBER(m_globals.helper_configurer, device, _member); }
         public void PORT_DIPNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_DIPNAME(m_globals.helper_configurer, mask, default_, name); }
         public void PORT_DIPSETTING(ioport_value default_, string name) { ioport_global.PORT_DIPSETTING(m_globals.helper_configurer, default_, name); }
@@ -1032,22 +1031,22 @@ namespace mame
 
 
         // c++ math.h
-        protected static float floor(float x) { return (float)Math.Floor(x); }
-        protected static double floor(double x) { return Math.Floor(x); }
-        protected static int lround(double x) { return (int)Math.Round(x, MidpointRounding.AwayFromZero); }
+        protected static float floor(float x) { return std.floor(x); }
+        protected static double floor(double x) { return std.floor(x); }
+        protected static int lround(double x) { return std.lround(x); }
 
 
         // c++ stdio.h
         protected static int memcmp<T>(ListBase<T> ptr1, ListBase<T> ptr2, UInt32 num) { return ptr1.compare(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
         protected static int memcmp<T>(ListPointer<T> ptr1, ListPointer<T> ptr2, UInt32 num) { return ptr1.compare(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
-        public static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
-        public static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
-        public static void memset<T>(ListBase<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
-        protected static void memset<T>(ListBase<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
-        protected static void memset<T>(ListPointer<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
-        protected static void memset<T>(T [] destination, T value) { memset(destination, value, (UInt32)destination.Length); }
-        protected static void memset<T>(T [] destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
-        protected static void memset<T>(T [,] destination, T value) { for (int i = 0; i < destination.GetLength(0); i++) for (int j = 0; j < destination.GetLength(1); j++) destination[i, j] = value; }
+        protected static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { std.memcpy<T>(destination, source, num); }  //  void * destination, const void * source, size_t num );
+        protected static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { std.memcpy<T>(destination, source, num); }  //  void * destination, const void * source, size_t num );
+        protected static void memset<T>(ListBase<T> destination, T value) { std.memset(destination, value, (UInt32)destination.Count); }
+        protected static void memset<T>(ListBase<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
+        protected static void memset<T>(ListPointer<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
+        protected static void memset<T>(T [] destination, T value) { std.memset(destination, value); }
+        protected static void memset<T>(T [] destination, T value, UInt32 num) { std.memset(destination, value, num); }
+        protected static void memset<T>(T [,] destination, T value) { std.memset(destination, value); }
 
 
         // c++ string.h
@@ -1060,7 +1059,7 @@ namespace mame
     public static class std
     {
         // c++ algorithm
-        public static void fill<T>(ListBase<T> destination, T value) { global_object.memset(destination, value); }
+        public static void fill<T>(ListBase<T> destination, T value) { std.memset(destination, value); }
         public static int max(int a, int b) { return Math.Max(a, b); }
         public static UInt32 max(UInt32 a, UInt32 b) { return Math.Max(a, b); }
         public static Int64 max(Int64 a, Int64 b) { return Math.Max(a, b); }
@@ -1074,20 +1073,49 @@ namespace mame
 
 
         // c++ cmath
+        public static int abs(int arg) { return Math.Abs(arg); }
         public static float abs(float arg) { return Math.Abs(arg); }
         public static double abs(double arg) { return Math.Abs(arg); }
         public static double exp(double x) { return Math.Exp(x); }
         public static float fabs(float arg) { return Math.Abs(arg); }
         public static double fabs(double arg) { return Math.Abs(arg); }
+        public static float floor(float arg) { return (float)Math.Floor(arg); }
         public static double floor(double arg) { return Math.Floor(arg); }
+        public static float pow(float base_, float exponent) { return (float)Math.Pow(base_, exponent); }
+        public static int lround(double x) { return (int)Math.Round(x, MidpointRounding.AwayFromZero); }
         public static float sqrt(float arg) { return (float)Math.Sqrt(arg); }
         public static double sqrt(double arg) { return Math.Sqrt(arg); }
 
 
         // c++ cstring
+        public static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
+        public static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
+        public static void memset<T>(ListBase<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
+        public static void memset<T>(ListBase<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
+        public static void memset<T>(ListPointer<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
+        public static void memset<T>(T [] destination, T value) { memset(destination, value, (UInt32)destination.Length); }
+        public static void memset<T>(T [] destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
+        public static void memset<T>(T [,] destination, T value) { for (int i = 0; i < destination.GetLength(0); i++) for (int j = 0; j < destination.GetLength(1); j++) destination[i, j] = value; }
         public static int strcmp(string str1, string str2) { return string.Compare(str1, str2); }
         public static int strlen(string str) { return str.Length; }
         public static int strncmp(string str1, string str2, int num) { return string.Compare(str1, 0, str2, 0, num); }
+
+
+        // c++ array
+        public class array<T>
+        {
+            T [] m_data;
+
+
+            public array(int N) { m_data = new T[N]; }
+
+
+            public T this[int index] { get { return m_data[index]; } set { m_data[index] = value; } }
+            public T this[UInt32 index] { get { return m_data[index]; } set { m_data[index] = value; } }
+
+
+            public int size() { return m_data.Length; }
+        }
 
 
         // c++ list
@@ -1438,28 +1466,28 @@ namespace mame
         public static RawBufferPointer operator --(RawBufferPointer left) { left.m_offset--; return left; }
 
         // set the unit value at the current set offset, using an offset in byte units
-        public void set_uint8_offs8(byte value) { ((RawBuffer)m_list).set_uint8(m_offset, value); }
-        public void set_uint16_offs8(UInt16 value) { ((RawBuffer)m_list).set_uint16(m_offset / 2, value); }
-        public void set_uint32_offs8(UInt32 value) { ((RawBuffer)m_list).set_uint32(m_offset / 4, value); }
-        public void set_uint64_offs8(UInt64 value) { ((RawBuffer)m_list).set_uint64(m_offset / 8, value); }
+        //public void set_uint8_offs8(int offset8, byte value) { ((RawBuffer)m_list).set_uint8(m_offset + offset8, value); }
+        //public void set_uint16_offs8(int offset8, UInt16 value) { ((RawBuffer)m_list).set_uint16((m_offset / 2) + (offset8 / 2), value); }
+        //public void set_uint32_offs8(int offset8, UInt32 value) { ((RawBuffer)m_list).set_uint32((m_offset / 4) + (offset8 / 4), value); }
+        //public void set_uint64_offs8(int offset8, UInt64 value) { ((RawBuffer)m_list).set_uint64((m_offset / 8) + (offset8 / 8), value); }
         // offset parameter is based on unit size for each function, not based on byte size.  eg, set_uint16 offset is in uint16 units
-        // Note the different behavior of get_uint16_offs8() vs get_uint16(0)
+        // Note the different behavior of set_uint16_offs8() vs set_uint16()
         public void set_uint8(int offset8, byte value) { ((RawBuffer)m_list).set_uint8(m_offset + offset8, value); }
-        public void set_uint16(int offset16, UInt16 value) { ((RawBuffer)m_list).set_uint16(m_offset + offset16, value); }
-        public void set_uint32(int offset32, UInt32 value) { ((RawBuffer)m_list).set_uint32(m_offset + offset32, value); }
-        public void set_uint64(int offset64, UInt64 value) { ((RawBuffer)m_list).set_uint64(m_offset + offset64, value); }
+        public void set_uint16(int offset16, UInt16 value) { ((RawBuffer)m_list).set_uint16((m_offset / 2) + offset16, value); }
+        public void set_uint32(int offset32, UInt32 value) { ((RawBuffer)m_list).set_uint32((m_offset / 4) + offset32, value); }
+        public void set_uint64(int offset64, UInt64 value) { ((RawBuffer)m_list).set_uint64((m_offset / 8) + offset64, value); }
 
         // get the unit value at the current set offset, using an offset in byte units
-        public byte get_uint8_offs8() { return ((RawBuffer)m_list).get_uint8(m_offset); }
-        public UInt16 get_uint16_offs8() { return ((RawBuffer)m_list).get_uint16(m_offset / 2); }
-        public UInt32 get_uint32_offs8() { return ((RawBuffer)m_list).get_uint32(m_offset / 4); }
-        public UInt64 get_uint64_offs8() { return ((RawBuffer)m_list).get_uint64(m_offset / 8); }
+        //public byte get_uint8_offs8(int offset8) { return ((RawBuffer)m_list).get_uint8(m_offset + offset8); }
+        //public UInt16 get_uint16_offs8(int offset8) { return ((RawBuffer)m_list).get_uint16((m_offset / 2) + (offset8 / 2)); }
+        //public UInt32 get_uint32_offs8(int offset8) { return ((RawBuffer)m_list).get_uint32((m_offset / 4) + (offset8 / 4)); }
+        //public UInt64 get_uint64_offs8(int offset8) { return ((RawBuffer)m_list).get_uint64((m_offset / 8) + (offset8 / 8)); }
         // offset parameter is based on unit size for each function, not based on byte size.  eg, get_uint16 offset is in uint16 units
-        // Note the different behavior of get_uint16_offs8() vs get_uint16(0)
+        // Note the different behavior of get_uint16_offs8() vs get_uint16()
         public byte get_uint8(int offset8) { return ((RawBuffer)m_list).get_uint8(m_offset + offset8); }
-        public UInt16 get_uint16(int offset16) { return ((RawBuffer)m_list).get_uint16(m_offset + offset16); }
-        public UInt32 get_uint32(int offset32) { return ((RawBuffer)m_list).get_uint32(m_offset + offset32); }
-        public UInt64 get_uint64(int offset64) { return ((RawBuffer)m_list).get_uint64(m_offset + offset64); }
+        public UInt16 get_uint16(int offset16) { return ((RawBuffer)m_list).get_uint16((m_offset / 2) + offset16); }
+        public UInt32 get_uint32(int offset32) { return ((RawBuffer)m_list).get_uint32((m_offset / 4) + offset32); }
+        public UInt64 get_uint64(int offset64) { return ((RawBuffer)m_list).get_uint64((m_offset / 8) + offset64); }
 
         public bool equals(string compareTo) { return equals(0, compareTo); }
         public bool equals(int startOffset, string compareTo) { return equals(startOffset, compareTo.ToCharArray()); }
@@ -1470,16 +1498,69 @@ namespace mame
     }
 
 
+    public class UInt16BufferPointer : RawBufferPointer
+    {
+        public UInt16BufferPointer() : base() { }
+        public UInt16BufferPointer(RawBuffer list, int offset = 0) : base(list, offset * 2) { }
+        public UInt16BufferPointer(RawBufferPointer listPtr, int offset = 0) : base(listPtr, offset * 2) { }
+
+        public new UInt16 this[int i] { get { return get_uint16(i); } set { set_uint16(i, value); } }
+        public new UInt16 this[UInt32 i] { get { return get_uint16((int)i); } set { set_uint16((int)i, value); } }
+
+        public static UInt16BufferPointer operator +(UInt16BufferPointer left, int right) { return new UInt16BufferPointer(left, right); }
+        public static UInt16BufferPointer operator +(UInt16BufferPointer left, UInt32 right) { return new UInt16BufferPointer(left, (int)right); }
+        public static UInt16BufferPointer operator ++(UInt16BufferPointer left) { left.m_offset += 2; return left; }
+        public static UInt16BufferPointer operator -(UInt16BufferPointer left, int right) { return new UInt16BufferPointer(left, -right); }
+        public static UInt16BufferPointer operator -(UInt16BufferPointer left, UInt32 right) { return new UInt16BufferPointer(left, -(int)right); }
+        public static UInt16BufferPointer operator --(UInt16BufferPointer left) { left.m_offset -= 2; return left; }
+    }
+
+    public class UInt32BufferPointer : RawBufferPointer
+    {
+        public UInt32BufferPointer() : base() { }
+        public UInt32BufferPointer(RawBuffer list, int offset = 0) : base(list, offset * 4) { }
+        public UInt32BufferPointer(RawBufferPointer listPtr, int offset = 0) : base(listPtr, offset * 4) { }
+
+        public new UInt32 this[int i] { get { return get_uint32(i); } set { set_uint32(i, value); } }
+        public new UInt32 this[UInt32 i] { get { return get_uint32((int)i); } set { set_uint32((int)i, value); } }
+
+        public static UInt32BufferPointer operator +(UInt32BufferPointer left, int right) { return new UInt32BufferPointer(left, right); }
+        public static UInt32BufferPointer operator +(UInt32BufferPointer left, UInt32 right) { return new UInt32BufferPointer(left, (int)right); }
+        public static UInt32BufferPointer operator ++(UInt32BufferPointer left) { left.m_offset += 4; return left; }
+        public static UInt32BufferPointer operator -(UInt32BufferPointer left, int right) { return new UInt32BufferPointer(left, -right); }
+        public static UInt32BufferPointer operator -(UInt32BufferPointer left, UInt32 right) { return new UInt32BufferPointer(left, -(int)right); }
+        public static UInt32BufferPointer operator --(UInt32BufferPointer left) { left.m_offset -= 4; return left; }
+    }
+
+    public class UInt64BufferPointer : RawBufferPointer
+    {
+        public UInt64BufferPointer() : base() { }
+        public UInt64BufferPointer(RawBuffer list, int offset = 0) : base(list, offset * 8) { }
+        public UInt64BufferPointer(RawBufferPointer listPtr, int offset = 0) : base(listPtr, offset * 8) { }
+
+        public new UInt64 this[int i] { get { return get_uint64(i); } set { set_uint64(i, value); } }
+        public new UInt64 this[UInt32 i] { get { return get_uint64((int)i); } set { set_uint64((int)i, value); } }
+
+        public static UInt64BufferPointer operator +(UInt64BufferPointer left, int right) { return new UInt64BufferPointer(left, right); }
+        public static UInt64BufferPointer operator +(UInt64BufferPointer left, UInt32 right) { return new UInt64BufferPointer(left, (int)right); }
+        public static UInt64BufferPointer operator ++(UInt64BufferPointer left) { left.m_offset += 8; return left; }
+        public static UInt64BufferPointer operator -(UInt64BufferPointer left, int right) { return new UInt64BufferPointer(left, -right); }
+        public static UInt64BufferPointer operator -(UInt64BufferPointer left, UInt32 right) { return new UInt64BufferPointer(left, -(int)right); }
+        public static UInt64BufferPointer operator --(UInt64BufferPointer left) { left.m_offset -= 8; return left; }
+    }
+
+
     public class RawBuffer : ListBytes
     {
-        [StructLayout(LayoutKind.Explicit)]
+        //[StructLayout(LayoutKind.Explicit)]
         struct RawBufferData
         {
             // these are unioned so that we can access different sizes directly.
-            [FieldOffset(0)] public byte   [] m_uint8;
-            [FieldOffset(0)] public UInt16 [] m_uint16; 
-            [FieldOffset(0)] public UInt32 [] m_uint32; 
-            [FieldOffset(0)] public UInt64 [] m_uint64;
+            //[FieldOffset(0)] public byte   [] m_uint8;
+            //[FieldOffset(0)] public UInt16 [] m_uint16; 
+            //[FieldOffset(0)] public UInt32 [] m_uint32; 
+            //[FieldOffset(0)] public UInt64 [] m_uint64;
+            public byte [] m_uint8;
         }
 
         RawBufferData m_bufferData = new RawBufferData();
@@ -1607,35 +1688,55 @@ namespace mame
         {
             assert_slow(offset16 * 2 < Count);
 
-            //this[offset16 * 2]     = (byte)(value >> 8);
-            //this[offset16 * 2 + 1] = (byte)value;
-            m_bufferData.m_uint16[offset16] = value;
+            int offset8 = offset16 * 2;
+            //m_bufferData.m_uint8[offset8]     = (byte)(value >> 8);
+            //m_bufferData.m_uint8[offset8 + 1] = (byte)value;
+            //m_bufferData.m_uint16[offset16] = value;
+            var bytes = BitConverter.GetBytes(value);
+            m_bufferData.m_uint8[offset8 + 0] = bytes[0];
+            m_bufferData.m_uint8[offset8 + 1] = bytes[1];
         }
 
         public void set_uint32(int offset32, UInt32 value)
         {
             assert_slow(offset32 * 4 < Count);
 
-            //this[offset32 * 4]     = (byte)(value >> 24);
-            //this[offset32 * 4 + 1] = (byte)(value >> 16);
-            //this[offset32 * 4 + 2] = (byte)(value >>  8);
-            //this[offset32 * 4 + 3] = (byte)value;
-            m_bufferData.m_uint32[offset32] = value;
+            int offset8 = offset32 * 4;
+            //m_bufferData.m_uint8[offset8]     = (byte)(value >> 24);
+            //m_bufferData.m_uint8[offset8 + 1] = (byte)(value >> 16);
+            //m_bufferData.m_uint8[offset8 + 2] = (byte)(value >>  8);
+            //m_bufferData.m_uint8[offset8 + 3] = (byte)value;
+            //m_bufferData.m_uint32[offset32] = value;
+            var bytes = BitConverter.GetBytes(value);
+            m_bufferData.m_uint8[offset8 + 0] = bytes[0];
+            m_bufferData.m_uint8[offset8 + 1] = bytes[1];
+            m_bufferData.m_uint8[offset8 + 2] = bytes[2];
+            m_bufferData.m_uint8[offset8 + 3] = bytes[3];
         }
 
         public void set_uint64(int offset64, UInt64 value)
         {
             assert_slow(offset64 * 8 < Count);
 
-            //this[offset64 * 8]     = (byte)(value >> 56);
-            //this[offset64 * 8 + 1] = (byte)(value >> 48);
-            //this[offset64 * 8 + 2] = (byte)(value >> 40);
-            //this[offset64 * 8 + 3] = (byte)(value >> 32);
-            //this[offset64 * 8 + 4] = (byte)(value >> 24);
-            //this[offset64 * 8 + 5] = (byte)(value >> 16);
-            //this[offset64 * 8 + 6] = (byte)(value >>  8);
-            //this[offset64 * 8 + 7] = (byte)value;
-            m_bufferData.m_uint64[offset64] = value;
+            int offset8 = offset64 * 8;
+            //m_bufferData.m_uint8[offset8]     = (byte)(value >> 56);
+            //m_bufferData.m_uint8[offset8 + 1] = (byte)(value >> 48);
+            //m_bufferData.m_uint8[offset8 + 2] = (byte)(value >> 40);
+            //m_bufferData.m_uint8[offset8 + 3] = (byte)(value >> 32);
+            //m_bufferData.m_uint8[offset8 + 4] = (byte)(value >> 24);
+            //m_bufferData.m_uint8[offset8 + 5] = (byte)(value >> 16);
+            //m_bufferData.m_uint8[offset8 + 6] = (byte)(value >>  8);
+            //m_bufferData.m_uint8[offset8 + 7] = (byte)value;
+            //m_bufferData.m_uint64[offset64] = value;
+            var bytes = BitConverter.GetBytes(value);
+            m_bufferData.m_uint8[offset8 + 0] = bytes[0];
+            m_bufferData.m_uint8[offset8 + 1] = bytes[1];
+            m_bufferData.m_uint8[offset8 + 2] = bytes[2];
+            m_bufferData.m_uint8[offset8 + 3] = bytes[3];
+            m_bufferData.m_uint8[offset8 + 4] = bytes[4];
+            m_bufferData.m_uint8[offset8 + 5] = bytes[5];
+            m_bufferData.m_uint8[offset8 + 6] = bytes[6];
+            m_bufferData.m_uint8[offset8 + 7] = bytes[7];
         }
 
         public byte get_uint8(int offset8 = 0)
@@ -1649,35 +1750,41 @@ namespace mame
         {
             assert_slow(offset16 * 2 < Count);
 
-            //return (UInt16)(this[offset16 * 2] << 8 | 
-            //       (UInt16) this[offset16 * 2 + 1]);
-            return m_bufferData.m_uint16[offset16];
+            int offset8 = offset16 * 2;
+            //return (UInt16)(m_bufferData.m_uint8[offset8] << 8 | 
+            //       (UInt16) m_bufferData.m_uint8[offset8 + 1]);
+            //return m_bufferData.m_uint16[offset16];
+            return BitConverter.ToUInt16(m_bufferData.m_uint8, offset8);
         }
 
         public UInt32 get_uint32(int offset32 = 0)
         {
             assert_slow(offset32 * 4 < Count);
 
-            //return (UInt32)this[offset32 * 4]     << 24 | 
-            //       (UInt32)this[offset32 * 4 + 1] << 16 | 
-            //       (UInt32)this[offset32 * 4 + 2] <<  8 | 
-            //       (UInt32)this[offset32 * 4 + 3]; 
-            return m_bufferData.m_uint32[offset32];
+            int offset8 = offset32 * 4;
+            //return (UInt32)m_bufferData.m_uint8[offset8]     << 24 | 
+            //       (UInt32)m_bufferData.m_uint8[offset8 + 1] << 16 | 
+            //       (UInt32)m_bufferData.m_uint8[offset8 + 2] <<  8 | 
+            //       (UInt32)m_bufferData.m_uint8[offset8 + 3]; 
+            //return m_bufferData.m_uint32[offset32];
+            return BitConverter.ToUInt32(m_bufferData.m_uint8, offset8);
         }
 
         public UInt64 get_uint64(int offset64 = 0)
         {
             assert_slow(offset64 * 8 < Count);
 
-            //return (UInt64)this[offset64 * 8]     << 56 | 
-            //       (UInt64)this[offset64 * 8 + 1] << 48 | 
-            //       (UInt64)this[offset64 * 8 + 2] << 40 | 
-            //       (UInt64)this[offset64 * 8 + 3] << 32 | 
-            //       (UInt64)this[offset64 * 8 + 4] << 24 | 
-            //       (UInt64)this[offset64 * 8 + 5] << 16 | 
-            //       (UInt64)this[offset64 * 8 + 6] <<  8 | 
-            //       (UInt64)this[offset64 * 8 + 7]; 
-            return m_bufferData.m_uint64[offset64];
+            int offset8 = offset64 * 8;
+            //return (UInt64)m_bufferData.m_uint8[offset8]     << 56 | 
+            //       (UInt64)m_bufferData.m_uint8[offset8 + 1] << 48 | 
+            //       (UInt64)m_bufferData.m_uint8[offset8 + 2] << 40 | 
+            //       (UInt64)m_bufferData.m_uint8[offset8 + 3] << 32 | 
+            //       (UInt64)m_bufferData.m_uint8[offset8 + 4] << 24 | 
+            //       (UInt64)m_bufferData.m_uint8[offset8 + 5] << 16 | 
+            //       (UInt64)m_bufferData.m_uint8[offset8 + 6] <<  8 | 
+            //       (UInt64)m_bufferData.m_uint8[offset8 + 7]; 
+            //return m_bufferData.m_uint64[offset64];
+            return BitConverter.ToUInt64(m_bufferData.m_uint8, offset8);
         }
     }
 

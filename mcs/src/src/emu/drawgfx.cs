@@ -15,7 +15,7 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public class gfx_element : global_object
+    public partial class gfx_element : global_object
     {
         // internal state
         device_palette_interface m_palette;    // palette used for drawing (optional when used as a pure decoder)
@@ -256,6 +256,11 @@ namespace mame
 
         // specific drawgfx implementations for each transparency type
 
+        // drawgfxt.cs
+        // core drawgfx implementation
+        //template <typename BitmapType, typename FunctionClass> void drawgfx_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, FunctionClass pixel_op);
+
+
         /*-------------------------------------------------
             opaque - render a gfx element with
             no transparency
@@ -265,26 +270,18 @@ namespace mame
         {
             color = colorbase() + granularity() * (color % colors());
             code %= elements();
-            //DECLARE_NO_PRIORITY;
-            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
-            //DRAWGFX_CORE(u16, PIXEL_OP_REBASE_OPAQUE, NO_PRIORITY);
-            u32 trans_mask = 0;
-            u32 trans_pen = 0;
-            ListPointer<rgb_t> paldata = null;
-            int PIXEL_TYPE_SIZE = 2;  // u16
-            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_OPAQUE, dest, cliprect, this, code, color, flipx, flipy, destx, desty, priority, width(), height(), rowbytes(), get_data, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
+            drawgfx_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_OPAQUE(color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_OPAQUE(destp, srcp); });
         }
+
 
         void opaque(bitmap_rgb32 dest, rectangle cliprect,
                 u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty)
         {
-            pen_t paldata = m_palette.pens()[colorbase() + granularity() * (color % colors())]; //m_palette.pens() + colorbase() + granularity() * (color % colors());
+            pen_t paldata = m_palette.pens()[colorbase() + granularity() * (color % colors())];  //const pen_t *paldata = m_palette->pens() + colorbase() + granularity() * (color % colors());
             code %= elements();
-            //DECLARE_NO_PRIORITY;
-            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
             throw new emu_unimplemented();
 #if false
-            DRAWGFX_CORE(u32, PIXEL_OP_REMAP_OPAQUE, NO_PRIORITY);
+            drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_OPAQUE(destp, srcp); });
 #endif
         }
 
@@ -324,13 +321,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            //DECLARE_NO_PRIORITY;
-            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
-            //DRAWGFX_CORE(u16, PIXEL_OP_REBASE_TRANSPEN, NO_PRIORITY);
-            u32 trans_mask = 0;
-            ListPointer<rgb_t> paldata = null;
-            int PIXEL_TYPE_SIZE = 2;  // u16
-            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_TRANSPEN, dest, cliprect, this, code, color, flipx, flipy, destx, desty, priority, width(), height(), rowbytes(), get_data, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
+            drawgfx_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
         }
 
 
@@ -364,12 +355,7 @@ namespace mame
 
             // render
             ListPointer<rgb_t> paldata = new ListPointer<rgb_t>(m_palette.pens(), (int)(colorbase() + granularity() * (color % colors())));  //const pen_t *paldata = m_palette.pens() + colorbase() + granularity() * (color % colors());
-            //DECLARE_NO_PRIORITY;
-            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
-            //DRAWGFX_CORE(u32, PIXEL_OP_REMAP_TRANSPEN, NO_PRIORITY);
-            u32 trans_mask = 0;
-            int PIXEL_TYPE_SIZE = 4;  // u32
-            drawgfxm_global.DRAWGFX_CORE<u32, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REMAP_TRANSPEN, dest, cliprect, this, code, color, flipx, flipy, destx, desty, priority, width(), height(), rowbytes(), get_data, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
+            drawgfx_core<bitmap_rgb32, u32, UInt32BufferPointer>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REMAP_TRANSPEN(trans_pen, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSPEN(destp, srcp); });
         }
 
 
@@ -412,13 +398,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            //DECLARE_NO_PRIORITY;
-            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
-            //DRAWGFX_CORE(u16, PIXEL_OP_REBASE_TRANSMASK, NO_PRIORITY);
-            u32 trans_pen = 0;
-            ListPointer<rgb_t> paldata = null;
-            int PIXEL_TYPE_SIZE = 2;  // u16
-            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_TRANSMASK, dest, cliprect, this, code, color, flipx, flipy, destx, desty, priority, width(), height(), rowbytes(), get_data, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
+            drawgfx_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSMASK(color, trans_mask, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
         }
 
         public void transmask(bitmap_rgb32 dest, rectangle cliprect,
@@ -450,20 +430,22 @@ namespace mame
             }
 
             // render
-            pen_t paldata = m_palette.pens()[colorbase() + granularity() * (color % colors())];
-            //DECLARE_NO_PRIORITY;
-            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
+            pen_t paldata = m_palette.pens()[colorbase() + granularity() * (color % colors())];  //const pen_t *paldata = m_palette->pens() + colorbase() + granularity() * (color % colors());
             throw new emu_unimplemented();
 #if false
-            DRAWGFX_CORE(UInt32, PIXEL_OP_REMAP_TRANSMASK, NO_PRIORITY);
+            drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSMASK(destp, srcp); });
 #endif
         }
+
 
         //void transtable(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, const UINT8 *pentable);
         //void transtable(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, const UINT8 *pentable);
         //void alpha(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 transpen, UINT8 alpha);
 
         // ----- zoomed graphics drawing -----
+
+        // core zoom implementation
+        //template <typename BitmapType, typename FunctionClass> void drawgfxzoom_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, FunctionClass pixel_op);
 
         // specific zoom implementations for each transparency type
         //void zoom_opaque(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley);
@@ -480,6 +462,9 @@ namespace mame
 
         // ----- priority masked graphics drawing -----
 
+        // core prio implementation
+        //template <typename BitmapType, typename PriorityType, typename FunctionClass> void drawgfx_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, PriorityType &priority, FunctionClass pixel_op);
+
         // specific prio implementations for each transparency type
         //void prio_opaque(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask);
         //void prio_opaque(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask);
@@ -494,6 +479,9 @@ namespace mame
         //void prio_alpha(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen, UINT8 alpha);
 
         // ----- priority masked zoomed graphics drawing -----
+
+        // core prio_zoom implementation
+        //template <typename BitmapType, typename PriorityType, typename FunctionClass> void drawgfxzoom_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, PriorityType &priority, FunctionClass pixel_op);
 
         // specific prio_zoom implementations for each transparency type
         //void prio_zoom_opaque(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask);
@@ -643,18 +631,13 @@ namespace mame
         // copy from one bitmap to another, copying all unclipped pixels
         static void copybitmap(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
         {
-            //DECLARE_NO_PRIORITY;
-            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
-            //COPYBITMAP_CORE(u16, PIXEL_OP_COPY_OPAQUE, NO_PRIORITY);
-            u32 color = 0;
-            u32 trans_mask = 0;
-            u32 trans_pen = 0;
-            ListPointer<rgb_t> paldata = null;
-            int PIXEL_TYPE_SIZE = 2;  // u16
-            drawgfxm_global.COPYBITMAP_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_COPY_OPAQUE, dest, src, cliprect, flipx, flipy, destx, desty, priority, color, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
+            drawgfxt_global.copybitmap_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_OPAQUE(ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_OPAQUE(destp, srcp); });
         }
 
-        //void copybitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect);
+        static void copybitmap(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         /*-------------------------------------------------
@@ -665,24 +648,17 @@ namespace mame
         // copy from one bitmap to another, copying all unclipped pixels except those that match transpen
         static void copybitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 trans_pen)
         {
-            //DECLARE_NO_PRIORITY;
-            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
             if (trans_pen > 0xffff)
-            {
                 copybitmap(dest, src, flipx, flipy, destx, desty, cliprect);
-            }
             else
-            {
-                //COPYBITMAP_CORE(u16, PIXEL_OP_COPY_TRANSPEN, NO_PRIORITY);
-                u32 color = 0;
-                u32 trans_mask = 0;
-                ListPointer<rgb_t> paldata = null;
-                int PIXEL_TYPE_SIZE = 2;  // u16
-                drawgfxm_global.COPYBITMAP_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_COPY_TRANSPEN, dest, src, cliprect, flipx, flipy, destx, desty, priority, color, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
-            }
+                drawgfxt_global.copybitmap_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_TRANSPEN(trans_pen, ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [trans_pen](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_TRANSPEN(destp, srcp); });
         }
 
-        //void copybitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, u32 transpen);
+        static void copybitmap_trans(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 transpen)
+        {
+            throw new emu_unimplemented();
+        }
+
 
         //void copybitmap_transalpha(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect);
 

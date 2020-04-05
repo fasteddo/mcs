@@ -30,19 +30,6 @@ namespace mame.plib
             m_arg = 0;
         }
 
-        //pfmt(const pfmt &rhs) : m_str(rhs.m_str), m_arg(rhs.m_arg) { }
-
-        //COPYASSIGNMOVE(pfmt, default)
-
-        //~pfmt() noexcept = default;
-
-
-        //operator pstring() const { return m_str; }
-        //pfmt &          e(const double &x) {return format_element("", 'e', x);  }
-        //pfmt &          g(const double &x) {return format_element("", 'g', x);  }
-
-        //pfmt &          e(const float &x) {return format_element("", 'e', static_cast<double>(x));  }
-        //pfmt &          g(const float &x) {return format_element("", 'g', static_cast<double>(x));  }
 
         //pfmt &operator ()(const void *x) {return format_element("", 'p', x);  }
         //pfmt &operator ()(const pstring &x) {return format_element("", 's', x.c_str() );  }
@@ -70,20 +57,6 @@ namespace mame.plib
         //{
         //    return ((*this)(std::forward<X>(x)))(std::forward<Y>(y), std::forward<Args>(args)...);
         //}
-
-        //template<typename T>
-        //pfmt &x(const T &x)
-        //{
-        //    return format_element(ptype_traits<T>::size_spec(), 'x', x);
-        //}
-
-        //template<typename T>
-        //pfmt &o(const T &x)
-        //{
-        //    return format_element(ptype_traits<T>::size_spec(), 'o', x);
-        //}
-
-        //pfmt &format_element(const char *l, const unsigned fmt_spec, ...);
     }
 
 

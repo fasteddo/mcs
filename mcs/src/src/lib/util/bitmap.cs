@@ -24,8 +24,7 @@ namespace mame
         BITMAP_FORMAT_IND64,            // 64bpp indexed
         BITMAP_FORMAT_RGB32,            // 32bpp 8-8-8 RGB
         BITMAP_FORMAT_ARGB32,           // 32bpp 8-8-8-8 ARGB
-        BITMAP_FORMAT_YUY16,            // 16bpp 8-8 Y/Cb, Y/Cr in sequence
-        BITMAP_FORMAT_LAST
+        BITMAP_FORMAT_YUY16             // 16bpp 8-8 Y/Cb, Y/Cr in sequence
     }
 
 
@@ -132,7 +131,7 @@ namespace mame
         // internal state
         RawBuffer m_alloc;  //std::unique_ptr<uint8_t []> m_alloc;        // pointer to allocated pixel memory
         uint32_t m_allocbytes;   // size of our allocation
-        RawBufferPointer m_base_;  //void *          m_base;         // pointer to pixel (0,0) (adjusted for padding)
+        RawBufferPointer m_base;  //void *          m_base;         // pointer to pixel (0,0) (adjusted for padding)
         int32_t m_rowpixels;    // pixels per row (including padding)
         int32_t m_width;        // width of the bitmap
         int32_t m_height;       // height of the bitmap
@@ -170,6 +169,8 @@ namespace mame
             m_palette = null;
 
 
+            assert(valid_format());
+
             // allocate intializes all other fields
             allocate(width, height, xslop, yslop);
         }
@@ -200,6 +201,7 @@ namespace mame
                 m_palette(NULL),
                 m_cliprect(0, width - 1, 0, height - 1)
         {
+            assert(valid_format());
         }
 #endif
 
@@ -217,7 +219,7 @@ namespace mame
         {
             m_alloc = null;
             m_allocbytes = 0;
-            m_base_ = source.raw_pixptr(subrect.top(), subrect.left());  //m_base(source.raw_pixptr(subrect.top(), subrect.left()))
+            m_base = source.raw_pixptr(subrect.top(), subrect.left());  //m_base(source.raw_pixptr(subrect.top(), subrect.left()))
             m_rowpixels = source.m_rowpixels;
             m_width = subrect.width();
             m_height = subrect.height();
@@ -253,7 +255,7 @@ namespace mame
             set_palette(null);
             //delete[] m_alloc;
             m_alloc = null;
-            m_base_ = null;
+            m_base = null;
 
             // reset all fields
             m_rowpixels = 0;
@@ -270,7 +272,7 @@ namespace mame
         int32_t rowbytes() { return m_rowpixels * m_bpp / 8; }
         public uint8_t bpp() { return m_bpp; }
         bitmap_format format() { return m_format; }
-        public bool valid() { return m_base_ != null; }
+        public bool valid() { return m_base != null; }
         public palette_t palette() { return m_palette; }
         public rectangle cliprect() { return m_cliprect; }
 
@@ -313,7 +315,7 @@ namespace mame
             m_alloc = new RawBuffer(m_allocbytes);  //m_alloc = new byte[m_allocbytes];
 
             // clear to 0 by default
-            memset(m_alloc, (uint8_t)0, m_allocbytes);  //memset(m_alloc, 0, m_allocbytes);
+            memset(m_alloc, (uint8_t)0, m_allocbytes);
 
             // compute the base
             compute_base(xslop, yslop);
@@ -419,9 +421,9 @@ namespace mame
             {
                 case 8:
                     // 8bpp always uses memset
-                    for (int y = fill.top(); y <= fill.bottom(); y++)
+                    for (int32_t y = fill.top(); y <= fill.bottom(); y++)
                     {
-                        memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width());  //memset(raw_pixptr(y, fill.get_min_x()), (byte)color, fill.width());
+                        memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width());
                     }
                     break;
 
@@ -429,24 +431,26 @@ namespace mame
                     // 16bpp can use memset if the bytes are equal
                     if ((uint8_t)(color >> 8) == (uint8_t)color)
                     {
-                        for (int y = fill.top(); y <= fill.bottom(); y++)
+                        for (int32_t y = fill.top(); y <= fill.bottom(); y++)
                         {
-                            memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 2);  //memset(raw_pixptr(y, fill.get_min_x()), (byte)color, fill.width() * 2);
+                            memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 2);
                         }
                     }
                     else
                     {
                         // Fill the first line the hard way
-                        RawBufferPointer destrow = pixt(fill.top());  //UInt16 *destrow = &pixt<UInt16>(fill.get_min_y());
-                        for (int x = fill.left(); x <= fill.right(); x++)
-                            destrow.set_uint16(x, (uint16_t)color); // destrow[x] = (UInt16)color;
+                        UInt16BufferPointer destrow = (UInt16BufferPointer)pixt<uint16_t>(fill.top());  //uint16_t *destrow = &pixt<uint16_t>(fill.top());
+                        for (int32_t x = fill.left(); x <= fill.right(); x++)
+                            destrow[x] = (uint16_t)color;
 
                         // For the other lines, just copy the first one
-                        ListBytesPointer destrow0 = pixt(fill.top(), fill.left());  //void *destrow0 = &pixt<UInt16>(fill.get_min_y(), fill.get_min_x());
-                        for (int y = fill.top() + 1; y <= fill.bottom(); y++)
+                        UInt16BufferPointer destrow0 = (UInt16BufferPointer)pixt<uint16_t>(fill.top(), fill.left());  //void *destrow0 = &pixt<uint16_t>(fill.top(), fill.left());
+                        for (int32_t y = fill.top() + 1; y <= fill.bottom(); y++)
                         {
-                            destrow = pixt(y, fill.left());  //destrow = &pixt<UInt16>(y, fill.get_min_x());
-                            memcpy(destrow, destrow0, (UInt32)fill.width() * 2);  //memcpy(destrow, destrow0, fill.width() * 2);
+                            destrow = (UInt16BufferPointer)pixt<uint16_t>(y, fill.left());  //destrow = &pixt<uint16_t>(y, fill.left());
+                            //memcpy(destrow, destrow0, fill.width() * 2);
+                            for (int i = 0; i < fill.width(); i++)  // * 2
+                                destrow[i] = destrow0[i];
                         }
                     }
                     break;
@@ -455,54 +459,54 @@ namespace mame
                     // 32bpp can use memset if the bytes are equal
                     if ((uint8_t)(color >> 8) == (uint8_t)color && (uint16_t)(color >> 16) == (uint16_t)color)
                     {
-                        for (int y = fill.top(); y <= fill.bottom(); y++)
+                        for (int32_t y = fill.top(); y <= fill.bottom(); y++)
                         {
-                            memset(pixt(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 4);  //memset(&pixt<UInt32>(y, fill.get_min_x()), (byte)color, fill.width() * 4);
+                            memset(pixt<uint32_t>(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 4);
                         }
                     }
                     else
                     {
                         // Fill the first line the hard way
-                        RawBufferPointer destrow = pixt(fill.top());  //UInt32 *destrow = &pixt<UInt32>(fill.get_min_y());
-                        for (int x = fill.left(); x <= fill.right(); x++)
-                            destrow.set_uint32(x + (-destrow.Offset + (destrow.Offset / 4)), (UInt32)color);  //destrow[x] = (UInt32)color;
+                        UInt32BufferPointer destrow = (UInt32BufferPointer)pixt<uint32_t>(fill.top());  //uint32_t *destrow  = &pixt<uint32_t>(fill.top());
+                        for (int32_t x = fill.left(); x <= fill.right(); x++)
+                            destrow[x] = (uint32_t)color;
 
                         // For the other lines, just copy the first one
-                        RawBufferPointer destrow0 = pixt(fill.top(), fill.left());  //UInt32 *destrow0 = &pixt<UInt32>(fill.get_min_y(), fill.get_min_x());
-                        for (int y = fill.top() + 1; y <= fill.bottom(); y++)
+                        UInt32BufferPointer destrow0 = (UInt32BufferPointer)pixt<uint32_t>(fill.top(), fill.left());  //uint32_t *destrow0 = &pixt<uint32_t>(fill.top(), fill.left());
+                        for (int32_t y = fill.top() + 1; y <= fill.bottom(); y++)
                         {
-                            destrow = pixt(y, fill.left());  //destrow = &pixt<UInt32>(y, fill.get_min_x());
-                            memcpy(destrow, destrow0, (UInt32)fill.width() * 4);  //memcpy(destrow, destrow0, fill.width() * 4);
+                            destrow = (UInt32BufferPointer)pixt<uint32_t>(y, fill.left());  //destrow = &pixt<uint32_t>(y, fill.left());
+                            //memcpy(destrow, destrow0, fill.width() * 4);
+                            for (int i = 0; i < fill.width(); i++)  // * 4
+                                destrow[i] = destrow0[i];
                         }
                     }
                     break;
 
                 case 64:
                     // 64bpp can use memset if the bytes are equal
-                    if ((uint8_t)(color >> 8) == (uint8_t)color && (uint16_t)(color >> 16) == (uint16_t)color)
+                    if ((uint8_t)(color >> 8) == (uint8_t)color && (uint16_t)(color >> 16) == (uint16_t)color) // FIXME: really?  wat about the upper bits that would be zeroed when done the "hard way"?
                     {
-                        for (int y = fill.top(); y <= fill.bottom(); y++)
+                        for (int32_t y = fill.top(); y <= fill.bottom(); y++)
                         {
-                            memset(pixt(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 8);  //memset(&pixt<UInt64>(y, fill.get_min_x()), (byte)color, fill.width() * 8);
+                            memset(pixt<uint64_t>(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 8);
                         }
                     }
                     else
                     {
                         // Fill the first line the hard way
-                        RawBufferPointer destrow = pixt(fill.top());  //UInt64 *destrow = &pixt<UInt64>(fill.get_min_y());
-                        for (int x = fill.left(); x <= fill.right(); x++)
-                        {
-                            destrow.set_uint64(x, (uint64_t)color);  //destrow[x] = (UInt64)color;
-                        }
+                        UInt64BufferPointer destrow = (UInt64BufferPointer)pixt<uint64_t>(fill.top());  //uint64_t *destrow  = &pixt<uint64_t>(fill.top());
+                        for (int32_t x = fill.left(); x <= fill.right(); x++)
+                            destrow[x] = (uint64_t)color;
 
                         // For the other lines, just copy the first one
-                        RawBufferPointer destrow0 = pixt(fill.top(), fill.left());  //UInt64 *destrow0 = &pixt<UInt64>(fill.get_min_y(), fill.get_min_x());
-                        for (int y = fill.top() + 1; y <= fill.bottom(); y++)
+                        UInt64BufferPointer destrow0 = (UInt64BufferPointer)pixt<uint64_t>(fill.top(), fill.left());  //uint64_t *destrow0 = &pixt<uint64_t>(fill.top(), fill.left());
+                        for (int32_t y = fill.top() + 1; y <= fill.bottom(); y++)
                         {
-                            //destrow = &pixt<UInt64>(y, fill.get_min_x());
-                            //destrowBufOffset = pixt(out destrowBuf, y, fill.get_min_x());
-                            destrow = pixt(y, fill.left());  //destrow = &pixt<UInt64>(y, fill.get_min_x());
-                            memcpy(destrow, destrow0, (UInt32)fill.width() * 8);  //memcpy(destrow, destrow0, fill.width() * 8);
+                            destrow = (UInt64BufferPointer)pixt<uint64_t>(y, fill.left());  //destrow = &pixt<uint64_t>(y, fill.left());
+                            //memcpy(destrow, destrow0, (UInt32)fill.width() * 8);
+                            for (int i = 0; i < fill.width(); i++)  // * 8
+                                destrow[i] = destrow0[i];
                         }
                     }
                     break;
@@ -522,16 +526,20 @@ namespace mame
 
         // pixel access
 
-        //template<typename _PixelType>
-        //_PixelType &pixt(int32_t y, int32_t x = 0) const { return *(reinterpret_cast<_PixelType *>(m_base) + y * m_rowpixels + x); }
-        RawBufferPointer pixt(int32_t y, int32_t x = 0) { return raw_pixptr(y, x); }
-        public RawBufferPointer pix8(int32_t y, int32_t x = 0) { return pixt(y, x); }
-        public UInt32 pix16(out RawBuffer buffer, int32_t y, int32_t x = 0) { RawBufferPointer bufferPtr = pixt(y, x);  buffer = bufferPtr.Buffer;  return (UInt32)(bufferPtr.Offset / 2); }
-        public UInt32 pix32(out RawBuffer buffer, int32_t y, int32_t x = 0) { RawBufferPointer bufferPtr = pixt(y, x);  buffer = bufferPtr.Buffer;  return (UInt32)(bufferPtr.Offset / 4); }
+        //template<typename PixelType>
+        //PixelType &pixt(int32_t y, int32_t x = 0) const { return *(reinterpret_cast<PixelType *>(m_base) + y * m_rowpixels + x); }
+        protected RawBufferPointer pixt<PixelType>(int32_t y, int32_t x = 0)
+        {
+            if      (typeof(PixelType) == typeof(uint8_t))  return new RawBufferPointer(m_base) + (y * m_rowpixels + x);
+            else if (typeof(PixelType) == typeof(uint16_t)) return new UInt16BufferPointer(m_base) + (y * m_rowpixels + x);
+            else if (typeof(PixelType) == typeof(uint32_t)) return new UInt32BufferPointer(m_base) + (y * m_rowpixels + x);
+            else if (typeof(PixelType) == typeof(uint64_t)) return new UInt64BufferPointer(m_base) + (y * m_rowpixels + x);
+            else throw new emu_fatalerror("bitmap_t.pix() - Unknown type. {0}", typeof(PixelType));
+        }
 
         public RawBufferPointer raw_pixptr(int32_t y, int32_t x = 0)  //void *raw_pixptr(int32_t y, int32_t x = 0) const
         {
-            return new RawBufferPointer(m_base_, (y * m_rowpixels + x) * m_bpp / 8);  //return reinterpret_cast<uint8_t *>(m_base) + (y * m_rowpixels + x) * m_bpp / 8; }
+            return new RawBufferPointer(m_base, (y * m_rowpixels + x) * m_bpp / 8);  //return reinterpret_cast<uint8_t *>(m_base) + (y * m_rowpixels + x) * m_bpp / 8; }
         }
 
 
@@ -556,108 +564,129 @@ namespace mame
         //-------------------------------------------------
         void compute_base(int xslop, int yslop)
         {
-            m_base_ = new RawBufferPointer(m_alloc, (m_rowpixels * yslop + xslop) * (m_bpp / 8));  // m_base = m_alloc + (m_rowpixels * yslop + xslop) * (m_bpp / 8);
+            m_base = new RawBufferPointer(m_alloc, (m_rowpixels * yslop + xslop) * (m_bpp / 8));  // m_base = m_alloc + (m_rowpixels * yslop + xslop) * (m_bpp / 8);
+        }
+
+
+        //-------------------------------------------------
+        //  valid_format - return true if the bitmap format
+        //  is valid and agrees with the BPP
+        //-------------------------------------------------
+        bool valid_format()
+        {
+            switch (m_format)
+            {
+            // invalid format
+            case bitmap_format.BITMAP_FORMAT_INVALID:
+                return false;
+
+            // 8bpp formats
+            case bitmap_format.BITMAP_FORMAT_IND8:
+                return m_bpp == 8;
+
+            // 16bpp formats
+            case bitmap_format.BITMAP_FORMAT_IND16:
+            case bitmap_format.BITMAP_FORMAT_YUY16:
+                return m_bpp == 16;
+
+            // 32bpp formats
+            case bitmap_format.BITMAP_FORMAT_IND32:
+            case bitmap_format.BITMAP_FORMAT_RGB32:
+            case bitmap_format.BITMAP_FORMAT_ARGB32:
+                return m_bpp == 32;
+
+            // 64bpp formats
+            case bitmap_format.BITMAP_FORMAT_IND64:
+                return m_bpp == 64;
+            }
+
+            return false;
         }
     }
 
 
-    // ======================> bitmap8_t, bitmap16_t, bitmap32_t, bitmap64_t
+    // ======================> bitmap_specific, bitmap8_t, bitmap16_t, bitmap32_t, bitmap64_t
 
-    // 8bpp bitmaps
-    public class bitmap8_t : bitmap_t
+    //template<typename PixelType>
+    public class bitmap_specific<PixelType, PixelTypeBufferPointer> : bitmap_t where PixelTypeBufferPointer : RawBufferPointer
     {
-        // construction/destruction -- subclasses only
-        //bitmap8_t(bitmap8_t &&) = default;
-        public bitmap8_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(format, 8, width, height, xslop, yslop) { }
-#if false
-        bitmap8_t(bitmap_format format, UINT8 *base, int width, int height, int rowpixels) : base(format, 8, base, width, height, rowpixels) { assert(valid_format(format)); }
-#endif
-        public bitmap8_t(bitmap_format format, bitmap8_t source, rectangle subrect) : base(format, 8, source, subrect) { }
+        int PixelBits;  //static constexpr int PixelBits = 8 * sizeof(PixelType);
 
-        //bitmap8_t &operator=(bitmap8_t &&) = default;
+
+        // construction/destruction -- subclasses only
+        //bitmap_specific(bitmap_specific<PixelType> &&) = default;
+        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(format, (uint8_t)(8 * sizeof_PixelType), width, height, xslop, yslop) { PixelBits = 8 * sizeof_PixelType; }
+#if false
+        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, PixelType base_, int width, int height, int rowpixels) : base(format, (uint8_t)(8 * sizeof_PixelBits), base_, width, height, rowpixels) { PixelBits = 8 * sizeof_PixelBits; }
+#endif
+        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, bitmap_specific<PixelType, PixelTypeBufferPointer> source, rectangle subrect) : base(format, (uint8_t)(8 * sizeof_PixelType), source, subrect) { PixelBits = 8 * sizeof_PixelType; }
+
+
+        //bitmap_specific<PixelType> &operator=(bitmap_specific<PixelType> &&) = default;
+
+
+        //using pixel_t = PixelType;
+
 
         // getters
-        //UINT8 bpp() const { return 8; }
+        public new uint8_t bpp() { return (uint8_t)PixelBits; }
+
 
         // pixel accessors
-        //typedef UINT8 pixel_t;
-        //pixel_t &pix(INT32 y, INT32 x = 0) const { return pixt<pixel_t>(y, x); }
-        //pixel_t &pix8(INT32 y, INT32 x = 0) const { return pixt<pixel_t>(y, x); }
+        public PixelTypeBufferPointer pix(int32_t y, int32_t x = 0) { return (PixelTypeBufferPointer)pixt<PixelType>(y, x); }
+        public RawBufferPointer pix8(int32_t y, int32_t x = 0) { static_assert(PixelBits == 8, "must be 8bpp"); return pixt<PixelType>(y, x); }
+        public UInt16BufferPointer pix16(int32_t y, int32_t x = 0) { static_assert(PixelBits == 16, "must be 16bpp"); return (UInt16BufferPointer)pixt<PixelType>(y, x); }
+        public UInt32BufferPointer pix32(int32_t y, int32_t x = 0) { static_assert(PixelBits == 32, "must be 32bpp"); return (UInt32BufferPointer)pixt<PixelType>(y, x); }
+        public UInt64BufferPointer pix64(int32_t y, int32_t x = 0) { static_assert(PixelBits == 64, "must be 64bpp"); return (UInt64BufferPointer)pixt<PixelType>(y, x); }
+    }
 
-        // private helpers
-        //bool valid_format(bitmap_format format) const { return (format == BITMAP_FORMAT_IND8); }
+
+    // 8bpp bitmaps
+    //using bitmap8_t = bitmap_specific<uint8_t>;
+    public class bitmap8_t : bitmap_specific<uint8_t, RawBufferPointer>
+    {
+        //bitmap8_t(bitmap_specific<PixelType> &&) = default;
+        protected bitmap8_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(1, format, width, height, xslop, yslop) { }
+#if false
+        bitmap8_t(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : base(format, PixelBits, base, width, height, rowpixels) { }
+#endif
+        protected bitmap8_t(bitmap_format format, bitmap_specific<uint8_t, RawBufferPointer> source, rectangle subrect) : base(1, format, source, subrect) { }
     }
 
     // 16bpp bitmaps
-    public class bitmap16_t : bitmap_t
+    //using bitmap16_t = bitmap_specific<uint16_t>;
+    public class bitmap16_t : bitmap_specific<uint16_t, UInt16BufferPointer>
     {
-        // construction/destruction -- subclasses only
-        //bitmap16_t(bitmap16_t &&) = default;
-        public bitmap16_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(format, 16, width, height, xslop, yslop) { /*assert(valid_format(format));*/ }
+        //bitmap16_t(bitmap_specific<PixelType> &&) = default;
+        protected bitmap16_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(2, format, width, height, xslop, yslop) { }
 #if false
-        bitmap16_t(bitmap_format format, UINT16 *base, int width, int height, int rowpixels) : base(format, 16, base, width, height, rowpixels) { assert(valid_format(format)); }
+        bitmap16_t(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : base(format, PixelBits, base, width, height, rowpixels) { }
 #endif
-        public bitmap16_t(bitmap_format format, bitmap16_t source, rectangle subrect) : base(format, 16, source, subrect) { }
-
-        //bitmap16_t &operator=(bitmap16_t &&) = default;
-
-        // getters
-        //UINT8 bpp() const { return 16; }
-
-        // pixel accessors
-        //typedef UINT16 pixel_t;
-        //pixel_t &pix(INT32 y, INT32 x = 0) const { return pixt<pixel_t>(y, x); }
-        //pixel_t &pix16(INT32 y, INT32 x = 0) const { return pixt<pixel_t>(y, x); }
-
-        // private helpers
-        //bool valid_format(bitmap_format format) const { return (format == BITMAP_FORMAT_IND16 || format == BITMAP_FORMAT_YUY16); }
+        protected bitmap16_t(bitmap_format format, bitmap_specific<uint16_t, UInt16BufferPointer> source, rectangle subrect) : base(2, format, source, subrect) { }
     }
 
     // 32bpp bitmaps
-    public class bitmap32_t : bitmap_t
+    //using bitmap32_t = bitmap_specific<uint32_t>;
+    public class bitmap32_t : bitmap_specific<uint32_t, UInt32BufferPointer>
     {
-        // construction/destruction -- subclasses only
-        //bitmap32_t(bitmap32_t &&) = default;
-        public bitmap32_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(format, 32, width, height, xslop, yslop) { /*assert(valid_format(format));*/ }
+        //bitmap32_t(bitmap_specific<PixelType> &&) = default;
+        protected bitmap32_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(4, format, width, height, xslop, yslop) { }
 #if false
-        bitmap32_t(bitmap_format format, UINT32 *base, int width, int height, int rowpixels) : base(format, 32, base, width, height, rowpixels) { assert(valid_format(format)); }
+        bitmap32_t(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : base(format, PixelBits, base, width, height, rowpixels) { }
 #endif
-        public bitmap32_t(bitmap_format format, bitmap32_t source, rectangle subrect) : base(format, 32, source, subrect) { }
-
-        //bitmap32_t &operator=(bitmap32_t &&) = default;
-
-        // getters
-        //UINT8 bpp() const { return 32; }
-
-        // pixel accessors
-        //typedef UINT32 pixel_t;
-        //pixel_t &pix(INT32 y, INT32 x = 0) const { return pixt<pixel_t>(y, x); }
-        //pixel_t &pix32(INT32 y, INT32 x = 0) const { return pixt<pixel_t>(y, x); }
-
-        // private helpers
-        //bool valid_format(bitmap_format format) const { return (format == BITMAP_FORMAT_IND32 || format == BITMAP_FORMAT_RGB32 || format == BITMAP_FORMAT_ARGB32); }
+        protected bitmap32_t(bitmap_format format, bitmap_specific<uint32_t, UInt32BufferPointer> source, rectangle subrect) : base(4, format, source, subrect) { }
     }
 
     // 64bpp bitmaps
-    class bitmap64_t : bitmap_t
+    //using bitmap64_t = bitmap_specific<uint64_t>;
+    public class bitmap64_t : bitmap_specific<uint64_t, UInt64BufferPointer>
     {
-        // construction/destruction -- subclasses only
-        public bitmap64_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(format, 64, width, height, xslop, yslop) { /*assert(valid_format(format));*/ }
+        //bitmap64_t(bitmap_specific<PixelType> &&) = default;
+        protected bitmap64_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(8, format, width, height, xslop, yslop) { }
 #if false
-        bitmap64_t(bitmap_format format, UINT64 *base, int width, int height, int rowpixels) : base(format, 64, base, width, height, rowpixels) { assert(valid_format(format)); }
+        bitmap64_t(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : base(format, PixelBits, base, width, height, rowpixels) { }
 #endif
-        public bitmap64_t(bitmap_format format, bitmap64_t source, rectangle subrect) : base(format, 64, source, subrect) { }
-
-        // getters
-        //UINT8 bpp() const { return 64; }
-
-        // pixel accessors
-        //typedef UINT64 pixel_t;
-        //pixel_t &pix(INT32 y, INT32 x = 0) const { return pixt<pixel_t>(y, x); }
-        //pixel_t &pix64(INT32 y, INT32 x = 0) const { return pixt<pixel_t>(y, x); }
-
-        // private helpers
-        //bool valid_format(bitmap_format format) const { return (format == BITMAP_FORMAT_IND64); }
+        protected bitmap64_t(bitmap_format format, bitmap_specific<uint64_t, UInt64BufferPointer> source, rectangle subrect) : base(8, format, source, subrect) { }
     }
 
 

@@ -636,7 +636,7 @@ namespace mameForm
 
                 UInt32 width = (UInt32)get_width();  //400;  //640; //rect_width(&bounds);
                 UInt32 height = (UInt32)get_height();  //400; //480; //rect_height(&bounds);
-                UInt32 pitch = (UInt32)((width + 3) & ~3);
+                UInt32 pitch = width;//(UInt32)((width + 3) & ~3);
 
 
                 lock (osdlock)

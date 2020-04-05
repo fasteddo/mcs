@@ -616,29 +616,21 @@ namespace mame
                 star = m_stars[star_offs++];
                 if (star_offs >= STAR_RNG_PERIOD)
                     star_offs = 0;
+
                 if (enable_star != 0 && (star & 0x80) != 0 && (star & starmask) != 0)
                 {
-                    //bitmap.pix32(y, GALAXIAN_XSCALE*x + 0) = m_star_color[star & 0x3f];
-                    RawBuffer bitmapBuf0;
-                    UInt32 bitmapBuf0Offset = bitmap.pix32(out bitmapBuf0, y, GALAXIAN_XSCALE*x + 0);
-                    bitmapBuf0.set_uint32((int)bitmapBuf0Offset, m_star_color[star & 0x3f]);
+                    bitmap.pix32(y, m_x_scale * x + 0)[0] = m_star_color[star & 0x3f];
                 }
 
                 /* second RNG clock: two pixels */
                 star = m_stars[star_offs++];
                 if (star_offs >= STAR_RNG_PERIOD)
                     star_offs = 0;
+
                 if (enable_star != 0 && (star & 0x80) != 0 && (star & starmask) != 0)
                 {
-                    //bitmap.pix32(y, GALAXIAN_XSCALE*x + 1) = m_star_color[star & 0x3f];
-                    RawBuffer bitmapBuf1;
-                    UInt32 bitmapBuf1Offset = bitmap.pix32(out bitmapBuf1, y, GALAXIAN_XSCALE*x + 1);
-                    bitmapBuf1.set_uint32((int)bitmapBuf1Offset, m_star_color[star & 0x3f]);
-
-                    //bitmap.pix32(y, GALAXIAN_XSCALE*x + 2) = m_star_color[star & 0x3f];
-                    RawBuffer bitmapBuf2;
-                    UInt32 bitmapBuf2Offset = bitmap.pix32(out bitmapBuf2, y, GALAXIAN_XSCALE*x + 2);
-                    bitmapBuf2.set_uint32((int)bitmapBuf2Offset, m_star_color[star & 0x3f]);
+                    bitmap.pix32(y, m_x_scale * x + 1)[0] = m_star_color[star & 0x3f];
+                    bitmap.pix32(y, m_x_scale * x + 2)[0] = m_star_color[star & 0x3f];
                 }
             }
         }
@@ -725,28 +717,19 @@ namespace mame
                 x += GALAXIAN_H0START;
                 if (x >= cliprect.min_x && x <= cliprect.max_x)
                 {
-                    //bitmap.pix32(y, x) = color;
-                    RawBuffer bitmapBuf;
-                    UInt32 bitmapBufOffset = bitmap.pix32(out bitmapBuf, y, x);
-                    bitmapBuf.set_uint32((int)bitmapBufOffset, color);
+                    bitmap.pix32(y, x)[0] = color;
                 }
 
                 x++;
                 if (x >= cliprect.min_x && x <= cliprect.max_x)
                 {
-                    //bitmap.pix32(y, x) = color;
-                    RawBuffer bitmapBuf;
-                    UInt32 bitmapBufOffset = bitmap.pix32(out bitmapBuf, y, x);
-                    bitmapBuf.set_uint32((int)bitmapBufOffset, color);
+                    bitmap.pix32(y, x)[0] = color;
                 }
 
                 x++;
                 if (x >= cliprect.min_x && x <= cliprect.max_x)
                 {
-                    //bitmap.pix32(y, x) = color;
-                    RawBuffer bitmapBuf;
-                    UInt32 bitmapBufOffset = bitmap.pix32(out bitmapBuf, y, x);
-                    bitmapBuf.set_uint32((int)bitmapBufOffset, color);
+                    bitmap.pix32(y, x)[0] = color;
                 }
             }
         }

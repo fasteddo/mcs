@@ -39,7 +39,7 @@ namespace mame
         // internal keyboard code information
         public class keycode_map_entry
         {
-            public ioport_field [] field = new ioport_field[SHIFT_COUNT + 1];
+            public std.array<ioport_field> field = new std.array<ioport_field>(SHIFT_COUNT + 1);
             public UInt32 shift;
         }
         //typedef std::unordered_map<char32_t, keycode_map_entry> keycode_map;
@@ -153,6 +153,10 @@ namespace mame
         //void post_coded(const char *text, size_t length = 0, const attotime &rate = attotime::zero);
         //void post_coded(const std::string &text, const attotime &rate = attotime::zero);
 
+
+        //-------------------------------------------------
+        //  paste - does a paste from the keyboard
+        //-------------------------------------------------
         public void paste()
         {
             throw new emu_unimplemented();
@@ -175,8 +179,8 @@ namespace mame
         {
             // find all shift keys
             UInt32 mask = 0;
-            ioport_field [] shift = new ioport_field[SHIFT_COUNT];
-            for (int i = 0; i < shift.Length; i++) shift[i] = null;  //std::fill(std::begin(shift), std::end(shift), nullptr);
+            std.array<ioport_field> shift = new std.array<ioport_field>(SHIFT_COUNT);
+            for (int i = 0; i < shift.size(); i++) shift[i] = null;  //std::fill(std::begin(shift), std::end(shift), nullptr);
             foreach (var port in manager.ports())
             {
                 foreach (ioport_field field in port.Value.fields())
@@ -220,7 +224,7 @@ namespace mame
                                         {
                                             keycode_map_entry newcode = new keycode_map_entry();
                                             //std::fill(std::begin(newcode.field), std::end(newcode.field), nullptr);
-                                            for (int i = 0; i < newcode.field.Length; i++)
+                                            for (int i = 0; i < newcode.field.size(); i++)
                                                 newcode.field[i] = null;
                                             newcode.shift = curshift;
 
@@ -231,7 +235,6 @@ namespace mame
                                                     newcode.field[fieldnum++] = shift[i];
                                             }
 
-                                            assert(fieldnum < newcode.field.Length);
                                             newcode.field[fieldnum] = field;
                                             if (null == found)
                                                 m_keycode_map.emplace(code, newcode);
@@ -307,8 +310,6 @@ namespace mame
                 {
                     do
                     {
-                        assert(m_fieldnum < code.field.Length);
-
                         ioport_field field = code.field[m_fieldnum];
                         if (field != null)
                         {
@@ -319,8 +320,8 @@ namespace mame
                                 field.set_value(!field.digital_value() ? (UInt32)1 : 0);
                         }
                     }
-                    while (code.field[m_fieldnum] != null && (++m_fieldnum < code.field.Length) && m_status_keydown);
-                    advance = (m_fieldnum >= code.field.Length) || code.field[m_fieldnum] == null;
+                    while (code.field[m_fieldnum] != null && (++m_fieldnum < code.field.size()) && m_status_keydown);
+                    advance = (m_fieldnum >= code.field.size()) || code.field[m_fieldnum] == null;
                 }
                 else
                 {

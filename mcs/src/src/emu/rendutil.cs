@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
@@ -23,9 +24,7 @@ namespace mame
                 return;
 
             /* adjust the source base */
-            //const UINT32 *sbase = &source.pix32(0);
-            RawBuffer sbaseBuf;
-            u32 sbaseOffset = source.pix32(out sbaseBuf, 0);
+            UInt32BufferPointer sbase = source.pix32(0);  //const u32 *sbase = &source.pix32(0);
 
             /* determine the steppings */
             u32 swidth = (u32)source.width();
@@ -35,19 +34,14 @@ namespace mame
             u32 dx = (swidth << 12) / dwidth;
             u32 dy = (sheight << 12) / dheight;
 
-            //throw new emu_unimplemented();
             /* if the source is higher res than the target, use full averaging */
             if (dx > 0x1000 || dy > 0x1000 || force)
             {
-                RawBuffer destBuf;
-                u32 destOffset = dest.pix32(out destBuf, 0);
-                resample_argb_bitmap_average(new RawBufferPointer(destBuf, (int)destOffset), (UInt32)dest.rowpixels(), dwidth, dheight, new RawBufferPointer(sbaseBuf, (int)sbaseOffset), (UInt32)source.rowpixels(), swidth, sheight, color, dx, dy);
+                resample_argb_bitmap_average(dest.pix(0), (u32)dest.rowpixels(), dwidth, dheight, sbase, (u32)source.rowpixels(), swidth, sheight, color, dx, dy);
             }
             else
             {
-                RawBuffer destBuf;
-                u32 destOffset = dest.pix32(out destBuf, 0);
-                resample_argb_bitmap_bilinear(new RawBufferPointer(destBuf, (int)destOffset), (UInt32)dest.rowpixels(), dwidth, dheight, new RawBufferPointer(sbaseBuf, (int)sbaseOffset), (UInt32)source.rowpixels(), swidth, sheight, color, dx, dy);
+                resample_argb_bitmap_bilinear(dest.pix(0), (u32)dest.rowpixels(), dwidth, dheight, sbase, (u32)source.rowpixels(), swidth, sheight, color, dx, dy);
             }
         }
 
@@ -60,9 +54,9 @@ namespace mame
             /* loop until we get a final result */
             while (true)
             {
-                byte code0 = 0;
-                byte code1 = 0;
-                byte thiscode;
+                u8 code0 = 0;
+                u8 code1 = 0;
+                u8 thiscode;
                 float x;
                 float y;
 
@@ -145,8 +139,8 @@ namespace mame
         public static bool render_clip_quad(render_bounds bounds, render_bounds clip, render_quad_texuv texcoords)
         {
             /* ensure our assumptions about the bounds are correct */
-            //assert(bounds->x0 <= bounds->x1);
-            //assert(bounds->y0 <= bounds->y1);
+            global_object.assert(bounds.x0 <= bounds.x1);
+            global_object.assert(bounds.y0 <= bounds.y1);
 
             /* trivial reject */
             if (bounds.y1 < clip.y0)
@@ -280,7 +274,7 @@ namespace mame
             render_round_nearest - floating point
             round-to-nearest
         -------------------------------------------------*/
-        public static float render_round_nearest(float f) { return (float)Math.Floor(f + 0.5f); }
+        public static float render_round_nearest(float f) { return std.floor(f + 0.5f); }
 
 
         /*-------------------------------------------------
@@ -315,10 +309,10 @@ namespace mame
         -------------------------------------------------*/
         public static void sect_render_bounds(render_bounds dest, render_bounds src)
         {
-            dest.x0 = Math.Max(dest.x0, src.x0);
-            dest.x1 = Math.Min(dest.x1, src.x1);
-            dest.y0 = Math.Max(dest.y0, src.y0);
-            dest.y1 = Math.Min(dest.y1, src.y1);
+            dest.x0 = std.max(dest.x0, src.x0);
+            dest.x1 = std.min(dest.x1, src.x1);
+            dest.y0 = std.max(dest.y0, src.y0);
+            dest.y1 = std.min(dest.y1, src.y1);
         }
 
 
@@ -328,10 +322,10 @@ namespace mame
         -------------------------------------------------*/
         public static void union_render_bounds(render_bounds dest, render_bounds src)
         {
-            dest.x0 = Math.Min(dest.x0, src.x0);
-            dest.x1 = Math.Max(dest.x1, src.x1);
-            dest.y0 = Math.Min(dest.y0, src.y0);
-            dest.y1 = Math.Max(dest.y1, src.y1);
+            dest.x0 = std.min(dest.x0, src.x0);
+            dest.x1 = std.max(dest.x1, src.x1);
+            dest.y0 = std.min(dest.y0, src.y0);
+            dest.y1 = std.max(dest.y1, src.y1);
         }
 
 
@@ -399,7 +393,7 @@ namespace mame
         public static float apply_brightness_contrast_gamma_fp(float srcval, float brightness, float contrast, float gamma)
         {
             /* first apply gamma */
-            srcval = (float)Math.Pow(srcval, 1.0f / gamma);
+            srcval = std.pow(srcval, 1.0f / gamma);
 
             /* then contrast/brightness */
             srcval = (srcval * contrast) + brightness - 1.0f;
@@ -419,11 +413,11 @@ namespace mame
             brightness, contrast, and gamma controls to
             a single RGB component
         -------------------------------------------------*/
-        public static byte apply_brightness_contrast_gamma(byte src, float brightness, float contrast, float gamma)
+        public static u8 apply_brightness_contrast_gamma(u8 src, float brightness, float contrast, float gamma)
         {
             float srcval = (float)src * (1.0f / 255.0f);
             float result = apply_brightness_contrast_gamma_fp(srcval, brightness, contrast, gamma);
-            return (byte)(result * 255.0f);
+            return (u8)(result * 255.0f);
         }
 
 
@@ -432,7 +426,7 @@ namespace mame
             by performing a true weighted average over
             all contributing pixels
         -------------------------------------------------*/
-        static void resample_argb_bitmap_average(RawBufferPointer dest, u32 drowpixels, u32 dwidth, u32 dheight, RawBufferPointer source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  // u32 *dest, const u32 *source
+        static void resample_argb_bitmap_average(UInt32BufferPointer dest, u32 drowpixels, u32 dwidth, u32 dheight, UInt32BufferPointer source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_average(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
         {
             u64 sumscale = (u64)dx * (u64)dy;
             u32 r;
@@ -451,7 +445,7 @@ namespace mame
             /* loop over the target vertically */
             for (y = 0; y < dheight; y++)
             {
-                UInt32 starty = y * dy;
+                u32 starty = y * dy;
 
                 /* loop over the target horizontally */
                 for (x = 0; x < dwidth; x++)
@@ -482,7 +476,7 @@ namespace mame
                         /* loop over all source pixels in the X direction */
                         for (curx = startx; xremaining != 0; curx += xchunk)
                         {
-                            UInt32 factor;
+                            u32 factor;
 
                             /* determine the X contribution, clamping to the amount remaining */
                             xchunk = 0x1000 - (curx & 0xfff);
@@ -494,7 +488,7 @@ namespace mame
                             factor = xchunk * ychunk;
 
                             /* fetch the source pixel */
-                            rgb_t pix = new rgb_t(source.get_uint32((int)((cury >> 12) * srowpixels + (curx >> 12))));  // source[(cury >> 12) * srowpixels + (curx >> 12)];
+                            rgb_t pix = new rgb_t(source[(cury >> 12) * srowpixels + (curx >> 12)]);  //rgb_t pix = source[(cury >> 12) * srowpixels + (curx >> 12)];
 
                             /* accumulate the RGBA values */
                             sumr += factor * pix.r();
@@ -513,7 +507,7 @@ namespace mame
                     /* if we're translucent, add in the destination pixel contribution */
                     if (a < 256)
                     {
-                        rgb_t dpix = new rgb_t(dest.get_uint32((int)(y * drowpixels + x)));  //dest[y * drowpixels + x];
+                        rgb_t dpix = new rgb_t(dest[y * drowpixels + x]);  //rgb_t dpix = dest[y * drowpixels + x];
                         suma += dpix.a() * (256 - a);
                         sumr += dpix.r() * (256 - a);
                         sumg += dpix.g() * (256 - a);
@@ -521,7 +515,7 @@ namespace mame
                     }
 
                     /* store the target pixel, dividing the RGBA values by the overall scale factor */
-                    dest.set_uint32((int)(y * drowpixels + x), new rgb_t((byte)suma, (byte)sumr, (byte)sumg, (byte)sumb));  // dest[y * drowpixels + x] = new rgb_t((byte)suma, (byte)sumr, (byte)sumg, (byte)sumb);
+                    dest[y * drowpixels + x] = new rgb_t((u8)suma, (u8)sumr, (u8)sumg, (u8)sumb);  //dest[y * drowpixels + x] = rgb_t(suma, sumr, sumg, sumb);
                 }
             }
         }
@@ -531,7 +525,7 @@ namespace mame
             resample_argb_bitmap_bilinear - perform texture
             sampling via a bilinear filter
         -------------------------------------------------*/
-        static void resample_argb_bitmap_bilinear(RawBufferPointer dest, u32 drowpixels, u32 dwidth, u32 dheight, RawBufferPointer source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //u32 *dest, const u32 *source
+        static void resample_argb_bitmap_bilinear(UInt32BufferPointer dest, u32 drowpixels, u32 dwidth, u32 dheight, UInt32BufferPointer source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_bilinear(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
         {
             u32 maxx = swidth << 12;
             u32 maxy = sheight << 12;
@@ -583,13 +577,13 @@ namespace mame
                     /* fetch the four relevant pixels */
                     pix0 = pix1 = pix2 = pix3 = new rgb_t(0);
                     if ((int)cury >= 0 && cury < maxy && (int)curx >= 0 && curx < maxx)
-                        pix0 = new rgb_t(source.get_uint32((int)((cury >> 12) * srowpixels + (curx >> 12))));  // source[(cury >> 12) * srowpixels + (curx >> 12)];
+                        pix0 = new rgb_t(source[(cury >> 12) * srowpixels + (curx >> 12)]);  //pix0 = source[(cury >> 12) * srowpixels + (curx >> 12)];
                     if ((int)cury >= 0 && cury < maxy && (int)nextx >= 0 && nextx < maxx)
-                        pix1 = new rgb_t(source.get_uint32((int)((cury >> 12) * srowpixels + (nextx >> 12))));  // source[(cury >> 12) * srowpixels + (nextx >> 12)];
+                        pix1 = new rgb_t(source[(cury >> 12) * srowpixels + (nextx >> 12)]);  //pix1 = source[(cury >> 12) * srowpixels + (nextx >> 12)];
                     if ((int)nexty >= 0 && nexty < maxy && (int)curx >= 0 && curx < maxx)
-                        pix2 = new rgb_t(source.get_uint32((int)((nexty >> 12) * srowpixels + (curx >> 12))));  // source[(nexty >> 12) * srowpixels + (curx >> 12)];
+                        pix2 = new rgb_t(source[(nexty >> 12) * srowpixels + (curx >> 12)]);  //pix2 = source[(nexty >> 12) * srowpixels + (curx >> 12)];
                     if ((int)nexty >= 0 && nexty < maxy && (int)nextx >= 0 && nextx < maxx)
-                        pix3 = new rgb_t(source.get_uint32((int)((nexty >> 12) * srowpixels + (nextx >> 12))));  // source[(nexty >> 12) * srowpixels + (nextx >> 12)];
+                        pix3 = new rgb_t(source[(nexty >> 12) * srowpixels + (nextx >> 12)]);  //pix3 = source[(nexty >> 12) * srowpixels + (nextx >> 12)];
 
                     /* compute the x/y scaling factors */
                     curx &= 0xfff;
@@ -632,7 +626,7 @@ namespace mame
                     /* if we're translucent, add in the destination pixel contribution */
                     if (a < 256)
                     {
-                        rgb_t dpix = new rgb_t(dest.get_uint32((int)(y * drowpixels + x)));  // dest[y * drowpixels + x];
+                        rgb_t dpix = new rgb_t(dest[y * drowpixels + x]);  //rgb_t dpix = dest[y * drowpixels + x];
                         suma += dpix.a() * (256 - a);
                         sumr += dpix.r() * (256 - a);
                         sumg += dpix.g() * (256 - a);
@@ -640,7 +634,7 @@ namespace mame
                     }
 
                     /* store the target pixel, dividing the RGBA values by the overall scale factor */
-                    dest.set_uint32((int)(y * drowpixels + x), new rgb_t((byte)suma, (byte)sumr, (byte)sumg, (byte)sumb));  // dest[y * drowpixels + x] = new rgb_t((byte)suma, (byte)sumr, (byte)sumg, (byte)sumb);
+                    dest[y * drowpixels + x] = new rgb_t((u8)suma, (u8)sumr, (u8)sumg, (u8)sumb);  //dest[y * drowpixels + x] = rgb_t(suma, sumr, sumg, sumb);
                 }
             }
         }

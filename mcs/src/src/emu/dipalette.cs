@@ -295,7 +295,8 @@ namespace mame
                 m_shadow_group = (UInt32)numgroups++;
             if (palette_hilights_enabled())
                 m_hilight_group = (UInt32)numgroups++;
-            assert_always(numentries * numgroups <= 65536, "Palette has more than 65536 colors.");
+            if (numentries * numgroups > 65536)
+                throw new emu_fatalerror("{0}({1}): Palette has more than 65536 colors.", device().shortname(), device().tag());
 
             // allocate a palette object containing all the colors and groups
             m_palette = palette_t.alloc(numentries, (UInt32)numgroups);

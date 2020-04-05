@@ -175,17 +175,15 @@ namespace mame.ui
                 // create a texture for snapshot
                 m_snapx_texture = render.texture_alloc(render_texture.hq_scale);  //m_snapx_texture.reset(render.texture_alloc(render_texture::hq_scale));
 
-                //std::memcpy(m_no_avail_bitmap.pix32(0), no_avail_bmp, 256 * 256 * sizeof(uint32_t));
-                RawBuffer m_no_avail_bitmapBuf;
-                UInt32 m_no_avail_bitmapOffset = m_no_avail_bitmap.pix32(out m_no_avail_bitmapBuf, 0);
+                //std::memcpy(&m_no_avail_bitmap.pix32(0), no_avail_bmp, 256 * 256 * sizeof(uint32_t));
+                UInt32BufferPointer m_no_avail_bitmapBuf = m_no_avail_bitmap.pix32(0);
                 for (int i = 0; i < 256 * 256; i++)  // sizeof(UInt32)
-                    m_no_avail_bitmapBuf.set_uint32((int)m_no_avail_bitmapOffset + i, defimg_global.no_avail_bmp[i]);
+                    m_no_avail_bitmapBuf[i] = defimg_global.no_avail_bmp[i];
 
-                //std::memcpy(m_star_bitmap.pix32(0), favorite_star_bmp, 32 * 32 * sizeof(uint32_t));
-                RawBuffer m_star_bitmapBuf;
-                UInt32 m_star_bitmapOffset = m_star_bitmap.pix32(out m_star_bitmapBuf, 0);
+                //std::memcpy(&m_star_bitmap.pix32(0), favorite_star_bmp, 32 * 32 * sizeof(uint32_t));
+                UInt32BufferPointer m_star_bitmapBuf = m_star_bitmap.pix32(0);
                 for (int i = 0; i < 32 * 32; i++)  // sizeof(UInt32)
-                    m_star_bitmapBuf.set_uint32((int)m_star_bitmapOffset + i, starimg_global.favorite_star_bmp[i]);
+                    m_star_bitmapBuf[i] = starimg_global.favorite_star_bmp[i];
 
                 m_star_texture = render.texture_alloc();  //m_star_texture.reset(render.texture_alloc());
                 m_star_texture.set_bitmap(m_star_bitmap, m_star_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
@@ -202,11 +200,10 @@ namespace mame.ui
                     m_toolbar_texture.emplace_back(render.texture_alloc());  //m_toolbar_texture.emplace_back(render.texture_alloc(), render);
                     m_sw_toolbar_texture.emplace_back(render.texture_alloc());  //m_sw_toolbar_texture.emplace_back(render.texture_alloc(), render);
 
-                    //std::memcpy(m_toolbar_bitmap.back().pix32(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
-                    RawBuffer m_toolbar_bitmapBuf;
-                    UInt32 m_toolbar_bitmapOffset = m_toolbar_bitmap.back().pix32(out m_toolbar_bitmapBuf, 0);
-                    for (int idx = 0; idx < 32 * 32; idx++)  // sizeof(UInt32)
-                        m_toolbar_bitmapBuf.set_uint32((int)m_toolbar_bitmapOffset + idx, toolbar_global.toolbar_bitmap_bmp[i, idx]);
+                    //std::memcpy(&m_toolbar_bitmap.back().pix32(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
+                    UInt32BufferPointer m_toolbar_bitmapBuf = m_toolbar_bitmap.back().pix32(0);
+                    for (int idx = 0; idx < 32 * 32; idx++)  // sizeof(uint32_t)
+                        m_toolbar_bitmapBuf[idx] = toolbar_global.toolbar_bitmap_bmp[i, idx];
 
                     if (m_toolbar_bitmap.back().valid())
                         m_toolbar_texture.back().set_bitmap(m_toolbar_bitmap.back(), m_toolbar_bitmap.back().cliprect(), texture_format.TEXFORMAT_ARGB32);
@@ -215,11 +212,10 @@ namespace mame.ui
 
                     if ((i == 0U) || (i == 2U))
                     {
-                        //std::memcpy(&m_sw_toolbar_bitmap.back()->pix32(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
-                        RawBuffer m_sw_toolbar_bitmapBuf;
-                        UInt32 m_sw_toolbar_bitmapOffset = m_sw_toolbar_bitmap.back().pix32(out m_sw_toolbar_bitmapBuf, 0);
-                        for (int idx = 0; idx < 32 * 32; idx++)  // sizeof(UInt32)
-                            m_sw_toolbar_bitmapBuf.set_uint32((int)m_sw_toolbar_bitmapOffset + idx, toolbar_global.toolbar_bitmap_bmp[i, idx]);
+                        //std::memcpy(&m_sw_toolbar_bitmap.back().pix32(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
+                        UInt32BufferPointer m_sw_toolbar_bitmapBuf = m_sw_toolbar_bitmap.back().pix32(0);
+                        for (int idx = 0; idx < 32 * 32; idx++)  // sizeof(uint32_t)
+                            m_sw_toolbar_bitmapBuf[idx] = toolbar_global.toolbar_bitmap_bmp[i, idx];
 
                         if (m_sw_toolbar_bitmap.back().valid())
                             m_sw_toolbar_texture.back().set_bitmap(m_sw_toolbar_bitmap.back(), m_sw_toolbar_bitmap.back().cliprect(), texture_format.TEXFORMAT_ARGB32);
@@ -2598,12 +2594,7 @@ namespace mame.ui
                 {
                     for (int y = 0; y < 256; y++)
                     {
-                        //tmp_bitmap.pix32(y, x) = src.pix32(y, x);
-                        RawBuffer tmp_bitmapBuf;
-                        UInt32 tmp_bitmapOffset = tmp_bitmap.pix32(out tmp_bitmapBuf, y, x);
-                        RawBuffer srcBuf;
-                        UInt32 srcOffset = src.pix32(out srcBuf, y, x);
-                        tmp_bitmapBuf.set_uint32((int)tmp_bitmapOffset, srcBuf.get_uint32((int)srcOffset));
+                        tmp_bitmap.pix32(y, x)[0] = src.pix32(y, x)[0];
                     }
                 }
                 no_available = true;
@@ -2672,12 +2663,7 @@ namespace mame.ui
                 {
                     for (int y = 0; y < dest_yPixel; y++)
                     {
-                        //snapx_bitmap.pix32(y + y1, x + x1) = dest_bitmap.pix32(y, x);
-                        RawBuffer snapx_bitmapBuf;
-                        UInt32 snapx_bitmapOffset = snapx_bitmap.pix32(out snapx_bitmapBuf, y + y1, x + x1);
-                        RawBuffer dest_bitmapBuf;
-                        UInt32 dest_bitmapOffset = dest_bitmap.pix32(out dest_bitmapBuf, y, x);
-                        snapx_bitmapBuf.set_uint32((int)snapx_bitmapOffset, dest_bitmapBuf.get_uint32((int)dest_bitmapOffset));
+                        snapx_bitmap.pix32(y + y1, x + x1)[0] = dest_bitmap.pix32(y, x)[0];
                     }
                 }
 

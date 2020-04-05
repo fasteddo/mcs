@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 
 using bitmap_ptr = mame.bitmap_argb32;
+using int32_t = System.Int32;
 using texture_ptr = mame.render_texture;
+using uint8_t = System.Byte;
 
 
 namespace mame.ui
@@ -48,10 +50,7 @@ namespace mame.ui
             for (UInt32 x = 0; x < 256; ++x)
             {
                 UInt32 alpha = ((x < 25) ? (0xff * x / 25) : (x >(256 - 25)) ? (0xff * (255 - x) / 25) : 0xff);
-                //m_hilight_bitmap->pix32(0, x) = rgb_t(alpha, 0xff, 0xff, 0xff);
-                RawBuffer m_hilight_bitmapBuf;
-                UInt32 m_hilight_bitmapOffset = m_hilight_bitmap.pix32(out m_hilight_bitmapBuf, 0, (int)x);
-                m_hilight_bitmapBuf.set_uint32((int)m_hilight_bitmapOffset, new rgb_t((byte)alpha,0xff,0xff,0xff));
+                m_hilight_bitmap.pix32(0, (int32_t)x)[0] = new rgb_t((uint8_t)alpha, 0xff, 0xff, 0xff);  //m_hilight_bitmap->pix32(0, x) = rgb_t(alpha, 0xff, 0xff, 0xff);
             }
 
             m_hilight_texture = render.texture_alloc();  //m_hilight_texture.reset(render.texture_alloc());
@@ -69,10 +68,7 @@ namespace mame.ui
                 UInt32 r = r1 + (y * (r2 - r1) / 128);
                 UInt32 g = g1 + (y * (g2 - g1) / 128);
                 UInt32 b = b1 + (y * (b2 - b1) / 128);
-                //m_hilight_main_bitmap->pix32(y, 0) = rgb_t(r, g, b);
-                RawBuffer m_hilight_main_bitmapBuf;
-                UInt32 m_hilight_main_bitmapOffset = m_hilight_main_bitmap.pix32(out m_hilight_main_bitmapBuf, (int)y, 0);
-                m_hilight_main_bitmapBuf.set_uint32((int)m_hilight_main_bitmapOffset, new rgb_t((byte)r, (byte)g, (byte)b));
+                m_hilight_main_bitmap.pix32((int32_t)y, 0)[0] = new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b);  //m_hilight_main_bitmap->pix32(y, 0) = rgb_t(r, g, b);
             }
 
             m_hilight_main_texture = render.texture_alloc();  //m_hilight_main_texture.reset(render.texture_alloc());
@@ -106,9 +102,7 @@ namespace mame.ui
             for (y = 0; y < height; y++)
             {
                 int linewidth = (y * (halfwidth - 1) + (height / 2)) * 255 * 2 / height;
-                //uint32_t *target = &dest.pix32(y, halfwidth);
-                RawBuffer targetBuf;
-                UInt32 targetOffset = dest.pix32(out targetBuf, y, halfwidth);
+                UInt32BufferPointer target = dest.pix32(y, halfwidth);  //uint32_t *target = &dest.pix32(y, halfwidth);
 
                 // don't antialias if height < 12
                 if (dest.height() < 12)
@@ -126,16 +120,15 @@ namespace mame.ui
                     // first column we only consume one pixel
                     if (x == 0)
                     {
-                        dalpha = Math.Min(0xff, linewidth);
-                        targetBuf.set_uint32((int)targetOffset + x, new rgb_t((byte)dalpha, 0xff, 0xff, 0xff));  //target[x] = new rgb_t(dalpha, 0xff, 0xff, 0xff);
+                        dalpha = std.min(0xff, linewidth);
+                        target[x] = new rgb_t((uint8_t)dalpha, 0xff, 0xff, 0xff);  //target[x] = rgb_t(dalpha, 0xff, 0xff, 0xff);
                     }
 
                     // remaining columns consume two pixels, one on each side
                     else
                     {
-                        dalpha = Math.Min(0x1fe, linewidth);
-                        targetBuf.set_uint32((int)targetOffset + x, new rgb_t((byte)(dalpha / 2), 0xff, 0xff, 0xff));  //target[x] = target[-x] = new rgb_t((byte)(dalpha / 2), 0xff, 0xff, 0xff);
-                        targetBuf.set_uint32((int)targetOffset + (-x), new rgb_t((byte)(dalpha / 2), 0xff, 0xff, 0xff));
+                        dalpha = std.min(0x1fe, linewidth);
+                        target[x] = target[-x] = new rgb_t((uint8_t)(dalpha / 2), 0xff, 0xff, 0xff);  //target[x] = target[-x] = rgb_t(dalpha / 2, 0xff, 0xff, 0xff);
                     }
 
                     // account for the weight we consumed */

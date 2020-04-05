@@ -71,6 +71,7 @@ namespace mame
              3000000, /* 3_MHz_XTAL             Probably only used to drive 68705 or similar MCUs on 80's Taito PCBs */
              3072000, /* 3.072_MHz_XTAL         INS 8520 input clock rate */
              3120000, /* 3.12_MHz_XTAL          SP0250 clock on Gottlieb games */
+             3276800, /* 3.2768_MHz_XTAL        SP0256 clock in Speech Synthesis for Dragon 32 */
              3521280, /* 3.52128_MHz_XTAL       RCA COSMAC VIP */
              3570000, /* 3.57_MHz_XTAL          Telmac TMC-600 */
              3578640, /* 3.57864_MHz_XTAL       Atari Portfolio PCD3311T */

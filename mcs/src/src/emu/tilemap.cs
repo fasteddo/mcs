@@ -14,6 +14,7 @@ using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+using u64 = System.UInt64;
 
 
 namespace mame
@@ -483,10 +484,10 @@ namespace mame
         // drawing
 
         public void draw(screen_device screen, bitmap_ind16 dest, rectangle cliprect, u32 flags, u8 priority = 0, u8 priority_mask = 0xff)
-        { draw_common<bitmap_ind16, UInt16>(screen, dest, cliprect, flags, priority, priority_mask); }
+        { draw_common<bitmap_ind16, u16, UInt16BufferPointer>(screen, dest, cliprect, flags, priority, priority_mask); }
 
         public void draw(screen_device screen, bitmap_rgb32 dest, rectangle cliprect, u32 flags, u8 priority = 0, u8 priority_mask = 0xff)
-        { draw_common<bitmap_rgb32, UInt32>(screen, dest, cliprect, flags, priority, priority_mask); }
+        { draw_common<bitmap_rgb32, u32, UInt32BufferPointer>(screen, dest, cliprect, flags, priority, priority_mask); }
 
         //void draw_roz(screen_device &screen, bitmap_ind16 &dest, const rectangle &cliprect, UINT32 startx, UINT32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, UINT32 flags, UINT8 priority = 0, UINT8 priority_mask = 0xff);
         //void draw_roz(screen_device &screen, bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 startx, UINT32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, UINT32 flags, UINT8 priority = 0, UINT8 priority_mask = 0xff);
@@ -517,7 +518,7 @@ namespace mame
             for (int ypos = (int)(scrolly - m_height); ypos <= blit.cliprect.bottom(); ypos += (int)m_height)
             {
                 for (int xpos = (int)(scrollx - m_width); xpos <= blit.cliprect.right(); xpos += (int)m_width)
-                    draw_instance<bitmap_rgb32, UInt32>(screen, dest, blit, xpos, ypos);
+                    draw_instance<bitmap_rgb32, u32, UInt32BufferPointer>(screen, dest, blit, xpos, ypos);
             }
         }
 
@@ -705,7 +706,7 @@ namespace mame
         //  scanline_draw_opaque_ind16 - draw to a 16bpp
         //  indexed bitmap
         //-------------------------------------------------
-        void scanline_draw_opaque_ind16(RawBufferPointer dest, /*UInt16 *dest,*/ RawBufferPointer source, /*UInt16 *source,*/ int count, ListBytesPointer pri, /*byte *pri,*/ u32 pcode)
+        void scanline_draw_opaque_ind16(UInt16BufferPointer dest, UInt16BufferPointer source, int count, ListBytesPointer pri, u32 pcode)  //inline void tilemap_t::scanline_draw_opaque_ind16(u16 *dest, const u16 *source, int count, u8 *pri, u32 pcode)
         {
             // special case for no palette offset
             int pal = (int)pcode >> 16;
@@ -713,10 +714,8 @@ namespace mame
             {
                 // use memcpy which should be well-optimized for the platform
                 //memcpy(dest, source, count * 2);
-                //for (int i = 0; i < count * 2 * 2; i++)
-                //    dest[i] = source[i];
                 for (int i = 0; i < count; i++)
-                    dest.set_uint16(i, source.get_uint16(i));
+                    dest[i] = source[i];
 
                 // skip the rest if not changing priority
                 if (pcode == 0xff00)
@@ -724,7 +723,7 @@ namespace mame
 
                 // update priority across the scanline
                 for (int i = 0; i < count; i++)
-                    pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                    pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
             }
 
             // priority case
@@ -732,8 +731,8 @@ namespace mame
             {
                 for (int i = 0; i < count; i++)
                 {
-                    dest.set_uint16(i, (UInt16)(source.get_uint16(i) + pal));  //dest[i] = source[i] + pal;
-                    pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                    dest[i] = (u16)(source[i] + pal);
+                    pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
                 }
             }
 
@@ -741,7 +740,7 @@ namespace mame
             else
             {
                 for (int i = 0; i < count; i++)
-                    dest.set_uint16(i, (UInt16)(source.get_uint16(i) + pal));  //dest[i] = source[i] + pal;
+                    dest[i] = (u16)(source[i] + pal);
             }
         }
 
@@ -749,7 +748,7 @@ namespace mame
         //  scanline_draw_masked_ind16 - draw to a 16bpp
         //  indexed bitmap using a mask
         //-------------------------------------------------
-        void scanline_draw_masked_ind16(RawBufferPointer dest, /*UInt16 *dest,*/ RawBufferPointer source, /*UInt16 *source,*/ ListBytesPointer maskptr, /*byte *maskptr,*/ int mask, int value, int count, ListBytesPointer pri, /*byte *pri,*/ u32 pcode)
+        void scanline_draw_masked_ind16(UInt16BufferPointer dest, UInt16BufferPointer source, ListBytesPointer maskptr, int mask, int value, int count, ListBytesPointer pri, u32 pcode)  //inline void tilemap_t::scanline_draw_masked_ind16(u16 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, u8 *pri, u32 pcode)
         {
             int pal = (int)pcode >> 16;
 
@@ -760,8 +759,8 @@ namespace mame
                 {
                     if ((maskptr[i] & mask) == value)
                     {
-                        dest.set_uint16(i, (UInt16)(source.get_uint16(i) + pal));  // dest[i] = source[i] + pal;
-                        pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                        dest[i] = (u16)(source[i] + pal);
+                        pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
                     }
                 }
             }
@@ -772,7 +771,7 @@ namespace mame
                 for (int i = 0; i < count; i++)
                 {
                     if ((maskptr[i] & mask) == value)
-                        dest.set_uint16(i, (UInt16)(source.get_uint16(i) + pal));  // dest[i] = source[i] + pal;
+                        dest[i] = (u16)(source[i] + pal);
                 }
             }
         }
@@ -781,18 +780,17 @@ namespace mame
         //  scanline_draw_opaque_rgb32 - draw to a 32bpp
         //  RGB bitmap
         //-------------------------------------------------
-        void scanline_draw_opaque_rgb32(RawBufferPointer dest, /*UInt32 *dest,*/ RawBufferPointer source, /*UInt16 *source,*/ int count, ListBase<rgb_t> pens, /*rgb_t *pens,*/ ListBytesPointer pri, /*byte *pri,*/ u32 pcode)
+        void scanline_draw_opaque_rgb32(UInt32BufferPointer dest, UInt16BufferPointer source, int count, ListBase<rgb_t> pens, ListBytesPointer pri, u32 pcode)  //inline void tilemap_t::scanline_draw_opaque_rgb32(u32 *dest, const u16 *source, int count, const rgb_t *pens, u8 *pri, u32 pcode)
         {
-            //const rgb_t *clut = &pens[pcode >> 16];
-            UInt32 clutIdx = pcode >> 16;
+            ListPointer<rgb_t> clut = new ListPointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
 
             // priority case
             if ((pcode & 0xffff) != 0xff00)
             {
                 for (int i = 0; i < count; i++)
                 {
-                    dest.set_uint32(i, pens[(int)(clutIdx + source.get_uint16(i))]);  //dest[i] = clut[source[i]];
-                    pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                    dest[i] = clut[source[i]];
+                    pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
                 }
             }
 
@@ -800,7 +798,7 @@ namespace mame
             else
             {
                 for (int i = 0; i < count; i++)
-                    dest.set_uint32(i, pens[(int)(clutIdx + source.get_uint16(i))]);  // dest[i] = clut[source[i]];
+                    dest[i] = clut[source[i]];
             }
         }
 
@@ -808,20 +806,21 @@ namespace mame
         //  scanline_draw_masked_rgb32 - draw to a 32bpp
         //  RGB bitmap using a mask
         //-------------------------------------------------
-        void scanline_draw_masked_rgb32(RawBufferPointer dest, /*UInt32 *dest,*/ RawBufferPointer source, /*UInt16 *source,*/ ListBytesPointer maskptr, /*byte *maskptr,*/ int mask, int value, int count, ListBase<rgb_t> pens, /*rgb_t *pens,*/ ListBytesPointer pri, /*byte *pri,*/ u32 pcode)
+        void scanline_draw_masked_rgb32(UInt32BufferPointer dest, UInt16BufferPointer source, ListBytesPointer maskptr, int mask, int value, int count, ListBase<rgb_t> pens, ListBytesPointer pri, u32 pcode)  //inline void tilemap_t::scanline_draw_masked_rgb32(u32 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, const rgb_t *pens, u8 *pri, u32 pcode)
         {
-            //const rgb_t *clut = &pens[pcode >> 16];
-            UInt32 clutIdx = pcode >> 16;
+            ListPointer<rgb_t> clut = new ListPointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
 
             // priority case
             if ((pcode & 0xffff) != 0xff00)
             {
                 for (int i = 0; i < count; i++)
+                {
                     if ((maskptr[i] & mask) == value)
                     {
-                        dest.set_uint32(i, pens[(int)(clutIdx + source.get_uint16(i))]);  // dest[i] = clut[source[i]];
-                        pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                        dest[i] = clut[source[i]];
+                        pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
                     }
+                }
             }
 
             // no priority case
@@ -830,7 +829,7 @@ namespace mame
                 for (int i = 0; i < count; i++)
                 {
                     if ((maskptr[i] & mask) == value)
-                        dest.set_uint32(i, pens[(int)(clutIdx + source.get_uint16(i))]);  // dest[i] = clut[source[i]];
+                        dest[i] = clut[source[i]];
                 }
             }
         }
@@ -839,18 +838,17 @@ namespace mame
         //  scanline_draw_opaque_rgb32_alpha - draw to a
         //  32bpp RGB bitmap with alpha blending
         //-------------------------------------------------
-        void scanline_draw_opaque_rgb32_alpha(RawBufferPointer dest, /*UInt32 *dest,*/ RawBufferPointer source, /*UInt16 *source,*/ int count, ListBase<rgb_t> pens, /*rgb_t *pens,*/ ListBytesPointer pri, /*byte *pri,*/ u32 pcode, u8 alpha)
+        void scanline_draw_opaque_rgb32_alpha(UInt32BufferPointer dest, UInt16BufferPointer source, int count, ListBase<rgb_t> pens, ListBytesPointer pri, u32 pcode, u8 alpha)  //inline void tilemap_t::scanline_draw_opaque_rgb32_alpha(u32 *dest, const u16 *source, int count, const rgb_t *pens, u8 *pri, u32 pcode, u8 alpha)
         {
-            //const rgb_t *clut = &pens[pcode >> 16];
-            UInt32 clutIdx = pcode >> 16;
+            ListPointer<rgb_t> clut = new ListPointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
 
             // priority case
             if ((pcode & 0xffff) != 0xff00)
             {
                 for (int i = 0; i < count; i++)
                 {
-                    dest.set_uint32(i, drawgfx_global.alpha_blend_r32(dest.get_uint32(i), pens[(int)(clutIdx + source.get_uint16(i))], alpha));  // dest[i] = alpha_blend_r32(dest[i], clut[source[i]], alpha);
-                    pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                    dest[i] = drawgfx_global.alpha_blend_r32(dest[i], clut[source[i]], alpha);
+                    pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
                 }
             }
 
@@ -858,7 +856,7 @@ namespace mame
             else
             {
                 for (int i = 0; i < count; i++)
-                    dest.set_uint32(i, drawgfx_global.alpha_blend_r32(dest.get_uint32(i), pens[(int)(clutIdx + source.get_uint16(i))], alpha));  // dest[i] = alpha_blend_r32(dest[i], clut[source[i]], alpha);
+                    dest[i] = drawgfx_global.alpha_blend_r32(dest[i], clut[source[i]], alpha);
             }
         }
 
@@ -867,10 +865,9 @@ namespace mame
         //  32bpp RGB bitmap using a mask and alpha
         //  blending
         //-------------------------------------------------
-        void scanline_draw_masked_rgb32_alpha(RawBufferPointer dest, /*UInt32 *dest,*/ RawBufferPointer source, /*UInt16 *source,*/ ListBytesPointer maskptr, /*byte *maskptr,*/ int mask, int value, int count, ListBase<rgb_t> pens, /*rgb_t *pens,*/ ListBytesPointer pri, /*byte *pri,*/ u32 pcode, u8 alpha)
+        void scanline_draw_masked_rgb32_alpha(UInt32BufferPointer dest, UInt16BufferPointer source, ListBytesPointer maskptr, int mask, int value, int count, ListBase<rgb_t> pens, ListBytesPointer pri, u32 pcode, u8 alpha)  //inline void tilemap_t::scanline_draw_masked_rgb32_alpha(u32 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, const rgb_t *pens, u8 *pri, u32 pcode, u8 alpha)
         {
-            //const rgb_t *clut = &pens[pcode >> 16];
-            UInt32 clutIdx = pcode >> 16;
+            ListPointer<rgb_t> clut = new ListPointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
 
             // priority case
             if ((pcode & 0xffff) != 0xff00)
@@ -879,8 +876,8 @@ namespace mame
                 {
                     if ((maskptr[i] & mask) == value)
                     {
-                        dest.set_uint32(i, drawgfx_global.alpha_blend_r32(dest.get_uint32(i), pens[(int)(clutIdx + source.get_uint32(i))], alpha));  // dest[i] = alpha_blend_r32(dest[i], clut[source[i]], alpha);
-                        pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                        dest[i] = drawgfx_global.alpha_blend_r32(dest[i], clut[source[i]], alpha);
+                        pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
                     }
                 }
             }
@@ -891,7 +888,7 @@ namespace mame
                 for (int i = 0; i < count; i++)
                 {
                     if ((maskptr[i] & mask) == value)
-                        dest.set_uint32(i, drawgfx_global.alpha_blend_r32(dest.get_uint32(i), pens[(int)(clutIdx + source.get_uint32(i))], alpha));  // dest[i] = alpha_blend_r32(dest[i], clut[source[i]], alpha);
+                        dest[i] = drawgfx_global.alpha_blend_r32(dest[i], clut[source[i]], alpha);
                 }
             }
         }
@@ -991,7 +988,7 @@ namespace mame
         //-------------------------------------------------
         //  tile_update - update a single dirty tile
         //-------------------------------------------------
-        void tile_update(logical_index logindex, UInt32 col, UInt32 row)
+        void tile_update(logical_index logindex, u32 col, u32 row)
         {
             profiler_global.g_profiler.start(profile_type.PROFILER_TILEMAP_UPDATE);
 
@@ -1001,13 +998,13 @@ namespace mame
             m_tile_get_info(this, ref m_tileinfo, memindex);
 
             // apply the global tilemap flip to the returned flip flags
-            UInt32 flags = (UInt32)(m_tileinfo.flags ^ (m_attributes & 0x03));
+            u32 flags = (UInt32)(m_tileinfo.flags ^ (m_attributes & 0x03));
 
             // draw the tile, using either direct or transparent
-            UInt32 x0 = m_tilewidth * col;
-            UInt32 y0 = m_tileheight * row;
+            u32 x0 = m_tilewidth * col;
+            u32 y0 = m_tileheight * row;
             m_tileflags[logindex] = tile_draw(m_tileinfo.pen_data, x0, y0,
-                m_tileinfo.palette_base, m_tileinfo.category, m_tileinfo.group, (byte)flags, m_tileinfo.pen_mask);
+                m_tileinfo.palette_base, m_tileinfo.category, m_tileinfo.group, (u8)flags, m_tileinfo.pen_mask);
 
             // if mask data is specified, apply it
             if ((flags & (tilemap_global.TILE_FORCE_LAYER0 | tilemap_global.TILE_FORCE_LAYER1 | tilemap_global.TILE_FORCE_LAYER2)) == 0 && m_tileinfo.mask_data != null)
@@ -1058,9 +1055,7 @@ namespace mame
             u8 ormask = 0;
             for (int ty = 0; ty < m_tileheight; ty++)
             {
-                //u16 *pixptr = &m_pixmap.pix16(y0, x0);
-                RawBuffer pixPtrBuf;
-                UInt32 pixPtrOffset = m_pixmap.pix16(out pixPtrBuf, (int)y0, (int)x0);
+                UInt16BufferPointer pixptr = m_pixmap.pix16((int)y0, (int)x0);  //u16 *pixptr = &m_pixmap.pix16(y0, x0);
                 RawBufferPointer flagsptr = m_flagsmap.pix8((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix8(y0, x0);
 
                 // pre-advance to the next row
@@ -1070,18 +1065,18 @@ namespace mame
                 int xoffs = 0;
                 for (u16 tx = 0; tx < m_tilewidth; tx++)
                 {
-                    byte pen = (byte)(pendata[0] & pen_mask);  //u8 pen = (*pendata++) & pen_mask;
+                    u8 pen = (u8)(pendata[0] & pen_mask);  //u8 pen = (*pendata++) & pen_mask;
                     pendata++;
                     u8 map = m_pen_to_flags[penmapOffset + pen] ;  //u8 map = penmap[pen];
-                    pixPtrBuf.set_uint16((int)pixPtrOffset + xoffs, (UInt16)(palette_base + pen));  //pixptr[xoffs] = palette_base + pen;
-                    flagsptr[xoffs] = (byte)(map | category);
+                    pixptr[xoffs] = (u16)(palette_base + pen);
+                    flagsptr[xoffs] = (u8)(map | category);
                     andmask &= map;
                     ormask |= map;
                     xoffs += dx0;
                 }
             }
 
-            return (byte)(andmask ^ ormask);
+            return (u8)(andmask ^ ormask);
         }
 
         //-------------------------------------------------
@@ -1149,8 +1144,6 @@ namespace mame
             blit = new blit_parameters();
 
             // set the target bitmap
-            assert(priority_bitmap.cliprect().contains(cliprect));
-
             blit.priority = priority_bitmap;
             blit.cliprect = cliprect;
 
@@ -1191,7 +1184,18 @@ namespace mame
         //  priority/priority_mask to the priority bitmap
         //-------------------------------------------------
         //template<class _BitmapClass>
-        void draw_common<_BitmapClass, pixel_t>(screen_device screen, _BitmapClass dest, rectangle cliprect, u32 flags, u8 priority, u8 priority_mask) where _BitmapClass : bitmap_t
+        //void tilemap_t::draw_common(screen_device &screen, _BitmapClass &dest, const rectangle &cliprect, u32 flags, u8 priority, u8 priority_mask)
+        void draw_common<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
+        (
+            screen_device screen,
+            _BitmapClass dest,
+            rectangle cliprect,
+            u32 flags,
+            u8 priority,
+            u8 priority_mask
+        )
+            where _BitmapClass : bitmap_specific<_BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
+            where _BitmapClass_PixelTypeBufferPointer : RawBufferPointer
         {
             // skip if disabled
             if (!m_enable)
@@ -1202,6 +1206,8 @@ namespace mame
 
 
             // configure the blit parameters based on the input parameters
+            assert(dest.cliprect().contains(cliprect));
+            assert(screen.cliprect().contains(cliprect));
             blit_parameters blit;
             configure_blit_parameters(out blit, screen.priority(), cliprect, flags, priority, priority_mask);
 
@@ -1222,7 +1228,7 @@ namespace mame
                 for (int ypos = (int)(scrolly - m_height); ypos <= blit.cliprect.bottom(); ypos += (int)m_height)
                 {
                     for (int xpos = (int)(scrollx - m_width); xpos <= blit.cliprect.right(); xpos += (int)m_width)
-                        draw_instance<_BitmapClass, pixel_t>(screen, dest, blit, xpos, ypos);
+                        draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>(screen, dest, blit, xpos, ypos);
                 }
             }
 
@@ -1236,8 +1242,8 @@ namespace mame
                 int scrolly = effective_colscroll(0, yextent);
                 for (int ypos = (int)(scrolly - m_height); ypos <= original_cliprect.bottom(); ypos += (int)m_height)
                 {
-                    int firstrow = Math.Max((original_cliprect.top() - ypos) / rowheight, 0);
-                    int lastrow =  (int)Math.Min((original_cliprect.bottom() - ypos) / rowheight, m_scrollrows - 1);
+                    int firstrow = std.max((original_cliprect.top() - ypos) / rowheight, 0);
+                    int lastrow =  std.min((original_cliprect.bottom() - ypos) / rowheight, (int)m_scrollrows - 1);
 
                     // iterate over rows in the tilemap
                     int nextrow;
@@ -1250,7 +1256,7 @@ namespace mame
                                 break;
 
                         // skip if disabled
-                        if (scrollx == tilemap_global.TILE_LINE_DISABLED)
+                        if ((u32)scrollx == tilemap_global.TILE_LINE_DISABLED)
                             continue;
 
                         // update the cliprect just for this set of rows
@@ -1259,7 +1265,7 @@ namespace mame
 
                         // iterate over X to handle wraparound
                         for (int xpos = (int)(scrollx - m_width); xpos <= original_cliprect.right(); xpos += (int)m_width)
-                            draw_instance<_BitmapClass, pixel_t>(screen, dest, blit, xpos, ypos);
+                            draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>(screen, dest, blit, xpos, ypos);
                     }
                 }
             }
@@ -1284,7 +1290,7 @@ namespace mame
                     }
 
                     // skip if disabled
-                    if (scrolly == tilemap_global.TILE_LINE_DISABLED)
+                    if ((u32)scrolly == tilemap_global.TILE_LINE_DISABLED)
                         continue;
 
                     // iterate over X to handle wraparound
@@ -1296,7 +1302,7 @@ namespace mame
 
                         // iterate over Y to handle wraparound
                         for (int ypos = (int)(scrolly - m_height); ypos <= original_cliprect.bottom(); ypos += (int)m_height)
-                            draw_instance<_BitmapClass, pixel_t>(screen, dest, blit, xpos, ypos);
+                            draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>(screen, dest, blit, xpos, ypos);
                     }
                 }
             }
@@ -1305,7 +1311,9 @@ namespace mame
             profiler_global.g_profiler.stop();
         }
 
+
         //template<class _BitmapClass> void draw_roz_common(screen_device &screen, _BitmapClass &dest, const rectangle &cliprect, UINT32 startx, UINT32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, UINT32 flags, UINT8 priority, UINT8 priority_mask);
+
 
         //-------------------------------------------------
         //  draw_instance - draw a single instance of the
@@ -1313,14 +1321,24 @@ namespace mame
         //  xpos,ypos
         //-------------------------------------------------
         //template<class _BitmapClass>
-        void draw_instance<_BitmapClass, pixel_t>(screen_device screen, _BitmapClass dest, blit_parameters blit, int xpos, int ypos) where _BitmapClass : bitmap_t
+        //void tilemap_t::draw_instance(screen_device &screen, _BitmapClass &dest, const blit_parameters &blit, int xpos, int ypos)
+        void draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
+        (
+            screen_device screen,
+            _BitmapClass dest,
+            blit_parameters blit,
+            int xpos,
+            int ypos
+        )
+            where _BitmapClass : bitmap_specific<_BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
+            where _BitmapClass_PixelTypeBufferPointer : RawBufferPointer
         {
             // clip destination coordinates to the tilemap
             // note that x2/y2 are exclusive, not inclusive
-            int x1 = Math.Max(xpos, blit.cliprect.left());
-            int x2 = Math.Min(xpos + (int)m_width, blit.cliprect.right() + 1);
-            int y1 = Math.Max(ypos, blit.cliprect.top());
-            int y2 = Math.Min(ypos + (int)m_height, blit.cliprect.bottom() + 1);
+            int x1 = std.max(xpos, blit.cliprect.left());
+            int x2 = std.min(xpos + (int)m_width, blit.cliprect.right() + 1);
+            int y1 = std.max(ypos, blit.cliprect.top());
+            int y2 = std.min(ypos + (int)m_height, blit.cliprect.bottom() + 1);
 
             // if totally clipped, stop here
             if (x1 >= x2 || y1 >= y2)
@@ -1328,25 +1346,28 @@ namespace mame
 
             // look up priority and destination base addresses for y1
             bitmap_ind8 priority_bitmap = blit.priority;
-            ListBytesPointer priority_baseaddr = priority_bitmap.pix8(y1, xpos);  //UINT8 *priority_baseaddr = &priority_bitmap.pix8(y1, xpos);
+            ListBytesPointer priority_baseaddr = priority_bitmap.pix8(y1, xpos);  //u8 *priority_baseaddr = &priority_bitmap.pix8(y1, xpos);
+
             //typename _BitmapClass::pixel_t *dest_baseaddr = NULL;
-            RawBuffer dest_baseaddrBuf = null;
-            UInt32 dest_baseaddrBufOffset = 0;
+            RawBufferPointer dest_baseaddr8 = null;
+            UInt16BufferPointer dest_baseaddr16 = null;
+            UInt32BufferPointer dest_baseaddr32 = null;
+            UInt64BufferPointer dest_baseaddr64 = null;
+
             int dest_rowpixels = 0;
             if (dest.valid())
             {
                 dest_rowpixels = dest.rowpixels();
+
                 //dest_baseaddr = dest.pix(y1, xpos);
-                if (typeof(pixel_t) == typeof(byte))
+                switch (dest.bpp())
                 {
-                    RawBufferPointer dest_baseaddrBuf8 = dest.pix8(y1, xpos);
-                    dest_baseaddrBuf = dest_baseaddrBuf8.Buffer;
-                    dest_baseaddrBufOffset = (UInt32)dest_baseaddrBuf8.Offset;
+                    case 8:  dest_baseaddr8 = dest.pix8(y1, xpos); break;
+                    case 16: dest_baseaddr16 = dest.pix16(y1, xpos); break;
+                    case 32: dest_baseaddr32 = dest.pix32(y1, xpos); break;
+                    case 64: dest_baseaddr64 = dest.pix64(y1, xpos); break;
+                    default: throw new emu_fatalerror("draw_instance() - unknown bpp - {0}\n", dest.bpp());
                 }
-                else if (typeof(pixel_t) == typeof(UInt16))
-                    dest_baseaddrBufOffset = dest.pix16(out dest_baseaddrBuf, y1, xpos);
-                else if (typeof(pixel_t) == typeof(UInt32))
-                    dest_baseaddrBufOffset = dest.pix32(out dest_baseaddrBuf, y1, xpos);
             }
 
             // convert screen coordinates to source tilemap coordinates
@@ -1356,10 +1377,8 @@ namespace mame
             y2 -= ypos;
 
             // get tilemap pixels
-            //const UINT16 *source_baseaddr = &m_pixmap.pix16(y1);
-            RawBuffer source_baseaddrBuf;
-            UInt32 source_baseaddrBufOffset = m_pixmap.pix16(out source_baseaddrBuf, y1);
-            ListBytesPointer mask_baseaddr = m_flagsmap.pix8(y1);  //const UINT8 *mask_baseaddr = &m_flagsmap.pix8(y1);
+            UInt16BufferPointer source_baseaddr = m_pixmap.pix16(y1);  //const u16 *source_baseaddr = &m_pixmap.pix16(y1);
+            ListBytesPointer mask_baseaddr = m_flagsmap.pix8(y1);  //const u8 *mask_baseaddr = &m_flagsmap.pix8(y1);
 
             // get start/stop columns, rounding outward
             int mincol = (int)(x1 / m_tilewidth);
@@ -1367,8 +1386,8 @@ namespace mame
 
             // set up row counter
             int y = y1;
-            int nexty = (int)(m_tileheight * (y1 / m_tileheight) + m_tileheight);
-            nexty = Math.Min(nexty, y2);
+            int nexty = m_tileheight * (y1 / m_tileheight) + m_tileheight;
+            nexty = std.min(nexty, y2);
 
             // loop over tilemap rows
             for (;;)
@@ -1402,7 +1421,7 @@ namespace mame
                             cur_trans = trans_t.MASKED;
                         // otherwise, our transparency state is constant across the tile; fetch it
                         else
-                            cur_trans = ((mask_baseaddr[column * (int)m_tilewidth] & blit.mask) == blit.value) ? trans_t.WHOLLY_OPAQUE : trans_t.WHOLLY_TRANSPARENT;
+                            cur_trans = ((mask_baseaddr[column * m_tilewidth] & blit.mask) == blit.value) ? trans_t.WHOLLY_OPAQUE : trans_t.WHOLLY_TRANSPARENT;
                     }
 
                     // if the transparency state is the same as last time, don't render yet
@@ -1411,60 +1430,88 @@ namespace mame
 
                     // compute the end of this run, in pixels
                     x_end = (int)(column * m_tilewidth);
-                    x_end = Math.Max(x_end, x1);
-                    x_end = Math.Min(x_end, x2);
+                    x_end = std.max(x_end, x1);
+                    x_end = std.min(x_end, x2);
 
                     // if we're rendering something, compute the pointers
                     ListBase<rgb_t> clut = m_palette.palette().entry_list_adjusted();  //rgb_t *clut = m_palette.palette().entry_list_adjusted();
                     if (prev_trans != trans_t.WHOLLY_TRANSPARENT)
                     {
-                        //const UINT16 *source0 = source_baseaddr + x_start;
-                        int source0Idx = x_start;
+                        UInt16BufferPointer source0 = source_baseaddr + x_start;  //const u16 *source0 = source_baseaddr + x_start;
+
                         //typename _BitmapClass::pixel_t *dest0 = dest_baseaddr + x_start;
-                        int dest0Idx = x_start;
-                        //UINT8 *pmap0 = priority_baseaddr + x_start;
-                        int pmap0Idx = x_start;
+                        RawBufferPointer dest0_8 = null;
+                        UInt16BufferPointer dest0_16 = null;
+                        UInt32BufferPointer dest0_32 = null;
+                        UInt64BufferPointer dest0_64 = null;
+                        switch (dest.bpp())
+                        {
+                            case 8:  dest0_8 = dest_baseaddr8 + x_start; break;
+                            case 16: dest0_16 = dest_baseaddr16 + x_start; break;
+                            case 32: dest0_32 = dest_baseaddr32 + x_start; break;
+                            case 64: dest0_64 = dest_baseaddr64 + x_start; break;
+                            default: throw new emu_fatalerror("draw_instance() - unknown bpp - {0}\n", dest.bpp());
+                        }
+
+                        ListBytesPointer pmap0 = new ListBytesPointer(priority_baseaddr) + x_start;  //u8 *pmap0 = priority_baseaddr + x_start;
 
                         // if we were opaque, use the opaque renderer
                         if (prev_trans == trans_t.WHOLLY_OPAQUE)
                         {
                             for (int cury = y; cury < nexty; cury++)
                             {
-                                if (dest_baseaddrBuf == null)
-                                    scanline_draw_opaque_null(x_end - x_start, new ListBytesPointer(priority_baseaddr, pmap0Idx), blit.tilemap_priority_code);
-                                else if (typeof(pixel_t) == typeof(UInt16))  // else if (sizeof(*dest0) == 2)
-                                    scanline_draw_opaque_ind16(new RawBufferPointer(dest_baseaddrBuf, (int)dest_baseaddrBufOffset + dest0Idx), new RawBufferPointer(source_baseaddrBuf, (int)source_baseaddrBufOffset + source0Idx), x_end - x_start, new ListBytesPointer(priority_baseaddr, pmap0Idx), blit.tilemap_priority_code);  //scanline_draw_opaque_ind16(reinterpret_cast<UInt16 *>(dest0), source0, x_end - x_start, pmap0, blit.tilemap_priority_code);
-                                else if (typeof(pixel_t) == typeof(UInt32) && blit.alpha >= 0xff)  // else if (sizeof(*dest0) == 4 && blit.alpha >= 0xff)
-                                    scanline_draw_opaque_rgb32(new RawBufferPointer(dest_baseaddrBuf, (int)dest_baseaddrBufOffset + dest0Idx), new RawBufferPointer(source_baseaddrBuf, (int)source_baseaddrBufOffset + source0Idx), x_end - x_start, clut, new ListBytesPointer(priority_baseaddr, pmap0Idx), blit.tilemap_priority_code);  // scanline_draw_opaque_rgb32(reinterpret_cast<UInt32 *>(dest0), source0, x_end - x_start, clut, pmap0, blit.tilemap_priority_code);
-                                else if (typeof(pixel_t) == typeof(UInt32))  // else if (sizeof(*dest0) == 4)
-                                    scanline_draw_opaque_rgb32_alpha(new RawBufferPointer(dest_baseaddrBuf, (int)dest_baseaddrBufOffset + dest0Idx), new RawBufferPointer(source_baseaddrBuf, (int)source_baseaddrBufOffset + source0Idx), x_end - x_start, clut, new ListBytesPointer(priority_baseaddr, pmap0Idx), blit.tilemap_priority_code, blit.alpha);  // scanline_draw_opaque_rgb32_alpha(reinterpret_cast<UINT32 *>(dest0), source0, x_end - x_start, clut, pmap0, blit.tilemap_priority_code, blit.alpha);
+                                if (dest_baseaddr8 == null && dest_baseaddr16 == null && dest_baseaddr32 == null && dest_baseaddr64 == null)  //if (dest_baseaddr == nullptr)
+                                    scanline_draw_opaque_null(x_end - x_start, pmap0, blit.tilemap_priority_code);
+                                else if (dest.bpp() == 16)  // else if (sizeof(*dest0) == 2)
+                                    scanline_draw_opaque_ind16(dest0_16, source0, x_end - x_start, pmap0, blit.tilemap_priority_code);  //scanline_draw_opaque_ind16(reinterpret_cast<u16 *>(dest0), source0, x_end - x_start, pmap0, blit.tilemap_priority_code);
+                                else if (dest.bpp() == 32 && blit.alpha >= 0xff)  // else if (sizeof(*dest0) == 4 && blit.alpha >= 0xff)
+                                    scanline_draw_opaque_rgb32(dest0_32, source0, x_end - x_start, clut, pmap0, blit.tilemap_priority_code);  //scanline_draw_opaque_rgb32(reinterpret_cast<u32 *>(dest0), source0, x_end - x_start, clut, pmap0, blit.tilemap_priority_code);
+                                else if (dest.bpp() == 32)  // else if (sizeof(*dest0) == 4)
+                                    scanline_draw_opaque_rgb32_alpha(dest0_32, source0, x_end - x_start, clut, pmap0, blit.tilemap_priority_code, blit.alpha);  //scanline_draw_opaque_rgb32_alpha(reinterpret_cast<u32 *>(dest0), source0, x_end - x_start, clut, pmap0, blit.tilemap_priority_code, blit.alpha);
 
-                                dest0Idx += dest_rowpixels;
-                                source0Idx += m_pixmap.rowpixels();
-                                pmap0Idx += priority_bitmap.rowpixels();
+                                //dest0 += dest_rowpixels;
+                                switch (dest.bpp())
+                                {
+                                    case 8:  dest0_8 += dest_rowpixels; break;
+                                    case 16: dest0_16 += dest_rowpixels; break;
+                                    case 32: dest0_32 += dest_rowpixels; break;
+                                    case 64: dest0_64 += dest_rowpixels; break;
+                                    default: throw new emu_fatalerror("draw_instance() - unknown bpp - {0}\n", dest.bpp());
+                                }
+
+                                source0 += m_pixmap.rowpixels();
+                                pmap0 += priority_bitmap.rowpixels();
                             }
                         }
                         // otherwise use the masked renderer
                         else
                         {
-                            //const UINT8 *mask0 = mask_baseaddr + x_start;
-                            int mask0Idx = x_start;
+                            ListBytesPointer mask0 = mask_baseaddr + x_start;  //const u8 *mask0 = mask_baseaddr + x_start;
 
                             for (int cury = y; cury < nexty; cury++)
                             {
-                                if (dest_baseaddrBuf == null)
-                                    scanline_draw_masked_null(new ListBytesPointer(mask_baseaddr, mask0Idx), blit.mask, blit.value, x_end - x_start, new ListBytesPointer(priority_baseaddr, pmap0Idx), blit.tilemap_priority_code);  // scanline_draw_masked_null(mask0, blit.mask, blit.value, x_end - x_start, pmap0, blit.tilemap_priority_code);
-                                else if (typeof(pixel_t) == typeof(UInt16))  // else if (sizeof(*dest0) == 2)
-                                    scanline_draw_masked_ind16(new RawBufferPointer(dest_baseaddrBuf, (int)dest_baseaddrBufOffset + dest0Idx), new RawBufferPointer(source_baseaddrBuf, (int)source_baseaddrBufOffset + source0Idx), new ListBytesPointer(mask_baseaddr, mask0Idx), blit.mask, blit.value, x_end - x_start, new ListBytesPointer(priority_baseaddr, pmap0Idx), blit.tilemap_priority_code);  // scanline_draw_masked_ind16(reinterpret_cast<UINT16 *>(dest0), source0, mask0, blit.mask, blit.value, x_end - x_start, pmap0, blit.tilemap_priority_code);
-                                else if (typeof(pixel_t) == typeof(UInt32) && blit.alpha >= 0xff)  // else if (sizeof(*dest0) == 4 && blit.alpha >= 0xff)
-                                    scanline_draw_masked_rgb32(new RawBufferPointer(dest_baseaddrBuf, (int)dest_baseaddrBufOffset + dest0Idx), new RawBufferPointer(source_baseaddrBuf, (int)source_baseaddrBufOffset + source0Idx), new ListBytesPointer(mask_baseaddr, mask0Idx), blit.mask, blit.value, x_end - x_start, clut, new ListBytesPointer(priority_baseaddr, pmap0Idx), blit.tilemap_priority_code);  // scanline_draw_masked_rgb32(reinterpret_cast<UINT32 *>(dest0), source0, mask0, blit.mask, blit.value, x_end - x_start, clut, pmap0, blit.tilemap_priority_code);
-                                else if (typeof(pixel_t) == typeof(UInt32))  // else if (sizeof(*dest0) == 4)
-                                    scanline_draw_masked_rgb32_alpha(new RawBufferPointer(dest_baseaddrBuf, (int)dest_baseaddrBufOffset + dest0Idx), new RawBufferPointer(source_baseaddrBuf, (int)source_baseaddrBufOffset + source0Idx), new ListBytesPointer(mask_baseaddr, mask0Idx), blit.mask, blit.value, x_end - x_start, clut, new ListBytesPointer(priority_baseaddr, pmap0Idx), blit.tilemap_priority_code, blit.alpha);  // scanline_draw_masked_rgb32_alpha(reinterpret_cast<UINT32 *>(dest0), source0, mask0, blit.mask, blit.value, x_end - x_start, clut, pmap0, blit.tilemap_priority_code, blit.alpha);
+                                if (dest_baseaddr8 == null && dest_baseaddr16 == null && dest_baseaddr32 == null && dest_baseaddr64 == null)  //if (dest_baseaddr == nullptr)
+                                    scanline_draw_masked_null(mask0, blit.mask, blit.value, x_end - x_start, pmap0, blit.tilemap_priority_code);
+                                else if (dest.bpp() == 16)  // else if (sizeof(*dest0) == 2)
+                                    scanline_draw_masked_ind16(dest0_16, source0, mask0, blit.mask, blit.value, x_end - x_start, pmap0, blit.tilemap_priority_code);  //scanline_draw_masked_ind16(reinterpret_cast<u16 *>(dest0), source0, mask0, blit.mask, blit.value, x_end - x_start, pmap0, blit.tilemap_priority_code);
+                                else if (dest.bpp() == 32 && blit.alpha >= 0xff)  // else if (sizeof(*dest0) == 4 && blit.alpha >= 0xff)
+                                    scanline_draw_masked_rgb32(dest0_32, source0, mask0, blit.mask, blit.value, x_end - x_start, clut, pmap0, blit.tilemap_priority_code);  //scanline_draw_masked_rgb32(reinterpret_cast<u32 *>(dest0), source0, mask0, blit.mask, blit.value, x_end - x_start, clut, pmap0, blit.tilemap_priority_code);
+                                else if (dest.bpp() == 32)  // else if (sizeof(*dest0) == 4)
+                                    scanline_draw_masked_rgb32_alpha(dest0_32, source0, mask0, blit.mask, blit.value, x_end - x_start, clut, pmap0, blit.tilemap_priority_code, blit.alpha);  //scanline_draw_masked_rgb32_alpha(reinterpret_cast<u32 *>(dest0), source0, mask0, blit.mask, blit.value, x_end - x_start, clut, pmap0, blit.tilemap_priority_code, blit.alpha);
 
-                                dest0Idx += dest_rowpixels;
-                                source0Idx += m_pixmap.rowpixels();
-                                mask0Idx += m_flagsmap.rowpixels();
-                                pmap0Idx += priority_bitmap.rowpixels();
+                                //dest0 += dest_rowpixels;
+                                switch (dest.bpp())
+                                {
+                                    case 8:  dest0_8 += dest_rowpixels; break;
+                                    case 16: dest0_16 += dest_rowpixels; break;
+                                    case 32: dest0_32 += dest_rowpixels; break;
+                                    case 64: dest0_64 += dest_rowpixels; break;
+                                    default: throw new emu_fatalerror("draw_instance() - unknown bpp - {0}\n", dest.bpp());
+                                }
+
+                                source0 += m_pixmap.rowpixels();
+                                mask0 += m_flagsmap.rowpixels();
+                                pmap0 += priority_bitmap.rowpixels();
                             }
                         }
                     }
@@ -1479,17 +1526,27 @@ namespace mame
                     break;
 
                 // advance to the next row on all our bitmaps
-                priority_baseaddr += (UInt32)(priority_bitmap.rowpixels() * (nexty - y));
-                source_baseaddrBufOffset += (UInt32)(m_pixmap.rowpixels() * (nexty - y));  // source_baseaddr += m_pixmap.rowpixels() * (nexty - y);
-                mask_baseaddr += (UInt32)(m_flagsmap.rowpixels() * (nexty - y));
-                dest_baseaddrBufOffset += (UInt32)(dest_rowpixels * (nexty - y));  // dest_baseaddr += dest_rowpixels * (nexty - y);
+                priority_baseaddr += priority_bitmap.rowpixels() * (nexty - y);
+                source_baseaddr += m_pixmap.rowpixels() * (nexty - y);
+                mask_baseaddr += m_flagsmap.rowpixels() * (nexty - y);
+
+                //dest_baseaddr += dest_rowpixels * (nexty - y);
+                switch (dest.bpp())
+                {
+                    case 8:  dest_baseaddr8 += dest_rowpixels * (nexty - y); break;
+                    case 16: dest_baseaddr16 += dest_rowpixels * (nexty - y); break;
+                    case 32: dest_baseaddr32 += dest_rowpixels * (nexty - y); break;
+                    case 64: dest_baseaddr64 += dest_rowpixels * (nexty - y); break;
+                    default: throw new emu_fatalerror("draw_instance() - unknown bpp - {0}\n", dest.bpp());
+                }
 
                 // increment the Y counter
                 y = nexty;
                 nexty += (int)m_tileheight;
-                nexty = Math.Min(nexty, y2);
+                nexty = std.min(nexty, y2);
             }
         }
+
 
         //template<class _BitmapClass> void draw_roz_core(screen_device &screen, _BitmapClass &destbitmap, const blit_parameters &blit, UINT32 startx, UINT32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound);
     }
@@ -1572,7 +1629,7 @@ namespace mame
                 case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_X:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_x, tilewidth, tileheight, cols, rows));
                 case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_Y:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_y, tilewidth, tileheight, cols, rows));
                 case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_XY: return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_xy, tilewidth, tileheight, cols, rows));
-                default: throw new emu_fatalerror("Tilemap manager create unknown mapper {0}", mapper);
+                default: throw new emu_fatalerror("Tilemap manager create unknown mapper {0}\n", mapper);
             }
         }
 

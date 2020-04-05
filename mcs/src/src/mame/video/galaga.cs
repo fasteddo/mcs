@@ -634,13 +634,9 @@ namespace mame
 
                         if (cliprect.contains(x, y))
                         {
-                            //bitmap.pix16(y, x) = STARS_COLOR_BASE + m_star_seed_tab[ star_cntr ].col;
-                            RawBuffer bitmapBuffer;
-                            UInt32 bitmapBufferOffset = bitmap.pix16(out bitmapBuffer, y, x);
-                            bitmapBuffer.set_uint16((int)bitmapBufferOffset, (UInt16)(STARS_COLOR_BASE + s_star_seed_tab[ star_cntr ].col));
+                            bitmap.pix16(y, x)[0] = (uint16_t)(STARS_COLOR_BASE + s_star_seed_tab[star_cntr].col);
                         }
                     }
-
                 }
             }
         }

@@ -984,8 +984,7 @@ cancel:
             // loop over rows in the cell
             for (y = 0; y < height; y++)
             {
-                RawBuffer destBuffer;
-                UInt32 destOffset = bitmap.pix32(out destBuffer, dsty + y, dstx);  //uint32_t *dest = &bitmap.pix32(dsty + y, dstx);
+                UInt32BufferPointer dest = bitmap.pix32(dsty + y, dstx);  //uint32_t *dest = &bitmap.pix32(dsty + y, dstx);
                 ListBytesPointer src = gfx.get_data((UInt32)index);  //const uint8_t *src = gfx.get_data(index);
 
                 // loop over columns in the cell
@@ -1013,11 +1012,10 @@ cancel:
                     }
 
                     // get a pointer to the start of this source row
-                    s = new ListBytesPointer(src, effy * (int)gfx.rowbytes());  //s = src + effy * gfx.rowbytes();
+                    s = src + effy * (int)gfx.rowbytes();
 
                     // extract the pixel
-                    destBuffer.set_uint32((int)destOffset, 0xff000000 | palette[s[effx]]);  // *dest++ = 0xff000000 | palette[s[effx]];
-                    destOffset++;
+                    dest[0] = 0xff000000 | palette[s[effx]];  dest++;  //*dest++ = 0xff000000 | palette[s[effx]];
                 }
             }
         }

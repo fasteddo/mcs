@@ -685,7 +685,7 @@ namespace mame
         bool effective_throttle()
         {
             // if we're paused, or if the UI is active, we always throttle
-            if (machine().paused())  // || machine().ui().is_menu_active())
+            if (machine().paused() && !machine().options().update_in_pause()) //|| machine().ui().is_menu_active())
                 return true;
 
             // if we're fast forwarding, we don't throttle
@@ -1147,19 +1147,15 @@ namespace mame
             primlist.acquire_lock();
             if (machine().options().snap_bilinear())
             {
-                //typedef software_renderer<UINT32, 0,0,0, 16,8,0, false, true> snap_renderer_bilinear;
-                //snap_renderer_bilinear.draw_primitives(primlist, &m_snap_bitmap.pix32(0), width, height, m_snap_bitmap.rowpixels());
-                RawBuffer m_snap_bitmapBuf;
-                UInt32 m_snap_bitmapOffset = m_snap_bitmap.pix32(out m_snap_bitmapBuf, 0);
-                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, true), primlist, new RawBufferPointer(m_snap_bitmapBuf), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
+                //typedef software_renderer<u32, 0,0,0, 16,8,0, false, true> snap_renderer_bilinear;
+                //snap_renderer_bilinear::draw_primitives(primlist, &m_snap_bitmap.pix32(0), width, height, m_snap_bitmap.rowpixels());
+                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, true), primlist, m_snap_bitmap.pix32(0), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
             }
             else
             {
-                //typedef software_renderer<UINT32, 0,0,0, 16,8,0, false, false> snap_renderer;
-                //snap_renderer.draw_primitives(primlist, &m_snap_bitmap.pix32(0), width, height, m_snap_bitmap.rowpixels());
-                RawBuffer m_snap_bitmapBuf;
-                UInt32 m_snap_bitmapOffset = m_snap_bitmap.pix32(out m_snap_bitmapBuf, 0);
-                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, false), primlist, new RawBufferPointer(m_snap_bitmapBuf), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
+                //typedef software_renderer<u32, 0,0,0, 16,8,0, false, false> snap_renderer;
+                //snap_renderer::draw_primitives(primlist, &m_snap_bitmap.pix32(0), width, height, m_snap_bitmap.rowpixels());
+                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, false), primlist, m_snap_bitmap.pix32(0), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
             }
             primlist.release_lock();
         }

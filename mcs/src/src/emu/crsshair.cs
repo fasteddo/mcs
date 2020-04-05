@@ -238,21 +238,15 @@ namespace mame
                 for (y = 0; y < CROSSHAIR_RAW_SIZE / 2; y++)
                 {
                     /* assume it is mirrored vertically */
-                    //u32 *dest0 = &m_bitmap->pix32(y);
-                    RawBuffer dest0Buf;
-                    UInt32 dest0Offset = m_bitmap.pix32(out dest0Buf, y);
-                    //u32 *dest1 = &m_bitmap->pix32(CROSSHAIR_RAW_SIZE - 1 - y);
-                    RawBuffer dest1Buf;
-                    UInt32 dest1Offset = m_bitmap.pix32(out dest1Buf, CROSSHAIR_RAW_SIZE - 1 - y);
+                    UInt32BufferPointer dest0 = m_bitmap.pix32(y);  //u32 *dest0 = &m_bitmap->pix32(y);
+                    UInt32BufferPointer dest1 = m_bitmap.pix32(CROSSHAIR_RAW_SIZE - 1 - y);  //u32 *dest1 = &m_bitmap->pix32(CROSSHAIR_RAW_SIZE - 1 - y);
 
                     /* extract to two rows simultaneously */
                     for (x = 0; x < CROSSHAIR_RAW_SIZE; x++)
                     {
                         if (((crosshair_raw_top[y * CROSSHAIR_RAW_ROWBYTES + x / 8] << (x % 8)) & 0x80) != 0)
                         {
-                            //dest0[x] = dest1[x] = new rgb_t(0xff,0x00,0x00,0x00) | color;
-                            dest0Buf.set_uint32((int)dest0Offset + x, new rgb_t(0xff,0x00,0x00,0x00) | color);
-                            dest1Buf.set_uint32((int)dest1Offset + x, new rgb_t(0xff,0x00,0x00,0x00) | color);
+                            dest0[x] = dest1[x] = new rgb_t(0xff,0x00,0x00,0x00) | color;
                         }
                     }
                 }

@@ -110,7 +110,7 @@ namespace mame
         public texture_format texformat() { return m_texformat; }
         //bool valid() const { return live().valid(); }
         //palette_t *palette() const { return live().palette(); }
-        //const rectangle &cliprect() const { return live().cliprect(); }
+        public rectangle cliprect() { return live().cliprect(); }
 
 
         // operations
@@ -406,7 +406,7 @@ namespace mame
         public int width() { return m_width; }
         public int height() { return m_height; }
         public rectangle visible_area() { return m_visarea; }
-        //const rectangle &cliprect() const { return m_bitmap[0].cliprect(); }
+        public rectangle cliprect() { return m_bitmap[0].cliprect(); }
         bool oldstyle_vblank_supplied() { return m_oldstyle_vblank_supplied; }
         attoseconds_t refresh_attoseconds() { return m_refresh; }
         attoseconds_t vblank_attoseconds() { return m_vblank; }
@@ -427,6 +427,7 @@ namespace mame
 
         public void set_raw(u32 pixclock, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart)
         {
+            assert(pixclock != 0);
             clock_set(pixclock);
             m_refresh = attotime.HZ_TO_ATTOSECONDS(pixclock) * htotal * vtotal;
             m_vblank = m_refresh / vtotal * (vtotal - (vbstart - vbend));

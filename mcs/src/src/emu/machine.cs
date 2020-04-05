@@ -446,6 +446,7 @@ namespace mame
         public machine_phase phase() { return m_current_phase; }
         public bool paused() { return m_paused || (m_current_phase != machine_phase.RUNNING); }
         public bool exit_pending() { return m_exit_pending; }
+        bool hard_reset_pending() { return m_hard_reset_pending; }
         public bool ui_active() { return m_ui_active; }
         public string basename() { return m_basename; }
         public int sample_rate() { return m_sample_rate; }
@@ -495,7 +496,8 @@ namespace mame
                 {
                     m_logfile = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                     osd_file.error filerr = m_logfile.open("error.log");
-                    assert_always(filerr == osd_file.error.NONE, "unable to open log file");
+                    if (filerr != osd_file.error.NONE)
+                        throw new emu_fatalerror("running_machine::run: unable to open log file");
 
                     //using namespace std::placeholders;
                     add_logerror_callback(logfile_callback);
@@ -681,7 +683,8 @@ namespace mame
         //-------------------------------------------------
         public void add_notifier(machine_notification notification_event, machine_notify_delegate callback, bool first = false)
         {
-            assert_always(m_current_phase == machine_phase.INIT, "Can only call add_notifier at init time!");
+            if (m_current_phase != machine_phase.INIT)
+                throw new emu_fatalerror("Can only call running_machine::add_notifier at init time!");
 
             if (first)
                 m_notifier_list[(int)notification_event].push_front(new notifier_callback_item(callback));
@@ -711,7 +714,9 @@ namespace mame
         //-------------------------------------------------
         public void add_logerror_callback(logerror_callback callback)
         {
-            assert_always(m_current_phase == machine_phase.INIT, "Can only call add_logerror_callback at init time!");
+            if (m_current_phase != machine_phase.INIT)
+                throw new emu_fatalerror("Can only call running_machine::add_logerror_callback at init time!");
+
             //m_string_buffer.reserve(1024);
             m_logerror_list.push_back(new logerror_callback_item(callback));
         }

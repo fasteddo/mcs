@@ -163,8 +163,9 @@ namespace mame.ui
         {
             //dip_descriptor *    next;
             //const char *        name;
-            //UINT32              mask;
-            //UINT32              state;
+            //device_t *          owner;
+            //uint32_t            mask;
+            //uint32_t            state;
         }
 
 

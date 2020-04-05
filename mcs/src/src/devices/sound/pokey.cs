@@ -761,8 +761,7 @@ namespace mame
                 m_IRQST |=  (byte)(param & 0xff);
                 break;
             default:
-                assert_always(false, "Unknown id in pokey_device::device_timer");
-                break;
+                throw new emu_fatalerror("Unknown id in pokey_device::device_timer");
             }
         }
 

@@ -70,7 +70,7 @@ namespace mame
         // getters
         public object baseptr() { return m_base; }  //void *base() const { return m_base; }
         u32 bytes() { return m_bytes; }
-        int membits() { return m_membits; }
+        public int membits() { return m_membits; }
         endianness_t endianness() { return m_endianness; }
         public int bytes_per_entry() { return m_bytes_per_entry; }
 

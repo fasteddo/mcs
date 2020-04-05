@@ -114,12 +114,6 @@ namespace mame
             Debug.Assert(condition, message);
         }
 
-        public static void assert_always(bool condition, string message)
-        {
-            // Trace asserts are enabled in Release builds, unlike Debug.Assert()
-            Trace.Assert(condition, message);
-        }
-
 
         // macros to convert radians to degrees and degrees to radians
         //template <typename T> constexpr auto RADIAN_TO_DEGREE(T const &x) { return (180.0 / M_PI) * x; }

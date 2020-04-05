@@ -278,8 +278,7 @@ namespace mame
     // render_texinfo - texture information
     public class render_texinfo
     {
-        public RawBuffer base_;  //void *              base;               // base of the data
-        public u32 baseOffset;
+        public RawBufferPointer base_;  //void *              base;               // base of the data
         public u32 rowpixels;          // pixels per row
         public u32 width;              // width of the image
         public u32 height;             // height of the image
@@ -817,8 +816,7 @@ namespace mame
 
                 // add a reference and set up the source bitmap
                 primlist.add_reference(m_bitmap);
-                texinfo.base_ = m_bitmap.raw_pixptr(m_sbounds.top(), m_sbounds.left()).Buffer;
-                texinfo.baseOffset = (UInt32)m_bitmap.raw_pixptr(m_sbounds.top(), m_sbounds.left()).Offset;
+                texinfo.base_ = m_bitmap.raw_pixptr(m_sbounds.top(), m_sbounds.left());
                 texinfo.rowpixels = (UInt32)m_bitmap.rowpixels();
                 texinfo.width = (UInt32)swidth;
                 texinfo.height = (UInt32)sheight;
@@ -855,7 +853,8 @@ namespace mame
                         if ((lowest == -1 || m_scaled[scalenum].seqid < m_scaled[lowest].seqid) && !primlist.has_reference(m_scaled[scalenum].bitmap))
                             lowest = scalenum;
 
-                    //assert_always(lowest != -1, "Too many live texture instances!");
+                    if (-1 == lowest)
+                        throw new emu_fatalerror("render_texture::get_scaled: Too many live texture instances!");
 
                     // throw out any existing entries
                     scaled = m_scaled[lowest];
@@ -876,7 +875,7 @@ namespace mame
 
                 // finally fill out the new info
                 primlist.add_reference(scaled.bitmap);
-                texinfo.baseOffset = scaled.bitmap.pix32(out texinfo.base_, 0);
+                texinfo.base_ = scaled.bitmap.raw_pixptr(0);  //texinfo.base = &scaled->bitmap->pix32(0);
                 texinfo.rowpixels = (UInt32)scaled.bitmap.rowpixels();
                 texinfo.width = dwidth;
                 texinfo.height = dheight;
@@ -2317,7 +2316,6 @@ namespace mame
                 prim.full_bounds = prim.bounds;
                 rendutil_global.set_render_color(prim.color, 1.0f, 1.0f, 1.0f, 1.0f);
                 prim.texture.base_ = null;
-                prim.texture.baseOffset = 0;
                 prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
                 list.append(prim);
 
@@ -2328,7 +2326,6 @@ namespace mame
                     prim.full_bounds = prim.bounds;
                     rendutil_global.set_render_color(prim.color, 1.0f, 0.0f, 0.0f, 0.0f);
                     prim.texture.base_ = null;
-                    prim.texture.baseOffset = 0;
                     prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
                     list.append(prim);
                 }
@@ -3358,7 +3355,8 @@ namespace mame
                             m_clear_extents[extIdx + m_clear_extents[extIdx + 1] + 2 + i] = m_clear_extents[extIdx + i];
 
                         lastIdx += m_clear_extents[extIdx + 1] + 2;
-                        //assert_always(last < max, "Ran out of clear extents!\n");
+                        if (lastIdx >= maxIdx)  //if (last >= max)
+                            throw new emu_fatalerror("render_target::remove_clear_extent: Ran out of clear extents!");
 
                         // split the extent between pieces
                         m_clear_extents[extIdx + m_clear_extents[extIdx + 1] + 2] = -(-m_clear_extents[extIdx] - diff);  // ext[ext[1] + 2] = -(-ext[0] - diff);
@@ -3381,7 +3379,8 @@ namespace mame
                             m_clear_extents[extIdx + m_clear_extents[extIdx + 1] + 2 + i] = m_clear_extents[extIdx + i];
 
                         lastIdx += m_clear_extents[extIdx + 1] + 2;  // last += ext[1] + 2;
-                        //assert_always(last < max, "Ran out of clear extents!\n");
+                        if (lastIdx >= maxIdx)  //if (last >= max)
+                            throw new emu_fatalerror("render_target::remove_clear_extent: Ran out of clear extents!");
 
                         // split the extent between pieces
                         m_clear_extents[extIdx + m_clear_extents[extIdx + 1] + 2] = -diff;  // ext[ext[1] + 2] = -diff;
@@ -3409,7 +3408,8 @@ namespace mame
 
                             lastIdx += 2;
                             linelastIdx += 2;
-                            //assert_always(last < max, "Ran out of clear extents!\n");
+                            if (lastIdx >= maxIdx)  //if (last >= max)
+                                throw new emu_fatalerror("render_target::remove_clear_extent: Ran out of clear extents!");
 
                             // split this extent into three parts
                             m_clear_extents[xextIdx] = boundsx0 - x0;  // xext[0] = boundsx0 - x0;
@@ -3496,7 +3496,6 @@ namespace mame
                         prim.full_bounds = prim.bounds;
                         rendutil_global.set_render_color(prim.color, 1.0f, 1.0f, 1.0f, 0.0f);
                         prim.texture.base_ = null;
-                        prim.texture.baseOffset = 0;
                         prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
                         clearlist.append(prim);
                     }
@@ -3550,7 +3549,6 @@ namespace mame
                             // RGB multiply will multiply against 0, leaving nothing
                             rendutil_global.set_render_color(prim.color, 1.0f, 0.0f, 0.0f, 0.0f);
                             prim.texture.base_ = null;
-                            prim.texture.baseOffset = 0;
                             prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE);
                         }
                         else

@@ -352,7 +352,7 @@ namespace mame
         //void clear_error();
 
 
-        //void check_for_file() { assert_always(m_file != NULL, "Illegal operation on unmounted image"); }
+        //void check_for_file() const { if (!m_file) throw emu_fatalerror("%s(%s): Illegal operation on unmounted image", device().shortname(), device().tag()); }
 
 
         //void setup_working_directory();

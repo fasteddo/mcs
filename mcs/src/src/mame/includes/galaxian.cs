@@ -87,7 +87,6 @@ namespace mame
         int m_numspritegens;
         //int m_counter_74ls161[2];
         //int m_direction[2];
-        //uint8_t m_gmgalax_selected_game;
         //uint8_t m_zigzag_ay8910_latch;
         //uint8_t m_kingball_speech_dip;
         //uint8_t m_kingball_sound;

@@ -332,7 +332,9 @@ namespace mame
         //-------------------------------------------------
         public input_item_id add_item(string name, input_item_id itemid, item_get_state_func getstate, object internal_obj = null)
         {
-            assert_always(machine().phase() == machine_phase.INIT, "Can only call input_device::add_item at init time!");
+            if (machine().phase() != machine_phase.INIT)
+                throw new emu_fatalerror("Can only call input_device::add_item at init time!");
+
             assert(name != null);
             assert(itemid > input_item_id.ITEM_ID_INVALID && itemid < input_item_id.ITEM_ID_MAXIMUM);
             assert(getstate != null);
@@ -569,7 +571,9 @@ namespace mame
         //-------------------------------------------------
         public input_device add_device(string name, string id, object internal_object = null)
         {
-            assert_always(machine().phase() == machine_phase.INIT, "Can only call input_class::add_device at init time!");
+            if (machine().phase() != machine_phase.INIT)
+                throw new emu_fatalerror("Can only call input_class::add_device at init time!");
+
             assert(name != null);
             assert(id != null);
 

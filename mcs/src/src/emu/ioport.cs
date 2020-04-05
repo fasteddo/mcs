@@ -25,14 +25,14 @@ namespace mame
 
 
     // I/O port callback function delegates
-    //typedef device_delegate<ioport_value (ioport_field &, void *)> ioport_field_read_delegate;
-    public delegate ioport_value ioport_field_read_delegate(ioport_field field, object param);
+    //typedef device_delegate<ioport_value ()> ioport_field_read_delegate;
+    public delegate ioport_value ioport_field_read_delegate();
 
     //typedef device_delegate<void (ioport_field &, u32, ioport_value, ioport_value)> ioport_field_write_delegate;
     public delegate void ioport_field_write_delegate(ioport_field field, u32 param, ioport_value param1, ioport_value param2);
 
-    //typedef device_delegate<float (ioport_field &, float)> ioport_field_crossmap_delegate;
-    public delegate float ioport_field_crossmap_delegate(ioport_field field, float param);
+    //typedef device_delegate<float (float)> ioport_field_crossmap_delegate;
+    public delegate float ioport_field_crossmap_delegate(float param);
 
 
     // sequence types for input_port_seq() call
@@ -865,22 +865,25 @@ namespace mame
         //define PORT_INVERT             configurer.field_set_analog_invert();
 
         // read callbacks
-        public static void PORT_CUSTOM_MEMBER(ioport_configurer configurer, string device, ioport_field_read_delegate callback, Object param) { configurer.field_set_dynamic_read(callback, param); }  //define PORT_CUSTOM_MEMBER(_device, _class, _member, _param) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)NULL), (void *)(_param));
+        public static void PORT_CUSTOM_MEMBER(ioport_configurer configurer, string device, ioport_field_read_delegate callback) { configurer.field_set_dynamic_read(callback); }  //#define PORT_CUSTOM_MEMBER(_class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
+        //#define PORT_CUSTOM_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)nullptr));
 
         // write callbacks
         //#define PORT_CHANGED_MEMBER(_device, _class, _member, _param) configurer.field_set_dynamic_write(ioport_field_write_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)nullptr), (_param));
 
         // input device handler
         public delegate int PORT_READ_LINE_DEVICE_MEMBER_delegate();
-        public static void PORT_READ_LINE_DEVICE_MEMBER(ioport_configurer configurer, string device, PORT_READ_LINE_DEVICE_MEMBER_delegate _member)  //PORT_READ_LINE_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate([](_class &device, ioport_field &field, void *param)->ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; } , #_class "::" #_member, _device, (_class *)nullptr));
+        //#define PORT_READ_LINE_MEMBER(_class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate([](_class &device)->ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; } , #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
+        public static void PORT_READ_LINE_DEVICE_MEMBER(ioport_configurer configurer, string device, PORT_READ_LINE_DEVICE_MEMBER_delegate _member)  //define PORT_READ_LINE_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate([](_class &device)->ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; } , #_class "::" #_member, _device, (_class *)nullptr));
         {
-            configurer.field_set_dynamic_read((field, param) =>
+            configurer.field_set_dynamic_read(() =>
             {
                 return (_member() & 1) != 0 ? ~(ioport_value)0 : 0;
             });
         }
 
         // output device handler
+        //#define PORT_WRITE_LINE_MEMBER(_class, _member) configurer.field_set_dynamic_write(ioport_field_write_delegate([](_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }, #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
         //#define PORT_WRITE_LINE_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_write(ioport_field_write_delegate([](_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }, #_class "::" #_member, _device, (_class *)nullptr));
 
         // dip switch definition
@@ -935,17 +938,16 @@ namespace mame
         public static char32_t UCHAR_MAMEKEY(char32_t code) { return UCHAR_MAMEKEY_BEGIN + code; }  //#define UCHAR_MAMEKEY(code) (UCHAR_MAMEKEY_BEGIN + ITEM_ID_##code)
 
         // macro for a read callback function (PORT_CUSTOM)
-        //#define CUSTOM_INPUT_MEMBER(name)   ioport_value name(ioport_field &field, void *param)
-        //#define DECLARE_CUSTOM_INPUT_MEMBER(name)   ioport_value name(ioport_field &field, void *param)
+        //#define CUSTOM_INPUT_MEMBER(name)   ioport_value name()
+        //#define DECLARE_CUSTOM_INPUT_MEMBER(name)   ioport_value name()
 
         // macro for port write callback functions (PORT_CHANGED)
         //#define INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, u32 param, ioport_value oldval, ioport_value newval)
         //#define DECLARE_INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, u32 param, ioport_value oldval, ioport_value newval)
 
         // macro for port changed callback functions (PORT_CROSSHAIR_MAPPER)
-        //#define CROSSHAIR_MAPPER(name)  float name(device_t &device, ioport_field &field, float linear_value)
-        //#define CROSSHAIR_MAPPER_MEMBER(name)   float name(ioport_field &field, float linear_value)
-        //#define DECLARE_CROSSHAIR_MAPPER_MEMBER(name)   float name(ioport_field &field, float linear_value)
+        //#define CROSSHAIR_MAPPER_MEMBER(name)   float name(float linear_value)
+        //#define DECLARE_CROSSHAIR_MAPPER_MEMBER(name)   float name(float linear_value)
 
         // macro for wrapping a default string
         public static string DEF_STR(INPUT_STRING str_num) { return input_port_default_strings[str_num]; }  //#define DEF_STR(str_num) ((const char *)INPUT_STRING_##str_num)
@@ -1508,7 +1510,6 @@ namespace mame
         string m_name;             // user-friendly name to display
         input_seq [] m_seq = new input_seq[(int)input_seq_type.SEQ_TYPE_TOTAL];// sequences of all types
         public ioport_field_read_delegate m_read;             // read callback routine
-        public object m_read_param;  //void *                      m_read_param;       // parameter for read callback routine
         ioport_field_write_delegate m_write;            // write callback routine
         u32 m_write_param;  // parameter for write callback routine
 
@@ -1550,7 +1551,6 @@ namespace mame
             m_flags = 0;
             m_impulse = 0;
             m_name = name;
-            m_read_param = null;
             m_write_param = 0;
             m_digital_value = false;
             m_min = 0;
@@ -1710,7 +1710,6 @@ namespace mame
         }
 
         public ioport_field_read_delegate get_read() { return m_read; }
-        public object get_read_param() { return m_read_param; }
         public ioport_field_write_delegate get_write() { return m_write; }
         public u32 get_write_param() { return m_write_param; }
         public bool has_dynamic_read() { return m_read != null; }
@@ -1937,7 +1936,7 @@ namespace mame
 
             // apply custom mapping if necessary
             if (m_crosshair_mapper != null)
-                value = m_crosshair_mapper(this, (float)value);
+                value = m_crosshair_mapper((float)value);
 
             // handle X axis
             if (m_crosshair_axis == crosshair_axis_t.CROSSHAIR_AXIS_X)
@@ -2409,7 +2408,8 @@ namespace mame
         //-------------------------------------------------
         public ioport_value read()
         {
-            //assert_always(manager().safe_to_read(), "Input ports cannot be read at init time!");
+            if (!manager().safe_to_read())
+                throw new emu_fatalerror("Input ports cannot be read at init time!");
 
             // start with the digital state
             ioport_value result = m_live.digital;
@@ -3160,7 +3160,7 @@ namespace mame
                 return;
 
             // call the callback to read a new value
-            ioport_value newval = m_field.get_read()(m_field, m_field.get_read_param());
+            ioport_value newval = m_field.get_read()();
             m_oldval = newval;
 
             // merge in the bits (don't invert yet, as all digitals are inverted together)
@@ -3398,7 +3398,7 @@ namespace mame
         //ioport_configurer field_set_analog_wraps() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_WRAPS; }
         //ioport_configurer field_set_remap_table(const ioport_value *table) { m_curfield->m_remap_table = table; }
         //ioport_configurer field_set_analog_invert() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_INVERT; }
-        public ioport_configurer field_set_dynamic_read(ioport_field_read_delegate callback, Object param = null) { m_curfield.m_read = callback; m_curfield.m_read_param = param; return this; }
+        public ioport_configurer field_set_dynamic_read(ioport_field_read_delegate callback) { m_curfield.m_read = callback; return this; }
         //ioport_configurer& field_set_dynamic_write(ioport_field_write_delegate delegate, u32 param = 0) { m_curfield->m_write = delegate; m_curfield->m_write_param = param; return *this; }
         public ioport_configurer field_set_diplocation(string location) { m_curfield.expand_diplocation(location, ref m_errorbuf); return this; }
 
@@ -3616,7 +3616,7 @@ namespace mame
         // getters
         running_machine machine() { return m_machine; }
         public ioport_list ports() { return m_portlist; }
-        bool safe_to_read() { return m_safe_to_read; }
+        public bool safe_to_read() { return m_safe_to_read; }
         public natural_keyboard natkeyboard() { assert(m_natkeyboard != null);  return m_natkeyboard; }
 
 
@@ -3984,7 +3984,14 @@ namespace mame
 
             // open the playback file
             osd_file.error filerr = m_playback_file.open(filename);
-            assert_always(filerr == osd_file.error.NONE, "Failed to open file for playback");
+
+            // return an explicit error if file isn't found in given path
+            if (filerr == osd_file.error.NOT_FOUND)
+                fatalerror("Input file {0} not found\n", filename);
+
+            // TODO: bail out any other error laconically for now
+            if (filerr != osd_file.error.NONE)
+                fatalerror("Failed to open file {0} for playback (code error={1})\n", filename, (int)filerr);
 
             // read the header and verify that it is a modern version; if not, print an error
             inp_header header = new inp_header();
@@ -4097,7 +4104,8 @@ namespace mame
 
             // open the record file
             osd_file.error filerr = m_record_file.open(filename);
-            assert_always(filerr == osd_file.error.NONE, "Failed to open file for recording");
+            if (filerr != osd_file.error.NONE)
+                throw new emu_fatalerror("ioport_manager::record_init: Failed to open file for recording");
 
             // get the base time
             system_time systime;
@@ -4147,16 +4155,19 @@ namespace mame
             if (m_record_file.is_open())
             {
                 // first the absolute time
+                //record_write(curtime.seconds());
                 RawBufferPointer secondsBuf = new RawBufferPointer(new RawBuffer(4));
-                secondsBuf.set_uint32_offs8((UInt32)curtime.seconds());
+                secondsBuf.set_uint32(0, (UInt32)curtime.seconds());
                 record_write(secondsBuf);
+                //record_write(curtime.attoseconds());
                 RawBufferPointer attosecondsBuf = new RawBufferPointer(new RawBuffer(8));
-                attosecondsBuf.set_uint64_offs8((UInt64)curtime.attoseconds());
+                attosecondsBuf.set_uint64(0, (UInt64)curtime.attoseconds());
                 record_write(attosecondsBuf);
 
                 // then the current speed
+                //record_write(u32(machine().video().speed_percent() * double(1 << 20)));
                 RawBufferPointer speedBuf = new RawBufferPointer(new RawBuffer(4));
-                speedBuf.set_uint32_offs8((UInt32)(machine().video().speed_percent() * (double)(1 << 20)));
+                speedBuf.set_uint32(0, (UInt32)(machine().video().speed_percent() * (double)(1 << 20)));
                 record_write(speedBuf);
             }
 
@@ -4299,7 +4310,8 @@ namespace mame
             osd_printf_info("Record input timecode file: {0}\n", record_filename);
 
             osd_file.error filerr = m_timecode_file.open(filename);
-            assert_always(filerr == osd_file.error.NONE, "Failed to open file for input timecode recording");
+            if (filerr != osd_file.error.NONE)
+                throw new emu_fatalerror("ioport_manager::timecode_init: Failed to open file for input timecode recording");
 
             m_timecode_file.puts("# ==========================================\n");
             m_timecode_file.puts("# TIMECODE FILE FOR VIDEO PREVIEW GENERATION\n");

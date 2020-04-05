@@ -76,7 +76,7 @@ namespace mame
         static readonly options_entry [] s_option_entries = new options_entry []
         {
             new options_entry(null,                                   null,              OPTION_HEADER,    "OSD KEYBOARD MAPPING OPTIONS"),
-#if SDLMAME_MACOSX
+#if false//#if defined(SDLMAME_MACOSX) || defined(OSD_MAC)
             new options_entry(OSDOPTION_UIMODEKEY,                    "DEL",             OPTION_STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
 #else
             new options_entry(OSDOPTION_UIMODEKEY,                    "SCRLOCK",         OPTION_STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
@@ -415,6 +415,7 @@ namespace mame
             //REGISTER_MODULE(m_mod_man, MONITOR_SDL);
             m_mod_man.register_module(win32_monitor_module.MONITOR_WIN32);  //REGISTER_MODULE(m_mod_man, MONITOR_WIN32);
             //REGISTER_MODULE(m_mod_man, MONITOR_DXGI);
+            //REGISTER_MODULE(m_mod_man, MONITOR_MAC);
 
 #if SDLMAME_MACOSX
             module_type DEBUG_OSX = null; m_mod_man.register_module(DEBUG_OSX);  //REGISTER_MODULE(m_mod_man, DEBUG_OSX);
