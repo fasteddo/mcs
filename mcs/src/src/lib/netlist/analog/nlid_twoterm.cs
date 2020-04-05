@@ -87,7 +87,7 @@ namespace mame.netlist
             }
 
 
-            //void solve_later(netlist_time delay = netlist_time::from_nsec(1));
+            //void solve_later(netlist_time delay = netlist_time::quantum());
 
 
             protected void set_G_V_I(nl_double G, nl_double V, nl_double I)
@@ -98,10 +98,10 @@ namespace mame.netlist
             }
 
 
-            ///* inline */ nl_double deltaV() const
-            //{
-            //    return m_P.net().Q_Analog() - m_N.net().Q_Analog();
-            //}
+            protected nl_double deltaV()
+            {
+                return m_P.net().Q_Analog() - m_N.net().Q_Analog();
+            }
 
 
             protected void set_mat(nl_double a11, nl_double a12, nl_double rhs1,
@@ -171,15 +171,16 @@ namespace mame.netlist
             }
 
 
+            //NETLIB_UPDATEI() { }
+
+
             //NETLIB_RESETI();
             //NETLIB_RESET(R)
             public override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
-                set_R(Math.Max(m_R.op(), exec().gmin()));
+                set_R(std.max(m_R.op(), exec().gmin()));
             }
-
-            //NETLIB_UPDATEI() { }
 
             //NETLIB_UPDATE_PARAMI();
             //NETLIB_UPDATE_PARAM(R)
@@ -283,7 +284,8 @@ namespace mame.netlist
 
             param_double_t m_C;
 
-            nl_double m_GParallel;
+            //generic_capacitor<capacitor_e::VARIABLE_CAPACITY> m_cap;
+            generic_capacitor_constant m_cap;  //generic_capacitor<capacitor_e.CONSTANT_CAPACITY> m_cap;
 
 
             //NETLIB_CONSTRUCTOR_DERIVED(C, twoterm)
@@ -293,11 +295,7 @@ namespace mame.netlist
                 : base(owner, name)
             {
                 m_C = new param_double_t(this, "C", 1e-6);
-                m_GParallel = 0.0;
-
-
-                //register_term("1", m_P);
-                //register_term("2", m_N);
+                m_cap = new generic_capacitor_constant(this, "m_cap");  //generic_capacitor<capacitor_e.CONSTANT_CAPACITY>(this, "m_cap");
             }
 
 
@@ -311,23 +309,33 @@ namespace mame.netlist
             }
 
 
+            //NETLIB_IS_DYNAMIC(m_cap.type() == capacitor_e::VARIABLE_CAPACITY)
+            public override bool is_dynamic() { return m_cap.type() == capacitor_e.VARIABLE_CAPACITY; }
+
+
+            //NETLIB_UPDATE_TERMINALSI()
+            public override void update_terminals()
+            {
+                nl_double I = m_cap.Ieq(m_C.op(), deltaV());
+                nl_double G = m_cap.G(m_C.op());
+                set_mat( G, -G, -I,
+                        -G,  G,  I);
+            }
+
+
             //NETLIB_RESETI();
             public override void reset()
             {
-                // FIXME: Startup conditions
-                set_G_V_I(exec().gmin(), 0.0, -5.0 / exec().gmin());
-                //set(exec().gmin(), 0.0, 0.0);
+                m_cap.setparams(exec().gmin());
             }
+
 
             //NETLIB_UPDATEI();
 
 
             //NETLIB_UPDATE_PARAMI();
             //NETLIB_UPDATE_PARAM(C)
-            public override void update_param()
-            {
-                m_GParallel = exec().gmin();
-            }
+            public override void update_param() { }
         }
     } //namespace analog
 

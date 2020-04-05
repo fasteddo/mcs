@@ -212,7 +212,9 @@
     <Compile Include="src\src\frontend\mame\ui\viewgfx.cs" />
     <Compile Include="src\src\frontend\mame\ui\widgets.cs" />
     <Compile Include="src\src\global.cs" />
+    <Compile Include="src\src\lib\netlist\analog\nld_bjt.cs" />
     <Compile Include="src\src\lib\netlist\analog\nld_fourterm.cs" />
+    <Compile Include="src\src\lib\netlist\analog\nld_generic_models.cs" />
     <Compile Include="src\src\lib\netlist\analog\nld_opamps.cs" />
     <Compile Include="src\src\lib\netlist\analog\nld_twoterm.cs" />
     <Compile Include="src\src\lib\netlist\analog\nlid_twoterm.cs" />

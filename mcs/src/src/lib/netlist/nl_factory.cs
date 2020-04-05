@@ -126,7 +126,7 @@ namespace mame.netlist
                 foreach (var e in this)
                 {
                     if (e.name() == factory.name())
-                        m_log.fatal.op(nl_errstr_global.MF_1_FACTORY_ALREADY_CONTAINS_1, factory.name());
+                        m_log.fatal.op(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
                 }
 
                 push_back(factory);  //push_back(std::move(factory));
@@ -140,7 +140,7 @@ namespace mame.netlist
                         return e;
                 }
 
-                m_log.fatal.op(nl_errstr_global.MF_1_CLASS_1_NOT_FOUND, devname);
+                m_log.fatal.op(nl_errstr_global.MF_CLASS_1_NOT_FOUND(devname));
                 return null; // appease code analysis
             }
 

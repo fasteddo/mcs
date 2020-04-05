@@ -85,7 +85,7 @@ namespace mame
             map.op(0xd509, 0xd50a).mirror(0x00f0).writeonly().share("gfxpointer");
             map.op(0xd50b, 0xd50b).mirror(0x00f0).w(soundlatch_w);
             map.op(0xd50c, 0xd50c).mirror(0x00f0).w(sound_semaphore2_w);
-            map.op(0xd50d, 0xd50d).mirror(0x00f0).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0xd50d, 0xd50d).mirror(0x00f0).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0xd50e, 0xd50e).mirror(0x00f0).w(taitosj_bankswitch_w);
             map.op(0xd50f, 0xd50f).mirror(0x00f0).nopw();
             map.op(0xd600, 0xd600).mirror(0x00ff).writeonly().share("video_mode");

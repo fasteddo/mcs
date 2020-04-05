@@ -525,7 +525,6 @@ namespace mame
             device.palette_device_after_ctor(init, entries, indirect);
             return device;
         }
-        protected void MCFG_PALETTE_ADD(string tag, u32 entries) { emupal_global.MCFG_PALETTE_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag, entries); }
 
 
         // er2055
@@ -848,9 +847,19 @@ namespace mame
 
         // netlist
         protected void MCFG_NETLIST_SETUP(func_type setup) { netlist_global.MCFG_NETLIST_SETUP(m_globals.helper_device, setup); }
-        protected void MCFG_NETLIST_ANALOG_MULT_OFFSET(double mult, double offset) { netlist_global.MCFG_NETLIST_ANALOG_MULT_OFFSET(m_globals.helper_device, mult, offset); }
-        protected void MCFG_NETLIST_STREAM_INPUT(string basetag, int chan, string name) { netlist_global.MCFG_NETLIST_STREAM_INPUT(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, basetag, chan, name); }
-        protected void MCFG_NETLIST_STREAM_OUTPUT(string basetag, int chan, string name) { netlist_global.MCFG_NETLIST_STREAM_OUTPUT(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, basetag, chan, name); }
+        protected static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
+        protected static netlist_mame_stream_input_device NETLIST_STREAM_INPUT(machine_config mconfig, string tag, int channel, string param_name)
+        {
+            var device = emu.detail.device_type_impl.op<netlist_mame_stream_input_device>(mconfig, tag, netlist_mame_stream_input_device.NETLIST_STREAM_INPUT, 0);
+            device.set_params(channel, param_name);
+            return device;
+        }
+        protected static netlist_mame_stream_output_device NETLIST_STREAM_OUTPUT(machine_config mconfig, string tag, int channel, string out_name)
+        {
+            var device = emu.detail.device_type_impl.op<netlist_mame_stream_output_device>(mconfig, tag, netlist_mame_stream_output_device.NETLIST_STREAM_OUTPUT, 0);
+            device.set_params(channel, out_name);
+            return device;
+        }
 
 
         // nl_setup
@@ -1256,6 +1265,7 @@ namespace mame
             public void clear() { Clear(); }
             public bool emplace(K key, V value) { if (ContainsKey(key)) { return false; } else { Add(key, value); return true; } }
             public bool empty() { return Count == 0; }
+            public bool erase(K key) { return Remove(key); }
             public V find(K key) { V value; if (TryGetValue(key, out value)) return value; else return default(V); }
             public bool insert(K key, V value) { if (ContainsKey(key)) { return false; } else { Add(key, value); return true; } }
             public int size() { return Count; }

@@ -2452,7 +2452,7 @@ namespace mame
         {
             // if we got the port, look for the field
             foreach (ioport_field field in fields())
-                if ((field.mask() & mask) != 0)
+                if ((field.mask() & mask) != 0 && field.enabled())
                     return field;
 
             return null;

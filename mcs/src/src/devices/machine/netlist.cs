@@ -22,11 +22,13 @@ namespace mame
 
     public static class netlist_global
     {
-        public static void MCFG_NETLIST_SETUP(device_t device, func_type _setup) { ((netlist_mame_device)device).set_constructor(_setup); }
+        public static void MCFG_NETLIST_SETUP(device_t device, func_type _setup) { ((netlist_mame_device)device).set_setup_func(_setup); }
+
+#if false
         //define MCFG_NETLIST_SETUP_MEMBER(_obj, _setup) downcast<netlist_mame_device &>(*device).set_constructor(_obj, _setup);
         //define MCFG_NETLIST_ANALOG_INPUT(_basetag, _tag, _name)                                        MCFG_DEVICE_ADD(_basetag ":" _tag, NETLIST_ANALOG_INPUT, 0)                                 netlist_mame_analog_input_t::static_set_name(*device, _name);
         public static void MCFG_NETLIST_ANALOG_MULT_OFFSET(device_t device, double _mult, double _offset) { ((device_t_with_netlist_mame_sub_interface)device).set_mult_offset(_mult, _offset); }
-        //define MCFG_NETLIST_ANALOG_OUTPUT(_basetag, _tag, _IN, _class, _member, _class_tag)             MCFG_DEVICE_ADD(_basetag ":" _tag, NETLIST_ANALOG_OUTPUT, 0)                                netlist_mame_analog_output_t::static_set_params(*device, _IN,                                           netlist_analog_output_delegate(& _class :: _member,                 						# _class "::" # _member, _class_tag, (_class *) 0)   );
+        //define MCFG_NETLIST_ANALOG_OUTPUT(_basetag, _tag, _IN, _class, _member, _class_tag)             MCFG_DEVICE_ADD(_basetag ":" _tag, NETLIST_ANALOG_OUTPUT, 0)                                netlist_mame_analog_output_t::static_set_params(*device, _IN,                                           FUNC(_class :: _member), _class_tag);
         //define MCFG_NETLIST_LOGIC_INPUT(_basetag, _tag, _name, _shift, _mask)                          MCFG_DEVICE_ADD(_basetag ":" _tag, NETLIST_LOGIC_INPUT, 0)                                  netlist_mame_logic_input_t::static_set_params(*device, _name, _mask, _shift);
         public static void MCFG_NETLIST_STREAM_INPUT(out device_t device, machine_config config, device_t owner, string basetag, int chan, string name)
         {
@@ -38,6 +40,7 @@ namespace mame
             mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, string.Format("{0}:cout{1}", basetag, chan), netlist_mame_stream_output_device.NETLIST_STREAM_OUTPUT, 0);
             ((netlist_mame_stream_output_device)device).set_params(chan, name);
         }
+#endif
 
         //define NETLIST_LOGIC_PORT_CHANGED(_base, _tag)                                                 PORT_CHANGED_MEMBER(_base ":" _tag, netlist_mame_logic_input_t, input_changed, 0)
         //define NETLIST_ANALOG_PORT_CHANGED(_base, _tag)                                                PORT_CHANGED_MEMBER(_base ":" _tag, netlist_mame_analog_input_t, input_changed, 0)
@@ -65,7 +68,7 @@ namespace mame
     // ----------------------------------------------------------------------------------------
     // netlist_mame_device_t
     // ----------------------------------------------------------------------------------------
-    class netlist_mame_device : device_t
+    public class netlist_mame_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NETLIST_CORE,  netlist_mame_device,       "netlist_core",  "Netlist Core Device")
         static device_t device_creator_netlist_mame_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_device(mconfig, tag, owner, clock); }
@@ -94,11 +97,11 @@ namespace mame
                 case plib.plog_level.DEBUG:
                     m_parent.logerror("netlist DEBUG: {0}\n", ls.c_str());
                     break;
-                case plib.plog_level.INFO:
-                    m_parent.logerror("netlist INFO: {0}\n", ls.c_str());
-                    break;
                 case plib.plog_level.VERBOSE:
                     m_parent.logerror("netlist VERBOSE: {0}\n", ls.c_str());
+                    break;
+                case plib.plog_level.INFO:
+                    m_parent.logerror("netlist INFO: {0}\n", ls.c_str());
                     break;
                 case plib.plog_level.WARNING:
                     m_parent.logerror("netlist WARNING: {0}\n", ls.c_str());
@@ -107,8 +110,36 @@ namespace mame
                     m_parent.logerror("netlist ERROR: {0}\n", ls.c_str());
                     break;
                 case plib.plog_level.FATAL:
-                    emu_fatalerror error = new emu_fatalerror("netlist ERROR: {0}\n", ls.c_str());
-                    throw error;
+                    throw new emu_fatalerror(1, "netlist ERROR: {0}\n", ls.c_str());
+                }
+            }
+        }
+
+
+        class netlist_validate_callbacks_t : netlist.callbacks_t
+        {
+            public netlist_validate_callbacks_t() : base() { }
+
+
+            public override void vlog(plib.plog_level l, string ls)
+            {
+                switch (l)
+                {
+                case plib.plog_level.DEBUG:
+                    break;
+                case plib.plog_level.VERBOSE:
+                    break;
+                case plib.plog_level.INFO:
+                    osd_printf_verbose("netlist INFO: {0}\n", ls.c_str());
+                    break;
+                case plib.plog_level.WARNING:
+                    osd_printf_warning("netlist WARNING: {0}\n", ls.c_str());
+                    break;
+                case plib.plog_level.ERROR:
+                    osd_printf_error("netlist ERROR: {0}\n", ls.c_str());
+                    break;
+                case plib.plog_level.FATAL:
+                    throw new emu_fatalerror(1, "netlist ERROR: {0}\n", ls.c_str());
                 }
             }
         }
@@ -121,6 +152,12 @@ namespace mame
 
             public netlist_mame_t(netlist_mame_device parent, string aname)
                 : base(aname, new netlist_mame_device.netlist_mame_callbacks_t(parent))
+            {
+                m_parent = parent;
+            }
+
+            netlist_mame_t(netlist_mame_device parent, string aname, netlist.callbacks_t cbs)
+                : base(aname, cbs)
             {
                 m_parent = parent;
             }
@@ -160,26 +197,27 @@ namespace mame
             m_setup_func = null;
         }
 
-        //~netlist_mame_device()
+        //virtual ~netlist_mame_device()
         //{
         //    netlist_global.LOGDEVCALLS(this, "~netlist_mame_device\n");
         //}
 
 
-        public void set_constructor(func_type setup_func)  //(void (*setup_func)(netlist::nlparse_t &))
-        {
-            m_setup_func = setup_func;  //func_type(setup_func);
-        }
-
-        //template <typename T, typename F>
-        //void set_constructor(T *obj, F && f)
-        //{
-        //    m_setup_func = std::move(std::bind(std::forward<F>(f), obj, std::placeholders::_1));
-        //}
+        public void set_setup_func(func_type func) { m_setup_func = func; }  //std::move(func); }
 
 
         protected netlist_time div { get { return m_div; } }
-        public netlist.setup_t setup() { return m_netlist.nlstate().setup(); }
+
+
+        public netlist.setup_t setup()
+        {
+            if (m_netlist == null)
+                throw new device_missing_dependencies();
+
+            return m_netlist.nlstate().setup();
+        }
+
+
         protected netlist_mame_t netlist() { return m_netlist; }
 
 
@@ -191,7 +229,7 @@ namespace mame
 
 
         // Custom to netlist ...
-        protected virtual void nl_register_devices() { }
+        protected virtual void nl_register_devices(netlist.setup_t lsetup) { }
 
 
         // device_t overrides
@@ -204,7 +242,29 @@ namespace mame
 
         protected override void device_validity_check(validity_checker valid)
         {
+#if true
+            //rom_exists(mconfig().root_device());
             netlist_global.LOGDEVCALLS(this, "device_validity_check {0}\n", this.mconfig().gamedrv().name);
+
+            try
+            {
+                //netlist_mame_t lnetlist(*this, "netlist", plib::make_unique<netlist_validate_callbacks_t>());
+                netlist.netlist_t lnetlist = new netlist.netlist_t("netlist", new netlist_validate_callbacks_t());  //netlist::netlist_t lnetlist("netlist", plib::make_unique<netlist_validate_callbacks_t>());
+                common_dev_start(lnetlist);
+            }
+            catch (memregion_not_set err)
+            {
+                osd_printf_verbose("{0}\n", err);
+            }
+            catch (emu_fatalerror err)
+            {
+                osd_printf_error("{0}\n", err.str());
+            }
+            catch (Exception err)
+            {
+                osd_printf_error("{0}\n", err);
+            }
+#endif
         }
 
 
@@ -212,46 +272,13 @@ namespace mame
         {
             netlist_global.LOGDEVCALLS(this, "device_start entry\n");
 
-            //printf("clock is %d\n", clock());
+            m_netlist = new netlist_mame_t(this, "netlist");  //m_netlist = netlist::pool().make_poolptr<netlist_mame_t>(*this, "netlist");
 
-            m_netlist = new netlist_mame_t(this, "netlist");  // m_netlist = netlist::pool().make_poolptr<netlist_mame_t>(*this, "netlist");
+            common_dev_start(m_netlist);
 
-            // register additional devices
-
-            nl_register_devices();
-
-            /* let sub-devices add sources and do stuff prior to parsing */
-            foreach (device_t d in subdevices())
-            {
-                device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;
-                if ( sdev != null )
-                {
-                    netlist_global.LOGDEVCALLS(this, "Preparse subdevice {0}/{1}\n", d.name(), d.shortname());
-                    sdev.pre_parse_action(m_netlist.nlstate());
-                }
-            }
-
-            /* add default data provider for roms */
-            setup().register_source(new netlist_data_memregions_t(this));  //setup().register_source(plib::make_unique<netlist_data_memregions_t>(*this));
-
-            m_setup_func(setup());
-
-            /* let sub-devices tweak the netlist */
-            foreach (device_t d in subdevices())
-            {
-                device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;
-                if ( sdev != null )
-                {
-                    netlist_global.LOGDEVCALLS(this, "Found subdevice {0}/{1}\n", d.name(), d.shortname());
-                    sdev.custom_netlist_additions(m_netlist.nlstate());
-                }
-            }
-
-            setup().prepare_to_run();
-
-            netlist().nlstate().save(this, m_rem, this.name(), "m_rem");
-            netlist().nlstate().save(this, m_div, this.name(), "m_div");
-            netlist().nlstate().save(this, m_old, this.name(), "m_old");
+            m_netlist.nlstate().save(this, m_rem, this.name(), "m_rem");
+            m_netlist.nlstate().save(this, m_div, this.name(), "m_div");
+            m_netlist.nlstate().save(this, m_old, this.name(), "m_old");
 
             save_state();
 
@@ -348,6 +375,48 @@ namespace mame
             }
 #endif
         }
+
+
+        void common_dev_start(netlist.netlist_t lnetlist)
+        {
+            var lsetup = lnetlist.nlstate().setup();
+
+            // register additional devices
+
+            nl_register_devices(lsetup);
+
+            /* let sub-devices add sources and do stuff prior to parsing */
+            foreach (device_t d in subdevices())
+            {
+                device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;  //netlist_mame_sub_interface *sdev = dynamic_cast<netlist_mame_sub_interface *>(&d);
+                if (sdev != null)
+                {
+                    netlist_global.LOGDEVCALLS(this, "Preparse subdevice {0}/{1}\n", d.name(), d.shortname());
+                    sdev.pre_parse_action(lnetlist.nlstate());
+                }
+            }
+
+            /* add default data provider for roms - if not in validity check*/
+            //if (has_running_machine())
+                lsetup.register_source(new netlist_data_memregions_t(this));
+
+            m_setup_func(lsetup);
+
+#if true
+            /* let sub-devices tweak the netlist */
+            foreach (device_t d in subdevices())
+            {
+                device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;  //netlist_mame_sub_interface *sdev = dynamic_cast<netlist_mame_sub_interface *>(&d);
+                if (sdev != null)
+                {
+                    netlist_global.LOGDEVCALLS(this, "Found subdevice {0}/{1}\n", d.name(), d.shortname());
+                    sdev.custom_netlist_additions(lnetlist.nlstate());
+                }
+            }
+
+            lsetup.prepare_to_run();
+#endif
+        }
     }
 
 
@@ -379,11 +448,18 @@ namespace mame
         }
 
 
+        //~netlist_mame_cpu_device() { }
+
+
         //offs_t genPC() const { return m_genPC; }
 
 
+        //netlist_mame_cpu_device & set_source(void (*setup_func)(netlist::nlparse_t &))
+        //template <typename T, typename F> netlist_mame_cpu_device & set_source(T *obj, F && f)
+
+
         // netlist_mame_device
-        //virtual void nl_register_devices();
+        //virtual void nl_register_devices(netlist::setup_t &lsetup) override;
 
 
         // device_t overrides
@@ -423,15 +499,15 @@ namespace mame
     // ----------------------------------------------------------------------------------------
     // netlist_mame_sound_device
     // ----------------------------------------------------------------------------------------
-    class netlist_mame_sound_device : netlist_mame_device
-                                      //device_sound_interface
+    public class netlist_mame_sound_device : netlist_mame_device
+                                             //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_SOUND, netlist_mame_sound_device, "netlist_sound", "Netlist Sound Device")
         static device_t device_creator_netlist_mame_sound_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_sound_device(mconfig, tag, owner, clock); }
         public static readonly device_type NETLIST_SOUND = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_sound_device, "netlist_sound", "Netlist Sound Device");
 
 
-        class device_sound_interface_netlist_mame_sound : device_sound_interface
+        public class device_sound_interface_netlist_mame_sound : device_sound_interface
         {
             public device_sound_interface_netlist_mame_sound(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
@@ -455,10 +531,19 @@ namespace mame
             : base(mconfig, NETLIST_SOUND, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_netlist_mame_sound(mconfig, this));  // device_sound_interface(mconfig, *this);
+            m_disound = GetClassInterface<device_sound_interface_netlist_mame_sound>();
 
             m_in = null;
             m_stream = null;
         }
+
+
+        public device_sound_interface_netlist_mame_sound disound { get { return m_disound; } }
+
+
+        //netlist_mame_sound_device & set_source(void (*setup_func)(netlist::nlparse_t &))
+        //template <typename T, typename F> netlist_mame_sound_device & set_source(T *obj, F && f)
+        public netlist_mame_sound_device set_source(func_type setup_func) { set_setup_func(setup_func); return this; }
 
 
         public sound_stream get_stream() { return m_stream; }
@@ -497,10 +582,10 @@ namespace mame
 
 
         // netlist_mame_device
-        protected override void nl_register_devices()
+        protected override void nl_register_devices(netlist.setup_t lsetup)
         {
-            setup().factory().register_device<nld_sound_out>("NETDEV_SOUND_OUT", "nld_sound_out", "+CHAN");
-            setup().factory().register_device<nld_sound_in>("NETDEV_SOUND_IN", "nld_sound_in", "-");
+            lsetup.factory().register_device<nld_sound_out>("NETDEV_SOUND_OUT", "nld_sound_out", "+CHAN");
+            lsetup.factory().register_device<nld_sound_in>("NETDEV_SOUND_IN", "nld_sound_in", "-");
         }
 
 
@@ -508,8 +593,6 @@ namespace mame
 
         protected override void device_start()
         {
-            m_disound = GetClassInterface<device_sound_interface_netlist_mame_sound>();
-
             base.device_start();
 
             netlist_global.LOGDEVCALLS(this, "sound device_start\n");
@@ -563,7 +646,7 @@ namespace mame
     // ----------------------------------------------------------------------------------------
     // netlist_mame_sub_interface
     // ----------------------------------------------------------------------------------------
-    class netlist_mame_sub_interface
+    public class netlist_mame_sub_interface
     {
         double m_offset;
         double m_mult;
@@ -582,13 +665,15 @@ namespace mame
             m_sound = (netlist_mame_sound_device)aowner;
         }
 
+        //virtual ~netlist_mame_sub_interface() { }
+
 
         public double offset { get { return m_offset; } }
         public double mult { get { return m_mult; } }
 
 
         public virtual void custom_netlist_additions(netlist.netlist_state_t nlstate) { }
-        protected virtual void pre_parse_action(netlist.setup_t setup) { }
+        public virtual void pre_parse_action(netlist.netlist_state_t nlstate) { }
 
 
         //inline netlist_mame_device &nl_owner() const { return *m_owner; }
@@ -605,7 +690,7 @@ namespace mame
     }
 
 
-    class device_t_with_netlist_mame_sub_interface : device_t
+    public class device_t_with_netlist_mame_sub_interface : device_t
     {
         protected netlist_mame_sub_interface m_netlist_mame_sub_interface;
 
@@ -644,6 +729,12 @@ namespace mame
 
 
         // construction/destruction
+        netlist_mame_analog_input_device(machine_config mconfig, string tag, device_t owner, string param_name)
+            : base(mconfig, NETLIST_ANALOG_INPUT, tag, owner, 0)
+        {
+            throw new emu_unimplemented();
+        }
+
         netlist_mame_analog_input_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)
             : base(mconfig, NETLIST_ANALOG_INPUT, tag, owner, clock)
         {
@@ -773,9 +864,9 @@ namespace mame
     // ----------------------------------------------------------------------------------------
     // netlist_mame_stream_input_device
     // ----------------------------------------------------------------------------------------
-    class netlist_mame_stream_input_device : device_t_with_netlist_mame_sub_interface
-                                             //device_t
-                                             //netlist_mame_sub_interface
+    public class netlist_mame_stream_input_device : device_t_with_netlist_mame_sub_interface
+                                                    //device_t
+                                                    //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_STREAM_INPUT,  netlist_mame_stream_input_device,  "nl_stream_in",  "Netlist Stream Input")
         static device_t device_creator_netlist_mame_stream_input_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_stream_input_device(mconfig, tag, owner, clock); }
@@ -838,9 +929,9 @@ namespace mame
     // netlist_mame_stream_output_device
     // ----------------------------------------------------------------------------------------
 
-    class netlist_mame_stream_output_device : device_t_with_netlist_mame_sub_interface
-                                              //device_t
-                                              //netlist_mame_sub_interface
+    public class netlist_mame_stream_output_device : device_t_with_netlist_mame_sub_interface
+                                                     //device_t
+                                                     //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_STREAM_OUTPUT, netlist_mame_stream_output_device, "nl_stream_out", "Netlist Stream Output")
         static device_t device_creator_netlist_mame_stream_output_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_stream_output_device(mconfig, tag, owner, clock); }
@@ -903,6 +994,18 @@ namespace mame
     // ----------------------------------------------------------------------------------------
     // Extensions to interface netlist with MAME code ....
     // ----------------------------------------------------------------------------------------
+
+    /*! Specific exception if memregion is not available.
+     *  The exception is thrown if the memregions are not available.
+     *  This may be the case in device_validity_check and needs
+     *  to be ignored.
+     */
+    class memregion_not_set : netlist.nl_exception
+    {
+        memregion_not_set(string text) : base(text) { }
+        memregion_not_set(string format, params object [] args) : base(format, args) { }
+    }
+
 
     //class netlist_source_memregion_t : public netlist::source_t
     //{

@@ -38,6 +38,25 @@ namespace mame
 
 
         /* ----------------------------------------------------------------------------
+         *  Mosfet Models
+         * ---------------------------------------------------------------------------*/
+        //static NETLIST_START(mosfet_models)
+        public static void netlist_mosfet_models(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            //NET_MODEL("NMOS _(VTO=0.0 N=1.0 IS=1E-14 KP=2E-5 UO=600 PHI=0.6 LD=0.0 L=1.0 TOX=1E-7 W=1.0 NSUB=0.0 GAMMA=0.0 RD=0.0 RS=0.0 LAMBDA=0.0)")
+            //NET_MODEL("PMOS _(VTO=0.0 N=1.0 IS=1E-14 KP=2E-5 UO=600 PHI=0.6 LD=0.0 L=1.0 TOX=1E-7 W=1.0 NSUB=0.0 GAMMA=0.0 RD=0.0 RS=0.0 LAMBDA=0.0)")
+        
+            // NMOS_DEFAULT and PMOS_DEFAULT are created in nl_setup.cpp
+            netlist.nl_setup_global.NET_MODEL(setup, "NMOS NMOS_DEFAULT(VTO=0.0 N=1.0 IS=1E-14 KP=0.0 UO=600 PHI=0.0 LD=0.0 L=100e-6 TOX=1E-7 W=100e-6 NSUB=0.0 GAMMA=0.0 RD=0.0 RS=0.0 LAMBDA=0.0 CGSO=0 CGDO=0 CGBO=0)");
+            netlist.nl_setup_global.NET_MODEL(setup, "PMOS PMOS_DEFAULT(VTO=0.0 N=1.0 IS=1E-14 KP=0.0 UO=600 PHI=0.0 LD=0.0 L=100e-6 TOX=1E-7 W=100e-6 NSUB=0.0 GAMMA=0.0 RD=0.0 RS=0.0 LAMBDA=0.0 CGSO=0 CGDO=0 CGBO=0)");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
+        /* ----------------------------------------------------------------------------
          *  BJT Models
          * ---------------------------------------------------------------------------*/
         //static NETLIST_START(bjt_models)
@@ -58,6 +77,8 @@ namespace mame
             netlist.nl_setup_global.NET_MODEL(setup, "2N3644 PNP(IS=650.6E-18 ISE=54.81E-15 ISC=0 XTI=3 BF=231.7 BR=3.563 IKF=1.079 IKR=0 XTB=1.5 VAF=115.7 VAR=35 VJE=0.65 VJC=0.65 RE=0.15 RC=0.715 RB=10 CJE=19.82E-12 CJC=14.76E-12 XCJC=0.75 FC=0.5 NF=1 NR=1 NE=1.829 NC=2 MJE=0.3357 MJC=0.5383 TF=603.7E-12 TR=111.3E-9 ITF=0.65 VTF=5 XTF=1.7 EG=1.11 KF=0 AF=1 VCEO=60 ICRATING=500m MFG=NSC)");
             // 2N5190 = BC817-25
             netlist.nl_setup_global.NET_MODEL(setup, "2N5190 NPN(IS=9.198E-14 NF=1.003 ISE=4.468E-16 NE=1.65 BF=338.8 IKF=0.4913 VAF=107.9 NR=1.002 ISC=5.109E-15 NC=1.071 BR=29.48 IKR=0.193 VAR=25 RB=1 IRB=1000 RBM=1 RE=0.2126 RC=0.143 XTB=0 EG=1.11 XTI=3 CJE=3.825E-11 VJE=0.7004 MJE=0.364 TF=5.229E-10 XTF=219.7 VTF=3.502 ITF=7.257 PTF=0 CJC=1.27E-11 VJC=0.4431 MJC=0.3983 XCJC=0.4555 TR=7E-11 CJS=0 VJS=0.75 MJS=0.333 FC=0.905 Vceo=45 Icrating=500m mfg=Philips)");
+
+            netlist.nl_setup_global.NET_MODEL(setup, "2N4401 NPN(IS=26.03f XTI=3 EG=1.11 VAF=90.7 BF=4.292K NE=1.244 ISE=26.03f IKF=0.2061 XTB=1.5 BR=1.01 NC=2 ISC=0 IKR=0 RC=0.5 CJC=11.01p MJC=0.3763 VJC=0.75 FC=0.5 CJE=24.07p MJE=0.3641 VJE=0.75 TR=233.7n TF=466.5p ITF=0 VTF=0 XTF=0 RB=10 VCEO=40)");
             netlist.nl_setup_global.NET_MODEL(setup, "2SC945 NPN(IS=3.577E-14 BF=2.382E+02 NF=1.01 VAF=1.206E+02 IKF=3.332E-01 ISE=3.038E-16 NE=1.205 BR=1.289E+01 NR=1.015 VAR=1.533E+01 IKR=2.037E-01 ISC=3.972E-14 NC=1.115 RB=3.680E+01 IRB=1.004E-04 RBM=1 RE=8.338E-01 RC=1.557E+00 CJE=1.877E-11 VJE=7.211E-01 MJE=3.486E-01 TF=4.149E-10 XTF=1.000E+02 VTF=9.956 ITF=5.118E-01 PTF=0 CJC=6.876p VJC=3.645E-01 MJC=3.074E-01 TR=5.145E-08 XTB=1.5 EG=1.11 XTI=3 FC=0.5 Vceo=50 Icrating=100m MFG=NEC)");
 
             netlist.nl_setup_global.NET_MODEL(setup, "BC237B NPN(IS=1.8E-14 ISE=5.0E-14 ISC=1.72E-13 XTI=3 BF=400 BR=35.5 IKF=0.14 IKR=0.03 XTB=1.5 VAF=80 VAR=12.5 VJE=0.58 VJC=0.54 RE=0.6 RC=0.25 RB=0.56 CJE=13E-12 CJC=4E-12 XCJC=0.75 FC=0.5 NF=0.9955 NR=1.005 NE=1.46 NC=1.27 MJE=0.33 MJC=0.33 TF=0.64E-9 TR=50.72E-9 EG=1.11 KF=0 AF=1 VCEO=45 ICRATING=100M MFG=ZETEX)");
@@ -106,7 +127,9 @@ namespace mame
 
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "diode_models", netlist_diode_models);
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "bjt_models", netlist_bjt_models);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "mosfet_models", netlist_mosfet_models);
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "family_models", netlist_family_models);
+
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "TTL74XX_lib", nlm_ttl74xx_global.netlist_TTL74XX_lib);
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "CD4XXX_lib", nlm_cd4xxx_global.netlist_CD4XXX_lib);
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "OPAMP_lib", nlm_opamp_global.netlist_OPAMP_lib);
@@ -114,6 +137,7 @@ namespace mame
 
             netlist.nl_setup_global.INCLUDE(setup, "diode_models");
             netlist.nl_setup_global.INCLUDE(setup, "bjt_models");
+            netlist.nl_setup_global.INCLUDE(setup, "mosfet_models");
             netlist.nl_setup_global.INCLUDE(setup, "family_models");
             netlist.nl_setup_global.INCLUDE(setup, "TTL74XX_lib");
             netlist.nl_setup_global.INCLUDE(setup, "CD4XXX_lib");

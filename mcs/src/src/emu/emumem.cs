@@ -3289,33 +3289,9 @@ namespace mame
                 }
             }
 
-            // Check if we have to adjust the unitmask and addresses
             nunitmask = 0xffffffffffffffffU >> (64 - m_config.data_width());
             if (unitmask != 0)
                 nunitmask &= unitmask;
-
-            if ((addrstart & default_lowbits_mask) != 0 || ((~addrend) & default_lowbits_mask) != 0)
-            {
-                if (((addrstart ^ addrend) & ~default_lowbits_mask) != 0)
-                    fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start or end is unaligned while the range spans more than one slot (granularity = {6}).\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, default_lowbits_mask + 1);
-                offs_t lowbyte = m_config.addr2byte(addrstart & default_lowbits_mask);
-                offs_t highbyte = m_config.addr2byte((addrend & default_lowbits_mask) + 1);
-                if (m_config.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                {
-                    u64 hmask = 0xffffffffffffffffU >> (64 - 8 * (int)highbyte);
-                    nunitmask = (nunitmask << (8 * (int)lowbyte)) & hmask;
-                }
-                else
-                {
-                    u64 hmask = 0xffffffffffffffffU >> ((64 - m_config.data_width()) + 8 * (int)lowbyte);
-                    nunitmask = (nunitmask << (m_config.data_width() - 8 * (int)highbyte)) & hmask;
-                }
-
-                addrstart &= ~default_lowbits_mask;
-                addrend |= default_lowbits_mask;
-                if (changing_bits < default_lowbits_mask)
-                    changing_bits = default_lowbits_mask;
-            }
 
             nstart = addrstart;
             nend = addrend;

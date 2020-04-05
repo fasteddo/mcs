@@ -58,7 +58,7 @@ namespace mame
         //WRITE8_MEMBER(pacman_state::pacman_interrupt_vector_w)
         void pacman_interrupt_vector_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
-            m_maincpu.target.set_input_line_vector(0, data);
+            m_maincpu.target.set_input_line_vector(0, data); // Z80
             m_maincpu.target.set_input_line(0, CLEAR_LINE);
         }
 
@@ -144,7 +144,7 @@ namespace mame
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
             map.op(0x5080, 0x5080).mirror(0xaf3f).nopw();
-            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (space, offset, data, mem_mask) => { m_watchdog.target.reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (space, offset, data, mem_mask) => { m_watchdog.target.reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x5000, 0x5000).mirror(0xaf3f).portr("IN0");
             map.op(0x5040, 0x5040).mirror(0xaf3f).portr("IN1");
             map.op(0x5080, 0x5080).mirror(0xaf3f).portr("DSW1");
@@ -168,7 +168,7 @@ namespace mame
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
             map.op(0x5080, 0x5080).mirror(0xaf3f).nopw();
-            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (space, offset, data, mem_mask) => { m_watchdog.target.reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (space, offset, data, mem_mask) => { m_watchdog.target.reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x5000, 0x5000).mirror(0xaf3f).portr("IN0");
             map.op(0x5040, 0x5040).mirror(0xaf3f).portr("IN1");
             map.op(0x5080, 0x5080).mirror(0xaf3f).portr("DSW1");

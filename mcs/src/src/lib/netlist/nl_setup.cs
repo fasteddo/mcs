@@ -220,9 +220,11 @@ namespace mame.netlist
             {
                 throw new emu_unimplemented();
 #if false
-                var rstream = stream(name);
-                plib.putf8_reader reader(rstream);
-                return m_setup.parse_stream(reader, name);
+                auto strm(stream(name));
+                if (strm)
+                    return setup.parse_stream(std::move(strm), name);
+                else
+                    return false;
 #endif
             }
         }
@@ -249,16 +251,16 @@ namespace mame.netlist
         {
             var pos = model_in.find(" ");
             if (pos == -1)
-                throw new nl_exception(nl_errstr_global.MF_1_UNABLE_TO_PARSE_MODEL_1, model_in);
+                throw new nl_exception(nl_errstr_global.MF_UNABLE_TO_PARSE_MODEL_1(model_in));
             string model = plib.pstring_global.ucase(plib.pstring_global.trim(plib.pstring_global.left(model_in, pos)));
             string def = plib.pstring_global.trim(model_in.substr(pos + 1));
             if (!m_models.insert(model, def))
-                throw new nl_exception(nl_errstr_global.MF_1_MODEL_ALREADY_EXISTS_1, model_in);
+                throw new nl_exception(nl_errstr_global.MF_MODEL_ALREADY_EXISTS_1(model_in));
         }
 
         /* model / family related */
 
-        public string model_value_str(string model, string entity)
+        public string value_str(string model, string entity)
         {
             model_map_t map = m_cache[model];
 
@@ -268,9 +270,9 @@ namespace mame.netlist
             string ret;
 
             if (entity != plib.pstring_global.ucase(entity))
-                throw new nl_exception(nl_errstr_global.MF_2_MODEL_PARAMETERS_NOT_UPPERCASE_1_2, entity, model_string(map));
+                throw new nl_exception(nl_errstr_global.MF_MODEL_PARAMETERS_NOT_UPPERCASE_1_2(entity, model_string(map)));
             if (map.find(entity) == null)
-                throw new nl_exception(nl_errstr_global.MF_2_ENTITY_1_NOT_FOUND_IN_MODEL_2, entity, model_string(map));
+                throw new nl_exception(nl_errstr_global.MF_ENTITY_1_NOT_FOUND_IN_MODEL_2(entity, model_string(map)));
             else
                 ret = map[entity];
 
@@ -278,14 +280,14 @@ namespace mame.netlist
         }
 
 
-        public double model_value(string model, string entity)
+        public nl_double value(string model, string entity)
         {
             model_map_t map = m_cache[model];
 
             if (map.size() == 0)
                 model_parse(model , map);
 
-            string tmp = model_value_str(model, entity);
+            string tmp = value_str(model, entity);
 
             nl_double factor = 1;  //plib::constants<nl_double>::one();
             var p = tmp[tmp.Length - 1];  //auto p = std::next(tmp.begin(), static_cast<pstring::difference_type>(tmp.size() - 1));
@@ -293,6 +295,7 @@ namespace mame.netlist
             {
                 case 'M': factor = 1e6; break;
                 case 'k': factor = 1e3; break;
+                case 'K': factor = 1e3; break;
                 case 'm': factor = 1e-3; break;
                 case 'u': factor = 1e-6; break;
                 case 'n': factor = 1e-9; break;
@@ -301,7 +304,7 @@ namespace mame.netlist
                 case 'a': factor = 1e-18; break;
                 default:
                     if (p < '0' || p > '9')
-                        throw new nl_exception(nl_errstr_global.MF_1_UNKNOWN_NUMBER_FACTOR_IN_1, entity);
+                        throw new nl_exception(nl_errstr_global.MF_UNKNOWN_NUMBER_FACTOR_IN_1(entity));
                     break;
             }
             if (factor != 1)  //if (factor != plib::constants<nl_double>::one())
@@ -313,7 +316,7 @@ namespace mame.netlist
         }
 
 
-        //pstring model_type(pstring model) { return model_value_str(model, "COREMODEL"); }
+        //pstring type(pstring model) { return value_str(model, "COREMODEL"); }
 
 
         void model_parse(string model_in, model_map_t map)
@@ -330,7 +333,7 @@ namespace mame.netlist
                 key = plib.pstring_global.ucase(model);
                 var i = m_models.find(key);
                 if (i == null)
-                    throw new nl_exception(nl_errstr_global.MF_1_MODEL_NOT_FOUND, model);
+                    throw new nl_exception(nl_errstr_global.MF_MODEL_NOT_FOUND(model));
                 model = i;
             }
 
@@ -346,12 +349,12 @@ namespace mame.netlist
                 if (i != null)
                     model_parse(xmodel, map);
                 else
-                    throw new nl_exception(nl_errstr_global.MF_1_MODEL_NOT_FOUND, model_in);
+                    throw new nl_exception(nl_errstr_global.MF_MODEL_NOT_FOUND(model_in));
             }
 
             string remainder = plib.pstring_global.trim(model.substr(pos + 1));
             if (!plib.pstring_global.endsWith(remainder, ")"))
-                throw new nl_exception(nl_errstr_global.MF_1_MODEL_ERROR_1, model);
+                throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_1(model));
             // FIMXE: Not optimal
             remainder = plib.pstring_global.left(remainder, remainder.Length - 1);
 
@@ -360,7 +363,8 @@ namespace mame.netlist
             {
                 var pose = pe.find("=");
                 if (pose == -1)
-                    throw new nl_exception(nl_errstr_global.MF_1_MODEL_ERROR_ON_PAIR_1, model);
+                    throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_ON_PAIR_1(model));
+
                 map[plib.pstring_global.ucase(plib.pstring_global.left(pe, pose))] = pe.substr(pose + 1);
             }
         }
@@ -435,12 +439,12 @@ namespace mame.netlist
         {
             var f = factory().factory_by_name(classname);
             if (f == null)
-                log().fatal.op(nl_errstr_global.MF_1_CLASS_1_NOT_FOUND, classname);
+                log().fatal.op(nl_errstr_global.MF_CLASS_1_NOT_FOUND(classname));
             /* make sure we parse macro library entries */
             f.macro_actions(this, name);
             string key = build_fqn(name);
             if (device_exists(key))
-                log().fatal.op(nl_errstr_global.MF_1_DEVICE_ALREADY_EXISTS_1, name);
+                log().fatal.op(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
             else
                 m_device_factory.Add(new KeyValuePair<string, factory.element_t>(key, f));  //m_device_factory.insert(m_device_factory.end(), {key, f});
         }
@@ -456,7 +460,7 @@ namespace mame.netlist
         {
             std.vector<string> list = new std.vector<string>(terms.Split(new string[] { ", " }, StringSplitOptions.None));  //plib::psplit(terms, ", ");
             if (list.size() < 2)
-                log().fatal.op(nl_errstr_global.MF_2_NET_C_NEEDS_AT_LEAST_2_TERMINAL);
+                log().fatal.op(nl_errstr_global.MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL());
             for (int i = 1; i < list.size(); i++)
             {
                 register_link(list[0], list[i]);
@@ -472,11 +476,11 @@ namespace mame.netlist
             if (idx == null)  //m_param_values.end())
             {
                 if (!m_param_values.insert(fqn, value))
-                    log().fatal.op(nl_errstr_global.MF_1_ADDING_PARAMETER_1_TO_PARAMETER_LIST, param);
+                    log().fatal.op(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param));
             }
             else
             {
-                log().warning.op(nl_errstr_global.MW_3_OVERWRITING_PARAM_1_OLD_2_NEW_3, fqn, idx, value);
+                log().warning.op(nl_errstr_global.MW_OVERWRITING_PARAM_1_OLD_2_NEW_3(fqn, idx, value));
                 m_param_values[fqn] = value;
             }
         }
@@ -529,7 +533,7 @@ namespace mame.netlist
                     return;
             }
 
-            log().fatal.op(nl_errstr_global.MF_1_NOT_FOUND_IN_SOURCE_COLLECTION, netlist_name);
+            log().fatal.op(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
         }
 
 
@@ -546,7 +550,7 @@ namespace mame.netlist
         public void register_alias_nofqn(string alias, string out_)
         {
             if (!m_alias.insert(alias, out_))
-                log().fatal.op(nl_errstr_global.MF_1_ADDING_ALI1_TO_ALIAS_LIST, alias);
+                log().fatal.op(nl_errstr_global.MF_ADDING_ALI1_TO_ALIAS_LIST(alias));
         }
 
 
@@ -649,7 +653,7 @@ namespace mame.netlist
         public void register_param_t(string name, param_t param)
         {
             if (!m_params.insert(param.name(), new param_ref_t(param.name(), param.device(), param)))
-                log().fatal.op(nl_errstr_global.MF_1_ADDING_PARAMETER_1_TO_PARAMETER_LIST, name);
+                log().fatal.op(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(name));
         }
 
 
@@ -666,7 +670,8 @@ namespace mame.netlist
         public void register_term(detail.core_terminal_t term)
         {
             if (!m_terminals.insert(term.name(), term))
-                log().fatal.op(nl_errstr_global.MF_2_ADDING_1_2_TO_TERMINAL_LIST, termtype_as_str(term), term.name());
+                log().fatal.op(nl_errstr_global.MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
+
             log().debug.op("{0} {1}\n", termtype_as_str(term), term.name());
         }
 
@@ -684,13 +689,13 @@ namespace mame.netlist
             if (t1.is_type(detail.terminal_type.OUTPUT) && t2.is_type(detail.terminal_type.INPUT))
             {
                 if (t2.has_net() && t2.net().isRailNet())
-                    log().fatal.op(nl_errstr_global.MF_1_INPUT_1_ALREADY_CONNECTED, t2.name());
+                    log().fatal.op(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
                 connect_input_output(t2, t1);
             }
             else if (t1.is_type(detail.terminal_type.INPUT) && t2.is_type(detail.terminal_type.OUTPUT))
             {
                 if (t1.has_net()  && t1.net().isRailNet())
-                    log().fatal.op(nl_errstr_global.MF_1_INPUT_1_ALREADY_CONNECTED, t1.name());
+                    log().fatal.op(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
                 connect_input_output(t1, t2);
             }
             else if (t1.is_type(detail.terminal_type.OUTPUT) && t2.is_type(detail.terminal_type.TERMINAL))
@@ -731,7 +736,7 @@ namespace mame.netlist
             string outname = resolve_alias(param_in_fqn);
             var ret = m_params.find(outname);
             if (ret == null && required)
-                log().fatal.op(nl_errstr_global.MF_2_PARAMETER_1_2_NOT_FOUND, param_in_fqn, outname);
+                log().fatal.op(nl_errstr_global.MF_PARAMETER_1_2_NOT_FOUND(param_in_fqn, outname));
             if (ret != null)
                 log().debug.op("Found parameter {0}\n", outname);
             return ret == null ? null : ret.m_param;
@@ -741,9 +746,9 @@ namespace mame.netlist
         /* get family */
         public logic_family_desc_t family_from_model(string model)
         {
-            if (m_models.model_value_str(model, "TYPE") == "TTL")
+            if (m_models.value_str(model, "TYPE") == "TTL")
                 return nl_base_global.family_TTL();
-            if (m_models.model_value_str(model, "TYPE") == "CD4XXX")
+            if (m_models.value_str(model, "TYPE") == "CD4XXX")
                 return nl_base_global.family_CD4XXX();
 
             foreach (var e in m_nlstate.family_cache)
@@ -754,13 +759,13 @@ namespace mame.netlist
 
             var ret = new logic_family_std_proxy_t();  //plib::make_unique_base<logic_family_desc_t, logic_family_std_proxy_t>();
 
-            ret.fixed_V = m_models.model_value(model, "FV");
-            ret.low_thresh_PCNT = m_models.model_value(model, "IVL");
-            ret.high_thresh_PCNT = m_models.model_value(model, "IVH");
-            ret.low_VO = m_models.model_value(model, "OVL");
-            ret.high_VO = m_models.model_value(model, "OVH");
-            ret.R_low = m_models.model_value(model, "ORL");
-            ret.R_high = m_models.model_value(model, "ORH");
+            ret.fixed_V = m_models.value(model, "FV");
+            ret.low_thresh_PCNT = m_models.value(model, "IVL");
+            ret.high_thresh_PCNT = m_models.value(model, "IVH");
+            ret.low_VO = m_models.value(model, "OVL");
+            ret.high_VO = m_models.value(model, "OVH");
+            ret.R_low = m_models.value(model, "ORL");
+            ret.R_high = m_models.value(model, "ORH");
 
             var retp = ret.get();
 
@@ -810,6 +815,7 @@ namespace mame.netlist
                     detail.core_terminal_t t1 = find_terminal(t1s);
                     detail.core_terminal_t t2 = find_terminal(t2s);
 
+                    //printf("%s %s\n", t1s.c_str(), t2s.c_str());
                     if (connect(t1, t2))
                     {
                         //li = m_links.erase(li);
@@ -826,9 +832,9 @@ namespace mame.netlist
             if (tries == 0)
             {
                 foreach (var link in m_links)
-                    log().warning.op(nl_errstr_global.MF_2_CONNECTING_1_TO_2, link.first(), link.second());
+                    log().warning.op(nl_errstr_global.MF_CONNECTING_1_TO_2(link.first(), link.second()));
 
-                log().fatal.op(nl_errstr_global.MF_0_LINK_TRIES_EXCEEDED);
+                log().fatal.op(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(nl_config_global.NL_MAX_LINK_RESOLVE_LOOPS));
             }
 
             log().verbose.op("deleting empty nets ...");
@@ -844,11 +850,24 @@ namespace mame.netlist
             {
                 detail.core_terminal_t term = i.second();
                 if (!term.has_net() && term.device() is devices.nld_dummy_input)  //dynamic_cast< devices::NETLIB_NAME(dummy_input) *>(&term->device()) != nullptr)
-                    log().warning.op(nl_errstr_global.MW_1_DUMMY_1_WITHOUT_CONNECTIONS, term.name());
+                {
+                    log().info.op(nl_errstr_global.MI_DUMMY_1_WITHOUT_CONNECTIONS(term.name()));
+                }
                 else if (!term.has_net())
+                {
                     errstr += new plib.pfmt("Found terminal {0} without a net\n").op(term.name());
+                }
                 else if (term.net().num_cons() == 0)
-                    log().warning.op(nl_errstr_global.MW_1_TERMINAL_1_WITHOUT_CONNECTIONS, term.name());
+                {
+                    if (term.is_logic_input())
+                        log().warning.op(nl_errstr_global.MW_LOGIC_INPUT_1_WITHOUT_CONNECTIONS(term.name()));
+                    else if (term.is_logic_output())
+                        log().info.op(nl_errstr_global.MI_LOGIC_OUTPUT_1_WITHOUT_CONNECTIONS(term.name()));
+                    else if (term.is_analog_output())
+                        log().info.op(nl_errstr_global.MI_ANALOG_OUTPUT_1_WITHOUT_CONNECTIONS(term.name()));
+                    else
+                        log().warning.op(nl_errstr_global.MW_TERMINAL_1_WITHOUT_CONNECTIONS(term.name()));
+                }
             }
 
             //FIXME: error string handling
@@ -905,7 +924,7 @@ namespace mame.netlist
             detail.core_terminal_t term = (ret == null ? null : ret);
 
             if (term == null && required)
-                log().fatal.op(nl_errstr_global.MF_2_TERMINAL_1_2_NOT_FOUND, terminal_in, tname);
+                log().fatal.op(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
             if (term != null)
                 log().debug.op("Found input {0}\n", tname);
 
@@ -970,6 +989,13 @@ namespace mame.netlist
             var solver = m_nlstate.get_single_device<devices.nld_solver>("solver");
             m_netlist_params = m_nlstate.get_single_device<devices.nld_netlistparams>("parameter");
 
+
+            /* set default model parameters */
+
+            m_models.register_model(new plib.pfmt("NMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op()));
+            m_models.register_model(new plib.pfmt("PMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op()));
+
+
             /* create devices */
 
             log().debug.op("Creating devices ...\n");
@@ -994,7 +1020,7 @@ namespace mame.netlist
                     }
                     else
                     {
-                        log().info.op("Unknown parameter: {0}", p.first());
+                        log().warning.op("Unknown parameter: {0}", p.first());
                     }
                 }
             }
@@ -1011,7 +1037,7 @@ namespace mame.netlist
                         //FIXME: check for errors ...
                         double v = plib.pstring_global.pstonum_double(p);
                         if (std.abs(v - std.floor(v)) > 1e-6 )
-                            log().fatal.op(nl_errstr_global.MF_1_HND_VAL_NOT_SUPPORTED, p);
+                            log().fatal.op(nl_errstr_global.MF_HND_VAL_NOT_SUPPORTED(p));
                         d.second().set_hint_deactivate(v == 0.0);
                     }
                 }
@@ -1029,8 +1055,8 @@ namespace mame.netlist
             {
                 if (t.N.net().isRailNet() && t.P.net().isRailNet())
                 {
-                    log().warning.op(nl_errstr_global.MW_3_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3,
-                        t.name(), t.N.net().name(), t.P.net().name());
+                    log().info.op(nl_errstr_global.MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(
+                        t.name(), t.N.net().name(), t.P.net().name()));
                     t.N.net().remove_terminal(t.N);
                     t.P.net().remove_terminal(t.P);
                     m_nlstate.remove_dev(t);
@@ -1044,7 +1070,7 @@ namespace mame.netlist
                 foreach (var p in m_nlstate.nets())
                 {
                     if (p.is_analog())
-                        log().fatal.op(nl_errstr_global.MF_0_NO_SOLVER);
+                        log().fatal.op(nl_errstr_global.MF_NO_SOLVER());
                 }
             }
             else
@@ -1069,12 +1095,12 @@ namespace mame.netlist
             log().debug.op("merging nets ...\n");
             if (othernet == thisnet)
             {
-                log().warning.op(nl_errstr_global.MW_1_CONNECTING_1_TO_ITSELF, thisnet.name());
+                log().warning.op(nl_errstr_global.MW_CONNECTING_1_TO_ITSELF(thisnet.name()));
                 return; // Nothing to do
             }
 
             if (thisnet.isRailNet() && othernet.isRailNet())
-                log().fatal.op(nl_errstr_global.MF_2_MERGE_RAIL_NETS_1_AND_2, thisnet.name(), othernet.name());
+                log().fatal.op(nl_errstr_global.MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
 
             if (othernet.isRailNet())
             {
@@ -1164,7 +1190,7 @@ namespace mame.netlist
             }
             else
             {
-                log().fatal.op(nl_errstr_global.MF_1_OBJECT_OUTPUT_TYPE_1, out_.name());
+                log().fatal.op(nl_errstr_global.MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
             }
         }
 
@@ -1186,7 +1212,7 @@ namespace mame.netlist
             }
             else
             {
-                log().fatal.op(nl_errstr_global.MF_1_OBJECT_INPUT_TYPE_1, inp.name());
+                log().fatal.op(nl_errstr_global.MF_OBJECT_INPUT_TYPE_1(inp.name()));
             }
         }
 
@@ -1258,7 +1284,7 @@ namespace mame.netlist
                     return "OUTPUT";
             }
 
-            log().fatal.op(nl_errstr_global.MF_1_UNKNOWN_OBJECT_TYPE_1, in_.type());
+            log().fatal.op(nl_errstr_global.MF_UNKNOWN_OBJECT_TYPE_1(in_.type()));
             return "Error";
         }
 
@@ -1285,7 +1311,7 @@ namespace mame.netlist
                 {
                     p.clear_net(); // de-link from all nets ...
                     if (!connect(new_proxy.proxy_term(), p))
-                        log().fatal.op(nl_errstr_global.MF_2_CONNECTING_1_TO_2, new_proxy.proxy_term().name(), p.name());
+                        log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
                 }
                 out_.net().core_terms().clear(); // clear the list
 
@@ -1331,7 +1357,7 @@ namespace mame.netlist
                     {
                         p.clear_net(); // de-link from all nets ...
                         if (!connect(ret.proxy_term(), p))
-                            log().fatal.op(nl_errstr_global.MF_2_CONNECTING_1_TO_2, ret.proxy_term().name(), p.name());
+                            log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
                     }
                     inp.net().core_terms().clear(); // clear the list
                 }

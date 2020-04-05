@@ -15,33 +15,6 @@ namespace mame
     //typedef u16 indirect_pen_t;
 
 
-    public static class emupal_global
-    {
-        //**************************************************************************
-        //  DEVICE CONFIGURATION MACROS
-        //**************************************************************************
-
-        public static void MCFG_PALETTE_ADD(out device_t device, machine_config config, device_t owner, string tag, u32 entries)
-        {
-            mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, palette_device.PALETTE, 0);
-            ((palette_device)device).set_entries(entries);
-        }
-
-        public static void MCFG_PALETTE_ADD(out device_t device, machine_config config, device_t owner, device_finder<palette_device> finder, u32 entries)
-        {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, target.second(), palette_device.PALETTE, 0);
-            finder.target = (palette_device)device;
-            ((palette_device)device).set_entries(entries);
-        }
-
-        //define MCFG_PALETTE_FORMAT(_format)             palette_device::static_set_format(*device, PALETTE_FORMAT_##_format);
-
-        // not implemented yet
-        //define MCFG_PALETTE_ADD_HARDCODED(_tag, _array)             MCFG_PALETTE_ADD(_tag, sizeof(_array) / 3)             palette_device::static_set_init(*device, palette_init_delegate(FUNC(palette_device::palette_init_RRRRGGGGBBBB_proms), downcast<palette_device *>(device)));
-    }
-
-
     // ======================> raw_to_rgb_converter
     class raw_to_rgb_converter
     {
@@ -208,7 +181,10 @@ namespace mame
         //enum rgb_444_prom_t { RGB_444_PROMS, RRRRGGGGBBBB_PROMS };
 
         // exotic formats
-        //enum rrrrggggbbbbrgbx_t { RRRRGGGGBBBBRGBx };
+        //enum rrrrggggbbbbrgbx_t      { RRRRGGGGBBBBRGBx };
+        //enum xrgbrrrrggggbbbb_bit0_t { xRGBRRRRGGGGBBBB_bit0 };
+        //enum xrgbrrrrggggbbbb_bit4_t { xRGBRRRRGGGGBBBB_bit4 };
+        //enum xbgrbbbbggggrrrr_bit0_t { xBGRBBBBGGGGRRRR_bit0 };
 
 
         device_palette_interface_palette_device m_device_palette_interface;
@@ -358,6 +334,9 @@ namespace mame
         //palette_device &set_format(grbx_888_t, u32 entries);
         //palette_device &set_format(bgrx_888_t, u32 entries);
         //palette_device &set_format(rrrrggggbbbbrgbx_t, u32 entries);
+        //palette_device &set_format(xrgbrrrrggggbbbb_bit0_t, u32 entries);
+        //palette_device &set_format(xrgbrrrrggggbbbb_bit4_t, u32 entries);
+        //palette_device &set_format(xbgrbbbbggggrrrr_bit0_t, u32 entries);
         //template <typename T> palette_device &set_format(T x, u32 entries, u32 indirect) { set_format(x, entries); set_indirect_entries(indirect); return *this; }
         //palette_device &set_membits(int membits) { m_membits = membits; m_membits_supplied = true; return *this; }
         //palette_device &set_endianness(endianness_t endianness) { m_endianness = endianness; m_endianness_supplied = true; return *this; }
@@ -423,18 +402,18 @@ namespace mame
 
 
         // generic read/write handlers
-        //DECLARE_READ8_MEMBER(read8);
-        //DECLARE_READ8_MEMBER(read8_ext);
-        //DECLARE_WRITE8_MEMBER(write8);
-        //DECLARE_WRITE8_MEMBER(write8_ext);
-        //DECLARE_WRITE8_MEMBER(write_indirect);
-        //DECLARE_WRITE8_MEMBER(write_indirect_ext);
-        //DECLARE_READ16_MEMBER(read16);
-        //DECLARE_READ16_MEMBER(read16_ext);
-        //DECLARE_WRITE16_MEMBER(write16);
-        //DECLARE_WRITE16_MEMBER(write16_ext);
-        //DECLARE_READ32_MEMBER(read32);
-        //DECLARE_WRITE32_MEMBER(write32);
+        //u8 read8(offs_t offset);
+        //u8 read8_ext(offs_t offset);
+        //void write8(offs_t offset, u8 data);
+        //void write8_ext(offs_t offset, u8 data);
+        //void write_indirect(offs_t offset, u8 data);
+        //void write_indirect_ext(offs_t offset, u8 data);
+        //u16 read16(offs_t offset);
+        //u16 read16_ext(offs_t offset);
+        //void write16(offs_t offset, u16 data, u16 mem_mask = u16(~0));
+        //void write16_ext(offs_t offset, u16 data, u16 mem_mask = u16(~0));
+        //u32 read32(offs_t offset);
+        //void write32(offs_t offset, u32 data, u32 mem_mask = u32(~0));
 
 
         // helper to update palette when data changed

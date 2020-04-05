@@ -79,6 +79,7 @@ namespace mame
 
         devcb_read8 m_tri_pa_cb;
         devcb_read8 m_tri_pb_cb;
+        devcb_read8 m_tri_pc_cb;
 
         uint8_t m_control;            // mode control word
         uint8_t [] m_output = new uint8_t[3];          // output latch
@@ -115,6 +116,7 @@ namespace mame
             m_out_pc_cb = new devcb_write8(this);
             m_tri_pa_cb = new devcb_read8(this);
             m_tri_pb_cb = new devcb_read8(this);
+            m_tri_pc_cb = new devcb_read8(this);
             m_control = 0;
             m_intr = new int[2] { 0, 0 };
         }
@@ -130,6 +132,7 @@ namespace mame
         // output state when pins are in tri-state, default 0xff
         //auto tri_pa_callback() { return m_tri_pa_cb.bind(); }
         //auto tri_pb_callback() { return m_tri_pb_cb.bind(); }
+        //auto tri_pc_callback() { return m_tri_pc_cb.bind(); }
 
 
         //-------------------------------------------------
@@ -255,6 +258,7 @@ namespace mame
             m_out_pc_cb.resolve_safe();
             m_tri_pa_cb.resolve_safe(0xff);
             m_tri_pb_cb.resolve_safe(0xff);
+            m_tri_pc_cb.resolve_safe(0xff);
         }
 
 
@@ -659,9 +663,9 @@ namespace mame
         //-------------------------------------------------
         void output_pc()
         {
-            byte data = 0;
-            byte mask = 0;
-            byte b_mask = 0x0f;
+            uint8_t data = 0;
+            uint8_t mask = 0;
+            uint8_t b_mask = 0x0f;
 
             // PC upper
             switch (group_mode(GROUP_A))
@@ -673,31 +677,31 @@ namespace mame
                 }
                 else
                 {
-                    // TTL inputs float high
-                    data |= 0xf0;
+                    // TTL inputs floating
+                    data |= (uint8_t)(m_tri_pc_cb.op(0) & 0xf0);
                 }
                 break;
 
             case MODE_1:
-                data |= m_intr[PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
+                data |= m_intr[PORT_A] != 0 ? (uint8_t)0x08 : (uint8_t)0x00;
 
                 if (port_mode(PORT_A) == MODE_OUTPUT)
                 {
-                    data |= m_obf[PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
+                    data |= m_obf[PORT_A] != 0 ? (uint8_t)0x80 : (uint8_t)0x00;
                     mask |= 0x30;
                 }
                 else
                 {
-                    data |= m_ibf[PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
+                    data |= m_ibf[PORT_A] != 0 ? (uint8_t)0x20 : (uint8_t)0x00;
                     mask |= 0xc0;
                 }
                 break;
 
             case MODE_2:
                 b_mask = 0x07;
-                data |= m_intr[PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
-                data |= m_ibf[PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
-                data |= m_obf[PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
+                data |= m_intr[PORT_A] != 0 ? (uint8_t)0x08 : (uint8_t)0x00;
+                data |= m_ibf[PORT_A] != 0 ? (uint8_t)0x20 : (uint8_t)0x00;
+                data |= m_obf[PORT_A] != 0 ? (uint8_t)0x80 : (uint8_t)0x00;
                 break;
             }
 
@@ -711,28 +715,28 @@ namespace mame
                 }
                 else
                 {
-                    // TTL inputs float high
-                    data |= b_mask;
+                    // TTL inputs floating
+                    data |= (uint8_t)(m_tri_pc_cb.op(0) & b_mask);
                 }
                 break;
 
             case MODE_1:
-                data |= m_intr[PORT_B] != 0 ? (byte)0x01 : (byte)0x00;
+                data |= m_intr[PORT_B] != 0 ? (uint8_t)0x01 : (uint8_t)0x00;
 
                 if (port_mode(PORT_B) == MODE_OUTPUT)
                 {
-                    data |= m_obf[PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
+                    data |= m_obf[PORT_B] != 0 ? (uint8_t)0x02 : (uint8_t)0x00;
                 }
                 else
                 {
-                    data |= m_ibf[PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
+                    data |= m_ibf[PORT_B] != 0 ? (uint8_t)0x02 : (uint8_t)0x00;
                 }
                 break;
             }
 
-            data |= (byte)(m_output[PORT_C] & mask);
+            data |= (uint8_t)(m_output[PORT_C] & mask);
 
-            m_out_pc_cb.op((offs_t)0, data);
+            m_out_pc_cb.op(0, data);
         }
 
 

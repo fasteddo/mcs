@@ -110,6 +110,7 @@ namespace mame
              6900000, /* 6.9_MHz_XTAL           BBN BitGraph CPU */
              7000000, /* 7_MHz_XTAL             Jaleco Mega System PCBs */
              7159090, /* 7.15909_MHz_XTAL       Blood Bros (2x NTSC subcarrier) */
+             7200000, /* 7.2_MHz_XTAL           Image Fight bootleg I80C031 MCU */
              7372800, /* 7.3728_MHz_XTAL        - */
              7864300, /* 7.8643_MHz_XTAL        Used on InterFlip games as video clock */
              7987000, /* 7.987_MHz_XTAL         PC9801-86 YM2608 clock */
@@ -308,6 +309,7 @@ namespace mame
             29376000, /* 29.376_MHz_XTAL        Qume QVT-103 */
             29491200, /* 29.4912_MHz_XTAL       Xerox Alto-II system clock (tagged 29.4MHz in the schematics) */
             30000000, /* 30_MHz_XTAL            Impera Magic Card */
+            30209800, /* 30.2098_MHz_XTAL       Philips CD-i NTSC (1920x NTSC line rate) */
             30476100, /* 30.4761_MHz_XTAL       Taito JC */
             30800000, /* 30.8_MHz_XTAL          15IE-00-013 */
             31279500, /* 31.2795_MHz_XTAL       Wyse WY-30+ */
@@ -320,6 +322,7 @@ namespace mame
             32530400, /* 32.5304_MHz_XTAL       Seta 2 */
             33000000, /* 33_MHz_XTAL            Sega Model 3 video board */
             33264000, /* 33.264_MHz_XTAL        Hazeltine 1500 terminal */
+            33330000, /* 33.33_MHz_XTAL         Sharp X68000 XVI */
             33333000, /* 33.333_MHz_XTAL        Sega Model 3 CPU board, Vegas */
             33833000, /* 33.833_MHz_XTAL        - */
             33868800, /* 33.8688_MHz_XTAL       Usually used to drive 90's Yamaha OPL/FM chips with /2 divider */
@@ -345,6 +348,7 @@ namespace mame
             44452800, /* 44.4528_MHz_XTAL       TeleVideo 965 */
             44900000, /* 44.9_MHz_XTAL          IBM 8514 1024x768 43.5Hz graphics */
             45000000, /* 45_MHz_XTAL            Eolith with Hyperstone CPUs */
+            45158400, /* 45.1584_MHz_XTAL       Philips CD-i CDIC, Sega Model 2A video, Sega Model 3 CPU */
             45158000, /* 45.158_MHz_XTAL        Sega Model 2A video board, Model 3 CPU board */
             45619200, /* 45.6192_MHz_XTAL       DEC VK100 */
             45830400, /* 45.8304_MHz_XTAL       Microterm 5510 */
@@ -360,6 +364,7 @@ namespace mame
             50000000, /* 50_MHz_XTAL            Williams/Midway T/W/V-unit system */
             50113000, /* 50.113_MHz_XTAL        Namco NA-1 (14x NTSC subcarrier)*/
             50349000, /* 50.349_MHz_XTAL        Sega System 18 (~3200x NTSC line rate) */
+            50350000, /* 50.35_MHz_XTAL         Sharp X68030 video */
             51200000, /* 51.2_MHz_XTAL          Namco Super System 22 video clock */
             52000000, /* 52_MHz_XTAL            Cojag */
             52832000, /* 52.832_MHz_XTAL        Wang PC TIG video controller */

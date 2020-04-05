@@ -48,6 +48,10 @@ namespace mame.netlist
             //        NET_REGISTER_DEV(CLOCK, name)                                           \
             //        PARAM(name.FREQ, freq)
 
+            //#define VARCLOCK(name, func)                                                    \
+            //        NET_REGISTER_DEV(VARCLOCK, name)                                        \
+            //        PARAM(name.FUNC, func)
+
             //#define EXTCLOCK(name, freq, pattern)                                           \
             //        NET_REGISTER_DEV(EXTCLOCK, name)                                        \
             //        PARAM(name.FREQ, freq)                                                  \
@@ -88,6 +92,7 @@ namespace mame.netlist
             //NETLIB_DEVICE_IMPL(function, "AFUNC",                  "N,FUNC")
             //NETLIB_DEVICE_IMPL(analog_input,        "ANALOG_INPUT",           "IN")
             //NETLIB_DEVICE_IMPL(clock,               "CLOCK",                  "FREQ")
+            //NETLIB_DEVICE_IMPL(varclock,            "VARCLOCK",               "FUNC")
             //NETLIB_DEVICE_IMPL(extclock,            "EXTCLOCK",               "FREQ,PATTERN")
             //NETLIB_DEVICE_IMPL(res_sw,              "RES_SWITCH",             "+IN,+P1,+P2")
             //NETLIB_DEVICE_IMPL(mainclock,           "MAINCLOCK",              "FREQ")

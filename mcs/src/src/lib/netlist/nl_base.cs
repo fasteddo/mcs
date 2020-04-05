@@ -51,6 +51,11 @@ namespace mame.netlist
     //    public: template <class CLASS> NETLIB_NAME(cname)(CLASS &owner, const pstring &name) \
     //    : NETLIB_NAME(pclass)(owner, name)
 
+    //#define NETLIB_CONSTRUCTOR_DERIVED_EX(cname, pclass, ...)                      \
+    //    private: detail::family_setter_t m_famsetter;                              \
+    //    public: template <class CLASS> NETLIB_NAME(cname)(CLASS &owner, const pstring &name, __VA_ARGS__) \
+    //    : NETLIB_NAME(pclass)(owner, name)
+
     /*! Used to define the constructor of a netlist device.
     *  Use this to define the constructor of a netlist device. Please refer to
     *  #NETLIB_OBJECT for an example.
@@ -379,7 +384,11 @@ namespace mame.netlist
 
             //COPYASSIGNMOVE(object_t, delete)
 
-            //~object_t() { }
+            // only childs should be destructible
+            ~object_t()
+            {
+                name_hash().erase(this);  //name_hash().erase(name_hash().find(this));
+            }
 
 
             /*! return name of the object
@@ -515,7 +524,7 @@ namespace mame.netlist
                     return terminal_type.OUTPUT;
                 else
                 {
-                    state().log().fatal.op(nl_errstr_global.MF_1_UNKNOWN_TYPE_FOR_OBJECT, name());
+                    state().log().fatal.op(nl_errstr_global.MF_UNKNOWN_TYPE_FOR_OBJECT(name()));
                     return terminal_type.TERMINAL; // please compiler
                 }
             }
@@ -535,7 +544,11 @@ namespace mame.netlist
 
 
             public bool is_logic() { return this is logic_t; }  //return dynamic_cast<const logic_t *>(this) != nullptr;
+            public bool is_logic_input() { return this is logic_input_t; }  //return dynamic_cast<const logic_input_t *>(this) != nullptr;
+            public bool is_logic_output() { return this is logic_output_t; }  //return dynamic_cast<const logic_output_t *>(this) != nullptr;
             public bool is_analog() { return this is analog_t; }  //return dynamic_cast<const analog_t *>(this) != nullptr;
+            bool is_analog_input() { return this is analog_input_t; }  //return dynamic_cast<const analog_input_t *>(this) != nullptr;
+            public bool is_analog_output() { return this is analog_output_t; }  //return dynamic_cast<const analog_output_t *>(this) != nullptr;
 
             //bool is_state(const state_e &astate) const NL_NOEXCEPT { return (m_state == astate); }
             public state_e terminal_state() { return m_state.op; }
@@ -901,7 +914,7 @@ namespace mame.netlist
                 foreach (var t in m_core_terms)
                 {
                     if (t == terminal)
-                        state().log().fatal.op(nl_errstr_global.MF_2_NET_1_DUPLICATE_TERMINAL_2, name(), t.name());
+                        state().log().fatal.op(nl_errstr_global.MF_NET_1_DUPLICATE_TERMINAL_2(name(), t.name()));
                 }
 
                 terminal.set_net(this);
@@ -919,7 +932,7 @@ namespace mame.netlist
                 }
                 else
                 {
-                    state().log().fatal.op(nl_errstr_global.MF_2_REMOVE_TERMINAL_1_FROM_NET_2, terminal.name(), this.name());
+                    state().log().fatal.op(nl_errstr_global.MF_REMOVE_TERMINAL_1_FROM_NET_2(terminal.name(), this.name()));
                 }
             }
 
@@ -1143,7 +1156,7 @@ namespace mame.netlist
             if (newQ != m_my_net.Q_Analog())
             {
                 m_my_net.set_Q_Analog(newQ);
-                m_my_net.toggle_and_push_to_queue(netlist_time.NLTIME_FROM_NS(1));
+                m_my_net.toggle_and_push_to_queue(netlist_time.quantum());
             }
         }
     }
@@ -1225,7 +1238,7 @@ namespace mame.netlist
                 bool err = false;
                 var vald = plib.pstring_global.pstonum_ne_bool(p, out err);
                 if (err)
-                    device.state().log().fatal.op(nl_errstr_global.MF_2_INVALID_NUMBER_CONVERSION_1_2, name, p);
+                    device.state().log().fatal.op(nl_errstr_global.MF_INVALID_NUMBER_CONVERSION_1_2(name, p));
                 m_param = vald;
             }
             else
@@ -1240,7 +1253,7 @@ namespace mame.netlist
         public void setTo(bool param) { set(ref m_param, param); }
     }
 
-    class param_num_t_int : param_t  //param_num_t<T>::param_num_t(device_t &device, const pstring &name, const T val)
+    public class param_num_t_int : param_t  //param_num_t<T>::param_num_t(device_t &device, const pstring &name, const T val)
     {
         int m_param;
 
@@ -1255,7 +1268,7 @@ namespace mame.netlist
                 bool err = false;
                 var vald = plib.pstring_global.pstonum_ne_int(p, out err);
                 if (err)
-                    device.state().log().fatal.op(nl_errstr_global.MF_2_INVALID_NUMBER_CONVERSION_1_2, name, p);
+                    device.state().log().fatal.op(nl_errstr_global.MF_INVALID_NUMBER_CONVERSION_1_2(name, p));
                 m_param = vald;
             }
             else
@@ -1285,7 +1298,7 @@ namespace mame.netlist
                 bool err = false;
                 var vald = plib.pstring_global.pstonum_ne_double(p, out err);
                 if (err)
-                    device.state().log().fatal.op(nl_errstr_global.MF_2_INVALID_NUMBER_CONVERSION_1_2, name, p);
+                    device.state().log().fatal.op(nl_errstr_global.MF_INVALID_NUMBER_CONVERSION_1_2(name, p));
                 m_param = vald;
             }
             else
@@ -1305,7 +1318,7 @@ namespace mame.netlist
     //using param_int_t = param_num_t<int>;
     //using param_double_t = param_num_t<double>;
     public class param_logic_t : param_num_t_bool { public param_logic_t(device_t device, string name, bool val) : base(device, name, val) { } }
-    class param_int_t : param_num_t_int { public param_int_t(device_t device, string name, int val) : base(device, name, val) { } }
+    public class param_int_t : param_num_t_int { public param_int_t(device_t device, string name, int val) : base(device, name, val) { } }
     class param_double_t : param_num_t_double { public param_double_t(device_t device, string name, double val) : base(device, name, val) { } }
 
 
@@ -1331,7 +1344,7 @@ namespace mame.netlist
 
 
         //const pstring &operator()() const NL_NOEXCEPT { return Value(); }
-        public string op() { return value(); }
+        public string op() { return str(); }
 
 
         //void setTo(const pstring &param) NL_NOEXCEPT
@@ -1340,7 +1353,7 @@ namespace mame.netlist
         protected virtual void changed() { }
 
 
-        protected string value() { return m_param; }
+        protected string str() { return m_param; }
     }
 
 
@@ -1349,28 +1362,39 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     class param_model_t : param_str_t
     {
-        class value_t
+        //template <typename T>
+        class value_base_t_nl_double
         {
-            double m_value;
+            nl_double m_value;  //const T m_value;
 
-            value_t(param_model_t param, string name)
+            public value_base_t_nl_double(param_model_t param, string name)
             {
-                m_value = param.model_value(name);
+                m_value = param.value(name);
             }
 
-            //const double &operator()() const NL_NOEXCEPT { return m_value; }
-            //operator const double&() const NL_NOEXCEPT { return m_value; }
+            //T operator()() const noexcept { return m_value; }
+            //operator T() const noexcept { return m_value; }
         }
 
+        //using value_t = value_base_t<nl_double>;
+        class value_t : value_base_t_nl_double { public value_t(param_model_t param, string name) : base(param, name) { } }
 
-        //friend class value_t;
+
+        //template <typename T>
+        //friend class value_base_t;
 
 
         public param_model_t(device_t device, string name, string val) : base(device, name, val) { }
 
 
-        //const pstring model_value_str(const pstring &entity) /*const*/;
-        //const pstring model_type() /*const*/;
+        //const pstring value_str(const pstring &entity) /*const*/;
+
+        nl_double value(string entity)
+        {
+            return state().setup().models().value(str(), entity);
+        }
+
+        //const pstring type() /*const*/;
 
 
         protected override void changed()
@@ -1379,10 +1403,6 @@ namespace mame.netlist
         }
 
 
-        nl_double model_value(string entity)
-        {
-            return state().setup().models().model_value(value(), entity);
-        }
 
         /* hide this */
         //void setTo(const pstring &param) = delete;
@@ -1558,7 +1578,7 @@ namespace mame.netlist
         protected void connect_post_start(detail.core_terminal_t t1, detail.core_terminal_t t2)
         {
             if (!setup().connect(t1, t2))
-                log().fatal.op(nl_errstr_global.MF_2_ERROR_CONNECTING_1_TO_2, t1.name(), t2.name());
+                log().fatal.op(nl_errstr_global.MF_ERROR_CONNECTING_1_TO_2(t1.name(), t2.name()));
         }
 
 
@@ -1733,7 +1753,7 @@ namespace mame.netlist
                 if (cc(d.second()))
                 {
                     if (ret != null)
-                        m_log.fatal.op(nl_errstr_global.MF_1_MORE_THAN_ONE_1_DEVICE_FOUND, classname);
+                        m_log.fatal.op(nl_errstr_global.MF_MORE_THAN_ONE_1_DEVICE_FOUND(classname));
                     else
                         ret = d.second();
                 }
@@ -1766,12 +1786,15 @@ namespace mame.netlist
 
 
         //template <typename T>
-        public void add_dev(string name, core_device_t dev)  //void add_dev(const pstring &name, poolptr<T> &&dev)
+        public void add_dev(string name, core_device_t dev)  //void add_dev(const pstring &name, pool_owned_ptr<T> &&dev)
         {
             foreach (var d in m_devices)
             {
                 if (d.first() == name)
-                    log().fatal.op(nl_errstr_global.MF_1_DUPLICATE_NAME_DEVICE_LIST, d.first());
+                {
+                    //dev.release();
+                    log().fatal.op(nl_errstr_global.MF_DUPLICATE_NAME_DEVICE_LIST(name));
+                }
             }
 
             //m_devices.push_back(dev);
@@ -1820,7 +1843,7 @@ namespace mame.netlist
     }
 
 
-    public abstract class netlist_t
+    public class netlist_t
     {
         netlist_state_t m_state;  //plib::unique_ptr<netlist_state_t>   m_state;
         devices.nld_solver m_solver;  //devices::NETLIB_NAME(solver) *      m_solver;

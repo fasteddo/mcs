@@ -62,6 +62,12 @@ namespace mame.netlist
         //#define CS(name, pI)                                                           \
         //        NET_REGISTER_DEV(CS, name)                                             \
         //        NETDEV_PARAMI(name, I, pI)
+        public static void CS(nlparse_t setup, string name, double pI)
+        {
+            nl_setup_global.NET_REGISTER_DEV(setup, "CS", name);
+            nl_setup_global.NETDEV_PARAMI(setup, name, "I", pI);
+        }
+
 
         // -----------------------------------------------------------------------------
         // Generic macros
@@ -76,7 +82,7 @@ namespace mame.netlist
         //#define RES_M(res) (static_cast<double>(res) * 1e6)
         //#define CAP_U(cap) (static_cast<double>(cap) * 1e-6)
         //#define CAP_N(cap) (static_cast<double>(cap) * 1e-9)
-        //#define CAP_P(cap) (static_cast<double>(cap) * 1e-12)
+        public static double CAP_P(double cap) { return cap * 1e-12; }
         //#define IND_U(ind) (static_cast<double>(ind) * 1e-6)
         //#define IND_N(ind) (static_cast<double>(ind) * 1e-9)
         //#define IND_P(ind) (static_cast<double>(ind) * 1e-12)

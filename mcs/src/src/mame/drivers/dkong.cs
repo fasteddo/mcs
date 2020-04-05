@@ -133,7 +133,7 @@ namespace mame
         {
             // 2 board DK and all DKjr has a watchdog
             if (m_watchdog.target != null)
-                m_watchdog.target.reset_w(space, 0, 0);
+                m_watchdog.target.watchdog_reset();
 
             uint8_t r = (uint8_t)ioport("IN2").read();
             machine().bookkeeping().coin_counter_w((int)offset, r >> 7);

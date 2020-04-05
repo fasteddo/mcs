@@ -126,10 +126,10 @@ namespace mame
             int scanline = param;
 
             if (scanline == 240) // vblank-out irq
-                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* RST 10h - vblank */
+                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* Z80 - RST 10h - vblank */
 
             if (scanline == 0) // unknown irq event, presumably vblank-in or a periodic one (writes to the soundlatch and drives freeze dip-switch)
-                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xcf);   /* RST 08h */
+                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xcf);   /* Z80 - RST 08h */
         }
 
 
@@ -142,7 +142,7 @@ namespace mame
             map.op(0xc002, 0xc002).portr("P2");
             map.op(0xc003, 0xc003).portr("DSWA");
             map.op(0xc004, 0xc004).portr("DSWB");
-            map.op(0xc800, 0xc800).w(m_soundlatch.target, (space, offset, data, mem_mask) => { m_soundlatch.target.write(space, offset, data, mem_mask); });
+            map.op(0xc800, 0xc800).w(m_soundlatch.target, (space, offset, data, mem_mask) => { m_soundlatch.target.write(data); });
             map.op(0xc802, 0xc803).w(_1942_scroll_w);
             map.op(0xc804, 0xc804).w(_1942_c804_w);
             map.op(0xc805, 0xc805).w(_1942_palette_bank_w);
@@ -158,7 +158,7 @@ namespace mame
         {
             map.op(0x0000, 0x3fff).rom();
             map.op(0x4000, 0x47ff).ram();
-            map.op(0x6000, 0x6000).r(m_soundlatch.target, (space, offset, mem_mask) => { return m_soundlatch.target.read(space, offset, mem_mask); });  //r(m_soundlatch, FUNC(generic_latch_8_device::read));
+            map.op(0x6000, 0x6000).r(m_soundlatch.target, (space, offset, mem_mask) => { return m_soundlatch.target.read(); });  //r(m_soundlatch, FUNC(generic_latch_8_device::read));
             map.op(0x8000, 0x8001).w("ay1", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay1")).address_data_w(space, offset, data, mem_mask); });  //w("ay1", FUNC(ay8910_device::address_data_w));
             map.op(0xc000, 0xc001).w("ay2", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay2")).address_data_w(space, offset, data, mem_mask); });  //w("ay2", FUNC(ay8910_device::address_data_w));
         }
@@ -316,11 +316,8 @@ namespace mame
         }
 
 
-        //MACHINE_CONFIG_START(_1942_state::_1942)
         public void _1942(machine_config config)
         {
-            MACHINE_CONFIG_START(config);
-
             /* basic machine hardware */
             Z80(config, m_maincpu, MAIN_CPU_CLOCK);    /* 4 MHz ??? */
             m_maincpu.target.memory().set_addrmap(AS_PROGRAM, _1942_map);
@@ -367,21 +364,18 @@ namespace mame
             /* NETLIST configuration using internal AY8910 resistor values */
 
             /* Minimize resampling between ay8910 and netlist */
-            MCFG_DEVICE_ADD("snd_nl", netlist_mame_sound_device.NETLIST_SOUND, AUDIO_CLOCK / 8 / 2);
-            MCFG_NETLIST_SETUP(netlist_nl_1942);
-            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 5.0);
-            MCFG_NETLIST_STREAM_INPUT("snd_nl", 0, "R_AY1_1.R");
-            MCFG_NETLIST_STREAM_INPUT("snd_nl", 1, "R_AY1_2.R");
-            MCFG_NETLIST_STREAM_INPUT("snd_nl", 2, "R_AY1_3.R");
-            MCFG_NETLIST_STREAM_INPUT("snd_nl", 3, "R_AY2_1.R");
-            MCFG_NETLIST_STREAM_INPUT("snd_nl", 4, "R_AY2_2.R");
-            MCFG_NETLIST_STREAM_INPUT("snd_nl", 5, "R_AY2_3.R");
+            NETLIST_SOUND(config, "snd_nl", AUDIO_CLOCK / 8 / 2)
+                .set_source(netlist_nl_1942)
+                .disound.add_route(ALL_OUTPUTS, "mono", 5.0);
+            NETLIST_STREAM_INPUT(config, "snd_nl:cin0", 0, "R_AY1_1.R");
+            NETLIST_STREAM_INPUT(config, "snd_nl:cin1", 1, "R_AY1_2.R");
+            NETLIST_STREAM_INPUT(config, "snd_nl:cin2", 2, "R_AY1_3.R");
+            NETLIST_STREAM_INPUT(config, "snd_nl:cin3", 3, "R_AY2_1.R");
+            NETLIST_STREAM_INPUT(config, "snd_nl:cin4", 4, "R_AY2_2.R");
+            NETLIST_STREAM_INPUT(config, "snd_nl:cin5", 5, "R_AY2_3.R");
 
-            MCFG_NETLIST_STREAM_OUTPUT("snd_nl", 0, "R1.1");
+            NETLIST_STREAM_OUTPUT(config, "snd_nl:cout0", 0, "R1.1").set_mult_offset(70000.0, 0.0);
             //MCFG_NETLIST_STREAM_OUTPUT("snd_nl", 0, "VR.2")
-            MCFG_NETLIST_ANALOG_MULT_OFFSET(70000.0, 0.0);
-
-            MACHINE_CONFIG_END();
         }
     }
 

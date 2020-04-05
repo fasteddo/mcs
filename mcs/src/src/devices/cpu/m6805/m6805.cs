@@ -72,12 +72,12 @@ namespace mame
         // state index constants
         //enum
         //{
-        const int M6805_PC = 1;
-        const int M6805_S  = 2;
-        const int M6805_CC = 3;
-        const int M6805_A  = 4;
-        const int M6805_X  = 5;
-        const int M6805_IRQ_STATE = 6;
+        protected const int M6805_PC = 1;
+        protected const int M6805_S  = 2;
+        protected const int M6805_CC = 3;
+        protected const int M6805_A  = 4;
+        protected const int M6805_X  = 5;
+        protected const int M6805_IRQ_STATE = 6;
         //};
 
 
@@ -293,6 +293,13 @@ namespace mame
 
             m_params = params_;
             m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_BIG, 8, (u8)params_.m_addr_width, 0, internal_map);
+        }
+
+
+        // this function is needed when passing in a non-static address_map_constructor in the ctor.  'this' isn't available
+        protected void m6805_base_device_after_ctor(address_map_constructor internal_map)
+        {
+            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_BIG, 8, (u8)m_params.m_addr_width, 0, internal_map);
         }
 
 

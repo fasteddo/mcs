@@ -159,7 +159,7 @@ namespace mame
             map.op(0x6800, 0x6807).r(bosco_dsw_r);
             map.op(0x6800, 0x681f).w(m_namco_sound.target, (space, offset, data, mem_mask) => { m_namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x6820, 0x6827).w("misclatch", (space, offset, data, mem_mask) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(space, offset, data, mem_mask); });  //FUNC(ls259_device::write_d0));
-            map.op(0x6830, 0x6830).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x6830, 0x6830).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x7000, 0x70ff).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).data_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).data_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
             map.op(0x7100, 0x7100).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
             map.op(0x8000, 0x87ff).ram().w(galaga_videoram_w).share("videoram");
@@ -179,7 +179,7 @@ namespace mame
             map.op(0x6800, 0x6807).r(bosco_dsw_r);
             map.op(0x6800, 0x681f).w(namco_sound.target, (space, offset, data, mem_mask) => { namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x6820, 0x6827).w("misclatch", (space, offset, data, mem_mask) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(space, offset, data, mem_mask); });  //FUNC(ls259_device::write_d0));
-            map.op(0x6830, 0x6830).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x6830, 0x6830).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x7000, 0x70ff).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).data_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).data_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
             map.op(0x7100, 0x7100).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
             map.op(0x7800, 0x7fff).ram().share("share1");                          /* work RAM */
@@ -203,7 +203,7 @@ namespace mame
             map.op(0x0000, 0x3fff).rom().nopw();         /* the only area different for each CPU */
             map.op(0x6800, 0x681f).w(namco_sound.target, (space, offset, data, mem_mask) => { namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x6820, 0x6827).w("misclatch", (space, offset, data, mem_mask) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(space, offset, data, mem_mask); });  //FUNC(ls259_device::write_d0));
-            map.op(0x6830, 0x6830).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x6830, 0x6830).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x7000, 0x70ff).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).data_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).data_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
             map.op(0x7100, 0x7100).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
             map.op(0x8000, 0x83ff).ram().w(digdug_videoram_w).share("videoram"); /* tilemap RAM (bottom half of RAM 0 */

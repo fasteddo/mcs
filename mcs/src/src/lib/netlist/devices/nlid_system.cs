@@ -26,6 +26,7 @@ namespace mame.netlist
 
             param_logic_t m_use_deactivate;
             param_int_t m_startup_strategy;
+            param_int_t m_mos_capmodel;
 
 
             //NETLIB_CONSTRUCTOR(netlistparams)
@@ -36,10 +37,12 @@ namespace mame.netlist
             {
                 m_use_deactivate = new param_logic_t(this, "USE_DEACTIVATE", false);
                 m_startup_strategy = new param_int_t(this, "STARTUP_STRATEGY", 1);
+                m_mos_capmodel = new param_int_t(this, "DEFAULT_MOS_CAPMODEL", 2);
             }
 
 
             public param_logic_t use_deactivate { get { return m_use_deactivate; } }
+            public param_int_t mos_capmodel { get { return m_mos_capmodel; } }
 
 
             //NETLIB_UPDATEI() { }
@@ -116,6 +119,12 @@ namespace mame.netlist
         // clock
         // -----------------------------------------------------------------------------
         //NETLIB_OBJECT(clock)
+
+
+        // -----------------------------------------------------------------------------
+        // varclock
+        // -----------------------------------------------------------------------------
+        //NETLIB_OBJECT(varclock)
 
 
         // -----------------------------------------------------------------------------

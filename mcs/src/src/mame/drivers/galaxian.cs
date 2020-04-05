@@ -482,7 +482,7 @@ namespace mame
             map.op(0x7006, 0x7006).mirror(0x07f8).w(galaxian_flip_screen_x_w);
             map.op(0x7007, 0x7007).mirror(0x07f8).w(galaxian_flip_screen_y_w);
             //AM_RANGE(0x7800, 0x7800) AM_MIRROR(0x07ff) AM_DEVWRITE("cust", galaxian_sound_device, pitch_w)
-            map.op(0x7800, 0x7800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_r(space, offset, mem_mask); });  //FUNC(watchdog_timer_device::reset_r));
+            map.op(0x7800, 0x7800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_r(space); });  //FUNC(watchdog_timer_device::reset_r));
         }
 
 
@@ -499,7 +499,7 @@ namespace mame
             map.unmap_value_high();
             map.op(0x0000, 0x3fff).rom();
             map.op(0x8000, 0x87ff).ram();
-            map.op(0x8800, 0x8800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_r(space, offset, mem_mask); });  //FUNC(watchdog_timer_device::reset_r));
+            map.op(0x8800, 0x8800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_r(space); });  //FUNC(watchdog_timer_device::reset_r));
             map.op(0xa800, 0xabff).mirror(0x0400).ram().w(galaxian_videoram_w).share("videoram");
             map.op(0xb000, 0xb0ff).mirror(0x0700).ram().w(galaxian_objram_w).share("spriteram");
             map.op(0xb808, 0xb808).mirror(0x07e3).w(irq_enable_w);
@@ -818,7 +818,7 @@ namespace mame
             m_ppi8255.op(0).target.out_pc_callback().set(konami_portc_0_w).reg();
 
             I8255A(config, m_ppi8255.op(1));
-            m_ppi8255.op(1).target.out_pa_callback().set(m_soundlatch, (space, offset, data, mem_mask) => { ((generic_latch_8_device)machine().config().device_find(this, "soundlatch")).write(space, offset, data, mem_mask); }).reg();  //FUNC(generic_latch_8_device::write));
+            m_ppi8255.op(1).target.out_pa_callback().set(m_soundlatch, (space, offset, data, mem_mask) => { ((generic_latch_8_device)machine().config().device_find(this, "soundlatch")).write(data); }).reg();  //FUNC(generic_latch_8_device::write));
             m_ppi8255.op(1).target.out_pb_callback().set(konami_sound_control_w).reg();
             m_ppi8255.op(1).target.in_pc_callback().set_ioport("IN3").reg();
             m_ppi8255.op(1).target.out_pc_callback().set(konami_portc_1_w).reg();
@@ -840,7 +840,7 @@ namespace mame
             AY8910(config, m_ay8910.op(0), KONAMI_SOUND_CLOCK/8);
             m_ay8910.op(0).target.set_flags(ay8910_global.AY8910_DISCRETE_OUTPUT);
             m_ay8910.op(0).target.set_resistors_load((int)RES_K(5.1), (int)RES_K(5.1), (int)RES_K(5.1));
-            m_ay8910.op(0).target.port_a_read_callback().set(m_soundlatch, (space, offset, mem_mask) => { return ((generic_latch_8_device)machine().config().device_find(this, "soundlatch")).read(space, offset, mem_mask); }).reg();  //FUNC(generic_latch_8_device::read));
+            m_ay8910.op(0).target.port_a_read_callback().set(m_soundlatch, (space, offset, mem_mask) => { return ((generic_latch_8_device)machine().config().device_find(this, "soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
             m_ay8910.op(0).target.port_b_read_callback().set(frogger_sound_timer_r).reg();
             m_ay8910.op(0).target.disound.add_route(0, "konami", 1.0, 0);
             m_ay8910.op(0).target.disound.add_route(1, "konami", 1.0, 1);

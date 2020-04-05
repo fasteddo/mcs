@@ -61,7 +61,7 @@ namespace mame
         //-------------------------------------------------
         //  watchdog_reset - reset the watchdog timer
         //-------------------------------------------------
-        void watchdog_reset()
+        public void watchdog_reset()
         {
             // if we're not enabled, skip it
             if (!m_enabled)
@@ -87,17 +87,13 @@ namespace mame
 
         // read/write handlers
 
-        //WRITE8_MEMBER( watchdog_timer_device::reset_w )
-        public void reset_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { watchdog_reset(); }
+        public void reset_w(u8 data = 0) { watchdog_reset(); }
+        public u8 reset_r(address_space space) { watchdog_reset(); return (u8)space.unmap(); }
 
-
-        //READ8_MEMBER( watchdog_timer_device::reset_r )
-        public byte reset_r(address_space space, offs_t offset, u8 mem_mask = 0xff) { watchdog_reset(); return (byte)space.unmap(); }
-
-        //DECLARE_WRITE16_MEMBER( reset16_w );
-        //DECLARE_READ16_MEMBER( reset16_r );
-        //DECLARE_WRITE32_MEMBER( reset32_w );
-        //DECLARE_READ32_MEMBER( reset32_r );
+        //void reset16_w(u16 data = 0);
+        //u16 reset16_r(address_space &space);
+        //void reset32_w(u32 data = 0);
+        //u32 reset32_r(address_space &space);
 
 
         // device-level overrides

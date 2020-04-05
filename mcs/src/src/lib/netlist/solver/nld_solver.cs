@@ -79,7 +79,7 @@ namespace mame.netlist
                 m_gmin = new param_double_t(this, "GMIN", 1e-9);
                 m_pivot = new param_logic_t(this, "PIVOT", false);                    // use pivoting - on supported solvers
                 m_nr_loops = new param_int_t(this, "NR_LOOPS", 250);            // Newton-Raphson loops
-                m_nr_recalc_delay = new param_double_t(this, "NR_RECALC_DELAY", netlist_time.NLTIME_FROM_NS(10).as_double());  // Delay to next solve attempt if nr loops exceeded
+                m_nr_recalc_delay = new param_double_t(this, "NR_RECALC_DELAY", netlist_time.quantum().as_double());  // Delay to next solve attempt if nr loops exceeded
                 m_parallel = new param_int_t(this, "PARALLEL", 0);
 
                 /* automatic time step */
@@ -219,7 +219,7 @@ namespace mame.netlist
 #endif
                         default:
                             throw new emu_unimplemented();
-                            log().warning.op(nl_errstr_global.MW_1_NO_SPECIFIC_SOLVER, net_count);
+                            log().info.op(nl_errstr_global.MI_NO_SPECIFIC_SOLVER(net_count));
                             if (net_count <= 8)
                             {
                                 ms = create_solver/*<double, -8>*/(-8, net_count, sname);
@@ -244,7 +244,7 @@ namespace mame.netlist
                             }
                             else
                             {
-                                log().fatal.op(nl_errstr_global.MF_1_NETGROUP_SIZE_EXCEEDED_1, 128);
+                                log().fatal.op(nl_errstr_global.MF_NETGROUP_SIZE_EXCEEDED_1(128));
                                 return; /* tease compilers */
                             }
                             break;
@@ -388,7 +388,7 @@ namespace mame.netlist
                 }
                 else
                 {
-                    log().fatal.op(nl_errstr_global.MF_1_UNKNOWN_SOLVER_TYPE, m_method.op());
+                    log().fatal.op(nl_errstr_global.MF_UNKNOWN_SOLVER_TYPE(m_method.op()));
                     return null;
                 }
             }

@@ -57,7 +57,7 @@ namespace mame.netlist
                 m_railstart = 0;
                 m_last_V = 0.0;
                 m_DD_n_m_1 = 0.0;
-                m_h_n_m_1 = 1e-9;
+                m_h_n_m_1 = 1e-12;
             }
 
 
@@ -219,7 +219,7 @@ namespace mame.netlist
                     // reschedule ....
                     if (this_resched > 1 && !m_Q_sync.net().is_queued())
                     {
-                        log().warning.op(nl_errstr_global.MW_1_NEWTON_LOOPS_EXCEEDED_ON_NET_1, this.name());
+                        log().warning.op(nl_errstr_global.MW_NEWTON_LOOPS_EXCEEDED_ON_NET_1(this.name()));
                         m_Q_sync.net().toggle_and_push_to_queue(m_params.m_nr_recalc_delay);
                     }
                 }
@@ -434,7 +434,7 @@ namespace mame.netlist
                                 break;
 
                             case detail.terminal_type.OUTPUT:
-                                log().fatal.op(nl_errstr_global.MF_1_UNHANDLED_ELEMENT_1_FOUND, p.name());
+                                log().fatal.op(nl_errstr_global.MF_UNHANDLED_ELEMENT_1_FOUND(p.name()));
                                 break;
                         }
                     }
@@ -470,10 +470,12 @@ namespace mame.netlist
                         analog_net_t n = m_nets[k];
                         terms_for_net_t t = m_terms[k].get();
 
-                        nl_double DD_n = (n.Q_Analog() - t.last_V);
+                        //nl_double DD_n = (n.Q_Analog() - t.last_V);
+                        // avoid floating point exceptions
+                        nl_double DD_n = std.max(-1e100, std.min(1e100, (n.Q_Analog() - t.last_V)));
                         nl_double hn = cur_ts;
 
-                        //printf("%f %f %f %f\n", DD_n, t->m_DD_n_m_1, hn, t->m_h_n_m_1);
+                        //printf("%g %g %g %g\n", DD_n, hn, t->m_DD_n_m_1, t->m_h_n_m_1);
                         nl_double DD2 = (DD_n / hn - t.DD_n_m_1 / t.h_n_m_1) / (hn + t.h_n_m_1);
                         nl_double new_net_timestep;
 
@@ -521,7 +523,7 @@ namespace mame.netlist
                     else // if (ot<0)
                     {
                         m_rails_temp[k].add(term, ot, true);
-                        log().fatal.op(nl_errstr_global.MF_1_FOUND_TERM_WITH_MISSING_OTHERNET, term.name());
+                        log().fatal.op(nl_errstr_global.MF_FOUND_TERM_WITH_MISSING_OTHERNET(term.name()));
                     }
                 }
             }
