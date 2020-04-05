@@ -549,14 +549,11 @@ namespace mame
         }
 
 
-        //MACHINE_CONFIG_START(dkong_state::dkong_base)
         void dkong_base(machine_config config)
         {
-            MACHINE_CONFIG_START(config);
-
             /* basic machine hardware */
-            MCFG_DEVICE_ADD(m_maincpu, z80_device.Z80, CLOCK_1H);
-            MCFG_DEVICE_PROGRAM_MAP(dkong_map);
+            Z80(config, m_maincpu, CLOCK_1H);
+            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, dkong_map);
 
             MCFG_MACHINE_START_OVERRIDE(config, machine_start_dkong2b);
             MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_dkong);
@@ -570,27 +567,22 @@ namespace mame
             m_dma8257.target.set_reverse_rw_mode(true); // why?
 
             /* video hardware */
-            MCFG_SCREEN_ADD(m_screen, SCREEN_TYPE_RASTER);
-            MCFG_SCREEN_RAW_PARAMS(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART);
-            MCFG_SCREEN_UPDATE_DRIVER(screen_update_dkong);
-            MCFG_SCREEN_PALETTE(m_palette);
-            MCFG_SCREEN_VBLANK_CALLBACK(vblank_irq);
+            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            m_screen.target.set_raw(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART);
+            m_screen.target.set_screen_update(screen_update_dkong);
+            m_screen.target.set_palette(m_palette);
+            m_screen.target.screen_vblank().set(vblank_irq).reg();
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_dkong);
             PALETTE(config, m_palette, dkong2b_palette, DK2B_PALETTE_LENGTH);
 
             MCFG_VIDEO_START_OVERRIDE(config, video_start_dkong);
-
-            MACHINE_CONFIG_END();
         }
 
 
-        //MACHINE_CONFIG_START(dkong_state::dkong2b)
         public void dkong2b(machine_config config)
         {
             dkong_base(config);
-
-            MACHINE_CONFIG_START(config);
 
             /* basic machine hardware */
             MCFG_MACHINE_START_OVERRIDE(config, machine_start_dkong2b);
@@ -600,8 +592,6 @@ namespace mame
             dkong2b_audio(config);
 
             WATCHDOG_TIMER(config, m_watchdog);
-
-            MACHINE_CONFIG_END();
         }
     }
 

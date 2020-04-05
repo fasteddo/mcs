@@ -16,20 +16,27 @@ namespace mame.ui
 
         protected static readonly KeyValuePair<emu.detail.device_feature.type, string> [] FEATURE_NAMES =
         {
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PROTECTION,    "protection"    ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PALETTE,       "color palette" ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.GRAPHICS,      "graphics"      ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.SOUND,         "sound"         ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CONTROLS,      "controls"      ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.KEYBOARD,      "keyboard"      ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MOUSE,         "mouse"         ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MICROPHONE,    "microphone"    ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CAMERA,        "camera"        ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.DISK,          "disk"          ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PRINTER,       "printer"       ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.LAN,           "LAN"           ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.WAN,           "WAN"           ),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.TIMING,        "timing"        )
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PROTECTION,    "protection"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.TIMING,        "timing"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.GRAPHICS,      "graphics"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PALETTE,       "color palette"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.SOUND,         "sound"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CAPTURE,       "capture hardware"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CAMERA,        "camera"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MICROPHONE,    "microphone"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CONTROLS,      "controls"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.KEYBOARD,      "keyboard"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MOUSE,         "mouse"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MEDIA,         "media"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.DISK,          "disk"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PRINTER,       "printer"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.TAPE,          "magnetic tape"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PUNCH,         "punch tape"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.DRUM,          "magnetic drum"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.ROM,           "solid state storage"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.COMMS,         "communications"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.LAN,           "LAN"),
+            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.WAN,           "WAN")
         };
 
 

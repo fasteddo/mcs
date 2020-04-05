@@ -250,17 +250,10 @@ namespace mame
         const int DIV_15      = 114;      /* divisor for 1.78979 MHz clock to 15.6999 kHz */
 
 
-        //#define P4(chip)  chip->poly4[chip->p4]
-        //#define P5(chip)  chip->poly5[chip->p5]
-        //#define P9(chip)  chip->poly9[chip->p9]
-        //#define P17(chip) chip->poly17[chip->p17]
-
-
         const int CLK_1 = 0;
         const int CLK_28 = 1;
         const int CLK_114 = 2;
 
-        static readonly int [] clock_divisors = new int [3] {1, DIV_64, DIV_15};
 
         //constexpr unsigned pokey_device::FREQ_17_EXACT;
 
@@ -279,7 +272,8 @@ namespace mame
 
         pokey_channel [] m_channel = new pokey_channel[POKEY_CHANNELS];
 
-        uint32_t m_output;        /* raw output */
+        uint32_t m_out_raw;        /* raw output */
+        bool m_old_raw_inval;       /* true: recalc m_out_raw required */
         double m_out_filter;    /* filtered output */
 
         int [] m_clock_cnt = new int[3];       /* clock counters */
@@ -600,7 +594,8 @@ namespace mame
             m_pot_counter = 0;
             m_kbd_cnt = 0;
             m_out_filter = 0;
-            m_output = 0;
+            m_out_raw = 0;
+            m_old_raw_inval = true;
             m_kbd_state = 0;
 
             /* reset more internal state */
@@ -784,7 +779,7 @@ namespace mame
             {
                 int out_ = 0;
                 for (int i = 0; i < 4; i++)
-                    out_ += (int)((m_output >> (4*i)) & 0x0f);
+                    out_ += (int)((m_out_raw >> (4*i)) & 0x0f);
                 out_ *= POKEY_DEFAULT_GAIN;
                 out_ = (out_ > 0x7fff) ? 0x7fff : out_;
                 while( samples > 0 )
@@ -796,7 +791,7 @@ namespace mame
             }
             else if (m_output_type == output_type.RC_LOWPASS)
             {
-                double rTot = m_voltab[m_output];
+                double rTot = m_voltab[m_out_raw];
 
                 double V0 = rTot / (rTot + m_r_pullup) * m_v_ref / 5.0 * 32767.0;
                 double mult = (m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-(rTot + m_r_pullup) / (m_cap * m_r_pullup * rTot) * m_clock_period.as_double());
@@ -813,7 +808,7 @@ namespace mame
             }
             else if (m_output_type == output_type.OPAMP_C_TO_GROUND)
             {
-                double rTot = m_voltab[m_output];
+                double rTot = m_voltab[m_out_raw];
                 /* In this configuration there is a capacitor in parallel to the pokey output to ground.
                     * With a LM324 in LTSpice this causes the opamp circuit to oscillate at around 100 kHz.
                     * We are ignoring the capacitor here, since this oscillation would not be audible.
@@ -836,7 +831,7 @@ namespace mame
             }
             else if (m_output_type == output_type.OPAMP_LOW_PASS)
             {
-                double rTot = m_voltab[m_output];
+                double rTot = m_voltab[m_out_raw];
                 /* This post-pokey stage usually has a low-pass filter behind it
                     * It is approximated by not adding in VRef below.
                     */
@@ -855,7 +850,7 @@ namespace mame
             }
             else if (m_output_type == output_type.DISCRETE_VAR_R)
             {
-                int out_ = (int)m_voltab[m_output];
+                int out_ = (int)m_voltab[m_out_raw];
                 while (samples > 0)
                 {
                     buffer[0] = out_;  // *buffer++ = out_;
@@ -871,14 +866,7 @@ namespace mame
         {
             do
             {
-                UInt32 new_out = step_one_clock();
-                if (m_output != new_out)
-                {
-                    //printf("forced update %08d %08x\n", m_icount, m_output);
-                    m_stream.update();
-                    m_output = new_out;
-                }
-
+                step_one_clock();
                 m_icountRef.i--;
             } while (m_icountRef.i > 0);
         }
@@ -894,32 +882,41 @@ namespace mame
          * I'm sure this was done because the propagation delays limited the number of cells the subtraction could ripple though.
          *
          */
-        uint32_t step_one_clock()
+        void step_one_clock()
         {
-            int base_clock = (m_AUDCTL & CLK_15KHZ) != 0 ? CLK_114 : CLK_28;
+            /* Clocks only count if we are not in a reset */
 
             if ((m_SKCTL & SK_RESET) != 0)
             {
-                int [] clock_triggered = new int[3] {0,0,0};
-                int clk;
+                /* polynom pointers */
+                if (++m_p4 == 0x0000f)
+                    m_p4 = 0;
+                if (++m_p5 == 0x0001f)
+                    m_p5 = 0;
+                if (++m_p9 == 0x001ff)
+                    m_p9 = 0;
+                if (++m_p17 == 0x1ffff)
+                    m_p17 = 0;
 
-                /* Clocks only count if we are not in a reset */
-                for (clk = 0; clk < 3; clk++)
+                /* CLK_1: no presacler */
+                int [] clock_triggered = new int[3] {1,0,0};
+
+                /* CLK_28: prescaler 63.9211 kHz */
+                if (++m_clock_cnt[CLK_28] >= DIV_64)
                 {
-                    m_clock_cnt[clk]++;
-                    if (m_clock_cnt[clk] >= clock_divisors[clk])
-                    {
-                        m_clock_cnt[clk] = 0;
-                        clock_triggered[clk] = 1;
-                    }
+                    m_clock_cnt[CLK_28] = 0;
+                    clock_triggered[CLK_28] = 1;
                 }
 
-                m_p4 = (m_p4 + 1) % 0x0000f;
-                m_p5 = (m_p5 + 1) % 0x0001f;
-                m_p9 = (m_p9 + 1) % 0x001ff;
-                m_p17 = (m_p17 + 1 ) % 0x1ffff;
+                /* CLK_114 prescaler 15.6999 kHz */
+                if (++m_clock_cnt[CLK_114] >= DIV_15)
+                {
+                    m_clock_cnt[CLK_114] = 0;
+                    clock_triggered[CLK_114] = 1;
+                }
 
-                clk = (m_AUDCTL & CH1_HICLK) != 0 ? CLK_1 : base_clock;
+                int base_clock = (m_AUDCTL & CLK_15KHZ) != 0 ? CLK_114 : CLK_28;
+                int clk = (m_AUDCTL & CH1_HICLK) != 0 ? CLK_1 : base_clock;
                 if (clock_triggered[clk] != 0)
                     m_channel[CHAN1].inc_chan();
 
@@ -1003,13 +1000,23 @@ namespace mame
                     m_channel[CHAN1].m_filter_sample = 1;
             }
 
-            uint32_t sum = 0;
-            for (int ch = 0; ch < 4; ch++)
+            if (m_old_raw_inval)
             {
-                sum |= (((((m_channel[ch].m_output ^ m_channel[ch].m_filter_sample) != 0 || (m_channel[ch].m_AUDC & VOLUME_ONLY) != 0) ? ((UInt32)m_channel[ch].m_AUDC & VOLUME_MASK) : 0 )) << (ch * 4));
-            }
+                uint32_t sum = 0;
+                for (int ch = 0; ch < 4; ch++)
+                {
+                    sum |= (((m_channel[ch].m_output ^ m_channel[ch].m_filter_sample) != 0 || (m_channel[ch].m_AUDC & VOLUME_ONLY) != 0) ? (((UInt32)m_channel[ch].m_AUDC & VOLUME_MASK) << (ch * 4)) : 0);
+                }
 
-            return sum;
+                if (m_out_raw != sum)
+                {
+                    //printf("forced update %08d %08x\n", m_icount, m_out_raw);
+                    m_stream.update();
+                }
+
+                m_old_raw_inval = false;
+                m_out_raw = sum;
+            }
         }
 
 
@@ -1111,11 +1118,8 @@ namespace mame
 
         void step_pot()
         {
-            if ((m_SKCTL & SK_RESET) == 0)
-                return;
-
-            byte upd = 0;
             m_pot_counter++;
+            uint8_t upd = 0;
             for (int pot = 0; pot < 8; pot++)
             {
                 if ((m_POTx[pot]<m_pot_counter) || (m_pot_counter == 228))
@@ -1124,7 +1128,10 @@ namespace mame
                     /* latching is emulated in read */
                 }
             }
-            synchronize(SYNC_POT, upd);
+
+            // some pots latched?
+            if (upd != 0)
+                synchronize(SYNC_POT, upd);
         }
 
 
@@ -1250,6 +1257,8 @@ namespace mame
                     m_channel[ch].m_output = (byte)(m_poly9[m_p9] & 1);
                 else
                     m_channel[ch].m_output = (byte)(m_poly17[m_p17] & 1);
+
+                m_old_raw_inval = true;
             }
         }
 
@@ -1359,6 +1368,7 @@ namespace mame
             case AUDC1_C:
                 LOG_SOUND("POKEY '{0}' AUDC1  {1} ({2})\n", tag(), data, audc2str(data));  // $%02x (%s)
                 m_channel[CHAN1].m_AUDC = data;
+                m_old_raw_inval = true;
                 break;
 
             case AUDF2_C:
@@ -1369,6 +1379,7 @@ namespace mame
             case AUDC2_C:
                 LOG_SOUND("POKEY '{0}' AUDC2  {1} ({2})\n", tag(), data, audc2str(data));
                 m_channel[CHAN2].m_AUDC = data;
+                m_old_raw_inval = true;
                 break;
 
             case AUDF3_C:
@@ -1379,6 +1390,7 @@ namespace mame
             case AUDC3_C:
                 LOG_SOUND("POKEY '{0}' AUDC3  {1} ({2})\n", tag(), data, audc2str(data));
                 m_channel[CHAN3].m_AUDC = data;
+                m_old_raw_inval = true;
                 break;
 
             case AUDF4_C:
@@ -1389,6 +1401,7 @@ namespace mame
             case AUDC4_C:
                 LOG_SOUND("POKEY '{0}' AUDC4  {1} ({2})\n", tag(), data, audc2str(data));
                 m_channel[CHAN4].m_AUDC = data;
+                m_old_raw_inval = true;
                 break;
 
             case AUDCTL_C:
@@ -1414,6 +1427,7 @@ namespace mame
                     m_channel[i].m_filter_sample = (i<2 ? (byte)1 : (byte)0);
                 }
 
+                m_old_raw_inval = true;
                 break;
 
             case SKREST_C:
@@ -1463,6 +1477,7 @@ namespace mame
             case SKCTL_C:
                 if( data == m_SKCTL )
                     return;
+
                 LOG("POKEY '{0}' SKCTL  {1}\n", tag(), data);
                 m_SKCTL = data;
                 if( (data & SK_RESET) == 0 )
@@ -1483,6 +1498,7 @@ namespace mame
                     m_clock_cnt[0] = 0;
                     m_clock_cnt[1] = 0;
                     m_clock_cnt[2] = 0;
+                    m_old_raw_inval = true;
                     /* FIXME: Serial port reset ! */
                 }
                 break;

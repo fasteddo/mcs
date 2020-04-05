@@ -189,6 +189,7 @@ namespace mame
             14318181, /* 14.318181_MHz_XTAL     Extremely common, used on 100's of PCBs (4x NTSC subcarrier) */
             14580000, /* 14.58_MHz_XTAL         Fortune 32:16 Video Controller */
             14705882, /* 14.705882_MHz_XTAL     Aleck64 */
+            14728000, /* 14.728_MHz_XTAL        ADM 36 */
             14742800, /* 14.7428_MHz_XTAL       ADM 23 */
             14745600, /* 14.7456_MHz_XTAL       Namco System 12 & System Super 22/23 for JVS */
             14784000, /* 14.784_MHz_XTAL        Zenith Z-29 */
@@ -270,6 +271,7 @@ namespace mame
             23961600, /* 23.9616_MHz_XTAL       Osborne 4 (Vixen) */
             24000000, /* 24_MHz_XTAL            Mario, 80's Data East games, 80's Konami games */
             24073400, /* 24.0734_MHz_XTAL       DEC Rainbow 100 */
+            24300000, /* 24.3_MHz_XTAL          ADM 36 132-column display clock */
             24576000, /* 24.576_MHz_XTAL        Pole Position h/w, Model 3 CPU board */
             24883200, /* 24.8832_MHz_XTAL       DEC VT100 */
             25000000, /* 25_MHz_XTAL            Namco System 22, Taito GNET, Dogyuun h/w */

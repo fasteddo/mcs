@@ -2197,6 +2197,8 @@ namespace mame
     }
 
 
+    //template class memory_access_cache<0,  1, ENDIANNESS_LITTLE>;
+    //template class memory_access_cache<0,  1, ENDIANNESS_BIG>;
     //template class memory_access_cache<0,  0, ENDIANNESS_LITTLE>;
     //template class memory_access_cache<0,  0, ENDIANNESS_BIG>;
     //template class memory_access_cache<1,  3, ENDIANNESS_LITTLE>;
@@ -4089,6 +4091,13 @@ namespace mame
                     // allocate one of the appropriate type
                     switch (spaceconfig.data_width() | (spaceconfig.addr_shift() + 4))
                     {
+                        case  8|(4+1):
+                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
+                                memory.allocate(new address_space_specific(0,  1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
+                            else
+                                memory.allocate(new address_space_specific(0,  1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
+                            break;
+
                         case  (8|(4-0)):
                             if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
                                 memory.allocate(new address_space_specific(0,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);

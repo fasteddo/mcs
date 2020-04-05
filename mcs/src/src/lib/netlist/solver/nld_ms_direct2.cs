@@ -11,6 +11,10 @@ namespace mame.netlist
 {
     namespace devices
     {
+        // ----------------------------------------------------------------------------------------
+        // matrix_solver - Direct2
+        // ----------------------------------------------------------------------------------------
+
         //template <typename FT>
         class matrix_solver_direct2_t: matrix_solver_direct_t//<FT, 2>
         {

@@ -512,6 +512,29 @@ namespace mame
         //void set_pc(offs_t pc) { set_state_int(STATE_GENPC, pc); }
 
 
+        // find the entry for a given index
+        //-------------------------------------------------
+        //  state_find_entry - return a pointer to the
+        //  state entry for the given index
+        //-------------------------------------------------
+        device_state_entry state_find_entry(int index)
+        {
+            // use fast lookup if possible
+            if (index >= FAST_STATE_MIN && index <= FAST_STATE_MAX)
+                return m_fast_state[index - FAST_STATE_MIN];
+
+            // otherwise, scan the first
+            foreach (var entry in m_state_list)
+            {
+                if (entry.index() == index)
+                    return entry;
+            }
+
+            // handle failure by returning nullptr
+            return null;
+        }
+
+
         // deliberately ambiguous functions; if you have the state interface
         // just use it directly
         //device_state_interface &state() { return *this; }
@@ -614,29 +637,6 @@ namespace mame
             // make sure we got something during startup
             if (m_state_list.size() == 0)
                 throw new emu_fatalerror("No state registered for device '{0}' that supports it!\n", device().tag());
-        }
-
-
-        // find the entry for a given index
-        //-------------------------------------------------
-        //  state_find_entry - return a pointer to the
-        //  state entry for the given index
-        //-------------------------------------------------
-        device_state_entry state_find_entry(int index)
-        {
-            // use fast lookup if possible
-            if (index >= FAST_STATE_MIN && index <= FAST_STATE_MAX)
-                return m_fast_state[index - FAST_STATE_MIN];
-
-            // otherwise, scan the first
-            foreach (var entry in m_state_list)
-            {
-                if (entry.index() == index)
-                    return entry;
-            }
-
-            // handle failure by returning nullptr
-            return null;
         }
     }
 }

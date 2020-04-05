@@ -1085,6 +1085,21 @@ namespace mame.ui
             else
                 str += "Sound\tOK\n";
 
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.CAPTURE) != 0)
+                str += "Capture\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.CAPTURE) != 0)
+                str += "Capture\tImperfect\n";
+
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.CAMERA) != 0)
+                str += "Camera\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.CAMERA) != 0)
+                str += "Camera\tImperfect\n";
+
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.MICROPHONE) != 0)
+                str += "Microphone\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.MICROPHONE) != 0)
+                str += "Microphone\tImperfect\n";
+
             if ((flags.unemulated_features() & emu.detail.device_feature.type.CONTROLS) != 0)
                 str += "Controls\tUnimplemented\n";
             else if ((flags.imperfect_features() & emu.detail.device_feature.type.CONTROLS) != 0)
@@ -1100,15 +1115,10 @@ namespace mame.ui
             else if ((flags.imperfect_features() & emu.detail.device_feature.type.MOUSE) != 0)
                 str += "Mouse\tImperfect\n";
 
-            if ((flags.unemulated_features() & emu.detail.device_feature.type.MICROPHONE) != 0)
-                str += "Microphone\tUnimplemented\n";
-            else if ((flags.imperfect_features() & emu.detail.device_feature.type.MICROPHONE) != 0)
-                str += "Microphone\tImperfect\n";
-
-            if ((flags.unemulated_features() & emu.detail.device_feature.type.CAMERA) != 0)
-                str += "Camera\tUnimplemented\n";
-            else if ((flags.imperfect_features() & emu.detail.device_feature.type.CAMERA) != 0)
-                str += "Camera\tImperfect\n";
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.MEDIA) != 0)
+                str += "Media\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.MEDIA) != 0)
+                str += "Media\tImperfect\n";
 
             if ((flags.unemulated_features() & emu.detail.device_feature.type.DISK) != 0)
                 str += "Disk\tUnimplemented\n";
@@ -1119,6 +1129,31 @@ namespace mame.ui
                 str += "Printer\tUnimplemented\n";
             else if ((flags.imperfect_features() & emu.detail.device_feature.type.PRINTER) != 0)
                 str += "Printer\tImperfect\n";
+
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.TAPE) != 0)
+                str += "Mag. Tape\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.TAPE) != 0)
+                str += "Mag. Tape\tImperfect\n";
+
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.PUNCH) != 0)
+                str += "Punch Tape\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.PUNCH) != 0)
+                str += "Punch Tape\tImperfect\n";
+
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.DRUM) != 0)
+                str += "Mag. Drum\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.DRUM) != 0)
+                str += "Mag. Drum\tImperfect\n";
+
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.ROM) != 0)
+                str += "(EP)ROM\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.ROM) != 0)
+                str += "(EP)ROM\tImperfect\n";
+
+            if ((flags.unemulated_features() & emu.detail.device_feature.type.COMMS) != 0)
+                str += "Communications\tUnimplemented\n";
+            else if ((flags.imperfect_features() & emu.detail.device_feature.type.COMMS) != 0)
+                str += "Communications\tImperfect\n";
 
             if ((flags.unemulated_features() & emu.detail.device_feature.type.LAN) != 0)
                 str += "LAN\tUnimplemented\n";

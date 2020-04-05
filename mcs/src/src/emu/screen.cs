@@ -79,7 +79,6 @@ namespace mame
         public static void MCFG_SCREEN_VBLANK_TIME(device_t device, attoseconds_t time) { ((screen_device)device).set_vblank_time(time); }
         public static void MCFG_SCREEN_SIZE(device_t device, u16 width, u16 height) { ((screen_device)device).set_size(width, height); }
         public static void MCFG_SCREEN_VISIBLE_AREA(device_t device, s16 minx, s16 maxx, s16 miny, s16 maxy) { ((screen_device)device).set_visarea(minx, maxx, miny, maxy); }
-        //define MCFG_SCREEN_DEFAULT_POSITION(_xscale, _xoffs, _yscale, _yoffs)              screen_device::static_set_default_position(*device, _xscale, _xoffs, _yscale, _yoffs);
         public static void MCFG_SCREEN_UPDATE_DRIVER(device_t device, screen_update_ind16_delegate method) { ((screen_device)device).set_screen_update(method); }  //screen_update_delegate_smart(&_class::_method, #_class "::" #_method, NULL));
         public static void MCFG_SCREEN_UPDATE_DRIVER(device_t device, screen_update_rgb32_delegate method) { ((screen_device)device).set_screen_update(method); }  //screen_update_delegate_smart(&_class::_method, #_class "::" #_method, NULL));
         //define MCFG_SCREEN_UPDATE_DEVICE(_device, _class, _method)             screen_device::static_set_screen_update(*device, screen_update_delegate_smart(&_class::_method, #_class "::" #_method, _device));
@@ -266,7 +265,7 @@ namespace mame
         devcb_write32 m_scanline_cb;              // screen scanline callback
         optional_device<palette_device> m_paletteDevice;  //optional_device<device_palette_interface> m_palette;      // our palette
         u32 m_video_attributes;         // flags describing the video system
-        //const char *        m_svg_region;               // the region in which the svg data is in
+        string m_svg_region;               // the region in which the svg data is in
 
         // internal state
         render_container m_container;                // pointer to our container
@@ -335,6 +334,7 @@ namespace mame
             m_scanline_cb = new devcb_write32(this);
             m_paletteDevice = new optional_device<palette_device>(this, finder_base.DUMMY_TAG);
             m_video_attributes = 0;
+            m_svg_region = null;
             m_container = null;
             m_width = 100;
             m_height = 100;
@@ -383,6 +383,14 @@ namespace mame
         {
             set_type(type);
             set_color(color);
+        }
+
+
+        screen_device(machine_config mconfig, string tag, device_t owner, string region)
+            : this(mconfig, tag, owner, (u32)0)
+        {
+            set_type(SCREEN_TYPE_SVG);
+            set_svg_region(region);
         }
 
 
@@ -495,6 +503,8 @@ namespace mame
 
         public void set_visarea(s16 minx, s16 maxx, s16 miny, s16 maxy) { m_visarea.set(minx, maxx, miny, maxy); }
 
+        void set_visarea_full() { m_visarea.set(0, m_width - 1, 0, m_height - 1); } // call after set_size
+
         void set_default_position(double xscale, double xoffs, double yscale, double yoffs)
         {
             m_xscale = (float)xscale;
@@ -548,7 +558,7 @@ namespace mame
 
         //void set_video_attributes(u32 flags) { m_video_attributes = flags; }
         void set_color(rgb_t color) { m_color = color; }
-        //void set_svg_region(const char *region) { m_svg_region = region; }
+        void set_svg_region(string region) { m_svg_region = region; }
 
 
         // information getters
@@ -1057,14 +1067,14 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
+            // if we have a palette and it's not started, wait for it
+            if (m_paletteDevice != null && m_paletteDevice.target != null && !m_paletteDevice.target.device_palette_interface.device().started())
+                throw new device_missing_dependencies();
+
             if (m_type == screen_type_enum.SCREEN_TYPE_SVG)
             {
                 throw new emu_unimplemented();
             }
-
-            // if we have a palette and it's not started, wait for it
-            if (m_paletteDevice != null && m_paletteDevice.target != null && !m_paletteDevice.target.device_palette_interface.device().started())
-                throw new device_missing_dependencies();
 
             // configure bitmap formats and allocate screen bitmaps
             texture_format texformat = m_screen_update_ind16 != null ? texture_format.TEXFORMAT_PALETTE16 : texture_format.TEXFORMAT_RGB32;

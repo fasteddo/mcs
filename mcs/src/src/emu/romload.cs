@@ -77,36 +77,16 @@ namespace mame
         /* ----- Helpers ----- */
 
         /***************************************************************************
-            HELPERS (also used by devimage.c)
+            HELPERS (also used by diimage.c)
          ***************************************************************************/
+
         public static osd_file.error common_process_file(emu_options options, string location, string ext, rom_entry romp, ref emu_file image_file)
         {
-            osd_file.error filerr;
-
-            if (location != null && !string.IsNullOrEmpty(location))
-                filerr = image_file.open(location, global_object.PATH_SEPARATOR, ROM_GETNAME(romp), ext);
-            else
-                filerr = image_file.open(ROM_GETNAME(romp), ext);
-
-            return filerr;
+            return (location != null && !string.IsNullOrEmpty(location))
+                    ? image_file.open(location, global_object.PATH_SEPARATOR, ROM_GETNAME(romp), ext)
+                    : image_file.open(ROM_GETNAME(romp), ext);
         }
 
-        public static osd_file.error common_process_file(emu_options options, string location, bool has_crc, UInt32 crc, rom_entry romp, ref emu_file image_file)
-        {
-            image_file = new emu_file(options.media_path(), global_object.OPEN_FLAG_READ);
-
-            osd_file.error filerr;
-
-            if (has_crc)
-                filerr = image_file.open(location, global_object.PATH_SEPARATOR, ROM_GETNAME(romp), crc);
-            else
-                filerr = image_file.open(location, global_object.PATH_SEPARATOR, ROM_GETNAME(romp));
-
-            if (filerr != osd_file.error.NONE)
-                image_file = null;
-
-            return filerr;
-        }
 
         public static emu_file common_process_file(emu_options options, string location, bool has_crc, UInt32 crc, rom_entry romp, out osd_file.error filerr)
         {
@@ -1409,35 +1389,30 @@ namespace mame
             /* loop until we hit the end of this region */
             while (!romload_global.ROMENTRY_ISREGIONEND(romp[0]))
             {
-                /* if this is a continue entry, it's invalid */
                 if (romload_global.ROMENTRY_ISCONTINUE(romp[0]))
                     throw new emu_fatalerror("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
 
-                /* if this is an ignore entry, it's invalid */
                 if (romload_global.ROMENTRY_ISIGNORE(romp[0]))
                     throw new emu_fatalerror("Error in RomModule definition: ROM_IGNORE not preceded by ROM_LOAD\n");
 
-                /* if this is a reload entry, it's invalid */
                 if (romload_global.ROMENTRY_ISRELOAD(romp[0]))
                     throw new emu_fatalerror("Error in RomModule definition: ROM_RELOAD not preceded by ROM_LOAD\n");
 
-                /* handle fills */
                 if (romload_global.ROMENTRY_ISFILL(romp[0]))
                 {
-                    fill_rom_data(romp[0]);
+                    if (ROM_GETBIOSFLAGS(romp[0]) == 0 || ROM_GETBIOSFLAGS(romp[0]) == device.system_bios())
+                        fill_rom_data(romp[0]);
+
                     romp++;
                 }
-
-                /* handle copies */
                 else if (romload_global.ROMENTRY_ISCOPY(romp[0]))
                 {
                     copy_rom_data(romp[0]);
                     romp++;
                 }
-
-                /* handle files */
                 else if (romload_global.ROMENTRY_ISFILE(romp[0]))
                 {
+                    /* handle files */
                     int irrelevantbios = (romload_global.ROM_GETBIOSFLAGS(romp[0]) != 0 && romload_global.ROM_GETBIOSFLAGS(romp[0]) != device.system_bios()) ? 1 : 0;
                     rom_entry baserom = romp[0];
                     int explength = 0;
@@ -1499,7 +1474,7 @@ namespace mame
                 }
                 else
                 {
-                    romp++; /* something else; skip */
+                    romp++; // something else - skip
                 }
             }
         }

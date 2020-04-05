@@ -114,23 +114,43 @@ namespace mame
         {
             public enum type  // : u32
             {
-                PROTECTION  = 1 <<  0,  //u32(1) <<  0,
-                PALETTE     = 1 <<  1,  //u32(1) <<  1,
-                GRAPHICS    = 1 <<  2,  //u32(1) <<  2,
-                SOUND       = 1 <<  3,  //u32(1) <<  3,
-                CONTROLS    = 1 <<  4,  //u32(1) <<  4,
-                KEYBOARD    = 1 <<  5,  //u32(1) <<  5,
-                MOUSE       = 1 <<  6,  //u32(1) <<  6,
-                MICROPHONE  = 1 <<  7,  //u32(1) <<  7,
-                CAMERA      = 1 <<  8,  //u32(1) <<  8,
-                DISK        = 1 <<  9,  //u32(1) <<  9,
-                PRINTER     = 1 << 10,  //u32(1) << 10,
-                LAN         = 1 << 11,  //u32(1) << 11,
-                WAN         = 1 << 12,  //u32(1) << 12,
-                TIMING      = 1 << 13,  //u32(1) << 13,
+                // Functionality-related
+                PROTECTION  = 1 <<  0,
+                TIMING      = 1 <<  1,
 
-                NONE        = 0,  //u32(0),
-                ALL         = (1 << 14) - 1  //(u32(1) << 14) - 1U
+                // Graphics
+                GRAPHICS    = 1 <<  2,
+                PALETTE     = 1 <<  3,
+
+                // Sound
+                SOUND       = 1 <<  4,
+
+                // Capture/Media Output
+                CAPTURE     = 1 <<  5,
+                CAMERA      = 1 <<  6,
+                MICROPHONE  = 1 <<  7,
+
+                // Controls/HID
+                CONTROLS    = 1 <<  8,
+                KEYBOARD    = 1 <<  9,
+                MOUSE       = 1 << 10,
+
+                // Media Output
+                MEDIA       = 1 << 11,
+                DISK        = 1 << 12,
+                PRINTER     = 1 << 13,
+                TAPE        = 1 << 14,
+                PUNCH       = 1 << 15,
+                DRUM        = 1 << 16,
+                ROM         = 1 << 17,
+
+                // Comms/Network
+                COMMS       = 1 << 18,
+                LAN         = 1 << 19,
+                WAN         = 1 << 20,
+
+                NONE        = 0,
+                ALL         = (1 << 21) - 1,
             }
         }
 

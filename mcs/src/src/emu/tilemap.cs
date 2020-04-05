@@ -371,6 +371,7 @@ namespace mame
 
 
         // dirtying
+        void mark_mapping_dirty() { mappings_update(); }
 
         //-------------------------------------------------
         //  mark_tile_dirty - mark a single tile dirty

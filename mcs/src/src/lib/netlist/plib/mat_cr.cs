@@ -60,13 +60,15 @@ namespace mame.plib
 
 
             for (uint16_t i = 0; i < n + 1; i++)  //for (index_type i=0; i<n+1; i++)
-                A[i] = 0;
+                row_idx[i] = 0;
         }
 
         //~matrix_compressed_rows_t() = default;
 
 
         //constexpr index_type size() const { return static_cast<index_type>((N>0) ? N : m_size); }
+
+        //void clear()
 
         //void set_scalar(const T scalar)
 

@@ -13,6 +13,7 @@ using ioport_value = System.UInt32;
 using item_list = mame.std.list<mame.layout_view.item>;
 using make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;
 using s64 = System.Int64;
+using u32 = System.UInt32;
 using view_list = mame.std.list<mame.layout_view>;
 
 
@@ -1949,6 +1950,8 @@ namespace mame
                 m_input_tag = env.get_attribute_string(itemnode, "inputtag", "");
                 m_input_port = null;
                 m_input_mask = 0;
+                m_input_shift = 0;
+                m_input_raw = false;
                 m_screen = null;
                 m_orientation = rendutil_global.orientation_add(env.parse_orientation(itemnode.get_child("orientation")), orientation);
                 m_color = rendlay_global.render_color_multiply(env.parse_color(itemnode.get_child("color")), color);
@@ -1975,6 +1978,9 @@ namespace mame
                 if (index != -1)
                     m_screen = new screen_device_iterator(env.machine().root_device()).byindex(index);
                 m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
+                for (u32 mask = m_input_mask; (mask != 0) && ((~mask & 1) != 0); mask >>= 1)
+                    m_input_shift++;
+                m_input_raw = env.get_attribute_int(itemnode, "inputraw", 0) == 1;
                 if (m_have_output && m_element != null)
                     throw new emu_unimplemented();
                 env.parse_bounds(itemnode.get_child("bounds"), out m_rawbounds);
@@ -2030,9 +2036,16 @@ namespace mame
                     // if configured to an input, fetch the input value
                     if (m_input_port != null)
                     {
-                        ioport_field field = m_input_port.field(m_input_mask);
-                        if (field != null)
-                            return ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
+                        if (m_input_raw)
+                        {
+                            return ((int)(m_input_port.read() & m_input_mask)) >> m_input_shift;
+                        }
+                        else
+                        {
+                            ioport_field field = m_input_port.field(m_input_mask);
+                            if (field != null)
+                                return ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
+                        }
                     }
                 }
 

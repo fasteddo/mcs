@@ -322,13 +322,14 @@ namespace mame
             MACHINE_CONFIG_START(config);
 
             /* basic machine hardware */
-            MCFG_DEVICE_ADD("maincpu", z80_device.Z80, MAIN_CPU_CLOCK);    /* 4 MHz ??? */
-            MCFG_DEVICE_PROGRAM_MAP(_1942_map);
+            Z80(config, m_maincpu, MAIN_CPU_CLOCK);    /* 4 MHz ??? */
+            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, _1942_map);
+
             TIMER(config, "scantimer").configure_scanline(_1942_scanline, "screen", 0, 1);
 
-            MCFG_DEVICE_ADD("audiocpu", z80_device.Z80, SOUND_CPU_CLOCK);  /* 3 MHz ??? */
-            MCFG_DEVICE_PROGRAM_MAP(sound_map);
-            MCFG_DEVICE_PERIODIC_INT_DRIVER(irq0_line_hold, 4*60);
+            Z80(config, m_audiocpu, SOUND_CPU_CLOCK);  /* 3 MHz ??? */
+            m_audiocpu.target.memory().set_addrmap(AS_PROGRAM, sound_map);
+            m_audiocpu.target.execute().set_periodic_int(irq0_line_hold, attotime.from_hz(4*60));
 
 
             /* video hardware */

@@ -155,6 +155,7 @@ namespace mame.netlist
 
 
                 set_logic_family(setup().family_from_model(m_FAMILY.op()));
+                m_Q.set_logic_family(this.logic_family());
             }
 
 

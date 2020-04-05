@@ -406,8 +406,10 @@ namespace mame.netlist
 
             bool already_processed(analog_net_t n)
             {
+                /* no need to process rail nets - these are known variables */
                 if (n.isRailNet())
                     return true;
+                /* if it's already processed - no need to continue */
                 foreach (var grp in groups)
                     if (grp.Contains(n))  //plib::container::contains(grp, n))
                         return true;
@@ -417,18 +419,22 @@ namespace mame.netlist
 
             void process_net(analog_net_t n)
             {
+                /* ignore empty nets. FIXME: print a warning message */
                 if (n.num_cons() == 0)
                     return;
                 /* add the net */
                 groups.back().push_back(n);
-                foreach (var p in n.core_terms())
+                /* process all terminals connected to this net */
+                foreach (var term in n.core_terms())
                 {
-                    if (p.is_type(detail.terminal_type.TERMINAL))
+                    /* only process analog terminals */
+                    if (term.is_type(detail.terminal_type.TERMINAL))
                     {
-                        var pt = (terminal_t)p;
-                        analog_net_t other_net = pt.otherterm().net();
-                        if (!already_processed(other_net))
-                            process_net(other_net);
+                        var pt = (terminal_t)term;
+                        /* check the connected terminal */
+                        analog_net_t connected_net = pt.connected_terminal().net();
+                        if (!already_processed(connected_net))
+                            process_net(connected_net);
                     }
                 }
             }

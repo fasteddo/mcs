@@ -235,7 +235,150 @@ namespace mame.netlist
 
 
     // ----------------------------------------------------------------------------------------
-    // setup_t
+    // Collection of models
+    // ----------------------------------------------------------------------------------------
+    public class models_t
+    {
+        //using model_map_t = std::unordered_map<pstring, pstring>;
+
+        std.unordered_map<string, string> m_models = new std.unordered_map<string, string>();  //std::unordered_map<pstring, pstring> m_models;
+        std.unordered_map<string, model_map_t> m_cache = new std.unordered_map<string, model_map_t>();  //std::unordered_map<pstring, model_map_t> m_cache;
+
+
+        public void register_model(string model_in)
+        {
+            var pos = model_in.find(" ");
+            if (pos == -1)
+                throw new nl_exception(nl_errstr_global.MF_1_UNABLE_TO_PARSE_MODEL_1, model_in);
+            string model = plib.pstring_global.ucase(plib.pstring_global.trim(plib.pstring_global.left(model_in, pos)));
+            string def = plib.pstring_global.trim(model_in.substr(pos + 1));
+            if (!m_models.insert(model, def))
+                throw new nl_exception(nl_errstr_global.MF_1_MODEL_ALREADY_EXISTS_1, model_in);
+        }
+
+        /* model / family related */
+
+        public string model_value_str(string model, string entity)
+        {
+            model_map_t map = m_cache[model];
+
+            if (map.size() == 0)
+                model_parse(model , map);
+
+            string ret;
+
+            if (entity != plib.pstring_global.ucase(entity))
+                throw new nl_exception(nl_errstr_global.MF_2_MODEL_PARAMETERS_NOT_UPPERCASE_1_2, entity, model_string(map));
+            if (map.find(entity) == null)
+                throw new nl_exception(nl_errstr_global.MF_2_ENTITY_1_NOT_FOUND_IN_MODEL_2, entity, model_string(map));
+            else
+                ret = map[entity];
+
+            return ret;
+        }
+
+
+        public double model_value(string model, string entity)
+        {
+            model_map_t map = m_cache[model];
+
+            if (map.size() == 0)
+                model_parse(model , map);
+
+            string tmp = model_value_str(model, entity);
+
+            nl_double factor = 1;  //plib::constants<nl_double>::one();
+            var p = tmp[tmp.Length - 1];  //auto p = std::next(tmp.begin(), static_cast<pstring::difference_type>(tmp.size() - 1));
+            switch (p)
+            {
+                case 'M': factor = 1e6; break;
+                case 'k': factor = 1e3; break;
+                case 'm': factor = 1e-3; break;
+                case 'u': factor = 1e-6; break;
+                case 'n': factor = 1e-9; break;
+                case 'p': factor = 1e-12; break;
+                case 'f': factor = 1e-15; break;
+                case 'a': factor = 1e-18; break;
+                default:
+                    if (p < '0' || p > '9')
+                        throw new nl_exception(nl_errstr_global.MF_1_UNKNOWN_NUMBER_FACTOR_IN_1, entity);
+                    break;
+            }
+            if (factor != 1)  //if (factor != plib::constants<nl_double>::one())
+                tmp = plib.pstring_global.left(tmp, tmp.Length - 1);
+
+            // FIXME: check for errors
+            //printf("%s %s %e %e\n", entity.c_str(), tmp.c_str(), plib::pstonum<nl_double>(tmp), factor);
+            return plib.pstring_global.pstonum_double(tmp) * factor;
+        }
+
+
+        //pstring model_type(pstring model) { return model_value_str(model, "COREMODEL"); }
+
+
+        void model_parse(string model_in, model_map_t map)
+        {
+            string model = model_in;
+            int pos = 0;
+            string key = "";
+
+            while (true)
+            {
+                pos = model.find("(");
+                if (pos != -1) break;
+
+                key = plib.pstring_global.ucase(model);
+                var i = m_models.find(key);
+                if (i == null)
+                    throw new nl_exception(nl_errstr_global.MF_1_MODEL_NOT_FOUND, model);
+                model = i;
+            }
+
+            string xmodel = plib.pstring_global.left(model, pos);
+
+            if (xmodel == "_")
+            {
+                map["COREMODEL"] = key;
+            }
+            else
+            {
+                var i = m_models.find(xmodel);
+                if (i != null)
+                    model_parse(xmodel, map);
+                else
+                    throw new nl_exception(nl_errstr_global.MF_1_MODEL_NOT_FOUND, model_in);
+            }
+
+            string remainder = plib.pstring_global.trim(model.substr(pos + 1));
+            if (!plib.pstring_global.endsWith(remainder, ")"))
+                throw new nl_exception(nl_errstr_global.MF_1_MODEL_ERROR_1, model);
+            // FIMXE: Not optimal
+            remainder = plib.pstring_global.left(remainder, remainder.Length - 1);
+
+            var pairs = remainder.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);  //(plib::psplit(remainder," ", true));
+            foreach (string pe in pairs)
+            {
+                var pose = pe.find("=");
+                if (pose == -1)
+                    throw new nl_exception(nl_errstr_global.MF_1_MODEL_ERROR_ON_PAIR_1, model);
+                map[plib.pstring_global.ucase(plib.pstring_global.left(pe, pose))] = pe.substr(pose + 1);
+            }
+        }
+
+
+        string model_string(model_map_t map)
+        {
+            string ret = map["COREMODEL"] + "(";
+            foreach (var i in map)
+                ret = ret + i.first() + "=" + i.second() + " ";
+
+            return ret + ")";
+        }
+    }
+
+
+    // ----------------------------------------------------------------------------------------
+    // nlparse_t
     // ----------------------------------------------------------------------------------------
 
     public class nlparse_t
@@ -243,7 +386,7 @@ namespace mame.netlist
         //using link_t = std::pair<pstring, pstring>;
 
 
-        protected std.unordered_map<string, string> m_models = new std.unordered_map<string, string>();
+        protected models_t m_models;
         std.stack<string> m_namespace_stack = new std.stack<string>();
         protected std.unordered_map<string, string> m_alias = new std.unordered_map<string, string>();
         protected std.vector<link_t> m_links = new std.vector<link_t>();
@@ -273,18 +416,7 @@ namespace mame.netlist
         }
 
 
-        public void register_model(string model_in)
-        {
-            var pos = model_in.find(" ");
-            if (pos == -1)
-                log().fatal.op(nl_errstr_global.MF_1_UNABLE_TO_PARSE_MODEL_1, model_in);
-            string model = plib.pstring_global.ucase(plib.pstring_global.trim(plib.pstring_global.left(model_in, pos)));
-            string def = plib.pstring_global.trim(model_in.substr(pos + 1));
-            string modelOLD = model_in.left(pos).trim().ucase();
-            string defOLD = model_in.substr(pos + 1).trim();
-            if (!m_models.insert(model, def))
-                log().fatal.op(nl_errstr_global.MF_1_MODEL_ALREADY_EXISTS_1, model_in);
-        }
+        public void register_model(string model_in) { m_models.register_model(model_in); }
 
 
         public void register_alias(string alias, string out_)
@@ -401,8 +533,6 @@ namespace mame.netlist
         }
 
 
-        /* parse a source */
-
         protected string build_fqn(string obj_name)
         {
             if (m_namespace_stack.empty())
@@ -467,27 +597,33 @@ namespace mame.netlist
          */
         //setup_t &setup() { return m_setup; }
         //const setup_t &setup() const { return m_setup; }
+
+        public models_t models() { return m_models; }
     }
 
+
+    // ----------------------------------------------------------------------------------------
+    // setup_t
+    // ----------------------------------------------------------------------------------------
 
     public class setup_t : nlparse_t
     {
         std.unordered_map<string, detail.core_terminal_t> m_terminals = new std.unordered_map<string, detail.core_terminal_t>();
 
-        netlist_t m_netlist;
+        netlist_state_t m_nlstate;
         devices.nld_netlistparams m_netlist_params;
         std.unordered_map<string, param_ref_t> m_params = new std.unordered_map<string, param_ref_t>();
 
         UInt32 m_proxy_cnt;
 
 
-        public setup_t(netlist_t netlist)
-            : base(null, netlist.log())  //: nlparse_t(*this, netlist.log())
+        public setup_t(netlist_state_t nlstate)
+            : base(null, nlstate.log())  //: nlparse_t(*this, nlstate.log())
         {
             m_setup = this;  // NOTE, can't pass this above so we do it here
 
 
-            m_netlist = netlist;
+            m_nlstate = nlstate;
             m_netlist_params = null;
             m_proxy_cnt = 0;
         }
@@ -506,14 +642,8 @@ namespace mame.netlist
         //COPYASSIGNMOVE(setup_t, delete)
 
 
-        //netlist_state_t &netlist();
-        //const netlist_state_t &netlist() const;
-        netlist_state_t netlist() { return m_netlist.nlstate(); }
-
-
-        //netlist_t &exec() { return m_netlist; }
-        //const netlist_t &exec() const { return m_netlist; }
-        public netlist_t exec() { return m_netlist; }
+        //netlist_state_t &nlstate() { return m_nlstate; }
+        //const netlist_state_t &nlstate() const { return m_nlstate; }
 
 
         public void register_param_t(string name, param_t param)
@@ -608,6 +738,38 @@ namespace mame.netlist
         }
 
 
+        /* get family */
+        public logic_family_desc_t family_from_model(string model)
+        {
+            if (m_models.model_value_str(model, "TYPE") == "TTL")
+                return nl_base_global.family_TTL();
+            if (m_models.model_value_str(model, "TYPE") == "CD4XXX")
+                return nl_base_global.family_CD4XXX();
+
+            foreach (var e in m_nlstate.family_cache)
+            {
+                if (e.first() == model)
+                    return e.second();
+            }
+
+            var ret = new logic_family_std_proxy_t();  //plib::make_unique_base<logic_family_desc_t, logic_family_std_proxy_t>();
+
+            ret.fixed_V = m_models.model_value(model, "FV");
+            ret.low_thresh_PCNT = m_models.model_value(model, "IVL");
+            ret.high_thresh_PCNT = m_models.model_value(model, "IVH");
+            ret.low_VO = m_models.model_value(model, "OVL");
+            ret.high_VO = m_models.model_value(model, "OVH");
+            ret.R_low = m_models.model_value(model, "ORL");
+            ret.R_high = m_models.model_value(model, "ORH");
+
+            var retp = ret.get();
+
+            m_nlstate.family_cache.emplace_back(new KeyValuePair<string, logic_family_desc_t>(model, ret));
+
+            return retp;
+        }
+
+
         void register_dynamic_log_devices()
         {
             string env = ""; //plib::util::environment("NL_LOGS", "");
@@ -619,10 +781,10 @@ namespace mame.netlist
                 foreach (string ll in loglist)
                 {
                     string name = "log_" + ll;
-                    var nc = factory().factory_by_name("LOG").Create(netlist(), name);
+                    var nc = factory().factory_by_name("LOG").Create(m_nlstate, name);
                     register_link(name + ".I", ll);
                     log().debug.op("    dynamic link {0}: <{1}>\n", ll, name);
-                    m_netlist.nlstate().add_dev(nc.name(), nc);
+                    m_nlstate.add_dev(nc.name(), nc);
                 }
             }
         }
@@ -702,147 +864,6 @@ namespace mame.netlist
         //const factory::list_t &factory() const { return m_factory; }
 
 
-        /* model / family related */
-
-        string model_value_str(model_map_t map, string entity)
-        {
-            string ret = "";
-
-            if (entity != plib.pstring_global.ucase(entity))
-                log().fatal.op(nl_errstr_global.MF_2_MODEL_PARAMETERS_NOT_UPPERCASE_1_2, entity, model_string(map));
-            if (map.find(entity) == null)
-                log().fatal.op(nl_errstr_global.MF_2_ENTITY_1_NOT_FOUND_IN_MODEL_2, entity, model_string(map));
-            else
-                ret = map[entity];
-
-            return ret;
-        }
-
-
-        public nl_double model_value(model_map_t map, string entity)
-        {
-            string tmp = model_value_str(map, entity);
-
-            nl_double factor = 1;  //plib::constants<nl_double>::one();
-            var p = tmp[tmp.Length - 1];  //auto p = std::next(tmp.begin(), static_cast<pstring::difference_type>(tmp.size() - 1));
-            switch (p)
-            {
-                case 'M': factor = 1e6; break;
-                case 'k': factor = 1e3; break;
-                case 'm': factor = 1e-3; break;
-                case 'u': factor = 1e-6; break;
-                case 'n': factor = 1e-9; break;
-                case 'p': factor = 1e-12; break;
-                case 'f': factor = 1e-15; break;
-                case 'a': factor = 1e-18; break;
-                default:
-                    if (p < '0' || p > '9')
-                        log().fatal.op(nl_errstr_global.MF_1_UNKNOWN_NUMBER_FACTOR_IN_1, entity);
-                    break;
-            }
-
-            if (factor != 1)  //plib::constants<nl_double>::one())
-                tmp = plib.pstring_global.left(tmp, tmp.Length - 1);
-
-            // FIXME: check for errors
-            return plib.pstring_global.pstonum_double(tmp) * factor;
-        }
-
-
-        static string model_string(model_map_t map)
-        {
-            string ret = map["COREMODEL"] + "(";
-            foreach (var i in map)
-                ret = ret + i.first() + "=" + i.second() + " ";
-
-            return ret + ")";
-        }
-
-
-        public void model_parse(string model_in, model_map_t map)
-        {
-            string model = model_in;
-            int pos = 0;
-            string key = "";
-
-            while (true)
-            {
-                pos = model.find("(");
-                if (pos != -1) break;
-
-                key = plib.pstring_global.ucase(model);
-                var i = m_models.find(key);
-                if (i == null)
-                    log().fatal.op(nl_errstr_global.MF_1_MODEL_NOT_FOUND, model);
-                model = i;
-            }
-
-            string xmodel = plib.pstring_global.left(model, pos);
-
-            if (xmodel == "_")
-            {
-                map["COREMODEL"] = key;
-            }
-            else
-            {
-                var i = m_models.find(xmodel);
-                if (i != null)
-                    model_parse(xmodel, map);
-                else
-                    log().fatal.op(nl_errstr_global.MF_1_MODEL_NOT_FOUND, model_in);
-            }
-
-            string remainder = plib.pstring_global.trim(model.substr(pos + 1));
-            if (!plib.pstring_global.endsWith(remainder, ")"))
-                log().fatal.op(nl_errstr_global.MF_1_MODEL_ERROR_1, model);
-            // FIMXE: Not optimal
-            remainder = plib.pstring_global.left(remainder, remainder.Length - 1);
-
-            var pairs = remainder.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            foreach (string pe in pairs)
-            {
-                var pose = pe.find("=");
-                if (pose == -1)
-                    log().fatal.op(nl_errstr_global.MF_1_MODEL_ERROR_ON_PAIR_1, model);
-                map[plib.pstring_global.ucase(plib.pstring_global.left(pe, pose))] = pe.substr(pose + 1);
-            }
-        }
-
-
-        public logic_family_desc_t family_from_model(string model)
-        {
-            model_map_t map = new model_map_t();
-            model_parse(model, map);
-
-            if (model_value_str(map, "TYPE") == "TTL")
-                return nl_base_global.family_TTL();
-            if (model_value_str(map, "TYPE") == "CD4XXX")
-                return nl_base_global.family_CD4XXX();
-
-            foreach (var e in netlist().family_cache)
-            {
-                if (e.first() == model)
-                    return e.second();
-            }
-
-            var ret = new logic_family_std_proxy_t();  //plib::make_unique_base<logic_family_desc_t, logic_family_std_proxy_t>();
-
-            ret.fixed_V = model_value(map, "FV");
-            ret.low_thresh_PCNT = model_value(map, "IVL");
-            ret.high_thresh_PCNT = model_value(map, "IVH");
-            ret.low_VO = model_value(map, "OVL");
-            ret.high_VO = model_value(map, "OVH");
-            ret.R_low = model_value(map, "ORL");
-            ret.R_high = model_value(map, "ORH");
-
-            var retp = ret.get();
-
-            netlist().family_cache.emplace_back(new KeyValuePair<string, logic_family_desc_t>(model, ret));
-
-            return retp;
-        }
-
-
         /* helper - also used by nltool */
         string resolve_alias(string name)
         {
@@ -910,7 +931,7 @@ namespace mame.netlist
             //            else
             //                return false;
             //        }), netlist().nets().end());
-            netlist().nets().RemoveAll(x =>
+            m_nlstate.nets().RemoveAll(x =>
             {
                 if (x.num_cons() == 0)
                 {
@@ -940,14 +961,14 @@ namespace mame.netlist
             {
                 if (factory().is_class<devices.nld_solver>(e.second()) || factory().is_class<devices.nld_netlistparams>(e.second()))
                 {
-                    m_netlist.nlstate().add_dev(e.first(), e.second().Create(netlist(), e.first()));  //poolptr<device_t>(e.second->Create(netlist(), e.first)));
+                    m_nlstate.add_dev(e.first(), e.second().Create(m_nlstate, e.first()));  //poolptr<device_t>(e.second->Create(netlist(), e.first)));
                 }
             }
 
             log().debug.op("Searching for solver and parameters ...\n");
 
-            var solver = netlist().get_single_device<devices.nld_solver>("solver");
-            m_netlist_params = netlist().get_single_device<devices.nld_netlistparams>("parameter");
+            var solver = m_nlstate.get_single_device<devices.nld_solver>("solver");
+            m_netlist_params = m_nlstate.get_single_device<devices.nld_netlistparams>("parameter");
 
             /* create devices */
 
@@ -956,8 +977,8 @@ namespace mame.netlist
             {
                 if (!factory().is_class<devices.nld_solver>(e.second()) && !factory().is_class<devices.nld_netlistparams>(e.second()))
                 {
-                    var dev = e.second().Create(netlist(), e.first());
-                    m_netlist.nlstate().add_dev(dev.name(), dev);
+                    var dev = e.second().Create(m_nlstate, e.first());
+                    m_nlstate.add_dev(dev.name(), dev);
                 }
             }
 
@@ -980,7 +1001,7 @@ namespace mame.netlist
 
             bool use_deactivate = m_netlist_params.use_deactivate.op() ? true : false;
 
-            foreach (var d in netlist().devices())
+            foreach (var d in m_nlstate.devices())
             {
                 if (use_deactivate)
                 {
@@ -1004,7 +1025,7 @@ namespace mame.netlist
             resolve_inputs();
 
             log().verbose.op("looking for two terms connected to rail nets ...");
-            foreach (var t in m_netlist.nlstate().get_device_list<analog.nld_twoterm>())
+            foreach (var t in m_nlstate.get_device_list<analog.nld_twoterm>())
             {
                 if (t.N.net().isRailNet() && t.P.net().isRailNet())
                 {
@@ -1012,7 +1033,7 @@ namespace mame.netlist
                         t.name(), t.N.net().name(), t.P.net().name());
                     t.N.net().remove_terminal(t.N);
                     t.P.net().remove_terminal(t.P);
-                    m_netlist.nlstate().remove_dev(t);
+                    m_nlstate.remove_dev(t);
                 }
             }
 
@@ -1020,7 +1041,7 @@ namespace mame.netlist
 
             if (solver == null)
             {
-                foreach (var p in netlist().nets())
+                foreach (var p in m_nlstate.nets())
                 {
                     if (p.is_analog())
                         log().fatal.op(nl_errstr_global.MF_0_NO_SOLVER);
@@ -1031,7 +1052,7 @@ namespace mame.netlist
                 solver.post_start();
             }
 
-            foreach (var n in netlist().nets())
+            foreach (var n in m_nlstate.nets())
             {
                 foreach (var term in n.core_terms())
                 {
@@ -1088,8 +1109,9 @@ namespace mame.netlist
             {
                 log().debug.op("adding analog net ...\n");
                 // FIXME: Nets should have a unique name
-                var anet = new analog_net_t(netlist(), "net." + t1.name());  //plib::palloc<analog_net_t>(netlist(),"net." + t1.name());
-                netlist().register_net(anet);  //plib::owned_ptr<analog_net_t>(anet, true));
+                var anet = new analog_net_t(m_nlstate, "net." + t1.name());  //plib::palloc<analog_net_t>(netlist(),"net." + t1.name());
+                //auto anetp = anet.get();
+                m_nlstate.register_net(anet);  //plib::owned_ptr<analog_net_t>(anet, true));
                 t1.set_net(anet);
                 anet.add_terminal(t2);
                 anet.add_terminal(t1);
@@ -1252,7 +1274,7 @@ namespace mame.netlist
             {
                 // create a new one ...
                 string x = new plib.pfmt("proxy_da_{0}_{1}").op(out_.name(), m_proxy_cnt);
-                var new_proxy = out_cast.logic_family().create_d_a_proxy(netlist(), x, out_cast);
+                var new_proxy = out_cast.logic_family().create_d_a_proxy(m_nlstate, x, out_cast);
                 m_proxy_cnt++;
 
                 //new_proxy->start_dev();
@@ -1272,7 +1294,7 @@ namespace mame.netlist
 
                 proxy = new_proxy;
 
-                m_netlist.nlstate().add_dev(new_proxy.name(), new_proxy);
+                m_nlstate.add_dev(new_proxy.name(), new_proxy);
             }
 
             return proxy;
@@ -1294,7 +1316,7 @@ namespace mame.netlist
             {
                 log().debug.op("connect_terminal_input: connecting proxy\n");
                 string x = new plib.pfmt("proxy_ad_{0}_{1}").op(inp.name(), m_proxy_cnt);
-                var new_proxy = incast.logic_family().create_a_d_proxy(netlist(), x, incast);
+                var new_proxy = incast.logic_family().create_a_d_proxy(m_nlstate, x, incast);
                 //auto new_proxy = plib::owned_ptr<devices::nld_a_to_d_proxy>::Create(netlist(), x, &incast);
                 incast.set_proxy(new_proxy);
                 m_proxy_cnt++;
@@ -1314,7 +1336,7 @@ namespace mame.netlist
                     inp.net().core_terms().clear(); // clear the list
                 }
                 ret.out_().net().add_terminal(inp);
-                m_netlist.nlstate().add_dev(new_proxy.name(), new_proxy);
+                m_nlstate.add_dev(new_proxy.name(), new_proxy);
                 return ret;
             }
         }

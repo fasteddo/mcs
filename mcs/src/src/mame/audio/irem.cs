@@ -14,7 +14,7 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    class irem_audio_device : device_t
+    public class irem_audio_device : device_t
     {
         netlist_mame_logic_input_device m_audio_SINH;
 
@@ -361,7 +361,7 @@ namespace mame
     }
 
 
-    class m52_soundc_audio_device : irem_audio_device
+    public class m52_soundc_audio_device : irem_audio_device
     {
         //DEFINE_DEVICE_TYPE(IREM_M52_SOUNDC_AUDIO, m52_soundc_audio_device, "m52_soundc_audio", "Irem M52 SoundC Audio")
         static device_t device_creator_m52_soundc_audio_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_soundc_audio_device(mconfig, tag, owner, clock); }

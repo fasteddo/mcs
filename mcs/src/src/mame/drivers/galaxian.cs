@@ -782,11 +782,8 @@ namespace mame
          *
          *************************************/
 
-        //MACHINE_CONFIG_START(galaxian_state::galaxian_base)
         void galaxian_base(machine_config config)
         {
-            MACHINE_CONFIG_START(config);
-
             // basic machine hardware
             Z80(config, m_maincpu, GALAXIAN_PIXEL_CLOCK/3/2);
             m_maincpu.target.memory().set_addrmap(AS_PROGRAM, galaxian_map);
@@ -797,15 +794,13 @@ namespace mame
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_galaxian);
             PALETTE(config, m_palette, galaxian_palette, 32);
 
-            MCFG_SCREEN_ADD("screen", SCREEN_TYPE_RASTER);
-            MCFG_SCREEN_RAW_PARAMS(GALAXIAN_PIXEL_CLOCK, GALAXIAN_HTOTAL, GALAXIAN_HBEND, GALAXIAN_HBSTART, GALAXIAN_VTOTAL, GALAXIAN_VBEND, GALAXIAN_VBSTART);
-            MCFG_SCREEN_UPDATE_DRIVER(screen_update_galaxian);
-            MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(vblank_interrupt_w));
+            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            m_screen.target.set_raw(GALAXIAN_PIXEL_CLOCK, GALAXIAN_HTOTAL, GALAXIAN_HBEND, GALAXIAN_HBSTART, GALAXIAN_VTOTAL, GALAXIAN_VBEND, GALAXIAN_VBSTART);
+            m_screen.target.set_screen_update(screen_update_galaxian);
+            m_screen.target.screen_vblank().set(vblank_interrupt_w).reg();
 
             // sound hardware
             SPEAKER(config, "speaker").front_center();
-
-            MACHINE_CONFIG_END();
         }
 
 
@@ -832,15 +827,12 @@ namespace mame
         }
 
 
-        //MACHINE_CONFIG_START(galaxian_state::konami_sound_1x_ay8910)
         void konami_sound_1x_ay8910(machine_config config)
         {
-            MACHINE_CONFIG_START(config);
-
             /* 2nd CPU to drive sound */
-            MCFG_DEVICE_ADD("audiocpu", z80_device.Z80, KONAMI_SOUND_CLOCK/8);
-            MCFG_DEVICE_PROGRAM_MAP(frogger_sound_map);
-            MCFG_DEVICE_IO_MAP(frogger_sound_portmap);
+            Z80(config, m_audiocpu, KONAMI_SOUND_CLOCK/8);
+            m_audiocpu.target.memory().set_addrmap(AS_PROGRAM, frogger_sound_map);
+            m_audiocpu.target.memory().set_addrmap(AS_IO, frogger_sound_portmap);
 
             GENERIC_LATCH_8(config, m_soundlatch);
 
@@ -854,10 +846,7 @@ namespace mame
             m_ay8910.op(0).target.disound.add_route(1, "konami", 1.0, 1);
             m_ay8910.op(0).target.disound.add_route(2, "konami", 1.0, 2);
 
-            MCFG_DEVICE_ADD("konami", discrete_sound_device.DISCRETE, konami_sound_discrete);
-            MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 0.75);
-
-            MACHINE_CONFIG_END();
+            DISCRETE(config, m_discrete, konami_sound_discrete).disound.add_route(ALL_OUTPUTS, "speaker", 0.75);
         }
 
 

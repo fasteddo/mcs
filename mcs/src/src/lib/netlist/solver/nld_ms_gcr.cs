@@ -37,8 +37,6 @@ namespace mame.netlist
             double [] RHS;  //plib::parray<FT, SIZE> RHS;
             double [] new_V;  //plib::parray<FT, SIZE> new_V;
 
-            std.vector<ListPointer<double>> [] m_term_cr = new std.vector<ListPointer<double>> [storage_N];  //std::array<plib::aligned_vector<FT *, PALIGN_VECTOROPT>, storage_N> m_term_cr;
-
             plib.matrix_compressed_rows_t_double_uint16_t mat;  //mat_type mat;
 
             extsolver m_proc;
@@ -49,10 +47,6 @@ namespace mame.netlist
                 : base(anetlist, name, matrix_solver_t.eSortType.PREFER_IDENTITY_TOP_LEFT, params_)
             {
                 this.SIZE = SIZE;
-
-
-                for (int i = 0; i < m_term_cr.Length; i++)
-                    m_term_cr[i] = new std.vector<ListPointer<double>>();
 
 
                 m_dim = size;
@@ -164,23 +158,24 @@ namespace mame.netlist
 
                 for (mat_index_type k = 0; k < iN; k++)
                 {
-                    m_term_cr[k].clear();
+                    UInt32 cnt = 0;
                     /* build pointers into the compressed row format matrix for each terminal */
                     for (UInt32 j = 0; j < this.terms[k].railstart; j++)
                     {
-                        int other = this.terms[k].connected_net_idx()[j];
+                        int other = this.terms[k].connected_net_idx[j];
                         for (var i = mat.row_idx[k]; i < mat.row_idx[k + 1]; i++)
                         {
                             if (other == (int)mat.col_idx[i])
                             {
-                                m_term_cr[k].push_back(new ListPointer<double>(mat.A, i));  //m_term_cr[k].push_back(&mat.A[i]);
+                                m_mat_ptr.op(k)[j] = new ListPointer<double>(mat.A, i);  //m_mat_ptr[k][j] = &mat.A[i];
+                                cnt++;
                                 break;
                             }
                         }
                     }
 
-                    nl_base_global.nl_assert(m_term_cr[k].size() == this.terms[k].railstart);
-                    m_term_cr[k].push_back(new ListPointer<double>(mat.A, mat.diag[k]));  //m_term_cr[k].push_back(&mat.A[mat.diag[k]]);
+                    nl_base_global.nl_assert(cnt == this.terms[k].railstart);
+                    m_mat_ptr.op(k)[this.m_terms[k].railstart] = new ListPointer<double>(mat.A, mat.diag[k]);  //m_mat_ptr[k][this->m_terms[k]->m_railstart] = &mat.A[mat.diag[k]];
                 }
 
                 this.log().verbose.op("maximum fill: {0}", gr.first());

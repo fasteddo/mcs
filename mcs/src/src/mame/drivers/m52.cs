@@ -277,16 +277,13 @@ namespace mame
         *
         *************************************/
 
-        //MACHINE_CONFIG_START(m52_state::m52)
         public void m52(machine_config config)
         {
-            MACHINE_CONFIG_START(config);
-
             /* basic machine hardware */
-            MCFG_DEVICE_ADD("maincpu", z80_device.Z80, MASTER_CLOCK / 6);
-            MCFG_DEVICE_PROGRAM_MAP(main_map);
-            MCFG_DEVICE_IO_MAP(main_portmap);
-            MCFG_DEVICE_VBLANK_INT_DRIVER("screen", irq0_line_hold);
+            Z80(config, m_maincpu, MASTER_CLOCK / 6);
+            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, main_map);
+            m_maincpu.target.memory().set_addrmap(AS_IO, main_portmap);
+            m_maincpu.target.execute().set_vblank_int("screen", irq0_line_hold);
 
             /* video hardware */
             PALETTE(config, m_sp_palette).set_entries(256, 32);
@@ -298,15 +295,13 @@ namespace mame
             PALETTE(config, m_bg_palette).set_entries(3 * 4, 32);
             GFXDECODE(config, m_bg_gfxdecode, m_bg_palette, gfx_m52_bg);
 
-            MCFG_SCREEN_ADD("screen", SCREEN_TYPE_RASTER);
-            MCFG_SCREEN_RAW_PARAMS(MASTER_CLOCK / 3, 384, 136, 376, 282, 22, 274);
-            MCFG_SCREEN_UPDATE_DRIVER(screen_update_m52);
+            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            m_screen.target.set_raw(MASTER_CLOCK / 3, 384, 136, 376, 282, 22, 274);
+            m_screen.target.set_screen_update(screen_update_m52);
 
             /* sound hardware */
             //m52_sound_c_audio(config);
-            MCFG_DEVICE_ADD("irem_audio", m52_soundc_audio_device.IREM_M52_SOUNDC_AUDIO, 0);
-
-            MACHINE_CONFIG_END();
+            IREM_M52_SOUNDC_AUDIO(config, "irem_audio", 0);
         }
     }
 

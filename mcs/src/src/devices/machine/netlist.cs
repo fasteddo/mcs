@@ -227,7 +227,7 @@ namespace mame
                 if ( sdev != null )
                 {
                     netlist_global.LOGDEVCALLS(this, "Preparse subdevice {0}/{1}\n", d.name(), d.shortname());
-                    sdev.pre_parse_action(setup());
+                    sdev.pre_parse_action(m_netlist.nlstate());
                 }
             }
 
@@ -243,7 +243,7 @@ namespace mame
                 if ( sdev != null )
                 {
                     netlist_global.LOGDEVCALLS(this, "Found subdevice {0}/{1}\n", d.name(), d.shortname());
-                    sdev.custom_netlist_additions(setup());
+                    sdev.custom_netlist_additions(m_netlist.nlstate());
                 }
             }
 
@@ -490,7 +490,7 @@ namespace mame
 
             foreach (var e in m_out)
             {
-                e.second().sound_update(cur);
+                e.second().sound_update_fill(samples);
                 e.second().buffer_reset(cur);
             }
         }
@@ -587,7 +587,7 @@ namespace mame
         public double mult { get { return m_mult; } }
 
 
-        public virtual void custom_netlist_additions(netlist.setup_t setup) { }
+        public virtual void custom_netlist_additions(netlist.netlist_state_t nlstate) { }
         protected virtual void pre_parse_action(netlist.setup_t setup) { }
 
 
@@ -615,8 +615,8 @@ namespace mame
             m_netlist_mame_sub_interface = new netlist_mame_sub_interface(owner);
         }
 
-        public virtual void custom_netlist_additions(netlist.setup_t setup) { m_netlist_mame_sub_interface.custom_netlist_additions(setup); }
-        public virtual void pre_parse_action(netlist.setup_t setup) { }
+        public virtual void custom_netlist_additions(netlist.netlist_state_t nlstate) { m_netlist_mame_sub_interface.custom_netlist_additions(nlstate); }
+        public virtual void pre_parse_action(netlist.netlist_state_t nlstate) { }
 
         public void set_mult_offset(double mult, double offset) { m_netlist_mame_sub_interface.set_mult_offset(mult, offset); }
     }
@@ -819,17 +819,17 @@ namespace mame
         }
 
 
-        public override void custom_netlist_additions(netlist.setup_t setup)
+        public override void custom_netlist_additions(netlist.netlist_state_t nlstate)
         {
-            if (!setup.device_exists("STREAM_INPUT"))
-                setup.register_dev("NETDEV_SOUND_IN", "STREAM_INPUT");
+            if (!nlstate.setup().device_exists("STREAM_INPUT"))
+                nlstate.setup().register_dev("NETDEV_SOUND_IN", "STREAM_INPUT");
 
             string sparam = string.Format("STREAM_INPUT.CHAN{0}", m_channel);  //plib::pfmt("STREAM_INPUT.CHAN{1}")(m_channel);
-            setup.register_param(sparam, m_param_name);  //pstring(m_param_name, pstring::UTF8));
+            nlstate.setup().register_param(sparam, m_param_name);  //pstring(m_param_name, pstring::UTF8));
             sparam = string.Format("STREAM_INPUT.MULT{0}", m_channel);  //plib::pfmt("STREAM_INPUT.MULT{1}")(m_channel);
-            setup.register_param(sparam, m_netlist_mame_sub_interface.mult);
+            nlstate.setup().register_param(sparam, m_netlist_mame_sub_interface.mult);
             sparam = string.Format("STREAM_INPUT.OFFSET{0}", m_channel);  //plib::pfmt("STREAM_INPUT.OFFSET{1}")(m_channel);
-            setup.register_param(sparam, m_netlist_mame_sub_interface.offset);
+            nlstate.setup().register_param(sparam, m_netlist_mame_sub_interface.offset);
         }
     }
 
@@ -884,18 +884,18 @@ namespace mame
         }
 
 
-        public override void custom_netlist_additions(netlist.setup_t setup)
+        public override void custom_netlist_additions(netlist.netlist_state_t nlstate)
         {
             //NETLIB_NAME(sound_out) *snd_out;
             string sname = string.Format("STREAM_OUT_{0}", m_channel);  //plib::pfmt("STREAM_OUT_{1}")(m_channel);
 
             //snd_out = dynamic_cast<NETLIB_NAME(sound_out) *>(setup.register_dev("nld_sound_out", sname));
-            setup.register_dev("NETDEV_SOUND_OUT", sname);
+            nlstate.setup().register_dev("NETDEV_SOUND_OUT", sname);
 
-            setup.register_param(sname + ".CHAN", m_channel);
-            setup.register_param(sname + ".MULT", m_netlist_mame_sub_interface.mult);
-            setup.register_param(sname + ".OFFSET", m_netlist_mame_sub_interface.offset);
-            setup.register_link(sname + ".IN", m_out_name);  //pstring(m_out_name, pstring::UTF8));
+            nlstate.setup().register_param(sname + ".CHAN", m_channel);
+            nlstate.setup().register_param(sname + ".MULT", m_netlist_mame_sub_interface.mult);
+            nlstate.setup().register_param(sname + ".OFFSET", m_netlist_mame_sub_interface.offset);
+            nlstate.setup().register_link(sname + ".IN", m_out_name);  //pstring(m_out_name, pstring::UTF8));
         }
     }
 
@@ -930,7 +930,7 @@ namespace mame
         }
 
 
-        protected override plib.pistream stream(string name)  //virtual std::unique_ptr<plib::pistream> stream(const pstring &name) override;
+        protected override plib.pistream stream(string name)  //virtual plib::unique_ptr<plib::pistream> stream(const pstring &name) override;
         {
             throw new emu_unimplemented();
         }
@@ -1004,6 +1004,18 @@ namespace mame
         }
 
 
+        public void sound_update_fill(int samples)
+        {
+            if (samples > m_bufsize)
+                throw new emu_fatalerror("sound {0}: pos {1} exceeded bufsize {2}\n", name().c_str(), samples, m_bufsize);
+
+            while (m_last_pos < samples )
+            {
+                m_buffer[m_last_pos++] = (stream_sample_t) m_cur;
+            }
+        }
+
+
         //NETLIB_UPDATEI()
         protected override void update()
         {
@@ -1023,7 +1035,6 @@ namespace mame
         {
             m_last_pos = 0;
             m_last_buffer_time.op = upto;
-            m_cur = 0.0;
         }
     }
 
@@ -1039,11 +1050,11 @@ namespace mame
 
         public class channel
         {
-            public netlist.param_str_t m_param_name;  //netlist::poolptr<netlist::param_str_t> m_param_name;
+            public netlist.param_str_t m_param_name;  //netlist::pool_owned_ptr<netlist::param_str_t> m_param_name;
             public netlist.param_double_t m_param;  //netlist::param_double_t *m_param;
             public ListPointer<stream_sample_t> m_buffer;  //stream_sample_t *m_buffer;
-            public netlist.param_double_t m_param_mult;  //netlist::poolptr<netlist::param_double_t> m_param_mult;
-            public netlist.param_double_t m_param_offset;  //netlist::poolptr<netlist::param_double_t> m_param_offset;
+            public netlist.param_double_t m_param_mult;  //netlist::pool_owned_ptr<netlist::param_double_t> m_param_mult;
+            public netlist.param_double_t m_param_offset;  //netlist::pool_owned_ptr<netlist::param_double_t> m_param_offset;
         }
         channel [] m_channels = new channel [MAX_INPUT_CHANNELS];
         netlist_time m_inc;

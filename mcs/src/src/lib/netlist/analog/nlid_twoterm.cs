@@ -90,11 +90,11 @@ namespace mame.netlist
             //void solve_later(netlist_time delay = netlist_time::from_nsec(1));
 
 
-            protected void set(nl_double G, nl_double V, nl_double I)
+            protected void set_G_V_I(nl_double G, nl_double V, nl_double I)
             {
                 /*      GO, GT, I                */
-                m_P.set( G,  G, (  V) * G - I);
-                m_N.set( G,  G, ( -V) * G + I);
+                m_P.set_go_gt_I( -G,  G, (  V) * G - I);
+                m_N.set_go_gt_I( -G,  G, ( -V) * G + I);
             }
 
 
@@ -104,12 +104,12 @@ namespace mame.netlist
             //}
 
 
-            protected void set_mat(nl_double a11, nl_double a12, nl_double r1,
-                                   nl_double a21, nl_double a22, nl_double r2)
+            protected void set_mat(nl_double a11, nl_double a12, nl_double rhs1,
+                                   nl_double a21, nl_double a22, nl_double rhs2)
             {
                 /*      GO, GT, I                */
-                m_P.set(-a12, a11, r1);
-                m_N.set(-a21, a22, r2);
+                m_P.set_go_gt_I(a12, a11, rhs1);
+                m_N.set_go_gt_I(a21, a22, rhs2);
             }
         }
 
@@ -212,6 +212,7 @@ namespace mame.netlist
             param_double_t m_R;
             param_double_t m_Dial;
             param_logic_t m_DialIsLog;
+            param_logic_t m_Reverse;
 
 
             //NETLIB_CONSTRUCTOR(POT)
@@ -225,6 +226,7 @@ namespace mame.netlist
                 m_R = new param_double_t(this, "R", 10000);
                 m_Dial = new param_double_t(this, "DIAL", 0.5);
                 m_DialIsLog = new param_logic_t(this, "DIALLOG", false);
+                m_Reverse = new param_logic_t(this, "REVERSE", false);
 
 
                 register_subalias("1", m_R1.P);
@@ -258,6 +260,8 @@ namespace mame.netlist
                 nl_double v = m_Dial.op();
                 if (m_DialIsLog.op())
                     v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
+                if (m_Reverse.op())
+                    v = 1.0 - v;
 
                 m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
                 m_R2.set_R(std.max(m_R.op() * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
@@ -311,7 +315,7 @@ namespace mame.netlist
             public override void reset()
             {
                 // FIXME: Startup conditions
-                set(exec().gmin(), 0.0, -5.0 / exec().gmin());
+                set_G_V_I(exec().gmin(), 0.0, -5.0 / exec().gmin());
                 //set(exec().gmin(), 0.0, 0.0);
             }
 

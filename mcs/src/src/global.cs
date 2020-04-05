@@ -724,7 +724,7 @@ namespace mame
 
 
         // irem
-        protected static msm5205_device MSM5205(machine_config mconfig, device_finder<msm5205_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
+        protected static m52_soundc_audio_device IREM_M52_SOUNDC_AUDIO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<m52_soundc_audio_device>(mconfig, tag, m52_soundc_audio_device.IREM_M52_SOUNDC_AUDIO, clock); }
 
 
         // latch8
@@ -804,6 +804,10 @@ namespace mame
         protected static mb88_cpu_device MB8842(machine_config mconfig, device_finder<mb88_cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, mb8842_cpu_device.MB8842, clock); }
         protected static mb88_cpu_device MB8843(machine_config mconfig, device_finder<mb88_cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, mb8843_cpu_device.MB8843, clock); }
         protected static mb88_cpu_device MB8844(machine_config mconfig, device_finder<mb88_cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, mb8844_cpu_device.MB8844, clock); }
+
+
+        // msm5205
+        protected static msm5205_device MSM5205(machine_config mconfig, device_finder<msm5205_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
 
 
         // namco

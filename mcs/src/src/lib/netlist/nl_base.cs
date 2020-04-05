@@ -180,6 +180,8 @@ namespace mame.netlist
          */
         public nl_exception(string text)  //!< text to be passed
             : base(text) { }
+        public nl_exception(string format, params object [] args)  //!< format to be used
+            : base(string.Format(format, args)) { }
     }
 
 
@@ -393,7 +395,7 @@ namespace mame.netlist
             netlist_t m_netlist;
 
 
-            public netlist_ref(netlist_state_t nl) { m_netlist = nl.setup().exec(); }
+            public netlist_ref(netlist_state_t nl) { m_netlist = nl.exec(); }
 
             //COPYASSIGNMOVE(netlist_ref, delete)
 
@@ -578,7 +580,7 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     class terminal_t : analog_t
     {
-        terminal_t m_otherterm;
+        terminal_t m_connected_terminal;
         ListPointer<nl_double> m_Idr1;  //nl_double *m_Idr1; // drive current
         ListPointer<nl_double> m_go1;  //nl_double *m_go1;  // conductance for Voltage from other term
         ListPointer<nl_double> m_gt1;  //nl_double *m_gt1;  // conductance for total conductance
@@ -593,7 +595,7 @@ namespace mame.netlist
             m_Idr1 = null;
             m_go1 = null;
             m_gt1 = null;
-            m_otherterm = otherterm;
+            m_connected_terminal = otherterm;
 
 
             state().setup().register_term(this);
@@ -604,17 +606,10 @@ namespace mame.netlist
 
         //nl_double operator ()() const  NL_NOEXCEPT;
 
-        //void set(const nl_double &G) NL_NOEXCEPT
-        //{
-        //    set(G,G, 0.0);
-        //}
+        //void set_conductivity(const nl_double &G) NL_NOEXCEPT
+        //void set_go_gt(const nl_double &GO, const nl_double &GT) NL_NOEXCEPT
 
-        //void set(const nl_double &GO, const nl_double &GT) NL_NOEXCEPT
-        //{
-        //    set(GO, GT, 0.0);
-        //}
-
-        public void set(nl_double GO, nl_double GT, nl_double I)
+        public void set_go_gt_I(nl_double GO, nl_double GT, nl_double I)
         {
             if (m_go1 != null)
             {
@@ -654,7 +649,7 @@ namespace mame.netlist
         }
 
 
-        public terminal_t otherterm() { return m_otherterm; }
+        public terminal_t connected_terminal() { return m_connected_terminal; }
     }
 
 
@@ -814,7 +809,7 @@ namespace mame.netlist
                 var p = this is analog_net_t ? (analog_net_t)this : null;
 
                 if (p != null)
-                    p.cur_Analog.op.d = 0.0;
+                    p.cur_Analog.op[0] = 0.0;
 
                 /* rebuild m_list and reset terminals to active or analog out state */
 
@@ -1049,7 +1044,7 @@ namespace mame.netlist
         //friend class detail::net_t;
 
 
-        state_var<doubleref> m_cur_Analog;  //state_var<nl_double>     m_cur_Analog;
+        state_var<ListPointer<nl_double>> m_cur_Analog;  //state_var<nl_double>     m_cur_Analog;
         devices.matrix_solver_t m_solver;
 
 
@@ -1059,17 +1054,17 @@ namespace mame.netlist
         public analog_net_t(netlist_state_t nl, string aname, detail.core_terminal_t mr = null)
             : base(nl, aname, mr)
         {
-            m_cur_Analog = new state_var<doubleref>(this, "m_cur_Analog", new doubleref(0.0));
+            m_cur_Analog = new state_var<ListPointer<nl_double>>(this, "m_cur_Analog", new ListPointer<nl_double>(new std.vector<nl_double>(1)));
             m_solver = null;
         }
 
 
-        public state_var<doubleref> cur_Analog { get { return m_cur_Analog; } set { m_cur_Analog = value; } }
+        public state_var<ListPointer<nl_double>> cur_Analog { get { return m_cur_Analog; } set { m_cur_Analog = value; } }
 
 
-        public nl_double Q_Analog() { return m_cur_Analog.op.d; }
-        public void set_Q_Analog(nl_double v) { m_cur_Analog.op.d = v; }
-        public doubleref Q_Analog_state_ptr() { return m_cur_Analog.op; }  //nl_double *Q_Analog_state_ptr() NL_NOEXCEPT { return m_cur_Analog.ptr(); }
+        public nl_double Q_Analog() { return m_cur_Analog.op[0]; }
+        public void set_Q_Analog(nl_double v) { m_cur_Analog.op[0] = v; }
+        public ListPointer<nl_double> Q_Analog_state_ptr() { return m_cur_Analog.op; }  //nl_double *Q_Analog_state_ptr() NL_NOEXCEPT { return m_cur_Analog.ptr(); }
 
         //FIXME: needed by current solver code
         public devices.matrix_solver_t solver() { return m_solver; }
@@ -1336,7 +1331,7 @@ namespace mame.netlist
 
 
         //const pstring &operator()() const NL_NOEXCEPT { return Value(); }
-        public string op() { return Value(); }
+        public string op() { return value(); }
 
 
         //void setTo(const pstring &param) NL_NOEXCEPT
@@ -1345,7 +1340,7 @@ namespace mame.netlist
         protected virtual void changed() { }
 
 
-        protected string Value() { return m_param; }
+        protected string value() { return m_param; }
     }
 
 
@@ -1371,9 +1366,6 @@ namespace mame.netlist
         //friend class value_t;
 
 
-        model_map_t m_map;
-
-
         public param_model_t(device_t device, string name, string val) : base(device, name, val) { }
 
 
@@ -1389,10 +1381,7 @@ namespace mame.netlist
 
         nl_double model_value(string entity)
         {
-            if (m_map.size() == 0)
-                state().setup().model_parse(this.Value(), m_map);
-
-            return state().setup().model_value(m_map, entity);
+            return state().setup().models().model_value(value(), entity);
         }
 
         /* hide this */
@@ -1542,7 +1531,7 @@ namespace mame.netlist
         public setup_t setup() { return state().setup(); }
 
         //template<class C, typename... Args>
-        //void register_sub(const pstring &name, std::unique_ptr<C> &dev, const Args&... args)
+        //void create_and_register_subdevice(const pstring &name, std::unique_ptr<C> &dev, const Args&... args)
 
 
         protected void register_subalias(string name, detail.core_terminal_t term)
@@ -1651,6 +1640,7 @@ namespace mame.netlist
 
 
         string m_name;
+        netlist_t m_netlist;
         plib.dynlib m_lib;   //plib::unique_ptr<plib::dynlib>      m_lib; // external lib needs to be loaded as long as netlist exists
         plib.state_manager_t m_state;
         callbacks_t m_callbacks;  //plib::unique_ptr<callbacks_t>       m_callbacks;
@@ -1668,14 +1658,15 @@ namespace mame.netlist
 
 
         public netlist_state_t(string aname,
-            callbacks_t callbacks,  //plib::unique_ptr<callbacks_t> &&callbacks,
-            setup_t setup)  //plib::unique_ptr<setup_t> &&setup);
+            netlist_t anetlist,
+            callbacks_t callbacks)  //plib::unique_ptr<callbacks_t> &&callbacks,
         {
             m_name = aname;
+            m_netlist = anetlist;
             m_state = new plib.state_manager_t();
             m_callbacks = callbacks; // Order is important here
             m_log = new log_type(nl_config_global.NL_DEBUG, m_callbacks);
-            m_setup = setup;
+            m_setup = new setup_t(this);  // , m_setup(plib::make_unique<setup_t>(*this))
 
 
             string libpath = "";  //pstring libpath = plib::util::environment("NL_BOOSTLIB", plib::util::buildpath({".", "nlboost.so"}));
@@ -1711,6 +1702,8 @@ namespace mame.netlist
         public log_type log() { return m_log; }
 
         public plib.dynlib lib() { return m_lib; }
+
+        public netlist_t exec() { return m_netlist; }
 
 
         /* state handling */
@@ -1847,9 +1840,7 @@ namespace mame.netlist
 
         public netlist_t(string aname, callbacks_t callbacks)  //explicit netlist_t(const pstring &aname, plib::unique_ptr<callbacks_t> callbacks);
         {
-            m_state = new netlist_state_t(aname,
-                callbacks,
-                new setup_t(this)); // FIXME, ugly but needed to have netlist_state_t constructed first
+            m_state = new netlist_state_t(aname, this, callbacks);
             m_solver = null;
             m_time = netlist_time.zero();
             m_mainclock = null;

@@ -72,7 +72,7 @@ namespace mame
         required_device<screen_device> m_screen;
         required_device<palette_device> m_palette;
         optional_device<generic_latch_8_device> m_soundlatch;
-        optional_device<discrete_device> m_discrete;
+        optional_device<discrete_sound_device> m_discrete;
 
         optional_ioport m_fake_select;
         optional_ioport_array m_tenspot_game_dsw;  //optional_ioport_array<10> m_tenspot_game_dsw;
@@ -156,7 +156,7 @@ namespace mame
             m_screen = new required_device<screen_device>(this, "screen");
             m_palette = new required_device<palette_device>(this, "palette");
             m_soundlatch = new optional_device<generic_latch_8_device>(this, "soundlatch");
-            m_discrete = new optional_device<discrete_device>(this, "konami");
+            m_discrete = new optional_device<discrete_sound_device>(this, "konami");
             m_fake_select = new optional_ioport(this, "FAKE_SELECT");
             m_tenspot_game_dsw = new optional_ioport_array(10, this, "IN2_GAME{0}", 0);  //{"IN2_GAME0", "IN2_GAME1", "IN2_GAME2", "IN2_GAME3", "IN2_GAME4", "IN2_GAME5", "IN2_GAME6", "IN2_GAME7", "IN2_GAME8", "IN2_GAME9"});
             m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");

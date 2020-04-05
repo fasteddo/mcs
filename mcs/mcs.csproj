@@ -241,6 +241,7 @@
     <Compile Include="src\src\lib\netlist\nl_time.cs" />
     <Compile Include="src\src\lib\netlist\plib\pdynlib.cs" />
     <Compile Include="src\src\lib\netlist\plib\pfmtlog.cs" />
+    <Compile Include="src\src\lib\netlist\plib\pmatrix2d.cs" />
     <Compile Include="src\src\lib\netlist\plib\pomp.cs" />
     <Compile Include="src\src\lib\netlist\plib\pstate.cs" />
     <Compile Include="src\src\lib\netlist\plib\pstream.cs" />
