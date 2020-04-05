@@ -12,54 +12,6 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    public class device_nvram_interface_er2055 : device_nvram_interface
-    {
-        public device_nvram_interface_er2055(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        //-------------------------------------------------
-        //  nvram_default - called to initialize NVRAM to
-        //  its default state
-        //-------------------------------------------------
-        protected override void nvram_default()
-        {
-            //throw new emu_unimplemented();
-#if false
-            // default to all-0xff
-            std::fill_n(&m_rom_data[0], SIZE_DATA, 0xff);
-
-            // populate from a memory region if present
-            if (m_default_data.found())
-                std::copy_n(&m_default_data[0], SIZE_DATA, &m_rom_data[0]);
-#endif
-        }
-
-        //-------------------------------------------------
-        //  nvram_read - called to read NVRAM from the
-        //  .nv file
-        //-------------------------------------------------
-        protected override void nvram_read(emu_file file)
-        {
-            throw new emu_unimplemented();
-#if false
-            file.read(&m_rom_data[0], SIZE_DATA);
-#endif
-        }
-
-        //-------------------------------------------------
-        //  nvram_write - called to write NVRAM to the
-        //  .nv file
-        //-------------------------------------------------
-        protected override void nvram_write(emu_file file)
-        {
-            throw new emu_unimplemented();
-#if false
-            file.write(&m_rom_data[0], SIZE_DATA);
-#endif
-        }
-    }
-
-
     // ======================> er2055_device
     public class er2055_device : device_t
                                  //public device_nvram_interface
@@ -68,6 +20,16 @@ namespace mame
         //DEFINE_DEVICE_TYPE(ER2055, er2055_device, "er2055", "ER2055 EAROM (64x8)")
         static device_t device_creator_er2055_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new er2055_device(mconfig, tag, owner, clock); }
         public static readonly device_type ER2055 = DEFINE_DEVICE_TYPE(device_creator_er2055_device, "er2055", "ER2055 EAROM (64x8)");
+
+
+        public class device_nvram_interface_er2055 : device_nvram_interface
+        {
+            public device_nvram_interface_er2055(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override void nvram_default() { ((er2055_device)device()).device_nvram_interface_nvram_default(); }
+            protected override void nvram_read(emu_file file) { ((er2055_device)device()).device_nvram_interface_nvram_read(file); }
+            protected override void nvram_write(emu_file file) { ((er2055_device)device()).device_nvram_interface_nvram_write(file); }
+        }
 
 
         const int SIZE_DATA = 0x40;
@@ -179,9 +141,47 @@ namespace mame
 
 
         // device_nvram_interface overrides
-        //virtual void nvram_default() override;
-        //virtual void nvram_read(emu_file &file) override;
-        //virtual void nvram_write(emu_file &file) override;
+        //-------------------------------------------------
+        //  nvram_default - called to initialize NVRAM to
+        //  its default state
+        //-------------------------------------------------
+        void device_nvram_interface_nvram_default()
+        {
+            //throw new emu_unimplemented();
+#if false
+            // default to all-0xff
+            std::fill_n(&m_rom_data[0], SIZE_DATA, 0xff);
+
+            // populate from a memory region if present
+            if (m_default_data.found())
+                std::copy_n(&m_default_data[0], SIZE_DATA, &m_rom_data[0]);
+#endif
+        }
+
+
+        //-------------------------------------------------
+        //  nvram_read - called to read NVRAM from the
+        //  .nv file
+        //-------------------------------------------------
+        void device_nvram_interface_nvram_read(emu_file file)
+        {
+            throw new emu_unimplemented();
+#if false
+            file.read(&m_rom_data[0], SIZE_DATA);
+#endif
+        }
+
+        //-------------------------------------------------
+        //  nvram_write - called to write NVRAM to the
+        //  .nv file
+        //-------------------------------------------------
+        void device_nvram_interface_nvram_write(emu_file file)
+        {
+            throw new emu_unimplemented();
+#if false
+            file.write(&m_rom_data[0], SIZE_DATA);
+#endif
+        }
 
 
         //-------------------------------------------------

@@ -16,7 +16,7 @@ namespace mame.netlist
         //#define RES(name, p_R)                                                         \
         //        NET_REGISTER_DEV(RES, name)                                            \
         //        NETDEV_PARAMI(name, R, p_R)
-        public static void RES(setup_t setup, string name, int p_R)
+        public static void RES(nlparse_t setup, string name, int p_R)
         {
             nl_setup_global.NET_REGISTER_DEV(setup, "RES", name);
             nl_setup_global.NETDEV_PARAMI(setup, name, "R", p_R);
@@ -25,7 +25,7 @@ namespace mame.netlist
         //#define POT(name, p_R)                                                         \
         //        NET_REGISTER_DEV(POT, name)                                            \
         //        NETDEV_PARAMI(name, R, p_R)
-        public static void POT(setup_t setup, string name, int p_R)
+        public static void POT(nlparse_t setup, string name, int p_R)
         {
             nl_setup_global.NET_REGISTER_DEV(setup, "POT", name);
             nl_setup_global.NETDEV_PARAMI(setup, name, "R", p_R);
@@ -40,7 +40,7 @@ namespace mame.netlist
         //#define CAP(name, p_C)                                                         \
         //        NET_REGISTER_DEV(CAP, name)                                            \
         //        NETDEV_PARAMI(name, C, p_C)
-        public static void CAP(setup_t setup, string name, double p_C)
+        public static void CAP(nlparse_t setup, string name, double p_C)
         {
             nl_setup_global.NET_REGISTER_DEV(setup, "CAP", name);
             nl_setup_global.NETDEV_PARAMI(setup, name, "C", p_C);

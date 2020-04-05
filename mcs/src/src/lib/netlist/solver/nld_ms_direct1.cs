@@ -18,7 +18,7 @@ namespace mame.netlist
             //typedef matrix_solver_direct_t<FT, 1> base_type;
 
 
-            public matrix_solver_direct1_t(netlist_base_t anetlist, string name, solver_parameters_t params_)
+            public matrix_solver_direct1_t(netlist_state_t anetlist, string name, solver_parameters_t params_)
                 : base(1, anetlist, name, params_, 1)
                 {}
 

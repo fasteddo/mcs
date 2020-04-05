@@ -368,29 +368,41 @@ namespace mame
         //-------------------------------------------------
         public virtual bool report_missing(bool found, string objname, bool required)
         {
-            if (required && m_tag == DUMMY_TAG)
+            if (required && (DUMMY_TAG == m_tag))
             {
                 osd_printf_error("Tag not defined for required {0}\n", objname);
                 return false;
             }
-
-            // just pass through in the found case
-            if (found)
+            else if (found)
+            {
+                // just pass through in the found case
                 return true;
-
-            // otherwise, report
-            string region_fulltag = m_base.get().subtag(m_tag);
-            if (required)
-                osd_printf_error("Required {0} '{1}' not found\n", objname, region_fulltag);
+            }
             else
-                osd_printf_verbose("Optional {0} '{1}' not found\n", objname, region_fulltag);
+            {
+                // otherwise, report
+                string region_fulltag = m_base.get().subtag(m_tag);
+                if (required)
+                    osd_printf_error("Required {0} '{1}' not found\n", objname, region_fulltag);
+                else if (DUMMY_TAG != m_tag)
+                    osd_printf_verbose("Optional {0} '{1}' not found\n", objname, region_fulltag);
 
-            return !required;
+                return !required;
+            }
         }
 
 
         public virtual void printf_warning(string format, params object [] args)
         {
+            //va_list argptr;
+            //char buffer[1024];
+            //
+            //// do the output
+            //va_start(argptr, format);
+            //vsnprintf(buffer, 1024, format, argptr);
+            //osd_printf_warning("%s", buffer);
+            //va_end(argptr);
+
             osd_printf_warning(format, args);
         }
     }
@@ -906,6 +918,50 @@ namespace mame
     class required_region_ptr<PointerType> : region_ptr_finder<PointerType/*, true*/>
     {
         public required_region_ptr(device_t basedevice, string tag, UInt32 length = 0) : base(true, basedevice, tag, length) { }
+    }
+
+
+    class required_region_ptr_uint8_t : required_region_ptr<uint8_t/*, true*/>
+    {
+        public required_region_ptr_uint8_t(device_t basedevice, string tag, UInt32 length = 0) : base(basedevice, tag, length) { }
+
+
+        //-------------------------------------------------
+        //  find_memregion - find memory region
+        //-------------------------------------------------
+        public override ListBytesPointer find_memregion(byte width, ref UInt32 length, bool required)
+        {
+            // look up the region and return nullptr if not found
+            memory_region region = base_().memregion(tag());
+            if (region == null)
+            {
+                length = 0;
+                return null;
+            }
+
+            // check the width and warn if not correct
+            if (region.bytewidth() != width)
+            {
+                if (required)
+                    osd_printf_warning("Region '{0}' found but is width {1}, not {2} as requested\n", tag(), region.bitwidth(), width*8);
+                length = 0;
+                return null;
+            }
+
+            // check the length and warn if other than specified
+            UInt32 length_found = region.bytes() / width;
+            if (length != 0 && length != length_found)
+            {
+                if (required)
+                    osd_printf_warning("Region '{0}' found but has {1} bytes, not {2} as requested\n", tag(), region.bytes(), (int)length*width);
+                length = 0;
+                return null;
+            }
+
+            // return results
+            length = length_found;
+            return new ListBytesPointer(region.base_());
+        }
     }
 
 

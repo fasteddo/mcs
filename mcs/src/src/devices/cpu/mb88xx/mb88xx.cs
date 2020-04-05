@@ -16,52 +16,48 @@ using uint64_t = System.UInt64;
 
 namespace mame
 {
-    public class device_execute_interface_mb88 : device_execute_interface
-    {
-        public device_execute_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_execute_interface overrides
-        public override uint32_t execute_min_cycles() { return 1; }
-        public override uint32_t execute_max_cycles() { return 3; }
-        public override uint32_t execute_input_lines() { return 1; }
-        public override void execute_run() { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_execute_interface_execute_run(); }
-        public override void execute_set_input(int inputnum, int state) { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_execute_interface_execute_set_input(state); }
-        public override uint64_t execute_clocks_to_cycles(uint64_t clocks) { return (clocks + 6 - 1) / 6; }
-        public override uint64_t execute_cycles_to_clocks(uint64_t cycles) { return (cycles * 6); }
-    }
-
-
-    public class device_memory_interface_mb88 : device_memory_interface
-    {
-        public device_memory_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_memory_interface overrides
-        public override space_config_vector memory_space_config() { mb88_cpu_device mb88 = (mb88_cpu_device)device(); return mb88.device_memory_interface_memory_space_config(); }
-    }
-
-
-    public class device_state_interface_mb88 : device_state_interface
-    {
-        public device_state_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_state_interface overrides
-        public override void state_import(device_state_entry entry) { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_state_interface_state_import(entry); }
-        public override void state_export(device_state_entry entry) { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_state_interface_state_export(entry); }
-        public override void state_string_export(device_state_entry entry, out string str) { mb88_cpu_device mb88 = (mb88_cpu_device)device(); mb88.device_state_interface_state_string_export(entry, out str); }
-    }
-
-
-    public class device_disasm_interface_mb88 : device_disasm_interface
-    {
-        public device_disasm_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
-    }
-
-
     public class mb88_cpu_device : cpu_device
     {
+        public class device_execute_interface_mb88 : device_execute_interface
+        {
+            public device_execute_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override uint32_t execute_min_cycles() { return 1; }
+            protected override uint32_t execute_max_cycles() { return 3; }
+            protected override uint32_t execute_input_lines() { return 1; }
+            protected override void execute_run() { ((mb88_cpu_device)device()).device_execute_interface_execute_run(); }
+            protected override void execute_set_input(int inputnum, int state) { ((mb88_cpu_device)device()).device_execute_interface_execute_set_input(state); }
+            protected override uint64_t execute_clocks_to_cycles(uint64_t clocks) { return (clocks + 6 - 1) / 6; }
+            protected override uint64_t execute_cycles_to_clocks(uint64_t cycles) { return cycles * 6; }
+        }
+
+
+        public class device_memory_interface_mb88 : device_memory_interface
+        {
+            public device_memory_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override space_config_vector memory_space_config() { return ((mb88_cpu_device)device()).device_memory_interface_memory_space_config(); }
+        }
+
+
+        public class device_state_interface_mb88 : device_state_interface
+        {
+            public device_state_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override void state_import(device_state_entry entry) { ((mb88_cpu_device)device()).device_state_interface_state_import(entry); }
+            protected override void state_export(device_state_entry entry) { ((mb88_cpu_device)device()).device_state_interface_state_export(entry); }
+            protected override void state_string_export(device_state_entry entry, out string str) { ((mb88_cpu_device)device()).device_state_interface_state_string_export(entry, out str); }
+        }
+
+
+        public class device_disasm_interface_mb88 : device_disasm_interface
+        {
+            public device_disasm_interface_mb88(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
+        }
+
+
         //enum
         //{
         const int MB88_PC  = 1;
@@ -389,7 +385,7 @@ namespace mame
         //virtual UINT32 execute_max_cycles() const { return 3; }
         //virtual UINT32 execute_input_lines() const { return 1; }
 
-        public void device_execute_interface_execute_run()
+        void device_execute_interface_execute_run()
         {
             while (m_icountRef.i > 0)
             {
@@ -911,7 +907,7 @@ namespace mame
             }
         }
 
-        public void device_execute_interface_execute_set_input(int state)
+        void device_execute_interface_execute_set_input(int state)
         {
             /* on falling edge trigger interrupt */
             if ( (m_pio & 0x04) != 0 && m_nf != 0 && state == CLEAR_LINE )
@@ -927,7 +923,7 @@ namespace mame
 
 
         // device_memory_interface overrides
-        public space_config_vector device_memory_interface_memory_space_config()
+        space_config_vector device_memory_interface_memory_space_config()
         {
             return new space_config_vector()
             {
@@ -938,7 +934,7 @@ namespace mame
 
 
         // device_state_interface overrides
-        public void device_state_interface_state_import(device_state_entry entry)
+        void device_state_interface_state_import(device_state_entry entry)
         {
             switch (entry.index())
             {
@@ -959,7 +955,7 @@ namespace mame
             }
         }
 
-        public void device_state_interface_state_export(device_state_entry entry)
+        void device_state_interface_state_export(device_state_entry entry)
         {
             switch (entry.index())
             {
@@ -980,7 +976,7 @@ namespace mame
             }
         }
 
-        public void device_state_interface_state_string_export(device_state_entry entry, out string str)
+        void device_state_interface_state_string_export(device_state_entry entry, out string str)
         {
             str = "";
             switch (entry.index())

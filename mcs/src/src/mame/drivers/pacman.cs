@@ -38,7 +38,7 @@ namespace mame
          *************************************/
 
         //WRITE_LINE_MEMBER(pacman_state::vblank_irq)
-        public void vblank_irq(int state)
+        void vblank_irq(int state)
         {
             if (state != 0 && m_irq_mask != 0)
                 m_maincpu.target.set_input_line(0, HOLD_LINE);
@@ -50,13 +50,13 @@ namespace mame
         //DECLARE_WRITE_LINE_MEMBER(s2650_interrupt);
 
         //WRITE_LINE_MEMBER(pacman_state::irq_mask_w)
-        public void irq_mask_w(int state)
+        void irq_mask_w(int state)
         {
             m_irq_mask = (byte)state;
         }
 
         //WRITE8_MEMBER(pacman_state::pacman_interrupt_vector_w)
-        public void pacman_interrupt_vector_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void pacman_interrupt_vector_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_maincpu.target.set_input_line_vector(0, data);
             m_maincpu.target.set_input_line(0, CLEAR_LINE);
@@ -70,14 +70,14 @@ namespace mame
         *************************************/
 
         //WRITE_LINE_MEMBER(pacman_state::coin_counter_w)
-        public void coin_counter_w(int state)
+        void coin_counter_w(int state)
         {
             machine().bookkeeping().coin_counter_w(0, state);
         }
 
 
         //WRITE_LINE_MEMBER(pacman_state::coin_lockout_global_w)
-        public void coin_lockout_global_w(int state)
+        void coin_lockout_global_w(int state)
         {
             machine().bookkeeping().coin_lockout_global_w(state == 0 ? 1 : 0);
         }
@@ -88,31 +88,31 @@ namespace mame
 
         // any access to these ROM addresses disables the decoder, and all you see is the original Pac-Man code
         //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x0038){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x0038]; }
-        public u8 mspacman_disable_decode_r_0x0038(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset + 0x0038]; }
+        u8 mspacman_disable_decode_r_0x0038(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset + 0x0038]; }
         //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x03b0){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x03b0]; }
-        public u8 mspacman_disable_decode_r_0x03b0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x03b0]; }
+        u8 mspacman_disable_decode_r_0x03b0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x03b0]; }
         //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x1600){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x1600]; }
-        public u8 mspacman_disable_decode_r_0x1600(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x1600]; }
+        u8 mspacman_disable_decode_r_0x1600(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x1600]; }
         //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x2120){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x2120]; }
-        public u8 mspacman_disable_decode_r_0x2120(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x2120]; }
+        u8 mspacman_disable_decode_r_0x2120(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x2120]; }
         //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x3ff0){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x3ff0]; }
-        public u8 mspacman_disable_decode_r_0x3ff0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x3ff0]; }
+        u8 mspacman_disable_decode_r_0x3ff0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x3ff0]; }
         //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x8000){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x8000]; }
-        public u8 mspacman_disable_decode_r_0x8000(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x8000]; }
+        u8 mspacman_disable_decode_r_0x8000(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x8000]; }
         //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x97f0){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x97f0]; }
-        public u8 mspacman_disable_decode_r_0x97f0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x97f0]; }
+        u8 mspacman_disable_decode_r_0x97f0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x97f0]; }
         //WRITE8_MEMBER(pacman_state::mspacman_disable_decode_w){ mspacman_disable_decode_latch(machine()); }
-        public void mspacman_disable_decode_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff){ mspacman_disable_decode_latch(machine()); }
+        void mspacman_disable_decode_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); }
 
         // any access to these ROM addresses enables the decoder, and you'll see the Ms. Pac-Man code
         //READ8_MEMBER(pacman_state::mspacman_enable_decode_r_0x3ff8){ mspacman_enable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x3ff8+0x10000]; }
-        public u8 mspacman_enable_decode_r_0x3ff8(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_enable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x3ff8+0x10000]; }
+        u8 mspacman_enable_decode_r_0x3ff8(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_enable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x3ff8+0x10000]; }
         //WRITE8_MEMBER(pacman_state::mspacman_enable_decode_w){ mspacman_enable_decode_latch(machine()); }
-        public void mspacman_enable_decode_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff){ mspacman_enable_decode_latch(machine()); }
+        void mspacman_enable_decode_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { mspacman_enable_decode_latch(machine()); }
 
 
         //READ8_MEMBER(pacman_state::pacman_read_nop)
-        public u8 pacman_read_nop(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 pacman_read_nop(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             // Return value of reading the bus with no devices enabled.
             // This seems to be common but more tests are needed. Ms Pacman reads bytes in sequence
@@ -132,21 +132,19 @@ namespace mame
 
         void pacman_map(address_map map, device_t device)
         {
-            pacman_state pacman_state = (pacman_state)device;
-
             //A lot of games don't have an a15 at the cpu.  Generally only games with a cpu daughter board can access the full 32k of romspace.
             map.op(0x0000, 0x3fff).mirror(0x8000).rom();
-            map.op(0x4000, 0x43ff).mirror(0xa000).ram().w(pacman_state.pacman_videoram_w).share("videoram");
-            map.op(0x4400, 0x47ff).mirror(0xa000).ram().w(pacman_state.pacman_colorram_w).share("colorram");
-            map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_state.pacman_read_nop).nopw();
+            map.op(0x4000, 0x43ff).mirror(0xa000).ram().w(pacman_videoram_w).share("videoram");
+            map.op(0x4400, 0x47ff).mirror(0xa000).ram().w(pacman_colorram_w).share("colorram");
+            map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_read_nop).nopw();
             map.op(0x4c00, 0x4fef).mirror(0xa000).ram();
             map.op(0x4ff0, 0x4fff).mirror(0xa000).ram().share("spriteram");
-            map.op(0x5000, 0x5007).mirror(0xaf38).w(pacman_state.mainlatch.target, pacman_state.ls259_device_write_d0_mainlatch);
-            map.op(0x5040, 0x505f).mirror(0xaf00).w(pacman_state.namco_sound.target, pacman_state.namco_device_pacman_sound_w);
+            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (space, offset, data, mem_mask) => { m_mainlatch.target.write_d0(space, offset, data, mem_mask); });  //FUNC(addressable_latch_device::write_d0));
+            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (space, offset, data, mem_mask) => { m_namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
             map.op(0x5080, 0x5080).mirror(0xaf3f).nopw();
-            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(pacman_state.watchdog.target, pacman_state.watchdog_timer_device_reset_w);
+            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (space, offset, data, mem_mask) => { m_watchdog.target.reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x5000, 0x5000).mirror(0xaf3f).portr("IN0");
             map.op(0x5040, 0x5040).mirror(0xaf3f).portr("IN1");
             map.op(0x5080, 0x5080).mirror(0xaf3f).portr("DSW1");
@@ -156,37 +154,35 @@ namespace mame
 
         void mspacman_map(address_map map, device_t device)
         {
-            pacman_state pacman_state = (pacman_state)device;
-
             /* start with 0000-3fff and 8000-bfff mapped to the ROMs */
             map.op(0x0000, 0xffff).bankr("bank1");
             map.op(0x4000, 0x7fff).mirror(0x8000).unmaprw();
 
-            map.op(0x4000, 0x43ff).mirror(0xa000).ram().w(pacman_state.pacman_videoram_w).share("videoram");
-            map.op(0x4400, 0x47ff).mirror(0xa000).ram().w(pacman_state.pacman_colorram_w).share("colorram");
-            map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_state.pacman_read_nop).nopw();
+            map.op(0x4000, 0x43ff).mirror(0xa000).ram().w(pacman_videoram_w).share("videoram");
+            map.op(0x4400, 0x47ff).mirror(0xa000).ram().w(pacman_colorram_w).share("colorram");
+            map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_read_nop).nopw();
             map.op(0x4c00, 0x4fef).mirror(0xa000).ram();
             map.op(0x4ff0, 0x4fff).mirror(0xa000).ram().share("spriteram");
-            map.op(0x5000, 0x5007).mirror(0xaf38).w(pacman_state.mainlatch.target, pacman_state.ls259_device_write_d0_mainlatch);
-            map.op(0x5040, 0x505f).mirror(0xaf00).w(pacman_state.namco_sound.target, pacman_state.namco_device_pacman_sound_w);
+            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (space, offset, data, mem_mask) => { m_mainlatch.target.write_d0(space, offset, data, mem_mask); });  //FUNC(ls259_device::write_d0));
+            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (space, offset, data, mem_mask) => { m_namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
             map.op(0x5080, 0x5080).mirror(0xaf3f).nopw();
-            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(pacman_state.watchdog.target, pacman_state.watchdog_timer_device_reset_w);
+            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (space, offset, data, mem_mask) => { m_watchdog.target.reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x5000, 0x5000).mirror(0xaf3f).portr("IN0");
             map.op(0x5040, 0x5040).mirror(0xaf3f).portr("IN1");
             map.op(0x5080, 0x5080).mirror(0xaf3f).portr("DSW1");
             map.op(0x50c0, 0x50c0).mirror(0xaf3f).portr("DSW2");
 
             /* overlay decode enable/disable on top */
-            map.op(0x0038, 0x003f).rw(pacman_state.mspacman_disable_decode_r_0x0038, pacman_state.mspacman_disable_decode_w);
-            map.op(0x03b0, 0x03b7).rw(pacman_state.mspacman_disable_decode_r_0x03b0, pacman_state.mspacman_disable_decode_w);
-            map.op(0x1600, 0x1607).rw(pacman_state.mspacman_disable_decode_r_0x1600, pacman_state.mspacman_disable_decode_w);
-            map.op(0x2120, 0x2127).rw(pacman_state.mspacman_disable_decode_r_0x2120, pacman_state.mspacman_disable_decode_w);
-            map.op(0x3ff0, 0x3ff7).rw(pacman_state.mspacman_disable_decode_r_0x3ff0, pacman_state.mspacman_disable_decode_w);
-            map.op(0x3ff8, 0x3fff).rw(pacman_state.mspacman_enable_decode_r_0x3ff8, pacman_state.mspacman_enable_decode_w);
-            map.op(0x8000, 0x8007).rw(pacman_state.mspacman_disable_decode_r_0x8000, pacman_state.mspacman_disable_decode_w);
-            map.op(0x97f0, 0x97f7).rw(pacman_state.mspacman_disable_decode_r_0x97f0, pacman_state.mspacman_disable_decode_w);
+            map.op(0x0038, 0x003f).rw(mspacman_disable_decode_r_0x0038, mspacman_disable_decode_w);
+            map.op(0x03b0, 0x03b7).rw(mspacman_disable_decode_r_0x03b0, mspacman_disable_decode_w);
+            map.op(0x1600, 0x1607).rw(mspacman_disable_decode_r_0x1600, mspacman_disable_decode_w);
+            map.op(0x2120, 0x2127).rw(mspacman_disable_decode_r_0x2120, mspacman_disable_decode_w);
+            map.op(0x3ff0, 0x3ff7).rw(mspacman_disable_decode_r_0x3ff0, mspacman_disable_decode_w);
+            map.op(0x3ff8, 0x3fff).rw(mspacman_enable_decode_r_0x3ff8, mspacman_enable_decode_w);
+            map.op(0x8000, 0x8007).rw(mspacman_disable_decode_r_0x8000, mspacman_disable_decode_w);
+            map.op(0x97f0, 0x97f7).rw(mspacman_disable_decode_r_0x97f0, mspacman_disable_decode_w);
         }
 
 
@@ -198,10 +194,8 @@ namespace mame
 
         void writeport(address_map map, device_t device)
         {
-            pacman_state state = (pacman_state)device;
-
             map.global_mask(0xff);
-            map.op(0x00, 0x00).w(state.pacman_interrupt_vector_w);    /* Pac-Man only */
+            map.op(0x00, 0x00).w(pacman_interrupt_vector_w);    /* Pac-Man only */
         }
     }
 
@@ -386,17 +380,17 @@ namespace mame
             m_globals.helper_config = config;
 
             /* basic machine hardware */
-            Z80(config, maincpu, MASTER_CLOCK/6);
-            maincpu.target.memory().set_addrmap(AS_PROGRAM, pacman_map);
-            maincpu.target.memory().set_addrmap(AS_IO, writeport);
+            Z80(config, m_maincpu, MASTER_CLOCK/6);
+            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, pacman_map);
+            m_maincpu.target.memory().set_addrmap(AS_IO, writeport);
 
             if (latch)
             {
-                LS259(config, mainlatch); // 74LS259 at 8K or 4099 at 7K
-                mainlatch.target.q_out_cb(0).set(irq_mask_w).reg();
-                mainlatch.target.q_out_cb(1).set("namco", namco_audio_device_sound_enable_w).reg();
-                mainlatch.target.q_out_cb(3).set(flipscreen_w).reg();
-                mainlatch.target.q_out_cb(7).set(coin_counter_w).reg();
+                LS259(config, m_mainlatch); // 74LS259 at 8K or 4099 at 7K
+                m_mainlatch.target.q_out_cb(0).set(irq_mask_w).reg();
+                m_mainlatch.target.q_out_cb(1).set("namco", (state) => { ((namco_device)subdevice("namco")).sound_enable_w(state); }).reg();  //FUNC(namco_device::sound_enable_w));
+                m_mainlatch.target.q_out_cb(3).set(flipscreen_w).reg();
+                m_mainlatch.target.q_out_cb(7).set(coin_counter_w).reg();
 
                 // NOTE(dwidel): The Pacman code uses $5004 and $5005 for LEDs and $5007 for coin lockout.  This hardware does not
                 // exist on any Pacman or Puckman board I have seen.
@@ -405,8 +399,8 @@ namespace mame
                 //m_mainlatch->q_out_cb<6>().set(FUNC(pacman_state::coin_lockout_global_w));
             }
 
-            WATCHDOG_TIMER(config, watchdog);
-            watchdog.target.set_vblank_count("screen", 16);
+            WATCHDOG_TIMER(config, m_watchdog);
+            m_watchdog.target.set_vblank_count("screen", 16);
 
             /* video hardware */
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_pacman);
@@ -424,28 +418,20 @@ namespace mame
             /* sound hardware */
             SPEAKER(config, "mono").front_center();
 
-            NAMCO(config, namco_sound, MASTER_CLOCK/6/32);
-            namco_sound.target.set_voices(3);
-            namco_sound.target.disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+            NAMCO(config, m_namco_sound, MASTER_CLOCK/6/32);
+            m_namco_sound.target.set_voices(3);
+            m_namco_sound.target.disound.add_route(ALL_OUTPUTS, "mono", 1.0);
         }
 
 
-        //MACHINE_CONFIG_START(pacman_state::mspacman)
         public void mspacman(machine_config config)
         {
             pacman(config);
 
-            MACHINE_CONFIG_START(config, this);
-
-            pacman_state pacman_state = (pacman_state)m_globals.helper_owner;
-
             /* basic machine hardware */
-            MCFG_DEVICE_MODIFY("maincpu");
-            MCFG_DEVICE_PROGRAM_MAP(mspacman_map);
+            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, mspacman_map);
 
-            pacman_state.mainlatch.target.q_out_cb(6).set(pacman_state.coin_lockout_global_w).reg();
-
-            MACHINE_CONFIG_END();
+            m_mainlatch.target.q_out_cb(6).set(coin_lockout_global_w).reg();
         }
     }
 
@@ -485,7 +471,7 @@ namespace mame
             ROM_LOAD( "pm1-3.1m",     0x0000, 0x0100, CRC("a9cc86bf") + SHA1("bbcec0570aeceb582ff8238a4bc8546a23430081") ), // 82s126
             ROM_LOAD( "pm1-2.3m",     0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ), // 82s126 - timing - not used
 
-            ROM_END(),
+            ROM_END,
         };
 
 
@@ -510,7 +496,7 @@ namespace mame
             ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC("a9cc86bf") + SHA1("bbcec0570aeceb582ff8238a4bc8546a23430081") ),
             ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    /* timing - not used */
 
-            ROM_END(),
+            ROM_END,
         };
 
 
@@ -538,7 +524,7 @@ namespace mame
             ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC("a9cc86bf") + SHA1("bbcec0570aeceb582ff8238a4bc8546a23430081") ),
             ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    /* timing - not used */
 
-            ROM_END(),
+            ROM_END,
         };
 
 
@@ -563,7 +549,7 @@ namespace mame
             ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC("a9cc86bf") + SHA1("bbcec0570aeceb582ff8238a4bc8546a23430081") ),
             ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    /* timing - not used */
 
-            ROM_END(),
+            ROM_END,
         };
     }
 

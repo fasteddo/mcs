@@ -11,22 +11,6 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    class device_sound_interface_digitalker : device_sound_interface
-    {
-        public device_sound_interface_digitalker(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        // device_sound_interface overrides
-        //-------------------------------------------------
-        //  sound_stream_update - handle a stream update
-        //-------------------------------------------------
-        public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
-        {
-            throw new emu_unimplemented();
-        }
-    }
-
-
     // ======================> digitalker_device
     class digitalker_device : device_t
                               //device_sound_interface
@@ -34,6 +18,14 @@ namespace mame
         //DEFINE_DEVICE_TYPE(DIGITALKER, digitalker_device, "digitalker", "MM54104 Digitalker")
         static device_t device_creator_digitalker_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new digitalker_device(mconfig, tag, owner, clock); }
         public static readonly device_type DIGITALKER = DEFINE_DEVICE_TYPE(device_creator_digitalker_device, "digitalker", "MM54104 Digitalker");
+
+
+        class device_sound_interface_digitalker : device_sound_interface
+        {
+            public device_sound_interface_digitalker(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { throw new emu_unimplemented(); }
+        }
 
 
         device_sound_interface_digitalker m_disound;

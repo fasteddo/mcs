@@ -16,7 +16,7 @@ namespace mame.netlist
         {
             //typedef FT float_type;
 
-            public matrix_solver_direct2_t(netlist_base_t anetlist, string name, solver_parameters_t params_)
+            public matrix_solver_direct2_t(netlist_state_t anetlist, string name, solver_parameters_t params_)
                 : base(2, anetlist, name, params_, 2)
             { }
 

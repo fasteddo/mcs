@@ -505,14 +505,15 @@ namespace mame
         /* legacy interface */
 
         //namespace emu { namespace detail {
-        //
+
         //template <std::size_t I, typename T, std::size_t N, typename U>
         //constexpr auto combine_weights(T const (&tab)[N], U w) { return tab[I] * w; }
-        //
+
         //template <std::size_t I, typename T, std::size_t N, typename U, typename... V>
         //constexpr auto combine_weights(T const (&tab)[N], U w0, V... w) { return (tab[I] * w0) + combine_weights<I + 1>(tab, w...); }
-        //
+
         //} } // namespace emu::detail
+
 
         public static double compute_resistor_weights(
             int minval, int maxval, double scaler,
@@ -705,21 +706,20 @@ namespace mame
         }
 
 
-        //template <typename T, std::size_t N, typename... U>
-        //constexpr int combine_weights(T const (&tab)[N], U... w)
+        //template <typename T = int, typename U, std::size_t N, typename... V>
+        //constexpr T combine_weights(U const (&tab)[N], V... w)
         //{
-        //    return int(emu::detail::combine_weights<0U>(tab, w...) + 0.5);
+        //    return T(emu::detail::combine_weights<0U>(tab, w...) + 0.5);
         //}
 
-
-        public static int combine_8_weights(double [] tab, int w0, int w1, int w2, int w3, int w4, int w5, int w6, int w7)  { return (int)(((tab)[0]*(w0) + (tab)[1]*(w1) + (tab)[2]*(w2) + (tab)[3]*(w3) + (tab)[4]*(w4) + (tab)[5]*(w5) + (tab)[6]*(w6) + (tab)[7]*(w7)) + 0.5); }
-        public static int combine_7_weights(double [] tab, int w0, int w1, int w2, int w3, int w4, int w5, int w6)          { return (int)(((tab)[0]*(w0) + (tab)[1]*(w1) + (tab)[2]*(w2) + (tab)[3]*(w3) + (tab)[4]*(w4) + (tab)[5]*(w5) + (tab)[6]*(w6)) + 0.5); }
-        public static int combine_6_weights(double [] tab, int w0, int w1, int w2, int w3, int w4, int w5)                  { return (int)(((tab)[0]*(w0) + (tab)[1]*(w1) + (tab)[2]*(w2) + (tab)[3]*(w3) + (tab)[4]*(w4) + (tab)[5]*(w5)) + 0.5); }
-        public static int combine_5_weights(double [] tab, int w0, int w1, int w2, int w3, int w4)                          { return (int)(((tab)[0]*(w0) + (tab)[1]*(w1) + (tab)[2]*(w2) + (tab)[3]*(w3) + (tab)[4]*(w4)) + 0.5); }
-        public static int combine_4_weights(double [] tab, int w0, int w1, int w2, int w3)                                  { return (int)(((tab)[0]*(w0) + (tab)[1]*(w1) + (tab)[2]*(w2) + (tab)[3]*(w3)) + 0.5); }
-        public static int combine_3_weights(double [] tab, int w0, int w1, int w2)                                          { return (int)(((tab)[0]*(w0) + (tab)[1]*(w1) + (tab)[2]*(w2)) + 0.5); }
-        public static int combine_2_weights(double [] tab, int w0, int w1)                                                  { return (int)(((tab)[0]*(w0) + (tab)[1]*(w1)) + 0.5); }
-        public static int combine_1_weights(double [] tab, int w0)                                                          { return (int)(((tab)[0]*(w0) + 0.5)); }
+        public static int combine_weights(double [] tab, int w0, int w1, int w2, int w3, int w4, int w5, int w6, int w7)  { return (int)((tab[0] * w0 + tab[1] * w1 + tab[2] * w2 + tab[3] * w3 + tab[4] * w4 + tab[5] * w5 + tab[6] * w6 + tab[7] * w7) + 0.5); }
+        public static int combine_weights(double [] tab, int w0, int w1, int w2, int w3, int w4, int w5, int w6)          { return (int)((tab[0] * w0 + tab[1] * w1 + tab[2] * w2 + tab[3] * w3 + tab[4] * w4 + tab[5] * w5 + tab[6] * w6) + 0.5); }
+        public static int combine_weights(double [] tab, int w0, int w1, int w2, int w3, int w4, int w5)                  { return (int)((tab[0] * w0 + tab[1] * w1 + tab[2] * w2 + tab[3] * w3 + tab[4] * w4 + tab[5] * w5) + 0.5); }
+        public static int combine_weights(double [] tab, int w0, int w1, int w2, int w3, int w4)                          { return (int)((tab[0] * w0 + tab[1] * w1 + tab[2] * w2 + tab[3] * w3 + tab[4] * w4) + 0.5); }
+        public static int combine_weights(double [] tab, int w0, int w1, int w2, int w3)                                  { return (int)((tab[0] * w0 + tab[1] * w1 + tab[2] * w2 + tab[3] * w3) + 0.5); }
+        public static int combine_weights(double [] tab, int w0, int w1, int w2)                                          { return (int)((tab[0] * w0 + tab[1] * w1 + tab[2] * w2) + 0.5); }
+        public static int combine_weights(double [] tab, int w0, int w1)                                                  { return (int)((tab[0] * w0 + tab[1] * w1) + 0.5); }
+        public static int combine_weights(double [] tab, int w0)                                                          { return (int)((tab[0] * w0 + 0.5)); }
 
 
         /* for the open collector outputs PROMs */

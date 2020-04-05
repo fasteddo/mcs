@@ -80,6 +80,29 @@ namespace mame.util
         //hash_collection &operator=(const hash_collection &src);
         //bool operator==(const hash_collection &rhs) const;
         //bool operator!=(const hash_collection &rhs) const { return !(*this == rhs); }
+        public static bool operator==(hash_collection left, hash_collection right)
+        {
+            // match CRCs
+            int matches = 0;
+            if (left.m_has_crc32 && right.m_has_crc32)
+            {
+                if (left.m_crc32 != right.m_crc32)
+                    return false;
+                matches++;
+            }
+
+            // match SHA1s
+            if (left.m_has_sha1 && right.m_has_sha1)
+            {
+                if (left.m_sha1 != right.m_sha1)
+                    return false;
+                matches++;
+            }
+
+            // if all shared hashes match, return true
+            return matches > 0;
+        }
+        public static bool operator!=(hash_collection left, hash_collection right) { return !(left == right); }
 
 
         // getters
@@ -162,23 +185,23 @@ namespace mame.util
         //  from_internal_string - convert an internal
         //  compact string to set of hashes and flags
         //-------------------------------------------------
-        public bool from_internal_string(string str)
+        public bool from_internal_string(string string_)
         {
-            assert(str != null);
+            assert(string_ != null);
 
             // start fresh
             reset();
 
             // determine the end of the string
-            int stringendIndex = str.Length;
-            int ptrIndex = 0;
+            int stringendIdx = string_.Length;  //const char *stringend = string + strlen(string);
+            int ptrIdx = 0;  //const char *ptr = string;
 
             // loop until we hit it
             bool errors = false;
             int skip_digits = 0;
-            while (ptrIndex < stringendIndex)
+            while (ptrIdx < stringendIdx)  //while (ptr < stringend)
             {
-                char c = str[ptrIndex++];
+                char c = string_[ptrIdx++];  //char c = *ptr++;
                 char uc = char.ToUpper(c);
 
                 // non-hex alpha values specify a hash type
@@ -189,14 +212,14 @@ namespace mame.util
                     if (uc == HASH_CRC)
                     {
                         m_has_crc32 = true;
-                        errors = !m_crc32.from_string(str.Remove(0, ptrIndex), stringendIndex - ptrIndex);  // ptr, stringend - ptr);
-                        skip_digits = 2 * 4/*sizeof(crc32_t)*/;
+                        errors = !m_crc32.from_string(string_.Remove(0, ptrIdx), stringendIdx - ptrIdx);  //errors = !m_crc32.from_string(ptr, stringend - ptr);
+                        skip_digits = 2 * 4;  //skip_digits = 2 * sizeof(crc32_t);
                     }
                     else if (uc == HASH_SHA1)
                     {
                         m_has_sha1 = true;
-                        errors = !m_sha1.from_string(str.Remove(0, ptrIndex), stringendIndex - ptrIndex);
-                        skip_digits = 2 * 4/*sizeof(sha1_t)*/;
+                        errors = !m_sha1.from_string(string_.Remove(0, ptrIdx), stringendIdx - ptrIdx);  //errors = !m_sha1.from_string(ptr, stringend - ptr);
+                        skip_digits = 2 * 4;  //skip_digits = 2 * sizeof(sha1_t);
                     }
                     else
                     {

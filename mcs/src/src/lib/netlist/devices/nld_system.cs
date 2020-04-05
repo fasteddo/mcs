@@ -20,7 +20,7 @@ namespace mame.netlist
             //#define TTL_INPUT(name, v)                                                      \
             //        NET_REGISTER_DEV(TTL_INPUT, name)                                       \
             //        PARAM(name.IN, v)
-            public static void TTL_INPUT(setup_t setup, string name, int v)
+            public static void TTL_INPUT(nlparse_t setup, string name, int v)
             {
                 nl_setup_global.NET_REGISTER_DEV(setup, "TTL_INPUT", name);
                 nl_setup_global.PARAM(setup, name + ".IN", v);
@@ -34,7 +34,7 @@ namespace mame.netlist
             //#define ANALOG_INPUT(name, v)                                                   \
             //        NET_REGISTER_DEV(ANALOG_INPUT, name)                                    \
             //        PARAM(name.IN, v)
-            public static void ANALOG_INPUT(setup_t setup, string name, int v)
+            public static void ANALOG_INPUT(nlparse_t setup, string name, int v)
             {
                 nl_setup_global.NET_REGISTER_DEV(setup, "ANALOG_INPUT", name);
                 nl_setup_global.PARAM(setup, name + ".IN", v);
@@ -58,7 +58,7 @@ namespace mame.netlist
 
             //#define DUMMY_INPUT(name)                                                       \
             //        NET_REGISTER_DEV(DUMMY_INPUT, name)
-            public static void DUMMY_INPUT(setup_t setup, string name) { nl_setup_global.NET_REGISTER_DEV(setup, "DUMMY_INPUT", name); }
+            public static void DUMMY_INPUT(nlparse_t setup, string name) { nl_setup_global.NET_REGISTER_DEV(setup, "DUMMY_INPUT", name); }
 
             //FIXME: Usage discouraged, use OPTIMIZE_FRONTIER instead
             //#define FRONTIER_DEV(name, cIN, cG, cOUT)                                       \
@@ -83,70 +83,19 @@ namespace mame.netlist
             //        PARAM(name.FUNC, p_F)
 
 
-            //NETLIB_DEVICE_IMPL(dummy_input)
-            //NETLIB_DEVICE_IMPL(frontier)
-            //NETLIB_DEVICE_IMPL(function)
-            //NETLIB_DEVICE_IMPL(logic_input)
-            //NETLIB_DEVICE_IMPL(analog_input)
-            //NETLIB_DEVICE_IMPL(clock)
-            //NETLIB_DEVICE_IMPL(extclock)
-            //NETLIB_DEVICE_IMPL(res_sw)
-            //NETLIB_DEVICE_IMPL(mainclock)
-            //NETLIB_DEVICE_IMPL(gnd)
-            //NETLIB_DEVICE_IMPL(netlistparams)
-        }
+            //NETLIB_DEVICE_IMPL(dummy_input, "DUMMY_INPUT",            "")
+            //NETLIB_DEVICE_IMPL(frontier, "FRONTIER_DEV",           "+I,+G,+Q")
+            //NETLIB_DEVICE_IMPL(function, "AFUNC",                  "N,FUNC")
+            //NETLIB_DEVICE_IMPL(analog_input,        "ANALOG_INPUT",           "IN")
+            //NETLIB_DEVICE_IMPL(clock,               "CLOCK",                  "FREQ")
+            //NETLIB_DEVICE_IMPL(extclock,            "EXTCLOCK",               "FREQ,PATTERN")
+            //NETLIB_DEVICE_IMPL(res_sw,              "RES_SWITCH",             "+IN,+P1,+P2")
+            //NETLIB_DEVICE_IMPL(mainclock,           "MAINCLOCK",              "FREQ")
+            //NETLIB_DEVICE_IMPL(gnd,                 "GND",                    "")
+            //NETLIB_DEVICE_IMPL(netlistparams,       "PARAMETER",              "")
 
-
-        partial class nld_logic_input : device_t
-        {
-            //NETLIB_UPDATE_AFTER_PARAM_CHANGE()
-            public override bool needs_update_after_param_change()
-            {
-                throw new emu_unimplemented();
-            }
-
-            //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(logic_input)
-            protected override void update()
-            {
-                m_Q.push((m_IN.op() ? 1U : 0U) & 1, netlist_time.from_nsec(1));
-            }
-
-            //NETLIB_RESETI();
-            //NETLIB_RESET(logic_input)
-            protected override void reset()
-            {
-                m_Q.initial(0);
-            }
-
-            //NETLIB_UPDATE_PARAMI();
-            //NETLIB_UPDATE_PARAM(logic_input)
-            public override void update_param() { }
-        }
-
-
-        partial class nld_analog_input : device_t
-        {
-            //NETLIB_UPDATE_AFTER_PARAM_CHANGE()
-            public override bool needs_update_after_param_change() { return true; }
-
-            //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(analog_input)
-            protected override void update()
-            {
-                m_Q.push(m_IN.op());
-            }
-
-            //NETLIB_RESETI();
-            //NETLIB_RESET(analog_input)
-            protected override void reset()
-            {
-                m_Q.initial(0.0);
-            }
-
-            //NETLIB_UPDATE_PARAMI();
-            //NETLIB_UPDATE_PARAM(analog_input)
-            public override void update_param() { }
+            //NETLIB_DEVICE_IMPL(logic_input, "LOGIC_INPUT", "IN,FAMILY")
+            //NETLIB_DEVICE_IMPL_ALIAS(logic_input_ttl, logic_input, "TTL_INPUT", "IN")
         }
     }
 }

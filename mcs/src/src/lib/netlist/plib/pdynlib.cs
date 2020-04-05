@@ -10,7 +10,7 @@ namespace mame.plib
     // ----------------------------------------------------------------------------------------
     // pdynlib: dynamic loading of libraries  ...
     // ----------------------------------------------------------------------------------------
-    public class dynlib
+    public class dynlib  // : public nocopyassignmove
     {
         //bool m_isLoaded;
         //void *m_lib;
@@ -36,6 +36,8 @@ namespace mame.plib
 #if false
 #endif
         }
+
+        //COPYASSIGNMOVE(dynlib, delete)
 
 
         public bool isLoaded()

@@ -25,12 +25,13 @@ namespace mame.netlist
             //}
             public static core_device_t bselect(bool b, object d1, core_device_t d2)
             {
-                core_device_t h = (d1 is core_device_t) ? (core_device_t)d1 : null;
+                var h = (d1 is core_device_t) ? (core_device_t)d1 : null;
                 return b ? h : d2;
             }
             //template<>
-            public static core_device_t bselect(bool b, netlist_base_t d1, core_device_t d2)
+            public static core_device_t bselect(bool b, netlist_state_t d1, core_device_t d2)
             {
+                //plib::unused_var(d1);
                 if (b)
                     throw new nl_exception("bselect with netlist and b==true");
                 return d2;
@@ -54,12 +55,8 @@ namespace mame.netlist
             public nld_twoterm(object owner, string name, bool terminals_owned = false)
                 : base(owner, name)
             {
-                m_P = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "1");
-                m_N = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "2");
-
-
-                m_P.otherterm = m_N;
-                m_N.otherterm = m_P;
+                m_P = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "1", m_N);
+                m_N = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "2", m_P);
             }
 
 
@@ -70,17 +67,27 @@ namespace mame.netlist
             //NETLIB_UPDATE_TERMINALSI() { }
             //NETLIB_RESETI() { }
 
+
             //NETLIB_UPDATEI();
             //NETLIB_UPDATE(twoterm)
             protected override void update()
             {
                 /* only called if connected to a rail net ==> notify the solver to recalculate */
+                solve_now();
+            }
+
+
+            public void solve_now()
+            {
                 /* we only need to call the non-rail terminal */
                 if (m_P.has_net() && !m_P.net().isRailNet())
                     m_P.solve_now();
                 else if (m_N.has_net() && !m_N.net().isRailNet())
                     m_N.solve_now();
             }
+
+
+            //void solve_later(netlist_time delay = netlist_time::from_nsec(1));
 
 
             protected void set(nl_double G, nl_double V, nl_double I)
@@ -124,7 +131,7 @@ namespace mame.netlist
 
             public void set_R(nl_double R)
             {
-                nl_double G = nl_config_global.NL_FCONST(1.0) / R;
+                nl_double G = 1.0 / R;  //const nl_double G = plib::constants<nl_double>::one() / R;
                 set_mat( G, -G, 0.0,
                         -G,  G, 0.0);
             }
@@ -132,27 +139,22 @@ namespace mame.netlist
 
             //NETLIB_RESETI();
             //NETLIB_RESET(R_base)
-            protected override void reset()
+            public override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
                 set_R(1.0 / exec().gmin());
             }
 
             //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(R_base)
-            protected override void update()
-            {
-                base.update();  //NETLIB_NAME(twoterm)::update();
-            }
         }
 
 
         //NETLIB_OBJECT_DERIVED(R, R_base)
         class nld_R : nld_R_base
         {
-            //NETLIB_DEVICE_IMPL_NS(analog, R)
-            static factory.element_t nld_R_c(string name, string classname, string def_param)
-            { return new factory.device_element_t<nld_R>(name, classname, def_param, "__FILE__"); }
+            //NETLIB_DEVICE_IMPL_NS(analog, R,    "RES",   "R")
+            static factory.element_t nld_R_c(string classname)
+            { return new factory.device_element_t<nld_R>("RES", classname, "R", "__FILE__"); }
             public static factory.constructor_ptr_t decl_R = nld_R_c;
 
 
@@ -171,7 +173,7 @@ namespace mame.netlist
 
             //NETLIB_RESETI();
             //NETLIB_RESET(R)
-            protected override void reset()
+            public override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
                 set_R(Math.Max(m_R.op(), exec().gmin()));
@@ -183,7 +185,7 @@ namespace mame.netlist
             //NETLIB_UPDATE_PARAM(R)
             public override void update_param()
             {
-                update_dev();
+                solve_now();
                 set_R(std.max(m_R.op(), exec().gmin()));
             }
 
@@ -198,9 +200,9 @@ namespace mame.netlist
         //NETLIB_OBJECT(POT)
         class nld_POT : device_t
         {
-            //NETLIB_DEVICE_IMPL_NS(analog, POT)
-            static factory.element_t nld_POT_c(string name, string classname, string def_param)
-            { return new factory.device_element_t<nld_POT>(name, classname, def_param, "__FILE__"); }
+            //NETLIB_DEVICE_IMPL_NS(analog, POT,  "POT",   "R")
+            static factory.element_t nld_POT_c(string classname)
+            { return new factory.device_element_t<nld_POT>("POT", classname, "R", "__FILE__"); }
             public static factory.constructor_ptr_t decl_POT = nld_POT_c;
 
 
@@ -222,7 +224,7 @@ namespace mame.netlist
                 m_R2 = new nld_R_base(this, "_R2");
                 m_R = new param_double_t(this, "R", 10000);
                 m_Dial = new param_double_t(this, "DIAL", 0.5);
-                m_DialIsLog = new param_logic_t(this, "DIALLOG", false /*0*/);
+                m_DialIsLog = new param_logic_t(this, "DIALLOG", false);
 
 
                 register_subalias("1", m_R1.P);
@@ -236,29 +238,29 @@ namespace mame.netlist
             //NETLIB_UPDATEI();
 
             //NETLIB_RESETI();
-            protected override void reset()
+            public override void reset()
             {
                 nl_double v = m_Dial.op();
                 if (m_DialIsLog.op())
                     v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
 
                 m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
-                m_R2.set_R(std.max(m_R.op() * (nl_config_global.NL_FCONST(1.0) - v), exec().gmin()));
+                m_R2.set_R(std.max(m_R.op() * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
             }
 
             //NETLIB_UPDATE_PARAMI();
             //NETLIB_UPDATE_PARAM(POT)
             public override void update_param()
             {
-                m_R1.update_dev();
-                m_R2.update_dev();
+                m_R1.solve_now();
+                m_R2.solve_now();
 
                 nl_double v = m_Dial.op();
                 if (m_DialIsLog.op())
                     v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
 
                 m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
-                m_R2.set_R(std.max(m_R.op() * (nl_config_global.NL_FCONST(1.0) - v), exec().gmin()));
+                m_R2.set_R(std.max(m_R.op() * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
             }
         }
 
@@ -269,9 +271,9 @@ namespace mame.netlist
         //NETLIB_OBJECT_DERIVED(C, twoterm)
         class nld_C : nld_twoterm
         {
-            //NETLIB_DEVICE_IMPL_NS(analog, C)
-            static factory.element_t nld_C_c(string name, string classname, string def_param)
-            { return new factory.device_element_t<nld_C>(name, classname, def_param, "__FILE__"); }
+            //NETLIB_DEVICE_IMPL_NS(analog, C,    "CAP",   "C")
+            static factory.element_t nld_C_c(string classname)
+            { return new factory.device_element_t<nld_C>("CAP", classname, "C", "__FILE__"); }
             public static factory.constructor_ptr_t decl_C = nld_C_c;
 
 
@@ -306,7 +308,7 @@ namespace mame.netlist
 
 
             //NETLIB_RESETI();
-            protected override void reset()
+            public override void reset()
             {
                 // FIXME: Startup conditions
                 set(exec().gmin(), 0.0, -5.0 / exec().gmin());
@@ -314,11 +316,7 @@ namespace mame.netlist
             }
 
             //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(C)
-            protected override void update()
-            {
-                base.update();  //NETLIB_NAME(twoterm)::update();
-            }
+
 
             //NETLIB_UPDATE_PARAMI();
             //NETLIB_UPDATE_PARAM(C)
@@ -332,14 +330,13 @@ namespace mame.netlist
 
     namespace devices
     {
-        //NETLIB_DEVICE_IMPL_NS(analog, R)
-        //NETLIB_DEVICE_IMPL_NS(analog, POT)
-        //NETLIB_DEVICE_IMPL_NS(analog, POT2)
-        //NETLIB_DEVICE_IMPL_NS(analog, C)
-        //NETLIB_DEVICE_IMPL_NS(analog, L)
-        //NETLIB_DEVICE_IMPL_NS(analog, D)
-        //NETLIB_DEVICE_IMPL_NS(analog, VS)
-        //NETLIB_DEVICE_IMPL_NS(analog, CS)
+        //NETLIB_DEVICE_IMPL_NS(analog, R,    "RES",   "R")
+        //NETLIB_DEVICE_IMPL_NS(analog, POT,  "POT",   "R")
+        //NETLIB_DEVICE_IMPL_NS(analog, POT2, "POT2",  "R")
+        //NETLIB_DEVICE_IMPL_NS(analog, C,    "CAP",   "C")
+        //NETLIB_DEVICE_IMPL_NS(analog, L,    "IND",   "L")
+        //NETLIB_DEVICE_IMPL_NS(analog, D,    "DIODE", "MODEL")
+        //NETLIB_DEVICE_IMPL_NS(analog, VS,   "VS",    "V")
+        //NETLIB_DEVICE_IMPL_NS(analog, CS,   "CS",    "I")
     }
-
 } // namespace netlist

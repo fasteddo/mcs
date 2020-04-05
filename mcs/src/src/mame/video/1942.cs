@@ -54,7 +54,7 @@ namespace mame
         }
 
 
-        public void _1942_palette(palette_device palette)
+        void _1942_palette(palette_device palette)
         {
             create_palette(palette);
 
@@ -106,7 +106,7 @@ namespace mame
 
             code = m_fg_videoram[tile_index];
             color = m_fg_videoram[tile_index + 0x400];
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 0,
+            SET_TILE_INFO_MEMBER(ref tileinfo, 0,
                     (UInt32)(code + ((color & 0x80) << 1)),
                     (UInt32)(color & 0x3f),
                     0);
@@ -122,10 +122,10 @@ namespace mame
 
             code = m_bg_videoram[tile_index];
             color = m_bg_videoram[tile_index + 0x10];
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 1,
+            SET_TILE_INFO_MEMBER(ref tileinfo, 1,
                     (UInt32)(code + ((color & 0x80) << 1)),
                     (UInt32)((color & 0x1f) + (0x20 * m_palette_bank)),
-                    (byte)tilemap_global.TILE_FLIPYX((color & 0x60) >> 5));
+                    (byte)TILE_FLIPYX((color & 0x60) >> 5));
         }
 
 
@@ -150,7 +150,7 @@ namespace mame
         ***************************************************************************/
 
         //WRITE8_MEMBER(_1942_state::_1942_fgvideoram_w)
-        public void _1942_fgvideoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_fgvideoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_fg_videoram[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);
@@ -158,7 +158,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(_1942_state::_1942_bgvideoram_w)
-        public void _1942_bgvideoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_bgvideoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_bg_videoram[offset] = data;
             m_bg_tilemap.mark_tile_dirty((offset & 0x0f) | ((offset >> 1) & 0x01f0));
@@ -166,7 +166,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(_1942_state::_1942_palette_bank_w)
-        public void _1942_palette_bank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_palette_bank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             if (m_palette_bank != data)
             {
@@ -177,7 +177,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(_1942_state::_1942_scroll_w)
-        public void _1942_scroll_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_scroll_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_scroll[offset] = data;
             m_bg_tilemap.set_scrollx(0, m_scroll[0] | (m_scroll[1] << 8));
@@ -185,7 +185,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(_1942_state::_1942_c804_w)
-        public void _1942_c804_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_c804_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             /* bit 7: flip screen
                bit 4: cpu B reset
@@ -249,7 +249,7 @@ namespace mame
         }
 
 
-        public uint32_t screen_update(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        u32 screen_update(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             m_bg_tilemap.draw(screen, bitmap, cliprect, 0, 0);
             draw_sprites(bitmap, cliprect);

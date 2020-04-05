@@ -10,7 +10,7 @@ namespace mame.plib
     // -----------------------------------------------------------------------------
     // pstream: things common to all streams
     // -----------------------------------------------------------------------------
-    public abstract class pstream //: nocopyassignmove
+    public abstract class pstream
     {
         //using pos_type = std::size_t;
 
@@ -23,7 +23,10 @@ namespace mame.plib
 
         public pstream(UInt32 flags) { m_flags = flags; }
 
-        //~pstream() { }
+        //virtual ~pstream() = default;
+
+        //COPYASSIGN(pstream, delete)
+        //pstream &operator=(pstream &&) noexcept = delete;
 
 
         //bool seekable() const { return ((m_flags & FLAG_SEEKABLE) != 0); }

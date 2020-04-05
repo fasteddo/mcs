@@ -48,7 +48,7 @@ namespace mame
             return (byte)(bitswap(e,swap_xor_table[method,0],swap_xor_table[method,1],swap_xor_table[method,2],swap_xor_table[method,3],swap_xor_table[method,4],swap_xor_table[method,5],swap_xor_table[method,6],swap_xor_table[method,7]) ^ swap_xor_table[method,8]);
         }
 
-        public void pacplus_decode()
+        void pacplus_decode()
         {
             int i;
             ListBytesPointer RAM;  //uint8_t *RAM;

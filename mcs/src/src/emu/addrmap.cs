@@ -123,11 +123,11 @@ namespace mame
         //write32s_delegate       m_wproto32s;            // 32-bit write proto-delegate
         //write64s_delegate       m_wproto64s;            // 64-bit write proto-delegate
 
-        //read8sm_delegate        m_rproto8sm;            // 8-bit read proto-delegate
+        read8sm_delegate        m_rproto8sm;            // 8-bit read proto-delegate
         //read16sm_delegate       m_rproto16sm;           // 16-bit read proto-delegate
         //read32sm_delegate       m_rproto32sm;           // 32-bit read proto-delegate
         //read64sm_delegate       m_rproto64sm;           // 64-bit read proto-delegate
-        //write8sm_delegate       m_wproto8sm;            // 8-bit write proto-delegate
+        write8sm_delegate       m_wproto8sm;            // 8-bit write proto-delegate
         //write16sm_delegate      m_wproto16sm;           // 16-bit write proto-delegate
         //write32sm_delegate      m_wproto32sm;           // 32-bit write proto-delegate
         //write64sm_delegate      m_wproto64sm;           // 64-bit write proto-delegate
@@ -141,11 +141,11 @@ namespace mame
         //write32mo_delegate      m_wproto32mo;           // 32-bit write proto-delegate
         //write64mo_delegate      m_wproto64mo;           // 64-bit write proto-delegate
 
-        //read8smo_delegate       m_rproto8smo;           // 8-bit read proto-delegate
+        read8smo_delegate       m_rproto8smo;           // 8-bit read proto-delegate
         //read16smo_delegate      m_rproto16smo;          // 16-bit read proto-delegate
         //read32smo_delegate      m_rproto32smo;          // 32-bit read proto-delegate
         //read64smo_delegate      m_rproto64smo;          // 64-bit read proto-delegate
-        //write8smo_delegate      m_wproto8smo;           // 8-bit write proto-delegate
+        write8smo_delegate      m_wproto8smo;           // 8-bit write proto-delegate
         //write16smo_delegate     m_wproto16smo;          // 16-bit write proto-delegate
         //write32smo_delegate     m_wproto32smo;          // 32-bit write proto-delegate
         //write64smo_delegate     m_wproto64smo;          // 64-bit write proto-delegate
@@ -199,7 +199,7 @@ namespace mame
         public map_handler_data read { get { return m_read; } }
         public map_handler_data write { get { return m_write; } }
         public string share_get { get { return m_share; } }
-        public string region { get { return m_region; } set { m_region = value; } }
+        public string region_var { get { return m_region; } set { m_region = value; } }
         public offs_t rgnoffs { get { return m_rgnoffs; } set { m_rgnoffs = value; } }
         public read8_delegate rproto8 { get { return m_rproto8; } }
         public read16_delegate rproto16 { get { return m_rproto16; } }
@@ -217,7 +217,7 @@ namespace mame
         // simple inline setters
         public address_map_entry mirror(offs_t _mirror) { m_addrmirror = _mirror; return this; }
         //address_map_entry &select(offs_t _select) { m_addrselect = _select; return *this; }
-        //address_map_entry &region(const char *tag, offs_t offset) { m_region = tag; m_rgnoffs = offset; return *this; }
+        public address_map_entry region(string tag, offs_t offset) { m_region = tag; m_rgnoffs = offset; return this; }
         public address_map_entry share(string tag) { m_share = tag; return this; }
 
         // slightly less simple inline setters
@@ -239,7 +239,7 @@ namespace mame
 
         public address_map_entry rom() { m_read.type = map_handler_type.AMH_ROM; return this; }
         public address_map_entry ram() { m_read.type = map_handler_type.AMH_RAM; m_write.type = map_handler_type.AMH_RAM; return this; }
-        address_map_entry readonly_() { m_read.type = map_handler_type.AMH_RAM; return this; }
+        public address_map_entry readonly_() { m_read.type = map_handler_type.AMH_RAM; return this; }
         public address_map_entry writeonly() { m_write.type = map_handler_type.AMH_RAM; return this; }
         public address_map_entry unmaprw() { m_read.type = map_handler_type.AMH_UNMAP; m_write.type = map_handler_type.AMH_UNMAP; return this; }
         //address_map_entry &unmapr() { m_read.m_type = AMH_UNMAP; return *this; }
@@ -361,6 +361,7 @@ namespace mame
         //address_map_entry &rw(const char *tag, RetR (T::*read)(ParamsR...), const char *read_name, RetW (U::*write)(ParamsW...), const char *write_name)
         //{ return r(emu::detail::make_delegate(read, read_name, tag, nullptr)).w(emu::detail::make_delegate(write, write_name, tag, nullptr)); }
         public address_map_entry rw(string tag, read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(string tag, read8sm_delegate rfunc, write8sm_delegate wfunc) { return r(rfunc).w(wfunc); }
 
         //template <typename T, typename Ret, typename... Params>
         //address_map_entry &m(const char *tag, Ret (T::*map)(Params...), const char *map_name)
@@ -471,7 +472,9 @@ namespace mame
 
         // device pointer/finder -> delegate converter
         public address_map_entry r(global_object device, read8_delegate func) { return r(func); }
+        public address_map_entry r(global_object device, read8smo_delegate func) { return r(func); }
         public address_map_entry w(global_object tag, write8_delegate func) { return w(func); }
+        public address_map_entry w(global_object tag, write8smo_delegate func) { return w(func); }
         public address_map_entry rw(global_object tag, read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
 
 
@@ -507,12 +510,54 @@ namespace mame
         //address_map_entry &w(write8m_delegate func);
         //address_map_entry &r(read8s_delegate func);
         //address_map_entry &w(write8s_delegate func);
-        //address_map_entry &r(read8sm_delegate func);
-        //address_map_entry &w(write8sm_delegate func);
+
+
+        public address_map_entry r(read8sm_delegate func)
+        {
+            assert(func != null);
+            m_read.type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
+            m_read.bits = 8;
+            m_read.name = func.Method.Name;
+            m_rproto8sm = func;
+            return this;
+        }
+
+
+        public address_map_entry w(write8sm_delegate func)
+        {
+            assert(func != null);
+            m_write.type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
+            m_write.bits = 8;
+            m_write.name = func.Method.Name;
+            m_wproto8sm = func;
+            return this;
+        }
+
+
         //address_map_entry &r(read8mo_delegate func);
         //address_map_entry &w(write8mo_delegate func);
-        //address_map_entry &r(read8smo_delegate func);
-        //address_map_entry &w(write8smo_delegate func);
+
+
+        public address_map_entry r(read8smo_delegate func)
+        {
+            assert(func != null);
+            m_read.type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
+            m_read.bits = 8;
+            m_read.name = func.Method.Name;
+            m_rproto8smo = func;
+            return this;
+        }
+
+
+        address_map_entry w(write8smo_delegate func)
+        {
+            assert(func != null);
+            m_write.type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
+            m_write.bits = 8;
+            m_write.name = func.Method.Name;
+            m_wproto8smo = func;
+            return this;
+        }
 
 
         // handler setters for 16-bit delegates
@@ -753,12 +798,6 @@ namespace mame
                 m_device = device.owner();
                 memintf.get_addrmap(spacenum)(this, m_device);
                 m_device = device;
-            }
-            else
-            {
-                // if the owner didn't provide a map, use the default device map
-                if (spaceconfig.default_map != null)
-                    spaceconfig.default_map(this, m_device);
             }
 
             // construct the internal device map (last so it takes priority)

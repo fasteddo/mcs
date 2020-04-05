@@ -21,19 +21,14 @@ namespace mame.netlist
             //typedef FT float_type;
 
 
-            protected matrix_solver_direct_t(UInt32 SIZE, netlist_base_t anetlist, string name, solver_parameters_t params_, UInt32 size)
+            protected matrix_solver_direct_t(UInt32 SIZE, netlist_state_t anetlist, string name, solver_parameters_t params_, UInt32 size)
                 : base(null, null, eSortType.NOSORT, params_)
             {
                 throw new emu_unimplemented();
             }
 
-            protected matrix_solver_direct_t(UInt32 SIZE, netlist_base_t anetlist, string name, eSortType sort, solver_parameters_t params_, UInt32 size)
+            protected matrix_solver_direct_t(UInt32 SIZE, netlist_state_t anetlist, string name, eSortType sort, solver_parameters_t params_, UInt32 size)
                 : base(null, null, eSortType.NOSORT, params_)
-            {
-                throw new emu_unimplemented();
-            }
-
-            ~matrix_solver_direct_t()
             {
                 throw new emu_unimplemented();
             }
@@ -45,7 +40,7 @@ namespace mame.netlist
             }
 
 
-            protected override void reset()
+            public override void reset()
             {
                 throw new emu_unimplemented();
 #if false
@@ -62,7 +57,7 @@ namespace mame.netlist
 
             //unsigned solve_non_dynamic(const bool newton_raphson);
 
-            //constexpr std::size_t N() const { return (m_N == 0) ? m_dim : m_N; }
+            //constexpr std::size_t size() const { return (m_N == 0) ? m_dim : m_N; }
 
             //void LE_solve();
 

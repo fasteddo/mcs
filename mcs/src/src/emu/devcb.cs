@@ -1067,13 +1067,13 @@ namespace mame
 
             //template <typename T>
             //std::enable_if_t<is_read<Result, T>::value, functoid_builder<std::remove_reference_t<T> > > set(T &&cb)
-            public delegate_builder set(read_line_delegate func)
+            public delegate_builder set(read8_delegate func)
             {
                 set_used();
                 return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
             }
 
-            public delegate_builder set(read8_delegate func)
+            public delegate_builder set(read_line_delegate func)
             {
                 set_used();
                 return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
@@ -1090,13 +1090,13 @@ namespace mame
 
             //template <typename T>
             //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(char const *tag, T &&func, char const *name)
-            public delegate_builder set(string tag, read_line_delegate func)//, char const *name)
+            public delegate_builder set(string tag, read8_delegate func)//, char const *name)
             {
                 set_used();
                 return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);//, name);
             }
 
-            public delegate_builder set(string tag, read8_delegate func)//, char const *name)
+            public delegate_builder set(string tag, read_line_delegate func)//, char const *name)
             {
                 set_used();
                 return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);//, name);
@@ -1115,6 +1115,13 @@ namespace mame
             //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
             //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
             public delegate_builder set<U>(device_finder<U> finder, read8_delegate func) where U : class //, char const *name)
+            {
+                set_used();
+                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
+                return new delegate_builder(m_target, m_append, target.first(), target.second(), func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+            }
+
+            public delegate_builder set<U>(device_finder<U> finder, read_line_delegate func) where U : class //, char const *name)
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
@@ -1426,8 +1433,7 @@ namespace mame
             //builder_base(builder_base &&) = default;
             ~builder_base()
             {
-                //global.osd_printf_debug("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name());
-                assert(m_consumed);
+                assert(m_consumed, string.Format("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name()));
             }
 
 
@@ -2752,6 +2758,13 @@ namespace mame
             //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
             //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
             public delegate_builder set<U>(device_finder<U> finder, write8_delegate func) where U : class //, string name)
+            {
+                set_used();
+                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
+                return new delegate_builder(m_target, m_append, target.first(), target.second(), func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+            }
+
+            public delegate_builder set<U>(device_finder<U> finder, write_line_delegate func) where U : class //, string name)
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());

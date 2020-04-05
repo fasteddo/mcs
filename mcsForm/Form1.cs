@@ -25,8 +25,8 @@ namespace mameForm
         BitmapHelper m_bitmapHelper;
         Random m_random = new Random();
         Graphics m_graphics;
-        int m_bitmapXOffset = 15;
-        int m_bitmapYOffset = 15;
+        int m_bitmapXOffset = 10;
+        int m_bitmapYOffset = 10;
         int m_updateCount = 0;
 
 
@@ -49,12 +49,7 @@ namespace mameForm
             this.FormClosing += Form1_FormClosing;
 
 
-            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);  // path to the exe
-            string backgroundPath = Path.Combine(path, @"Background01.png");
-            if (!File.Exists(backgroundPath))
-                backgroundPath = Path.Combine(path, @"..\..\Background01.png");
-
-            m_bitmap = new Bitmap(backgroundPath);
+            m_bitmap = new Bitmap(Width - (m_bitmapXOffset * 2), Height - (m_bitmapYOffset * 2), System.Drawing.Imaging.PixelFormat.Format32bppRgb);
             m_bitmapHelper = new BitmapHelper(m_bitmap);
 
 
@@ -366,11 +361,6 @@ namespace mameForm
             mouseY = (int)(mouseY / scaleY);
 
 
-            // HACK for high dpi?  until we switch to 4.7?
-            mouseX = (int)(mouseX * 0.83333333f);
-            mouseY = (int)(mouseY * 0.83333333f);
-
-
             if (mame.mame_machine_manager.instance() == null || mame.mame_machine_manager.instance().osd() == null)
                 return;
 
@@ -531,48 +521,107 @@ namespace mameForm
 #if true
             lock (osd.osdlock)
             {
+                //if (Width != m_bitmap.Width || Height != m_bitmap.Height ||
+                //    Width != osd.get_width() || Height != osd.get_height())
+                //{
+                //    m_bitmap = new Bitmap(Width, Height, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
+                //    m_bitmapHelper = new BitmapHelper(m_bitmap);
+                //
+                //    osd.set_bounds(Width, Height);
+                //
+                //    framedata = osd.screenbufferptr;
+                //}
+
+                // right now the source and target bitmaps are different sizes, so detect resizes differently for each
+
+                if (Width - (m_bitmapXOffset * 2) != m_bitmap.Width || Height - (m_bitmapYOffset * 2) != m_bitmap.Height)
+                {
+                    m_bitmap = new Bitmap(Width - (m_bitmapXOffset * 2), Height - (m_bitmapYOffset * 2), System.Drawing.Imaging.PixelFormat.Format32bppRgb);
+                    m_bitmapHelper = new BitmapHelper(m_bitmap);
+
+                    m_graphics = CreateGraphics();
+                }
+
+                if (osd.get_width() != 600 || osd.get_height() != 600)
+                {
+                    osd.set_bounds(600, 600);
+
+                    framedata = osd.screenbufferptr;
+                }
+
                 m_bitmapHelper.Lock();
 
-                //int stride = 640;
-                int stride = 400;
+#if false
+                {
+                    // random dots to make sure things are working, and not frozen
+                    int stride = osd.get_width();
+                    int x = 200;
+                    int y = 100;
+                    Random r = new System.Random();
+                    if (x + 10 < osd.get_width() && y + 60 < osd.get_height())
+                    {
+                        for (int i = 0; i < 10; i++)
+                            framedata.set_uint32(x + (y * stride) + i, (UInt32)(r.Next() % 16000000));
 
-                Random r = new System.Random();
-                for (int i = 0; i < 10; i++)
-                    framedata.set_uint32(i + 200 + 100 * stride, (UInt32)(r.Next() % 16000000));
-
-                for (int i = 0; i < 10; i++)
-                    framedata.set_uint32(i + 200 + 110 * stride, mame.rgb_t.white());
+                        for (int i = 0; i < 10; i++)
+                            framedata.set_uint32(x + ((y + 10) * stride) + i, mame.rgb_t.white());
 
 #if false
-                for (int i = 0; i < 10; i++)
-                    framedata.set_uint32(i + 200 + 120 * stride, mame.rgb_t.red);
+                        for (int i = 0; i < 10; i++)
+                            framedata.set_uint32(x + ((y + 20) * stride) + i, mame.rgb_t.red);
 
-                for (int i = 0; i < 10; i++)
-                    framedata.set_uint32(i + 200 + 130 * stride, mame.rgb_t.green);
+                        for (int i = 0; i < 10; i++)
+                            framedata.set_uint32(x + ((y + 30) * stride) + i, mame.rgb_t.green);
 
-                for (int i = 0; i < 10; i++)
-                    framedata.set_uint32(i + 200 + 140 * stride, mame.rgb_t.blue);
+                        for (int i = 0; i < 10; i++)
+                            framedata.set_uint32(x + ((y + 40) * stride) + i, mame.rgb_t.blue);
 
-                for (int i = 0; i < 10; i++)
-                    framedata.set_uint32(i + 200 + 150 * stride, mame.rgb_t.pink);
+                        for (int i = 0; i < 10; i++)
+                            framedata.set_uint32(x + ((y + 50) * stride) + i, mame.rgb_t.pink);
 
-                for (int i = 0; i < 10; i++)
-                    framedata.set_uint32(i + 200 + 160 * stride, mame.rgb_t.greenyellow);
+                        for (int i = 0; i < 10; i++)
+                            framedata.set_uint32(x + ((y + 60) * stride) + i, mame.rgb_t.greenyellow);
 #endif
+                    }
+                }
+#endif
+
+                {
+                    // copy whole line at once
+                    int sourceWidth = osd.get_width();
+                    int sourceHeight = osd.get_height();
+                    int sourceBytesPerPix = 4;  // TODO query this
+                    int sourceStride = sourceWidth * sourceBytesPerPix;
+                    int destWidth = m_bitmapHelper.Width;
+                    int destHeight = m_bitmapHelper.Height;
+                    int destBytesPerPix = 4;  // TODO fix funcs in BitmapHelper and query this
+                    int destStride = destWidth * destBytesPerPix;
+                    
+                    // if dest is smaller than source, clamp
+                    sourceHeight = Math.Min(sourceHeight, destHeight);
+                    int copyLength = Math.Min(sourceStride, destStride);
+
+                    for (int y = 0; y < sourceHeight; y++)
+                    {
+                        framedata.Buffer.CopyTo(y * sourceStride, m_bitmapHelper.rgbValues, y * destStride, copyLength);
+                    }
+                }
+
+#if false
+                // copy pixel by pixel
 
                 BitmapHelper.SetPixelRawFunc setPixelFunc = m_bitmapHelper.IsAlphaBitmap ? m_bitmapHelper.SetPixelRawAlpha : (BitmapHelper.SetPixelRawFunc)m_bitmapHelper.SetPixelRawNoAlpha;
                 int destPixelSize = m_bitmapHelper.GetRawPixelSize();
-
-                const int scale = 3;
-                for (int y = 0; y < 400; y++)
+                const int scale = 1;
+                for (int y = 0; y < osd.get_height(); y++)
                 {
-                    int sourceArrayIndex = y * stride;
+                    int sourceArrayIndex = y * osd.get_height();
 
                     for (int j = 0; j < scale; j++)
                     {
                         int destArrayIndex = m_bitmapHelper.GetRawYIndex((y * scale) + j);
 
-                        for (int x = 0; x < 400; x++)
+                        for (int x = 0; x < osd.get_width(); x++)
                         {
                             UInt32 color = framedata.get_uint32(sourceArrayIndex + x);
 
@@ -584,7 +633,7 @@ namespace mameForm
                         }
                     }
                 }
-
+#endif
 
                 m_bitmapHelper.Unlock(true);
             }
@@ -593,7 +642,8 @@ namespace mameForm
 
             if (m_graphics != null)
             {
-                m_graphics.DrawImage(m_bitmap, m_bitmapXOffset, m_bitmapYOffset);
+                m_graphics.DrawImageUnscaled(m_bitmap, m_bitmapXOffset, m_bitmapYOffset);
+                //m_graphics.DrawImage(m_bitmap, m_bitmapXOffset, m_bitmapYOffset, Width - (m_bitmapXOffset * 3), Height - (m_bitmapYOffset * 3));
 
                 if (mame.mame_machine_manager.instance().machine() == null || mame.mame_machine_manager.instance().machine().phase() != mame.machine_phase.RUNNING)
                     return;

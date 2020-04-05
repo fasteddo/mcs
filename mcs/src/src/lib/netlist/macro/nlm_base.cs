@@ -13,7 +13,7 @@ namespace mame
          *  Diode Models
          * ---------------------------------------------------------------------------*/
         //static NETLIST_START(diode_models)
-        public static void netlist_diode_models(netlist.setup_t setup)
+        public static void netlist_diode_models(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -39,7 +39,7 @@ namespace mame
          *  BJT Models
          * ---------------------------------------------------------------------------*/
         //static NETLIST_START(bjt_models)
-        public static void netlist_bjt_models(netlist.setup_t setup)
+        public static void netlist_bjt_models(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -71,7 +71,7 @@ namespace mame
          *  Family models
          * ---------------------------------------------------------------------------*/
         //static NETLIST_START(family_models)
-        public static void netlist_family_models(netlist.setup_t setup)
+        public static void netlist_family_models(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -91,7 +91,7 @@ namespace mame
          *  Always included
          * ---------------------------------------------------------------------------*/
         //NETLIST_START(base)
-        public static void netlist_base(netlist.setup_t setup)
+        public static void netlist_base(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 

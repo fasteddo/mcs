@@ -24,7 +24,7 @@ namespace mame
         {
             ROM_REGION( 0x400, "mcu", 0 ),
             ROM_LOAD( "53xx.bin",     0x0000, 0x0400, CRC("b326fecb") + SHA1("758d8583d658e4f1df93184009d86c3eb8713899") ),
-            ROM_END(),
+            ROM_END,
         };
 
 
@@ -56,37 +56,37 @@ namespace mame
 
 
         //READ8_MEMBER( namco_53xx_device::K_r )
-        public u8 K_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 K_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return m_k.op(0);
         }
 
         //READ8_MEMBER( namco_53xx_device::R0_r )
-        public u8 R0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 R0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return m_in[0].op(0);
         }
 
         //READ8_MEMBER( namco_53xx_device::R1_r )
-        public u8 R1_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 R1_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return m_in[1].op(0);
         }
 
         //READ8_MEMBER( namco_53xx_device::R2_r )
-        public u8 R2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 R2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return m_in[2].op(0);
         }
 
         //READ8_MEMBER( namco_53xx_device::R3_r )
-        public u8 R3_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 R3_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return m_in[3].op(0);
         }
 
         //WRITE8_MEMBER( namco_53xx_device::O_w )
-        public void O_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void O_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             byte out_value = (byte)(data & 0x0f);
             if ((data & 0x10) != 0)
@@ -96,7 +96,7 @@ namespace mame
         }
 
         //WRITE8_MEMBER( namco_53xx_device::P_w )
-        public void P_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void P_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_p.op(space, 0, data);
         }

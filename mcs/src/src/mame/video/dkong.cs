@@ -125,7 +125,7 @@ namespace mame
         );
 
 
-        public void dkong2b_palette(palette_device palette)
+        void dkong2b_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
@@ -154,7 +154,7 @@ namespace mame
         }
 
 
-        public void radarscp_palette(palette_device palette)
+        void radarscp_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
@@ -246,7 +246,7 @@ namespace mame
         ***************************************************************************/
 
         //WRITE8_MEMBER(dkong_state::dkong_videoram_w)
-        public void dkong_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             if (m_video_ram[offset] != data)
             {
@@ -276,7 +276,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(dkong_state::dkong_palettebank_w)
-        public void dkong_palettebank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_palettebank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             int newbank;
 
@@ -296,28 +296,28 @@ namespace mame
 
 
         //WRITE8_MEMBER(dkong_state::radarscp_grid_enable_w)
-        public void radarscp_grid_enable_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void radarscp_grid_enable_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             throw new emu_unimplemented();
         }
 
 
         //WRITE8_MEMBER(dkong_state::radarscp_grid_color_w)
-        public void radarscp_grid_color_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void radarscp_grid_color_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             throw new emu_unimplemented();
         }
 
 
         //WRITE8_MEMBER(dkong_state::dkong_flipscreen_w)
-        public void dkong_flipscreen_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_flipscreen_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_flip = (uint8_t)(data & 0x01);
         }
 
 
         //WRITE8_MEMBER(dkong_state::dkong_spritebank_w)
-        public void dkong_spritebank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_spritebank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_sprite_bank = (uint8_t)(data & 0x01);
         }
@@ -490,7 +490,7 @@ namespace mame
 
 
         //VIDEO_START_MEMBER(dkong_state,dkong_base)
-        public void video_start_dkong_base()
+        void video_start_dkong_base()
         {
             m_cd4049_b = (Math.Log(0.0 - Math.Log(cd4049_al)) - Math.Log(0.0 - Math.Log((1.0-cd4049_al))) ) / Math.Log(cd4049_vh/cd4049_vl);
             m_cd4049_a = Math.Log(0.0 - Math.Log(cd4049_al)) - m_cd4049_b * Math.Log(cd4049_vh);
@@ -531,7 +531,7 @@ namespace mame
 
 
         //VIDEO_START_MEMBER(dkong_state,dkong)
-        public void video_start_dkong()
+        void video_start_dkong()
         {
             //VIDEO_START_CALL_MEMBER(dkong_base);
             video_start_dkong_base();
@@ -568,7 +568,7 @@ namespace mame
         }
 
 
-        uint32_t screen_update_dkong(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        u32 screen_update_dkong(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             machine().tilemap().set_flip_all(m_flip != 0 ? TILEMAP_FLIPX | TILEMAP_FLIPY : 0);
 

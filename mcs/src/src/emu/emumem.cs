@@ -44,6 +44,11 @@ namespace mame
     //using read64s_delegate = device_delegate<u64 (offs_t, u64)>;
 
     //using read8sm_delegate  = device_delegate<u8  (offs_t)>;
+    public delegate u8 read8sm_delegate(offs_t offset);
+    public delegate u16 read16sm_delegate(offs_t offset);
+    public delegate u32 read32sm_delegate(offs_t offset);
+    public delegate u64 read64sm_delegate(offs_t offset);
+
     //using read16sm_delegate = device_delegate<u16 (offs_t)>;
     //using read32sm_delegate = device_delegate<u32 (offs_t)>;
     //using read64sm_delegate = device_delegate<u64 (offs_t)>;
@@ -54,9 +59,10 @@ namespace mame
     //using read64mo_delegate = device_delegate<u64 (address_space &)>;
 
     //using read8smo_delegate  = device_delegate<u8  ()>;
-    //using read16smo_delegate = device_delegate<u16 ()>;
-    //using read32smo_delegate = device_delegate<u32 ()>;
-    //using read64smo_delegate = device_delegate<u64 ()>;
+    public delegate u8 read8smo_delegate();
+    public delegate u16 read16smo_delegate();
+    public delegate u32 read32smo_delegate();
+    public delegate u64 read64smo_delegate();
 
 
     // ======================> write_delegate
@@ -78,9 +84,10 @@ namespace mame
     //using write64s_delegate = device_delegate<void (offs_t, u64, u64)>;
 
     //using write8sm_delegate  = device_delegate<void (offs_t, u8 )>;
-    //using write16sm_delegate = device_delegate<void (offs_t, u16)>;
-    //using write32sm_delegate = device_delegate<void (offs_t, u32)>;
-    //using write64sm_delegate = device_delegate<void (offs_t, u64)>;
+    public delegate void write8sm_delegate(offs_t offset, u8 data);
+    public delegate void write16sm_delegate(offs_t offset, u16 data);
+    public delegate void write32sm_delegate(offs_t offset, u32 data);
+    public delegate void write64sm_delegate(offs_t offset, u64 data);
 
     //using write8mo_delegate  = device_delegate<void (address_space &, u8 )>;
     //using write16mo_delegate = device_delegate<void (address_space &, u16)>;
@@ -88,9 +95,10 @@ namespace mame
     //using write64mo_delegate = device_delegate<void (address_space &, u64)>;
 
     //using write8smo_delegate  = device_delegate<void (u8 )>;
-    //using write16smo_delegate = device_delegate<void (u16)>;
-    //using write32smo_delegate = device_delegate<void (u32)>;
-    //using write64smo_delegate = device_delegate<void (u64)>;
+    public delegate void write8smo_delegate(u8 data);
+    public delegate void write16smo_delegate(u16 data);
+    public delegate void write32smo_delegate(u32 data);
+    public delegate void write64smo_delegate(u64 data);
 
 
 #if false
@@ -2231,7 +2239,6 @@ namespace mame
         bool m_is_octal;                 // to determine if messages/debugger will show octal or hex
 
         address_map_constructor m_internal_map;
-        address_map_constructor m_default_map;
 
 
         // construction/destruction
@@ -2250,10 +2257,9 @@ namespace mame
             m_page_shift = 0;
             m_is_octal = false;
             m_internal_map = null;
-            m_default_map = null;
         }
 
-        public address_space_config(string name, endianness_t endian, u8 datawidth, u8 addrwidth, s8 addrshift = 0, address_map_constructor internal_ctor = null, address_map_constructor defmap = null)
+        public address_space_config(string name, endianness_t endian, u8 datawidth, u8 addrwidth, s8 addrshift = 0, address_map_constructor internal_ = null)
         {
             m_name = name;
             m_endianness = endian;
@@ -2263,11 +2269,10 @@ namespace mame
             m_logaddr_width = addrwidth;
             m_page_shift = 0;
             m_is_octal = false;
-            m_internal_map = internal_ctor;
-            m_default_map = defmap;
+            m_internal_map = internal_;
         }
 
-        public address_space_config(string name, endianness_t endian, u8 datawidth, u8 addrwidth, s8 addrshift, u8 logwidth, u8 pageshift, address_map_constructor internal_ctor = null, address_map_constructor defmap = null)
+        public address_space_config(string name, endianness_t endian, u8 datawidth, u8 addrwidth, s8 addrshift, u8 logwidth, u8 pageshift, address_map_constructor internal_ = null)
         {
             m_name = name;
             m_endianness = endian;
@@ -2277,8 +2282,7 @@ namespace mame
             m_logaddr_width = logwidth;
             m_page_shift = pageshift;
             m_is_octal = false;
-            m_internal_map = internal_ctor;
-            m_default_map = defmap;
+            m_internal_map = internal_;
         }
 
 
@@ -2293,7 +2297,6 @@ namespace mame
         public bool is_octal() { return m_is_octal; }
 
         public address_map_constructor internal_map { get { return m_internal_map; } }
-        public address_map_constructor default_map { get { return m_default_map; } }
 
 
         // Actual alignment of the bus addresses
@@ -2838,37 +2841,37 @@ namespace mame
                 }
 
                 // if this is a ROM handler without a specified region, attach it to the implicit region
-                if (m_spacenum == 0 && entry.read.type == map_handler_type.AMH_ROM && entry.region == null)
+                if (m_spacenum == 0 && entry.read.type == map_handler_type.AMH_ROM && entry.region_var == null)
                 {
                     // make sure it fits within the memory region before doing so, however
                     if (entry.addrend < devregionsize)
                     {
-                        entry.region = m_device.tag();
+                        entry.region_var = m_device.tag();
                         entry.rgnoffs = address_to_byte(entry.addrstart);
                     }
                 }
 
                 // validate adjusted addresses against implicit regions
-                if (entry.region != null && entry.share_get == null)
+                if (entry.region_var != null && entry.share_get == null)
                 {
                     // determine full tag
-                    string fulltag = entry.devbase.subtag(entry.region);
+                    string fulltag = entry.devbase.subtag(entry.region_var);
 
                     // find the region
                     memory_region region = m_manager.machine().root_device().memregion(fulltag);
                     if (region == null)
-                        fatalerror("device '{0}' {1} space memory map entry {2}-{3} references nonexistant region \"{4}\"\n", m_device.tag(), m_name, entry.addrstart, entry.addrend, entry.region);
+                        fatalerror("device '{0}' {1} space memory map entry {2}-{3} references nonexistant region \"{4}\"\n", m_device.tag(), m_name, entry.addrstart, entry.addrend, entry.region_var);
 
                     // validate the region
                     if (entry.rgnoffs + m_config.addr2byte(entry.addrend - entry.addrstart + 1) > region.bytes())
-                        fatalerror("device '{0}' {1} space memory map entry {2}-{3} extends beyond region \"{4}\" size ({5})\n", m_device.tag(), m_name, entry.addrstart, entry.addrend, entry.region, region.bytes());
+                        fatalerror("device '{0}' {1} space memory map entry {2}-{3} extends beyond region \"{4}\" size ({5})\n", m_device.tag(), m_name, entry.addrstart, entry.addrend, entry.region_var, region.bytes());
                 }
 
                 // convert any region-relative entries to their memory pointers
-                if (entry.region != null)
+                if (entry.region_var != null)
                 {
                     // determine full tag
-                    string fulltag = entry.devbase.subtag(entry.region);
+                    string fulltag = entry.devbase.subtag(entry.region_var);
 
                     // set the memory address
                     entry.memory = new ListBytesPointer(m_manager.machine().root_device().memregion(fulltag).base_(), (int)entry.rgnoffs);  //entry.m_memory = m_manager.machine().root_device().memregion(fulltag.c_str())->base() + entry.m_rgnoffs;
@@ -3782,7 +3785,7 @@ namespace mame
         //-------------------------------------------------
         //  configure_entry - configure an entry
         //-------------------------------------------------
-        void configure_entry(int entrynum, ListBytesPointer base_)  // void *base_)
+        public void configure_entry(int entrynum, ListBytesPointer base_)  // void *base_)
         {
             // must be positive
             if (entrynum < 0)
@@ -3973,7 +3976,7 @@ namespace mame
                 allocate(memory);
             }
 
-            allocate(m_machine.dummy().dummy_memory());
+            allocate(m_machine.dummy().memory());
 
             // construct and preprocess the address_map for each space
             foreach (var memory in memories)

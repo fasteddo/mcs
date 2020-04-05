@@ -26,8 +26,8 @@ namespace mame
         static readonly List<tiny_rom_entry> rom_namco_51xx = new List<tiny_rom_entry>()
         {
             ROM_REGION( 0x400, "mcu", 0 ),
-            ROM_LOAD( "51xx.bin",     0x0000, 0x0400, util.hash_global.CRC("c2f57ef8") + util.hash_global.SHA1("50de79e0d6a76bda95ffb02fcce369a79e6abfec") ),
-            ROM_END(),
+            ROM_LOAD( "51xx.bin",     0x0000, 0x0400, CRC("c2f57ef8") + SHA1("50de79e0d6a76bda95ffb02fcce369a79e6abfec") ),
+            ROM_END,
         };
 
 
@@ -77,10 +77,10 @@ namespace mame
 
 
         //#define READ_PORT(num)           m_in[num](space, 0)
-        public byte READ_PORT(int num, address_space space) { return m_in[num].op(space, 0); } 
+        byte READ_PORT(int num, address_space space) { return m_in[num].op(space, 0); } 
 
         //#define WRITE_PORT(num, data)    m_out[num](space, 0, data)
-        public void WRITE_PORT(int num, byte data, address_space space) { m_out[num].op(space, 0, data); }
+        void WRITE_PORT(int num, byte data, address_space space) { m_out[num].op(space, 0, data); }
 
 
         static game_driver write_namcoio_51XX_driver = null;

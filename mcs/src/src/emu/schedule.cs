@@ -216,6 +216,7 @@ namespace mame
         //attotime remaining() const;
         attotime start() { return m_start; }
         public attotime expire() { return m_expire; }
+        //attotime period() const { return m_period; }
 
 
         // internal helpers

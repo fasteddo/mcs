@@ -15,48 +15,6 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    class device_execute_interface_m6800 : device_execute_interface
-    {
-        public device_execute_interface_m6800(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        // device_execute_interface overrides
-        public override uint32_t execute_min_cycles() { return 1; }
-        public override uint32_t execute_max_cycles() { return 12; }
-        public override uint32_t execute_input_lines() { return 2; }
-        public override bool execute_input_edge_triggered(int inputnum) { m6800_cpu_device m6800 = (m6800_cpu_device)device(); return m6800.device_execute_interface_execute_input_edge_triggered(inputnum); }
-        public override void execute_run() { m6800_cpu_device m6800 = (m6800_cpu_device)device(); m6800.device_execute_interface_execute_run(); }
-        public override void execute_set_input(int irqline, int state) { m6800_cpu_device m6800 = (m6800_cpu_device)device(); m6800.device_execute_interface_execute_set_input(irqline, state); }
-    }
-
-
-    class device_memory_interface_m6800 : device_memory_interface
-    {
-        public device_memory_interface_m6800(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_memory_interface overrides
-        public override space_config_vector memory_space_config() { m6800_cpu_device m6800 = (m6800_cpu_device)device(); return m6800.device_memory_interface_memory_space_config(); }
-    }
-
-
-    class device_state_interface_m6800 : device_state_interface
-    {
-        public device_state_interface_m6800(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_state_interface overrides
-        public override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
-    }
-
-
-    class device_disasm_interface_m6800 : device_disasm_interface
-    {
-        public device_disasm_interface_m6800(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
-    }
-
-
     partial class m6800_cpu_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6800, m6800_cpu_device, "m6800", "Motorola M6800")
@@ -64,8 +22,44 @@ namespace mame
         public static readonly device_type M6800 = DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola M6800");
 
 
-        //typedef void (m6800_cpu_device::*op_func)();
-        public delegate void op_func(m6800_cpu_device cpu);
+        protected class device_execute_interface_m6800 : device_execute_interface
+        {
+            public device_execute_interface_m6800(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override uint32_t execute_min_cycles() { return 1; }
+            protected override uint32_t execute_max_cycles() { return 12; }
+            protected override uint32_t execute_input_lines() { return 2; }
+            protected override bool execute_input_edge_triggered(int inputnum) { return ((m6800_cpu_device)device()).device_execute_interface_execute_input_edge_triggered(inputnum); }
+            protected override void execute_run() { ((m6800_cpu_device)device()).device_execute_interface_execute_run(); }
+            protected override void execute_set_input(int irqline, int state) { ((m6800_cpu_device)device()).device_execute_interface_execute_set_input(irqline, state); }
+        }
+
+
+        protected class device_memory_interface_m6800 : device_memory_interface
+        {
+            public device_memory_interface_m6800(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override space_config_vector memory_space_config() { return ((m6800_cpu_device)device()).device_memory_interface_memory_space_config(); }
+        }
+
+
+        protected class device_state_interface_m6800 : device_state_interface
+        {
+            public device_state_interface_m6800(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
+        }
+
+
+        protected class device_disasm_interface_m6800 : device_disasm_interface
+        {
+            public device_disasm_interface_m6800(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
+        }
+
+
+        public delegate void op_func(m6800_cpu_device cpu);  //typedef void (m6800_cpu_device::*op_func)();
 
 
         //enum
@@ -449,9 +443,9 @@ namespace mame
         //virtual uint32_t execute_min_cycles() const override { return 1; }
         //virtual uint32_t execute_max_cycles() const override { return 12; }
         //virtual uint32_t execute_input_lines() const override { return 2; }
-        public bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == device_execute_interface.INPUT_LINE_NMI; }
+        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == device_execute_interface.INPUT_LINE_NMI; }
 
-        public void device_execute_interface_execute_run()
+        void device_execute_interface_execute_run()
         {
             uint8_t ireg;
 
@@ -477,7 +471,7 @@ namespace mame
             } while (m_icountRef.i > 0);
         }
 
-        public void device_execute_interface_execute_set_input(int irqline, int state)
+        protected void device_execute_interface_execute_set_input(int irqline, int state)
         {
             switch (irqline)
             {
@@ -497,7 +491,7 @@ namespace mame
 
 
         // device_memory_interface overrides
-        public space_config_vector device_memory_interface_memory_space_config()
+        space_config_vector device_memory_interface_memory_space_config()
         {
             if (memory().has_configured_map(AS_OPCODES))
             {
@@ -613,258 +607,6 @@ namespace mame
         public virtual void EAT_CYCLES() { throw new emu_unimplemented(); }
         public virtual void CLEANUP_COUNTERS() { }
         protected virtual void TAKE_TRAP() { }
-
-#if false
-        void aba();
-        void abx();
-        void adca_di();
-        void adca_ex();
-        void adca_im();
-        void adca_ix();
-        void adcb_di();
-        void adcb_ex();
-        void adcb_im();
-        void adcb_ix();
-        void adcx_im();
-        void adda_di();
-        void adda_ex();
-        void adda_im();
-        void adda_ix();
-        void addb_di();
-        void addb_ex();
-        void addb_im();
-        void addb_ix();
-        void addd_di();
-        void addd_ex();
-        void addx_ex();
-        void addd_im();
-        void addd_ix();
-        void aim_di();
-        void aim_ix();
-        void anda_di();
-        void anda_ex();
-        void anda_im();
-        void anda_ix();
-        void andb_di();
-        void andb_ex();
-        void andb_im();
-        void andb_ix();
-        void asl_ex();
-        void asl_ix();
-        void asla();
-        void aslb();
-        void asld();
-        void asr_ex();
-        void asr_ix();
-        void asra();
-        void asrb();
-        void bcc();
-        void bcs();
-        void beq();
-        void bge();
-        void bgt();
-        void bhi();
-        void bita_di();
-        void bita_ex();
-        void bita_im();
-        void bita_ix();
-        void bitb_di();
-        void bitb_ex();
-        void bitb_im();
-        void bitb_ix();
-        void ble();
-        void bls();
-        void blt();
-        void bmi();
-        void bne();
-        void bpl();
-        void bra();
-        void brn();
-        void bsr();
-        void bvc();
-        void bvs();
-        void cba();
-        void clc();
-        void cli();
-        void clr_ex();
-        void clr_ix();
-        void clra();
-        void clrb();
-        void clv();
-        void cmpa_di();
-        void cmpa_ex();
-        void cmpa_im();
-        void cmpa_ix();
-        void cmpb_di();
-        void cmpb_ex();
-        void cmpb_im();
-        void cmpb_ix();
-        void cmpx_di();
-        void cmpx_ex();
-        void cmpx_im();
-        void cmpx_ix();
-        void com_ex();
-        void com_ix();
-        void coma();
-        void comb();
-        void daa();
-        void dec_ex();
-        void dec_ix();
-        void deca();
-        void decb();
-        void des();
-        void dex();
-        void eim_di();
-        void eim_ix();
-        void eora_di();
-        void eora_ex();
-        void eora_im();
-        void eora_ix();
-        void eorb_di();
-        void eorb_ex();
-        void eorb_im();
-        void eorb_ix();
-        void illegl1();
-        void illegl2();
-        void illegl3();
-        void inc_ex();
-        void inc_ix();
-        void inca();
-        void incb();
-        void ins();
-        void inx();
-        void jmp_ex();
-        void jmp_ix();
-        void jsr_di();
-        void jsr_ex();
-        void jsr_ix();
-        void lda_di();
-        void lda_ex();
-        void lda_im();
-        void lda_ix();
-        void ldb_di();
-        void ldb_ex();
-        void ldb_im();
-        void ldb_ix();
-        void ldd_di();
-        void ldd_ex();
-        void ldd_im();
-        void ldd_ix();
-        void lds_di();
-        void lds_ex();
-        void lds_im();
-        void lds_ix();
-        void ldx_di();
-        void ldx_ex();
-        void ldx_im();
-        void ldx_ix();
-        void lsr_ex();
-        void lsr_ix();
-        void lsra();
-        void lsrb();
-        void lsrd();
-        void mul();
-        void neg_ex();
-        void neg_ix();
-        void nega();
-        void negb();
-        void nop();
-        void oim_di();
-        void oim_ix();
-        void ora_di();
-        void ora_ex();
-        void ora_im();
-        void ora_ix();
-        void orb_di();
-        void orb_ex();
-        void orb_im();
-        void orb_ix();
-        void psha();
-        void pshb();
-        void pshx();
-        void pula();
-        void pulb();
-        void pulx();
-        void rol_ex();
-        void rol_ix();
-        void rola();
-        void rolb();
-        void ror_ex();
-        void ror_ix();
-        void rora();
-        void rorb();
-        void rti();
-        void rts();
-        void sba();
-        void sbca_di();
-        void sbca_ex();
-        void sbca_im();
-        void sbca_ix();
-        void sbcb_di();
-        void sbcb_ex();
-        void sbcb_im();
-        void sbcb_ix();
-        void sec();
-        void sei();
-        void sev();
-        void slp();
-        void sta_di();
-        void sta_ex();
-        void sta_im();
-        void sta_ix();
-        void stb_di();
-        void stb_ex();
-        void stb_im();
-        void stb_ix();
-        void std_di();
-        void std_ex();
-        void std_im();
-        void std_ix();
-        void sts_di();
-        void sts_ex();
-        void sts_im();
-        void sts_ix();
-        void stx_di();
-        void stx_ex();
-        void stx_im();
-        void stx_ix();
-        void suba_di();
-        void suba_ex();
-        void suba_im();
-        void suba_ix();
-        void subb_di();
-        void subb_ex();
-        void subb_im();
-        void subb_ix();
-        void subd_di();
-        void subd_ex();
-        void subd_im();
-        void subd_ix();
-        void swi();
-        void tab();
-        void tap();
-        void tba();
-        void tim_di();
-        void tim_ix();
-        void tpa();
-        void tst_ex();
-        void tst_ix();
-        void tsta();
-        void tstb();
-        void tsx();
-        void txs();
-        void undoc1();
-        void undoc2();
-        void wai();
-        void xgdx();
-        void cpx_di();
-        void cpx_ex();
-        void cpx_im();
-        void cpx_ix();
-        void trap();
-        void btst_ix();
-        void stx_nsc();
-#endif
     }
 
 

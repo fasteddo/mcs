@@ -46,52 +46,5 @@ namespace mame
             m_samples = new optional_device<samples_device>(this, "samples");
             m_subcpu3 = new optional_device<cpu_device>(this, "sub3");
         }
-
-
-        //DECLARE_DRIVER_INIT(xevious);
-        //DECLARE_DRIVER_INIT(xevios);
-        //DECLARE_DRIVER_INIT(battles);
-        //TILE_GET_INFO_MEMBER(get_fg_tile_info);
-        //TILE_GET_INFO_MEMBER(get_bg_tile_info);
-        //DECLARE_VIDEO_START(xevious);
-        //DECLARE_PALETTE_INIT(xevious);
-        //DECLARE_MACHINE_RESET(xevios);
-        //DECLARE_MACHINE_RESET(battles);
-
-        //UINT32 screen_update_xevious(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-        //INTERRUPT_GEN_MEMBER(battles_interrupt_4);
-        //TIMER_DEVICE_CALLBACK_MEMBER(battles_nmi_generate);
-        //void draw_sprites(bitmap_ind16 &bitmap,const rectangle &cliprect);
-        //DECLARE_WRITE8_MEMBER( xevious_fg_videoram_w );
-        //DECLARE_WRITE8_MEMBER( xevious_fg_colorram_w );
-        //DECLARE_WRITE8_MEMBER( xevious_bg_videoram_w );
-        //DECLARE_WRITE8_MEMBER( xevious_bg_colorram_w );
-        //DECLARE_WRITE8_MEMBER( xevious_vh_latch_w );
-        //DECLARE_WRITE8_MEMBER( xevious_bs_w );
-        //DECLARE_READ8_MEMBER( xevious_bb_r );
-
-
-        // Custom I/O
-        //void battles_customio_init();
-
-
-        //DECLARE_READ8_MEMBER( battles_customio0_r );
-        //DECLARE_READ8_MEMBER( battles_customio_data0_r );
-        //DECLARE_READ8_MEMBER( battles_customio3_r );
-        //DECLARE_READ8_MEMBER( battles_customio_data3_r );
-        //DECLARE_READ8_MEMBER( battles_input_port_r );
-
-
-        //DECLARE_WRITE8_MEMBER( battles_customio0_w );
-        //DECLARE_WRITE8_MEMBER( battles_customio_data0_w );
-        //DECLARE_WRITE8_MEMBER( battles_customio3_w );
-        //DECLARE_WRITE8_MEMBER( battles_customio_data3_w );
-        //DECLARE_WRITE8_MEMBER( battles_CPU4_coin_w );
-        //DECLARE_WRITE8_MEMBER( battles_noise_sound_w );
-
-        //void xevious(machine_config &config);
-        //void battles(machine_config &config);
-        //void battles_mem4(address_map &map);
-        //void xevious_map(address_map &map);
     }
 }

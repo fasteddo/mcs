@@ -16,54 +16,50 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    public class device_execute_interface_m6502 : device_execute_interface
-    {
-        public device_execute_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_execute_interface overrides
-        public override uint32_t execute_min_cycles() { return 1; }
-        public override uint32_t execute_max_cycles() { return 10; }
-        public override uint32_t execute_input_lines() { m6502_device m6502 = (m6502_device)device(); return m6502.device_execute_interface_execute_input_lines(); }
-        public override void execute_run() { m6502_device m6502 = (m6502_device)device(); m6502.device_execute_interface_execute_run(); }
-        public override void execute_set_input(int inputnum, int state) { m6502_device m6502 = (m6502_device)device(); m6502.device_execute_interface_execute_set_input(inputnum, state); }
-        public override bool execute_input_edge_triggered(int inputnum) { m6502_device m6502 = (m6502_device)device(); return m6502.device_execute_interface_execute_input_edge_triggered(inputnum); }
-    }
-
-
-    public class device_memory_interface_m6502 : device_memory_interface
-    {
-        public device_memory_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_memory_interface overrides
-        public override space_config_vector memory_space_config() { m6502_device m6502 = (m6502_device)device(); return m6502.device_memory_interface_memory_space_config(); }
-    }
-
-
-    public class device_state_interface_m6502 : device_state_interface
-    {
-        public device_state_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_state_interface overrides
-        public override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
-        public override void state_export(device_state_entry entry) { m6502_device m6502 = (m6502_device)device(); m6502.device_state_interface_state_export(entry); }
-        public override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
-    }
-
-
-    public class device_disasm_interface_m6502 : device_disasm_interface
-    {
-        public device_disasm_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
-    }
-
-
     partial class m6502_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6502, m6502_device, "m6502", "MOS Technology M6502")
         static device_t device_creator_mb6502_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6502_device(mconfig, tag, owner, clock); }
         public static readonly device_type M6502 = DEFINE_DEVICE_TYPE(device_creator_mb6502_cpu_device, "m6502", "MOS Technology M6502");
+
+
+        class device_execute_interface_m6502 : device_execute_interface
+        {
+            public device_execute_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override uint32_t execute_min_cycles() { return 1; }
+            protected override uint32_t execute_max_cycles() { return 10; }
+            protected override uint32_t execute_input_lines() { return ((m6502_device)device()).device_execute_interface_execute_input_lines(); }
+            protected override void execute_run() { ((m6502_device)device()).device_execute_interface_execute_run(); }
+            protected override void execute_set_input(int inputnum, int state) { ((m6502_device)device()).device_execute_interface_execute_set_input(inputnum, state); }
+            protected override bool execute_input_edge_triggered(int inputnum) { return ((m6502_device)device()).device_execute_interface_execute_input_edge_triggered(inputnum); }
+        }
+
+
+        public class device_memory_interface_m6502 : device_memory_interface
+        {
+            public device_memory_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override space_config_vector memory_space_config() { return ((m6502_device)device()).device_memory_interface_memory_space_config(); }
+        }
+
+
+        public class device_state_interface_m6502 : device_state_interface
+        {
+            public device_state_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
+            protected override void state_export(device_state_entry entry) { ((m6502_device)device()).device_state_interface_state_export(entry); }
+            protected override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
+        }
+
+
+        public class device_disasm_interface_m6502 : device_disasm_interface
+        {
+            public device_disasm_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
+        }
 
 
         //enum
@@ -355,9 +351,9 @@ namespace mame
         // device_execute_interface overrides
         //virtual uint32_t execute_min_cycles() const override;
         //virtual uint32_t execute_max_cycles() const override;
-        public uint32_t device_execute_interface_execute_input_lines() { return NMI_LINE + 1; }
+        uint32_t device_execute_interface_execute_input_lines() { return NMI_LINE + 1; }
 
-        public void device_execute_interface_execute_run()
+        void device_execute_interface_execute_run()
         {
             if (inst_substate != 0)
                 do_exec_partial();
@@ -376,7 +372,7 @@ namespace mame
             }
         }
 
-        public void device_execute_interface_execute_set_input(int inputnum, int state)
+        void device_execute_interface_execute_set_input(int inputnum, int state)
         {
             switch (inputnum)
             {
@@ -391,11 +387,11 @@ namespace mame
             }
         }
 
-        public bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == NMI_LINE; }
+        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == NMI_LINE; }
 
 
         // device_memory_interface overrides
-        public space_config_vector device_memory_interface_memory_space_config()
+        space_config_vector device_memory_interface_memory_space_config()
         {
             if (memory().has_configured_map(AS_OPCODES))
             {
@@ -418,7 +414,7 @@ namespace mame
         // device_state_interface overrides
         //virtual void state_import(const device_state_entry &entry) override;
 
-        public void device_state_interface_state_export(device_state_entry entry)
+        void device_state_interface_state_export(device_state_entry entry)
         {
             switch (entry.index())
             {

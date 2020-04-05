@@ -13,28 +13,20 @@ using uint8_t = System.Byte;
 
 namespace mame
 {
-    class device_sound_interface_galaxian_sound : device_sound_interface
-    {
-        public device_sound_interface_galaxian_sound(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        // device_sound_interface overrides
-        //-------------------------------------------------
-        //  sound_stream_update - handle a stream update
-        //-------------------------------------------------
-        public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
-        {
-            throw new emu_unimplemented();
-        }
-    }
-
-
     public class galaxian_sound_device : device_t
                                          //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(GALAXIAN, galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound")
         static device_t device_creator_galaxian_sound_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_sound_device(mconfig, tag, owner, clock); }
         public static readonly device_type GALAXIAN = DEFINE_DEVICE_TYPE(device_creator_galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound");
+
+
+        public class device_sound_interface_galaxian_sound : device_sound_interface
+        {
+            public device_sound_interface_galaxian_sound(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { throw new emu_unimplemented(); }
+        }
 
 
         device_sound_interface_galaxian_sound m_disound;
@@ -50,10 +42,15 @@ namespace mame
         {
             m_class_interfaces.Add(new device_sound_interface_galaxian_sound(mconfig, this));  // device_sound_interface(mconfig, *this);
 
+            m_disound = GetClassInterface<device_sound_interface_galaxian_sound>();
+
 
             m_lfo_val = 0;
             m_discrete = new required_device<discrete_device>(this, "^" + galaxian_state.GAL_AUDIO);
         }
+
+
+        public device_sound_interface_galaxian_sound disound { get { return m_disound; } }
 
 
         /* FIXME: May be replaced by one call! */
@@ -97,28 +94,28 @@ namespace mame
 
 
         //WRITE8_MEMBER( galaxian_sound_device::vol_w )
-        public void vol_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void vol_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
             m_discrete.target.write((offs_t)NODE_RELATIVE(galaxian_state.GAL_INP_VOL1, (int)offset), (uint8_t)(data & 0x01));
         }
 
 
         //WRITE8_MEMBER( galaxian_sound_device::noise_enable_w )
-        public void noise_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void noise_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
             m_discrete.target.write(galaxian_state.GAL_INP_HIT, (byte)(data & 0x01));
         }
 
 
         //WRITE8_MEMBER( galaxian_sound_device::background_enable_w )
-        public void background_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void background_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
             m_discrete.target.write((offs_t)NODE_RELATIVE(galaxian_state.GAL_INP_FS1, (int)offset), (uint8_t)(data & 0x01));
         }
 
 
         //WRITE8_MEMBER( galaxian_sound_device::fire_enable_w )
-        public void fire_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void fire_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
             m_discrete.target.write(galaxian_state.GAL_INP_FIRE, (byte)(data & 0x01));
         }
@@ -143,9 +140,6 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            m_disound = GetClassInterface<device_sound_interface_galaxian_sound>();
-
-
             m_lfo_val = 0;
 
             save_item(m_lfo_val, "m_lfo_val");
@@ -505,7 +499,7 @@ namespace mame
                 DISCRETE_OUTPUT(NODE_280, 32767.0/5.0*5),
             DISCRETE_TASK_END(),
 
-            DISCRETE_SOUND_END(),
+            DISCRETE_SOUND_END,
         };
     }
 }

@@ -26,7 +26,7 @@ namespace mame
         {
             ROM_REGION( 0x800, "mcu", 0 ),
             ROM_LOAD( "50xx.bin",     0x0000, 0x0800, CRC("a0acbaf7") + SHA1("f03c79451e73b3a93c1591cdb27fedc9f130508d") ),
-            ROM_END(),
+            ROM_END,
         };
 
 
@@ -78,25 +78,25 @@ namespace mame
 
 
         //READ8_MEMBER( namco_50xx_device::K_r )
-        public u8 K_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 K_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return (byte)(m_latched_cmd >> 4);
         }
 
         //READ8_MEMBER( namco_50xx_device::R0_r )
-        public u8 R0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 R0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return (byte)(m_latched_cmd & 0x0f);
         }
 
         //READ8_MEMBER( namco_50xx_device::R2_r )
-        public u8 R2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 R2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return (byte)(m_latched_rw & 1);
         }
 
         //WRITE8_MEMBER( namco_50xx_device::O_w )
-        public void O_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void O_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             byte out_value = (byte)(data & 0x0f);
             if ((data & 0x10) != 0)

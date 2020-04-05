@@ -121,7 +121,7 @@ namespace mame
 
 
         // required overrides
-        public abstract space_config_vector memory_space_config();
+        protected abstract space_config_vector memory_space_config();
 
 
         // optional operation overrides

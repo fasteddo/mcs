@@ -250,7 +250,7 @@ namespace mame
 
 
     // an object_transform is used to track transformations when building an object list
-    struct object_transform
+    class object_transform
     {
         public float               yoffs;       // offset transforms
         public float               xscale;
@@ -282,28 +282,46 @@ namespace mame
     // render_color - floating point set of ARGB values
     public class render_color
     {
-        public float               a;                  // alpha component (0.0 = transparent, 1.0 = opaque)
-        public float               r;                  // red component (0.0 = none, 1.0 = max)
-        public float               g;                  // green component (0.0 = none, 1.0 = max)
-        public float               b;                  // blue component (0.0 = none, 1.0 = max)
+        public float a;                  // alpha component (0.0 = transparent, 1.0 = opaque)
+        public float r;                  // red component (0.0 = none, 1.0 = max)
+        public float g;                  // green component (0.0 = none, 1.0 = max)
+        public float b;                  // blue component (0.0 = none, 1.0 = max)
     }
 
 
     // render_texuv - floating point set of UV texture coordinates
-    public struct render_texuv
+    public class render_texuv
     {
-        public float               u;                  // U coodinate (0.0-1.0)
-        public float               v;                  // V coordinate (0.0-1.0)
+        public float u;                  // U coodinate (0.0-1.0)
+        public float v;                  // V coordinate (0.0-1.0)
+
+        public render_texuv() { }
+        public render_texuv(render_texuv quad) { u = quad.u; v = quad.v; }
     }
 
 
     // render_quad_texuv - floating point set of UV texture coordinates
     public class render_quad_texuv
     {
-        public render_texuv        tl;                 // top-left UV coordinate
-        public render_texuv        tr;                 // top-right UV coordinate
-        public render_texuv        bl;                 // bottom-left UV coordinate
-        public render_texuv        br;                 // bottom-right UV coordinate
+        public render_texuv tl;                 // top-left UV coordinate
+        public render_texuv tr;                 // top-right UV coordinate
+        public render_texuv bl;                 // bottom-left UV coordinate
+        public render_texuv br;                 // bottom-right UV coordinate
+
+        public render_quad_texuv()
+        {
+            tl = new render_texuv();
+            tr = new render_texuv();
+            bl = new render_texuv();
+            br = new render_texuv();
+        }
+        public render_quad_texuv(render_quad_texuv quad)
+        {
+            tl = new render_texuv(quad.tl);
+            tr = new render_texuv(quad.tr);
+            bl = new render_texuv(quad.bl);
+            br = new render_texuv(quad.br);
+        }
     }
 
 
@@ -2348,7 +2366,7 @@ namespace mame
                             render_global.normalize_bounds(bounds);
 
                             // apply the transform to the item
-                            object_transform item_xform;
+                            object_transform item_xform = new object_transform();
                             item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
                             item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
                             item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
@@ -2399,7 +2417,7 @@ namespace mame
             // process the debug containers
             foreach (render_container debug in m_debug_containers)
             {
-                object_transform ui_xform;
+                object_transform ui_xform = new object_transform();
                 ui_xform.xoffs = 0;
                 ui_xform.yoffs = 0;
                 ui_xform.xscale = (float)m_width;
@@ -2418,7 +2436,7 @@ namespace mame
             if (is_ui_target())
             {
                 // compute the transform for the UI
-                object_transform ui_xform;
+                object_transform ui_xform = new object_transform();
                 ui_xform.xoffs = 0;
                 ui_xform.yoffs = 0;
                 ui_xform.xscale = (float) m_width;
@@ -2930,7 +2948,7 @@ namespace mame
             rendutil_global.sect_render_bounds(root_cliprect, m_bounds);
 
             // compute the container transform
-            object_transform container_xform;
+            object_transform container_xform = new object_transform();
             container_xform.orientation = rendutil_global.orientation_add(container.orientation(), xform.orientation);
             {
                 float xscale = (container_xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0 ? container.yscale() : container.xscale();
@@ -3061,7 +3079,7 @@ namespace mame
                             prim.texture.palette = curitem.texture().get_adjusted_palette(container);
 
                             // determine UV coordinates and apply clipping
-                            prim.texcoords = render_global.oriented_texcoords[finalorient];
+                            prim.texcoords = new render_quad_texuv(render_global.oriented_texcoords[finalorient]);
 
                             // apply clipping
                             clipped = rendutil_global.render_clip_quad(prim.bounds, cliprect, prim.texcoords);
@@ -3121,7 +3139,7 @@ namespace mame
                                 int finalorient = rendutil_global.orientation_add(vectororient, container_xform.orientation);
 
                                 // determine UV coordinates
-                                prim.texcoords = render_global.oriented_texcoords[finalorient];
+                                prim.texcoords = new render_quad_texuv(render_global.oriented_texcoords[finalorient]);
 
                                 // apply clipping
                                 clipped = rendutil_global.render_clip_quad(prim.bounds, cliprect, prim.texcoords);
@@ -3169,7 +3187,7 @@ namespace mame
                     (container_xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0 ? (UInt32)width : (UInt32)height, prim.texture, list);
 
                 // determine UV coordinates
-                prim.texcoords = render_global.oriented_texcoords[container_xform.orientation];
+                prim.texcoords = new render_quad_texuv(render_global.oriented_texcoords[container_xform.orientation]);
 
                 // set the flags and add it to the list
                 prim.flags = render_global.PRIMFLAG_TEXORIENT((UInt32)container_xform.orientation)
@@ -3226,7 +3244,7 @@ namespace mame
                 rendutil_global.sect_render_bounds(cliprect, m_bounds);
 
                 // determine UV coordinates and apply clipping
-                prim.texcoords = render_global.oriented_texcoords[xform.orientation];
+                prim.texcoords = new render_quad_texuv(render_global.oriented_texcoords[xform.orientation]);
                 bool clipped = rendutil_global.render_clip_quad(prim.bounds, cliprect, prim.texcoords);
 
                 // add to the list or free if we're clipped out
@@ -3252,7 +3270,7 @@ namespace mame
             compute_visible_area(m_width, m_height, m_pixel_aspect, m_orientation, out viswidth, out visheight);
 
             // create a root transform for the target
-            object_transform root_xform;
+            object_transform root_xform = new object_transform();
             root_xform.xoffs = (float)(m_width - viswidth) / 2;
             root_xform.yoffs = (float)(m_height - visheight) / 2;
 

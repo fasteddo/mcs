@@ -15,46 +15,20 @@ using u64 = System.UInt64;
 
 namespace mame
 {
-    class device_sound_interface_msm5205 : device_sound_interface
-    {
-        public device_sound_interface_msm5205(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        // device_sound_interface overrides
-        //-------------------------------------------------
-        //  sound_stream_update - handle a stream update
-        //-------------------------------------------------
-        public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
-        {
-            msm5205_device pokey = (msm5205_device)device();
-
-            ListPointer<stream_sample_t> buffer = outputs[0];
-
-            /* if this voice is active */
-            if (pokey.signal != 0)
-            {
-                short val = (short)(pokey.signal * 16);
-                while (samples != 0)
-                {
-                    buffer[0] = val;  //*buffer++ = val;
-                    buffer++;
-                    samples--;
-                }
-            }
-            else
-            {
-                memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
-            }
-        }
-    }
-
-
     public class msm5205_device : device_t
                                   //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(MSM5205, msm5205_device, "msm5205", "MSM5205")
         static device_t device_creator_msm5205_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new msm5205_device(mconfig, tag, owner, clock); }
         public static readonly device_type MSM5205 = DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "MSM5205");
+
+
+        public class device_sound_interface_msm5205 : device_sound_interface
+        {
+            public device_sound_interface_msm5205(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((msm5205_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+        }
 
 
         /* step size index shift table */
@@ -77,6 +51,9 @@ namespace mame
         const int TIMER_VCK = 0;
         const int TIMER_ADPCM_CAPTURE = 1;
         //}
+
+
+        device_sound_interface_msm5205 m_disound;
 
 
         sound_stream m_stream;     // number of stream system
@@ -106,6 +83,7 @@ namespace mame
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_msm5205(mconfig, this));  //device_sound_interface(mconfig, *this),
+            m_disound = GetClassInterface<device_sound_interface_msm5205>();
 
             m_s1 = false;
             m_s2 = false;
@@ -115,7 +93,7 @@ namespace mame
         }
 
 
-        public s32 signal { get { return m_signal; } }
+        public device_sound_interface_msm5205 disound { get { return m_disound; } }
 
 
         public void set_prescaler_selector(int select)
@@ -308,8 +286,30 @@ namespace mame
         }
 
 
-        // sound stream update overrides
-        //protected override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples);
+        // device_sound_interface overrides
+        //-------------------------------------------------
+        //  sound_stream_update - handle a stream update
+        //-------------------------------------------------
+        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        {
+            ListPointer<stream_sample_t> buffer = outputs[0];
+
+            /* if this voice is active */
+            if (m_signal != 0)
+            {
+                short val = (short)(m_signal * 16);
+                while (samples != 0)
+                {
+                    buffer[0] = val;  //*buffer++ = val;
+                    buffer++;
+                    samples--;
+                }
+            }
+            else
+            {
+                memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
+            }
+        }
 
 
         void compute_tables()

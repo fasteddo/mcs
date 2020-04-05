@@ -17,31 +17,29 @@ using uint64_t = System.UInt64;
 
 namespace mame
 {
-    class device_execute_interface_m6801 : device_execute_interface_m6800
-    {
-        public device_execute_interface_m6801(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_execute_interface overrides
-        public override uint64_t execute_clocks_to_cycles(uint64_t clocks) { return (clocks + 4 - 1) / 4; }
-        public override uint64_t execute_cycles_to_clocks(uint64_t cycles) { return (cycles * 4); }
-        public override void execute_set_input(int irqline, int state) { m6801_cpu_device m6801 = (m6801_cpu_device)device(); m6801.device_execute_interface_execute_set_input(irqline, state); }
-    }
-
-
-    class device_disasm_interface_m6801 : device_disasm_interface_m6800
-    {
-        public device_disasm_interface_m6801(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
-    }
-
-
     class m6801_cpu_device : m6800_cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6801, m6801_cpu_device, "m6801", "Motorola M6801")
         static device_t device_creator_m6801_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6801_cpu_device(mconfig, tag, owner, clock); }
         public static readonly device_type M6801 = DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola M6801");
+
+
+        class device_execute_interface_m6801 : device_execute_interface_m6800
+        {
+            public device_execute_interface_m6801(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override uint64_t execute_clocks_to_cycles(uint64_t clocks) { return (clocks + 4 - 1) / 4; }
+            protected override uint64_t execute_cycles_to_clocks(uint64_t cycles) { return cycles * 4; }
+            protected override void execute_set_input(int irqline, int state) { ((m6801_cpu_device)device()).device_execute_interface_execute_set_input(irqline, state); }
+        }
+
+
+        protected class device_disasm_interface_m6801 : device_disasm_interface_m6800
+        {
+            public device_disasm_interface_m6801(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
+        }
 
 
         //enum
@@ -570,7 +568,7 @@ namespace mame
             case IO_ICR2H:
             case IO_ICR2L:
             default:
-                logerror("PC {0}: warning - read from reserved internal register {1}\n", GetClassInterface<device_state_interface>().pc(), offset);
+                logerror("PC {0}: warning - read from reserved internal register {1}\n", state().pc(), offset);
                 break;
             }
 
@@ -719,7 +717,7 @@ namespace mame
             case IO_ICRH:
             case IO_ICRL:
             case IO_RDR:
-                LOG("PC {0}: warning - write {1} to read only internal register {2}\n", GetClassInterface<device_state_interface>().pc(), data, offset);
+                LOG("PC {0}: warning - write {1} to read only internal register {2}\n", state().pc(), data, offset);
                 break;
 
             case IO_P3CSR:
@@ -781,7 +779,7 @@ namespace mame
             case IO_ICR2H:
             case IO_ICR2L:
             default:
-                logerror("PC {0}: warning - write {1} to reserved internal register {2}\n", GetClassInterface<device_state_interface>().pc(), data, offset);
+                logerror("PC {0}: warning - write {1} to reserved internal register {2}\n", state().pc(), data, offset);
                 break;
             }
         }
@@ -904,7 +902,7 @@ namespace mame
         //virtual uint64_t execute_clocks_to_cycles(uint64_t clocks) const override { return (clocks + 4 - 1) / 4; }
         //virtual uint64_t execute_cycles_to_clocks(uint64_t cycles) const override { return (cycles * 4); }
 
-        public new void device_execute_interface_execute_set_input(int irqline, int state)
+        new void device_execute_interface_execute_set_input(int irqline, int state)
         {
             switch (irqline)
             {
@@ -1146,20 +1144,20 @@ namespace mame
     }
 
 
-    class device_disasm_interface_m6803 : device_disasm_interface_m6801
-    {
-        public device_disasm_interface_m6803(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
-    }
-
-
     class m6803_cpu_device : m6801_cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6803, m6803_cpu_device, "m6803", "Motorola M6803")
         static device_t device_creator_m6803_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6803_cpu_device(mconfig, tag, owner, clock); }
         public static readonly device_type M6803 = DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola M6803");
+
+
+        class device_disasm_interface_m6803 : device_disasm_interface_m6801
+        {
+            public device_disasm_interface_m6803(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
+        }
+
 
         m6803_cpu_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
             : base(mconfig, M6803, tag, owner, clock, m6803_insn, cycles_6803, m6803_mem)

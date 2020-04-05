@@ -95,22 +95,23 @@ namespace mame
         //#undef assert_always
 
         //#if defined(MAME_DEBUG_FAST)
-        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("Fatal error: %s\nCaused by assert: %s:%d: %s", msg, __FILE__, __LINE__, #x); } while (0)
+        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("%s\nCaused by assert: %s:%d: %s", msg, __FILE__, __LINE__, #x); } while (0)
         //#elif defined(MAME_DEBUG)
-        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("Fatal error: %s\nCaused by assert: %s:%d: %s", msg, __FILE__, __LINE__, #x); } while (0)
+        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("%s\nCaused by assert: %s:%d: %s", msg, __FILE__, __LINE__, #x); } while (0)
         //#else
-        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("Fatal error: %s (%s:%d)", msg, __FILE__, __LINE__); } while (0)
+        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("%s (%s:%d)", msg, __FILE__, __LINE__); } while (0)
         //#endif
 
         [Conditional("DEBUG")]
         public static void assert(bool condition)
         {
             Debug.Assert(condition);
+        }
 
-            // Trace asserts are enabled in Release builds, unlike Debug.Assert()
-#if false
-            Trace.Assert(condition);
-#endif
+        [Conditional("DEBUG")]
+        public static void assert(bool condition, string message)
+        {
+            Debug.Assert(condition, message);
         }
 
         public static void assert_always(bool condition, string message)

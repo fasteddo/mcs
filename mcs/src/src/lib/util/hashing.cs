@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using ListBytes = mame.ListBase<System.Byte>;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -32,49 +33,49 @@ namespace mame.util
 
     // ======================> SHA-1
     // final digest
-    public class sha1_t
+    public class sha1_t : global_object
     {
         //static const sha1_t null;
 
 
-        uint8_t [] m_raw = new uint8_t[20];  //uint8_t m_raw[20];
+        ListBytes m_raw = new ListBytes();  //uint8_t m_raw[20];
 
 
-        public sha1_t() { }
+        public sha1_t() { m_raw.resize(20); }
 
 
         //bool operator==(const sha1_t &rhs) const { return memcmp(m_raw, rhs.m_raw, sizeof(m_raw)) == 0; }
         //bool operator!=(const sha1_t &rhs) const { return memcmp(m_raw, rhs.m_raw, sizeof(m_raw)) != 0; }
+        public static bool operator==(sha1_t left, sha1_t right) { return memcmp(left.m_raw, right.m_raw, (UInt32)left.m_raw.Count) == 0; }
+        public static bool operator!=(sha1_t left, sha1_t right) { return memcmp(left.m_raw, right.m_raw, (UInt32)left.m_raw.Count) != 0; }
 
-        public uint8_t [] op() { return m_raw; }  //operator UINT8 *() { return m_raw; }
+        public ListBytes op() { return m_raw; }  //operator UINT8 *() { return m_raw; }
 
 
         //-------------------------------------------------
         //  from_string - convert from a string
         //-------------------------------------------------
-        public bool from_string(string str, int length = -1)
+        public bool from_string(string string_, int length = -1)
         {
             // must be at least long enough to hold everything
-            for (int i = 0; i < 20; i++)
-                m_raw[i] = 0;
-
-            int strIndex = 0;
+            memset(m_raw, (uint8_t)0);
 
             if (length == -1)
-                length = str.Length;
+                length = strlen(string_);
 
-            if (length < 2 * 4/*sizeof(m_raw)*/)
+            if (length < 2 * m_raw.Count)  //if (length < 2 * sizeof(m_raw))
                 return false;
 
             // iterate through our raw buffer
-            for (int bytenum = 0; bytenum < 4/*sizeof(m_raw)*/; bytenum++)
+            int stringIdx = 0;
+            for (int i = 0; i < m_raw.Count; i++)  //for (auto & elem : m_raw)
             {
-                int upper = hashing_global.char_to_hex(str[strIndex++]);
-                int lower = hashing_global.char_to_hex(str[strIndex++]);
+                int upper = hashing_global.char_to_hex(string_[stringIdx++]);
+                int lower = hashing_global.char_to_hex(string_[stringIdx++]);
                 if (upper == -1 || lower == -1)
                     return false;
 
-                m_raw[bytenum] = (byte)(((byte)upper << 4) | (byte)lower);
+                m_raw[i] = (byte)((upper << 4) | lower);
             }
 
             return true;
@@ -86,8 +87,8 @@ namespace mame.util
         public string as_string()
         {
             string ret = "";
-            for (int i = 0; i < m_raw.Length; i++)
-                ret += string.Format("{0}", m_raw[i]); // "%02x", m_raw[i]);
+            for (int i = 0; i < m_raw.Count; i++)
+                ret += string.Format("{0:x2}", m_raw[i]); // "%02x", m_raw[i]);
 
             return ret;
         }
@@ -108,14 +109,14 @@ namespace mame.util
         void reset() { sha1_global.sha1_init(out m_context); }
 
         // append data
-        public void append(ListBytesPointer data, uint32_t length) { sha1_global.sha1_update(ref m_context, length, data); }
+        public void append(ListBytesPointer data, uint32_t length) { sha1_global.sha1_update(m_context, length, data); }
     
         // finalize and compute the final digest
         public sha1_t finish()
         {
             sha1_t result = new sha1_t();
-            sha1_global.sha1_final(ref m_context);
-            sha1_global.sha1_digest(m_context, result.op());
+            sha1_global.sha1_final(m_context);
+            sha1_global.sha1_digest(m_context, (UInt32)result.op().Count, new ListBytesPointer(result.op()));
             return result;
         }
 
@@ -146,6 +147,8 @@ namespace mame.util
 
         //constexpr bool operator==(const crc32_t &rhs) const { return m_raw == rhs.m_raw; }
         //constexpr bool operator!=(const crc32_t &rhs) const { return m_raw != rhs.m_raw; }
+        public static bool operator==(crc32_t left, crc32_t right) { return left.m_raw == right.m_raw; }
+        public static bool operator!=(crc32_t left, crc32_t right) { return left.m_raw != right.m_raw; }
 
         //crc32_t &operator=(const crc32_t &rhs) = default;
         //crc32_t &operator=(const uint32_t crc) { m_raw = crc; return *this; }
@@ -187,7 +190,7 @@ namespace mame.util
         //-------------------------------------------------
         public string as_string()
         {
-            return string.Format("{0}", m_raw);  // %08x", m_raw);
+            return string.Format("{0:x8}", m_raw);  // %08x", m_raw);
         }
     }
 

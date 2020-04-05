@@ -9,6 +9,7 @@ using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
+using u32 = System.UInt32;
 
 
 namespace mame
@@ -33,7 +34,7 @@ namespace mame
 
         int TOTAL_COLORS(int gfxn) { return (int)(gfxdecode.target.digfx.gfx(gfxn).colors() * gfxdecode.target.digfx.gfx(gfxn).granularity()); }
 
-        public void xevious_palette(palette_device palette)
+        void xevious_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
@@ -125,10 +126,10 @@ namespace mame
                We reproduce this here, but since the tilemap system automatically flips
                characters when screen is flipped, we have to flip them back. */
             byte color = (byte)(((attr & 0x03) << 4) | ((attr & 0x3c) >> 2));
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 0,
+            SET_TILE_INFO_MEMBER(ref tileinfo, 0,
                     (UInt32)(m_xevious_fg_videoram.target[tile_index] | (flip_screen() != 0 ? 0x100 : 0)),
                     color,
-                    (byte)(tilemap_global.TILE_FLIPYX((attr & 0xc0) >> 6) ^ (flip_screen() != 0 ? tilemap_global.TILE_FLIPX : 0)));
+                    (byte)(TILE_FLIPYX((attr & 0xc0) >> 6) ^ (flip_screen() != 0 ? TILE_FLIPX : 0)));
         }
 
         //TILE_GET_INFO_MEMBER(xevious_state::get_bg_tile_info)
@@ -137,10 +138,10 @@ namespace mame
             byte code = m_xevious_bg_videoram.target[tile_index];
             byte attr = m_xevious_bg_colorram.target[tile_index];
             byte color = (byte)(((attr & 0x3c) >> 2) | ((code & 0x80) >> 3) | ((attr & 0x03) << 5));
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 1,
+            SET_TILE_INFO_MEMBER(ref tileinfo, 1,
                     (UInt32)(code + ((attr & 0x01) << 8)),
                     color,
-                    (byte)(tilemap_global.TILE_FLIPYX((attr & 0xc0) >> 6)));
+                    (byte)(TILE_FLIPYX((attr & 0xc0) >> 6)));
         }
 
 
@@ -150,7 +151,7 @@ namespace mame
 
         ***************************************************************************/
         //VIDEO_START_MEMBER(xevious_state,xevious)
-        public void video_start_xevious()
+        void video_start_xevious()
         {
             m_bg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_bg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
             m_fg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_fg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
@@ -249,7 +250,7 @@ namespace mame
         }
 
 
-        public UInt32 screen_update_xevious(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        u32 screen_update_xevious(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             m_bg_tilemap.draw(screen, bitmap, cliprect, 0,0);
             draw_sprites(bitmap,cliprect);
@@ -264,35 +265,35 @@ namespace mame
         ***************************************************************************/
 
         //WRITE8_MEMBER( xevious_state::xevious_fg_videoram_w )
-        public void xevious_fg_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_fg_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_xevious_fg_videoram.target[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset);
         }
 
         //WRITE8_MEMBER( xevious_state::xevious_fg_colorram_w )
-        public void xevious_fg_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_fg_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_xevious_fg_colorram.target[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset);
         }
 
         //WRITE8_MEMBER( xevious_state::xevious_bg_videoram_w )
-        public void xevious_bg_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_bg_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_xevious_bg_videoram.target[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
         //WRITE8_MEMBER( xevious_state::xevious_bg_colorram_w )
-        public void xevious_bg_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_bg_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_xevious_bg_colorram.target[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
         //WRITE8_MEMBER( xevious_state::xevious_vh_latch_w )
-        public void xevious_vh_latch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_vh_latch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             int reg;
             int scroll = (int)(data + ((offset&0x01)<<8));   /* A0 -> D8 */
@@ -325,13 +326,13 @@ namespace mame
 
         /* emulation for schematic 9B */
         //WRITE8_MEMBER( xevious_state::xevious_bs_w )
-        public void xevious_bs_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_bs_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_xevious_bs[offset & 1] = data;
         }
 
         //READ8_MEMBER( xevious_state::xevious_bb_r )
-        public u8 xevious_bb_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 xevious_bb_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             ListBytesPointer rom2a = new ListBytesPointer(memregion("gfx4").base_());  //uint8_t *rom2a = memregion("gfx4")->base();
             ListBytesPointer rom2b = new ListBytesPointer(rom2a, 0x1000);  //uint8_t *rom2b = rom2a+0x1000;

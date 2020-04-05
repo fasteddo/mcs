@@ -1,6 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
+//#define ASSERT_SLOW
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,6 +18,7 @@ using ioport_value = System.UInt32;
 using ListBytes = mame.ListBase<System.Byte>;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -24,8 +27,6 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
-
-//#define ASSERT_SLOW
 
 
 namespace mame
@@ -41,7 +42,9 @@ namespace mame
             address_map_entry m_helper_curentry = null;
             address_map m_helper_map = null;
             ioport_configurer m_helper_configurer = null;
-            netlist.setup_t m_helper_setup = null;
+            ioport_list m_helper_portlist = null;
+            bool m_helper_originated_from_port_include = false;
+            netlist.nlparse_t m_helper_setup = null;
 
             public machine_config helper_config { get { return m_helper_config; } set { m_helper_config = value; } }
             public device_t helper_owner { get { return m_helper_owner; } set { m_helper_owner = value; } }
@@ -49,7 +52,9 @@ namespace mame
             public address_map_entry helper_curentry { set { m_helper_curentry = value; } }
             public address_map helper_address_map { set { m_helper_map = value; } }
             public ioport_configurer helper_configurer { get { return m_helper_configurer; } set { m_helper_configurer = value; } }
-            public netlist.setup_t helper_setup { get { return m_helper_setup; } set { m_helper_setup = value; } }
+            public ioport_list helper_portlist { get { return m_helper_portlist; } set { m_helper_portlist = value; } }
+            public bool helper_originated_from_port_include { get { return m_helper_originated_from_port_include; } set { m_helper_originated_from_port_include = value; } }
+            public netlist.nlparse_t helper_setup { get { return m_helper_setup; } set { m_helper_setup = value; } }
         }
 
         protected helpers m_globals = new helpers();
@@ -58,6 +63,10 @@ namespace mame
         // _74259
         protected static ls259_device LS259(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ls259_device>(mconfig, tag, ls259_device.LS259, clock); }
         protected static ls259_device LS259(machine_config mconfig, device_finder<ls259_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, ls259_device.LS259, clock); }
+
+
+        // attotime
+        protected static attoseconds_t ATTOSECONDS_IN_USEC(u32 x) { return attotime.ATTOSECONDS_IN_USEC(x); }
 
 
         // ay8910
@@ -106,6 +115,10 @@ namespace mame
         protected const int CROSSHAIR_RAW_ROWBYTES = crsshair_global.CROSSHAIR_RAW_ROWBYTES;
 
 
+        // dac
+        protected static dac_8bit_r2r_device DAC_8BIT_R2R(machine_config mconfig, device_finder<dac_8bit_r2r_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
+
+
         // devcb
         protected static read_line_delegate READLINE(string tag, read_line_delegate func) { return devcb_global.DEVCB_READLINE(tag, func); }
         protected static read_line_delegate READLINE(read_line_delegate func) { return devcb_global.DEVCB_READLINE(func); }
@@ -132,6 +145,7 @@ namespace mame
         protected void MCFG_DEVICE_DISABLE() { diexec_global.MCFG_DEVICE_DISABLE(m_globals.helper_device); }
         protected void MCFG_DEVICE_VBLANK_INT_DRIVER(string tag, device_interrupt_delegate func) { diexec_global.MCFG_DEVICE_VBLANK_INT_DRIVER(m_globals.helper_device, tag, func); }
         protected void MCFG_DEVICE_PERIODIC_INT_DRIVER(device_interrupt_delegate func, int rate) { diexec_global.MCFG_DEVICE_PERIODIC_INT_DRIVER(m_globals.helper_device, func, rate); }
+        protected void MCFG_DEVICE_PERIODIC_INT_DRIVER(device_interrupt_delegate func, XTAL rate) { diexec_global.MCFG_DEVICE_PERIODIC_INT_DRIVER(m_globals.helper_device, func, rate); }
 
 
         // digfx
@@ -171,6 +185,12 @@ namespace mame
         protected static discrete_sound_device DISCRETE(machine_config mconfig, string tag, discrete_block [] intf)
         {
             var device = emu.detail.device_type_impl.op<discrete_sound_device>(mconfig, tag, discrete_sound_device.DISCRETE, 0);
+            device.set_intf(intf);
+            return device;
+        }
+        protected static discrete_sound_device DISCRETE(machine_config mconfig, device_finder<discrete_sound_device> finder, discrete_block [] intf)
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0);
             device.set_intf(intf);
             return device;
         }
@@ -266,6 +286,7 @@ namespace mame
         protected const int DISCRETE_MAX_OUTPUTS = discrete_global.DISCRETE_MAX_OUTPUTS;
         protected const int DISCRETE_MAX_TASK_GROUPS = discrete_global.DISCRETE_MAX_TASK_GROUPS;
         protected static double RC_CHARGE_EXP_DT(double rc, double dt) { return discrete_global.RC_CHARGE_EXP_DT(rc, dt); }
+        protected const double DEFAULT_TTL_V_LOGIC_1 = discrete_global.DEFAULT_TTL_V_LOGIC_1;
         protected const double DISC_LINADJ = discrete_global.DISC_LINADJ;
         protected const int DISC_CLK_MASK = discrete_global.DISC_CLK_MASK;
         protected const int DISC_CLK_ON_F_EDGE = discrete_global.DISC_CLK_ON_F_EDGE;
@@ -343,7 +364,7 @@ namespace mame
         protected const int DEFAULT_555_VALUES_1 = discrete_global.DEFAULT_555_VALUES_1;
         protected const int DEFAULT_555_VALUES_2 = discrete_global.DEFAULT_555_VALUES_2;
         protected const int DEFAULT_555_CC_SOURCE = discrete_global.DEFAULT_555_CC_SOURCE;
-        protected static discrete_block DISCRETE_SOUND_END() { return discrete_global.DISCRETE_SOUND_END(); }
+        protected static discrete_block DISCRETE_SOUND_END { get { return discrete_global.DISCRETE_SOUND_END; } }
         protected static discrete_block DISCRETE_ADJUSTMENT(int NODE, double MIN, double MAX, double LOGLIN, string TAG)  { return discrete_global.DISCRETE_ADJUSTMENT(NODE, MIN, MAX, LOGLIN, TAG); }
         protected static discrete_block DISCRETE_INPUT_DATA(int NODE) { return discrete_global.DISCRETE_INPUT_DATA(NODE); }
         protected static discrete_block DISCRETE_INPUTX_DATA(int NODE, double GAIN, double OFFSET, double INIT) { return discrete_global.DISCRETE_INPUTX_DATA(NODE, GAIN, OFFSET, INIT); }
@@ -428,6 +449,8 @@ namespace mame
             device.gfxdecode_device_after_ctor(palette, gfxinfo);
             return device;
         }
+        protected static void copyscrollbitmap(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect) { drawgfx_global.copyscrollbitmap(dest, src, numrows, rowscroll, numcols, colscroll, cliprect); }
+        protected static void copyscrollbitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen) { drawgfx_global.copyscrollbitmap_trans(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
 
 
         // driver
@@ -460,8 +483,10 @@ namespace mame
         protected const UInt32 ROT270 = emucore_global.ROT270;
         public static void fatalerror(string format, params object [] args) { emucore_global.fatalerror(format, args); }
         [Conditional("DEBUG")] public static void assert(bool condition) { emucore_global.assert(condition); }
-        [Conditional("ASSERT_SLOW")][Conditional("DEBUG")] protected static void assert_slow(bool condition) { emucore_global.assert(condition); }
+        [Conditional("DEBUG")] public static void assert(bool condition, string message) { emucore_global.assert(condition, message); }
+        [Conditional("ASSERT_SLOW")] protected static void assert_slow(bool condition) { emucore_global.assert(condition); }
         public static void assert_always(bool condition, string message) { emucore_global.assert_always(condition, message); }
+        [Conditional("DEBUG")] public static void static_assert(bool condition, string message) { assert(condition, message); }
 
 
         // emumem
@@ -500,6 +525,7 @@ namespace mame
             device.palette_device_after_ctor(init, entries, indirect);
             return device;
         }
+        protected void MCFG_PALETTE_ADD(string tag, u32 entries) { emupal_global.MCFG_PALETTE_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag, entries); }
 
 
         // er2055
@@ -555,6 +581,11 @@ namespace mame
         protected static readonly input_code KEYCODE_F1 = input_global.KEYCODE_F1;
 
 
+        // input_merger
+        protected static input_merger_device INPUT_MERGER_ANY_HIGH(machine_config mconfig, device_finder<input_merger_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
+        protected static input_merger_device INPUT_MERGER_ALL_HIGH(machine_config mconfig, device_finder<input_merger_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_all_high_device.INPUT_MERGER_ALL_HIGH, clock); }
+
+
         // ioport
         protected const ioport_value IP_ACTIVE_HIGH = ioport_global.IP_ACTIVE_HIGH;
         protected const ioport_value IP_ACTIVE_LOW = ioport_global.IP_ACTIVE_LOW;
@@ -565,6 +596,7 @@ namespace mame
         protected const ioport_type IPT_START2 = ioport_type.IPT_START2;
         protected const ioport_type IPT_COIN1 = ioport_type.IPT_COIN1;
         protected const ioport_type IPT_COIN2 = ioport_type.IPT_COIN2;
+        protected const ioport_type IPT_COIN3 = ioport_type.IPT_COIN3;
         protected const ioport_type IPT_SERVICE1 = ioport_type.IPT_SERVICE1;
         protected const ioport_type IPT_SERVICE = ioport_type.IPT_SERVICE;
         protected const ioport_type IPT_TILT = ioport_type.IPT_TILT;
@@ -589,6 +621,8 @@ namespace mame
         public const INPUT_STRING Coinage = INPUT_STRING.INPUT_STRING_Coinage;
         public const INPUT_STRING Coin_A = INPUT_STRING.INPUT_STRING_Coin_A;
         public const INPUT_STRING Coin_B = INPUT_STRING.INPUT_STRING_Coin_B;
+        protected const INPUT_STRING _9C_1C = INPUT_STRING.INPUT_STRING_9C_1C;
+        protected const INPUT_STRING _8C_1C = INPUT_STRING.INPUT_STRING_8C_1C;
         public const INPUT_STRING _7C_1C = INPUT_STRING.INPUT_STRING_7C_1C;
         public const INPUT_STRING _6C_1C = INPUT_STRING.INPUT_STRING_6C_1C;
         public const INPUT_STRING _5C_1C = INPUT_STRING.INPUT_STRING_5C_1C;
@@ -618,6 +652,7 @@ namespace mame
         protected const INPUT_STRING Italian = INPUT_STRING.INPUT_STRING_Italian;
         protected const INPUT_STRING Korean = INPUT_STRING.INPUT_STRING_Korean;
         protected const INPUT_STRING Spanish = INPUT_STRING.INPUT_STRING_Spanish;
+        protected const INPUT_STRING Easiest = INPUT_STRING.INPUT_STRING_Easiest;
         protected const INPUT_STRING Easy = INPUT_STRING.INPUT_STRING_Easy;
         protected const INPUT_STRING Normal = INPUT_STRING.INPUT_STRING_Normal;
         protected const INPUT_STRING Medium = INPUT_STRING.INPUT_STRING_Medium;
@@ -626,16 +661,37 @@ namespace mame
         protected const INPUT_STRING Difficult = INPUT_STRING.INPUT_STRING_Difficult;
         protected const INPUT_STRING Very_Difficult = INPUT_STRING.INPUT_STRING_Very_Difficult;
         protected const INPUT_STRING Allow_Continue = INPUT_STRING.INPUT_STRING_Allow_Continue;
+        protected const INPUT_STRING Unused = INPUT_STRING.INPUT_STRING_Unused;
+        protected const INPUT_STRING Unknown = INPUT_STRING.INPUT_STRING_Unknown;
         protected const INPUT_STRING Alternate = INPUT_STRING.INPUT_STRING_Alternate;
         protected const INPUT_STRING None = INPUT_STRING.INPUT_STRING_None;
         protected void INPUT_PORTS_START(device_t owner, ioport_list portlist, ref string errorbuf)
         {
-            ioport_configurer configurer = new ioport_configurer(owner, portlist, ref errorbuf);
-            m_globals.helper_configurer = configurer;
-            m_globals.helper_owner = owner;
+            // if we're inside PORT_INCLUDE, we already have a configurer, and don't need to create a new one
+            if (!m_globals.helper_originated_from_port_include)
+            {
+                ioport_configurer configurer = new ioport_configurer(owner, portlist, ref errorbuf);
+                m_globals.helper_configurer = configurer;
+                m_globals.helper_owner = owner;
+                m_globals.helper_portlist = portlist;
+            }
         }
-        protected void INPUT_PORTS_END() { m_globals.helper_configurer = null; m_globals.helper_owner = null; }
-        protected void PORT_INCLUDE(ioport_constructor name, device_t owner, ioport_list portlist, ref string errorbuf) { ioport_global.PORT_INCLUDE(name, owner, portlist, ref errorbuf); }
+        protected void INPUT_PORTS_END()
+        {
+            // if we're inside PORT_INCLUDE, don't null out our helper variables, we need them still
+            if (!m_globals.helper_originated_from_port_include)
+            {
+                m_globals.helper_configurer = null;
+                m_globals.helper_owner = null;
+                m_globals.helper_portlist = null;
+            }
+        }
+        protected void PORT_INCLUDE(ioport_constructor name, ref string errorbuf)
+        {
+            m_globals.helper_originated_from_port_include = true;
+            ioport_global.PORT_INCLUDE(name, m_globals.helper_owner, m_globals.helper_portlist, ref errorbuf);
+            m_globals.helper_originated_from_port_include = false;
+        }
         protected void PORT_START(string tag) { ioport_global.PORT_START(m_globals.helper_configurer, tag); }
         protected void PORT_MODIFY(string tag) { ioport_global.PORT_MODIFY(m_globals.helper_configurer, tag); }
         protected void PORT_BIT(ioport_value mask, ioport_value default_, ioport_type type) { ioport_global.PORT_BIT(m_globals.helper_configurer, mask, default_, type); }
@@ -690,17 +746,15 @@ namespace mame
 
 
         // mconfig
-        protected void MACHINE_CONFIG_START(machine_config config, device_t device)
+        protected void MACHINE_CONFIG_START(machine_config config)
         {
             //device_t *device = nullptr; \
             //devcb_base *devcb = nullptr; \
             //(void)device; \
             //(void)devcb;
 
-            assert(device != null);
-
             m_globals.helper_config = config;
-            m_globals.helper_owner = device;  // after we create the device, the owner becomes the device so that children are created under it.
+            m_globals.helper_owner = (device_t)this;  // after we create the device, the owner becomes the device so that children are created under it.
             m_globals.helper_device = null;
 
             mconfig_global.MACHINE_CONFIG_START();
@@ -716,13 +770,11 @@ namespace mame
             m_globals.helper_device = null;
         }
 
-        protected void MCFG_QUANTUM_TIME(attotime time) { mconfig_global.MCFG_QUANTUM_TIME(m_globals.helper_config, time); }
         protected void MCFG_DEVICE_ADD(string tag, device_type type, u32 clock = 0) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag, type, clock); }
         protected void MCFG_DEVICE_ADD(string tag, device_type type, XTAL clock) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag, type, clock); }
         protected void MCFG_DEVICE_ADD(device_finder<cpu_device> finder, device_type type, XTAL clock) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, finder.tag(), type, clock); finder.target = (cpu_device)m_globals.helper_device; }
-        protected void MCFG_DEVICE_ADD_discrete_sound_device(discrete_block [] intf) { ((discrete_sound_device)m_globals.helper_device).discrete_sound_device_after_ctor(intf); }
-        protected void MCFG_DEVICE_ADD_gfxdecode_device(string tag, gfx_decode_entry [] gfxinfo) { ((gfxdecode_device)m_globals.helper_device).gfxdecode_device_after_ctor(tag, gfxinfo); }
-        protected speaker_device SPEAKER(machine_config mconfig, string tag) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, mconfig, m_globals.helper_owner, tag, speaker_device.SPEAKER, 0); return (speaker_device)m_globals.helper_device; }  // alias for device_type_impl<DeviceClass>::operator()
+        protected void MCFG_DEVICE_ADD(string tag, device_type type, string palette_tag, gfx_decode_entry [] gfxinfo) { MCFG_DEVICE_ADD(tag, type); ((gfxdecode_device)m_globals.helper_device).gfxdecode_device_after_ctor(palette_tag, gfxinfo); }
+        protected void MCFG_DEVICE_ADD(string tag, device_type type, discrete_block [] intf) { MCFG_DEVICE_ADD(tag, type); ((discrete_sound_device)m_globals.helper_device).discrete_sound_device_after_ctor(intf); }
         protected void MCFG_DEVICE_MODIFY(string tag) { mconfig_global.MCFG_DEVICE_MODIFY(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag); }
 
 
@@ -732,6 +784,10 @@ namespace mame
 
         // m6801
         protected static cpu_device M6803(machine_config mconfig, device_finder<cpu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
+
+
+        // m68705
+        protected static m68705p_device M68705P5(machine_config mconfig, device_finder<m68705p_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, m68705p5_device.M68705P5, clock); }
 
 
         // machine
@@ -787,7 +843,7 @@ namespace mame
 
 
         // netlist
-        protected void MCFG_NETLIST_SETUP(setup_func setup) { netlist_global.MCFG_NETLIST_SETUP(m_globals.helper_device, setup); }
+        protected void MCFG_NETLIST_SETUP(func_type setup) { netlist_global.MCFG_NETLIST_SETUP(m_globals.helper_device, setup); }
         protected void MCFG_NETLIST_ANALOG_MULT_OFFSET(double mult, double offset) { netlist_global.MCFG_NETLIST_ANALOG_MULT_OFFSET(m_globals.helper_device, mult, offset); }
         protected void MCFG_NETLIST_STREAM_INPUT(string basetag, int chan, string name) { netlist_global.MCFG_NETLIST_STREAM_INPUT(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, basetag, chan, name); }
         protected void MCFG_NETLIST_STREAM_OUTPUT(string basetag, int chan, string name) { netlist_global.MCFG_NETLIST_STREAM_OUTPUT(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, basetag, chan, name); }
@@ -797,7 +853,7 @@ namespace mame
         protected void NET_C(params string [] term1) { netlist.nl_setup_global.NET_C(m_globals.helper_setup, term1); }
         protected void PARAM(string name, int val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
         protected void PARAM(string name, double val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
-        protected void NETLIST_START(netlist.setup_t setup) { m_globals.helper_setup = setup;  netlist.nl_setup_global.NETLIST_START(); }
+        protected void NETLIST_START(netlist.nlparse_t setup) { m_globals.helper_setup = setup;  netlist.nl_setup_global.NETLIST_START(); }
         protected void NETLIST_END() { m_globals.helper_setup = null;  netlist.nl_setup_global.NETLIST_END(); }
 
 
@@ -852,7 +908,6 @@ namespace mame
 
         // pokey
         protected static pokey_device POKEY(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
-        protected void MCFG_POKEY_OUTPUT_OPAMP_LOW_PASS(double _R, double _C, double _V) { pokey_global.MCFG_POKEY_OUTPUT_OPAMP_LOW_PASS(m_globals.helper_device, _R, _C, _V); }
 
 
         // render
@@ -890,14 +945,14 @@ namespace mame
         protected static int compute_res_net(int inputs, int channel, res_net_info di) { return resnet_global.compute_res_net(inputs, channel, di); }
         protected static void compute_res_net_all(out std.vector<rgb_t> rgb, ListBytesPointer prom, res_net_decode_info rdi, res_net_info di) { resnet_global.compute_res_net_all(out rgb, prom, rdi, di); }
         protected static double compute_resistor_weights(int minval, int maxval, double scaler, int count_1, int [] resistances_1, out double [] weights_1, int pulldown_1, int pullup_1, int count_2, int [] resistances_2, out double [] weights_2, int pulldown_2, int pullup_2, int count_3, int [] resistances_3, out double [] weights_3, int pulldown_3, int pullup_3 ) { return resnet_global.compute_resistor_weights(minval, maxval, scaler, count_1, resistances_1, out weights_1, pulldown_1, pullup_1, count_2, resistances_2, out weights_2, pulldown_2, pullup_2, count_3, resistances_3, out weights_3, pulldown_3, pullup_3); }
-        protected static int combine_3_weights(double [] tab, int w0, int w1, int w2) { return resnet_global.combine_3_weights(tab, w0, w1, w2); }
-        protected static int combine_2_weights(double [] tab, int w0, int w1) { return resnet_global.combine_2_weights(tab, w0, w1); }
+        protected static int combine_weights(double [] tab, int w0, int w1, int w2) { return resnet_global.combine_weights(tab, w0, w1, w2); }
+        protected static int combine_weights(double [] tab, int w0, int w1) { return resnet_global.combine_weights(tab, w0, w1); }
 
 
         // romentry
         protected static readonly UInt32 ROMREGION_ERASE00 = romentry_global.ROMREGION_ERASE00;
         protected static readonly UInt32 ROMREGION_ERASEFF = romentry_global.ROMREGION_ERASEFF;
-        protected static tiny_rom_entry ROM_END() { return romentry_global.ROM_END(); }
+        protected static tiny_rom_entry ROM_END { get { return romentry_global.ROM_END; } }
         protected static tiny_rom_entry ROM_REGION(UInt32 length, string tag, UInt32 flags) { return romentry_global.ROM_REGION(length, tag, flags); }
         protected static tiny_rom_entry ROM_LOAD(string name, UInt32 offset, UInt32 length, string hash) { return romentry_global.ROM_LOAD(name, offset, length, hash); }
         protected static tiny_rom_entry ROM_FILL(UInt32 offset, UInt32 length, byte value) { return romentry_global.ROM_FILL(offset, length, value); }
@@ -948,13 +1003,26 @@ namespace mame
         protected void MCFG_SCREEN_PALETTE(finder_base palette) { screen_global.MCFG_SCREEN_PALETTE(m_globals.helper_device, palette); }
 
 
+        // speaker
+        protected speaker_device SPEAKER(machine_config mconfig, string tag) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, mconfig, m_globals.helper_owner, tag, speaker_device.SPEAKER, 0); return (speaker_device)m_globals.helper_device; }  // alias for device_type_impl<DeviceClass>::operator()
+
+
         // strformat
         public static string string_format(string format, params object [] args) { return strformat_global.string_format(format, args); }
 
 
+        // taitosjsec
+        protected static taito_sj_security_mcu_device TAITO_SJ_SECURITY_MCU(machine_config mconfig, device_finder<taito_sj_security_mcu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, taito_sj_security_mcu_device.TAITO_SJ_SECURITY_MCU, clock); }
+
+
         // tilemap
+        protected const u32 TILEMAP_DRAW_OPAQUE = tilemap_global.TILEMAP_DRAW_OPAQUE;
+        protected const u8 TILE_FLIPX = tilemap_global.TILE_FLIPX;
+        protected const u8 TILE_FORCE_LAYER0 = tilemap_global.TILE_FORCE_LAYER0;
         protected const u32 TILEMAP_FLIPX = tilemap_global.TILEMAP_FLIPX;
         protected const u32 TILEMAP_FLIPY = tilemap_global.TILEMAP_FLIPY;
+        protected static void SET_TILE_INFO_MEMBER(ref tile_data tileinfo, u8 GFX, u32 CODE, u32 COLOR, u8 FLAGS) { tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, GFX, CODE, COLOR, FLAGS); }
+        protected static int TILE_FLIPYX(int YX) { return tilemap_global.TILE_FLIPYX(YX); }
 
 
         // timer
@@ -1031,13 +1099,16 @@ namespace mame
 
 
         // c++ math.h
+        protected static float floor(float x) { return (float)Math.Floor(x); }
+        protected static double floor(double x) { return Math.Floor(x); }
         protected static int lround(double x) { return (int)Math.Round(x, MidpointRounding.AwayFromZero); }
 
 
         // c++ stdio.h
+        protected static int memcmp<T>(ListBase<T> ptr1, ListBase<T> ptr2, UInt32 num) { return ptr1.compare(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
         protected static int memcmp<T>(ListPointer<T> ptr1, ListPointer<T> ptr2, UInt32 num) { return ptr1.compare(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
-        protected static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
-        protected static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
+        public static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
+        public static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
         public static void memset<T>(ListBase<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
         protected static void memset<T>(ListBase<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
         protected static void memset<T>(ListPointer<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
@@ -1076,6 +1147,8 @@ namespace mame
         public static float fabs(float arg) { return Math.Abs(arg); }
         public static double fabs(double arg) { return Math.Abs(arg); }
         public static double floor(double arg) { return Math.Floor(arg); }
+        public static float sqrt(float arg) { return (float)Math.Sqrt(arg); }
+        public static double sqrt(double arg) { return Math.Sqrt(arg); }
 
 
         // c++ cstring
@@ -1290,6 +1363,17 @@ namespace mame
         public virtual T this[u32 index] { get { return this[(int)index]; } set { this[(int)index] = value; } }
 
 
+        public virtual bool compare(ListBase<T> right, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (!this[i].Equals(right[i]))
+                    return false;
+            }
+            return true;
+        }
+
+
         public virtual void copy(int destStart, int srcStart, ListBase<T> src, int count)
         {
             if (this != src)
@@ -1358,11 +1442,11 @@ namespace mame
         public virtual T this[UInt32 i] { get { return m_list[m_offset + (int)i]; } set { m_list[m_offset + (int)i] = value; } }
 
 
-        public static ListPointer<T> operator +(ListPointer<T> left, int right) { left.m_offset += right; return left; }
-        public static ListPointer<T> operator +(ListPointer<T> left, UInt32 right) { left.m_offset += (int)right; return left; }
+        public static ListPointer<T> operator +(ListPointer<T> left, int right) { return new ListPointer<T>(left, right); }
+        public static ListPointer<T> operator +(ListPointer<T> left, UInt32 right) { return new ListPointer<T>(left, (int)right); }
         public static ListPointer<T> operator ++(ListPointer<T> left) { left.m_offset++; return left; }
-        public static ListPointer<T> operator -(ListPointer<T> left, int right) { left.m_offset -= right; return left; }
-        public static ListPointer<T> operator -(ListPointer<T> left, UInt32 right) { left.m_offset -= (int)right; return left; }
+        public static ListPointer<T> operator -(ListPointer<T> left, int right) { return new ListPointer<T>(left, -right); }
+        public static ListPointer<T> operator -(ListPointer<T> left, UInt32 right) { return new ListPointer<T>(left, -(int)right); }
         public static ListPointer<T> operator --(ListPointer<T> left) { left.m_offset--; return left; }
 
 
@@ -1412,26 +1496,36 @@ namespace mame
 
         public new RawBuffer Buffer { get { return (RawBuffer)m_list; } }
 
-        public static RawBufferPointer operator +(RawBufferPointer left, int right) { left.m_offset += right; return left; }
-        public static RawBufferPointer operator +(RawBufferPointer left, UInt32 right) { left.m_offset += (int)right; return left; }
+        public static RawBufferPointer operator +(RawBufferPointer left, int right) { return new RawBufferPointer(left, right); }
+        public static RawBufferPointer operator +(RawBufferPointer left, UInt32 right) { return new RawBufferPointer(left, (int)right); }
         public static RawBufferPointer operator ++(RawBufferPointer left) { left.m_offset++; return left; }
-        public static RawBufferPointer operator -(RawBufferPointer left, int right) { left.m_offset -= right; return left; }
-        public static RawBufferPointer operator -(RawBufferPointer left, UInt32 right) { left.m_offset -= (int)right; return left; }
+        public static RawBufferPointer operator -(RawBufferPointer left, int right) { return new RawBufferPointer(left, -right); }
+        public static RawBufferPointer operator -(RawBufferPointer left, UInt32 right) { return new RawBufferPointer(left, -(int)right); }
         public static RawBufferPointer operator --(RawBufferPointer left) { left.m_offset--; return left; }
 
-        public void set_uint8(byte value) { set_uint8(0, value); }
-        public void set_uint16(UInt16 value) { set_uint16(0, value); }
-        public void set_uint32(UInt32 value) { set_uint32(0, value); }
-        public void set_uint64(UInt64 value) { set_uint64(0, value); }
+        // set the unit value at the current set offset, using an offset in byte units
+        public void set_uint8_offs8(byte value) { ((RawBuffer)m_list).set_uint8(m_offset, value); }
+        public void set_uint16_offs8(UInt16 value) { ((RawBuffer)m_list).set_uint16(m_offset / 2, value); }
+        public void set_uint32_offs8(UInt32 value) { ((RawBuffer)m_list).set_uint32(m_offset / 4, value); }
+        public void set_uint64_offs8(UInt64 value) { ((RawBuffer)m_list).set_uint64(m_offset / 8, value); }
+        // offset parameter is based on unit size for each function, not based on byte size.  eg, set_uint16 offset is in uint16 units
+        // Note the different behavior of get_uint16_offs8() vs get_uint16(0)
         public void set_uint8(int offset8, byte value) { ((RawBuffer)m_list).set_uint8(m_offset + offset8, value); }
         public void set_uint16(int offset16, UInt16 value) { ((RawBuffer)m_list).set_uint16(m_offset + offset16, value); }
         public void set_uint32(int offset32, UInt32 value) { ((RawBuffer)m_list).set_uint32(m_offset + offset32, value); }
         public void set_uint64(int offset64, UInt64 value) { ((RawBuffer)m_list).set_uint64(m_offset + offset64, value); }
 
-        public byte get_uint8(int offset8 = 0) { return ((RawBuffer)m_list).get_uint8(m_offset + offset8); }
-        public UInt16 get_uint16(int offset16 = 0) { return ((RawBuffer)m_list).get_uint16(m_offset + offset16); }
-        public UInt32 get_uint32(int offset32 = 0) { return ((RawBuffer)m_list).get_uint32(m_offset + offset32); }
-        public UInt64 get_uint64(int offset64 = 0) { return ((RawBuffer)m_list).get_uint64(m_offset + offset64); }
+        // get the unit value at the current set offset, using an offset in byte units
+        public byte get_uint8_offs8() { return ((RawBuffer)m_list).get_uint8(m_offset); }
+        public UInt16 get_uint16_offs8() { return ((RawBuffer)m_list).get_uint16(m_offset / 2); }
+        public UInt32 get_uint32_offs8() { return ((RawBuffer)m_list).get_uint32(m_offset / 4); }
+        public UInt64 get_uint64_offs8() { return ((RawBuffer)m_list).get_uint64(m_offset / 8); }
+        // offset parameter is based on unit size for each function, not based on byte size.  eg, get_uint16 offset is in uint16 units
+        // Note the different behavior of get_uint16_offs8() vs get_uint16(0)
+        public byte get_uint8(int offset8) { return ((RawBuffer)m_list).get_uint8(m_offset + offset8); }
+        public UInt16 get_uint16(int offset16) { return ((RawBuffer)m_list).get_uint16(m_offset + offset16); }
+        public UInt32 get_uint32(int offset32) { return ((RawBuffer)m_list).get_uint32(m_offset + offset32); }
+        public UInt64 get_uint64(int offset64) { return ((RawBuffer)m_list).get_uint64(m_offset + offset64); }
 
         public bool equals(string compareTo) { return equals(0, compareTo); }
         public bool equals(int startOffset, string compareTo) { return equals(startOffset, compareTo.ToCharArray()); }
@@ -1447,24 +1541,18 @@ namespace mame
         [StructLayout(LayoutKind.Explicit)]
         struct RawBufferData
         {
-            [FieldOffset(0)]
-            public byte[] m_byte;
-
-            [FieldOffset(0)]
-            public UInt16[] m_uint16;
-
-            [FieldOffset(0)]
-            public UInt32[] m_uint32;
-
-            [FieldOffset(0)]
-            public UInt64[] m_uint64;
+            // these are unioned so that we can access different sizes directly.
+            [FieldOffset(0)] public byte   [] m_uint8;
+            [FieldOffset(0)] public UInt16 [] m_uint16; 
+            [FieldOffset(0)] public UInt32 [] m_uint32; 
+            [FieldOffset(0)] public UInt64 [] m_uint64;
         }
 
         RawBufferData m_bufferData = new RawBufferData();
         int m_actualLength = 0;
 
 
-        public RawBuffer() { m_bufferData.m_byte = new byte [0]; }
+        public RawBuffer() { m_bufferData.m_uint8 = new byte [0]; }
         public RawBuffer(int size) : this() { resize(size); }
         public RawBuffer(UInt32 size) : this((int)size) { }
 
@@ -1475,7 +1563,7 @@ namespace mame
         public override byte this[int index] { get { return get_uint8(index); } set { set_uint8(index, value); } }
 
         public override int Count { get { return m_actualLength; } }
-        public override int Capacity { get { return m_bufferData.m_byte.Length; } set { } }
+        public override int Capacity { get { return m_bufferData.m_uint8.Length; } set { } }
 
 
         public override void Add(byte item)
@@ -1483,14 +1571,14 @@ namespace mame
             if (Capacity <= Count + 1)
             {
                 int newSize = Math.Min(Count + 1024, (Count + 1) * 2);  // cap the growth
-                Array.Resize(ref m_bufferData.m_byte, newSize);
+                Array.Resize(ref m_bufferData.m_uint8, newSize);
             }
 
-            m_bufferData.m_byte[m_actualLength] = item;
+            m_bufferData.m_uint8[m_actualLength] = item;
             m_actualLength++;
         }
 
-        public override void Clear() { m_bufferData.m_byte = new byte [0];  m_actualLength = 0; }
+        public override void Clear() { m_bufferData.m_uint8 = new byte [0];  m_actualLength = 0; }
 
         public override bool Contains(byte item) { throw new emu_unimplemented(); }
 
@@ -1498,7 +1586,7 @@ namespace mame
 
         public override void CopyTo(int index, byte[] array, int arrayIndex, int count)
         {
-            Array.Copy(m_bufferData.m_byte, index, array, arrayIndex, count);
+            Array.Copy(m_bufferData.m_uint8, index, array, arrayIndex, count);
         }
 
         public override byte Find(Predicate<byte> match) { throw new emu_unimplemented(); }
@@ -1514,10 +1602,10 @@ namespace mame
         public override void RemoveAt(int index)
         {
             if (index > 0)
-                Array.Copy(m_bufferData.m_byte, 0, m_bufferData.m_byte, 0, index);
+                Array.Copy(m_bufferData.m_uint8, 0, m_bufferData.m_uint8, 0, index);
 
             if (index < Count - 1)
-                Array.Copy(m_bufferData.m_byte, index + 1, m_bufferData.m_byte, index, Count - index - 1);
+                Array.Copy(m_bufferData.m_uint8, index + 1, m_bufferData.m_uint8, index, Count - index - 1);
 
             m_actualLength--;
         }
@@ -1578,7 +1666,7 @@ namespace mame
         {
             assert_slow(offset8 < Count);
 
-            m_bufferData.m_byte[offset8] = value;
+            m_bufferData.m_uint8[offset8] = value;
         }
 
         public void set_uint16(int offset16, UInt16 value)
@@ -1620,7 +1708,7 @@ namespace mame
         {
             assert_slow(offset8 < Count);
 
-            return m_bufferData.m_byte[offset8];
+            return m_bufferData.m_uint8[offset8];
         }
 
         public UInt16 get_uint16(int offset16 = 0)

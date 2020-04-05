@@ -21,15 +21,13 @@ namespace mame.netlist
             detail.core_terminal_t m_proxy_term;
 
 
-            protected nld_base_proxy(netlist_base_t anetlist, string name, logic_t inout_proxied, detail.core_terminal_t proxy_inout)
+            protected nld_base_proxy(netlist_state_t anetlist, string name, logic_t inout_proxied, detail.core_terminal_t proxy_inout)
                 : base(anetlist, name)
             {
                 m_logic_family = inout_proxied.logic_family();
                 m_term_proxied = inout_proxied;
                 m_proxy_term = proxy_inout;
             }
-
-            //~nld_base_proxy() { }
 
 
             protected detail.core_terminal_t proxy_term_prop { get { return m_proxy_term; } set { m_proxy_term = value; } }
@@ -49,13 +47,11 @@ namespace mame.netlist
             logic_output_t m_Q;
 
 
-            protected nld_base_a_to_d_proxy(netlist_base_t anetlist, string name, logic_input_t in_proxied, detail.core_terminal_t in_proxy)
+            protected nld_base_a_to_d_proxy(netlist_state_t anetlist, string name, logic_input_t in_proxied, detail.core_terminal_t in_proxy)
                 : base(anetlist, name, in_proxied, in_proxy)
             {
                 m_Q = new logic_output_t(this, "Q");
             }
-
-            //~nld_base_a_to_d_proxy() { }
 
 
             public virtual logic_output_t out_() { return m_Q; }
@@ -68,7 +64,7 @@ namespace mame.netlist
             analog_input_t m_I;
 
 
-            public nld_a_to_d_proxy(netlist_base_t anetlist, string name, logic_input_t in_proxied)
+            public nld_a_to_d_proxy(netlist_state_t anetlist, string name, logic_input_t in_proxied)
                 : base(anetlist, name, in_proxied, null)// m_I)
             {
                 m_I = new analog_input_t(this, "I");
@@ -77,11 +73,9 @@ namespace mame.netlist
                 proxy_term_prop = m_I;
             }
 
-            //~nld_a_to_d_proxy() { }
-
 
             //NETLIB_RESETI();
-            protected override void reset()
+            public override void reset()
             {
                 throw new emu_unimplemented();
             }
@@ -104,13 +98,11 @@ namespace mame.netlist
             logic_input_t m_I;
 
 
-            protected nld_base_d_to_a_proxy(netlist_base_t anetlist, string name, logic_output_t out_proxied, detail.core_terminal_t proxy_out)
+            protected nld_base_d_to_a_proxy(netlist_state_t anetlist, string name, logic_output_t out_proxied, detail.core_terminal_t proxy_out)
                 : base(anetlist, name, out_proxied, proxy_out)
             {
                 m_I = new logic_input_t(this, "I");
             }
-
-            //~nld_base_d_to_a_proxy() { }
 
 
             public virtual logic_input_t in_() { return m_I; }
@@ -137,11 +129,9 @@ namespace mame.netlist
                 //proxy_term_prop = m_RV.m_p;
             }
 
-            //~nld_d_to_a_proxy() { }
-
 
             //NETLIB_RESETI();
-            protected override void reset()
+            public override void reset()
             {
                 throw new emu_unimplemented();
             }

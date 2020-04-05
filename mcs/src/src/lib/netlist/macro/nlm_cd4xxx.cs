@@ -14,7 +14,7 @@ namespace mame
          * ---------------------------------------------------------------------------*/
         //#define CD4001_NOR(name)                                                      \
         //        NET_REGISTER_DEV(CD4001_NOR, name)
-        public static void CD4001_NOR(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4001_NOR", name); }
+        public static void CD4001_NOR(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4001_NOR", name); }
 
         //#define CD4001_DIP(name)                                                      \
         //        NET_REGISTER_DEV(CD4001_DIP, name)
@@ -51,7 +51,7 @@ namespace mame
          */
 
         //static NETLIST_START(CD4001_DIP)
-        public static void netlist_CD4001_DIP(netlist.setup_t setup)
+        public static void netlist_CD4001_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -98,7 +98,7 @@ namespace mame
          */
 
         //static NETLIST_START(CD4020_DIP)
-        public static void netlist_CD4020_DIP(netlist.setup_t setup)
+        public static void netlist_CD4020_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -140,7 +140,7 @@ namespace mame
          *
          */
         //static NETLIST_START(CD4066_DIP)
-        public static void netlist_CD4066_DIP(netlist.setup_t setup)
+        public static void netlist_CD4066_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -173,7 +173,7 @@ namespace mame
 
 
         //static NETLIST_START(CD4016_DIP)
-        public static void netlist_CD4016_DIP(netlist.setup_t setup)
+        public static void netlist_CD4016_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -206,7 +206,7 @@ namespace mame
 
 
         //static NETLIST_START(CD4316_DIP)
-        public static void netlist_CD4316_DIP(netlist.setup_t setup)
+        public static void netlist_CD4316_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -241,7 +241,7 @@ namespace mame
 
 
         //NETLIST_START(CD4XXX_lib)
-        public static void netlist_CD4XXX_lib(netlist.setup_t setup)
+        public static void netlist_CD4XXX_lib(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 

@@ -17,86 +17,6 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    class device_sound_interface_samples : device_sound_interface
-    {
-        public device_sound_interface_samples(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        // device_sound_interface overrides
-        //-------------------------------------------------
-        //  sound_stream_update - update a sound stream
-        //-------------------------------------------------
-        public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
-        {
-            samples_device samplesdev = (samples_device)device();
-
-            // find the channel with this stream
-            for (int channel = 0; channel < samplesdev.m_channels; channel++)
-            {
-                if (stream == samplesdev.m_channel[channel].stream)
-                {
-                    samples_device.channel_t chan = samplesdev.m_channel[channel];
-                    ListPointer<stream_sample_t> buffer = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t * buffer = outputs[0];
-
-                    // process if we still have a source and we're not paused
-                    if (chan.source != null && !chan.paused)
-                    {
-                        // load some info locally
-                        uint32_t pos = chan.pos;
-                        uint32_t frac = chan.frac;
-                        uint32_t step = chan.step;
-                        ListBase<int16_t> sample = chan.source;  //const int16_t *sample = chan.source;
-                        uint32_t sample_length = (UInt32)chan.source_length;
-
-                        while (samples-- != 0)
-                        {
-                            // do a linear interp on the sample
-                            int sample1 = sample[(int)pos];
-                            int sample2 = sample[(int)((pos + 1) % sample_length)];
-                            int fracmult = (int)(frac >> (samples_device.FRAC_BITS - 14));
-                            buffer[0] = ((0x4000 - fracmult) * sample1 + fracmult * sample2) >> 14;  //*buffer++ = ((0x4000 - fracmult) * sample1 + fracmult * sample2) >> 14;
-                            buffer++;
-
-                            // advance
-                            frac += step;
-                            pos += frac >> samples_device.FRAC_BITS;
-                            frac = frac & ((1 << samples_device.FRAC_BITS) - 1);
-
-                            // handle looping/ending
-                            if (pos >= sample_length)
-                            {
-                                if (chan.loop)
-                                {
-                                    pos %= sample_length;
-                                }
-                                else
-                                {
-                                    chan.source = null;
-                                    chan.source_num = -1;
-                                    if (samples > 0)
-                                        memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
-
-                                    break;
-                                }
-                            }
-                        }
-
-                        // push position back out
-                        chan.pos = pos;
-                        chan.frac = frac;
-                    }
-                    else
-                    {
-                        memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
-                    }
-
-                    break;
-                }
-            }
-        }
-    }
-
-
     // ======================> samples_device
     public class samples_device : device_t
                                   //device_sound_interface
@@ -104,6 +24,14 @@ namespace mame
         //DEFINE_DEVICE_TYPE(SAMPLES, samples_device, "samples", "Samples")
         static device_t device_creator_samples_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock = 0) { return new samples_device(mconfig, tag, owner, clock); }
         public static readonly device_type SAMPLES = DEFINE_DEVICE_TYPE(device_creator_samples_device, "samples", "Samples");
+
+
+        class device_sound_interface_samples : device_sound_interface
+        {
+            public device_sound_interface_samples(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((samples_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+        }
 
 
         //typedef device_delegate<void ()> start_cb_delegate;
@@ -120,7 +48,7 @@ namespace mame
         }
 
 
-        public class channel_t
+        class channel_t
         {
             public sound_stream stream;
             public ListBase<int16_t> source = new ListBase<int16_t>();  //const int16_t *   source;
@@ -136,20 +64,20 @@ namespace mame
 
 
         // internal constants
-        public const byte FRAC_BITS = 24;
+        const byte FRAC_BITS = 24;
         //static const UINT32 FRAC_ONE = 1 << FRAC_BITS;
         //static const UINT32 FRAC_MASK = FRAC_ONE - 1;
 
 
-        device_sound_interface_namco m_disound;
+        device_sound_interface_samples m_disound;
 
         // interface
-        public uint8_t m_channels;         // number of discrete audio channels needed
+        uint8_t m_channels;         // number of discrete audio channels needed
         public string [] m_names;     // array of sample names
         start_cb_delegate m_samples_start_cb; // optional callback
 
         // internal state
-        public std.vector<channel_t> m_channel = new std.vector<channel_t>();
+        std.vector<channel_t> m_channel = new std.vector<channel_t>();
         std.vector<sample_t> m_sample = new std.vector<sample_t>();
 
 
@@ -264,7 +192,7 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            m_disound = GetClassInterface<device_sound_interface_namco>();
+            m_disound = GetClassInterface<device_sound_interface_samples>();
 
             // read audio samples
             load_samples();
@@ -343,9 +271,76 @@ namespace mame
         }
 
 
-        // moved to device_sound_interface_samples
         // device_sound_interface overrides
-        //virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
+        //-------------------------------------------------
+        //  sound_stream_update - update a sound stream
+        //-------------------------------------------------
+        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        {
+            // find the channel with this stream
+            for (int channel = 0; channel < m_channels; channel++)
+            {
+                if (stream == m_channel[channel].stream)
+                {
+                    channel_t chan = m_channel[channel];
+                    ListPointer<stream_sample_t> buffer = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t * buffer = outputs[0];
+
+                    // process if we still have a source and we're not paused
+                    if (chan.source != null && !chan.paused)
+                    {
+                        // load some info locally
+                        uint32_t pos = chan.pos;
+                        uint32_t frac = chan.frac;
+                        uint32_t step = chan.step;
+                        ListBase<int16_t> sample = chan.source;  //const int16_t *sample = chan.source;
+                        uint32_t sample_length = (UInt32)chan.source_length;
+
+                        while (samples-- != 0)
+                        {
+                            // do a linear interp on the sample
+                            int sample1 = sample[(int)pos];
+                            int sample2 = sample[(int)((pos + 1) % sample_length)];
+                            int fracmult = (int)(frac >> (FRAC_BITS - 14));
+                            buffer[0] = ((0x4000 - fracmult) * sample1 + fracmult * sample2) >> 14;  //*buffer++ = ((0x4000 - fracmult) * sample1 + fracmult * sample2) >> 14;
+                            buffer++;
+
+                            // advance
+                            frac += step;
+                            pos += frac >> FRAC_BITS;
+                            frac = frac & ((1 << FRAC_BITS) - 1);
+
+                            // handle looping/ending
+                            if (pos >= sample_length)
+                            {
+                                if (chan.loop)
+                                {
+                                    pos %= sample_length;
+                                }
+                                else
+                                {
+                                    chan.source = null;
+                                    chan.source_num = -1;
+                                    if (samples > 0)
+                                        memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
+
+                                    break;
+                                }
+                            }
+                        }
+
+                        // push position back out
+                        chan.pos = pos;
+                        chan.frac = frac;
+                    }
+                    else
+                    {
+                        memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
+                    }
+
+                    break;
+                }
+            }
+        }
 
 
         // internal helpers

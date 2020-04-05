@@ -4146,15 +4146,15 @@ namespace mame
             {
                 // first the absolute time
                 RawBufferPointer secondsBuf = new RawBufferPointer(new RawBuffer(4));
-                secondsBuf.set_uint32((UInt32)curtime.seconds());
+                secondsBuf.set_uint32_offs8((UInt32)curtime.seconds());
                 record_write(secondsBuf);
                 RawBufferPointer attosecondsBuf = new RawBufferPointer(new RawBuffer(8));
-                attosecondsBuf.set_uint64((UInt64)curtime.attoseconds());
+                attosecondsBuf.set_uint64_offs8((UInt64)curtime.attoseconds());
                 record_write(attosecondsBuf);
 
                 // then the current speed
                 RawBufferPointer speedBuf = new RawBufferPointer(new RawBuffer(4));
-                speedBuf.set_uint32((UInt32)(machine().video().speed_percent() * (double)(1 << 20)));
+                speedBuf.set_uint32_offs8((UInt32)(machine().video().speed_percent() * (double)(1 << 20)));
                 record_write(speedBuf);
             }
 

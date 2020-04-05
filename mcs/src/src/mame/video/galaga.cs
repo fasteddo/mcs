@@ -10,6 +10,7 @@ using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
+using u32 = System.UInt32;
 
 
 namespace mame
@@ -327,7 +328,7 @@ namespace mame
 
         ***************************************************************************/
 
-        public void galaga_palette(palette_device palette)
+        void galaga_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
@@ -418,10 +419,10 @@ namespace mame
                characters when screen is flipped, we have to flip them back. */
             int color = m_videoram[tile_index + 0x400] & 0x3f;
 
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 0,
+            SET_TILE_INFO_MEMBER(ref tileinfo, 0,
                     (UInt32)((m_videoram[tile_index] & 0x7f) | (flip_screen() != 0 ? 0x80 : 0) | (m_galaga_gfxbank << 8)),
                     (UInt32)color,
-                    flip_screen() != 0 ? tilemap_global.TILE_FLIPX : (byte)0);
+                    flip_screen() != 0 ? TILE_FLIPX : (byte)0);
 
             tileinfo.group = (byte)color;
         }
@@ -433,7 +434,7 @@ namespace mame
 
         ***************************************************************************/
         //VIDEO_START_MEMBER(galaga_state,galaga)
-        public void video_start_galaga()
+        void video_start_galaga()
         {
             m_fg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, get_tile_info, tilemap_scan, 8, 8, 36, 28);  //tilemap_get_info_delegate(FUNC(galaga_state::get_tile_info),this),tilemap_mapper_delegate(FUNC(galaga_state::tilemap_scan),this),8,8,36,28);
             m_fg_tilemap.configure_groups(m_gfxdecode.target.digfx.gfx(0), 0x1f);
@@ -450,7 +451,7 @@ namespace mame
           Memory handlers
         ***************************************************************************/
         //WRITE8_MEMBER(galaga_state::galaga_videoram_w)
-        public void galaga_videoram_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void galaga_videoram_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
             m_videoram[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);
@@ -550,7 +551,7 @@ namespace mame
         }
 
 
-        public UInt32 screen_update_galaga(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        u32 screen_update_galaga(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             bitmap.fill(m_palette.target.palette_interface.black_pen(), cliprect);
             draw_stars(bitmap,cliprect);
@@ -563,7 +564,7 @@ namespace mame
         static readonly int [] screen_vblank_galaga_speeds = new int[8] { -1, -2, -3, 0, 3, 2, 1, 0 };
 
         //void WRITE_LINE_MEMBER(galaga_state.screen_vblank_galaga);
-        public void screen_vblank_galaga(int state)
+        void screen_vblank_galaga(int state)
         {
             // falling edge
             if (state == 0)

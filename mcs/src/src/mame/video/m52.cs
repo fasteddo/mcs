@@ -45,9 +45,9 @@ namespace mame
             for (int i = 0; i < 512; i++)
             {
                 uint8_t promval = char_pal[i];
-                int r = combine_3_weights(weights_r, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
-                int g = combine_3_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
-                int b = combine_2_weights(weights_b, BIT(promval, 6), BIT(promval, 7));
+                int r = combine_weights(weights_r, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
+                int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
+                int b = combine_weights(weights_b, BIT(promval, 6), BIT(promval, 7));
 
                 m_tx_palette.target.palette_interface.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
             }
@@ -57,9 +57,9 @@ namespace mame
             for (int i = 0; i < 32; i++)
             {
                 uint8_t promval = back_pal[i];
-                int r = combine_3_weights(weights_r, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
-                int g = combine_3_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
-                int b = combine_2_weights(weights_b, BIT(promval, 6), BIT(promval, 7));
+                int r = combine_weights(weights_r, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
+                int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
+                int b = combine_weights(weights_b, BIT(promval, 6), BIT(promval, 7));
 
                 m_bg_palette.target.palette_interface.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
             }
@@ -91,7 +91,8 @@ namespace mame
         }
 
 
-        void init_sprite_palette(int [] resistances_3, int [] resistances_2, double [] weights_r, double [] weights_g, double [] weights_b, double scale)
+        //template <size_t N, size_t O, size_t P>
+        void init_sprite_palette(int [] resistances_3, int [] resistances_2, double [] weights_r, double [] weights_g, double [] weights_b, double scale)  //void m52_state::init_sprite_palette(const int *resistances_3, const int *resistances_2, double (&weights_r)[N], double (&weights_g)[O], double (&weights_b)[P], double scale)
         {
             var sprite_pal = memregion("spr_pal").base_();
             var sprite_table = memregion("spr_clut").base_();
@@ -106,9 +107,9 @@ namespace mame
             for (int i = 0; i < 32; i++)
             {
                 uint8_t promval = sprite_pal[i];
-                int r = combine_2_weights(weights_r, BIT(promval, 6), BIT(promval, 7));
-                int g = combine_3_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
-                int b = combine_3_weights(weights_b, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
+                int r = combine_weights(weights_r, BIT(promval, 6), BIT(promval, 7));
+                int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
+                int b = combine_weights(weights_b, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
 
                 m_sp_palette.target.palette_interface.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
             }
@@ -145,10 +146,10 @@ namespace mame
 
             if (tile_index / 32 <= 6)
             {
-                flag |= tilemap_global.TILE_FORCE_LAYER0; /* lines 0 to 6 are opaqe? */
+                flag |= TILE_FORCE_LAYER0; /* lines 0 to 6 are opaqe? */
             }
 
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 0, (UInt32)code, (UInt32)(color & 0x7f), (byte)flag);
+            SET_TILE_INFO_MEMBER(ref tileinfo, 0, (u32)code, (u32)(color & 0x7f), (u8)flag);
         }
 
 
@@ -186,7 +187,7 @@ namespace mame
          *************************************/
 
         //WRITE8_MEMBER(m52_state::m52_scroll_w)
-        public void m52_scroll_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected virtual void m52_scroll_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
         /*
             According to the schematics there is only one video register that holds the X scroll value
@@ -209,7 +210,7 @@ namespace mame
          *************************************/
 
         //WRITE8_MEMBER(m52_state::m52_videoram_w)
-        public void m52_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_videoram.target[offset] = data;
             m_tx_tilemap.mark_tile_dirty(offset);
@@ -217,7 +218,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(m52_state::m52_colorram_w)
-        public void m52_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_colorram.target[offset] = data;
             m_tx_tilemap.mark_tile_dirty(offset);
@@ -234,7 +235,7 @@ namespace mame
            scroll board. It mangles the value written to the port m52_bg1xpos_w, as
            follows: result = popcount(value & 0x7f) ^ (value >> 7) */
         //READ8_MEMBER(m52_state::m52_protection_r)
-        public u8 m52_protection_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 m52_protection_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             int popcount = 0;
             int temp;
@@ -253,31 +254,31 @@ namespace mame
          *************************************/
 
         //WRITE8_MEMBER(m52_state::m52_bg1ypos_w)
-        public void m52_bg1ypos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bg1ypos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_bg1ypos = data;
         }
 
         //WRITE8_MEMBER(m52_state::m52_bg1xpos_w)
-        public void m52_bg1xpos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bg1xpos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_bg1xpos = data;
         }
 
         //WRITE8_MEMBER(m52_state::m52_bg2xpos_w)
-        public void m52_bg2xpos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bg2xpos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_bg2xpos = data;
         }
 
         //WRITE8_MEMBER(m52_state::m52_bg2ypos_w)
-        public void m52_bg2ypos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bg2ypos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_bg2ypos = data;
         }
 
         //WRITE8_MEMBER(m52_state::m52_bgcontrol_w)
-        public void m52_bgcontrol_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bgcontrol_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_bgcontrol = data;
         }
@@ -290,7 +291,7 @@ namespace mame
          *************************************/
 
         //WRITE8_MEMBER(m52_state::m52_flipscreen_w)
-        public void m52_flipscreen_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_flipscreen_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             /* screen flip is handled both by software and hardware */
             flip_screen_set((u32)((data & 0x01) ^ (~ioport("DSW2").read() & 0x01)));
@@ -430,7 +431,7 @@ namespace mame
          *
          *************************************/
 
-        public uint32_t screen_update_m52(screen_device screen, bitmap_rgb32 bitmap, rectangle cliprect)
+        u32 screen_update_m52(screen_device screen, bitmap_rgb32 bitmap, rectangle cliprect)
         {
             int offs;
             var paldata = m_sp_palette.target.device_palette_interface.pens();

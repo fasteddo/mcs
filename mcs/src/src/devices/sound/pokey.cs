@@ -17,151 +17,6 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    public static class pokey_global
-    {
-        public static void MCFG_POKEY_OUTPUT_OPAMP_LOW_PASS(device_t device, double _R, double _C, double _V)
-        {
-            ((pokey_device)device).m_output_type = pokey_device.output_type.OPAMP_LOW_PASS;
-            ((pokey_device)device).m_r_pullup = _R;
-            ((pokey_device)device).m_cap = _C;
-            ((pokey_device)device).m_v_ref = _V;
-        }
-    }
-
-
-    class device_sound_interface_pokey : device_sound_interface
-    {
-        public device_sound_interface_pokey(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        // device_sound_interface overrides
-        //-------------------------------------------------
-        //  sound_stream_update - handle a stream update
-        //-------------------------------------------------
-        public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
-        {
-            pokey_device pokey = (pokey_device)device();
-
-            var buffer = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t *buffer = outputs[0];
-
-            if (pokey.m_output_type == pokey_device.output_type.LEGACY_LINEAR)
-            {
-                int out_ = 0;
-                for (int i = 0; i < 4; i++)
-                    out_ += (int)((pokey.m_output >> (4*i)) & 0x0f);
-                out_ *= pokey_device.POKEY_DEFAULT_GAIN;
-                out_ = (out_ > 0x7fff) ? 0x7fff : out_;
-                while( samples > 0 )
-                {
-                    buffer[0] = out_;  //*buffer++ = out_;
-                    buffer++;
-                    samples--;
-                }
-            }
-            else if (pokey.m_output_type == pokey_device.output_type.RC_LOWPASS)
-            {
-                double rTot = pokey.m_voltab[pokey.m_output];
-
-                double V0 = rTot / (rTot+pokey.m_r_pullup) * pokey.m_v_ref / 5.0 * 32767.0;
-                double mult = (pokey.m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-(rTot + pokey.m_r_pullup) / (pokey.m_cap * pokey.m_r_pullup * rTot) * pokey.m_clock_period.as_double());
-
-                while( samples > 0 )
-                {
-                    /* store sum of output signals into the buffer */
-                    pokey.m_out_filter += (V0 - pokey.m_out_filter) * mult;
-                    buffer[0] = (int)pokey.m_out_filter;  //*buffer++ = pokey.m_out_filter;
-                    buffer++;
-                    samples--;
-
-                }
-            }
-            else if (pokey.m_output_type == pokey_device.output_type.OPAMP_C_TO_GROUND)
-            {
-                double rTot = pokey.m_voltab[pokey.m_output];
-                /* In this configuration there is a capacitor in parallel to the pokey output to ground.
-                 * With a LM324 in LTSpice this causes the opamp circuit to oscillate at around 100 kHz.
-                 * We are ignoring the capacitor here, since this oscillation would not be audible.
-                 */
-
-                /* This post-pokey stage usually has a high-pass filter behind it
-                 * It is approximated by eliminating m_v_ref ( -1.0 term)
-                 */
-
-                double V0 = ((rTot+pokey.m_r_pullup) / rTot - 1.0) * pokey.m_v_ref  / 5.0 * 32767.0;
-
-                while( samples > 0 )
-                {
-                    /* store sum of output signals into the buffer */
-                    buffer[0] = (int)V0;  //*buffer++ = V0;
-                    buffer++;
-                    samples--;
-
-                }
-            }
-            else if (pokey.m_output_type == pokey_device.output_type.OPAMP_LOW_PASS)
-            {
-                double rTot = pokey.m_voltab[pokey.m_output];
-                /* This post-pokey stage usually has a low-pass filter behind it
-                 * It is approximated by not adding in VRef below.
-                 */
-
-                double V0 = (pokey.m_r_pullup / rTot) * pokey.m_v_ref  / 5.0 * 32767.0;
-                double mult = (pokey.m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-1.0 / (pokey.m_cap * pokey.m_r_pullup) * pokey.m_clock_period.as_double());
-
-                while( samples > 0 )
-                {
-                    /* store sum of output signals into the buffer */
-                    pokey.m_out_filter += (V0 - pokey.m_out_filter) * mult;
-                    buffer[0] = (int)pokey.m_out_filter;  //*buffer++ = pokey.m_out_filter /* + m_v_ref */;       // see above
-                    buffer++;
-                    samples--;
-                }
-            }
-            else if (pokey.m_output_type == pokey_device.output_type.DISCRETE_VAR_R)
-            {
-                int out_ = (int)pokey.m_voltab[pokey.m_output];
-                while( samples > 0 )
-                {
-                    buffer[0] = out_;  // *buffer++ = out_;
-                    buffer++;
-                    samples--;
-                }
-            }
-        }
-    }
-
-
-    public class device_execute_interface_pokey : device_execute_interface
-    {
-        public device_execute_interface_pokey(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_execute_interface overrides
-        public override void execute_run()
-        {
-            pokey_device pokey = (pokey_device)device();
-
-            do
-            {
-                UInt32 new_out = pokey.step_one_clock();
-                if (pokey.m_output != new_out)
-                {
-                    //printf("forced update %08d %08x\n", m_icount, m_output);
-                    pokey.m_stream.update();
-                    pokey.m_output = new_out;
-                }
-
-                pokey.m_icountRef.i--;
-            } while (pokey.m_icountRef.i > 0);
-        }
-    }
-
-
-    public class device_state_interface_pokey : device_state_interface
-    {
-        public device_state_interface_pokey(machine_config mconfig, device_t device) : base(mconfig, device) { }
-    }
-
-
     // ======================> pokey_device
     public class pokey_device : device_t
                                 //device_sound_interface,
@@ -171,6 +26,28 @@ namespace mame
         //DEFINE_DEVICE_TYPE(POKEY, pokey_device, "pokey", "Atari C012294 POKEY")
         static device_t device_creator_pokey_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pokey_device(mconfig, tag, owner, clock); }
         public static readonly device_type POKEY = DEFINE_DEVICE_TYPE(device_creator_pokey_device, "pokey", "Atari C012294 POKEY");
+
+
+        public class device_sound_interface_pokey : device_sound_interface
+        {
+            public device_sound_interface_pokey(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((pokey_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+        }
+
+
+        public class device_execute_interface_pokey : device_execute_interface
+        {
+            public device_execute_interface_pokey(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override void execute_run() { ((pokey_device)device()).device_execute_interface_execute_run(); }
+        }
+
+
+        public class device_state_interface_pokey : device_state_interface
+        {
+            public device_state_interface_pokey(machine_config mconfig, device_t device) : base(mconfig, device) { }
+        }
 
 
         /* CONSTANT DEFINITIONS */
@@ -234,7 +111,7 @@ namespace mame
         //}
 
 
-        public enum output_type
+        enum output_type
         {
             LEGACY_LINEAR = 0,
             RC_LOWPASS,
@@ -301,7 +178,7 @@ namespace mame
         const int POKEY_CHANNELS = 4;
 
 
-        public const int POKEY_DEFAULT_GAIN = (32767/11/4);
+        const int POKEY_DEFAULT_GAIN = (32767/11/4);
 
 
         const bool VERBOSE         = false;
@@ -394,16 +271,16 @@ namespace mame
 
 
         // other internal states
-        public intref m_icountRef = new intref();  //int m_icount;
+        intref m_icountRef = new intref();  //int m_icount;
 
 
         // internal state
-        public sound_stream m_stream;
+        sound_stream m_stream;
 
         pokey_channel [] m_channel = new pokey_channel[POKEY_CHANNELS];
 
-        public uint32_t m_output;        /* raw output */
-        public double m_out_filter;    /* filtered output */
+        uint32_t m_output;        /* raw output */
+        double m_out_filter;    /* filtered output */
 
         int [] m_clock_cnt = new int[3];       /* clock counters */
         uint32_t m_p4;              /* poly4 index */
@@ -435,18 +312,18 @@ namespace mame
         uint8_t m_kbd_latch;
         uint8_t m_kbd_state;
 
-        public attotime m_clock_period;
+        attotime m_clock_period;
 
         uint32_t [] m_poly4 = new uint32_t[0x0f];
         uint32_t [] m_poly5 = new uint32_t[0x1f];
         uint32_t [] m_poly9 = new uint32_t[0x1ff];
         uint32_t [] m_poly17 = new uint32_t[0x1ffff];
-        public uint32_t [] m_voltab = new uint32_t[0x10000];
+        uint32_t [] m_voltab = new uint32_t[0x10000];
 
-        public output_type m_output_type;
-        public double m_r_pullup;
-        public double m_cap;
-        public double m_v_ref;
+        output_type m_output_type;
+        double m_r_pullup;
+        double m_cap;
+        double m_v_ref;
 
 
         // construction/destruction
@@ -459,6 +336,9 @@ namespace mame
             m_class_interfaces.Add(new device_sound_interface_pokey(mconfig, this));  //device_sound_interface(mconfig, *this),
             m_class_interfaces.Add(new device_execute_interface_pokey(mconfig, this));  //device_execute_interface(mconfig, *this),
             m_class_interfaces.Add(new device_state_interface_pokey(mconfig, this));  //device_state_interface(mconfig, *this),
+            m_disound = GetClassInterface<device_sound_interface_pokey>();
+            m_diexec = GetClassInterface<device_execute_interface_pokey>();
+            m_distate = GetClassInterface<device_state_interface_pokey>();
 
 
             m_icountRef.i = 0;  //m_icount = 0;
@@ -470,6 +350,9 @@ namespace mame
             m_serout_w_cb = new devcb_write8(this);
             m_output_type = output_type.LEGACY_LINEAR;
         }
+
+
+        public device_sound_interface_pokey disound { get { return m_disound; } }
 
 
         //template <unsigned N> auto pot_r() { return m_pot_r_cb[N].bind(); }
@@ -511,8 +394,7 @@ namespace mame
         //-------------------------------------------------
         //  read - memory interface for reading the active status
         //-------------------------------------------------
-        //READ8_MEMBER( pokey_device::read )
-        public u8 read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        public uint8_t read(offs_t offset)
         {
             int data;
             int pot;
@@ -610,8 +492,7 @@ namespace mame
         //-------------------------------------------------
         //  write - memory interface for write
         //-------------------------------------------------
-        //WRITE8_MEMBER( pokey_device::write )
-        public void write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void write(offs_t offset, uint8_t data)
         {
             synchronize(SYNC_WRITE, (int)((offset << 8) | data));
         }
@@ -660,11 +541,6 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            m_disound = GetClassInterface<device_sound_interface_pokey>();
-            m_diexec = GetClassInterface<device_execute_interface_pokey>();
-            m_distate = GetClassInterface<device_state_interface_pokey>();
-
-
             //int sample_rate = clock();
             int i;
 
@@ -897,10 +773,115 @@ namespace mame
 
 
         // device_sound_interface overrides
-        //virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
+        //-------------------------------------------------
+        //  sound_stream_update - handle a stream update
+        //-------------------------------------------------
+        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        {
+            var buffer = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t *buffer = outputs[0];
+
+            if (m_output_type == output_type.LEGACY_LINEAR)
+            {
+                int out_ = 0;
+                for (int i = 0; i < 4; i++)
+                    out_ += (int)((m_output >> (4*i)) & 0x0f);
+                out_ *= POKEY_DEFAULT_GAIN;
+                out_ = (out_ > 0x7fff) ? 0x7fff : out_;
+                while( samples > 0 )
+                {
+                    buffer[0] = out_;  //*buffer++ = out_;
+                    buffer++;
+                    samples--;
+                }
+            }
+            else if (m_output_type == output_type.RC_LOWPASS)
+            {
+                double rTot = m_voltab[m_output];
+
+                double V0 = rTot / (rTot + m_r_pullup) * m_v_ref / 5.0 * 32767.0;
+                double mult = (m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-(rTot + m_r_pullup) / (m_cap * m_r_pullup * rTot) * m_clock_period.as_double());
+
+                while( samples > 0 )
+                {
+                    /* store sum of output signals into the buffer */
+                    m_out_filter += (V0 - m_out_filter) * mult;
+                    buffer[0] = (int)m_out_filter;  //*buffer++ = pokey.m_out_filter;
+                    buffer++;
+                    samples--;
+
+                }
+            }
+            else if (m_output_type == output_type.OPAMP_C_TO_GROUND)
+            {
+                double rTot = m_voltab[m_output];
+                /* In this configuration there is a capacitor in parallel to the pokey output to ground.
+                    * With a LM324 in LTSpice this causes the opamp circuit to oscillate at around 100 kHz.
+                    * We are ignoring the capacitor here, since this oscillation would not be audible.
+                    */
+
+                /* This post-pokey stage usually has a high-pass filter behind it
+                    * It is approximated by eliminating m_v_ref ( -1.0 term)
+                    */
+
+                double V0 = ((rTot + m_r_pullup) / rTot - 1.0) * m_v_ref  / 5.0 * 32767.0;
+
+                while (samples > 0)
+                {
+                    /* store sum of output signals into the buffer */
+                    buffer[0] = (int)V0;  //*buffer++ = V0;
+                    buffer++;
+                    samples--;
+
+                }
+            }
+            else if (m_output_type == output_type.OPAMP_LOW_PASS)
+            {
+                double rTot = m_voltab[m_output];
+                /* This post-pokey stage usually has a low-pass filter behind it
+                    * It is approximated by not adding in VRef below.
+                    */
+
+                double V0 = (m_r_pullup / rTot) * m_v_ref  / 5.0 * 32767.0;
+                double mult = (m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-1.0 / (m_cap * m_r_pullup) * m_clock_period.as_double());
+
+                while (samples > 0)
+                {
+                    /* store sum of output signals into the buffer */
+                    m_out_filter += (V0 - m_out_filter) * mult;
+                    buffer[0] = (int)m_out_filter;  //*buffer++ = pokey.m_out_filter /* + m_v_ref */;       // see above
+                    buffer++;
+                    samples--;
+                }
+            }
+            else if (m_output_type == output_type.DISCRETE_VAR_R)
+            {
+                int out_ = (int)m_voltab[m_output];
+                while (samples > 0)
+                {
+                    buffer[0] = out_;  // *buffer++ = out_;
+                    buffer++;
+                    samples--;
+                }
+            }
+        }
 
 
-        //virtual void execute_run() override;
+        // device_execute_interface overrides
+        void device_execute_interface_execute_run()
+        {
+            do
+            {
+                UInt32 new_out = step_one_clock();
+                if (m_output != new_out)
+                {
+                    //printf("forced update %08d %08x\n", m_icount, m_output);
+                    m_stream.update();
+                    m_output = new_out;
+                }
+
+                m_icountRef.i--;
+            } while (m_icountRef.i > 0);
+        }
 
 
         //virtual uint32_t execute_min_cycles() const { return 114; }
@@ -913,7 +894,7 @@ namespace mame
          * I'm sure this was done because the propagation delays limited the number of cells the subtraction could ripple though.
          *
          */
-        public uint32_t step_one_clock()
+        uint32_t step_one_clock()
         {
             int base_clock = (m_AUDCTL & CLK_15KHZ) != 0 ? CLK_114 : CLK_28;
 

@@ -15,15 +15,16 @@ namespace mame.netlist
         {
             //#define ENTRYY(n, m, s)    case (n * 100 + m): \
             //    { using xtype = netlist_factory_truthtable_t<n, m>; \
-            //        ret = plib::palloc<xtype>(desc.name, desc.classname, desc.def_param, s); } break
+            //        ret = plib::make_unique<xtype>(desc.name, desc.classname, desc.def_param, s); } break
 
             //#define ENTRY(n, s) ENTRYY(n, 1, s); ENTRYY(n, 2, s); ENTRYY(n, 3, s); \
             //                    ENTRYY(n, 4, s); ENTRYY(n, 5, s); ENTRYY(n, 6, s); \
             //                    ENTRYY(n, 7, s); ENTRYY(n, 8, s)
 
-            public static void tt_factory_create(setup_t setup, tt_desc desc, string sourcefile)
+            /* the returned element is still missing a pointer to the family ... */
+            public static netlist_base_factory_truthtable_t tt_factory_create(tt_desc desc, string sourcefile)  //plib::unique_ptr<netlist_base_factory_truthtable_t> tt_factory_create(tt_desc &desc, const pstring &sourcefile);
             {
-                netlist_base_factory_truthtable_t ret;
+                netlist_base_factory_truthtable_t ret;  //plib::unique_ptr<netlist_base_factory_truthtable_t> ret;
 
                 //switch (desc.ni * 100 + desc.no)
                 //{
@@ -59,31 +60,30 @@ namespace mame.netlist
 
 
                 ret.desc = desc.desc;
-                if (desc.family != "")
-                    ret.family = setup.family_from_model(desc.family);
+                ret.family_name = desc.family;
 
-                setup.factory().register_device(ret);  //std::unique_ptr<netlist_base_factory_truthtable_t>(ret));
+                return ret;
             }
         }
 
 
-        abstract class netlist_base_factory_truthtable_t : factory.element_t
+        public abstract class netlist_base_factory_truthtable_t : factory.element_t
         {
             std.vector<string> m_desc;
-            logic_family_desc_t m_family;
+            string m_family_name;
+            logic_family_desc_t m_family_desc;
 
 
             public netlist_base_factory_truthtable_t(string name, string classname, string def_param, string sourcefile)
                 : base(name, classname, def_param, sourcefile)
             {
-                m_family = nl_base_global.family_TTL();
+                m_family_desc = nl_base_global.family_TTL();
             }
-
-            //~netlist_base_factory_truthtable_t() { }
 
 
             public std.vector<string> desc { get { return m_desc; } set { m_desc = value; } }
-            public logic_family_desc_t family { get { return m_family; } set { m_family = value; } }
+            public string family_name { get { return m_family_name; } set { m_family_name = value; } }
+            public logic_family_desc_t family_desc { get { return m_family_desc; } set { m_family_desc = value; } }
         }
 
 
@@ -109,7 +109,7 @@ namespace mame.netlist
             }
 
 
-            public override device_t Create(netlist_base_t anetlist, string name)
+            public override device_t Create(netlist_state_t anetlist, string name)  //poolptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override
             {
                 throw new emu_unimplemented();
             }

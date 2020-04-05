@@ -78,6 +78,7 @@ namespace mame
              3686400, /* 3.6864_MHz_XTAL        Baud rate clock for MC68681 and similar UARTs */
              3840000, /* 3.84_MHz_XTAL          Fairlight CMI Alphanumeric Keyboard */
              3900000, /* 3.9_MHz_XTAL           Resonator - Used on some Fidelity boards */
+             3932160, /* 3.93216_MHz_XTAL       Apple Lisa COP421 (197-0016A) */
              4000000, /* 4_MHz_XTAL             - */
              4028000, /* 4.028_MHz_XTAL         Sony SMC-777 */
              4032000, /* 4.032_MHz_XTAL         GRiD Compass modem board */
@@ -134,6 +135,7 @@ namespace mame
             10137600, /* 10.1376_MHz_XTAL       Wyse WY-100 */
             10245000, /* 10.245_MHz_XTAL        PES Speech box */
             10380000, /* 10.38_MHz_XTAL         Fairlight Q219 Lightpen/Graphics Card */
+            10480000, /* 10.48_MHz_XTAL         System-80 (50 Hz) */
             10500000, /* 10.5_MHz_XTAL          Agat-7 */
             10595000, /* 10.595_MHz_XTAL        Mad Alien */
             10644500, /* 10.6445_MHz_XTAL       TRS-80 Model I */
@@ -229,12 +231,14 @@ namespace mame
             17734472, /* 17.734472_MHz_XTAL     actually ~4x PAL subcarrier */
             17971200, /* 17.9712_MHz_XTAL       Compucolor II, Hazeltine Esprit III */
             18000000, /* 18_MHz_XTAL            S.A.R, Ikari Warriors 3 */
+            18414000, /* 18.414_MHz_XTAL        Ann Arbor Ambassador */
             18432000, /* 18.432_MHz_XTAL        Extremely common, used on 100's of PCBs (48000 * 384) */
             18480000, /* 18.48_MHz_XTAL         Wyse WY-100 video */
             18575000, /* 18.575_MHz_XTAL        Visual 102, Visual 220 */
             18720000, /* 18.72_MHz_XTAL         Nokia MikroMikko 1 */
             18869600, /* 18.8696_MHz_XTAL       Memorex 2178 */
             19339600, /* 19.3396_MHz_XTAL       TeleVideo TVI-955 80-column display clock */
+            19584000, /* 19.584_MHz_XTAL        ADM-42 */
             19600000, /* 19.6_MHz_XTAL          Universal Mr. Do - Model 8021 PCB */
             19602000, /* 19.602_MHz_XTAL        Ampex 210+ 80-column display clock */
             19660800, /* 19.6608_MHz_XTAL       Euro League (bootleg), labeled as "UKI 19.6608 20PF" */
@@ -244,6 +248,7 @@ namespace mame
             20000000, /* 20_MHz_XTAL            - */
             20160000, /* 20.16_MHz_XTAL         Nintendo 8080 */
             20275200, /* 20.2752_MHz_XTAL       TRS-80 Model III */
+            20375040, /* 20.37504_MHz_XTAL      Apple Lisa dot clock (197-0019A) */
             20625000, /* 20.625_MHz_XTAL        SM 7238 */
             20790000, /* 20.79_MHz_XTAL         Blockade-hardware Gremlin games */
             21000000, /* 21_MHz_XTAL            Lock-On pixel clock */
@@ -378,6 +383,7 @@ namespace mame
             80000000, /* 80_MHz_XTAL            ARM710 */
             87183360, /* 87.18336_MHz_XTAL      AT&T 630 MTG */
             92940500, /* 92.9405_MHz_XTAL       Sun cgthree */
+            99522000, /* 99.522_MHz_XTAL        Radius Two Page Display */
            100000000, /* 100_MHz_XTAL           PSX-based Namco System 12, Vegas, Sony ZN1-2-based */
            101491200, /* 101.4912_MHz_XTAL      PSX-based Namco System 10 */
            108108000, /* 108.108_MHz_XTAL       HP 98550 high-res color card */

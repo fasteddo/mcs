@@ -43,162 +43,20 @@ namespace mame
     }
 
 
-    class device_sound_interface_ay8910 : device_sound_interface
-    {
-        public device_sound_interface_ay8910(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        // device_sound_interface overrides
-        //-------------------------------------------------
-        //  sound_stream_update - handle a stream update
-        //-------------------------------------------------
-        public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
-        {
-            ay8910_device ay8910 = (ay8910_device)device();
-
-            ListPointer<stream_sample_t> [] buf = new ListPointer<stream_sample_t> [ay8910_device.NUM_CHANNELS];  //stream_sample_t *buf[NUM_CHANNELS];
-            int chan;
-
-            buf[0] = new ListPointer<stream_sample_t>(outputs[0]);
-            buf[1] = null;
-            buf[2] = null;
-            if (ay8910.m_streams == ay8910_device.NUM_CHANNELS)
-            {
-                buf[1] = outputs[1];
-                buf[2] = outputs[2];
-            }
-
-            /* hack to prevent us from hanging when starting filtered outputs */
-            if (ay8910.m_ready == 0)
-            {
-                for (chan = 0; chan < ay8910_device.NUM_CHANNELS; chan++)
-                {
-                    if (buf[chan] != null)
-                        memset(buf[chan], 0, (UInt32)samples);  //memset(buf[chan], 0, samples * sizeof_(*buf[chan]));
-                }
-            }
-
-            /* The 8910 has three outputs, each output is the mix of one of the three */
-            /* tone generators and of the (single) noise generator. The two are mixed */
-            /* BEFORE going into the DAC. The formula to mix each channel is: */
-            /* (ToneOn | ToneDisable) & (NoiseOn | NoiseDisable). */
-            /* Note that this means that if both tone and noise are disabled, the output */
-            /* is 1, not 0, and can be modulated changing the volume. */
-
-            /* buffering loop */
-            while (samples != 0)
-            {
-                for (chan = 0; chan < ay8910_device.NUM_CHANNELS; chan++)
-                {
-                    ay8910.m_count[chan]++;
-                    if (ay8910.m_count[chan] >= ay8910.TONE_PERIOD(chan))
-                    {
-                        ay8910.m_output[chan] ^= 1;
-                        ay8910.m_count[chan] = 0;
-                    }
-                }
-
-                ay8910.m_count_noise++;
-                if (ay8910.m_count_noise >= ay8910.NOISE_PERIOD())
-                {
-                    /* toggle the prescaler output. Noise is no different to
-                     * channels.
-                     */
-                    ay8910.m_count_noise = 0;
-                    ay8910.m_prescale_noise ^= 1;
-
-                    if (ay8910.m_prescale_noise != 0)
-                    {
-                        /* The Random Number Generator of the 8910 is a 17-bit shift */
-                        /* register. The input to the shift register is bit0 XOR bit3 */
-                        /* (bit0 is the output). This was verified on AY-3-8910 and YM2149 chips. */
-
-                        ay8910.m_rng ^= (((ay8910.m_rng & 1) ^ ((ay8910.m_rng >> 3) & 1)) << 17);
-                        ay8910.m_rng >>= 1;
-                    }
-                }
-
-                for (chan = 0; chan < ay8910_device.NUM_CHANNELS; chan++)
-                {
-                    ay8910.m_vol_enabled[chan] = (byte)((ay8910.m_output[chan] | ay8910.TONE_ENABLEQ(chan)) & (ay8910.NOISE_OUTPUT() | ay8910.NOISE_ENABLEQ(chan)));
-                }
-
-                /* update envelope */
-                if (ay8910.m_holding == 0)
-                {
-                    ay8910.m_count_env++;
-                    if (ay8910.m_count_env >= ay8910.ENVELOPE_PERIOD() * ay8910.m_step )
-                    {
-                        ay8910.m_count_env = 0;
-                        ay8910.m_env_step--;
-
-                        /* check envelope current position */
-                        if (ay8910.m_env_step < 0)
-                        {
-                            if (ay8910.m_hold != 0)
-                            {
-                                if (ay8910.m_alternate != 0)
-                                    ay8910.m_attack ^= ay8910.m_env_step_mask;
-                                ay8910.m_holding = 1;
-                                ay8910.m_env_step = 0;
-                            }
-                            else
-                            {
-                                /* if CountEnv has looped an odd number of times (usually 1), */
-                                /* invert the output. */
-                                if (ay8910.m_alternate != 0 && (ay8910.m_env_step & (ay8910.m_env_step_mask + 1)) != 0)
-                                    ay8910.m_attack ^= ay8910.m_env_step_mask;
-
-                                ay8910.m_env_step &= (sbyte)ay8910.m_env_step_mask;
-                            }
-                        }
-
-                    }
-                }
-                ay8910.m_env_volume = (UInt32)(ay8910.m_env_step ^ ay8910.m_attack);
-
-                if (ay8910.m_streams == 3)
-                {
-                    for (chan = 0; chan < ay8910_device.NUM_CHANNELS; chan++)
-                    {
-                        if (ay8910.TONE_ENVELOPE(chan) != 0)
-                        {
-                            if (ay8910.type() == ay8914_device.AY8914) // AY8914 Has a two bit tone_envelope field
-                            {
-                                buf[chan][0] = ay8910.m_env_table[chan, ay8910.m_vol_enabled[chan] != 0 ? ay8910.m_env_volume >> (3 - ay8910.TONE_ENVELOPE(chan)) : 0];  // *(buf[chan]++)
-                                buf[chan]++;
-                            }
-                            else
-                            {
-                                buf[chan][0] = ay8910.m_env_table[chan, ay8910.m_vol_enabled[chan] != 0 ? ay8910.m_env_volume : 0];  // *(buf[chan]++)
-                                buf[chan]++;
-                            }
-                        }
-                        else
-                        {
-                            buf[chan][0] = ay8910.m_vol_table[chan, ay8910.m_vol_enabled[chan] != 0 ? ay8910.TONE_VOLUME(chan) : 0];  // *(buf[chan]++)
-                            buf[chan]++;
-                        }
-                    }
-                }
-                else
-                {
-                    buf[0][0] = ay8910.mix_3D();  // *(buf[0]++)
-                    buf[0]++;
-                }
-
-                samples--;
-            }
-        }
-    }
-
-
     public class ay8910_device : device_t
                                  //public device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(AY8910, ay8910_device, "ay8910", "AY-3-8910A PSG")
         static device_t device_creator_ay8910_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8910_device(mconfig, tag, owner, clock); }
         public static readonly device_type AY8910 = DEFINE_DEVICE_TYPE(device_creator_ay8910_device, "ay8910", "AY-3-8910A PSG");
+
+
+        public class device_sound_interface_ay8910 : device_sound_interface
+        {
+            public device_sound_interface_ay8910(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((ay8910_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+        }
 
 
         protected enum psg_type_t
@@ -262,7 +120,7 @@ namespace mame
         const int YM2149_PIN26_LOW            = 0x10;
 
 
-        public const int NUM_CHANNELS = 3;
+        const int NUM_CHANNELS = 3;
 
 
         const int MAX_OUTPUT = 0x7fff;
@@ -287,14 +145,14 @@ namespace mame
         const int AY_PORTB    = 15;
 
 
-        public int NOISE_ENABLEQ(int chan) { return (m_regs[AY_ENABLE] >> (3 + chan)) & 1; }
-        public int TONE_ENABLEQ(int chan) { return (m_regs[AY_ENABLE] >> chan) & 1; }
-        public int TONE_PERIOD(int chan) { return m_regs[chan << 1] | ((m_regs[(chan << 1) | 1] & 0x0f) << 8); }
-        public int NOISE_PERIOD() { return m_regs[AY_NOISEPER] & 0x1f; }
-        public int TONE_VOLUME(int chan) { return m_regs[AY_AVOL + chan] & 0x0f; }
-        public int TONE_ENVELOPE(int chan) { return (m_regs[AY_AVOL + chan] >> 4) & (type() == ay8914_device.AY8914 ? 3 : 1); }
-        public int ENVELOPE_PERIOD() { return m_regs[AY_EFINE] | (m_regs[AY_ECOARSE] << 8); }
-        public int NOISE_OUTPUT() { return m_rng & 1; }
+        int NOISE_ENABLEQ(int chan) { return (m_regs[AY_ENABLE] >> (3 + chan)) & 1; }
+        int TONE_ENABLEQ(int chan) { return (m_regs[AY_ENABLE] >> chan) & 1; }
+        int TONE_PERIOD(int chan) { return m_regs[chan << 1] | ((m_regs[(chan << 1) | 1] & 0x0f) << 8); }
+        int NOISE_PERIOD() { return m_regs[AY_NOISEPER] & 0x1f; }
+        int TONE_VOLUME(int chan) { return m_regs[AY_AVOL + chan] & 0x0f; }
+        int TONE_ENVELOPE(int chan) { return (m_regs[AY_AVOL + chan] >> 4) & (type() == ay8914_device.AY8914 ? 3 : 1); }
+        int ENVELOPE_PERIOD() { return m_regs[AY_EFINE] | (m_regs[AY_ECOARSE] << 8); }
+        int NOISE_OUTPUT() { return m_rng & 1; }
 
 
         static readonly ay_ym_param ym2149_param = new ay_ym_param
@@ -355,35 +213,35 @@ namespace mame
 
 
         psg_type_t m_type;
-        public int m_streams;
+        int m_streams;
         int m_ioports;
-        public int m_ready;
+        int m_ready;
         sound_stream m_channel;
         bool m_active;
         int32_t m_register_latch;
         uint8_t [] m_regs = new uint8_t[16];
         int32_t m_last_enable;
-        public int32_t [] m_count = new int32_t[NUM_CHANNELS];
-        public uint8_t [] m_output = new uint8_t[NUM_CHANNELS];
-        public uint8_t m_prescale_noise;
-        public int32_t m_count_noise;
-        public int32_t m_count_env;
-        public int8_t m_env_step;
-        public uint32_t m_env_volume;
-        public uint8_t m_hold;
-        public uint8_t m_alternate;
-        public uint8_t m_attack;
-        public uint8_t m_holding;
-        public int32_t m_rng;
-        public uint8_t m_env_step_mask;
+        int32_t [] m_count = new int32_t[NUM_CHANNELS];
+        uint8_t [] m_output = new uint8_t[NUM_CHANNELS];
+        uint8_t m_prescale_noise;
+        int32_t m_count_noise;
+        int32_t m_count_env;
+        int8_t m_env_step;
+        uint32_t m_env_volume;
+        uint8_t m_hold;
+        uint8_t m_alternate;
+        uint8_t m_attack;
+        uint8_t m_holding;
+        int32_t m_rng;
+        uint8_t m_env_step_mask;
         ///* init parameters ... */
-        public int m_step;
+        int m_step;
         int m_zero_is_off;
-        public uint8_t [] m_vol_enabled = new uint8_t[NUM_CHANNELS];
+        uint8_t [] m_vol_enabled = new uint8_t[NUM_CHANNELS];
         ay_ym_param m_par;
         ay_ym_param m_par_env;
-        public int32_t [,] m_vol_table = new int32_t[NUM_CHANNELS, 16];
-        public int32_t [,] m_env_table = new int32_t[NUM_CHANNELS, 32];
+        int32_t [,] m_vol_table = new int32_t[NUM_CHANNELS, 16];
+        int32_t [,] m_env_table = new int32_t[NUM_CHANNELS, 32];
         int32_t [] m_vol3d_table;  //std::unique_ptr<int32_t[]> m_vol3d_table;
         int m_flags;          /* Flags */
         int [] m_res_load = new int[3];    /* Load on channel in ohms */
@@ -405,6 +263,7 @@ namespace mame
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_ay8910(mconfig, this));  // device_sound_interface(mconfig, *this);
+            m_disound = GetClassInterface<device_sound_interface_ay8910>();
 
             m_type = psg_type;
             m_streams = streams;
@@ -436,16 +295,19 @@ namespace mame
             m_port_b_write_cb = new devcb_write8(this);
 
 
-            memset(m_regs, (byte)0);
+            memset(m_regs, (u8)0);
             memset(m_count, 0);
-            memset(m_output, (byte)0);
-            memset(m_vol_enabled, (byte)0);
+            memset(m_output, (u8)0);
+            memset(m_vol_enabled, (u8)0);
             memset(m_vol_table, 0);
             memset(m_env_table, 0);
             m_res_load[0] = m_res_load[1] = m_res_load[2] = 1000; //Default values for resistor loads
 
             set_type(psg_type);
         }
+
+
+        public device_sound_interface_ay8910 disound { get { return m_disound; } }
 
 
         // configuration helpers
@@ -459,31 +321,25 @@ namespace mame
         public devcb_write.binder port_b_write_callback() { return m_port_b_write_cb.bind(); }
 
 
-        //READ8_MEMBER( ay8910_device::data_r )
-        public u8 data_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
-        {
-            return ay8910_read_ym();
-        }
+        public u8 data_r() { return ay8910_read_ym(); }
 
 
-        //WRITE8_MEMBER( ay8910_device::address_w )
-        public void address_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void address_w(u8 data)
         {
 #if ENABLE_REGISTER_TEST
             return;
 #else
-            data_address_w(space, 1, data);
+            ay8910_write_ym(0, data);
 #endif
         }
 
 
-        //WRITE8_MEMBER( ay8910_device::data_w )
-        public void data_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void data_w(u8 data)
         {
 #if ENABLE_REGISTER_TEST
             return;
 #else
-            data_address_w(space, 0, data);
+            ay8910_write_ym(1, data);
 #endif
         }
 
@@ -498,11 +354,10 @@ namespace mame
 
 
         // use this when BC1 == A0; here, BC1=0 selects 'data' and BC1=1 selects 'latch address'
-        //DECLARE_WRITE8_MEMBER( data_address_w ) { ay8910_write_ym(~offset & 1, data); } // note that directly connecting BC1 to A0 puts data on 0 and address on 1
-        public void data_address_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { ay8910_write_ym((int)(~offset & 1), data); } // note that directly connecting BC1 to A0 puts data on 0 and address on 1
+        public void data_address_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { ay8910_write_ym((int)(~offset & 1), data); }  //DECLARE_WRITE8_MEMBER( data_address_w ) { ay8910_write_ym(~offset & 1, data); }  // note that directly connecting BC1 to A0 puts data on 0 and address on 1
 
         // use this when BC1 == !A0; here, BC1=0 selects 'latch address' and BC1=1 selects 'data'
-        //DECLARE_WRITE8_MEMBER( address_data_w ) { ay8910_write_ym(offset & 1, data); }
+        public void address_data_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { ay8910_write_ym((int)(offset & 1), data); }  //DECLARE_WRITE8_MEMBER( address_data_w ) { ay8910_write_ym(offset & 1, data); }
 
         // bc1=a0, bc2=a1
         //DECLARE_WRITE8_MEMBER(write_bc1_bc2);
@@ -669,9 +524,6 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            m_disound = GetClassInterface<device_sound_interface_ay8910>();
-
-
             int master_clock = (int)clock();
 
             if (m_ioports < 1 && !(m_port_a_read_cb.isnull() && m_port_a_write_cb.isnull()))
@@ -720,7 +572,145 @@ namespace mame
 
 
         // device_sound_interface - sound stream update overrides
-        //virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
+        //-------------------------------------------------
+        //  sound_stream_update - handle a stream update
+        //-------------------------------------------------
+        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        {
+            ListPointer<stream_sample_t> [] buf = new ListPointer<stream_sample_t> [NUM_CHANNELS];  //stream_sample_t *buf[NUM_CHANNELS];
+            int chan;
+
+            buf[0] = new ListPointer<stream_sample_t>(outputs[0]);
+            buf[1] = null;
+            buf[2] = null;
+            if (m_streams == NUM_CHANNELS)
+            {
+                buf[1] = outputs[1];
+                buf[2] = outputs[2];
+            }
+
+            /* hack to prevent us from hanging when starting filtered outputs */
+            if (m_ready == 0)
+            {
+                for (chan = 0; chan < NUM_CHANNELS; chan++)
+                {
+                    if (buf[chan] != null)
+                        memset(buf[chan], 0, (UInt32)samples);  //memset(buf[chan], 0, samples * sizeof_(*buf[chan]));
+                }
+            }
+
+            /* The 8910 has three outputs, each output is the mix of one of the three */
+            /* tone generators and of the (single) noise generator. The two are mixed */
+            /* BEFORE going into the DAC. The formula to mix each channel is: */
+            /* (ToneOn | ToneDisable) & (NoiseOn | NoiseDisable). */
+            /* Note that this means that if both tone and noise are disabled, the output */
+            /* is 1, not 0, and can be modulated changing the volume. */
+
+            /* buffering loop */
+            while (samples != 0)
+            {
+                for (chan = 0; chan < NUM_CHANNELS; chan++)
+                {
+                    m_count[chan]++;
+                    if (m_count[chan] >= TONE_PERIOD(chan))
+                    {
+                        m_output[chan] ^= 1;
+                        m_count[chan] = 0;
+                    }
+                }
+
+                m_count_noise++;
+                if (m_count_noise >= NOISE_PERIOD())
+                {
+                    /* toggle the prescaler output. Noise is no different to
+                        * channels.
+                        */
+                    m_count_noise = 0;
+                    m_prescale_noise ^= 1;
+
+                    if (m_prescale_noise != 0)
+                    {
+                        /* The Random Number Generator of the 8910 is a 17-bit shift */
+                        /* register. The input to the shift register is bit0 XOR bit3 */
+                        /* (bit0 is the output). This was verified on AY-3-8910 and YM2149 chips. */
+
+                        m_rng ^= (((m_rng & 1) ^ ((m_rng >> 3) & 1)) << 17);
+                        m_rng >>= 1;
+                    }
+                }
+
+                for (chan = 0; chan < NUM_CHANNELS; chan++)
+                {
+                    m_vol_enabled[chan] = (byte)((m_output[chan] | TONE_ENABLEQ(chan)) & (NOISE_OUTPUT() | NOISE_ENABLEQ(chan)));
+                }
+
+                /* update envelope */
+                if (m_holding == 0)
+                {
+                    m_count_env++;
+                    if (m_count_env >= ENVELOPE_PERIOD() * m_step )
+                    {
+                        m_count_env = 0;
+                        m_env_step--;
+
+                        /* check envelope current position */
+                        if (m_env_step < 0)
+                        {
+                            if (m_hold != 0)
+                            {
+                                if (m_alternate != 0)
+                                    m_attack ^= m_env_step_mask;
+                                m_holding = 1;
+                                m_env_step = 0;
+                            }
+                            else
+                            {
+                                /* if CountEnv has looped an odd number of times (usually 1), */
+                                /* invert the output. */
+                                if (m_alternate != 0 && (m_env_step & (m_env_step_mask + 1)) != 0)
+                                    m_attack ^= m_env_step_mask;
+
+                                m_env_step &= (sbyte)m_env_step_mask;
+                            }
+                        }
+
+                    }
+                }
+                m_env_volume = (UInt32)(m_env_step ^ m_attack);
+
+                if (m_streams == 3)
+                {
+                    for (chan = 0; chan < NUM_CHANNELS; chan++)
+                    {
+                        if (TONE_ENVELOPE(chan) != 0)
+                        {
+                            if (type() == ay8914_device.AY8914) // AY8914 Has a two bit tone_envelope field
+                            {
+                                buf[chan][0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? m_env_volume >> (3 - TONE_ENVELOPE(chan)) : 0];  // *(buf[chan]++)
+                                buf[chan]++;
+                            }
+                            else
+                            {
+                                buf[chan][0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? m_env_volume : 0];  // *(buf[chan]++)
+                                buf[chan]++;
+                            }
+                        }
+                        else
+                        {
+                            buf[chan][0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? TONE_VOLUME(chan) : 0];  // *(buf[chan]++)
+                            buf[chan]++;
+                        }
+                    }
+                }
+                else
+                {
+                    buf[0][0] = mix_3D();  // *(buf[0]++)
+                    buf[0]++;
+                }
+
+                samples--;
+            }
+        }
 
 
         // trampolines for callbacks from fm.cpp
@@ -754,7 +744,7 @@ namespace mame
         }
 
 
-        public uint16_t mix_3D()
+        uint16_t mix_3D()
         {
             int indx = 0;
             int chan;

@@ -27,8 +27,6 @@ namespace mame.netlist
      */
     public abstract class callbacks_t
     {
-        //~callbacks_t() {}
-
         /* logging callback */
         public abstract void vlog(plib.plog_level l, string ls);
     }

@@ -119,7 +119,7 @@ namespace mame
         //#define TILEMAP_MAPPER_MEMBER(_name)    tilemap_memory_index _name(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
 
         // useful macro inside of a TILE_GET_INFO callback to set tile information
-        public static void SET_TILE_INFO_MEMBER(ref tile_data tileinfo, byte GFX, UInt32 CODE, UInt32 COLOR, byte FLAGS) { tileinfo.set(GFX, CODE, COLOR, FLAGS); }
+        public static void SET_TILE_INFO_MEMBER(ref tile_data tileinfo, u8 GFX, u32 CODE, u32 COLOR, u8 FLAGS) { tileinfo.set(GFX, CODE, COLOR, FLAGS); }
 
         // Macros for setting tile attributes in the TILE_GET_INFO callback:
         //   TILE_FLIP_YX assumes that flipy is in bit 1 and flipx is in bit 0

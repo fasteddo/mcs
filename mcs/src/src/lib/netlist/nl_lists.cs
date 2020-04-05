@@ -94,6 +94,8 @@ namespace mame.netlist
         // profiling
         //nperfcount_t<KEEPSTAT> m_prof_sortmove;
         //nperfcount_t<KEEPSTAT> m_prof_call;
+        //nperfcount_t<KEEPSTAT> m_prof_remove;
+        //nperfcount_t<KEEPSTAT> m_prof_retime;
 
 
         public timed_queue_linear(bool TS, UInt32 list_size)
@@ -116,7 +118,7 @@ namespace mame.netlist
             /* Lock */
             lock (m_lock)  //lock_guard_type lck(m_lock);
             {
-                int iIdx = m_endIdx;  //T * i(m_end);
+                int iIdx = m_endIdx;  //T * i(m_end-1);
                 for (; pqentry_t<detail.net_t, netlist_time>.QueueOp.less(m_list[iIdx - 1], e); --iIdx)  //for (; QueueOp::less(*(i - 1), e); --i)
                 {
                     // handled in the insert below

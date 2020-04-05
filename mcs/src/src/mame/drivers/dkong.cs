@@ -22,17 +22,17 @@ namespace mame
          *************************************/
 
         //READ8_MEMBER(dkong_state::memory_read_byte)
-        public u8 memory_read_byte(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 memory_read_byte(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
-            address_space prog_space = m_maincpu.target.GetClassInterface<device_memory_interface>().space(AS_PROGRAM);
+            address_space prog_space = m_maincpu.target.memory().space(AS_PROGRAM);
             return prog_space.read_byte(offset);
         }
 
 
         //WRITE8_MEMBER(dkong_state::memory_write_byte)
-        public void memory_write_byte(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void memory_write_byte(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
-            address_space prog_space = m_maincpu.target.GetClassInterface<device_memory_interface>().space(AS_PROGRAM);
+            address_space prog_space = m_maincpu.target.memory().space(AS_PROGRAM);
             prog_space.write_byte(offset, data);
         }
 
@@ -44,7 +44,7 @@ namespace mame
          *************************************/
 
         //MACHINE_START_MEMBER(dkong_state,dkong2b)
-        public void machine_start_dkong2b()
+        void machine_start_dkong2b()
         {
             m_hardware_type = HARDWARE_TKG04;
 
@@ -54,7 +54,7 @@ namespace mame
 
 
         //MACHINE_RESET_MEMBER(dkong_state,dkong)
-        public void machine_reset_dkong()
+        void machine_reset_dkong()
         {
             /* nothing */
         }
@@ -93,14 +93,14 @@ namespace mame
         //}
 
         //READ8_MEMBER(dkong_state::p8257_ctl_r)
-        public u8 p8257_ctl_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 p8257_ctl_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return m_dma_latch;
         }
 
 
         //WRITE8_MEMBER(dkong_state::p8257_ctl_w)
-        public void p8257_ctl_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void p8257_ctl_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_dma_latch = data;
         }
@@ -119,7 +119,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(dkong_state::p8257_drq_w)
-        public void p8257_drq_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void p8257_drq_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_dma8257.target.dreq0_w(data & 0x01);
             m_dma8257.target.dreq1_w(data & 0x01);
@@ -129,7 +129,7 @@ namespace mame
 
 
         //READ8_MEMBER(dkong_state::dkong_in2_r)
-        public u8 dkong_in2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 dkong_in2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             // 2 board DK and all DKjr has a watchdog
             if (m_watchdog.target != null)
@@ -313,7 +313,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(dkong_state::nmi_mask_w)
-        public void nmi_mask_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void nmi_mask_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_nmi_mask = (uint8_t)(data & 1);
             if (m_nmi_mask == 0)
@@ -327,18 +327,18 @@ namespace mame
          *
          *************************************/
 
-        public void dkong_map(address_map map, device_t device)
+        void dkong_map(address_map map, device_t device)
         {
             map.op(0x0000, 0x4fff).rom();
             map.op(0x6000, 0x6bff).ram();
             map.op(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
             map.op(0x7400, 0x77ff).ram().w(dkong_videoram_w).share("video_ram");
-            map.op(0x7800, 0x780f).rw(i8257_device_read, i8257_device_write);   /* P8257 control registers */
-            map.op(0x7c00, 0x7c00).portr("IN0").w("ls175.3d", latch8_device_write);    /* IN0, sound CPU intf */
+            map.op(0x7800, 0x780f).rw(m_dma8257, (space, offset, mem_mask) => { return m_dma8257.target.read(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { m_dma8257.target.write(space, offset, data, mem_mask); });  //FUNC(i8257_device::read), FUNC(i8257_device::write));   /* P8257 control registers */
+            map.op(0x7c00, 0x7c00).portr("IN0").w("ls175.3d", (space, offset, data, mem_mask) => { ((latch8_device)subdevice("ls175.3d")).write(space, offset, data, mem_mask); });  //FUNC(latch8_device::write));    /* IN0, sound CPU intf */
             map.op(0x7c80, 0x7c80).portr("IN1").w(radarscp_grid_color_w);/* IN1 */
 
             map.op(0x7d00, 0x7d00).r(dkong_in2_r);                               /* IN2 */
-            map.op(0x7d00, 0x7d07).w(latch8_device_bit0_w);          /* Sound signals */
+            map.op(0x7d00, 0x7d07).w(m_dev_6h.target, (space, offset, data, mem_mask) => { m_dev_6h.target.bit0_w(space, offset, data, mem_mask); });  //FUNC(latch8_device::bit0_w));          /* Sound signals */
 
             map.op(0x7d80, 0x7d80).portr("DSW0").w(dkong_audio_irq_w);   /* DSW0 */
             map.op(0x7d81, 0x7d81).w(radarscp_grid_enable_w);
@@ -351,7 +351,7 @@ namespace mame
     }
 
 
-    public partial class dkong : global_object
+    partial class dkong : global_object
     {
         /*************************************
          *
@@ -415,7 +415,7 @@ namespace mame
             PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 );
             PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN );   /* not connected - held to high */
             PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN );   /* not connected - held to high */
-            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_DEVICE_MEMBER("virtual_p2", dkong_state.latch8_device_bit4_q_r); /* status from sound cpu */
+            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_DEVICE_MEMBER("virtual_p2", () => { return ((latch8_device)dkong_state.subdevice("virtual_p2")).bit4_q_r(); });  //latch8_device, bit4_q_r) /* status from sound cpu */
             PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 );
 
             PORT_START("SERVICE1");
@@ -480,12 +480,12 @@ namespace mame
         {
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
-            PORT_INCLUDE( construct_ioport_dkong_in0_4, owner, portlist, ref errorbuf );
-            PORT_INCLUDE( construct_ioport_dkong_in1_4, owner, portlist, ref errorbuf );
-            PORT_INCLUDE( construct_ioport_dkong_in2, owner, portlist, ref errorbuf );
-            PORT_INCLUDE( construct_ioport_dkong_dsw0, owner, portlist, ref errorbuf );
+            PORT_INCLUDE( construct_ioport_dkong_in0_4, ref errorbuf );
+            PORT_INCLUDE( construct_ioport_dkong_in1_4, ref errorbuf );
+            PORT_INCLUDE( construct_ioport_dkong_in2, ref errorbuf );
+            PORT_INCLUDE( construct_ioport_dkong_dsw0, ref errorbuf );
 
-            PORT_INCLUDE( construct_ioport_dkong_config, owner, portlist, ref errorbuf );
+            PORT_INCLUDE( construct_ioport_dkong_config, ref errorbuf );
 
             INPUT_PORTS_END();
         }
@@ -528,7 +528,7 @@ namespace mame
          *************************************/
 
         //WRITE_LINE_MEMBER(dkong_state::vblank_irq)
-        public void vblank_irq(int state)
+        void vblank_irq(int state)
         {
             if (state != 0 && m_nmi_mask != 0)
                 m_maincpu.target.set_input_line(device_execute_interface.INPUT_LINE_NMI, ASSERT_LINE);
@@ -536,7 +536,7 @@ namespace mame
 
 
         //WRITE_LINE_MEMBER(dkong_state::busreq_w )
-        public void busreq_w(int state)
+        void busreq_w(int state)
         {
             // since our Z80 has no support for BUSACK, we assume it is granted immediately
             m_maincpu.target.set_input_line(z80_device.Z80_INPUT_LINE_BUSRQ, state);
@@ -552,7 +552,7 @@ namespace mame
         //MACHINE_CONFIG_START(dkong_state::dkong_base)
         void dkong_base(machine_config config)
         {
-            MACHINE_CONFIG_START(config, this);
+            MACHINE_CONFIG_START(config);
 
             /* basic machine hardware */
             MCFG_DEVICE_ADD(m_maincpu, z80_device.Z80, CLOCK_1H);
@@ -590,7 +590,7 @@ namespace mame
         {
             dkong_base(config);
 
-            MACHINE_CONFIG_START(config, this);
+            MACHINE_CONFIG_START(config);
 
             /* basic machine hardware */
             MCFG_MACHINE_START_OVERRIDE(config, machine_start_dkong2b);
@@ -606,7 +606,7 @@ namespace mame
     }
 
 
-    public partial class dkong : global_object
+    partial class dkong : global_object
     {
         /*************************************
          *
@@ -644,7 +644,7 @@ namespace mame
             ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, CRC("d6412358") + SHA1("f9c872da2fe8e800574ae3bf483fb3ccacc92eb3") ), /* palette high 4 bits (inverted) */
             ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, CRC("b869b8f5") + SHA1("c2bdccbf2654b64ea55cd589fd21323a9178a660") ), /* character color codes on a per-column basis */
 
-            ROM_END(),
+            ROM_END,
         };
 
 

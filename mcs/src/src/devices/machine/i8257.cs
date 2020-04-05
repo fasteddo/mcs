@@ -15,26 +15,20 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    class device_execute_interface_i8257 : device_execute_interface
-    {
-        public device_execute_interface_i8257(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-
-        public override void execute_run()
-        {
-            i8257_device i8257 = (i8257_device)device();
-
-            i8257.execute_run();
-        }
-    }
-
-
     public class i8257_device : device_t
                                 //device_execute_interface
     {
         //DEFINE_DEVICE_TYPE(I8257, i8257_device, "i8257", "Intel 8257 DMA Controller")
         static device_t device_creator_i8257_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8257_device(mconfig, tag, owner, clock); }
         public static readonly device_type I8257 = DEFINE_DEVICE_TYPE(device_creator_i8257_device, "i8257", "Intel 8257 DMA Controller");
+
+
+        class device_execute_interface_i8257 : device_execute_interface
+        {
+            public device_execute_interface_i8257(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override void execute_run() { ((i8257_device)device()).device_execute_interface_execute_run(); }
+        }
 
 
         const int LOG_SETUP     = 1 << 1;
@@ -151,7 +145,11 @@ namespace mame
         }
 
 
-        //DECLARE_READ8_MEMBER( read );
+        //READ8_MEMBER( i8257_device::read )
+        public u8 read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         //WRITE8_MEMBER( i8257_device::write )
@@ -337,7 +335,7 @@ namespace mame
         }
 
 
-        public void execute_run()
+        void device_execute_interface_execute_run()
         {
             LOG("{0}\n", "execute_run");
 

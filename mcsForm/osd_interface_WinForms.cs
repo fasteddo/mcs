@@ -388,7 +388,7 @@ namespace mameForm
 
 
         render_target m_target;
-        RawBuffer screenbuffer = new RawBuffer(640 * 480 * 2 * 4);  //g_state.screenbuffer = new uint32_t[400 * 400 * 2];
+        RawBuffer screenbuffer;  //g_state.screenbuffer = new uint32_t[400 * 400 * 2];
         public RawBufferPointer screenbufferptr;
         public Queue<Int16> m_audiobuffer = new Queue<Int16>();
 
@@ -552,10 +552,9 @@ namespace mameForm
              * scale that to whatever they want.
              **/
             //m_target.set_bounds(640, 480, 1.0f);
-            m_target.set_bounds(400, 400, 1.0f);
+            //m_target.set_bounds(400, 400, 1.0f);
 
-
-            screenbufferptr = new RawBufferPointer(screenbuffer);
+            set_bounds(10, 10);
 
 
             {
@@ -635,16 +634,15 @@ namespace mameForm
                 render_primitive_list list = m_target.get_primitives();
                 list.acquire_lock();
 
-                UInt32 width = 400;  //640; //rect_width(&bounds);
-                UInt32 height = 400; //480; //rect_height(&bounds);
+                UInt32 width = (UInt32)get_width();  //400;  //640; //rect_width(&bounds);
+                UInt32 height = (UInt32)get_height();  //400; //480; //rect_height(&bounds);
                 UInt32 pitch = (UInt32)((width + 3) & ~3);
 
 
                 lock (osdlock)
                 {
                     //software_renderer<typeof(UInt32), 0,0,0, 16,8,0>.draw_primitives(list, g_state.screenbuffer, width, height, pitch);
-                    software_renderer<UInt32>.SetTemplateParams(32, 0,0,0, 16,8,0);
-                    software_renderer<UInt32>.draw_primitives(list, screenbufferptr, width, height, pitch);
+                    software_renderer<UInt32>.draw_primitives(new software_renderer<UInt32>.TemplateParams(32, 0,0,0, 16,8,0), list, screenbufferptr, width, height, pitch);
                 }
 
                 list.release_lock();
@@ -688,6 +686,21 @@ namespace mameForm
         public override std.vector<mame.ui.menu_item> get_slider_list()
         {
             return base.get_slider_list();
+        }
+
+
+        public int get_width() { return m_target.width(); }
+        public int get_height() { return m_target.height(); }
+
+
+        public void set_bounds(int width, int height, float pixel_aspect = 0)
+        {
+            m_target.set_bounds(width, height, pixel_aspect);
+
+            const int bpp = 32;
+            const int bytes_per_pixel = bpp / 8;
+            screenbuffer = new RawBuffer(width * height * bytes_per_pixel);  //g_state.screenbuffer = new uint32_t[400 * 400 * 2];
+            screenbufferptr = new RawBufferPointer(screenbuffer);
         }
 
 

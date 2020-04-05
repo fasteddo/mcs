@@ -11,14 +11,14 @@ namespace mame
     {
         //#define MC14584B_GATE(name)                                                   \
         //        NET_REGISTER_DEV(MC14584B_GATE, name)
-        public static void MC14584B_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "MC14584B_GATE", name); }
+        public static void MC14584B_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "MC14584B_GATE", name); }
 
         //#define MC14584B_DIP(name)                                                    \
         //        NET_REGISTER_DEV(MC14584B_DIP, name)
 
 
         //static NETLIST_START(MC14584B_DIP)
-        public static void netlist_MC14584B_DIP(netlist.setup_t setup)
+        public static void netlist_MC14584B_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -48,7 +48,7 @@ namespace mame
 
 
         //NETLIST_START(otheric_lib)
-        public static void netlist_otheric_lib(netlist.setup_t setup)
+        public static void netlist_otheric_lib(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 

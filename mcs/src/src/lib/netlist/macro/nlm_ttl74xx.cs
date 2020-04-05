@@ -11,7 +11,7 @@ namespace mame
     {
         //#define TTL_7400_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_7400_GATE, name)
-        public static void TTL_7400_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7400_GATE", name); }
+        public static void TTL_7400_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7400_GATE", name); }
 
         //#define TTL_7400_NAND(name, cA, cB)                                           \
         //        NET_REGISTER_DEV(TTL_7400_NAND, name)                                  \
@@ -24,7 +24,7 @@ namespace mame
 
         //#define TTL_7402_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_7402_GATE, name)
-        public static void TTL_7402_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7402_GATE", name); }
+        public static void TTL_7402_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7402_GATE", name); }
 
         //#define TTL_7402_NOR(name, cI1, cI2)                                          \
         //        NET_REGISTER_DEV(TTL_7402_NOR, name)                                  \
@@ -36,7 +36,7 @@ namespace mame
 
         //#define TTL_7404_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_7404_GATE, name)
-        public static void TTL_7404_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7404_GATE", name); }
+        public static void TTL_7404_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7404_GATE", name); }
 
         //#define TTL_7404_INVERT(name, cA)                                             \
         //        NET_REGISTER_DEV(TTL_7404_INVERT, name)                               \
@@ -48,7 +48,7 @@ namespace mame
 
         //#define TTL_7408_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_7408_GATE, name)
-        public static void TTL_7408_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7408_GATE", name); }
+        public static void TTL_7408_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7408_GATE", name); }
 
         //#define TTL_7408_AND(name, cA, cB)                                            \
         //        NET_REGISTER_DEV(TTL_7408_AND, name)                                   \
@@ -61,7 +61,7 @@ namespace mame
 
         //#define TTL_7410_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_7410_GATE, name)
-        public static void TTL_7410_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7410_GATE", name); }
+        public static void TTL_7410_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7410_GATE", name); }
 
         //#define TTL_7410_NAND(name, cI1, cI2, cI3)                                    \
         //        NET_REGISTER_DEV(TTL_7410_NAND, name)                                 \
@@ -75,7 +75,7 @@ namespace mame
 
         //#define TTL_7411_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_7411_GATE, name)
-        public static void TTL_7411_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7411_GATE", name); }
+        public static void TTL_7411_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7411_GATE", name); }
 
         //#define TTL_7411_AND(name, cI1, cI2, cI3)                                     \
         //        NET_REGISTER_DEV(TTL_7411_AND, name)                                  \
@@ -103,7 +103,7 @@ namespace mame
 
         //#define TTL_7416_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_7416_GATE, name)
-        public static void TTL_7416_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7416_GATE", name); }
+        public static void TTL_7416_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7416_GATE", name); }
 
         //#define TTL_7416_DIP(name)                                                    \
         //        NET_REGISTER_DEV(TTL_7416_DIP, name)
@@ -111,7 +111,7 @@ namespace mame
 
         //#define TTL_7420_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_7420_GATE, name)
-        public static void TTL_7420_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7420_GATE", name); }
+        public static void TTL_7420_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7420_GATE", name); }
 
         //#define TTL_7420_NAND(name, cI1, cI2, cI3, cI4)                               \
         //        NET_REGISTER_DEV(TTL_7420_NAND, name)                                 \
@@ -126,7 +126,7 @@ namespace mame
 
         //#define TTL_7425_GATE(name)                                                    \
         //        NET_REGISTER_DEV(TTL_7425_GATE, name)
-        public static void TTL_7425_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7425_GATE", name); }
+        public static void TTL_7425_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7425_GATE", name); }
 
         //#define TTL_7425_NOR(name, cI1, cI2, cI3, cI4)                                 \
         //        NET_REGISTER_DEV(TTL_7425_NOR, name)                                   \
@@ -141,7 +141,7 @@ namespace mame
 
         //#define TTL_7427_GATE(name)                                                    \
         //        NET_REGISTER_DEV(TTL_7427_GATE, name)
-        public static void TTL_7427_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7427_GATE", name); }
+        public static void TTL_7427_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7427_GATE", name); }
 
         //#define TTL_7427_NOR(name, cI1, cI2, cI3)                                      \
         //        NET_REGISTER_DEV(TTL_7427_NOR, name)                                   \
@@ -155,7 +155,7 @@ namespace mame
 
         //#define TTL_7430_GATE(name)                                                    \
         //        NET_REGISTER_DEV(TTL_7430_GATE, name)
-        public static void TTL_7430_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7430_GATE", name); }
+        public static void TTL_7430_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7430_GATE", name); }
 
         //#define TTL_7430_NAND(name, cI1, cI2, cI3, cI4, cI5, cI6, cI7, cI8)            \
         //        NET_REGISTER_DEV(TTL_7430_NAND, name)                                  \
@@ -174,7 +174,7 @@ namespace mame
 
         //#define TTL_7432_GATE(name)                                                    \
         //        NET_REGISTER_DEV(TTL_7432_OR, name)
-        public static void TTL_7432_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7432_OR", name); }
+        public static void TTL_7432_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7432_OR", name); }
 
         //#define TTL_7432_OR(name, cI1, cI2)                                            \
         //        NET_REGISTER_DEV(TTL_7432_OR, name)                                    \
@@ -187,7 +187,7 @@ namespace mame
 
         //#define TTL_7437_GATE(name)                                                    \
         //        NET_REGISTER_DEV(TTL_7437_GATE, name)
-        public static void TTL_7437_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7437_GATE", name); }
+        public static void TTL_7437_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7437_GATE", name); }
 
         //#define TTL_7437_NAND(name, cA, cB)                                            \
         //        NET_REGISTER_DEV(TTL_7437_NAND, name)                                  \
@@ -200,7 +200,7 @@ namespace mame
 
         //#define TTL_7486_GATE(name)                                                    \
         //        NET_REGISTER_DEV(TTL_7486_GATE, name)
-        public static void TTL_7486_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7486_GATE", name); }
+        public static void TTL_7486_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7486_GATE", name); }
 
         //#define TTL_7486_XOR(name, cA, cB)                                             \
         //        NET_REGISTER_DEV(TTL_7486_XOR, name)                                   \
@@ -219,7 +219,7 @@ namespace mame
 
         //#define TTL_74260_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_74260_GATE, name)
-        public static void TTL_74260_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74260_GATE", name); }
+        public static void TTL_74260_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74260_GATE", name); }
 
         //#define TTL_74260_NOR(name, cA, cB, cC, cD, cE) \
         //        NET_REGISTER_DEV(TTL_74260_NOR, name)   \
@@ -273,7 +273,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7400_DIP)
-        public static void netlist_TTL_7400_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7400_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -318,7 +318,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7402_DIP)
-        public static void netlist_TTL_7402_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7402_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -361,7 +361,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7404_DIP)
-        public static void netlist_TTL_7404_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7404_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -409,7 +409,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7408_DIP)
-        public static void netlist_TTL_7408_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7408_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -454,7 +454,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7410_DIP)
-        public static void netlist_TTL_7410_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7410_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -498,7 +498,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7411_DIP)
-        public static void netlist_TTL_7411_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7411_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -531,7 +531,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7414_GATE)
-        public static void netlist_TTL_7414_GATE(netlist.setup_t setup)
+        public static void netlist_TTL_7414_GATE(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -545,7 +545,7 @@ namespace mame
 
 
         //static NETLIST_START(TTL_74LS14_GATE)
-        public static void netlist_TTL_74LS14_GATE(netlist.setup_t setup)
+        public static void netlist_TTL_74LS14_GATE(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -559,7 +559,7 @@ namespace mame
 
 
         //static NETLIST_START(TTL_7414_DIP)
-        public static void netlist_TTL_7414_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7414_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -589,7 +589,7 @@ namespace mame
 
 
         //static NETLIST_START(TTL_74LS14_DIP)
-        public static void netlist_TTL_74LS14_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74LS14_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -625,7 +625,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7416_DIP)
-        public static void netlist_TTL_7416_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7416_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -673,7 +673,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7420_DIP)
-        public static void netlist_TTL_7420_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7420_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -722,7 +722,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7425_DIP)
-        public static void netlist_TTL_7425_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7425_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -767,7 +767,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7427_DIP)
-        public static void netlist_TTL_7427_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7427_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -815,7 +815,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7430_DIP)
-        public static void netlist_TTL_7430_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7430_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -859,7 +859,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7432_DIP)
-        public static void netlist_TTL_7432_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7432_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -907,7 +907,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7437_DIP)
-        public static void netlist_TTL_7437_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7437_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -952,7 +952,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_7486_DIP)
-        public static void netlist_TTL_7486_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_7486_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1009,7 +1009,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_74155_DIP)
-        public static void netlist_TTL_74155_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74155_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1039,7 +1039,7 @@ namespace mame
 
 
         //static NETLIST_START(TTL_74156_DIP)
-        public static void netlist_TTL_74156_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74156_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1088,7 +1088,7 @@ namespace mame
          */
 
         //static NETLIST_START(TTL_74260_DIP)
-        public static void netlist_TTL_74260_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74260_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1138,11 +1138,11 @@ namespace mame
         //#define TTL_74279B(name)                                                         \
         //        NET_REGISTER_DEV(TTL_74279B, name)
         //#endif
-        public static void TTL_74279A(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74279A", name); }
-        public static void TTL_74279B(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74279B", name); }
+        public static void TTL_74279A(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74279A", name); }
+        public static void TTL_74279B(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74279B", name); }
 
         //static NETLIST_START(TTL_74279_DIP)
-        public static void netlist_TTL_74279_DIP(netlist.setup_t setup)
+        public static void netlist_TTL_74279_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1206,10 +1206,10 @@ namespace mame
         //#define DM9312_TT(name)     \
         //        NET_REGISTER_DEV(DM9312_TT, name)
         //#endif
-        public static void DM9312_TT(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "DM9312_TT", name); }
+        public static void DM9312_TT(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "DM9312_TT", name); }
 
         //static NETLIST_START(DM9312_DIP)
-        public static void netlist_DM9312_DIP(netlist.setup_t setup)
+        public static void netlist_DM9312_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -1235,12 +1235,13 @@ namespace mame
 
 
         //NETLIST_START(TTL74XX_lib)
-        public static void netlist_TTL74XX_lib(netlist.setup_t setup)
+        public static void netlist_TTL74XX_lib(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.NET_MODEL(setup, "DM7414    SCHMITT_TRIGGER(VTP=1.7 VTM=0.9 VI=4.35 RI=6.15k VOH=3.5 ROH=120 VOL=0.1 ROL=37.5 TPLH=15 TPHL=15)");
-            netlist.nl_setup_global.NET_MODEL(setup, "DM74LS14  SCHMITT_TRIGGER(VTP=1.6 VTM=0.8 VI=4.4 RI=19.3k VOH=3.45 ROH=130 VOL=0.1 ROL=31.2 TPLH=15 TPHL=15)");
+            netlist.nl_setup_global.NET_MODEL(setup, "DM7414         SCHMITT_TRIGGER(VTP=1.7 VTM=0.9 VI=4.35 RI=6.15k VOH=3.5 ROH=120 VOL=0.1 ROL=37.5 TPLH=15 TPHL=15)");
+            netlist.nl_setup_global.NET_MODEL(setup, "TTL_7414_GATE  SCHMITT_TRIGGER(VTP=1.7 VTM=0.9 VI=4.35 RI=6.15k VOH=3.5 ROH=120 VOL=0.1 ROL=37.5 TPLH=15 TPHL=15)");
+            netlist.nl_setup_global.NET_MODEL(setup, "DM74LS14       SCHMITT_TRIGGER(VTP=1.6 VTM=0.8 VI=4.4 RI=19.3k VOH=3.45 ROH=130 VOL=0.1 ROL=31.2 TPLH=15 TPHL=15)");
             //NET_MODEL("DM7414 FAMILY(FV=5 IVL=0.16 IVH=0.4 OVL=0.1 OVH=0.05 ORL=10.0 ORH=1.0e8)")
 
 

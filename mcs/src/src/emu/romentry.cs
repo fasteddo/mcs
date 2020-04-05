@@ -106,7 +106,7 @@ namespace mame
         /* ----- start/stop macros ----- */
         //#define ROM_NAME(name)                              rom_##name
         //#define ROM_START(name)                             static const tiny_rom_entry ROM_NAME(name)[] = {
-        public static tiny_rom_entry ROM_END() { return new tiny_rom_entry(null, null, 0, 0, ROMENTRYTYPE_END); }
+        public static tiny_rom_entry ROM_END { get { return new tiny_rom_entry(null, null, 0, 0, ROMENTRYTYPE_END); } }
 
 
         /* ----- ROM region macros ----- */

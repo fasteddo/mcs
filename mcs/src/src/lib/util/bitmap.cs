@@ -344,7 +344,7 @@ namespace mame
 
             // determine how much memory we need for the new bitmap
             int new_rowpixels = compute_rowpixels(width, xslop);
-            UInt32 new_allocbytes = (UInt32)(new_rowpixels * (height + 2 * yslop) * m_bpp / 8);
+            uint32_t new_allocbytes = (uint32_t)(new_rowpixels * (height + 2 * yslop) * m_bpp / 8);
 
             // if we need more memory, just realloc
             if (new_allocbytes > m_allocbytes)

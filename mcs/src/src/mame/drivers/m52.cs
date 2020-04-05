@@ -29,7 +29,7 @@ namespace mame
             map.op(0x8400, 0x87ff).ram().w(m52_colorram_w).share("colorram");
             map.op(0x8800, 0x8800).mirror(0x07ff).r(m52_protection_r);
             map.op(0xc800, 0xcbff).mirror(0x0400).writeonly().share("spriteram"); // only 0x100 of this used by video code?
-            map.op(0xd000, 0xd000).mirror(0x07fc).w("irem_audio", irem_audio_device_cmd_w);
+            map.op(0xd000, 0xd000).mirror(0x07fc).w("irem_audio", (space, offset, data, mem_mask) => { ((irem_audio_device)subdevice("irem_audio")).cmd_w(space, offset, data, mem_mask); });  //FUNC(irem_audio_device::cmd_w));
             map.op(0xd001, 0xd001).mirror(0x07fc).w(m52_flipscreen_w);   /* + coin counters */
             map.op(0xd000, 0xd000).mirror(0x07f8).portr("IN0");
             map.op(0xd001, 0xd001).mirror(0x07f8).portr("IN1");
@@ -124,7 +124,9 @@ namespace mame
         //static INPUT_PORTS_START( mpatrol )
         void construct_ioport_mpatrol(device_t owner, ioport_list portlist, ref string errorbuf)
         {
-            PORT_INCLUDE(construct_ioport_m52, owner, portlist, ref errorbuf);
+            INPUT_PORTS_START(owner, portlist, ref errorbuf);
+
+            PORT_INCLUDE(construct_ioport_m52, ref errorbuf);
 
             PORT_MODIFY("IN1");
             PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_2WAY();
@@ -196,7 +198,7 @@ namespace mame
         );
 
 
-        static readonly uint32_t [] bgcharlayout_xoffset = digfx_global.ArrayCombineUInt32(
+        static readonly uint32_t [] bgcharlayout_xoffset = ArrayCombineUInt32(
             STEP4(0x000,1), STEP4(0x008,1), STEP4(0x010,1), STEP4(0x018,1),
             STEP4(0x020,1), STEP4(0x028,1), STEP4(0x030,1), STEP4(0x038,1),
             STEP4(0x040,1), STEP4(0x048,1), STEP4(0x050,1), STEP4(0x058,1),
@@ -215,7 +217,7 @@ namespace mame
             STEP4(0x1e0,1), STEP4(0x1e8,1), STEP4(0x1f0,1), STEP4(0x1f8,1));
 
 
-        static readonly uint32_t [] bgcharlayout_yoffset = digfx_global.ArrayCombineUInt32(
+        static readonly uint32_t [] bgcharlayout_yoffset = ArrayCombineUInt32(
             STEP32(0x0000,0x200), STEP32(0x4000,0x200), STEP32(0x8000,0x200), STEP32(0xc000,0x200));
 
 
@@ -278,7 +280,7 @@ namespace mame
         //MACHINE_CONFIG_START(m52_state::m52)
         public void m52(machine_config config)
         {
-            MACHINE_CONFIG_START(config, this);
+            MACHINE_CONFIG_START(config);
 
             /* basic machine hardware */
             MCFG_DEVICE_ADD("maincpu", z80_device.Z80, MASTER_CLOCK / 6);
@@ -359,7 +361,8 @@ namespace mame
 
             ROM_REGION(0x0100, "spr_clut", 0),
             ROM_LOAD("mpc-2.2h", 0x0000, 0x0100, CRC("7ae4cd97") + SHA1("bc0662fac82ffe65f02092d912b2c2b0c7a8ac2b")),
-            ROM_END(),
+
+            ROM_END,
         };
 
 

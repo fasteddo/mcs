@@ -173,7 +173,7 @@ namespace mame
         //void irq7_line_assert(device_t &device);
 
 
-        protected virtual void driver_init() { }
+        public virtual void driver_init() { }
 
 
         // helpers called at startup

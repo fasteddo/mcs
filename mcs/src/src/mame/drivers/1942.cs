@@ -38,7 +38,7 @@ namespace mame
 
 
         //static NETLIST_START(nl_1942)
-        void netlist_nl_1942(netlist.setup_t setup)
+        void netlist_nl_1942(netlist.nlparse_t setup)
         {
             NETLIST_START(setup);
 
@@ -114,14 +114,14 @@ namespace mame
 
 
         //WRITE8_MEMBER(_1942_state::_1942_bankswitch_w)
-        public void _1942_bankswitch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_bankswitch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             membank("bank1").set_entry(data & 0x03);
         }
 
 
         //TIMER_DEVICE_CALLBACK_MEMBER(_1942_state::_1942_scanline)
-        public void _1942_scanline(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
+        void _1942_scanline(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
         {
             int scanline = param;
 
@@ -142,7 +142,7 @@ namespace mame
             map.op(0xc002, 0xc002).portr("P2");
             map.op(0xc003, 0xc003).portr("DSWA");
             map.op(0xc004, 0xc004).portr("DSWB");
-            map.op(0xc800, 0xc800).w(soundlatch.target, generic_latch_8_device_write);
+            map.op(0xc800, 0xc800).w(m_soundlatch.target, (space, offset, data, mem_mask) => { m_soundlatch.target.write(space, offset, data, mem_mask); });
             map.op(0xc802, 0xc803).w(_1942_scroll_w);
             map.op(0xc804, 0xc804).w(_1942_c804_w);
             map.op(0xc805, 0xc805).w(_1942_palette_bank_w);
@@ -158,9 +158,9 @@ namespace mame
         {
             map.op(0x0000, 0x3fff).rom();
             map.op(0x4000, 0x47ff).ram();
-            map.op(0x6000, 0x6000).r(soundlatch.target, generic_latch_8_device_read);
-            map.op(0x8000, 0x8001).w("ay1", ay8910_device_address_data_w_ay1);
-            map.op(0xc000, 0xc001).w("ay2", ay8910_device_address_data_w_ay2);
+            map.op(0x6000, 0x6000).r(m_soundlatch.target, (space, offset, mem_mask) => { return m_soundlatch.target.read(space, offset, mem_mask); });  //r(m_soundlatch, FUNC(generic_latch_8_device::read));
+            map.op(0x8000, 0x8001).w("ay1", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay1")).address_data_w(space, offset, data, mem_mask); });  //w("ay1", FUNC(ay8910_device::address_data_w));
+            map.op(0xc000, 0xc001).w("ay2", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay2")).address_data_w(space, offset, data, mem_mask); });  //w("ay2", FUNC(ay8910_device::address_data_w));
         }
     }
 
@@ -319,7 +319,7 @@ namespace mame
         //MACHINE_CONFIG_START(_1942_state::_1942)
         public void _1942(machine_config config)
         {
-            MACHINE_CONFIG_START(config, this);
+            MACHINE_CONFIG_START(config);
 
             /* basic machine hardware */
             MCFG_DEVICE_ADD("maincpu", z80_device.Z80, MAIN_CPU_CLOCK);    /* 4 MHz ??? */
@@ -332,37 +332,36 @@ namespace mame
 
 
             /* video hardware */
-            MCFG_DEVICE_ADD("gfxdecode", gfxdecode_device.GFXDECODE);//, "palette", gfx_1942);
-            MCFG_DEVICE_ADD_gfxdecode_device("palette", gfx_1942);
+            GFXDECODE(config, m_gfxdecode, m_palette, gfx_1942);
 
             PALETTE(config, m_palette, _1942_palette, 64*4+4*32*8+16*16, 256);
 
             screen_device screen = SCREEN(config, "screen", SCREEN_TYPE_RASTER);
             screen.set_refresh_hz(60);
-            screen.set_vblank_time(attotime.ATTOSECONDS_IN_USEC(0));
+            screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
             screen.set_size(32*8, 32*8);
             screen.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
             screen.set_screen_update(screen_update);
-            screen.set_palette(palette);
+            screen.set_palette(m_palette);
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();
 
-            GENERIC_LATCH_8(config, soundlatch);
+            GENERIC_LATCH_8(config, m_soundlatch);
 
             ay8910_device ay1 = AY8910(config, "ay1", AUDIO_CLOCK);  /* 1.5 MHz */
             ay1.set_flags(ay8910_global.AY8910_RESISTOR_OUTPUT);
             ay1.set_resistors_load((int)10000.0, (int)10000.0, (int)10000.0);
-            ay1.GetClassInterface<device_sound_interface>().add_route(0, "snd_nl", 1.0, 0);
-            ay1.GetClassInterface<device_sound_interface>().add_route(1, "snd_nl", 1.0, 1);
-            ay1.GetClassInterface<device_sound_interface>().add_route(2, "snd_nl", 1.0, 2);
+            ay1.disound.add_route(0, "snd_nl", 1.0, 0);
+            ay1.disound.add_route(1, "snd_nl", 1.0, 1);
+            ay1.disound.add_route(2, "snd_nl", 1.0, 2);
 
             ay8910_device ay2 = AY8910(config, "ay2", AUDIO_CLOCK);  /* 1.5 MHz */
             ay2.set_flags(ay8910_global.AY8910_RESISTOR_OUTPUT);
             ay2.set_resistors_load((int)10000.0, (int)10000.0, (int)10000.0);
-            ay2.GetClassInterface<device_sound_interface>().add_route(0, "snd_nl", 1.0, 3);
-            ay2.GetClassInterface<device_sound_interface>().add_route(1, "snd_nl", 1.0, 4);
-            ay2.GetClassInterface<device_sound_interface>().add_route(2, "snd_nl", 1.0, 5);
+            ay2.disound.add_route(0, "snd_nl", 1.0, 3);
+            ay2.disound.add_route(1, "snd_nl", 1.0, 4);
+            ay2.disound.add_route(2, "snd_nl", 1.0, 5);
 
             /* NETLIST configuration using internal AY8910 resistor values */
 
@@ -436,14 +435,14 @@ namespace mame
             ROM_LOAD( "sb-1.k6",  0x0800, 0x0100, CRC("712ac508") + SHA1("5349d722ab6733afdda65f6e0a98322f0d515e86") ),    /* interrupt timing (not used) */
             ROM_LOAD( "sb-9.m11", 0x0900, 0x0100, CRC("4921635c") + SHA1("aee37d6cdc36acf0f11ff5f93e7b16e4b12f6c39") ),    /* video timing? (not used) */
 
-            ROM_END(),
+            ROM_END,
         };
     }
 
 
     partial class _1942_state : driver_device
     {
-        public void driver_init()
+        public override void driver_init()
         {
             ListBytesPointer ROM = new ListBytesPointer(memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
             membank("bank1").configure_entries(0, 4, new ListBytesPointer(ROM, 0x10000), 0x4000);  //membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x4000);

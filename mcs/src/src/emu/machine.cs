@@ -125,34 +125,22 @@ namespace mame
     }
 
 
-    public class device_memory_interface_dummy : device_memory_interface
-    {
-        public device_memory_interface_dummy(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_memory_interface overrides
-        //-------------------------------------------------
-        //  memory_space_config - return a description of
-        //  any address spaces owned by this device
-        //-------------------------------------------------
-        public override space_config_vector memory_space_config()
-        {
-            dummy_space_device dummy = (dummy_space_device)device();
-            return new space_config_vector()
-            {
-                std.make_pair(0, dummy.m_space_config)
-            };
-        }
-    }
-
-
     // ======================> dummy_space_device
     // a dummy address space for passing to handlers outside of the memory system
     public class dummy_space_device : device_t
-                               //device_memory_interface
+                                      //device_memory_interface
     {
         //DEFINE_DEVICE_TYPE(DUMMY_SPACE, dummy_space_device, "dummy_space", "Dummy Space")
         static device_t device_creator_dummy_space_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dummy_space_device(mconfig, tag, owner, clock); }
         public static readonly device_type DUMMY_SPACE = DEFINE_DEVICE_TYPE(device_creator_dummy_space_device, "dummy_space", "Dummy Space");
+
+
+        public class device_memory_interface_dummy : device_memory_interface
+        {
+            public device_memory_interface_dummy(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override space_config_vector memory_space_config() { return ((dummy_space_device)device()).device_memory_interface_memory_space_config(); }
+        }
 
 
         void dummy(address_map map, device_t owner)
@@ -163,7 +151,7 @@ namespace mame
 
         device_memory_interface_dummy m_memory;
 
-        public address_space_config m_space_config;
+        address_space_config m_space_config;
 
 
         public dummy_space_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -172,11 +160,11 @@ namespace mame
             m_class_interfaces.Add(new device_memory_interface_dummy(mconfig, this));
 
             m_memory = GetClassInterface<device_memory_interface_dummy>();
-            m_space_config = new address_space_config("dummy", endianness_t.ENDIANNESS_LITTLE, 8, 32, 0, null, dummy);
+            m_space_config = new address_space_config("dummy", endianness_t.ENDIANNESS_LITTLE, 8, 32, 0, dummy);
         }
 
 
-        public device_memory_interface dummy_memory() { return m_memory; }
+        public device_memory_interface_dummy memory() { return m_memory; }
 
 
         //READ8_MEMBER(dummy_space_device::read)
@@ -198,7 +186,17 @@ namespace mame
 
 
         // device_memory_interface overrides
-        //public override address_space_config memory_space_config(address_spacenum spacenum = AS_0)
+        //-------------------------------------------------
+        //  memory_space_config - return a description of
+        //  any address spaces owned by this device
+        //-------------------------------------------------
+        space_config_vector device_memory_interface_memory_space_config()
+        {
+            return new space_config_vector()
+            {
+                std.make_pair(0, m_space_config)
+            };
+        }
     }
 
 
@@ -896,7 +894,7 @@ namespace mame
         // misc
 
         public dummy_space_device dummy() { return m_dummy_space; }
-        public address_space dummy_space() { return m_dummy_space.dummy_memory().space(AS_PROGRAM); }
+        public address_space dummy_space() { return m_dummy_space.memory().space(AS_PROGRAM); }
 
 
         /*-------------------------------------------------
@@ -1168,8 +1166,8 @@ namespace mame
                 string software = null;
                 for (device_t dev = device; dev.owner() != null; dev = dev.owner())
                 {
-                    device_image_interface intf = dev.GetClassInterface<device_image_interface>();
-                    if (intf != null)
+                    device_image_interface intf;
+                    if (dev.interface_(out intf))
                     {
                         software = intf.basename_noext();
                         break;

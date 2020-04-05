@@ -80,15 +80,14 @@ namespace mame
         public static void MACHINE_CONFIG_END() { }
 
 
-        // scheduling parameters
-        public static void MCFG_QUANTUM_TIME(machine_config config, attotime time) { config.minimum_quantum = time; }
-        //define MCFG_QUANTUM_PERFECT_CPU(_cputag)             subtag(config.m_perfect_cpu_quantum, _cputag);
+        //*************************************************************************/
+        /** @name Core machine config options */
+        //*************************************************************************/
 
         // add/remove devices
         public static void MCFG_DEVICE_ADD(out device_t device, machine_config config, device_t owner, string tag, device_type type, u32 clock) { device = emu.detail.mconfig_global.device_add_impl(config, tag, type, owner, clock); }  //#define MCFG_DEVICE_ADD(_tag, ...)             device = emu::detail::device_add_impl(config, _tag, __VA_ARGS__);
         public static void MCFG_DEVICE_ADD(out device_t device, machine_config config, device_t owner, string tag, device_type type, XTAL clock) { device = emu.detail.mconfig_global.device_add_impl(config, tag, type, owner, clock); }  //#define MCFG_DEVICE_ADD(_tag, ...)             device = emu::detail::device_add_impl(config, _tag, __VA_ARGS__);
         //#define MCFG_DEVICE_REPLACE(_tag, ...)             device = emu::detail::device_replace_impl(config, _tag, __VA_ARGS__);
-        //#define MCFG_DEVICE_REMOVE(_tag)             device = config.device_remove(_tag);
         public static void MCFG_DEVICE_MODIFY(out device_t device, machine_config config, device_t owner, string tag) { device = config.device_find(owner, tag); }  // #define MCFG_DEVICE_MODIFY(_tag)  device = config.device_find(this, _tag);
     }
 

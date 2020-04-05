@@ -27,7 +27,7 @@ namespace mame
             var videoram = m_videoram.target;  //uint8_t *videoram = m_videoram;
 
             int data = videoram[tile_index];
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 0, ((UInt32)data & 0x3f) + 0x40, 0, (byte)tilemap_global.TILE_FLIPYX(data >> 6));
+            SET_TILE_INFO_MEMBER(ref tileinfo, 0, ((UInt32)data & 0x3f) + 0x40, 0, (byte)TILE_FLIPYX(data >> 6));
         }
 
 
@@ -65,7 +65,7 @@ namespace mame
 
 
         //VIDEO_START_MEMBER(centiped_state,centiped)
-        public void video_start_centiped()
+        void video_start_centiped()
         {
             init_common();
             init_penmask();
@@ -81,7 +81,7 @@ namespace mame
          *************************************/
 
         //WRITE8_MEMBER(centiped_state::centiped_videoram_w)
-        public void centiped_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void centiped_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             var videoram = m_videoram.target;  //uint8_t *videoram = m_videoram;
 
@@ -97,7 +97,7 @@ namespace mame
          *************************************/
 
         //WRITE_LINE_MEMBER(centiped_state::flip_screen_w)
-        public void flip_screen_w(int state)
+        void flip_screen_w(int state)
         {
             m_flipscreen = (byte)state;
         }
@@ -170,7 +170,7 @@ namespace mame
         ***************************************************************************/
 
         //WRITE8_MEMBER(centiped_state::centiped_paletteram_w)
-        public void centiped_paletteram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void centiped_paletteram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_paletteram[offset] = data;
 
@@ -228,7 +228,7 @@ namespace mame
          *
          *************************************/
 
-        public u32 screen_update_centiped(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        u32 screen_update_centiped(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             ListBytesPointer spriteram = m_spriteram.target;  //uint8_t *spriteram = m_spriteram;
             rectangle spriteclip = cliprect;

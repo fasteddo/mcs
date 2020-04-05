@@ -55,6 +55,7 @@ namespace mame
         //define MCFG_DEVICE_VBLANK_INT_DEVICE(_tag, _devtag, _class, _func)             device_execute_interface::static_set_vblank_int(*device, device_interrupt_delegate(&_class::_func, #_class "::" #_func, _devtag, (_class *)0), _tag);
         //define MCFG_DEVICE_VBLANK_INT_REMOVE()              device_execute_interface::static_set_vblank_int(*device, device_interrupt_delegate(), NULL);
         public static void MCFG_DEVICE_PERIODIC_INT_DRIVER(device_t device, device_interrupt_delegate func, int rate) { device.execute().set_periodic_int(func, attotime.from_hz(rate)); }  //device_interrupt_delegate(&_class::_func, #_class "::" #_func, DEVICE_SELF, (_class *)0), attotime::from_hz(_rate));
+        public static void MCFG_DEVICE_PERIODIC_INT_DRIVER(device_t device, device_interrupt_delegate func, XTAL rate) { device.execute().set_periodic_int(func, attotime.from_hz(rate)); }  //device_interrupt_delegate(&_class::_func, #_class "::" #_func, DEVICE_SELF, (_class *)0), attotime::from_hz(_rate));
         //define MCFG_DEVICE_PERIODIC_INT_DEVICE(_devtag, _class, _func, _rate)             device_execute_interface::static_set_periodic_int(*device, device_interrupt_delegate(&_class::_func, #_class "::" #_func, _devtag, (_class *)0), attotime::from_hz(_rate));
         //define MCFG_DEVICE_PERIODIC_INT_REMOVE()              device_execute_interface::static_set_periodic_int(*device, device_interrupt_delegate(), attotime());
         //define MCFG_DEVICE_IRQ_ACKNOWLEDGE_DRIVER(_class, _func)             device_execute_interface::static_set_irq_acknowledge_callback(*device, device_irq_acknowledge_delegate(&_class::_func, #_class "::" #_func, DEVICE_SELF, (_class *)0));
@@ -434,25 +435,28 @@ namespace mame
 
         public void set_disable() { m_disabled = true; }
 
-        public void set_vblank_int(device_interrupt_delegate function, string tag)  //template <typename Object> void set_vblank_int(Object &&cb, const char *tag)
+
+        //template <typename Object> void set_vblank_int(Object &&cb, const char *tag)
+        //{
+        //    m_vblank_interrupt = std::forward<Object>(cb);
+        //    m_vblank_interrupt_screen = tag;
+        //}
+
+        public void set_vblank_int(device_interrupt_delegate function, string tag)
         {
             m_vblank_interrupt = function;  //m_vblank_interrupt = std::forward<Object>(cb);
             m_vblank_interrupt_screen = tag;
         }
 
-        //void set_vblank_int(device_interrupt_delegate callback, const char *tag)
-        //{
-        //    m_vblank_interrupt = callback;
-        //    m_vblank_interrupt_screen = tag;
-        //}
         //template <class FunctionClass> void set_vblank_int(const char *tag, const char *devname, void (FunctionClass::*callback)(device_t &), const char *name)
         //{
         //    set_vblank_int(device_interrupt_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)), tag);
         //}
-        //template <class FunctionClass> void set_vblank_int(const char *tag, void (FunctionClass::*callback)(device_t &), const char *name)
-        //{
-        //    set_vblank_int(device_interrupt_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), tag);
-        //}
+
+        public void set_vblank_int(string tag, device_interrupt_delegate callback)  //template <class FunctionClass> void set_vblank_int(const char *tag, void (FunctionClass::*callback)(device_t &), const char *name)
+        {
+            set_vblank_int(callback, tag);  //set_vblank_int(device_interrupt_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), tag);
+        }
 
 
         public void set_periodic_int(device_interrupt_delegate function, attotime rate)  //template <typename Object> void set_periodic_int(Object &&cb, const attotime &rate)
@@ -672,27 +676,27 @@ namespace mame
         //  execute_clocks_to_cycles - convert the number
         //  of clocks to cycles, rounding down if necessary
         //-------------------------------------------------
-        public virtual u64 execute_clocks_to_cycles(u64 clocks) { return clocks; }
+        protected virtual u64 execute_clocks_to_cycles(u64 clocks) { return clocks; }
 
         //-------------------------------------------------
         //  execute_cycles_to_clocks - convert the number
         //  of cycles to clocks, rounding down if necessary
         //-------------------------------------------------
-        public virtual u64 execute_cycles_to_clocks(u64 cycles) { return cycles; }
+        protected virtual u64 execute_cycles_to_clocks(u64 cycles) { return cycles; }
 
         //-------------------------------------------------
         //  execute_min_cycles - return the smallest number
         //  of cycles that a single instruction or
         //  operation can take
         //-------------------------------------------------
-        public virtual u32 execute_min_cycles() { return 1; }
+        protected virtual u32 execute_min_cycles() { return 1; }
 
         //-------------------------------------------------
         //  execute_max_cycles - return the maximum number
         //  of cycles that a single instruction or
         //  operation can take
         //-------------------------------------------------
-        public virtual u32 execute_max_cycles() { return 1; }
+        protected virtual u32 execute_max_cycles() { return 1; }
 
 
         // input line information getters
@@ -701,37 +705,37 @@ namespace mame
         //  execute_input_lines - return the total number
         //  of input lines for the device
         //-------------------------------------------------
-        public virtual u32 execute_input_lines() { return 0; }
+        protected virtual u32 execute_input_lines() { return 0; }
 
         //-------------------------------------------------
         //  execute_default_irq_vector - return the default
         //  IRQ vector when an acknowledge is processed
         //-------------------------------------------------
-        public virtual u32 execute_default_irq_vector(int linenum) { return 0; }
+        protected virtual u32 execute_default_irq_vector(int linenum) { return 0; }
 
         //-------------------------------------------------
         //  execute_input_edge_triggered - return true if
         //  the input line has an asynchronous edge trigger
         //-------------------------------------------------
-        public virtual bool execute_input_edge_triggered(int linenum) { return false; }
+        protected virtual bool execute_input_edge_triggered(int linenum) { return false; }
 
 
         // optional operation overrides
 
-        public abstract void execute_run();
+        protected abstract void execute_run();
 
         //-------------------------------------------------
         //  execute_burn - called after we consume a bunch
         //  of cycles for artifical reasons (such as
         //  spinning devices for performance optimization)
         //-------------------------------------------------
-        public virtual void execute_burn(s32 cycles) { }
+        protected virtual void execute_burn(s32 cycles) { }
 
         //-------------------------------------------------
         //  execute_set_input - called when a synchronized
         //  input is changed
         //-------------------------------------------------
-        public virtual void execute_set_input(int linenum, int state) { }
+        protected virtual void execute_set_input(int linenum, int state) { }
 
 
         // interface-level overrides

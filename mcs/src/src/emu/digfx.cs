@@ -279,7 +279,7 @@ namespace mame
                         memory_region region = basedevice.memregion(gfx.memory_region);
                         //assert(region != NULL);
                         region_length = 8 * region.bytes();
-                        region_base = new ListBytesPointer(region.base_(), 0);  //region_base = region->base();
+                        region_base = new ListBytesPointer(region.base_());  //region_base = region->base();
                         region_width = region.bytewidth();
                         region_endianness = region.endianness();
                     }

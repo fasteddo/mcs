@@ -32,7 +32,9 @@ namespace mame.plib
 
         //pfmt(const pfmt &rhs) : m_str(rhs.m_str), m_arg(rhs.m_arg) { }
 
-        //~pfmt() { }
+        //COPYASSIGNMOVE(pfmt, default)
+
+        //~pfmt() noexcept = default;
 
 
         //operator pstring() const { return m_str; }
@@ -75,7 +77,7 @@ namespace mame.plib
 
 
     //template <class T, bool build_enabled = true>
-    public abstract class pfmt_writer_t<T> //: plib::nocopyassignmove
+    public abstract class pfmt_writer_t<T>
     {
         // template parameters
         bool build_enabled;
@@ -86,7 +88,9 @@ namespace mame.plib
 
         public pfmt_writer_t(bool build_enabled = true) { this.build_enabled = build_enabled;  m_enabled = true; }
 
-        //~pfmt_writer_t() { }
+        //COPYASSIGNMOVE(pfmt_writer_t, delete)
+
+        //~pfmt_writer_t() noexcept = default;
 
 
         protected abstract void vdowrite(string ls);
@@ -153,7 +157,9 @@ namespace mame.plib
 
         public plog_channel(T b, plog_level L, bool build_enabled = true) : base(build_enabled) {this.L = L;  this.build_enabled = build_enabled;  m_base = b; }
 
-        //~plog_channel() { }
+        //COPYASSIGNMOVE(plog_channel, delete)
+
+        //~plog_channel() noexcept = default;
 
 
         protected override void vdowrite(string ls)
@@ -188,6 +194,7 @@ namespace mame.plib
             fatal = new plog_channel<T>(proxy, plog_level.FATAL);
         }
 
-        //~plog_base() {}
+        //COPYASSIGNMOVE(plog_base, default)
+        //virtual ~plog_base() noexcept = default;
     }
 }

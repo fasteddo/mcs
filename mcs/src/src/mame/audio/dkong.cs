@@ -476,7 +476,7 @@ namespace mame
 #endif
                 DISCRETE_TASK_END(),
 
-            DISCRETE_SOUND_END(),
+            DISCRETE_SOUND_END,
         };
 
 
@@ -487,7 +487,7 @@ namespace mame
          ****************************************************************/
 
         //WRITE8_MEMBER(dkong_state::dkong_voice_w)
-        public void dkong_voice_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_voice_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             /* only provided for documentation purposes
              * not actually used
@@ -497,7 +497,7 @@ namespace mame
 
 
         //READ8_MEMBER(dkong_state::dkong_voice_status_r)
-        public u8 dkong_voice_status_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 dkong_voice_status_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             /* only provided for documentation purposes
              * not actually used
@@ -507,7 +507,7 @@ namespace mame
 
 
         //READ8_MEMBER(dkong_state::dkong_tune_r)
-        public u8 dkong_tune_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 dkong_tune_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             uint8_t page = (uint8_t)(m_dev_vp2.target.read(space, 0) & 0x47);
 
@@ -524,7 +524,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(dkong_state::dkong_p1_w)
-        public void dkong_p1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_p1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_discrete.target.write(DS_DAC, data);
         }
@@ -537,7 +537,7 @@ namespace mame
          ****************************************************************/
 
         //WRITE8_MEMBER(dkong_state::dkong_audio_irq_w)
-        public void dkong_audio_irq_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_audio_irq_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             if (data != 0)
                 m_soundcpu.target.set_input_line(0, ASSERT_LINE);
@@ -576,11 +576,11 @@ namespace mame
             m_ls175_3d.target.set_xorvalue(0x0f);
 
             LATCH8(config, m_dev_6h);
-            m_dev_6h.target.write_cb(0).set("discrete", discrete_device_write_line_DS_SOUND0_INP).reg();
-            m_dev_6h.target.write_cb(1).set("discrete", discrete_device_write_line_DS_SOUND1_INP).reg();
-            m_dev_6h.target.write_cb(2).set("discrete", discrete_device_write_line_DS_SOUND2_INP).reg();
-            m_dev_6h.target.write_cb(6).set("discrete", discrete_device_write_line_DS_SOUND6_INP).reg();
-            m_dev_6h.target.write_cb(7).set("discrete", discrete_device_write_line_DS_SOUND7_INP).reg();
+            m_dev_6h.target.write_cb(0).set("discrete", (state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND0_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND0_INP>));
+            m_dev_6h.target.write_cb(1).set("discrete", (state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND1_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND1_INP>));
+            m_dev_6h.target.write_cb(2).set("discrete", (state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND2_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND2_INP>));
+            m_dev_6h.target.write_cb(6).set("discrete", (state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND6_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND6_INP>));
+            m_dev_6h.target.write_cb(7).set("discrete", (state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND7_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND7_INP>));
 
             /*   If P2.Bit7 -> is apparently an external signal decay or other output control
              *   If P2.Bit6 -> activates the external compressed sample ROM (not radarscp1)
@@ -591,8 +591,8 @@ namespace mame
 
             LATCH8(config, m_dev_vp2);      /* virtual latch for port B */
             m_dev_vp2.target.set_xorvalue(0x20);  /* signal is inverted       */
-            m_dev_vp2.target.read_cb(5).set(latch8_device_bit3_r).reg();
-            m_dev_vp2.target.write_cb(7).set("discrete", discrete_device_write_line_DS_DISCHARGE_INV).reg();
+            m_dev_vp2.target.read_cb(5).set(m_dev_6h, () => { return m_dev_6h.target.bit3_r(); }).reg();  //FUNC(latch8_device::bit3_r));
+            m_dev_vp2.target.write_cb(7).set("discrete", (state) => { ((discrete_device)subdevice("discrete")).write_line(DS_DISCHARGE_INV, state); }).reg();  //FUNC(discrete_device::write_line<DS_DISCHARGE_INV>));
 
             MB8884(config, m_soundcpu, I8035_CLOCK);
             m_soundcpu.target.memory().set_addrmap(AS_PROGRAM, dkong_sound_map);
@@ -600,13 +600,13 @@ namespace mame
             m_soundcpu.target.bus_in_cb().set(dkong_tune_r).reg();
             m_soundcpu.target.bus_out_cb().set(dkong_voice_w).reg();
             m_soundcpu.target.p1_out_cb().set(dkong_p1_w).reg(); // only write to dac
-            m_soundcpu.target.p2_in_cb().set("virtual_p2", latch8_device_read).reg();
-            m_soundcpu.target.p2_out_cb().set("virtual_p2", latch8_device_write).reg();
-            m_soundcpu.target.t0_in_cb().set("ls259.6h", latch8_device_bit5_q_r).reg();
-            m_soundcpu.target.t1_in_cb().set("ls259.6h", latch8_device_bit4_q_r).reg();
+            m_soundcpu.target.p2_in_cb().set("virtual_p2", (space, offset, mem_mask) => { return ((latch8_device)subdevice("virtual_p2")).read(space, offset, mem_mask); }).reg();  //FUNC(latch8_device::read));
+            m_soundcpu.target.p2_out_cb().set("virtual_p2", (space, offset, data, mem_mask) => { ((latch8_device)subdevice("virtual_p2")).write(space, offset, data, mem_mask); }).reg();  //FUNC(latch8_device::write));
+            m_soundcpu.target.t0_in_cb().set("ls259.6h", () => { return ((latch8_device)subdevice("ls259.6h")).bit5_q_r(); }).reg();  //FUNC(latch8_device::bit5_q_r));
+            m_soundcpu.target.t1_in_cb().set("ls259.6h", () => { return ((latch8_device)subdevice("ls259.6h")).bit4_q_r(); }).reg();  //FUNC(latch8_device::bit4_q_r));
 
             SPEAKER(config, "mono").front_center();
-            DISCRETE(config, "discrete", dkong2b_discrete).GetClassInterface<device_sound_interface>().add_route(ALL_OUTPUTS, "mono", 1.0);
+            DISCRETE(config, "discrete", dkong2b_discrete).disound.add_route(ALL_OUTPUTS, "mono", 1.0);
         }
     }
 }

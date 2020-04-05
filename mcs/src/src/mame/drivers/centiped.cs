@@ -22,7 +22,7 @@ namespace mame
          *************************************/
 
         //TIMER_DEVICE_CALLBACK_MEMBER(centiped_state::generate_interrupt)
-        public void generate_interrupt(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
+        void generate_interrupt(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
         {
             int scanline = param;
 
@@ -36,7 +36,7 @@ namespace mame
 
 
         //MACHINE_START_MEMBER(centiped_state,centiped)
-        public void machine_start_centiped()
+        void machine_start_centiped()
         {
             save_item(m_oldpos, "m_oldpos");
             save_item(m_sign, "m_sign");
@@ -46,7 +46,7 @@ namespace mame
 
 
         //MACHINE_RESET_MEMBER(centiped_state,centiped)
-        public void machine_reset_centiped()
+        void machine_reset_centiped()
         {
             m_maincpu.target.set_input_line(0, CLEAR_LINE);
             m_prg_bank = 0;
@@ -57,7 +57,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(centiped_state::irq_ack_w)
-        public void irq_ack_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void irq_ack_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_maincpu.target.set_input_line(0, CLEAR_LINE);
         }
@@ -118,14 +118,14 @@ namespace mame
 
 
         //READ8_MEMBER(centiped_state::centiped_IN0_r)
-        public u8 centiped_IN0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 centiped_IN0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return (u8)read_trackball(0, 0);
         }
 
 
         //READ8_MEMBER(centiped_state::centiped_IN2_r)
-        public u8 centiped_IN2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 centiped_IN2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return (u8)read_trackball(1, 2);
         }
@@ -220,7 +220,7 @@ namespace mame
          *************************************/
 
         //READ8_MEMBER(centiped_state::caterplr_unknown_r)
-        public u8 caterplr_unknown_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 caterplr_unknown_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             throw new emu_unimplemented();
 #if false
@@ -230,28 +230,28 @@ namespace mame
 
 
         //WRITE_LINE_MEMBER(centiped_state::coin_counter_left_w)
-        public void coin_counter_left_w(int state)
+        void coin_counter_left_w(int state)
         {
             machine().bookkeeping().coin_counter_w(0, state);
         }
 
 
         //WRITE_LINE_MEMBER(centiped_state::coin_counter_center_w)
-        public void coin_counter_center_w(int state)
+        void coin_counter_center_w(int state)
         {
             machine().bookkeeping().coin_counter_w(1, state);
         }
 
 
         //WRITE_LINE_MEMBER(centiped_state::coin_counter_right_w)
-        public void coin_counter_right_w(int state)
+        void coin_counter_right_w(int state)
         {
             machine().bookkeeping().coin_counter_w(2, state);
         }
 
 
         //WRITE_LINE_MEMBER(centiped_state::bullsdrt_coin_count_w)
-        public void bullsdrt_coin_count_w(int state)
+        void bullsdrt_coin_count_w(int state)
         {
             throw new emu_unimplemented();
 #if false
@@ -267,13 +267,13 @@ namespace mame
          *************************************/
 
         //READ8_MEMBER(centiped_state::earom_read)
-        public u8 earom_read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 earom_read(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             return m_earom.target.data();
         }
 
         //WRITE8_MEMBER(centiped_state::earom_write)
-        public void earom_write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void earom_write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_earom.target.set_address((uint8_t)(offset & 0x3f));
             m_earom.target.set_data(data);
@@ -281,7 +281,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(centiped_state::earom_control_w)
-        public void earom_control_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void earom_control_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             // CK = DB0, C1 = /DB1, C2 = DB2, CS1 = DB3, /CS2 = GND
             m_earom.target.set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
@@ -312,8 +312,8 @@ namespace mame
             map.op(0x1680, 0x1680).w(earom_control_w);
             map.op(0x1700, 0x173f).r(earom_read);
             map.op(0x1800, 0x1800).w(irq_ack_w);
-            map.op(0x1c00, 0x1c07).nopr().w("outlatch", ls259_device_write_d7_outlatch);
-            map.op(0x2000, 0x2000).w("watchdog", watchdog_timer_device_reset_w);
+            map.op(0x1c00, 0x1c07).nopr().w("outlatch", (space, offset, data, mem_mask) => { ((addressable_latch_device)subdevice("outlatch")).write_d7(space, offset, data, mem_mask); });  //FUNC(ls259_device::write_d7));
+            map.op(0x2000, 0x2000).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(space, offset, data, mem_mask); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x2000, 0x3fff).rom();
         }
 
@@ -322,7 +322,7 @@ namespace mame
         {
             centiped_base_map(map, device);
 
-            map.op(0x1000, 0x100f).rw("pokey", pokey_device_read, pokey_device_write);
+            map.op(0x1000, 0x100f).rw("pokey", (offset) => { return ((pokey_device)subdevice("pokey")).read(offset); }, (offset, data) => { ((pokey_device)subdevice("pokey")).write(offset, data); });  //rw("pokey", FUNC(pokey_device::read), FUNC(pokey_device::write));
         }
     }
 
@@ -493,19 +493,19 @@ namespace mame
         void centiped_base(machine_config config)
         {
             /* basic machine hardware */
-            M6502(config, maincpu, 12096000/8);  /* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
+            M6502(config, m_maincpu, 12096000/8);  /* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
 
             MCFG_MACHINE_START_OVERRIDE(config, machine_start_centiped);
             MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_centiped);
 
-            ER2055(config, earom);
+            ER2055(config, m_earom);
 
-            LS259(config, outlatch);
-            outlatch.target.q_out_cb(0).set(coin_counter_left_w).reg();
-            outlatch.target.q_out_cb(1).set(coin_counter_center_w).reg();
-            outlatch.target.q_out_cb(2).set(coin_counter_right_w).reg();
-            outlatch.target.q_out_cb(3).set_output("led0").invert().reg(); // LED 1
-            outlatch.target.q_out_cb(4).set_output("led1").invert().reg(); // LED 2
+            LS259(config, m_outlatch);
+            m_outlatch.target.q_out_cb(0).set(coin_counter_left_w).reg();
+            m_outlatch.target.q_out_cb(1).set(coin_counter_center_w).reg();
+            m_outlatch.target.q_out_cb(2).set(coin_counter_right_w).reg();
+            m_outlatch.target.q_out_cb(3).set_output("led0").invert().reg(); // LED 1
+            m_outlatch.target.q_out_cb(4).set_output("led1").invert().reg(); // LED 2
 
             WATCHDOG_TIMER(config, "watchdog");
 
@@ -513,15 +513,15 @@ namespace mame
             TIMER(config, "32v").configure_scanline(generate_interrupt, "screen", 0, 16);
 
             /* video hardware */
-            SCREEN(config, screen, SCREEN_TYPE_RASTER);
-            screen.target.set_refresh_hz(60);
-            screen.target.set_size(32*8, 32*8);
-            screen.target.set_visarea(0*8, 32*8-1, 0*8, 30*8-1);
-            screen.target.set_screen_update(screen_update_centiped);
-            screen.target.set_palette(palette);
+            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            m_screen.target.set_refresh_hz(60);
+            m_screen.target.set_size(32*8, 32*8);
+            m_screen.target.set_visarea(0*8, 32*8-1, 0*8, 30*8-1);
+            m_screen.target.set_screen_update(screen_update_centiped);
+            m_screen.target.set_palette(m_palette);
 
-            GFXDECODE(config, gfxdecode, palette, gfx_centiped);
-            PALETTE(config, palette).set_entries(4+4*4*4*4);
+            GFXDECODE(config, m_gfxdecode, m_palette, gfx_centiped);
+            PALETTE(config, m_palette).set_entries(4+4*4*4*4);
 
             MCFG_VIDEO_START_OVERRIDE(config, video_start_centiped);
         }
@@ -531,17 +531,17 @@ namespace mame
         {
             centiped_base(config);
 
-            maincpu.target.memory().set_addrmap(AS_PROGRAM, centiped_map);
+            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, centiped_map);
 
             // M10
-            outlatch.target.q_out_cb(7).set(flip_screen_w).reg();
+            m_outlatch.target.q_out_cb(7).set(flip_screen_w).reg();
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();
 
             pokey_device pokey = POKEY(config, "pokey", 12096000/8);
             pokey.set_output_opamp_low_pass(RES_K(3.3), CAP_U(0.01), 5.0);
-            pokey.GetClassInterface<device_sound_interface>().add_route(ALL_OUTPUTS, "mono", 0.5);
+            pokey.disound.add_route(ALL_OUTPUTS, "mono", 0.5);
         }
     }
 
@@ -581,7 +581,7 @@ namespace mame
             ROM_REGION( 0x0100, "proms", 0 ),
             ROM_LOAD( "136001-213.p4",  0x0000, 0x0100, CRC("6fa3093a") + SHA1("2b7aeca74c1ae4156bf1878453a047330f96f0a8") ),
 
-            ROM_END(),
+            ROM_END,
         };
 
 

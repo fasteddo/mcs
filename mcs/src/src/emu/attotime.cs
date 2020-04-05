@@ -185,7 +185,8 @@ namespace mame
             {
                 //f = modf(1.0 / frequency, &i);
                 double d = 1.0 / frequency;
-                double i = (int)d;                double f = d % 1;
+                double i = (int)d;
+                double f = d % 1;
 
                 return new attotime((seconds_t)i, (attoseconds_t)(f * ATTOSECONDS_PER_SECOND));
             }

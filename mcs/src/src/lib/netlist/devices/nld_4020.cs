@@ -19,6 +19,6 @@ namespace mame
 
         //#define CD4020(name)                                                            \
         //        NET_REGISTER_DEV(CD4020, name)
-        public static void CD4020(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4020", name); }
+        public static void CD4020(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4020", name); }
     }
 }

@@ -9,6 +9,7 @@ using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
+using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 
@@ -33,7 +34,7 @@ namespace mame
          *
          *************************************/
 
-        public void galaxian_palette(palette_device palette)
+        void galaxian_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
             int [] rgb_resistances3 = new int [3] { 1000, 470, 220 };
@@ -89,18 +90,18 @@ namespace mame
                 bit0 = (byte)BIT(color_prom[i], 0);
                 bit1 = (byte)BIT(color_prom[i], 1);
                 bit2 = (byte)BIT(color_prom[i], 2);
-                int r = (byte)combine_3_weights(rweights, bit0, bit1, bit2);
+                int r = (byte)combine_weights(rweights, bit0, bit1, bit2);
 
                 /* green component */
                 bit0 = (byte)BIT(color_prom[i], 3);
                 bit1 = (byte)BIT(color_prom[i], 4);
                 bit2 = (byte)BIT(color_prom[i], 5);
-                int g = (byte)combine_3_weights(gweights, bit0, bit1, bit2);
+                int g = (byte)combine_weights(gweights, bit0, bit1, bit2);
 
                 /* blue component */
                 bit0 = (byte)BIT(color_prom[i], 6);
                 bit1 = (byte)BIT(color_prom[i], 7);
-                int b = (byte)combine_2_weights(bweights, bit0, bit1);
+                int b = (byte)combine_weights(bweights, bit0, bit1);
 
                 palette.palette_interface.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
             }
@@ -225,7 +226,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(galaxian_state::galaxian_videoram_w)
-        public void galaxian_videoram_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void galaxian_videoram_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
             var videoram = m_videoram.target;  //uint8_t *videoram = m_videoram;
 
@@ -240,7 +241,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(galaxian_state::galaxian_objram_w)
-        public void galaxian_objram_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void galaxian_objram_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
         {
             /* update any video up to the current scanline */
             //  m_screen->update_now();
@@ -280,7 +281,7 @@ namespace mame
          *
          *************************************/
 
-        public UInt32 screen_update_galaxian(screen_device screen, bitmap_rgb32 bitmap, rectangle cliprect)
+        u32 screen_update_galaxian(screen_device screen, bitmap_rgb32 bitmap, rectangle cliprect)
         {
             /* draw the background layer (including stars) */
             m_draw_background_ptr(bitmap, cliprect);
@@ -319,7 +320,7 @@ namespace mame
             if (m_extend_tile_info_ptr != null)
                 m_extend_tile_info_ptr(ref code, ref color, attrib, x);
 
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 0, code, color, 0);
+            SET_TILE_INFO_MEMBER(ref tileinfo, 0, code, color, 0);
         }
 
 
@@ -440,7 +441,7 @@ namespace mame
          *************************************/
 
         //WRITE8_MEMBER(galaxian_state::galaxian_flip_screen_x_w)
-        public void galaxian_flip_screen_x_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void galaxian_flip_screen_x_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             if (m_flipscreen_x != (data & 0x01))
             {
@@ -458,7 +459,7 @@ namespace mame
         }
 
         //WRITE8_MEMBER(galaxian_state::galaxian_flip_screen_y_w)
-        public void galaxian_flip_screen_y_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void galaxian_flip_screen_y_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             if (m_flipscreen_y != (data & 0x01))
             {
@@ -471,7 +472,7 @@ namespace mame
         }
 
         //WRITE8_MEMBER(galaxian_state::galaxian_flip_screen_xy_w)
-        public void galaxian_flip_screen_xy_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void galaxian_flip_screen_xy_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             galaxian_flip_screen_x_w(space, offset, data);
             galaxian_flip_screen_y_w(space, offset, data);
@@ -485,7 +486,7 @@ namespace mame
          *************************************/
 
         //WRITE8_MEMBER(galaxian_state::galaxian_stars_enable_w)
-        public void galaxian_stars_enable_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void galaxian_stars_enable_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             if (((m_stars_enabled ^ data) & 0x01) != 0)
             {

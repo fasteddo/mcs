@@ -582,25 +582,25 @@ namespace mame
         //  state_import - called after new state is
         //  written to perform any post-processing
         //-------------------------------------------------
-        public virtual void state_import(device_state_entry entry) { }
+        protected virtual void state_import(device_state_entry entry) { }
 
         //-------------------------------------------------
         //  state_export - called prior to new state
         //  reading the state
         //-------------------------------------------------
-        public virtual void state_export(device_state_entry entry) { }
+        protected virtual void state_export(device_state_entry entry) { }
 
         //-------------------------------------------------
         //  state_string_import - called after new state is
         //  written to perform any post-processing
         //-------------------------------------------------
-        public virtual void state_string_import(device_state_entry entry, string str) { }
+        protected virtual void state_string_import(device_state_entry entry, string str) { }
 
         //-------------------------------------------------
         //  state_string_export - called after new state is
         //  written to perform any post-processing
         //-------------------------------------------------
-        public virtual void state_string_export(device_state_entry entry, out string str) { str = ""; }
+        protected virtual void state_string_export(device_state_entry entry, out string str) { str = ""; }
 
 
         // internal operation overrides
@@ -613,7 +613,7 @@ namespace mame
         {
             // make sure we got something during startup
             if (m_state_list.size() == 0)
-                throw new emu_fatalerror("No state registered for device '{0}' that supports it!", device().tag());
+                throw new emu_fatalerror("No state registered for device '{0}' that supports it!\n", device().tag());
         }
 
 

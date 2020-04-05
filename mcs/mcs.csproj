@@ -58,6 +58,10 @@
     <Compile Include="src\src\devices\cpu\m6800\6800ops.cs" />
     <Compile Include="src\src\devices\cpu\m6800\m6800.cs" />
     <Compile Include="src\src\devices\cpu\m6800\m6801.cs" />
+    <Compile Include="src\src\devices\cpu\m6805\6805ops.cs" />
+    <Compile Include="src\src\devices\cpu\m6805\m6805.cs" />
+    <Compile Include="src\src\devices\cpu\m6805\m6805defs.cs" />
+    <Compile Include="src\src\devices\cpu\m6805\m68705.cs" />
     <Compile Include="src\src\devices\cpu\mb88xx\mb88xx.cs" />
     <Compile Include="src\src\devices\cpu\mcs48\mcs48.cs" />
     <Compile Include="src\src\devices\cpu\z80\z80.cs" />
@@ -70,6 +74,7 @@
     <Compile Include="src\src\devices\machine\gen_latch.cs" />
     <Compile Include="src\src\devices\machine\i8255.cs" />
     <Compile Include="src\src\devices\machine\i8257.cs" />
+    <Compile Include="src\src\devices\machine\input_merger.cs" />
     <Compile Include="src\src\devices\machine\latch8.cs" />
     <Compile Include="src\src\devices\machine\netlist.cs" />
     <Compile Include="src\src\devices\machine\rescap.cs" />
@@ -220,12 +225,13 @@
     <Compile Include="src\src\lib\netlist\devices\nlid_proxy.cs" />
     <Compile Include="src\src\lib\netlist\devices\nlid_system.cs" />
     <Compile Include="src\src\lib\netlist\devices\nlid_truthtable.cs" />
+    <Compile Include="src\src\lib\netlist\plib\mat_cr.cs" />
     <Compile Include="src\src\lib\netlist\macro\nlm_base.cs" />
     <Compile Include="src\src\lib\netlist\macro\nlm_cd4xxx.cs" />
     <Compile Include="src\src\lib\netlist\macro\nlm_opamp.cs" />
     <Compile Include="src\src\lib\netlist\macro\nlm_other.cs" />
     <Compile Include="src\src\lib\netlist\macro\nlm_ttl74xx.cs" />
-    <Compile Include="src\src\lib\netlist\netlist_types.cs" />
+    <Compile Include="src\src\lib\netlist\nltypes.cs" />
     <Compile Include="src\src\lib\netlist\nl_base.cs" />
     <Compile Include="src\src\lib\netlist\nl_config.cs" />
     <Compile Include="src\src\lib\netlist\nl_errstr.cs" />
@@ -239,7 +245,6 @@
     <Compile Include="src\src\lib\netlist\plib\pstate.cs" />
     <Compile Include="src\src\lib\netlist\plib\pstream.cs" />
     <Compile Include="src\src\lib\netlist\plib\pstring.cs" />
-    <Compile Include="src\src\lib\netlist\solver\mat_cr.cs" />
     <Compile Include="src\src\lib\netlist\solver\nld_matrix_solver.cs" />
     <Compile Include="src\src\lib\netlist\solver\nld_ms_direct.cs" />
     <Compile Include="src\src\lib\netlist\solver\nld_ms_direct1.cs" />
@@ -280,6 +285,7 @@
     <Compile Include="src\src\mame\drivers\galaxian.cs" />
     <Compile Include="src\src\mame\drivers\m52.cs" />
     <Compile Include="src\src\mame\drivers\pacman.cs" />
+    <Compile Include="src\src\mame\drivers\taitosj.cs" />
     <Compile Include="src\src\mame\includes\1942.cs" />
     <Compile Include="src\src\mame\includes\centiped.cs" />
     <Compile Include="src\src\mame\includes\digdug.cs" />
@@ -289,12 +295,15 @@
     <Compile Include="src\src\mame\includes\iremipt.cs" />
     <Compile Include="src\src\mame\includes\m52.cs" />
     <Compile Include="src\src\mame\includes\pacman.cs" />
+    <Compile Include="src\src\mame\includes\taitosj.cs" />
     <Compile Include="src\src\mame\includes\xevious.cs" />
     <Compile Include="src\src\mame\machine\namco06.cs" />
     <Compile Include="src\src\mame\machine\namco50.cs" />
     <Compile Include="src\src\mame\machine\namco51.cs" />
     <Compile Include="src\src\mame\machine\namco53.cs" />
     <Compile Include="src\src\mame\machine\pacplus.cs" />
+    <Compile Include="src\src\mame\machine\taitosj.cs" />
+    <Compile Include="src\src\mame\machine\taitosjsec.cs" />
     <Compile Include="src\src\mame\mame.cs" />
     <Compile Include="src\src\mame\video\1942.cs" />
     <Compile Include="src\src\mame\video\centiped.cs" />
@@ -304,6 +313,7 @@
     <Compile Include="src\src\mame\video\galaxian.cs" />
     <Compile Include="src\src\mame\video\m52.cs" />
     <Compile Include="src\src\mame\video\pacman.cs" />
+    <Compile Include="src\src\mame\video\taitosj.cs" />
     <Compile Include="src\src\mame\video\xevious.cs" />
     <Compile Include="src\src\osd\eminline.cs" />
     <Compile Include="src\src\osd\modules\debugger\debug_module.cs" />

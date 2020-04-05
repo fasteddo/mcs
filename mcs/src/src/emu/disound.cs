@@ -233,7 +233,38 @@ namespace mame
         //float input_gain(int inputnum) const;
         //float output_gain(int outputnum) const;
         //void set_input_gain(int inputnum, float gain);
-        //void set_output_gain(int outputnum, float gain);
+
+
+        //-------------------------------------------------
+        //  set_output_gain - set the gain on the given
+        //  output index of the device
+        //-------------------------------------------------
+        public void set_output_gain(int outputnum, float gain)
+        {
+            // handle ALL_OUTPUTS as a special case
+            if (outputnum == ALL_OUTPUTS)
+            {
+                foreach (var stream in device().machine().sound().streams())
+                {
+                    if (stream.device() == device())
+                    {
+                        for (int num = 0; num < stream.output_count(); num++)
+                            stream.set_output_gain(num, gain);
+                    }
+                }
+            }
+
+            // look up the stream and stream output index
+            else
+            {
+                int stream_outputnum;
+                sound_stream stream = output_to_stream_output(outputnum, out stream_outputnum);
+                if (stream != null)
+                    stream.set_output_gain(stream_outputnum, gain);
+            }
+        }
+
+
         //int inputnum_from_device(device_t &device, int outputnum = 0) const;
 
 

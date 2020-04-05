@@ -697,6 +697,7 @@ namespace mame
         //-------------------------------------------------
         int original_speed_setting() { return (int)(machine().options().speed() * 1000.0f + 0.5f); }
 
+
         //-------------------------------------------------
         //  finish_screen_updates - finish updating all
         //  the screens
@@ -706,12 +707,18 @@ namespace mame
             // finish updating the screens
             screen_device_iterator iter = new screen_device_iterator(machine().root_device());
 
+            bool has_screen = false;
             foreach (screen_device screen in iter)
+            {
                 screen.update_partial(screen.visible_area().bottom());
+                has_screen = true;
+            }
 
             // now add the quads for all the screens
-            bool anything_changed = m_output_changed;
+            bool anything_changed = !has_screen || m_output_changed;
             m_output_changed = false;
+
+            // now add the quads for all the screens
             foreach (screen_device screen in iter)
                 if (screen.update_quads())
                     anything_changed = true;
@@ -884,6 +891,7 @@ namespace mame
             m_throttle_realtime = m_throttle_emutime = emutime;
         }
 
+
         //-------------------------------------------------
         //  throttle_until_ticks - spin until the
         //  specified target time, calling the OSD code
@@ -902,7 +910,11 @@ namespace mame
             while (current_ticks < target_ticks)
             {
                 // compute how much time to sleep for, taking into account the average oversleep
-                osd_ticks_t delta = (target_ticks - current_ticks) * 1000 / (1000 + m_average_oversleep);
+                osd_ticks_t delta = target_ticks - current_ticks;
+                if (delta > m_average_oversleep / 1000)
+                    delta -= m_average_oversleep / 1000;
+                else
+                    delta = 0;
 
                 // see if we can sleep
                 bool slept = allowed_to_sleep && delta != 0;
@@ -919,8 +931,8 @@ namespace mame
                     osd_ticks_t actual_ticks = new_ticks - current_ticks;
                     if (actual_ticks > delta)
                     {
-                        // take 90% of the previous average plus 10% of the new value
-                        osd_ticks_t oversleep_milliticks = 1000 * (actual_ticks - delta) / delta;
+                        // take 99% of the previous average plus 1% of the new value
+                        osd_ticks_t oversleep_milliticks = 1000 * (actual_ticks - delta);
                         m_average_oversleep = (m_average_oversleep * 99 + oversleep_milliticks) / 100;
 
                         if (LOG_THROTTLE)
@@ -1132,8 +1144,7 @@ namespace mame
                 //snap_renderer_bilinear.draw_primitives(primlist, &m_snap_bitmap.pix32(0), width, height, m_snap_bitmap.rowpixels());
                 RawBuffer m_snap_bitmapBuf;
                 UInt32 m_snap_bitmapOffset = m_snap_bitmap.pix32(out m_snap_bitmapBuf, 0);
-                software_renderer<UInt32>.SetTemplateParams(32, 0,0,0, 16,8,0, false, true);
-                software_renderer<UInt32>.draw_primitives(primlist, new RawBufferPointer(m_snap_bitmapBuf), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
+                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, true), primlist, new RawBufferPointer(m_snap_bitmapBuf), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
             }
             else
             {
@@ -1141,8 +1152,7 @@ namespace mame
                 //snap_renderer.draw_primitives(primlist, &m_snap_bitmap.pix32(0), width, height, m_snap_bitmap.rowpixels());
                 RawBuffer m_snap_bitmapBuf;
                 UInt32 m_snap_bitmapOffset = m_snap_bitmap.pix32(out m_snap_bitmapBuf, 0);
-                software_renderer<UInt32>.SetTemplateParams(32, 0,0,0, 16,8,0, false, false);
-                software_renderer<UInt32>.draw_primitives(primlist, new RawBufferPointer(m_snap_bitmapBuf), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
+                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, false), primlist, new RawBufferPointer(m_snap_bitmapBuf), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
             }
             primlist.release_lock();
         }

@@ -11,6 +11,6 @@ namespace mame
     {
         //#define CD4066_GATE(name)                                                       \
         //        NET_REGISTER_DEV(CD4066_GATE, name)
-        public static void CD4066_GATE(netlist.setup_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4066_GATE", name); }
+        public static void CD4066_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4066_GATE", name); }
     }
 }

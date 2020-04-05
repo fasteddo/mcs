@@ -165,7 +165,7 @@ namespace mame
                             galaga_final_mixer /* INFO */),
             DISCRETE_OUTPUT(NODE_90, 1),
 
-            DISCRETE_SOUND_END(),
+            DISCRETE_SOUND_END,
         };
     }
 }

@@ -27,6 +27,9 @@ namespace mame
             pacman.driver_pacman,
             pacman.driver_pacplus,
             pacman.driver_puckman,
+            taitosj.driver_elevator,
+            taitosj.driver_jungleh,
+            taitosj.driver_junglek,
         };
 
         public static readonly int s_driver_count = s_drivers_sorted.Count;

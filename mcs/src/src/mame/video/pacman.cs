@@ -8,6 +8,7 @@ using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
+using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -75,7 +76,7 @@ namespace mame
 
         ***************************************************************************/
 
-        public void pacman_palette(palette_device palette)
+        void pacman_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
             int [] resistances3 = new int [3] { 1000, 470, 220 };
@@ -101,18 +102,18 @@ namespace mame
                 bit0 = BIT(color_prom[i], 0);
                 bit1 = BIT(color_prom[i], 1);
                 bit2 = BIT(color_prom[i], 2);
-                int r = combine_3_weights(rweights, bit0, bit1, bit2);
+                int r = combine_weights(rweights, bit0, bit1, bit2);
 
                 // green component
                 bit0 = BIT(color_prom[i], 3);
                 bit1 = BIT(color_prom[i], 4);
                 bit2 = BIT(color_prom[i], 5);
-                int g = combine_3_weights(gweights, bit0, bit1, bit2);
+                int g = combine_weights(gweights, bit0, bit1, bit2);
 
                 // blue component
                 bit0 = BIT(color_prom[i], 6);
                 bit1 = BIT(color_prom[i], 7);
-                int b = combine_2_weights(bweights, bit0, bit1);
+                int b = combine_weights(bweights, bit0, bit1);
 
                 palette.palette_interface.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
             }
@@ -172,7 +173,7 @@ namespace mame
 
 
         //VIDEO_START_MEMBER(pacman_state,pacman)
-        public void video_start_pacman()
+        void video_start_pacman()
         {
             init_save_state();
 
@@ -193,7 +194,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(pacman_state::pacman_videoram_w)
-        public void pacman_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void pacman_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_videoram[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
@@ -201,7 +202,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(pacman_state::pacman_colorram_w)
-        public void pacman_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void pacman_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_colorram[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
@@ -209,19 +210,19 @@ namespace mame
 
 
         //WRITE_LINE_MEMBER(pacman_state::flipscreen_w)
-        public void flipscreen_w(int state)
+        void flipscreen_w(int state)
         {
             m_flipscreen = (byte)state;
             m_bg_tilemap.set_flip(m_flipscreen * ( TILEMAP_FLIPX + TILEMAP_FLIPY ) );
         }
 
 
-        public uint32_t screen_update_pacman(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        u32 screen_update_pacman(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             if (m_bgpriority != 0)
                 bitmap.fill(0, cliprect);
             else
-                m_bg_tilemap.draw(screen, bitmap, cliprect, tilemap_global.TILEMAP_DRAW_OPAQUE, 0);
+                m_bg_tilemap.draw(screen, bitmap, cliprect, TILEMAP_DRAW_OPAQUE, 0);
 
             if ( m_spriteram != null )
             {

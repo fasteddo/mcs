@@ -16,7 +16,7 @@ namespace mame
         //#define OPAMP(name, model)                                                     \
         //        NET_REGISTER_DEV(OPAMP, name)                                          \
         //        NETDEV_PARAMI(name, MODEL, model)
-        public static void OPAMP(netlist.setup_t setup, string name, string model)
+        public static void OPAMP(netlist.nlparse_t setup, string name, string model)
         {
             netlist.nl_setup_global.NET_REGISTER_DEV(setup, "OPAMP", name);
             netlist.nl_setup_global.NETDEV_PARAMI(setup, name, "MODEL", model);

@@ -704,7 +704,7 @@ namespace mame
             std.map<string, string> card_bios = new std.map<string, string>();
             foreach (device_t device in new device_iterator(machine.config().root_device()))
             {
-                device_slot_interface slot = device.GetClassInterface<device_slot_interface>();  // (device_slot_interface)device;
+                device_slot_interface slot = device.GetClassInterface<device_slot_interface>();  //device_slot_interface const *const slot(dynamic_cast<device_slot_interface *>(&device));
                 if (slot != null)
                 {
                     device_t card = slot.get_card_device();
@@ -920,14 +920,14 @@ namespace mame
             verify_length_and_hash - verify the length
             and hash signatures of a file
         -------------------------------------------------*/
-        void verify_length_and_hash(string name, UInt32 explength, util.hash_collection hashes)
+        void verify_length_and_hash(string name, u32 explength, util.hash_collection hashes)
         {
             /* we've already complained if there is no file */
             if (m_file == null)
                 return;
 
             /* verify length */
-            UInt32 actlength = (UInt32)m_file.size();
+            u32 actlength = (u32)m_file.size();
             if (explength != actlength)
             {
                 m_errorstring += string.Format("{0} WRONG LENGTH (expected: {1} found: {2})\n", name, explength, actlength);  // %08x found: %08x

@@ -44,8 +44,8 @@ namespace mame
 
     //typedef delegate<void (screen_device &, bool)> vblank_state_delegate;
     public delegate void vblank_state_delegate(screen_device device, bool vblank_state);
-    //typedef device_delegate<UINT32 (screen_device &, bitmap_ind16 &, const rectangle &)> screen_update_ind16_delegate;
-    //typedef device_delegate<UINT32 (screen_device &, bitmap_rgb32 &, const rectangle &)> screen_update_rgb32_delegate;
+    //typedef device_delegate<u32 (screen_device &, bitmap_ind16 &, const rectangle &)> screen_update_ind16_delegate;
+    //typedef device_delegate<u32 (screen_device &, bitmap_rgb32 &, const rectangle &)> screen_update_rgb32_delegate;
     public delegate u32 screen_update_ind16_delegate(screen_device device, bitmap_ind16 bitmap, rectangle rect);
     public delegate u32 screen_update_rgb32_delegate(screen_device device, bitmap_rgb32 bitmap, rectangle rect);
 
@@ -378,6 +378,14 @@ namespace mame
         }
 
 
+        public screen_device(machine_config mconfig, string tag, device_t owner, screen_type_enum type, rgb_t color)
+            : this(mconfig, tag, owner, (u32)0)
+        {
+            set_type(type);
+            set_color(color);
+        }
+
+
         public void screen_device_after_ctor(screen_type_enum type)
         {
             set_type(type);
@@ -436,7 +444,7 @@ namespace mame
             return phys_aspect;
         }
 
-        int width() { return m_width; }
+        public int width() { return m_width; }
         public int height() { return m_height; }
         public rectangle visible_area() { return m_visarea; }
         //const rectangle &cliprect() const { return m_bitmap[0].cliprect(); }
@@ -539,7 +547,7 @@ namespace mame
         public void set_palette(finder_base finder) { m_paletteDevice.set_tag(finder); }
 
         //void set_video_attributes(u32 flags) { m_video_attributes = flags; }
-        //void set_color(rgb_t color) { m_color = color; }
+        void set_color(rgb_t color) { m_color = color; }
         //void set_svg_region(const char *region) { m_svg_region = region; }
 
 

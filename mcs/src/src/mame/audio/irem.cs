@@ -100,17 +100,17 @@ namespace mame
                 {
                     /* PSG 0 or 1? */
                     if ((m_port2 & 0x08) != 0)
-                        m_ay_45M.target.address_w(space, 0, m_port1);
+                        m_ay_45M.target.address_w(m_port1);
                     if ((m_port2 & 0x10) != 0)
-                        m_ay_45L.target.address_w(space, 0, m_port1);
+                        m_ay_45L.target.address_w(m_port1);
                 }
                 else
                 {
                     /* PSG 0 or 1? */
                     if ((m_port2 & 0x08) != 0)
-                        m_ay_45M.target.data_w(space, 0, m_port1);
+                        m_ay_45M.target.data_w(m_port1);
                     if ((m_port2 & 0x10) != 0)
-                        m_ay_45L.target.data_w(space, 0, m_port1);
+                        m_ay_45L.target.data_w(m_port1);
                 }
             }
 
@@ -128,9 +128,9 @@ namespace mame
         {
             /* PSG 0 or 1? */
             if ((m_port2 & 0x08) != 0)
-                return m_ay_45M.target.data_r(space, 0);
+                return m_ay_45M.target.data_r();
             if ((m_port2 & 0x10) != 0)
-                return m_ay_45L.target.data_r(space, 0);
+                return m_ay_45L.target.data_r();
 
             return 0xff;
         }
@@ -310,7 +310,7 @@ namespace mame
 
             DISCRETE_OUTPUT(NODE_40, 18.0),
 
-            DISCRETE_SOUND_END(),
+            DISCRETE_SOUND_END,
         };
 
 
@@ -392,20 +392,20 @@ namespace mame
             ay_45M.target.set_resistors_load(470, 0, 0);
             ay_45M.target.port_a_read_callback().set(soundlatch_r).reg();
             ay_45M.target.port_b_write_callback().set(ay8910_45M_portb_w).reg();
-            ay_45M.target.GetClassInterface<device_sound_interface>().add_route(0, "filtermix", 1.0, 0);
+            ay_45M.target.disound.add_route(0, "filtermix", 1.0, 0);
 
             AY8910(config, ay_45L, new XTAL(3579545)/4); /* verified on pcb */
             ay_45L.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT | ay8910_global.AY8910_DISCRETE_OUTPUT);
             ay_45L.target.set_resistors_load(470, 0, 0);
             ay_45L.target.port_a_write_callback().set(ay8910_45L_porta_w).reg();
-            ay_45L.target.GetClassInterface<device_sound_interface>().add_route(0, "filtermix", 1.0, 1);
+            ay_45L.target.disound.add_route(0, "filtermix", 1.0, 1);
 
             MSM5205(config, adpcm1, new XTAL(384000)); /* verified on pcb */
             adpcm1.target.vck_callback().set_inputline(cpu, device_execute_interface.INPUT_LINE_NMI).reg(); // driven through NPN inverter
             adpcm1.target.set_prescaler_selector(msm5205_device.S96_4B);      /* default to 4KHz, but can be changed at run time */
-            adpcm1.target.GetClassInterface<device_sound_interface>().add_route(0, "filtermix", 1.0, 2);
+            adpcm1.target.disound.add_route(0, "filtermix", 1.0, 2);
 
-            DISCRETE(config, "filtermix", m52_sound_c_discrete).GetClassInterface<device_sound_interface>().add_route(ALL_OUTPUTS, "mono", 1.0);
+            DISCRETE(config, "filtermix", m52_sound_c_discrete).disound.add_route(ALL_OUTPUTS, "mono", 1.0);
         }
     }
 }

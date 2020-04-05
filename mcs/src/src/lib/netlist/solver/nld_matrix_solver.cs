@@ -18,7 +18,7 @@ namespace mame.netlist
 
         struct solver_parameters_t
         {
-            public int m_pivot;
+            public bool m_pivot;
             public nl_double m_accuracy;
             public nl_double m_dynamic_lte;
             public nl_double m_min_timestep;
@@ -28,6 +28,8 @@ namespace mame.netlist
             public UInt32 m_gs_loops;
             public UInt32 m_nr_loops;
             public netlist_time m_nr_recalc_delay;
+            public bool m_use_gabs;
+            public bool m_use_linear_prediction;
             public bool m_log_stats;
         }
 
@@ -95,10 +97,6 @@ namespace mame.netlist
                         {
                             m_terms.Insert(i, term);  //plib::container::insert_at(m_terms, i, term);
                             m_connected_net_idx.Insert(i, net_other);  //plib::container::insert_at(m_connected_net_idx, i, net_other);
-                            m_gt.Insert(i, 0.0);  //plib::container::insert_at(m_gt, i, 0.0);
-                            m_go.Insert(i, 0.0);  //plib::container::insert_at(m_go, i, 0.0);
-                            m_Idr.Insert(i, 0.0);  //plib::container::insert_at(m_Idr, i, 0.0);
-                            m_connected_net_V.Insert(i, null);  //plib::container::insert_at(m_connected_net_V, i, null);
                             return;
                         }
                     }
@@ -106,14 +104,10 @@ namespace mame.netlist
 
                 m_terms.push_back(term);
                 m_connected_net_idx.push_back(net_other);
-                m_gt.push_back(0.0);
-                m_go.push_back(0.0);
-                m_Idr.push_back(0.0);
-                m_connected_net_V.push_back(null);
             }
 
 
-            public UInt32 count() { return (UInt32)m_terms.size(); }
+            public UInt32 count() { return (UInt32)m_terms.size(); }  //std::size_t count() const { return m_terms.size(); }
 
             public std.vector<terminal_t> terms() { return m_terms; }  //inline terminal_t **terms() { return m_terms.data(); }
             public std.vector<int> connected_net_idx() { return m_connected_net_idx; }  //inline int *connected_net_idx() { return m_connected_net_idx.data(); }
@@ -124,10 +118,15 @@ namespace mame.netlist
 
             public void set_pointers()
             {
+                m_gt.resize((int)count(), 0.0);
+                m_go.resize((int)count(), 0.0);
+                m_Idr.resize((int)count(), 0.0);
+                m_connected_net_V.resize((int)count(), null);
+
                 for (UInt32 i = 0; i < count(); i++)
                 {
                     m_terms[i].set_ptrs(new ListPointer<nl_double>(m_gt, (int)i), new ListPointer<nl_double>(m_go, (int)i), new ListPointer<nl_double>(m_Idr, (int)i));  //m_terms[i]->set_ptrs(&m_gt[i], &m_go[i], &m_Idr[i]);
-                    m_connected_net_V[i] = m_terms[i].otherterm.net().Q_Analog_state_ptr();
+                    m_connected_net_V[i] = m_terms[i].otherterm().net().Q_Analog_state_ptr();
                 }
             }
         }
@@ -143,8 +142,6 @@ namespace mame.netlist
             {
                 m_proxied_net = null;
             }
-            
-            //~proxied_analog_output_t() { }
 
 
             public analog_net_t proxied_net { get { return m_proxied_net; } set { m_proxied_net = value; } }
@@ -160,15 +157,17 @@ namespace mame.netlist
             {
                 NOSORT,
                 ASCENDING,
-                DESCENDING
+                DESCENDING,
+                PREFER_IDENTITY_TOP_LEFT,
+                PREFER_BAND_MATRIX
             }
 
 
             std.vector<terms_for_net_t> m_terms = new std.vector<terms_for_net_t>();  //std::vector<std::unique_ptr<terms_for_net_t>> m_terms;
             std.vector<analog_net_t> m_nets = new std.vector<analog_net_t>();
-            std.vector<proxied_analog_output_t> m_inps = new std.vector<proxied_analog_output_t>();  //std::vector<std::unique_ptr<proxied_analog_output_t>> m_inps;
+            std.vector<proxied_analog_output_t> m_inps = new std.vector<proxied_analog_output_t>();  //std::vector<poolptr<proxied_analog_output_t>> m_inps;
 
-            std.vector<terms_for_net_t> m_rails_temp = new std.vector<terms_for_net_t>();
+            std.vector<terms_for_net_t> m_rails_temp = new std.vector<terms_for_net_t>();  //std::vector<plib::unique_ptr<terms_for_net_t>> m_rails_temp;
 
             solver_parameters_t m_params;
 
@@ -194,7 +193,7 @@ namespace mame.netlist
             // ----------------------------------------------------------------------------------------
             // matrix_solver
             // ----------------------------------------------------------------------------------------
-            protected matrix_solver_t(netlist_base_t anetlist, string name, eSortType sort, solver_parameters_t params_)
+            protected matrix_solver_t(netlist_state_t anetlist, string name, eSortType sort, solver_parameters_t params_)
                 : base(anetlist, name)
             {
                 m_params = params_;
@@ -212,8 +211,6 @@ namespace mame.netlist
 
                 connect_post_start(m_fb_sync, m_Q_sync);
             }
-
-            //~matrix_solver_t() { }
 
 
             public std.vector<terms_for_net_t> terms { get { return m_terms; } }
@@ -258,9 +255,8 @@ namespace mame.netlist
             /* after every call to solve, update inputs must be called.
              * this can be done as well as a batch to ease parallel processing.
              */
-            public netlist_time solve()
+            public netlist_time solve(netlist_time now)
             {
-                netlist_time now = exec().time();
                 netlist_time delta = now - m_last_step.op;
 
                 // We are already up to date. Avoid oscillations.
@@ -292,7 +288,7 @@ namespace mame.netlist
 
             public void update_forced()
             {
-                netlist_time new_timestep = solve();
+                netlist_time new_timestep = solve(exec().time());
                 update_inputs();
 
                 if (m_params.m_dynamic_ts && has_timestep_devices())
@@ -317,7 +313,7 @@ namespace mame.netlist
 
 
             //NETLIB_RESETI();
-            protected override void reset()
+            public override void reset()
             {
                 m_last_step.op = netlist_time.zero();
             }
@@ -332,6 +328,10 @@ namespace mame.netlist
                 }
                 return -1;
             }
+
+
+            //std::pair<int, int> get_left_right_of_diag(std::size_t row, std::size_t diag);
+            //double get_weight_around_diag(std::size_t row, std::size_t diag);
 
 
             public virtual void log_stats()
@@ -369,6 +369,66 @@ namespace mame.netlist
             //std::size_t ops() { return m_ops; }
 
 
+            void sort_terms(eSortType sort)
+            {
+                throw new emu_unimplemented();
+#if false
+                /* Sort in descending order by number of connected matrix voltages.
+                 * The idea is, that for Gauss-Seidel algo the first voltage computed
+                 * depends on the greatest number of previous voltages thus taking into
+                 * account the maximum amout of information.
+                 *
+                 * This actually improves performance on popeye slightly. Average
+                 * GS computations reduce from 2.509 to 2.370
+                 *
+                 * Smallest to largest : 2.613
+                 * Unsorted            : 2.509
+                 * Largest to smallest : 2.370
+                 *
+                 * Sorting as a general matrix pre-conditioning is mentioned in
+                 * literature but I have found no articles about Gauss Seidel.
+                 *
+                 * For Gaussian Elimination however increasing order is better suited.
+                 * NOTE: Even better would be to sort on elements right of the matrix diagonal.
+                 *
+                 */
+
+                if (m_sort != eSortType.NOSORT)
+                {
+                    int sort_order = (m_sort == eSortType.DESCENDING ? 1 : -1);
+
+                    for (UInt32 k = 0; k < iN - 1; k++)
+                    {
+                        for (UInt32 i = k + 1; i < iN; i++)
+                        {
+                            if (((int)(m_terms[k].railstart) - (int)(m_terms[i].railstart)) * sort_order < 0)
+                            {
+                                //std::swap(m_terms[i], m_terms[k]);
+                                var termsTemp = m_terms[i];
+                                m_terms[i] = m_terms[k];
+                                m_terms[k] = termsTemp;
+                                //std::swap(m_nets[i], m_nets[k]);
+                                var netsTemp = m_nets[i];
+                                m_nets[i] = m_nets[k];
+                                m_nets[k] = netsTemp;
+                            }
+                        }
+                    }
+
+                    foreach (var term in m_terms)
+                    {
+                        var other = term.connected_net_idx();
+                        for (UInt32 i = 0; i < term.count(); i++)
+                        {
+                            if (other[i] != -1)
+                                other[i] = get_net_idx(term.terms()[i].otherterm().net());
+                        }
+                    }
+                }
+#endif
+            }
+
+
             protected void setup_base(analog_net_t_list_t nets)
             {
                 log().debug.op("New solver setup\n");
@@ -391,7 +451,7 @@ namespace mame.netlist
 
                     net.set_solver(this);
 
-                    foreach (var p in net.core_terms)
+                    foreach (var p in net.core_terms())
                     {
                         log().debug.op("{0} {1} {2}\n", p.name(), net.name(), net.isRailNet());
 
@@ -455,7 +515,7 @@ namespace mame.netlist
                         }
                     }
 
-                    log().debug.op("added net with {0} populated connections\n", net.core_terms.size());
+                    log().debug.op("added net with {0} populated connections\n", net.core_terms().size());
                 }
 
                 /* now setup the matrix */
@@ -495,8 +555,8 @@ namespace mame.netlist
 
                         t.h_n_m_1 = hn;
                         t.DD_n_m_1 = DD_n;
-                        if (Math.Abs(DD2) > nl_config_global.NL_FCONST(1e-60)) // avoid div-by-zero
-                            new_net_timestep = Math.Sqrt(m_params.m_dynamic_lte / Math.Abs(nl_config_global.NL_FCONST(0.5) * DD2));
+                        if (std.fabs(DD2) > 1e-60)  //plib::constants<nl_double>::cast(1e-60)) // avoid div-by-zero
+                            new_net_timestep = std.sqrt(m_params.m_dynamic_lte / std.fabs(0.5 * DD2));  //std::fabs(plib::constants<nl_double>::cast(0.5)*DD2));
                         else
                             new_net_timestep = m_params.m_max_timestep;
 
@@ -516,19 +576,19 @@ namespace mame.netlist
                 /*
                  * FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
                  */
-                return netlist_time.Max(netlist_time.from_double(new_solver_timestep), netlist_time.quantum() * 2);
+                return netlist_time.Max(netlist_time.from_double(new_solver_timestep), netlist_time.quantum() * 2);  //std::max(netlist_time::from_double(new_solver_timestep), netlist_time::quantum() * 2);
             }
 
 
             /* virtual */ void add_term(UInt32 k, terminal_t term)
             {
-                if (term.otherterm.net().isRailNet())
+                if (term.otherterm().net().isRailNet())
                 {
                     m_rails_temp[k].add(term, -1, false);
                 }
                 else
                 {
-                    int ot = get_net_idx(term.otherterm.net());
+                    int ot = get_net_idx(term.otherterm().net());
                     if (ot >= 0)
                     {
                         m_terms[k].add(term, ot, true);
@@ -543,9 +603,9 @@ namespace mame.netlist
             }
 
             //template <typename T>
-            //void store(const T * RESTRICT V);
+            //void store(const T & V);
             //template <typename T>
-            //T delta(const T * RESTRICT V);
+            //auto delta(const T & V) -> typename std::decay<decltype(V[0])>::type;
 
             //template <typename T>
             //void build_LE_A();
@@ -567,66 +627,10 @@ namespace mame.netlist
                     m_terms[k].set_pointers();
                 }
 
-                foreach (terms_for_net_t rt in m_rails_temp)
-                {
-                    rt.clear(); // no longer needed
-                    //plib::pfree(rt); // no longer needed
-                }
-
+                // free all - no longer needed
                 m_rails_temp.clear();
 
-                /* Sort in descending order by number of connected matrix voltages.
-                 * The idea is, that for Gauss-Seidel algo the first voltage computed
-                 * depends on the greatest number of previous voltages thus taking into
-                 * account the maximum amout of information.
-                 *
-                 * This actually improves performance on popeye slightly. Average
-                 * GS computations reduce from 2.509 to 2.370
-                 *
-                 * Smallest to largest : 2.613
-                 * Unsorted            : 2.509
-                 * Largest to smallest : 2.370
-                 *
-                 * Sorting as a general matrix pre-conditioning is mentioned in
-                 * literature but I have found no articles about Gauss Seidel.
-                 *
-                 * For Gaussian Elimination however increasing order is better suited.
-                 * NOTE: Even better would be to sort on elements right of the matrix diagonal.
-                 *
-                 */
-
-                if (m_sort != eSortType.NOSORT)
-                {
-                    int sort_order = (m_sort == eSortType.DESCENDING ? 1 : -1);
-
-                    for (UInt32 k = 0; k < iN - 1; k++)
-                    {
-                        for (UInt32 i = k + 1; i < iN; i++)
-                        {
-                            if (((int)(m_terms[k].railstart) - (int)(m_terms[i].railstart)) * sort_order < 0)
-                            {
-                                //std::swap(m_terms[i], m_terms[k]);
-                                var termsTemp = m_terms[i];
-                                m_terms[i] = m_terms[k];
-                                m_terms[k] = termsTemp;
-                                //std::swap(m_nets[i], m_nets[k]);
-                                var netsTemp = m_nets[i];
-                                m_nets[i] = m_nets[k];
-                                m_nets[k] = netsTemp;
-                            }
-                        }
-                    }
-
-                    foreach (var term in m_terms)
-                    {
-                        var other = term.connected_net_idx();
-                        for (UInt32 i = 0; i < term.count(); i++)
-                        {
-                            if (other[i] != -1)
-                                other[i] = get_net_idx(term.terms()[i].otherterm.net());
-                        }
-                    }
-                }
+                sort_terms(m_sort);
 
                 /* create a list of non zero elements. */
                 for (UInt32 k = 0; k < iN; k++)
@@ -691,9 +695,7 @@ namespace mame.netlist
                  * This should reduce cache misses ...
                  */
 
-                bool [,] touched = new bool [iN, iN];  //bool **touched = plib::palloc_array<bool *>(iN);
-                //for (UInt32 k = 0; k < iN; k++)
-                //    touched[k] = plib::palloc_array<bool>(iN);
+                bool [,] touched = new bool [iN, iN];  //std::vector<std::vector<bool>> touched(iN, std::vector<bool>(iN));
 
                 for (UInt32 k = 0; k < iN; k++)
                 {
@@ -748,19 +750,14 @@ namespace mame.netlist
                 {
                     string num = new plib.pfmt("{0}").op(k);
 
-                    state().save(this, m_terms[k].last_V, "lastV." + num);
-                    state().save(this, m_terms[k].DD_n_m_1, "m_DD_n_m_1." + num);
-                    state().save(this, m_terms[k].h_n_m_1, "m_h_n_m_1." + num);
+                    state().save(this, m_terms[k].last_V, this.name(), "lastV." + num);
+                    state().save(this, m_terms[k].DD_n_m_1, this.name(), "m_DD_n_m_1." + num);
+                    state().save(this, m_terms[k].h_n_m_1, this.name(), "m_h_n_m_1." + num);
 
-                    state().save(this, m_terms[k].go(),"GO" + num, m_terms[k].count());
-                    state().save(this, m_terms[k].gt(),"GT" + num, m_terms[k].count());
-                    state().save(this, m_terms[k].Idr(),"IDR" + num , m_terms[k].count());
+                    state().save(this, m_terms[k].go(),"GO" + num, this.name(), m_terms[k].count());
+                    state().save(this, m_terms[k].gt(),"GT" + num, this.name(), m_terms[k].count());
+                    state().save(this, m_terms[k].Idr(),"IDR" + num , this.name(), m_terms[k].count());
                 }
-
-                //for (UInt32 k = 0; k < iN; k++)
-                //    plib::pfree_array(touched[k]);
-                //plib::pfree_array(touched);
-                touched = null;
             }
 
 

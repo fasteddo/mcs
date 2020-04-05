@@ -9,6 +9,7 @@ using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
+using u32 = System.UInt32;
 
 
 namespace mame
@@ -34,7 +35,7 @@ namespace mame
 
         ***************************************************************************/
 
-        public void digdug_palette(palette_device palette)
+        void digdug_palette(palette_device palette)
         {
             ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
@@ -97,7 +98,7 @@ namespace mame
                the top 4 bits of alpha code. This feature is not used by Dig Dug. */
 
             int color = m_bg_disable != 0 ? 0xf : (code >> 4);
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 2,
+            SET_TILE_INFO_MEMBER(ref tileinfo, 2,
                     (UInt32)code,
                     (UInt32)(color | m_bg_color_bank),
                     0);
@@ -125,10 +126,10 @@ namespace mame
                timing signals, while x flip is done by selecting the 2nd character set.
                We reproduce this here, but since the tilemap system automatically flips
                characters when screen is flipped, we have to flip them back. */
-            tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, 0,
+            SET_TILE_INFO_MEMBER(ref tileinfo, 0,
                     (UInt32)((code & 0x7f) | (flip_screen() != 0 ? 0x80 : 0)),
                     (UInt32)color,
-                    flip_screen() != 0 ? tilemap_global.TILE_FLIPX : (byte)0);
+                    flip_screen() != 0 ? TILE_FLIPX : (byte)0);
         }
 
 
@@ -136,7 +137,7 @@ namespace mame
           Start the video hardware emulation.
         ***************************************************************************/
         //VIDEO_START_MEMBER(digdug_state,digdug)
-        public void video_start_digdug()
+        void video_start_digdug()
         {
             m_bg_select = 0;
             m_tx_color_mode = 0;
@@ -222,7 +223,7 @@ namespace mame
         }
 
 
-        public UInt32 screen_update_digdug(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        u32 screen_update_digdug(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             m_bg_tilemap.draw(screen, bitmap, cliprect, 0,0);
             m_fg_tilemap.draw(screen, bitmap, cliprect, 0,0);
@@ -237,7 +238,7 @@ namespace mame
         ***************************************************************************/
 
         //WRITE8_MEMBER( digdug_state::digdug_videoram_w )
-        public void digdug_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void digdug_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_videoram[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);
@@ -245,7 +246,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(digdug_state::bg_select_w)
-        public void bg_select_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void bg_select_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             // select background picture
             if (m_bg_select != (data & 0x03))
@@ -263,7 +264,7 @@ namespace mame
         }
 
         //WRITE_LINE_MEMBER(digdug_state::tx_color_mode_w)
-        public void tx_color_mode_w(int state)
+        void tx_color_mode_w(int state)
         {
             // select alpha layer color mode (see tx_get_tile_info)
             m_tx_color_mode = (byte)state;
@@ -271,7 +272,7 @@ namespace mame
         }
 
         //WRITE_LINE_MEMBER(digdug_state::bg_disable_w)
-        public void bg_disable_w(int state)
+        void bg_disable_w(int state)
         {
             // "disable" background (see bg_get_tile_info)
             m_bg_disable = (byte)state;

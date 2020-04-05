@@ -24,7 +24,7 @@ namespace mame
          *************************************/
 
         //WRITE_LINE_MEMBER(galaxian_state::vblank_interrupt_w)
-        public void vblank_interrupt_w(int state)
+        void vblank_interrupt_w(int state)
         {
             /* interrupt line is clocked at VBLANK */
             /* a flip-flop at 6F is held in the preset state based on the NMI ON signal */
@@ -37,7 +37,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(galaxian_state::irq_enable_w)
-        public void irq_enable_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void irq_enable_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             /* the latched D0 bit here goes to the CLEAR line on the interrupt flip-flop */
             m_irq_enabled = (byte)(data & 1);
@@ -55,7 +55,7 @@ namespace mame
          *************************************/
 
         //WRITE8_MEMBER(galaxian_state::start_lamp_w)
-        public void start_lamp_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void start_lamp_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             /* offset 0 = 1P START LAMP */
             /* offset 1 = 2P START LAMP */
@@ -64,7 +64,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(galaxian_state::coin_lock_w)
-        public void coin_lock_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void coin_lock_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             /* many variants and bootlegs don't have this */
             machine().bookkeeping().coin_lockout_global_w(~data & 1);
@@ -72,14 +72,14 @@ namespace mame
 
 
         //WRITE8_MEMBER(galaxian_state::coin_count_0_w)
-        public void coin_count_0_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void coin_count_0_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             machine().bookkeeping().coin_counter_w(0, data & 1);
         }
 
 
         //WRITE8_MEMBER(galaxian_state::coin_count_1_w)
-        public void coin_count_1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void coin_count_1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             machine().bookkeeping().coin_counter_w(1, data & 1);
         }
@@ -93,34 +93,12 @@ namespace mame
 
 #if false
         READ8_MEMBER(galaxian_state::konami_ay8910_r)
-        {
-            /* the decoding here is very simplistic, and you can address both simultaneously */
-            uint8_t result = 0xff;
-            if (offset & 0x20) result &= m_ay8910[1]->data_r(space, 0);
-            if (offset & 0x80) result &= m_ay8910[0]->data_r(space, 0);
-            return result;
-        }
-
-
         WRITE8_MEMBER(galaxian_state::konami_ay8910_w)
-        {
-            /* AV 4,5 ==> AY8910 #2 */
-            /* the decoding here is very simplistic, and you can address two simultaneously */
-            if (offset & 0x10)
-                m_ay8910[1]->address_w(space, 0, data);
-            else if (offset & 0x20)
-                m_ay8910[1]->data_w(space, 0, data);
-            /* AV6,7 ==> AY8910 #1 */
-            if (offset & 0x40)
-                m_ay8910[0]->address_w(space, 0, data);
-            else if (offset & 0x80)
-                m_ay8910[0]->data_w(space, 0, data);
-        }
 #endif
 
 
         //WRITE8_MEMBER(galaxian_state::konami_sound_control_w)
-        public void konami_sound_control_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void konami_sound_control_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             byte old = m_konami_sound_control;
             m_konami_sound_control = data;
@@ -136,7 +114,7 @@ namespace mame
 
 
         //READ8_MEMBER(galaxian_state::konami_sound_timer_r)
-        public u8 konami_sound_timer_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 konami_sound_timer_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             /*
                 The timer is clocked at KONAMI_SOUND_CLOCK and cascades through a
@@ -175,7 +153,7 @@ namespace mame
         static readonly string [] konami_sound_filter_w_ayname = new string[2] { "8910.0", "8910.1" };
 
         //WRITE8_MEMBER(galaxian_state::konami_sound_filter_w)
-        public void konami_sound_filter_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void konami_sound_filter_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             if (m_discrete != null)
             {
@@ -201,14 +179,14 @@ namespace mame
 
 
         //WRITE8_MEMBER(galaxian_state::konami_portc_0_w)
-        public void konami_portc_0_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void konami_portc_0_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             logerror("{0}:ppi0_portc_w = {1}\n", machine().describe_context(), data);  // %02X
         }
 
 
         //WRITE8_MEMBER(galaxian_state::konami_portc_1_w)
-        public void konami_portc_1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void konami_portc_1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             logerror("{0}:ppi1_portc_w = {1}\n", machine().describe_context(), data);  // %02X
         }
@@ -221,7 +199,7 @@ namespace mame
          *************************************/
 
         //READ8_MEMBER(galaxian_state::frogger_ppi8255_r)
-        public u8 frogger_ppi8255_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 frogger_ppi8255_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             /* the decoding here is very simplistic, and you can address both simultaneously */
             byte result = 0xff;
@@ -232,7 +210,7 @@ namespace mame
 
 
         //WRITE8_MEMBER(galaxian_state::frogger_ppi8255_w)
-        public void frogger_ppi8255_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void frogger_ppi8255_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             /* the decoding here is very simplistic, and you can address both simultaneously */
             if ((offset & 0x1000) != 0) m_ppi8255.op(1).target.write((offset >> 1) & 3, data);
@@ -241,29 +219,29 @@ namespace mame
 
 
         //READ8_MEMBER(galaxian_state::frogger_ay8910_r)
-        public u8 frogger_ay8910_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 frogger_ay8910_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             /* the decoding here is very simplistic */
             byte result = 0xff;
-            if ((offset & 0x40) != 0) result &= m_ay8910.op(0).target.data_r(space, 0);
+            if ((offset & 0x40) != 0) result &= m_ay8910.op(0).target.data_r();
             return result;
         }
 
 
         //WRITE8_MEMBER(galaxian_state::frogger_ay8910_w)
-        public void frogger_ay8910_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void frogger_ay8910_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             /* the decoding here is very simplistic */
             /* AV6,7 ==> AY8910 #1 */
             if ((offset & 0x40) != 0)
-                m_ay8910.op(0).target.data_w(space, 0, data);
+                m_ay8910.op(0).target.data_w(data);
             else if ((offset & 0x80) != 0)
-                m_ay8910.op(0).target.address_w(space, 0, data);
+                m_ay8910.op(0).target.address_w(data);
         }
 
 
         //READ8_MEMBER(galaxian_state::frogger_sound_timer_r)
-        public u8 frogger_sound_timer_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 frogger_sound_timer_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
         {
             /* same as regular Konami sound but with bits 3,5 swapped */
             byte konami_value = konami_sound_timer_r(space, 0);
@@ -478,9 +456,9 @@ namespace mame
 
         void galaxian_map_discrete(address_map map, device_t device)
         {
-            map.op(0x6004, 0x6007).mirror(0x07f8).w("cust", galaxian_sound_device_lfo_freq_w);
-            map.op(0x6800, 0x6807).mirror(0x07f8).w("cust", galaxian_sound_device_sound_w);
-            map.op(0x7800, 0x7800).mirror(0x07ff).w("cust", galaxian_sound_device_pitch_w);
+            map.op(0x6004, 0x6007).mirror(0x07f8).w("cust", (space, offset, data, mem_mask) => { ((galaxian_sound_device)subdevice("cust")).lfo_freq_w(space, offset, data, mem_mask); });  //FUNC(galaxian_sound_device::lfo_freq_w));
+            map.op(0x6800, 0x6807).mirror(0x07f8).w("cust", (space, offset, data, mem_mask) => { ((galaxian_sound_device)subdevice("cust")).sound_w(space, offset, data, mem_mask); });  //FUNC(galaxian_sound_device::sound_w));
+            map.op(0x7800, 0x7800).mirror(0x07ff).w("cust", (space, offset, data, mem_mask) => { ((galaxian_sound_device)subdevice("cust")).pitch_w(space, offset, data, mem_mask); });  //FUNC(galaxian_sound_device::pitch_w));
         }
 
 
@@ -504,7 +482,7 @@ namespace mame
             map.op(0x7006, 0x7006).mirror(0x07f8).w(galaxian_flip_screen_x_w);
             map.op(0x7007, 0x7007).mirror(0x07f8).w(galaxian_flip_screen_y_w);
             //AM_RANGE(0x7800, 0x7800) AM_MIRROR(0x07ff) AM_DEVWRITE("cust", galaxian_sound_device, pitch_w)
-            map.op(0x7800, 0x7800).mirror(0x07ff).r("watchdog", watchdog_timer_device_reset_r);
+            map.op(0x7800, 0x7800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_r(space, offset, mem_mask); });  //FUNC(watchdog_timer_device::reset_r));
         }
 
 
@@ -521,7 +499,7 @@ namespace mame
             map.unmap_value_high();
             map.op(0x0000, 0x3fff).rom();
             map.op(0x8000, 0x87ff).ram();
-            map.op(0x8800, 0x8800).mirror(0x07ff).r("watchdog", watchdog_timer_device_reset_r);
+            map.op(0x8800, 0x8800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_r(space, offset, mem_mask); });  //FUNC(watchdog_timer_device::reset_r));
             map.op(0xa800, 0xabff).mirror(0x0400).ram().w(galaxian_videoram_w).share("videoram");
             map.op(0xb000, 0xb0ff).mirror(0x0700).ram().w(galaxian_objram_w).share("spriteram");
             map.op(0xb808, 0xb808).mirror(0x07e3).w(irq_enable_w);
@@ -557,7 +535,7 @@ namespace mame
     }
 
 
-    public partial class galaxian : global_object
+    partial class galaxian : global_object
     {
         /*************************************
          *
@@ -794,7 +772,7 @@ namespace mame
 
             DISCRETE_OUTPUT(NODE_40, 10.0 ),
 
-            DISCRETE_SOUND_END(),
+            DISCRETE_SOUND_END,
         };
 
 
@@ -807,7 +785,7 @@ namespace mame
         //MACHINE_CONFIG_START(galaxian_state::galaxian_base)
         void galaxian_base(machine_config config)
         {
-            MACHINE_CONFIG_START(config, this);
+            MACHINE_CONFIG_START(config);
 
             // basic machine hardware
             Z80(config, m_maincpu, GALAXIAN_PIXEL_CLOCK/3/2);
@@ -836,19 +814,19 @@ namespace mame
         {
             galaxian_base(config);
 
-            MACHINE_CONFIG_START(config, this);
+            MACHINE_CONFIG_START(config);
 
-            I8255A(config, ppi8255.op(0));
-            ppi8255.op(0).target.in_pa_callback().set_ioport("IN0").reg();
-            ppi8255.op(0).target.in_pb_callback().set_ioport("IN1").reg();
-            ppi8255.op(0).target.in_pc_callback().set_ioport("IN2").reg();
-            ppi8255.op(0).target.out_pc_callback().set(konami_portc_0_w).reg();
+            I8255A(config, m_ppi8255.op(0));
+            m_ppi8255.op(0).target.in_pa_callback().set_ioport("IN0").reg();
+            m_ppi8255.op(0).target.in_pb_callback().set_ioport("IN1").reg();
+            m_ppi8255.op(0).target.in_pc_callback().set_ioport("IN2").reg();
+            m_ppi8255.op(0).target.out_pc_callback().set(konami_portc_0_w).reg();
 
-            I8255A(config, ppi8255.op(1));
-            ppi8255.op(1).target.out_pa_callback().set(soundlatch, generic_latch_8_device_write).reg();
-            ppi8255.op(1).target.out_pb_callback().set(konami_sound_control_w).reg();
-            ppi8255.op(1).target.in_pc_callback().set_ioport("IN3").reg();
-            ppi8255.op(1).target.out_pc_callback().set(konami_portc_1_w).reg();
+            I8255A(config, m_ppi8255.op(1));
+            m_ppi8255.op(1).target.out_pa_callback().set(m_soundlatch, (space, offset, data, mem_mask) => { ((generic_latch_8_device)machine().config().device_find(this, "soundlatch")).write(space, offset, data, mem_mask); }).reg();  //FUNC(generic_latch_8_device::write));
+            m_ppi8255.op(1).target.out_pb_callback().set(konami_sound_control_w).reg();
+            m_ppi8255.op(1).target.in_pc_callback().set_ioport("IN3").reg();
+            m_ppi8255.op(1).target.out_pc_callback().set(konami_portc_1_w).reg();
 
             MACHINE_CONFIG_END();
         }
@@ -857,27 +835,26 @@ namespace mame
         //MACHINE_CONFIG_START(galaxian_state::konami_sound_1x_ay8910)
         void konami_sound_1x_ay8910(machine_config config)
         {
-            MACHINE_CONFIG_START(config, this);
+            MACHINE_CONFIG_START(config);
 
             /* 2nd CPU to drive sound */
-            MCFG_DEVICE_ADD("audiocpu", z80_device.Z80, galaxian_state.KONAMI_SOUND_CLOCK/8);
+            MCFG_DEVICE_ADD("audiocpu", z80_device.Z80, KONAMI_SOUND_CLOCK/8);
             MCFG_DEVICE_PROGRAM_MAP(frogger_sound_map);
             MCFG_DEVICE_IO_MAP(frogger_sound_portmap);
 
-            GENERIC_LATCH_8(config, soundlatch);
+            GENERIC_LATCH_8(config, m_soundlatch);
 
             /* sound hardware */
-            AY8910(config, ay8910.op(0), galaxian_state.KONAMI_SOUND_CLOCK/8);
-            ay8910.op(0).target.set_flags(ay8910_global.AY8910_DISCRETE_OUTPUT);
-            ay8910.op(0).target.set_resistors_load((int)RES_K(5.1), (int)RES_K(5.1), (int)RES_K(5.1));
-            ay8910.op(0).target.port_a_read_callback().set(soundlatch, generic_latch_8_device_read).reg();
-            ay8910.op(0).target.port_b_read_callback().set(frogger_sound_timer_r).reg();
-            ay8910.op(0).target.GetClassInterface<device_sound_interface>().add_route(0, "konami", 1.0, 0);
-            ay8910.op(0).target.GetClassInterface<device_sound_interface>().add_route(1, "konami", 1.0, 1);
-            ay8910.op(0).target.GetClassInterface<device_sound_interface>().add_route(2, "konami", 1.0, 2);
+            AY8910(config, m_ay8910.op(0), KONAMI_SOUND_CLOCK/8);
+            m_ay8910.op(0).target.set_flags(ay8910_global.AY8910_DISCRETE_OUTPUT);
+            m_ay8910.op(0).target.set_resistors_load((int)RES_K(5.1), (int)RES_K(5.1), (int)RES_K(5.1));
+            m_ay8910.op(0).target.port_a_read_callback().set(m_soundlatch, (space, offset, mem_mask) => { return ((generic_latch_8_device)machine().config().device_find(this, "soundlatch")).read(space, offset, mem_mask); }).reg();  //FUNC(generic_latch_8_device::read));
+            m_ay8910.op(0).target.port_b_read_callback().set(frogger_sound_timer_r).reg();
+            m_ay8910.op(0).target.disound.add_route(0, "konami", 1.0, 0);
+            m_ay8910.op(0).target.disound.add_route(1, "konami", 1.0, 1);
+            m_ay8910.op(0).target.disound.add_route(2, "konami", 1.0, 2);
 
-            MCFG_DEVICE_ADD("konami", discrete_sound_device.DISCRETE);//, konami_sound_discrete);
-            MCFG_DEVICE_ADD_discrete_sound_device(konami_sound_discrete);
+            MCFG_DEVICE_ADD("konami", discrete_sound_device.DISCRETE, konami_sound_discrete);
             MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 0.75);
 
             MACHINE_CONFIG_END();
@@ -894,9 +871,9 @@ namespace mame
         {
             galaxian_base(config);
 
-            GALAXIAN(config, "cust", 0).GetClassInterface<device_sound_interface>().add_route(ALL_OUTPUTS, "speaker", 0.4);
+            GALAXIAN(config, "cust", 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.4);
 
-            DISCRETE(config, GAL_AUDIO, galaxian_discrete).GetClassInterface<device_sound_interface>().add_route(ALL_OUTPUTS, "speaker", 1.0);
+            DISCRETE(config, GAL_AUDIO, galaxian_discrete).disound.add_route(ALL_OUTPUTS, "speaker", 1.0);
         }
 
 
@@ -967,7 +944,7 @@ namespace mame
     }
 
 
-    public partial class galaxian : global_object
+    partial class galaxian : global_object
     {
         /*************************************
          *
@@ -993,7 +970,7 @@ namespace mame
             ROM_REGION( 0x0020, "proms", 0 ),
             ROM_LOAD( "6l.bpr",       0x0000, 0x0020, CRC("c3ac9467") + SHA1("f382ad5a34d282056c78a5ec00c30ec43772bae2") ),
 
-            ROM_END(),
+            ROM_END,
         };
 
 
@@ -1024,7 +1001,7 @@ namespace mame
             ROM_REGION( 0x0020, "proms", 0 ),
             ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, CRC("413703bf") + SHA1("66648b2b28d3dcbda5bdb2605d1977428939dd3c") ),
 
-            ROM_END(),
+            ROM_END,
         };
 
 

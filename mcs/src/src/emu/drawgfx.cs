@@ -205,8 +205,21 @@ namespace mame
                 m_pen_usage.clear();
         }
 
+
         //void set_raw_layout(const UINT8 *srcdata, UINT32 width, UINT32 height, UINT32 total, UINT32 linemod, UINT32 charmod);
-        //void set_source(const UINT8 *source);
+
+
+        //-------------------------------------------------
+        // set_source - set the source data for a gfx_element
+        //-------------------------------------------------
+        public void set_source(ListBytesPointer source)  //void gfx_element::set_source(const u8 *source)
+        {
+            m_srcdata = source;
+            m_dirty.set(1, (int)elements());  //memset(&m_dirty[0], 1, elements());
+            if (m_layout_is_raw) m_gfxdata = source;  //const_cast<u8 *>(source);
+        }
+
+
         //void set_source_and_total(const UINT8 *source, UINT32 total);
         //void set_xormask(UINT32 xormask) { m_layout_xormask = xormask; }
         //void set_palette(device_palette_interface *palette) { m_palette = palette; }
@@ -217,7 +230,7 @@ namespace mame
 
 
         // operations
-        //void mark_dirty(UINT32 code) { if (code < elements()) { m_dirty[code] = 1; m_dirtyseq++; } }
+        public void mark_dirty(u32 code) { if (code < elements()) { m_dirty[code] = 1; m_dirtyseq++; } }
         //void mark_all_dirty() { memset(&m_dirty[0], 1, elements()); }
 
         public ListBytesPointer get_data(u32 code)  //const u8 *get_data(u32 code)
@@ -253,9 +266,13 @@ namespace mame
             color = colorbase() + granularity() * (color % colors());
             code %= elements();
             //DECLARE_NO_PRIORITY;
-            bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
+            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
             //DRAWGFX_CORE(u16, PIXEL_OP_REBASE_OPAQUE, NO_PRIORITY);
-            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_OPAQUE, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, 0, null, 2);
+            u32 trans_mask = 0;
+            u32 trans_pen = 0;
+            ListPointer<rgb_t> paldata = null;
+            int PIXEL_TYPE_SIZE = 2;  // u16
+            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_OPAQUE, dest, cliprect, this, code, color, flipx, flipy, destx, desty, priority, width(), height(), rowbytes(), get_data, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
         }
 
         void opaque(bitmap_rgb32 dest, rectangle cliprect,
@@ -264,7 +281,7 @@ namespace mame
             pen_t paldata = m_palette.pens()[colorbase() + granularity() * (color % colors())]; //m_palette.pens() + colorbase() + granularity() * (color % colors());
             code %= elements();
             //DECLARE_NO_PRIORITY;
-            bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
+            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
             throw new emu_unimplemented();
 #if false
             DRAWGFX_CORE(u32, PIXEL_OP_REMAP_OPAQUE, NO_PRIORITY);
@@ -308,9 +325,12 @@ namespace mame
             // render
             color = colorbase() + granularity() * (color % colors());
             //DECLARE_NO_PRIORITY;
-            bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
+            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
             //DRAWGFX_CORE(u16, PIXEL_OP_REBASE_TRANSPEN, NO_PRIORITY);
-            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_TRANSPEN, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, trans_pen, null, 2);
+            u32 trans_mask = 0;
+            ListPointer<rgb_t> paldata = null;
+            int PIXEL_TYPE_SIZE = 2;  // u16
+            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_TRANSPEN, dest, cliprect, this, code, color, flipx, flipy, destx, desty, priority, width(), height(), rowbytes(), get_data, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
         }
 
 
@@ -345,9 +365,11 @@ namespace mame
             // render
             ListPointer<rgb_t> paldata = new ListPointer<rgb_t>(m_palette.pens(), (int)(colorbase() + granularity() * (color % colors())));  //const pen_t *paldata = m_palette.pens() + colorbase() + granularity() * (color % colors());
             //DECLARE_NO_PRIORITY;
-            bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
+            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
             //DRAWGFX_CORE(u32, PIXEL_OP_REMAP_TRANSPEN, NO_PRIORITY);
-            drawgfxm_global.DRAWGFX_CORE<u32, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REMAP_TRANSPEN, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, trans_pen, paldata, 2);
+            u32 trans_mask = 0;
+            int PIXEL_TYPE_SIZE = 4;  // u32
+            drawgfxm_global.DRAWGFX_CORE<u32, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REMAP_TRANSPEN, dest, cliprect, this, code, color, flipx, flipy, destx, desty, priority, width(), height(), rowbytes(), get_data, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
         }
 
 
@@ -391,9 +413,12 @@ namespace mame
             // render
             color = colorbase() + granularity() * (color % colors());
             //DECLARE_NO_PRIORITY;
-            bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
+            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
             //DRAWGFX_CORE(u16, PIXEL_OP_REBASE_TRANSMASK, NO_PRIORITY);
-            drawgfxm_global.DRAWGFX_CORE<UInt16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_TRANSMASK, cliprect, destx, desty, width(), height(), flipx, flipy, rowbytes(), get_data, code, dest, priority, color, trans_mask, null, 2);
+            u32 trans_pen = 0;
+            ListPointer<rgb_t> paldata = null;
+            int PIXEL_TYPE_SIZE = 2;  // u16
+            drawgfxm_global.DRAWGFX_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_REBASE_TRANSMASK, dest, cliprect, this, code, color, flipx, flipy, destx, desty, priority, width(), height(), rowbytes(), get_data, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
         }
 
         public void transmask(bitmap_rgb32 dest, rectangle cliprect,
@@ -427,7 +452,7 @@ namespace mame
             // render
             pen_t paldata = m_palette.pens()[colorbase() + granularity() * (color % colors())];
             //DECLARE_NO_PRIORITY;
-            bitmap_t priority = drawgfxm_global.drawgfx_dummy_priority_bitmap;
+            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
             throw new emu_unimplemented();
 #if false
             DRAWGFX_CORE(UInt32, PIXEL_OP_REMAP_TRANSMASK, NO_PRIORITY);
@@ -605,6 +630,211 @@ namespace mame
 
     static class drawgfx_global
     {
+        // ----- bitmap copying -----
+
+        /***************************************************************************
+            COPYBITMAP IMPLEMENTATIONS
+        ***************************************************************************/
+
+        /*-------------------------------------------------
+            copybitmap - copy from one bitmap to another,
+            copying all unclipped pixels
+        -------------------------------------------------*/
+        // copy from one bitmap to another, copying all unclipped pixels
+        static void copybitmap(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
+        {
+            //DECLARE_NO_PRIORITY;
+            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
+            //COPYBITMAP_CORE(u16, PIXEL_OP_COPY_OPAQUE, NO_PRIORITY);
+            u32 color = 0;
+            u32 trans_mask = 0;
+            u32 trans_pen = 0;
+            ListPointer<rgb_t> paldata = null;
+            int PIXEL_TYPE_SIZE = 2;  // u16
+            drawgfxm_global.COPYBITMAP_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_COPY_OPAQUE, dest, src, cliprect, flipx, flipy, destx, desty, priority, color, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
+        }
+
+        //void copybitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect);
+
+
+        /*-------------------------------------------------
+            copybitmap_trans - copy from one bitmap to
+            another, copying all unclipped pixels except
+            those that match transpen
+        -------------------------------------------------*/
+        // copy from one bitmap to another, copying all unclipped pixels except those that match transpen
+        static void copybitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 trans_pen)
+        {
+            //DECLARE_NO_PRIORITY;
+            var priority = drawgfxm_global.DECLARE_NO_PRIORITY;
+            if (trans_pen > 0xffff)
+            {
+                copybitmap(dest, src, flipx, flipy, destx, desty, cliprect);
+            }
+            else
+            {
+                //COPYBITMAP_CORE(u16, PIXEL_OP_COPY_TRANSPEN, NO_PRIORITY);
+                u32 color = 0;
+                u32 trans_mask = 0;
+                ListPointer<rgb_t> paldata = null;
+                int PIXEL_TYPE_SIZE = 2;  // u16
+                drawgfxm_global.COPYBITMAP_CORE<u16, drawgfxm_global.NO_PRIORITY>(drawgfxm_global.PIXEL_OP_COPY_TRANSPEN, dest, src, cliprect, flipx, flipy, destx, desty, priority, color, trans_mask, trans_pen, paldata, PIXEL_TYPE_SIZE);
+            }
+        }
+
+        //void copybitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, u32 transpen);
+
+        //void copybitmap_transalpha(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect);
+
+
+        /*
+          Copy a bitmap onto another with scroll and wraparound.
+          These functions support multiple independently scrolling rows/columns.
+          "rows" is the number of independently scrolling rows. "rowscroll" is an
+          array of integers telling how much to scroll each row. Same thing for
+          "numcols" and "colscroll".
+          If the bitmap cannot scroll in one direction, set numrows or columns to 0.
+          If the bitmap scrolls as a whole, set numrows and/or numcols to 1.
+          Bidirectional scrolling is, of course, supported only if the bitmap
+          scrolls as a whole in at least one direction.
+        */
+
+        /***************************************************************************
+            COPYSCROLLBITMAP IMPLEMENTATIONS
+        ***************************************************************************/
+
+        /*-------------------------------------------------
+            copyscrollbitmap - copy from one bitmap to
+            another, copying all unclipped pixels, and
+            applying scrolling to one or more rows/columns
+        -------------------------------------------------*/
+        // copy from one bitmap to another, copying all unclipped pixels, and applying scrolling to one or more rows/columns
+        public static void copyscrollbitmap(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect)  //void copyscrollbitmap(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect)
+        {
+            // just call through to the transparent case as the underlying copybitmap will
+            // optimize for pen == 0xffffffff
+            copyscrollbitmap_trans(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, 0xffffffff);
+        }
+
+        //void copyscrollbitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect);
+
+
+        /*-------------------------------------------------
+            copyscrollbitmap_trans - copy from one bitmap
+            to another, copying all unclipped pixels
+            except those that match transpen, and applying
+            scrolling to one or more rows/columns
+        -------------------------------------------------*/
+        //template<class _BitmapClass>
+        static void copyscrollbitmap_trans_common(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen)  //static inline void copyscrollbitmap_trans_common(_BitmapClass &dest, const _BitmapClass &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen)
+        {
+            // no rowscroll and no colscroll means no scroll
+            if (numrows == 0 && numcols == 0)
+            {
+                copybitmap_trans(dest, src, 0, 0, 0, 0, cliprect, trans_pen);
+                return;
+            }
+
+            global_object.assert(numrows != 0 || rowscroll == null);
+            global_object.assert(numrows == 0 || rowscroll != null);
+            global_object.assert(numcols != 0 || colscroll == null);
+            global_object.assert(numcols == 0 || colscroll != null);
+
+            // fully scrolling X,Y playfield
+            if (numrows <= 1 && numcols <= 1)
+            {
+                s32 xscroll = normalize_xscroll(src, (numrows == 0) ? 0 : rowscroll[0]);
+                s32 yscroll = normalize_yscroll(src, (numcols == 0) ? 0 : colscroll[0]);
+
+                // iterate over all portions of the scroll that overlap the destination
+                for (s32 sx = xscroll - src.width(); sx < dest.width(); sx += src.width())
+                    for (s32 sy = yscroll - src.height(); sy < dest.height(); sy += src.height())
+                        copybitmap_trans(dest, src, 0, 0, sx, sy, cliprect, trans_pen);
+            }
+
+            // scrolling columns plus horizontal scroll
+            else if (numrows <= 1)
+            {
+                s32 xscroll = normalize_xscroll(src, (numrows == 0) ? 0 : rowscroll[0]);
+                rectangle subclip = cliprect;
+
+                // determine width of each column
+                int colwidth = (int)(src.width() / numcols);
+                global_object.assert(src.width() % colwidth == 0);
+
+                // iterate over each column
+                int groupcols;
+                for (int col = 0; col < numcols; col += groupcols)
+                {
+                    s32 yscroll = colscroll[col];
+
+                    // count consecutive columns scrolled by the same amount
+                    for (groupcols = 1; col + groupcols < numcols; groupcols++)
+                            if (colscroll[col + groupcols] != yscroll)
+                            break;
+
+                    // iterate over reps of the columns in question
+                    yscroll = normalize_yscroll(src, yscroll);
+                    for (s32 sx = xscroll - src.width(); sx < dest.width(); sx += src.width())
+                    {
+                        // compute the cliprect for this group
+                        subclip.setx(col * colwidth + sx, (col + groupcols) * colwidth - 1 + sx);
+                        subclip.intersection(cliprect);  //subclip &= cliprect;
+
+                        // iterate over all portions of the scroll that overlap the destination
+                        for (s32 sy = yscroll - src.height(); sy < dest.height(); sy += src.height())
+                            copybitmap_trans(dest, src, 0, 0, sx, sy, subclip, trans_pen);
+                    }
+                }
+            }
+
+            // scrolling rows plus vertical scroll
+            else if (numcols <= 1)
+            {
+                s32 yscroll = normalize_yscroll(src, (numcols == 0) ? 0 : colscroll[0]);
+                rectangle subclip = cliprect;
+
+                // determine width of each rows
+                int rowheight = (int)(src.height() / numrows);
+                global_object.assert(src.height() % rowheight == 0);
+
+                // iterate over each row
+                int grouprows;
+                for (int row = 0; row < numrows; row += grouprows)
+                {
+                    s32 xscroll = rowscroll[row];
+
+                    // count consecutive rows scrolled by the same amount
+                    for (grouprows = 1; row + grouprows < numrows; grouprows++)
+                            if (rowscroll[row + grouprows] != xscroll)
+                            break;
+
+                    // iterate over reps of the rows in question
+                    xscroll = normalize_xscroll(src, xscroll);
+                    for (s32 sy = yscroll - src.height(); sy < dest.height(); sy += src.height())
+                    {
+                        // compute the cliprect for this group
+                        subclip.sety(row * rowheight + sy, (row + grouprows) * rowheight - 1 + sy);
+                        subclip.intersection(cliprect);  //subclip &= cliprect;
+
+                        // iterate over all portions of the scroll that overlap the destination
+                        for (s32 sx = xscroll - src.width(); sx < dest.width(); sx += src.width())
+                            copybitmap_trans(dest, src, 0, 0, sx, sy, subclip, trans_pen);
+                    }
+                }
+            }
+        }
+
+
+        // copy from one bitmap to another, copying all unclipped pixels except those that match transpen, and applying scrolling to one or more rows/columns
+
+        public static void copyscrollbitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen)  //void copyscrollbitmap_trans(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen);
+        { copyscrollbitmap_trans_common(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
+
+        //void copyscrollbitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen)
+        //{ copyscrollbitmap_trans_common(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
+
+
         //-------------------------------------------------
         //  alpha_blend_r16 - alpha blend two 16-bit
         //  5-5-5 RGB pixels
@@ -633,5 +863,21 @@ namespace mame
             offset
         -------------------------------------------------*/
         public static int readbit(ListBytesPointer src, /*const u8 *src,*/ UInt32 bitnum) { return src[bitnum / 8] & (0x80 >> (int)(bitnum % 8)); }
+
+
+        /*-------------------------------------------------
+            normalize_xscroll - normalize an X scroll
+            value for a bitmap to be positive and less
+            than the width
+        -------------------------------------------------*/
+        static s32 normalize_xscroll(bitmap_t bitmap, s32 xscroll) { return xscroll >= 0 ? xscroll % bitmap.width() : (bitmap.width() - (-xscroll) % bitmap.width()); }
+
+
+        /*-------------------------------------------------
+            normalize_yscroll - normalize a Y scroll
+            value for a bitmap to be positive and less
+            than the height
+        -------------------------------------------------*/
+        static s32 normalize_yscroll(bitmap_t bitmap, s32 yscroll) { return yscroll >= 0 ? yscroll % bitmap.height() : (bitmap.height() - (-yscroll) % bitmap.height()); }
     }
 }

@@ -181,10 +181,18 @@ namespace mame.ui
 
             public void clear_free_list()
             {
+                // free stack is in reverse order - unwind it properly
+                menu reversed = null;  //std::unique_ptr<menu> reversed;
                 while (m_free != null)
                 {
-                    m_free = m_free.m_parent;
+                    menu menu = m_free;  //std::unique_ptr<menu> menu(std::move(m_free));
+                    m_free = menu.m_parent;  //m_free = std::move(menu->m_parent);
+                    menu.m_parent = reversed;  //menu->m_parent = std::move(reversed);
+                    reversed = menu;  //reversed = std::move(menu);
                 }
+
+                while (reversed != null)
+                    reversed = reversed.m_parent;  //reversed = std::move(reversed->m_parent);
             }
 
 

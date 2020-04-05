@@ -17,54 +17,49 @@ using uint64_t = System.UInt64;
 
 namespace mame
 {
-    public class device_execute_interface_mcs48 : device_execute_interface
-    {
-        public device_execute_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_execute_interface overrides
-        public override uint64_t execute_clocks_to_cycles(uint64_t clocks) { return (clocks + 15 - 1) / 15; }
-        public override uint64_t execute_cycles_to_clocks(uint64_t cycles) { return (cycles * 15); }
-        public override uint32_t execute_min_cycles() { return 1; }
-        public override uint32_t execute_max_cycles() { return 3; }
-        public override uint32_t execute_input_lines() { return 2; }
-        public override void execute_run() { mcs48_cpu_device mcs48 = (mcs48_cpu_device)device(); mcs48.device_execute_interface_execute_run(); }
-        public override void execute_set_input(int inputnum, int state) { mcs48_cpu_device mcs48 = (mcs48_cpu_device)device(); mcs48.device_execute_interface_execute_set_input(inputnum, state); }
-    }
-
-
-    public class device_memory_interface_mcs48 : device_memory_interface
-    {
-        public device_memory_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_memory_interface overrides
-        public override space_config_vector memory_space_config() { mcs48_cpu_device mcs48 = (mcs48_cpu_device)device(); return mcs48.device_memory_interface_memory_space_config(); }
-    }
-
-
-    public class device_state_interface_mcs48 : device_state_interface
-    {
-        public device_state_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_state_interface overrides
-        public override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
-        public override void state_export(device_state_entry entry) { throw new emu_unimplemented(); }
-        public override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
-    }
-
-
-    public class device_disasm_interface_mcs48 : device_disasm_interface
-    {
-        public device_disasm_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_disasm_interface overrides
-        protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
-    }
-
-
     public class mcs48_cpu_device : cpu_device
     {
-        //typedef int (mcs48_cpu_device::*mcs48_ophandler)();
-        public delegate int mcs48_ophandler(mcs48_cpu_device cpu);
+        public class device_execute_interface_mcs48 : device_execute_interface
+        {
+            public device_execute_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override uint64_t execute_clocks_to_cycles(uint64_t clocks) { return (clocks + 15 - 1) / 15; }
+            protected override uint64_t execute_cycles_to_clocks(uint64_t cycles) { return cycles * 15; }
+            protected override uint32_t execute_min_cycles() { return 1; }
+            protected override uint32_t execute_max_cycles() { return 3; }
+            protected override uint32_t execute_input_lines() { return 2; }
+            protected override void execute_run() { ((mcs48_cpu_device)device()).device_execute_interface_execute_run(); }
+            protected override void execute_set_input(int inputnum, int state) { ((mcs48_cpu_device)device()).device_execute_interface_execute_set_input(inputnum, state); }
+        }
+
+
+        public class device_memory_interface_mcs48 : device_memory_interface
+        {
+            public device_memory_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override space_config_vector memory_space_config() { return ((mcs48_cpu_device)device()).device_memory_interface_memory_space_config(); }
+        }
+
+
+        public class device_state_interface_mcs48 : device_state_interface
+        {
+            public device_state_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
+            protected override void state_export(device_state_entry entry) { throw new emu_unimplemented(); }
+            protected override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
+        }
+
+
+        public class device_disasm_interface_mcs48 : device_disasm_interface
+        {
+            public device_disasm_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
+        }
+
+
+        public delegate int mcs48_ophandler(mcs48_cpu_device cpu);  //typedef int (mcs48_cpu_device::*mcs48_ophandler)();
 
 
         /***************************************************************************
@@ -913,7 +908,7 @@ namespace mame
         //virtual uint32_t execute_max_cycles() const override { return 3; }
         //virtual uint32_t execute_input_lines() const override { return 2; }
 
-        public void device_execute_interface_execute_run()
+        void device_execute_interface_execute_run()
         {
             int curcycles;
 
@@ -946,7 +941,7 @@ namespace mame
             } while (m_icountRef.i > 0);
         }
 
-        public void device_execute_interface_execute_set_input(int inputnum, int state)
+        void device_execute_interface_execute_set_input(int inputnum, int state)
         {
             switch (inputnum)
             {
@@ -962,7 +957,7 @@ namespace mame
 
 
         // device_memory_interface overrides
-        public space_config_vector device_memory_interface_memory_space_config()
+        space_config_vector device_memory_interface_memory_space_config()
         {
             if ((feature_mask & EXT_BUS_FEATURE) != 0)
                 return new space_config_vector()

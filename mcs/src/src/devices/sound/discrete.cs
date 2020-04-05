@@ -513,7 +513,7 @@ namespace mame
          *
          *************************************/
 
-        //#define DEFAULT_TTL_V_LOGIC_1               3.4
+        public const double DEFAULT_TTL_V_LOGIC_1               = 3.4;
 
         //#define DISC_LOGADJ                         1.0
         public const double DISC_LINADJ                         = 0.0;
@@ -769,7 +769,7 @@ namespace mame
         public static discrete_block DSC_SND_ENTRY<class_type>(int node, int dss, int num, int [] iact, ListPointer<double> iinit, Object custom, string name) where class_type : discrete_base_node, new()
         { return new discrete_block(node, discrete_create_node<class_type>, dss, num, iact, iinit, custom, name, typeof(class_type).FullName); } // _nod,  &discrete_create_node< DISCRETE_CLASS_NAME(_class) >, _dss, _num, _iact, _iinit, _custom, _name, /* # _class*/ }; }
 
-        public static discrete_block DISCRETE_SOUND_END() { return DSC_SND_ENTRY<discrete_special_node>( NODE_00, (int)discrete_node_type.DSS_NULL     , 0, DSE( NODE_NC ), DSE( 0.0 ) ,null  ,"DISCRETE_SOUND_END" ); }
+        public static discrete_block DISCRETE_SOUND_END { get { return DSC_SND_ENTRY<discrete_special_node>( NODE_00, (int)discrete_node_type.DSS_NULL     , 0, DSE( NODE_NC ), DSE( 0.0 ) ,null  ,"DISCRETE_SOUND_END" ); } }
 
         static int [] DSE(params int [] objects) { return objects; }  //#define DSE( ... ) { __VA_ARGS__ }
         static ListPointer<double> DSE(params double [] objects) { return new ListPointer<double>(new ListBase<double>(objects)); }  //#define DSE( ... ) { __VA_ARGS__ }
@@ -1989,15 +1989,6 @@ namespace mame
     }
 
 
-    public class device_sound_interface_discrete : device_sound_interface
-    {
-        public device_sound_interface_discrete(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-        // device_sound_interface overrides
-        public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { discrete_sound_device discrete_sound = (discrete_sound_device)device(); discrete_sound.device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
-    }
-
-
     // ======================> discrete_sound_device
     public class discrete_sound_device : discrete_device
                                          //public device_sound_interface
@@ -2005,6 +1996,17 @@ namespace mame
         //DEFINE_DEVICE_TYPE(DISCRETE, discrete_sound_device, "discrete", "Discrete Sound")
         static device_t device_creator_discrete_sound_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new discrete_sound_device(mconfig, tag, owner, clock); }
         public static readonly device_type DISCRETE = DEFINE_DEVICE_TYPE(device_creator_discrete_sound_device, "discrete", "Discrete Sound");
+
+
+        public class device_sound_interface_discrete : device_sound_interface
+        {
+            public device_sound_interface_discrete(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((discrete_sound_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+        }
+
+
+        device_sound_interface_discrete m_disound;
 
 
         /* the output stream */
@@ -2033,6 +2035,7 @@ namespace mame
             : base(mconfig, DISCRETE, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_discrete(mconfig, this));  //device_sound_interface(mconfig, *this)
+            m_disound = GetClassInterface<device_sound_interface_discrete>();
 
             m_stream = null;
         }
@@ -2042,6 +2045,9 @@ namespace mame
         {
             set_intf(intf);
         }
+
+
+        public device_sound_interface_discrete disound { get { return m_disound; } }
 
 
         /* --------------------------------- */
@@ -2104,8 +2110,7 @@ namespace mame
 
 
         // device_sound_interface overrides
-        //virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
-        public void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
         {
             int outputnum = 0;
 

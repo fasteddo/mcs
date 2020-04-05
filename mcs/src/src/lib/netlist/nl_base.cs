@@ -6,14 +6,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 using analog_net_t_list_t = mame.std.vector<mame.netlist.analog_net_t>;
-using devices_collection_type = mame.std.vector<mame.netlist.core_device_t>;
+using devices_collection_type = mame.std.vector<System.Collections.Generic.KeyValuePair<string, mame.netlist.core_device_t>>;  //using devices_collection_type = std::vector<std::pair<pstring, poolptr<core_device_t>>>;
 using entry_t = mame.netlist.pqentry_t<mame.netlist.detail.net_t, mame.netlist.ptime_u64>;
 using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
 using model_map_t = mame.std.unordered_map<string, string>;
 using netlist_base_t = mame.netlist.netlist_state_t;
 using netlist_sig_t = System.UInt32;
 using netlist_time = mame.netlist.ptime_u64;  //using netlist_time = ptime<std::uint64_t, NETLIST_INTERNAL_RES>;
-using nets_collection_type = mame.std.vector<mame.netlist.detail.net_t>;
+using nets_collection_type = mame.std.vector<mame.netlist.detail.net_t>;  //using nets_collection_type = std::vector<poolptr<detail::net_t>>;
 using nl_double = System.Double;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;
 using timed_queue = mame.netlist.timed_queue_linear;
@@ -117,36 +117,30 @@ namespace mame.netlist
     //#define NETLIB_TIMESTEPI()                                                     \
     //    public: virtual void timestep(const nl_double step) override
 
-    //#define NETLIB_UPDATE_AFTER_PARAM_CHANGE()                                     \
-    //    public: virtual bool needs_update_after_param_change() const override { return true; }
-
     //#define NETLIB_FAMILY(family) , m_famsetter(*this, family)
 
     //#define NETLIB_DELEGATE(chip, name) nldelegate(&NETLIB_NAME(chip) :: name, this)
 
-    //#define NETLIB_UPDATE_TERMINALSI() public: virtual void update_terminals() override
-    //#define NETLIB_HANDLERI(name) private: virtual void name() NL_NOEXCEPT
-    //#define NETLIB_UPDATEI() protected: virtual void update() NL_NOEXCEPT override
-    //#define NETLIB_UPDATE_PARAMI() public: virtual void update_param() override
-    //#define NETLIB_RESETI() protected: virtual void reset() override
+    //#define NETLIB_UPDATE_TERMINALSI() virtual void update_terminals() override
+    //#define NETLIB_HANDLERI(name) virtual void name() NL_NOEXCEPT
+    //#define NETLIB_UPDATEI() virtual void update() NL_NOEXCEPT override
+    //#define NETLIB_UPDATE_PARAMI() virtual void update_param() override
+    //#define NETLIB_RESETI() virtual void reset() override
 
     //#define NETLIB_TIMESTEP(chip) void NETLIB_NAME(chip) :: timestep(const nl_double step)
 
     //#define NETLIB_SUB(chip) nld_ ## chip
-    //#define NETLIB_SUBXX(ns, chip) std::unique_ptr< ns :: nld_ ## chip >
+    //#define NETLIB_SUBXX(ns, chip) poolptr< ns :: nld_ ## chip >
 
-    //#define NETLIB_HANDLER(chip, name) void NETLIB_NAME(chip) :: name(void) NL_NOEXCEPT
+    //#define NETLIB_HANDLER(chip, name) void NETLIB_NAME(chip) :: name() NL_NOEXCEPT
     //#define NETLIB_UPDATE(chip) NETLIB_HANDLER(chip, update)
-
-    // FIXME: NETLIB_PARENT_UPDATE should disappear
-    //#define NETLIB_PARENT_UPDATE(chip) NETLIB_NAME(chip) :: update();
 
     //#define NETLIB_RESET(chip) void NETLIB_NAME(chip) :: reset(void)
 
-    //#define NETLIB_UPDATE_PARAM(chip) void NETLIB_NAME(chip) :: update_param(void)
+    //#define NETLIB_UPDATE_PARAM(chip) void NETLIB_NAME(chip) :: update_param()
     //#define NETLIB_FUNC_VOID(chip, name, params) void NETLIB_NAME(chip) :: name params
 
-    //#define NETLIB_UPDATE_TERMINALS(chip) void NETLIB_NAME(chip) :: update_terminals(void)
+    //#define NETLIB_UPDATE_TERMINALS(chip) void NETLIB_NAME(chip) :: update_terminals()
 
 
     static class nl_base_global
@@ -199,7 +193,7 @@ namespace mame.netlist
 
         public interface netlist_interface
         {
-            netlist_base_t state();
+            netlist_state_t state();
             netlist_t exec();
         }
 
@@ -226,8 +220,8 @@ namespace mame.netlist
         public logic_family_desc_t() { }
         //~logic_family_desc_t() { }
 
+        //COPYASSIGNMOVE(logic_family_desc_t, delete)
 
-        public logic_family_desc_t get() { return this; }  // for smart ptr
 
         public double fixed_V { get { return m_fixed_V; } set { m_fixed_V = value; } }
         public double low_thresh_PCNT { get { return m_low_thresh_PCNT; } set { m_low_thresh_PCNT = value; } }
@@ -238,8 +232,8 @@ namespace mame.netlist
         public double R_high { get { return m_R_high; } set { m_R_high = value; } }
 
 
-        public abstract devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_base_t anetlist, string name, logic_output_t proxied);  //virtual plib::owned_ptr<devices::nld_base_d_to_a_proxy> create_d_a_proxy(netlist_base_t &anetlist, const pstring &name, logic_output_t *proxied) const = 0;
-        public abstract devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_base_t anetlist, string name, logic_input_t proxied);  //virtual plib::owned_ptr<devices::nld_base_a_to_d_proxy> create_a_d_proxy(netlist_base_t &anetlist, const pstring &name, logic_input_t *proxied) const = 0;
+        public abstract devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_state_t anetlist, string name, logic_output_t proxied);  //virtual poolptr<devices::nld_base_d_to_a_proxy> create_d_a_proxy(netlist_state_t &anetlist, const pstring &name, logic_output_t *proxied) const = 0;
+        public abstract devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_state_t anetlist, string name, logic_input_t proxied);  //virtual poolptr<devices::nld_base_a_to_d_proxy> create_a_d_proxy(netlist_state_t &anetlist, const pstring &name, logic_input_t *proxied) const = 0;
 
 
         //double fixed_V() const { return m_fixed_V; }
@@ -269,6 +263,7 @@ namespace mame.netlist
 
         //logic_family_t() : m_logic_family(nullptr) {}
         //~logic_family_t() { } // prohibit polymorphic destruction
+        //COPYASSIGNMOVE(logic_family_t, delete)
 
         //const logic_family_desc_t *logic_family() const { return m_logic_family; }
         //void set_logic_family(const logic_family_desc_t *fam) { m_logic_family = fam; }
@@ -297,41 +292,35 @@ namespace mame.netlist
     {
         T m_value;
 
-        void blah<G>() { }
 
         //template <typename O>
         //! Constructor.
-        public state_var(detail.netlist_interface_plus_name owner,             //!< owner must have a netlist() method.
-                         string name,     //!< identifier/name for this state variable
-                         T value)         //!< Initial value after construction
+        public state_var(
+            detail.netlist_interface_plus_name owner,             //!< owner must have a netlist() method.
+            string name,     //!< identifier/name for this state variable
+            T value)         //!< Initial value after construction
         {
             m_value = value;
 
 
-            owner.state().save(owner, m_value, name);
+            owner.state().save(owner, m_value, owner.name(), name);
         }
 
 
         //! Copy Constructor.
-        //constexpr state_var(const state_var &rhs) noexcept = default;
+        //state_array(const state_array &rhs) NL_NOEXCEPT = default;
+        //! Destructor.
+        //~state_array() noexcept = default;
         //! Move Constructor.
-        //constexpr state_var(state_var &&rhs) noexcept = default;
+        //state_array(state_array &&rhs) NL_NOEXCEPT = default;
+        //state_array &operator=(const state_array &rhs) NL_NOEXCEPT = default;
+        //state_array &operator=(state_array &&rhs) NL_NOEXCEPT = default;
 
-        //! Assignment operator to assign value of a state var.
-        //C14CONSTEXPR state_var &operator=(const state_var &rhs) noexcept = default;
-        //! Assignment move operator to assign value of a state var.
-        //C14CONSTEXPR state_var &operator=(state_var &&rhs) noexcept = default;
-        //! Assignment operator to assign value of type T.
-        //C14CONSTEXPR state_var &operator=(const T &rhs) noexcept { m_value = rhs; return *this; }
+        //state_array &operator=(const T &rhs) NL_NOEXCEPT { m_value = rhs; return *this; }
+        //T & operator[](const std::size_t i) NL_NOEXCEPT { return m_value[i]; }
+        //constexpr const T & operator[](const std::size_t i) const NL_NOEXCEPT { return m_value[i]; }
+
         public T op { get { return m_value; } set { m_value = value; } }
-        //! Assignment move operator to assign value of type T.
-        //C14CONSTEXPR state_var &operator=(T &&rhs) noexcept { std::swap(m_value, rhs); return *this; }
-        //! Return value of state variable.
-        //C14CONSTEXPR operator T & () noexcept { return m_value; }
-        //! Return const value of state variable.
-        //constexpr operator const T & () const noexcept { return m_value; }
-        //C14CONSTEXPR T * ptr() noexcept { return &m_value; }
-        //constexpr const T * ptr() const noexcept{ return &m_value; }
     }
 
 
@@ -367,7 +356,14 @@ namespace mame.netlist
          */
         public class object_t : global_object
         {
-            string m_name;  //std::unique_ptr<pstring> m_name;
+            //string m_name;  //std::unique_ptr<pstring> m_name;
+
+            static std.unordered_map<object_t, string> name_hash_lhash;
+            static std.unordered_map<object_t, string> name_hash()
+            {
+                //static std::unordered_map<const object_t *, pstring> lhash;
+                return name_hash_lhash;
+            }
 
 
             /*! Constructor.
@@ -376,8 +372,10 @@ namespace mame.netlist
              */
             public object_t(string aname /*!< string containing name of the object */)
             {
-                m_name = string.Copy(aname);  //(plib::make_unique<pstring>(aname))
+                name_hash().insert(this, aname);
             }
+
+            //COPYASSIGNMOVE(object_t, delete)
 
             //~object_t() { }
 
@@ -386,13 +384,7 @@ namespace mame.netlist
              *
              *  \returns name of the object.
              */
-            public string name() { return m_name; }
-
-
-            //void * operator new (size_t size, void *ptr) { return ptr; }
-            //void operator delete (void *ptr, void *) {  }
-            //void * operator new (size_t size);
-            //void operator delete (void * mem);
+            public string name() { return name_hash().find(this); }
         }
 
 
@@ -402,6 +394,8 @@ namespace mame.netlist
 
 
             public netlist_ref(netlist_state_t nl) { m_netlist = nl.setup().exec(); }
+
+            //COPYASSIGNMOVE(netlist_ref, delete)
 
             public netlist_state_t state() { return m_netlist.nlstate(); }
 
@@ -444,7 +438,7 @@ namespace mame.netlist
             /*! The netlist owning the owner of this object.
              * \returns reference to netlist object.
              */
-            public netlist_base_t state() { return m_device.state(); }
+            public netlist_state_t state() { return m_device.state(); }
 
             public netlist_t exec() { return m_device.exec(); }
         }
@@ -497,6 +491,7 @@ namespace mame.netlist
 
             //~core_terminal_t() { }
 
+            //COPYASSIGNMOVE(core_terminal_t, delete)
 
             public nldelegate delegate_ { get { return m_delegate; } set { m_delegate = value; } }
 
@@ -545,6 +540,8 @@ namespace mame.netlist
             void set_state(state_e astate) { m_state.op = astate; }
 
             public void reset() { set_state(is_type(terminal_type.OUTPUT) ? state_e.STATE_OUT : state_e.STATE_INP_ACTIVE); }
+
+            public void set_copied_input(netlist_sig_t val) { }
         }
     }
 
@@ -552,7 +549,7 @@ namespace mame.netlist
     /*! Delegate type for device notification.
         *
         */
-    //typedef plib::pmfp<void> nldelegate;
+    //using nldelegate = plib::pmfp<void>;
     public delegate void nldelegate();
 
 
@@ -565,8 +562,6 @@ namespace mame.netlist
             : base(dev, aname, state)
         {
         }
-
-        //~analog_t() { }
 
 
         //const analog_net_t & net() const NL_NOEXCEPT;
@@ -592,22 +587,19 @@ namespace mame.netlist
         // ----------------------------------------------------------------------------------------
         // terminal_t
         // ----------------------------------------------------------------------------------------
-        public terminal_t(core_device_t dev, string aname)
+        public terminal_t(core_device_t dev, string aname, terminal_t otherterm)
             : base(dev, aname, state_e.STATE_BIDIR)
         {
-            m_otherterm = null;
             m_Idr1 = null;
             m_go1 = null;
             m_gt1 = null;
+            m_otherterm = otherterm;
 
 
             state().setup().register_term(this);
         }
 
         //~terminal_t() { }
-
-
-        public terminal_t otherterm { get { return m_otherterm; } set { m_otherterm = value; } }
 
 
         //nl_double operator ()() const  NL_NOEXCEPT;
@@ -622,12 +614,14 @@ namespace mame.netlist
         //    set(GO, GT, 0.0);
         //}
 
-        //void set(const nl_double &GO, const nl_double &GT, const nl_double &I) NL_NOEXCEPT
         public void set(nl_double GO, nl_double GT, nl_double I)
         {
-            set_ptr(m_Idr1, I);
-            set_ptr(m_go1, GO);
-            set_ptr(m_gt1, GT);
+            if (m_go1 != null)
+            {
+                if (m_Idr1[0] != I) m_Idr1[0] = I;  //if (*m_Idr1 != I) *m_Idr1 = I;
+                if (m_go1[0] != GO) m_go1[0] = GO;  //if (*m_go1 != GO) *m_go1 = GO;
+                if (m_gt1[0] != GT) m_gt1[0] = GT;  //if (*m_gt1 != GT) *m_gt1 = GT;
+            }
         }
 
 
@@ -645,22 +639,22 @@ namespace mame.netlist
         //void schedule_solve_after(const netlist_time &after);
 
 
-        public void set_ptrs(ListPointer<nl_double> gt, ListPointer<nl_double> go, ListPointer<nl_double> Idr)  //nl_double *gt, nl_double *go, nl_double *Idr)
+        public void set_ptrs(ListPointer<nl_double> gt, ListPointer<nl_double> go, ListPointer<nl_double> Idr)  //void set_ptrs(nl_double *gt, nl_double *go, nl_double *Idr) noexcept;
         {
-            m_gt1 = new ListPointer<nl_double>(gt);
-            m_go1 = new ListPointer<nl_double>(go);
-            m_Idr1 = new ListPointer<nl_double>(Idr);
-        }
-
-
-        //void set_ptr(nl_double *ptr, const nl_double &val) NL_NOEXCEPT
-        void set_ptr(ListPointer<nl_double> ptr, nl_double val)
-        {
-            if (ptr != null && ptr[0] != val)
+            if (!(gt != null && go != null && Idr != null) && (gt != null || go != null || Idr != null))  //if (!(gt && go && Idr) && (gt || go || Idr))
             {
-                ptr[0] = val;  //*ptr = val;
+                state().log().fatal.op("Inconsistent nullptrs for terminal {0}", name());
+            }
+            else
+            {
+                m_gt1 = new ListPointer<nl_double>(gt);  //m_gt1 = gt;
+                m_go1 = new ListPointer<nl_double>(go);  //m_go1 = go;
+                m_Idr1 = new ListPointer<nl_double>(Idr);  //m_Idr1 = Idr;
             }
         }
+
+
+        public terminal_t otherterm() { return m_otherterm; }
     }
 
 
@@ -668,7 +662,7 @@ namespace mame.netlist
     // logic_t
     // -----------------------------------------------------------------------------
     public class logic_t : detail.core_terminal_t,
-                           logic_family_t  //, public logic_family_t
+                           logic_family_t
     {
         devices.nld_base_proxy m_proxy;
 
@@ -679,8 +673,6 @@ namespace mame.netlist
         {
             m_proxy = null;
         }
-
-        //~logic_t() { }
 
 
         // logic_family_t
@@ -711,13 +703,8 @@ namespace mame.netlist
             state().setup().register_term(this);
         }
 
-        //~logic_input_t() { }
-
 
         //netlist_sig_t operator()() const NL_NOEXCEPT
-        //{
-        //    return Q();
-        //}
 
         //void inactivate() NL_NOEXCEPT;
         //void activate() NL_NOEXCEPT;
@@ -746,8 +733,6 @@ namespace mame.netlist
             state().setup().register_term(this);
         }
 
-        //~analog_input_t() { }
-
 
         /*! returns voltage at terminal.
          *  \returns voltage at terminal.
@@ -772,28 +757,26 @@ namespace mame.netlist
         {
             enum queue_status
             {
-                QS_DELAYED_DUE_TO_INACTIVE = 0,
-                QS_QUEUED,
-                QS_DELIVERED
+                DELAYED_DUE_TO_INACTIVE = 0,
+                QUEUED,
+                DELIVERED
             }
 
 
             netlist_ref m_netlist_ref;
 
 
-            std.vector<core_terminal_t> m_core_terms = new std.vector<core_terminal_t>(); // save post-start m_list ...
-
             state_var<netlist_sig_t> m_new_Q;
             state_var<netlist_sig_t> m_cur_Q;
             state_var<queue_status> m_in_queue;    /* 0: not in queue, 1: in queue, 2: last was taken */
+            state_var<netlist_time> m_next_scheduled_time;
 
-            state_var<netlist_time> m_time;
-
-            std.vector<core_terminal_t> m_list_active = new std.vector<core_terminal_t>();  //plib::linkedlist_t<core_terminal_t> m_list_active;
             core_terminal_t m_railterminal;
+            std.vector<core_terminal_t> m_list_active = new std.vector<core_terminal_t>();  //plib::linkedlist_t<core_terminal_t> m_list_active;
+            std.vector<core_terminal_t> m_core_terms = new std.vector<core_terminal_t>(); // save post-start m_list ...
 
 
-            public net_t(netlist_base_t nl, string aname, core_terminal_t mr = null)
+            public net_t(netlist_state_t nl, string aname, core_terminal_t mr = null)
                 : base(aname)
                 //, netlist_ref(nl)
             {
@@ -801,22 +784,16 @@ namespace mame.netlist
 
                 m_new_Q = new state_var<netlist_sig_t>(this, "m_new_Q", 0);
                 m_cur_Q = new state_var<netlist_sig_t>(this, "m_cur_Q", 0);
-                m_in_queue = new state_var<queue_status>(this, "m_in_queue", queue_status.QS_DELIVERED);
-                m_time = new state_var<netlist_time>(this, "m_time", netlist_time.zero());
+                m_in_queue = new state_var<queue_status>(this, "m_in_queue", queue_status.DELIVERED);
+                m_next_scheduled_time = new state_var<netlist_time>(this, "m_time", netlist_time.zero());
                 m_railterminal = mr;
             }
 
+            //COPYASSIGNMOVE(net_t, delete)
 
-            ~net_t()
-            {
-                //throw new emu_unimplemented();
-#if false
-                state().run_state_manager().remove_save_items(this);
-#endif
-            }
+            //virtual ~net_t() noexcept = default;
 
 
-            public std.vector<core_terminal_t> core_terms { get { return m_core_terms; } }
             protected state_var<netlist_sig_t> new_Q { get { return m_new_Q; } set { m_new_Q = value; } }
             protected state_var<netlist_sig_t> cur_Q { get { return m_cur_Q; } set { m_cur_Q = value; } }
 
@@ -828,13 +805,13 @@ namespace mame.netlist
 
             public void reset()
             {
-                m_time.op = netlist_time.zero();
-                m_in_queue.op = queue_status.QS_DELIVERED;
+                m_next_scheduled_time.op = netlist_time.zero();
+                m_in_queue.op = queue_status.DELIVERED;
 
                 m_new_Q.op = 0;
                 m_cur_Q.op = 0;
 
-                analog_net_t p = this is analog_net_t ? (analog_net_t)this : null;
+                var p = this is analog_net_t ? (analog_net_t)this : null;
 
                 if (p != null)
                     p.cur_Analog.op.d = 0.0;
@@ -847,6 +824,8 @@ namespace mame.netlist
                     ct.reset();
                     if (ct.terminal_state() != logic_t.state_e.STATE_INP_PASSIVE)
                         m_list_active.push_back(ct);
+
+                    ct.set_copied_input(m_cur_Q.op);
                 }
             }
 
@@ -865,17 +844,25 @@ namespace mame.netlist
             {
                 if ((num_cons() != 0))
                 {
+                    var lexec = exec();
+                    var q = lexec.queue();
+                    var nst = lexec.time() + delay;
+
                     if (is_queued())
-                        exec().queue().remove(this);
-                    m_time.op = exec().time() + delay;
-                    m_in_queue.op = !m_list_active.empty() ? queue_status.QS_QUEUED : queue_status.QS_DELAYED_DUE_TO_INACTIVE;    /* queued ? */
-                    if (m_in_queue.op == queue_status.QS_QUEUED)
-                        exec().queue().push(new entry_t(m_time.op, this));
+                        q.remove(this);
+
+                    m_in_queue.op = !m_list_active.empty() ? queue_status.QUEUED : queue_status.DELAYED_DUE_TO_INACTIVE;    /* queued ? */
+                    if (m_in_queue.op == queue_status.QUEUED)
+                        q.push(new entry_t(nst, this));
+                    else
+                        update_inputs();
+
+                    m_next_scheduled_time.op = nst;
                 }
             }
 
 
-            public bool is_queued() { return m_in_queue.op == queue_status.QS_QUEUED; }
+            public bool is_queued() { return m_in_queue.op == queue_status.QUEUED; }
 
 
             public void update_devs()
@@ -886,23 +873,23 @@ namespace mame.netlist
 
                 var mask = (new_Q.op << core_terminal_t.INP_LH_SHIFT) | (m_cur_Q.op << core_terminal_t.INP_HL_SHIFT);
 
-                m_in_queue.op = queue_status.QS_DELIVERED; /* mark as taken ... */
+                m_in_queue.op = queue_status.DELIVERED; /* mark as taken ... */
 
-                if (mask == (UInt32)core_terminal_t.state_e.STATE_INP_HL)
+                switch (mask)
                 {
-                    m_cur_Q = new_Q;
-                    process((UInt32)(core_terminal_t.state_e.STATE_INP_HL | core_terminal_t.state_e.STATE_INP_ACTIVE));
-                }
-                else if (mask == (UInt32)core_terminal_t.state_e.STATE_INP_LH)
-                {
-                    m_cur_Q = new_Q;
-                    process((UInt32)(core_terminal_t.state_e.STATE_INP_LH | core_terminal_t.state_e.STATE_INP_ACTIVE));
+                    case (UInt32)core_terminal_t.state_e.STATE_INP_HL:
+                    case (UInt32)core_terminal_t.state_e.STATE_INP_LH:
+                        process((UInt32)(mask | (UInt32)core_terminal_t.state_e.STATE_INP_ACTIVE), new_Q.op);
+                        break;
+                    default:
+                        /* do nothing */
+                        break;
                 }
             }
 
 
-            public netlist_time time() { return m_time.op; }
-            public void set_time(netlist_time ntime) { m_time.op = ntime; }
+            public netlist_time next_scheduled_time() { return m_next_scheduled_time.op; }
+            public void set_next_scheduled_time(netlist_time ntime) { m_next_scheduled_time.op = ntime; }
 
             public bool isRailNet() { return m_railterminal != null; }
             public core_terminal_t railterminal() { return m_railterminal; }
@@ -957,6 +944,7 @@ namespace mame.netlist
                     if (term.terminal_state() != logic_t.state_e.STATE_INP_PASSIVE)
                     {
                         m_list_active.push_back(term);
+                        term.set_copied_input(m_cur_Q.op);
                     }
                 }
             }
@@ -971,11 +959,57 @@ namespace mame.netlist
             }
 
 
-            //template <typename T>
-            void process(UInt32 mask)  //void process<T>(T mask)
+            public std.vector<core_terminal_t> core_terms() { return m_core_terms; }
+
+
+            void update_inputs()
             {
+                /* nothing needs to be done */
+            }
+
+
+            /* only used for logic nets */
+            //netlist_sig_t Q() const noexcept { return m_cur_Q; }
+
+
+            /* only used for logic nets */
+            public void initial(netlist_sig_t val)
+            {
+                m_cur_Q.op = m_new_Q.op = val;
+                update_inputs();
+            }
+
+
+            /* only used for logic nets */
+            public void set_Q_and_push(netlist_sig_t newQ, netlist_time delay)
+            {
+                if (newQ != m_new_Q.op)
+                {
+                    m_new_Q.op = newQ;
+                    push_to_queue(delay);
+                }
+            }
+
+
+            /* only used for logic nets */
+            //void set_Q_time(const netlist_sig_t newQ, const netlist_time at) NL_NOEXCEPT
+
+            /* internal state support
+             * FIXME: get rid of this and implement export/import in MAME
+             */
+            /* only used for logic nets */
+            //netlist_sig_t *Q_state_ptr() { return m_cur_Q.ptr(); }
+
+
+            //template <typename T>
+            void process(UInt32 mask, netlist_sig_t sig)  //void process(const T mask, netlist_sig_t sig)
+            {
+                m_cur_Q.op = sig;
+
                 foreach (var p in m_list_active)
                 {
+                    p.set_copied_input(sig);
+
                     //throw new emu_unimplemented();
 #if false
                     p.device().m_stat_call_count.inc();
@@ -985,16 +1019,13 @@ namespace mame.netlist
                     {
                         //throw new emu_unimplemented();
 #if false
-                        p.device().m_stat_total_time.start();
+                        auto g(p.device().m_stat_total_time.guard());
 #endif
 
+                        //p.device().m_stat_total_time.start();
                         if (p.delegate_ != null)
                             p.delegate_();
-
-                        //throw new emu_unimplemented();
-#if false
-                        p.device().m_stat_total_time.stop();
-#endif
+                        //p.device().m_stat_total_time.stop();
                     }
                 }
             }
@@ -1008,47 +1039,6 @@ namespace mame.netlist
             : base(nl, aname, mr)
         {
         }
-
-        //~logic_net_t() { }
-
-
-        //netlist_sig_t Q() const NL_NOEXCEPT { return m_cur_Q; }
-        public void initial(netlist_sig_t val) { cur_Q.op = val;  new_Q.op = val; }
-
-
-        public void set_Q_and_push(netlist_sig_t newQ, netlist_time delay)
-        {
-            if (newQ != new_Q.op)
-            {
-                new_Q.op = newQ;
-                push_to_queue(delay);
-            }
-        }
-
-
-        //void set_Q_and_push_force(const netlist_sig_t newQ, const netlist_time &delay) NL_NOEXCEPT
-        //{
-        //    if (newQ != m_new_Q || is_queued())
-        //    {
-        //        m_new_Q = newQ;
-        //        push_to_queue(delay);
-        //    }
-        //}
-
-        //void set_Q_time(const netlist_sig_t newQ, const netlist_time &at) NL_NOEXCEPT
-        //{
-        //    if (newQ != m_new_Q)
-        //    {
-        //        m_in_queue = QS_DELAYED_DUE_TO_INACTIVE;
-        //        m_time = at;
-        //    }
-        //    m_cur_Q = m_new_Q = newQ;
-        //}
-
-        /* internal state support
-         * FIXME: get rid of this and implement export/import in MAME
-         */
-        //netlist_sig_t *Q_state_ptr() { return m_cur_Q.ptr(); }
     }
 
 
@@ -1066,14 +1056,12 @@ namespace mame.netlist
         // ----------------------------------------------------------------------------------------
         // analog_net_t
         // ----------------------------------------------------------------------------------------
-        public analog_net_t(netlist_base_t nl, string aname, detail.core_terminal_t mr = null)
+        public analog_net_t(netlist_state_t nl, string aname, detail.core_terminal_t mr = null)
             : base(nl, aname, mr)
         {
             m_cur_Analog = new state_var<doubleref>(this, "m_cur_Analog", new doubleref(0.0));
             m_solver = null;
         }
-
-        //~analog_net_t() { }
 
 
         public state_var<doubleref> cur_Analog { get { return m_cur_Analog; } set { m_cur_Analog = value; } }
@@ -1104,12 +1092,10 @@ namespace mame.netlist
 
 
             set_net(m_my_net);
-            state().register_net(m_my_net);  //plib::owned_ptr<logic_net_t>(&m_my_net, false));
+            state().register_net(m_my_net);  //state().register_net(poolptr<logic_net_t>(&m_my_net, false));
             set_logic_family(dev.logic_family());
             state().setup().register_term(this);
         }
-
-        //~logic_output_t() { }
 
 
         public void initial(netlist_sig_t val)
@@ -1124,11 +1110,6 @@ namespace mame.netlist
             m_my_net.set_Q_and_push(newQ, delay); // take the shortcut
         }
 
-
-        //void push_force(const netlist_sig_t newQ, const netlist_time &delay) NL_NOEXCEPT
-        //{
-        //    m_my_net.set_Q_and_push_force(newQ, delay); // take the shortcut
-        //}
 
         //void set_Q_time(const netlist_sig_t newQ, const netlist_time &at) NL_NOEXCEPT
         //{
@@ -1151,14 +1132,12 @@ namespace mame.netlist
             m_my_net = new analog_net_t(dev.state(), name() + ".net", this);
 
 
-            state().register_net(m_my_net);  //plib::owned_ptr<analog_net_t>(&m_my_net, false));
+            state().register_net(m_my_net);  //state().register_net(poolptr<analog_net_t>(&m_my_net, false));
             set_net(m_my_net);
 
             //net().m_cur_Analog = NL_FCONST(0.0);
             state().setup().register_term(this);
         }
-
-        //~analog_output_t() { }
 
 
         public void push(nl_double val) { set_Q(val); }
@@ -1193,8 +1172,10 @@ namespace mame.netlist
         public param_t(device_t device, string name)
             : base(device, device.name() + "." + name)
         {
-            device.setup().register_param(this.name(), this);
+            device.setup().register_param_t(this.name(), this);
         }
+
+        //COPYASSIGNMOVE(param_t, delete)
 
         //~param_t() { } /* not intended to be destroyed */
 
@@ -1205,8 +1186,6 @@ namespace mame.netlist
         void update_param()
         {
             device().update_param();
-            if (device().needs_update_after_param_change())
-                device().update_dev();
         }
 
 
@@ -1249,7 +1228,7 @@ namespace mame.netlist
             if (found)
             {
                 bool err = false;
-                bool vald = plib.pstring_global.pstonum_ne_bool(p, out err);
+                var vald = plib.pstring_global.pstonum_ne_bool(p, out err);
                 if (err)
                     device.state().log().fatal.op(nl_errstr_global.MF_2_INVALID_NUMBER_CONVERSION_1_2, name, p);
                 m_param = vald;
@@ -1259,7 +1238,7 @@ namespace mame.netlist
                 m_param = val;
             }
 
-            device.state().save(this, m_param, "m_param");
+            device.state().save(this, m_param, this.name(), "m_param");
         }
 
         public bool op() { return m_param; }  //const T operator()() const NL_NOEXCEPT { return m_param; }
@@ -1279,7 +1258,7 @@ namespace mame.netlist
             if (found)
             {
                 bool err = false;
-                int vald = plib.pstring_global.pstonum_ne_int(p, out err);
+                var vald = plib.pstring_global.pstonum_ne_int(p, out err);
                 if (err)
                     device.state().log().fatal.op(nl_errstr_global.MF_2_INVALID_NUMBER_CONVERSION_1_2, name, p);
                 m_param = vald;
@@ -1289,7 +1268,7 @@ namespace mame.netlist
                 m_param = val;
             }
 
-            device.state().save(this, m_param, "m_param");
+            device.state().save(this, m_param, this.name(), "m_param");
         }
 
         public int op() { return m_param; }  //const T operator()() const NL_NOEXCEPT { return m_param; }
@@ -1309,7 +1288,7 @@ namespace mame.netlist
             if (found)
             {
                 bool err = false;
-                double vald = plib.pstring_global.pstonum_ne_double(p, out err);
+                var vald = plib.pstring_global.pstonum_ne_double(p, out err);
                 if (err)
                     device.state().log().fatal.op(nl_errstr_global.MF_2_INVALID_NUMBER_CONVERSION_1_2, name, p);
                 m_param = vald;
@@ -1319,7 +1298,7 @@ namespace mame.netlist
                 m_param = val;
             }
 
-            device.state().save(this, m_param, "m_param");
+            device.state().save(this, m_param, this.name(), "m_param");
         }
 
         public double op() { return m_param; }  //const T operator()() const NL_NOEXCEPT { return m_param; }
@@ -1327,9 +1306,9 @@ namespace mame.netlist
     }
 
     /* FIXME: these should go as well */
-    //typedef param_num_t<bool> param_logic_t;
-    //typedef param_num_t<int> param_int_t;
-    //typedef param_num_t<double> param_double_t;
+    //using param_logic_t = param_num_t<bool>;
+    //using param_int_t = param_num_t<int>;
+    //using param_double_t = param_num_t<double>;
     public class param_logic_t : param_num_t_bool { public param_logic_t(device_t device, string name, bool val) : base(device, name, val) { } }
     class param_int_t : param_num_t_int { public param_int_t(device_t device, string name, int val) : base(device, name, val) { } }
     class param_double_t : param_num_t_double { public param_double_t(device_t device, string name, double val) : base(device, name, val) { } }
@@ -1355,23 +1334,16 @@ namespace mame.netlist
             m_param = device.setup().get_initial_param_val(this.name(), val);
         }
 
-        //~param_str_t() { }
-
 
         //const pstring &operator()() const NL_NOEXCEPT { return Value(); }
         public string op() { return Value(); }
 
-        //void setTo(const pstring &param) NL_NOEXCEPT
-        //{
-        //    if (m_param != param)
-        //    {
-        //        m_param = param;
-        //        changed();
-        //        update_param();
-        //    }
-        //}
 
-        //virtual void changed();
+        //void setTo(const pstring &param) NL_NOEXCEPT
+
+
+        protected virtual void changed() { }
+
 
         protected string Value() { return m_param; }
     }
@@ -1408,7 +1380,12 @@ namespace mame.netlist
         //const pstring model_value_str(const pstring &entity) /*const*/;
         //const pstring model_type() /*const*/;
 
-        //virtual void changed() override;
+
+        protected override void changed()
+        {
+            throw new emu_unimplemented();
+        }
+
 
         nl_double model_value(string entity)
         {
@@ -1427,7 +1404,7 @@ namespace mame.netlist
     // core_device_t
     // -----------------------------------------------------------------------------
     public class core_device_t : detail.object_t,
-                                 logic_family_t,  //public logic_family_t,
+                                 logic_family_t,
                                  detail.netlist_interface_plus_name  //public detail::netlist_ref
     {
         detail.netlist_ref m_netlist_ref;
@@ -1439,17 +1416,18 @@ namespace mame.netlist
         //nperfcount_t<NL_KEEP_STATISTICS> m_stat_inc_active;
 
         bool m_hint_deactivate;
+        state_var_s32 m_active_outputs;
 
 
-        // the only common type between netlist_base_t and core_device_t is 'object'.
+        // the only common type between netlist_state_t and core_device_t is 'object'.
         // so we accept 'object' as the parameter, and disambiguate below
         protected core_device_t(object owner, string name)
-            : base(owner is netlist_base_t ? name : (owner is core_device_t ? ((core_device_t)owner).name() + "." + name : ""))
+            : base(owner is netlist_state_t ? name : (owner is core_device_t ? ((core_device_t)owner).name() + "." + name : ""))
         {
-            assert(owner is netlist_base_t || owner is core_device_t);
+            assert(owner is netlist_state_t || owner is core_device_t);
 
-            if (owner is netlist_base_t)
-                core_device_t_ctor((netlist_base_t)owner, name);
+            if (owner is netlist_state_t)
+                core_device_t_ctor((netlist_state_t)owner, name);
             else if (owner is core_device_t)
                 core_device_t_ctor((core_device_t)owner, name);
             else
@@ -1457,7 +1435,7 @@ namespace mame.netlist
         }
 
 
-        protected void core_device_t_ctor(netlist_base_t owner, string name)
+        protected void core_device_t_ctor(netlist_state_t owner, string name)
             //: base(name)
             //, logic_family_t()
             //, netlist_ref(owner)
@@ -1466,6 +1444,7 @@ namespace mame.netlist
 
 
             m_hint_deactivate = false;
+            m_active_outputs = new state_var_s32(this, "m_active_outputs", 1);
 
 
             if (logic_family() == null)
@@ -1482,16 +1461,19 @@ namespace mame.netlist
 
 
             m_hint_deactivate = false;
+            m_active_outputs = new state_var_s32(this, "m_active_outputs", 1);
 
 
             set_logic_family(owner.logic_family());
             if (logic_family() == null)
                 set_logic_family(nl_base_global.family_TTL());
 
-            state().add_dev(this);  //state().add_dev(plib::owned_ptr<core_device_t>(this, false));
+            state().add_dev(this.name(), this);  //state().add_dev(this->name(), poolptr<core_device_t>(this, false));
         }
 
-        //~core_device_t() { }
+        //COPYASSIGNMOVE(core_device_t, delete)
+
+        //virtual ~core_device_t() noexcept = default;
 
 
         // netlist_interface
@@ -1505,28 +1487,14 @@ namespace mame.netlist
         public void set_logic_family(logic_family_desc_t fam) { m_logic_family = fam; }
 
 
-        public void update_dev() { do_update(); }
-
-
         //void do_inc_active() NL_NOEXCEPT
-        //{
-        //    if (m_hint_deactivate)
-        //    {
-        //        m_stat_inc_active.inc();
-        //        inc_active();
-        //    }
-        //}
-
         //void do_dec_active() NL_NOEXCEPT
-        //{
-        //    if (m_hint_deactivate)
-        //        dec_active();
-        //}
 
 
-        public void do_reset() { reset(); }
         public void set_hint_deactivate(bool v) { m_hint_deactivate = v; }
         public bool get_hint_deactivate() { return m_hint_deactivate; }
+        /* Has to be set in device reset */
+        //void set_active_outputs(int n) { m_active_outputs = n; }
 
 
         public void set_default_delegate(detail.core_terminal_t term)
@@ -1537,15 +1505,9 @@ namespace mame.netlist
 
 
         protected virtual void update() { }
+        public virtual void reset() { }
         protected virtual void inc_active() {  }
         protected virtual void dec_active() {  }
-        protected virtual void reset() { }
-
-
-        void do_update()
-        {
-            update();
-        }
 
 
         protected log_type log() { return state().log(); }
@@ -1557,7 +1519,6 @@ namespace mame.netlist
         public virtual void update_param() {}
         public virtual bool is_dynamic() { return false; }
         public virtual bool is_timestep() { return false; }
-        public virtual bool needs_update_after_param_change() { return false; }
     }
 
 
@@ -1568,7 +1529,9 @@ namespace mame.netlist
     {
         //protected device_t(netlist_base_t owner, string name) : base(owner, name) { }
         //protected device_t(core_device_t owner, string name) : base(owner, name) { }
-        protected device_t(object owner, string name) : base(owner, name) { assert(owner is netlist_base_t || owner is core_device_t); }
+        protected device_t(object owner, string name) : base(owner, name) { assert(owner is netlist_state_t || owner is core_device_t); }
+
+        //COPYASSIGNMOVE(device_t, delete)
 
         //~device_t()
         //{
@@ -1580,9 +1543,6 @@ namespace mame.netlist
 
         //template<class C, typename... Args>
         //void register_sub(const pstring &name, std::unique_ptr<C> &dev, const Args&... args)
-        //{
-        //    dev.reset(plib::palloc<C>(*this, name, args...));
-        //}
 
 
         protected void register_subalias(string name, detail.core_terminal_t term)
@@ -1648,7 +1608,7 @@ namespace mame.netlist
                                //public detail::netlist_ref,
                                plib.state_manager_t.callback_t
         {
-            //typedef pqentry_t<net_t *, netlist_time> entry_t;
+            //using entry_t = pqentry_t<net_t *, netlist_time>;
 
 
             netlist_ref m_netlist_ref;
@@ -1672,9 +1632,9 @@ namespace mame.netlist
             }
 
 
-            //void register_state(plib::state_manager_t &manager, const pstring &module) override;
-            public void on_pre_save() { throw new emu_unimplemented(); }
-            public void on_post_load() { throw new emu_unimplemented(); }
+            public void register_state(plib.state_manager_t manager, string module) { throw new emu_unimplemented(); }
+            public void on_pre_save(plib.state_manager_t manager) { throw new emu_unimplemented(); }
+            public void on_post_load(plib.state_manager_t manager) { throw new emu_unimplemented(); }
         }
     }
 
@@ -1682,20 +1642,20 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     // netlist_state__t
     // -----------------------------------------------------------------------------
-    public class netlist_state_t  //: private plib::nocopyassignmove
+    public class netlist_state_t
     {
-        //using nets_collection_type = std::vector<plib::owned_ptr<detail::net_t>>;
-        //using devices_collection_type = std::vector<plib::owned_ptr<core_device_t>>;
+        //using nets_collection_type = std::vector<poolptr<detail::net_t>>;
 
-        //friend class netlist_t; // allow access to private members
+        /* need to preserve order of device creation ... */
+        //using devices_collection_type = std::vector<std::pair<pstring, poolptr<core_device_t>>>;
 
 
         string m_name;
-        plib.dynlib m_lib; // external lib needs to be loaded as long as netlist exists
+        plib.dynlib m_lib;   //plib::unique_ptr<plib::dynlib>      m_lib; // external lib needs to be loaded as long as netlist exists
         plib.state_manager_t m_state;
-        callbacks_t m_callbacks;
+        callbacks_t m_callbacks;  //plib::unique_ptr<callbacks_t>       m_callbacks;
         log_type m_log;
-        setup_t m_setup;
+        setup_t m_setup;  //plib::unique_ptr<setup_t>           m_setup;
 
         nets_collection_type m_nets = new nets_collection_type();
         /* sole use is to manage lifetime of net objects */
@@ -1704,14 +1664,13 @@ namespace mame.netlist
         devices.nld_netlistparams m_params;  //devices::NETLIB_NAME(netlistparams) *m_params;
 
         /* sole use is to manage lifetime of family objects */
-        std.vector<KeyValuePair<string, logic_family_desc_t>> m_family_cache = new std.vector<KeyValuePair<string, logic_family_desc_t>>();  //std::vector<std::pair<pstring, std::unique_ptr<logic_family_desc_t>>> m_family_cache;
+        std.vector<KeyValuePair<string, logic_family_desc_t>> m_family_cache = new std.vector<KeyValuePair<string, logic_family_desc_t>>();  //std::vector<std::pair<pstring, plib::unique_ptr<logic_family_desc_t>>> m_family_cache;
 
 
         public netlist_state_t(string aname,
-            callbacks_t callbacks,
-            setup_t setup)
+            callbacks_t callbacks,  //plib::unique_ptr<callbacks_t> &&callbacks,
+            setup_t setup)  //plib::unique_ptr<setup_t> &&setup);
         {
-            m_params = null;
             m_name = aname;
             m_state = new plib.state_manager_t();
             m_callbacks = callbacks; // Order is important here
@@ -1723,11 +1682,9 @@ namespace mame.netlist
             m_lib = new plib.dynlib(libpath);
         }
 
-        ~netlist_state_t()
-        {
-            //nets().clear();
-            //m_devices.clear();
-        }
+
+        //COPYASSIGNMOVE(netlist_state_t, delete)
+        //~netlist_state_t() { }
 
 
         public devices.nld_netlistparams params_ { get { return m_params; } set { m_params = value; } }
@@ -1762,14 +1719,14 @@ namespace mame.netlist
 
 
         //template<typename O, typename C>
-        public void save(detail.netlist_name_interface owner, object state, string stname)  //void save(O &owner, C &state, const pstring &stname)
+        public void save(detail.netlist_name_interface owner, object state, string module, string stname)  //void save(O &owner, C &state, const pstring &module, const pstring &stname)
         {
-            this.run_state_manager().save_item(owner, state, owner.name() + "." + stname);  //this.run_state_manager().save_item(static_cast<void *>(&owner), state, owner.name() + pstring(".") + stname);
+            this.run_state_manager().save_item(owner, state, module + "." + stname);  //this->run_state_manager().save_item(static_cast<void *>(&owner), state, module + pstring(".") + stname);
         }
         //template<typename O, typename C>
-        public void save(detail.netlist_name_interface owner, object state, string stname, UInt32 count)  //void save(O &owner, C *state, const pstring &stname, const std::size_t count)
+        public void save(detail.netlist_name_interface owner, object state, string module, string stname, UInt32 count)  //void save(O &owner, C *state, const pstring &module, const pstring &stname, const std::size_t count)
         {
-            this.run_state_manager().save_state_ptr(owner, owner.name() + "." + stname, null, count, state);  //this->run_state_manager().save_state_ptr(static_cast<void *>(&owner), owner.name() + pstring(".") + stname, plib::state_manager_t::datatype_f<C>::f(), count, state);
+            this.run_state_manager().save_state_ptr(owner, module + "." + stname, null, count, state);  //this->run_state_manager().save_state_ptr(static_cast<void *>(&owner), module + pstring(".") + stname, plib::state_manager_t::dtype<C>(), count, state);
         }
 
 
@@ -1780,12 +1737,12 @@ namespace mame.netlist
             core_device_t ret = null;
             foreach (var d in m_devices)
             {
-                if (cc(d))
+                if (cc(d.second()))
                 {
                     if (ret != null)
                         m_log.fatal.op(nl_errstr_global.MF_1_MORE_THAN_ONE_1_DEVICE_FOUND, classname);
                     else
-                        ret = d;
+                        ret = d.second();
                 }
             }
 
@@ -1798,7 +1755,7 @@ namespace mame.netlist
 
 
         //template <typename T>
-        public void register_net(detail.net_t net) { m_nets.push_back(net); }  //void register_net(plib::owned_ptr<T> &&net) { m_nets.push_back(std::move(net)); }
+        public void register_net(detail.net_t net) { m_nets.push_back(net); }  //void register_net(poolptr<T> &&net) { m_nets.push_back(std::move(net)); }
 
 
         //template<class device_class>
@@ -1807,7 +1764,7 @@ namespace mame.netlist
             std.vector<device_class> tmp = new std.vector<device_class>();
             foreach (var d in m_devices)
             {
-                device_class dev = d is device_class ? (device_class)d : null;  //device_class *dev = dynamic_cast<device_class *>(d.get());
+                var dev = d is device_class ? (device_class)d.second() : null;  //device_class *dev = dynamic_cast<device_class *>(d.get());
                 if (dev != null)
                     tmp.push_back(dev);
             }
@@ -1815,31 +1772,40 @@ namespace mame.netlist
         }
 
 
-        public void add_dev(core_device_t dev)
+        //template <typename T>
+        public void add_dev(string name, core_device_t dev)  //void add_dev(const pstring &name, poolptr<T> &&dev)
         {
             foreach (var d in m_devices)
             {
-                if (d.name() == dev.name())
-                    log().fatal.op(nl_errstr_global.MF_1_DUPLICATE_NAME_DEVICE_LIST, d.name());
+                if (d.first() == name)
+                    log().fatal.op(nl_errstr_global.MF_1_DUPLICATE_NAME_DEVICE_LIST, d.first());
             }
 
-            m_devices.push_back(dev);
+            //m_devices.push_back(dev);
+            m_devices.Add(new KeyValuePair<string, core_device_t>(name, dev));  //m_devices.insert(m_devices.end(), { name, std::move(dev) });
         }
 
 
+        /**
+         * @brief Remove device
+         *
+         * Care needs to be applied if this is called to remove devices with
+         * sub-devices which may have registered state.
+         *
+         * @param dev Device to be removed
+         */
         public void remove_dev(core_device_t dev)
         {
-            //m_devices.erase(
-            //    std::remove_if(
-            //        m_devices.begin(),
-            //        m_devices.end(),
-            //        [&] (plib::owned_ptr<core_device_t> const& p)
-            //        {
-            //            return p.get() == dev;
-            //        }),
-            //        m_devices.end()
-            //    );
-            m_devices.RemoveAll(p => { return p == dev; });
+            for (int i = 0; i < m_devices.Count; i++)  //for (auto it = m_devices.begin(); it != m_devices.end(); it++)
+            {
+                var it = m_devices[i];
+                if (it.second() == dev)
+                {
+                    m_state.remove_save_items(dev);
+                    m_devices.erase(i);
+                    return;
+                }
+            }
         }
 
 
@@ -1863,29 +1829,31 @@ namespace mame.netlist
 
     public abstract class netlist_t
     {
-        netlist_state_t m_state;
+        netlist_state_t m_state;  //plib::unique_ptr<netlist_state_t>   m_state;
+        devices.nld_solver m_solver;  //devices::NETLIB_NAME(solver) *      m_solver;
 
         /* mostly rw */
+        //PALIGNAS_CACHELINE()
         netlist_time m_time;
         devices.nld_mainclock m_mainclock;  //devices::NETLIB_NAME(mainclock) *   m_mainclock;
-        detail.queue_t m_queue;
 
-        devices.nld_solver m_solver;  //devices::NETLIB_NAME(solver) *      m_solver;
+        //PALIGNAS_CACHELINE()
+        detail.queue_t m_queue;
 
         // performance
         //nperftime_t<NL_KEEP_STATISTICS>     m_stat_mainloop;
         //nperfcount_t<NL_KEEP_STATISTICS>    m_perf_out_processed;
 
 
-        public netlist_t(string aname, callbacks_t callbacks)
+        public netlist_t(string aname, callbacks_t callbacks)  //explicit netlist_t(const pstring &aname, plib::unique_ptr<callbacks_t> callbacks);
         {
             m_state = new netlist_state_t(aname,
                 callbacks,
                 new setup_t(this)); // FIXME, ugly but needed to have netlist_state_t constructed first
+            m_solver = null;
             m_time = netlist_time.zero();
             m_mainclock = null;
             m_queue = new detail.queue_t(m_state);
-            m_solver = null;
 
 
             devices.net_lib_global.initialize_factory(nlstate().setup().factory());
@@ -1893,6 +1861,8 @@ namespace mame.netlist
             run_state_manager().save_item(this, (plib.state_manager_t.callback_t)m_queue, "m_queue");
             run_state_manager().save_item(this, m_time, "m_time");
         }
+
+        //COPYASSIGNMOVE(netlist_t, delete)
 
         //~netlist_t() { }
 
@@ -1904,14 +1874,14 @@ namespace mame.netlist
 
         public void process_queue(netlist_time delta)
         {
+            //throw new emu_unimplemented();
+#if false
+            auto sm_guard(m_stat_mainloop.guard());
+#endif
+
             netlist_time stop = m_time + delta;
 
             m_queue.push(new entry_t(stop, null));
-
-            //throw new emu_unimplemented();
-#if false
-            m_stat_mainloop.start();
-#endif
 
             if (m_mainclock == null)
             {
@@ -1934,7 +1904,7 @@ namespace mame.netlist
             {
                 logic_net_t mc_net = m_mainclock.Q.net();
                 netlist_time inc = m_mainclock.inc;
-                netlist_time mc_time = mc_net.time();
+                netlist_time mc_time = mc_net.next_scheduled_time();
 
                 do
                 {
@@ -1963,13 +1933,8 @@ namespace mame.netlist
                     }
                 } while (true); //while (e.m_object != nullptr);
 
-                mc_net.set_time(mc_time);
+                mc_net.set_next_scheduled_time(mc_time);
             }
-
-            //throw new emu_unimplemented();
-#if false
-            m_stat_mainloop.stop();
-#endif
         }
 
 
@@ -2001,9 +1966,9 @@ namespace mame.netlist
             m_time = netlist_time.zero();
             m_queue.clear();
             if (m_mainclock != null)
-                m_mainclock.Q.net().set_time(netlist_time.zero());
+                m_mainclock.Q.net().set_next_scheduled_time(netlist_time.zero());
             //if (m_solver != nullptr)
-            //  m_solver->do_reset();
+            //  m_solver->reset();
 
             //m_state.reset();
         }
@@ -2053,13 +2018,13 @@ namespace mame.netlist
         }
 
 
-        public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_base_t anetlist, string name, logic_output_t proxied)
+        public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_state_t anetlist, string name, logic_output_t proxied)  //poolptr<devices::nld_base_d_to_a_proxy> create_d_a_proxy(netlist_state_t &anetlist, const pstring &name, logic_output_t *proxied) const override;
         {
-            return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return plib::owned_ptr<devices::nld_base_d_to_a_proxy>::Create<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
+            return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return pool().make_poolptr<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
         }
-        public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_base_t anetlist, string name, logic_input_t proxied)
+        public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_state_t anetlist, string name, logic_input_t proxied)  //poolptr<devices::nld_base_a_to_d_proxy> create_a_d_proxy(netlist_state_t &anetlist, const pstring &name, logic_input_t *proxied) const override;
         {
-            return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return plib::owned_ptr<devices::nld_base_a_to_d_proxy>::Create<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
+            return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return pool().make_poolptr<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
         }
     }
 
@@ -2079,13 +2044,13 @@ namespace mame.netlist
         }
 
 
-        public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_base_t anetlist, string name, logic_output_t proxied)
+        public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_state_t anetlist, string name, logic_output_t proxied)  //poolptr<devices::nld_base_d_to_a_proxy> create_d_a_proxy(netlist_state_t &anetlist, const pstring &name, logic_output_t *proxied) const override;
         {
-            return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return plib::owned_ptr<devices::nld_base_d_to_a_proxy>::Create<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
+            return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return pool().make_poolptr<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
         }
-        public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_base_t anetlist, string name, logic_input_t proxied)
+        public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_state_t anetlist, string name, logic_input_t proxied)  //poolptr<devices::nld_base_a_to_d_proxy> create_a_d_proxy(netlist_state_t &anetlist, const pstring &name, logic_input_t *proxied) const override;
         {
-            return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return plib::owned_ptr<devices::nld_base_a_to_d_proxy>::Create<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
+            return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return pool().make_poolptr<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
         }
     }
 }

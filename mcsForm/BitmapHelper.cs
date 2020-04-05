@@ -24,6 +24,8 @@ public class BitmapHelper
     public int Height { get { return m_height; } }
     public bool IsAlphaBitmap { get { return m_isAlpha; } }
 
+    public byte[] rgbValues { get { return m_rgbValues; } }  // NOTE: no lock check!
+
 
     public BitmapHelper(Bitmap bitmap)
     {
@@ -47,11 +49,12 @@ public class BitmapHelper
         m_bitmapData = BitmapRef.LockBits(rect, ImageLockMode.ReadWrite, BitmapRef.PixelFormat);
         m_bitmapPtr = m_bitmapData.Scan0;
 
-        int rgbValueLength = IsAlphaBitmap ? 4 : 3;
+        //int rgbValueLength = IsAlphaBitmap ? 4 : 3;
+        int rgbValueLength = 4;  // TODO fix this
 
         int bytes = (Width * Height) * rgbValueLength;
-        if (m_rgbValues == null || m_rgbValues.Length != (bytes - 1))
-            m_rgbValues = new byte [bytes - 1];
+        if (m_rgbValues == null || m_rgbValues.Length != bytes)
+            m_rgbValues = new byte [bytes];
 
         Marshal.Copy(m_bitmapPtr, m_rgbValues, 0, m_rgbValues.Length);
 
@@ -82,7 +85,7 @@ public class BitmapHelper
         if (!m_locked)
             throw new Exception("Bitmap not locked.");
 
-        if (IsAlphaBitmap)
+        if (true)
         {
             for (int index = 0; index < m_rgbValues.Length - 1; index += 4)
             {

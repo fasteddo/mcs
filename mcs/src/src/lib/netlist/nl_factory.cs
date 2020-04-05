@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
+
 
 namespace mame.netlist
 {
@@ -15,38 +17,30 @@ namespace mame.netlist
     {
         public static class nl_factory_global
         {
-            // deprecated!
-            //#define NETLIB_DEVICE_IMPL_DEPRECATED(chip) \
-            //    static std::unique_ptr<factory::element_t> NETLIB_NAME(chip ## _c)( \
-            //            const pstring &name, const pstring &classname, const pstring &def_param) \
-            //    { \
-            //        return std::unique_ptr<factory::element_t>(plib::palloc<factory::device_element_t<NETLIB_NAME(chip)>>(name, classname, def_param, pstring(__FILE__))); \
-            //    } \
-            //    factory::constructor_ptr_t decl_ ## chip = NETLIB_NAME(chip ## _c);
+            //#define NETLIB_DEVICE_IMPL_ALIAS(p_alias, chip, p_name, p_def_param) \
+            //    NETLIB_DEVICE_IMPL_BASE(devices, p_alias, chip, p_name, p_def_param) \
 
-            // the new way ...
             //#define NETLIB_DEVICE_IMPL(chip, p_name, p_def_param) \
-            //    static std::unique_ptr<factory::element_t> NETLIB_NAME(chip ## _c)( \
-            //            const pstring &name, const pstring &classname, const pstring &def_param) \
-            //    { \
-            //        return std::unique_ptr<factory::element_t>(plib::palloc<factory::device_element_t<NETLIB_NAME(chip)>>(p_name, classname, p_def_param, pstring(__FILE__))); \
-            //    } \
-            //    factory::constructor_ptr_t decl_ ## chip = NETLIB_NAME(chip ## _c);
+            //    NETLIB_DEVICE_IMPL_NS(devices, chip, p_name, p_def_param)
 
-            //#define NETLIB_DEVICE_IMPL_NS(ns, chip) \
-            //    static std::unique_ptr<factory::element_t> NETLIB_NAME(chip ## _c)( \
-            //            const pstring &name, const pstring &classname, const pstring &def_param) \
+            //#define NETLIB_DEVICE_IMPL_NS(ns, chip, p_name, p_def_param) \
+            //    NETLIB_DEVICE_IMPL_BASE(ns, chip, chip, p_name, p_def_param) \
+
+            //#define NETLIB_DEVICE_IMPL_BASE(ns, p_alias, chip, p_name, p_def_param) \
+            //    static plib::unique_ptr<factory::element_t> NETLIB_NAME(p_alias ## _c) \
+            //            (const pstring &classname) \
             //    { \
-            //        return std::unique_ptr<factory::element_t>(plib::palloc<factory::device_element_t<ns :: NETLIB_NAME(chip)>>(name, classname, def_param, pstring(__FILE__))); \
+            //        return plib::make_unique<factory::device_element_t<ns :: NETLIB_NAME(chip)>>(p_name, classname, p_def_param, pstring(__FILE__)); \
             //    } \
-            //    factory::constructor_ptr_t decl_ ## chip = NETLIB_NAME(chip ## _c);
+            //    \
+            //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
         }
 
 
         // -----------------------------------------------------------------------------
         // net_dev class factory
         // -----------------------------------------------------------------------------
-        public abstract class element_t //: plib::nocopyassignmove
+        public abstract class element_t
         {
             string m_name;                             /* device name */
             string m_classname;                        /* device class name */
@@ -72,12 +66,11 @@ namespace mame.netlist
 
             //~element_t() { }
 
+            //COPYASSIGNMOVE(element_t, default)
 
-            public element_t get() { return this; }
 
-
-            public abstract device_t Create(netlist_state_t anetlist, string name);  //virtual plib::owned_ptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) = 0;
-            public virtual void macro_actions(netlist_state_t anetlist, string name) {}
+            public abstract device_t Create(netlist_state_t anetlist, string name);  //virtual poolptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) = 0;
+            public virtual void macro_actions(nlparse_t nparser, string name) { }
 
             public string name() { return m_name; }
             //const pstring &classname() const { return m_classname; }
@@ -93,7 +86,7 @@ namespace mame.netlist
             public device_element_t(string name, string classname, string def_param, string sourcefile) : base(name, classname, def_param, sourcefile) { }
 
 
-            //plib::owned_ptr<device_t> Create(netlist_t &anetlist, const pstring &name) override { return plib::owned_ptr<device_t>::Create<C>(anetlist, name); }
+            //poolptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override { return pool().make_poolptr<C>(anetlist, name); }
             public override device_t Create(netlist_state_t anetlist, string name)
             {
                 Type type = typeof(C);
@@ -112,27 +105,28 @@ namespace mame.netlist
         }
 
 
-        public class list_t : std.vector<element_t>  //public std::vector<std::unique_ptr<element_t>>
+        public class list_t : std.vector<element_t>  //class list_t : public std::vector<plib::unique_ptr<element_t>>
         {
-            setup_t m_setup;
+            log_type m_log;
 
 
-            public list_t(setup_t setup) { m_setup = setup; }
-            //~list_t() { clear(); }
+            public list_t(log_type alog) { m_log = alog; }
+            //~list_t() { }
+            //COPYASSIGNMOVE(list_t, delete)
 
 
             //template<class device_class>
             public void register_device<device_class>(string name, string classname, string def_param)
             {
-                register_device(new device_element_t<device_class>(name, classname, def_param));  //register_device(std::unique_ptr<element_t>(plib::palloc<device_element_t<device_class>>(name, classname, def_param)));
+                register_device(new device_element_t<device_class>(name, classname, def_param));  //register_device(plib::make_unique<device_element_t<device_class>>(name, classname, def_param));
             }
 
-            public void register_device(element_t factory)  //void register_device(std::unique_ptr<element_t> &&factory);
+            public void register_device(element_t factory)  //void register_device(plib::unique_ptr<element_t> &&factory);
             {
                 foreach (var e in this)
                 {
                     if (e.name() == factory.name())
-                        m_setup.log().fatal.op(nl_errstr_global.MF_1_FACTORY_ALREADY_CONTAINS_1, factory.name());
+                        m_log.fatal.op(nl_errstr_global.MF_1_FACTORY_ALREADY_CONTAINS_1, factory.name());
                 }
 
                 push_back(factory);  //push_back(std::move(factory));
@@ -143,10 +137,10 @@ namespace mame.netlist
                 foreach (var e in this)
                 {
                     if (e.name() == devname)
-                        return e.get();
+                        return e;
                 }
 
-                m_setup.log().fatal.op(nl_errstr_global.MF_1_CLASS_1_NOT_FOUND, devname);
+                m_log.fatal.op(nl_errstr_global.MF_1_CLASS_1_NOT_FOUND, devname);
                 return null; // appease code analysis
             }
 
@@ -160,15 +154,14 @@ namespace mame.netlist
         // factory_creator_ptr_t
         // -----------------------------------------------------------------------------
 
-        //using constructor_ptr_t = std::unique_ptr<element_t> (*)(const pstring &name, const pstring &classname,
-        //        const pstring &def_param);
-        public delegate element_t constructor_ptr_t(string name, string classname, string def_param);
+        //using constructor_ptr_t = plib::unique_ptr<element_t> (*)(const pstring &classname);
+        public delegate element_t constructor_ptr_t(string classname);
 
         //template <typename T>
-        //std::unique_ptr<element_t> constructor_t(const pstring &name, const pstring &classname,
+        //plib::unique_ptr<element_t> constructor_t(const pstring &name, const pstring &classname,
         //        const pstring &def_param)
         //{
-        //    return std::unique_ptr<element_t>(plib::palloc<device_element_t<T>>(name, classname, def_param));
+        //    return plib::make_unique<device_element_t<T>>(name, classname, def_param);
         //}
 
 
@@ -177,11 +170,11 @@ namespace mame.netlist
         // -----------------------------------------------------------------------------
         class library_element_t : element_t
         {
-            public library_element_t(setup_t setup, string name, string classname, string def_param, string source)
+            public library_element_t(string name, string classname, string def_param, string source)
                 : base(name, classname, def_param, source) {  }
 
 
-            public override device_t Create(netlist_state_t anetlist, string name)
+            public override device_t Create(netlist_state_t anetlist, string name)  //poolptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override;
             {
                 throw new emu_unimplemented();
 #if false
@@ -189,7 +182,7 @@ namespace mame.netlist
 #endif
             }
 
-            public override void macro_actions(netlist_state_t anetlist, string name)
+            public override void macro_actions(nlparse_t nparser, string name)
             {
                 throw new emu_unimplemented();
 #if false

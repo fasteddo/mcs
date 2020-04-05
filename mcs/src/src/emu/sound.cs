@@ -337,9 +337,21 @@ namespace mame
                 m_new_sample_rate = (UInt32)new_rate;
         }
 
+
         //void set_user_gain(int inputnum, float gain);
         //void set_input_gain(int inputnum, float gain);
-        //void set_output_gain(int outputnum, float gain);
+
+
+        //-------------------------------------------------
+        //  set_output_gain - set the output gain on a
+        //  given stream's output
+        //-------------------------------------------------
+        public void set_output_gain(int outputnum, float gain)
+        {
+            update();
+            assert(outputnum >= 0 && outputnum < m_output.size());
+            m_output[outputnum].m_gain = (s16)(int)(0x100 * gain);
+        }
 
 
         // helpers called by our friends only
