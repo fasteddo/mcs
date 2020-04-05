@@ -145,6 +145,7 @@ namespace mame
             10717200, /* 10.7172_MHz_XTAL       Eltec EurocomII */
             10730000, /* 10.73_MHz_XTAL         Ruleta RE-900 VDP Clock */
             10733000, /* 10.733_MHz_XTAL        The Fairyland Story */
+            10738000, /* 10.738_MHz_XTAL        Pokerout (poker+breakout) TMS9129 VDP Clock */
             10738635, /* 10.738635_MHz_XTAL     TMS9918 family (3x NTSC subcarrier) */
             10816000, /* 10.816_MHz_XTAL        Universal 1979-1980 (Cosmic Alien, etc) */
             10886400, /* 10.8864_MHz_XTAL       Systel System 100 */
@@ -326,7 +327,7 @@ namespace mame
             32220000, /* 32.22_MHz_XTAL         Typically used on 90's Data East PCBs (close to 9x NTSC subcarrier which is 32.215905Mhz */
             32256000, /* 32.256_MHz_XTAL        Hitachi MB-6890 */
             32317400, /* 32.3174_MHz_XTAL       DEC VT330, VT340 */
-            32530400, /* 32.5304_MHz_XTAL       Seta 2 */
+            32530470, /* 32.53047_MHz_XTAL      Seta 2 */
             33000000, /* 33_MHz_XTAL            Sega Model 3 video board */
             33264000, /* 33.264_MHz_XTAL        Hazeltine 1500 terminal */
             33330000, /* 33.33_MHz_XTAL         Sharp X68000 XVI */
@@ -338,6 +339,7 @@ namespace mame
             34846000, /* 34.846_MHz_XTAL        Visual 550 */
             35904000, /* 35.904_MHz_XTAL        Used on HP98543 graphics board */
             36000000, /* 36_MHz_XTAL            Sega Model 1 video board */
+            36864000, /* 36.864_MHz_XTAL        Unidesa Cirsa Rock 'n' Roll */
             37980000, /* 37.98_MHz_XTAL         Falco 5220 */
             38769220, /* 38.76922_MHz_XTAL      Namco System 21 video board */
             38863630, /* 38.86363_MHz_XTAL      Sharp X68000 15.98kHz video */

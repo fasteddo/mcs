@@ -813,6 +813,7 @@ namespace mame
         std.vector<s16> m_finalmix = new std.vector<s16>();
         std.vector<s32> m_leftmix = new std.vector<s32>();
         std.vector<s32> m_rightmix = new std.vector<s32>();
+        int m_samples_this_update;
 
         u8 m_muted;
         int m_attenuation;
@@ -839,6 +840,9 @@ namespace mame
             m_finalmix = new std.vector<s16>(machine.sample_rate());
             m_leftmix = new std.vector<s32>(machine.sample_rate());
             m_rightmix = new std.vector<s32>(machine.sample_rate());
+            m_samples_this_update = 0;
+            m_muted = 0;
+            m_attenuation = 0;
             m_nosound_mode = machine.osd().no_sound() ? 1 : 0;
             m_wavfile = null;
             m_update_attoseconds = STREAMS_UPDATE_ATTOTIME.attoseconds();
@@ -887,6 +891,8 @@ namespace mame
         public std.vector<sound_stream> streams() { return m_stream_list; }
         public attotime last_update() { return m_last_update; }
         public attoseconds_t update_attoseconds() { return m_update_attoseconds; }
+        //int sample_count() const { return m_samples_this_update; }
+        //void samples(s16 *buffer);
 
 
         // stream creation
@@ -1068,16 +1074,16 @@ namespace mame
 
 
             // force all the speaker streams to generate the proper number of samples
-            int samples_this_update = 0;
+            m_samples_this_update = 0;
             foreach (speaker_device speaker in new speaker_device_iterator(machine().root_device()))
-                speaker.mix(m_leftmix, m_rightmix, ref samples_this_update, (m_muted & MUTE_REASON_SYSTEM) != 0);
+                speaker.mix(m_leftmix, m_rightmix, ref m_samples_this_update, (m_muted & MUTE_REASON_SYSTEM) != 0);
 
             // now downmix the final result
             u32 finalmix_step = (UInt32)machine().video().speed_factor();
             u32 finalmix_offset = 0;
             ListPointer<s16> finalmix = new ListPointer<s16>(m_finalmix);  //s16 *finalmix = &m_finalmix[0];
             int sample;
-            for (sample = (int)m_finalmix_leftover; sample < samples_this_update * 1000; sample += (int)finalmix_step)
+            for (sample = (int)m_finalmix_leftover; sample < m_samples_this_update * 1000; sample += (int)finalmix_step)
             {
                 int sampindex = sample / 1000;
 
@@ -1100,7 +1106,7 @@ namespace mame
                 finalmix[finalmix_offset++] = (Int16)samp;
             }
 
-            m_finalmix_leftover = (UInt32)(sample - samples_this_update * 1000);
+            m_finalmix_leftover = (UInt32)(sample - m_samples_this_update * 1000);
 
             // play the result
             if (finalmix_offset > 0)

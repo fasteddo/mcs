@@ -576,6 +576,29 @@ namespace mame
             m_handler_callback_type = callback_type;
         }
 
+
+        //-------------------------------------------------
+        //  output_joined_collection
+        //-------------------------------------------------
+        delegate void TEmitMemberFunc(string img);
+        delegate void TEmitDelimFunc();
+        //template<typename TColl, typename TEmitMemberFunc, typename TEmitDelimFunc>
+        static void output_joined_collection(std.vector<string> collection, TEmitMemberFunc emit_member, TEmitDelimFunc emit_delim)  //static void output_joined_collection(const TColl &collection, TEmitMemberFunc emit_member, TEmitDelimFunc emit_delim)
+        {
+            bool is_first = true;
+
+            foreach (var member in collection)
+            {
+                if (is_first)
+                    is_first = false;
+                else
+                    emit_delim();
+
+                emit_member(member);
+            }
+        }
+
+
         //-------------------------------------------------
         //  display_startup_screens - display the
         //  various startup screens
@@ -586,8 +609,8 @@ namespace mame
             int str = machine().options().seconds_to_run();
             bool show_gameinfo = !machine().options().skip_gameinfo();
             bool show_warnings = true;
-            bool show_mandatory_fileman = !machine().options().skip_mandatory_fileman();
-            bool video_none = strcmp(((osd_options)machine().options()).video(), "none") == 0;
+            bool show_mandatory_fileman = true;
+            bool video_none = strcmp(((osd_options)machine().options()).video(), osd_options.OSDOPTVAL_NONE) == 0;
 
             // disable everything if we are using -str for 300 or fewer seconds, or if we're the empty driver,
             // or if we are debugging, or if there's no mame window to send inputs to
@@ -636,13 +659,17 @@ namespace mame
                         break;
 
                     case 2:
-                        if (show_mandatory_fileman)
-                            messagebox_text = machine_info().mandatory_images();
-
-                        if (!messagebox_text.empty())
+                        std.vector<string> mandatory_images = mame_machine_manager.instance().missing_mandatory_images();
+                        if (!mandatory_images.empty() && show_mandatory_fileman)
                         {
-                            string warning = "This driver requires images to be loaded in the following device(s): " + messagebox_text;
-                            ui.menu_file_manager.force_file_manager(this, machine().render().ui_container(), warning);
+                            string warning = "";
+                            warning += "This driver requires images to be loaded in the following device(s): ";
+
+                            output_joined_collection(mandatory_images,
+                            (img) => { warning += "\"" + img + "\""; },  //    [&warning](const std::reference_wrapper<const std::string> &img)    { warning << "\"" << img.get() << "\""; },
+                            () =>    { warning += ","; });  //    [&warning]()                                                        { warning << ","; });
+
+                            ui.menu_file_manager.force_file_manager(this, machine().render().ui_container(), warning.str().c_str());
                         }
                         break;
                 }

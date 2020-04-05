@@ -28,8 +28,8 @@ namespace mame
     //typedef device_delegate<ioport_value (ioport_field &, void *)> ioport_field_read_delegate;
     public delegate ioport_value ioport_field_read_delegate(ioport_field field, object param);
 
-    //typedef device_delegate<void (ioport_field &, void *, ioport_value, ioport_value)> ioport_field_write_delegate;
-    public delegate void ioport_field_write_delegate(ioport_field field, object param, ioport_value param1, ioport_value param2);
+    //typedef device_delegate<void (ioport_field &, u32, ioport_value, ioport_value)> ioport_field_write_delegate;
+    public delegate void ioport_field_write_delegate(ioport_field field, u32 param, ioport_value param1, ioport_value param2);
 
     //typedef device_delegate<float (ioport_field &, float)> ioport_field_crossmap_delegate;
     public delegate float ioport_field_crossmap_delegate(ioport_field field, float param);
@@ -868,7 +868,7 @@ namespace mame
         public static void PORT_CUSTOM_MEMBER(ioport_configurer configurer, string device, ioport_field_read_delegate callback, Object param) { configurer.field_set_dynamic_read(callback, param); }  //define PORT_CUSTOM_MEMBER(_device, _class, _member, _param) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)NULL), (void *)(_param));
 
         // write callbacks
-        //define PORT_CHANGED_MEMBER(_device, _class, _member, _param)             configurer.field_set_dynamic_write(ioport_field_write_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)NULL), (void *)(_param));
+        //#define PORT_CHANGED_MEMBER(_device, _class, _member, _param) configurer.field_set_dynamic_write(ioport_field_write_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)nullptr), (_param));
 
         // input device handler
         public delegate int PORT_READ_LINE_DEVICE_MEMBER_delegate();
@@ -881,7 +881,7 @@ namespace mame
         }
 
         // output device handler
-        //define PORT_WRITE_LINE_DEVICE_MEMBER(_device, _class, _member)             configurer.field_set_dynamic_write(ioport_field_write_delegate(&ioport_write_line_wrapper<_class, &_class::_member>, #_class "::" #_member, _device, (_class *)NULL));
+        //#define PORT_WRITE_LINE_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_write(ioport_field_write_delegate([](_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }, #_class "::" #_member, _device, (_class *)nullptr));
 
         // dip switch definition
         public static void PORT_DIPNAME(ioport_configurer configurer, ioport_value mask, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_DIPSWITCH, default_, mask, name); }
@@ -939,8 +939,8 @@ namespace mame
         //#define DECLARE_CUSTOM_INPUT_MEMBER(name)   ioport_value name(ioport_field &field, void *param)
 
         // macro for port write callback functions (PORT_CHANGED)
-        //#define INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, void *param, ioport_value oldval, ioport_value newval)
-        //#define DECLARE_INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, void *param, ioport_value oldval, ioport_value newval)
+        //#define INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, u32 param, ioport_value oldval, ioport_value newval)
+        //#define DECLARE_INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, u32 param, ioport_value oldval, ioport_value newval)
 
         // macro for port changed callback functions (PORT_CROSSHAIR_MAPPER)
         //#define CROSSHAIR_MAPPER(name)  float name(device_t &device, ioport_field &field, float linear_value)
@@ -1510,7 +1510,7 @@ namespace mame
         public ioport_field_read_delegate m_read;             // read callback routine
         public object m_read_param;  //void *                      m_read_param;       // parameter for read callback routine
         ioport_field_write_delegate m_write;            // write callback routine
-        object m_write_param;  //void *                      m_write_param;      // parameter for write callback routine
+        u32 m_write_param;  // parameter for write callback routine
 
         // data relevant to digital control types
         bool m_digital_value;    // externally set value
@@ -1551,7 +1551,7 @@ namespace mame
             m_impulse = 0;
             m_name = name;
             m_read_param = null;
-            m_write_param = null;
+            m_write_param = 0;
             m_digital_value = false;
             m_min = 0;
             m_max = maskbits;
@@ -1712,7 +1712,7 @@ namespace mame
         public ioport_field_read_delegate get_read() { return m_read; }
         public object get_read_param() { return m_read_param; }
         public ioport_field_write_delegate get_write() { return m_write; }
-        public object get_write_param() { return m_write_param; }
+        public u32 get_write_param() { return m_write_param; }
         public bool has_dynamic_read() { return m_read != null; }
         public bool has_dynamic_write() { return m_write != null; }
         public ioport_value minval() { return m_min; }
@@ -3399,7 +3399,7 @@ namespace mame
         //ioport_configurer field_set_remap_table(const ioport_value *table) { m_curfield->m_remap_table = table; }
         //ioport_configurer field_set_analog_invert() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_INVERT; }
         public ioport_configurer field_set_dynamic_read(ioport_field_read_delegate callback, Object param = null) { m_curfield.m_read = callback; m_curfield.m_read_param = param; return this; }
-        //void field_set_dynamic_write(ioport_field_write_delegate delegate, void *param = NULL) const { m_curfield->m_write = delegate; m_curfield->m_write_param = param; }
+        //ioport_configurer& field_set_dynamic_write(ioport_field_write_delegate delegate, u32 param = 0) { m_curfield->m_write = delegate; m_curfield->m_write_param = param; return *this; }
         public ioport_configurer field_set_diplocation(string location) { m_curfield.expand_diplocation(location, ref m_errorbuf); return this; }
 
 

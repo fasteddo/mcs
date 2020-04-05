@@ -389,7 +389,6 @@ namespace mame
         public const string OPTION_BIOS         = "bios";
         const string OPTION_CHEAT               = "cheat";
         const string OPTION_SKIP_GAMEINFO       = "skip_gameinfo";
-        const string OPTION_SKIP_MANDATORY_FILEMAN = "skip_mandatory_fileman";
         const string OPTION_UI_FONT             = "uifont";
         const string OPTION_UI                  = "ui";
         public const string OPTION_RAMSIZE      = "ramsize";
@@ -594,7 +593,6 @@ namespace mame
             new options_entry(OPTION_BIOS,                                       null,        OPTION_STRING,     "select the system BIOS to use"),
             new options_entry(OPTION_CHEAT + ";c",                               "0",         OPTION_BOOLEAN,    "enable cheat subsystem"),
             new options_entry(OPTION_SKIP_GAMEINFO,                              "0",         OPTION_BOOLEAN,    "skip displaying the system information screen at startup"),
-            new options_entry(OPTION_SKIP_MANDATORY_FILEMAN,                     "0",         OPTION_BOOLEAN,    "skip prompting the user for any mandatory images with the file manager at startup"),
             new options_entry(OPTION_UI_FONT,                                    "default",   OPTION_STRING,     "specify a font to use"),
             new options_entry(OPTION_UI,                                         "cabinet",   OPTION_STRING,     "type of UI (simple|cabinet)"),
             new options_entry(OPTION_RAMSIZE + ";ram",                           null,        OPTION_STRING,     "size of RAM (if supported by driver)"),
@@ -627,7 +625,7 @@ namespace mame
 
         // slots and devices
         std.unordered_map<string, slot_option> m_slot_options = new std.unordered_map<string, slot_option>();
-        //std::unordered_map<std::string, ::image_option>     m_image_options_cannonical;
+        //std::unordered_map<std::string, ::image_option>     m_image_options_canonical;
         std.unordered_map<string, image_option> m_image_options = new std.unordered_map<string, image_option>();
 
 
@@ -889,7 +887,6 @@ namespace mame
         public string bios() { return value(OPTION_BIOS); }
         public bool cheat() { return bool_value(OPTION_CHEAT); }
         public bool skip_gameinfo() { return bool_value(OPTION_SKIP_GAMEINFO); }
-        public bool skip_mandatory_fileman() { return bool_value(OPTION_SKIP_MANDATORY_FILEMAN); }
         public string ui_font() { return value(OPTION_UI_FONT); }
         public ui_option ui() { return m_ui; }
         //const char *ram_size() const { return value(OPTION_RAMSIZE); }

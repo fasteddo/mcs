@@ -413,7 +413,7 @@ namespace mame
         //  operator+= - append a code to the end of an
         //  input sequence
         //-------------------------------------------------
-        input_seq append_code_to_sequence_plus(input_code code)
+        public input_seq append_code_to_sequence_plus(input_code code)
         {
             // if not enough room, return FALSE
             int curlength = length();
@@ -1042,60 +1042,74 @@ namespace mame
         // input sequence helpers
 
         //-------------------------------------------------
-        //  seq_name - generate the friendly name of a
-        //  sequence
+        //  seq_clean - clean the sequence, removing
+        //  any invalid bits
         //-------------------------------------------------
-        public string seq_name(input_seq seq)
+        input_seq seq_clean(input_seq seq)
         {
-            // make a copy of our sequence, removing any invalid bits
-            input_code [] clean_codes = new input_code [seq.length()];
             int clean_index = 0;
 
             for (int codenum = 0; seq[codenum] != input_seq.end_code; codenum++)
             {
                 // if this is a code item which is not valid, don't copy it and remove any preceding ORs/NOTs
                 input_code code = seq[codenum];
-                if (!code.internal_get() && string.IsNullOrEmpty(code_name(code)))
+                if (!code.internal_get() && code_name(code).empty())
                 {
-                    while (clean_index > 0 && clean_codes[clean_index - 1].internal_get())
+                    while (clean_index > 0 && seq[clean_index - 1].internal_get())
                         clean_index--;
                 }
                 else if (clean_index > 0 || !code.internal_get())
                 {
-                    clean_codes[clean_index++] = code;
+                    clean_index++;
                 }
             }
 
+            input_seq cleaned_seq = new input_seq();
+            for (int i = 0; i < clean_index; i++)
+                cleaned_seq.append_code_to_sequence_plus(seq[i]);  //cleaned_seq += seq[i];
+
+            return cleaned_seq;
+        }
+
+
+        //-------------------------------------------------
+        //  seq_name - generate the friendly name of a
+        //  sequence
+        //-------------------------------------------------
+        public string seq_name(input_seq seq)
+        {
+            // make a copy of our sequence, removing any invalid bits
+            input_seq cleaned_seq = seq_clean(seq);
+
             // special case: empty
-            if (clean_index == 0)
-            {
+            if (cleaned_seq[0] == input_seq.end_code)
                 return seq.length() == 0 ? "None" : "n/a";
-            }
 
             // start with an empty buffer
             string str = "";
 
             // loop until we hit the end
-            for (int codenum = 0; codenum < clean_index; codenum++)
+            for (int codenum = 0; cleaned_seq[codenum] != input_seq.end_code; codenum++)
             {
                 // append a space if not the first code
                 if (codenum != 0)
-                    str += " ";
+                    str.append(" ");
 
                 // handle OR/NOT codes here
-                input_code code = clean_codes[codenum];
+                input_code code = cleaned_seq[codenum];
                 if (code == input_seq.or_code)
-                    str += "or";
+                    str.append("or");
                 else if (code == input_seq.not_code)
-                    str += "not";
+                    str.append("not");
 
                 // otherwise, assume it is an input code and ask the input system to generate it
                 else
-                    str += code_name(code);
+                    str.append(code_name(code));
             }
 
             return str;
         }
+
 
         //string seq_to_tokens(const input_seq &seq) const;
         //void seq_from_tokens(input_seq &seq, const char *_token);

@@ -1808,8 +1808,9 @@ namespace mame
             seen.push_back(this);
             if (!m_bounds_resolved)
             {
+                rendutil_global.set_render_bounds_xy(m_bounds, 0.0F, 0.0F, 1.0F, 1.0F);
                 environment local = new environment(env);
-                resolve_bounds(local, m_groupnode, groupmap, seen, false, true);
+                resolve_bounds(local, m_groupnode, groupmap, seen, true, false, true);
             }
             seen.pop_back();
         }
@@ -1820,6 +1821,7 @@ namespace mame
                 util.xml.data_node parentnode,
                 group_map groupmap,
                 std.vector<layout_group> seen,
+                bool empty,
                 bool repeat,
                 bool init)
         {
@@ -1857,7 +1859,12 @@ namespace mame
                 {
                     render_bounds itembounds;
                     env.parse_bounds(itemnode.get_child("bounds"), out itembounds);
-                    rendutil_global.union_render_bounds(m_bounds, itembounds);
+                    if (empty)
+                        m_bounds = itembounds;
+                    else
+                        rendutil_global.union_render_bounds(m_bounds, itembounds);
+
+                    empty = false;
                 }
                 else if (strcmp(itemnode.get_name(), "group") == 0)
                 {
@@ -1866,7 +1873,12 @@ namespace mame
                     {
                         render_bounds itembounds;
                         env.parse_bounds(itemboundsnode, out itembounds);
-                        rendutil_global.union_render_bounds(m_bounds, itembounds);
+                        if (empty)
+                            m_bounds = itembounds;
+                        else
+                            rendutil_global.union_render_bounds(m_bounds, itembounds);
+
+                        empty = false;
                     }
                     else
                     {
@@ -1888,7 +1900,13 @@ namespace mame
                             x1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.x0 + found.m_bounds.y1 - found.m_bounds.y0) : found.m_bounds.x1,
                             y1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.y0 + found.m_bounds.x1 - found.m_bounds.x0) : found.m_bounds.y1
                         };
-                        rendutil_global.union_render_bounds(m_bounds, itembounds);
+
+                        if (empty)
+                            m_bounds = itembounds;
+                        else
+                            rendutil_global.union_render_bounds(m_bounds, itembounds);
+
+                        empty = false;
                     }
                 }
                 else if (strcmp(itemnode.get_name(), "repeat") == 0)
@@ -1900,7 +1918,7 @@ namespace mame
                     environment local = new environment(env);
                     for (int i = 0; !m_bounds_resolved && (count > i); ++i)
                     {
-                        resolve_bounds(local, itemnode, groupmap, seen, true, i == 0);
+                        resolve_bounds(local, itemnode, groupmap, seen, empty, true, i == 0);
                         local.increment_parameters();
                     }
                 }

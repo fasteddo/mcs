@@ -208,6 +208,42 @@ namespace mame
         }
 
 
+        public override void before_load_settings(running_machine machine)
+        {
+            //throw new emu_unimplemented();
+#if false
+            m_lua.on_machine_before_load_settings();
+#endif
+        }
+
+
+        //-------------------------------------------------
+        //  missing_mandatory_images - search for devices
+        //  which need an image to be loaded
+        //-------------------------------------------------
+        public std.vector<string> missing_mandatory_images()  //std::vector<std::reference_wrapper<const std::string>> mame_machine_manager::missing_mandatory_images()
+        {
+            std.vector<string> results = new std.vector<string>();
+            assert(machine() != null);
+
+            // make sure that any required image has a mounted file
+            foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
+            {
+                if (image.must_be_loaded())
+                {
+                    if (machine().options().image_option(image.instance_name()).value().empty())
+                    {
+                        // this is a missing image; give LUA plugins a chance to handle it
+                        if (!lua().on_missing_mandatory_image(image.instance_name()))
+                            results.push_back(image.instance_name());
+                    }
+                }
+            }
+
+            return results;
+        }
+
+
         public override void create_custom(running_machine machine)
         {
             // start the inifile manager

@@ -352,7 +352,7 @@ namespace mame
 
 
         // internal state
-        std.vector<entry> m_entries = new std.vector<entry>();  //std::vector<entry::shared_ptr>                      m_entries;              // cannonical list of entries
+        std.vector<entry> m_entries = new std.vector<entry>();  //std::vector<entry::shared_ptr>                      m_entries;              // canonical list of entries
         std.unordered_map<string, entry> m_entrymap = new std.unordered_map<string, entry>();  //std::unordered_map<std::string, entry::weak_ptr>    m_entrymap;             // map for fast lookup
         string m_command;              // command found
         std.vector<string> m_command_arguments;   // command arguments

@@ -12,47 +12,6 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    namespace emu.detail
-    {
-        public static class mconfig_global
-        {
-            //template <typename Tag, typename Creator, typename... Params>
-            //inline std::enable_if_t<emu::detail::is_device_implementation<typename std::remove_reference_t<Creator>::exposed_type>::value, typename std::remove_reference_t<Creator>::exposed_type *> device_add_impl(machine_config &mconfig, Tag &&tag, Creator &&type, Params &&... args)
-            //{
-            //    return &type(mconfig, std::forward<Tag>(tag), std::forward<Params>(args)...);
-            //}
-            //template <typename Tag, typename Creator, typename... Params>
-            //inline std::enable_if_t<emu::detail::is_device_interface<typename std::remove_reference_t<Creator>::exposed_type>::value, device_t *> device_add_impl(machine_config &mconfig, Tag &&tag, Creator &&type, Params &&... args)
-            //{
-            //    return &type(mconfig, std::forward<Tag>(tag), std::forward<Params>(args)...).device();
-            //}
-            //template <typename Tag, typename Creator, typename... Params>
-            public static device_t device_add_impl(machine_config mconfig, string tag, device_type type, device_t owner, u32 clock)
-            {
-                return mconfig.device_add(tag, type, clock);
-            }
-
-            public static device_t device_add_impl(machine_config mconfig, string tag, device_type type, device_t owner, XTAL clock)
-            {
-                return device_add_impl(mconfig, tag, type, owner, clock.value());
-            }
-
-
-            //template <typename Tag, typename Creator, typename... Params>
-            //inline std::enable_if_t<emu::detail::is_device_implementation<typename std::remove_reference_t<Creator>::exposed_type>::value, typename std::remove_reference_t<Creator>::exposed_type *> device_replace_impl(machine_config &mconfig, Tag &&tag, Creator &&type, Params &&... args)
-            //{
-            //    return &type(mconfig.replace(), std::forward<Tag>(tag), std::forward<Params>(args)...);
-            //}
-            //template <typename Tag, typename Creator, typename... Params>
-            //inline std::enable_if_t<emu::detail::is_device_interface<typename std::remove_reference_t<Creator>::exposed_type>::value, device_t *> device_replace_impl(machine_config &mconfig, Tag &&tag, Creator &&type, Params &&... args)
-            //{
-            //    return &type(mconfig.replace(), std::forward<Tag>(tag), std::forward<Params>(args)...).device();
-            //}
-            //
-        }
-    } // namespace emu::detail
-
-
     public class internal_layout
     {
         public int decompressed_size;

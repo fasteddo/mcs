@@ -261,6 +261,17 @@ namespace mame
         }
 
 
+        public bool on_missing_mandatory_image(string instance_name)
+        {
+            //throw new emu_unimplemented();
+            return false;
+        }
+
+
+        //void on_machine_before_load_settings();
+
+
+
         //template<typename T, typename U>
         public bool call_plugin<T, U>(string name, T in_, out U out_)
         {

@@ -917,6 +917,9 @@ namespace mame
 
         // returns command line arguments as an std::vector<std::string> in UTF-8
         //std::vector<std::string> osd_get_command_line(int argc, char *argv[]);
+
+        // specifies "aggressive focus" - should MAME capture input for any windows co-habiting a MAME window?
+        //void osd_set_aggressive_input_focus(bool aggressive_focus);
     }
 
 

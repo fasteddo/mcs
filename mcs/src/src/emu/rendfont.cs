@@ -1233,7 +1233,7 @@ namespace mame
             // TODO check accuracy
             //throw new emu_unimplemented();
 
-            //str.c_str(); // force NUL-termination - we depend on it later
+            //(void)str.c_str(); // force NUL-termination - we depend on it later
             UInt32 len = (UInt32)str.length();
             std.vector<char> buf = new std.vector<char>(2 * ((int)len + 1));
             buf.resize(2 * ((int)len + 1));

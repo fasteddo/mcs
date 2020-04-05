@@ -75,6 +75,7 @@ namespace mame
         public virtual void create_custom(running_machine machine) { }
         public virtual void load_cheatfiles(running_machine machine) { }
         public virtual void ui_initialize(running_machine machine) { }
+        public virtual void before_load_settings(running_machine machine) { }
 
         public virtual void update_machine() { }
 

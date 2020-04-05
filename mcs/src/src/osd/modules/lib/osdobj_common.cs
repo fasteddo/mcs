@@ -17,6 +17,7 @@ namespace mame
         public const string OSDCOMMAND_LIST_NETWORK_ADAPTERS = "listnetwork";
 
         public const string OSDOPTION_DEBUGGER      = "debugger";
+        const string OSDOPTION_DEBUGGER_PORT        = "debugger_port";
         const string OSDOPTION_DEBUGGER_FONT        = "debugger_font";
         const string OSDOPTION_DEBUGGER_FONT_SIZE   = "debugger_font_size";
         const string OSDOPTION_WATCHDOG             = "watchdog";
@@ -61,7 +62,7 @@ namespace mame
         const string OSDOPTION_AUDIO_EFFECT         = "audio_effect";
 
         protected const string OSDOPTVAL_AUTO       = "auto";
-        const string OSDOPTVAL_NONE                 = "none";
+        public const string OSDOPTVAL_NONE          = "none";
 
         const string OSDOPTION_BGFX_PATH            = "bgfx_path";
         const string OSDOPTION_BGFX_BACKEND         = "bgfx_backend";
@@ -99,6 +100,7 @@ namespace mame
 
             new options_entry(null,                                   null,             OPTION_HEADER,     "OSD DEBUGGING OPTIONS"),
             new options_entry(OSDOPTION_DEBUGGER,                     OSDOPTVAL_AUTO,   OPTION_STRING,     "debugger used : "),
+            new options_entry(OSDOPTION_DEBUGGER_PORT,                "23946",          OPTION_INTEGER,    "port to use for gdbstub debugger"),
             new options_entry(OSDOPTION_DEBUGGER_FONT + ";dfont",     OSDOPTVAL_AUTO,   OPTION_STRING,     "font to use for debugger views"),
             new options_entry(OSDOPTION_DEBUGGER_FONT_SIZE + ";dfontsize", "0",         OPTION_FLOAT,      "font size to use for debugger views"),
             new options_entry(OSDOPTION_WATCHDOG + ";wdog",           "0",              OPTION_INTEGER,    "force the program to terminate if no updates within specified number of seconds"),
@@ -235,6 +237,9 @@ namespace mame
 
         // debugging options
         public string debugger() { return value(OSDOPTION_DEBUGGER); }
+        //int debugger_port() const { return int_value(OSDOPTION_DEBUGGER_PORT); }
+        //const char *debugger_font() const { return value(OSDOPTION_DEBUGGER_FONT); }
+        //float debugger_font_size() const { return float_value(OSDOPTION_DEBUGGER_FONT_SIZE); }
         public int watchdog() { return int_value(OSDOPTION_WATCHDOG); }
 
 
@@ -419,6 +424,7 @@ namespace mame
             //module_type DEBUG_WINDOWS = null; m_mod_man.register_module(DEBUG_WINDOWS);  //REGISTER_MODULE(m_mod_man, DEBUG_WINDOWS);
             //module_type DEBUG_QT = null; m_mod_man.register_module(DEBUG_QT);  //REGISTER_MODULE(m_mod_man, DEBUG_QT);
             //REGISTER_MODULE(m_mod_man, DEBUG_IMGUI);
+            //REGISTER_MODULE(m_mod_man, DEBUG_GDBSTUB);
             //module_type DEBUG_NONE = null; m_mod_man.register_module(DEBUG_NONE);  //REGISTER_MODULE(m_mod_man, DEBUG_NONE);
 #endif
 

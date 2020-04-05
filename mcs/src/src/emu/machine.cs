@@ -505,6 +505,7 @@ namespace mame
                 start();
 
                 // load the configuration settings
+                manager().before_load_settings(this);
                 m_configuration.load_settings();
 
                 // disallow save state registrations starting here.

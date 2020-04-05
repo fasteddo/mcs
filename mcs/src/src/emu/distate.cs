@@ -116,7 +116,8 @@ namespace mame
         // query information
         public int index() { return m_index; }
         //void *dataptr() const { return entry_baseptr(); }
-        //UInt64 datamask() { return m_datamask; }
+        //u64 datamask() { return m_datamask; }
+        //u8 datasize() const { return m_datasize; }
         //const char *symbol() const { return m_symbol; }
         //bool visible() const { return ((m_flags & DSF_NOSHOW) == 0); }
         //bool writeable() const { return ((m_flags & DSF_READONLY) == 0); }

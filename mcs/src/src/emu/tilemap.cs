@@ -1149,6 +1149,8 @@ namespace mame
             blit = new blit_parameters();
 
             // set the target bitmap
+            assert(priority_bitmap.cliprect().contains(cliprect));
+
             blit.priority = priority_bitmap;
             blit.cliprect = cliprect;
 
@@ -1208,19 +1210,15 @@ namespace mame
 
             // flip the tilemap around the center of the visible area
             rectangle visarea = screen.visible_area();
-            // TODO: is this correct or are drivers relying on a bug here?
-            // These are not the width and height, rather 2 * left + width,
-            // and 2 * top + height, and these are inputs to the
-            // effective_*scroll functions used in the case of a flip.
-            u32 width = (u32)(visarea.right() + visarea.left() + 1);
-            u32 height = (u32)(visarea.bottom() + visarea.top() + 1);
+            u32 xextent = (u32)(visarea.right() + visarea.left() + 1); // x0 + x1 + 1 for calculating horizontal centre as (x0 + x1 + 1) >> 1
+            u32 yextent = (u32)(visarea.bottom() + visarea.top() + 1); // y0 + y1 + 1 for calculating vertical centre as (y0 + y1 + 1) >> 1
 
             // XY scrolling playfield
             if (m_scrollrows == 1 && m_scrollcols == 1)
             {
                 // iterate to handle wraparound
-                int scrollx = effective_rowscroll(0, width);
-                int scrolly = effective_colscroll(0, height);
+                int scrollx = effective_rowscroll(0, xextent);
+                int scrolly = effective_colscroll(0, yextent);
                 for (int ypos = (int)(scrolly - m_height); ypos <= blit.cliprect.bottom(); ypos += (int)m_height)
                 {
                     for (int xpos = (int)(scrollx - m_width); xpos <= blit.cliprect.right(); xpos += (int)m_width)
@@ -1235,7 +1233,7 @@ namespace mame
 
                 // iterate over Y to handle wraparound
                 int rowheight = (int)(m_height / m_scrollrows);
-                int scrolly = effective_colscroll(0, height);
+                int scrolly = effective_colscroll(0, yextent);
                 for (int ypos = (int)(scrolly - m_height); ypos <= original_cliprect.bottom(); ypos += (int)m_height)
                 {
                     int firstrow = Math.Max((original_cliprect.top() - ypos) / rowheight, 0);
@@ -1246,9 +1244,9 @@ namespace mame
                     for (int currow = firstrow; currow <= lastrow; currow = nextrow)
                     {
                         // scan forward until we find a non-matching row
-                        int scrollx = effective_rowscroll(currow, width);
+                        int scrollx = effective_rowscroll(currow, xextent);
                         for (nextrow = currow + 1; nextrow <= lastrow; nextrow++)
-                            if (effective_rowscroll(nextrow, width) != scrollx)
+                            if (effective_rowscroll(nextrow, xextent) != scrollx)
                                 break;
 
                         // skip if disabled
@@ -1272,16 +1270,16 @@ namespace mame
                 rectangle original_cliprect = new rectangle(blit.cliprect);
 
                 // iterate over columns in the tilemap
-                int scrollx = effective_rowscroll(0, width);
+                int scrollx = effective_rowscroll(0, xextent);
                 int colwidth = (int)(m_width / m_scrollcols);
                 int nextcol;
                 for (int curcol = 0; curcol < m_scrollcols; curcol = nextcol)
                 {
                     // scan forward until we find a non-matching column
-                    int scrolly = effective_colscroll(curcol, height);
+                    int scrolly = effective_colscroll(curcol, yextent);
                     for (nextcol = curcol + 1; nextcol < m_scrollcols; nextcol++)
                     {
-                        if (effective_colscroll(nextcol, height) != scrolly)
+                        if (effective_colscroll(nextcol, yextent) != scrolly)
                             break;
                     }
 
