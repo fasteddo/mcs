@@ -873,7 +873,7 @@ namespace mame
         //-------------------------------------------------
         //  import_submaps - propagate in the device submaps
         //-------------------------------------------------
-        public void import_submaps(running_machine machine, device_t owner, int data_width, endianness_t endian)
+        public void import_submaps(running_machine machine, device_t owner, int data_width, endianness_t endian, int addr_shift)
         {
             address_map_entry prev = null;
             address_map_entry entry = m_entrylist.first();
@@ -895,7 +895,7 @@ namespace mame
                     address_map submap = new address_map(mapdevice, entry);
 
                     // Recursively import if needed
-                    submap.import_submaps(machine, mapdevice, data_width, endian);
+                    submap.import_submaps(machine, mapdevice, data_width, endian, addr_shift);
 
                     offs_t max_end = entry.addrend - entry.addrstart;
 
@@ -905,6 +905,24 @@ namespace mame
                         while (submap.m_entrylist.count() != 0)
                         {
                             address_map_entry subentry = submap.m_entrylist.detach_head();
+
+                            if (addr_shift > 0)
+                            {
+                                subentry.addrstart <<= addr_shift;
+                                subentry.addrend = ((subentry.addrend + 1) << addr_shift) - 1;
+                                subentry.addrmirror <<= addr_shift;
+                                subentry.addrmask <<= addr_shift;
+                                subentry.addrselect <<= addr_shift;
+                            }
+                            else if (addr_shift < 0)
+                            {
+                                subentry.addrstart >>= -addr_shift;
+                                subentry.addrend >>= -addr_shift;
+                                subentry.addrmirror >>= -addr_shift;
+                                subentry.addrmask >>= -addr_shift;
+                                subentry.addrselect >>= -addr_shift;
+                            }
+
                             if (subentry.addrend > max_end)
                                 subentry.addrend = max_end;
 
@@ -935,6 +953,12 @@ namespace mame
                                 ratio++;
                         }
                         ratio = data_width / ratio;
+
+                        if (addr_shift > 0)
+                            ratio <<= addr_shift;
+                        else if (addr_shift < 0)
+                            max_end = ((max_end + 1) << -addr_shift) - 1;
+
                         max_end = (max_end + 1) / (offs_t)ratio - 1;
 
                         // Then merge the contents taking the ratio into account
@@ -980,11 +1004,22 @@ namespace mame
                             if (subentry.addrend > max_end)
                                 subentry.addrend = max_end;
 
-                            subentry.addrstart = subentry.addrstart * (offs_t)ratio + entry.addrstart;
-                            subentry.addrend = (subentry.addrend + 1) * (offs_t)ratio - 1 + entry.addrstart;
-                            subentry.addrmirror = (subentry.addrmirror / (offs_t)ratio) | entry.addrmirror;
-                            subentry.addrmask = (subentry.addrmask / (offs_t)ratio) | entry.addrmask;
-                            subentry.addrselect = (subentry.addrselect / (offs_t)ratio) | entry.addrselect;
+                            if (addr_shift < 0)
+                            {
+                                subentry.addrstart = ((subentry.addrstart * (offs_t)ratio) >> -addr_shift) + entry.addrstart;
+                                subentry.addrend = (((subentry.addrend + 1) * (offs_t)ratio - 1) >> -addr_shift) + entry.addrstart;
+                                subentry.addrmirror = ((subentry.addrmirror / (offs_t)ratio) << -addr_shift) | entry.addrmirror;
+                                subentry.addrmask = ((subentry.addrmask / (offs_t)ratio) << -addr_shift) | entry.addrmask;
+                                subentry.addrselect = ((subentry.addrselect / (offs_t)ratio) << -addr_shift) | entry.addrselect;
+                            }
+                            else
+                            {
+                                subentry.addrstart = subentry.addrstart * (offs_t)ratio + entry.addrstart;
+                                subentry.addrend = (subentry.addrend + 1) * (offs_t)ratio - 1 + entry.addrstart;
+                                subentry.addrmirror = (subentry.addrmirror / (offs_t)ratio) | entry.addrmirror;
+                                subentry.addrmask = (subentry.addrmask / (offs_t)ratio) | entry.addrmask;
+                                subentry.addrselect = (subentry.addrselect / (offs_t)ratio) | entry.addrselect;
+                            }
 
                             if (subentry.addrstart > entry.addrend)
                             {

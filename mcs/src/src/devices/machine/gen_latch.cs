@@ -157,7 +157,7 @@ namespace mame
 
             // if the latch has been written and the value is changed, log a warning
             if (is_latch_written() && m_latched_value != value)
-                logerror("Warning: latch written before being read. Previous: {0}, new: {1}\n", m_latched_value, value);  // %02x, new: %02x
+                LOGMASKED(LOG_WARN, "Warning: latch written before being read. Previous: {0}, new: {1}\n", m_latched_value, value);  // %02x, new: %02x
 
             // store the new value and mark it not read
             m_latched_value = value;

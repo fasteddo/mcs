@@ -837,6 +837,8 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, ioport_group.IPG_UI,      ioport_type.IPT_UI_END,              "UI End",                 new input_seq(input_global.KEYCODE_END) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, ioport_group.IPG_UI,      ioport_type.IPT_UI_PAGE_UP,          "UI Page Up",             new input_seq(input_global.KEYCODE_PGUP) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, ioport_group.IPG_UI,      ioport_type.IPT_UI_PAGE_DOWN,        "UI Page Down",           new input_seq(input_global.KEYCODE_PGDN) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, ioport_group.IPG_UI,      ioport_type.IPT_UI_FOCUS_NEXT,       "UI Focus Next",          new input_seq(input_global.KEYCODE_TAB, input_seq.not_code, input_global.KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, ioport_group.IPG_UI,      ioport_type.IPT_UI_FOCUS_PREV,       "UI Focus Previous",      new input_seq(input_global.KEYCODE_TAB, input_global.KEYCODE_LSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, ioport_group.IPG_UI,      ioport_type.IPT_UI_SELECT,           "UI Select",              new input_seq(input_global.KEYCODE_ENTER, input_seq.or_code, input_global.JOYCODE_BUTTON1_INDEXED(0), input_seq.or_code, input_global.KEYCODE_ENTER_PAD) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, ioport_group.IPG_UI,      ioport_type.IPT_UI_CANCEL,           "UI Cancel",              new input_seq(input_global.KEYCODE_ESC) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, ioport_group.IPG_UI,      ioport_type.IPT_UI_DISPLAY_COMMENT,  "UI Display Comment",     new input_seq(input_global.KEYCODE_SPACE) );

@@ -82,7 +82,6 @@ namespace mame
         public static void MCFG_SCREEN_UPDATE_DRIVER(device_t device, screen_update_ind16_delegate method) { ((screen_device)device).set_screen_update(method); }  //screen_update_delegate_smart(&_class::_method, #_class "::" #_method, NULL));
         public static void MCFG_SCREEN_UPDATE_DRIVER(device_t device, screen_update_rgb32_delegate method) { ((screen_device)device).set_screen_update(method); }  //screen_update_delegate_smart(&_class::_method, #_class "::" #_method, NULL));
         //define MCFG_SCREEN_UPDATE_DEVICE(_device, _class, _method)             screen_device::static_set_screen_update(*device, screen_update_delegate_smart(&_class::_method, #_class "::" #_method, _device));
-        public static void MCFG_SCREEN_VBLANK_CALLBACK(device_t device, write_line_delegate method) { ((screen_device)device).set_screen_vblank(method); }  //downcast<screen_device &>(*device).set_screen_vblank(DEVCB_##_devcb);
         public static void MCFG_SCREEN_PALETTE(device_t device, string palette_tag) { ((screen_device)device).set_palette(palette_tag); }
         public static void MCFG_SCREEN_PALETTE(device_t device, finder_base palette) { ((screen_device)device).set_palette(palette); }
         //define MCFG_SCREEN_NO_PALETTE             downcast<screen_device &>(*device).set_palette(finder_base::DUMMY_TAG);
@@ -334,7 +333,7 @@ namespace mame
             m_scanline_cb = new devcb_write32(this);
             m_paletteDevice = new optional_device<palette_device>(this, finder_base.DUMMY_TAG);
             m_video_attributes = 0;
-            m_svg_region = null;
+            m_svg_region = tag;
             m_container = null;
             m_width = 100;
             m_height = 100;
@@ -383,14 +382,6 @@ namespace mame
         {
             set_type(type);
             set_color(color);
-        }
-
-
-        screen_device(machine_config mconfig, string tag, device_t owner, string region)
-            : this(mconfig, tag, owner, (u32)0)
-        {
-            set_type(SCREEN_TYPE_SVG);
-            set_svg_region(region);
         }
 
 
@@ -547,8 +538,6 @@ namespace mame
             m_screen_update_rgb32 = callback;
         }
 
-        //template<class Object>
-        public devcb_base set_screen_vblank(write_line_delegate obj) { return m_screen_vblank.set_callback(this, obj); }
         public devcb_write.binder screen_vblank() { return m_screen_vblank.bind(); }  //auto screen_vblank() { return m_screen_vblank.bind(); }
         //auto scanline() { m_video_attributes |= VIDEO_UPDATE_SCANLINE; return m_scanline_cb.bind(); }
 
@@ -558,7 +547,7 @@ namespace mame
 
         //void set_video_attributes(u32 flags) { m_video_attributes = flags; }
         void set_color(rgb_t color) { m_color = color; }
-        void set_svg_region(string region) { m_svg_region = region; }
+        void set_svg_region(string region) { m_svg_region = region; }  // default region is device tag
 
 
         // information getters

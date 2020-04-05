@@ -119,18 +119,6 @@ namespace mame
         protected static dac_8bit_r2r_device DAC_8BIT_R2R(machine_config mconfig, device_finder<dac_8bit_r2r_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
 
 
-        // devcb
-        protected static read_line_delegate READLINE(string tag, read_line_delegate func) { return devcb_global.DEVCB_READLINE(tag, func); }
-        protected static read_line_delegate READLINE(read_line_delegate func) { return devcb_global.DEVCB_READLINE(func); }
-        protected static read8_delegate READ8(string tag, read8_delegate func) { return devcb_global.DEVCB_READ8(tag, func); }
-        protected static read8_delegate READ8(read8_delegate func) { return devcb_global.DEVCB_READ8(func); }
-        protected static write_line_delegate WRITELINE(string tag, write_line_delegate func) { return devcb_global.DEVCB_WRITELINE(tag, func); }
-        protected static write_line_delegate WRITELINE(write_line_delegate func) { return devcb_global.DEVCB_WRITELINE(func); }
-        protected static write8_delegate WRITE8(string tag, write8_delegate func) { return devcb_global.DEVCB_WRITE8(tag, func); }
-        protected static write8_delegate WRITE8(write8_delegate func) { return devcb_global.DEVCB_WRITE8(func); }
-        protected static DEVCB_INPUTLINE INPUTLINE(string tag, int linenum) { return new DEVCB_INPUTLINE(tag, linenum); }
-
-
         // device
         protected const string DEVICE_SELF = device_global.DEVICE_SELF;
         protected const string DEVICE_SELF_OWNER = device_global.DEVICE_SELF_OWNER;
@@ -731,6 +719,8 @@ namespace mame
 
 
         // logmacro
+        protected const int LOG_WARN = 1 << 0;
+
         protected static void LOGMASKED(int mask, device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(mask, device, format, args); }
         protected static void LOG(device_t device, string format, params object [] args) { logmacro_global.LOG(device, format, args); }
 
@@ -1011,7 +1001,6 @@ namespace mame
         protected void MCFG_SCREEN_VISIBLE_AREA(Int16 minx, Int16 maxx, Int16 miny, Int16 maxy) { screen_global.MCFG_SCREEN_VISIBLE_AREA(m_globals.helper_device, minx, maxx, miny, maxy); }
         protected void MCFG_SCREEN_UPDATE_DRIVER(screen_update_ind16_delegate method) { screen_global.MCFG_SCREEN_UPDATE_DRIVER(m_globals.helper_device, method); }
         protected void MCFG_SCREEN_UPDATE_DRIVER(screen_update_rgb32_delegate method) { screen_global.MCFG_SCREEN_UPDATE_DRIVER(m_globals.helper_device, method); }
-        protected void MCFG_SCREEN_VBLANK_CALLBACK(write_line_delegate method) { screen_global.MCFG_SCREEN_VBLANK_CALLBACK(m_globals.helper_device, method); }
         protected void MCFG_SCREEN_PALETTE(string palette_tag) { screen_global.MCFG_SCREEN_PALETTE(m_globals.helper_device, palette_tag); }
         protected void MCFG_SCREEN_PALETTE(finder_base palette) { screen_global.MCFG_SCREEN_PALETTE(m_globals.helper_device, palette); }
 

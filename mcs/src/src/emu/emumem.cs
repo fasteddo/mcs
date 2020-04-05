@@ -2804,7 +2804,7 @@ namespace mame
             m_map = new address_map(m_device, m_spacenum);
 
             // merge in the submaps
-            m_map.import_submaps(m_manager.machine(), m_device.owner() != null ? m_device.owner() : m_device, data_width(), endianness());
+            m_map.import_submaps(m_manager.machine(), m_device.owner() != null ? m_device.owner() : m_device, data_width(), endianness(), addr_shift());
 
             // extract global parameters specified by the map
             m_unmap = (m_map.unmapval == 0) ? 0UL : ~0UL;

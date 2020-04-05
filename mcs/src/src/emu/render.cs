@@ -865,8 +865,8 @@ namespace mame
             int sheight = m_sbounds.height();
 
             // ensure height/width are non-zero
-            if (dwidth < 1) dwidth = 1;
-            if (dheight < 1) dheight = 1;
+            if (dwidth == 0) dwidth = 1;
+            if (dheight == 0) dheight = 1;
 
             texinfo.unique_id = m_id;
             texinfo.old_id = m_old_id;

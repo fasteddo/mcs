@@ -103,10 +103,7 @@ namespace mame
             m_bitwidth = ((select & 4) != 0) ? (u8)4 : (u8)3;
         }
 
-        //template <class Object> devcb_base &set_vck_callback(Object &&cb) { return m_vck_cb.set_callback(std::forward<Object>(cb)); }
-        public devcb_base set_vck_callback(DEVCB_INPUTLINE cb) { return m_vck_cb.set_callback(this, cb); }
 
-        //template <class Object> devcb_base &set_vck_legacy_callback(Object &&cb) { return m_vck_legacy_cb.set_callback(std::forward<Object>(cb)); }
         public devcb_write.binder vck_callback() { return m_vck_cb.bind(); }
         //auto vck_legacy_callback() { return m_vck_legacy_cb.bind(); }
 

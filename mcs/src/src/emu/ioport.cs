@@ -334,6 +334,8 @@ namespace mame
             IPT_UI_END,
             IPT_UI_PAGE_UP,
             IPT_UI_PAGE_DOWN,
+            IPT_UI_FOCUS_NEXT,
+            IPT_UI_FOCUS_PREV,
             IPT_UI_SELECT,
             IPT_UI_CANCEL,
             IPT_UI_DISPLAY_COMMENT,

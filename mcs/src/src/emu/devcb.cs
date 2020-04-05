@@ -16,83 +16,6 @@ using u64 = System.UInt64;
 namespace mame
 {
     //**************************************************************************
-    //  LEGACY SYNAX SUPPORT - WILL BE REMOVED
-    //**************************************************************************
-
-    public static class devcb_global
-    {
-        public static read8_delegate DEVCB_READ8(string tag, read8_delegate func) { return func; }  //#define DEVCB_READ8(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        public static read8_delegate DEVCB_READ8(read8_delegate func) { return func; }  //#define DEVCB_READ8(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        //#define DEVCB_READ16(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        //#define DEVCB_READ32(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        public static read_line_delegate DEVCB_READLINE(string tag, read_line_delegate func) { return func; }  //#define DEVCB_READLINE(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        public static read_line_delegate DEVCB_READLINE(read_line_delegate func) { return func; }  //#define DEVCB_READLINE(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-
-        public static write8_delegate DEVCB_WRITE8(string tag, write8_delegate func) { return func; }  //#define DEVCB_WRITE8(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        public static write8_delegate DEVCB_WRITE8(write8_delegate func) { return func; }  //#define DEVCB_WRITE8(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        //#define DEVCB_WRITE16(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        //#define DEVCB_WRITE32(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        public static write_line_delegate DEVCB_WRITELINE(string tag, write_line_delegate func) { return func; }  //#define DEVCB_WRITELINE(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-        public static write_line_delegate DEVCB_WRITELINE(write_line_delegate func) { return func; }  //#define DEVCB_WRITELINE(tag, _class, _func) (std::forward_as_tuple((tag), &_class::_func, #_class "::" #_func))
-    }
-
-
-    //template <typename T> struct devcb_constant_t { T m_value; };
-    //template <typename T> auto DEVCB_CONSTANT(T &&value) { return devcb_constant_t<std::decay_t<T> >{ std::forward<T>(value) }; }
-
-
-    public class DEVCB_IOPORT
-    {
-        public string m_tag;
-        public DEVCB_IOPORT(string tag) { m_tag = tag; }
-    }
-
-    public class DEVCB_INPUTLINE
-    {
-        public string m_tag;
-        public int m_linenum;
-        public DEVCB_INPUTLINE(string tag, int linenum) { m_tag = tag; m_linenum = linenum; }
-    }
-
-#if false
-    struct DEVCB_ASSERTLINE
-    {
-        constexpr DEVCB_ASSERTLINE(char const *tag, int linenum) : m_tag(tag), m_linenum(linenum) { }
-        char const *m_tag;
-        int m_linenum;
-    };
-
-    struct DEVCB_CLEARLINE
-    {
-        constexpr DEVCB_CLEARLINE(char const *tag, int linenum) : m_tag(tag), m_linenum(linenum) { }
-        char const *m_tag;
-        int m_linenum;
-    };
-
-    struct DEVCB_HOLDLINE
-    {
-        constexpr DEVCB_HOLDLINE(char const *tag, int linenum) : m_tag(tag), m_linenum(linenum) { }
-        char const *m_tag;
-        int m_linenum;
-    };
-
-    struct DEVCB_MEMBANK
-    {
-        constexpr DEVCB_MEMBANK(char const *tag) : m_tag(tag) { }
-        char const *m_tag;
-    };
-
-    struct DEVCB_OUTPUT
-    {
-        constexpr DEVCB_OUTPUT(char const *tag) : m_tag(tag) { }
-        char const *m_tag;
-    };
-
-    enum devcb_noop_t { DEVCB_NOOP };
-#endif
-
-
-    //**************************************************************************
     //  DELEGATE TYPES
     //**************************************************************************
 
@@ -1233,42 +1156,6 @@ namespace mame
 
         //void reset();
 
-        // legacy syntax support - will be removed
-        //template <typename T, typename U, typename V>
-        //devcb_base &set_callback(std::tuple<T, U, V> const &desc)
-        //{
-        //    bind().set(std::forward<T>(std::get<0>(desc)), std::forward<U>(std::get<1>(desc)), std::forward<V>(std::get<2>(desc)));
-        //    return *this;
-        //}
-        //devcb_base &set_callback(DEVCB_IOPORT &&desc) { bind().set_ioport(desc.m_tag); return *this; }
-        //template <typename T>
-        //devcb_base &set_callback(devcb_constant_t<T> &&desc)
-        //{
-        //    bind().set_constant(std::move(desc.m_value));
-        //    return *this;
-        //}
-
-        public devcb_base set_callback(device_t device, read_line_delegate func)
-        {
-            throw new emu_unimplemented();
-#if false
-            bind().set(std::forward<T>(std::get<0>(desc)), std::forward<U>(std::get<1>(desc)), std::forward<V>(std::get<2>(desc)));
-#endif
-            return this;
-        }
-
-        public devcb_base set_callback(device_t device, read8_delegate func)
-        {
-            bind().set(device.tag(), func).reg();  // ??
-            return this;
-        }
-
-        public devcb_base set_callback(device_t device, DEVCB_IOPORT desc)
-        {
-            bind().set_ioport(desc.m_tag).reg();
-            return this;
-        }
-
 
         //virtual void validity_check(validity_checker &valid) const override;
 
@@ -1297,15 +1184,19 @@ namespace mame
 
 
         //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
-        //void devcb_read<Result, DefaultMask>::resolve_safe(Result dflt)
-        public void resolve_safe(int dflt)
+        //bool devcb_read<Result, DefaultMask>::resolve_safe(Result dflt)
+        public bool resolve_safe(int dflt)
         {
             resolve();
 
-            if (m_functions_r8.empty())
+            bool resolved_r8 = !m_functions_r8.empty();
+            if (!resolved_r8)
                 m_functions_r8.emplace_back((address_space space, offs_t offset, u8 mem_mask) => { return (u8)dflt; });
-            if (m_functions_rl.empty())
+            bool resolved_rl = !m_functions_rl.empty();
+            if (!resolved_rl)
                 m_functions_rl.emplace_back(() => { return dflt; });
+
+            return resolved_r8 || resolved_rl;
         }
 
 
@@ -2980,39 +2871,6 @@ namespace mame
 
         //void reset();
 
-        // legacy syntax support - will be removed
-        //template <typename T, typename U, typename V>
-        //devcb_base &set_callback(std::tuple<T, U, V> const &desc)
-        //{
-        //    bind().set(std::forward<T>(std::get<0>(desc)), std::forward<U>(std::get<1>(desc)), std::forward<V>(std::get<2>(desc)));
-        //    return *this;
-        //}
-        //devcb_base &set_callback(DEVCB_INPUTLINE &&desc) { bind().set_inputline(desc.m_tag, desc.m_linenum); return *this; }
-        //devcb_base &set_callback(DEVCB_ASSERTLINE &&desc) { bind().set_inputline(desc.m_tag, desc.m_linenum, ASSERT_LINE); return *this; }
-        //devcb_base &set_callback(DEVCB_CLEARLINE &&desc) { bind().set_inputline(desc.m_tag, desc.m_linenum, CLEAR_LINE); return *this; }
-        //devcb_base &set_callback(DEVCB_HOLDLINE &&desc) { bind().set_inputline(desc.m_tag, desc.m_linenum, HOLD_LINE); return *this; }
-        //devcb_base &set_callback(DEVCB_MEMBANK &&desc) { bind().set_membank(desc.m_tag); return *this; }
-        //devcb_base &set_callback(DEVCB_OUTPUT &&desc) { bind().set_output(desc.m_tag); return *this; }
-        //devcb_base &set_callback(devcb_noop_t desc) { bind().set_nop(); return *this; }
-
-        public devcb_base set_callback(device_t device, write_line_delegate func)
-        {
-            bind().set(func).reg();  //bind().set(std::forward<T>(std::get<0>(desc)), std::forward<U>(std::get<1>(desc)), std::forward<V>(std::get<2>(desc)));
-            return this;
-        }
-
-        public devcb_base set_callback(device_t device, write8_delegate func)
-        {
-            bind().set(func).reg();  //bind().set(std::forward<T>(std::get<0>(desc)), std::forward<U>(std::get<1>(desc)), std::forward<V>(std::get<2>(desc)));
-            return this;
-        }
-
-        public devcb_base set_callback(device_t device, DEVCB_INPUTLINE desc)
-        {
-            bind().set_inputline(desc.m_tag, desc.m_linenum).reg();  //bind().set_inputline(desc.m_tag, desc.m_linenum); return *this;
-            return this;
-        }
-
 
         //virtual void validity_check(validity_checker &valid) const override;
 
@@ -3045,17 +2903,22 @@ namespace mame
 
 
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
-        //void devcb_write<Input, DefaultMask>::resolve_safe()
-        public void resolve_safe()
+        //bool devcb_write<Input, DefaultMask>::resolve_safe()
+        public bool resolve_safe()
         {
             resolve();
 
-            if (m_functions_w8.empty())
+            bool resolved_w8 = !m_functions_w8.empty();
+            if (!resolved_w8)
                 m_functions_w8.emplace_back((address_space space, offs_t offset, byte data, byte mem_mask) => { });
-            if (m_functions_w32.empty())
+            bool resolved_w32 = !m_functions_w32.empty();
+            if (!resolved_w32)
                 m_functions_w32.emplace_back((address_space space, offs_t offset, u32 data, u32 mem_mask) => { });
-            if (m_functions_wl.empty())
+            bool resolved_wl = !m_functions_wl.empty();
+            if (!resolved_wl)
                 m_functions_wl.emplace_back((int data) => { });
+
+            return resolved_w8 || resolved_w32 || resolved_wl;
         }
 
 

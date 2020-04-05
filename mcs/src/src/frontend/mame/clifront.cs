@@ -46,6 +46,7 @@ namespace mame
         const string CLICOMMAND_VERIFYSOFTWARE      = "verifysoftware";
         const string CLICOMMAND_GETSOFTLIST         = "getsoftlist";
         const string CLICOMMAND_VERIFYSOFTLIST      = "verifysoftlist";
+        const string CLICOMMAND_VERSION             = "version";
 
         // command options
         const string CLIOPTION_DTD                  = "dtd";
@@ -88,6 +89,7 @@ namespace mame
             new options_entry(CLICOMMAND_VERIFYSOFTWARE + ";vsoft", "0",    OPTION_COMMAND,    "verify known software for the system"),
             new options_entry(CLICOMMAND_GETSOFTLIST    + ";glist", "0",    OPTION_COMMAND,    "retrieve software list by name"),
             new options_entry(CLICOMMAND_VERIFYSOFTLIST + ";vlist", "0",    OPTION_COMMAND,    "verify software list by name"),
+            new options_entry(CLICOMMAND_VERSION,                   "0",    OPTION_COMMAND,    "get MAME version"),
 
             new options_entry(null,                                 null,   OPTION_HEADER,     "FRONTEND COMMAND OPTIONS"),
             new options_entry(CLIOPTION_DTD,                        "1",    OPTION_BOOLEAN,    "include DTD in XML output"),
@@ -1084,6 +1086,15 @@ namespace mame
                     throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "{0} romsets found in {1} software lists, {2} were OK.\n", correct + incorrect, matched, correct);
                 osd_printf_info("{0} romsets found in {1} software lists, {2} romsets were OK.\n", correct, matched, correct);
             }
+        }
+
+
+        //-------------------------------------------------
+        //  version - emit MAME version to stdout
+        //-------------------------------------------------
+        void version(std.vector<string> args)
+        {
+            osd_printf_info("{0}", emulator_info.get_build_version());
         }
 
 

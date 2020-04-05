@@ -616,7 +616,7 @@ namespace mame
         void clrx()
         {
             X = 0;
-            clr_nzc();
+            clr_nz();
             SEZ();
         }
 

@@ -147,6 +147,7 @@ namespace mame
             10733000, /* 10.733_MHz_XTAL        The Fairyland Story */
             10738635, /* 10.738635_MHz_XTAL     TMS9918 family (3x NTSC subcarrier) */
             10816000, /* 10.816_MHz_XTAL        Universal 1979-1980 (Cosmic Alien, etc) */
+            10886400, /* 10.8864_MHz_XTAL       Systel System 100 */
             10920000, /* 10.92_MHz_XTAL         ADDS Viewpoint 60, Viewpoint A2 */
             11000000, /* 11_MHz_XTAL            Mario I8039 sound */
             11004000, /* 11.004_MHz_XTAL        TI 911 VDT */
@@ -192,6 +193,7 @@ namespace mame
             14705882, /* 14.705882_MHz_XTAL     Aleck64 */
             14728000, /* 14.728_MHz_XTAL        ADM 36 */
             14742800, /* 14.7428_MHz_XTAL       ADM 23 */
+            14745000, /* 14.745_MHz_XTAL        Synertek KTM-3 */
             14745600, /* 14.7456_MHz_XTAL       Namco System 12 & System Super 22/23 for JVS */
             14784000, /* 14.784_MHz_XTAL        Zenith Z-29 */
             14916000, /* 14.916_MHz_XTAL        ADDS Viewpoint 122 */
@@ -228,6 +230,7 @@ namespace mame
             17064000, /* 17.064_MHz_XTAL        Memorex 1377 */
             17350000, /* 17.35_MHz_XTAL         ITT Courier 1700 */
             17360000, /* 17.36_MHz_XTAL         OMTI Series 10 SCSI controller */
+            17430000, /* 17.43_MHz_XTAL         Videx Videoterm */
             17550000, /* 17.55_MHz_XTAL         HP 264x display clock (50 Hz configuration) */
             17600000, /* 17.6_MHz_XTAL          LSI Octopus */
             17734470, /* 17.73447_MHz_XTAL      (~4x PAL subcarrier) */
@@ -239,6 +242,7 @@ namespace mame
             18480000, /* 18.48_MHz_XTAL         Wyse WY-100 video */
             18575000, /* 18.575_MHz_XTAL        Visual 102, Visual 220 */
             18720000, /* 18.72_MHz_XTAL         Nokia MikroMikko 1 */
+            18867000, /* 18.867_MHz_XTAL        Decision Data IS-482 */
             18869600, /* 18.8696_MHz_XTAL       Memorex 2178 */
             19339600, /* 19.3396_MHz_XTAL       TeleVideo TVI-955 80-column display clock */
             19584000, /* 19.584_MHz_XTAL        ADM-42 */
@@ -265,6 +269,7 @@ namespace mame
             22032000, /* 22.032_MHz_XTAL        Intellec Series II I/O controller */
             22096000, /* 22.096_MHz_XTAL        ADDS Viewpoint 122 */
             22118400, /* 22.1184_MHz_XTAL       Amusco Poker */
+            22248000, /* 22.248_MHz_XTAL        Quantel DPB-7000 */
             22321000, /* 22.321_MHz_XTAL        Apple LaserWriter II NT */
             22464000, /* 22.464_MHz_XTAL        CIT-101 132-column display clock */
             22656000, /* 22.656_MHz_XTAL        Super Pinball Action (~1440x NTSC line rate) */
@@ -283,13 +288,13 @@ namespace mame
             25398360, /* 25.39836_MHz_XTAL      Tandberg TDV 2324 */
             25400000, /* 25.4_MHz_XTAL          PC9801-86 PCM base clock */
             25447000, /* 25.447_MHz_XTAL        Namco EVA3A (Funcube2) */
-            25590906, /* 25.590906_MHz_XTAL     Atari Jaguar NTSC */
-            25593900, /* 25.5939_MHz_XTAL       Atari Jaguar PAL */
             25771500, /* 25.7715_MHz_XTAL       HP-2622A */
             25920000, /* 25.92_MHz_XTAL         ADDS Viewpoint 60 */
             26000000, /* 26_MHz_XTAL            Gaelco PCBs */
             26366000, /* 26.366_MHz_XTAL        DEC VT320 */
             26580000, /* 26.58_MHz_XTAL         Wyse WY-60 80-column display clock */
+            26590906, /* 26.590906_MHz_XTAL     Atari Jaguar NTSC */
+            26593900, /* 26.5939_MHz_XTAL       Atari Jaguar PAL */
             26601712, /* 26.601712_MHz_XTAL     Astro Corp.'s Show Hand, PAL Vtech/Yeno Socrates (6x PAL subcarrier) */
             26666000, /* 26.666_MHz_XTAL        Imagetek I4100/I4220/I4300 */
             26666666, /* 26.666666_MHz_XTAL     Irem M92 but most use 27MHz */
@@ -415,7 +420,7 @@ namespace mame
 
 
         public double dvalue() { return m_current_clock; }
-        public u32 value() { return (u32)m_current_clock; }
+        public u32 value() { return (u32)(m_current_clock + 1e-3); }
         double base_get() { return m_base_clock; }
 
         //template <typename T> constexpr XTAL operator *(T &&mult) const noexcept { return XTAL(m_base_clock, m_current_clock * mult); }
