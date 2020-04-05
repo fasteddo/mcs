@@ -213,6 +213,7 @@ namespace mame
             16000000, /* 16_MHz_XTAL            Extremely common, used on 100's of PCBs */
             16097280, /* 16.09728_MHz_XTAL      DEC VT240 (1024 * 262 * 60) */
             16128000, /* 16.128_MHz_XTAL        Fujitsu FM-7 */
+            16200000, /* 16.2_MHz_XTAL          Debut */
             16257000, /* 16.257_MHz_XTAL        IBM PC MDA & EGA */
             16364000, /* 16.364_MHz_XTAL        Corvus Concept */
             16384000, /* 16.384_MHz_XTAL        - */
@@ -318,6 +319,7 @@ namespace mame
             32000000, /* 32_MHz_XTAL            - */
             32147000, /* 32.147_MHz_XTAL        Ampex 210+ 132-column display clock */
             32220000, /* 32.22_MHz_XTAL         Typically used on 90's Data East PCBs (close to 9x NTSC subcarrier which is 32.215905Mhz */
+            32256000, /* 32.256_MHz_XTAL        Hitachi MB-6890 */
             32317400, /* 32.3174_MHz_XTAL       DEC VT330, VT340 */
             32530400, /* 32.5304_MHz_XTAL       Seta 2 */
             33000000, /* 33_MHz_XTAL            Sega Model 3 video board */

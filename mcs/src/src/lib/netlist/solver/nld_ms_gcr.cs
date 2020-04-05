@@ -191,7 +191,7 @@ namespace mame.netlist
                     string symname = static_compile_name();
                     m_proc.load(this.state().lib(), symname);
                     if (m_proc.resolved())
-                        this.log().warning("External static solver {0} found ...", symname);
+                        this->log().info("External static solver {1} found ...", symname);
                     else
                         this.log().warning("External static solver {0} not found ...", symname);
 #endif

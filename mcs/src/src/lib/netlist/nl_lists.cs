@@ -98,7 +98,7 @@ namespace mame.netlist
         //nperfcount_t<KEEPSTAT> m_prof_retime;
 
 
-        public timed_queue_linear(bool TS, UInt32 list_size)
+        public timed_queue_linear(bool TS, bool KEEPSTAT, UInt32 list_size)
         {
             this.TS = TS;
 
@@ -141,6 +141,35 @@ namespace mame.netlist
         }
 
 
+        public void push_nostats(pqentry_t<detail.net_t, netlist_time> e)  //void push_nostats(T && e) noexcept
+        {
+            /* Lock */
+            lock (m_lock)  //lock_guard_type lck(m_lock);
+            {
+//#if 1
+                //T * i(m_end-1);
+                //for (; QueueOp::less(*(i), e); --i)
+                //{
+                //    *(i+1) = *(i);
+                //}
+                //*(i+1) = std::move(e);
+                //++m_end;
+//#else
+                //T * i(m_end++);
+                //while (QueueOp::less(*(--i), e))
+                //{
+                //    *(i+1) = *(i);
+                //}
+                //*(i+1) = std::move(e);
+//#endif
+
+                int iIdx = m_endIdx;  //T * i(m_end-1);
+                m_list.Insert(iIdx, e);  //*i = std::move(e);
+                ++m_endIdx;
+            }
+        }
+
+
         public pqentry_t<detail.net_t, netlist_time> pop() { return m_list[--m_endIdx]; }  //{ return *(--m_end); }
         public pqentry_t<detail.net_t, netlist_time> top() { return m_list[m_endIdx - 1]; }  //{ return *(m_end-1); }
 
@@ -149,20 +178,12 @@ namespace mame.netlist
         public void remove<R>(R elem)
         {
             throw new emu_unimplemented();
-#if false
-            /* Lock */
-            tqlock lck(m_lock);
-            for (T * i = m_end - 1; i > &m_list[0]; --i)
-            {
-                if (QueueOp::equal(*i, elem))
-                {
-                    --m_end;
-                    for (;i < m_end; ++i)
-                        *i = std::move(*(i+1));
-                    return;
-                }
-            }
-#endif
+        }
+
+        //template <class R>
+        public void remove_nostats<R>(R elem)
+        {
+            throw new emu_unimplemented();
         }
 
         //void retime(const T &elem) noexcept

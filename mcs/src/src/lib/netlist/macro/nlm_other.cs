@@ -22,25 +22,25 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            MC14584B_GATE(setup, "s1");
-            MC14584B_GATE(setup, "s2");
-            MC14584B_GATE(setup, "s3");
-            MC14584B_GATE(setup, "s4");
-            MC14584B_GATE(setup, "s5");
-            MC14584B_GATE(setup, "s6");
+            MC14584B_GATE(setup, "A");
+            MC14584B_GATE(setup, "B");
+            MC14584B_GATE(setup, "C");
+            MC14584B_GATE(setup, "D");
+            MC14584B_GATE(setup, "E");
+            MC14584B_GATE(setup, "F");
 
-            netlist.devices.nld_system_global.DUMMY_INPUT(setup, "GND");
-            netlist.devices.nld_system_global.DUMMY_INPUT(setup, "VCC");
+            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
+            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
 
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
-                "s1.A",  /*    A1 |1     ++    14| VCC  */ "VCC.I",
-                "s1.Q",  /*    Y1 |2           13| A6   */ "s6.A",
-                "s2.A",  /*    A2 |3           12| Y6   */ "s6.Q",
-                "s2.Q",  /*    Y2 |4  MC14584B 11| A5   */ "s5.A",
-                "s3.A",  /*    A3 |5           10| Y5   */ "s5.Q",
-                "s3.Q",  /*    Y3 |6            9| A4   */ "s4.A",
-                "GND.I", /*   GND |7            8| Y4   */ "s4.Q"
-                        /*       +--------------+      */
+                "A.A",   /*    A1 |1     ++    14| VCC  */ "A.VCC",
+                "A.Q",   /*    Y1 |2           13| A6   */ "F.A",
+                "B.A",   /*    A2 |3           12| Y6   */ "F.Q",
+                "B.Q",   /*    Y2 |4  MC14584B 11| A5   */ "E.A",
+                "C.A",   /*    A3 |5           10| Y5   */ "E.Q",
+                "C.Q",   /*    Y3 |6            9| A4   */ "D.A",
+                "A.GND", /*   GND |7            8| Y4   */ "D.Q"
+                         /*       +--------------+      */
             );
 
             netlist.nl_setup_global.NETLIST_END();

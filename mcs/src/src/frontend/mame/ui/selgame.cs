@@ -505,11 +505,11 @@ namespace mame.ui
             // reselect prior game launched, if any
             if (old_item_selected != -1)
             {
-                selected = old_item_selected;
+                set_selected_index(old_item_selected);
                 if (ui_globals.visible_main_lines == 0)
-                    top_line = (selected != 0) ? selected - 1 : 0;
+                    top_line = (selected_index() != 0) ? selected_index() - 1 : 0;
                 else
-                    top_line = selected - (ui_globals.visible_main_lines / 2);
+                    top_line = selected_index() - (ui_globals.visible_main_lines / 2);
 
                 if (reselect_last.software().empty())
                     reselect_last.reset();
@@ -527,7 +527,7 @@ namespace mame.ui
         protected override void handle()
         {
             if (m_prev_selected == null)
-                m_prev_selected = item[0].ref_;
+                m_prev_selected = item(0).ref_;
 
             // if I have to load datfile, perform a hard reset
             if (ui_globals.reset)

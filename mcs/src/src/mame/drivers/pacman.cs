@@ -139,7 +139,7 @@ namespace mame
             map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_read_nop).nopw();
             map.op(0x4c00, 0x4fef).mirror(0xa000).ram();
             map.op(0x4ff0, 0x4fff).mirror(0xa000).ram().share("spriteram");
-            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (space, offset, data, mem_mask) => { m_mainlatch.target.write_d0(space, offset, data, mem_mask); });  //FUNC(addressable_latch_device::write_d0));
+            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (space, offset, data, mem_mask) => { m_mainlatch.target.write_d0(offset, data); });  //FUNC(addressable_latch_device::write_d0));
             map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (space, offset, data, mem_mask) => { m_namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
@@ -163,7 +163,7 @@ namespace mame
             map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_read_nop).nopw();
             map.op(0x4c00, 0x4fef).mirror(0xa000).ram();
             map.op(0x4ff0, 0x4fff).mirror(0xa000).ram().share("spriteram");
-            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (space, offset, data, mem_mask) => { m_mainlatch.target.write_d0(space, offset, data, mem_mask); });  //FUNC(ls259_device::write_d0));
+            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (space, offset, data, mem_mask) => { m_mainlatch.target.write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
             map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (space, offset, data, mem_mask) => { m_namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();

@@ -29,7 +29,20 @@ namespace mame.netlist
          * Your mileage may vary.
          *
          */
+        //#ifndef USE_MEMPOOL
         //#define USE_MEMPOOL                 (0)
+        //#endif
+
+        /*! Enable queue statistics.
+         *
+         * Queue statistics come at a performance cost. Although
+         * the cost is low, we disable them here since they are
+         * only needed during development.
+         *
+         */
+        //#ifndef USE_QUEUE_STATS
+        public const bool USE_QUEUE_STATS = false;
+        //#endif
 
         /*! Store input values in logic_terminal_t.
          *
@@ -41,7 +54,9 @@ namespace mame.netlist
          * the default approach. It is up to 5% slower.
          *
          */
+        //#ifndef USE_COPY_INSTEAD_OF_REFERENCE
         //#define USE_COPY_INSTEAD_OF_REFERENCE (0)
+        //#endif
 
         /*
          * FIXME: Using truthtable is a lot slower than the explicit device
@@ -51,6 +66,16 @@ namespace mame.netlist
 
         //#define USE_TRUTHTABLE_7448 (0)
 
+        /*
+         * FIXME: The truthtable implementation of 74107 (JK-Flipflop)
+         *        is included for educational purposes to demonstrate how
+         *        to implement state holding devices as truthtables.
+         *        It will completely nuke performance for pong.
+         */
+
+        //#define USE_TRUTHTABLE_74107 (0)
+
+
         // How many times do we try to resolve links (connections)
         public const int NL_MAX_LINK_RESOLVE_LOOPS   = 100;
 
@@ -59,32 +84,15 @@ namespace mame.netlist
         //  DEBUGGING
         //============================================================
 
+        //#ifndef NL_DEBUG
         public const bool NL_DEBUG = false;
-        //#define NL_KEEP_STATISTICS          (0)
-
-        //============================================================
-        //  General Macros
-        //============================================================
-
-        //#if defined(OPENMP)
-        //#define HAS_OPENMP ( OPENMP >= 200805 )
-        //#elif defined(_OPENMP)
-        //#define HAS_OPENMP ( _OPENMP >= 200805 )
-        //#else
-        //#define HAS_OPENMP (0)
+        //#define NL_DEBUG                    (true)
         //#endif
 
-        //============================================================
-        //  General
-        //============================================================
 
-        /* The following adds about 10% to 20% performance for analog
-         * netlists like kidniki.
-         */
-
-        //#if !defined(USE_OPENMP)
-        //#define USE_OPENMP              (0)
-        //#endif // !defined(USE_OPENMP)
+        //============================================================
+        // Time resolution
+        //============================================================
 
         // Use nano-second resolution - Sufficient for now
         public const uint64_t NETLIST_INTERNAL_RES = 1000000000;  //static constexpr const auto NETLIST_INTERNAL_RES = 1000000000;
@@ -99,15 +107,5 @@ namespace mame.netlist
 
         //#define nl_double float
         //using nl_double = double;
-
-        //============================================================
-        //  WARNINGS
-        //============================================================
-
-        //#if (USE_OPENMP)
-        //#if (!(HAS_OPENMP))
-        //#error To use openmp compile and link with "-fopenmp"
-        //#endif
-        //#endif
     }
 }

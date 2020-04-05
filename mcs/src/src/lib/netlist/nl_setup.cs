@@ -312,7 +312,12 @@ namespace mame.netlist
 
             // FIXME: check for errors
             //printf("%s %s %e %e\n", entity.c_str(), tmp.c_str(), plib::pstonum<nl_double>(tmp), factor);
-            return plib.pstring_global.pstonum_double(tmp) * factor;
+            bool err = false;
+            nl_double val = plib.putil_global.pstonum_ne_double(true, tmp, out err);
+            if (err)
+                throw new nl_exception(nl_errstr_global.MF_MODEL_NUMBER_CONVERSION_ERROR(entity, tmp, "double", model));
+
+            return val * factor;
         }
 
 
@@ -558,7 +563,7 @@ namespace mame.netlist
         public void register_link_fqn(string sin, string sout)
         {
             link_t temp = new link_t(sin, sout);
-            log().debug.op("link {0} <== {1}\n", sin, sout);
+            log().debug.op("link {0} <== {1}", sin, sout);
             m_links.push_back(temp);
         }
 
@@ -599,7 +604,7 @@ namespace mame.netlist
          * We thus need a better approach to creating netlists in a context
          * other than static procedures.
          */
-        //setup_t &setup() { return m_setup; }
+        protected setup_t setup() { return m_setup; }
         //const setup_t &setup() const { return m_setup; }
 
         public models_t models() { return m_models; }
@@ -619,6 +624,7 @@ namespace mame.netlist
         std.unordered_map<string, param_ref_t> m_params = new std.unordered_map<string, param_ref_t>();
 
         UInt32 m_proxy_cnt;
+        bool m_validation;
 
 
         public setup_t(netlist_state_t nlstate)
@@ -630,6 +636,7 @@ namespace mame.netlist
             m_nlstate = nlstate;
             m_netlist_params = null;
             m_proxy_cnt = 0;
+            m_validation = false;
         }
 
         //~setup_t()
@@ -724,7 +731,7 @@ namespace mame.netlist
             }
             else
                 ret = false;
-                //netlist().error("Connecting {1} to {2} not supported!\n", t1.name(), t2.name());
+
             return ret;
         }
 
@@ -751,11 +758,9 @@ namespace mame.netlist
             if (m_models.value_str(model, "TYPE") == "CD4XXX")
                 return nl_base_global.family_CD4XXX();
 
-            foreach (var e in m_nlstate.family_cache)
-            {
-                if (e.first() == model)
-                    return e.second();
-            }
+            var it = m_nlstate.family_cache.find(model);
+            if (it != null)  //if (it != m_nlstate.m_family_cache.end())
+                return it;   //return it->second.get();
 
             var ret = new logic_family_std_proxy_t();  //plib::make_unique_base<logic_family_desc_t, logic_family_std_proxy_t>();
 
@@ -769,7 +774,7 @@ namespace mame.netlist
 
             var retp = ret.get();
 
-            m_nlstate.family_cache.emplace_back(new KeyValuePair<string, logic_family_desc_t>(model, ret));
+            m_nlstate.family_cache.emplace(model, ret);  //m_nlstate.m_family_cache.emplace(model, std::move(ret));
 
             return retp;
         }
@@ -803,7 +808,7 @@ namespace mame.netlist
              * We therefore first park connecting inputs and retry
              * after all other terminals were connected.
              */
-            int tries = nl_config_global.NL_MAX_LINK_RESOLVE_LOOPS;
+            UInt32 tries = m_netlist_params.max_link_loops.op();
             while (m_links.size() > 0 && tries >  0)
             {
                 for (int liIdx = 0; liIdx < m_links.Count;  )  //for (auto li = m_links.begin(); li != m_links.end(); )
@@ -832,9 +837,9 @@ namespace mame.netlist
             if (tries == 0)
             {
                 foreach (var link in m_links)
-                    log().warning.op(nl_errstr_global.MF_CONNECTING_1_TO_2(link.first(), link.second()));
+                    log().warning.op(nl_errstr_global.MF_CONNECTING_1_TO_2(setup().de_alias(link.first()), setup().de_alias(link.second())));
 
-                log().fatal.op(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(nl_config_global.NL_MAX_LINK_RESOLVE_LOOPS));
+                log().fatal.op(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(m_netlist_params.max_link_loops.op()));
             }
 
             log().verbose.op("deleting empty nets ...");
@@ -843,7 +848,7 @@ namespace mame.netlist
 
             delete_empty_nets();
 
-            string errstr = "";
+            bool err = false;
 
             log().verbose.op("looking for terminals not connected ...");
             foreach (var i in m_terminals)
@@ -855,7 +860,8 @@ namespace mame.netlist
                 }
                 else if (!term.has_net())
                 {
-                    errstr += new plib.pfmt("Found terminal {0} without a net\n").op(term.name());
+                    log().error.op(nl_errstr_global.ME_TERMINAL_1_WITHOUT_NET(setup().de_alias(term.name())));
+                    err = true;
                 }
                 else if (term.net().num_cons() == 0)
                 {
@@ -870,9 +876,8 @@ namespace mame.netlist
                 }
             }
 
-            //FIXME: error string handling
-            if (errstr != "")
-                log().fatal.op("{0}", errstr);
+            if (err)
+                log().fatal.op(nl_errstr_global.MF_TERMINALS_WITHOUT_NET());
         }
 
 
@@ -901,6 +906,32 @@ namespace mame.netlist
         }
 
 
+        string de_alias(string alias)
+        {
+            string temp = alias;
+            string ret;
+
+            /* FIXME: Detect endless loop */
+            do
+            {
+                ret = temp;
+                temp = "";
+                foreach (var e in m_alias)
+                {
+                    // FIXME: this will resolve first one found
+                    if (e.second() == ret)
+                    {
+                        temp = e.first();
+                        break;
+                    }
+                }
+            } while (temp != "" && temp != ret);
+
+            log().debug.op("{0}==>{1}\n", alias, ret);
+            return ret;
+        }
+
+
         /* needed by nltool */
         //std::vector<pstring> get_terminals_for_device_name(const pstring &devname);
 
@@ -910,6 +941,8 @@ namespace mame.netlist
 
 
         /* needed by proxy */
+        //detail::core_terminal_t *find_terminal(const pstring &outname_in, const detail::terminal_type atype, bool required = true) const;
+
         detail.core_terminal_t find_terminal(string terminal_in, bool required = true)
         {
             string tname = resolve_alias(terminal_in);
@@ -1014,13 +1047,16 @@ namespace mame.netlist
                 var f = m_params.find(p.first());
                 if (f == null)  //m_params.end())
                 {
-                    if (p.first().endsWith(".HINT_NO_DEACTIVATE"))  //if (plib::endsWith(p.first, pstring(".HINT_NO_DEACTIVATE")))
+                    if (p.first().endsWith(nl_errstr_global.sHINT_NO_DEACTIVATE))  //if (plib::endsWith(p.first, sHINT_NO_DEACTIVATE))
                     {
                         // FIXME: get device name, check for device
+                        var dev = m_nlstate.find_device(plib.pstring_global.replace_all(p.first(), nl_errstr_global.sHINT_NO_DEACTIVATE, ""));
+                        if (dev == null)
+                            log().warning.op(nl_errstr_global.MW_DEVICE_NOT_FOUND_FOR_HINT(p.first()));
                     }
                     else
                     {
-                        log().warning.op("Unknown parameter: {0}", p.first());
+                        log().warning.op(nl_errstr_global.MW_UNKNOWN_PARAMETER(p.first()));
                     }
                 }
             }
@@ -1031,12 +1067,13 @@ namespace mame.netlist
             {
                 if (use_deactivate)
                 {
-                    var p = m_param_values.find(d.second().name() + ".HINT_NO_DEACTIVATE");
+                    var p = m_param_values.find(d.second().name() + nl_errstr_global.sHINT_NO_DEACTIVATE);
                     if (p != null)
                     {
                         //FIXME: check for errors ...
-                        double v = plib.pstring_global.pstonum_double(p);
-                        if (std.abs(v - std.floor(v)) > 1e-6 )
+                        bool err = false;
+                        var v = plib.putil_global.pstonum_ne_double(true, p, out err);
+                        if (err || std.abs(v - std.floor(v)) > 1e-6 )
                             log().fatal.op(nl_errstr_global.MF_HND_VAL_NOT_SUPPORTED(p));
                         d.second().set_hint_deactivate(v == 0.0);
                     }
@@ -1055,11 +1092,19 @@ namespace mame.netlist
             {
                 if (t.N.net().isRailNet() && t.P.net().isRailNet())
                 {
-                    log().info.op(nl_errstr_global.MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(
-                        t.name(), t.N.net().name(), t.P.net().name()));
+                    // We are not interested in power terminals - This is intended behaviour
+                    if (!t.name().endsWith("." + nl_errstr_global.sPowerDevRes))
+                        log().info.op(nl_errstr_global.MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(
+                            t.name(), t.N.net().name(), t.P.net().name()));
                     t.N.net().remove_terminal(t.N);
                     t.P.net().remove_terminal(t.P);
                     m_nlstate.remove_dev(t);
+                }
+                else
+                {
+                    if (t.name().endsWith("." + nl_errstr_global.sPowerDevRes))
+                        log().info.op(nl_errstr_global.MI_POWER_TERMINALS_1_CONNECTED_ANALOG_2_3(
+                            t.name(), t.N.net().name(), t.P.net().name()));
                 }
             }
 
@@ -1088,6 +1133,11 @@ namespace mame.netlist
                 }
             }
         }
+
+
+        /* validation */
+        public void enable_validation() { m_validation = true; }
+        bool is_validation() { return m_validation; }
 
 
         void merge_nets(detail.net_t thisnet, detail.net_t othernet)

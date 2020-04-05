@@ -25,8 +25,10 @@ namespace mame.netlist
 
 
             param_logic_t m_use_deactivate;
-            param_int_t m_startup_strategy;
-            param_int_t m_mos_capmodel;
+            param_num_t_unsigned m_startup_strategy;
+            param_num_t_unsigned m_mos_capmodel;
+            //! How many times do we try to resolve links (connections)
+            param_num_t_unsigned m_max_link_loops;
 
 
             //NETLIB_CONSTRUCTOR(netlistparams)
@@ -36,13 +38,15 @@ namespace mame.netlist
                 : base(owner, name)
             {
                 m_use_deactivate = new param_logic_t(this, "USE_DEACTIVATE", false);
-                m_startup_strategy = new param_int_t(this, "STARTUP_STRATEGY", 1);
-                m_mos_capmodel = new param_int_t(this, "DEFAULT_MOS_CAPMODEL", 2);
+                m_startup_strategy = new param_num_t_unsigned(this, "STARTUP_STRATEGY", 1);
+                m_mos_capmodel = new param_num_t_unsigned(this, "DEFAULT_MOS_CAPMODEL", 2);
+                m_max_link_loops = new param_num_t_unsigned(this, "MAX_LINK_RESOLVE_LOOPS", 100);
             }
 
 
             public param_logic_t use_deactivate { get { return m_use_deactivate; } }
-            public param_int_t mos_capmodel { get { return m_mos_capmodel; } }
+            public param_num_t_unsigned mos_capmodel { get { return m_mos_capmodel; } }
+            public param_num_t_unsigned max_link_loops { get { return m_max_link_loops; } }
 
 
             //NETLIB_UPDATEI() { }
@@ -252,8 +256,8 @@ namespace mame.netlist
         // -----------------------------------------------------------------------------
         // nld_dummy_input
         // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT_DERIVED(dummy_input, base_dummy)
-        class nld_dummy_input : nld_base_dummy
+        //NETLIB_OBJECT(dummy_input)
+        class nld_dummy_input : device_t
         {
             //NETLIB_DEVICE_IMPL(dummy_input, "DUMMY_INPUT",            "")
             static factory.element_t nld_dummy_input_c(string classname)
@@ -264,7 +268,7 @@ namespace mame.netlist
             //analog_input_t m_I;
 
 
-            //NETLIB_CONSTRUCTOR_DERIVED(dummy_input, base_dummy)
+            //NETLIB_CONSTRUCTOR(dummy_input)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
             nld_dummy_input(netlist_t owner, string name)
@@ -287,7 +291,7 @@ namespace mame.netlist
         // -----------------------------------------------------------------------------
         // nld_frontier
         // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT_DERIVED(frontier, base_dummy)
+        //NETLIB_OBJECT(frontier)
 
 
         /* -----------------------------------------------------------------------------

@@ -50,8 +50,6 @@ namespace mame.netlist
             param_logic_t m_use_gabs;
             param_logic_t m_use_linear_prediction;
 
-            param_logic_t m_log_stats;
-
             std.vector<matrix_solver_t> m_mat_solvers;  //std::vector<poolptr<matrix_solver_t>> m_mat_solvers;
             std.vector<matrix_solver_t> m_mat_solvers_all = new std.vector<matrix_solver_t>();  //std::vector<std::unique_ptr<matrix_solver_t>> m_mat_solvers;
             std.vector<matrix_solver_t> m_mat_solvers_timestepping = new std.vector<matrix_solver_t>();  //std::vector<matrix_solver_t *> m_mat_solvers_timestepping;
@@ -91,7 +89,6 @@ namespace mame.netlist
                 m_use_gabs = new param_logic_t(this, "USE_GABS", true);
                 m_use_linear_prediction = new param_logic_t(this, "USE_LINEAR_PREDICTION", false); // // savings are eaten up by effort
 
-                m_log_stats = new param_logic_t(this, "LOG_STATS", true);   // log statistics on shutdown
                 m_params = new solver_parameters_t();
 
 
@@ -130,13 +127,6 @@ namespace mame.netlist
                 }
 
                 //m_params.m_max_timestep = std::max(m_params.m_max_timestep, m_params.m_max_timestep::)
-
-                // Override log statistics
-                string p = "";  //plib::util::environment("NL_STATS", "");
-                if (p != "")
-                    m_params.m_log_stats = plib.pstring_global.pstonum_bool(p);  //plib::pstonum<decltype(m_params.m_log_stats)>(p);
-                else
-                    m_params.m_log_stats = m_log_stats.op();
 
                 log().verbose.op("Scanning net groups ...");
                 // determine net groups

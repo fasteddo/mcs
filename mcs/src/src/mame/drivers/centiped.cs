@@ -312,7 +312,7 @@ namespace mame
             map.op(0x1680, 0x1680).w(earom_control_w);
             map.op(0x1700, 0x173f).r(earom_read);
             map.op(0x1800, 0x1800).w(irq_ack_w);
-            map.op(0x1c00, 0x1c07).nopr().w("outlatch", (space, offset, data, mem_mask) => { ((addressable_latch_device)subdevice("outlatch")).write_d7(space, offset, data, mem_mask); });  //FUNC(ls259_device::write_d7));
+            map.op(0x1c00, 0x1c07).nopr().w("outlatch", (space, offset, data, mem_mask) => { ((addressable_latch_device)subdevice("outlatch")).write_d7(offset, data); });  //FUNC(ls259_device::write_d7));
             map.op(0x2000, 0x2000).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x2000, 0x3fff).rom();
         }

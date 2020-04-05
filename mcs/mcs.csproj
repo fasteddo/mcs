@@ -248,6 +248,7 @@
     <Compile Include="src\src\lib\netlist\plib\pstate.cs" />
     <Compile Include="src\src\lib\netlist\plib\pstream.cs" />
     <Compile Include="src\src\lib\netlist\plib\pstring.cs" />
+    <Compile Include="src\src\lib\netlist\plib\putil.cs" />
     <Compile Include="src\src\lib\netlist\solver\nld_matrix_solver.cs" />
     <Compile Include="src\src\lib\netlist\solver\nld_ms_direct.cs" />
     <Compile Include="src\src\lib\netlist\solver\nld_ms_direct1.cs" />

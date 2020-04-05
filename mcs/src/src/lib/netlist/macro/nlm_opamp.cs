@@ -325,8 +325,8 @@ namespace mame
             netlist.nl_setup_global.ALIAS(setup, "PLUS", "R1.1"); // Positive input
             netlist.nl_setup_global.ALIAS(setup, "MINUS", "R2.1"); // Negative input
             netlist.nl_setup_global.ALIAS(setup, "OUT", "G1.OP"); // Opamp output ...
-            netlist.nl_setup_global.ALIAS(setup, "VCC", "G1.ON");  // V- terminal
-            netlist.nl_setup_global.ALIAS(setup, "GND", "DUMMY.I");  // V+ terminal
+            ALIAS(GND, G1.ON)  // V- terminal
+            ALIAS(VCC, DUMMY.I)  // V+ terminal
 
             netlist.devices.nld_system_global.DUMMY_INPUT(setup, "DUMMY");
 

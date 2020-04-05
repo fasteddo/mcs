@@ -14,6 +14,7 @@ namespace mame
         static void LOG_OUTPUT_FUNC(device_t device, string format, params object [] args) { device.logerror(format, args); }
 
         const int LOG_GENERAL = 1 << 0;
+        public const int LOG_DEBUG   = 1 << 0;
 
         public static void LOGMASKED(int mask, device_t device, string format, params object [] args) { if ((VERBOSE & mask) != 0) LOG_OUTPUT_FUNC(device, format, args); }  //#define LOGMASKED(mask, ...) do { if (VERBOSE & (mask)) (LOG_OUTPUT_FUNC)(__VA_ARGS__); } while (false)
 

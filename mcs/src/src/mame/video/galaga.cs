@@ -11,6 +11,7 @@ using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint16_t = System.UInt16;
 
 
 namespace mame
@@ -389,6 +390,98 @@ namespace mame
 
 
         /***************************************************************************
+            Star field documentation
+
+            Couriersud, May 2019:
+
+            The code below was manually applied based on a pull request from
+            Jindrich Makovicka. He based his work on information published by
+            Wolfgang Scherr about the 05XX on pin4.at.
+
+            Wolfgang shared is VHDL implementation with the MAME team. I have
+            created a spreadsheet implementation for his decode logic.
+
+            Both implementations use the same Galois type LFSR( tap 15,12,10,5).
+            Using the same seed value, the following holds true:
+
+            Decode_W(lfsr[t-4]) = Decode_J(lfsr[t])
+
+            The two decoding algorithm (Wolfgang, Jindrich) thus deliver the same
+            results but with a 4 clock difference.
+
+            Jindrich's code filters out stars with y<4. This matches the starfield
+            measurements documented above. Wolfgang states that his code matches his
+            measurements and there are stars with y<4.
+            We need to have a closer look at this.
+
+            Both implementations are complex compared to other star field gnerators
+            used in the industry. We thus now have two decoding solutions matching
+            the output. I wonder if there is a simpler one.
+        ***************************************************************************/
+        void starfield_init()
+        {
+            const uint16_t feed = 0x9420;
+
+            int idx = 0;
+            for (uint16_t sf = 0; sf < 4; ++sf)
+            {
+                // starfield select flags
+                uint16_t sf1 = (uint16_t)((sf >> 1) & 1);
+                uint16_t sf2 = (uint16_t)(sf & 1);
+
+                uint16_t i = 0x70cc;
+                for (int cnt = 0; cnt < 65535; ++cnt)
+                {
+                    // output enable lookup
+                    uint16_t xor1 = (uint16_t)(i ^ (i >> 3));
+                    uint16_t xor2 = (uint16_t)(xor1 ^ (i >> 2));
+                    uint16_t oe = (uint16_t)((sf1 != 0 ? 0 : 0x4000) | ((sf1 ^ sf2) != 0 ? 0 : 0x1000));
+                    if ((i & 0x8007) == 0x8007
+                        && (~i & 0x2008) == 0x2008
+                        && (xor1 & 0x0100) == (sf1 != 0 ? 0 : 0x0100)
+                        && (xor2 & 0x0040) == (sf2 != 0 ? 0 : 0x0040)
+                        && (i & 0x5000) == oe
+                        && cnt >= 256 * 4)
+                    {
+                        // color lookup
+                        uint16_t xor3 = (uint16_t)((i >> 1) ^ (i >> 6));
+                        uint16_t clr =
+                            (uint16_t)((((i >> 9) & 0x07)
+                             | ((xor3 ^ (i >> 4) ^ (i >> 7)) & 0x08)
+                             | (~xor3 & 0x10)
+                             | (((i >> 2) ^ (i >> 5)) & 0x20))
+                            ^ ((i & 0x4000) != 0 ? 0 : 0x24)
+                            ^ ((((i >> 2) ^ i) & 0x1000) != 0 ? 0x21 : 0));
+#if false
+                        m_star_seed_tab[idx].x = cnt % 256;
+                        m_star_seed_tab[idx].y = cnt / 256;
+                        m_star_seed_tab[idx].col = clr;
+                        m_star_seed_tab[idx].set = sf;
+#else
+                        int x = cnt % 256;
+                        int y = cnt / 256;
+                        int col = clr;
+                        int set = sf;
+
+                        if ((x != s_star_seed_tab[idx].x) || (y != s_star_seed_tab[idx].y)
+                            || (col != s_star_seed_tab[idx].col) || (s_star_seed_tab[idx].set != set))
+                            LOGMASKED(logmacro_global.LOG_DEBUG, "Mismatch: {0} {1} {2} {3} {4} {5} {6} {7}\n", x, y, col, set, s_star_seed_tab[idx].x,
+                                s_star_seed_tab[idx].y, s_star_seed_tab[idx].col, s_star_seed_tab[idx].set);
+#endif
+                        ++idx;
+                    }
+
+                    // update the LFSR
+                    if ((i & 1) != 0)
+                        i = (uint16_t)((i >> 1) ^ feed);
+                    else
+                        i = (uint16_t)(i >> 1);
+                }
+            }
+        }
+
+
+        /***************************************************************************
           Callbacks for the TileMap code
         ***************************************************************************/
 
@@ -444,6 +537,8 @@ namespace mame
             save_item(m_stars_scrollx, "m_stars_scrollx");
             save_item(m_stars_scrolly, "m_stars_scrolly");
             save_item(m_galaga_gfxbank, "m_galaga_gfxbank");
+
+            starfield_init();
         }
 
 

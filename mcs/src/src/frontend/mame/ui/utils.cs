@@ -1212,7 +1212,7 @@ namespace mame
                     {
                         item_append(string.Format("Filter {0}", i + 1), m_parent.m_filters[i].display_name(), get_arrow_flags(i), (UInt32)FILTER.FILTER_FIRST + i);  // %1$u
                         if (m_added)
-                            selected = item.size() - 2;
+                            set_selected_index(item_count() - 2);
 
                         if (m_parent.m_filters[i].wants_adjuster())
                         {
@@ -1504,7 +1504,7 @@ namespace mame
                     {
                         item_append(string.Format("Filter {0}", i + 1), m_parent.m_filters[i].display_name(), get_arrow_flags(i), (UInt32)FILTER.FILTER_FIRST + i);  // %1$u
                         if (m_added)
-                            selected = item.size() - 2;
+                            set_selected_index(item_count() - 2);
 
                         if (m_parent.m_filters[i].wants_adjuster())
                         {

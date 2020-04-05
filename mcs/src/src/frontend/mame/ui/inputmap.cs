@@ -60,8 +60,8 @@ namespace mame.ui
             //const input_seq *   defseq;             /* pointer to the default sequence */
             //const char *        name;               /* pointer to the base name of the item */
             //const char *        owner_name;         /* pointer to the name of the owner of the item */
-            //UINT32              sortorder;          /* sorting information */
-            //UINT8               type;               /* type of port */
+            //ioport_group group;              /* group type */
+            //uint8_t type;               /* type of port */
             //bool                is_optional;        /* true if this input is considered optional */
         }
 
@@ -71,7 +71,7 @@ namespace mame.ui
         //input_item_data *   pollingitem;
 
 
-        //uint32_t            last_sortorder;
+        //input_item_data *   lastitem;
         //bool                record_next;
         //input_seq           starting_seq;
 
@@ -94,7 +94,7 @@ namespace mame.ui
         }
 
 
-        //void populate_and_sort(struct input_item_data *itemlist);
+        //void populate_sorted(std::vector<input_item_data *> &&itemarray);
         //void toggle_none_default(input_seq &selected_seq, input_seq &original_seq, const input_seq &selected_defseq);
 
         //virtual void handle() override;

@@ -30,7 +30,6 @@ namespace mame.netlist
             public netlist_time m_nr_recalc_delay;
             public bool m_use_gabs;
             public bool m_use_linear_prediction;
-            public bool m_log_stats;
         }
 
 
@@ -316,7 +315,7 @@ namespace mame.netlist
             {
                 //throw new emu_unimplemented();
 #if false
-                if (this.m_stat_calculations != 0 && this.m_stat_vsolver_calls && this.m_params.m_log_stats)
+                if (this.m_stat_calculations != 0 && this.m_stat_vsolver_calls && log().verbose.is_enabled())
                 {
                     log().verbose("==============================================");
                     log().verbose("Solver {1}", this->name());
@@ -493,7 +492,6 @@ namespace mame.netlist
                     }
                     if (new_solver_timestep < m_params.m_min_timestep)
                     {
-                        //log().warning("Dynamic timestep below min timestep. Consider decreasing MIN_TIMESTEP: {1} us", new_solver_timestep*1.0e6);
                         new_solver_timestep = m_params.m_min_timestep;
                     }
                 }

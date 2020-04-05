@@ -136,10 +136,10 @@ namespace mame.plib
             }
         }
 
-        //void set_enabled(const bool v)
-        //{
-        //    m_enabled = v;
-        //}
+        public void set_enabled(bool v)
+        {
+            m_enabled = v;
+        }
 
         //bool is_enabled() const { return m_enabled; }
 

@@ -400,7 +400,7 @@ cancel:
                         title_buf += string.Format(" = {0}", paldev.read_entry((pen_t)index));  // %X
 
                     rgb_t col = state.palette.which != 0 ? palette.indirect_color(index) : raw_color[index];
-                    title_buf += string.Format(" (R:{0} G:{1} B:{2})", col.r(), col.g(), col.b());  // (R:%X G:%X B:%X)
+                    title_buf += string.Format(" (A:{0} R:{1} G:{2} B:{3})", col.a(), col.r(), col.g(), col.b());  //  (A:%X R:%X G:%X B:%X)
                 }
             }
 

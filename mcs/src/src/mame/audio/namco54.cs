@@ -115,6 +115,7 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
+            save_item(m_latched_cmd, "m_latched_cmd");
         }
 
         //-------------------------------------------------

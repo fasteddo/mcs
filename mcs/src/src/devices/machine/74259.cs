@@ -87,8 +87,7 @@ namespace mame
         //  write_d0 - bus-triggered write handler using
         //  LSB of data (or CRUOUT on TMS99xx)
         //-------------------------------------------------
-        //WRITE8_MEMBER(addressable_latch_device::write_d0)
-        public void write_d0(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void write_d0(offs_t offset, u8 data)
         {
             if (LOG_MYSTERY_BITS && data != 0x00 && data != 0x01 && data != 0xff)
                 logerror("Mystery bits written to Q{0}:{1}{2}{3}{4}{5}{6}{7}\n",  // %d:%s%s%s%s%s%s%s\n",
@@ -105,15 +104,14 @@ namespace mame
         }
 
 
-        //DECLARE_WRITE8_MEMBER(write_d1);
+        //void write_d1(offs_t offset, u8 data);
 
 
         //-------------------------------------------------
         //  write_d7 - bus-triggered write handler using
         //  MSB of (8-bit) data
         //-------------------------------------------------
-        //WRITE8_MEMBER(addressable_latch_device::write_d7)
-        public void write_d7(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void write_d7(offs_t offset, u8 data)
         {
             if (LOG_MYSTERY_BITS && data != 0x00 && data != 0x80 && data != 0xff)
                 logerror("Mystery bits written to Q{0}:{1}{2}{3}{4}{5}{6}{7}\n",  // %d:%s%s%s%s%s%s%s\n",
@@ -130,11 +128,12 @@ namespace mame
         }
 
 
-        //DECLARE_WRITE8_MEMBER(write_a0);
-        //DECLARE_WRITE8_MEMBER(write_a3);
-        //DECLARE_WRITE8_MEMBER(write_nibble_d0);
-        //DECLARE_WRITE8_MEMBER(write_nibble_d3);
-        //DECLARE_WRITE8_MEMBER(clear);
+        //void write_a0(offs_t offset, u8 data = 0);
+        //void write_a3(offs_t offset, u8 data = 0);
+        //void write_nibble_d0(u8 data);
+        //void write_nibble_d3(u8 data);
+        //void clear(u8 data = 0);
+
 
         // read handlers (inlined for the sake of optimization)
         public int q0_r() { return BIT(m_q, 0); }  //DECLARE_READ_LINE_MEMBER(q0_r) { return BIT(m_q, 0); }

@@ -404,7 +404,7 @@ namespace mame
             add_port_latch_state(0);
             add_port_latch_state(1);
             add_port_latch_state(2);
-            add_port_latch_state(3); // FIXME: only if present
+            // PORTD has no latch registered since it is either input-only or nonexistent
             add_port_ddr_state(0);
             add_port_ddr_state(1);
             add_port_ddr_state(2);
@@ -495,7 +495,8 @@ namespace mame
         {
             //throw new emu_unimplemented();
 #if false
-            state_add(M68705_LATCHA + N, util::string_format("LATCH%c", 'A' + N).c_str(), m_port_latch[N]).mask(~m_port_mask[N] & 0xff);
+            if (m_port_mask[N] != 0xff)
+                state_add(M68705_LATCHA + N, util::string_format("LATCH%c", 'A' + N).c_str(), m_port_latch[N]).mask(~m_port_mask[N] & 0xff);
 #endif
         }
 
@@ -504,7 +505,8 @@ namespace mame
         {
             //throw new emu_unimplemented();
 #if false
-            state_add(M68705_DDRA + N, util::string_format("DDR%c", 'A' + N).c_str(), m_port_ddr[N]).mask(~m_port_mask[N] & 0xff);
+            if (m_port_mask[N] != 0xff)
+                state_add(M68705_DDRA + N, util::string_format("DDR%c", 'A' + N).c_str(), m_port_ddr[N]).mask(~m_port_mask[N] & 0xff);
 #endif
         }
     }

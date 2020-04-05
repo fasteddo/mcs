@@ -66,7 +66,7 @@ namespace mame
 
 
     // ----------------------------------------------------------------------------------------
-    // netlist_mame_device_t
+    // netlist_mame_device
     // ----------------------------------------------------------------------------------------
     public class netlist_mame_device : device_t
     {
@@ -110,7 +110,7 @@ namespace mame
                     m_parent.logerror("netlist ERROR: {0}\n", ls.c_str());
                     break;
                 case plib.plog_level.FATAL:
-                    throw new emu_fatalerror(1, "netlist ERROR: {0}\n", ls.c_str());
+                    throw new emu_fatalerror(1, "netlist FATAL: {0}\n", ls.c_str());
                 }
             }
         }
@@ -139,7 +139,7 @@ namespace mame
                     osd_printf_error("netlist ERROR: {0}\n", ls.c_str());
                     break;
                 case plib.plog_level.FATAL:
-                    throw new emu_fatalerror(1, "netlist ERROR: {0}\n", ls.c_str());
+                    throw new emu_fatalerror(1, "netlist FATAL: {0}\n", ls.c_str());
                 }
             }
         }
@@ -242,29 +242,9 @@ namespace mame
 
         protected override void device_validity_check(validity_checker valid)
         {
-#if true
+            base_validity_check(valid);
             //rom_exists(mconfig().root_device());
             netlist_global.LOGDEVCALLS(this, "device_validity_check {0}\n", this.mconfig().gamedrv().name);
-
-            try
-            {
-                //netlist_mame_t lnetlist(*this, "netlist", plib::make_unique<netlist_validate_callbacks_t>());
-                netlist.netlist_t lnetlist = new netlist.netlist_t("netlist", new netlist_validate_callbacks_t());  //netlist::netlist_t lnetlist("netlist", plib::make_unique<netlist_validate_callbacks_t>());
-                common_dev_start(lnetlist);
-            }
-            catch (memregion_not_set err)
-            {
-                osd_printf_verbose("{0}\n", err);
-            }
-            catch (emu_fatalerror err)
-            {
-                osd_printf_error("{0}\n", err.str());
-            }
-            catch (Exception err)
-            {
-                osd_printf_error("{0}\n", err);
-            }
-#endif
         }
 
 
@@ -273,6 +253,12 @@ namespace mame
             netlist_global.LOGDEVCALLS(this, "device_start entry\n");
 
             m_netlist = new netlist_mame_t(this, "netlist");  //m_netlist = netlist::pool().make_poolptr<netlist_mame_t>(*this, "netlist");
+
+            if (!machine().options().verbose())
+            {
+                m_netlist.nlstate().log().verbose.set_enabled(false);
+                m_netlist.nlstate().log().debug.set_enabled(false);
+            }
 
             common_dev_start(m_netlist);
 
@@ -331,6 +317,45 @@ namespace mame
         }
 
 
+        protected netlist.netlist_t base_validity_check(validity_checker valid)
+        {
+            try
+            {
+                //netlist_mame_t lnetlist(*this, "netlist", plib::make_unique<netlist_validate_callbacks_t>());
+                var lnetlist = new netlist.netlist_t("netlist", new netlist_validate_callbacks_t());  //auto lnetlist = plib::make_unique<netlist::netlist_t>("netlist", plib::make_unique<netlist_validate_callbacks_t>());
+                // enable validation mode
+                lnetlist.nlstate().setup().enable_validation();
+                common_dev_start(lnetlist);
+
+                foreach (device_t d in subdevices())
+                {
+                    device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;
+                    if (sdev != null)
+                    {
+                        netlist_global.LOGDEVCALLS(this, "Validity check on subdevice {0}/{1}\n", d.name(), d.shortname());
+                        sdev.validity_helper(valid, lnetlist.nlstate());
+                    }
+                }
+
+                return lnetlist;
+            }
+            catch (memregion_not_set err)
+            {
+                osd_printf_verbose("{0}\n", err);
+            }
+            catch (emu_fatalerror err)
+            {
+                osd_printf_error("{0}\n", err.str());
+            }
+            catch (Exception err)
+            {
+                osd_printf_error("{0}\n", err);
+            }
+
+            return null;  //return plib::unique_ptr<netlist::netlist_t>(nullptr);
+        }
+
+
         void save_state()
         {
             //throw new emu_unimplemented();
@@ -380,6 +405,21 @@ namespace mame
         void common_dev_start(netlist.netlist_t lnetlist)
         {
             var lsetup = lnetlist.nlstate().setup();
+
+            //throw new emu_unimplemented();
+#if false
+            // Override log statistics
+            string p = plib.util.environment("NL_STATS", "");
+            if (p != "")
+            {
+                bool err = false;
+                bool v = plib.pstonum_ne<bool, true>(p, err);
+                if (err)
+                    lsetup.log().warning("NL_STATS: invalid value {1}", p);
+                else
+                    lnetlist.enable_stats(v);
+            }
+#endif
 
             // register additional devices
 
@@ -581,6 +621,12 @@ namespace mame
         }
 
 
+        protected override void device_validity_check(validity_checker valid)
+        {
+            throw new emu_unimplemented();
+        }
+
+
         // netlist_mame_device
         protected override void nl_register_devices(netlist.setup_t lsetup)
         {
@@ -676,6 +722,9 @@ namespace mame
         public virtual void pre_parse_action(netlist.netlist_state_t nlstate) { }
 
 
+        public virtual void validity_helper(validity_checker valid, netlist.netlist_state_t nlstate) { throw new emu_unimplemented(); }  // need to re-do device_t_with_mame_sub_interface.  Doesn't do inheritance right
+
+
         //inline netlist_mame_device &nl_owner() const { return *m_owner; }
 
 
@@ -703,6 +752,8 @@ namespace mame
         public virtual void custom_netlist_additions(netlist.netlist_state_t nlstate) { m_netlist_mame_sub_interface.custom_netlist_additions(nlstate); }
         public virtual void pre_parse_action(netlist.netlist_state_t nlstate) { }
 
+        public virtual void validity_helper(validity_checker valid, netlist.netlist_state_t nlstate) { m_netlist_mame_sub_interface.validity_helper(valid, nlstate); }
+
         public void set_mult_offset(double mult, double offset) { m_netlist_mame_sub_interface.set_mult_offset(mult, offset); }
     }
 
@@ -710,7 +761,8 @@ namespace mame
     // ----------------------------------------------------------------------------------------
     // netlist_mame_analog_input_device
     // ----------------------------------------------------------------------------------------
-    class netlist_mame_analog_input_device : device_t
+    class netlist_mame_analog_input_device : device_t_with_netlist_mame_sub_interface
+                                             //device_t
                                              //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_ANALOG_INPUT,  netlist_mame_analog_input_device,  "nl_analog_in",  "Netlist Analog Input")
@@ -761,6 +813,12 @@ namespace mame
         //inline DECLARE_WRITE16_MEMBER(write16)             { write(data);   }
         //inline DECLARE_WRITE32_MEMBER(write32)             { write(data);   }
         //inline DECLARE_WRITE64_MEMBER(write64)             { write(data);   }
+
+
+        public override void validity_helper(validity_checker valid, netlist.netlist_state_t nlstate)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         // device-level overrides
@@ -838,6 +896,12 @@ namespace mame
         //DECLARE_WRITE16_MEMBER(write16)             { write(data);   }
         //DECLARE_WRITE32_MEMBER(write32)             { write(data);   }
         //DECLARE_WRITE64_MEMBER(write64)             { write(data);   }
+
+
+        public override void validity_helper(validity_checker valid, netlist.netlist_state_t nlstate)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         // device-level overrides
