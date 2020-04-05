@@ -1847,7 +1847,8 @@ namespace mame
                     else
                         env.set_repeat_parameter(itemnode, init);
                 }
-                else if (strcmp(itemnode.get_name(), "backdrop") == 0 ||
+                else if (strcmp(itemnode.get_name(), "element") == 0 ||
+                    strcmp(itemnode.get_name(), "backdrop") == 0 ||
                     strcmp(itemnode.get_name(), "screen") == 0 ||
                     strcmp(itemnode.get_name(), "overlay") == 0 ||
                     strcmp(itemnode.get_name(), "bezel") == 0 ||
@@ -1939,7 +1940,7 @@ namespace mame
                     float [,] trans,  //layout_group::transform const &trans,
                     render_color color)
             {
-                m_element = null;
+                m_element = find_element(env, itemnode, elemmap);
 
                 //throw new emu_unimplemented();
 #if false
@@ -1947,27 +1948,18 @@ namespace mame
 #endif
 
                 m_have_output = env.get_attribute_string(itemnode, "name", "").Length != 0;
-                m_input_tag = env.get_attribute_string(itemnode, "inputtag", "");
+                m_input_tag = make_input_tag(env, itemnode);
                 m_input_port = null;
-                m_input_mask = 0;
+                m_input_field = null;
+                m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
                 m_input_shift = 0;
-                m_input_raw = false;
+                m_input_raw = 0 != env.get_attribute_int(itemnode, "inputraw", 0);
                 m_screen = null;
                 m_orientation = rendutil_global.orientation_add(env.parse_orientation(itemnode.get_child("orientation")), orientation);
+                m_rawbounds = make_bounds(env, itemnode, trans);
                 m_color = rendlay_global.render_color_multiply(env.parse_color(itemnode.get_child("color")), color);
+                m_blend_mode = get_blend_mode(env, itemnode);
 
-
-                // find the associated element
-                string name = env.get_attribute_string(itemnode, "element", null);
-                if (name != null)
-                {
-                    // search the list of elements for a match, error if not found
-                    var found = elemmap.find(name);
-                    if (found != null)
-                        m_element = found;
-                    else
-                        throw new rendlay_global.layout_syntax_error(string_format("unable to find element {0}", name));
-                }
 
                 // outputs need resolving
                 if (m_have_output)
@@ -1977,18 +1969,12 @@ namespace mame
                 int index = env.get_attribute_int(itemnode, "index", -1);
                 if (index != -1)
                     m_screen = new screen_device_iterator(env.machine().root_device()).byindex(index);
-                m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
+
                 for (u32 mask = m_input_mask; (mask != 0) && ((~mask & 1) != 0); mask >>= 1)
                     m_input_shift++;
-                m_input_raw = env.get_attribute_int(itemnode, "inputraw", 0) == 1;
+
                 if (m_have_output && m_element != null)
                     throw new emu_unimplemented();
-                env.parse_bounds(itemnode.get_child("bounds"), out m_rawbounds);
-                rendlay_global.render_bounds_transform(ref m_rawbounds, trans);
-                if (m_rawbounds.x0 > m_rawbounds.x1)
-                    std.swap(ref m_rawbounds.x0, ref m_rawbounds.x1);
-                if (m_rawbounds.y0 > m_rawbounds.y1)
-                    std.swap(ref m_rawbounds.y0, ref m_rawbounds.y1);
 
                 // sanity checks
                 if (strcmp(itemnode.get_name(), "screen") == 0)
@@ -2009,9 +1995,6 @@ namespace mame
                 {
                     throw new rendlay_global.layout_syntax_error(string_format("item of type {0} require an element tag", itemnode.get_name()));
                 }
-
-                if (has_input())
-                    m_input_port = env.device().ioport(m_input_tag.c_str());
             }
 
 
@@ -2042,7 +2025,7 @@ namespace mame
                         }
                         else
                         {
-                            ioport_field field = m_input_port.field(m_input_mask);
+                            ioport_field field = m_input_field != null ? m_input_field : m_input_port.field(m_input_mask);
                             if (field != null)
                                 return ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
                         }
@@ -2059,11 +2042,113 @@ namespace mame
             //---------------------------------------------
             public void resolve_tags()
             {
-                if (has_input())
+                if (!m_input_tag.empty())
                 {
                     m_input_port = m_element.machine().root_device().ioport(m_input_tag);
+                    if (m_input_port != null)
+                    {
+                        foreach (ioport_field field in m_input_port.fields())
+                        {
+                            if ((field.mask() & m_input_mask) != 0)
+                            {
+                                if (field.condition().condition() == ioport_condition.condition_t.ALWAYS)
+                                    m_input_field = field;
+
+                                break;
+                            }
+                        }
+                    }
                 }
             }
+
+
+            //---------------------------------------------
+            //  find_element - find element definition
+            //---------------------------------------------
+            layout_element find_element(environment env, util.xml.data_node itemnode, element_map elemmap)
+            {
+                string name = env.get_attribute_string(itemnode, strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element", null);
+                if (string.IsNullOrEmpty(name))
+                    return null;
+
+                // search the list of elements for a match, error if not found
+                var found = elemmap.find(name);
+                if (null != found)
+                    return found;
+                else
+                    throw new rendlay_global.layout_syntax_error("unable to find element {0}", name);
+            }
+
+
+            //---------------------------------------------
+            //  make_bounds - get transformed bounds
+            //---------------------------------------------
+            render_bounds make_bounds(
+                    environment env,
+                    util.xml.data_node itemnode,
+                    float [,] trans)  //layout_group.transform trans)
+            {
+                render_bounds bounds;
+                env.parse_bounds(itemnode.get_child("bounds"), out bounds);
+                rendlay_global.render_bounds_transform(ref bounds, trans);
+                if (bounds.x0 > bounds.x1)
+                    std.swap(ref bounds.x0, ref bounds.x1);
+                if (bounds.y0 > bounds.y1)
+                    std.swap(ref bounds.y0, ref bounds.y1);
+                return bounds;
+            }
+
+
+            //---------------------------------------------
+            //  make_input_tag - get absolute input tag
+            //---------------------------------------------
+            string make_input_tag(environment env, util.xml.data_node itemnode)
+            {
+                string tag = env.get_attribute_string(itemnode, "inputtag", null);
+                return !string.IsNullOrEmpty(tag) ? env.device().subtag(tag) : "";
+            }
+
+
+            //---------------------------------------------
+            //  get_blend_mode - explicit or implicit blend
+            //---------------------------------------------
+            int get_blend_mode(environment env, util.xml.data_node itemnode)
+            {
+                // see if there's a blend mode attribute
+                string mode = env.get_attribute_string(itemnode, "blend", null);
+                if (!string.IsNullOrEmpty(mode))
+                {
+                    if (strcmp(mode, "none") == 0)
+                        return BLENDMODE_NONE;
+                    else if (strcmp(mode, "alpha") == 0)
+                        return BLENDMODE_ALPHA;
+                    else if (strcmp(mode, "multiply") == 0)
+                        return BLENDMODE_RGB_MULTIPLY;
+                    else if (strcmp(mode, "add") == 0)
+                        return BLENDMODE_ADD;
+                    else
+                        throw new rendlay_global.layout_syntax_error("unknown blend mode {0}", mode);
+                }
+
+                // fall back to implicit blend mode based on element type
+                if (strcmp(itemnode.get_name(), "screen") == 0)
+                    return -1; // magic number recognised by render.cpp to allow per-element blend mode
+                else if (strcmp(itemnode.get_name(), "overlay") == 0)
+                    return BLENDMODE_RGB_MULTIPLY;
+                else
+                    return BLENDMODE_ALPHA;
+            }
+        }
+
+
+        class layer_lists
+        {
+            public item_list backdrops = new item_list();
+            public item_list screens = new item_list();
+            public item_list overlays = new item_list();
+            public item_list bezels = new item_list();
+            public item_list cpanels = new item_list();
+            public item_list marquees = new item_list();
         }
 
 
@@ -2080,36 +2165,55 @@ namespace mame
             m_name = make_name(env, viewnode);
             m_aspect = 1.0f;
             m_scraspect = 1.0f;
+            m_items = new item_list();
+            m_has_art = false;
 
 
+            // parse the layout
             m_expbounds.x0 = 0;
             m_expbounds.y0 = 0;
             m_expbounds.x1 = 0;
             m_expbounds.y1 = 0;
             environment local = new environment(env);
+            layer_lists layers = new layer_lists();
             local.set_parameter("viewname", m_name);
-            add_items(local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
+            add_items(layers, local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
+
+            // deal with legacy element groupings
+            if (!layers.overlays.empty() || (layers.backdrops.size() <= 1))
+            {
+                // screens (-1) + overlays (RGB multiply) + backdrop (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
+                foreach (item backdrop in layers.backdrops)
+                    backdrop.set_blend_mode(render_global.BLENDMODE_ADD);
+
+                foreach (var i in layers.screens) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.screens);
+                foreach (var i in layers.overlays) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.overlays);
+                foreach (var i in layers.backdrops) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.backdrops);
+                foreach (var i in layers.bezels) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.bezels);
+                foreach (var i in layers.cpanels) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.cpanels);
+                foreach (var i in layers.marquees) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.marquees);
+            }
+            else
+            {
+                // multiple backdrop pieces and no overlays (Golly! Ghost! mode):
+                // backdrop (alpha) + screens (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
+                foreach (item screen in layers.screens)
+                {
+                    if (screen.blend_mode() == -1)
+                        screen.set_blend_mode(render_global.BLENDMODE_ADD);
+                }
+
+                foreach (var i in layers.backdrops) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.backdrops);
+                foreach (var i in layers.screens) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.screens);
+                foreach (var i in layers.bezels) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.bezels);
+                foreach (var i in layers.cpanels) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.cpanels);
+                foreach (var i in layers.marquees) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.marquees);
+            }
+
+            // calculate metrics
             recompute(new render_layer_config());
             foreach (var group in groupmap)
                 group.second().set_bounds_unresolved();
-        }
-
-
-        //-------------------------------------------------
-        //  items - return the appropriate list
-        //-------------------------------------------------
-        public item_list items(item_layer layer)
-        {
-            switch (layer)
-            {
-                case item_layer.ITEM_LAYER_BACKDROP:   return m_backdrop_list;
-                case item_layer.ITEM_LAYER_SCREEN:     return m_screen_list;
-                case item_layer.ITEM_LAYER_OVERLAY:    return m_overlay_list;
-                case item_layer.ITEM_LAYER_BEZEL:      return m_bezel_list;
-                case item_layer.ITEM_LAYER_CPANEL:     return m_cpanel_list;
-                case item_layer.ITEM_LAYER_MARQUEE:    return m_marquee_list;
-                default:                               throw new emu_exception();  // false; // calling this with an invalid layer is bad, m'kay?
-            }
         }
 
 
@@ -2134,44 +2238,26 @@ namespace mame
             // loop over all layers
             bool first = true;
             bool scrfirst = true;
-            for (item_layer layer = item_layer.ITEM_LAYER_FIRST; layer < item_layer.ITEM_LAYER_MAX; layer++)
+            foreach (item curitem in m_items)
             {
-                // determine if this layer should be visible
-                switch (layer)
+                // accumulate bounds
+                if (first)
+                    m_bounds = new render_bounds(curitem.rawbounds());
+                else
+                    rendutil_global.union_render_bounds(m_bounds, curitem.rawbounds());
+                first = false;
+
+                // accumulate screen bounds
+                if (curitem.screen() != null)
                 {
-                    case item_layer.ITEM_LAYER_BACKDROP:   m_layenabled[(int)layer] = layerconfig.backdrops_enabled();  break;
-                    case item_layer.ITEM_LAYER_OVERLAY:    m_layenabled[(int)layer] = layerconfig.overlays_enabled();   break;
-                    case item_layer.ITEM_LAYER_BEZEL:      m_layenabled[(int)layer] = layerconfig.bezels_enabled();     break;
-                    case item_layer.ITEM_LAYER_CPANEL:     m_layenabled[(int)layer] = layerconfig.cpanels_enabled();    break;
-                    case item_layer.ITEM_LAYER_MARQUEE:    m_layenabled[(int)layer] = layerconfig.marquees_enabled();   break;
-                    default:                               m_layenabled[(int)layer] = true;                             break;
-                }
+                    if (scrfirst)
+                        m_scrbounds = new render_bounds(curitem.rawbounds());
+                    else
+                        rendutil_global.union_render_bounds(m_scrbounds, curitem.rawbounds());
+                    scrfirst = false;
 
-                // only do it if requested
-                if (m_layenabled[(int)layer])
-                {
-                    foreach (item curitem in items(layer))
-                    {
-                        // accumulate bounds
-                        if (first)
-                            m_bounds = new render_bounds(curitem.rawbounds());
-                        else
-                            rendutil_global.union_render_bounds(m_bounds, curitem.rawbounds());
-                        first = false;
-
-                        // accumulate screen bounds
-                        if (curitem.screen() != null)
-                        {
-                            if (scrfirst)
-                                m_scrbounds = new render_bounds(curitem.rawbounds());
-                            else
-                                rendutil_global.union_render_bounds(m_scrbounds, curitem.rawbounds());
-                            scrfirst = false;
-
-                            // accumulate the screens in use while we're scanning
-                            m_screens.add(curitem.screen());
-                        }
-                    }
+                    // accumulate the screens in use while we're scanning
+                    m_screens.add(curitem.screen());
                 }
             }
 
@@ -2210,16 +2296,12 @@ namespace mame
             float xscale = (target_bounds.x1 - target_bounds.x0) / (m_bounds.x1 - m_bounds.x0);
             float yscale = (target_bounds.y1 - target_bounds.y0) / (m_bounds.y1 - m_bounds.y0);
 
-            // normalize all the item bounds
-            for (item_layer layer = item_layer.ITEM_LAYER_FIRST; layer < item_layer.ITEM_LAYER_MAX; layer++)
+            foreach (item curitem in items())
             {
-                foreach (item curitem in items(layer))
-                {
-                    curitem.bounds().x0 = target_bounds.x0 + (curitem.rawbounds().x0 - xoffs) * xscale;
-                    curitem.bounds().x1 = target_bounds.x0 + (curitem.rawbounds().x1 - xoffs) * xscale;
-                    curitem.bounds().y0 = target_bounds.y0 + (curitem.rawbounds().y0 - yoffs) * yscale;
-                    curitem.bounds().y1 = target_bounds.y0 + (curitem.rawbounds().y1 - yoffs) * yscale;
-                }
+                curitem.bounds().x0 = target_bounds.x0 + (curitem.rawbounds().x0 - xoffs) * xscale;
+                curitem.bounds().x1 = target_bounds.x0 + (curitem.rawbounds().x1 - xoffs) * xscale;
+                curitem.bounds().y0 = target_bounds.y0 + (curitem.rawbounds().y0 - yoffs) * yscale;
+                curitem.bounds().y1 = target_bounds.y0 + (curitem.rawbounds().y1 - yoffs) * yscale;
             }
         }
 
@@ -2230,13 +2312,8 @@ namespace mame
         //-----------------------------
         public void resolve_tags()
         {
-            for (item_layer layer = item_layer.ITEM_LAYER_FIRST; layer < item_layer.ITEM_LAYER_MAX; ++layer)
-            {
-                foreach (item curitem in items(layer))
-                {
-                    curitem.resolve_tags();
-                }
-            }
+            foreach (item curitem in items())
+                curitem.resolve_tags();
         }
 
 
@@ -2244,6 +2321,7 @@ namespace mame
         //  add_items - add items, recursing for groups
         //-------------------------------------------------
         void add_items(
+                layer_lists layers,
                 environment env,
                 util.xml.data_node parentnode,
                 element_map elemmap,
@@ -2282,27 +2360,37 @@ namespace mame
                 }
                 else if (strcmp(itemnode.get_name(), "backdrop") == 0)
                 {
-                    m_backdrop_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.backdrops.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "screen") == 0)
                 {
-                    m_screen_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.screens.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                }
+                else if (strcmp(itemnode.get_name(), "element") == 0)
+                {
+                    layers.screens.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "overlay") == 0)
                 {
-                    m_overlay_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.overlays.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "bezel") == 0)
                 {
-                    m_bezel_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.bezels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "cpanel") == 0)
                 {
-                    m_cpanel_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.cpanels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "marquee") == 0)
                 {
-                    m_marquee_list.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.marquees.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "group") == 0)
                 {
@@ -2334,6 +2422,7 @@ namespace mame
 
                     environment local = new environment(env);
                     add_items(
+                            layers,
                             local,
                             found.get_groupnode(),
                             elemmap,
@@ -2354,7 +2443,7 @@ namespace mame
                     environment local = new environment(env);
                     for (int i = 0; count > i; ++i)
                     {
-                        add_items(local, itemnode, elemmap, groupmap, orientation, trans, color, false, true, i == 0);
+                        add_items(layers, local, itemnode, elemmap, groupmap, orientation, trans, color, false, true, i == 0);
                         local.increment_parameters();
                     }
                 }

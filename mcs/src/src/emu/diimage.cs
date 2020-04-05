@@ -54,6 +54,9 @@ namespace mame
     // class representing interface-specific live image
     public abstract class device_image_interface : device_interface
     {
+        //typedef device_delegate<image_init_result (device_image_interface &)> load_delegate;
+        //typedef device_delegate<void (device_image_interface &)> unload_delegate;
+
         //typedef std::vector<std::unique_ptr<image_device_format>> formatlist_type;
 
 

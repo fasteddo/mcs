@@ -130,10 +130,6 @@ namespace mame
         protected const int CLEAR_LINE = (int)line_state.CLEAR_LINE;
         protected const int ASSERT_LINE = (int)line_state.ASSERT_LINE;
         protected const int HOLD_LINE = (int)line_state.HOLD_LINE;
-        protected void MCFG_DEVICE_DISABLE() { diexec_global.MCFG_DEVICE_DISABLE(m_globals.helper_device); }
-        protected void MCFG_DEVICE_VBLANK_INT_DRIVER(string tag, device_interrupt_delegate func) { diexec_global.MCFG_DEVICE_VBLANK_INT_DRIVER(m_globals.helper_device, tag, func); }
-        protected void MCFG_DEVICE_PERIODIC_INT_DRIVER(device_interrupt_delegate func, int rate) { diexec_global.MCFG_DEVICE_PERIODIC_INT_DRIVER(m_globals.helper_device, func, rate); }
-        protected void MCFG_DEVICE_PERIODIC_INT_DRIVER(device_interrupt_delegate func, XTAL rate) { diexec_global.MCFG_DEVICE_PERIODIC_INT_DRIVER(m_globals.helper_device, func, rate); }
 
 
         // digfx
@@ -158,11 +154,6 @@ namespace mame
         protected static bool GFXENTRY_ISREVERSE(UInt32 x) { return digfx_global.GFXENTRY_ISREVERSE(x); }
         protected static gfx_decode_entry GFXDECODE_ENTRY(string region, u32 offset, gfx_layout layout, u16 start, u16 colors) { return digfx_global.GFXDECODE_ENTRY(region, offset, layout, start, colors); }
         protected static gfx_decode_entry GFXDECODE_SCALE(string region, u32 offset, gfx_layout layout, u16 start, u16 colors, u32 x, u32 y) { return digfx_global.GFXDECODE_SCALE(region, offset, layout, start, colors, x, y); }
-
-
-        // dimemory
-        protected void MCFG_DEVICE_PROGRAM_MAP(address_map_constructor map) { dimemory_global.MCFG_DEVICE_PROGRAM_MAP(m_globals.helper_device, map); }
-        protected void MCFG_DEVICE_IO_MAP(address_map_constructor map) { dimemory_global.MCFG_DEVICE_IO_MAP(m_globals.helper_device, map); }
 
 
         // disc_flt
@@ -407,8 +398,6 @@ namespace mame
         // disound
         protected const int ALL_OUTPUTS = disound_global.ALL_OUTPUTS;
         protected const int AUTO_ALLOC_INPUT = disound_global.AUTO_ALLOC_INPUT;
-        protected void MCFG_SOUND_ROUTE(u32 output, string target, double gain) { disound_global.MCFG_SOUND_ROUTE(m_globals.helper_device, output, target, gain); }
-        protected void MCFG_SOUND_ROUTE(u32 output, string target, double gain, u32 input) { disound_global.MCFG_SOUND_ROUTE(m_globals.helper_device, output, target, gain, input); }
 
 
         // distate
@@ -734,39 +723,6 @@ namespace mame
         protected const int EMU_ERR_INVALID_CONFIG = main_global.EMU_ERR_INVALID_CONFIG;
 
 
-        // mconfig
-        protected void MACHINE_CONFIG_START(machine_config config)
-        {
-            //device_t *device = nullptr; \
-            //devcb_base *devcb = nullptr; \
-            //(void)device; \
-            //(void)devcb;
-
-            m_globals.helper_config = config;
-            m_globals.helper_owner = (device_t)this;  // after we create the device, the owner becomes the device so that children are created under it.
-            m_globals.helper_device = null;
-
-            mconfig_global.MACHINE_CONFIG_START();
-        }
-
-        protected void MACHINE_CONFIG_END()
-        {
-            mconfig_global.MACHINE_CONFIG_END();
-
-            m_globals.helper_owner = null;
-            m_globals.helper_curentry = null;
-            m_globals.helper_address_map = null;
-            m_globals.helper_device = null;
-        }
-
-        protected void MCFG_DEVICE_ADD(string tag, device_type type, u32 clock = 0) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag, type, clock); }
-        protected void MCFG_DEVICE_ADD(string tag, device_type type, XTAL clock) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag, type, clock); }
-        protected void MCFG_DEVICE_ADD(device_finder<cpu_device> finder, device_type type, XTAL clock) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, finder.tag(), type, clock); finder.target = (cpu_device)m_globals.helper_device; }
-        protected void MCFG_DEVICE_ADD(string tag, device_type type, string palette_tag, gfx_decode_entry [] gfxinfo) { MCFG_DEVICE_ADD(tag, type); ((gfxdecode_device)m_globals.helper_device).gfxdecode_device_after_ctor(palette_tag, gfxinfo); }
-        protected void MCFG_DEVICE_ADD(string tag, device_type type, discrete_block [] intf) { MCFG_DEVICE_ADD(tag, type); ((discrete_sound_device)m_globals.helper_device).discrete_sound_device_after_ctor(intf); }
-        protected void MCFG_DEVICE_MODIFY(string tag) { mconfig_global.MCFG_DEVICE_MODIFY(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag); }
-
-
         // m6502
         protected static cpu_device M6502(machine_config mconfig, device_finder<cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
 
@@ -836,7 +792,6 @@ namespace mame
 
 
         // netlist
-        protected void MCFG_NETLIST_SETUP(func_type setup) { netlist_global.MCFG_NETLIST_SETUP(m_globals.helper_device, setup); }
         protected static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
         protected static netlist_mame_stream_input_device NETLIST_STREAM_INPUT(machine_config mconfig, string tag, int channel, string param_name)
         {
@@ -916,7 +871,10 @@ namespace mame
         // render
         public static u32 PRIMFLAG_BLENDMODE(u32 x) { return render_global.PRIMFLAG_BLENDMODE(x); }
         protected static u32 PRIMFLAG_TEXWRAP(u32 x) { return render_global.PRIMFLAG_TEXWRAP(x); }
+        protected const int BLENDMODE_NONE = render_global.BLENDMODE_NONE;
         public const int BLENDMODE_ALPHA = render_global.BLENDMODE_ALPHA;
+        protected const int BLENDMODE_RGB_MULTIPLY = render_global.BLENDMODE_RGB_MULTIPLY;
+        protected const int BLENDMODE_ADD = render_global.BLENDMODE_ADD;
         protected const u32 PRIMFLAG_PACKABLE = render_global.PRIMFLAG_PACKABLE;
 
 
@@ -992,21 +950,10 @@ namespace mame
         protected const screen_type_enum SCREEN_TYPE_LCD = screen_type_enum.SCREEN_TYPE_LCD;
         protected const screen_type_enum SCREEN_TYPE_SVG = screen_type_enum.SCREEN_TYPE_SVG;
         protected const screen_type_enum SCREEN_TYPE_INVALID = screen_type_enum.SCREEN_TYPE_INVALID;
-        protected void MCFG_SCREEN_ADD(string tag, screen_type_enum type) { screen_global.MCFG_SCREEN_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag, type); }
-        protected void MCFG_SCREEN_ADD(device_finder<screen_device> finder, screen_type_enum type) { screen_global.MCFG_SCREEN_ADD(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, finder, type); }
-        protected void MCFG_SCREEN_RAW_PARAMS(XTAL pixclock, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart) { screen_global.MCFG_SCREEN_RAW_PARAMS(m_globals.helper_device, pixclock, htotal, hbend, hbstart, vtotal, vbend, vbstart); }
-        protected void MCFG_SCREEN_REFRESH_RATE(u32 rate) { screen_global.MCFG_SCREEN_REFRESH_RATE(m_globals.helper_device, rate); }
-        protected void MCFG_SCREEN_VBLANK_TIME(attoseconds_t time) { screen_global.MCFG_SCREEN_VBLANK_TIME(m_globals.helper_device, time); }
-        protected void MCFG_SCREEN_SIZE(u16 width, u16 height) { screen_global.MCFG_SCREEN_SIZE(m_globals.helper_device, width, height); }
-        protected void MCFG_SCREEN_VISIBLE_AREA(Int16 minx, Int16 maxx, Int16 miny, Int16 maxy) { screen_global.MCFG_SCREEN_VISIBLE_AREA(m_globals.helper_device, minx, maxx, miny, maxy); }
-        protected void MCFG_SCREEN_UPDATE_DRIVER(screen_update_ind16_delegate method) { screen_global.MCFG_SCREEN_UPDATE_DRIVER(m_globals.helper_device, method); }
-        protected void MCFG_SCREEN_UPDATE_DRIVER(screen_update_rgb32_delegate method) { screen_global.MCFG_SCREEN_UPDATE_DRIVER(m_globals.helper_device, method); }
-        protected void MCFG_SCREEN_PALETTE(string palette_tag) { screen_global.MCFG_SCREEN_PALETTE(m_globals.helper_device, palette_tag); }
-        protected void MCFG_SCREEN_PALETTE(finder_base palette) { screen_global.MCFG_SCREEN_PALETTE(m_globals.helper_device, palette); }
 
 
         // speaker
-        protected speaker_device SPEAKER(machine_config mconfig, string tag) { mconfig_global.MCFG_DEVICE_ADD(out m_globals.m_helper_device, mconfig, m_globals.helper_owner, tag, speaker_device.SPEAKER, 0); return (speaker_device)m_globals.helper_device; }  // alias for device_type_impl<DeviceClass>::operator()
+        protected static speaker_device SPEAKER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<speaker_device>(mconfig, tag, speaker_device.SPEAKER, 0); }
 
 
         // strformat
@@ -1029,31 +976,15 @@ namespace mame
 
         // timer
         protected static timer_device TIMER(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, clock); }
-        protected void MCFG_TIMER_DRIVER_ADD_SCANLINE(string tag, timer_device.expired_delegate callback, string screen, int first_vpos, int increment) { timer_global.MCFG_TIMER_DRIVER_ADD_SCANLINE(out m_globals.m_helper_device, m_globals.helper_config, m_globals.helper_owner, tag, callback, screen, first_vpos, increment); }
 
 
         // ui
-        protected static float UI_TARGET_FONT_HEIGHT { get { return ui_global.UI_TARGET_FONT_HEIGHT; } }
         protected const float UI_MAX_FONT_HEIGHT = ui_global.UI_MAX_FONT_HEIGHT;
         public const float UI_LINE_WIDTH = ui_global.UI_LINE_WIDTH;
-        protected static float UI_BOX_LR_BORDER { get { return ui_global.UI_BOX_LR_BORDER; } }
-        protected static float UI_BOX_TB_BORDER { get { return ui_global.UI_BOX_TB_BORDER; } }
         protected static readonly rgb_t UI_GREEN_COLOR = ui_global.UI_GREEN_COLOR;
         protected static readonly rgb_t UI_YELLOW_COLOR = ui_global.UI_YELLOW_COLOR;
         protected static readonly rgb_t UI_RED_COLOR = ui_global.UI_RED_COLOR;
-        protected static rgb_t UI_BORDER_COLOR { get { return ui_global.UI_BORDER_COLOR; } }
-        protected static rgb_t UI_BACKGROUND_COLOR { get { return ui_global.UI_BACKGROUND_COLOR; } }
-        public static rgb_t UI_GFXVIEWER_BG_COLOR { get { return ui_global.UI_GFXVIEWER_BG_COLOR; } }
-        protected static rgb_t UI_TEXT_COLOR { get { return ui_global.UI_TEXT_COLOR; } }
-        protected static rgb_t UI_TEXT_BG_COLOR { get { return ui_global.UI_TEXT_BG_COLOR; } }
-        protected static rgb_t UI_SUBITEM_COLOR { get { return ui_global.UI_SUBITEM_COLOR; } }
-        protected static rgb_t UI_CLONE_COLOR { get { return ui_global.UI_CLONE_COLOR; } }
-        protected static rgb_t UI_SELECTED_COLOR { get { return ui_global.UI_SELECTED_COLOR; } }
-        protected static rgb_t UI_SELECTED_BG_COLOR { get { return ui_global.UI_SELECTED_BG_COLOR; } }
-        protected static rgb_t UI_MOUSEOVER_COLOR { get { return ui_global.UI_MOUSEOVER_COLOR; } }
-        protected static rgb_t UI_MOUSEOVER_BG_COLOR { get { return ui_global.UI_MOUSEOVER_BG_COLOR; } }
-        protected static rgb_t UI_SLIDER_COLOR { get { return ui_global.UI_SLIDER_COLOR; } }
-        public const UInt32 UI_HANDLER_CANCEL = ui_global.UI_HANDLER_CANCEL;
+        public const uint32_t UI_HANDLER_CANCEL = ui_global.UI_HANDLER_CANCEL;
 
 
         // watchdog

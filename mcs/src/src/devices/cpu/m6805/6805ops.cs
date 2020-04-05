@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using u32 = System.UInt32;
 
 
 namespace mame
@@ -649,7 +650,7 @@ namespace mame
             pushbyte(m_a);
             pushbyte(m_cc);
             SEI();
-            rm16(m_params.m_swi_vector, ref m_pc);
+            rm16((u32)(m_params.m_swi_vector & m_params.m_vector_mask), ref m_pc);
         }
 
         // $84 ILLEGAL

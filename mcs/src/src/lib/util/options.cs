@@ -151,7 +151,7 @@ namespace mame
             public void set_priority(int priority) { m_priority = priority; }
             public option_type type() { return m_type; }
             public string description() { return m_description; }
-            protected virtual string default_value()
+            public virtual string default_value()
             {
                 // I don't really want this generally available, but MewUI seems to need it.  Please
                 // do not use
@@ -290,7 +290,7 @@ namespace mame
             //-------------------------------------------------
             //  simple_entry::default_value
             //-------------------------------------------------
-            protected override string default_value()
+            public override string default_value()
             {
                 // only MewUI seems to need this; please don't use
                 return m_defdata;

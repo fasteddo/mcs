@@ -340,7 +340,7 @@ namespace mame.ui
                     item_append(elem.Key, "", 0, elem.Key);
 
                 item_append(menu_item_type.SEPARATOR);
-                customtop = ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
+                customtop = ui().get_line_height() + (3.0f * ui().box_tb_border());
             }
 
 
@@ -533,7 +533,7 @@ namespace mame.ui
             emu_options clean_options = new emu_options();
             machine_config mconfig = new machine_config(driver, clean_options);
 
-            var flags = new system_flags(new machine_static_info(mconfig));
+            var flags = new system_flags(new machine_static_info(ui().options(), mconfig));
             m_flags.emplace(driver, flags);
             return flags;  //.first.second;
         }
@@ -554,7 +554,7 @@ namespace mame.ui
             // determine the text for the header
             make_topbox_text(out tempbuf[0], out tempbuf[1], out tempbuf[2]);
 
-            float y1 = origy1 - 3.0f * UI_BOX_TB_BORDER - ui().get_line_height();
+            float y1 = origy1 - 3.0f * ui().box_tb_border() - ui().get_line_height();
 
             string [] tempbuf2 = new string[3] { tempbuf[0], tempbuf[1], tempbuf[2] };
 
@@ -562,10 +562,10 @@ namespace mame.ui
                     tempbuf2, //tempbuf, tempbuf + 3,
                     origx1, origx2, origy1 - top, y1,
                     text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, true,
-                    UI_TEXT_COLOR, UI_BACKGROUND_COLOR, 1.0f);
+                    ui().colors().text_color(), ui().colors().background_color(), 1.0f);
 
             // draw toolbar
-            draw_toolbar(origx1, y1, origx2, origy1 - UI_BOX_TB_BORDER);
+            draw_toolbar(origx1, y1, origx2, origy1 - ui().box_tb_border());
 
             // determine the text to render below
             ui_software_info swinfo;
@@ -573,7 +573,7 @@ namespace mame.ui
             get_selection(out swinfo, out driver);
 
             bool isstar = false;
-            rgb_t color = UI_BACKGROUND_COLOR;
+            rgb_t color = ui().colors().background_color();
             if (swinfo != null && ((swinfo.startempty != 1) || driver == null))
             {
                 isstar = mame_machine_manager.instance().favorite().is_favorite_system_software(swinfo);
@@ -671,13 +671,13 @@ namespace mame.ui
             // draw the footer
             draw_text_box(
                     tempbuf, //std::begin(tempbuf), std::end(tempbuf),
-                    origx1, origx2, origy2 + UI_BOX_TB_BORDER, origy2 + bottom,
+                    origx1, origx2, origy2 + ui().box_tb_border(), origy2 + bottom,
                     text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, true,
-                    UI_TEXT_COLOR, color, 1.0f);
+                    ui().colors().text_color(), color, 1.0f);
 
             // is favorite? draw the star
             if (isstar)
-                draw_star(origx1 + UI_BOX_LR_BORDER, origy2 + (2.0f * UI_BOX_TB_BORDER));
+                draw_star(origx1 + ui().box_lr_border(), origy2 + (2.0f * ui().box_tb_border()));
         }
 
 
@@ -771,22 +771,22 @@ namespace mame.ui
             float al_y1 = origy1 + 0.9f * line_height;
 
             rgb_t fgcolor_right, fgcolor_left;
-            fgcolor_right = fgcolor_left = UI_TEXT_COLOR;
+            fgcolor_right = fgcolor_left = ui().colors().text_color();
 
             // set hover
             if (mouse_in_rect(ar_x0, ar_y0, ar_x1, ar_y1) && current != dmax)
             {
-                ui().draw_textured_box(container(), ar_x0 + 0.01f, ar_y0, ar_x1 - 0.01f, ar_y1, UI_MOUSEOVER_BG_COLOR, new rgb_t(43, 43, 43),
+                ui().draw_textured_box(container(), ar_x0 + 0.01f, ar_y0, ar_x1 - 0.01f, ar_y1, ui().colors().mouseover_bg_color(), new rgb_t(43, 43, 43),
                         hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 set_hover(utils_global.HOVER_UI_RIGHT);
-                fgcolor_right = UI_MOUSEOVER_COLOR;
+                fgcolor_right = ui().colors().mouseover_color();
             }
             else if (mouse_in_rect(al_x0, al_y0, al_x1, al_y1) && current != dmin)
             {
-                ui().draw_textured_box(container(), al_x0 + 0.01f, al_y0, al_x1 - 0.01f, al_y1, UI_MOUSEOVER_BG_COLOR, new rgb_t(43, 43, 43),
+                ui().draw_textured_box(container(), al_x0 + 0.01f, al_y0, al_x1 - 0.01f, al_y1, ui().colors().mouseover_bg_color(), new rgb_t(43, 43, 43),
                         hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 set_hover(utils_global.HOVER_UI_LEFT);
-                fgcolor_left = UI_MOUSEOVER_COLOR;
+                fgcolor_left = ui().colors().mouseover_color();
             }
 
             // apply arrow
@@ -809,15 +809,15 @@ namespace mame.ui
         //-------------------------------------------------
         void draw_info_arrow(int ub, float origx1, float origx2, float oy1, float line_height, float text_size, float ud_arrow_width)
         {
-            rgb_t fgcolor = UI_TEXT_COLOR;
+            rgb_t fgcolor = ui().colors().text_color();
             UInt32 orientation = (ub == 0) ? ROT0 : ROT0 ^ ORIENTATION_FLIP_Y;
 
             if (mouse_in_rect(origx1, oy1, origx2, oy1 + (line_height * text_size)))
             {
-                ui().draw_textured_box(container(), origx1 + 0.01f, oy1, origx2 - 0.01f, oy1 + (line_height * text_size), UI_MOUSEOVER_BG_COLOR,
+                ui().draw_textured_box(container(), origx1 + 0.01f, oy1, origx2 - 0.01f, oy1 + (line_height * text_size), ui().colors().mouseover_bg_color(),
                         new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 set_hover((ub == 0) ? utils_global.HOVER_DAT_UP : utils_global.HOVER_DAT_DOWN);
-                fgcolor = UI_MOUSEOVER_COLOR;
+                fgcolor = ui().colors().mouseover_color();
             }
 
             draw_arrow(0.5f * (origx1 + origx2) - 0.5f * (ud_arrow_width * text_size), oy1 + 0.25f * (line_height * text_size),
@@ -846,7 +846,7 @@ namespace mame.ui
             // calculate line height
             float line_height = ui().get_line_height();
             float text_size = ui().options().infos_size();
-            float sc = y2 - y1 - (2.0f * UI_BOX_TB_BORDER);
+            float sc = y2 - y1 - (2.0f * ui().box_tb_border());
             float line_height_max = line_height * text_size;
             if (((float)machine_filter.type.COUNT * line_height_max) > sc)
             {
@@ -867,12 +867,12 @@ namespace mame.ui
             // outline the box and inset by the border width
             float origy1 = y1;
             float origy2 = y2;
-            x2 = x1 + left_width + 2.0f * UI_BOX_LR_BORDER;
-            ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
-            x1 += UI_BOX_LR_BORDER;
-            x2 -= UI_BOX_LR_BORDER;
-            y1 += UI_BOX_TB_BORDER;
-            y2 -= UI_BOX_TB_BORDER;
+            x2 = x1 + left_width + 2.0f * ui().box_lr_border();
+            ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
+            x1 += ui().box_lr_border();
+            x2 -= ui().box_lr_border();
+            y1 += ui().box_tb_border();
+            y2 -= ui().box_tb_border();
 
             // now draw the rows
             var active_filter = filters.find(current);
@@ -897,12 +897,12 @@ namespace mame.ui
                 }
 
                 // handle mouse hover in passing
-                rgb_t bgcolor = UI_TEXT_BG_COLOR;
-                rgb_t fgcolor = UI_TEXT_COLOR;
+                rgb_t bgcolor = ui().colors().text_bg_color();
+                rgb_t fgcolor = ui().colors().text_color();
                 if (mouse_in_rect(x1, y1, x2, y1 + line_height_max))
                 {
-                    bgcolor = UI_MOUSEOVER_BG_COLOR;
-                    fgcolor = UI_MOUSEOVER_COLOR;
+                    bgcolor = ui().colors().mouseover_bg_color();
+                    fgcolor = ui().colors().mouseover_color();
                     set_hover(utils_global.HOVER_FILTER_FIRST + (int)filter);
                     highlight(x1, y1, x2, y1 + line_height_max, bgcolor);
                 }
@@ -932,8 +932,8 @@ namespace mame.ui
                 y1 += line_height_max;
             }
 
-            x1 = x2 + UI_BOX_LR_BORDER;
-            x2 = x1 + 2.0f * UI_BOX_LR_BORDER;
+            x1 = x2 + ui().box_lr_border();
+            x2 = x1 + 2.0f * ui().box_lr_border();
             y1 = origy1;
             y2 = origy2;
             float space = x2 - x1;
@@ -947,15 +947,15 @@ namespace mame.ui
 
             ui().draw_outlined_box(container(), x1, y1, x2, y2, new rgb_t(0xef, 0x12, 0x47, 0x7b));
 
-            rgb_t fgcolor2 = UI_TEXT_COLOR;
+            rgb_t fgcolor2 = ui().colors().text_color();
             if (mouse_in_rect(x1, y1, x2, y2))
             {
-                fgcolor2 = UI_MOUSEOVER_COLOR;
+                fgcolor2 = ui().colors().mouseover_color();
                 set_hover(utils_global.HOVER_LPANEL_ARROW);
             }
 
             draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor2, ROT90 ^ ORIENTATION_FLIP_X);
-            return x2 + UI_BOX_LR_BORDER;
+            return x2 + ui().box_lr_border();
         }
 
 
@@ -1112,16 +1112,16 @@ namespace mame.ui
 
             ui().draw_outlined_box(container(), x1, y1, x2, y2, new rgb_t(0xef, 0x12, 0x47, 0x7b)); // FIXME: magic numbers in colour?
 
-            rgb_t fgcolor = UI_TEXT_COLOR;
+            rgb_t fgcolor = ui().colors().text_color();
             if (mouse_in_rect(x1, y1, x2, y2))
             {
-                fgcolor = UI_MOUSEOVER_COLOR;
+                fgcolor = ui().options().mouseover_color();
                 set_hover(utils_global.HOVER_LPANEL_ARROW);
             }
 
             draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
 
-            return x2 + UI_BOX_LR_BORDER;
+            return x2 + ui().box_lr_border();
         }
 
 
@@ -1221,7 +1221,7 @@ namespace mame.ui
                 return;
             }
 
-            origy1 += UI_BOX_TB_BORDER;
+            origy1 += ui().box_tb_border();
             float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
             float ud_arrow_width = line_height * machine().render().ui_aspect();
             float oy1 = origy1 + line_height;
@@ -1239,14 +1239,14 @@ namespace mame.ui
                         container(), name,
                         origx1, origy1, origx2 - origx1,
                         text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER,
-                        mame_ui_manager.draw_mode.NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+                        mame_ui_manager.draw_mode.NONE, ui().colors().text_color(), ui().colors().text_bg_color(),
                         out txt_length, out unused);
                 txt_length += 0.01f;
                 title_size = Math.Max(txt_length, title_size);
             }
 
-            rgb_t fgcolor = UI_TEXT_COLOR;
-            rgb_t bgcolor = UI_TEXT_BG_COLOR;
+            rgb_t fgcolor = ui().colors().text_color();
+            rgb_t bgcolor = ui().colors().text_bg_color();
             if (get_focus() == focused_menu.RIGHTBOTTOM)
             {
                 fgcolor = new rgb_t(0xff, 0xff, 0xff, 0x00);
@@ -1260,7 +1260,7 @@ namespace mame.ui
             float tmp_size = (sc > middle) ? ((middle - 2.0f * gutter_width) / sc) : 1.0f;
             title_size *= tmp_size;
 
-            if (bgcolor != UI_TEXT_BG_COLOR)
+            if (bgcolor != ui().colors().text_bg_color())
             {
                 ui().draw_textured_box(container(), origx1 + ((middle - title_size) * 0.5f), origy1, origx1 + ((middle + title_size) * 0.5f),
                         origy1 + line_height, bgcolor, new rgb_t(255, 43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
@@ -1341,14 +1341,14 @@ namespace mame.ui
                             container(), leftcol.c_str(),
                             origx1 + gutter_width, oy1, sc,
                             text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
-                            mame_ui_manager.draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+                            mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
                             out unused1, out unused2,
                             tmp_size3);
                     ui().draw_text_full(
                             container(), rightcol.c_str(),
                             origx1 + gutter_width, oy1, sc,
                             text_layout.text_justify.RIGHT, text_layout.word_wrapping.TRUNCATE,
-                            mame_ui_manager.draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+                            mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
                             out unused1, out unused2,
                             tmp_size3);
                 }
@@ -1361,7 +1361,7 @@ namespace mame.ui
                             container(), tempbuf.c_str(),
                             origx1 + gutter_width, oy1, origx2 - origx1,
                             text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
-                            mame_ui_manager.draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+                            mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
                             out unused1, out unused2,
                             tmp_size3);
                 }
@@ -1371,7 +1371,7 @@ namespace mame.ui
                             container(), tempbuf.c_str(),
                             origx1 + gutter_width, oy1, origx2 - origx1,
                             text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
-                            mame_ui_manager.draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+                            mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
                             out unused1, out unused2,
                             text_size);
                 }
@@ -1420,10 +1420,10 @@ namespace mame.ui
             ui().draw_outlined_box(container(), x1, y1, x2, y2, new rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
             // take off the borders
-            x1 += UI_BOX_LR_BORDER;
-            x2 -= UI_BOX_LR_BORDER;
-            y1 += UI_BOX_TB_BORDER;
-            y2 -= UI_BOX_TB_BORDER;
+            x1 += ui().box_lr_border();
+            x2 -= ui().box_lr_border();
+            y1 += ui().box_tb_border();
+            y2 -= ui().box_tb_border();
 
             texture_ptr_vector t_texture = m_is_swlist ? m_cache.sw_toolbar_texture() : m_cache.toolbar_texture();
             bitmap_vector t_bitmap = m_is_swlist ? m_cache.sw_toolbar_bitmap() : m_cache.toolbar_bitmap();
@@ -1447,8 +1447,8 @@ namespace mame.ui
                     {
                         set_hover(utils_global.HOVER_B_FAV + z);
                         color = rgb_t.white();
-                        float ypos = y2 + ui().get_line_height() + 2.0f * UI_BOX_TB_BORDER;
-                        ui().draw_text_box(container(), hover_msg[z], text_layout.text_justify.CENTER, 0.5f, ypos, UI_BACKGROUND_COLOR);
+                        float ypos = y2 + ui().get_line_height() + 2.0f * ui().box_tb_border();
+                        ui().draw_text_box(container(), hover_msg[z], text_layout.text_justify.CENTER, 0.5f, ypos, ui().colors().background_color());
                     }
 
                     container().add_quad(x1, y1, x2, y2, color, t_texture[z], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
@@ -1987,8 +1987,8 @@ namespace mame.ui
             float ud_arrow_width = line_height * machine().render().ui_aspect();
             float gutter_width = 0.52f * ud_arrow_width;
             float icon_offset = m_has_icons ? (1.5f * ud_arrow_width) : 0.0f;
-            float right_panel_size = (ui_globals.panels_status == utils_global.HIDE_BOTH || ui_globals.panels_status == utils_global.HIDE_RIGHT_PANEL) ? 2.0f * UI_BOX_LR_BORDER : 0.3f;
-            float visible_width = 1.0f - 4.0f * UI_BOX_LR_BORDER;
+            float right_panel_size = (ui_globals.panels_status == utils_global.HIDE_BOTH || ui_globals.panels_status == utils_global.HIDE_RIGHT_PANEL) ? 2.0f * ui().box_lr_border() : 0.3f;
+            float visible_width = 1.0f - 4.0f * ui().box_lr_border();
             float primary_left = (1.0f - visible_width) * 0.5f;
             float primary_width = visible_width;
 
@@ -2009,7 +2009,7 @@ namespace mame.ui
                 map_mouse();
 
             // account for extra space at the top and bottom
-            float visible_main_menu_height = 1.0f - 2.0f * UI_BOX_TB_BORDER - visible_extra_menu_height;
+            float visible_main_menu_height = 1.0f - 2.0f * ui().box_tb_border() - visible_extra_menu_height;
             m_visible_lines = (int)(Math.Truncate(visible_main_menu_height / line_height));
             visible_main_menu_height = (float)m_visible_lines * line_height;
 
@@ -2026,20 +2026,20 @@ namespace mame.ui
             visible_top += get_customtop();
 
             // compute left box size
-            float x1 = visible_left - UI_BOX_LR_BORDER;
-            float y1 = visible_top - UI_BOX_TB_BORDER;
-            float x2 = x1 + 2.0f * UI_BOX_LR_BORDER;
-            float y2 = visible_top + visible_main_menu_height + UI_BOX_TB_BORDER + extra_height;
+            float x1 = visible_left - ui().box_lr_border();
+            float y1 = visible_top - ui().box_tb_border();
+            float x2 = x1 + 2.0f * ui().box_lr_border();
+            float y2 = visible_top + visible_main_menu_height + ui().box_tb_border() + extra_height;
 
             // add left box
             visible_left = draw_left_panel(x1, y1, x2, y2);
-            visible_width -= right_panel_size + visible_left - 2.0f * UI_BOX_LR_BORDER;
+            visible_width -= right_panel_size + visible_left - 2.0f * ui().box_lr_border();
 
             // compute and add main box
-            x1 = visible_left - UI_BOX_LR_BORDER;
-            x2 = visible_left + visible_width + UI_BOX_LR_BORDER;
+            x1 = visible_left - ui().box_lr_border();
+            x2 = visible_left + visible_width + ui().box_lr_border();
             float line = visible_top + ((float)m_visible_lines * line_height);
-            ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+            ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
             if (visible_items < m_visible_lines)
                 m_visible_lines = visible_items;
@@ -2062,9 +2062,9 @@ namespace mame.ui
                 int itemnum = top_line + linenum;
                 menu_item pitem = item(itemnum);
                 string itemtext = pitem.text.c_str();
-                rgb_t fgcolor = UI_TEXT_COLOR;
-                rgb_t bgcolor = UI_TEXT_BG_COLOR;
-                rgb_t fgcolor3 = UI_CLONE_COLOR;
+                rgb_t fgcolor = ui().colors().text_color();
+                rgb_t bgcolor = ui().colors().text_bg_color();
+                rgb_t fgcolor3 = ui().colors().clone_color();
                 float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
                 float line_y0 = line_y;
                 float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
@@ -2089,14 +2089,14 @@ namespace mame.ui
                 else if (itemnum == hover())
                 {
                     // else if the mouse is over this item, draw with a different background
-                    fgcolor = fgcolor3 = UI_MOUSEOVER_COLOR;
-                    bgcolor = UI_MOUSEOVER_BG_COLOR;
+                    fgcolor = fgcolor3 = ui().options().mouseover_color();
+                    bgcolor = ui().colors().mouseover_bg_color();
                     highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
                 }
                 else if (pitem.ref_ == m_prev_selected)
                 {
-                    fgcolor = fgcolor3 = UI_MOUSEOVER_COLOR;
-                    bgcolor = UI_MOUSEOVER_BG_COLOR;
+                    fgcolor = fgcolor3 = ui().options().mouseover_color();
+                    bgcolor = ui().colors().mouseover_bg_color();
                     ui().draw_textured_box(container(), line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, bgcolor, new rgb_t(43, 43, 43),
                             hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
@@ -2123,7 +2123,7 @@ namespace mame.ui
                 {
                     // if we're just a divider, draw a line
                     container().add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height,
-                            UI_LINE_WIDTH, UI_TEXT_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                 }
                 else if (pitem.subtext.empty())
                 {
@@ -2192,8 +2192,8 @@ namespace mame.ui
                 float line_y0 = line;
                 float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
                 float line_y1 = line + line_height;
-                rgb_t fgcolor = UI_TEXT_COLOR;
-                rgb_t bgcolor = UI_TEXT_BG_COLOR;
+                rgb_t fgcolor = ui().colors().text_color();
+                rgb_t bgcolor = ui().colors().text_bg_color();
 
                 if (mouse_in_rect(line_x0, line_y0, line_x1, line_y1) && is_selectable(pitem))
                     set_hover((int)count);
@@ -2209,15 +2209,15 @@ namespace mame.ui
                 // else if the mouse is over this item, draw with a different background
                 else if (count == hover())
                 {
-                    fgcolor = UI_MOUSEOVER_COLOR;
-                    bgcolor = UI_MOUSEOVER_BG_COLOR;
+                    fgcolor = ui().options().mouseover_color();
+                    bgcolor = ui().colors().mouseover_bg_color();
                     highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
                 }
 
                 if (pitem.type == menu_item_type.SEPARATOR)
                 {
                     container().add_line(visible_left, line + 0.5f * line_height, visible_left + visible_width, line + 0.5f * line_height,
-                            UI_LINE_WIDTH, UI_TEXT_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                 }
                 else
                 {
@@ -2234,8 +2234,8 @@ namespace mame.ui
 
             draw_right_panel(x1, y1, x2, y2);
 
-            x1 = primary_left - UI_BOX_LR_BORDER;
-            x2 = primary_left + primary_width + UI_BOX_LR_BORDER;
+            x1 = primary_left - ui().box_lr_border();
+            x2 = primary_left + primary_width + ui().box_lr_border();
 
             // if there is something special to add, do it by calling the virtual method
             custom_render(get_selection_ref(), get_customtop(), get_custombottom(), x1, y1, x2, y2);
@@ -2263,7 +2263,7 @@ namespace mame.ui
         void draw_right_panel(float origx1, float origy1, float origx2, float origy2)
         {
             bool hide = (ui_globals.panels_status == utils_global.HIDE_RIGHT_PANEL) || (ui_globals.panels_status == utils_global.HIDE_BOTH);
-            float x2 = hide ? origx2 : (origx1 + 2.0f * UI_BOX_LR_BORDER);
+            float x2 = hide ? origx2 : (origx1 + 2.0f * ui().box_lr_border());
             float space = x2 - origx1;
             float lr_arrow_width = 0.4f * space * machine().render().ui_aspect();
 
@@ -2275,10 +2275,10 @@ namespace mame.ui
 
             ui().draw_outlined_box(container(), origx1, origy1, origx2, origy2, new rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
-            rgb_t fgcolor = UI_TEXT_COLOR;
+            rgb_t fgcolor = ui().colors().text_color();
             if (mouse_in_rect(origx1, origy1, x2, origy2))
             {
-                fgcolor = UI_MOUSEOVER_COLOR;
+                fgcolor = ui().options().mouseover_color();
                 set_hover(utils_global.HOVER_RPANEL_ARROW);
             }
 
@@ -2307,10 +2307,10 @@ namespace mame.ui
             float midl = (x2 - x1) * 0.5f;
 
             // add outlined box for options
-            ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+            ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
             // add separator line
-            container().add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container().add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
             string [] buffer = new string[utils_global.RP_LAST + 1];
             buffer[utils_global.RP_IMAGES] = "Images";
@@ -2327,15 +2327,15 @@ namespace mame.ui
 
             for (int cells = utils_global.RP_FIRST; cells <= utils_global.RP_LAST; ++cells)
             {
-                rgb_t bgcolor = UI_TEXT_BG_COLOR;
-                rgb_t fgcolor = UI_TEXT_COLOR;
+                rgb_t bgcolor = ui().colors().text_bg_color();
+                rgb_t fgcolor = ui().colors().text_color();
 
                 if (mouse_in_rect(x1, y1, x1 + midl, y1 + line_height))
                 {
                     if (ui_globals.rpanel != cells)
                     {
-                        bgcolor = UI_MOUSEOVER_BG_COLOR;
-                        fgcolor = UI_MOUSEOVER_COLOR;
+                        bgcolor = ui().colors().mouseover_bg_color();
+                        fgcolor = ui().options().mouseover_color();
                         set_hover(utils_global.HOVER_RP_FIRST + cells);
                     }
                 }
@@ -2343,9 +2343,9 @@ namespace mame.ui
                 if (ui_globals.rpanel != cells)
                 {
                     container().add_line(x1, y1 + line_height, x1 + midl, y1 + line_height, UI_LINE_WIDTH,
-                            UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                    if (fgcolor != UI_MOUSEOVER_COLOR)
-                        fgcolor = UI_CLONE_COLOR;
+                            ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                    if (fgcolor != ui().colors().mouseover_color())
+                        fgcolor = ui().colors().clone_color();
                 }
 
                 if (m_focus == focused_menu.RIGHTTOP && ui_globals.rpanel == cells)
@@ -2355,7 +2355,7 @@ namespace mame.ui
                     ui().draw_textured_box(container(), x1 + UI_LINE_WIDTH, y1 + UI_LINE_WIDTH, x1 + midl - UI_LINE_WIDTH, y1 + line_height,
                             bgcolor, new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
-                else if (bgcolor == UI_MOUSEOVER_BG_COLOR)
+                else if (bgcolor == ui().colors().mouseover_bg_color())
                 {
                     container().add_rect(x1 + UI_LINE_WIDTH, y1 + UI_LINE_WIDTH, x1 + midl - UI_LINE_WIDTH, y1 + line_height,
                             bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
@@ -2549,8 +2549,8 @@ namespace mame.ui
                 title_size = Math.Max(text_length + 0.01f, title_size);
             }
 
-            rgb_t fgcolor = (m_focus == focused_menu.RIGHTBOTTOM) ? new rgb_t(0xff, 0xff, 0x00) : UI_TEXT_COLOR;
-            rgb_t bgcolor = (m_focus == focused_menu.RIGHTBOTTOM) ? new rgb_t(0xff, 0xff, 0xff) : UI_TEXT_BG_COLOR;
+            rgb_t fgcolor = (m_focus == focused_menu.RIGHTBOTTOM) ? new rgb_t(0xff, 0xff, 0x00) : ui().colors().text_color();
+            rgb_t bgcolor = (m_focus == focused_menu.RIGHTBOTTOM) ? new rgb_t(0xff, 0xff, 0xff) : ui().colors().text_bg_color();
             float middle = origx2 - origx1;
 
             // check size
@@ -2558,12 +2558,12 @@ namespace mame.ui
             float tmp_size = (sc > middle) ? ((middle - 2.0f * gutter_width) / sc) : 1.0f;
             title_size *= tmp_size;
 
-            if (bgcolor != UI_TEXT_BG_COLOR)
+            if (bgcolor != ui().colors().text_bg_color())
             {
                 ui().draw_textured_box(
                         container(),
-                        origx1 + ((middle - title_size) * 0.5f), origy1 + UI_BOX_TB_BORDER,
-                        origx1 + ((middle + title_size) * 0.5f), origy1 + UI_BOX_TB_BORDER + line_height,
+                        origx1 + ((middle - title_size) * 0.5f), origy1 + ui().box_tb_border(),
+                        origx1 + ((middle + title_size) * 0.5f), origy1 + ui().box_tb_border() + line_height,
                         bgcolor, new rgb_t(43, 43, 43),
                         hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
             }
@@ -2571,11 +2571,11 @@ namespace mame.ui
             float unused1;
             float unused2;
             ui().draw_text_full(container(),
-                    snaptext.c_str(), origx1, origy1 + UI_BOX_TB_BORDER, origx2 - origx1,
+                    snaptext.c_str(), origx1, origy1 + ui().box_tb_border(), origx2 - origx1,
                     text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
                     out unused1, out unused2, tmp_size);
 
-            draw_common_arrow(origx1, origy1 + UI_BOX_TB_BORDER, origx2, origy2, m_image_view, FIRST_VIEW, LAST_VIEW, title_size);
+            draw_common_arrow(origx1, origy1 + ui().box_tb_border(), origx2, origy2, m_image_view, FIRST_VIEW, LAST_VIEW, title_size);
 
             return searchstr;
         }
@@ -2613,7 +2613,7 @@ namespace mame.ui
             if (tmp_bitmap.valid())
             {
                 float panel_width = origx2 - origx1 - 0.02f;
-                float panel_height = origy2 - origy1 - 0.02f - (3.0f * UI_BOX_TB_BORDER) - (2.0f * line_height);
+                float panel_height = origy2 - origy1 - 0.02f - (3.0f * ui().box_tb_border()) - (2.0f * line_height);
                 int screen_width = machine().render().ui_target().width();
                 int screen_height = machine().render().ui_target().height();
 
@@ -2702,8 +2702,8 @@ namespace mame.ui
                 float line_height = ui().get_line_height();
                 float x1 = origx1 + 0.01f;
                 float x2 = origx2 - 0.01f;
-                float y1 = origy1 + (2.0f * UI_BOX_TB_BORDER) + line_height;
-                float y2 = origy2 - UI_BOX_TB_BORDER - line_height;
+                float y1 = origy1 + (2.0f * ui().box_tb_border()) + line_height;
+                float y2 = origy2 - ui().box_tb_border() - line_height;
 
                 // apply texture
                 container().add_quad(x1, y1, x2, y2, rgb_t.white(), m_cache.snapx_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));

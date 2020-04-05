@@ -189,7 +189,8 @@ namespace mame
         uint8_t       m_dbbi;               /* 8-bit input data buffer (UPI-41 only) */
         uint8_t       m_dbbo;               /* 8-bit output data buffer (UPI-41 only) */
 
-        bool          m_irq_state;          /* true if an IRQ is pending */
+        bool          m_irq_state;          /* true if the IRQ line is active */
+        bool          m_irq_polled;         /* true if last instruction was JNI (and not taken) */
         bool          m_irq_in_progress;    /* true if an IRQ is in progress */
         bool          m_timer_overflow;     /* true on a timer overflow; cleared by taking interrupt */
         bool          m_timer_flag;         /* true on a timer overflow; cleared on JTF */
@@ -391,8 +392,8 @@ namespace mame
         int jf0()            { execute_jcc((m_psw & F_FLAG) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
         int jf1()            { execute_jcc((m_sts & STS_F1) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
         int jnc()            { execute_jcc((m_psw & C_FLAG) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jni()            { execute_jcc(m_irq_state ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jnibf()          { execute_jcc((m_sts & STS_IBF) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
+        int jni()            { m_irq_polled = m_irq_state == false; execute_jcc(m_irq_state ? (uint8_t)1 : (uint8_t)0); return 2; }
+        int jnibf()          { m_irq_polled = (m_sts & STS_IBF) != 0; execute_jcc((m_sts & STS_IBF) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
         int jnt_0()          { execute_jcc(test_r(0) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
         int jnt_1()          { execute_jcc(test_r(1) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
         int jnz()            { execute_jcc(m_a != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
@@ -770,6 +771,7 @@ namespace mame
             m_dbbi = 0;
             m_dbbo = 0;
             m_irq_state = false;
+            m_irq_polled = false;
 
             /* FIXME: Current implementation suboptimal */
             m_ea = m_int_rom_size != 0 ? (uint8_t)0 : (uint8_t)1;
@@ -841,6 +843,7 @@ namespace mame
             save_item(m_dbbo, "m_dbbo");
 
             save_item(m_irq_state, "m_irq_state");
+            save_item(m_irq_polled, "m_irq_polled");
             save_item(m_irq_in_progress, "m_irq_in_progress");
             save_item(m_timer_overflow, "m_timer_overflow");
             save_item(m_timer_flag, "m_timer_flag");
@@ -927,6 +930,7 @@ namespace mame
 
                 /* fetch next opcode */
                 m_prevpc = m_pc;
+                m_irq_polled = false;
                 debugger_instruction_hook(m_pc);
                 opcode = opcode_fetch();
 
@@ -1205,6 +1209,10 @@ namespace mame
             if ((m_irq_state || (m_sts & STS_IBF) != 0) && m_xirq_enabled)
             {
                 m_irq_in_progress = true;
+
+                // force JNI to be taken (hack)
+                if (m_irq_polled)
+                    m_pc = (uint16_t)(((m_pc - 1) & 0xf00) | m_cache.read_byte(m_pc - 1U));
 
                 /* transfer to location 0x03 */
                 push_pc_psw();

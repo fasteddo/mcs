@@ -27,20 +27,6 @@ namespace mame
     public delegate void texture_scaler_func(bitmap_argb32 dest, bitmap_argb32 source, rectangle sbounds, layout_element.texture param); //, void *param);
 
 
-    public enum item_layer
-    {
-        ITEM_LAYER_FIRST = 0,
-        ITEM_LAYER_BACKDROP = ITEM_LAYER_FIRST,
-        ITEM_LAYER_SCREEN,
-        ITEM_LAYER_OVERLAY,
-        ITEM_LAYER_BEZEL,
-        ITEM_LAYER_CPANEL,
-        ITEM_LAYER_MARQUEE,
-        ITEM_LAYER_MAX
-    }
-    //DECLARE_ENUM_INCDEC_OPERATORS(item_layer)
-
-
     public static class render_global
     {
         // blending modes
@@ -170,23 +156,6 @@ namespace mame
         };
 
 
-        // layer orders
-        static readonly KeyValuePair<item_layer, int> [] layer_order_standard = new KeyValuePair<item_layer, int> [] {
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_SCREEN,    -1 ), // FIXME: invalid blend mode - we're relying on the goodness of the OSD
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_OVERLAY,   BLENDMODE_RGB_MULTIPLY ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BACKDROP,  BLENDMODE_ADD ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BEZEL,     BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_CPANEL,    BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_MARQUEE,   BLENDMODE_ALPHA ) };
-        static readonly KeyValuePair<item_layer, int> [] layer_order_alternate = new KeyValuePair<item_layer, int> [] {
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BACKDROP,  BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_SCREEN,    BLENDMODE_ADD ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_OVERLAY,   BLENDMODE_RGB_MULTIPLY ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_BEZEL,     BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_CPANEL,    BLENDMODE_ALPHA ),
-                new KeyValuePair<item_layer, int>( item_layer.ITEM_LAYER_MARQUEE,   BLENDMODE_ALPHA ) };
-
-
         //-------------------------------------------------
         //  apply_orientation - apply orientation to a
         //  set of bounds
@@ -226,25 +195,6 @@ namespace mame
                 std.swap(ref bounds.x0, ref bounds.x1);
             if (bounds.y0 > bounds.y1)
                 std.swap(ref bounds.y0, ref bounds.y1);
-        }
-
-
-        //-------------------------------------------------
-        //  get_layer_and_blendmode - return the
-        //  appropriate layer index and blendmode
-        //-------------------------------------------------
-        public static item_layer get_layer_and_blendmode(layout_view view, int index, out int blendmode)
-        {
-            //  if we have multiple backdrop pieces and no overlays, render:
-            //      backdrop (add) + screens (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
-            //  else render:
-            //      screens (add) + overlays (RGB multiply) + backdrop (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
-
-            KeyValuePair<item_layer, int> [] layer_order = (((view.items(item_layer.ITEM_LAYER_BACKDROP).size() > 1) && view.items(item_layer.ITEM_LAYER_OVERLAY).empty()) ? layer_order_alternate : layer_order_standard);
-
-            // select the layer and blend mode
-            blendmode = layer_order[index].second();
-            return layer_order[index].first();
         }
     }
 
@@ -394,14 +344,9 @@ namespace mame
     // render_layer_config - describes the state of layers
     public class render_layer_config
     {
-        const u8 ENABLE_BACKDROP          = 0x01; // enable backdrop layers
-        const u8 ENABLE_OVERLAY           = 0x02; // enable overlay layers
-        const u8 ENABLE_BEZEL             = 0x04; // enable bezel layers
-        const u8 ENABLE_CPANEL            = 0x08; // enable cpanel layers
-        const u8 ENABLE_MARQUEE           = 0x10; // enable marquee layers
-        const u8 ZOOM_TO_SCREEN           = 0x20; // zoom to screen area by default
-        const u8 ENABLE_SCREEN_OVERLAY    = 0x40; // enable screen overlays
-        const u8 DEFAULT = ENABLE_BACKDROP | ENABLE_OVERLAY | ENABLE_BEZEL | ENABLE_CPANEL | ENABLE_MARQUEE | ENABLE_SCREEN_OVERLAY;
+        const u8 ZOOM_TO_SCREEN           = 0x01; // zoom to screen area by default
+        const u8 ENABLE_SCREEN_OVERLAY    = 0x02; // enable screen overlays
+        const u8 DEFAULT = ENABLE_SCREEN_OVERLAY;
 
 
         u8 m_state = DEFAULT;
@@ -422,20 +367,10 @@ namespace mame
         //bool operator!=(const render_layer_config &rhs) const { return m_state != rhs.m_state; }
 
 
-        public bool backdrops_enabled() { return (m_state & ENABLE_BACKDROP) != 0; }
-        public bool overlays_enabled() { return (m_state & ENABLE_OVERLAY) != 0; }
-        public bool bezels_enabled() { return (m_state & ENABLE_BEZEL) != 0; }
-        public bool cpanels_enabled() { return (m_state & ENABLE_CPANEL) != 0; }
-        public bool marquees_enabled() { return (m_state & ENABLE_MARQUEE) != 0; }
         public bool screen_overlay_enabled() { return (m_state & ENABLE_SCREEN_OVERLAY) != 0; }
         public bool zoom_to_screen() { return (m_state & ZOOM_TO_SCREEN) != 0; }
 
 
-        public render_layer_config set_backdrops_enabled(bool enable)         { return set_flag(ENABLE_BACKDROP, enable); }
-        public render_layer_config set_overlays_enabled(bool enable)          { return set_flag(ENABLE_OVERLAY, enable); }
-        public render_layer_config set_bezels_enabled(bool enable)            { return set_flag(ENABLE_BEZEL, enable); }
-        public render_layer_config set_cpanels_enabled(bool enable)           { return set_flag(ENABLE_CPANEL, enable); }
-        public render_layer_config set_marquees_enabled(bool enable)          { return set_flag(ENABLE_MARQUEE, enable); }
         public render_layer_config set_screen_overlay_enabled(bool enable)    { return set_flag(ENABLE_SCREEN_OVERLAY, enable); }
         public render_layer_config set_zoom_to_screen(bool zoom)              { return set_flag(ZOOM_TO_SCREEN, zoom); }
     }
@@ -807,8 +742,9 @@ namespace mame
             //assert(bitmap.cliprect().contains(sbounds));
 
             // ensure we have a valid palette for palettized modes
-            if (format == texture_format.TEXFORMAT_PALETTE16 || format == texture_format.TEXFORMAT_PALETTEA16)
+            if (format == texture_format.TEXFORMAT_PALETTE16)
             {
+                //throw new emu_unimplemented();
                 //assert(bitmap.palette() != NULL);
             }
 
@@ -959,7 +895,6 @@ namespace mame
             switch (m_format)
             {
                 case texture_format.TEXFORMAT_PALETTE16:
-                case texture_format.TEXFORMAT_PALETTEA16:
 
                     assert(m_bitmap.palette() != null);
 
@@ -1261,7 +1196,6 @@ namespace mame
             switch (texformat)
             {
                 case texture_format.TEXFORMAT_PALETTE16:
-                case texture_format.TEXFORMAT_PALETTEA16:
                     if (m_palclient == null) // if adjusted palette hasn't been created yet, create it
                     {
                         m_palclient = new palette_client(palette);
@@ -1649,6 +1583,7 @@ namespace mame
         //using group_map = std::unordered_map<std::string, layout_group>;
         //using item_list = std::list<item>;
 
+
         /// \brief A single backdrop/screen/overlay/bezel/cpanel/marquee item
         ///
         /// Each view has four lists of view_items, one for each "layer."
@@ -1668,6 +1603,7 @@ namespace mame
             bool m_have_output;      // whether we actually have an output
             string m_input_tag;        // input tag of this item
             ioport_port m_input_port;       // input port of this item
+            ioport_field m_input_field;      // input port field of this item
             ioport_value m_input_mask;       // input mask of this item
             u8 m_input_shift;      // input mask rightshift for raw (trailing 0s)
             bool m_input_raw;        // get raw data from input port
@@ -1676,6 +1612,7 @@ namespace mame
             render_bounds m_bounds = new render_bounds();           // bounds of the item
             render_bounds m_rawbounds = new render_bounds();        // raw (original) bounds of the item
             render_color m_color = new render_color();            // color of the item
+            int m_blend_mode;       // blending mode to use when drawing
 
 
             // rendlay.cs
@@ -1694,15 +1631,27 @@ namespace mame
             public render_bounds bounds() { return m_bounds; }
             public render_bounds rawbounds() { return m_rawbounds; }
             public render_color color() { return m_color; }
+            public int blend_mode() { return m_blend_mode; }
             public int orientation() { return m_orientation; }
             //render_container *screen_container(running_machine &machine) const;
-            public bool has_input() { return !string.IsNullOrEmpty(m_input_tag); }
+            public bool has_input() { return m_input_port != null; }
             public ioport_port input_tag_and_mask(out ioport_value mask) { mask = m_input_mask; return m_input_port; }
 
 
             // rendlay.cs
             //public int state()
             //public void resolve_tags()
+
+
+            // setters
+            public void set_blend_mode(int mode) { m_blend_mode = mode; }
+
+
+            // rendlay.cs
+            //static layout_element find_element(environment env, util.xml.data_node itemnode, element_map elemmap);
+            //static render_bounds make_bounds(environment env, util.xml.data_node itemnode, float [,] trans);  //layout_group.transform trans
+            //static string make_input_tag(environment env, util.xml.data_node itemnode);
+            //static int get_blend_mode(environment env, util.xml.data_node itemnode);
         }
 
 
@@ -1714,13 +1663,8 @@ namespace mame
         render_bounds m_bounds = new render_bounds();           // computed bounds of the view
         render_bounds m_scrbounds = new render_bounds();        // computed bounds of the screens within the view
         render_bounds m_expbounds = new render_bounds();        // explicit bounds of the view
-        bool [] m_layenabled = new bool[(int)item_layer.ITEM_LAYER_MAX]; // is this layer enabled?
-        item_list m_backdrop_list = new item_list();    // list of backdrop items
-        item_list m_screen_list = new item_list();      // list of screen items
-        item_list m_overlay_list = new item_list();     // list of overlay items
-        item_list m_bezel_list = new item_list();       // list of bezel items
-        item_list m_cpanel_list = new item_list();      // list of marquee items
-        item_list m_marquee_list = new item_list();     // list of marquee items
+        item_list m_items;            // list of layout items
+        bool m_has_art;          // true if the layout contains non-screen elements
 
 
         //static const simple_list<item> s_null_list;
@@ -1736,15 +1680,14 @@ namespace mame
 
         // getters
 
-        // rendlay.cs
-        //public List<item> items(item_layer layer)  // item_list &items(item_layer layer)
-
+        public item_list items() { return m_items; }
         public string name() { return m_name; }
+        //render_bounds bounds() { return m_bounds; }
+        //render_bounds screen_bounds() { return m_scrbounds; }
         public render_screen_list screens() { return m_screens; }
-        public bool layer_enabled(item_layer layer) { return m_layenabled[(int)layer]; }
 
         //
-        public bool has_art() { return !m_backdrop_list.empty() || !m_overlay_list.empty() || !m_bezel_list.empty() || !m_cpanel_list.empty() || !m_marquee_list.empty(); }
+        public bool has_art() { return m_has_art; }
 
         public float effective_aspect(render_layer_config config) { return (config.zoom_to_screen() && m_screens.count() != 0) ? m_scraspect : m_aspect; }
 
@@ -1754,13 +1697,13 @@ namespace mame
         // rendlay.cs
         //public void recompute(render_layer_config layerconfig)
 
-
         // rendlay.cs
         //public void resolve_tags()
 
-
+        // rendlay.cs
         // add items, recursing for groups
         //void add_items(
+        //        layer_lists &layers,
         //        environment &env,
         //        util::xml::data_node const &parentnode,
         //        element_map &elemmap,
@@ -1772,6 +1715,7 @@ namespace mame
         //        bool repeat,
         //        bool init);
 
+        // rendlay.cs
         //static std::string make_name(environment &env, util::xml::data_node const &viewnode);
     }
 
@@ -1890,11 +1834,6 @@ namespace mame
 
 
             // determine the base layer configuration based on options
-            m_base_layerconfig.set_backdrops_enabled(manager.machine().options().use_backdrops());
-            m_base_layerconfig.set_overlays_enabled(manager.machine().options().use_overlays());
-            m_base_layerconfig.set_bezels_enabled(manager.machine().options().use_bezels());
-            m_base_layerconfig.set_cpanels_enabled(manager.machine().options().use_cpanels());
-            m_base_layerconfig.set_marquees_enabled(manager.machine().options().use_marquees());
             m_base_layerconfig.set_zoom_to_screen(manager.machine().options().artwork_crop());
 
             // aspect and scale options
@@ -2021,21 +1960,11 @@ namespace mame
 
 
         // layer config getters
-        //bool backdrops_enabled() const { return m_layerconfig.backdrops_enabled(); }
-        //bool overlays_enabled() const { return m_layerconfig.overlays_enabled(); }
-        //bool bezels_enabled() const { return m_layerconfig.bezels_enabled(); }
-        //bool cpanels_enabled() const { return m_layerconfig.cpanels_enabled(); }
-        //bool marquees_enabled() const { return m_layerconfig.marquees_enabled(); }
         //bool screen_overlay_enabled() const { return m_layerconfig.screen_overlay_enabled(); }
         //bool zoom_to_screen() const { return m_layerconfig.zoom_to_screen(); }
 
 
         // layer config setters
-        public void set_backdrops_enabled(bool enable) { m_layerconfig.set_backdrops_enabled(enable); update_layer_config(); }
-        public void set_overlays_enabled(bool enable) { m_layerconfig.set_overlays_enabled(enable); update_layer_config(); }
-        public void set_bezels_enabled(bool enable) { m_layerconfig.set_bezels_enabled(enable); update_layer_config(); }
-        public void set_cpanels_enabled(bool enable) { m_layerconfig.set_cpanels_enabled(enable); update_layer_config(); }
-        public void set_marquees_enabled(bool enable) { m_layerconfig.set_marquees_enabled(enable); update_layer_config(); }
         public void set_screen_overlay_enabled(bool enable) { m_layerconfig.set_screen_overlay_enabled(enable); update_layer_config(); }
         public void set_zoom_to_screen(bool zoom) { m_layerconfig.set_zoom_to_screen(zoom); update_layer_config(); }
 
@@ -2264,41 +2193,38 @@ namespace mame
                 throw new emu_fatalerror("Mandatory artwork is missing");
 
             // scan the current view for all screens
-            for (item_layer layer = item_layer.ITEM_LAYER_FIRST; layer < item_layer.ITEM_LAYER_MAX; ++layer)
+            foreach (layout_view.item curitem in m_curview.items())
             {
                 // iterate over items in the layer
-                foreach (layout_view.item curitem in m_curview.items(layer))
+                if (curitem.screen() != null)
                 {
-                    if (curitem.screen() != null)
+                    // use a hard-coded default visible area for vector screens
+                    screen_device screen = curitem.screen();
+                    rectangle vectorvis = new rectangle(0, 639, 0, 479);
+                    rectangle visarea = (screen.screen_type() == screen_type_enum.SCREEN_TYPE_VECTOR) ? vectorvis : screen.visible_area();
+
+                    // apply target orientation to the bounds
+                    render_bounds bounds = curitem.bounds();
+                    render_global.apply_orientation(bounds, m_orientation);
+                    render_global.normalize_bounds(bounds);
+
+                    // based on the orientation of the screen container, check the bitmap
+                    float xscale, yscale;
+                    if ((rendutil_global.orientation_add(m_orientation, screen.container().orientation()) & ORIENTATION_SWAP_XY) == 0)
                     {
-                        // use a hard-coded default visible area for vector screens
-                        screen_device screen = curitem.screen();
-                        rectangle vectorvis = new rectangle(0, 639, 0, 479);
-                        rectangle visarea = (screen.screen_type() == screen_type_enum.SCREEN_TYPE_VECTOR) ? vectorvis : screen.visible_area();
-
-                        // apply target orientation to the bounds
-                        render_bounds bounds = curitem.bounds();
-                        render_global.apply_orientation(bounds, m_orientation);
-                        render_global.normalize_bounds(bounds);
-
-                        // based on the orientation of the screen container, check the bitmap
-                        float xscale, yscale;
-                        if ((rendutil_global.orientation_add(m_orientation, screen.container().orientation()) & emucore_global.ORIENTATION_SWAP_XY) == 0)
-                        {
-                            xscale = (float)visarea.width() / bounds.width();
-                            yscale = (float)visarea.height() / bounds.height();
-                        }
-                        else
-                        {
-                            xscale = (float)visarea.height() / bounds.width();
-                            yscale = (float)visarea.width() / bounds.height();
-                        }
-
-                        // pick the greater
-                        maxxscale = Math.Max(xscale, maxxscale);
-                        maxyscale = Math.Max(yscale, maxyscale);
-                        screens_considered++;
+                        xscale = (float)visarea.width() / bounds.width();
+                        yscale = (float)visarea.height() / bounds.height();
                     }
+                    else
+                    {
+                        xscale = (float)visarea.height() / bounds.width();
+                        yscale = (float)visarea.width() / bounds.height();
+                    }
+
+                    // pick the greater
+                    maxxscale = std.max(xscale, maxxscale);
+                    maxyscale = std.max(yscale, maxyscale);
+                    screens_considered++;
                 }
             }
 
@@ -2350,44 +2276,35 @@ namespace mame
             root_xform.orientation = m_orientation;
             root_xform.no_center = false;
 
-            // iterate over layers back-to-front, but only if we're running
+            // iterate over items in the view, but only if we're running
             if (m_manager.machine().phase() >= machine_phase.RESET)
             {
-                for (item_layer layernum = item_layer.ITEM_LAYER_FIRST; layernum < item_layer.ITEM_LAYER_MAX; layernum++)
+                foreach (layout_view.item curitem in m_curview.items())
                 {
-                    int blendmode;
-                    item_layer layer = render_global.get_layer_and_blendmode(m_curview, (int)layernum, out blendmode);
-                    if (m_curview.layer_enabled(layer))
-                    {
-                        // iterate over items in the layer
-                        foreach (layout_view.item curitem in m_curview.items(layer))
-                        {
-                            // first apply orientation to the bounds
-                            render_bounds bounds = curitem.bounds();
-                            render_global.apply_orientation(bounds, root_xform.orientation);
-                            render_global.normalize_bounds(bounds);
+                    // first apply orientation to the bounds
+                    render_bounds bounds = curitem.bounds();
+                    render_global.apply_orientation(bounds, root_xform.orientation);
+                    render_global.normalize_bounds(bounds);
 
-                            // apply the transform to the item
-                            object_transform item_xform = new object_transform();
-                            item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
-                            item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
-                            item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
-                            item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
-                            item_xform.color = new render_color();
-                            item_xform.color.r = curitem.color().r * root_xform.color.r;
-                            item_xform.color.g = curitem.color().g * root_xform.color.g;
-                            item_xform.color.b = curitem.color().b * root_xform.color.b;
-                            item_xform.color.a = curitem.color().a * root_xform.color.a;
-                            item_xform.orientation = rendutil_global.orientation_add(curitem.orientation(), root_xform.orientation);
-                            item_xform.no_center = false;
+                    // apply the transform to the item
+                    object_transform item_xform = new object_transform();
+                    item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
+                    item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
+                    item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
+                    item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
+                    item_xform.color = new render_color();
+                    item_xform.color.r = curitem.color().r * root_xform.color.r;
+                    item_xform.color.g = curitem.color().g * root_xform.color.g;
+                    item_xform.color.b = curitem.color().b * root_xform.color.b;
+                    item_xform.color.a = curitem.color().a * root_xform.color.a;
+                    item_xform.orientation = rendutil_global.orientation_add(curitem.orientation(), root_xform.orientation);
+                    item_xform.no_center = false;
 
-                            // if there is no associated element, it must be a screen element
-                            if (curitem.screen() != null)
-                                add_container_primitives(list, root_xform, item_xform, curitem.screen().container(), blendmode);
-                            else
-                                add_element_primitives(list, item_xform, curitem.element(), curitem.state(), blendmode);
-                        }
-                    }
+                    // if there is no associated element, it must be a screen element
+                    if (curitem.screen() != null)
+                        add_container_primitives(list, root_xform, item_xform, curitem.screen().container(), curitem.blend_mode());
+                    else
+                        add_element_primitives(list, item_xform, curitem.element(), curitem.state(), curitem.blend_mode());
                 }
             }
 
@@ -3304,36 +3221,27 @@ namespace mame
                 return false;
             }
 
-            // loop through each layer
-            for (item_layer layernum = item_layer.ITEM_LAYER_FIRST; layernum < item_layer.ITEM_LAYER_MAX; layernum++)
+            // iterate over items in the view
+            foreach (layout_view.item item in m_curview.items())
             {
-                int blendmode;
-                item_layer layer = render_global.get_layer_and_blendmode(m_curview, (int)layernum, out blendmode);
-                if (m_curview.layer_enabled(layer))
+                bool checkit;
+
+                // if we're looking for a particular container, verify that we have the right one
+                if (container != null)
+                    checkit = (item.screen() != null && item.screen().container() == container);
+
+                // otherwise, assume we're looking for an input
+                else
+                    checkit = item.has_input();
+
+                // this target is worth looking at; now check the point
+                if (checkit && target_fx >= item.bounds().x0 && target_fx < item.bounds().x1 && target_fy >= item.bounds().y0 && target_fy < item.bounds().y1)
                 {
-                    // iterate over items in the layer
-                    foreach (layout_view.item item in m_curview.items(layer))
-                    {
-                        bool checkit;
-
-                        // if we're looking for a particular container, verify that we have the right one
-                        if (container != null)
-                            checkit = (item.screen() != null && item.screen().container() == container);
-
-                        // otherwise, assume we're looking for an input
-                        else
-                            checkit = item.has_input();
-
-                        // this target is worth looking at; now check the point
-                        if (checkit && target_fx >= item.bounds().x0 && target_fx < item.bounds().x1 && target_fy >= item.bounds().y0 && target_fy < item.bounds().y1)
-                        {
-                            // point successfully mapped
-                            mapped_x = (target_fx - item.bounds().x0) / (item.bounds().x1 - item.bounds().x0);
-                            mapped_y = (target_fy - item.bounds().y0) / (item.bounds().y1 - item.bounds().y0);
-                            mapped_input_port = item.input_tag_and_mask(out mapped_input_mask);
-                            return true;
-                        }
-                    }
+                    // point successfully mapped
+                    mapped_x = (target_fx - item.bounds().x0) / (item.bounds().x1 - item.bounds().x0);
+                    mapped_y = (target_fy - item.bounds().y0) / (item.bounds().y1 - item.bounds().y0);
+                    mapped_input_port = item.input_tag_and_mask(out mapped_input_mask);
+                    return true;
                 }
             }
 
@@ -3628,7 +3536,7 @@ namespace mame
                     case render_primitive.primitive_type.QUAD:
                     {
                         // stop when we hit an alpha texture
-                        if (render_global.PRIMFLAG_GET_TEXFORMAT(prim.flags) == (UInt32)texture_format.TEXFORMAT_ARGB32 || render_global.PRIMFLAG_GET_TEXFORMAT(prim.flags) == (UInt32)texture_format.TEXFORMAT_PALETTEA16)
+                        if (render_global.PRIMFLAG_GET_TEXFORMAT(prim.flags) == (UInt32)texture_format.TEXFORMAT_ARGB32)
                             goto done;
 
                         // if this quad can't be cleanly removed from the extents list, we're done

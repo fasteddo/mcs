@@ -53,45 +53,6 @@ namespace mame
     } // namespace emu::detail
 
 
-    public static class mconfig_global
-    {
-        //*************************************************************************/
-        /** @name Machine config start/end macros */
-        //*************************************************************************/
-
-        /**
-         @def MACHINE_CONFIG_START(_name)
-         Begins a new machine/device config.
-         @param _name name of this config
-         @hideinitializer
-         */
-        //#define MACHINE_CONFIG_START(_name) \
-        //ATTR_COLD void _name(machine_config &config) \
-        //{ \
-        //    device_t *device = nullptr; \
-        //    (void)device; \
-        public static void MACHINE_CONFIG_START() { }
-
-        /**
-        @def MACHINE_CONFIG_END
-        Ends a machine_config.
-        @hideinitializer
-        */
-        public static void MACHINE_CONFIG_END() { }
-
-
-        //*************************************************************************/
-        /** @name Core machine config options */
-        //*************************************************************************/
-
-        // add/remove devices
-        public static void MCFG_DEVICE_ADD(out device_t device, machine_config config, device_t owner, string tag, device_type type, u32 clock) { device = emu.detail.mconfig_global.device_add_impl(config, tag, type, owner, clock); }  //#define MCFG_DEVICE_ADD(_tag, ...)             device = emu::detail::device_add_impl(config, _tag, __VA_ARGS__);
-        public static void MCFG_DEVICE_ADD(out device_t device, machine_config config, device_t owner, string tag, device_type type, XTAL clock) { device = emu.detail.mconfig_global.device_add_impl(config, tag, type, owner, clock); }  //#define MCFG_DEVICE_ADD(_tag, ...)             device = emu::detail::device_add_impl(config, _tag, __VA_ARGS__);
-        //#define MCFG_DEVICE_REPLACE(_tag, ...)             device = emu::detail::device_replace_impl(config, _tag, __VA_ARGS__);
-        public static void MCFG_DEVICE_MODIFY(out device_t device, machine_config config, device_t owner, string tag) { device = config.device_find(owner, tag); }  // #define MCFG_DEVICE_MODIFY(_tag)  device = config.device_find(this, _tag);
-    }
-
-
     public class internal_layout
     {
         public int decompressed_size;

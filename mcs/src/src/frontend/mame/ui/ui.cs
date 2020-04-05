@@ -89,41 +89,18 @@ namespace mame
 
 
         /* preferred font height; use ui_get_line_height() to get actual height */
-        public static int UI_TARGET_FONT_ROWS      { get { return get_font_rows(); } }
-        public static float UI_TARGET_FONT_HEIGHT  { get { return 1.0f / (float)UI_TARGET_FONT_ROWS; } }
         public const float UI_MAX_FONT_HEIGHT      = 1.0f / 20.0f;
 
         /* width of lines drawn in the UI */
         public const float UI_LINE_WIDTH           = 1.0f / 500.0f;
 
-        /* border between outlines and inner text on left/right and top/bottom sides */
-        public static float UI_BOX_LR_BORDER { get { return UI_TARGET_FONT_HEIGHT * 0.25f; } }
-        public static float UI_BOX_TB_BORDER { get { return UI_TARGET_FONT_HEIGHT * 0.25f; } }
-
         /* handy colors */
         public static readonly rgb_t UI_GREEN_COLOR          = new rgb_t(0xef,0x10,0x60,0x10);
         public static readonly rgb_t UI_YELLOW_COLOR         = new rgb_t(0xef,0x60,0x60,0x10);
         public static readonly rgb_t UI_RED_COLOR            = new rgb_t(0xf0,0x60,0x10,0x10);
-        public static rgb_t UI_BORDER_COLOR                  { get { return decode_ui_color(0); } }
-        public static rgb_t UI_BACKGROUND_COLOR              { get { return decode_ui_color(1); } }
-        public static rgb_t UI_GFXVIEWER_BG_COLOR            { get { return decode_ui_color(2); } }
-        public static rgb_t UI_UNAVAILABLE_COLOR             { get { return decode_ui_color(3); } }
-        public static rgb_t UI_TEXT_COLOR                    { get { return decode_ui_color(4); } }
-        public static rgb_t UI_TEXT_BG_COLOR                 { get { return decode_ui_color(5); } }
-        public static rgb_t UI_SUBITEM_COLOR                 { get { return decode_ui_color(6); } }
-        public static rgb_t UI_CLONE_COLOR                   { get { return decode_ui_color(7); } }
-        public static rgb_t UI_SELECTED_COLOR                { get { return decode_ui_color(8); } }
-        public static rgb_t UI_SELECTED_BG_COLOR             { get { return decode_ui_color(9); } }
-        public static rgb_t UI_MOUSEOVER_COLOR               { get { return decode_ui_color(10); } }
-        public static rgb_t UI_MOUSEOVER_BG_COLOR            { get { return decode_ui_color(11); } }
-        public static rgb_t UI_MOUSEDOWN_COLOR               { get { return decode_ui_color(12); } }
-        public static rgb_t UI_MOUSEDOWN_BG_COLOR            { get { return decode_ui_color(13); } }
-        public static rgb_t UI_DIPSW_COLOR                   { get { return decode_ui_color(14); } }
-        public static rgb_t UI_SLIDER_COLOR                  { get { return decode_ui_color(15); } }
 
         /* cancel return value for a UI handler */
-        public const UInt32 UI_HANDLER_CANCEL       = UInt32.MaxValue;
-
+        public const uint32_t UI_HANDLER_CANCEL       = uint32_t.MaxValue;
 
         public const int SLIDER_DEVICE_SPACING  = 0x0ff;
         public const int SLIDER_SCREEN_SPACING  = 0x0f;
@@ -175,30 +152,7 @@ namespace mame
         };
 
 
-        static readonly string [] s_color_list = 
-        {
-            ui_options.OPTION_UI_BORDER_COLOR,
-            ui_options.OPTION_UI_BACKGROUND_COLOR,
-            ui_options.OPTION_UI_GFXVIEWER_BG_COLOR,
-            ui_options.OPTION_UI_UNAVAILABLE_COLOR,
-            ui_options.OPTION_UI_TEXT_COLOR,
-            ui_options.OPTION_UI_TEXT_BG_COLOR,
-            ui_options.OPTION_UI_SUBITEM_COLOR,
-            ui_options.OPTION_UI_CLONE_COLOR,
-            ui_options.OPTION_UI_SELECTED_COLOR,
-            ui_options.OPTION_UI_SELECTED_BG_COLOR,
-            ui_options.OPTION_UI_MOUSEOVER_COLOR,
-            ui_options.OPTION_UI_MOUSEOVER_BG_COLOR,
-            ui_options.OPTION_UI_MOUSEDOWN_COLOR,
-            ui_options.OPTION_UI_MOUSEDOWN_BG_COLOR,
-            ui_options.OPTION_UI_DIPSW_COLOR,
-            ui_options.OPTION_UI_SLIDER_COLOR,
-        };
-
-        static readonly rgb_t [] color = new rgb_t[s_color_list.Length];
-
-
-        public static readonly UInt32 [] mouse_bitmap = new UInt32[32*32]
+        public static readonly uint32_t [] mouse_bitmap = new UInt32[32*32]
         {
             0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
             0x09a46f30,0x81ac7c43,0x24af8049,0x00ad7d45,0x00a8753a,0x00a46f30,0x009f6725,0x009b611c,0x00985b14,0x0095560d,0x00935308,0x00915004,0x00904e02,0x008f4e01,0x008f4d00,0x008f4d00,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
@@ -233,37 +187,67 @@ namespace mame
             0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
             0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff
         };
+    }
 
 
-        public static rgb_t decode_ui_color(int id, running_machine machine = null)
+    // ======================> ui_colors
+
+    public class ui_colors
+    {
+        rgb_t m_border_color;
+        rgb_t m_background_color;
+        rgb_t m_gfxviewer_bg_color;
+        rgb_t m_unavailable_color;
+        rgb_t m_text_color;
+        rgb_t m_text_bg_color;
+        rgb_t m_subitem_color;
+        rgb_t m_clone_color;
+        rgb_t m_selected_color;
+        rgb_t m_selected_bg_color;
+        rgb_t m_mouseover_color;
+        rgb_t m_mouseover_bg_color;
+        rgb_t m_mousedown_color;
+        rgb_t m_mousedown_bg_color;
+        rgb_t m_dipsw_color;
+        rgb_t m_slider_color;
+
+
+        public rgb_t border_color() { return m_border_color; }
+        public rgb_t background_color() { return m_background_color; }
+        public rgb_t gfxviewer_bg_color() { return m_gfxviewer_bg_color; }
+        //rgb_t unavailable_color() const { return m_unavailable_color; }
+        public rgb_t text_color() { return m_text_color; }
+        public rgb_t text_bg_color() { return m_text_bg_color; }
+        public rgb_t subitem_color() { return m_subitem_color; }
+        public rgb_t clone_color() { return m_clone_color; }
+        public rgb_t selected_color() { return m_selected_color; }
+        public rgb_t selected_bg_color() { return m_selected_bg_color; }
+        public rgb_t mouseover_color() { return m_mouseover_color; }
+        public rgb_t mouseover_bg_color() { return m_mouseover_bg_color; }
+        //rgb_t mousedown_color() const { return m_mousedown_color; }
+        //rgb_t mousedown_bg_color() const { return m_mousedown_bg_color; }
+        //rgb_t dipsw_color() const { return m_dipsw_color; }
+        public rgb_t slider_color() { return m_slider_color; }
+
+
+        public void refresh(ui_options options)
         {
-            if (machine != null)
-            {
-                ui_options option = new ui_options();
-                for (int x = 0; x < s_color_list.Length; ++x)
-                {
-                    string o_default = option.value(s_color_list[x]);
-                    string s_option = mame_machine_manager.instance().ui().options().value(s_color_list[x]);
-                    int len = s_option.Length;
-                    if (len != 8)
-                        color[x] = new rgb_t((UInt32)Convert.ToInt64(o_default, 16));  //strtoul(o_default, null, 16));
-                    else
-                        color[x] = new rgb_t((UInt32)Convert.ToInt64(s_option, 16));  //strtoul(s_option, null, 16));
-                }
-            }
-
-            return color[id];
-        }
-
-
-        static int get_font_rows_value;
-
-        //-------------------------------------------------
-        //  get font rows from options
-        //-------------------------------------------------
-        public static int get_font_rows(running_machine machine = null)
-        {
-            return machine != null ? get_font_rows_value = mame_machine_manager.instance().ui().options().font_rows() : get_font_rows_value;
+            m_border_color = options.border_color();
+            m_background_color = options.background_color();
+            m_gfxviewer_bg_color = options.gfxviewer_bg_color();
+            m_unavailable_color = options.unavailable_color();
+            m_text_color = options.text_color();
+            m_text_bg_color = options.text_bg_color();
+            m_subitem_color = options.subitem_color();
+            m_clone_color = options.clone_color();
+            m_selected_color = options.selected_color();
+            m_selected_bg_color = options.selected_bg_color();
+            m_mouseover_color = options.mouseover_color();
+            m_mouseover_bg_color = options.mouseover_bg_color();
+            m_mousedown_color = options.mousedown_color();
+            m_mousedown_bg_color = options.mousedown_bg_color();
+            m_dipsw_color = options.dipsw_color();
+            m_slider_color = options.slider_color();
         }
     }
 
@@ -295,6 +279,8 @@ namespace mame
         render_texture m_mouse_arrow_texture;
         bool m_mouse_show;
         ui_options m_ui_options = new ui_options();
+        ui_colors m_ui_colors = new ui_colors();
+        float m_target_font_height;
 
         ui.machine_info m_machine_info;
 
@@ -330,6 +316,7 @@ namespace mame
             m_mouse_bitmap = new bitmap_argb32(32, 32);
             m_mouse_arrow_texture = null;
             m_mouse_show = false;
+            m_target_font_height = 0;
         }
 
 
@@ -341,8 +328,10 @@ namespace mame
             ui.menu.init(machine(), options());
             viewgfx_global.ui_gfx_init(machine());
 
-            ui_global.get_font_rows(machine());
-            ui_global.decode_ui_color(0, machine());
+            m_ui_colors.refresh(options());
+
+            // update font row info from setting
+            update_target_font_height();
 
             // more initialization
             //using namespace std::placeholders;
@@ -368,6 +357,7 @@ namespace mame
         public  running_machine machine() { return m_machine; }
         bool single_step() { return m_single_step; }
         public ui_options options() { return m_ui_options; }
+        public ui_colors colors() { return m_ui_colors; }
         public ui.machine_info machine_info() { assert(m_machine_info != null); return m_machine_info; }
 
 
@@ -596,11 +586,12 @@ namespace mame
             int str = machine().options().seconds_to_run();
             bool show_gameinfo = !machine().options().skip_gameinfo();
             bool show_warnings = true;
-            bool show_mandatory_fileman = true;
+            bool show_mandatory_fileman = !machine().options().skip_mandatory_fileman();
+            bool video_none = strcmp(((osd_options)machine().options()).video(), "none") == 0;
 
             // disable everything if we are using -str for 300 or fewer seconds, or if we're the empty driver,
-            // or if we are debugging
-            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0)
+            // or if we are debugging, or if there's no mame window to send inputs to
+            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0 || video_none)
                 show_gameinfo = show_warnings = show_mandatory_fileman = false;
 
 #if EMSCRIPTEN
@@ -619,7 +610,7 @@ namespace mame
             for (int state = 0; state < maxstate && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(machine()); state++)
             {
                 // default to standard colors
-                messagebox_backcolor = UI_BACKGROUND_COLOR;
+                messagebox_backcolor = colors().background_color();
                 messagebox_text = "";
 
                 // pick the next state
@@ -692,7 +683,7 @@ namespace mame
 
             // copy in the new text
             messagebox_text = text;
-            messagebox_backcolor = UI_BACKGROUND_COLOR;
+            messagebox_backcolor = colors().background_color();
 
             // don't update more than 4 times/second
             if (force || (curtime - lastupdatetime_set_startup_text) > osdcore_global.m_osdcore.osd_ticks_per_second() / 4)
@@ -751,7 +742,7 @@ namespace mame
                     if (mouse_target.map_point_container(mouse_target_x, mouse_target_y, container, out mouse_x, out mouse_y))
                     {
                         float cursor_size = 0.6f * get_line_height();
-                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, UI_TEXT_COLOR, m_mouse_arrow_texture, render_global.PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, colors().text_color(), m_mouse_arrow_texture, render_global.PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                     }
                 }
             }
@@ -792,7 +783,7 @@ namespace mame
             one_to_one_line_height = (float)raw_font_pixel_height / (float)target_pixel_height;
 
             // determine the scale factor
-            scale_factor = UI_TARGET_FONT_HEIGHT / one_to_one_line_height;
+            scale_factor = target_font_height() / one_to_one_line_height;
 
             // if our font is small-ish, do integral scaling
             if (raw_font_pixel_height < 24)
@@ -847,7 +838,10 @@ namespace mame
         //  an outlined box with the given background
         //  color
         //-------------------------------------------------
-        public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor) { draw_outlined_box(container, x0, y0, x1, y1, UI_BORDER_COLOR, backcolor); }
+        public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor)
+        {
+            draw_outlined_box(container, x0, y0, x1, y1, colors().border_color(), backcolor);
+        }
 
         public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t fgcolor, rgb_t bgcolor)
         {
@@ -865,7 +859,7 @@ namespace mame
         {
             float unused1;
             float unused2;
-            draw_text_full(container, buf, x, y, 1.0f - x, ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD, draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, out unused1, out unused2);
+            draw_text_full(container, buf, x, y, 1.0f - x, ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD, draw_mode.NORMAL, colors().text_color(), colors().text_bg_color(), out unused1, out unused2);
         }
 
         //-------------------------------------------------
@@ -904,7 +898,7 @@ namespace mame
         public void draw_text_box(render_container container, string text, ui.text_layout.text_justify justify, float xpos, float ypos, rgb_t backcolor)
         {
             // cap the maximum width
-            float maximum_width = 1.0f - UI_BOX_LR_BORDER * 2;
+            float maximum_width = 1.0f - box_lr_border() * 2;
 
             // create a layout
             ui.text_layout layout = create_layout(container, maximum_width, justify);
@@ -927,15 +921,15 @@ namespace mame
             var actual_left = layout.actual_left();
             var actual_width = layout.actual_width();
             var actual_height = layout.actual_height();
-            var x = Math.Min(Math.Max(xpos - actual_width / 2, UI_BOX_LR_BORDER), 1.0f - actual_width - UI_BOX_LR_BORDER);
-            var y = Math.Min(Math.Max(ypos - actual_height / 2, UI_BOX_TB_BORDER), 1.0f - actual_height - UI_BOX_TB_BORDER);
+            var x = std.min(std.max(xpos - actual_width / 2, box_lr_border()), 1.0f - actual_width - box_lr_border());
+            var y = std.min(std.max(ypos - actual_height / 2, box_tb_border()), 1.0f - actual_height - box_tb_border());
 
             // add a box around that
             draw_outlined_box(container,
-                    x - UI_BOX_LR_BORDER,
-                    y - UI_BOX_TB_BORDER,
-                    x + actual_width + UI_BOX_LR_BORDER,
-                    y + actual_height + UI_BOX_TB_BORDER, backcolor);
+                    x - box_lr_border(),
+                    y - box_tb_border(),
+                    x + actual_width + box_lr_border(),
+                    y + actual_height + box_tb_border(), backcolor);
 
             // emit the text
             layout.emit(container, x - actual_left, y);
@@ -983,7 +977,7 @@ namespace mame
         {
             // extract the text
             messagebox_poptext = text;
-            messagebox_backcolor = UI_BACKGROUND_COLOR;
+            messagebox_backcolor = colors().background_color();
 
             // set a timer
             m_popup_text_end = osdcore_global.m_osdcore.osd_ticks() + osdcore_global.m_osdcore.osd_ticks_per_second() * (UInt64)seconds;
@@ -1051,7 +1045,9 @@ namespace mame
             set_handler(ui_callback_type.MENU, ui.menu.ui_handler);  //, _1, std::ref_(this)));
         }
 
+
         //void show_mouse(bool status);
+
 
         //-------------------------------------------------
         //  is_menu_active - return true if the menu
@@ -1063,18 +1059,11 @@ namespace mame
                 || m_handler_callback_type == ui_callback_type.VIEWER;
         }
 
+
         //-------------------------------------------------
         //  can_paste
         //-------------------------------------------------
         bool can_paste()
-        {
-            throw new emu_unimplemented();
-        }
-
-        //-------------------------------------------------
-        //  paste - does a paste from the keyboard
-        //-------------------------------------------------
-        void paste()
         {
             throw new emu_unimplemented();
         }
@@ -1106,8 +1095,8 @@ namespace mame
                 if (!layout.empty())
                 {
                     float x = 0.2f;
-                    float y = 0.5f * get_line_height() + 2.0f * UI_BOX_TB_BORDER;
-                    draw_text_box(machine().render().ui_container(), layout, x, y, UI_BACKGROUND_COLOR);
+                    float y = 0.5f * get_line_height() + 2.0f * box_tb_border();
+                    draw_text_box(machine().render().ui_container(), layout, x, y, colors().background_color());
                 }
             }
         }
@@ -1219,6 +1208,13 @@ namespace mame
         }
 
 
+        // metrics
+        float target_font_height() { return m_target_font_height; }
+        public float box_lr_border() { return target_font_height() * 0.25f; }
+        public float box_tb_border() { return target_font_height() * 0.25f; }
+        //void update_target_font_height();
+
+
         // other
         //-------------------------------------------------
         //  process_natural_keyboard - processes any
@@ -1285,7 +1281,7 @@ namespace mame
         {
             // extract the text
             messagebox_poptext = message;
-            messagebox_backcolor = UI_BACKGROUND_COLOR;
+            messagebox_backcolor = colors().background_color();
 
             // set a timer
             m_popup_text_end = osdcore_global.m_osdcore.osd_ticks() + osdcore_global.m_osdcore.osd_ticks_per_second() * (osd_ticks_t)seconds;
@@ -1412,7 +1408,7 @@ namespace mame
             {
                 // paste command
                 if (machine().ui_input().pressed((int)ioport_type.IPT_UI_PASTE))
-                    paste();
+                    machine().ioport().natkeyboard().paste();
             }
 
             image_handler_ingame();
@@ -1619,6 +1615,16 @@ namespace mame
 
 
         // private methods
+
+        //-------------------------------------------------
+        //  update_target_font_height
+        //-------------------------------------------------
+        void update_target_font_height()
+        {
+            m_target_font_height = 1.0f / options().font_rows();
+        }
+
+
         //-------------------------------------------------
         //  exit - clean up ourselves on exit
         //-------------------------------------------------

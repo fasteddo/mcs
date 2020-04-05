@@ -127,10 +127,38 @@ namespace mame
         /***************************************************************************
             CORE IMPLEMENTATION
         ***************************************************************************/
+
+        //-------------------------------------------------
+        //  update_machine
+        //-------------------------------------------------
         public override void update_machine()
         {
             m_lua.set_machine(machine());
             m_lua.attach_notifiers();
+        }
+
+
+        //-------------------------------------------------
+        //  split
+        //-------------------------------------------------
+        static std.vector<string> split(string text, char sep)
+        {
+            std.vector<string> tokens = new std.vector<string>();
+            int start = 0;
+            int end = 0;
+            while ((end = text.find(sep, start)) != -1)
+            {
+                string temp = text.substr(start, end - start);
+                if (temp != "") tokens.push_back(temp);
+                start = end + 1;
+            }
+
+            {
+                string temp = text.substr(start);
+                if (temp != "") tokens.push_back(temp);
+            }
+
+            return tokens;
         }
 
 
@@ -201,9 +229,9 @@ namespace mame
 
 
         /* execute as configured by the OPTION_SYSTEMNAME option on the specified options */
-        /*-------------------------------------------------
-            execute - run the core emulation
-        -------------------------------------------------*/
+        //-------------------------------------------------
+        //  execute - run the core emulation
+        //-------------------------------------------------
         public int execute()
         {
             bool started_empty = false;
@@ -287,19 +315,26 @@ namespace mame
         }
 
 
+        //-------------------------------------------------
+        //  start_luaengine
+        //-------------------------------------------------
         public void start_luaengine()
         {
             if (options().plugins())
             {
+                //throw new emu_unimplemented();
+#if false
+                // scan all plugin directories
                 path_iterator iter = new path_iterator(options().plugins_path());
                 string pluginpath;
                 while (iter.next(out pluginpath))
                 {
-                    m_plugins.parse_json(pluginpath);
-                }
+                    // user may specify environment variables; subsitute them
+                    osdcore_global.m_osdcore.osd_subst_env(out pluginpath, pluginpath);
 
-                string [] include = options().plugin() == null ? new string[0] : options().plugin().Split(',');  // split(options().plugin(),',');
-                string [] exclude = options().no_plugin() == null ? new string[0] : options().no_plugin().Split(',');
+                    // and then scan the directory recursively
+                    m_plugins.scan_directory(pluginpath, true);
+                }
 
                 {
                     // parse the file
@@ -309,7 +344,7 @@ namespace mame
                     {
                         try
                         {
-                            m_plugins.parse_ini_file(file.core_file_get(), mame_options.OPTION_PRIORITY_MAME_INI, mame_options.OPTION_PRIORITY_MAME_INI < mame_options.OPTION_PRIORITY_DRIVER_INI, false);
+                            m_plugins.parse_ini_file(file.core_file_get());  //(util::core_file&)file
                         }
                         catch (options_exception )
                         {
@@ -320,34 +355,34 @@ namespace mame
                     }
                 }
 
-                foreach (var curentry in m_plugins.entries())
+                // process includes
+                foreach (string incl in split(options().plugin(), ','))
                 {
-                    if (curentry.type() != core_options.option_type.HEADER)
-                    {
-                        if (Array.Exists(include, s => s == curentry.name()))  // std::find(include.begin(), include.end(), curentry.name()) != include.end())
-                        {
-                            m_plugins.set_value(curentry.name(), "1", emu_options.OPTION_PRIORITY_CMDLINE);
-                        }
-
-                        if (Array.Exists(exclude, s => s == curentry.name()))  // std::find(exclude.begin(), exclude.end(), curentry.name()) != exclude.end())
-                        {
-                            m_plugins.set_value(curentry.name(), "0", emu_options.OPTION_PRIORITY_CMDLINE);
-                        }
-                    }
+                    plugin p = m_plugins.find(incl);
+                    if (p == null)
+                        fatalerror("Fatal error: Could not load plugin: {0}\n", incl.c_str());
+                    p.m_start = true;
                 }
+
+                // process excludes
+                foreach (string excl in split(options().no_plugin(), ','))
+                {
+                    plugin p = m_plugins.find(excl);
+                    if (p == null)
+                        fatalerror("Fatal error: Unknown plugin: {0}\n", excl.c_str());
+                    p.m_start = false;
+                }
+#endif
             }
 
+            // we have a special way to open the console plugin
             if (options().console())
             {
-                m_plugins.set_value("console", "1", emu_options.OPTION_PRIORITY_CMDLINE);
-                if (m_plugins.exists(emu_options.OPTION_CONSOLE))
-                {
-                    m_plugins.set_value(emu_options.OPTION_CONSOLE, "1", emu_options.OPTION_PRIORITY_CMDLINE);
-                }
-                else
-                {
-                    fatalerror("Console plugin not found.\n");
-                }
+                plugin p = m_plugins.find(emu_options.OPTION_CONSOLE);
+                if (p == null)
+                    fatalerror("Fatal error: Console plugin not found.\n");
+
+                p.m_start = true;
             }
 
             m_lua.initialize();

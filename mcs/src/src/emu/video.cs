@@ -6,7 +6,10 @@ using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
 using osd_ticks_t = System.UInt64;
+using s8 = System.SByte;
 using s16 = System.Int16;
+using s32 = System.Int32;
+using u8 = System.Byte;
 using u32 = System.UInt32;
 
 
@@ -61,7 +64,7 @@ namespace mame
         osd_ticks_t m_throttle_last_ticks;      // osd_ticks the last call to throttle
         attotime m_throttle_realtime;        // real time the last call to throttle
         attotime m_throttle_emutime;         // emulated time the last call to throttle
-        UInt32 m_throttle_history;         // history of frames where we were fast enough
+        u32 m_throttle_history;         // history of frames where we were fast enough
 
         // dynamic speed computation
         osd_ticks_t m_speed_last_realtime;      // real time at the last speed calculation
@@ -69,26 +72,26 @@ namespace mame
         double m_speed_percent;            // most recent speed percentage
 
         // overall speed computation
-        UInt32 m_overall_real_seconds;     // accumulated real seconds at normal speed
+        u32 m_overall_real_seconds;     // accumulated real seconds at normal speed
         osd_ticks_t m_overall_real_ticks;       // accumulated real ticks at normal speed
         attotime m_overall_emutime;          // accumulated emulated time at normal speed
-        UInt32 m_overall_valid_counter;    // number of consecutive valid time periods
+        u32 m_overall_valid_counter;    // number of consecutive valid time periods
 
-        UInt32 m_frame_update_counter;     // how many times frame_update() has been called
+        u32 m_frame_update_counter;     // how many times frame_update() has been called
 
         // configuration
         bool m_throttled;                // flag: TRUE if we're currently throttled
         float m_throttle_rate;            // target rate for throttling
         bool m_fastforward;              // flag: TRUE if we're currently fast-forwarding
-        UInt32 m_seconds_to_run;           // number of seconds to run before quitting
+        u32 m_seconds_to_run;           // number of seconds to run before quitting
         bool m_auto_frameskip;           // flag: TRUE if we're automatically frameskipping
-        UInt32 m_speed;                    // overall speed (*1000)
+        u32 m_speed;                    // overall speed (*1000)
 
         // frameskipping
-        byte m_empty_skip_count;         // number of empty frames we have skipped
-        byte m_frameskip_level;          // current frameskip level
-        byte m_frameskip_counter;        // counter that counts through the frameskip steps
-        sbyte m_frameskip_adjust;
+        u8 m_empty_skip_count;         // number of empty frames we have skipped
+        u8 m_frameskip_level;          // current frameskip level
+        u8 m_frameskip_counter;        // counter that counts through the frameskip steps
+        s8 m_frameskip_adjust;
         bool m_skipping_this_frame;      // flag: TRUE if we are skipping the current frame
         osd_ticks_t m_average_oversleep;        // average number of ticks the OSD oversleeps
 
@@ -96,8 +99,8 @@ namespace mame
         render_target m_snap_target;              // screen shapshot target
         bitmap_rgb32 m_snap_bitmap = new bitmap_rgb32();              // screen snapshot bitmap
         bool m_snap_native;              // are we using native per-screen layouts?
-        int m_snap_width;               // width of snapshots (0 == auto)
-        int m_snap_height;              // height of snapshots (0 == auto)
+        s32 m_snap_width;               // width of snapshots (0 == auto)
+        s32 m_snap_height;              // height of snapshots (0 == auto)
 
         // movie recording - MNG
         class mng_info_t
@@ -335,6 +338,8 @@ namespace mame
         public void toggle_record_avi() { toggle_record_movie(movie_format.MF_AVI); }
 
         //osd_file::error open_next(emu_file &file, const char *extension, uint32_t index = 0);
+        //void compute_snapshot_size(s32 &width, s32 &height);
+        //void pixels(u32 *buffer);
 
 
         // render a frame
@@ -450,7 +455,7 @@ namespace mame
         }
 
         public double speed_percent() { return m_speed_percent; }
-        public UInt32 frame_update_count() { return m_frame_update_counter; }
+        public u32 frame_update_count() { return m_frame_update_counter; }
 
 
         // snapshots
@@ -655,6 +660,7 @@ namespace mame
             return m_auto_frameskip;
         }
 
+
         //-------------------------------------------------
         //  effective_frameskip - return the effective
         //  frameskip value, accounting for fast
@@ -669,6 +675,7 @@ namespace mame
             // otherwise, it's up to the user
             return m_frameskip_level;
         }
+
 
         //-------------------------------------------------
         //  effective_throttle - return the effective
@@ -707,15 +714,16 @@ namespace mame
             // finish updating the screens
             screen_device_iterator iter = new screen_device_iterator(machine().root_device());
 
-            bool has_screen = false;
+            bool has_live_screen = false;
             foreach (screen_device screen in iter)
             {
                 screen.update_partial(screen.visible_area().bottom());
-                has_screen = true;
+                if (machine().render().is_live(screen))
+                    has_live_screen = true;
             }
 
             // now add the quads for all the screens
-            bool anything_changed = !has_screen || m_output_changed;
+            bool anything_changed = !has_live_screen || m_output_changed;
             m_output_changed = false;
 
             // now add the quads for all the screens
@@ -1125,10 +1133,9 @@ namespace mame
             }
 
             // get the minimum width/height and set it on the target
-            int width = m_snap_width;
-            int height = m_snap_height;
-            if (width == 0 || height == 0)
-                m_snap_target.compute_minimum_size(out width, out height);
+            s32 width;
+            s32 height;
+            compute_snapshot_size(out width, out height);
             m_snap_target.set_bounds(width, height);
 
             // if we don't have a bitmap, or if it's not the right size, allocate a new one
@@ -1155,6 +1162,20 @@ namespace mame
                 software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, false), primlist, new RawBufferPointer(m_snap_bitmapBuf), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
             }
             primlist.release_lock();
+        }
+
+
+        //-------------------------------------------------
+        //  compute_snapshot_size - computes width and
+        //  height of the current snapshot target
+        //  accounting for OPTION_SNAPSIZE
+        //-------------------------------------------------
+        void compute_snapshot_size(out s32 width, out s32 height)
+        {
+            width = m_snap_width;
+            height = m_snap_height;
+            if (width == 0 || height == 0)
+                m_snap_target.compute_minimum_size(out width, out height);
         }
 
 

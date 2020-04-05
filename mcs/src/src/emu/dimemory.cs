@@ -9,21 +9,6 @@ using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValueP
 
 namespace mame
 {
-    public static class dimemory_global
-    {
-        //**************************************************************************
-        //  INTERFACE CONFIGURATION MACROS
-        //**************************************************************************
-
-        static void MCFG_DEVICE_ADDRESS_MAP(device_t device, int space, address_map_constructor map) { device.memory().set_addrmap(space, map); }
-        //#define MCFG_DEVICE_REMOVE_ADDRESS_MAP(_space)     device_memory_interface::static_set_addrmap(*device, _space, NULL);
-        public static void MCFG_DEVICE_PROGRAM_MAP(device_t device, address_map_constructor map) { MCFG_DEVICE_ADDRESS_MAP(device, global_object.AS_PROGRAM, map); }
-        //define MCFG_DEVICE_DATA_MAP(_map)             MCFG_DEVICE_ADDRESS_MAP(AS_DATA, _map)
-        public static void MCFG_DEVICE_IO_MAP(device_t device, address_map_constructor map) { MCFG_DEVICE_ADDRESS_MAP(device, global_object.AS_IO, map); }
-        //#define MCFG_DEVICE_OPCODES_MAP(_map)     MCFG_DEVICE_ADDRESS_MAP(AS_OPCODES, _map)
-    }
-
-
     // ======================> device_memory_interface
     public abstract class device_memory_interface : device_interface
     {

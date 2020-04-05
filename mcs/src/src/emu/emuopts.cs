@@ -324,11 +324,6 @@ namespace mame
 
         // core artwork options
         const string OPTION_ARTWORK_CROP        = "artwork_crop";
-        const string OPTION_USE_BACKDROPS       = "use_backdrops";
-        const string OPTION_USE_OVERLAYS        = "use_overlays";
-        const string OPTION_USE_BEZELS          = "use_bezels";
-        const string OPTION_USE_CPANELS         = "use_cpanels";
-        const string OPTION_USE_MARQUEES        = "use_marquees";
         const string OPTION_FALLBACK_ARTWORK    = "fallback_artwork";
         const string OPTION_OVERRIDE_ARTWORK    = "override_artwork";
 
@@ -391,12 +386,13 @@ namespace mame
         const string OPTION_DRC_USE_C           = "drc_use_c";
         const string OPTION_DRC_LOG_UML         = "drc_log_uml";
         const string OPTION_DRC_LOG_NATIVE      = "drc_log_native";
-        public const string OPTION_BIOS                = "bios";
+        public const string OPTION_BIOS         = "bios";
         const string OPTION_CHEAT               = "cheat";
         const string OPTION_SKIP_GAMEINFO       = "skip_gameinfo";
+        const string OPTION_SKIP_MANDATORY_FILEMAN = "skip_mandatory_fileman";
         const string OPTION_UI_FONT             = "uifont";
         const string OPTION_UI                  = "ui";
-        public const string OPTION_RAMSIZE             = "ramsize";
+        public const string OPTION_RAMSIZE      = "ramsize";
         const string OPTION_NVRAM_SAVE          = "nvram_save";
 
         // core comm options
@@ -413,7 +409,7 @@ namespace mame
         const string OPTION_AUTOBOOT_DELAY      = "autoboot_delay";
         const string OPTION_AUTOBOOT_SCRIPT     = "autoboot_script";
 
-        public const string OPTION_CONSOLE             = "console";
+        public const string OPTION_CONSOLE      = "console";
         const string OPTION_PLUGINS             = "plugins";
         const string OPTION_PLUGIN              = "plugin";
         const string OPTION_NO_PLUGIN           = "noplugin";
@@ -518,11 +514,6 @@ namespace mame
             // artwork options
             new options_entry(null,                                              null,        OPTION_HEADER,     "CORE ARTWORK OPTIONS"),
             new options_entry(OPTION_ARTWORK_CROP + ";artcrop",                  "0",         OPTION_BOOLEAN,    "crop artwork so emulated screen image fills output screen/window in one axis"),
-            new options_entry(OPTION_USE_BACKDROPS + ";backdrop",                "1",         OPTION_BOOLEAN,    "enable backdrops if artwork is enabled and available"),
-            new options_entry(OPTION_USE_OVERLAYS + ";overlay",                  "1",         OPTION_BOOLEAN,    "enable overlays if artwork is enabled and available"),
-            new options_entry(OPTION_USE_BEZELS + ";bezel",                      "1",         OPTION_BOOLEAN,    "enable bezels if artwork is enabled and available"),
-            new options_entry(OPTION_USE_CPANELS + ";cpanel",                    "1",         OPTION_BOOLEAN,    "enable cpanels if artwork is enabled and available"),
-            new options_entry(OPTION_USE_MARQUEES + ";marquee",                  "1",         OPTION_BOOLEAN,    "enable marquees if artwork is enabled and available"),
             new options_entry(OPTION_FALLBACK_ARTWORK,                           null,        OPTION_STRING,     "fallback artwork if no external artwork or internal driver layout defined"),
             new options_entry(OPTION_OVERRIDE_ARTWORK,                           null,        OPTION_STRING,     "override artwork for external artwork and internal driver layout"),
 
@@ -603,6 +594,7 @@ namespace mame
             new options_entry(OPTION_BIOS,                                       null,        OPTION_STRING,     "select the system BIOS to use"),
             new options_entry(OPTION_CHEAT + ";c",                               "0",         OPTION_BOOLEAN,    "enable cheat subsystem"),
             new options_entry(OPTION_SKIP_GAMEINFO,                              "0",         OPTION_BOOLEAN,    "skip displaying the system information screen at startup"),
+            new options_entry(OPTION_SKIP_MANDATORY_FILEMAN,                     "0",         OPTION_BOOLEAN,    "skip prompting the user for any mandatory images with the file manager at startup"),
             new options_entry(OPTION_UI_FONT,                                    "default",   OPTION_STRING,     "specify a font to use"),
             new options_entry(OPTION_UI,                                         "cabinet",   OPTION_STRING,     "type of UI (simple|cabinet)"),
             new options_entry(OPTION_RAMSIZE + ";ram",                           null,        OPTION_STRING,     "size of RAM (if supported by driver)"),
@@ -829,11 +821,6 @@ namespace mame
 
         // core artwork options
         public bool artwork_crop() { return bool_value(OPTION_ARTWORK_CROP); }
-        public bool use_backdrops() { return bool_value(OPTION_USE_BACKDROPS); }
-        public bool use_overlays() { return bool_value(OPTION_USE_OVERLAYS); }
-        public bool use_bezels() { return bool_value(OPTION_USE_BEZELS); }
-        public bool use_cpanels() { return bool_value(OPTION_USE_CPANELS); }
-        public bool use_marquees() { return bool_value(OPTION_USE_MARQUEES); }
         public string fallback_artwork() { return value(OPTION_FALLBACK_ARTWORK); }
         public string override_artwork() { return value(OPTION_OVERRIDE_ARTWORK); }
 
@@ -902,6 +889,7 @@ namespace mame
         public string bios() { return value(OPTION_BIOS); }
         public bool cheat() { return bool_value(OPTION_CHEAT); }
         public bool skip_gameinfo() { return bool_value(OPTION_SKIP_GAMEINFO); }
+        public bool skip_mandatory_fileman() { return bool_value(OPTION_SKIP_MANDATORY_FILEMAN); }
         public string ui_font() { return value(OPTION_UI_FONT); }
         public ui_option ui() { return m_ui; }
         //const char *ram_size() const { return value(OPTION_RAMSIZE); }
@@ -964,6 +952,7 @@ namespace mame
             return iter;
         }
         //::image_option &image_option(const std::string &device_name);
+        public bool has_image_option(string device_name) { return m_image_options.find(device_name) != null; }
 
 
         //-------------------------------------------------

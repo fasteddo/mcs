@@ -1208,8 +1208,12 @@ namespace mame
 
             // flip the tilemap around the center of the visible area
             rectangle visarea = screen.visible_area();
-            u32 width = (u32)(visarea.left() + visarea.right() + 1);
-            u32 height = (u32)(visarea.top() + visarea.bottom() + 1);
+            // TODO: is this correct or are drivers relying on a bug here?
+            // These are not the width and height, rather 2 * left + width,
+            // and 2 * top + height, and these are inputs to the
+            // effective_*scroll functions used in the case of a flip.
+            u32 width = (u32)(visarea.right() + visarea.left() + 1);
+            u32 height = (u32)(visarea.bottom() + visarea.top() + 1);
 
             // XY scrolling playfield
             if (m_scrollrows == 1 && m_scrollcols == 1)
@@ -1656,6 +1660,16 @@ namespace mame
         //    set_layout(mapper, columns, rows);
         //    set_tile_size(tilewidth, tileheight);
         //}
+
+        //template <typename T>
+        //tilemap_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&gfxtag, int entrybytes, u16 tilewidth, u16 tileheight)
+        //    : tilemap_device(mconfig, tag, owner, (u32)0)
+        //{
+        //    set_gfxdecode(std::forward<T>(gfxtag));
+        //    set_bytes_per_entry(entrybytes);
+        //    set_tile_size(tilewidth, tileheight);
+        //}
+
         tilemap_device(machine_config mconfig, string tag, device_t owner, u32 clock = 0)
             : base(mconfig, TILEMAP, tag, owner, clock)
         {
@@ -1675,6 +1689,11 @@ namespace mame
         //template <class FunctionClass> void set_info_callback(void (FunctionClass::*callback)(tilemap_t &, tile_data &, tilemap_memory_index), const char *name)
         //{
         //    set_info_callback(tilemap_get_info_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
+        //}
+
+        //template <class FunctionClass> void set_layout(tilemap_memory_index (FunctionClass::*callback)(u32, u32, u32, u32), const char *name, u32 columns, u32 rows)
+        //{
+        //    set_layout(tilemap_mapper_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), columns, rows);
         //}
 
         //void set_layout(tilemap_standard_mapper mapper, u32 columns, u32 rows) {

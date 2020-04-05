@@ -40,6 +40,8 @@ namespace mame.ui
         };
 
 
+        ui_options m_options;
+
         // overall feature status
         machine_flags.type m_flags;
         emu.detail.device_feature.type m_unemulated_features;
@@ -59,14 +61,15 @@ namespace mame.ui
         //-------------------------------------------------
         //  machine_static_info - constructors
         //-------------------------------------------------
-        public machine_static_info(machine_config config)
-            : this(config, null)
+        public machine_static_info(ui_options options, machine_config config)
+            : this(options, config, null)
         {
         }
 
 
-        protected machine_static_info(machine_config config, ioport_list ports)
+        protected machine_static_info(ui_options options, machine_config config, ioport_list ports)
         {
+            m_options = options;
             m_flags = config.gamedrv().flags;
             m_unemulated_features = config.gamedrv().type.unemulated_features();
             m_imperfect_features = config.gamedrv().type.imperfect_features();
@@ -171,7 +174,7 @@ namespace mame.ui
             else if ((machine_flags_get() & MACHINE_WARNINGS) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
                 return UI_YELLOW_COLOR;
             else
-                return UI_BACKGROUND_COLOR;
+                return m_options.background_color();
         }
     }
 
@@ -185,7 +188,7 @@ namespace mame.ui
         //  machine_info - constructor
         //-------------------------------------------------
         public machine_info(running_machine machine)
-            : base(machine.config(), machine.ioport().ports())
+            : base(((mame_ui_manager)machine.ui()).options(), machine.config(), machine.ioport().ports())
         {
             m_machine = machine;
         }

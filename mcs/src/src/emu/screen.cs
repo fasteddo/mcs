@@ -34,8 +34,7 @@ namespace mame
     public enum texture_format
     {
         TEXFORMAT_UNDEFINED = 0,                            // require a format to be specified
-        TEXFORMAT_PALETTE16,                                // 16bpp palettized, alpha ignored
-        TEXFORMAT_PALETTEA16,                               // 16bpp palettized, alpha respected
+        TEXFORMAT_PALETTE16,                                // 16bpp palettized, no alpha
         TEXFORMAT_RGB32,                                    // 32bpp 8-8-8 RGB
         TEXFORMAT_ARGB32,                                   // 32bpp 8-8-8-8 ARGB
         TEXFORMAT_YUY16                                     // 16bpp 8-8 Y/Cb, Y/Cr in sequence
@@ -48,45 +47,6 @@ namespace mame
     //typedef device_delegate<u32 (screen_device &, bitmap_rgb32 &, const rectangle &)> screen_update_rgb32_delegate;
     public delegate u32 screen_update_ind16_delegate(screen_device device, bitmap_ind16 bitmap, rectangle rect);
     public delegate u32 screen_update_rgb32_delegate(screen_device device, bitmap_rgb32 bitmap, rectangle rect);
-
-
-    public static class screen_global
-    {
-        //**************************************************************************
-        //  SCREEN DEVICE CONFIGURATION MACROS
-        //**************************************************************************
-
-        public static void MCFG_SCREEN_ADD(out device_t device, machine_config config, device_t owner, string tag, screen_type_enum type)
-        {
-            mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, screen_device.SCREEN, 0);
-            ((screen_device)device).screen_device_after_ctor(type);
-        }
-
-        public static void MCFG_SCREEN_ADD(out device_t device, machine_config config, device_t owner, device_finder<screen_device> finder, screen_type_enum type)
-        {
-            var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-            mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, target.second(), screen_device.SCREEN, 0);
-            finder.target = (screen_device)device;
-            ((screen_device)device).screen_device_after_ctor(type);
-        }
-
-        //define MCFG_SCREEN_MODIFY(_tag)             MCFG_DEVICE_MODIFY(_tag)
-
-        static void MCFG_SCREEN_TYPE(device_t device, screen_type_enum type) { ((screen_device)device).set_type(type); }
-        public static void MCFG_SCREEN_RAW_PARAMS(device_t device, XTAL pixclock, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart) { ((screen_device)device).set_raw(pixclock, htotal, hbend, hbstart, vtotal, vbend, vbstart); }
-
-        public static void MCFG_SCREEN_REFRESH_RATE(device_t device, u32 rate) { ((screen_device)device).set_refresh(attotime.HZ_TO_ATTOSECONDS(rate)); }
-        public static void MCFG_SCREEN_VBLANK_TIME(device_t device, attoseconds_t time) { ((screen_device)device).set_vblank_time(time); }
-        public static void MCFG_SCREEN_SIZE(device_t device, u16 width, u16 height) { ((screen_device)device).set_size(width, height); }
-        public static void MCFG_SCREEN_VISIBLE_AREA(device_t device, s16 minx, s16 maxx, s16 miny, s16 maxy) { ((screen_device)device).set_visarea(minx, maxx, miny, maxy); }
-        public static void MCFG_SCREEN_UPDATE_DRIVER(device_t device, screen_update_ind16_delegate method) { ((screen_device)device).set_screen_update(method); }  //screen_update_delegate_smart(&_class::_method, #_class "::" #_method, NULL));
-        public static void MCFG_SCREEN_UPDATE_DRIVER(device_t device, screen_update_rgb32_delegate method) { ((screen_device)device).set_screen_update(method); }  //screen_update_delegate_smart(&_class::_method, #_class "::" #_method, NULL));
-        //define MCFG_SCREEN_UPDATE_DEVICE(_device, _class, _method)             screen_device::static_set_screen_update(*device, screen_update_delegate_smart(&_class::_method, #_class "::" #_method, _device));
-        public static void MCFG_SCREEN_PALETTE(device_t device, string palette_tag) { ((screen_device)device).set_palette(palette_tag); }
-        public static void MCFG_SCREEN_PALETTE(device_t device, finder_base palette) { ((screen_device)device).set_palette(palette); }
-        //define MCFG_SCREEN_NO_PALETTE             downcast<screen_device &>(*device).set_palette(finder_base::DUMMY_TAG);
-        //define MCFG_SCREEN_VIDEO_ATTRIBUTES(_flags)             screen_device::static_set_video_attributes(*device, _flags);
-    }
 
 
     // ======================> screen_bitmap
@@ -251,7 +211,7 @@ namespace mame
         screen_type_enum m_type;                     // type of screen
         int m_orientation;              // orientation flags combined with system flags
         KeyValuePair<UInt32, UInt32> m_phys_aspect;  //std::pair<unsigned, unsigned> m_phys_aspect;    // physical aspect ratio
-        bool m_oldstyle_vblank_supplied; // MCFG_SCREEN_VBLANK_TIME macro used
+        bool m_oldstyle_vblank_supplied; // set_vblank_time call used
         attoseconds_t m_refresh;                  // default refresh period
         attoseconds_t m_vblank;                   // duration of a VBLANK
         float m_xoffset;

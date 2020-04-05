@@ -412,7 +412,7 @@ cancel:
                 x0 = boxbounds.x0 - (0.5f - 0.5f * (titlewidth + chwidth));
 
             // go ahead and draw the outer box now
-            mui.draw_outlined_box(container, boxbounds.x0 - x0, boxbounds.y0, boxbounds.x1 + x0, boxbounds.y1, global_object.UI_GFXVIEWER_BG_COLOR);
+            mui.draw_outlined_box(container, boxbounds.x0 - x0, boxbounds.y0, boxbounds.x1 + x0, boxbounds.y1, mui.colors().gfxviewer_bg_color());
 
             // draw the title
             x0 = 0.5f - 0.5f * titlewidth;
@@ -726,7 +726,7 @@ cancel:
                 x0 = boxbounds.x0 - (0.5f - 0.5f * (titlewidth + chwidth));
 
             // go ahead and draw the outer box now
-            mui.draw_outlined_box(container, boxbounds.x0 - x0, boxbounds.y0, boxbounds.x1 + x0, boxbounds.y1, global_object.UI_GFXVIEWER_BG_COLOR);
+            mui.draw_outlined_box(container, boxbounds.x0 - x0, boxbounds.y0, boxbounds.x1 + x0, boxbounds.y1, mui.colors().gfxviewer_bg_color());
 
             // draw the title
             x0 = 0.5f - 0.5f * titlewidth;
@@ -1147,7 +1147,7 @@ cancel:
             }
 
             // go ahead and draw the outer box now
-            mui.draw_outlined_box(container, boxbounds.x0, boxbounds.y0, boxbounds.x1, boxbounds.y1, global_object.UI_GFXVIEWER_BG_COLOR);
+            mui.draw_outlined_box(container, boxbounds.x0, boxbounds.y0, boxbounds.x1, boxbounds.y1, mui.colors().gfxviewer_bg_color());
 
             // draw the title
             x0 = 0.5f - 0.5f * titlewidth;

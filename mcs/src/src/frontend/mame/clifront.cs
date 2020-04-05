@@ -1298,24 +1298,7 @@ namespace mame
 
                 throw new emu_unimplemented();
 #if false
-                // generate the updated INI
-                file_ui.puts(ui_opts.output_ini());
-
-                plugin_options plugin_opts;
-                path_iterator iter = new path_iterator(m_options.plugins_path());
-                string pluginpath;
-                while (iter.next(out pluginpath))
-                {
-                    plugin_opts.parse_json(pluginpath);
-                }
-                emu_file file_plugin = new emu_file(osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
-                if (file_plugin.open("plugin.ini") != osd_file.error.NONE)
-                    throw new emu_fatalerror("Unable to create file plugin.ini\n");
-
-                // generate the updated INI
-                file_plugin.puts(plugin_opts.output_ini().c_str());
 #endif
-                return;
             }
 
             // showconfig?

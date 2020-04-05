@@ -44,23 +44,6 @@ namespace mame
 
         // interrupt generator callback called as a VBLANK or periodic interrupt
         //#define INTERRUPT_GEN_MEMBER(func)      void func(device_t &device)
-
-
-        //**************************************************************************
-        //  INTERFACE CONFIGURATION MACROS
-        //**************************************************************************
-
-        public static void MCFG_DEVICE_DISABLE(device_t device) { device.execute().set_disable(); }
-        public static void MCFG_DEVICE_VBLANK_INT_DRIVER(device_t device, string tag, device_interrupt_delegate func) { device.execute().set_vblank_int(func, tag); }  //device_interrupt_delegate(&_class::_func, #_class "::" #_func, DEVICE_SELF, (_class *)0), _tag);
-        //define MCFG_DEVICE_VBLANK_INT_DEVICE(_tag, _devtag, _class, _func)             device_execute_interface::static_set_vblank_int(*device, device_interrupt_delegate(&_class::_func, #_class "::" #_func, _devtag, (_class *)0), _tag);
-        //define MCFG_DEVICE_VBLANK_INT_REMOVE()              device_execute_interface::static_set_vblank_int(*device, device_interrupt_delegate(), NULL);
-        public static void MCFG_DEVICE_PERIODIC_INT_DRIVER(device_t device, device_interrupt_delegate func, int rate) { device.execute().set_periodic_int(func, attotime.from_hz(rate)); }  //device_interrupt_delegate(&_class::_func, #_class "::" #_func, DEVICE_SELF, (_class *)0), attotime::from_hz(_rate));
-        public static void MCFG_DEVICE_PERIODIC_INT_DRIVER(device_t device, device_interrupt_delegate func, XTAL rate) { device.execute().set_periodic_int(func, attotime.from_hz(rate)); }  //device_interrupt_delegate(&_class::_func, #_class "::" #_func, DEVICE_SELF, (_class *)0), attotime::from_hz(_rate));
-        //define MCFG_DEVICE_PERIODIC_INT_DEVICE(_devtag, _class, _func, _rate)             device_execute_interface::static_set_periodic_int(*device, device_interrupt_delegate(&_class::_func, #_class "::" #_func, _devtag, (_class *)0), attotime::from_hz(_rate));
-        //define MCFG_DEVICE_PERIODIC_INT_REMOVE()              device_execute_interface::static_set_periodic_int(*device, device_interrupt_delegate(), attotime());
-        //define MCFG_DEVICE_IRQ_ACKNOWLEDGE_DRIVER(_class, _func)             device_execute_interface::static_set_irq_acknowledge_callback(*device, device_irq_acknowledge_delegate(&_class::_func, #_class "::" #_func, DEVICE_SELF, (_class *)0));
-        //define MCFG_DEVICE_IRQ_ACKNOWLEDGE_DEVICE(_devtag, _class, _func)             device_execute_interface::static_set_irq_acknowledge_callback(*device, device_irq_acknowledge_delegate(&_class::_func, #_class "::" #_func, _devtag, (_class *)0));
-        //define MCFG_DEVICE_IRQ_ACKNOWLEDGE_REMOVE()              device_execute_interface::static_set_irq_acknowledge_callback(*device, device_irq_acknowledge_delegate());
     }
 
 

@@ -499,8 +499,8 @@ namespace mame.ui
             }
 
             // configure the custom rendering
-            customtop = 3.0f * ui().get_line_height() + 5.0f * UI_BOX_TB_BORDER;
-            custombottom = 5.0f * ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+            customtop = 3.0f * ui().get_line_height() + 5.0f * ui().box_tb_border();
+            custombottom = 5.0f * ui().get_line_height() + 3.0f * ui().box_tb_border();
 
             // reselect prior game launched, if any
             if (old_item_selected != -1)

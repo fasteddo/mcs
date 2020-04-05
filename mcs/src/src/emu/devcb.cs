@@ -1184,19 +1184,15 @@ namespace mame
 
 
         //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
-        //bool devcb_read<Result, DefaultMask>::resolve_safe(Result dflt)
-        public bool resolve_safe(int dflt)
+        //void devcb_read<Result, DefaultMask>::resolve_safe(Result dflt)
+        public void resolve_safe(int dflt)
         {
             resolve();
 
-            bool resolved_r8 = !m_functions_r8.empty();
-            if (!resolved_r8)
+            if (m_functions_r8.empty())
                 m_functions_r8.emplace_back((address_space space, offs_t offset, u8 mem_mask) => { return (u8)dflt; });
-            bool resolved_rl = !m_functions_rl.empty();
-            if (!resolved_rl)
+            if (m_functions_rl.empty())
                 m_functions_rl.emplace_back(() => { return dflt; });
-
-            return resolved_r8 || resolved_rl;
         }
 
 
@@ -2903,22 +2899,17 @@ namespace mame
 
 
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
-        //bool devcb_write<Input, DefaultMask>::resolve_safe()
-        public bool resolve_safe()
+        //void devcb_write<Input, DefaultMask>::resolve_safe()
+        public void resolve_safe()
         {
             resolve();
 
-            bool resolved_w8 = !m_functions_w8.empty();
-            if (!resolved_w8)
+            if (m_functions_w8.empty())
                 m_functions_w8.emplace_back((address_space space, offs_t offset, byte data, byte mem_mask) => { });
-            bool resolved_w32 = !m_functions_w32.empty();
-            if (!resolved_w32)
+            if (m_functions_w32.empty())
                 m_functions_w32.emplace_back((address_space space, offs_t offset, u32 data, u32 mem_mask) => { });
-            bool resolved_wl = !m_functions_wl.empty();
-            if (!resolved_wl)
+            if (m_functions_wl.empty())
                 m_functions_wl.emplace_back((int data) => { });
-
-            return resolved_w8 || resolved_w32 || resolved_wl;
         }
 
 

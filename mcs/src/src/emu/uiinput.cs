@@ -60,6 +60,7 @@ namespace mame
         running_machine m_machine;                  // reference to our machine
 
         /* pressed states; retrieved with ui_input_pressed() */
+        bool m_presses_enabled;
         osd_ticks_t [] m_next_repeat = new osd_ticks_t[(int)ioport_type.IPT_COUNT];
         u8 [] m_seqpressed = new u8[(int)ioport_type.IPT_COUNT];
 
@@ -83,6 +84,7 @@ namespace mame
         public ui_input_manager(running_machine machine)
         {
             m_machine = machine;
+            m_presses_enabled = true;
             m_current_mouse_target = null;
             m_current_mouse_down = false;
             m_current_mouse_field = null;
@@ -90,11 +92,11 @@ namespace mame
             m_events_end = 0;
 
 
-            /* create the private data */
+            // create the private data
             m_current_mouse_x = -1;
             m_current_mouse_y = -1;
 
-            /* add a frame callback to poll inputs */
+            // add a frame callback to poll inputs
             machine.add_notifier(machine_notification.MACHINE_NOTIFY_FRAME, frame_update);
         }
 
@@ -106,12 +108,20 @@ namespace mame
         -------------------------------------------------*/
         void frame_update(running_machine machine)
         {
-            /* update the state of all the UI keys */
+            // update the state of all the UI keys
             for (ioport_type code = (ioport_type)(ioport_type.IPT_UI_FIRST + 1); code < ioport_type.IPT_UI_LAST; ++code)
             {
-                bool pressed = machine.ioport().type_pressed(code);
-                if (!pressed || m_seqpressed[(int)code] != SEQ_PRESSED_RESET)
-                    m_seqpressed[(int)code] = pressed ? (byte)1 : (byte)0;
+                if (m_presses_enabled)
+                {
+                    bool pressed = machine.ioport().type_pressed(code);
+                    if (!pressed || m_seqpressed[(int)code] != SEQ_PRESSED_RESET)
+                        m_seqpressed[(int)code] = pressed ? (u8)1 : (u8)0;
+                }
+                else
+                {
+                    // UI key presses are disabled
+                    m_seqpressed[(int)code] = 0;  //false;
+                }
             }
 
             // perform mouse hit testing
@@ -139,7 +149,7 @@ namespace mame
         -------------------------------------------------*/
         bool push_event(ui_event evt)
         {
-            /* some pre-processing (this is an icky place to do this stuff!) */
+            // some pre-processing (this is an icky place to do this stuff!)
             switch (evt.event_type)
             {
                 case ui_event.type.MOUSE_MOVE:
@@ -170,7 +180,7 @@ namespace mame
                     break;
             }
 
-            /* is the queue filled up? */
+            // is the queue filled up?
             if ((m_events_end + 1) % m_events.Length == m_events_start)
                 return false;
 
@@ -273,6 +283,11 @@ namespace mame
         {
             return pressed_repeat(code, 0);
         }
+
+
+        // enable/disable UI key presses
+        //bool presses_enabled() const { return m_presses_enabled; }
+        //void set_presses_enabled(bool enabled) { m_presses_enabled = enabled; }
 
 
         /* return TRUE if a key down for the given user interface sequence is detected, or if

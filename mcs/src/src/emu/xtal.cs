@@ -208,7 +208,7 @@ namespace mame
             15468480, /* 15.46848_MHz_XTAL      Bank Panic h/w, Sega G80 */
             15582000, /* 15.582_MHz_XTAL        Zentec Zephyr */
             15667200, /* 15.6672_MHz_XTAL       Apple Macintosh */
-            15700000, /* 15.700_MHz_XTAL        Motogonki */
+            15700000, /* 15.7_MHz_XTAL          Motogonki */
             15897600, /* 15.8976_MHz_XTAL       IAI Swyft */
             15920000, /* 15.92_MHz_XTAL         HP Integral PC */
             15974400, /* 15.9744_MHz_XTAL       Osborne 1 (9600 * 52 * 32) */
@@ -359,7 +359,7 @@ namespace mame
             45158000, /* 45.158_MHz_XTAL        Sega Model 2A video board, Model 3 CPU board */
             45619200, /* 45.6192_MHz_XTAL       DEC VK100 */
             45830400, /* 45.8304_MHz_XTAL       Microterm 5510 */
-            46615120, /* 46.61512_Mhz_XTAL      Soundblaster 16 PCM base clock */
+            46615120, /* 46.61512_MHz_XTAL      Soundblaster 16 PCM base clock */
             47736000, /* 47.736_MHz_XTAL        Visual 100 */
             48000000, /* 48_MHz_XTAL            Williams/Midway Y/Z-unit system / SSV board */
             48384000, /* 48.384_MHz_XTAL        Namco NB-1 */
@@ -385,7 +385,7 @@ namespace mame
             60000000, /* 60_MHz_XTAL            - */
             61440000, /* 61.44_MHz_XTAL         Donkey Kong */
             64000000, /* 64_MHz_XTAL            BattleToads */
-            64108800, /* 64.108.800_Mhz_XTAL    HP Topcat high-res */
+            64108800, /* 64.1088_MHz_XTAL       HP Topcat high-res */
             66666700, /* 66.6667_MHz_XTAL       Later Midway games */
             67737600, /* 67.7376_MHz_XTAL       PSX-based h/w, Sony ZN1-2-based */
             68850000, /* 68.85_MHz_XTAL         Wyse WY-50 */

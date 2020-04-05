@@ -9,17 +9,6 @@ using device_type = mame.emu.detail.device_type_impl_base;
 
 namespace mame
 {
-    public static class devcpu_global
-    {
-        //**************************************************************************
-        //  CPU DEVICE CONFIGURATION MACROS
-        //**************************************************************************
-
-        // recompilation parameters
-        //#define MCFG_CPU_FORCE_NO_DRC()             dynamic_cast<cpu_device &>(*device).set_force_no_drc(true);
-    }
-
-
     // ======================> cpu_device
     public class cpu_device : device_t
                               //public device_execute_interface,

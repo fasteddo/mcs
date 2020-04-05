@@ -83,7 +83,7 @@ namespace mame.ui
                 }
             }
 
-            custombottom = 2.0f * ui().get_line_height() + 2.0f * UI_BOX_TB_BORDER;
+            custombottom = 2.0f * ui().get_line_height() + 2.0f * ui().box_tb_border();
         }
 
 
@@ -229,57 +229,57 @@ namespace mame.ui
                 float text_height;
                 int curval;
 
-                /* determine the current value and text */
+                // determine the current value and text
                 curval = curslider.update(machine(), curslider.arg, curslider.id, out tempstring, slider_state.SLIDER_NOCHANGE);
 
-                /* compute the current and default percentages */
+                // compute the current and default percentages
                 percentage = (float)(curval - curslider.minval) / (float)(curslider.maxval - curslider.minval);
                 default_percentage = (float)(curslider.defval - curslider.minval) / (float)(curslider.maxval - curslider.minval);
 
-                /* assemble the text */
+                // assemble the text
                 tempstring = string.Format("{0} ", curslider.description);  //.ins(0, " ").ins(0, curslider.description);
 
-                /* move us to the bottom of the screen, and expand to full width */
-                y2 = 1.0f - UI_BOX_TB_BORDER;
+                // move us to the bottom of the screen, and expand to full width
+                y2 = 1.0f - ui().box_tb_border();
                 y1 = y2 - bottom;
-                x1 = UI_BOX_LR_BORDER;
-                x2 = 1.0f - UI_BOX_LR_BORDER;
+                x1 = ui().box_lr_border();
+                x2 = 1.0f - ui().box_lr_border();
 
-                /* draw extra menu area */
-                ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
-                y1 += UI_BOX_TB_BORDER;
+                // draw extra menu area
+                ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
+                y1 += ui().box_tb_border();
 
-                /* determine the text height */
+                // determine the text height
                 float unused;
-                ui().draw_text_full(container(), tempstring, 0, 0, x2 - x1 - 2.0f * UI_BOX_LR_BORDER,
+                ui().draw_text_full(container(), tempstring.c_str(), 0, 0, x2 - x1 - 2.0f * ui().box_lr_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out unused, out text_height);
 
-                /* draw the thermometer */
-                bar_left = x1 + UI_BOX_LR_BORDER;
+                // draw the thermometer
+                bar_left = x1 + ui().box_lr_border();
                 bar_area_top = y1;
-                bar_width = x2 - x1 - 2.0f * UI_BOX_LR_BORDER;
+                bar_width = x2 - x1 - 2.0f * ui().box_lr_border();
                 bar_area_height = line_height;
 
-                /* compute positions */
+                // compute positions
                 bar_top = bar_area_top + 0.125f * bar_area_height;
                 bar_bottom = bar_area_top + 0.875f * bar_area_height;
                 default_x = bar_left + bar_width * default_percentage;
                 current_x = bar_left + bar_width * percentage;
 
-                /* fill in the percentage */
-                container().add_rect(bar_left, bar_top, current_x, bar_bottom, UI_SLIDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                // fill in the percentage
+                container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui().colors().slider_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
-                /* draw the top and bottom lines */
-                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                // draw the top and bottom lines
+                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
-                /* draw default marker */
-                container().add_line(default_x, bar_area_top, default_x, bar_top, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                // draw default marker
+                container().add_line(default_x, bar_area_top, default_x, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
-                /* draw the actual text */
-                mame_machine_manager.instance().ui().draw_text_full(container(), tempstring, x1 + UI_BOX_LR_BORDER, y1 + line_height, x2 - x1 - 2.0f * UI_BOX_LR_BORDER,
-                            text_layout.text_justify.CENTER, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, out unused, out text_height);
+                // draw the actual text
+                ui().draw_text_full(container(), tempstring.c_str(), x1 + ui().box_lr_border(), y1 + line_height, x2 - x1 - 2.0f * ui().box_lr_border(),
+                            text_layout.text_justify.CENTER, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out unused, out text_height);
             }
         }
 

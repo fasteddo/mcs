@@ -45,10 +45,7 @@ namespace mame
         //enum
         //{
         const int M6801_IRQ_LINE = M6800_IRQ_LINE;
-        const int M6801_TIN_LINE = M6800_IRQ_LINE + 1;                 /* P20/Tin Input Capture line (eddge sense)     */
-                                        /* Active eddge is selecrable by internal reg.  */
-                                        /* raise eddge : CLEAR_LINE  -> ASSERT_LINE     */
-                                        /* fall  eddge : ASSERT_LINE -> CLEAR_LINE      */
+        const int M6801_TIN_LINE = M6800_IRQ_LINE + 1; // P20/Tin Input Capture line (edge sense). Active edge is selectable by internal reg.
         const int M6801_SC1_LINE = M6800_IRQ_LINE + 2;
         //}
 
@@ -936,7 +933,7 @@ namespace mame
 
                 if (state != irq_state[M6801_TIN_LINE])
                 {
-                    //eddge = (state == CLEAR_LINE ) ? 2 : 0;
+                    //edge = (state == CLEAR_LINE ) ? 2 : 0;
                     if (((tcsr & TCSR_IEDG) ^ (state == CLEAR_LINE ? TCSR_IEDG : 0)) == 0)
                         return;
 

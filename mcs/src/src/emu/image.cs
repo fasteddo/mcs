@@ -140,7 +140,8 @@ namespace mame
                 //      Note that as a part of #2, we cannot extract the option when the image in question is a part of an
                 //      active reset_on_load; hence the check for is_reset_and_loading() (see issue #2414)
                 if (!image.is_reset_on_load()
-                    || (!image.exists() && !image.is_reset_and_loading() && !machine().options().image_option(image.instance_name()).value().empty()))
+                    || (!image.exists() && !image.is_reset_and_loading()
+                        && machine().options().has_image_option(image.instance_name()) && !machine().options().image_option(image.instance_name()).value().empty()))
                 {
                     // we have to assemble the image option differently for software lists and for normal images
                     string image_opt = "";
@@ -155,7 +156,7 @@ namespace mame
                     }
 
                     // and set the option (provided that it hasn't been removed out from under us)
-                    if (machine().options().exists(image.instance_name()))
+                    if (machine().options().exists(image.instance_name()) && machine().options().has_image_option(image.instance_name()))
                         machine().options().image_option(image.instance_name()).specify(image_opt);
                 }
             }

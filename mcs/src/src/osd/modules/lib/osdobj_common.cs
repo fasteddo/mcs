@@ -244,7 +244,7 @@ namespace mame
 
 
         // video options
-        //const char *video() const { return value(OSDOPTION_VIDEO); }
+        public string video() { return value(OSDOPTION_VIDEO); }
         //int numscreens() const { return int_value(OSDOPTION_NUMSCREENS); }
         //bool window() const { return bool_value(OSDOPTION_WINDOW); }
         //bool maximize() const { return bool_value(OSDOPTION_MAXIMIZE); }

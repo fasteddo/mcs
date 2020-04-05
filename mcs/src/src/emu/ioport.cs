@@ -1335,7 +1335,7 @@ namespace mame
 
 
         // getters
-        //condition_t condition() const { return m_condition; }
+        public condition_t condition() { return m_condition; }
         string tag() { return m_tag; }
         //ioport_value mask() const { return m_mask; }
         //ioport_value value() const { return m_value; }

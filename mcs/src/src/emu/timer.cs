@@ -11,29 +11,6 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public static class timer_global
-    {
-        //define MCFG_TIMER_ADD_NONE(_tag)             MCFG_DEVICE_ADD(_tag, TIMER, 0)             timer_device::static_configure_generic(*device, timer_device_expired_delegate());
-        //define MCFG_TIMER_DRIVER_ADD(_tag, _class, _callback)             MCFG_DEVICE_ADD(_tag, TIMER, 0)             timer_device::static_configure_generic(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, NULL, (_class *)0));
-        //define MCFG_TIMER_DEVICE_ADD(_tag, _devtag, _class, _callback)             MCFG_DEVICE_ADD(_tag, TIMER, 0)             timer_device::static_configure_generic(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, _devtag, (_class *)0));
-        //define MCFG_TIMER_DRIVER_ADD_PERIODIC(_tag, _class, _callback, _period)             MCFG_DEVICE_ADD(_tag, TIMER, 0)             timer_device::static_configure_periodic(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, NULL, (_class *)0), _period);
-        //define MCFG_TIMER_DEVICE_ADD_PERIODIC(_tag, _devtag, _class, _callback, _period)             MCFG_DEVICE_ADD(_tag, TIMER, 0)             timer_device::static_configure_periodic(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, _devtag, (_class *)0), _period);
-        //define MCFG_TIMER_DRIVER_ADD_SCANLINE(_tag, _class, _callback, _screen, _first_vpos, _increment)             MCFG_DEVICE_ADD(_tag, TIMER, 0)             timer_device::static_configure_scanline(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, NULL, (_class *)0), _screen, _first_vpos, _increment);
-        public static void MCFG_TIMER_DRIVER_ADD_SCANLINE(out device_t device, machine_config config, device_t owner, string tag, timer_device.expired_delegate callback, string screen, int first_vpos, int increment)
-        {
-            mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, tag, timer_device.TIMER, 0);
-            ((timer_device)device).configure_scanline(callback, screen, first_vpos, increment);  //timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, NULL, (_class *)0), _screen, _first_vpos, _increment);
-        }
-        //define MCFG_TIMER_DEVICE_ADD_SCANLINE(_tag, _devtag, _class, _callback, _screen, _first_vpos, _increment)             MCFG_DEVICE_ADD(_tag, TIMER, 0)             timer_device::static_configure_scanline(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, _devtag, (_class *)0), _screen, _first_vpos, _increment);
-        //define MCFG_TIMER_MODIFY(_tag)             MCFG_DEVICE_MODIFY(_tag)
-
-        //define MCFG_TIMER_DRIVER_CALLBACK(_class, _callback)             timer_device::static_set_callback(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, NULL, (_class *)0));
-        //define MCFG_TIMER_START_DELAY(_start_delay)             timer_device::static_set_start_delay(*device, _start_delay);
-        //define MCFG_TIMER_PARAM(_param)             timer_device::static_set_param(*device, _param);
-        //define MCFG_TIMER_PTR(_ptr)             timer_device::static_set_ptr(*device, (void *)(_ptr));
-    }
-
-
     // ======================> timer_device
     public class timer_device : device_t
     {

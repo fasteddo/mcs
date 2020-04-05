@@ -547,12 +547,12 @@ namespace mame.ui
             visible_main_menu_height += 0.01f;
 
             // if we are too wide or too tall, clamp it down
-            if (visible_width + 2.0f * UI_BOX_LR_BORDER > 1.0f)
-                visible_width = 1.0f - 2.0f * UI_BOX_LR_BORDER;
+            if (visible_width + 2.0f * ui().box_lr_border() > 1.0f)
+                visible_width = 1.0f - 2.0f * ui().box_lr_border();
 
             // if the menu and extra menu won't fit, take away part of the regular menu, it will scroll
-            if (visible_main_menu_height + visible_extra_menu_height + 2.0f * UI_BOX_TB_BORDER > 1.0f)
-                visible_main_menu_height = 1.0f - 2.0f * UI_BOX_TB_BORDER - visible_extra_menu_height;
+            if (visible_main_menu_height + visible_extra_menu_height + 2.0f * ui().box_tb_border() > 1.0f)
+                visible_main_menu_height = 1.0f - 2.0f * ui().box_tb_border() - visible_extra_menu_height;
 
             m_visible_lines = Math.Min((int)(Math.Floor(visible_main_menu_height / line_height)), (int)m_items.size());
             visible_main_menu_height = (float)m_visible_lines * line_height;
@@ -562,12 +562,12 @@ namespace mame.ui
             float visible_top = ((1.0f - visible_main_menu_height - visible_extra_menu_height) * 0.5f) + m_customtop;
 
             // first add us a box
-            float x1 = visible_left - UI_BOX_LR_BORDER;
-            float y1 = visible_top - UI_BOX_TB_BORDER;
-            float x2 = visible_left + visible_width + UI_BOX_LR_BORDER;
-            float y2 = visible_top + visible_main_menu_height + UI_BOX_TB_BORDER;
+            float x1 = visible_left - ui().box_lr_border();
+            float y1 = visible_top - ui().box_tb_border();
+            float x2 = visible_left + visible_width + ui().box_lr_border();
+            float y2 = visible_top + visible_main_menu_height + ui().box_tb_border();
             if (!customonly)
-                ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+                ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
             // determine the first visible line based on the current selection
             if (top_line < 0 || is_first_selected())
@@ -606,10 +606,10 @@ namespace mame.ui
                     var itemnum = top_line + linenum;
                     menu_item pitem = m_items[itemnum];
                     string itemtext = pitem.text;
-                    rgb_t fgcolor = UI_TEXT_COLOR;
-                    rgb_t bgcolor = UI_TEXT_BG_COLOR;
-                    rgb_t fgcolor2 = UI_SUBITEM_COLOR;
-                    rgb_t fgcolor3 = UI_CLONE_COLOR;
+                    rgb_t fgcolor = ui().colors().text_color();
+                    rgb_t bgcolor = ui().colors().text_bg_color();
+                    rgb_t fgcolor2 = ui().colors().subitem_color();
+                    rgb_t fgcolor3 = ui().colors().clone_color();
                     float line_y0 = visible_top + (float)linenum * line_height;
                     float line_y1 = line_y0 + line_height;
 
@@ -620,19 +620,19 @@ namespace mame.ui
                     // if we're selected, draw with a different background
                     if (is_selected(itemnum))
                     {
-                        fgcolor = fgcolor2 = fgcolor3 = UI_SELECTED_COLOR;
-                        bgcolor = UI_SELECTED_BG_COLOR;
+                        fgcolor = fgcolor2 = fgcolor3 = ui().colors().selected_color();
+                        bgcolor = ui().colors().selected_bg_color();
                     }
 
                     // else if the mouse is over this item, draw with a different background
                     else if (itemnum == m_hover)
                     {
-                        fgcolor = fgcolor2 = fgcolor3 = UI_MOUSEOVER_COLOR;
-                        bgcolor = UI_MOUSEOVER_BG_COLOR;
+                        fgcolor = fgcolor2 = fgcolor3 = ui().colors().mouseover_color();
+                        bgcolor = ui().colors().mouseover_bg_color();
                     }
 
                     // if we have some background hilighting to do, add a quad behind everything else
-                    if (bgcolor != UI_TEXT_BG_COLOR)
+                    if (bgcolor != ui().colors().text_bg_color())
                         highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
 
                     if (linenum == 0 && show_top_arrow)
@@ -664,7 +664,7 @@ namespace mame.ui
                     else if (itemtext == menu_item.MENU_SEPARATOR_ITEM)
                     {
                         // if we're just a divider, draw a line
-                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                     }
                     else if (pitem.subtext == null)
                     {
@@ -672,8 +672,8 @@ namespace mame.ui
                         if ((pitem.flags & FLAG_UI_HEADING) != 0)
                         {
                             float heading_width = ui().get_string_width(itemtext);
-                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - UI_BOX_LR_BORDER, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + UI_BOX_LR_BORDER, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - ui().box_lr_border(), line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + ui().box_lr_border(), line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                         }
 
                         float unused1;
@@ -772,22 +772,22 @@ namespace mame.ui
                             text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out target_width, out target_height);
 
                 // determine the target location
-                float target_x = visible_left + visible_width - target_width - UI_BOX_LR_BORDER;
-                float target_y = line_y + line_height + UI_BOX_TB_BORDER;
-                if (target_y + target_height + UI_BOX_TB_BORDER > visible_main_menu_height)
-                    target_y = line_y - target_height - UI_BOX_TB_BORDER;
+                float target_x = visible_left + visible_width - target_width - ui().box_lr_border();
+                float target_y = line_y + line_height + ui().box_tb_border();
+                if (target_y + target_height + ui().box_tb_border() > visible_main_menu_height)
+                    target_y = line_y - target_height - ui().box_tb_border();
 
                 // add a box around that
-                ui().draw_outlined_box(container(), target_x - UI_BOX_LR_BORDER,
-                                    target_y - UI_BOX_TB_BORDER,
-                                    target_x + target_width + UI_BOX_LR_BORDER,
-                                    target_y + target_height + UI_BOX_TB_BORDER,
-                                    subitem_invert ? UI_SELECTED_BG_COLOR : UI_BACKGROUND_COLOR);
+                ui().draw_outlined_box(container(), target_x - ui().box_lr_border(),
+                        target_y - ui().box_tb_border(),
+                        target_x + target_width + ui().box_lr_border(),
+                        target_y + target_height + ui().box_tb_border(),
+                        subitem_invert ? ui().colors().selected_bg_color() : ui().colors().background_color());
 
                 float unused1;
                 float unused2;
-                ui().draw_text_full(container(), pitem.subtext, target_x, target_y, target_width,
-                            text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, UI_SELECTED_COLOR, UI_SELECTED_BG_COLOR, out unused1, out unused2);
+                ui().draw_text_full(container(), pitem.subtext.c_str(), target_x, target_y, target_width,
+                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(), out unused1, out unused2);
             }
 
             // if there is something special to add, do it by calling the virtual method
@@ -814,11 +814,11 @@ namespace mame.ui
             float target_y;
 
             // compute the multi-line target width/height
-            ui().draw_text_full(container(), text, 0, 0, 1.0f - 2.0f * UI_BOX_LR_BORDER - 2.0f * gutter_width,
+            ui().draw_text_full(container(), text, 0, 0, 1.0f - 2.0f * ui().box_lr_border() - 2.0f * gutter_width,
                         text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out target_width, out target_height);
             target_height += 2.0f * line_height;
-            if (target_height > 1.0f - 2.0f * UI_BOX_TB_BORDER)
-                target_height = (float)Math.Floor((1.0f - 2.0f * UI_BOX_TB_BORDER) / line_height) * line_height;
+            if (target_height > 1.0f - 2.0f * ui().box_tb_border())
+                target_height = (float)Math.Floor((1.0f - 2.0f * ui().box_tb_border()) / line_height) * line_height;
 
             // maximum against "return to prior menu" text
             prior_width = ui().get_string_width(backtext) + 2.0f * gutter_width;
@@ -829,25 +829,26 @@ namespace mame.ui
             target_y = 0.5f - 0.5f * target_height;
 
             // make sure we stay on-screen
-            if (target_x < UI_BOX_LR_BORDER + gutter_width)
-                target_x = UI_BOX_LR_BORDER + gutter_width;
-            if (target_x + target_width + gutter_width + UI_BOX_LR_BORDER > 1.0f)
-                target_x = 1.0f - UI_BOX_LR_BORDER - gutter_width - target_width;
-            if (target_y < UI_BOX_TB_BORDER)
-                target_y = UI_BOX_TB_BORDER;
-            if (target_y + target_height + UI_BOX_TB_BORDER > 1.0f)
-                target_y = 1.0f - UI_BOX_TB_BORDER - target_height;
+            if (target_x < ui().box_lr_border() + gutter_width)
+                target_x = ui().box_lr_border() + gutter_width;
+            if (target_x + target_width + gutter_width + ui().box_lr_border() > 1.0f)
+                target_x = 1.0f - ui().box_lr_border() - gutter_width - target_width;
+            if (target_y < ui().box_tb_border())
+                target_y = ui().box_tb_border();
+            if (target_y + target_height + ui().box_tb_border() > 1.0f)
+                target_y = 1.0f - ui().box_tb_border() - target_height;
 
             // add a box around that
-            ui().draw_outlined_box(container(), target_x - UI_BOX_LR_BORDER - gutter_width,
-                                target_y - UI_BOX_TB_BORDER,
-                                target_x + target_width + gutter_width + UI_BOX_LR_BORDER,
-                                target_y + target_height + UI_BOX_TB_BORDER, (m_items[0].flags & FLAG_REDTEXT) != 0 ? UI_RED_COLOR : UI_BACKGROUND_COLOR);
+            ui().draw_outlined_box(container(), target_x - ui().box_lr_border() - gutter_width,
+                                    target_y - ui().box_tb_border(),
+                                    target_x + target_width + gutter_width + ui().box_lr_border(),
+                                    target_y + target_height + ui().box_tb_border(),
+                                    (m_items[0].flags & FLAG_REDTEXT) != 0 ? UI_RED_COLOR : ui().colors().background_color());
 
             float unused1;
             float unused2;
             ui().draw_text_full(container(), text, target_x, target_y, target_width,
-                        text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, out unused1, out unused2);
+                        text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out unused1, out unused2);
 
             // draw the "return to prior menu" text with a hilight behind it
             highlight(
@@ -855,10 +856,10 @@ namespace mame.ui
                         target_y + target_height - line_height,
                         target_x + target_width - 0.5f * UI_LINE_WIDTH,
                         target_y + target_height,
-                        UI_SELECTED_BG_COLOR);
+                        ui().colors().selected_bg_color());
 
             ui().draw_text_full(container(), backtext, target_x, target_y + target_height - line_height, target_width,
-                        text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, UI_SELECTED_COLOR, UI_SELECTED_BG_COLOR, out unused1, out unused2);
+                        text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(), out unused1, out unused2);
 
             // artificially set the hover to the last item so a double-click exits
             m_hover = m_items.size() - 1;
@@ -1110,7 +1111,7 @@ namespace mame.ui
                         0.0f, 0.0f, 1.0f, justify, wrap,
                         mame_ui_manager.draw_mode.NONE, rgb_t.black(), rgb_t.white(),
                         out width, out unused1, text_size);
-                width += 2.0f * UI_BOX_LR_BORDER;
+                width += 2.0f * ui().box_lr_border();
                 maxwidth = Math.Max(maxwidth, width);
             }
 
@@ -1126,10 +1127,10 @@ namespace mame.ui
             ui().draw_outlined_box(container(), x1, y1, x2, y2, bgcolor);
 
             // inset box and draw content
-            x1 += UI_BOX_LR_BORDER;
-            x2 -= UI_BOX_LR_BORDER;
-            y1 += UI_BOX_TB_BORDER;
-            y2 -= UI_BOX_TB_BORDER;
+            x1 += ui().box_lr_border();
+            x2 -= ui().box_lr_border();
+            y1 += ui().box_tb_border();
+            y2 -= ui().box_tb_border();
             foreach (var it in iter)  //for (Iter it = begin; it != end; ++it)
             {
                 float unused1;
@@ -1137,7 +1138,7 @@ namespace mame.ui
                 ui().draw_text_full(
                         container(), get_c_str(it),
                         x1, y1, x2 - x1, justify, wrap,
-                        mame_ui_manager.draw_mode.NORMAL, fgcolor, UI_TEXT_BG_COLOR,
+                        mame_ui_manager.draw_mode.NORMAL, fgcolor, ui().colors().text_bg_color(),
                         out unused1, out unused2, text_size);
                 y1 += ui().get_line_height();
             }

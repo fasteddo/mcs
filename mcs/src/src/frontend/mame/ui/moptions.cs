@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using uint32_t = System.UInt32;
+
 
 namespace mame
 {
@@ -183,21 +185,40 @@ namespace mame
         public int font_rows() { return int_value(OPTION_FONT_ROWS); }
         public int hide_panels() { return int_value(OPTION_HIDE_PANELS); }
 
-        //const char *ui_border_color() const { return value(OPTION_UI_BORDER_COLOR); }
-        //const char *ui_bg_color() const { return value(OPTION_UI_BACKGROUND_COLOR); }
-        //const char *ui_gfx_bg_color() const { return value(OPTION_UI_GFXVIEWER_BG_COLOR); }
-        //const char *ui_unavail_color() const { return value(OPTION_UI_UNAVAILABLE_COLOR); }
-        //const char *ui_text_color() const { return value(OPTION_UI_TEXT_COLOR); }
-        //const char *ui_text_bg_color() const { return value(OPTION_UI_TEXT_BG_COLOR); }
-        //const char *ui_subitem_color() const { return value(OPTION_UI_SUBITEM_COLOR); }
-        //const char *ui_clone_color() const { return value(OPTION_UI_CLONE_COLOR); }
-        //const char *ui_selected_color() const { return value(OPTION_UI_SELECTED_COLOR); }
-        //const char *ui_selected_bg_color() const { return value(OPTION_UI_SELECTED_BG_COLOR); }
-        //const char *ui_mouseover_color() const { return value(OPTION_UI_MOUSEOVER_COLOR); }
-        //const char *ui_mouseover_bg_color() const { return value(OPTION_UI_MOUSEOVER_BG_COLOR); }
-        //const char *ui_mousedown_color() const { return value(OPTION_UI_MOUSEDOWN_COLOR); }
-        //const char *ui_mousedown_bg_color() const { return value(OPTION_UI_MOUSEDOWN_BG_COLOR); }
-        //const char *ui_dipsw_color() const { return value(OPTION_UI_DIPSW_COLOR); }
-        //const char *ui_slider_color() const { return value(OPTION_UI_SLIDER_COLOR); }
+        public rgb_t border_color() { return rgb_value(OPTION_UI_BORDER_COLOR); }
+        public rgb_t background_color() { return rgb_value(OPTION_UI_BACKGROUND_COLOR); }
+        public rgb_t gfxviewer_bg_color() { return rgb_value(OPTION_UI_GFXVIEWER_BG_COLOR); }
+        public rgb_t unavailable_color() { return rgb_value(OPTION_UI_UNAVAILABLE_COLOR); }
+        public rgb_t text_color() { return rgb_value(OPTION_UI_TEXT_COLOR); }
+        public rgb_t text_bg_color() { return rgb_value(OPTION_UI_TEXT_BG_COLOR); }
+        public rgb_t subitem_color() { return rgb_value(OPTION_UI_SUBITEM_COLOR); }
+        public rgb_t clone_color() { return rgb_value(OPTION_UI_CLONE_COLOR); }
+        public rgb_t selected_color() { return rgb_value(OPTION_UI_SELECTED_COLOR); }
+        public rgb_t selected_bg_color() { return rgb_value(OPTION_UI_SELECTED_BG_COLOR); }
+        public rgb_t mouseover_color() { return rgb_value(OPTION_UI_MOUSEOVER_COLOR); }
+        public rgb_t mouseover_bg_color() { return rgb_value(OPTION_UI_MOUSEOVER_BG_COLOR); }
+        public rgb_t mousedown_color() { return rgb_value(OPTION_UI_MOUSEDOWN_COLOR); }
+        public rgb_t mousedown_bg_color() { return rgb_value(OPTION_UI_MOUSEDOWN_BG_COLOR); }
+        public rgb_t dipsw_color() { return rgb_value(OPTION_UI_DIPSW_COLOR); }
+        public rgb_t slider_color() { return rgb_value(OPTION_UI_SLIDER_COLOR); }
+
+
+        //-------------------------------------------------
+        //  rgb_value - decode an RGB option
+        //-------------------------------------------------
+        rgb_t rgb_value(string option)
+        {
+            // find the entry
+            core_options.entry entry = get_entry(option);
+
+            // look up the value, and sanity check the result
+            string value = entry.value();
+            int len = strlen(value);
+            if (len != 8)
+                value = entry.default_value().c_str();
+
+            // convert to an rgb_t
+            return new rgb_t((UInt32)Convert.ToInt64(value, 16));  //return new rgb_t((uint32_t)strtoul(value, null, 16));
+        }
     }
 }

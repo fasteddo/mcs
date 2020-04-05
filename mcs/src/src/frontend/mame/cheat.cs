@@ -38,33 +38,6 @@ namespace mame
 
             //throw new emu_unimplemented();
 #if false
-            : m_machine(machine),
-                m_disabled(true),
-                m_symtable(&machine)
-
-
-            // if the cheat engine is disabled, we're done
-            if (!machine.options().cheat())
-                return;
-
-            // request a callback
-            machine.add_notifier(MACHINE_NOTIFY_FRAME, machine_notify_delegate(FUNC(cheat_manager::frame_update), this));
-
-            // create a global symbol table
-            m_symtable.add("frame", symbol_table::READ_ONLY, &m_framecount);
-            m_symtable.add("frombcd", 1, 1, execute_frombcd);
-            m_symtable.add("tobcd", 1, 1, execute_tobcd);
-
-            // we rely on the debugger expression callbacks; if the debugger isn't
-            // enabled, we must jumpstart them manually
-            if ((machine.debug_flags & DEBUG_FLAG_ENABLED) == 0)
-                debug_cpu_init(machine);
-
-            // configure for memory access (shared with debugger)
-            debug_cpu_configure_memory(machine, m_symtable);
-
-            // load the cheats
-            reload();
 #endif
         }
 

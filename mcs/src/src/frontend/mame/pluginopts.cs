@@ -7,32 +7,52 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    class plugin_options : core_options
+    // ======================> plugin
+    class plugin
     {
-        //static const options_entry s_option_entries[];
-        static readonly options_entry [] s_option_entries = new options_entry[]
+        string m_name;
+        string m_description;
+        string m_type;
+        string m_directory;
+        public bool m_start;
+    }
+
+
+    // ======================> plugin_options
+    class plugin_options
+    {
+        //std::list<plugin> m_plugins;
+
+
+        public plugin_options() { }
+
+
+        // accessors
+        //std.list<plugin> plugins() { return m_plugins; }
+        //const std::list<plugin> &plugins() const { return m_plugins; }
+
+        // methods
+        public void scan_directory(string path, bool recursive)
         {
-            new options_entry(null,  null,  OPTION_HEADER,  "PLUGINS OPTIONS"),
-            new options_entry(null),
-        };
-
-
-        std.list<string> m_descriptions;
-
-
-        // construction/destruction
-        //-------------------------------------------------
-        //  plugin_options - constructor
-        //-------------------------------------------------
-        public plugin_options() : base()
-        {
-            add_entries(s_option_entries);
+            throw new emu_unimplemented();
         }
 
 
-        public void parse_json(string path)
+        //bool load_plugin(const std::string &path);
+
+
+        public plugin find(string name)
         {
-            //throw new emu_unimplemented();
+            throw new emu_unimplemented();
         }
+
+
+        // INI functionality
+        public void parse_ini_file(util.core_file inifile)
+        {
+            throw new emu_unimplemented();
+        }
+
+        //std::string output_ini() const;
     }
 }

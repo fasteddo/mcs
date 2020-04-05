@@ -22,26 +22,6 @@ namespace mame
 
     public static class netlist_global
     {
-        public static void MCFG_NETLIST_SETUP(device_t device, func_type _setup) { ((netlist_mame_device)device).set_setup_func(_setup); }
-
-#if false
-        //define MCFG_NETLIST_SETUP_MEMBER(_obj, _setup) downcast<netlist_mame_device &>(*device).set_constructor(_obj, _setup);
-        //define MCFG_NETLIST_ANALOG_INPUT(_basetag, _tag, _name)                                        MCFG_DEVICE_ADD(_basetag ":" _tag, NETLIST_ANALOG_INPUT, 0)                                 netlist_mame_analog_input_t::static_set_name(*device, _name);
-        public static void MCFG_NETLIST_ANALOG_MULT_OFFSET(device_t device, double _mult, double _offset) { ((device_t_with_netlist_mame_sub_interface)device).set_mult_offset(_mult, _offset); }
-        //define MCFG_NETLIST_ANALOG_OUTPUT(_basetag, _tag, _IN, _class, _member, _class_tag)             MCFG_DEVICE_ADD(_basetag ":" _tag, NETLIST_ANALOG_OUTPUT, 0)                                netlist_mame_analog_output_t::static_set_params(*device, _IN,                                           FUNC(_class :: _member), _class_tag);
-        //define MCFG_NETLIST_LOGIC_INPUT(_basetag, _tag, _name, _shift, _mask)                          MCFG_DEVICE_ADD(_basetag ":" _tag, NETLIST_LOGIC_INPUT, 0)                                  netlist_mame_logic_input_t::static_set_params(*device, _name, _mask, _shift);
-        public static void MCFG_NETLIST_STREAM_INPUT(out device_t device, machine_config config, device_t owner, string basetag, int chan, string name)
-        {
-            mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, string.Format("{0}:cin{1}", basetag, chan), netlist_mame_stream_input_device.NETLIST_STREAM_INPUT, 0);
-            ((netlist_mame_stream_input_device)device).set_params(chan, name);
-        }
-        public static void MCFG_NETLIST_STREAM_OUTPUT(out device_t device, machine_config config, device_t owner, string basetag, int chan, string name)
-        {
-            mconfig_global.MCFG_DEVICE_ADD(out device, config, owner, string.Format("{0}:cout{1}", basetag, chan), netlist_mame_stream_output_device.NETLIST_STREAM_OUTPUT, 0);
-            ((netlist_mame_stream_output_device)device).set_params(chan, name);
-        }
-#endif
-
         //define NETLIST_LOGIC_PORT_CHANGED(_base, _tag)                                                 PORT_CHANGED_MEMBER(_base ":" _tag, netlist_mame_logic_input_t, input_changed, 0)
         //define NETLIST_ANALOG_PORT_CHANGED(_base, _tag)                                                PORT_CHANGED_MEMBER(_base ":" _tag, netlist_mame_analog_input_t, input_changed, 0)
 

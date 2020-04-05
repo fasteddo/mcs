@@ -191,12 +191,13 @@ namespace mame
             public u32 m_addr_width;
             public u32 m_sp_mask;
             public u32 m_sp_floor;
+            public u16 m_vector_mask;
             public u16 m_swi_vector;
 
 
             public configuration_params(
-                    op_handler_func [] ops,  //op_handler_table ops,
-                    u8 [] cycles,  //cycle_count_table cycles,
+                    op_handler_func [] ops,  //op_handler_table &ops,
+                    u8 [] cycles,  //cycle_count_table &cycles,
                     u32 addr_width,
                     u32 sp_mask,
                     u32 sp_floor,
@@ -207,6 +208,26 @@ namespace mame
                 m_addr_width = addr_width;
                 m_sp_mask = sp_mask;
                 m_sp_floor = sp_floor;
+                m_vector_mask = (u16)((1U << (int)addr_width) - 1);
+                m_swi_vector = swi_vector;
+            }
+
+
+            configuration_params(
+                    op_handler_func [] ops,  //op_handler_table &ops,
+                    u8 [] cycles,  //cycle_count_table &cycles,
+                    u32 addr_width,
+                    u32 sp_mask,
+                    u32 sp_floor,
+                    u16 vector_mask,
+                    u16 swi_vector)
+            {
+                m_ops = ops;
+                m_cycles = cycles;
+                m_addr_width = addr_width;
+                m_sp_mask = sp_mask;
+                m_sp_floor = sp_floor;
+                m_vector_mask = vector_mask;
                 m_swi_vector = swi_vector;
             }
         }
@@ -356,7 +377,7 @@ namespace mame
             /* IRQ disabled */
             SEI();
 
-            rm16(0xfffe, ref m_pc);
+            rm16((u32)(0xfffe & m_params.m_vector_mask), ref m_pc);
         }
 
 

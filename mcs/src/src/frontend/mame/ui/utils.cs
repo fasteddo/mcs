@@ -1198,9 +1198,9 @@ namespace mame
                     string [] text = { "Select custom filters:" };
                     draw_text_box(
                             text,  //std::begin(text), std::end(text),
-                            x, x2, y - top, y - UI_BOX_TB_BORDER,
+                            x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            UI_TEXT_COLOR, UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -1235,7 +1235,7 @@ namespace mame
                     item_append(menu_item_type.SEPARATOR);
 
                     // leave space for heading
-                    customtop = ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+                    customtop = ui().get_line_height() + 3.0f * ui().box_tb_border();
                 }
 
 
@@ -1490,9 +1490,9 @@ namespace mame
                     string [] text = { "Select custom filters:" };
                     draw_text_box(
                             text,  //std::begin(text), std::end(text),
-                            x, x2, y - top, y - UI_BOX_TB_BORDER,
+                            x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            UI_TEXT_COLOR, UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -1527,7 +1527,7 @@ namespace mame
                     item_append(menu_item_type.SEPARATOR);
 
                     // leave space for heading
-                    customtop = ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+                    customtop = ui().get_line_height() + 3.0f * ui().box_tb_border();
                 }
 
 
@@ -2003,9 +2003,9 @@ namespace mame
                     string [] text = { "Select category:" };
                     draw_text_box(
                             text,  //std::begin(text), std::end(text),
-                            x, x2, y - top, y - UI_BOX_TB_BORDER,
+                            x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            UI_TEXT_COLOR, UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -2023,7 +2023,7 @@ namespace mame
                     }
 
                     item_append(menu_item_type.SEPARATOR);
-                    customtop = ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+                    customtop = ui().get_line_height() + 3.0f * ui().box_tb_border();
                 }
 
 

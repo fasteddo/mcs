@@ -17,18 +17,6 @@ namespace mame
     {
         public const int ALL_OUTPUTS       = 65535;    // special value indicating all outputs for the current chip
         public const int AUTO_ALLOC_INPUT  = 65535;
-
-
-        //**************************************************************************
-        //  INTERFACE CONFIGURATION MACROS
-        //**************************************************************************
-
-        //#define MCFG_SOUND_ROUTE(_output, _target, ...)     dynamic_cast<device_sound_interface &>(*device).add_route(_output, _target, __VA_ARGS__);
-        public static void MCFG_SOUND_ROUTE(device_t device, u32 output, string target, double gain) { device.GetClassInterface<device_sound_interface>().add_route(output, target, gain); }
-        public static void MCFG_SOUND_ROUTE(device_t device, u32 output, string target, double gain, u32 input) { device.GetClassInterface<device_sound_interface>().add_route(output, target, gain, input); }
-        //define MCFG_SOUND_ROUTES_RESET()             device_sound_interface::static_reset_routes(*device);
-
-        //define MCFG_MIXER_ROUTE(_output, _target, _gain, _mixoutput)             device_sound_interface::static_add_route(*device, _output, _target, _gain, AUTO_ALLOC_INPUT, _mixoutput);
     }
 
 

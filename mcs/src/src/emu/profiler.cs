@@ -26,9 +26,10 @@ namespace mame
         PROFILER_BLIT,
         PROFILER_SOUND,
         PROFILER_TIMER_CALLBACK,
-        PROFILER_INPUT,             // input.c and inptport.c
+        PROFILER_INPUT,             // input.cpp and inptport.cpp
         PROFILER_MOVIE_REC,         // movie recording
         PROFILER_LOGERROR,          // logerror
+        PROFILER_LUA,               // LUA
         PROFILER_EXTRA,             // everything else
 
         // the USER types are available to driver writers to profile
@@ -100,6 +101,7 @@ namespace mame
             new profile_string() { type = (int)profile_type.PROFILER_INPUT,            str = "Input Processing" },
             new profile_string() { type = (int)profile_type.PROFILER_MOVIE_REC,        str = "Movie Recording" },
             new profile_string() { type = (int)profile_type.PROFILER_LOGERROR,         str = "Error Logging" },
+            new profile_string() { type = (int)profile_type.PROFILER_LUA,              str = "LUA" },
             new profile_string() { type = (int)profile_type.PROFILER_EXTRA,            str = "Unaccounted/Overhead" },
             new profile_string() { type = (int)profile_type.PROFILER_USER1,            str = "User 1" },
             new profile_string() { type = (int)profile_type.PROFILER_USER2,            str = "User 2" },

@@ -809,8 +809,6 @@ namespace mame
         {
             galaxian_base(config);
 
-            MACHINE_CONFIG_START(config);
-
             I8255A(config, m_ppi8255.op(0));
             m_ppi8255.op(0).target.in_pa_callback().set_ioport("IN0").reg();
             m_ppi8255.op(0).target.in_pb_callback().set_ioport("IN1").reg();
@@ -822,8 +820,6 @@ namespace mame
             m_ppi8255.op(1).target.out_pb_callback().set(konami_sound_control_w).reg();
             m_ppi8255.op(1).target.in_pc_callback().set_ioport("IN3").reg();
             m_ppi8255.op(1).target.out_pc_callback().set(konami_portc_1_w).reg();
-
-            MACHINE_CONFIG_END();
         }
 
 

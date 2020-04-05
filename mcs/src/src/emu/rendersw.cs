@@ -1178,6 +1178,16 @@ namespace mame
         }
 
 
+        //-------------------------------------------------
+        //  draw_quad_rgb32_multiply - perform
+        //  rasterization using RGB multiply
+        //-------------------------------------------------
+        static void draw_quad_rgb32_multiply(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata
+        {
+            throw new emu_unimplemented();
+        }
+
+
         //**************************************************************************
         //  32-BIT ARGB QUAD RASTERIZERS
         //**************************************************************************
@@ -1375,16 +1385,6 @@ namespace mame
 
 
         //-------------------------------------------------
-        //  draw_quad_argb32_multiply - perform
-        //  rasterization using RGB multiply
-        //-------------------------------------------------
-        static void draw_quad_argb32_multiply(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        //-------------------------------------------------
         //  draw_quad_argb32_add - perform
         //  rasterization by using RGB add
         //-------------------------------------------------
@@ -1461,9 +1461,6 @@ namespace mame
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
                     draw_quad_palette16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTEA16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
-                    draw_quad_palettea16_alpha(prim, dstdata, pitch, setup);
-
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)) ||
                          primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_yuy16_none(prim, dstdata, pitch, setup);
@@ -1476,14 +1473,15 @@ namespace mame
                          primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)))
                     draw_quad_rgb32(t, prim, dstdata, pitch, setup);
 
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_RGB_MULTIPLY)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_RGB_MULTIPLY)))
+                    draw_quad_rgb32_multiply(prim, dstdata, pitch, setup);
+
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
                     draw_quad_rgb32_add(prim, dstdata, pitch, setup);
 
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_argb32_alpha(t, prim, dstdata, pitch, setup);
-
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_RGB_MULTIPLY)))
-                    draw_quad_argb32_multiply(prim, dstdata, pitch, setup);
 
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
                     draw_quad_argb32_add(prim, dstdata, pitch, setup);

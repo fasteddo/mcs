@@ -66,6 +66,7 @@ namespace mame
         public static int compare(this String str, string s) { return str.CompareTo(s); }
         public static bool empty(this String str) { return string.IsNullOrEmpty(str); }
         public static int find(this String str, char c) { return str.IndexOf(c); }
+        public static int find(this String str, char c, int start) { return str.IndexOf(c, start); }
         public static int find(this String str, string s) { return str.IndexOf(s); }
         public static int find_first_of(this String str, string s, int pos = 0) { return str.IndexOf(s, pos); }
         public static int find_first_of(this String str, char c, int pos = 0) { return str.IndexOf(c, pos); }
