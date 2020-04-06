@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using u64 = System.UInt64;
 
 
 namespace mame
@@ -626,8 +627,8 @@ namespace mame
 
         int m_romsloaded;            // current ROMs loaded count
         int m_romstotal;             // total number of ROMs to read
-        u32 m_romsloadedsize;     // total size of ROMs loaded so far
-        u32 m_romstotalsize;      // total size of ROMs to read
+        u64 m_romsloadedsize;     // total size of ROMs loaded so far
+        u64 m_romstotalsize;      // total size of ROMs to read
 
         emu_file m_file;  //std::unique_ptr<emu_file>  m_file;               /* current file */
         std.vector<open_chd> m_chd_list = new std.vector<open_chd>();  //std::vector<std::unique_ptr<open_chd>> m_chd_list;     /* disks */
@@ -918,7 +919,7 @@ namespace mame
             string buffer;  //char buffer[200];
 
             if (!string.IsNullOrEmpty(name))
-                buffer = string.Format("{0} ({1}%)", from_list ? "Loading Software" : "Loading Machine", (UInt32)(100 * (UInt64)m_romsloadedsize / (UInt64)m_romstotalsize));
+                buffer = string.Format("{0} ({1}%)", from_list ? "Loading Software" : "Loading Machine", (UInt32)(100 * m_romsloadedsize / m_romstotalsize));
             else
                 buffer = string.Format("Loading Complete");
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
+using netlist_time_ext = mame.plib.ptime_i64;  //netlist_time
 using nl_fptype = System.Double;
 
 
@@ -43,7 +44,7 @@ namespace mame.netlist
         }
 
 
-        struct solver_parameters_t
+        public struct solver_parameters_t
         {
             param_fp_t m_freq;
             param_fp_t m_gs_sor;
@@ -64,7 +65,6 @@ namespace mame.netlist
             public param_enum_t_matrix_sort_type_e m_sort_type;
 
             param_logic_t m_use_gabs;
-            param_logic_t m_use_linear_prediction;
 
             public nl_fptype m_min_timestep;
             public nl_fptype m_max_timestep;
@@ -100,7 +100,6 @@ namespace mame.netlist
 
                 // special
                 m_use_gabs = new param_logic_t(parent, "USE_GABS", true);
-                m_use_linear_prediction = new param_logic_t(parent, "USE_LINEAR_PREDICTION", false); // // savings are eaten up by effort
 
                 {
                     m_min_timestep = m_dynamic_min_ts.op();
@@ -120,7 +119,7 @@ namespace mame.netlist
         }
 
 
-        class terms_for_net_t
+        public class terms_for_net_t
         {
             public plib.aligned_vector<UInt32> m_nz;   //!< all non zero for multiplication
             public plib.aligned_vector<UInt32> m_nzrd; //!< non zero right of the diagonal for elimination, may include RHS element
@@ -197,7 +196,7 @@ namespace mame.netlist
         }
 
 
-        abstract class matrix_solver_t : device_t
+        public abstract class matrix_solver_t : device_t
         {
             //using list_t = std::vector<matrix_solver_t *>;
             //template <typename T> using aligned_alloc = plib::aligned_allocator<T, PALIGN_VECTOROPT>;
@@ -222,7 +221,7 @@ namespace mame.netlist
             state_var<UInt32> m_stat_newton_raphson;
             state_var<UInt32> m_stat_vsolver_calls;
 
-            state_var<netlist_time> m_last_step;
+            state_var<netlist_time_ext> m_last_step;
             std.vector<core_device_t> m_step_devices = new std.vector<core_device_t>();
             std.vector<core_device_t> m_dynamic_devices = new std.vector<core_device_t>();
 
@@ -244,7 +243,7 @@ namespace mame.netlist
                 m_stat_calculations = new state_var<UInt32>(this, "m_stat_calculations", 0);
                 m_stat_newton_raphson = new state_var<UInt32>(this, "m_stat_newton_raphson", 0);
                 m_stat_vsolver_calls = new state_var<UInt32>(this, "m_stat_vsolver_calls", 0);
-                m_last_step = new state_var<netlist_time>(this, "m_last_step", netlist_time.zero());
+                m_last_step = new state_var<netlist_time_ext>(this, "m_last_step", netlist_time_ext.zero());
                 m_fb_sync = new logic_input_t(this, "FB_sync");
                 m_Q_sync = new logic_output_t(this, "Q_sync");
                 m_ops = 0;
@@ -258,18 +257,18 @@ namespace mame.netlist
             }
 
 
-            public netlist_time solve(netlist_time now)
+            public netlist_time solve(netlist_time_ext now)
             {
-                netlist_time delta = now - m_last_step.op;
+                netlist_time_ext delta = now - m_last_step.op;
 
                 // We are already up to date. Avoid oscillations.
                 // FIXME: Make this a parameter!
-                if (delta < netlist_time.quantum())
+                if (delta < netlist_time_ext.quantum())
                     return netlist_time.zero();
 
                 // update all terminals for new time step
                 m_last_step.op = now;
-                step(delta);
+                step((netlist_time)delta);
 
                 ++m_stat_vsolver_calls.op;
                 if (has_dynamic_devices())
@@ -299,8 +298,7 @@ namespace mame.netlist
                     this.vsolve_non_dynamic(false);
                 }
 
-                netlist_time next_time_step = compute_next_timestep(delta.as_fp());
-                return next_time_step;
+                return compute_next_timestep(delta.as_fp());
             }
 
 
@@ -312,8 +310,8 @@ namespace mame.netlist
             }
 
 
-            public bool has_dynamic_devices() { return m_dynamic_devices.size() > 0; }
-            public bool has_timestep_devices() { return m_step_devices.size() > 0; }
+            public bool has_dynamic_devices() { return !m_dynamic_devices.empty(); }
+            public bool has_timestep_devices() { return !m_step_devices.empty(); }
 
 
             // update_forced is called from within param_update
@@ -349,7 +347,7 @@ namespace mame.netlist
             //NETLIB_RESETI();
             public override void reset()
             {
-                m_last_step.op = netlist_time.zero();
+                m_last_step.op = netlist_time_ext.zero();
             }
 
 
@@ -502,19 +500,19 @@ namespace mame.netlist
 
             void add_term(UInt32 net_idx, terminal_t term)
             {
-                if (term.connected_terminal().net().isRailNet())
+                if (get_connected_net(term).isRailNet())
                 {
                     m_rails_temp[net_idx].add_terminal(term, -1, false);
                 }
                 else
                 {
-                    int ot = get_net_idx(term.connected_terminal().net());
+                    int ot = get_net_idx(get_connected_net(term));
                     if (ot >= 0)
                     {
                         m_terms[net_idx].add_terminal(term, ot, true);
                     }
                     // Should this be allowed ?
-                    else // if (ot<0)
+                    else
                     {
                         m_rails_temp[net_idx].add_terminal(term, ot, true);
                         log().fatal.op(nl_errstr_global.MF_FOUND_TERM_WITH_MISSING_OTHERNET(term.name()));
@@ -693,9 +691,16 @@ namespace mame.netlist
                     for (int i = 0; i < count; i++)
                     {
                         m_terms[k].terms()[i].set_ptrs(new ListPointer<nl_fptype>(m_gtn.op(k), i), new ListPointer<nl_fptype>(m_gonn.op(k), i), new ListPointer<nl_fptype>(m_Idrn.op(k), i));  //m_terms[k].terms()[i]->set_ptrs(&m_gtn[k][i], &m_gonn[k][i], &m_Idrn[k][i]);
-                        m_connected_net_Vn.op(k)[i] = new ListPointer<nl_fptype>(m_terms[k].terms()[i].connected_terminal().net().Q_Analog_state_ptr());  //m_connected_net_Vn[k][i] = m_terms[k].terms()[i]->connected_terminal()->net().Q_Analog_state_ptr();
+                        //m_connected_net_Vn[k][i] = m_terms[k].terms()[i]->connected_terminal()->net().Q_Analog_state_ptr();
+                        m_connected_net_Vn.op(k)[i] = new ListPointer<nl_fptype>(get_connected_net(m_terms[k].terms()[i]).Q_Analog_state_ptr());  //m_connected_net_Vn[k][i] = get_connected_net(m_terms[k].terms()[i])->Q_Analog_state_ptr();
                     }
                 }
+            }
+
+
+            analog_net_t get_connected_net(terminal_t term)
+            {
+                return state().setup().get_connected_terminal(term).net();
             }
         }
 
@@ -797,11 +802,12 @@ namespace mame.netlist
                     for (UInt32 k = 0; k < size(); k++)
                     {
                         var t = m_terms[k];
-                        //const nl_fptype DD_n = (n->Q_Analog() - t->m_last_V);
+                        var v = t.getV();
                         // avoid floating point exceptions
-
                         nl_fptype DD_n = std.max(-fp_constants.TIMESTEP_MAXDIFF(),
-                            std.min(+fp_constants.TIMESTEP_MAXDIFF(), (t.getV() - m_last_V[k])));
+                            std.min(+fp_constants.TIMESTEP_MAXDIFF(), (v - m_last_V[k])));
+
+                        m_last_V[k] = v;
                         nl_fptype hn = cur_ts;
 
                         //printf("%g %g %g %g\n", DD_n, hn, t.m_DD_n_m_1, t.m_h_n_m_1);
@@ -815,21 +821,13 @@ namespace mame.netlist
                         else
                             new_net_timestep = m_params.m_max_timestep;
 
-                        if (new_net_timestep < new_solver_timestep)
-                            new_solver_timestep = new_net_timestep;
+                        new_solver_timestep = std.min(new_net_timestep, new_solver_timestep);
+                    }
 
-                        m_last_V[k] = t.getV();
-                    }
-                    if (new_solver_timestep < m_params.m_min_timestep)
-                    {
-                        new_solver_timestep = m_params.m_min_timestep;
-                    }
+                    new_solver_timestep = std.max(new_solver_timestep, m_params.m_min_timestep);
                 }
-                //if (new_solver_timestep > 10.0 * hn)
-                //    new_solver_timestep = 10.0 * hn;
-                //
-                // FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
 
+                // FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
                 return std.max(netlist_time.from_fp(new_solver_timestep), netlist_time.quantum() * 2);
             }
 

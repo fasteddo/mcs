@@ -278,7 +278,7 @@ namespace mame.ui
                 ui_globals.rpanel = (byte)std.min(std.max(moptions.last_right_panel(), (int)utils_global.RP_FIRST), (int)utils_global.RP_LAST);
 
                 string tmp = moptions.last_used_filter();
-                int found = tmp.find_first_of(",");
+                int found = tmp.find_first_of(',');
                 string fake_ini;
                 if (found == -1)
                 {
@@ -339,8 +339,8 @@ namespace mame.ui
 
             ui_options mopt = ui().options();
             mopt.set_value(ui_options.OPTION_LAST_RIGHT_PANEL, ui_globals.rpanel, mame_options.OPTION_PRIORITY_CMDLINE);
-            mopt.set_value(ui_options.OPTION_LAST_USED_FILTER, filter.c_str(), mame_options.OPTION_PRIORITY_CMDLINE);
-            mopt.set_value(ui_options.OPTION_LAST_USED_MACHINE, last_driver.c_str(), mame_options.OPTION_PRIORITY_CMDLINE);
+            mopt.set_value(ui_options.OPTION_LAST_USED_FILTER, filter, mame_options.OPTION_PRIORITY_CMDLINE);
+            mopt.set_value(ui_options.OPTION_LAST_USED_MACHINE, last_driver, mame_options.OPTION_PRIORITY_CMDLINE);
             mopt.set_value(ui_options.OPTION_HIDE_PANELS, ui_globals.panels_status, mame_options.OPTION_PRIORITY_CMDLINE);
             ui().save_ui_options();
 
@@ -1335,8 +1335,8 @@ namespace mame.ui
                 driver_enumerator drv = new driver_enumerator(machine().options(), ui_swinfo.driver);
                 media_auditor auditor = new media_auditor(drv);
                 drv.next();
-                software_list_device swlist = software_list_device.find_by_name(drv.config(), ui_swinfo.listname.c_str());
-                software_info swinfo = swlist.find(ui_swinfo.shortname.c_str());
+                software_list_device swlist = software_list_device.find_by_name(drv.config(), ui_swinfo.listname);
+                software_info swinfo = swlist.find(ui_swinfo.shortname);
 
                 media_auditor.summary summary = auditor.audit_software(swlist.list_name(), swinfo, media_auditor.AUDIT_VALIDATE_FAST);
 

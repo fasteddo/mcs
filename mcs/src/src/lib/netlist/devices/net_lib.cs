@@ -141,6 +141,8 @@ namespace mame.netlist
                 //LIB_ENTRY(9334)
                 //LIB_ENTRY(AM2847)
                 //// FIXME: duplicate?
+                //LIB_ENTRY(CD4006)
+                //LIB_ENTRY(CD4006_dip)
                 //LIB_ENTRY(CD4020_WI)
                 //LIB_ENTRY(CD4020)
                 //LIB_ENTRY(CD4066_GATE)

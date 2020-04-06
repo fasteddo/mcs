@@ -1208,7 +1208,7 @@ namespace mame
         digital_joystick m_next;                                         // next joystick in the list
         int m_player;                                       // player number represented
         int m_number;                                       // joystick number represented
-        simple_list<simple_list_wrapper<ioport_field>> [] m_field = new simple_list<simple_list_wrapper<ioport_field>>[(int)direction_t.JOYDIR_COUNT];  //simple_list<simple_list_wrapper<ioport_field> > m_field[JOYDIR_COUNT];  // potential input fields for each direction
+        std.forward_list<ioport_field> [] m_field = new std.forward_list<ioport_field>[(int)direction_t.JOYDIR_COUNT];  //std::forward_list<std::reference_wrapper<ioport_field> > m_field[JOYDIR_COUNT];  // potential input fields for each direction
         u8 m_current;                                      // current value
         u8 m_current4way;                                  // current 4-way value
         u8 m_previous;                                     // previous value
@@ -1229,7 +1229,7 @@ namespace mame
 
 
             for (int i = 0; i < m_field.Length; i++)
-                m_field[i] = new simple_list<simple_list_wrapper<ioport_field>>();
+                m_field[i] = new std.forward_list<ioport_field>();
         }
 
 
@@ -1252,7 +1252,7 @@ namespace mame
         public direction_t add_axis(ioport_field field)
         {
             direction_t direction = (direction_t)((field.type() - (ioport_type.IPT_DIGITAL_JOYSTICK_FIRST + 1)) % 4);
-            m_field[(int)direction].append(new simple_list_wrapper<ioport_field>(field));  // *global_alloc(simple_list_wrapper<ioport_field>(&field)));
+            m_field[(int)direction].emplace_front(field);
             return direction;
         }
 
@@ -1273,10 +1273,10 @@ namespace mame
             running_machine machine = null;
             for (direction_t direction = direction_t.JOYDIR_UP; direction < direction_t.JOYDIR_COUNT; direction++)
             {
-                foreach (simple_list_wrapper<ioport_field> i in m_field[(int)direction])
+                foreach (ioport_field i in m_field[(int)direction])  //for (const std::reference_wrapper<ioport_field> &i : m_field[direction])
                 {
-                    machine = i.obj().machine();
-                    if (machine.input().seq_pressed(i.obj().seq(input_seq_type.SEQ_TYPE_STANDARD)))
+                    machine = i.machine();
+                    if (machine.input().seq_pressed(i.seq(input_seq_type.SEQ_TYPE_STANDARD)))
                         m_current |= (byte)((byte)1 << (byte)direction);
                 }
             }
@@ -3358,7 +3358,7 @@ namespace mame
             string fulltag = m_owner.subtag(tag);
 
             // find the existing port
-            m_curport = m_portlist.find(fulltag.c_str());
+            m_curport = m_portlist.find(fulltag);
             if (m_curport == null)
                 throw new emu_fatalerror("Requested to modify nonexistent port '{0}'", fulltag.c_str());
 
@@ -4304,7 +4304,7 @@ namespace mame
 
             // if no file, nothing to do
             string record_filename = machine().options().record();
-            if (string.IsNullOrEmpty(record_filename))
+            if (string.IsNullOrEmpty(record_filename))  //if (record_filename[0] == 0)
             {
                 machine().video().set_timecode_enabled(false);
                 return;

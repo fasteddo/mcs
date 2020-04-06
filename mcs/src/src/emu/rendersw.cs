@@ -702,10 +702,6 @@ namespace mame
         //-------------------------------------------------
         static void draw_quad_palette16_none(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata
         {
-            int dudx = setup.dudx;
-            int dvdx = setup.dvdx;
-            int endx = setup.endx;
-
             // ensure all parameters are valid
             assert(prim.texture.palette != null);
 
@@ -731,7 +727,7 @@ namespace mame
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // loop over cols
-                    for (s32 x = setup.startx; x < endx; x++)
+                    for (s32 x = setup.startx; x < setup.endx; x++)
                     {
                         u32 pix = get_texel_palette16(t, prim.texture, curu, curv);
 
@@ -744,8 +740,8 @@ namespace mame
                             default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
                         }
 
-                        curu += dudx;
-                        curv += dvdx;
+                        curu += setup.dudx;
+                        curv += setup.dvdx;
                     }
                 }
             }
@@ -780,7 +776,7 @@ namespace mame
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // loop over cols
-                    for (s32 x = setup.startx; x < endx; x++)
+                    for (s32 x = setup.startx; x < setup.endx; x++)
                     {
                         u32 pix = get_texel_palette16(t, prim.texture, curu, curv);
                         u32 r = (source32_r(t, pix) * sr) >> 8;
@@ -796,8 +792,8 @@ namespace mame
                             default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
                         }
 
-                        curu += dudx;
-                        curv += dvdx;
+                        curu += setup.dudx;
+                        curv += setup.dvdx;
                     }
                 }
             }
@@ -834,7 +830,7 @@ namespace mame
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
                     // loop over cols
-                    for (s32 x = setup.startx; x < endx; x++)
+                    for (s32 x = setup.startx; x < setup.endx; x++)
                     {
                         u32 pix = get_texel_palette16(t, prim.texture, curu, curv);
 
@@ -861,8 +857,8 @@ namespace mame
                             default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
                         }
 
-                        curu += dudx;
-                        curv += dvdx;
+                        curu += setup.dudx;
+                        curv += setup.dvdx;
                     }
                 }
             }
@@ -874,31 +870,6 @@ namespace mame
         //-------------------------------------------------
         static void draw_quad_palette16_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata,
         {
-            s32 dudx = setup.dudx;
-            s32 dvdx = setup.dvdx;
-            s32 endx = setup.endx;
-
-            // ensure all parameters are valid
-            assert(prim.texture.palette != null);
-
-            throw new emu_unimplemented();
-        }
-
-
-        //**************************************************************************
-        //  16-BIT ALPHA PALETTE RASTERIZERS
-        //**************************************************************************
-
-        //-------------------------------------------------
-        //  draw_quad_palettea16_alpha - perform
-        //  rasterization using standard alpha blending
-        //-------------------------------------------------
-        static void draw_quad_palettea16_alpha(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata,
-        {
-            s32 dudx = setup.dudx;
-            s32 dvdx = setup.dvdx;
-            s32 endx = setup.endx;
-
             // ensure all parameters are valid
             assert(prim.texture.palette != null);
 
@@ -942,9 +913,6 @@ namespace mame
         static void draw_quad_rgb32(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
         {
             ListBase<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
-            s32 dudx = setup.dudx;
-            s32 dvdx = setup.dvdx;
-            s32 endx = setup.endx;
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(t, prim.color.a))
@@ -971,7 +939,7 @@ namespace mame
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < endx; x++)
+                        for (int x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
 
@@ -984,8 +952,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
 
@@ -993,7 +961,7 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
                             u32 r = palbase[(int)((pix >> 16) & 0xff)] >> t._SrcShiftR;
@@ -1009,8 +977,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
                 }
@@ -1050,7 +1018,7 @@ namespace mame
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
                             u32 r = (source32_r(t, pix) * sr) >> 8;
@@ -1066,8 +1034,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
 
@@ -1075,7 +1043,7 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
                             u32 r = (palbase[(int)((pix >> 16) & 0xff)] * sr) >> (8 + t._SrcShiftR);
@@ -1091,8 +1059,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
                 }
@@ -1134,7 +1102,7 @@ namespace mame
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
 
@@ -1161,8 +1129,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
 
@@ -1170,7 +1138,7 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
 
@@ -1197,8 +1165,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
                 }
@@ -1237,9 +1205,6 @@ namespace mame
         static void draw_quad_argb32_alpha(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata,
         {
             ListBase<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
-            s32 dudx = setup.dudx;
-            s32 dvdx = setup.dvdx;
-            s32 endx = setup.endx;
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(t, prim.color.a))
@@ -1266,7 +1231,7 @@ namespace mame
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_argb32(t, prim.texture, curu, curv);
                             u32 ta = pix >> 24;
@@ -1306,8 +1271,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
 
@@ -1315,7 +1280,7 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_argb32(t, prim.texture, curu, curv);
                             u32 ta = pix >> 24;
@@ -1355,8 +1320,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
                 }
@@ -1398,7 +1363,7 @@ namespace mame
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_argb32(t, prim.texture, curu, curv);
                             u32 ta = (pix >> 24) * sa;
@@ -1438,8 +1403,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
 
@@ -1447,7 +1412,7 @@ namespace mame
                     else
                     {
                         // loop over cols
-                        for (s32 x = setup.startx; x < endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_argb32(t, prim.texture, curu, curv);
                             u32 ta = (pix >> 24) * sa;
@@ -1487,8 +1452,8 @@ namespace mame
                                 default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
                             }
 
-                            curu += dudx;
-                            curv += dvdx;
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
                         }
                     }
                 }

@@ -19,6 +19,12 @@ namespace mame
         //#define CD4001_DIP(name)                                                      \
         //        NET_REGISTER_DEV(CD4001_DIP, name)
 
+        //#define CD4070_GATE(name)                                                      \
+        //        NET_REGISTER_DEV(CD4070_GATE, name)
+
+        //#define CD4070_DIP(name)                                                      \
+        //        NET_REGISTER_DEV(CD4070_DIP, name)
+
         /* ----------------------------------------------------------------------------
          *  DIP only macros
          * ---------------------------------------------------------------------------*/
@@ -205,6 +211,53 @@ namespace mame
         }
 
 
+        /*
+         *  DM7486: Quad 2-Input Exclusive-OR Gates
+         *
+         *             Y = A+B
+         *          +---+---++---+
+         *          | A | B || Y |
+         *          +===+===++===+
+         *          | 0 | 0 || 0 |
+         *          | 0 | 1 || 1 |
+         *          | 1 | 0 || 1 |
+         *          | 1 | 1 || 0 |
+         *          +---+---++---+
+         *
+         *  Naming conventions follow National Semiconductor datasheet
+         *
+         */
+        //static NETLIST_START(CD4070_DIP)
+        public static void netlist_CD4070_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            throw new emu_unimplemented();
+#if false
+            CD4070_GATE(A);
+            CD4070_GATE(B);
+            CD4070_GATE(C);
+            CD4070_GATE(D);
+#endif
+
+            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+
+            netlist.nl_setup_global.DIPPINS(setup,  /*       +--------------+      */
+                "A.A",  /*    A1 |1     ++    14| VCC  */ "A.VCC",
+                "A.B",  /*    B1 |2           13| B4   */ "D.B",
+                "A.Q",  /*    Y1 |3           12| A4   */ "D.A",
+                "B.Q",  /*    Y2 |4    7486   11| Y4   */ "D.Q",
+                "B.A",  /*    A2 |5           10| Y3   */ "C.Q",
+                "B.B",  /*    B2 |6            9| B3   */ "C.B",
+                "A.GND",/*   GND |7            8| A3   */ "C.A"
+                      /*       +--------------+      */
+            );
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
         //static NETLIST_START(CD4316_DIP)
         public static void netlist_CD4316_DIP(netlist.nlparse_t setup)
         {
@@ -253,7 +306,17 @@ namespace mame
                 netlist.nl_setup_global.TT_FAMILY("CD4XXX");
             netlist.nl_setup_global.TRUTHTABLE_END(setup);
 
+            netlist.nl_setup_global.TRUTHTABLE_START("CD4070_GATE", 2, 1, "");
+                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
+                netlist.nl_setup_global.TT_LINE("0,0|0|15");
+                netlist.nl_setup_global.TT_LINE("0,1|1|22");
+                netlist.nl_setup_global.TT_LINE("1,0|1|22");
+                netlist.nl_setup_global.TT_LINE("1,1|0|15");
+                netlist.nl_setup_global.TT_FAMILY("CD4XXX");
+            netlist.nl_setup_global.TRUTHTABLE_END(setup);
+
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4001_DIP", netlist_CD4001_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4070_DIP", netlist_CD4070_DIP);
 
             /* DIP ONLY */
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4020_DIP", netlist_CD4020_DIP);

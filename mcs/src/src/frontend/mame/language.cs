@@ -70,7 +70,7 @@ namespace mame
             global_object.strreplace(ref name, "(", "");
             global_object.strreplace(ref name, ")", "");
             emu_file file = new emu_file(m_options.language_path(), global_object.OPEN_FLAG_READ);
-            if (file.open(name.c_str(), osdcore_global.PATH_SEPARATOR + "strings.mo") != osd_file.error.NONE)
+            if (file.open(name, osdcore_global.PATH_SEPARATOR + "strings.mo") != osd_file.error.NONE)
             {
                 global_object.osd_printf_error("Error opening translation file {0}\n", name);
                 return;

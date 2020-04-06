@@ -152,7 +152,7 @@ namespace mame
 
             new options_entry(null,                                   null,             OPTION_HEADER,    "OSD ACCELERATED VIDEO OPTIONS"),
             new options_entry(OSDOPTION_FILTER + ";glfilter;flt",     "1",              OPTION_BOOLEAN,   "use bilinear filtering when scaling emulated video"),
-            new options_entry(OSDOPTION_PRESCALE + "(1-3)",           "1",              OPTION_INTEGER,   "scale emulated video by this factor before applying filters/shaders"),
+            new options_entry(OSDOPTION_PRESCALE + "(1-8)",           "1",              OPTION_INTEGER,   "scale emulated video by this factor before applying filters/shaders"),
 
 #if USE_OPENGL
             new options_entry(null,                                   null,             OPTION_HEADER,    "OpenGL-SPECIFIC OPTIONS"),

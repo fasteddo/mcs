@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
+using netlist_time_ext = mame.plib.ptime_i64;  //netlist_time
 using nl_fptype = System.Double;
 
 
@@ -243,10 +244,10 @@ namespace mame.netlist
                 if (m_params.m_dynamic_ts.op())
                     return;
 
-                netlist_time now = exec().time();
+                netlist_time_ext now = exec().time();
                 // force solving during start up if there are no time-step devices
                 // FIXME: Needs a more elegant solution
-                bool force_solve = (now < netlist_time.from_fp(2 * m_params.m_max_timestep));
+                bool force_solve = (now < netlist_time_ext.from_fp(2 * m_params.m_max_timestep));
 
                 int nthreads = std.min(m_params.m_parallel.op(), plib.omp.pomp_global.get_max_threads());
 
@@ -355,7 +356,7 @@ namespace mame.netlist
             }
 
 
-            void process_net(analog_net_t n)
+            void process_net(netlist_state_t netlist, analog_net_t n)
             {
                 // ignore empty nets. FIXME: print a warning message
                 if (n.num_cons() == 0)
@@ -370,9 +371,10 @@ namespace mame.netlist
                     {
                         var pt = (terminal_t)term;
                         // check the connected terminal
-                        analog_net_t connected_net = pt.connected_terminal().net();
+                        // analog_net_t &connected_net = pt->connected_terminal()->net();
+                        analog_net_t connected_net = netlist.setup().get_connected_terminal(pt).net();
                         if (!already_processed(connected_net))
-                            process_net(connected_net);
+                            process_net(netlist, connected_net);
                     }
                 }
             }
@@ -391,7 +393,7 @@ namespace mame.netlist
                         if (!already_processed(n))
                         {
                             groups.emplace_back(new analog_net_t.list_t());
-                            process_net(n);
+                            process_net(netlist, n);
                         }
                     }
                 }

@@ -21,6 +21,14 @@ namespace mame
 {
     public static class nlm_opamp_global
     {
+        //#define UA741_DIP8(name)                                                           \
+        //        NET_REGISTER_DEV(UA741_DIP8, name)
+        public static void UA741_DIP8(netlist.nlparse_t setup, string name)
+        {
+            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "UA741_DIP8", name);
+        }
+
+
         /*
          *   Generic layout with 4 opamps, VCC on pin 4 and GND on pin 11
          */
@@ -97,6 +105,7 @@ namespace mame
 
         /*
          *   Generic layout with 1 opamp, VCC+ on pin 7, VCC- on pin 4 and compensation
+         *   // FIXME: Offset inputs are not supported!
          */
 
         //static NETLIST_START(opamp_layout_1_7_4)
@@ -104,18 +113,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.DIPPINS(setup,        /*   +--------------+   */
-                "OFFSET.N1",  /*   |1     ++     8|   */ "NC",
-                "MINUS",      /*   |2            7|   */ "VCC.PLUS",
-                "PLUS",       /*   |3            6|   */ "OUT",
-                "VCC.MINUS",  /*   |4            5|   */ "OFFSET.N2"
-                            /*   +--------------+   */
+            netlist.nl_setup_global.DIPPINS(setup,             /*   +--------------+   */
+                "NC" /* OFFSET */, /*   |1     ++     8|   */ "NC",
+                "A.MINUS",         /*   |2            7|   */ "A.VCC",
+                "A.PLUS",          /*   |3            6|   */ "A.OUT",
+                "A.GND",           /*   |4            5|   */ "NC" /* OFFSET */
+                                 /*   +--------------+   */
             );
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "VCC.MINUS");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "VCC.PLUS");
-            netlist.nl_setup_global.NET_C(setup, "A.MINUS", "MINUS");
-            netlist.nl_setup_global.NET_C(setup, "A.PLUS", "PLUS");
-            netlist.nl_setup_global.NET_C(setup, "A.OUT", "OUT");
 
             netlist.nl_setup_global.NETLIST_END();
         }
@@ -186,6 +190,20 @@ namespace mame
             nld_opamps_global.OPAMP(setup, "B", "MB3614");
             nld_opamps_global.OPAMP(setup, "C", "MB3614");
             nld_opamps_global.OPAMP(setup, "D", "MB3614");
+
+            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TL084_DIP)
+        public static void netlist_TL084_DIP(netlist.nlparse_t setup)
+        {
+            nld_opamps_global.OPAMP(setup, "A", "TL084");
+            nld_opamps_global.OPAMP(setup, "B", "TL084");
+            nld_opamps_global.OPAMP(setup, "C", "TL084");
+            nld_opamps_global.OPAMP(setup, "D", "TL084");
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
 
@@ -465,13 +483,18 @@ namespace mame
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_8_5", netlist_opamp_layout_1_8_5);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_11_6", netlist_opamp_layout_1_11_6);
 
+            // FIXME: JFET Opamp may need better model
+            // VLL and VHH for +-6V  RI=10^12 (for numerical stability 10^9 is used below
+            // RO from data sheet
+            netlist.nl_setup_global.NET_MODEL(setup, "TL084       OPAMP(TYPE=3 VLH=0.75 VLL=0.75 FPF=10 UGF=3000k SLEW=13M RI=1000M RO=192 DAB=0.0014)");
+
             netlist.nl_setup_global.NET_MODEL(setup, "LM324       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.00075)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM358       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.001)");
             netlist.nl_setup_global.NET_MODEL(setup, "MB3614      OPAMP(TYPE=3 VLH=1.4 VLL=0.02 FPF=10 UGF=1000k SLEW=0.6M RI=1000k RO=50 DAB=0.002)");
             netlist.nl_setup_global.NET_MODEL(setup, "UA741       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=75 DAB=0.0017)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM747       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=50 DAB=0.0017)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM747A      OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=1000k SLEW=0.7M RI=6000k RO=50 DAB=0.0015)");
-            // TI and Motorola Datasheets differ - below are Motorola values values SLEW is average of LH and HL
+            // TI and Motorola Datasheets differ - below are Motorola values, SLEW is average of LH and HL
             netlist.nl_setup_global.NET_MODEL(setup, "LM3900      OPAMP(TYPE=3 VLH=1.0 VLL=0.03 FPF=2k UGF=4M SLEW=10M RI=10M RO=2k DAB=0.0015)");
 
 #if USE_LM3900_MODEL_1
@@ -480,6 +503,7 @@ namespace mame
 #endif
 
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MB3614_DIP", netlist_MB3614_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL084_DIP", netlist_TL084_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM324_DIP", netlist_LM324_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM358_DIP", netlist_LM358_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM2902_DIP", netlist_LM2902_DIP);

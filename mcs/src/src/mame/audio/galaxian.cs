@@ -9,48 +9,34 @@ using offs_t = System.UInt32;
 using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
+using uint32_t = System.UInt32;
 
 
 namespace mame
 {
     public class galaxian_sound_device : device_t
-                                         //device_sound_interface
     {
-        //DEFINE_DEVICE_TYPE(GALAXIAN, galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound")
+        //DEFINE_DEVICE_TYPE(GALAXIAN_SOUND, galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound")
         static device_t device_creator_galaxian_sound_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_sound_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GALAXIAN = DEFINE_DEVICE_TYPE(device_creator_galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound");
-
-
-        public class device_sound_interface_galaxian_sound : device_sound_interface
-        {
-            public device_sound_interface_galaxian_sound(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { throw new emu_unimplemented(); }
-        }
-
-
-        device_sound_interface_galaxian_sound m_disound;
+        public static readonly device_type GALAXIAN_SOUND = DEFINE_DEVICE_TYPE(device_creator_galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound");
 
 
         // internal state
+        required_device<discrete_sound_device> m_discrete;  //required_device<discrete_device> m_discrete;
         uint8_t m_lfo_val;
-        required_device<discrete_device> m_discrete;
 
 
-        galaxian_sound_device(machine_config mconfig, string tag, device_t owner, u32 clock)
-            : base(mconfig, GALAXIAN, tag, owner, clock)
+        galaxian_sound_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
+            : this(mconfig, GALAXIAN_SOUND, tag, owner, clock)
         {
-            m_class_interfaces.Add(new device_sound_interface_galaxian_sound(mconfig, this));  // device_sound_interface(mconfig, *this);
-
-            m_disound = GetClassInterface<device_sound_interface_galaxian_sound>();
-
-
-            m_lfo_val = 0;
-            m_discrete = new required_device<discrete_device>(this, "^" + galaxian_state.GAL_AUDIO);
         }
 
-
-        public device_sound_interface_galaxian_sound disound { get { return m_disound; } }
+        galaxian_sound_device(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock)
+            : base(mconfig, type, tag, owner, clock)
+        {
+            m_discrete = new required_device<discrete_sound_device>(this, "discrete");
+            m_lfo_val = 0;
+        }
 
 
         /* FIXME: May be replaced by one call! */
@@ -146,6 +132,17 @@ namespace mame
         }
 
 
+        //-------------------------------------------------
+        //  machine_add_config - add device configuration
+        //-------------------------------------------------
+        protected override void device_add_mconfig(machine_config config)
+        {
+            // sound hardware
+            DISCRETE(config, m_discrete).disound.add_route(ALL_OUTPUTS, ":speaker", 1.0);
+            m_discrete.target.set_intf(galaxian_state.galaxian_discrete);
+        }
+
+
         // sound stream update overrides
         //virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
     }
@@ -153,9 +150,6 @@ namespace mame
 
     partial class galaxian_state : driver_device
     {
-        public const string GAL_AUDIO   = "discrete";
-
-
         // initialized in \includes\galaxian.cs because of order of operation issues due to partial classes
         // https://stackoverflow.com/questions/29086844/static-field-initialization-order-with-partial-classes
         static readonly XTAL SOUND_CLOCK;//             = GALAXIAN_MASTER_CLOCK/6/2;          /* 1.536 MHz */
@@ -370,7 +364,8 @@ namespace mame
          *************************************/
 
         //DISCRETE_SOUND_START(galaxian_discrete)
-        readonly discrete_block [] galaxian_discrete = new discrete_block []
+        public static readonly discrete_block [] galaxian_discrete;  // init moved to constructor because of out-of-order construction of partial classes
+        static discrete_block [] galaxian_discrete_construct() { return new discrete_block []
         {
             /************************************************/
             /* Input register mapping for galaxian          */
@@ -500,6 +495,6 @@ namespace mame
             DISCRETE_TASK_END(),
 
             DISCRETE_SOUND_END,
-        };
+        }; }
     }
 }

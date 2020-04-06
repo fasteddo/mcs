@@ -15,7 +15,7 @@ namespace mame.netlist
 
         //#define RES(name, p_R)                                                         \
         //        NET_REGISTER_DEVEXT(RES, name, p_R)
-        public static void RES(nlparse_t setup, string name, int p_R)
+        public static void RES(nlparse_t setup, string name, double p_R)
         {
             nl_setup_global.NET_REGISTER_DEVEXT(setup, "RES", name, p_R.ToString());
         }

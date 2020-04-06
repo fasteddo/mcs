@@ -457,7 +457,7 @@ namespace mame
             {
                 foreach (string name in names)
                 {
-                    existing_entry = get_entry(name.c_str());
+                    existing_entry = get_entry(name);
                     if (existing_entry != null)
                         break;
                 }

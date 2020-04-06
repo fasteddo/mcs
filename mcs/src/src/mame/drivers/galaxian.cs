@@ -155,22 +155,23 @@ namespace mame
         //WRITE8_MEMBER(galaxian_state::konami_sound_filter_w)
         void konami_sound_filter_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
-            if (m_discrete != null)
+            if (m_netlist != null)
             {
                 /* the offset is used as data, 6 channels * 2 bits each */
-                /* AV0 .. AV5 ==> AY8910 #2 */
-                /* AV6 .. AV11 ==> AY8910 #1 */
+                /* AV0 .. AV5  ==> AY8910 #2 - 3C */
+                /* AV6 .. AV11 ==> AY8910 #1 - 3D */
                 for (int which = 0; which < 2; which++)
                 {
                     if (m_ay8910.op(which) != null)
                     {
-                        for (int chan = 0; chan < 3; chan++)
+                        for (int flt = 0; flt < 6; flt++)
                         {
-                            uint8_t bits = (uint8_t)((offset >> (2 * chan + 6 * (1 - which))) & 3);
+                            int fltnum = (flt + 6 * which);
+                            uint8_t bit = (uint8_t)((offset >> (flt + 6 * (1 - which))) & 1);
 
                             /* low bit goes to 0.22uF capacitor = 220000pF  */
                             /* high bit goes to 0.047uF capacitor = 47000pF */
-                            m_discrete.target.write((offs_t)NODE_(3 * which + chan + 11), bits);
+                            m_filter_ctl.op(fltnum).target.write(bit);
                         }
                     }
                 }
@@ -718,66 +719,6 @@ namespace mame
 
         /*************************************
          *
-         *  Sound configuration
-         *
-         *************************************/
-
-        static readonly discrete_mixer_desc konami_sound_mixer_desc = new discrete_mixer_desc
-        (
-            DISC_MIXER_IS_OP_AMP,
-            new double [] {RES_K(5.1), RES_K(5.1), RES_K(5.1), RES_K(5.1), RES_K(5.1), RES_K(5.1)},
-            new int [] {0,0,0,0,0,0},  /* no variable resistors   */
-            new double [] {0,0,0,0,0,0},  /* no node capacitors      */
-            0, RES_K(2.2),
-            0,
-            0, /* modelled separately */
-            0, 1
-        );
-
-        //static DISCRETE_SOUND_START( konami_sound_discrete )
-        static readonly discrete_block [] konami_sound_discrete = new discrete_block []
-        {
-            DISCRETE_INPUTX_STREAM(NODE_01, 0, 1.0, 0),
-            DISCRETE_INPUTX_STREAM(NODE_02, 1, 1.0, 0),
-            DISCRETE_INPUTX_STREAM(NODE_03, 2, 1.0, 0),
-
-            DISCRETE_INPUTX_STREAM(NODE_04, 3, 1.0, 0),
-            DISCRETE_INPUTX_STREAM(NODE_05, 4, 1.0, 0),
-            DISCRETE_INPUTX_STREAM(NODE_06, 5, 1.0, 0),
-
-            DISCRETE_INPUT_DATA(NODE_11),
-            DISCRETE_INPUT_DATA(NODE_12),
-            DISCRETE_INPUT_DATA(NODE_13),
-
-            DISCRETE_INPUT_DATA(NODE_14),
-            DISCRETE_INPUT_DATA(NODE_15),
-            DISCRETE_INPUT_DATA(NODE_16),
-
-            DISCRETE_RCFILTER_SW(NODE_21, 1, NODE_01, NODE_11, AY8910_INTERNAL_RESISTANCE+1000, CAP_U(0.22), CAP_U(0.047), 0, 0),
-            DISCRETE_RCFILTER_SW(NODE_22, 1, NODE_02, NODE_12, AY8910_INTERNAL_RESISTANCE+1000, CAP_U(0.22), CAP_U(0.047), 0, 0),
-            DISCRETE_RCFILTER_SW(NODE_23, 1, NODE_03, NODE_13, AY8910_INTERNAL_RESISTANCE+1000, CAP_U(0.22), CAP_U(0.047), 0, 0),
-
-            DISCRETE_RCFILTER_SW(NODE_24, 1, NODE_04, NODE_14, AY8910_INTERNAL_RESISTANCE+1000, CAP_U(0.22), CAP_U(0.047), 0, 0),
-            DISCRETE_RCFILTER_SW(NODE_25, 1, NODE_05, NODE_15, AY8910_INTERNAL_RESISTANCE+1000, CAP_U(0.22), CAP_U(0.047), 0, 0),
-            DISCRETE_RCFILTER_SW(NODE_26, 1, NODE_06, NODE_16, AY8910_INTERNAL_RESISTANCE+1000, CAP_U(0.22), CAP_U(0.047), 0, 0),
-
-            DISCRETE_MIXER6(NODE_30, 1, NODE_21, NODE_22, NODE_23, NODE_24, NODE_25, NODE_26, konami_sound_mixer_desc),
-
-            /* FIXME the amplifier M51516L has a decay circuit */
-            /* This is handled with sound_global_enable but    */
-            /* belongs here.                                   */
-
-            /* Input impedance of a M51516L is typically 30k (datasheet) */
-            DISCRETE_CRFILTER(NODE_40,NODE_30,RES_K(30),CAP_U(0.15)),
-
-            DISCRETE_OUTPUT(NODE_40, 10.0 ),
-
-            DISCRETE_SOUND_END,
-        };
-
-
-        /*************************************
-         *
          *  Core machine driver pieces
          *
          *************************************/
@@ -834,15 +775,32 @@ namespace mame
 
             /* sound hardware */
             AY8910(config, m_ay8910.op(0), KONAMI_SOUND_CLOCK/8);
-            m_ay8910.op(0).target.set_flags(ay8910_global.AY8910_DISCRETE_OUTPUT);
-            m_ay8910.op(0).target.set_resistors_load((int)RES_K(5.1), (int)RES_K(5.1), (int)RES_K(5.1));
+            m_ay8910.op(0).target.set_flags(ay8910_global.AY8910_RESISTOR_OUTPUT);
+            m_ay8910.op(0).target.set_resistors_load((int)1000.0, (int)1000.0, (int)1000.0);
             m_ay8910.op(0).target.port_a_read_callback().set(m_soundlatch, (space, offset, mem_mask) => { return ((generic_latch_8_device)subdevice("soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
             m_ay8910.op(0).target.port_b_read_callback().set(frogger_sound_timer_r).reg();
             m_ay8910.op(0).target.disound.add_route(0, "konami", 1.0, 0);
             m_ay8910.op(0).target.disound.add_route(1, "konami", 1.0, 1);
             m_ay8910.op(0).target.disound.add_route(2, "konami", 1.0, 2);
 
-            DISCRETE(config, m_discrete, konami_sound_discrete).disound.add_route(ALL_OUTPUTS, "speaker", 0.75);
+            NETLIST_SOUND(config, "konami", 48000)
+                .set_source(netlist_konami1x)
+                .disound.add_route(ALL_OUTPUTS, "speaker", 1.0);
+
+            // Filter
+            NETLIST_LOGIC_INPUT(config, "konami:ctl0", "CTL0.IN", 0);
+            NETLIST_LOGIC_INPUT(config, "konami:ctl1", "CTL1.IN", 0);
+            NETLIST_LOGIC_INPUT(config, "konami:ctl2", "CTL2.IN", 0);
+            NETLIST_LOGIC_INPUT(config, "konami:ctl3", "CTL3.IN", 0);
+            NETLIST_LOGIC_INPUT(config, "konami:ctl4", "CTL4.IN", 0);
+            NETLIST_LOGIC_INPUT(config, "konami:ctl5", "CTL5.IN", 0);
+
+            // CHA1 - 3D
+            NETLIST_STREAM_INPUT(config, "konami:cin0", 0, "R_AY3D_A.R");
+            NETLIST_STREAM_INPUT(config, "konami:cin1", 1, "R_AY3D_B.R");
+            NETLIST_STREAM_INPUT(config, "konami:cin2", 2, "R_AY3D_C.R");
+
+            NETLIST_STREAM_OUTPUT(config, "konami:cout0", 0, "OUT").set_mult_offset(30000.0 / 0.05, 0.0);
         }
 
 
@@ -856,9 +814,7 @@ namespace mame
         {
             galaxian_base(config);
 
-            GALAXIAN(config, "cust", 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.4);
-
-            DISCRETE(config, GAL_AUDIO, galaxian_discrete).disound.add_route(ALL_OUTPUTS, "speaker", 1.0);
+            GALAXIAN_SOUND(config, "cust", 0);
         }
 
 

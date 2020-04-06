@@ -657,7 +657,7 @@ namespace mame.ui
             else
             {
                 string copyright = emulator_info.get_copyright();
-                int found = copyright.IndexOf("\n");
+                int found = copyright.find('\n');
 
                 tempbuf[0] = "";
                 tempbuf[1] = string.Format("{0} {1}", emulator_info.get_appname(), version_global.build_version);  // %1$s %2$s
@@ -1539,8 +1539,8 @@ namespace mame.ui
             }
 
             string tmp = searchstr;
-            path_iterator path = new path_iterator(tmp.c_str());
-            path_iterator path_iter = new path_iterator(addpath.c_str());
+            path_iterator path = new path_iterator(tmp);
+            path_iterator path_iter = new path_iterator(addpath);
             string c_path;
             string curpath;
 

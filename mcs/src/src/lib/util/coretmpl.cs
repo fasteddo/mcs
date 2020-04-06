@@ -392,40 +392,6 @@ namespace mame
     }
 
 
-    // ======================> simple_list_wrapper
-    // a simple_list_wrapper wraps an existing object with a next pointer so it
-    // can live in a simple_list without requiring the object to have a next
-    // pointer
-    //template<class _ObjectType>
-    public class simple_list_wrapper<ObjectType> : simple_list_item<simple_list_wrapper<ObjectType>> // where _ObjectType : simple_list_item<_ObjectType>
-    {
-        // internal state
-        simple_list_wrapper<ObjectType> m_next;
-        ObjectType m_object;
-
-
-        // construction/destruction
-        public simple_list_wrapper(ObjectType obj)
-        {
-            m_next = null;
-            m_object = obj;
-        }
-
-        // operators
-        //operator ObjectType *() { return m_object; }
-        //operator ObjectType *() const { return m_object; }
-        //ObjectType *operator *() { return m_object; }
-        //ObjectType *operator *() const { return m_object; }
-
-        // getters
-        public simple_list_wrapper<ObjectType> next() { return m_next; }
-        public simple_list_wrapper<ObjectType> m_next_get() { return m_next; }
-        public void m_next_set(simple_list_wrapper<ObjectType> value) { m_next = value; }
-
-        public ObjectType obj() { return m_object; }
-    }
-
-
     // ======================> fixed_allocator
     // a fixed_allocator is a simple class that maintains a free pool of objects
     //template<class ItemType>

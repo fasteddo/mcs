@@ -25,28 +25,30 @@ namespace mame.plib
         //constexpr pqentry_t(pqentry_t &&e) = default;
 
 
-        //pqentry_t& operator=(pqentry_t && other) noexcept = default;
-        //pqentry_t& operator=(const pqentry_t &other) noexcept = default;
-
-
-        public netlist_time exec_time { get { return m_exec_time; } }
-        public Element object_ { get { return m_object; } }
-
-
-        //void swap(pqentry_t &other) noexcept
+        //inline bool operator ==(const pqentry_t &rhs) const noexcept
         //{
-        //    std::swap(m_exec_time, other.m_exec_time);
-        //    std::swap(m_object, other.m_object);
+        //    return m_object == rhs.m_object;
         //}
 
-        public static class QueueOp
-        {
-            public static bool less(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_exec_time < rhs.m_exec_time; }
-            static bool lessequal(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_exec_time <= rhs.m_exec_time; }
-            public static bool equal(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_object.Equals(rhs.m_object); }  //{ return lhs.m_object == rhs.m_object; }
-            public static bool equal(pqentry_t<Element, Time> lhs, Element rhs) { return lhs.m_object.Equals(rhs); }  //{ return lhs.m_object == rhs; }
-            public static pqentry_t<Element, Time> never() { return new pqentry_t<Element, Time>(netlist_time.never(), default(Element)); }
-        }
+        //inline bool operator ==(const Element &rhs) const noexcept
+        //{
+        //    return m_object == rhs;
+        //}
+
+        //inline bool operator <=(const pqentry_t &rhs) const noexcept
+        //{
+        //    return (m_exec_time <= rhs.m_exec_time);
+        //}
+
+        public static bool operator >(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_exec_time > rhs.m_exec_time; }
+        public static bool operator <(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_exec_time < rhs.m_exec_time; }
+
+
+        public static pqentry_t<Element, Time> never() { return new pqentry_t<Element, Time>(netlist_time.never(), default); }
+
+
+        public netlist_time exec_time() { return m_exec_time; }  //Time exec_time() const noexcept { return m_exec_time; }
+        public Element object_()  { return m_object; }
     }
 
 
@@ -95,14 +97,17 @@ namespace mame.plib
             lock (m_lock)  //lock_guard_type lck(m_lock);
             {
                 int iIdx = m_endIdx;  //T * i(m_end-1);
-                for (; pqentry_t<netlist.detail.net_t, netlist_time>.QueueOp.less(m_list[iIdx - 1], e); --iIdx)  //for (; QueueOp::less(*(i - 1), e); --i)
+                // handled in the insert below
+                //*i = std::move(e);
+                for (; m_list[iIdx - 1] < m_list[iIdx]; --iIdx)  //for (; *(i-1) < *i; --i)
                 {
                     // handled in the insert below
-                    //*(i) = std::move(*(i-1));
+                    //std::swap(*(i-1), *(i));
 
                     //throw new emu_unimplemented();
 #if false
-                    m_prof_sortmove.inc();
+                    if (KEEPSTAT)
+                        m_prof_sortmove.inc();
 #endif
                 }
 
@@ -111,7 +116,8 @@ namespace mame.plib
 
                 //throw new emu_unimplemented();
 #if false
-                m_prof_call.inc();
+                if (KEEPSTAT)
+                    m_prof_call.inc();
 #endif
             }
         }
@@ -191,11 +197,11 @@ namespace mame.plib
             lock (m_lock)  //lock_guard_type lck(m_lock);
             {
                 m_endIdx = 0;  //m_end = m_list[0];
-                /* put an empty element with maximum time into the queue.
-                 * the insert algo above will run into this element and doesn't
-                 * need a comparison with queue start.
-                 */
-                m_list[0] = pqentry_t<netlist.detail.net_t, netlist_time>.QueueOp.never();  //m_list[0] = QueueOp::never();
+                // put an empty element with maximum time into the queue.
+                // the insert algo above will run into this element and doesn't
+                // need a comparison with queue start.
+                //
+                m_list[0] = pqentry_t<netlist.detail.net_t, netlist_time>.never();  //m_list[0] = T::never();
                 m_endIdx++;  //m_end++;
             }
         }

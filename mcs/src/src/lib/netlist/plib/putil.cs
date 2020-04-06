@@ -36,49 +36,46 @@ namespace mame.plib
         public static bool set_from_string(string s, out netlist.solver.matrix_type_e m_v)
         {
             //int f = from_string_int(strings(), s); \
-            //if (f>=0) { m_v = static_cast<E>(f); return true; } else { return false; } \
+            //if (f>=0) { m_v = static_cast<E>(f); return true; } \
+            //return false;\
             if (Enum.IsDefined(typeof(netlist.solver.matrix_type_e), s))
             {
                 m_v = (netlist.solver.matrix_type_e)Enum.Parse(typeof(netlist.solver.matrix_type_e), s);
                 return true;
             }
-            else
-            {
-                m_v = default;
-                return false;
-            }
+
+            m_v = default;
+            return false;
         }
 
         public static bool set_from_string(string s, out netlist.solver.matrix_sort_type_e m_v)
         {
             //int f = from_string_int(strings(), s); \
-            //if (f>=0) { m_v = static_cast<E>(f); return true; } else { return false; } \
+            //if (f>=0) { m_v = static_cast<E>(f); return true; } \
+            //return false;\
             if (Enum.IsDefined(typeof(netlist.solver.matrix_sort_type_e), s))
             {
                 m_v = (netlist.solver.matrix_sort_type_e)Enum.Parse(typeof(netlist.solver.matrix_sort_type_e), s);
                 return true;
             }
-            else
-            {
-                m_v = default;
-                return false;
-            }
+
+            m_v = default;
+            return false;
         }
 
         public static bool set_from_string(string s, out netlist.solver.matrix_fp_type_e m_v)
         {
             //int f = from_string_int(strings(), s); \
-            //if (f>=0) { m_v = static_cast<E>(f); return true; } else { return false; } \
+            //if (f>=0) { m_v = static_cast<E>(f); return true; } \
+            //return false;\
             if (Enum.IsDefined(typeof(netlist.solver.matrix_fp_type_e), s))
             {
                 m_v = (netlist.solver.matrix_fp_type_e)Enum.Parse(typeof(netlist.solver.matrix_fp_type_e), s);
                 return true;
             }
-            else
-            {
-                m_v = default;
-                return false;
-            }
+
+            m_v = default;
+            return false;
         }
     }
 

@@ -24,6 +24,8 @@ namespace mame
             GALAXIAN_MASTER_CLOCK = XTAL_global.op("18.432_MHz_XTAL");
             SOUND_CLOCK           = GALAXIAN_MASTER_CLOCK/6/2;          /* 1.536 MHz */
             RNG_RATE              = GALAXIAN_MASTER_CLOCK/3*2;          /* RNG clock is XTAL/3*2 see Aaron's note in video/galaxian.c */
+
+            galaxian_discrete = galaxian_discrete_construct();
         }
 
 
@@ -64,7 +66,7 @@ namespace mame
         optional_device<cpu_device> m_audiocpu;
         optional_device<cpu_device> m_audio2;
         optional_device<dac_byte_interface> m_dac;
-        optional_device_array_ay8910_device m_ay8910;  //optional_device_array<ay8910_device/*, 3*/> m_ay8910;
+        optional_device_array_ay8910_device m_ay8910;  //optional_device_array<ay8910_device, 3> m_ay8910;
         optional_device<ay8910_device> m_ay8910_cclimber;
         optional_device<digitalker_device> m_digitalker;
         optional_device_array_i8255_device m_ppi8255;  //optional_device_array<i8255_device, 3> m_ppi8255;
@@ -72,7 +74,8 @@ namespace mame
         required_device<screen_device> m_screen;
         required_device<palette_device> m_palette;
         optional_device<generic_latch_8_device> m_soundlatch;
-        optional_device<discrete_sound_device> m_discrete;
+        optional_device<netlist_mame_sound_device> m_netlist;
+        optional_device_array_netlist_mame_logic_input_device m_filter_ctl;  //optional_device_array<netlist_mame_logic_input_device, 12> m_filter_ctl;
 
         optional_ioport m_fake_select;
         optional_ioport_array m_tenspot_game_dsw;  //optional_ioport_array<10> m_tenspot_game_dsw;
@@ -155,7 +158,8 @@ namespace mame
             m_screen = new required_device<screen_device>(this, "screen");
             m_palette = new required_device<palette_device>(this, "palette");
             m_soundlatch = new optional_device<generic_latch_8_device>(this, "soundlatch");
-            m_discrete = new optional_device<discrete_sound_device>(this, "konami");
+            m_netlist = new optional_device<netlist_mame_sound_device>(this, "konami");
+            m_filter_ctl = new optional_device_array_netlist_mame_logic_input_device(12, this, "konami:ctl{0}", 0);
             m_fake_select = new optional_ioport(this, "FAKE_SELECT");
             m_tenspot_game_dsw = new optional_ioport_array(10, this, "IN2_GAME{0}", 0);  //{"IN2_GAME0", "IN2_GAME1", "IN2_GAME2", "IN2_GAME3", "IN2_GAME4", "IN2_GAME5", "IN2_GAME6", "IN2_GAME7", "IN2_GAME8", "IN2_GAME9"});
             m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");

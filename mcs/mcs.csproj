@@ -289,6 +289,7 @@
     <Compile Include="src\src\mame\audio\irem.cs" />
     <Compile Include="src\src\mame\audio\namco54.cs" />
     <Compile Include="src\src\mame\audio\nl_1942.cs" />
+    <Compile Include="src\src\mame\audio\nl_konami.cs" />
     <Compile Include="src\src\mame\drivers\1942.cs" />
     <Compile Include="src\src\mame\drivers\centiped.cs" />
     <Compile Include="src\src\mame\drivers\dkong.cs" />

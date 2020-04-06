@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
 using model_map_t = mame.std.unordered_map<string, string>;
 using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
+using netlist_time_ext = mame.plib.ptime_i64;  //netlist_time
 using nlmempool = mame.plib.mempool;
 
 
@@ -59,11 +60,14 @@ namespace mame.netlist
 
 
 #if (PHAS_INT128)
-    using netlist_time = ptime<INT128, NETLIST_INTERNAL_RES>;
+    //using netlist_time = plib::ptime<INT128, NETLIST_INTERNAL_RES>;
+    using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
+    using netlist_time_ext = plib::ptime<INT128, NETLIST_INTERNAL_RES>;
 #else
     //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
-    //static_assert(noexcept(netlist_time::from_nsec(1)) == true, "Not evaluated as constexpr");
+    //using netlist_time_ext = netlist_time;
 #endif
+    //static_assert(noexcept(netlist_time::from_nsec(1)), "Not evaluated as constexpr");
 
 
     //============================================================

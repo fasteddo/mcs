@@ -37,7 +37,7 @@ namespace mame.plib
 
     // FIXME: needs a separate file
     //template <class T, std::size_t ALIGN = PALIGN_VECTOROPT>
-    class aligned_vector<T> : std.vector<T>  //class aligned_vector : public std::vector<T, aligned_allocator<T, ALIGN>>
+    public class aligned_vector<T> : std.vector<T>  //class aligned_vector : public std::vector<T, aligned_allocator<T, ALIGN>>
     {
         //using base = std::vector<T, aligned_allocator<T, ALIGN>>;
 

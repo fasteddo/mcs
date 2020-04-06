@@ -155,7 +155,11 @@ namespace mame.netlist
             public override void reset() { m_Q.initial(0); }
 
             //NETLIB_UPDATE_PARAMI();
-            public override void update_param() { m_Q.push((netlist_sig_t)((m_IN.op() ? 1 : 0) & 1), netlist_time.from_nsec(1)); }
+            public override void update_param()
+            {
+                //printf("%s %d\n", name().c_str(), m_IN());
+                m_Q.push((netlist_sig_t)((m_IN.op() ? 1 : 0) & 1), netlist_time.from_nsec(1));
+            }
         }
 
 

@@ -917,7 +917,7 @@ namespace mame
         public memory_region memregion(string _tag)
         {
             // build a fully-qualified name and look it up
-            var search = machine().memory().regions().find(subtag(_tag).c_str());
+            var search = machine().memory().regions().find(subtag(_tag));
             if (search != null)
                 return search;
             else
@@ -931,7 +931,7 @@ namespace mame
         public memory_share memshare(string _tag)
         {
             // build a fully-qualified name and look it up
-            var search = machine().memory().shares().find(subtag(_tag).c_str());
+            var search = machine().memory().shares().find(subtag(_tag));
             if (search != null)
                 return search;
             else
@@ -944,7 +944,7 @@ namespace mame
         //-------------------------------------------------
         public memory_bank membank(string _tag)
         {
-            var search = machine().memory().banks().find(subtag(_tag).c_str());
+            var search = machine().memory().banks().find(subtag(_tag));
             if (search != null)
                 return search;
             else

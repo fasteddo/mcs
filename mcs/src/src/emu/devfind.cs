@@ -609,6 +609,16 @@ namespace mame
         }
     }
 
+    public class optional_device_array_netlist_mame_logic_input_device : optional_device_array<netlist_mame_logic_input_device>
+    {
+        public optional_device_array_netlist_mame_logic_input_device(int Count, device_t basedevice, string format, int start) : base(Count, basedevice, format, start)
+        {
+            m_array = new device_finder<netlist_mame_logic_input_device>[Count];
+            for (int i = 0; i < Count; i++)
+                m_array[i] = new device_finder<netlist_mame_logic_input_device>(false, basedevice, m_tag[i]);
+        }
+    }
+
     //template <class DeviceClass, unsigned Count> using required_device_array = device_array_finder<DeviceClass, Count, true>;
     public class required_device_array<DeviceClass> : device_array_finder<DeviceClass> where DeviceClass : class
     {

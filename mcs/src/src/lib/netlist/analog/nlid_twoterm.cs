@@ -349,6 +349,7 @@ namespace mame.netlist
 
             //NETLIB_UPDATE_PARAMI();
             //NETLIB_UPDATE_PARAM(C)
+            //FIXME: should be able to change
             public override void update_param() { }
         }
     } //namespace analog

@@ -112,6 +112,9 @@ namespace mame.plib
         //constexpr double as_float() const noexcept { return as_fp<float>(); }
         //constexpr double as_long_double() const noexcept { return as_fp<long double>(); }
 
+        //constexpr ptime shl(unsigned shift) const noexcept { return ptime(m_time << shift); }
+        //constexpr ptime shr(unsigned shift) const noexcept { return ptime(m_time >> shift); }
+
         // for save states ....
         //C14CONSTEXPR internal_type *get_internaltype_ptr() noexcept { return &m_time; }
 
@@ -162,7 +165,7 @@ namespace mame.plib
 
         public ptime_i64() : this(0) { }  //constexpr ptime() noexcept : m_time(0) {}
         protected ptime_i64(int64_t nom, int64_t den) : this(nom * (RES / den)) { }
-        protected ptime_i64(int64_t time) : base() { m_time = time; }  //constexpr explicit ptime(const internal_type &time) : m_time(time) {}
+        public ptime_i64(int64_t time) : base() { m_time = time; }  //constexpr explicit ptime(const internal_type &time) : m_time(time) {}
 
 
         public static ptime_i64 operator+(ptime_i64 lhs, ptime_i64 rhs) { return new ptime_i64(lhs.m_time + rhs.m_time); }
@@ -205,6 +208,10 @@ namespace mame.plib
         //constexpr double as_long_double() const noexcept { return as_fp<long double>(); }
 
 
+        ptime_i64 shl(int shift) { return new ptime_i64(m_time << shift); }
+        public ptime_i64 shr(int shift) { return new ptime_i64(m_time >> shift); }
+
+
         public static ptime_i64 from_nsec(int64_t ns) { return new ptime_i64(ns, 1000000000); }
         public static ptime_i64 from_usec(int64_t us) { return new ptime_i64(us, 1000000); }
         public static ptime_i64 from_msec(int64_t ms) { return new ptime_i64(ms, 1000); }
@@ -232,7 +239,7 @@ namespace mame.plib
         public static ptime_i64 zero() { return new ptime_i64(0); }
         public static ptime_i64 quantum() { return new ptime_i64(1, RES); }
         public static ptime_i64 never() { return new ptime_i64(int64_t.MaxValue, RES); }  //{ return ptime(plib::numeric_limits<internal_type>::max(), RES); }
-        static int64_t resolution() { return RES; }  //static constexpr const internal_type resolution() noexcept { return RES; }
+        public static int64_t resolution() { return RES; }  //static constexpr const internal_type resolution() noexcept { return RES; }
 
 
         //constexpr internal_type in_nsec() const noexcept { return m_time / (RES / UINT64_C(1000000000)); }

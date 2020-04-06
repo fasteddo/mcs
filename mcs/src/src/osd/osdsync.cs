@@ -337,8 +337,7 @@ error:
             {
                 osd_work_item item = queue.free;  //(osd_work_item *)queue.free;
                 queue.free = item.next;
-                if (item.eventObj != null)
-                    item.eventObj = null;  //delete item.event;
+                item.event_ = null;  //delete item.event;
                 item = null;  //delete item;
             }
 
@@ -347,8 +346,7 @@ error:
             {
                 osd_work_item item = queue.list;  //(osd_work_item *)queue->list;
                 queue.list = item.next;
-                if (item.eventObj != null)
-                    item.eventObj = null;  //delete item->event;
+                item.event_ = null;  //delete item->event;
                 item = null;  //delete item;
             }
 
@@ -511,19 +509,19 @@ error:
                 return true;
 
             // if we don't have an event, create one
-            if (item.eventObj == null)
+            if (item.event_ == null)
             {
                 //std::lock_guard<std::mutex> lock(item->queue.lock);
                 lock (item.queue.lockObj)
-                    item.eventObj = new osd_event(1, 0);  // true, false);     // manual reset, not signalled
+                    item.event_ = new osd_event(1, 0);  // true, false);     // manual reset, not signalled
             }
             else
             {
-                item.eventObj.reset();
+                item.event_.reset();
             }
 
             // if we don't have an event, we need to spin (shouldn't ever really happen)
-            if (item.eventObj == null)
+            if (item.event_ == null)
             {
                 // TODO: do we need to measure the spin time here as well? and how can we do it?
                 spin_while(ref item.done, 0, timeout);  //spin_while<std::atomic<int>,int>(&item->done, 0, timeout);
@@ -532,7 +530,7 @@ error:
             // otherwise, block on the event until done
             else if (item.done == 0)
             {
-                item.eventObj.wait(timeout);
+                item.event_.wait(timeout);
             }
 
             // return true if the refcount actually hit 0
@@ -738,9 +736,9 @@ error:
                         //std::lock_guard<std::mutex> lock_(queue.lock_);
                         lock (queue.lockObj)
                         {
-                            if (item.eventObj != null)
+                            if (item.event_ != null)
                             {
-                                item.eventObj.set();
+                                item.event_.set();
 #if KEEP_STATISTICS
                                 add_to_stat(item.queue.setevents, 1);
 #endif
@@ -1019,7 +1017,7 @@ error:
         public osd_work_callback callback;       // callback function
         public object param;  //void *              param;          // callback parameter
         public object result;  //void *              result;         // callback result
-        public osd_event eventObj;          // event signalled when complete
+        public osd_event event_;          // event signalled when complete
         public UInt32 flags;          // creation flags
         public int done;  //std::atomic<int32_t>  done;           // is the item done?
 
@@ -1031,7 +1029,7 @@ error:
             callback = null;
             param = null;
             result = null;
-            eventObj = null;                // manual reset, not signalled
+            event_ = null;                // manual reset, not signalled
             flags = 0;
             done = 0;  //false;
         }

@@ -67,6 +67,7 @@ namespace mame
              2457600, /* 2.4576_MHz_XTAL        Atari ST MFP */
              2457600, /* 2.4576_MHz_XTAL        Atari ST MFP, NEC PC-98xx */
              2500000, /* 2.5_MHz_XTAL           Janken Man units */
+             2600000, /* 2.6_MHz_XTAL           Sharp PC-1500 */
              2950000, /* 2.95_MHz_XTAL          Playmatic MPU-C, MPU-III & Sound-3 */
              3000000, /* 3_MHz_XTAL             Probably only used to drive 68705 or similar MCUs on 80's Taito PCBs */
              3072000, /* 3.072_MHz_XTAL         INS 8520 input clock rate */
@@ -75,6 +76,7 @@ namespace mame
              3521280, /* 3.52128_MHz_XTAL       RCA COSMAC VIP */
              3570000, /* 3.57_MHz_XTAL          Telmac TMC-600 */
              3578640, /* 3.57864_MHz_XTAL       Atari Portfolio PCD3311T */
+             3579000, /* 3.579_MHz_XTAL         BeebOPL */
              3579545, /* 3.579545_MHz_XTAL      NTSC color subcarrier, extremely common, used on 100's of PCBs (Keytronic custom part #48-300-010 is equivalent) */
              3686400, /* 3.6864_MHz_XTAL        Baud rate clock for MC68681 and similar UARTs */
              3840000, /* 3.84_MHz_XTAL          Fairlight CMI Alphanumeric Keyboard */
@@ -126,6 +128,7 @@ namespace mame
              8867236, /* 8.867236_MHz_XTAL      RCA CDP1869 PAL color clock (~2x PAL subcarrier) */
              8867238, /* 8.867238_MHz_XTAL      ETI-660 (~2x PAL subcarrier) */
              8945000, /* 8.945_MHz_XTAL         Hit Me */
+             9000000, /* 9_MHz_XTAL             Homedata PCBs */
              9216000, /* 9.216_MHz_XTAL         Univac UTS 20 */
              9600000, /* 9.6_MHz_XTAL           WD37C65 second clock (for 300 KB/sec rate) */
              9828000, /* 9.828_MHz_XTAL         Universal PCBs */
@@ -214,6 +217,7 @@ namespace mame
             15700000, /* 15.7_MHz_XTAL          Motogonki */
             15897600, /* 15.8976_MHz_XTAL       IAI Swyft */
             15920000, /* 15.92_MHz_XTAL         HP Integral PC */
+            15930000, /* 15.93_MHz_XTAL         ADM 12 */
             15974400, /* 15.9744_MHz_XTAL       Osborne 1 (9600 * 52 * 32) */
             16000000, /* 16_MHz_XTAL            Extremely common, used on 100's of PCBs */
             16097280, /* 16.09728_MHz_XTAL      DEC VT240 (1024 * 262 * 60) */
@@ -271,6 +275,7 @@ namespace mame
             21281370, /* 21.28137_MHz_XTAL      Radica Tetris (PAL) */
             21300000, /* 21.3_MHz_XTAL          - */
             21477272, /* 21.477272_MHz_XTAL     BMC bowling, some Data East 90's games, Vtech Socrates; (6x NTSC subcarrier) */
+            21667500, /* 21.6675_MHz_XTAL       AT&T 610 (80-column display clock) */
             22000000, /* 22_MHz_XTAL            - */
             22032000, /* 22.032_MHz_XTAL        Intellec Series II I/O controller */
             22096000, /* 22.096_MHz_XTAL        ADDS Viewpoint 122 */
@@ -310,6 +315,7 @@ namespace mame
             27164000, /* 27.164_MHz_XTAL        Typically used on 90's Taito PCBs to drive the custom chips */
             27210900, /* 27.2109_MHz_XTAL       LA Girl */
             27562000, /* 27.562_MHz_XTAL        Visual 220 */
+            27720000, /* 27.72_MHz_XTAL         AT&T 610 (132-column display clock) */
             28000000, /* 28_MHz_XTAL            - */
             28322000, /* 28.322_MHz_XTAL        Saitek RISC 2500, Mephisto Montreux */
             28375160, /* 28.37516_MHz_XTAL      Amiga PAL systems */
@@ -396,6 +402,7 @@ namespace mame
             61440000, /* 61.44_MHz_XTAL         Donkey Kong */
             64000000, /* 64_MHz_XTAL            BattleToads */
             64108800, /* 64.1088_MHz_XTAL       HP Topcat high-res */
+            66000000, /* 66_MHz_XTAL            - */
             66666700, /* 66.6667_MHz_XTAL       Later Midway games */
             67737600, /* 67.7376_MHz_XTAL       PSX-based h/w, Sony ZN1-2-based */
             68850000, /* 68.85_MHz_XTAL         Wyse WY-50 */

@@ -2746,7 +2746,7 @@ namespace mame
 
             // attempt to open the file; bail if we can't
             emu_file layoutfile = new emu_file(m_manager.machine().options().art_path(), OPEN_FLAG_READ);
-            osd_file.error filerr = layoutfile.open(fname.c_str());
+            osd_file.error filerr = layoutfile.open(fname);
             if (filerr != osd_file.error.NONE)
                 return false;
 

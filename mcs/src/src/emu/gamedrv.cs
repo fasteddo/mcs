@@ -37,7 +37,7 @@ namespace mame
         public const UInt64 MACHINE_MECHANICAL                = (UInt64)machine_flags.type.MECHANICAL;
         public const UInt64 MACHINE_IS_INCOMPLETE             = (UInt64)machine_flags.type.IS_INCOMPLETE;
 
-        // flags taht map to device feature flags
+        // flags that map to device feature flags
         public const UInt64 MACHINE_UNEMULATED_PROTECTION     = 0x0000000100000000;   // game's protection not fully emulated
         public const UInt64 MACHINE_WRONG_COLORS              = 0x0000000200000000;   // colors are totally wrong
         public const UInt64 MACHINE_IMPERFECT_COLORS          = 0x0000000400000000;   // colors are not 100% accurate, but close

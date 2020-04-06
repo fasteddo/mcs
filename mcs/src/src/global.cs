@@ -170,9 +170,10 @@ namespace mame
             device.set_intf(intf);
             return device;
         }
+        protected static discrete_sound_device DISCRETE(machine_config mconfig, device_finder<discrete_sound_device> finder) { return emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0); }
         protected static discrete_sound_device DISCRETE(machine_config mconfig, device_finder<discrete_sound_device> finder, discrete_block [] intf)
         {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0);
+            var device = DISCRETE(mconfig, finder);
             device.set_intf(intf);
             return device;
         }
@@ -511,7 +512,7 @@ namespace mame
 
 
         // galaxian
-        protected static galaxian_sound_device GALAXIAN(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<galaxian_sound_device>(mconfig, tag, galaxian_sound_device.GALAXIAN, clock); }
+        protected static galaxian_sound_device GALAXIAN_SOUND(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<galaxian_sound_device>(mconfig, tag, galaxian_sound_device.GALAXIAN_SOUND, clock); }
 
 
         // gamedrv
@@ -794,7 +795,14 @@ namespace mame
 
 
         // netlist
+        protected static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
         protected static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
+        protected static netlist_mame_logic_input_device NETLIST_LOGIC_INPUT(machine_config mconfig, string tag, string param_name, uint32_t shift)
+        {
+            var device = emu.detail.device_type_impl.op<netlist_mame_logic_input_device>(mconfig, tag, netlist_mame_logic_input_device.NETLIST_LOGIC_INPUT, 0);
+            device.set_params(param_name, shift);
+            return device;
+        }
         protected static netlist_mame_stream_input_device NETLIST_STREAM_INPUT(machine_config mconfig, string tag, int channel, string param_name)
         {
             var device = emu.detail.device_type_impl.op<netlist_mame_stream_input_device>(mconfig, tag, netlist_mame_stream_input_device.NETLIST_STREAM_INPUT, 0);
@@ -810,21 +818,33 @@ namespace mame
 
 
         // nl_setup
+        protected void ALIAS(string alias, string name) { netlist.nl_setup_global.ALIAS(m_globals.helper_setup, alias, name); }
+        protected void INCLUDE(string name) { netlist.nl_setup_global.INCLUDE(m_globals.helper_setup, name); }
+        protected void LOCAL_SOURCE(string name, netlist.source_proc_t.setup_func_delegate netlist_name) { netlist.nl_setup_global.LOCAL_SOURCE(m_globals.helper_setup, name, netlist_name); }
         protected void NET_C(params string [] term1) { netlist.nl_setup_global.NET_C(m_globals.helper_setup, term1); }
-        protected void PARAM(string name, int val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
         protected void PARAM(string name, double val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
+        protected void SUBMODEL(string model, string name) { netlist.nl_setup_global.SUBMODEL(m_globals.helper_setup, model, name); }
         protected void NETLIST_START(netlist.nlparse_t setup) { m_globals.helper_setup = setup;  netlist.nl_setup_global.NETLIST_START(); }
         protected void NETLIST_END() { m_globals.helper_setup = null;  netlist.nl_setup_global.NETLIST_END(); }
 
 
+        // nld_4066
+        protected void CD4066_GATE(string name) { nld_4066_global.CD4066_GATE(m_globals.helper_setup, name); }
+
+
         // nld_system
+        protected void TTL_INPUT(string name, int v) { netlist.devices.nld_system_global.TTL_INPUT(m_globals.helper_setup, name, v); }
         protected void ANALOG_INPUT(string name, int v) { netlist.devices.nld_system_global.ANALOG_INPUT(m_globals.helper_setup, name, v); }
 
 
         // nld_twoterm
-        protected void RES(string name, int p_R) { netlist.nld_twoterm_global.RES(m_globals.helper_setup, name, p_R); }
+        protected void RES(string name, double p_R) { netlist.nld_twoterm_global.RES(m_globals.helper_setup, name, p_R); }
         protected void POT(string name, int p_R) { netlist.nld_twoterm_global.POT(m_globals.helper_setup, name, p_R); }
         protected void CAP(string name, double p_C) { netlist.nld_twoterm_global.CAP(m_globals.helper_setup, name, p_C); }
+
+
+        // nlm_opamp
+        protected void UA741_DIP8(string name) { nlm_opamp_global.UA741_DIP8(m_globals.helper_setup, name); }
 
 
         // options
@@ -1165,6 +1185,25 @@ namespace mame
         }
 
 
+        // c++ forward_list
+        public class forward_list<T> : IEnumerable<T>
+        {
+            LinkedList<T> m_list = new LinkedList<T>();
+
+
+            public forward_list() { }
+            public forward_list(IEnumerable<T> collection) { m_list = new LinkedList<T>(collection); }
+
+
+            // IEnumerable
+            IEnumerator IEnumerable.GetEnumerator() { return m_list.GetEnumerator(); }
+            IEnumerator<T> IEnumerable<T>.GetEnumerator() { return m_list.GetEnumerator(); }
+
+
+            public void emplace_front(T item) { m_list.AddFirst(item); }
+        }
+
+
         // c++ istream
         public class istream
         {
@@ -1306,6 +1345,8 @@ namespace mame
             // std::stack functions
             public bool empty() { return m_stack.Count == 0; }
             public T top() { return m_stack.Peek(); }
+            public void push(T value) { m_stack.Push(value); }
+            public void pop() { m_stack.Pop(); }
         }
 
 

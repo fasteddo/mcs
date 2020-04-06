@@ -51,7 +51,6 @@ namespace mame.netlist
 
         //#define PARAM(name, val)                                                        \
         //        setup.register_param(# name, val);
-        public static void PARAM(nlparse_t setup, string name, int val) { setup.register_param(name, val); }
         public static void PARAM(nlparse_t setup, string name, double val) { setup.register_param(name, val); }
 
         //#define HINT(name, val)                                                        \
@@ -97,6 +96,12 @@ namespace mame.netlist
         //        setup.namespace_push(# name);                                          \
         //        setup.include(# model);                                                \
         //        setup.namespace_pop();
+        public static void SUBMODEL(nlparse_t setup, string model, string name)
+        {
+            setup.namespace_push(name);
+            setup.include(model);
+            setup.namespace_pop();
+        }
 
         //#define OPTIMIZE_FRONTIER(attach, r_in, r_out)                                  \
         //        setup.register_frontier(# attach, r_in, r_out);
@@ -195,18 +200,14 @@ namespace mame.netlist
     {
         //friend class setup_t;
 
-        protected source_netlist_t() : base() { }
-
+        //source_netlist_t() = default;
         //COPYASSIGNMOVE(source_netlist_t, delete)
         //virtual ~source_netlist_t() noexcept = default;
 
         public virtual bool parse(nlparse_t setup, string name)
         {
             var strm = stream(name);
-            if (strm != null)
-                return setup.parse_stream(strm, name);
-            else
-                return false;
+            return strm != null ? setup.parse_stream(strm, name) : false;
         }
     }
 
@@ -215,8 +216,7 @@ namespace mame.netlist
     {
         //friend class setup_t;
 
-        protected source_data_t() : base() { }
-
+        //source_data_t() = default;
         //COPYASSIGNMOVE(source_data_t, delete)
         //virtual ~source_data_t() noexcept = default;
     }
@@ -250,19 +250,15 @@ namespace mame.netlist
         {
             model_map_t map = m_cache[model];
 
-            if (map.size() == 0)
+            if (map.empty())
                 model_parse(model , map);
-
-            string ret;
 
             if (entity != plib.pstrutil_global.ucase(entity))
                 throw new nl_exception(nl_errstr_global.MF_MODEL_PARAMETERS_NOT_UPPERCASE_1_2(entity, model_string(map)));
             if (map.find(entity) == null)
                 throw new nl_exception(nl_errstr_global.MF_ENTITY_1_NOT_FOUND_IN_MODEL_2(entity, model_string(map)));
-            else
-                ret = map[entity];
 
-            return ret;
+            return map[entity];
         }
 
 
@@ -270,7 +266,7 @@ namespace mame.netlist
         {
             model_map_t map = m_cache[model];
 
-            if (map.size() == 0)
+            if (map.empty())
                 model_parse(model , map);
 
             string tmp = value_str(model, entity);
@@ -437,21 +433,17 @@ namespace mame.netlist
                 log().fatal.op(nl_errstr_global.MF_CLASS_1_NOT_FOUND(classname));
                 throw new nl_exception(nl_errstr_global.MF_CLASS_1_NOT_FOUND(classname));
             }
-            else
+
+            // make sure we parse macro library entries
+            f.macro_actions(this, name);
+            string key = build_fqn(name);
+            if (device_exists(key))
             {
-                // make sure we parse macro library entries
-                f.macro_actions(this, name);
-                string key = build_fqn(name);
-                if (device_exists(key))
-                {
-                    log().fatal.op(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
-                    throw new nl_exception(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
-                }
-                else
-                {
-                    m_device_factory.Add(new KeyValuePair<string, factory.element_t>(key, f));  //m_device_factory.insert(m_device_factory.end(), {key, f});
-                }
+                log().fatal.op(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
+                throw new nl_exception(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
             }
+
+            m_device_factory.Add(new KeyValuePair<string, factory.element_t>(key, f));  //m_device_factory.insert(m_device_factory.end(), {key, f});
         }
 
 
@@ -462,7 +454,7 @@ namespace mame.netlist
 
             register_dev(classname, name);
 
-            if (params_and_connections.size() > 0)
+            if (!params_and_connections.empty())
             {
                 var ptokIdx = 0;  //auto ptok(params_and_connections.begin());
                 var ptok_endIdx = params_and_connections.Count;  //auto ptok_end(params_and_connections.end());
@@ -631,8 +623,20 @@ namespace mame.netlist
 
         // handle namespace
 
-        //void namespace_push(const pstring &aname);
-        //void namespace_pop();
+        public void namespace_push(string aname)
+        {
+            if (m_namespace_stack.empty())
+                //m_namespace_stack.push(netlist().name() + "." + aname);
+                m_namespace_stack.push(aname);
+            else
+                m_namespace_stack.push(m_namespace_stack.top() + "." + aname);
+        }
+
+
+        public void namespace_pop()
+        {
+            m_namespace_stack.pop();
+        }
 
 
         // include other files
@@ -652,11 +656,8 @@ namespace mame.netlist
 
         protected string build_fqn(string obj_name)
         {
-            if (m_namespace_stack.empty())
-                //return netlist().name() + "." + obj_name;
-                return obj_name;
-            else
-                return m_namespace_stack.top() + "." + obj_name;
+            return m_namespace_stack.empty() ? obj_name
+                : m_namespace_stack.top() + "." + obj_name;
         }
 
 
@@ -737,6 +738,7 @@ namespace mame.netlist
     public class setup_t : nlparse_t
     {
         std.unordered_map<string, detail.core_terminal_t> m_terminals = new std.unordered_map<string, detail.core_terminal_t>();
+        std.unordered_map<terminal_t, terminal_t> m_connected_terminals;
 
         netlist_state_t m_nlstate;
         devices.nld_netlistparams m_netlist_params;
@@ -778,10 +780,7 @@ namespace mame.netlist
         public string get_initial_param_val(string name, string def)
         {
             var i = m_param_values.find(name);
-            if (i != null)//m_param_values.end())
-                return i;
-            else
-                return def;
+            return (i != null) ? i : def;  //return (i != m_param_values.end()) ? i->second : def;
         }
 
 
@@ -793,6 +792,20 @@ namespace mame.netlist
                 log().fatal.op(nl_errstr_global.MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
                 throw new nl_exception(nl_errstr_global.MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
             }
+        }
+
+
+        public void register_term(terminal_t term, terminal_t other_term)
+        {
+            this.register_term(term);
+            m_connected_terminals.insert(term, other_term);
+        }
+
+
+        public terminal_t get_connected_terminal(terminal_t term)
+        {
+            var ret = m_connected_terminals.find(term);
+            return ret != null ? ret : null;
         }
 
 
@@ -933,7 +946,7 @@ namespace mame.netlist
             // after all other terminals were connected.
 
             UInt32 tries = m_netlist_params.max_link_loops.op();
-            while (m_links.size() > 0 && tries >  0)
+            while (!m_links.empty() && tries >  0)
             {
                 for (int liIdx = 0; liIdx < m_links.Count;  )  //for (auto li = m_links.begin(); li != m_links.end(); )
                 {
@@ -1075,7 +1088,43 @@ namespace mame.netlist
 
 
         // needed by proxy
-        //detail::core_terminal_t *find_terminal(const pstring &outname_in, const detail::terminal_type atype, bool required = true) const;
+        detail.core_terminal_t find_terminal(string terminal_in,
+                detail.terminal_type atype, bool required = true)
+        {
+            string tname = resolve_alias(terminal_in);
+            var ret = m_terminals.find(tname);
+            // look for default
+            if (ret == null && atype == detail.terminal_type.OUTPUT)
+            {
+                // look for ".Q" std output
+                ret = m_terminals.find(tname + ".Q");
+            }
+
+            if (ret == null && required)
+            {
+                log().fatal.op(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
+                throw new nl_exception(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
+            }
+
+            detail.core_terminal_t term = ret == null ? null : ret;
+
+            if (term != null && term.type() != atype)
+            {
+                if (required)
+                {
+                    log().fatal.op(nl_errstr_global.MF_OBJECT_1_2_WRONG_TYPE(terminal_in, tname));
+                    throw new nl_exception(nl_errstr_global.MF_OBJECT_1_2_WRONG_TYPE(terminal_in, tname));
+                }
+
+                term = null;
+            }
+
+            if (term != null)
+                log().debug.op("Found input {0}\n", tname);
+
+            return term;
+        }
+
 
         public detail.core_terminal_t find_terminal(string terminal_in, bool required = true)
         {
@@ -1131,10 +1180,8 @@ namespace mame.netlist
                     x.state().log().verbose.op("Deleting net {0} ...", x.name());
                     return true;
                 }
-                else
-                {
-                    return false;
-                }
+
+                return false;
             });
         }
 
@@ -1201,7 +1248,7 @@ namespace mame.netlist
                 }
             }
 
-            bool use_deactivate = m_netlist_params.use_deactivate.op() ? true : false;
+            bool use_deactivate = m_netlist_params.use_deactivate.op();
 
             foreach (var d in m_nlstate.devices())
             {
@@ -1461,7 +1508,7 @@ namespace mame.netlist
 
 
         // helpers
-        string termtype_as_str(detail.core_terminal_t in_)
+        static string termtype_as_str(detail.core_terminal_t in_)
         {
             switch (in_.type())
             {
@@ -1486,39 +1533,35 @@ namespace mame.netlist
             var out_cast = (logic_output_t)out_;  //auto &out_cast = static_cast<logic_output_t &>(out);
             var iter_proxy = m_proxies.find(out_);
 
-            if (iter_proxy == null)  //if (iter_proxy == m_proxies.end())
-            {
-                // create a new one ...
-                string x = new plib.pfmt("proxy_da_{0}_{1}").op(out_.name(), m_proxy_cnt);
-                var new_proxy = out_cast.logic_family().create_d_a_proxy(m_nlstate, x, out_cast);
-                m_proxy_cnt++;
-
-                // connect all existing terminals to new net
-
-                foreach (var p in out_.net().core_terms())
-                {
-                    p.clear_net(); // de-link from all nets ...
-                    if (!connect(new_proxy.proxy_term(), p))
-                    {
-                        log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
-                        throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
-                    }
-                }
-                out_.net().core_terms().clear();
-
-                out_.net().add_terminal(new_proxy.in_());
-
-                var proxy = new_proxy;  //auto proxy(new_proxy.get());
-                if (!m_proxies.insert(out_, proxy))
-                    throw new nl_exception(nl_errstr_global.MF_DUPLICATE_PROXY_1(out_.name()));
-
-                m_nlstate.register_device(new_proxy.name(), new_proxy);
-                return proxy;
-            }
-            else
-            {
+            if (iter_proxy != null)  //if (iter_proxy != m_proxies.end())
                 return iter_proxy;
+
+            // create a new one ...
+            string x = new plib.pfmt("proxy_da_{0}_{1}").op(out_.name(), m_proxy_cnt);
+            var new_proxy = out_cast.logic_family().create_d_a_proxy(m_nlstate, x, out_cast);
+            m_proxy_cnt++;
+
+            // connect all existing terminals to new net
+
+            foreach (var p in out_.net().core_terms())
+            {
+                p.clear_net(); // de-link from all nets ...
+                if (!connect(new_proxy.proxy_term(), p))
+                {
+                    log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
+                    throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
+                }
             }
+            out_.net().core_terms().clear();
+
+            out_.net().add_terminal(new_proxy.in_());
+
+            var proxy = new_proxy;  //auto proxy(new_proxy.get());
+            if (!m_proxies.insert(out_, proxy))
+                throw new nl_exception(nl_errstr_global.MF_DUPLICATE_PROXY_1(out_.name()));
+
+            m_nlstate.register_device(new_proxy.name(), new_proxy);
+            return proxy;
         }
 
 
@@ -1530,42 +1573,38 @@ namespace mame.netlist
             var iter_proxy = m_proxies.find(inp);
 
             if (iter_proxy != null)  //if (iter_proxy != m_proxies.end())
-            {
                 return iter_proxy;
-            }
-            else
+
+            log().debug.op("connect_terminal_input: connecting proxy\n");
+            string x = new plib.pfmt("proxy_ad_{0}_{1}").op(inp.name(), m_proxy_cnt);
+            var new_proxy = incast.logic_family().create_a_d_proxy(m_nlstate, x, incast);
+            //auto new_proxy = plib::owned_ptr<devices::nld_a_to_d_proxy>::Create(netlist(), x, &incast);
+
+            var ret = new_proxy;  //auto ret(new_proxy.get());
+
+            if (!m_proxies.insert(inp, ret))  //if (!m_proxies.insert({&inp, ret}).second)
+                throw new nl_exception(nl_errstr_global.MF_DUPLICATE_PROXY_1(inp.name()));
+
+            m_proxy_cnt++;
+
+            // connect all existing terminals to new net
+
+            if (inp.has_net())
             {
-                log().debug.op("connect_terminal_input: connecting proxy\n");
-                string x = new plib.pfmt("proxy_ad_{0}_{1}").op(inp.name(), m_proxy_cnt);
-                var new_proxy = incast.logic_family().create_a_d_proxy(m_nlstate, x, incast);
-                //auto new_proxy = plib::owned_ptr<devices::nld_a_to_d_proxy>::Create(netlist(), x, &incast);
-
-                var ret = new_proxy;  //auto ret(new_proxy.get());
-
-                if (!m_proxies.insert(inp, ret))  //if (!m_proxies.insert({&inp, ret}).second)
-                    throw new nl_exception(nl_errstr_global.MF_DUPLICATE_PROXY_1(inp.name()));
-
-                m_proxy_cnt++;
-
-                // connect all existing terminals to new net
-
-                if (inp.has_net())
+                foreach (var p in inp.net().core_terms())
                 {
-                    foreach (var p in inp.net().core_terms())
+                    p.clear_net(); // de-link from all nets ...
+                    if (!connect(ret.proxy_term(), p))
                     {
-                        p.clear_net(); // de-link from all nets ...
-                        if (!connect(ret.proxy_term(), p))
-                        {
-                            log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
-                            throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
-                        }
+                        log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
+                        throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
                     }
-                    inp.net().core_terms().clear(); // clear the list
                 }
-                ret.out_().net().add_terminal(inp);
-                m_nlstate.register_device(new_proxy.name(), new_proxy);
-                return ret;
+                inp.net().core_terms().clear(); // clear the list
             }
+            ret.out_().net().add_terminal(inp);
+            m_nlstate.register_device(new_proxy.name(), new_proxy);
+            return ret;
         }
 
 
@@ -1593,8 +1632,7 @@ namespace mame.netlist
         string m_setup_func_name;
 
 
-        public source_proc_t(string name, setup_func_delegate setup_func)  //void (*setup_func)(nlparse_t &))
-            : base()
+        public source_proc_t(string name, setup_func_delegate setup_func)  //source_proc_t(const pstring &name, void (*setup_func)(nlparse_t &))
         {
             m_setup_func = setup_func;
             m_setup_func_name = name;
@@ -1608,10 +1646,8 @@ namespace mame.netlist
                 m_setup_func(setup);
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
 
