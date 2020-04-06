@@ -342,6 +342,32 @@ namespace mame.netlist
         {
             public std.vector<analog_net_t.list_t> groups = new std.vector<analog_net_t.list_t>();
 
+            std.vector<analog_net_t.list_t> groupspre;
+
+
+            public void run(netlist_state_t netlist)
+            {
+                foreach (var net in netlist.nets())
+                {
+                    netlist.log().verbose.op("processing {0}", net.name());
+                    if (!net.isRailNet() && net.num_cons() > 0)
+                    {
+                        netlist.log().verbose.op("   ==> not a rail net");
+                        // Must be an analog net
+                        var n = (analog_net_t)net;
+                        if (!already_processed(n))
+                        {
+                            groupspre.emplace_back(new analog_net_t.list_t());
+                            process_net(netlist, n);
+                        }
+                    }
+                }
+
+                foreach (var g in groupspre)
+                    if (!g.empty())
+                        groups.push_back(g);
+            }
+
 
             bool already_processed(analog_net_t n)
             {
@@ -356,45 +382,61 @@ namespace mame.netlist
             }
 
 
+            bool check_if_processed_and_join(analog_net_t n)
+            {
+                // no need to process rail nets - these are known variables
+                if (n.isRailNet())
+                    return true;
+
+                // First check if it is in a previous group.
+                // In this case we need to merge this group into the current group
+                if (groupspre.size() > 1)
+                {
+                    for (UInt32 i = 0; i < groupspre.size() - 1; i++)
+                    {
+                        if (plib.putil_global.contains(groupspre[i], n))
+                        {
+                            // copy all nets
+                            foreach (var cn in groupspre[i])
+                                if (!plib.putil_global.contains(groupspre.back(), cn))
+                                    groupspre.back().push_back(cn);
+
+                            // clear
+                            groupspre[i].clear();
+                            return true;
+                        }
+                    }
+                }
+
+                // if it's already processed - no need to continue
+                if (!groupspre.empty() && plib.putil_global.contains(groupspre.back(), n))
+                    return true;
+
+                return false;
+            }
+
+
             void process_net(netlist_state_t netlist, analog_net_t n)
             {
                 // ignore empty nets. FIXME: print a warning message
+                netlist.log().verbose.op("Net {0}", n.name());
                 if (n.num_cons() == 0)
                     return;
                 // add the net
-                groups.back().push_back(n);
+                groupspre.back().push_back(n);
                 // process all terminals connected to this net
                 foreach (var term in n.core_terms())
                 {
+                    netlist.log().verbose.op("Term {0} {1}", term.name(), (int)term.type());
                     // only process analog terminals
                     if (term.is_type(detail.terminal_type.TERMINAL))
                     {
                         var pt = (terminal_t)term;
                         // check the connected terminal
-                        // analog_net_t &connected_net = pt->connected_terminal()->net();
                         analog_net_t connected_net = netlist.setup().get_connected_terminal(pt).net();
-                        if (!already_processed(connected_net))
+                        netlist.log().verbose.op("  Connected net {0}", connected_net.name());
+                        if (!check_if_processed_and_join(connected_net))
                             process_net(netlist, connected_net);
-                    }
-                }
-            }
-
-
-            public void run(netlist_state_t netlist)
-            {
-                foreach (var net in netlist.nets())
-                {
-                    netlist.log().debug.op("processing {0}\n", net.name());
-                    if (!net.isRailNet() && net.num_cons() > 0)
-                    {
-                        netlist.log().debug.op("   ==> not a rail net\n");
-                        // Must be an analog net
-                        var n = (analog_net_t)net;
-                        if (!already_processed(n))
-                        {
-                            groups.emplace_back(new analog_net_t.list_t());
-                            process_net(netlist, n);
-                        }
                     }
                 }
             }

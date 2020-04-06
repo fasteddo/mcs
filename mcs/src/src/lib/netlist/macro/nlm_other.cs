@@ -57,7 +57,7 @@ namespace mame
                 netlist.nl_setup_global.TT_LINE(" 0 | 1 |100");
                 netlist.nl_setup_global.TT_LINE(" 1 | 0 |100");
                 // 2.1V negative going and 2.7V positive going at 5V
-                netlist.nl_setup_global.TT_FAMILY("FAMILY(FV=0 IVL=0.42 IVH=0.54 OVL=0.05 OVH=0.05 ORL=10.0 ORH=10.0)");
+                netlist.nl_setup_global.TT_FAMILY("FAMILY(IVL=0.42 IVH=0.54 OVL=0.05 OVH=0.05 ORL=10.0 ORH=10.0)");
             netlist.nl_setup_global.TRUTHTABLE_END(setup);
 
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MC14584B_DIP", netlist_MC14584B_DIP);

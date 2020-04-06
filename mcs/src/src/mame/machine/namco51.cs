@@ -34,8 +34,8 @@ namespace mame
         // internal state
         required_device<mb88_cpu_device> m_cpu;
         required_device<screen_device> m_screen;
-        devcb_read8 [] m_in = new devcb_read8[4];
-        devcb_write8 [] m_out = new devcb_write8[2];
+        devcb_read8.array<i4, devcb_read8> m_in;
+        devcb_write8.array<i2, devcb_write8> m_out;
 
         int m_lastcoins;
         int m_lastbuttons;
@@ -55,11 +55,8 @@ namespace mame
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_screen = new required_device<screen_device>(this, finder_base.DUMMY_TAG);
 
-            for (int i = 0; i < 4; i++)
-                m_in[i] = new devcb_read8(this);
-
-            for (int i = 0; i < 2; i++)
-                m_out[i] = new devcb_write8(this);
+            m_in = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
+            m_out = new devcb_write8.array<i2, devcb_write8>(this, () => { return new devcb_write8(this); });
 
             m_lastcoins = 0;
             m_lastbuttons = 0;
@@ -346,12 +343,10 @@ namespace mame
         protected override void device_start()
         {
             /* resolve our read callbacks */
-            foreach (devcb_read8 cb in m_in)
-                cb.resolve_safe(0);
+            m_in.resolve_all_safe(0);
 
             /* resolve our write callbacks */
-            foreach (devcb_write8 cb in m_out)
-                cb.resolve_safe();
+            m_out.resolve_all_safe();
 
             save_item(m_lastcoins, "m_lastcoins");
             save_item(m_lastbuttons, "m_lastbuttons");

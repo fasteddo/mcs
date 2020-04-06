@@ -11,6 +11,7 @@ using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 
@@ -20,33 +21,27 @@ namespace mame
     {
         void create_palette(palette_device palette)
         {
-            ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
-            int i;
+            ListBytesPointer color_prom = new ListBytesPointer(memregion("palproms").base_());  //const uint8_t *color_prom = memregion("palproms")->base();
 
-            for (i = 0; i < 256; i++)
+            for (int i = 0; i < 256; i++)
             {
-                int bit0;
-                int bit1;
-                int bit2;
-                int bit3;
-
                 /* red component */
-                bit0 = (color_prom[i + 0 * 256] >> 0) & 0x01;
-                bit1 = (color_prom[i + 0 * 256] >> 1) & 0x01;
-                bit2 = (color_prom[i + 0 * 256] >> 2) & 0x01;
-                bit3 = (color_prom[i + 0 * 256] >> 3) & 0x01;
+                int bit0 = BIT(color_prom[i + 0 * 256], 0);
+                int bit1 = BIT(color_prom[i + 0 * 256], 1);
+                int bit2 = BIT(color_prom[i + 0 * 256], 2);
+                int bit3 = BIT(color_prom[i + 0 * 256], 3);
                 int r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 /* green component */
-                bit0 = (color_prom[i + 1 * 256] >> 0) & 0x01;
-                bit1 = (color_prom[i + 1 * 256] >> 1) & 0x01;
-                bit2 = (color_prom[i + 1 * 256] >> 2) & 0x01;
-                bit3 = (color_prom[i + 1 * 256] >> 3) & 0x01;
+                bit0 = BIT(color_prom[i + 1 * 256], 0);
+                bit1 = BIT(color_prom[i + 1 * 256], 1);
+                bit2 = BIT(color_prom[i + 1 * 256], 2);
+                bit3 = BIT(color_prom[i + 1 * 256], 3);
                 int g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 /* blue component */
-                bit0 = (color_prom[i + 2 * 256] >> 0) & 0x01;
-                bit1 = (color_prom[i + 2 * 256] >> 1) & 0x01;
-                bit2 = (color_prom[i + 2 * 256] >> 2) & 0x01;
-                bit3 = (color_prom[i + 2 * 256] >> 3) & 0x01;
+                bit0 = BIT(color_prom[i + 2 * 256], 0);
+                bit1 = BIT(color_prom[i + 2 * 256], 1);
+                bit2 = BIT(color_prom[i + 2 * 256], 2);
+                bit3 = BIT(color_prom[i + 2 * 256], 3);
                 int b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
                 palette.palette_interface.set_indirect_color(i, new rgb_t((u8)r, (u8)g, (u8)b));
@@ -58,36 +53,31 @@ namespace mame
         {
             create_palette(palette);
 
-            ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
-            color_prom += 3 * 256;
-            // color_prom now points to the beginning of the lookup table
-
-
             /* characters use palette entries 128-143 */
             int colorbase = 0;
+            ListBytesPointer charlut_prom = new ListBytesPointer(memregion("charprom").base_());  //const uint8_t *charlut_prom = memregion("charprom")->base();
             for (int i = 0; i < 64 * 4; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x80 | color_prom[0]));  //*color_prom++);
-                color_prom++;
+                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x80 | charlut_prom[i]));
             }
 
             // background tiles use palette entries 0-63 in four banks
             colorbase += 64 * 4;
+            ListBytesPointer tilelut_prom = new ListBytesPointer(memregion("tileprom").base_());  //const uint8_t *tilelut_prom = memregion("tileprom")->base();
             for (int i = 0; i < 32 * 8; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 0 * 32 * 8 + i), (indirect_pen_t)(0x00 | color_prom[0]));  //*color_prom);
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 1 * 32 * 8 + i), (indirect_pen_t)(0x10 | color_prom[0]));
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 2 * 32 * 8 + i), (indirect_pen_t)(0x20 | color_prom[0]));
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 3 * 32 * 8 + i), (indirect_pen_t)(0x30 | color_prom[0]));
-                color_prom++;
+                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 0 * 32 * 8 + i), (indirect_pen_t)(0x00 | tilelut_prom[i]));
+                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 1 * 32 * 8 + i), (indirect_pen_t)(0x10 | tilelut_prom[i]));
+                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 2 * 32 * 8 + i), (indirect_pen_t)(0x20 | tilelut_prom[i]));
+                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 3 * 32 * 8 + i), (indirect_pen_t)(0x30 | tilelut_prom[i]));
             }
 
             // sprites use palette entries 64-79
             colorbase += 4 * 32 * 8;
+            ListBytesPointer sprlut_prom = new ListBytesPointer(memregion("sprprom").base_());  //const uint8_t *sprlut_prom = memregion("sprprom")->base();
             for (int i = 0; i < 16 * 16; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x40 | color_prom[0]));  //*color_prom++);
-                color_prom++;
+                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x40 | sprlut_prom[i]));
             }
         }
 
@@ -101,11 +91,8 @@ namespace mame
         //TILE_GET_INFO_MEMBER(_1942_state::get_fg_tile_info)
         void get_fg_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            int code;
-            int color;
-
-            code = m_fg_videoram[tile_index];
-            color = m_fg_videoram[tile_index + 0x400];
+            int code = m_fg_videoram[tile_index];
+            int color = m_fg_videoram[tile_index + 0x400];
             SET_TILE_INFO_MEMBER(ref tileinfo, 0,
                     (UInt32)(code + ((color & 0x80) << 1)),
                     (UInt32)(color & 0x3f),
@@ -115,13 +102,10 @@ namespace mame
         //TILE_GET_INFO_MEMBER(_1942_state::get_bg_tile_info)
         void get_bg_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            int code;
-            int color;
-
             tile_index = (tile_index & 0x0f) | ((tile_index & 0x01f0) << 1);
 
-            code = m_bg_videoram[tile_index];
-            color = m_bg_videoram[tile_index + 0x10];
+            int code = m_bg_videoram[tile_index];
+            int color = m_bg_videoram[tile_index + 0x10];
             SET_TILE_INFO_MEMBER(ref tileinfo, 1,
                     (UInt32)(code + ((color & 0x80) << 1)),
                     (UInt32)((color & 0x1f) + (0x20 * m_palette_bank)),
@@ -207,44 +191,92 @@ namespace mame
 
         protected virtual void draw_sprites(bitmap_ind16 bitmap, rectangle cliprect)
         {
-            int offs;
+            // Sprites 0 to 15 are drawn on all scanlines.
+            // Sprites 16 to 23 are drawn on scanlines 16 to 127.
+            // Sprites 24 to 31 are drawn on scanlines 128 to 239.
+            //
+            // The reason for this is ostensibly so that the back half of the sprite list can
+            // be used to selectively mask sprites along the midpoint of the screen.
+            //
+            // Moreover, the H counter runs from 128 to 511 for a total of 384 horizontal
+            // clocks per scanline. With an effective 6MHz pixel clock, this produces a
+            // horizontal scan rate of exactly 15.625kHz, a standard scan rate for games
+            // of this era.
+            //
+            // Sprites are drawn by MAME in reverse order, as the actual hardware only
+            // permits a transparent pixel to be overwritten by an opaque pixel, and does
+            // not support opaque-opaque overwriting - i.e., the first sprite to draw wins
+            // control over its horizontal range. If MAME drew in forward order, it would
+            // instead produce a last-sprite-wins behavior.
 
-            for (offs = (int)m_spriteram.bytes() - 4; offs >= 0; offs -= 4)
+            for (int y = cliprect.min_y; y <= cliprect.max_y; y++)
             {
-                int i;
-                int code;
-                int col;
-                int sx;
-                int sy;
-                int dir;
-
-                code = (m_spriteram[offs] & 0x7f) + 4 * (m_spriteram[offs + 1] & 0x20) + 2 * (m_spriteram[offs] & 0x80);
-                col = m_spriteram[offs + 1] & 0x0f;
-                sx = m_spriteram[offs + 3] - 0x10 * (m_spriteram[offs + 1] & 0x10);
-                sy = m_spriteram[offs + 2];
-                dir = 1;
-
-                if (flip_screen() != 0)
+                rectangle cliprecty = new rectangle(cliprect.min_x, cliprect.max_x, y, y);
+                uint8_t [] objdata = new uint8_t [4];
+                uint8_t v = flip_screen() != 0 ? (uint8_t)(~(y - 1)) : (uint8_t)(y - 1);
+                for (int h = 496; h >= 128; h -= 16)
                 {
-                    sx = 240 - sx;
-                    sy = 240 - sy;
-                    dir = -1;
+                    bool objcnt4 = BIT(h, 8) != BIT(~h, 7);
+                    bool objcnt3 = ((BIT(v, 7) != 0) && objcnt4) != (BIT(~h, 7) != 0);
+                    uint8_t obj_idx = (uint8_t)((h >> 4) & 7);
+                    obj_idx |= objcnt3 ? (uint8_t)0x08 : (uint8_t)0x00;
+                    obj_idx |= objcnt4 ? (uint8_t)0x10 : (uint8_t)0x00;
+                    obj_idx <<= 2;
+                    for (int i = 0; i < 4; i++)
+                        objdata[i] = m_spriteram[obj_idx | i];
+
+                    int code = (objdata[0] & 0x7f) + ((objdata[1] & 0x20) << 2) + ((objdata[0] & 0x80) << 1);
+                    int col = objdata[1] & 0x0f;
+                    int sx = objdata[3] - 0x10 * (objdata[1] & 0x10);
+                    int sy = objdata[2];
+                    int dir = 1;
+
+                    uint8_t valpha = (uint8_t)sy;
+                    uint8_t v2c = (uint8_t)((uint8_t)(~v) + (flip_screen() != 0 ? 0x01 : 0xff));
+                    uint8_t lvbeta = (uint8_t)(v2c + valpha);
+                    uint8_t vbeta = (uint8_t)(~lvbeta);
+                    bool vleq = vbeta <= ((~valpha) & 0xff);
+                    bool vinlen = true;
+                    uint8_t vlen = (uint8_t)(objdata[1] >> 6);
+                    switch (vlen & 3)
+                    {
+                    case 0:
+                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0) && (BIT(lvbeta, 5) != 0) && (BIT(lvbeta, 4) != 0);
+                        break;
+                    case 1:
+                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0) && (BIT(lvbeta, 5) != 0);
+                        break;
+                    case 2:
+                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0);
+                        break;
+                    case 3:
+                        vinlen = true;
+                        break;
+                    }
+                    bool vinzone = !(vleq && vinlen);
+
+                    if (flip_screen() != 0)
+                    {
+                        sx = 240 - sx;
+                        sy = 240 - sy;
+                        dir = -1;
+                    }
+
+                    /* handle double / quadruple height */
+                    {
+                        int i = (objdata[1] & 0xc0) >> 6;
+                        if (i == 2)
+                            i = 3;
+
+                        if (!vinzone)
+                        {
+                            do
+                            {
+                                m_gfxdecode.target.digfx.gfx(2).transpen(bitmap, cliprecty, (u32)(code + i), (u32)col, (int)flip_screen(), (int)flip_screen(), sx, sy + 16 * i * dir, 15);
+                            } while (i-- > 0);
+                        }
+                    }
                 }
-
-                /* handle double / quadruple height */
-                i = (m_spriteram[offs + 1] & 0xc0) >> 6;
-                if (i == 2)
-                    i = 3;
-
-                do
-                {
-                    m_gfxdecode.target.digfx.gfx(2).transpen(bitmap, cliprect,
-                            (u32)(code + i), (u32)col,
-                            (int)flip_screen(), (int)flip_screen(),
-                            sx, sy + 16 * i * dir, 15);
-
-                    i--;
-                } while (i >= 0);
             }
         }
 

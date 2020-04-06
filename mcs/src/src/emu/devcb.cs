@@ -166,6 +166,42 @@ namespace mame
         }
 
 
+        /// \brief Callback array helper
+        ///
+        /// Simplifies construction and resolution of arrays of callbacks.
+        //template <typename T, unsigned Count>
+        public class array<T, Count_> : std.array<T> where Count_ : const_value_int, new() where T : devcb_base //class array : public std::array<T, Count>
+        {
+            //using std::array<T, Count>::array;
+
+            static Count_ Count = new Count_();
+
+            //template <unsigned... V>
+            array(device_t owner, int unused, Func<T> add_function)  //array(device_t &owner, std::integer_sequence<unsigned, V...> const &)
+                : base(Count.op)  //: std::array<T, Count>{{ { make_one<V>(owner) }... }}
+            {
+                for (int i = 0; i < this.size(); i++)
+                {
+                    this[i] = add_function();
+                }
+            }
+
+            protected array(device_t owner, Func<T> add_function) : this(owner, 0, add_function) { }  //array(device_t &owner) : array(owner, std::make_integer_sequence<unsigned, Count>()) { }
+
+
+            //template <unsigned N> device_t &make_one(device_t &owner) { return owner; }
+
+
+            public virtual void resolve_all()
+            {
+                foreach (T elem in this)
+                {
+                    elem.resolve();
+                }
+            }
+        }
+
+
         protected devcb_base(device_t owner)
         {
             m_owner = owner;
@@ -1084,6 +1120,29 @@ namespace mame
 
 
             void set_used() { assert(!m_used); m_used = true; }
+        }
+
+
+        //template <unsigned Count>
+        public new class array<Count, devcb_read_type> : devcb_read_base.array<devcb_read_type, Count> where Count : const_value_int, new() where devcb_read_type : devcb_read  //class array : public devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>
+        {
+            //using devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>::array;
+
+            public array(device_t owner, Func<devcb_read_type> add_function) : base(owner, add_function) { }
+
+            public override void resolve_all()
+            {
+                foreach (devcb_read_type elem in this)
+                {
+                    elem.resolve();
+                }
+            }
+
+            public void resolve_all_safe(int dflt)  //void resolve_all_safe(Result dflt)
+            {
+                foreach (devcb_read_type elem in this)  //for (devcb_read<Result, DefaultMask> &elem : *this)
+                    elem.resolve_safe(dflt);
+            }
         }
 
 
@@ -2789,6 +2848,29 @@ namespace mame
 
 
             void set_used() { assert(!m_used); m_used = true; }
+        }
+
+
+        //template <unsigned Count>
+        public new class array<Count, devcb_write_type> : devcb_write_base.array<devcb_write_type, Count> where Count : const_value_int, new() where devcb_write_type : devcb_write  //class array : public devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>
+        {
+            //using devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>::array;
+
+            public array(device_t owner, Func<devcb_write_type> add_function) : base(owner, add_function) { }
+
+            public override void resolve_all()
+            {
+                foreach (devcb_write_type elem in this)
+                {
+                    elem.resolve();
+                }
+            }
+
+            public void resolve_all_safe()
+            {
+                foreach (devcb_write elem in this)  //for (devcb_write<Input, DefaultMask> &elem : *this)
+                    elem.resolve_safe();
+            }
         }
 
 

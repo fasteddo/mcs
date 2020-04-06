@@ -541,7 +541,7 @@ namespace mame
 
             // input options
             new options_entry(null,                                              null,        OPTION_HEADER,     "CORE INPUT OPTIONS"),
-            new options_entry(OPTION_COIN_LOCKOUT + ";coinlock",                 "1",         OPTION_BOOLEAN,    "ignore coin inputs if coin lockout ouput is active"),
+            new options_entry(OPTION_COIN_LOCKOUT + ";coinlock",                 "1",         OPTION_BOOLEAN,    "ignore coin inputs if coin lockout output is active"),
             new options_entry(OPTION_CTRLR,                                      null,        OPTION_STRING,     "preconfigure for specified controller"),
             new options_entry(OPTION_MOUSE,                                      "0",         OPTION_BOOLEAN,    "enable mouse input"),
             new options_entry(OPTION_JOYSTICK + ";joy",                          "1",         OPTION_BOOLEAN,    "enable joystick input"),

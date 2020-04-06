@@ -330,10 +330,10 @@ namespace mame.netlist
             }
 
 
-            //void update_after(const netlist_time &after)
-            //{
-            //    m_Q_sync.net().toggle_and_push_to_queue(after);
-            //}
+            public void update_after(netlist_time after)
+            {
+                m_Q_sync.net().toggle_and_push_to_queue(after);
+            }
 
 
             // netdevice functions
@@ -511,10 +511,8 @@ namespace mame.netlist
                     {
                         m_terms[net_idx].add_terminal(term, ot, true);
                     }
-                    // Should this be allowed ?
                     else
                     {
-                        m_rails_temp[net_idx].add_terminal(term, ot, true);
                         log().fatal.op(nl_errstr_global.MF_FOUND_TERM_WITH_MISSING_OTHERNET(term.name()));
                         throw new nl_exception(nl_errstr_global.MF_FOUND_TERM_WITH_MISSING_OTHERNET(term.name()));
                     }

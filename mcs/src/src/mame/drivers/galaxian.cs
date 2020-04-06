@@ -966,7 +966,7 @@ namespace mame
          *
          *************************************/
 
-        /* basic galaxian hardware */
+        // Basic galaxian hardware
         //                                                         creator,                 rom           YEAR,   NAME,       PARENT,  MACHINE,                           INPUT,                                 INIT,                                   MONITOR,COMPANY, FULLNAME,FLAGS
         public static readonly game_driver driver_galaxian = GAME( device_creator_galaxian, rom_galaxian, "1979", "galaxian", null,    galaxian.galaxian_state_galaxian,  m_galaxian.construct_ioport_galaxian,  galaxian.galaxian_state_init_galaxian,  ROT90,  "Namco", "Galaxian (Namco set 1)", MACHINE_SUPPORTS_SAVE );
 
@@ -978,7 +978,7 @@ namespace mame
          *
          *************************************/
 
-        /* Frogger based hardware: 2nd Z80, AY-8910A, 2 8255 PPI for I/O, custom background */
+        // Frogger based hardware: 2nd Z80, AY-8910A, 2 8255 PPI for I/O, custom background
         //                                                        creator,                rom          YEAR,   NAME,      PARENT,  MACHINE,                         INPUT,                               INIT,                                 MONITOR,COMPANY, FULLNAME,FLAGS
         public static readonly game_driver driver_frogger = GAME( device_creator_frogger, rom_frogger, "1981", "frogger", null,    galaxian.galaxian_state_frogger, m_galaxian.construct_ioport_frogger, galaxian.galaxian_state_init_frogger, ROT90,  "Konami", "Frogger", MACHINE_SUPPORTS_SAVE );
     }

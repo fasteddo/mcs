@@ -21,7 +21,7 @@ namespace mame
 
 
         // device callbacks
-        devcb_write_line [] m_q_out_cb = new devcb_write_line[8];      // output line callback array
+        devcb_write_line.array<i8, devcb_write_line> m_q_out_cb;      // output line callback array
         devcb_write8 m_parallel_out_cb;  // parallel output option
 
         // miscellaneous configuration
@@ -39,8 +39,7 @@ namespace mame
         protected addressable_latch_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock, bool clear_active)
             : base(mconfig, type, tag, owner, clock)
         {
-            for (int i = 0; i < 8; i++)
-                m_q_out_cb[i] = new devcb_write_line(this);
+            m_q_out_cb = new devcb_write_line.array<i8, devcb_write_line>(this, () => { return new devcb_write_line(this); });
             m_parallel_out_cb = new devcb_write8(this);
             m_clear_active = clear_active;
         }
@@ -172,8 +171,7 @@ namespace mame
         protected override void device_start()
         {
             // resolve callbacks
-            foreach (devcb_write_line cb in m_q_out_cb)
-                cb.resolve();
+            m_q_out_cb.resolve_all();
             m_parallel_out_cb.resolve();
 
             // initial input state

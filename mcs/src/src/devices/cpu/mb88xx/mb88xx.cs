@@ -190,8 +190,8 @@ namespace mame
         devcb_read8 m_read_k;
         devcb_write8 m_write_o;
         devcb_write8 m_write_p;
-        devcb_read8 [] m_read_r = new devcb_read8[4];
-        devcb_write8 [] m_write_r = new devcb_write8[4];
+        devcb_read8.array<i4, devcb_read8> m_read_r;
+        devcb_write8.array<i4, devcb_write8> m_write_r;
         devcb_read_line m_read_si;
         devcb_write_line m_write_so;
 
@@ -226,10 +226,8 @@ namespace mame
             m_read_k = new devcb_read8(this);
             m_write_o = new devcb_write8(this);
             m_write_p = new devcb_write8(this);
-            for (int i = 0; i < 4; i++)
-                m_read_r[i] = new devcb_read8(this);
-            for (int i = 0; i < 4; i++)
-                m_write_r[i] = new devcb_write8(this);
+            m_read_r = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
+            m_write_r = new devcb_write8.array<i4, devcb_write8>(this, () => { return new devcb_write8(this); });
             m_read_si = new devcb_read_line(this);
             m_write_so = new devcb_write_line(this);
         }
@@ -291,10 +289,8 @@ namespace mame
             m_read_k.resolve_safe(0);
             m_write_o.resolve_safe();
             m_write_p.resolve_safe();
-            foreach (var cb in m_read_r)
-                cb.resolve_safe(0);
-            foreach (var cb in m_write_r)
-                cb.resolve_safe();
+            m_read_r.resolve_all_safe(0);
+            m_write_r.resolve_all_safe();
             m_read_si.resolve_safe(0);
             m_write_so.resolve_safe();
 

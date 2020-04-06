@@ -141,10 +141,6 @@ namespace mame
             DISCRETE(config, m_discrete).disound.add_route(ALL_OUTPUTS, ":speaker", 1.0);
             m_discrete.target.set_intf(galaxian_state.galaxian_discrete);
         }
-
-
-        // sound stream update overrides
-        //virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
     }
 
 

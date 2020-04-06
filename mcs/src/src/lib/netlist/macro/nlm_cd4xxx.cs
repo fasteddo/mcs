@@ -12,9 +12,9 @@ namespace mame
         /* ----------------------------------------------------------------------------
          *  Netlist Macros
          * ---------------------------------------------------------------------------*/
-        //#define CD4001_NOR(name)                                                      \
-        //        NET_REGISTER_DEV(CD4001_NOR, name)
-        public static void CD4001_NOR(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4001_NOR", name); }
+        //#define CD4001_GATE(name)                                                      \
+        //        NET_REGISTER_DEV(CD4001_GATE, name)
+        public static void CD4001_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4001_GATE", name); }
 
         //#define CD4001_DIP(name)                                                      \
         //        NET_REGISTER_DEV(CD4001_DIP, name)
@@ -61,22 +61,22 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            CD4001_NOR(setup, "s1");
-            CD4001_NOR(setup, "s2");
-            CD4001_NOR(setup, "s3");
-            CD4001_NOR(setup, "s4");
+            CD4001_GATE(setup, "s1");
+            CD4001_GATE(setup, "s2");
+            CD4001_GATE(setup, "s3");
+            CD4001_GATE(setup, "s4");
 
             netlist.nl_setup_global.NET_C(setup, "s1.VCC", "s2.VCC", "s3.VCC", "s4.VCC");
-            netlist.nl_setup_global.NET_C(setup, "s1.VDD", "s2.VDD", "s3.VDD", "s4.VDD");
+            netlist.nl_setup_global.NET_C(setup, "s1.GND", "s2.GND", "s3.GND", "s4.GND");
 
             netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+      */
-                "s1.A",   /*    A1 |1     ++    14| VCC  */ "s1.VCC",
+                "s1.A",   /*    A1 |1     ++    14| VDD  */ "s1.VCC",
                 "s1.B",   /*    B1 |2           13| A6   */ "s4.B",
                 "s1.Q",   /*    A2 |3           12| Y6   */ "s4.A",
                 "s2.Q",   /*    Y2 |4    4001   11| A5   */ "s4.Q",
                 "s2.A",   /*    A3 |5           10| Y5   */ "s3.Q",
                 "s2.B",   /*    Y3 |6            9| A4   */ "s3.B",
-                "s1.VDD", /*   GND |7            8| Y4   */ "s3.A"
+                "s1.GND", /*   VSS |7            8| Y4   */ "s3.A"
                           /*       +--------------+      */
             );
 
@@ -298,7 +298,7 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.TRUTHTABLE_START("CD4001_NOR", 2, 1, "");
+            netlist.nl_setup_global.TRUTHTABLE_START("CD4001_GATE", 2, 1, "");
                 netlist.nl_setup_global.TT_HEAD("A , B | Q ");
                 netlist.nl_setup_global.TT_LINE("0,0|1|85");
                 netlist.nl_setup_global.TT_LINE("X,1|0|120");

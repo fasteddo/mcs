@@ -51,10 +51,16 @@ namespace mame.netlist
     //    public: template <class CLASS> NETLIB_NAME(cname)(CLASS &owner, const pstring &name) \
     //    : NETLIB_NAME(pclass)(owner, name)
 
+    // FIXME: Only used by diode
     //#define NETLIB_CONSTRUCTOR_DERIVED_EX(cname, pclass, ...)                      \
     //    private: detail::family_setter_t m_famsetter;                              \
     //    public: template <class CLASS> NETLIB_NAME(cname)(CLASS &owner, const pstring &name, __VA_ARGS__) \
     //    : NETLIB_NAME(pclass)(owner, name)
+
+    //#define NETLIB_CONSTRUCTOR_DERIVED_PASS(cname, pclass, ...)                      \
+    //    private: detail::family_setter_t m_famsetter;                              \
+    //    public: template <class CLASS> NETLIB_NAME(cname)(CLASS &owner, const pstring &name) \
+    //    : NETLIB_NAME(pclass)(owner, name, __VA_ARGS__)
 
     /// \brief Used to define the constructor of a netlist device.
     ///  Use this to define the constructor of a netlist device. Please refer to
@@ -670,7 +676,13 @@ namespace mame.netlist
         }
 
 
-        //void schedule_solve_after(const netlist_time &after);
+        public void schedule_solve_after(netlist_time after)
+        {
+            // Nets may belong to railnets which do not have a solver attached
+            if (this.has_net())
+                if (net().solver() != null)
+                    net().solver().update_after(after);
+        }
 
 
         public void set_ptrs(ListPointer<nl_fptype> gt, ListPointer<nl_fptype> go, ListPointer<nl_fptype> Idr)  //void set_ptrs(nl_fptype *gt, nl_fptype *go, nl_fptype *Idr) noexcept(false);
@@ -1210,6 +1222,7 @@ namespace mame.netlist
 
 
             set_logic_family(owner.logic_family());
+            //printf("%s %f %f\n", this->name().c_str(), logic_family()->R_low(), logic_family()->R_high());
             if (logic_family() == null)
                 set_logic_family(nl_base_global.family_TTL());
             owner.state().register_device(this.name(), this);
@@ -1911,6 +1924,25 @@ namespace mame.netlist
 
             // Initialize factory
             netlist.devices.net_lib_global.initialize_factory(m_setup.factory());
+
+            // Add default include file
+            //using a = plib::psource_str_t<plib::psource_t>;
+            string content =
+            "#define RES_R(res) (res)            \n" +
+            "#define RES_K(res) ((res) * 1e3)    \n" +
+            "#define RES_M(res) ((res) * 1e6)    \n" +
+            "#define CAP_U(cap) ((cap) * 1e-6)   \n" +
+            "#define CAP_N(cap) ((cap) * 1e-9)   \n" +
+            "#define CAP_P(cap) ((cap) * 1e-12)  \n" +
+            "#define IND_U(ind) ((ind) * 1e-6)   \n" +
+            "#define IND_N(ind) ((ind) * 1e-9)   \n" +
+            "#define IND_P(ind) ((ind) * 1e-12)  \n";
+
+            throw new emu_unimplemented();
+#if false
+            setup().add_include(plib::make_unique<a>("netlist/devices/net_lib.h", content));
+#endif
+
             nlm_base_global.netlist_base(m_setup);  //NETLIST_NAME(base)(*m_setup);
         }
 
@@ -2462,14 +2494,15 @@ namespace mame.netlist
     {
         logic_family_cd4xxx_t() : base()
         {
-            m_fixed_V = nlconst.magic(0.0);
             m_low_thresh_PCNT = nlconst.magic(1.5 / 5.0);
             m_high_thresh_PCNT = nlconst.magic(3.5 / 5.0);
             // m_low_V  - these depend on sinked/sourced current. Values should be suitable for typical applications.
             m_low_VO = nlconst.magic(0.05);
             m_high_VO = nlconst.magic(0.05); // 4.95
-            m_R_low = nlconst.magic(10.0);
-            m_R_high = nlconst.magic(10.0);
+            // https://www.classe.cornell.edu/~ib38/teaching/p360/lectures/wk09/l26/EE2301Exp3F10.pdf
+            // typical CMOS may sink 0.4mA while output stays <= 0.4V
+            m_R_low = nlconst.magic(500.0);
+            m_R_high = nlconst.magic(500.0);
         }
 
 

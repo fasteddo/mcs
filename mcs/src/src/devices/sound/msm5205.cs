@@ -18,9 +18,9 @@ namespace mame
     public class msm5205_device : device_t
                                   //device_sound_interface
     {
-        //DEFINE_DEVICE_TYPE(MSM5205, msm5205_device, "msm5205", "MSM5205")
+        //DEFINE_DEVICE_TYPE(MSM5205, msm5205_device, "msm5205", "OKI MSM5205 ADPCM")
         static device_t device_creator_msm5205_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new msm5205_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MSM5205 = DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "MSM5205");
+        public static readonly device_type MSM5205 = DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "OKI MSM5205 ADPCM");
 
 
         public class device_sound_interface_msm5205 : device_sound_interface
@@ -67,6 +67,7 @@ namespace mame
         u8 m_bitwidth;              // bit width selector -3B/4B
         s32 m_signal;               // current ADPCM signal
         s32 m_step;                 // current ADPCM step
+        u8 m_dac_bits;              // DAC output bits (10 for MSM5205, 12 for MSM6585)
         int [] m_diff_lookup = new int[49*16];
 
         devcb_write_line m_vck_cb;
@@ -74,12 +75,12 @@ namespace mame
 
 
         msm5205_device(machine_config mconfig, string tag, device_t owner, u32 clock)
-            : this(mconfig, MSM5205, tag, owner, clock)
+            : this(mconfig, MSM5205, tag, owner, clock, 10)
         {
         }
 
 
-        msm5205_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
+        msm5205_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock, u8 dac_bits)
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_msm5205(mconfig, this));  //device_sound_interface(mconfig, *this),
@@ -88,6 +89,7 @@ namespace mame
             m_s1 = false;
             m_s2 = false;
             m_bitwidth = 4;
+            m_dac_bits = dac_bits;
             m_vck_cb = new devcb_write_line(this);
             m_vck_legacy_cb = new devcb_write_line(this);
         }
@@ -208,6 +210,7 @@ namespace mame
 
         protected override void device_clock_changed()
         {
+            m_stream.set_sample_rate((int)clock());
             int prescaler = get_prescaler();
             if (prescaler != 0)
             {
@@ -232,7 +235,7 @@ namespace mame
                     m_vck = !m_vck;
                     m_vck_cb.op(m_vck ? 1 : 0);
                     if (!m_vck)
-                        m_capture_timer.adjust(attotime.from_nsec(15600));
+                        m_capture_timer.adjust(attotime.from_hz(clock() / 6)); // 15.6 usec at 384KHz
                     break;
 
                 case TIMER_ADPCM_CAPTURE:
@@ -294,7 +297,8 @@ namespace mame
             /* if this voice is active */
             if (m_signal != 0)
             {
-                short val = (short)(m_signal * 16);
+                int dac_mask = (m_dac_bits >= 12) ? 0 : (1 << (12 - m_dac_bits)) - 1;
+                short val = (short)((m_signal & ~dac_mask) * 16); // 10 bit DAC
                 while (samples != 0)
                 {
                     buffer[0] = val;  //*buffer++ = val;

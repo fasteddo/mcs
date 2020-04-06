@@ -354,14 +354,6 @@ namespace mame
         std.vector<string> m_command_arguments;   // command arguments
 
 
-        //-------------------------------------------------
-        //  core_options - constructor
-        //-------------------------------------------------
-
-        public core_options()
-        {
-        }
-
         //core_options(const core_options &) = delete;
         //core_options(core_options &&) = delete;
         //core_options& operator=(const core_options &) = delete;

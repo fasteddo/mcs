@@ -32,7 +32,7 @@ namespace mame
         required_device<mb88_cpu_device> m_cpu;
         byte m_portO;
         devcb_read8 m_k;
-        devcb_read8 [] m_in = new devcb_read8[4];
+        devcb_read8.array<i4, devcb_read8> m_in;
         devcb_write8 m_p;
         emu_timer m_irq_cleared_timer;
 
@@ -43,8 +43,7 @@ namespace mame
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_portO = 0;
             m_k = new devcb_read8(this);
-            for (int i = 0; i < 4; i++)
-                m_in[i] = new devcb_read8(this);
+            m_in = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
             m_p = new devcb_write8(this);
         }
 
@@ -136,8 +135,7 @@ namespace mame
         {
             /* resolve our read/write callbacks */
             m_k.resolve_safe(0);
-            foreach (devcb_read8 cb in m_in)
-                cb.resolve_safe(0);
+            m_in.resolve_all_safe(0);
             m_p.resolve_safe();
 
             m_irq_cleared_timer = machine().scheduler().timer_alloc(irq_clear);  //timer_expired_delegate(FUNC(namco_53xx_device::irq_clear), this));

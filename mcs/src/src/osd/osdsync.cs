@@ -335,7 +335,7 @@ error:
             // free all items in the free list
             while (queue.free != null)  //.load() != nullptr)
             {
-                osd_work_item item = queue.free;  //(osd_work_item *)queue.free;
+                var item = queue.free;  //auto *item = (osd_work_item *)queue->free;
                 queue.free = item.next;
                 item.event_ = null;  //delete item.event;
                 item = null;  //delete item;
@@ -344,7 +344,7 @@ error:
             // free all items in the active list
             while (queue.list != null)  //.load() != nullptr)
             {
-                osd_work_item item = queue.list;  //(osd_work_item *)queue->list;
+                var item = queue.list;  //auto *item = (osd_work_item *)queue->list;
                 queue.list = item.next;
                 item.event_ = null;  //delete item->event;
                 item = null;  //delete item;
@@ -597,7 +597,7 @@ error:
         //============================================================
         static void worker_thread_entry(object param)
         {
-            work_thread_info thread = (work_thread_info)param;
+            var thread = (work_thread_info)param;
             osd_work_queue queue = thread.queue;
 
             // loop until we exit

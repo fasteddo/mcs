@@ -39,11 +39,23 @@ namespace mame
         {
             int scanline = param;
 
-            if (scanline == 240) // vblank-out irq
-                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* Z80 - RST 10h - vblank */
+            if (scanline == 0x2c) // audio irq point 1
+                m_audiocpu.target.set_input_line(0, HOLD_LINE);
 
-            if (scanline == 0) // unknown irq event, presumably vblank-in or a periodic one (writes to the soundlatch and drives freeze dip-switch)
+            if (scanline == 0x6d) // periodic irq (writes to the soundlatch and drives freeze dip-switch), + audio irq point 2
+            {
                 m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xcf);   /* Z80 - RST 08h */
+                m_audiocpu.target.set_input_line(0, HOLD_LINE);
+            }
+
+            if (scanline == 0xaf) // audio irq point 3
+                m_audiocpu.target.set_input_line(0, HOLD_LINE);
+
+            if (scanline == 0xf0) // vblank-out irq, audio irq point 4
+            {
+                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* Z80 - RST 10h - vblank */
+                m_audiocpu.target.set_input_line(0, HOLD_LINE);
+            }
         }
 
 
@@ -240,21 +252,19 @@ namespace mame
 
             Z80(config, m_audiocpu, SOUND_CPU_CLOCK);  /* 3 MHz ??? */
             m_audiocpu.target.memory().set_addrmap(AS_PROGRAM, sound_map);
-            m_audiocpu.target.execute().set_periodic_int(irq0_line_hold, attotime.from_hz(4*60));
-
 
             /* video hardware */
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_1942);
 
             PALETTE(config, m_palette, _1942_palette, 64*4+4*32*8+16*16, 256);
 
-            screen_device screen = SCREEN(config, "screen", SCREEN_TYPE_RASTER);
-            screen.set_refresh_hz(60);
-            screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
-            screen.set_size(32*8, 32*8);
-            screen.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
-            screen.set_screen_update(screen_update);
-            screen.set_palette(m_palette);
+            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            m_screen.target.set_refresh_hz(60);
+            m_screen.target.set_vblank_time(ATTOSECONDS_IN_USEC(0));
+            m_screen.target.set_size(32*8, 32*8);
+            m_screen.target.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
+            m_screen.target.set_screen_update(screen_update);
+            m_screen.target.set_palette(m_palette);
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();
@@ -332,17 +342,25 @@ namespace mame
             ROM_LOAD( "sr-16.n1", 0x08000, 0x4000, CRC("024418f8") + SHA1("145b8d5d6c8654cd090955a98f6dd8c8dbafe7c1") ),
             ROM_LOAD( "sr-17.n2", 0x0c000, 0x4000, CRC("e2c7e489") + SHA1("d4b5d575c021f58f6966df189df94e08c5b3621c") ),
 
-            ROM_REGION( 0x0a00, "proms", 0 ),
+            ROM_REGION( 0x0300, "palproms", 0 ),
             ROM_LOAD( "sb-5.e8",  0x0000, 0x0100, CRC("93ab8153") + SHA1("a792f24e5c0c3c4a6b436102e7a98199f878ece1") ),    /* red component */
             ROM_LOAD( "sb-6.e9",  0x0100, 0x0100, CRC("8ab44f7d") + SHA1("f74680a6a987d74b3acb32e6396f20e127874149") ),    /* green component */
             ROM_LOAD( "sb-7.e10", 0x0200, 0x0100, CRC("f4ade9a4") + SHA1("62ad31d31d183cce213b03168daa035083b2f28e") ),    /* blue component */
-            ROM_LOAD( "sb-0.f1",  0x0300, 0x0100, CRC("6047d91b") + SHA1("1ce025f9524c1033e48c5294ee7d360f8bfebe8d") ),    /* char lookup table */
-            ROM_LOAD( "sb-4.d6",  0x0400, 0x0100, CRC("4858968d") + SHA1("20b5dbcaa1a4081b3139e7e2332d8fe3c9e55ed6") ),    /* tile lookup table */
-            ROM_LOAD( "sb-8.k3",  0x0500, 0x0100, CRC("f6fad943") + SHA1("b0a24ea7805272e8ebf72a99b08907bc00d5f82f") ),    /* sprite lookup table */
-            ROM_LOAD( "sb-2.d1",  0x0600, 0x0100, CRC("8bb8b3df") + SHA1("49de2819c4c92057fedcb20425282515d85829aa") ),    /* tile palette selector? (not used) */
-            ROM_LOAD( "sb-3.d2",  0x0700, 0x0100, CRC("3b0c99af") + SHA1("38f30ac1e48632634e409f328ee3051b987de7ad") ),    /* tile palette selector? (not used) */
-            ROM_LOAD( "sb-1.k6",  0x0800, 0x0100, CRC("712ac508") + SHA1("5349d722ab6733afdda65f6e0a98322f0d515e86") ),    /* interrupt timing (not used) */
-            ROM_LOAD( "sb-9.m11", 0x0900, 0x0100, CRC("4921635c") + SHA1("aee37d6cdc36acf0f11ff5f93e7b16e4b12f6c39") ),    /* video timing? (not used) */
+
+            ROM_REGION( 0x0100, "charprom", 0 ),
+            ROM_LOAD( "sb-0.f1",  0x0000, 0x0100, CRC("6047d91b") + SHA1("1ce025f9524c1033e48c5294ee7d360f8bfebe8d") ),    /* char lookup table */
+
+            ROM_REGION( 0x0100, "tileprom", 0 ),
+            ROM_LOAD( "sb-4.d6",  0x0000, 0x0100, CRC("4858968d") + SHA1("20b5dbcaa1a4081b3139e7e2332d8fe3c9e55ed6") ),    /* tile lookup table */
+
+            ROM_REGION( 0x0100, "sprprom", 0 ),
+            ROM_LOAD( "sb-8.k3",  0x0000, 0x0100, CRC("f6fad943") + SHA1("b0a24ea7805272e8ebf72a99b08907bc00d5f82f") ),    /* sprite lookup table */
+
+            ROM_REGION( 0x0400, "proms", 0 ),
+            ROM_LOAD( "sb-2.d1",  0x0000, 0x0100, CRC("8bb8b3df") + SHA1("49de2819c4c92057fedcb20425282515d85829aa") ),    /* tile palette selector? (not used) */
+            ROM_LOAD( "sb-3.d2",  0x0100, 0x0100, CRC("3b0c99af") + SHA1("38f30ac1e48632634e409f328ee3051b987de7ad") ),    /* tile palette selector? (not used) */
+            ROM_LOAD( "sb-1.k6",  0x0200, 0x0100, CRC("712ac508") + SHA1("5349d722ab6733afdda65f6e0a98322f0d515e86") ),    /* interrupt timing (not used) */
+            ROM_LOAD( "sb-9.m11", 0x0300, 0x0100, CRC("4921635c") + SHA1("aee37d6cdc36acf0f11ff5f93e7b16e4b12f6c39") ),    /* video timing? (not used) */
 
             ROM_END,
         };
@@ -372,6 +390,6 @@ namespace mame
 
 
         //                                                     creator,             rom       YEAR,   NAME,   PARENT,  MACHINE,                 INPUT,                        INIT,                          MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_1942 = GAME( device_creator_1942, rom_1942, "1984", "1942", null,    _1942._1942_state__1942, m_1942.construct_ioport_1942, _1942._1942_state_driver_init, ROT270, "Capcom", "1942 (Revision B)", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_1942 = GAME( device_creator_1942, rom_1942, "1984", "1942", null,    _1942._1942_state__1942, m_1942.construct_ioport_1942, _1942._1942_state_driver_init, ROT270, "Capcom", "1942 (Revision B)", MACHINE_SUPPORTS_SAVE);
     }
 }

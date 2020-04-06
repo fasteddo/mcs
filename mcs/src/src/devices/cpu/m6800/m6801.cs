@@ -213,8 +213,8 @@ namespace mame
         };
 
 
-        devcb_read8 [] m_in_port_func = new devcb_read8 [4];
-        devcb_write8 [] m_out_port_func = new devcb_write8 [4];
+        devcb_read8.array<i4, devcb_read8> m_in_port_func;
+        devcb_write8.array<i4, devcb_write8> m_out_port_func;
 
         devcb_write_line m_out_sc2_func;
         devcb_write_line m_out_sertx_func;
@@ -329,22 +329,11 @@ namespace mame
 
             init_m6803_insn();
 
-            m_in_port_func = new devcb_read8 [4] { new devcb_read8(this), new devcb_read8(this), new devcb_read8(this), new devcb_read8(this) };
-            m_out_port_func = new devcb_write8 [4] { new devcb_write8(this), new devcb_write8(this), new devcb_write8(this), new devcb_write8(this) };
+            m_in_port_func = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
+            m_out_port_func = new devcb_write8.array<i4, devcb_write8>(this, () => { return new devcb_write8(this); });
             m_out_sc2_func = new devcb_write_line(this);
             m_out_sertx_func = new devcb_write_line(this);
         }
-
-
-        public uint8_t [] port_ddr { get { return m_port_ddr; } }
-        public devcb_read8 [] in_port_func { get { return m_in_port_func; } }
-        public uint8_t [] port_data { get { return m_port_data; } }
-        public uint8_t p3csr { get { return m_p3csr; } set { m_p3csr = value; } }
-        public uint8_t tcsr { get { return m_tcsr; } set { m_tcsr = value; } }
-        public uint8_t pending_tcsr { get { return m_pending_tcsr; } set { m_pending_tcsr = value; } }
-        public uint16_t input_capture { get { return m_input_capture; } set { m_input_capture = value; } }
-        public int port3_latched { get { return m_port3_latched; } set { m_port3_latched = value; } }
-        public int sc1_state { get { return m_sc1_state; } set { m_sc1_state = value; } }
 
 
         public devcb_read8.binder in_p1_cb() { return m_in_port_func[0].bind(); }
@@ -791,12 +780,10 @@ namespace mame
         // device-level overrides
         protected override void device_resolve_objects()
         {
-            foreach (var cb in m_in_port_func)
-                cb.resolve_safe(0xff);
+            base.device_resolve_objects();
 
-            foreach (var cb in m_out_port_func)
-                cb.resolve_safe();
-
+            m_in_port_func.resolve_all_safe(0xff);
+            m_out_port_func.resolve_all_safe();
             m_out_sc2_func.resolve_safe();
             m_out_sertx_func.resolve_safe();
         }
@@ -907,25 +894,25 @@ namespace mame
             switch (irqline)
             {
             case M6801_SC1_LINE:
-                if (sc1_state == 0 && (CLEAR_LINE != state))
+                if (m_sc1_state == 0 && (CLEAR_LINE != state))
                 {
-                    if (port3_latched == 0 && (p3csr & M6801_P3CSR_LE) != 0)
+                    if (m_port3_latched == 0 && (m_p3csr & M6801_P3CSR_LE) != 0)
                     {
                         // latch input data to port 3
-                        port_data[2] = (uint8_t)((in_port_func[2].op() & (port_ddr[2] ^ 0xff)) | (port_data[2] & port_ddr[2]));
-                        port3_latched = 1;
-                        LOGPORT("Latched Port 3 Data: {0}\n", port_data[2]);
+                        m_port_data[2] = (uint8_t)((m_in_port_func[2].op() & (m_port_ddr[2] ^ 0xff)) | (m_port_data[2] & m_port_ddr[2]));
+                        m_port3_latched = 1;
+                        LOGPORT("Latched Port 3 Data: {0}\n", m_port_data[2]);
 
                         // set IS3 flag bit
-                        p3csr |= M6801_P3CSR_IS3_FLAG;
+                        m_p3csr |= M6801_P3CSR_IS3_FLAG;
                     }
                     else
                     {
-                        LOGPORT("Not latching Port 3 Data:{0}{1}", port3_latched != 0 ? " already latched" : "", (p3csr & M6801_P3CSR_LE) != 0 ? "" : " LE clear");
+                        LOGPORT("Not latching Port 3 Data:{0}{1}", m_port3_latched != 0 ? " already latched" : "", (m_p3csr & M6801_P3CSR_LE) != 0 ? "" : " LE clear");
                     }
                 }
 
-                sc1_state = ASSERT_LINE == state ? 1 : 0;
+                m_sc1_state = ASSERT_LINE == state ? 1 : 0;
                 if (CLEAR_LINE != state)
                     standard_irq_callback(M6801_SC1_LINE); // re-entrant - do it after setting m_sc1_state
 
@@ -937,13 +924,13 @@ namespace mame
                 if (state != irq_state[M6801_TIN_LINE])
                 {
                     //edge = (state == CLEAR_LINE ) ? 2 : 0;
-                    if (((tcsr & TCSR_IEDG) ^ (state == CLEAR_LINE ? TCSR_IEDG : 0)) == 0)
+                    if (((m_tcsr & TCSR_IEDG) ^ (state == CLEAR_LINE ? TCSR_IEDG : 0)) == 0)
                         return;
 
                     /* active edge in */
-                    tcsr |= TCSR_ICF;
-                    pending_tcsr |= TCSR_ICF;
-                    input_capture = CT;
+                    m_tcsr |= TCSR_ICF;
+                    m_pending_tcsr |= TCSR_ICF;
+                    m_input_capture = CT;
                     MODIFIED_tcsr();
                 }
                 break;

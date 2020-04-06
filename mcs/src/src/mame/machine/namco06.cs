@@ -30,9 +30,9 @@ namespace mame
 
         required_device<cpu_device> m_nmicpu;
 
-        devcb_read8 [] m_read = new devcb_read8[4];
-        devcb_write_line [] m_readreq = new devcb_write_line[4];
-        devcb_write8 [] m_write = new devcb_write8[4];
+        devcb_read8.array<i4, devcb_read8> m_read;
+        devcb_write_line.array<i4, devcb_write_line> m_readreq;
+        devcb_write8.array<i4, devcb_write8> m_write;
 
 
         namco_06xx_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -41,14 +41,9 @@ namespace mame
             m_control = 0;
             m_nmicpu = new required_device<cpu_device>(this, finder_base.DUMMY_TAG);
 
-            for (int i = 0; i < 4; i++)
-                m_read[i] = new devcb_read8(this);
-
-            for (int i = 0; i < 4; i++)
-                m_readreq[i] = new devcb_write_line(this);
-
-            for (int i = 0; i < 4; i++)
-                m_write[i] = new devcb_write8(this);
+            m_read = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
+            m_readreq = new devcb_write_line.array<i4, devcb_write_line>(this, () => { return new devcb_write_line(this); });
+            m_write = new devcb_write8.array<i4, devcb_write8>(this, () => { return new devcb_write8(this); });
         }
 
 
@@ -145,14 +140,9 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            foreach (devcb_read8 cb in m_read)
-                cb.resolve_safe(0xff);
-
-            foreach (devcb_write_line cb in m_readreq)
-                cb.resolve_safe();
-
-            foreach (devcb_write8 cb in m_write)
-                cb.resolve_safe();
+            m_read.resolve_all_safe(0xff);
+            m_readreq.resolve_all_safe();
+            m_write.resolve_all_safe();
 
             /* allocate a timer */
             m_nmi_timer = machine().scheduler().timer_alloc(nmi_generate); //timer_expired_delegate(FUNC(namco_06xx_device::nmi_generate),this));

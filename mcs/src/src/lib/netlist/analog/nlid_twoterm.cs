@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
 using nl_fptype = System.Double;
 
 
@@ -86,7 +87,18 @@ namespace mame.netlist
             }
 
 
-            //void solve_later(netlist_time delay = netlist_time::quantum());
+            public void solve_later(netlist_time delay = null)  //void solve_later(netlist_time delay = netlist_time::quantum()) noexcept;
+            {
+                // handle default param
+                if (delay == null)
+                    delay = netlist_time.quantum();
+
+                // we only need to call the non-rail terminal
+                if (m_P.has_net() && !m_P.net().isRailNet())
+                    m_P.schedule_solve_after(delay);
+                else if (m_N.has_net() && !m_N.net().isRailNet())
+                    m_N.schedule_solve_after(delay);
+            }
 
 
             protected void set_G_V_I(nl_fptype G, nl_fptype V, nl_fptype I)
@@ -200,8 +212,10 @@ namespace mame.netlist
             //NETLIB_UPDATE_PARAM(R)
             public override void update_param()
             {
+                // FIXME: We only need to update the net first if this is a time stepping net
                 solve_now();
                 set_R(std.max(m_R.op(), exec().gmin()));
+                solve_later();
             }
 
             /* protect set_R ... it's a recipe to desaster when used to bypass the parameter */
@@ -269,6 +283,7 @@ namespace mame.netlist
             //NETLIB_UPDATE_PARAM(POT)
             public override void update_param()
             {
+                // FIXME: We only need to update the net first if this is a time stepping net
                 m_R1.solve_now();
                 m_R2.solve_now();
 
@@ -280,6 +295,8 @@ namespace mame.netlist
 
                 m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
                 m_R2.set_R(std.max(m_R.op() * (nlconst.one() - v), exec().gmin()));
+                m_R1.solve_later();
+                m_R2.solve_later();
             }
         }
 

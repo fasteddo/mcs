@@ -178,6 +178,7 @@ namespace mame
             12854400, /* 12.8544_MHz_XTAL       Alphatronic P3 */
             12936000, /* 12.936_MHz_XTAL        CDC 721 */
             12979200, /* 12.9792_MHz_XTAL       Exidy 440 */
+            13000000, /* 13_MHz_XTAL            STM Pied Piper dot clock */
             13300000, /* 13.3_MHz_XTAL          BMC bowling */
             13330560, /* 13.33056_MHz_XTAL      Taito L */
             13333000, /* 13.333_MHz_XTAL        Ojanko High School */
@@ -341,6 +342,7 @@ namespace mame
             32256000, /* 32.256_MHz_XTAL        Hitachi MB-6890 */
             32317400, /* 32.3174_MHz_XTAL       DEC VT330, VT340 */
             32530470, /* 32.53047_MHz_XTAL      Seta 2 */
+            32768000, /* 32.768_MHz_XTAL        Roland D-50 audio clock */
             33000000, /* 33_MHz_XTAL            Sega Model 3 video board */
             33264000, /* 33.264_MHz_XTAL        Hazeltine 1500 terminal */
             33330000, /* 33.33_MHz_XTAL         Sharp X68000 XVI */

@@ -212,7 +212,7 @@ namespace mame
                         {
                             if ((curshift & ~mask) == 0)
                             {
-                                // fetch the code, ignoring 0 and shiters
+                                // fetch the code, ignoring 0 and shifters
                                 ListBase<char32_t> codes = field.keyboard_codes((int)curshift);
                                 foreach (char32_t code in codes)
                                 {

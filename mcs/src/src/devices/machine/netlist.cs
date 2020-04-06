@@ -975,9 +975,9 @@ namespace mame
             string sparam = new plib.pfmt("STREAM_INPUT.CHAN{0}").op(m_channel);
             nlstate.setup().register_param(sparam, m_param_name);
             sparam = new plib.pfmt("STREAM_INPUT.MULT{0}").op(m_channel);
-            nlstate.setup().register_param(sparam, m_netlist_mame_sub_interface.mult);
+            nlstate.setup().register_param_val(sparam, m_netlist_mame_sub_interface.mult);
             sparam = new plib.pfmt("STREAM_INPUT.OFFSET{0}").op(m_channel);
-            nlstate.setup().register_param(sparam, m_netlist_mame_sub_interface.offset);
+            nlstate.setup().register_param_val(sparam, m_netlist_mame_sub_interface.offset);
         }
     }
 
@@ -1040,9 +1040,9 @@ namespace mame
             //snd_out = dynamic_cast<NETLIB_NAME(sound_out) *>(setup.register_dev("nld_sound_out", sname));
             nlstate.setup().register_dev("NETDEV_SOUND_OUT", sname);
 
-            nlstate.setup().register_param(sname + ".CHAN", m_channel);
-            nlstate.setup().register_param(sname + ".MULT", m_netlist_mame_sub_interface.mult);
-            nlstate.setup().register_param(sname + ".OFFSET", m_netlist_mame_sub_interface.offset);
+            nlstate.setup().register_param_val(sname + ".CHAN", m_channel);
+            nlstate.setup().register_param_val(sname + ".MULT", m_netlist_mame_sub_interface.mult);
+            nlstate.setup().register_param_val(sname + ".OFFSET", m_netlist_mame_sub_interface.offset);
             nlstate.setup().register_link(sname + ".IN", m_out_name);  //pstring(m_out_name, pstring::UTF8));
         }
     }

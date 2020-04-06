@@ -311,36 +311,7 @@ namespace mame.util
     }
 
 
-#if false
-    class core_proxy_file : public core_file
-    {
-    public:
-        core_proxy_file(core_file &file) : m_file(file) { }
-        virtual ~core_proxy_file() override { }
-        virtual osd_file::error compress(int level) override { return m_file.compress(level); }
-
-        virtual int seek(std::int64_t offset, int whence) override { return m_file.seek(offset, whence); }
-        virtual std::uint64_t tell() const override { return m_file.tell(); }
-        virtual bool eof() const override { return m_file.eof(); }
-        virtual std::uint64_t size() const override { return m_file.size(); }
-
-        virtual std::uint32_t read(void *buffer, std::uint32_t length) override { return m_file.read(buffer, length); }
-        virtual int getc() override { return m_file.getc(); }
-        virtual int ungetc(int c) override { return m_file.ungetc(c); }
-        virtual char *gets(char *s, int n) override { return m_file.gets(s, n); }
-        virtual const void *buffer() override { return m_file.buffer(); }
-
-        virtual std::uint32_t write(const void *buffer, std::uint32_t length) override { return m_file.write(buffer, length); }
-        virtual int puts(const char *s) override { return m_file.puts(s); }
-        virtual int vprintf(util::format_argument_pack<std::ostream> const &args) override { return m_file.vprintf(args); }
-        virtual osd_file::error truncate(std::uint64_t offset) override { return m_file.truncate(offset); }
-
-        virtual osd_file::error flush() override { return m_file.flush(); }
-
-    private:
-        core_file &m_file;
-    };
-#endif
+    //class core_proxy_file : public core_file
 
 
     abstract class core_text_file : core_file
@@ -428,7 +399,7 @@ namespace mame.util
 
                 // fetch the next character
                 char16_t [] utf16_buffer = new char16_t[unicode_global.UTF16_CHAR_MAX];
-                char32_t uchar = char32_t.MaxValue;  //(char32_t)~0;
+                var uchar = char32_t.MaxValue;  //(char32_t)~0;
                 switch (m_text_type)
                 {
                 default:

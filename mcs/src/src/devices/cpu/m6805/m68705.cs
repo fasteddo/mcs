@@ -198,6 +198,7 @@ namespace mame
 
 
         const int PORT_COUNT = 4;  //static unsigned const PORT_COUNT = 4;
+        public class iPORT_COUNT : const_value_int { public int op { get { return PORT_COUNT; } } }
 
 
         // timer/counter
@@ -209,8 +210,8 @@ namespace mame
         u8 [] m_port_input;  //u8              m_port_input[PORT_COUNT];
         u8 [] m_port_latch;  //u8              m_port_latch[PORT_COUNT];
         u8 [] m_port_ddr;  //u8              m_port_ddr[PORT_COUNT];
-        devcb_read8 [] m_port_cb_r;  //devcb_read8     m_port_cb_r[PORT_COUNT];
-        devcb_write8 [] m_port_cb_w;  //devcb_write8    m_port_cb_w[PORT_COUNT];
+        devcb_read8.array<iPORT_COUNT, devcb_read8> m_port_cb_r;
+        devcb_write8.array<iPORT_COUNT, devcb_write8> m_port_cb_w;
 
         // miscellaneous register
         //enum mr_mask : u8
@@ -238,8 +239,8 @@ namespace mame
             m_port_input = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_latch = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_ddr = new u8 [PORT_COUNT] { 0x00, 0x00, 0x00, 0x00 };
-            m_port_cb_r = new devcb_read8 [PORT_COUNT] { new devcb_read8(this), new devcb_read8(this), new devcb_read8(this), new devcb_read8(this) };
-            m_port_cb_w = new devcb_write8 [PORT_COUNT] { new devcb_write8(this), new devcb_write8(this), new devcb_write8(this), new devcb_write8(this) };
+            m_port_cb_r = new devcb_read8.array<iPORT_COUNT, devcb_read8>(this, () => { return new devcb_read8(this); });
+            m_port_cb_w = new devcb_write8.array<iPORT_COUNT, devcb_write8>(this, () => { return new devcb_write8(this); });
             m_ram_size = ram_size;
         }
 
@@ -398,8 +399,8 @@ namespace mame
 
             // initialise digital I/O
             for (int i = 0; i < m_port_input.Length; i++) m_port_input[i] = 0xff;  //for (u8 &input : m_port_input) input = 0xff;
-            foreach (devcb_read8 cb in m_port_cb_r) cb.resolve();
-            foreach (devcb_write8 cb in m_port_cb_w) cb.resolve_safe();
+            m_port_cb_r.resolve_all();
+            m_port_cb_w.resolve_all_safe();
 
             add_port_latch_state(0);
             add_port_latch_state(1);

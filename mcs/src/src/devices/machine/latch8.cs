@@ -31,8 +31,8 @@ namespace mame
         uint32_t           m_xorvalue;  /* after mask */
         uint32_t           m_nosync;
 
-        devcb_write_line [] m_write_cb = new devcb_write_line [8];
-        devcb_read_line [] m_read_cb = new devcb_read_line [8];
+        devcb_write_line.array<i8, devcb_write_line> m_write_cb;
+        devcb_read_line.array<i8, devcb_read_line> m_read_cb;
 
 
         latch8_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)
@@ -44,10 +44,8 @@ namespace mame
             m_maskout = 0;
             m_xorvalue = 0;
             m_nosync = 0;
-            for (int i = 0; i < 8; i++)
-                m_write_cb[i] = new devcb_write_line(this);
-            for (int i = 0; i < 8; i++)
-                m_read_cb[i] = new devcb_read_line(this);
+            m_write_cb = new devcb_write_line.array<i8, devcb_write_line>(this, () => { return new devcb_write_line(this); });
+            m_read_cb = new devcb_read_line.array<i8, devcb_read_line>(this, () => { return new devcb_read_line(this); });
         }
 
 

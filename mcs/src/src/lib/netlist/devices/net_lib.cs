@@ -12,8 +12,7 @@ namespace mame.netlist
         public static class net_lib_global
         {
             //#define SOLVER(name, freq)                                                  \
-            //        NET_REGISTER_DEV(SOLVER, name)                                      \
-            //        PARAM(name.FREQ, freq)
+            //        NET_REGISTER_DEVEXT(SOLVER, name, freq)
             public static void SOLVER(nlparse_t setup, string name, int freq)
             {
                 nl_setup_global.NET_REGISTER_DEV(setup, "SOLVER", name);
@@ -46,6 +45,7 @@ namespace mame.netlist
                 //LIB_ENTRY(VCVS)
                 //LIB_ENTRY(VCCS)
                 //LIB_ENTRY(CCCS)
+                //LIB_ENTRY(CCVS)
                 //LIB_ENTRY(LVCCS)
                 //LIB_ENTRY(opamp)
                 //LIB_ENTRY(nc_pin)

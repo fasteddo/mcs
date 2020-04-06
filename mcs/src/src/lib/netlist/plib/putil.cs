@@ -22,6 +22,19 @@ namespace mame.plib
         //std::vector<std::string> psplit_r(const std::string &stri,
         //        const std::string &token,
         //        const std::size_t maxsplit);
+
+        public static string environment(string var, string default_val)
+        {
+            return (std.getenv(var.c_str()) == null) ? default_val
+                : std.getenv(var.c_str());
+        }
+
+
+        //template <class C, class T>
+        public static bool contains<C, T>(C con, T elem) where C : ICollection<T>  //bool contains(C &con, const T &elem)
+        {
+            return con.Contains(elem);  //return std::find(con.begin(), con.end(), elem) != con.end();
+        }
     }
 
 

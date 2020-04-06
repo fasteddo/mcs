@@ -100,11 +100,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.NET_MODEL(setup, "FAMILY _(TYPE=CUSTOM FV=5 IVL=0.16 IVH=0.4 OVL=0.1 OVH=1.0 ORL=1.0 ORH=130.0)");
+            netlist.nl_setup_global.NET_MODEL(setup, "FAMILY _(TYPE=CUSTOM IVL=0.16 IVH=0.4 OVL=0.1 OVH=1.0 ORL=1.0 ORH=130.0)");
             netlist.nl_setup_global.NET_MODEL(setup, "OPAMP _()");
             netlist.nl_setup_global.NET_MODEL(setup, "SCHMITT_TRIGGER _()");
 
-            netlist.nl_setup_global.NET_MODEL(setup, "74XXOC FAMILY(FV=5 IVL=0.16 IVH=0.4 OVL=0.1 OVH=0.05 ORL=10.0 ORH=1.0e8)");
+            netlist.nl_setup_global.NET_MODEL(setup, "74XXOC FAMILY(IVL=0.16 IVH=0.4 OVL=0.1 OVH=0.05 ORL=10.0 ORH=1.0e8)");
             netlist.nl_setup_global.NET_MODEL(setup, "74XX FAMILY(TYPE=TTL)");
             netlist.nl_setup_global.NET_MODEL(setup, "CD4XXX FAMILY(TYPE=CD4XXX)");
 

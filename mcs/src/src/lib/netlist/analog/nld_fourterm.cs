@@ -13,16 +13,17 @@ namespace mame
         // Macros
         // ----------------------------------------------------------------------------------------
 
-        //#define VCCS(name)                                                            \
-        //        NET_REGISTER_DEV(VCCS, name)
-        public static void VCCS(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "VCCS", name); }
+        //#define VCCS(name, G)                                                         \
+        //        NET_REGISTER_DEVEXT(VCCS, G)
 
-        //#define CCCS(name)                                                            \
-        //        NET_REGISTER_DEV(CCCS, name)
+        //#define CCCS(name, G)                                                         \
+        //        NET_REGISTER_DEVEXT(CCCS, name, G)
 
-        //#define VCVS(name)                                                            \
-        //        NET_REGISTER_DEV(VCVS, name)
-        public static void VCVS(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "VCVS", name); }
+        //#define VCVS(name, G)                                                         \
+        //        NET_REGISTER_DEVEXT(VCVS, name, G)
+
+        //#define CCVS(name, G)                                                         \
+        //        NET_REGISTER_DEVEXT(CCVS, name, G)
 
         //#define LVCCS(name)                                                           \
         //        NET_REGISTER_DEV(LVCCS, name)

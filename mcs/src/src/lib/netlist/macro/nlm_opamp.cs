@@ -328,11 +328,7 @@ namespace mame
 
 
 #if USE_LM3900_MODEL_0  // == 0
-        //static NETLIST_START(LM3900)
-        public static void netlist_LM3900(netlist.nlparse_t setup)
-        {
-            netlist.nl_setup_global.NETLIST_START();
-
+        static NETLIST_START(LM3900)
 
             /*
              *  Fast norton opamp model without bandwidth
@@ -340,28 +336,28 @@ namespace mame
 
             /* Terminal definitions for calling netlists */
 
-            netlist.nl_setup_global.ALIAS(setup, "PLUS", "R1.1"); // Positive input
-            netlist.nl_setup_global.ALIAS(setup, "MINUS", "R2.1"); // Negative input
-            netlist.nl_setup_global.ALIAS(setup, "OUT", "G1.OP"); // Opamp output ...
+            ALIAS(PLUS, R1.1) // Positive input
+            ALIAS(MINUS, R2.1) // Negative input
+            ALIAS(OUT, G1.OP) // Opamp output ...
             ALIAS(GND, G1.ON)  // V- terminal
-            ALIAS(VCC, DUMMY.I)  // V+ terminal
+            ALIAS(VCC, DUMMY.1)  // V+ terminal
 
-            netlist.devices.nld_system_global.DUMMY_INPUT(setup, "DUMMY");
+            RES(DUMMY, RES_K(1))
+            NET_C(DUMMY.2, GND)
 
             /* The opamp model */
 
-            netlist.nld_twoterm_global.RES(setup, "R1", 1);
-            netlist.nld_twoterm_global.RES(setup, "R2", 1);
-            netlist.nl_setup_global.NET_C(setup, "R1.1", "G1.IP");
-            netlist.nl_setup_global.NET_C(setup, "R2.1", "G1.IN");
-            netlist.nl_setup_global.NET_C(setup, "R1.2", "R2.2", "G1.ON");
-            nld_fourterm_global.VCVS(setup, "G1");
-            netlist.nl_setup_global.PARAM(setup, "G1.G", 10000000);
+            RES(R1, 1)
+            RES(R2, 1)
+            NET_C(R1.1, G1.IP)
+            NET_C(R2.1, G1.IN)
+            NET_C(R1.2, R2.2, G1.ON)
+            VCVS(G1)
+            PARAM(G1.G, 10000000)
             //PARAM(G1.RI, 1)
-            netlist.nl_setup_global.PARAM(setup, "G1.RO", rescap_global.RES_K(8));
+            PARAM(G1.RO, RES_K(8))
 
-            netlist.nl_setup_global.NETLIST_END();
-        }
+        NETLIST_END()
 #endif
 
 #if USE_LM3900_MODEL_1  // == 1

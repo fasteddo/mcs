@@ -282,7 +282,7 @@ namespace mame
         uint32_t m_p9;              /* poly9 index */
         uint32_t m_p17;             /* poly17 index */
 
-        devcb_read8 [] m_pot_r_cb = new devcb_read8[8];
+        devcb_read8.array<i8, devcb_read8> m_pot_r_cb;
         devcb_read8 m_allpot_r_cb;
         devcb_read8 m_serin_r_cb;
         devcb_write8 m_serout_w_cb;
@@ -337,8 +337,7 @@ namespace mame
 
             m_icountRef.i = 0;  //m_icount = 0;
             m_stream = null;
-            for (int i = 0; i < m_pot_r_cb.Length; i++)  //m_pot_r_cb{ {*this}, {*this}, {*this}, {*this}, {*this}, {*this}, {*this}, {*this} },
-                m_pot_r_cb[i] = new devcb_read8(this);
+            m_pot_r_cb = new devcb_read8.array<i8, devcb_read8>(this, () => { return new devcb_read8(this); });
             m_allpot_r_cb = new devcb_read8(this);
             m_serin_r_cb = new devcb_read8(this);
             m_serout_w_cb = new devcb_write8(this);
@@ -587,8 +586,7 @@ namespace mame
             std.fill(m_clock_cnt, 0);  //std::fill(std::begin(m_clock_cnt), std::end(m_clock_cnt), 0);
             std.fill<uint8_t>(m_POTx, 0);
             
-            foreach (devcb_read8 cb in m_pot_r_cb)
-                cb.resolve();
+            m_pot_r_cb.resolve_all();
             m_allpot_r_cb.resolve();
             m_serin_r_cb.resolve();
             m_serout_w_cb.resolve_safe();

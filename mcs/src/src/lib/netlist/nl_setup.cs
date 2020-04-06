@@ -50,16 +50,16 @@ namespace mame.netlist
         public static void NET_C(nlparse_t setup, params string [] term1) { setup.register_link_arr(string.Join(", ", term1)); }
 
         //#define PARAM(name, val)                                                        \
-        //        setup.register_param(# name, val);
-        public static void PARAM(nlparse_t setup, string name, double val) { setup.register_param(name, val); }
+        //        setup.register_param(# name, # val);
+        public static void PARAM(nlparse_t setup, string name, int val) { PARAM(setup, name, val.ToString()); }
+        public static void PARAM(nlparse_t setup, string name, double val) { PARAM(setup, name, val.ToString()); }
+        public static void PARAM(nlparse_t setup, string name, string val) { setup.register_param(name, val); }
 
         //#define HINT(name, val)                                                        \
-        //        setup.register_param(# name ".HINT_" # val, 1);
+        //        setup.register_param(# name ".HINT_" # val, "1");
 
         //#define NETDEV_PARAMI(name, param, val)                                         \
         //        setup.register_param(# name "." # param, val);
-        public static void NETDEV_PARAMI(nlparse_t setup, string name, string param, int val) { setup.register_param(name + "." + param, val); }
-        public static void NETDEV_PARAMI(nlparse_t setup, string name, string param, double val) { setup.register_param(name + "." + param, val); }
         public static void NETDEV_PARAMI(nlparse_t setup, string name, string param, string val) { setup.register_param(name + "." + param, val); }
 
         //#define NETLIST_NAME(name) netlist ## _ ## name
@@ -104,7 +104,7 @@ namespace mame.netlist
         }
 
         //#define OPTIMIZE_FRONTIER(attach, r_in, r_out)                                  \
-        //        setup.register_frontier(# attach, r_in, r_out);
+        //        setup.register_frontier(# attach, PSTRINGIFY_VA(r_in), PSTRINGIFY_VA(r_out));
 
 
         // -----------------------------------------------------------------------------
@@ -358,7 +358,7 @@ namespace mame.netlist
         }
 
 
-        string model_string(model_map_t map)
+        static string model_string(model_map_t map)
         {
             // operator [] has no const implementation
             string ret = map["COREMODEL"] + "(";
@@ -495,11 +495,9 @@ namespace mame.netlist
                         string paramfq = name + "." + tp;
 
                         log().debug.op("Defparam: {0}\n", paramfq);
-                        // remove quotes
-                        if (plib.pstrutil_global.startsWith(params_and_connections[ptokIdx], "\"") && plib.pstrutil_global.endsWith(params_and_connections[ptokIdx], "\""))  //if (plib::startsWith(*ptok, "\"") && plib::endsWith(*ptok, "\""))
-                            register_param(paramfq, params_and_connections[ptokIdx].substr(1, params_and_connections[ptokIdx].length() - 2));  //register_param(paramfq, ptok->substr(1, ptok->length() - 2));
-                        else
-                            register_param(paramfq, params_and_connections[ptokIdx]);  //register_param(paramfq, *ptok);
+
+                        register_param(paramfq, params_and_connections[ptokIdx]);  //register_param(paramfq, *ptok);
+
                         ++ptokIdx;  //++ptok;
                     }
                 }
@@ -555,17 +553,22 @@ namespace mame.netlist
         public void register_param(string param, string value)
         {
             string fqn = build_fqn(param);
+            string val = value;
+
+            // strip " from stringified strings
+            if (plib.pstrutil_global.startsWith(value, "\"") && plib.pstrutil_global.endsWith(value, "\""))
+                val = value.substr(1, value.length() - 2);
 
             var idx = m_param_values.find(fqn);
             if (idx == null)  //m_param_values.end())
             {
-                if (!m_param_values.insert(fqn, value))
+                if (!m_param_values.insert(fqn, val))
                     log().fatal.op(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param));
             }
             else
             {
-                log().warning.op(nl_errstr_global.MW_OVERWRITING_PARAM_1_OLD_2_NEW_3(fqn, idx, value));
-                m_param_values[fqn] = value;
+                log().warning.op(nl_errstr_global.MW_OVERWRITING_PARAM_1_OLD_2_NEW_3(fqn, idx, val));
+                m_param_values[fqn] = val;
             }
         }
 
@@ -584,7 +587,7 @@ namespace mame.netlist
 
         //template <typename T>
         //typename std::enable_if<std::is_floating_point<T>::value || std::is_integral<T>::value>::type
-        public void register_param(string param, nl_fptype value)  //register_param(const pstring &param, T value)
+        public void register_param_val(string param, nl_fptype value)  //register_param(const pstring &param, T value)
         {
             register_param_x(param, value);  //register_param_x(param, static_cast<nl_fptype>(value));
         }
@@ -604,7 +607,7 @@ namespace mame.netlist
         }
 
 
-        //void register_frontier(const pstring &attach, const nl_fptype r_IN, const nl_fptype r_OUT);
+        //void register_frontier(const pstring &attach, const pstring &r_IN, const pstring &r_OUT);
 
 
         // register a source
@@ -701,10 +704,6 @@ namespace mame.netlist
 
 
         //void add_include(plib::unique_ptr<plib::psource_t> &&inc)
-        //{
-        //    m_includes.add_source(std::move(inc));
-        //}
-
         //void add_define(const pstring &def, const pstring &val)
         //void add_define(const pstring &defstr);
 
@@ -901,7 +900,6 @@ namespace mame.netlist
 
             var ret = new logic_family_std_proxy_t();  //plib::make_unique_base<logic_family_desc_t, logic_family_std_proxy_t>();
 
-            ret.m_fixed_V = m_models.value(model, "FV");
             ret.m_low_thresh_PCNT = m_models.value(model, "IVL");
             ret.m_high_thresh_PCNT = m_models.value(model, "IVH");
             ret.m_low_VO = m_models.value(model, "OVL");
@@ -917,22 +915,16 @@ namespace mame.netlist
         }
 
 
-        void register_dynamic_log_devices()
+        void register_dynamic_log_devices(std.vector<string> loglist)
         {
-            string env = ""; //plib::util::environment("NL_LOGS", "");
-
-            if (env != "")
+            log().debug.op("Creating dynamic logs ...");
+            foreach (var ll in  loglist)
             {
-                log().debug.op("Creating dynamic logs ...");
-                var loglist = env.Split(':');  //std::vector<pstring> loglist(plib::psplit(env, ":"));
-                foreach (string ll in loglist)
-                {
-                    string name = "log_" + ll;
-                    var nc = factory().factory_by_name("LOG").Create(m_nlstate.pool(), m_nlstate, name);
-                    register_link(name + ".I", ll);
-                    log().debug.op("    dynamic link {0}: <{1}>\n", ll, name);
-                    m_nlstate.register_device(nc.name(), nc);
-                }
+                string name = "log_" + ll;
+                var nc = factory().factory_by_name("LOG").Create(m_nlstate.pool(), m_nlstate, name);
+                register_link(name + ".I", ll);
+                log().debug.op("    dynamic link {0}: <{1}>\n", ll, name);
+                m_nlstate.register_device(nc.name(), nc);
             }
         }
 
@@ -946,7 +938,7 @@ namespace mame.netlist
             // after all other terminals were connected.
 
             UInt32 tries = m_netlist_params.max_link_loops.op();
-            while (!m_links.empty() && tries >  0)
+            while (!m_links.empty() && tries > 0)
             {
                 for (int liIdx = 0; liIdx < m_links.Count;  )  //for (auto li = m_links.begin(); li != m_links.end(); )
                 {
@@ -1192,7 +1184,13 @@ namespace mame.netlist
         // ----------------------------------------------------------------------------------------
         public void prepare_to_run()
         {
-            register_dynamic_log_devices();
+            string envlog = plib.putil_global.environment("NL_LOGS", "");
+
+            if (envlog != "")
+            {
+                std.vector<string> loglist = new std.vector<string>(plib.putil_global.psplit(envlog, ":"));
+                register_dynamic_log_devices(loglist);
+            }
 
             // make sure the solver and parameters are started first!
 

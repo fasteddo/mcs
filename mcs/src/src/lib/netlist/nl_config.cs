@@ -20,7 +20,7 @@ namespace mame.netlist
         ///
         /// \brief Version - Minor.
         ///
-        public const int NL_VERSION_MINOR           = 9;
+        public const int NL_VERSION_MINOR           = 11;
         /// \brief Version - Patch level.
         ///
         const int NL_VERSION_PATCHLEVEL      = 0;

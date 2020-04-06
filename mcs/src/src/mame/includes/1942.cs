@@ -14,6 +14,8 @@ namespace mame
 {
     partial class _1942_state : driver_device
     {
+        required_device<screen_device> m_screen;
+
         /* memory pointers */
         required_shared_ptr_uint8_t m_spriteram;
         required_shared_ptr_uint8_t m_fg_videoram;
@@ -30,11 +32,13 @@ namespace mame
         tilemap_t m_bg_tilemap;
         int m_palette_bank;
         uint8_t [] m_scroll = new uint8_t[2];
+        uint8_t [,] m_sprite_bufs = new uint8_t[2, 512];
 
 
         public _1942_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
+            m_screen = new required_device<screen_device>(this, "screen");
             m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
             m_fg_videoram = new required_shared_ptr_uint8_t(this, "fg_videoram");
             m_bg_videoram = new required_shared_ptr_uint8_t(this, "bg_videoram");

@@ -581,7 +581,7 @@ namespace mame
 
             m_machine = machine;
 
-            osd_options options = (osd_options)machine.options();
+            var options = (osd_options)machine.options();
 
             // extract the verbose printing option
             if (options.verbose())
@@ -761,7 +761,7 @@ namespace mame
             else if (command == osd_options.OSDCOMMAND_LIST_MIDI_DEVICES)
             {
                 osd_module om = select_module_options<osd_module>(options(), midi_module.OSD_MIDI_PROVIDER);
-                midi_module pm = select_module_options<midi_module>(options(), midi_module.OSD_MIDI_PROVIDER);
+                var pm = select_module_options<midi_module>(options(), midi_module.OSD_MIDI_PROVIDER);
 
                 if (om.probe())
                 {

@@ -822,7 +822,9 @@ namespace mame
         protected void INCLUDE(string name) { netlist.nl_setup_global.INCLUDE(m_globals.helper_setup, name); }
         protected void LOCAL_SOURCE(string name, netlist.source_proc_t.setup_func_delegate netlist_name) { netlist.nl_setup_global.LOCAL_SOURCE(m_globals.helper_setup, name, netlist_name); }
         protected void NET_C(params string [] term1) { netlist.nl_setup_global.NET_C(m_globals.helper_setup, term1); }
+        protected void PARAM(string name, int val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
         protected void PARAM(string name, double val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
+        protected void PARAM(string name, string val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
         protected void SUBMODEL(string model, string name) { netlist.nl_setup_global.SUBMODEL(m_globals.helper_setup, model, name); }
         protected void NETLIST_START(netlist.nlparse_t setup) { m_globals.helper_setup = setup;  netlist.nl_setup_global.NETLIST_START(); }
         protected void NETLIST_END() { m_globals.helper_setup = null;  netlist.nl_setup_global.NETLIST_END(); }
@@ -1123,6 +1125,7 @@ namespace mame
 
 
         // c++ cstdlib
+        public static string getenv(string env_var) { return System.Environment.GetEnvironmentVariable(env_var); }
         public static UInt64 strtoul(string str, string endptr, int base_) { return Convert.ToUInt64(str, 16); }
 
 
@@ -1141,12 +1144,17 @@ namespace mame
 
 
         // c++ array
-        public class array<T>
+        public class array<T> : IEnumerable<T>
         {
             T [] m_data;
 
 
             public array(int N) { m_data = new T[N]; }
+
+
+            // IEnumerable
+            IEnumerator IEnumerable.GetEnumerator() { return m_data.GetEnumerator(); }
+            IEnumerator<T> IEnumerable<T>.GetEnumerator() { return ((IEnumerable<T>)m_data).GetEnumerator(); }
 
 
             public static bool operator ==(array<T> lhs, array<T> rhs)
@@ -1175,6 +1183,18 @@ namespace mame
             public static bool operator !=(array<T> lhs, array<T> rhs)
             {
                 return !(lhs == rhs);
+            }
+
+
+            public override bool Equals(object obj)
+            {
+                return this == (array<T>)obj;
+            }
+
+
+            public override int GetHashCode()
+            {
+                return m_data.GetHashCode();
             }
 
             public T this[int index] { get { return m_data[index]; } set { m_data[index] = value; } }
@@ -1988,4 +2008,15 @@ namespace mame
         //public static implicit operator int(intref x) { return x.get(); }
         //public static implicit operator intref(int x) { return new intref(x); }
     }
+
+
+    public interface const_value_int
+    {
+        int op { get; }
+    }
+
+
+    public class i2 : const_value_int { public int op { get { return 2; } } }
+    public class i4 : const_value_int { public int op { get { return 4; } } }
+    public class i8 : const_value_int { public int op { get { return 8; } } }
 }

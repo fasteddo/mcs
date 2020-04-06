@@ -90,14 +90,14 @@ namespace mame
         devcb_write_line   m_out_hrq_cb;
         devcb_write_line   m_out_tc_cb;
 
-        /* accessors to main memory */
+        // accessors to main memory
         devcb_read8        m_in_memr_cb;
         devcb_write8       m_out_memw_cb;
 
-        /* channel accessors */
-        devcb_read8        [] m_in_ior_cb = new devcb_read8 [4];
-        devcb_write8       [] m_out_iow_cb = new devcb_write8 [4];
-        devcb_write_line   [] m_out_dack_cb = new devcb_write_line [4];
+        // channel accessors
+        devcb_read8.array<i4, devcb_read8> m_in_ior_cb;
+        devcb_write8.array<i4, devcb_write8> m_out_iow_cb;
+        devcb_write_line.array<i4, devcb_write_line> m_out_dack_cb;
 
         struct channel
         {
@@ -136,12 +136,9 @@ namespace mame
             m_out_tc_cb = new devcb_write_line(this);
             m_in_memr_cb = new devcb_read8(this);
             m_out_memw_cb = new devcb_write8(this);
-            for (int i = 0; i < 4; i++)
-                m_in_ior_cb[i] = new devcb_read8(this);
-            for (int i = 0; i < 4; i++)
-                m_out_iow_cb[i] = new devcb_write8(this);
-            for (int i = 0; i < 4; i++)
-                m_out_dack_cb[i] = new devcb_write_line(this);
+            m_in_ior_cb = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
+            m_out_iow_cb = new devcb_write8.array<i4, devcb_write8>(this, () => { return new devcb_write8(this); });
+            m_out_dack_cb = new devcb_write_line.array<i4, devcb_write_line>(this, () => { return new devcb_write_line(this); });
         }
 
 
@@ -279,12 +276,9 @@ namespace mame
             m_out_tc_cb.resolve_safe();
             m_in_memr_cb.resolve_safe(0);
             m_out_memw_cb.resolve_safe();
-            foreach (var cb in m_in_ior_cb)
-                cb.resolve_safe(0);
-            foreach (var cb in m_out_iow_cb)
-                cb.resolve_safe();
-            foreach (var cb in m_out_dack_cb)
-                cb.resolve_safe();
+            m_in_ior_cb.resolve_all_safe(0);
+            m_out_iow_cb.resolve_all_safe();
+            m_out_dack_cb.resolve_all_safe();
 
             // state saving
             save_item(m_msb, "m_msb");

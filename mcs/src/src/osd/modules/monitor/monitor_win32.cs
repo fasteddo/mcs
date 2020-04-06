@@ -20,33 +20,8 @@ namespace mame
         }
 
 
-#if false
-        std::shared_ptr<osd_monitor_info> monitor_from_rect(const osd_rect& rect) override
-        {
-            if (!m_initialized)
-                return nullptr;
-
-            RECT p;
-            p.top = rect.top();
-            p.left = rect.left();
-            p.bottom = rect.bottom();
-            p.right = rect.right();
-
-            auto nearest = monitor_from_handle(reinterpret_cast<std::uintptr_t>(MonitorFromRect(&p, MONITOR_DEFAULTTONEAREST)));
-            assert(nearest != nullptr);
-            return nearest;
-        }
-
-        std::shared_ptr<osd_monitor_info> monitor_from_window(const osd_window& window) override
-        {
-            if (!m_initialized)
-                return nullptr;
-
-            auto nearest = monitor_from_handle(reinterpret_cast<std::uintptr_t>(MonitorFromWindow(static_cast<const win_window_info &>(window).platform_window(), MONITOR_DEFAULTTONEAREST)));
-            assert(nearest != nullptr);
-            return nearest;
-        }
-#endif
+        //std::shared_ptr<osd_monitor_info> monitor_from_rect(const osd_rect& rect) override
+        //std::shared_ptr<osd_monitor_info> monitor_from_window(const osd_window& window) override
 
 
         protected override int init_internal(osd_options options)
@@ -69,34 +44,6 @@ namespace mame
         }
 
 
-#if false
-        static BOOL CALLBACK monitor_enum_callback(HMONITOR handle, HDC dc, LPRECT rect, LPARAM data)
-        {
-            win32_monitor_module* self = reinterpret_cast<win32_monitor_module*>(data);
-            MONITORINFOEX info;
-            BOOL result;
-
-            // get the monitor info
-            info.cbSize = sizeof(info);
-            result = GetMonitorInfo(handle, static_cast<LPMONITORINFO>(&info));
-            assert(result);
-            (void)result; // to silence gcc 4.6
-
-                          // guess the aspect ratio assuming square pixels
-            float aspect = static_cast<float>(info.rcMonitor.right - info.rcMonitor.left) / static_cast<float>(info.rcMonitor.bottom - info.rcMonitor.top);
-
-            // allocate a new monitor info
-            auto temp = osd::text::from_tstring(info.szDevice);
-
-            // copy in the data
-            auto monitor = std::make_shared<win32_monitor_info>(*self, handle, temp.c_str(), aspect);
-
-            // hook us into the list
-            self->add_monitor(monitor);
-
-            // enumerate all the available monitors so to list their names in verbose mode
-            return TRUE;
-        }
-#endif
+        //static BOOL CALLBACK monitor_enum_callback(HMONITOR handle, HDC dc, LPRECT rect, LPARAM data)
     }
 }
