@@ -7,7 +7,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 using attoseconds_t = System.Int64;
 using device_type = mame.emu.detail.device_type_impl_base;
@@ -17,6 +16,7 @@ using int64_t = System.Int64;
 using ioport_value = System.UInt32;
 using ListBytes = mame.ListBase<System.Byte>;
 using ListBytesPointer = mame.ListPointer<System.Byte>;
+using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
 using offs_t = System.UInt32;
 using s32 = System.Int32;
 using u8 = System.Byte;
@@ -93,12 +93,14 @@ namespace mame
         protected static int core_strwildcmp(string sp1, string sp2) { return corestr_global.core_strwildcmp(sp1, sp2); }
         protected static bool core_iswildstr(string sp) { return corestr_global.core_iswildstr(sp); }
         protected static string strtrimspace(string str) { return corestr_global.strtrimspace(str); }
+        public static int strreplace(ref string str, string search, string replace) { return corestr_global.strreplace(ref str, search, replace); }
 
 
         // coretmpl
         protected static u32 make_bitmask32(u32 N) { return coretmpl_global.make_bitmask32(N); }
         protected static int BIT(int x, int n) { return coretmpl_global.BIT(x, n); }
         protected static UInt32 BIT(UInt32 x, int n)  { return coretmpl_global.BIT(x, n); }
+        protected static int bitswap(int val, int B1, int B0) { return coretmpl_global.bitswap(val, B1, B0); }
         protected static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B7, B6, B5, B4, B3, B2, B1, B0); }
         protected static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B15, B14, B13, B12, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
         public static sbyte iabs(sbyte v) { return coretmpl_global.iabs(v); }
@@ -719,7 +721,7 @@ namespace mame
         protected const int EMU_ERR_FAILED_VALIDITY = main_global.EMU_ERR_FAILED_VALIDITY;
         protected const int EMU_ERR_MISSING_FILES = main_global.EMU_ERR_MISSING_FILES;
         protected const int EMU_ERR_DEVICE = main_global.EMU_ERR_DEVICE;
-        protected const int EMU_ERR_NO_SUCH_GAME = main_global.EMU_ERR_NO_SUCH_GAME;
+        protected const int EMU_ERR_NO_SUCH_SYSTEM = main_global.EMU_ERR_NO_SUCH_SYSTEM;
         protected const int EMU_ERR_INVALID_CONFIG = main_global.EMU_ERR_INVALID_CONFIG;
 
 
@@ -839,6 +841,7 @@ namespace mame
 
 
         // osdcomm
+        public static uint32_t swapendian_int32(uint32_t val) { return osdcomm_global.swapendian_int32(val); }
         public static int16_t little_endianize_int16(int16_t x) { return osdcomm_global.little_endianize_int16(x); }
         public static uint16_t little_endianize_int16(uint16_t x) { return osdcomm_global.little_endianize_int16(x); }
         public static int32_t little_endianize_int32(int32_t x) { return osdcomm_global.little_endianize_int32(x); }
@@ -852,10 +855,10 @@ namespace mame
         protected const UInt32 OPEN_FLAG_CREATE = osdcore_global.OPEN_FLAG_CREATE;
         protected const UInt32 OPEN_FLAG_CREATE_PATHS = osdcore_global.OPEN_FLAG_CREATE_PATHS;
         protected const UInt32 OPEN_FLAG_NO_PRELOAD = osdcore_global.OPEN_FLAG_NO_PRELOAD;
-        protected static void osd_printf_error(string format, params object [] args) { osdcore_interface.osd_printf_error(format, args); }
-        protected static void osd_printf_warning(string format, params object [] args) { osdcore_interface.osd_printf_warning(format, args); }
+        public static void osd_printf_error(string format, params object [] args) { osdcore_interface.osd_printf_error(format, args); }
+        public static void osd_printf_warning(string format, params object [] args) { osdcore_interface.osd_printf_warning(format, args); }
         public static void osd_printf_info(string format, params object [] args) { osdcore_interface.osd_printf_info(format, args); }
-        protected static void osd_printf_verbose(string format, params object [] args) { osdcore_interface.osd_printf_verbose(format, args); }
+        public static void osd_printf_verbose(string format, params object [] args) { osdcore_interface.osd_printf_verbose(format, args); }
         public static void osd_printf_debug(string format, params object [] args) { osdcore_interface.osd_printf_debug(format, args); }
 
 
@@ -956,6 +959,10 @@ namespace mame
         protected static speaker_device SPEAKER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<speaker_device>(mconfig, tag, speaker_device.SPEAKER, 0); }
 
 
+        // starfield
+        protected static starfield_05xx_device STARFIELD_05XX(machine_config mconfig, device_finder<starfield_05xx_device> finder, uint32_t clock) { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, 0); }
+
+
         // strformat
         public static string string_format(string format, params object [] args) { return strformat_global.string_format(format, args); }
 
@@ -979,6 +986,9 @@ namespace mame
 
 
         // ui
+        protected const int SLIDER_ID_MIXERVOL = (int)slider_id.SLIDER_ID_MIXERVOL;
+        protected const int SLIDER_ID_ADJUSTER = (int)slider_id.SLIDER_ID_ADJUSTER;
+        protected const int SLIDER_ID_ADJUSTER_LAST = (int)slider_id.SLIDER_ID_ADJUSTER_LAST;
         protected const float UI_MAX_FONT_HEIGHT = ui_global.UI_MAX_FONT_HEIGHT;
         public const float UI_LINE_WIDTH = ui_global.UI_LINE_WIDTH;
         protected static readonly rgb_t UI_GREEN_COLOR = ui_global.UI_GREEN_COLOR;
@@ -1061,16 +1071,20 @@ namespace mame
     {
         // c++ algorithm
         public static void fill<T>(ListBase<T> destination, T value) { std.memset(destination, value); }
+        public static void fill<T>(T [] destination, T value) { std.memset(destination, value); }
         public static int max(int a, int b) { return Math.Max(a, b); }
         public static UInt32 max(UInt32 a, UInt32 b) { return Math.Max(a, b); }
         public static Int64 max(Int64 a, Int64 b) { return Math.Max(a, b); }
         public static float max(float a, float b) { return Math.Max(a, b); }
         public static double max(double a, double b) { return Math.Max(a, b); }
+        public static attotime max(attotime a, attotime b) { return attotime.Max(a, b); }
+        public static netlist_time max(netlist_time a, netlist_time b) { return netlist_time.Max(a, b); }
         public static int min(int a, int b) { return Math.Min(a, b); }
         public static UInt32 min(UInt32 a, UInt32 b) { return Math.Min(a, b); }
         public static Int64 min(Int64 a, Int64 b) { return Math.Min(a, b); }
         public static float min(float a, float b) { return Math.Min(a, b); }
         public static double min(double a, double b) { return Math.Min(a, b); }
+        public static attotime min(attotime a, attotime b) { return attotime.Min(a, b); }
 
 
         // c++ cmath
@@ -1088,6 +1102,10 @@ namespace mame
         public static double sqrt(double arg) { return Math.Sqrt(arg); }
 
 
+        // c++ cstdlib
+        public static UInt64 strtoul(string str, string endptr, int base_) { return Convert.ToUInt64(str, 16); }
+
+
         // c++ cstring
         public static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
         public static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
@@ -1097,9 +1115,11 @@ namespace mame
         public static void memset<T>(T [] destination, T value) { memset(destination, value, (UInt32)destination.Length); }
         public static void memset<T>(T [] destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
         public static void memset<T>(T [,] destination, T value) { for (int i = 0; i < destination.GetLength(0); i++) for (int j = 0; j < destination.GetLength(1); j++) destination[i, j] = value; }
+        public static int strchr(string str, char character) { return str.IndexOf(character); }
         public static int strcmp(string str1, string str2) { return string.Compare(str1, str2); }
         public static int strlen(string str) { return str.Length; }
         public static int strncmp(string str1, string str2, int num) { return string.Compare(str1, 0, str2, 0, num); }
+        public static int strstr(string str1, string str2) { return str1.IndexOf(str2); }
 
 
         // c++ array
@@ -1110,6 +1130,34 @@ namespace mame
 
             public array(int N) { m_data = new T[N]; }
 
+
+            public static bool operator ==(array<T> lhs, array<T> rhs)
+            {
+                // available in .NET 3.5 and higher
+                //return Enumerable.SequenceEquals(lhs, rhs);
+
+                if (ReferenceEquals(lhs, rhs))
+                    return true;
+
+                if (lhs == null || rhs == null)
+                    return false;
+
+                if (lhs.size() != rhs.size())
+                    return false;
+
+                EqualityComparer<T> comparer = EqualityComparer<T>.Default;
+                for (int i = 0; i < lhs.size(); i++)
+                {
+                    if (!comparer.Equals(lhs[i], rhs[i])) return false;
+                }
+
+                return true;
+            }
+
+            public static bool operator !=(array<T> lhs, array<T> rhs)
+            {
+                return !(lhs == rhs);
+            }
 
             public T this[int index] { get { return m_data[index]; } set { m_data[index] = value; } }
             public T this[UInt32 index] { get { return m_data[index]; } set { m_data[index] = value; } }
@@ -1126,27 +1174,40 @@ namespace mame
 
 
         // c++ list
-        public class list<T> : LinkedList<T>
+        public class list<T> : IEnumerable<T>
         {
-            public list() : base() { }
-            public list(IEnumerable<T> collection) : base(collection) { }
-            //protected LinkedList(SerializationInfo info, StreamingContext context);
+            LinkedList<T> m_list = new LinkedList<T>();
+
+
+            public list() { }
+            public list(IEnumerable<T> collection) { m_list = new LinkedList<T>(collection); }
+
+
+            // IEnumerable
+            IEnumerator IEnumerable.GetEnumerator() { return m_list.GetEnumerator(); }
+            IEnumerator<T> IEnumerable<T>.GetEnumerator() { return m_list.GetEnumerator(); }
+
+
+            public LinkedListNode<T> AddLast(T value) { return m_list.AddLast(value); }
 
 
             // std::list functions
-            public void clear() { Clear(); }
-            public LinkedListNode<T> emplace_back(T item) { return AddLast(item); }
-            public bool empty() { return Count == 0; }
-            public void push_back(T item) { AddLast(item); }
-            public void push_front(T item) { AddFirst(item); }
-            public int size() { return Count; }
+            public void clear() { m_list.Clear(); }
+            public LinkedListNode<T> emplace_back(T item) { return m_list.AddLast(item); }
+            public bool empty() { return m_list.Count == 0; }
+            public void push_back(T item) { m_list.AddLast(item); }
+            public void push_front(T item) { m_list.AddFirst(item); }
+            public int size() { return m_list.Count; }
         }
 
 
         // c++ map
-        public class map<K, V> : Dictionary<K, V>
+        public class map<K, V> : IEnumerable<KeyValuePair<K, V>>
         {
-            public map() : base() { }
+            Dictionary<K, V> m_dictionary = new Dictionary<K, V>();
+
+
+            public map() { }
             //public Dictionary(int capacity);
             //public Dictionary(IEqualityComparer<TKey> comparer);
             //public Dictionary(IDictionary<TKey, TValue> dictionary);
@@ -1155,18 +1216,32 @@ namespace mame
             //protected Dictionary(SerializationInfo info, StreamingContext context);
 
 
+            // IEnumerable
+            IEnumerator IEnumerable.GetEnumerator() { return m_dictionary.GetEnumerator(); }
+            IEnumerator<KeyValuePair<K, V>> IEnumerable<KeyValuePair<K, V>>.GetEnumerator() { return m_dictionary.GetEnumerator(); }
+
+
+            public V this[K key] { get { return m_dictionary[key]; } set { m_dictionary[key] = value; } }
+
+
+            public void Add(K key, V value) { m_dictionary.Add(key, value); }
+
+
             // std::map functions
-            public bool emplace(K key, V value) { if (ContainsKey(key)) { return false; } else { Add(key, value); return true; } }
-            public void erase(K key) { Remove(key); }
-            public V find(K key) { V value; if (TryGetValue(key, out value)) return value; else return default(V); }
-            public int size() { return Count; }
+            public bool emplace(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
+            public void erase(K key) { m_dictionary.Remove(key); }
+            public V find(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default(V); }
+            public int size() { return m_dictionary.Count; }
         }
 
 
         // c++ multimap
-        public class multimap<K, V> : Dictionary<K, List<V>> // std::multimap<std::string, ui_software_info, ci_less> m_list;
+        public class multimap<K, V>
         {
-            public multimap() : base() { }
+            Dictionary<K, List<V>> m_dictionary = new Dictionary<K, List<V>>();
+
+
+            public multimap() { }
             //public Dictionary(int capacity);
             //public Dictionary(IEqualityComparer<TKey> comparer);
             //public Dictionary(IDictionary<TKey, TValue> dictionary);
@@ -1176,38 +1251,73 @@ namespace mame
         }
 
 
-        // c++ set
-        public class set<T> : HashSet<T>
+        // c++ pair
+        public class pair<T, V>
         {
-            public set() : base() { }
+            KeyValuePair<T, V> m_keyValue;
+
+
+            public pair(T key, V value) { m_keyValue = new KeyValuePair<T, V>(key, value); }
+
+            public override string ToString() { return m_keyValue.ToString(); }
+
+
+            public T first { get { return m_keyValue.Key; } }
+            public V second { get { return m_keyValue.Value; } }
+        }
+
+
+        // c++ set
+        public class set<T>
+        {
+            HashSet<T> m_set = new HashSet<T>();
+
+
+            public set() { }
             //public HashSet(IEqualityComparer<T> comparer);
             //public HashSet(IEnumerable<T> collection);
             //public HashSet(IEnumerable<T> collection, IEqualityComparer<T> comparer);
             //protected HashSet(SerializationInfo info, StreamingContext context);
 
 
+            public bool ContainsIf(Func<T, bool> predicate)
+            {
+                foreach (var element in m_set)
+                {
+                    if (predicate(element))
+                        return true;
+                }
+                return false;
+            }
+
+
             // std::set functions
-            public bool emplace(T item) { return Add(item); }
-            public bool erase(T item) { return Remove(item); }
-            public bool find(T item) { return Contains(item); }
-            public bool insert(T item) { return Add(item); }
+            public bool emplace(T item) { return m_set.Add(item); }
+            public bool erase(T item) { return m_set.Remove(item); }
+            public bool find(T item) { return m_set.Contains(item); }
+            public bool insert(T item) { return m_set.Add(item); }
         }
 
 
         // c++ stack
-        public class stack<T> : Stack<T>
+        public class stack<T>
         {
+            Stack<T> m_stack = new Stack<T>();
+
 
             // std::stack functions
-            public bool empty() { return Count == 0; }
-            public T top() { return Peek(); }
+            public bool empty() { return m_stack.Count == 0; }
+            public T top() { return m_stack.Peek(); }
         }
 
 
         // c++ unordered_map
-        public class unordered_map<K, V> : Dictionary<K, V>
+        public class unordered_map<K, V> : IEnumerable<KeyValuePair<K, V>>
         {
-            public unordered_map() : base() { }
+            Dictionary<K, V> m_dictionary = new Dictionary<K, V>();
+
+
+            public unordered_map() { }
             //public Dictionary(int capacity);
             //public Dictionary(IEqualityComparer<TKey> comparer);
             //public Dictionary(IDictionary<TKey, TValue> dictionary);
@@ -1216,21 +1326,32 @@ namespace mame
             //protected Dictionary(SerializationInfo info, StreamingContext context);
 
 
+            // IEnumerable
+            IEnumerator IEnumerable.GetEnumerator() { return m_dictionary.GetEnumerator(); }
+            IEnumerator<KeyValuePair<K, V>> IEnumerable<KeyValuePair<K, V>>.GetEnumerator() { return m_dictionary.GetEnumerator(); }
+
+
+            public V this[K key] { get { return m_dictionary[key]; } set { m_dictionary[key] = value; } }
+
+
             // std::unordered_map functions
-            public void clear() { Clear(); }
-            public bool emplace(K key, V value) { if (ContainsKey(key)) { return false; } else { Add(key, value); return true; } }
-            public bool empty() { return Count == 0; }
-            public bool erase(K key) { return Remove(key); }
-            public V find(K key) { V value; if (TryGetValue(key, out value)) return value; else return default(V); }
-            public bool insert(K key, V value) { if (ContainsKey(key)) { return false; } else { Add(key, value); return true; } }
-            public int size() { return Count; }
+            public void clear() { m_dictionary.Clear(); }
+            public bool emplace(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
+            public bool empty() { return m_dictionary.Count == 0; }
+            public bool erase(K key) { return m_dictionary.Remove(key); }
+            public V find(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default; }
+            public bool insert(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
+            public int size() { return m_dictionary.Count; }
         }
 
 
         // c++ unordered_set
-        public class unordered_set<T> : HashSet<T>
+        public class unordered_set<T>
         {
-            public unordered_set() : base() { }
+            HashSet<T> m_set = new HashSet<T>();
+
+
+            public unordered_set() { }
             //public HashSet(IEqualityComparer<T> comparer);
             //public HashSet(IEnumerable<T> collection);
             //public HashSet(IEnumerable<T> collection, IEqualityComparer<T> comparer);
@@ -1238,11 +1359,11 @@ namespace mame
 
 
             // std::unordered_set functions
-            public void clear() { Clear(); }
-            public bool emplace(T item) { return Add(item); }
-            public bool erase(T item) { return Remove(item); }
-            public bool find(T item) { return Contains(item); }
-            public bool insert(T item) { return Add(item); }
+            public void clear() { m_set.Clear(); }
+            public bool emplace(T item) { return m_set.Add(item); }
+            public bool erase(T item) { return m_set.Remove(item); }
+            public bool find(T item) { return m_set.Contains(item); }
+            public bool insert(T item) { return m_set.Add(item); }
         }
 
 

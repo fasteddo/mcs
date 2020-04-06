@@ -7,8 +7,7 @@ using System.Collections.Generic;
 using link_t = System.Collections.Generic.KeyValuePair<string, string>;  //using link_t = std::pair<pstring, pstring>;
 using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
 using model_map_t = mame.std.unordered_map<string, string>;
-using netlist_base_t = mame.netlist.netlist_state_t;
-using nl_double = System.Double;
+using nl_fptype = System.Double;
 
 
 namespace mame.netlist
@@ -31,12 +30,17 @@ namespace mame.netlist
 
         //#define DIPPINS(pin1, ...)                                                          \
         //        setup.register_dippins_arr( # pin1 ", " # __VA_ARGS__);
-        public static void DIPPINS(nlparse_t setup, params string [] pin1) { setup.register_dippins_arr(string.Join(", ", pin1)); }
+        public static void DIPPINS(nlparse_t setup, params string [] pin1) { setup.register_dip_alias_arr(string.Join(", ", pin1)); }
 
-        /* to be used to reference new library truthtable devices */
+        // to be used to reference new library truthtable devices
         //#define NET_REGISTER_DEV(type, name)                                            \
         //        setup.register_dev(# type, # name);
         public static void NET_REGISTER_DEV(nlparse_t setup, string type, string name) { setup.register_dev(type, name); }
+
+        // name is first element so that __VA_ARGS__ always has one element
+        //#define NET_REGISTER_DEVEXT(type, ...)                                   \
+        //        setup.register_devx(# type, { PSTRINGIFY_VA(__VA_ARGS__) });
+        public static void NET_REGISTER_DEVEXT(nlparse_t setup, string type, params string [] args) { setup.register_devx(type, args); }
 
         //#define NET_CONNECT(name, input, output)                                        \
         //        setup.register_link(# name "." # input, # output);
@@ -92,7 +96,6 @@ namespace mame.netlist
         //#define SUBMODEL(model, name)                                                  \
         //        setup.namespace_push(# name);                                          \
         //        setup.include(# model);                                                \
-        //        /*NETLIST_NAME(model)(setup);*/                                        \
         //        setup.namespace_pop();
 
         //#define OPTIMIZE_FRONTIER(attach, r_in, r_out)                                  \
@@ -140,9 +143,9 @@ namespace mame.netlist
         public static void TT_FAMILY(string x) { TRUTHTABLE_desc.family = x; }
 
         //#define TRUTHTABLE_END() \
-        //        setup.tt_factory_create(desc, __FILE__);       \
+        //        setup.truthtable_create(desc, __FILE__);       \
         //    }
-        public static void TRUTHTABLE_END(nlparse_t setup) { setup.tt_factory_create(TRUTHTABLE_desc, "__FILE__");  TRUTHTABLE_desc = null; }
+        public static void TRUTHTABLE_END(nlparse_t setup) { setup.truthtable_create(TRUTHTABLE_desc, "__FILE__");  TRUTHTABLE_desc = null; }
     }
 
 
@@ -178,6 +181,10 @@ namespace mame.netlist
             m_device = device;
             m_param = param;
         }
+
+        //const pstring &name() const noexcept { return m_name; }
+        //const core_device_t &device() const noexcept { return m_device; }
+        //param_t *param() const noexcept { return &m_param; }
     }
 
 
@@ -237,7 +244,7 @@ namespace mame.netlist
                 throw new nl_exception(nl_errstr_global.MF_MODEL_ALREADY_EXISTS_1(model_in));
         }
 
-        /* model / family related */
+        // model / family related
 
         public string value_str(string model, string entity)
         {
@@ -259,7 +266,7 @@ namespace mame.netlist
         }
 
 
-        public nl_double value(string model, string entity)
+        public nl_fptype value(string model, string entity)
         {
             model_map_t map = m_cache[model];
 
@@ -268,31 +275,31 @@ namespace mame.netlist
 
             string tmp = value_str(model, entity);
 
-            nl_double factor = 1;  //plib::constants<nl_double>::one();
+            nl_fptype factor = nlconst.one();
             var p = tmp[tmp.Length - 1];  //auto p = std::next(tmp.begin(), static_cast<pstring::difference_type>(tmp.size() - 1));
             switch (p)
             {
-                case 'M': factor = 1e6; break;
+                case 'M': factor = nlconst.magic(1e6); break;
                 case 'k':
-                case 'K': factor = 1e3; break;
-                case 'm': factor = 1e-3; break;
-                case 'u': factor = 1e-6; break;
-                case 'n': factor = 1e-9; break;
-                case 'p': factor = 1e-12; break;
-                case 'f': factor = 1e-15; break;
-                case 'a': factor = 1e-18; break;
+                case 'K': factor = nlconst.magic(1e3); break;
+                case 'm': factor = nlconst.magic(1e-3); break;
+                case 'u': factor = nlconst.magic(1e-6); break;
+                case 'n': factor = nlconst.magic(1e-9); break;
+                case 'p': factor = nlconst.magic(1e-12); break;
+                case 'f': factor = nlconst.magic(1e-15); break;
+                case 'a': factor = nlconst.magic(1e-18); break;
                 default:
                     if (p < '0' || p > '9')
                         throw new nl_exception(nl_errstr_global.MF_UNKNOWN_NUMBER_FACTOR_IN_1(entity));
                     break;
             }
-            if (factor != 1)  //if (factor != plib::constants<nl_double>::one())
+            if (factor != nlconst.one())
                 tmp = plib.pstrutil_global.left(tmp, tmp.Length - 1);
 
             // FIXME: check for errors
-            //printf("%s %s %e %e\n", entity.c_str(), tmp.c_str(), plib::pstonum<nl_double>(tmp), factor);
+            //printf("%s %s %e %e\n", entity.c_str(), tmp.c_str(), plib::pstonum<nl_fptype>(tmp), factor);
             bool err = false;
-            var val = plib.putil_global.pstonum_ne_double(true, tmp, out err);
+            var val = plib.pstonum_global.pstonum_ne_nl_fptype(true, tmp, out err);
             if (err)
                 throw new nl_exception(nl_errstr_global.MF_MODEL_NUMBER_CONVERSION_ERROR(entity, tmp, "double", model));
 
@@ -386,7 +393,7 @@ namespace mame.netlist
 
         factory.list_t m_factory;
 
-        /* need to preserve order of device creation ... */
+        // need to preserve order of device creation ...
         protected std.vector<KeyValuePair<string, factory.element_t>> m_device_factory;  //std::vector<std::pair<pstring, factory::element_t *>> m_device_factory;
 
 
@@ -416,7 +423,7 @@ namespace mame.netlist
         }
 
 
-        public void register_dippins_arr(string terms)
+        public void register_dip_alias_arr(string terms)
         {
             throw new emu_unimplemented();
         }
@@ -426,15 +433,109 @@ namespace mame.netlist
         {
             var f = factory().factory_by_name(classname);
             if (f == null)
+            {
                 log().fatal.op(nl_errstr_global.MF_CLASS_1_NOT_FOUND(classname));
-            /* make sure we parse macro library entries */
-            f.macro_actions(this, name);
-            string key = build_fqn(name);
-            if (device_exists(key))
-                log().fatal.op(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
+                throw new nl_exception(nl_errstr_global.MF_CLASS_1_NOT_FOUND(classname));
+            }
             else
-                m_device_factory.Add(new KeyValuePair<string, factory.element_t>(key, f));  //m_device_factory.insert(m_device_factory.end(), {key, f});
+            {
+                // make sure we parse macro library entries
+                f.macro_actions(this, name);
+                string key = build_fqn(name);
+                if (device_exists(key))
+                {
+                    log().fatal.op(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
+                    throw new nl_exception(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
+                }
+                else
+                {
+                    m_device_factory.Add(new KeyValuePair<string, factory.element_t>(key, f));  //m_device_factory.insert(m_device_factory.end(), {key, f});
+                }
+            }
         }
+
+
+        void register_dev(string classname, string name, std.vector<string> params_and_connections)
+        {
+            var f = m_setup.factory().factory_by_name(classname);  //factory::element_t *f = m_setup.factory().factory_by_name(classname);
+            var paramlist = plib.putil_global.psplit(f.param_desc(), ",");
+
+            register_dev(classname, name);
+
+            if (params_and_connections.size() > 0)
+            {
+                var ptokIdx = 0;  //auto ptok(params_and_connections.begin());
+                var ptok_endIdx = params_and_connections.Count;  //auto ptok_end(params_and_connections.end());
+
+                foreach (var tp in paramlist)
+                {
+                    //printf("x %s %s\n", tp.c_str(), ptok->c_str());
+                    if (plib.pstrutil_global.startsWith(tp, "+"))
+                    {
+                        if (ptokIdx == ptok_endIdx)  //if (ptok == ptok_end)
+                        {
+                            var err = nl_errstr_global.MF_PARAM_COUNT_MISMATCH_2(name, params_and_connections.size());
+                            log().fatal.op(err);
+                            throw new nl_exception(err);
+                            //break;
+                        }
+                        string output_name = params_and_connections[ptokIdx];  //pstring output_name = *ptok;
+                        log().debug.op("Link: {0} {1}\n", tp, output_name);
+
+                        register_link(name + "." + tp.substr(1), output_name);
+                        ++ptokIdx;  //++ptok;
+                    }
+                    else if (plib.pstrutil_global.startsWith(tp, "@"))
+                    {
+                        string term = tp.substr(1);
+                        m_setup.log().debug.op("Link: {0} {1}\n", tp, term);
+
+                        register_link(name + "." + term, term);
+                    }
+                    else
+                    {
+                        if (ptokIdx == params_and_connections.Count)  //if (ptok == params_and_connections.end())
+                        {
+                            var err = nl_errstr_global.MF_PARAM_COUNT_MISMATCH_2(name, params_and_connections.size());
+                            log().fatal.op(err);
+                            throw new nl_exception(err);
+                        }
+                        string paramfq = name + "." + tp;
+
+                        log().debug.op("Defparam: {0}\n", paramfq);
+                        // remove quotes
+                        if (plib.pstrutil_global.startsWith(params_and_connections[ptokIdx], "\"") && plib.pstrutil_global.endsWith(params_and_connections[ptokIdx], "\""))  //if (plib::startsWith(*ptok, "\"") && plib::endsWith(*ptok, "\""))
+                            register_param(paramfq, params_and_connections[ptokIdx].substr(1, params_and_connections[ptokIdx].length() - 2));  //register_param(paramfq, ptok->substr(1, ptok->length() - 2));
+                        else
+                            register_param(paramfq, params_and_connections[ptokIdx]);  //register_param(paramfq, *ptok);
+                        ++ptokIdx;  //++ptok;
+                    }
+                }
+                if (ptokIdx != params_and_connections.Count)  //if (ptok != params_and_connections.end())
+                {
+                    var err = nl_errstr_global.MF_PARAM_COUNT_EXCEEDED_2(name, params_and_connections.size());
+                    log().fatal.op(err);
+                    throw new nl_exception(err);
+                }
+            }
+        }
+
+
+        public void register_devx(string classname, string [] params_and_connections)
+        {
+            std.vector<string> params_ = new std.vector<string>();
+            int i = 0;  //auto i(params_and_connections.begin());
+            string name = params_and_connections[i];  //pstring name(*i);
+            ++i;
+            for (; i < params_and_connections.Length; i++)  //for (; i != params_and_connections.end(); ++i)
+            {
+                params_.emplace_back(params_and_connections[i]);
+            }
+            register_dev(classname, name, params_);
+        }
+
+
+        //void register_dev(const pstring &classname, const pstring &name, const char *params_and_connections);
 
 
         public void register_link(string sin, string sout)
@@ -447,7 +548,11 @@ namespace mame.netlist
         {
             std.vector<string> list = new std.vector<string>(terms.Split(new string[] { ", " }, StringSplitOptions.None));  //plib::psplit(terms, ", ");
             if (list.size() < 2)
+            {
                 log().fatal.op(nl_errstr_global.MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL());
+                throw new nl_exception(nl_errstr_global.MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL());
+            }
+
             for (int i = 1; i < list.size(); i++)
             {
                 register_link(list[0], list[i]);
@@ -473,13 +578,32 @@ namespace mame.netlist
         }
 
 
-        public void register_param(string param, double value)
+        // FIXME: quick hack
+        //void register_param_x(const pstring &param, const nl_fptype value);
+        void register_param_x(string param, nl_fptype value)
         {
-            if (std.abs(value - std.floor(value)) > 1e-30 || std.abs(value) > 1e9)
-                register_param(param, string.Format("{0:f9}", value));  //register_param(param, plib::pfmt("{1:.9}").e(value));
+            if (plib.pmath_global.abs(value - plib.pmath_global.floor(value)) > nlconst.magic(1e-30)
+                || plib.pmath_global.abs(value) > nlconst.magic(1e9))
+                register_param(param, new plib.pfmt("{0}").op(value));  //register_param(param, plib::pfmt("{1:.9}").e(value));
             else
-                register_param(param, string.Format("{0}", (long)value));
+                register_param(param, new plib.pfmt("{0}").op(value));  //register_param(param, plib::pfmt("{1}")(static_cast<long>(value)));
         }
+
+
+        //template <typename T>
+        //typename std::enable_if<std::is_floating_point<T>::value || std::is_integral<T>::value>::type
+        public void register_param(string param, nl_fptype value)  //register_param(const pstring &param, T value)
+        {
+            register_param_x(param, value);  //register_param_x(param, static_cast<nl_fptype>(value));
+        }
+
+
+#if PUSE_FLOAT128
+        void register_param(const pstring &param, __float128 value)
+        {
+            register_param_x(param, static_cast<nl_fptype>(value));
+        }
+#endif
 
 
         public void register_lib_entry(string name, string sourcefile)
@@ -488,49 +612,41 @@ namespace mame.netlist
         }
 
 
-        //void register_frontier(const pstring &attach, const double r_IN, const double r_OUT);
+        //void register_frontier(const pstring &attach, const nl_fptype r_IN, const nl_fptype r_OUT);
 
 
-        /* register a source */
+        // register a source
         public void register_source(plib.psource_t src)  //void register_source(plib::unique_ptr<plib::psource_t> &&src)
         {
             m_sources.add_source(src);  //m_sources.add_source(std::move(src));
         }
 
 
-        public void tt_factory_create(tt_desc desc, string sourcefile)
+        public void truthtable_create(tt_desc desc, string sourcefile)
         {
-            var fac = devices.nlid_truthtable_global.tt_factory_create(desc, sourcefile);  //auto fac = devices::tt_factory_create(desc, sourcefile);
+            var fac = netlist.factory.nlid_truthtable_global.truthtable_create(desc, sourcefile);
             m_factory.register_device(fac);
         }
 
 
-        /* handle namespace */
+        // handle namespace
 
         //void namespace_push(const pstring &aname);
         //void namespace_pop();
 
-        /* include other files */
+
+        // include other files
 
         public void include(string netlist_name)
         {
-#if false
-            for (auto &base : m_sources)
-            {
-                auto source(dynamic_cast<source_netlist_t *>(base.get()));
-                if (source && source->parse(*this, netlist_name))
-                    return;
-            }
-            log().fatal.op(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
-#endif
-
-            if (m_sources.for_all(netlist_name, (src) =>  //if (m_sources.for_all<source_netlist_t>(netlist_name, [this, &netlist_name] (auto &src)
+            if (m_sources.for_all((src) =>  //if (m_sources.for_all<source_netlist_t>([this, &netlist_name] (source_netlist_t *src)
             {
                 return src.parse(this, netlist_name);
             }))
                 return;
 
             log().fatal.op(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
+            throw new nl_exception(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
         }
 
 
@@ -547,11 +663,14 @@ namespace mame.netlist
         public void register_alias_nofqn(string alias, string out_)
         {
             if (!m_alias.insert(alias, out_))
+            {
                 log().fatal.op(nl_errstr_global.MF_ADDING_ALI1_TO_ALIAS_LIST(alias));
+                throw new nl_exception(nl_errstr_global.MF_ADDING_ALI1_TO_ALIAS_LIST(alias));
+            }
         }
 
 
-        /* also called from devices for latebinding connected terminals */
+        // also called from devices for latebinding connected terminals
         public void register_link_fqn(string sin, string sout)
         {
             link_t temp = new link_t(sin, sout);
@@ -560,7 +679,7 @@ namespace mame.netlist
         }
 
 
-        /* used from netlist.cpp (mame) */
+        // used from netlist.cpp (mame)
         public bool device_exists(string name)
         {
             foreach (var d in m_device_factory)
@@ -573,7 +692,7 @@ namespace mame.netlist
         }
 
 
-        /* FIXME: used by source_t - need a different approach at some time */
+        // FIXME: used by source_t - need a different approach at some time
         public bool parse_stream(std.istream istrm, string name)  //bool nlparse_t::parse_stream(plib::psource_t::stream_ptr &&istrm, const pstring &name)
         {
             throw new emu_unimplemented();
@@ -598,13 +717,12 @@ namespace mame.netlist
         public log_type log() { return m_log; }
 
 
-        /* FIXME: sources may need access to the netlist parent type
-         * since they may be created in a context in which they don't
-         * have access to their environment.
-         * Example is the MAME memregion source.
-         * We thus need a better approach to creating netlists in a context
-         * other than static procedures.
-         */
+        // FIXME: sources may need access to the netlist parent type
+        // since they may be created in a context in which they don't
+        // have access to their environment.
+        // Example is the MAME memregion source.
+        // We thus need a better approach to creating netlists in a context
+        // other than static procedures.
         protected setup_t setup() { return m_setup; }
         //const setup_t &setup() const { return m_setup; }
 
@@ -623,9 +741,9 @@ namespace mame.netlist
         netlist_state_t m_nlstate;
         devices.nld_netlistparams m_netlist_params;
         std.unordered_map<string, param_ref_t> m_params = new std.unordered_map<string, param_ref_t>();
+        std.unordered_map<detail.core_terminal_t, devices.nld_base_proxy> m_proxies;
 
         UInt32 m_proxy_cnt;
-        bool m_validation;
 
 
         public setup_t(netlist_state_t nlstate)
@@ -637,7 +755,6 @@ namespace mame.netlist
             m_nlstate = nlstate;
             m_netlist_params = null;
             m_proxy_cnt = 0;
-            m_validation = false;
         }
 
         //~setup_t() { }
@@ -645,14 +762,16 @@ namespace mame.netlist
         //COPYASSIGNMOVE(setup_t, delete)
 
 
-        //netlist_state_t &nlstate() { return m_nlstate; }
-        //const netlist_state_t &nlstate() const { return m_nlstate; }
+        netlist_state_t nlstate() { return m_nlstate; }
 
 
         public void register_param_t(string name, param_t param)
         {
             if (!m_params.insert(param.name(), new param_ref_t(param.name(), param.device(), param)))
+            {
                 log().fatal.op(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(name));
+                throw new nl_exception(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(name));
+            }
         }
 
 
@@ -668,14 +787,16 @@ namespace mame.netlist
 
         public void register_term(detail.core_terminal_t term)
         {
-            if (!m_terminals.insert(term.name(), term))
-                log().fatal.op(nl_errstr_global.MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
-
             log().debug.op("{0} {1}\n", termtype_as_str(term), term.name());
+            if (!m_terminals.insert(term.name(), term))
+            {
+                log().fatal.op(nl_errstr_global.MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
+                throw new nl_exception(nl_errstr_global.MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
+            }
         }
 
 
-        //void remove_connections(const pstring &attach);
+        //void remove_connections(const pstring &pin);
 
 
         public bool connect(detail.core_terminal_t t1_in, detail.core_terminal_t t2_in)
@@ -688,13 +809,19 @@ namespace mame.netlist
             if (t1.is_type(detail.terminal_type.OUTPUT) && t2.is_type(detail.terminal_type.INPUT))
             {
                 if (t2.has_net() && t2.net().isRailNet())
+                {
                     log().fatal.op(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
+                    throw new nl_exception(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
+                }
                 connect_input_output(t2, t1);
             }
             else if (t1.is_type(detail.terminal_type.INPUT) && t2.is_type(detail.terminal_type.OUTPUT))
             {
                 if (t1.has_net()  && t1.net().isRailNet())
+                {
                     log().fatal.op(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
+                    throw new nl_exception(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
+                }
                 connect_input_output(t1, t2);
             }
             else if (t1.is_type(detail.terminal_type.OUTPUT) && t2.is_type(detail.terminal_type.TERMINAL))
@@ -735,14 +862,19 @@ namespace mame.netlist
             string outname = resolve_alias(param_in_fqn);
             var ret = m_params.find(outname);
             if (ret == null && required)
+            {
                 log().fatal.op(nl_errstr_global.MF_PARAMETER_1_2_NOT_FOUND(param_in_fqn, outname));
+                throw new nl_exception(nl_errstr_global.MF_PARAMETER_1_2_NOT_FOUND(param_in_fqn, outname));
+            }
+
             if (ret != null)
                 log().debug.op("Found parameter {0}\n", outname);
+
             return ret == null ? null : ret.m_param;
         }
 
 
-        /* get family */
+        // get family
         public logic_family_desc_t family_from_model(string model)
         {
             if (m_models.value_str(model, "TYPE") == "TTL")
@@ -756,13 +888,13 @@ namespace mame.netlist
 
             var ret = new logic_family_std_proxy_t();  //plib::make_unique_base<logic_family_desc_t, logic_family_std_proxy_t>();
 
-            ret.fixed_V = m_models.value(model, "FV");
-            ret.low_thresh_PCNT = m_models.value(model, "IVL");
-            ret.high_thresh_PCNT = m_models.value(model, "IVH");
-            ret.low_VO = m_models.value(model, "OVL");
-            ret.high_VO = m_models.value(model, "OVH");
-            ret.R_low = m_models.value(model, "ORL");
-            ret.R_high = m_models.value(model, "ORH");
+            ret.m_fixed_V = m_models.value(model, "FV");
+            ret.m_low_thresh_PCNT = m_models.value(model, "IVL");
+            ret.m_high_thresh_PCNT = m_models.value(model, "IVH");
+            ret.m_low_VO = m_models.value(model, "OVL");
+            ret.m_high_VO = m_models.value(model, "OVH");
+            ret.m_R_low = m_models.value(model, "ORL");
+            ret.m_R_high = m_models.value(model, "ORH");
 
             var retp = ret.get();
 
@@ -783,7 +915,7 @@ namespace mame.netlist
                 foreach (string ll in loglist)
                 {
                     string name = "log_" + ll;
-                    var nc = factory().factory_by_name("LOG").Create(m_nlstate, name);
+                    var nc = factory().factory_by_name("LOG").Create(m_nlstate.pool(), m_nlstate, name);
                     register_link(name + ".I", ll);
                     log().debug.op("    dynamic link {0}: <{1}>\n", ll, name);
                     m_nlstate.register_device(nc.name(), nc);
@@ -796,11 +928,11 @@ namespace mame.netlist
         {
             log().verbose.op("Resolving inputs ...");
 
-            /* Netlist can directly connect input to input.
-             * We therefore first park connecting inputs and retry
-             * after all other terminals were connected.
-             */
-            UInt32 tries = m_netlist_params.max_link_loops.op;
+            // Netlist can directly connect input to input.
+            // We therefore first park connecting inputs and retry
+            // after all other terminals were connected.
+
+            UInt32 tries = m_netlist_params.max_link_loops.op();
             while (m_links.size() > 0 && tries >  0)
             {
                 for (int liIdx = 0; liIdx < m_links.Count;  )  //for (auto li = m_links.begin(); li != m_links.end(); )
@@ -831,7 +963,8 @@ namespace mame.netlist
                 foreach (var link in m_links)
                     log().warning.op(nl_errstr_global.MF_CONNECTING_1_TO_2(setup().de_alias(link.first()), setup().de_alias(link.second())));
 
-                log().fatal.op(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(m_netlist_params.max_link_loops.op));
+                log().fatal.op(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(m_netlist_params.max_link_loops.op()));
+                throw new nl_exception(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(m_netlist_params.max_link_loops.op()));
             }
 
             log().verbose.op("deleting empty nets ...");
@@ -846,9 +979,15 @@ namespace mame.netlist
             foreach (var i in m_terminals)
             {
                 detail.core_terminal_t term = i.second();
-                if (!term.has_net() && term.device() is devices.nld_dummy_input)  //dynamic_cast< devices::NETLIB_NAME(dummy_input) *>(&term->device()) != nullptr)
+                bool is_nc = term.device() is devices.nld_nc_pin;  //bool is_nc(dynamic_cast< devices::NETLIB_NAME(nc_pin) *>(&term->device()) != nullptr);
+                if (term.has_net() && is_nc)
                 {
-                    log().info.op(nl_errstr_global.MI_DUMMY_1_WITHOUT_CONNECTIONS(term.name()));
+                    log().error.op(nl_errstr_global.ME_NC_PIN_1_WITH_CONNECTIONS(term.name()));
+                    err = true;
+                }
+                else if (is_nc)
+                {
+                    /* ignore */
                 }
                 else if (!term.has_net())
                 {
@@ -869,7 +1008,10 @@ namespace mame.netlist
             }
 
             if (err)
+            {
                 log().fatal.op(nl_errstr_global.MF_TERMINALS_WITHOUT_NET());
+                throw new nl_exception(nl_errstr_global.MF_TERMINALS_WITHOUT_NET());
+            }
         }
 
 
@@ -880,13 +1022,13 @@ namespace mame.netlist
         //const factory::list_t &factory() const { return m_factory; }
 
 
-        /* helper - also used by nltool */
+        // helper - also used by nltool
         string resolve_alias(string name)
         {
             string temp = name;
             string ret;
 
-            /* FIXME: Detect endless loop */
+            // FIXME: Detect endless loop
             do {
                 ret = temp;
                 var p = m_alias.find(ret);
@@ -898,12 +1040,12 @@ namespace mame.netlist
         }
 
 
-        string de_alias(string alias)
+        public string de_alias(string alias)
         {
             string temp = alias;
             string ret;
 
-            /* FIXME: Detect endless loop */
+            // FIXME: Detect endless loop
             do
             {
                 ret = temp;
@@ -924,7 +1066,7 @@ namespace mame.netlist
         }
 
 
-        /* needed by nltool */
+        // needed by nltool
         //std::vector<pstring> get_terminals_for_device_name(const pstring &devname);
 
 
@@ -932,32 +1074,39 @@ namespace mame.netlist
         //const log_type &log() const;
 
 
-        /* needed by proxy */
+        // needed by proxy
         //detail::core_terminal_t *find_terminal(const pstring &outname_in, const detail::terminal_type atype, bool required = true) const;
 
-        detail.core_terminal_t find_terminal(string terminal_in, bool required = true)
+        public detail.core_terminal_t find_terminal(string terminal_in, bool required = true)
         {
             string tname = resolve_alias(terminal_in);
             var ret = m_terminals.find(tname);
-            /* look for default */
+            // look for default
             if (ret == null)
             {
-                /* look for ".Q" std output */
+                // look for ".Q" std output
                 ret = m_terminals.find(tname + ".Q");
             }
 
             detail.core_terminal_t term = (ret == null ? null : ret);
 
             if (term == null && required)
+            {
                 log().fatal.op(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
-            if (term != null)
-                log().debug.op("Found input {0}\n", tname);
+                throw new nl_exception(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
+            }
 
+            if (term != null)
+            {
+                log().debug.op("Found input {0}\n", tname);
+            }
+
+            // FIXME: this should resolve any proxy
             return term;
         }
 
 
-        /* core net handling */
+        // core net handling
         // ----------------------------------------------------------------------------------------
         // Device handling
         // ----------------------------------------------------------------------------------------
@@ -990,6 +1139,7 @@ namespace mame.netlist
         }
 
 
+        // run preparation
         // ----------------------------------------------------------------------------------------
         // Run preparation
         // ----------------------------------------------------------------------------------------
@@ -997,15 +1147,13 @@ namespace mame.netlist
         {
             register_dynamic_log_devices();
 
-            /* load the library ... */
-
-            /* make sure the solver and parameters are started first! */
+            // make sure the solver and parameters are started first!
 
             foreach (var e in m_device_factory)
             {
                 if (factory().is_class<devices.nld_solver>(e.second()) || factory().is_class<devices.nld_netlistparams>(e.second()))
                 {
-                    m_nlstate.register_device(e.first(), e.second().Create(m_nlstate, e.first()));  //m_nlstate.register_device(e.first, e.second->Create(m_nlstate, e.first));
+                    m_nlstate.register_device(e.first(), e.second().Create(nlstate().pool(), m_nlstate, e.first()));
                 }
             }
 
@@ -1015,20 +1163,20 @@ namespace mame.netlist
             m_netlist_params = m_nlstate.get_single_device<devices.nld_netlistparams>("parameter");
 
 
-            /* set default model parameters */
+            // set default model parameters
 
-            m_models.register_model(new plib.pfmt("NMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op));
-            m_models.register_model(new plib.pfmt("PMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op));
+            m_models.register_model(new plib.pfmt("NMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op()));
+            m_models.register_model(new plib.pfmt("PMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op()));
 
 
-            /* create devices */
+            // create devices
 
             log().debug.op("Creating devices ...\n");
             foreach (var e in m_device_factory)
             {
                 if (!factory().is_class<devices.nld_solver>(e.second()) && !factory().is_class<devices.nld_netlistparams>(e.second()))
                 {
-                    var dev = e.second().Create(m_nlstate, e.first());
+                    var dev = e.second().Create(m_nlstate.pool(), m_nlstate, e.first());
                     m_nlstate.register_device(dev.name(), dev);
                 }
             }
@@ -1053,7 +1201,7 @@ namespace mame.netlist
                 }
             }
 
-            bool use_deactivate = m_netlist_params.use_deactivate.op ? true : false;
+            bool use_deactivate = m_netlist_params.use_deactivate.op() ? true : false;
 
             foreach (var d in m_nlstate.devices())
             {
@@ -1064,10 +1212,14 @@ namespace mame.netlist
                     {
                         //FIXME: check for errors ...
                         bool err = false;
-                        var v = plib.putil_global.pstonum_ne_double(true, p, out err);
-                        if (err || std.abs(v - std.floor(v)) > 1e-6 )
+                        var v = plib.pstonum_global.pstonum_ne_nl_fptype(true, p, out err);
+                        if (err || plib.pmath_global.abs(v - plib.pmath_global.floor(v)) > nlconst.magic(1e-6) )
+                        {
                             log().fatal.op(nl_errstr_global.MF_HND_VAL_NOT_SUPPORTED(p));
-                        d.second().set_hint_deactivate(v == 0.0);
+                            throw new nl_exception(nl_errstr_global.MF_HND_VAL_NOT_SUPPORTED(p));
+                        }
+                        // FIXME comparison with zero
+                        d.second().set_hint_deactivate(v == nlconst.zero());
                     }
                 }
                 else
@@ -1076,7 +1228,7 @@ namespace mame.netlist
                 }
             }
 
-            /* resolve inputs */
+            // resolve inputs
             resolve_inputs();
 
             log().verbose.op("looking for two terms connected to rail nets ...");
@@ -1084,19 +1236,11 @@ namespace mame.netlist
             {
                 if (t.N.net().isRailNet() && t.P.net().isRailNet())
                 {
-                    // We are not interested in power terminals - This is intended behaviour
-                    if (!t.name().endsWith("." + nl_errstr_global.sPowerDevRes))
-                        log().info.op(nl_errstr_global.MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(
-                            t.name(), t.N.net().name(), t.P.net().name()));
+                    log().info.op(nl_errstr_global.MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(
+                        t.name(), t.N.net().name(), t.P.net().name()));
                     t.N.net().remove_terminal(t.N);
                     t.P.net().remove_terminal(t.P);
                     m_nlstate.remove_device(t);
-                }
-                else
-                {
-                    if (t.name().endsWith("." + nl_errstr_global.sPowerDevRes))
-                        log().info.op(nl_errstr_global.MI_POWER_TERMINALS_1_CONNECTED_ANALOG_2_3(
-                            t.name(), t.N.net().name(), t.P.net().name()));
                 }
             }
 
@@ -1107,7 +1251,10 @@ namespace mame.netlist
                 foreach (var p in m_nlstate.nets())
                 {
                     if (p.is_analog())
+                    {
                         log().fatal.op(nl_errstr_global.MF_NO_SOLVER());
+                        throw new nl_exception(nl_errstr_global.MF_NO_SOLVER());
+                    }
                 }
             }
             else
@@ -1126,18 +1273,6 @@ namespace mame.netlist
         }
 
 
-        /* validation */
-        /* The extended validation mode is not intended for running.
-         * The intention is to identify power pins which are not properly
-         * connected. The downside is that this mode creates a netlist which
-         * is different (and not able to run).
-         *
-         * Extended validation is supported by nltool validate option.
-         */
-        public void set_extended_validation(bool val) { m_validation = val; }
-        bool is_extended_validation() { return m_validation; }
-
-
         void merge_nets(detail.net_t thisnet, detail.net_t othernet)
         {
             log().debug.op("merging nets ...\n");
@@ -1148,7 +1283,10 @@ namespace mame.netlist
             }
 
             if (thisnet.isRailNet() && othernet.isRailNet())
+            {
                 log().fatal.op(nl_errstr_global.MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
+                throw new nl_exception(nl_errstr_global.MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
+            }
 
             if (othernet.isRailNet())
             {
@@ -1183,12 +1321,12 @@ namespace mame.netlist
             {
                 log().debug.op("adding analog net ...\n");
                 // FIXME: Nets should have a unique name
-                var anet = new analog_net_t(m_nlstate, "net." + t1.name());  //auto anet = pool().make_owned<analog_net_t>(m_nlstate,"net." + t1.name());
-                //auto anetp = anet.get();
+                var anet = new analog_net_t(m_nlstate,"net." + t1.name());  //auto anet = nlstate().pool().make_owned<analog_net_t>(m_nlstate,"net." + t1.name());
+                var anetp = anet;  //auto anetp = anet.get();
                 m_nlstate.register_net(anet);  //plib::owned_ptr<analog_net_t>(anet, true));
-                t1.set_net(anet);
-                anet.add_terminal(t2);
-                anet.add_terminal(t1);
+                t1.set_net(anetp);
+                anetp.add_terminal(t2);
+                anetp.add_terminal(t1);
             }
         }
 
@@ -1223,7 +1361,7 @@ namespace mame.netlist
             if (out_.is_analog())
             {
                 log().debug.op("connect_terminal_output: {0} {1}\n", in_.name(), out_.name());
-                /* no proxy needed, just merge existing terminal net */
+                // no proxy needed, just merge existing terminal net
                 if (in_.has_net())
                     merge_nets(out_.net(), in_.net());
                 else
@@ -1239,6 +1377,7 @@ namespace mame.netlist
             else
             {
                 log().fatal.op(nl_errstr_global.MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
+                throw new nl_exception(nl_errstr_global.MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
             }
         }
 
@@ -1261,17 +1400,19 @@ namespace mame.netlist
             else
             {
                 log().fatal.op(nl_errstr_global.MF_OBJECT_INPUT_TYPE_1(inp.name()));
+                throw new nl_exception(nl_errstr_global.MF_OBJECT_INPUT_TYPE_1(inp.name()));
             }
         }
 
 
-        static detail.core_terminal_t resolve_proxy(detail.core_terminal_t term)
+        detail.core_terminal_t resolve_proxy(detail.core_terminal_t term)
         {
             if (term.is_logic())
             {
-                logic_t out_ = (logic_t)term;
-                if (out_.has_proxy())
-                    return out_.get_proxy().proxy_term();
+                logic_t out_ = (logic_t)term;  //auto &out = dynamic_cast<logic_t &>(term);
+                var iter_proxy = m_proxies.find(out_);
+                if (iter_proxy != null)  //if (iter_proxy != m_proxies.end())
+                    return iter_proxy.proxy_term();  //return iter_proxy->second->proxy_term();
             }
 
             return term;
@@ -1332,59 +1473,65 @@ namespace mame.netlist
                     return "OUTPUT";
             }
 
-            log().fatal.op(nl_errstr_global.MF_UNKNOWN_OBJECT_TYPE_1(in_.type()));
-            return "Error";
+            // FIXME: in.type() will have thrown already
+            // log().fatal(MF_UNKNOWN_OBJECT_TYPE_1(static_cast<unsigned>(in.type())));
+            return "Error"; // Tease gcc
         }
 
 
         devices.nld_base_proxy get_d_a_proxy(detail.core_terminal_t out_)
         {
-            nl_base_global.nl_assert(out_.is_logic());
+            nl_config_global.nl_assert(out_.is_logic());
 
-            logic_output_t out_cast = (logic_output_t)out_;
-            devices.nld_base_proxy proxy = out_cast.get_proxy();
+            var out_cast = (logic_output_t)out_;  //auto &out_cast = static_cast<logic_output_t &>(out);
+            var iter_proxy = m_proxies.find(out_);
 
-            if (proxy == null)
+            if (iter_proxy == null)  //if (iter_proxy == m_proxies.end())
             {
                 // create a new one ...
                 string x = new plib.pfmt("proxy_da_{0}_{1}").op(out_.name(), m_proxy_cnt);
                 var new_proxy = out_cast.logic_family().create_d_a_proxy(m_nlstate, x, out_cast);
                 m_proxy_cnt++;
 
-                //new_proxy->start_dev();
-
-                /* connect all existing terminals to new net */
+                // connect all existing terminals to new net
 
                 foreach (var p in out_.net().core_terms())
                 {
                     p.clear_net(); // de-link from all nets ...
                     if (!connect(new_proxy.proxy_term(), p))
+                    {
                         log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
+                        throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
+                    }
                 }
-                out_.net().core_terms().clear(); // clear the list
+                out_.net().core_terms().clear();
 
                 out_.net().add_terminal(new_proxy.in_());
-                out_cast.set_proxy(proxy);
 
-                proxy = new_proxy;
+                var proxy = new_proxy;  //auto proxy(new_proxy.get());
+                if (!m_proxies.insert(out_, proxy))
+                    throw new nl_exception(nl_errstr_global.MF_DUPLICATE_PROXY_1(out_.name()));
 
                 m_nlstate.register_device(new_proxy.name(), new_proxy);
+                return proxy;
             }
-
-            return proxy;
+            else
+            {
+                return iter_proxy;
+            }
         }
 
 
         devices.nld_base_proxy get_a_d_proxy(detail.core_terminal_t inp)
         {
-            nl_base_global.nl_assert(inp.is_logic());
+            nl_config_global.nl_assert(inp.is_logic());
 
-            logic_input_t incast = (logic_input_t)inp;
-            devices.nld_base_proxy proxy = incast.get_proxy();
+            var incast = (logic_input_t)inp;  //auto &incast = dynamic_cast<logic_input_t &>(inp);
+            var iter_proxy = m_proxies.find(inp);
 
-            if (proxy != null)
+            if (iter_proxy != null)  //if (iter_proxy != m_proxies.end())
             {
-                return proxy;
+                return iter_proxy;
             }
             else
             {
@@ -1392,12 +1539,15 @@ namespace mame.netlist
                 string x = new plib.pfmt("proxy_ad_{0}_{1}").op(inp.name(), m_proxy_cnt);
                 var new_proxy = incast.logic_family().create_a_d_proxy(m_nlstate, x, incast);
                 //auto new_proxy = plib::owned_ptr<devices::nld_a_to_d_proxy>::Create(netlist(), x, &incast);
-                incast.set_proxy(new_proxy);
+
+                var ret = new_proxy;  //auto ret(new_proxy.get());
+
+                if (!m_proxies.insert(inp, ret))  //if (!m_proxies.insert({&inp, ret}).second)
+                    throw new nl_exception(nl_errstr_global.MF_DUPLICATE_PROXY_1(inp.name()));
+
                 m_proxy_cnt++;
 
-                var ret = new_proxy;
-
-                /* connect all existing terminals to new net */
+                // connect all existing terminals to new net
 
                 if (inp.has_net())
                 {
@@ -1405,7 +1555,10 @@ namespace mame.netlist
                     {
                         p.clear_net(); // de-link from all nets ...
                         if (!connect(ret.proxy_term(), p))
+                        {
                             log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
+                            throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
+                        }
                     }
                     inp.net().core_terms().clear(); // clear the list
                 }
@@ -1414,6 +1567,9 @@ namespace mame.netlist
                 return ret;
             }
         }
+
+
+        //detail::core_terminal_t &resolve_proxy(detail::core_terminal_t &term);
     }
 
 
@@ -1474,13 +1630,13 @@ namespace mame.netlist
         public logic_family_std_proxy_t get() { return this; }  // for smart ptr
 
 
-        public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_base_t anetlist, string name, logic_output_t proxied)
+        public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_state_t anetlist, string name, logic_output_t proxied)
         {
-            return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return pool().make_unique<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
+            return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return anetlist.make_object<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
         }
-        public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_base_t anetlist, string name, logic_input_t proxied)
+        public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_state_t anetlist, string name, logic_input_t proxied)
         {
-            return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return pool().make_unique<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
+            return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return anetlist.make_object<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
         }
     }
 }

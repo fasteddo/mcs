@@ -187,7 +187,7 @@ namespace mame
         //virtual const char *custom_brief_instance_name() const { return nullptr; }
 
 
-        //const image_device_format *device_get_indexed_creatable_format(int index) const { if (index < m_formatlist.size()) return m_formatlist.at(index).get(); else return nullptr;  }
+        //const image_device_format *device_get_indexed_creatable_format(int index) const noexcept { return (index < m_formatlist.size()) ? m_formatlist.at(index).get() : nullptr;  }
         //const image_device_format *device_get_named_creatable_format(const char *format_name);
         //const option_guide *device_get_creation_option_guide() { return create_option_guide(); }
 
@@ -218,26 +218,26 @@ namespace mame
         //void message(const char *format, ...) ATTR_PRINTF(2,3);
 
 
-        public bool exists() { return !string.IsNullOrEmpty(m_image_name); }
-        public string filename() { if (string.IsNullOrEmpty(m_image_name)) return null; else return m_image_name; }
-        //const char *basename() { if (!m_basename) return NULL; else return m_basename; }
-        public string basename_noext()  { if (string.IsNullOrEmpty(m_basename_noext)) return null; else return m_basename_noext; }
-        //const std::string &filetype() const { return m_filetype; }
+        public bool exists() { return !m_image_name.empty(); }
+        public string filename() { return m_image_name.empty() ? null : m_image_name.c_str(); }
+        //string basename() { return m_basename.empty() ? null : m_basename.c_str(); }
+        public string basename_noext() { return m_basename_noext.empty() ? null : m_basename_noext.c_str(); }
+        //string filetype() { return m_filetype; }
         //bool is_filetype(const std::string &candidate_filetype) { return !core_stricmp(filetype().c_str(), candidate_filetype.c_str()); }
-        //bool is_open() const { return bool(m_file); }
-        //core_file *image_core_file() { return m_file; }
-        //UINT64 length() { check_for_file(); return core_fsize(m_file); }
-        //bool is_readonly() { return m_readonly; }
-        //UINT32 fread(void *buffer, UINT32 length) { check_for_file(); return core_fread(m_file, buffer, length); }
-        //UINT32 fread(optional_shared_ptr<UINT8> &ptr, UINT32 length) { ptr.allocate(length); return fread(ptr.target(), length); }
-        //UINT32 fread(optional_shared_ptr<UINT8> &ptr, UINT32 length, offs_t offset) { ptr.allocate(length); return fread(ptr + offset, length - offset); }
-        //UINT32 fwrite(const void *buffer, UINT32 length) { check_for_file(); return core_fwrite(m_file, buffer, length); }
-        //int fseek(INT64 offset, int whence) { check_for_file(); return core_fseek(m_file, offset, whence); }
-        //UINT64 ftell() { check_for_file(); return core_ftell(m_file); }
+        //bool is_open() const noexcept { return bool(m_file); }
+        //util::core_file &image_core_file() const noexcept { return *m_file; }
+        //u64 length() { check_for_file(); return m_file->size(); }
+        //bool is_readonly() const noexcept { return m_readonly; }
+        //u32 fread(void *buffer, u32 length) { check_for_file(); return m_file->read(buffer, length); }
+        //u32 fread(optional_shared_ptr<u8> &ptr, u32 length) { ptr.allocate(length); return fread(ptr.target(), length); }
+        //u32 fread(optional_shared_ptr<u8> &ptr, u32 length, offs_t offset) { ptr.allocate(length); return fread(ptr + offset, length - offset); }
+        //u32 fwrite(const void *buffer, u32 length) { check_for_file(); return m_file->write(buffer, length); }
+        //int fseek(s64 offset, int whence) { check_for_file(); return m_file->seek(offset, whence); }
+        //u64 ftell() { check_for_file(); return m_file->tell(); }
         //int fgetc() { char ch; if (fread(&ch, 1) != 1) ch = '\0'; return ch; }
-        //char *fgets(char *buffer, UINT32 length) { check_for_file(); return core_fgets(buffer, length, m_file); }
-        //int image_feof() { check_for_file(); return core_feof(m_file); }
-        //void *ptr() {check_for_file(); return (void *) core_fbuffer(m_file); }
+        //char *fgets(char *buffer, u32 length) { check_for_file(); return m_file->gets(buffer, length); }
+        //int image_feof() { check_for_file(); return m_file->eof(); }
+        //void *ptr() {check_for_file(); return const_cast<void *>(m_file->buffer()); }
 
 
         // configuration access

@@ -132,11 +132,6 @@ namespace mame
 
         public static void fatalerror(string format, params object [] args)
         {
-            //va_list ap;
-            //va_start(ap, format);
-            //emu_fatalerror error(format, ap);
-            //va_end(ap);
-            //throw error;
             throw new emu_fatalerror(format, args);
         }
     }
@@ -232,9 +227,9 @@ namespace mame
         {
         }
 
-        public emu_fatalerror(int exitcode, string format, params object [] args)
+        public emu_fatalerror(int _exitcode, string format, params object [] args)
         {
-            code = exitcode;
+            code = _exitcode;
             text = string.Format(format, args);
 
             string error = string.Format("emu_fatalerror: {0}code: {1}\n", text, code);
@@ -242,7 +237,7 @@ namespace mame
         }
 
 
-        public string str() { return text; }
+        public string what() { return text; }
         public int exitcode() { return code; }
     }
 

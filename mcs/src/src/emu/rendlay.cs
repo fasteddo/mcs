@@ -2578,8 +2578,7 @@ namespace mame
                     string name = env.get_attribute_string(childnode, "name", null);
                     if (name == null)
                         throw new rendlay_global.layout_syntax_error("element lacks name attribute");
-                    //if (!m_elemmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(env, childnode, dirname)).second)
-                    if (m_elemmap.ContainsKey(name))
+                    if (!m_elemmap.emplace(name, new layout_element(env, childnode, dirname)))  //if (!m_elemmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(env, childnode, dirname)).second)
                         throw new rendlay_global.layout_syntax_error(string_format("duplicate element name {0}", name));
                     m_elemmap.emplace(name, new layout_element(env, childnode, dirname));
                 }
@@ -2588,8 +2587,7 @@ namespace mame
                     string name = env.get_attribute_string(childnode, "name", null);
                     if (name == null)
                         throw new rendlay_global.layout_syntax_error("group lacks name attribute");
-                    //if (!groupmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(childnode)).second)
-                    if (groupmap.ContainsKey(name))
+                    if (!groupmap.emplace(name, new layout_group(childnode)))  //if (!groupmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(childnode)).second)
                         throw new rendlay_global.layout_syntax_error(string_format("duplicate group name {0}", name));
                     groupmap.emplace(name, new layout_group(childnode));
                 }

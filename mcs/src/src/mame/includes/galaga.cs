@@ -17,17 +17,6 @@ namespace mame
 {
     partial class galaga_state : driver_device
     {
-        struct star
-        {
-            public uint16_t x;
-            public uint16_t y;
-            public uint8_t col;
-            public uint8_t set;
-
-            public star(uint16_t x, uint16_t y, uint8_t col, uint8_t set) { this.x = x; this.y = y; this.col = col; this.set = set; }
-        }
-
-
         /* memory pointers */
         protected optional_shared_ptr_uint8_t m_videoram;
         optional_shared_ptr_uint8_t m_galaga_ram1;
@@ -42,11 +31,8 @@ namespace mame
         required_device<screen_device> m_screen;
         required_device<palette_device> m_palette;
         output_manager.output_finder/*<2>*/ m_leds;
+        optional_device<starfield_05xx_device> m_starfield; // not present on battles, digdug, xevious
         emu_timer m_cpu3_interrupt_timer;
-
-        /* machine state */
-        uint32_t m_stars_scrollx;
-        uint32_t m_stars_scrolly;
 
         uint32_t m_galaga_gfxbank; // used by catsbee
 
@@ -79,6 +65,11 @@ namespace mame
             m_screen = new required_device<screen_device>(this, "screen");
             m_palette = new required_device<palette_device>(this, "palette");
             m_leds = new output_manager.output_finder(2, this, "led{0}", 0U);
+            m_starfield = new optional_device<starfield_05xx_device>(this, "starfield");
+            m_galaga_gfxbank = 0;
+            m_main_irq_mask = 0;
+            m_sub_irq_mask = 0;
+            m_sub2_nmi_mask = 0;
         }
 
 

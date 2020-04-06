@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using nl_double = System.Double;
+using nl_fptype = System.Double;
 
 
 namespace mame.netlist.analog
@@ -29,18 +29,18 @@ namespace mame.netlist.analog
     //template <>
     class generic_capacitor_variable  //<capacitor_e::VARIABLE_CAPACITY>
     {
-        state_var<double> m_h;
-        state_var<double> m_c;
-        state_var<double> m_v;
-        nl_double m_gmin;
+        state_var<nl_fptype> m_h;
+        state_var<nl_fptype> m_c;
+        state_var<nl_fptype> m_v;
+        nl_fptype m_gmin;
 
 
         generic_capacitor_variable(device_t dev, string name)
         {
-            m_h = new state_var<double>(dev, name + ".m_h", 0.0);
-            m_c = new state_var<double>(dev, name + ".m_c", 0.0);
-            m_v = new state_var<double>(dev, name + ".m_v", 0.0);
-            m_gmin = 0.0;
+            m_h = new state_var<nl_fptype>(dev, name + ".m_h", nlconst.zero());
+            m_c = new state_var<nl_fptype>(dev, name + ".m_c", nlconst.zero());
+            m_v = new state_var<nl_fptype>(dev, name + ".m_v", nlconst.zero());
+            m_gmin = nlconst.zero();
         }
 
         capacitor_e type() { return capacitor_e.VARIABLE_CAPACITY; }
@@ -52,29 +52,29 @@ namespace mame.netlist.analog
         // so that G depends on un+1 only and Ieq on un only.
         // In both cases, i = G * un+1 + Ieq
 
-        //nl_double G(nl_double cap) const
+        //nl_fptype G(nl_fptype cap) const noexcept
         //{
         //    //return m_h * cap +  m_gmin;
-        //    return m_h * 0.5 * (cap + m_c) +  m_gmin;
+        //    return m_h * nlconst::half() * (cap + m_c) +  m_gmin;
         //    //return m_h * cap +  m_gmin;
         //}
 
-        //nl_double Ieq(nl_double cap, nl_double v) const
+        //nl_fptype Ieq(nl_fptype cap, nl_fptype v) const noexcept
         //{
         //    plib::unused_var(v);
         //    //return -m_h * 0.5 * ((cap + m_c) * m_v + (cap - m_c) * v) ;
-        //    return -m_h * 0.5 * (cap + m_c) * m_v;
+        //    return -m_h * nlconst::half() * (cap + m_c) * m_v;
         //    //return -m_h * cap * m_v;
         //}
 
-        //void timestep(nl_double cap, nl_double v, nl_double step)
+        //void timestep(nl_fptype cap, nl_fptype v, nl_fptype step) noexcept
         //{
-        //    m_h = 1.0 / step;
+        //    m_h = plib::reciprocal(step);
         //    m_c = cap;
         //    m_v = v;
         //}
 
-        //void setparams(nl_double gmin) { m_gmin = gmin; }
+        //void setparams(nl_fptype gmin) noexcept { m_gmin = gmin; }
     }
 
 
@@ -82,36 +82,36 @@ namespace mame.netlist.analog
     //template <>
     class generic_capacitor_constant  //<capacitor_e::CONSTANT_CAPACITY>
     {
-        state_var<nl_double> m_h;
-        state_var<double> m_v;
-        nl_double m_gmin;
+        state_var<nl_fptype> m_h;
+        state_var<nl_fptype> m_v;
+        nl_fptype m_gmin;
 
 
         public generic_capacitor_constant(device_t dev, string name)
         {
-            m_h = new state_var<nl_double>(dev, name + ".m_h", 0.0);
-            m_v = new state_var<nl_double>(dev, name + ".m_v", 0.0);
-            m_gmin = 0.0;
+            m_h = new state_var<nl_fptype>(dev, name + ".m_h", nlconst.zero());
+            m_v = new state_var<nl_fptype>(dev, name + ".m_v", nlconst.zero());
+            m_gmin = nlconst.zero();
         }
 
 
         public capacitor_e type() { return capacitor_e.CONSTANT_CAPACITY; }
 
-        public nl_double G(nl_double cap) { return cap * m_h.op +  m_gmin; }
+        public nl_fptype G(nl_fptype cap) { return cap * m_h.op +  m_gmin; }
 
-        public nl_double Ieq(nl_double cap, nl_double v)
+        public nl_fptype Ieq(nl_fptype cap, nl_fptype v)
         {
             //plib::unused_var(v);
             return - G(cap) * m_v.op;
         }
 
-        //void timestep(nl_double cap, nl_double v, nl_double step)
+        //void timestep(nl_fptype cap, nl_fptype v, nl_fptype step) noexcept
         //{
         //    plib::unused_var(cap);
-        //    m_h = 1.0 / step;
+        //    m_h = plib::reciprocal(step);
         //    m_v = v;
         //}
 
-        public void setparams(nl_double gmin) { m_gmin = gmin; }
+        public void setparams(nl_fptype gmin) { m_gmin = gmin; }
     }
 }

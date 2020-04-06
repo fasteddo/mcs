@@ -24,7 +24,7 @@ namespace mame
 
         static readonly internal_layout layout_dualhsxs = new internal_layout
         (
-            985, layout_dualhsxs_data.Length, 1, layout_dualhsxs_data
+            985, layout_dualhsxs_data.Length, internal_layout.compression.ZLIB, layout_dualhsxs_data
         );
     }
 }

@@ -342,6 +342,8 @@ namespace mame
             m_allpot_r_cb = new devcb_read8(this);
             m_serin_r_cb = new devcb_read8(this);
             m_serout_w_cb = new devcb_write8(this);
+            m_keyboard_r = null;
+            m_irq_f = null;
             m_output_type = output_type.LEGACY_LINEAR;
         }
 
@@ -359,30 +361,14 @@ namespace mame
         /* all are, in contrast to actual hardware, ACTIVE_HIGH */
 
         //typedef device_delegate<uint8_t (uint8_t k543210)> kb_cb_delegate;
-        delegate byte kb_cb_delegate(uint8_t k543210);
+        delegate uint8_t kb_cb_delegate(uint8_t k543210);
 
-        //void set_keyboard_callback(kb_cb_delegate callback) { m_keyboard_r = callback; }
-        //template <class FunctionClass> void set_keyboard_callback(const char *devname, uint8_t (FunctionClass::*callback)(uint8_t), const char *name)
-        //{
-        //    set_keyboard_callback(kb_cb_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
-        //}
-        //template <class FunctionClass> void set_keyboard_callback(uint8_t (FunctionClass::*callback)(uint8_t), const char *name)
-        //{
-        //    set_keyboard_callback(kb_cb_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
-        //}
+        //template <typename... T> void set_keyboard_callback(T &&... args) { m_keyboard_r.set(std::forward<T>(args)...); }
 
         //typedef device_delegate<void (int mask)> int_cb_delegate;
         delegate void int_cb_delegate(int mask);
 
-        //void set_interrupt_callback(int_cb_delegate callback) { m_irq_f = callback; }
-        //template <class FunctionClass> void set_interrupt_callback(const char *devname, void (FunctionClass::*callback)(int), const char *name)
-        //{
-        //    set_interrupt_callback(int_cb_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
-        //}
-        //template <class FunctionClass> void set_interrupt_callback(void (FunctionClass::*callback)(int), const char *name)
-        //{
-        //    set_interrupt_callback(int_cb_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
-        //}
+        //template <typename... T> void set_interrupt_callback(T &&... args) { m_irq_f.set(std::forward<T>(args)...); }
 
 
         //-------------------------------------------------
@@ -536,10 +522,9 @@ namespace mame
         protected override void device_start()
         {
             //int sample_rate = clock();
-            int i;
 
             /* Setup channels */
-            for (i = 0; i < POKEY_CHANNELS; i++)
+            for (int i = 0; i < POKEY_CHANNELS; i++)
             {
                 m_channel[i] = new pokey_channel();
 
@@ -553,8 +538,8 @@ namespace mame
             // bind callbacks
             //throw new emu_unimplemented();
 #if false
-            m_keyboard_r.bind_relative_to(*owner());
-            m_irq_f.bind_relative_to(*owner());
+            m_keyboard_r.resolve();
+            m_irq_f.resolve();
 #endif
 
             /* calculate the A/D times
@@ -599,16 +584,9 @@ namespace mame
             m_kbd_state = 0;
 
             /* reset more internal state */
-            for (i=0; i<3; i++)
-            {
-                m_clock_cnt[i] = 0;
-            }
-
-            for (i=0; i<8; i++)
-            {
-                m_POTx[i] = 0;
-            }
-
+            std.fill(m_clock_cnt, 0);  //std::fill(std::begin(m_clock_cnt), std::end(m_clock_cnt), 0);
+            std.fill<uint8_t>(m_POTx, 0);
+            
             foreach (devcb_read8 cb in m_pot_r_cb)
                 cb.resolve();
             m_allpot_r_cb.resolve();
@@ -622,7 +600,7 @@ namespace mame
             timer_alloc(SYNC_POT);
             timer_alloc(SYNC_SET_IRQST);
 
-            for (i=0; i<POKEY_CHANNELS; i++)
+            for (int i=0; i<POKEY_CHANNELS; i++)
             {
                 //throw new emu_unimplemented();
 #if false

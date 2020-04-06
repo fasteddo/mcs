@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
+using nlmempool = mame.plib.mempool;
 
 
 namespace mame.netlist
@@ -42,10 +43,10 @@ namespace mame.netlist
         // -----------------------------------------------------------------------------
         public abstract class element_t
         {
-            string m_name;                             /* device name */
-            string m_classname;                        /* device class name */
-            string m_def_param;                        /* default parameter */
-            string m_sourcefile;                       /* source file */
+            string m_name;                             ///< device name
+            string m_classname;                        ///< device class name
+            string m_def_param;                        ///< default parameter
+            string m_sourcefile;                       ///< source file
 
 
             protected element_t(string name, string classname, string def_param)
@@ -69,12 +70,12 @@ namespace mame.netlist
             //COPYASSIGNMOVE(element_t, default)
 
 
-            public abstract device_t Create(netlist_state_t anetlist, string name);  //virtual unique_pool_ptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) = 0;
+            public abstract device_t Create(nlmempool pool, netlist_state_t anetlist, string name);  //virtual unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) = 0;
             public virtual void macro_actions(nlparse_t nparser, string name) { }
 
             public string name() { return m_name; }
             //const pstring &classname() const { return m_classname; }
-            //const pstring &param_desc() const { return m_def_param; }
+            public string param_desc() { return m_def_param; }
             //const pstring &sourcefile() const { return m_sourcefile; }
         }
 
@@ -86,8 +87,8 @@ namespace mame.netlist
             public device_element_t(string name, string classname, string def_param, string sourcefile) : base(name, classname, def_param, sourcefile) { }
 
 
-            //unique_pool_ptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override { return pool().make_unique<C>(anetlist, name); }
-            public override device_t Create(netlist_state_t anetlist, string name)
+            //unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override { return pool.make_unique<C>(anetlist, name); }
+            public override device_t Create(nlmempool pool, netlist_state_t anetlist, string name)
             {
                 Type type = typeof(C);
                 if      (type == typeof(nld_sound_in))              return new nld_sound_in(anetlist, name);
@@ -126,7 +127,10 @@ namespace mame.netlist
                 foreach (var e in this)
                 {
                     if (e.name() == factory.name())
+                    {
                         m_log.fatal.op(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
+                        throw new nl_exception(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
+                    }
                 }
 
                 push_back(factory);  //push_back(std::move(factory));
@@ -141,7 +145,7 @@ namespace mame.netlist
                 }
 
                 m_log.fatal.op(nl_errstr_global.MF_CLASS_1_NOT_FOUND(devname));
-                return null; // appease code analysis
+                throw new nl_exception(nl_errstr_global.MF_CLASS_1_NOT_FOUND(devname));
             }
 
             //template <class C>
@@ -174,11 +178,11 @@ namespace mame.netlist
                 : base(name, classname, def_param, source) {  }
 
 
-            public override device_t Create(netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override;
+            public override device_t Create(nlmempool pool, netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override;
             {
                 throw new emu_unimplemented();
 #if false
-                return plib::owned_ptr<device_t>::Create<NETLIB_NAME(wrapper)>(anetlist, name);
+                return pool.make_unique<NETLIB_NAME(wrapper)>(anetlist, name);
 #endif
             }
 

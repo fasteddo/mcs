@@ -4,8 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using netlist_base_t = mame.netlist.netlist_state_t;
-using nl_double = System.Double;
+using nl_fptype = System.Double;
 
 
 // -----------------------------------------------------------------------------
@@ -90,24 +89,35 @@ namespace mame.netlist
             //void solve_later(netlist_time delay = netlist_time::quantum());
 
 
-            protected void set_G_V_I(nl_double G, nl_double V, nl_double I)
+            protected void set_G_V_I(nl_fptype G, nl_fptype V, nl_fptype I)
             {
-                /*      GO, GT, I                */
+                //               GO, GT,        I
                 m_P.set_go_gt_I( -G,  G, (  V) * G - I);
                 m_N.set_go_gt_I( -G,  G, ( -V) * G + I);
             }
 
 
-            protected nl_double deltaV()
+            protected nl_fptype deltaV()
             {
                 return m_P.net().Q_Analog() - m_N.net().Q_Analog();
             }
 
 
-            protected void set_mat(nl_double a11, nl_double a12, nl_double rhs1,
-                                   nl_double a21, nl_double a22, nl_double rhs2)
+            //nl_fptype V1P() const noexcept
+            //{
+            //    return m_P.net().Q_Analog();
+            //}
+
+            //nl_fptype V2N() const noexcept
+            //{
+            //    return m_N.net().Q_Analog();
+            //}
+
+
+            protected void set_mat(nl_fptype a11, nl_fptype a12, nl_fptype rhs1,
+                                   nl_fptype a21, nl_fptype a22, nl_fptype rhs2)
             {
-                /*      GO, GT, I                */
+                //               GO,  GT,     I
                 m_P.set_go_gt_I(a12, a11, rhs1);
                 m_N.set_go_gt_I(a21, a22, rhs2);
             }
@@ -129,11 +139,11 @@ namespace mame.netlist
             }
 
 
-            public void set_R(nl_double R)
+            public void set_R(nl_fptype R)
             {
-                nl_double G = 1.0 / R;  //const nl_double G = plib::constants<nl_double>::one() / R;
-                set_mat( G, -G, 0.0,
-                        -G,  G, 0.0);
+                nl_fptype G = plib.pmath_global.reciprocal(R);
+                set_mat( G, -G, nlconst.zero(),
+                        -G,  G, nlconst.zero());
             }
 
 
@@ -142,7 +152,7 @@ namespace mame.netlist
             public override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
-                set_R(1.0 / exec().gmin());
+                set_R(plib.pmath_global.reciprocal(exec().gmin()));
             }
 
             //NETLIB_UPDATEI();
@@ -158,7 +168,11 @@ namespace mame.netlist
             public static factory.constructor_ptr_t decl_R = nld_R_c;
 
 
-            param_double_t m_R;
+            // protect set_R ... it's a recipe to desaster when used to bypass the parameter
+            //using NETLIB_NAME(R_base)::set_R;
+
+
+            param_fp_t m_R;
 
 
             //NETLIB_CONSTRUCTOR_DERIVED(R, R_base)
@@ -167,7 +181,7 @@ namespace mame.netlist
             public nld_R(object owner, string name)
                 : base(owner, name)
             {
-                m_R = new param_double_t(this, "R", 1e9);
+                m_R = new param_fp_t(this, "R", nlconst.magic(1e9));
             }
 
 
@@ -179,7 +193,7 @@ namespace mame.netlist
             public override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
-                set_R(std.max(m_R.op, exec().gmin()));
+                set_R(std.max(m_R.op(), exec().gmin()));
             }
 
             //NETLIB_UPDATE_PARAMI();
@@ -187,7 +201,7 @@ namespace mame.netlist
             public override void update_param()
             {
                 solve_now();
-                set_R(std.max(m_R.op, exec().gmin()));
+                set_R(std.max(m_R.op(), exec().gmin()));
             }
 
             /* protect set_R ... it's a recipe to desaster when used to bypass the parameter */
@@ -210,8 +224,8 @@ namespace mame.netlist
             nld_R_base m_R1;  //NETLIB_SUB(R_base) m_R1;
             nld_R_base m_R2;  //NETLIB_SUB(R_base) m_R2;
 
-            param_double_t m_R;
-            param_double_t m_Dial;
+            param_fp_t m_R;
+            param_fp_t m_Dial;
             param_logic_t m_DialIsLog;
             param_logic_t m_Reverse;
 
@@ -224,8 +238,8 @@ namespace mame.netlist
             {
                 m_R1 = new nld_R_base(this, "_R1");
                 m_R2 = new nld_R_base(this, "_R2");
-                m_R = new param_double_t(this, "R", 10000);
-                m_Dial = new param_double_t(this, "DIAL", 0.5);
+                m_R = new param_fp_t(this, "R", 10000);
+                m_Dial = new param_fp_t(this, "DIAL", nlconst.half());
                 m_DialIsLog = new param_logic_t(this, "DIALLOG", false);
                 m_Reverse = new param_logic_t(this, "REVERSE", false);
 
@@ -243,12 +257,12 @@ namespace mame.netlist
             //NETLIB_RESETI();
             public override void reset()
             {
-                nl_double v = m_Dial.op;
-                if (m_DialIsLog.op)
-                    v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
+                nl_fptype v = m_Dial.op();
+                if (m_DialIsLog.op())
+                    v = (plib.pmath_global.exp(v) - nlconst.one()) / (plib.pmath_global.exp(nlconst.one()) - nlconst.one());
 
-                m_R1.set_R(std.max(m_R.op * v, exec().gmin()));
-                m_R2.set_R(std.max(m_R.op * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
+                m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
+                m_R2.set_R(std.max(m_R.op() * (nlconst.one() - v), exec().gmin()));
             }
 
             //NETLIB_UPDATE_PARAMI();
@@ -258,14 +272,14 @@ namespace mame.netlist
                 m_R1.solve_now();
                 m_R2.solve_now();
 
-                nl_double v = m_Dial.op;
-                if (m_DialIsLog.op)
-                    v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
-                if (m_Reverse.op)
-                    v = 1.0 - v;
+                nl_fptype v = m_Dial.op();
+                if (m_DialIsLog.op())
+                    v = (plib.pmath_global.exp(v) - nlconst.one()) / (plib.pmath_global.exp(nlconst.one()) - nlconst.one());
+                if (m_Reverse.op())
+                    v = nlconst.one() - v;
 
-                m_R1.set_R(std.max(m_R.op * v, exec().gmin()));
-                m_R2.set_R(std.max(m_R.op * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
+                m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
+                m_R2.set_R(std.max(m_R.op() * (nlconst.one() - v), exec().gmin()));
             }
         }
 
@@ -282,7 +296,7 @@ namespace mame.netlist
             public static factory.constructor_ptr_t decl_C = nld_C_c;
 
 
-            param_double_t m_C;
+            param_fp_t m_C;
 
             //generic_capacitor<capacitor_e::VARIABLE_CAPACITY> m_cap;
             generic_capacitor_constant m_cap;  //generic_capacitor<capacitor_e.CONSTANT_CAPACITY> m_cap;
@@ -294,8 +308,8 @@ namespace mame.netlist
             public nld_C(netlist_state_t owner, string name)
                 : base(owner, name)
             {
-                m_C = new param_double_t(this, "C", 1e-6);
-                m_cap = new generic_capacitor_constant(this, "m_cap");  //generic_capacitor<capacitor_e.CONSTANT_CAPACITY>(this, "m_cap");
+                m_C = new param_fp_t(this, "C", nlconst.magic(1e-6));
+                m_cap = new generic_capacitor_constant(this, "m_cap");  //, m_cap(*this, "m_cap")
             }
 
 
@@ -303,7 +317,7 @@ namespace mame.netlist
             public override bool is_timestep() { return true; }
 
             //NETLIB_TIMESTEPI();
-            public override void timestep(nl_double step)
+            public override void timestep(nl_fptype step)
             {
                 throw new emu_unimplemented();
             }
@@ -316,8 +330,8 @@ namespace mame.netlist
             //NETLIB_UPDATE_TERMINALSI()
             public override void update_terminals()
             {
-                nl_double I = m_cap.Ieq(m_C.op, deltaV());
-                nl_double G = m_cap.G(m_C.op);
+                nl_fptype I = m_cap.Ieq(m_C.op(), deltaV());
+                nl_fptype G = m_cap.G(m_C.op());
                 set_mat( G, -G, -I,
                         -G,  G,  I);
             }

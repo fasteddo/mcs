@@ -622,6 +622,9 @@ namespace mame
         }
 
 
+        public abstract void input_update();
+
+
         public virtual void set_verbose(bool print_verbose) { m_print_verbose = print_verbose; }
 
 
@@ -703,7 +706,7 @@ namespace mame
         //  customize_input_type_list - provide OSD
         //  additions/modifications to the input list
         //-------------------------------------------------
-        public virtual void customize_input_type_list(simple_list<input_type_entry> typelist)
+        public virtual void customize_input_type_list(std.vector<input_type_entry> typelist)
         {
             //
             // inptport.c defines some general purpose defaults for key and joystick bindings.

@@ -120,9 +120,7 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.devices.nld_system_global.TTL_INPUT(setup, "ttlhigh", 1);
-            netlist.devices.nld_system_global.TTL_INPUT(setup, "ttllow", 0);
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "GND", "GND");
+            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "GNDA", "GND");
             netlist.nl_setup_global.NET_REGISTER_DEV(setup, "PARAMETER", "NETLIST");
 
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "diode_models", netlist_diode_models);

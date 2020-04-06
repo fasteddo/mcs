@@ -23,7 +23,7 @@ namespace mame
 
         static readonly internal_layout layout_quadhsxs = new internal_layout
         (
-            1346, layout_quadhsxs_data.Length, 1, layout_quadhsxs_data
+            1346, layout_quadhsxs_data.Length, internal_layout.compression.ZLIB, layout_quadhsxs_data
         );
     }
 }

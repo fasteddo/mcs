@@ -22,7 +22,7 @@ namespace mame
 
         static readonly internal_layout layout_triphsxs = new internal_layout
         (
-            569, layout_triphsxs_data.Length, 1, layout_triphsxs_data
+            569, layout_triphsxs_data.Length, internal_layout.compression.ZLIB, layout_triphsxs_data
         );
     }
 }

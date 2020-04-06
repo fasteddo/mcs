@@ -578,7 +578,7 @@ namespace mame
 #if false
             catch (emu_fatalerror fatal)
             {
-                osdcore_global.osd_printf_error(string.Format("FATALERROR: {0}\n", fatal.str()));
+                osdcore_global.osd_printf_error(string.Format("FATALERROR: {0}\n", fatal.what()));
                 error = machine_manager.MAMERR.MAMERR_FATALERROR;
                 //if (fatal.exitcode() != 0)
                 //    error = fatal.exitcode();

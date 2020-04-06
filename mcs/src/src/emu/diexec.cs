@@ -348,9 +348,12 @@ namespace mame
         {
             m_scheduler = null;
             m_disabled = false;
+            m_vblank_interrupt = null;
             m_vblank_interrupt_screen = null;
+            m_timed_interrupt = null;
             m_timed_interrupt_period = attotime.zero;
             m_nextexec = null;
+            m_driver_irq = null;
             m_timedint_timer = null;
             m_profiler = profile_type.PROFILER_IDLE;
             m_icountptrRef = null;
@@ -419,9 +422,9 @@ namespace mame
         public void set_disable() { m_disabled = true; }
 
 
-        //template <typename Object> void set_vblank_int(Object &&cb, const char *tag)
+        //template <typename... T> void set_vblank_int(const char *tag, T &&... args)
         //{
-        //    m_vblank_interrupt = std::forward<Object>(cb);
+        //    m_vblank_interrupt.set(std::forward<T>(args)...);
         //    m_vblank_interrupt_screen = tag;
         //}
 
@@ -431,47 +434,51 @@ namespace mame
             m_vblank_interrupt_screen = tag;
         }
 
-        //template <class FunctionClass> void set_vblank_int(const char *tag, const char *devname, void (FunctionClass::*callback)(device_t &), const char *name)
-        //{
-        //    set_vblank_int(device_interrupt_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)), tag);
-        //}
-
         public void set_vblank_int(string tag, device_interrupt_delegate callback)  //template <class FunctionClass> void set_vblank_int(const char *tag, void (FunctionClass::*callback)(device_t &), const char *name)
         {
             set_vblank_int(callback, tag);  //set_vblank_int(device_interrupt_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), tag);
         }
 
 
-        public void set_periodic_int(device_interrupt_delegate function, attotime rate)  //template <typename Object> void set_periodic_int(Object &&cb, const attotime &rate)
+        //void remove_vblank_int()
+        //{
+        //    m_vblank_interrupt = device_interrupt_delegate(*this);
+        //    m_vblank_interrupt_screen = nullptr;
+        //}
+
+
+        //template <typename F> void set_periodic_int(F &&cb, const char *name, const attotime &rate)
+        //{
+        //    m_timed_interrupt.set(std::forward<F>(cb), name);
+        //    m_timed_interrupt_period = rate;
+        //}
+        //template <typename T, typename F> void set_periodic_int(T &&target, F &&cb, const char *name, const attotime &rate)
+        //{
+        //    m_timed_interrupt.set(std::forward<T>(target), std::forward<F>(cb), name);
+        //    m_timed_interrupt_period = rate;
+        //}
+
+        public void set_periodic_int(device_interrupt_delegate function, attotime rate)
         {
-            m_timed_interrupt = function;  //m_timed_interrupt = std::forward<Object>(cb);
+            m_timed_interrupt = function;  //m_timed_interrupt.set(std::forward<F>(cb), name);
             m_timed_interrupt_period = rate;
         }
 
-        //void set_periodic_int(device_interrupt_delegate callback, const attotime &rate)
+
+        //void remove_periodic_int()
         //{
-        //    m_timed_interrupt = callback;
-        //    m_timed_interrupt_period = rate;
-        //}
-        //template <class FunctionClass> void set_periodic_int(const char *devname, void (FunctionClass::*callback)(device_t &), const char *name, const attotime &rate)
-        //{
-        //    set_periodic_int(device_interrupt_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)), rate);
-        //}
-        //template <class FunctionClass> void set_periodic_int(void (FunctionClass::*callback)(device_t &), const char *name, const attotime &rate)
-        //{
-        //    set_periodic_int(device_interrupt_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), rate);
+        //    m_timed_interrupt = device_interrupt_delegate(*this);
+        //    m_timed_interrupt_period = attotime();
         //}
 
 
-        //template <typename Object> void set_irq_acknowledge_callback(Object &&cb) { m_driver_irq = std::forward<Object>(cb); }
-        //void set_irq_acknowledge_callback(device_irq_acknowledge_delegate callback) { m_driver_irq = callback; }
-        //template <class FunctionClass> void set_irq_acknowledge_callback(const char *devname, int (FunctionClass::*callback)(device_t &, int), const char *name)
+        //template <typename... T> void set_irq_acknowledge_callback(T &&... args)
         //{
-        //    set_irq_acknowledge_callback(device_irq_acknowledge_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
+        //    m_driver_irq.set(std::forward<T>(args)...);
         //}
-        //template <class FunctionClass> void set_irq_acknowledge_callback(int (FunctionClass::*callback)(device_t &, int), const char *name)
+        //void remove_irq_acknowledge_callback()
         //{
-        //    set_irq_acknowledge_callback(device_irq_acknowledge_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
+        //    m_driver_irq = device_irq_acknowledge_delegate(*this);
         //}
 
 
@@ -755,9 +762,9 @@ namespace mame
             m_scheduler = device().machine().scheduler();
 
             // bind delegates
-            //m_vblank_interrupt.bind_relative_to(*device().owner());
-            //m_timed_interrupt.bind_relative_to(*device().owner());
-            //m_driver_irq.bind_relative_to(*device().owner());
+            //m_vblank_interrupt.resolve();
+            //m_timed_interrupt.resolve();
+            //m_driver_irq.resolve();
 
             // fill in the initial states
             device_iterator iter = new device_iterator(device().machine().root_device());

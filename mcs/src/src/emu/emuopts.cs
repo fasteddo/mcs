@@ -302,6 +302,7 @@ namespace mame
         const string OPTION_SLEEP               = "sleep";
         const string OPTION_SPEED               = "speed";
         const string OPTION_REFRESHSPEED        = "refreshspeed";
+        const string OPTION_LOWLATENCY          = "lowlatency";
 
         // core render options
         const string OPTION_KEEPASPECT          = "keepaspect";
@@ -488,6 +489,7 @@ namespace mame
             new options_entry(OPTION_SLEEP,                                      "1",         OPTION_BOOLEAN,    "enable sleeping, which gives time back to other applications when idle"),
             new options_entry(OPTION_SPEED + "(0.01-100)",                       "1.0",       OPTION_FLOAT,      "controls the speed of gameplay, relative to realtime; smaller numbers are slower"),
             new options_entry(OPTION_REFRESHSPEED + ";rs",                       "0",         OPTION_BOOLEAN,    "automatically adjust emulation speed to keep the emulated refresh rate slower than the host screen"),
+            new options_entry(OPTION_LOWLATENCY + ";lolat",                      "0",         OPTION_BOOLEAN,    "draws new frame before throttling to reduce input latency"),
 
             // render options
             new options_entry(null,                                              null,        OPTION_HEADER,     "CORE RENDER OPTIONS"),
@@ -794,6 +796,7 @@ namespace mame
         public bool sleep() { return m_sleep; }
         public float speed() { return float_value(OPTION_SPEED); }
         public bool refresh_speed() { return m_refresh_speed; }
+        public bool low_latency() { return bool_value(OPTION_LOWLATENCY); }
 
 
         // core render options
@@ -1091,6 +1094,7 @@ namespace mame
                 // happen in practice
                 //
                 // In reality, I want to really return std::optional<std::string> here
+                // FIXME: the std::string assignment can throw exceptions, and returning std::optional<std::string> also isn't safe in noexcept
                 m_temp = m_host.specified_value();
                 result = m_temp.c_str();
             }

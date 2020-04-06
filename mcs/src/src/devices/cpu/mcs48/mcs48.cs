@@ -739,15 +739,7 @@ namespace mame
         }
 
 
-        //void set_t0_clk_cb(clock_update_delegate callback) { m_t0_clk_func = callback; }
-        //template <class FunctionClass> void set_t0_clk_cb(const char *devname, void (FunctionClass::*callback)(uint32_t), const char *name)
-        //{
-        //    set_t0_clk_cb(clock_update_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
-        //}
-        //template <class FunctionClass> void set_t0_clk_cb(void (FunctionClass::*callback)(uint32_t), const char *name)
-        //{
-        //    set_t0_clk_cb(clock_update_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
-        //}
+        //template <typename... T> void set_t0_clk_cb(T &&... args) { m_t0_clk_func.set(std::forward<T>(args)...); }
 
 
         // device-level overrides
@@ -870,7 +862,7 @@ namespace mame
 
         protected override void device_config_complete()
         {
-            //m_t0_clk_func.bind_relative_to(*owner());
+            //m_t0_clk_func.resolve();
             if (m_t0_clk_func != null)
                 m_t0_clk_func(clock() / 3);
         }

@@ -6,19 +6,26 @@ using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
 using device_timer_id = System.UInt32;
+using s32 = System.Int32;
 using u32 = System.UInt32;
 
 
 namespace mame
 {
     // timer callbacks look like this
-    //delegate<void (void *, INT32)> timer_expired_delegate;
-    public delegate void timer_expired_delegate(object o, int param);
+    //typedef named_delegate<void (void *, s32)> timer_expired_delegate;
+    public delegate void timer_expired_delegate(object o, s32 param);
 
 
     // ======================> emu_timer
-    public class emu_timer : simple_list_item<emu_timer>
+    public class emu_timer : global_object, simple_list_item<emu_timer>
     {
+        //friend class device_scheduler;
+        //friend class simple_list<emu_timer>;
+        //friend class fixed_allocator<emu_timer>;
+        //friend class resource_pool_object<emu_timer>;
+
+
         // internal state
         running_machine m_machine;      // reference to the owning machine
         emu_timer m_next;         // next timer in order in the list
@@ -45,6 +52,15 @@ namespace mame
             m_start = attotime.zero;
             m_expire = attotime.never;
         }
+
+
+        public emu_timer prev { get { return m_prev; } set { m_prev = value; } }
+        public timer_expired_delegate callback { get { return m_callback; } }
+        public bool temporary { get { return m_temporary; } }
+        public attotime period { get { return m_period; } }
+        public device_t device { get { return m_device; } }
+        public device_timer_id id { get { return m_id; } }
+        public bool enabled_set { get { return m_enabled; } set { m_enabled = value; } }
 
 
         // allocation and re-use
@@ -90,7 +106,7 @@ namespace mame
             m_machine = device.machine();
             m_next = null;
             m_prev = null;
-            m_callback = null;
+            m_callback = device_timer_expired;  //m_callback = timer_expired_delegate(FUNC(emu_timer::device_timer_expired), this);
             m_param = 0;
             m_ptr = ptr;
             m_enabled = false;
@@ -128,14 +144,8 @@ namespace mame
         public emu_timer m_next_get() { return m_next; }
         public void m_next_set(emu_timer value) { m_next = value; }
 
-        public emu_timer prev() { return m_prev; }
-        public timer_expired_delegate callback() { return m_callback; }
-        running_machine machine() { /*assert(m_machine != NULL);*/ return m_machine; }
+        running_machine machine() { assert(m_machine != null); return m_machine; }
         public bool enabled() { return m_enabled; }
-        public bool temporary() { return m_temporary; }
-        public attotime period() { return m_period; }
-        public device_t device() { return m_device; }
-        public device_timer_id id() { return m_id; }
         public int param() { return m_param; }
         public object ptr() { return m_ptr; }
 
@@ -164,9 +174,6 @@ namespace mame
 
         //void set_param(int param) { m_param = param; }
         //void set_ptr(void *ptr) { m_ptr = ptr; }
-        public void next_set(emu_timer value) { m_next = value; }
-        public void prev_set(emu_timer value) { m_prev = value; }
-        public void enabled_set(bool value) { m_enabled = value; }  // directly set the var, otherwise call enable()
 
 
         // control
@@ -290,6 +297,16 @@ namespace mame
                     machine().logerror(" cb={0}\n", m_callback);
             else
                 machine().logerror(" dev={0} id={1}\n", m_device.tag(), m_id);
+        }
+
+
+        //-------------------------------------------------
+        //  device_timer_expired - trampoline to avoid a
+        //  conditional jump on the hot path
+        //-------------------------------------------------
+        void device_timer_expired(object ptr, s32 param)  //static void device_timer_expired(emu_timer &timer, void *ptr, s32 param);
+        {
+            this.m_device.timer_expired(this, this.m_id, param, ptr);  //timer.m_device->timer_expired(timer, timer.m_id, param, ptr);
         }
     }
 
@@ -553,7 +570,7 @@ namespace mame
                             // if the new local CPU time is less than our target, move the target up, but not before the base
                             if (exec.localtime < target)
                             {
-                                target = attotime.Max(exec.localtime, m_basetime);
+                                target = std.max(exec.localtime, m_basetime);
 
                                 if (machine().video().frame_update_count() % 1000 == 0)
                                 {
@@ -691,7 +708,7 @@ namespace mame
                 emu_timer timer = m_timer_list;
 
                 // temporary timers go away entirely (except our special never-expiring one)
-                if (timer.temporary() && !timer.expire().is_never())
+                if (timer.temporary && !timer.expire().is_never())
                     m_timer_allocator.reclaim(timer.release());
 
                 // permanent ones get added to our private list
@@ -770,29 +787,13 @@ namespace mame
             // if we haven't yet set a scheduling quantum, do it now
             if (m_quantum_list.empty())
             {
-                // set the core scheduling quantum
-                attotime min_quantum = machine().config().minimum_quantum;
-
-                // if none specified default to 60Hz
-                if (min_quantum.is_zero())
-                    min_quantum = attotime.from_hz(60);
+                // set the core scheduling quantum, ensuring it's no longer than 60Hz
+                attotime min_quantum = machine().config().maximum_quantum(attotime.from_hz(60));
 
                 // if the configuration specifies a device to make perfect, pick that as the minimum
-                if (!machine().config().perfect_cpu_quantum().empty())
-                {
-                    device_t device = machine().root_device().subdevice(machine().config().perfect_cpu_quantum().c_str());
-                    if (device == null)
-                        fatalerror("Device '{0}' specified for perfect interleave is not present!\n", machine().config().perfect_cpu_quantum());
-
-                    device_execute_interface exec;
-                    if (!device.interface_(out exec))
-                        fatalerror("Device '{0}' specified for perfect interleave is not an executing device!\n", machine().config().perfect_cpu_quantum());
-
-                    min_quantum = attotime.Min(new attotime(0, exec.minimum_quantum()), min_quantum);
-                }
-
-                // make sure it's no higher than 60Hz
-                min_quantum = attotime.Min(min_quantum, attotime.from_hz(60));
+                device_execute_interface exec = machine().config().perfect_quantum_device();
+                if (exec != null)
+                    min_quantum = std.min(new attotime(0, exec.minimum_quantum()), min_quantum);
 
                 // inform the timer system of our decision
                 add_scheduling_quantum(min_quantum, attotime.never);
@@ -901,7 +902,7 @@ namespace mame
 
             // if we found an exact match, just take the maximum expiry time
             if (insert_after != null && insert_after.requested() == quantum_attos)
-                insert_after.expire_set(attotime.Max(insert_after.expire(), expire));
+                insert_after.expire_set(std.max(insert_after.expire(), expire));
 
             // otherwise, allocate a new quantum and insert it after the one we picked
             else
@@ -934,15 +935,15 @@ namespace mame
                 if (curtimer.expire() > expire)
                 {
                     // link the new guy in before the current list entry
-                    timer.prev_set(curtimer.prev());
-                    timer.next_set(curtimer);
+                    timer.prev = prevtimer;
+                    timer.m_next_set(curtimer);
 
-                    if (curtimer.prev() != null)
-                        curtimer.prev().next_set(timer);
+                    if (prevtimer != null)
+                        prevtimer.m_next_set(timer);
                     else
                         m_timer_list = timer;
 
-                    curtimer.prev_set(timer);
+                    curtimer.prev = timer;
 
                     return timer;
                 }
@@ -950,12 +951,12 @@ namespace mame
 
             // need to insert after the last one
             if (prevtimer != null)
-                prevtimer.next_set(timer);
+                prevtimer.m_next_set(timer);
             else
                 m_timer_list = timer;
 
-            timer.prev_set(prevtimer);
-            timer.next_set(null);
+            timer.prev = prevtimer;
+            timer.m_next_set(null);
 
             return timer;
         }
@@ -967,13 +968,13 @@ namespace mame
         public emu_timer timer_list_remove(emu_timer timer)
         {
             // remove it from the list
-            if (timer.prev() != null)
-                timer.prev().next_set(timer.next());
+            if (timer.prev != null)
+                timer.prev.m_next_set(timer.next());
             else
                 m_timer_list = timer.next();
 
             if (timer.next() != null)
-                timer.next().prev_set(timer.prev());
+                timer.next().prev = timer.prev;
 
             return timer;
         }
@@ -994,8 +995,8 @@ namespace mame
                 // if this is a one-shot timer, disable it now
                 emu_timer timer = m_timer_list;
                 bool was_enabled = timer.enabled();
-                if (timer.period().is_zero() || timer.period().is_never())
-                    timer.enabled_set(false);
+                if (timer.period.is_zero() || timer.period.is_never())
+                    timer.enabled_set = false;
 
                 // set the global state of which callback we're in
                 m_callback_timer_modified = false;
@@ -1007,38 +1008,27 @@ namespace mame
                 {
                     profiler_global.g_profiler.start(profile_type.PROFILER_TIMER_CALLBACK);
 
-
-                    if (timer.device() != null)
+                    if (timer.callback != null)
                     {
                         if (machine().video().frame_update_count() % 400 == 0)
                         {
-                        LOG("execute_timers: timer device {0} timer {1}\n", timer.device().tag(), timer.id());
+                        if (timer.device != null)
+                            LOG("execute_timers: timer device {0} timer {1}\n", timer.device.tag(), timer.id);
+                        else
+                            LOG("execute_timers: timer callback {0}\n", timer.callback.ToString());
                         }
 
-                        timer.device().timer_expired(timer, timer.id(), timer.param(), timer.ptr());
+                        timer.callback(timer.ptr(), timer.param());
                     }
-                    else if (timer.callback() != null)
-                    {
-                        if (machine().video().frame_update_count() % 400 == 0)
-                        {
-                        LOG("execute_timers: timer callback {0}\n", timer.callback());
-                        }
-
-                        timer.callback()(timer.ptr(), timer.param());
-                    }
-
 
                     profiler_global.g_profiler.stop();
                 }
-
-                // clear the callback timer global
-                m_callback_timer = null;
 
                 // reset or remove the timer, but only if it wasn't modified during the callback
                 if (!m_callback_timer_modified)
                 {
                     // if the timer is temporary, remove it now
-                    if (timer.temporary())
+                    if (timer.temporary)
                         m_timer_allocator.reclaim(timer.release());
 
                     // otherwise, reschedule it
@@ -1046,6 +1036,9 @@ namespace mame
                         timer.schedule_next_period();
                 }
             }
+
+            // clear the callback timer global
+            m_callback_timer = null;
         }
     }
 }

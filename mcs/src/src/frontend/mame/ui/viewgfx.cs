@@ -6,6 +6,8 @@ using System.Collections.Generic;
 
 using ListBytesPointer = mame.ListPointer<System.Byte>;
 using pen_t = System.UInt32;
+using uint8_t = System.Byte;
+using uint32_t = System.UInt32;
 
 
 namespace mame
@@ -23,10 +25,10 @@ namespace mame
         // information about a single gfx device
         class ui_gfx_info
         {
-            public device_gfx_interface gfxinterface;    // pointer to device's gfx interface
-            public byte setcount;                     // how many gfx sets device has
-            public byte [] rotate = new byte[digfx_global.MAX_GFX_ELEMENTS];     // current rotation (orientation) value
-            public byte [] columns = new byte[digfx_global.MAX_GFX_ELEMENTS];    // number of items per row
+            public device_gfx_interface interface_;    // pointer to device's gfx interface
+            public uint8_t setcount;                     // how many gfx sets device has
+            public uint8_t [] rotate = new uint8_t[digfx_global.MAX_GFX_ELEMENTS];     // current rotation (orientation) value
+            public uint8_t [] columns = new uint8_t[digfx_global.MAX_GFX_ELEMENTS];    // number of items per row
             public int [] offset = new int[digfx_global.MAX_GFX_ELEMENTS];     // current offset of top,left item
             public int [] color = new int[digfx_global.MAX_GFX_ELEMENTS];      // current color selected
             public device_palette_interface [] palette = new device_palette_interface[digfx_global.MAX_GFX_ELEMENTS]; // associated palette (maybe multiple choice one day?)
@@ -37,21 +39,21 @@ namespace mame
         class ui_gfx_state
         {
             public bool started;        // have we called ui_gfx_count_devices() yet?
-            public byte mode;           // which mode are we in?
+            public uint8_t mode;           // which mode are we in?
 
             // intermediate bitmaps
             public bool bitmap_dirty;   // is the bitmap dirty?
-            public bitmap_rgb32 bitmap;         // bitmap for drawing gfx and tilemaps
+            public bitmap_rgb32 bitmap = new bitmap_rgb32();         // bitmap for drawing gfx and tilemaps
             public render_texture texture;        // texture for rendering the above bitmap
 
             // palette-specific data
             public class palette_class
             {
-                public device_palette_interface palette_interface;     // pointer to current device
+                public device_palette_interface interface_;     // pointer to current device
                 public int devcount;             // how many palette devices exist
                 public int devindex;             // which palette device is visible
-                public byte which;                // which subset (pens or indirect colors)?
-                public byte columns;              // number of items per row
+                public uint8_t which;                // which subset (pens or indirect colors)?
+                public uint8_t columns;              // number of items per row
                 public int offset;               // current offset of top left item
             }
             public palette_class palette = new palette_class();
@@ -59,9 +61,9 @@ namespace mame
             // graphics-specific data
             public class gfxset_class
             {
-                public byte devcount;   // how many gfx devices exist
-                public byte devindex;   // which device is visible
-                public byte set;        // which set is visible
+                public uint8_t devcount;   // how many gfx devices exist
+                public uint8_t devindex;   // which device is visible
+                public uint8_t set;        // which set is visible
             }
             public gfxset_class gfxset = new gfxset_class();
 
@@ -75,8 +77,8 @@ namespace mame
                 public int xoffs;                // current X offset
                 public int yoffs;                // current Y offset
                 public int zoom;                 // zoom factor
-                public byte rotate;              // current rotation (orientation) value
-                public UInt32 flags;                    // render flags
+                public uint8_t rotate;              // current rotation (orientation) value
+                public uint32_t flags;                    // render flags
             }
             public tilemap_class tilemap = new tilemap_class();
 
@@ -93,7 +95,7 @@ namespace mame
         /***************************************************************************
             GLOBAL VARIABLES
         ***************************************************************************/
-        static ui_gfx_state ui_gfx;
+        static ui_gfx_state ui_gfx = new ui_gfx_state();
 
 
         // initialization
@@ -103,30 +105,50 @@ namespace mame
         public static void ui_gfx_init(running_machine machine)
         {
             ui_gfx_state state = ui_gfx;
-            byte rotate = (byte)(machine.system().flags & machine_flags.type.MASK_ORIENTATION);
+            uint8_t rotate = (uint8_t)(machine.system().flags & machine_flags.type.MASK_ORIENTATION);
 
             // make sure we clean up after ourselves
             machine.add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, ui_gfx_exit);
 
             // initialize our global state
-            ui_gfx = new ui_gfx_state();  //memset(state, 0, sizeof(*state));
-            state = ui_gfx;
+            state.started = false;
+            state.mode = 0;
+            state.bitmap_dirty = false;
+            state.bitmap.reset();
+            state.texture = null;
+            state.gfxset.devcount = 0;
+            state.gfxset.devindex = 0;
+            state.gfxset.set = 0;
 
             // set up the palette state
+            state.palette.interface_ = null;
+            state.palette.devcount = 0;
+            state.palette.devindex = 0;
+            state.palette.which = 0;
             state.palette.columns = 16;
 
             // set up the graphics state
-            for (byte i = 0; i < MAX_GFX_DECODERS; i++)
+            for (uint8_t i = 0; i < MAX_GFX_DECODERS; i++)
             {
-                for (byte j = 0; j < digfx_global.MAX_GFX_ELEMENTS; j++)
+                state.gfxdev[i].interface_ = null;
+                state.gfxdev[i].setcount = 0;
+                for (uint8_t j = 0; j < digfx_global.MAX_GFX_ELEMENTS; j++)
                 {
-                    state.gfxdev[i].rotate[j] = (byte)rotate;
+                    state.gfxdev[i].rotate[j] = rotate;
                     state.gfxdev[i].columns[j] = 16;
+                    state.gfxdev[i].offset[j] = 0;
+                    state.gfxdev[i].color[j] = 0;
+                    state.gfxdev[i].palette[j] = null;
+                    state.gfxdev[i].color_count[j] = 0;
                 }
             }
 
             // set up the tilemap state
-            state.tilemap.rotate = (byte)rotate;
+            state.tilemap.which = 0;
+            state.tilemap.xoffs = 0;
+            state.tilemap.yoffs = 0;
+            state.tilemap.zoom = 0;
+            state.tilemap.rotate = rotate;
             state.tilemap.flags = tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES;
         }
 
@@ -257,21 +279,21 @@ cancel:
 
             // count the gfx devices
             state.gfxset.devcount = 0;
-            foreach (device_gfx_interface gfxinterface in new gfx_interface_iterator(machine.root_device()))
+            foreach (device_gfx_interface interface_ in new gfx_interface_iterator(machine.root_device()))
             {
                 // count the gfx sets in each device, skipping devices with none
                 byte count = 0;
-                while (count < digfx_global.MAX_GFX_ELEMENTS && gfxinterface.gfx(count) != null)
+                while (count < digfx_global.MAX_GFX_ELEMENTS && interface_.gfx(count) != null)
                     count++;
 
                 // count = index of first nullptr
                 if (count > 0)
                 {
-                    state.gfxdev[state.gfxset.devcount].gfxinterface = gfxinterface;
+                    state.gfxdev[state.gfxset.devcount].interface_ = interface_;
                     state.gfxdev[state.gfxset.devcount].setcount = (byte)count;
                     for (byte slot = 0; slot != count; slot++)
                     {
-                        var gfx = gfxinterface.gfx(slot);
+                        var gfx = interface_.gfx(slot);
                         if (gfx.has_palette())
                         {
                             state.gfxdev[state.gfxset.devcount].palette[slot] = gfx.palette();
@@ -279,8 +301,8 @@ cancel:
                         }
                         else
                         {
-                            state.gfxdev[state.gfxset.devcount].palette[slot] = state.palette.palette_interface;
-                            state.gfxdev[state.gfxset.devcount].color_count[slot] = (int)(state.palette.palette_interface.entries() / gfx.granularity());
+                            state.gfxdev[state.gfxset.devcount].palette[slot] = state.palette.interface_;
+                            state.gfxdev[state.gfxset.devcount].color_count[slot] = (int)(state.palette.interface_.entries() / gfx.granularity());
                             if (state.gfxdev[state.gfxset.devcount].color_count[slot] == 0)
                                 state.gfxdev[state.gfxset.devcount].color_count[slot] = 1;
                         }
@@ -305,7 +327,7 @@ cancel:
             ui_gfx.texture = null;
 
             // free the bitmap
-            ui_gfx.bitmap = null;  //global_free(ui_gfx.bitmap);
+            ui_gfx.bitmap.reset();
         }
 
 
@@ -321,7 +343,7 @@ cancel:
         static void palette_set_device(running_machine machine, ui_gfx_state state)
         {
             palette_interface_iterator pal_iter = new palette_interface_iterator(machine.root_device());
-            state.palette.palette_interface = pal_iter.byindex(state.palette.devindex);
+            state.palette.interface_ = pal_iter.byindex(state.palette.devindex);
         }
 
 
@@ -331,26 +353,23 @@ cancel:
         //-------------------------------------------------
         static void palette_handler(mame_ui_manager mui, render_container container, ui_gfx_state state)
         {
-            device_palette_interface palette = state.palette.palette_interface;
+            device_palette_interface palette = state.palette.interface_;
             palette_device paldev = (palette_device)palette.device();
 
             int total = state.palette.which != 0 ? (int)palette.indirect_entries() : (int)palette.entries();
             ListBase<rgb_t> raw_color = palette.palette().entry_list_raw();  //const rgb_t *raw_color = palette->palette()->entry_list_raw();
             render_font ui_font = mui.get_font();
-            float chwidth;
-            float chheight;
             float titlewidth;
             float x0;
             float y0;
             render_bounds cellboxbounds;
             render_bounds boxbounds = new render_bounds();
-            int x;
-            int y;
             int skip;
 
             // add a half character padding for the box
-            chheight = mui.get_line_height();
-            chwidth = ui_font.char_width(chheight, mui.machine().render().ui_aspect(), '0');
+            float aspect = mui.machine().render().ui_aspect(container);
+            float chheight = mui.get_line_height();
+            float chwidth = ui_font.char_width(chheight, aspect, '0');
             boxbounds.x0 = 0.0f + 0.5f * chwidth;
             boxbounds.x1 = 1.0f - 0.5f * chwidth;
             boxbounds.y0 = 0.0f + 0.5f * chheight;
@@ -406,7 +425,7 @@ cancel:
 
             // expand the outer box to fit the title
             string title = title_buf;
-            titlewidth = ui_font.string_width(chheight, mui.machine().render().ui_aspect(), title);
+            titlewidth = ui_font.string_width(chheight, aspect, title.c_str());
             x0 = 0.0f;
             if (boxbounds.x1 - boxbounds.x0 < titlewidth + chwidth)
                 x0 = boxbounds.x0 - (0.5f - 0.5f * (titlewidth + chwidth));
@@ -419,17 +438,17 @@ cancel:
             y0 = boxbounds.y0 + 0.5f * chheight;
             foreach (var ch in title)
             {
-                container.add_char(x0, y0, chheight, mui.machine().render().ui_aspect(), rgb_t.white(), ui_font, ch);
-                x0 += ui_font.char_width(chheight, mui.machine().render().ui_aspect(), ch);
+                container.add_char(x0, y0, chheight, aspect, rgb_t.white(), ui_font, ch);
+                x0 += ui_font.char_width(chheight, aspect, ch);
             }
 
             // draw the top column headers
             skip = (int)(chwidth / cellwidth);
-            for (x = 0; x < state.palette.columns; x += 1 + skip)
+            for (int x = 0; x < state.palette.columns; x += 1 + skip)
             {
                 x0 = boxbounds.x0 + 6.0f * chwidth + (float)x * cellwidth;
                 y0 = boxbounds.y0 + 2.0f * chheight;
-                container.add_char(x0 + 0.5f * (cellwidth - chwidth), y0, chheight, mui.machine().render().ui_aspect(), rgb_t.white(), ui_font, "0123456789ABCDEF"[x & 0xf]);
+                container.add_char(x0 + 0.5f * (cellwidth - chwidth), y0, chheight, aspect, rgb_t.white(), ui_font, "0123456789ABCDEF"[x & 0xf]);
 
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
@@ -439,7 +458,7 @@ cancel:
 
             // draw the side column headers
             skip = (int)(chheight / cellheight);
-            for (y = 0; y < state.palette.columns; y += 1 + skip)
+            for (int y = 0; y < state.palette.columns; y += 1 + skip)
             {
                 // only display if there is data to show
                 if (state.palette.offset + y * state.palette.columns < total)
@@ -455,18 +474,18 @@ cancel:
 
                     // draw the row header
                     buffer = string.Format("{0:X5}", state.palette.offset + y * state.palette.columns);  // %5X
-                    for (x = 4; x >= 0; x--)
+                    for (int x = 4; x >= 0; x--)
                     {
-                        x0 -= ui_font.char_width(chheight, mui.machine().render().ui_aspect(), buffer[x]);
-                        container.add_char(x0, y0 + 0.5f * (cellheight - chheight), chheight, mui.machine().render().ui_aspect(), rgb_t.white(), ui_font, buffer[x]);
+                        x0 -= ui_font.char_width(chheight, aspect, buffer[x]);
+                        container.add_char(x0, y0 + 0.5f * (cellheight - chheight), chheight, aspect, rgb_t.white(), ui_font, buffer[x]);
                     }
                 }
             }
 
             // now add the rectangles for the colors
-            for (y = 0; y < state.palette.columns; y++)
+            for (int y = 0; y < state.palette.columns; y++)
             {
-                for (x = 0; x < state.palette.columns; x++)
+                for (int x = 0; x < state.palette.columns; x++)
                 {
                     int index = state.palette.offset + y * state.palette.columns + x;
                     if (index < total)
@@ -490,7 +509,7 @@ cancel:
         //-------------------------------------------------
         static void palette_handle_keys(running_machine machine, ui_gfx_state state)
         {
-            device_palette_interface palette = state.palette.palette_interface;
+            device_palette_interface palette = state.palette.interface_;
             int rowcount;
             int screencount;
             int total;
@@ -518,7 +537,7 @@ cancel:
                 {
                     state.palette.devindex--;
                     palette_set_device(machine, state);
-                    palette = state.palette.palette_interface;
+                    palette = state.palette.interface_;
                     state.palette.which = (palette.indirect_entries() > 0) ? (byte)1 : (byte)0;
                 }
             }
@@ -533,7 +552,7 @@ cancel:
                 {
                     state.palette.devindex++;
                     palette_set_device(machine, state);
-                    palette = state.palette.palette_interface;
+                    palette = state.palette.interface_;
                     state.palette.which = 0;
                 }
             }
@@ -582,15 +601,8 @@ cancel:
             int dev = state.gfxset.devindex;
             int set = state.gfxset.set;
             ui_gfx_info info = state.gfxdev[dev];
-            device_gfx_interface gfxinterface = info.gfxinterface;
+            device_gfx_interface gfxinterface = info.interface_;
             gfx_element gfx = gfxinterface.gfx(set);
-            float fullwidth;
-            float fullheight;
-            float cellwidth;
-            float cellheight;
-            float chwidth;
-            float chheight;
-            float titlewidth;
             float x0;
             float y0;
             render_bounds cellboxbounds;
@@ -602,15 +614,13 @@ cancel:
             int cellxpix;
             int cellypix;
             int xcells;
-            int ycells;
             int pixelscale = 0;
-            int x;
-            int y;
             int skip;
 
             // add a half character padding for the box
-            chheight = mui.get_line_height();
-            chwidth = ui_font.char_width(chheight, mui.machine().render().ui_aspect(), '0');
+            float aspect = mui.machine().render().ui_aspect(container);
+            float chheight = mui.get_line_height();
+            float chwidth = ui_font.char_width(chheight, aspect, '0');
             boxbounds.x0 = 0.0f + 0.5f * chwidth;
             boxbounds.x1 = 1.0f - 0.5f * chwidth;
             boxbounds.y0 = 0.0f + 0.5f * chheight;
@@ -652,20 +662,20 @@ cancel:
             pixelscale = Math.Max(1, pixelscale);
 
             // in the Y direction, we just display as many as we can
-            ycells = cellboxheight / (pixelscale * cellypix);
+            int ycells = cellboxheight / (pixelscale * cellypix);
 
             // now determine the actual cellbox size
             cellboxwidth = Math.Min(cellboxwidth, xcells * pixelscale * cellxpix);
             cellboxheight = Math.Min(cellboxheight, ycells * pixelscale * cellypix);
 
             // compute the size of a single cell at this pixel scale factor, as well as the aspect ratio
-            cellwidth = (cellboxwidth / (float)xcells) / (float)targwidth;
-            cellheight = (cellboxheight / (float)ycells) / (float)targheight;
+            float cellwidth = (cellboxwidth / (float)xcells) / (float)targwidth;
+            float cellheight = (cellboxheight / (float)ycells) / (float)targheight;
             //cellaspect = cellwidth / cellheight;
 
             // working from the new width/height, recompute the boxbounds
-            fullwidth = (float)cellboxwidth / (float)targwidth + 6.5f * chwidth;
-            fullheight = (float)cellboxheight / (float)targheight + 4.0f * chheight;
+            float fullwidth = (float)cellboxwidth / (float)targwidth + 6.5f * chwidth;
+            float fullheight = (float)cellboxheight / (float)targheight + 4.0f * chheight;
 
             // recompute boxbounds from this
             boxbounds.x0 = (1.0f - fullwidth) * 0.5f;
@@ -719,7 +729,7 @@ cancel:
 
             // expand the outer box to fit the title
             string title = title_buf;
-            titlewidth = ui_font.string_width(chheight, mui.machine().render().ui_aspect(), title);
+            float titlewidth = ui_font.string_width(chheight, aspect, title.c_str());
             x0 = 0.0f;
 
             if (boxbounds.x1 - boxbounds.x0 < titlewidth + chwidth)
@@ -733,17 +743,17 @@ cancel:
             y0 = boxbounds.y0 + 0.5f * chheight;
             foreach (var ch in title)
             {
-                container.add_char(x0, y0, chheight, mui.machine().render().ui_aspect(), rgb_t.white(), ui_font, ch);
-                x0 += ui_font.char_width(chheight, mui.machine().render().ui_aspect(), ch);
+                container.add_char(x0, y0, chheight, aspect, rgb_t.white(), ui_font, ch);
+                x0 += ui_font.char_width(chheight, aspect, ch);
             }
 
             // draw the top column headers
             skip = (int)(chwidth / cellwidth);
-            for (x = 0; x < xcells; x += 1 + skip)
+            for (int x = 0; x < xcells; x += 1 + skip)
             {
                 x0 = boxbounds.x0 + 6.0f * chwidth + (float)x * cellwidth;
                 y0 = boxbounds.y0 + 2.0f * chheight;
-                container.add_char(x0 + 0.5f * (cellwidth - chwidth), y0, chheight, mui.machine().render().ui_aspect(), rgb_t.white(), ui_font, "0123456789ABCDEF"[x & 0xf]);
+                container.add_char(x0 + 0.5f * (cellwidth - chwidth), y0, chheight, aspect, rgb_t.white(), ui_font, "0123456789ABCDEF"[x & 0xf]);
 
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
@@ -753,7 +763,7 @@ cancel:
 
             // draw the side column headers
             skip = (int)(chheight / cellheight);
-            for (y = 0; y < ycells; y += 1 + skip)
+            for (int y = 0; y < ycells; y += 1 + skip)
             {
                 // only display if there is data to show
                 if (info.offset[set] + y * xcells < gfx.elements())
@@ -769,10 +779,10 @@ cancel:
 
                     // draw the row header
                     buffer = string.Format("{0:X5}", info.offset[set] + y * xcells);
-                    for (x = 4; x >= 0; x--)
+                    for (int x = 4; x >= 0; x--)
                     {
-                        x0 -= ui_font.char_width(chheight, mui.machine().render().ui_aspect(), buffer[x]);
-                        container.add_char(x0, y0 + 0.5f * (cellheight - chheight), chheight, mui.machine().render().ui_aspect(), rgb_t.white(), ui_font, buffer[x]);
+                        x0 -= ui_font.char_width(chheight, aspect, buffer[x]);
+                        container.add_char(x0, y0 + 0.5f * (cellheight - chheight), chheight, aspect, rgb_t.white(), ui_font, buffer[x]);
                     }
                 }
             }
@@ -829,7 +839,7 @@ cancel:
             int dev = state.gfxset.devindex;
             int set = state.gfxset.set;
             ui_gfx_info info = state.gfxdev[dev];
-            gfx_element gfx = info.gfxinterface.gfx(set);
+            gfx_element gfx = info.interface_.gfx(set);
 
             // handle cells per line (minus,plus)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_OUT))
@@ -907,14 +917,14 @@ cancel:
             cellypix = 1 + ((info.rotate[set] & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
 
             // realloc the bitmap if it is too small
-            if (state.bitmap == null || state.texture == null || state.bitmap.bpp() != 32 || state.bitmap.width() != cellxpix * xcells || state.bitmap.height() != cellypix * ycells)
+            if (!state.bitmap.valid() || state.texture == null || state.bitmap.width() != cellxpix * xcells || state.bitmap.height() != cellypix * ycells)
             {
                 // free the old stuff
                 machine.render().texture_free(state.texture);
-                state.bitmap = null;  //global_free(state.bitmap);
+                state.bitmap.reset();
 
                 // allocate new stuff
-                state.bitmap = new bitmap_rgb32(cellxpix * xcells, cellypix * ycells);
+                state.bitmap.allocate(cellxpix * xcells, cellypix * ycells);
                 state.texture = machine.render().texture_alloc();
                 state.texture.set_bitmap(state.bitmap, state.bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
 
@@ -1033,8 +1043,6 @@ cancel:
         static void tilemap_handler(mame_ui_manager mui, render_container container, ui_gfx_state state)
         {
             render_font ui_font = mui.get_font();
-            float chwidth;
-            float chheight;
             render_bounds mapboxbounds;
             render_bounds boxbounds = new render_bounds();
             int targwidth = mui.machine().render().ui_target().width();
@@ -1053,8 +1061,9 @@ cancel:
                 std.swap(ref mapwidth, ref mapheight);
 
             // add a half character padding for the box
-            chheight = mui.get_line_height();
-            chwidth = ui_font.char_width(chheight, mui.machine().render().ui_aspect(), '0');
+            float aspect = mui.machine().render().ui_aspect(container);
+            float chheight = mui.get_line_height();
+            float chwidth = ui_font.char_width(chheight, aspect, '0');
             boxbounds.x0 = 0.0f + 0.5f * chwidth;
             boxbounds.x1 = 1.0f - 0.5f * chwidth;
             boxbounds.y0 = 0.0f + 0.5f * chheight;
@@ -1137,7 +1146,7 @@ cancel:
 
             // expand the outer box to fit the title
             string title = title_buf;
-            titlewidth = ui_font.string_width(chheight, mui.machine().render().ui_aspect(), title);
+            titlewidth = ui_font.string_width(chheight, aspect, title.c_str());
             if (boxbounds.x1 - boxbounds.x0 < titlewidth + chwidth)
             {
                 boxbounds.x0 = 0.5f - 0.5f * (titlewidth + chwidth);
@@ -1152,8 +1161,8 @@ cancel:
             y0 = boxbounds.y0 + 0.5f * chheight;
             foreach (var ch in title)
             {
-                container.add_char(x0, y0, chheight, mui.machine().render().ui_aspect(), rgb_t.white(), ui_font, ch);
-                x0 += ui_font.char_width(chheight, mui.machine().render().ui_aspect(), ch);
+                container.add_char(x0, y0, chheight, aspect, rgb_t.white(), ui_font, ch);
+                x0 += ui_font.char_width(chheight, aspect, ch);
             }
 
             // update the bitmap
@@ -1305,14 +1314,14 @@ cancel:
                 std.swap(ref width, ref height);
 
             // realloc the bitmap if it is too small
-            if (state.bitmap == null || state.texture == null || state.bitmap.width() != width || state.bitmap.height() != height)
+            if (!state.bitmap.valid() || state.texture == null || state.bitmap.width() != width || state.bitmap.height() != height)
             {
                 // free the old stuff
                 machine.render().texture_free(state.texture);
-                state.bitmap = null;  //global_free(state.bitmap);
+                state.bitmap.reset();
 
                 // allocate new stuff
-                state.bitmap = new bitmap_rgb32(width, height);
+                state.bitmap.allocate(width, height);
                 state.texture = machine.render().texture_alloc();
                 state.texture.set_bitmap(state.bitmap, state.bitmap.cliprect(), texture_format.TEXFORMAT_RGB32);
 

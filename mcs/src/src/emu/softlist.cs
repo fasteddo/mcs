@@ -109,12 +109,20 @@ namespace mame
             if (m_interface.empty())
                 return true;
 
-            // copy the comma-delimited interface list and ensure it ends with a final comma
-            string interfaces = interface_list + ",";
-
-            // then add a comma to the end of our interface and return true if we find it in the list string
-            string our_interface = m_interface + ",";
-            return interfaces.IndexOf(our_interface, 0) != -1;
+            // find our interface at the beginning of the list or immediately following a comma
+            while (true)
+            {
+                int foundIdx = std.strstr(interface_list, m_interface.c_str());  //char const *const found(std::strstr(interface_list, m_interface.c_str()));
+                if (foundIdx == -1)  //if (!found)
+                    return false;
+                if (((foundIdx == 0) || (',' == interface_list[foundIdx - 1])) && ((',' == interface_list[foundIdx + m_interface.size()]) || interface_list[foundIdx + m_interface.size()] != 0))  //if (((found == interface_list) || (',' == found[-1])) && ((',' == found[m_interface.size()]) || !found[m_interface.size()]))
+                    return true;
+                int interface_listIdx = std.strchr(interface_list, ',');  //interface_list = std::strchr(interface_list, ',');
+                if (interface_listIdx == -1)  //if (!interface_list)
+                    return false;
+                interface_list = interface_list.Remove(0, interface_listIdx);
+                interface_list = interface_list.Remove(0, 1);  //++interface_list;
+            }
         }
 
 

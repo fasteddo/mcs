@@ -9,6 +9,7 @@ namespace mame.plib
 {
     public class pstrutil_global
     {
+        public static bool startsWith(string str, string arg) { return str.StartsWith(arg); }
         public static bool endsWith(string str, string value) { return str.EndsWith(value); }
         public static string ucase(string str) { return str.ToUpper(); }
         public static string trim(string str) { return str.Trim(); }

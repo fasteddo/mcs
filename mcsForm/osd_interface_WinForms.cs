@@ -650,6 +650,11 @@ namespace mameForm
         }
 
 
+        public override void input_update()
+        {
+        }
+
+
         public override void update_audio_stream(ListPointer<Int16> buffer, int samples_this_frame)  //const int16_t *buffer, int samples_this_frame) = 0;
         {
             base.update_audio_stream(buffer, samples_this_frame);
@@ -677,7 +682,7 @@ namespace mameForm
         }
 
 
-        public override void customize_input_type_list(simple_list<input_type_entry> typelist)
+        public override void customize_input_type_list(std.vector<input_type_entry> typelist)
         {
             base.customize_input_type_list(typelist);
         }

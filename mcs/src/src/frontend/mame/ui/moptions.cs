@@ -209,7 +209,7 @@ namespace mame
         rgb_t rgb_value(string option)
         {
             // find the entry
-            core_options.entry entry = get_entry(option);
+            core_options.entry entry = get_entry(option);  //core_options::entry::shared_const_ptr entry = get_entry(option);
 
             // look up the value, and sanity check the result
             string value = entry.value();
@@ -218,7 +218,7 @@ namespace mame
                 value = entry.default_value().c_str();
 
             // convert to an rgb_t
-            return new rgb_t((UInt32)Convert.ToInt64(value, 16));  //return new rgb_t((uint32_t)strtoul(value, null, 16));
+            return new rgb_t((uint32_t)std.strtoul(value, null, 16));
         }
     }
 }

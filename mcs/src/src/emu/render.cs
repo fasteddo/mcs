@@ -1210,7 +1210,7 @@ namespace mame
                 case texture_format.TEXFORMAT_RGB32:
                 case texture_format.TEXFORMAT_ARGB32:
                 case texture_format.TEXFORMAT_YUY16:
-                    out_length = 256;
+                    out_length = (UInt32)m_bcglookup256.Count;  //ARRAY_LENGTH(m_bcglookup256);
                     return m_bcglookup256;
 
                 default:
@@ -1746,7 +1746,7 @@ namespace mame
 
 
         // getters
-        Dictionary<string, layout_element> elements() { return m_elemmap; }
+        element_map elements() { return m_elemmap; }
         public view_list views() { return m_viewlist; }
 
 

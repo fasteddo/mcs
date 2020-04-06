@@ -314,6 +314,8 @@ namespace mame
             m_yoffset = 0.0f;
             m_xscale = 1.0f;
             m_yscale = 1.0f;
+            m_screen_update_ind16 = null;
+            m_screen_update_rgb32 = null;
             m_screen_vblank = new devcb_write_line(this);
             m_scanline_cb = new devcb_write32(this);
             m_paletteDevice = new optional_device<palette_device>(this, finder_base.DUMMY_TAG);
@@ -376,7 +378,7 @@ namespace mame
             set_type(type);
         }
 
-        //~screen_device() { }
+        //~screen_device() { destroy_scan_bitmaps(); }
 
 
         // configuration readers
@@ -568,26 +570,30 @@ namespace mame
             m_yoffset = (float)yoffs;
         }
 
-        // FIXME: these should be aware of current device for resolving the tag
-        //template <class FunctionClass>
-        //void set_screen_update(u32 (FunctionClass::*callback)(screen_device &, bitmap_ind16 &, const rectangle &), const char *name)
+
+        //template <typename F>
+        //std::enable_if_t<screen_update_ind16_delegate::supports_callback<F>::value> set_screen_update(F &&callback, const char *name)
         //{
-        //    set_screen_update(screen_update_ind16_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
+        //    m_screen_update_ind16.set(std::forward<F>(callback), name);
+        //    m_screen_update_rgb32 = screen_update_rgb32_delegate(*this);
         //}
-        //template <class FunctionClass>
-        //void set_screen_update(u32 (FunctionClass::*callback)(screen_device &, bitmap_rgb32 &, const rectangle &), const char *name)
+        //template <typename F>
+        //std::enable_if_t<screen_update_rgb32_delegate::supports_callback<F>::value> set_screen_update(F &&callback, const char *name)
         //{
-        //    set_screen_update(screen_update_rgb32_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
+        //    m_screen_update_ind16 = screen_update_ind16_delegate(*this);
+        //    m_screen_update_rgb32.set(std::forward<F>(callback), name);
         //}
-        //template <class FunctionClass>
-        //void set_screen_update(const char *devname, u32 (FunctionClass::*callback)(screen_device &, bitmap_ind16 &, const rectangle &), const char *name)
+        //template <typename T, typename F>
+        //std::enable_if_t<screen_update_ind16_delegate::supports_callback<F>::value> set_screen_update(T &&target, F &&callback, const char *name)
         //{
-        //    set_screen_update(screen_update_ind16_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
+        //    m_screen_update_ind16.set(std::forward<T>(target), std::forward<F>(callback), name);
+        //    m_screen_update_rgb32 = screen_update_rgb32_delegate(*this);
         //}
-        //template <class FunctionClass>
-        //void set_screen_update(const char *devname, u32 (FunctionClass::*callback)(screen_device &, bitmap_rgb32 &, const rectangle &), const char *name)
+        //template <typename T, typename F>
+        //std::enable_if_t<screen_update_rgb32_delegate::supports_callback<F>::value> set_screen_update(T &&target, F &&callback, const char *name)
         //{
-        //    set_screen_update(screen_update_rgb32_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
+        //    m_screen_update_ind16 = screen_update_ind16_delegate(*this);
+        //    m_screen_update_rgb32.set(std::forward<T>(target), std::forward<F>(callback), name);
         //}
 
         public void set_screen_update(screen_update_ind16_delegate callback)
@@ -601,6 +607,7 @@ namespace mame
             m_screen_update_ind16 = null;
             m_screen_update_rgb32 = callback;
         }
+
 
         public devcb_write.binder screen_vblank() { return m_screen_vblank.bind(); }  //auto screen_vblank() { return m_screen_vblank.bind(); }
         //auto scanline() { m_video_attributes |= VIDEO_UPDATE_SCANLINE; return m_scanline_cb.bind(); }
@@ -647,15 +654,9 @@ namespace mame
             m_height = height;
             m_visarea = visarea;
 
-            // reallocate bitmap if necessary
-            if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
-            {
-                update_scan_bitmap_size(vpos());
-            }
-            else
-            {
-                realloc_screen_bitmaps();
-            }
+            // reallocate bitmap(s) if necessary
+            realloc_screen_bitmaps();
+            if (machine().input().code_pressed(input_global.KEYCODE_E)) osd_printf_warning("CONFIGURE\n");
 
             // compute timing parameters
             m_frame_period = frame_period;
@@ -1154,8 +1155,8 @@ namespace mame
             // bind our handlers
             //throw new emu_unimplemented();
 #if false
-            m_screen_update_ind16.bind_relative_to(*owner());
-            m_screen_update_rgb32.bind_relative_to(*owner());
+            m_screen_update_ind16.resolve();
+            m_screen_update_rgb32.resolve();
 #endif
             m_screen_vblank.resolve_safe();
             m_scanline_cb.resolve();
@@ -1196,25 +1197,6 @@ namespace mame
             m_texture[0].set_id((u64)m_unique_id << 57);
             m_texture[1] = machine().render().texture_alloc();
             m_texture[1].set_id(((u64)m_unique_id << 57) | 1);
-
-            if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
-            {
-                for (int i = 0; i < m_height; i++)
-                {
-                    for (int j = 0; j < 2; j++)
-                    {
-                        if (screen16)
-                        {
-                            m_scan_bitmaps[j].push_back(new bitmap_ind16(m_width, 1));
-                        }
-                        else
-                        {
-                            m_scan_bitmaps[j].push_back(new bitmap_rgb32(m_width, 1));
-                        }
-                    }
-                    m_scan_widths.push_back(m_width);
-                }
-            }
 
             // configure the default cliparea
             render_container.user_settings settings;
@@ -1403,6 +1385,8 @@ namespace mame
             }
             m_texture[0].set_bitmap(m_bitmap[0].live(), m_visarea, m_bitmap[0].texformat());
             m_texture[1].set_bitmap(m_bitmap[1].live(), m_visarea, m_bitmap[1].texformat());
+
+            allocate_scan_bitmaps();
         }
 
         //-------------------------------------------------
@@ -1493,6 +1477,10 @@ namespace mame
 
         void update_scan_bitmap_size(int y)
         {
+            // don't update this line if it exceeds the allocated size, which can happen on initial configuration
+            if (y >= m_scan_widths.size())
+                return;
+
             // determine effective size to allocate
             s32 effwidth = std.max(m_max_width, m_visarea.right() + 1);
 
@@ -1552,6 +1540,54 @@ namespace mame
                         }
                     }
                     break;
+                }
+            }
+        }
+
+
+        //void destroy_scan_bitmaps();
+
+
+        //-------------------------------------------------
+        //  allocate_scan_bitmaps - allocate per-scanline
+        //  bitmaps if applicable
+        //-------------------------------------------------
+        void allocate_scan_bitmaps()
+        {
+            if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+            {
+                bool screen16 = m_screen_update_ind16 != null;
+                s32 effwidth = std.max(m_max_width, m_visarea.right() + 1);
+                s32 old_height = (s32)m_scan_widths.size();
+                s32 effheight = std.max(m_height, m_visarea.bottom() + 1);
+                if (old_height < effheight)
+                {
+                    for (int i = old_height; i < effheight; i++)
+                    {
+                        for (int j = 0; j < 2; j++)
+                        {
+                            if (screen16)
+                                m_scan_bitmaps[j].push_back(new bitmap_ind16(effwidth, 1));
+                            else
+                                m_scan_bitmaps[j].push_back(new bitmap_rgb32(effwidth, 1));
+                        }
+                        m_scan_widths.push_back(m_width);
+                    }
+                }
+                else
+                {
+                    for (int i = effheight; i < old_height; i++)
+                    {
+                        for (int j = 0; j < 2; j++)
+                        {
+                            if (screen16)
+                                m_scan_bitmaps[j][i] = null;  //delete (bitmap_ind16 *)m_scan_bitmaps[j][i];
+                            else
+                                m_scan_bitmaps[j][i] = null;  //delete (bitmap_rgb32 *)m_scan_bitmaps[j][i];
+                            m_scan_bitmaps[j].erase(i);  //m_scan_bitmaps[j].erase(m_scan_bitmaps[j].begin() + i);
+                        }
+                        m_scan_widths.erase(i);  //m_scan_widths.erase(m_scan_widths.begin() + i);
+                    }
                 }
             }
         }

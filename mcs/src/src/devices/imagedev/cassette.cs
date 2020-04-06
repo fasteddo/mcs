@@ -81,19 +81,18 @@ namespace mame
         //virtual image_init_result call_create(int format_type, util::option_resolution *format_options);
         //virtual void call_unload();
         //virtual string call_display();
-        //virtual software_list_loader &get_software_list_loader() const override { return image_software_list_loader::instance(); }
 
 
         //virtual iodevice_t image_type() const { return IO_CASSETTE; }
 
 
-        //virtual bool is_readable()  const { return 1; }
-        //virtual bool is_writeable() const { return 1; }
-        //virtual bool is_creatable() const { return 1; }
-        //virtual bool must_be_loaded() const { return 0; }
-        //virtual bool is_reset_on_load() const { return 0; }
-        //virtual const char *image_interface() const { return m_interface; }
-        //virtual const char *file_extensions() const { return m_extension_list; }
+        //virtual bool is_readable()  const noexcept override { return true; }
+        //virtual bool is_writeable() const noexcept override { return true; }
+        //virtual bool is_creatable() const noexcept override { return true; }
+        //virtual bool must_be_loaded() const noexcept override { return false; }
+        //virtual bool is_reset_on_load() const noexcept override { return false; }
+        //virtual const char *image_interface() const noexcept override { return m_interface; }
+        //virtual const char *file_extensions() const noexcept override { return m_extension_list; }
 
 
         // specific implementation
@@ -130,6 +129,9 @@ namespace mame
         //virtual void device_config_complete();
         //virtual void device_start();
         //virtual const bool use_software_list_file_extension_for_filetype() const override { return true; }
+
+        // device_image_interface implementation
+        //virtual const software_list_loader &get_software_list_loader() const override { return image_software_list_loader::instance(); }
 
         //image_init_result internal_load(bool is_create);
     }

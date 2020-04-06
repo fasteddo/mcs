@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using device_type = mame.emu.detail.device_type_impl_base;
@@ -238,6 +239,8 @@ namespace mame
 
 
         configuration_params m_params;
+        u32 m_min_cycles;
+        u32 m_max_cycles;
 
         // address spaces
         address_space_config m_program_config;
@@ -334,6 +337,21 @@ namespace mame
             m_program = m_dimemory.space(AS_PROGRAM);
             m_cache = m_program.cache(0, 0, (int)endianness_t.ENDIANNESS_BIG);
 
+            // get the minimum not including the zero placeholders for illegal instructions
+            //m_min_cycles = *std::min_element(
+            //        std::begin(m_params.m_cycles),
+            //        std::end(m_params.m_cycles),
+            //        [] (u8 x, u8 y) { return u8(x - 1) < u8(y - 1); });
+            //m_max_cycles = *std::max_element(std::begin(m_params.m_cycles), std::end(m_params.m_cycles));
+            u32 result = u32.MaxValue;
+            foreach (var c in m_params.m_cycles)
+            {
+                if (c == 0) continue;
+                result = Math.Min(result, c);
+            }
+            m_min_cycles = result;
+            m_max_cycles = m_params.m_cycles.Max();
+
             // set our instruction counter
             set_icountptr(m_icountRef);
 
@@ -384,19 +402,7 @@ namespace mame
         // device_execute_interface overrides
         uint32_t device_execute_interface_execute_min_cycles()
         {
-            // get the minimum not including the zero placeholders for illegal instructions
-            //u32 const result(*std::min_element(
-            //        std::begin(m_params.m_cycles),
-            //        std::end(m_params.m_cycles),
-            //        [] (u8 x, u8 y) { return u8(x - 1) < u8(y - 1); }));
-            u32 result = u32.MaxValue;
-            foreach (var c in m_params.m_cycles)
-            {
-                if (c == 0) continue;
-                result = Math.Min(result, c);
-            }
-
-            return result;
+            return m_min_cycles;
         }
 
         //virtual uint32_t execute_max_cycles() const override;

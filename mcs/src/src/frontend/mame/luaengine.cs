@@ -144,6 +144,7 @@ namespace mame
         // internal state
         //lua_State          *m_lua_state;
         running_machine m_machine;
+        //std::unique_ptr<input_sequence_poller> m_seq_poll;
 
         //std::vector<std::string> m_menu;
 
@@ -239,7 +240,16 @@ namespace mame
         //bool menu_callback(std::string &menu, int index, std::string event);
 
 
-        public void set_machine(running_machine machine) { m_machine = machine; }
+        public void set_machine(running_machine machine)
+        {
+            //throw new emu_unimplemented();
+#if false
+            if (machine == null || (machine != m_machine))
+                m_seq_poll.reset();
+#endif
+
+            m_machine = machine;
+        }
 
         //std::vector<std::string> &get_menu() { return m_menu; }
 

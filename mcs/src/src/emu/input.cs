@@ -323,12 +323,16 @@ namespace mame
         public static readonly input_code INPUT_CODE_INVALID = new input_code();
 
 
-        // internal state
         u32 m_internal;
 
 
         // construction/destruction
-        public input_code(input_device_class devclass = input_device_class.DEVICE_CLASS_INVALID, int devindex = 0, input_item_class itemclass = input_item_class.ITEM_CLASS_INVALID, input_item_modifier modifier = input_item_modifier.ITEM_MODIFIER_NONE, input_item_id itemid = input_item_id.ITEM_ID_INVALID)
+        public input_code(
+            input_device_class devclass = input_device_class.DEVICE_CLASS_INVALID,
+            int devindex = 0,
+            input_item_class itemclass = input_item_class.ITEM_CLASS_INVALID,
+            input_item_modifier modifier = input_item_modifier.ITEM_MODIFIER_NONE,
+            input_item_id itemid = input_item_id.ITEM_ID_INVALID)
         {
             m_internal = ((((UInt32)devclass & 0xf) << 28) | (((UInt32)devindex & 0xff) << 20) | (((UInt32)itemclass & 0xf) << 16) | (((UInt32)modifier & 0xf) << 12) | ((UInt32)itemid & 0xfff));
 
@@ -339,15 +343,12 @@ namespace mame
             assert(itemid >= 0 && itemid < input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
         }
 
-        public input_code(input_code src)
-        {
-            m_internal = src.m_internal;
-        }
+        //public input_code(input_code src) { m_internal = src.m_internal; }
 
 
         // operators
-        //bool operator==(const input_code &rhs) const { return m_internal == rhs.m_internal; }
-        //bool operator!=(const input_code &rhs) const { return m_internal != rhs.m_internal; }
+        public static bool operator ==(input_code left, input_code right) { return left.m_internal == right.m_internal; }
+        public static bool operator !=(input_code left, input_code right) { return left.m_internal != right.m_internal; }
 
 
         // getters
@@ -360,20 +361,39 @@ namespace mame
 
 
         // setters
-        //void set_device_class(input_device_class devclass) { assert(devclass >= 0 && devclass <= 0xf); m_internal = (m_internal & ~(0xf << 28)) | ((devclass & 0xf) << 28); }
-        public void set_device_index(int devindex) { /*assert(devindex >= 0 && devindex <= 0xff);*/ m_internal = (UInt32)((m_internal & ~(0xff << 20)) | ((devindex & 0xff) << 20)); }
-        public void set_item_class(input_item_class itemclass) { /*assert(itemclass >= 0 && itemclass <= 0xf);*/ m_internal = (UInt32)((m_internal & ~(0xf << 16)) | (((UInt32)itemclass & 0xf) << 16)); }
-        public void set_item_modifier(input_item_modifier modifier) { /*assert(modifier >= 0 && modifier <= 0xf);*/ m_internal = (UInt32)((m_internal & ~(0xf << 12)) | (((UInt32)modifier & 0xf) << 12)); }
-        //void set_item_id(input_item_id itemid) { assert(itemid >= 0 && itemid <= 0xfff); m_internal = (m_internal & ~0xfff) | (itemid & 0xfff); }
+        //void set_device_class(input_device_class devclass) noexcept
+        //{
+        //    assert(devclass >= 0 && devclass <= 0xf);
+        //    m_internal = (m_internal & ~(0xf << 28)) | ((devclass & 0xf) << 28);
+        //}
+        public void set_device_index(int devindex)
+        {
+            assert(devindex >= 0 && (UInt32)devindex <= 0xff);
+            m_internal = (UInt32)((m_internal & ~(0xff << 20)) | (((UInt32)devindex & 0xff) << 20));
+        }
+        public void set_item_class(input_item_class itemclass)
+        {
+            assert(itemclass >= 0 && (UInt32)itemclass <= 0xf);
+            m_internal = (UInt32)((m_internal & ~(0xf << 16)) | (((UInt32)itemclass & 0xf) << 16));
+        }
+        public void set_item_modifier(input_item_modifier modifier)
+        {
+            assert(modifier >= 0 && (UInt32)modifier <= 0xf);
+            m_internal = (UInt32)((m_internal & ~(0xf << 12)) | (((UInt32)modifier & 0xf) << 12));
+        }
+        //void set_item_id(input_item_id itemid) noexcept
+        //{
+        //    assert(itemid >= 0 && itemid <= 0xfff);
+        //    m_internal = (m_internal & ~0xfff) | (itemid & 0xfff);
+        //}
     }
 
 
     // ======================> input_seq
     // a sequence of input_codes, supporting AND/OR and inversion
-    public class input_seq
+    public class input_seq : global_object
     {
         // constant codes used in sequences
-        // additional expanded input codes for sequences
         public static readonly input_code end_code = new input_code(input_device_class.DEVICE_CLASS_INTERNAL,     0, input_item_class.ITEM_CLASS_INVALID, input_item_modifier.ITEM_MODIFIER_NONE, input_item_id.ITEM_ID_SEQ_END);
         public static readonly input_code default_code = new input_code(input_device_class.DEVICE_CLASS_INTERNAL, 0, input_item_class.ITEM_CLASS_INVALID, input_item_modifier.ITEM_MODIFIER_NONE, input_item_id.ITEM_ID_SEQ_DEFAULT);
         public static readonly input_code not_code = new input_code(input_device_class.DEVICE_CLASS_INTERNAL,     0, input_item_class.ITEM_CLASS_INVALID, input_item_modifier.ITEM_MODIFIER_NONE, input_item_id.ITEM_ID_SEQ_NOT);
@@ -382,33 +402,29 @@ namespace mame
         // constant sequences
         public static readonly input_seq empty_seq = new input_seq();
 
-        // constant sequences
-        //static const input_seq empty_seq;
-
 
         // internal state
-        input_code [] m_code = new input_code[16];
+        std.array<input_code> m_code = new std.array<input_code>(16);  //std::array<input_code, 16> m_code;
 
 
         // construction/destruction
-        public input_seq() { set(); }
-        public input_seq(input_code code0) { set(code0); }
-        public input_seq(input_code code0, input_code code1) { set(code0, code1); }
-        public input_seq(input_code code0, input_code code1, input_code code2) { set(code0, code1, code2); }
-        public input_seq(input_code code0, input_code code1, input_code code2, input_code code3) { set(code0, code1, code2, code3); }
-        public input_seq(input_code code0, input_code code1, input_code code2, input_code code3, input_code code4) { set(code0, code1, code2, code3, code4); }
-        public input_seq(input_code code0, input_code code1, input_code code2, input_code code3, input_code code4, input_code code5) { set(code0, code1, code2, code3, code4, code5); }
-        public input_seq(input_code code0, input_code code1, input_code code2, input_code code3, input_code code4, input_code code5, input_code code6) { set(code0, code1, code2, code3, code4, code5, code6); }
-        public input_seq(input_seq rhs) { for (int i = 0; i < m_code.Length; i++) m_code[i] = rhs.m_code[i]; }
+        //input_seq() noexcept : input_seq(std::make_index_sequence<std::tuple_size<decltype(m_code)>::value>()) { }
+        //template <typename... T> input_seq(input_code code_0, T... code_n) noexcept : input_seq(std::make_index_sequence<std::tuple_size<decltype(m_code)>::value - sizeof...(T) - 1>(), code_0, code_n...) { }
+        //constexpr input_seq(const input_seq &rhs) noexcept = default;
+        //template <size_t... N, typename... T> input_seq(std::integer_sequence<size_t, N...>, T... code) noexcept : m_code({ code..., get_end_code(N)... }) { }
+        //template <size_t... N> input_seq(std::integer_sequence<size_t, N...>) noexcept : m_code({ get_end_code(N)... }) { }
+        public input_seq(params input_code [] codes)
+        {
+            set(codes);
+        }
 
 
         // operators
-        //bool operator==(const input_seq &rhs) const { return (memcmp(m_code, rhs.m_code, sizeof(m_code)) == 0); }
-        //bool operator!=(const input_seq &rhs) const { return (memcmp(m_code, rhs.m_code, sizeof(m_code)) != 0); }
+        public static bool operator ==(input_seq lhs, input_seq rhs) { return lhs.m_code == rhs.m_code; }
+        public static bool operator !=(input_seq lhs, input_seq rhs) { return lhs.m_code != rhs.m_code; }
+        public input_code this[int index] { get { return (index >= 0 && index < m_code.size()) ? m_code[index] : end_code; } }  //constexpr input_code operator[](int index) const noexcept { return (index >= 0 && index < m_code.size()) ? m_code[index] : end_code; }
 
-        public input_code this[int index] { get { return (index >= 0 && index < m_code.Length) ? m_code[index] : input_seq.end_code; } }  //input_code operator[] (int index) { return (index >= 0 && index < ARRAY_LENGTH(m_code)) ? m_code[index] : input_seq::end_code; }
-
-        //input_seq &operator+=(input_code code);
+        //input_seq &operator+=(input_code code) noexcept;
         //-------------------------------------------------
         //  operator+= - append a code to the end of an
         //  input sequence
@@ -417,16 +433,17 @@ namespace mame
         {
             // if not enough room, return FALSE
             int curlength = length();
-            if (curlength < m_code.Length - 1)
+            if (curlength < m_code.size() - 1)
             {
                 m_code[curlength++] = code;
-                m_code[curlength] = end_code;
+                if ((curlength + 1) < m_code.size())
+                    m_code[curlength + 1] = end_code;
             }
 
             return this;
         }
 
-        //input_seq &operator|=(input_code code);
+        //input_seq &operator|=(input_code code) noexcept;
         //-------------------------------------------------
         //  operator|= - append a code to a sequence; if
         //  the sequence is non-empty, insert an OR
@@ -435,73 +452,94 @@ namespace mame
         public input_seq append_code_to_sequence_or(input_code code)
         {
             // overwrite end/default with the new code
-            if (m_code[0] == end_code || m_code[0] == default_code)
+            if (m_code[0] == default_code)
             {
                 m_code[0] = code;
+                m_code[1] = end_code;
             }
-            // otherwise, append an OR token and then the new code
             else
             {
-                append_code_to_sequence_plus(or_code); //this += or_code;
-                append_code_to_sequence_plus(code);    //this += code;
+                // otherwise, append an OR token and then the new code
+                int curlength = length();
+                if ((curlength + 1) < m_code.size())
+                {
+                    m_code[curlength] = or_code;
+                    m_code[curlength + 1] = code;
+                    if ((curlength + 2) < m_code.size())
+                        m_code[curlength + 2] = end_code;
+                }
             }
 
             return this;
         }
 
 
-
         // getters
+        public bool empty() { return m_code[0] == end_code; }
+        //constexpr int max_size() const noexcept { return std::tuple_size<decltype(m_code)>::value; }
 
-        //-------------------------------------------------
-        //  length - return the length of the sequence
-        //-------------------------------------------------
-        public int length()
+
+        int length()
         {
             // find the end token; error if none found
-            for (int seqnum = 0; seqnum < m_code.Length; seqnum++)
+            for (int seqnum = 0; seqnum < m_code.size(); seqnum++)
             {
                 if (m_code[seqnum] == end_code)
                     return seqnum;
             }
 
-            return m_code.Length;
+            return m_code.size();
         }
 
-        //bool is_valid() const;
+
+        //bool is_valid() const noexcept;
+
+
         public bool is_default() { return m_code[0] == default_code; }
 
 
         // setters
 
-        //-------------------------------------------------
-        //  set - directly set up to the first 7 codes
-        //-------------------------------------------------
-        public void set() { set(end_code, end_code, end_code, end_code, end_code, end_code, end_code); }
-        public void set(input_code code0) { set(code0, end_code, end_code, end_code, end_code, end_code, end_code); }
-        public void set(input_code code0, input_code code1) { set(code0, code1, end_code, end_code, end_code, end_code, end_code); }
-        public void set(input_code code0, input_code code1, input_code code2) { set(code0, code1, code2, end_code, end_code, end_code, end_code); }
-        public void set(input_code code0, input_code code1, input_code code2, input_code code3) { set(code0, code1, code2, code3, end_code, end_code, end_code); }
-        public void set(input_code code0, input_code code1, input_code code2, input_code code3, input_code code4) { set(code0, code1, code2, code3, code4, end_code, end_code); }
-        public void set(input_code code0, input_code code1, input_code code2, input_code code3, input_code code4, input_code code5) { set(code0, code1, code2, code3, code4, code5, end_code); }
-        public void set(input_code code0, input_code code1, input_code code2, input_code code3, input_code code4, input_code code5, input_code code6)
+        //template <typename... T> void set(input_code code_0, T... code_n) noexcept
+        //{
+        //    static_assert(sizeof...(T) < std::tuple_size<decltype(m_code)>::value, "too many codes for input_seq");
+        //    set<0>(code_0, code_n...);
+        //}
+        void set(params input_code [] codes)
         {
-            m_code[0] = code0;
-            m_code[1] = code1;
-            m_code[2] = code2;
-            m_code[3] = code3;
-            m_code[4] = code4;
-            m_code[5] = code5;
-            m_code[6] = code6;
-            for (int codenum = 7; codenum < m_code.Length; codenum++)
-                m_code[codenum] = end_code;
+            assert(codes.Length <= m_code.size(), "too many codes for input_seq");
+
+            for (int i = 0; i < m_code.size(); i++)
+                m_code[i] = i < codes.Length ? codes[i] : end_code;
         }
 
-        void reset() { set(); }
-        public void set_default() { set(default_code); }
 
-        //void backspace();
-        //void replace(input_code oldcode, input_code newcode);
+        //void reset() noexcept { set(end_code); }
+        public void set_default() { var codes = new input_code[16]; codes.Fill(end_code); codes[0] = default_code; set(codes); }  //void set_default() noexcept { set(default_code); }
+
+
+        public void backspace()
+        {
+            // if we have at least one entry, remove it
+            int curlength = length();
+            if (curlength > 0)
+                m_code[curlength - 1] = end_code;
+        }
+
+
+        //void replace(input_code oldcode, input_code newcode) noexcept;
+
+        //static constexpr input_code get_end_code(size_t) noexcept { return end_code; }
+
+        //template <unsigned N> void set() noexcept
+        //{
+        //    std::fill(std::next(m_code.begin(), N), m_code.end(), end_code);
+        //}
+        //template <unsigned N, typename... T> void set(input_code code_0, T... code_n) noexcept
+        //{
+        //    m_code[N] = code_0;
+        //    set<N + 1>(code_n...);
+        //}
     }
 
 
@@ -516,18 +554,11 @@ namespace mame
         // classes
         input_class [] m_class = new input_class[(int)input_device_class.DEVICE_CLASS_MAXIMUM];  //std::array<std::unique_ptr<input_class>, DEVICE_CLASS_MAXIMUM> m_class;
 
-        // sequence polling state
-        //input_seq           m_poll_seq;
-        osd_ticks_t m_poll_seq_last_ticks;
-        input_item_class m_poll_seq_class;
-
 
         // construction/destruction
         public input_manager(running_machine machine)
         {
             m_machine = machine;
-            m_poll_seq_last_ticks = 0;
-            m_poll_seq_class = input_item_class.ITEM_CLASS_SWITCH;
 
 
             // reset code memory
@@ -1033,12 +1064,6 @@ namespace mame
         }
 
 
-        // input sequence polling
-        //void seq_poll_start(input_item_class itemclass, const input_seq *startseq = NULL);
-        //bool seq_poll();
-        //const input_seq &seq_poll_final() const { return m_poll_seq; }
-
-
         // input sequence helpers
 
         //-------------------------------------------------
@@ -1047,6 +1072,8 @@ namespace mame
         //-------------------------------------------------
         input_seq seq_clean(input_seq seq)
         {
+            // make a copy of our sequence, removing any invalid bits
+            input_seq clean_codes = new input_seq();
             int clean_index = 0;
 
             for (int codenum = 0; seq[codenum] != input_seq.end_code; codenum++)
@@ -1055,20 +1082,20 @@ namespace mame
                 input_code code = seq[codenum];
                 if (!code.internal_get() && code_name(code).empty())
                 {
-                    while (clean_index > 0 && seq[clean_index - 1].internal_get())
+                    while (clean_index > 0 && clean_codes[clean_index - 1].internal_get())
+                    {
+                        clean_codes.backspace();
                         clean_index--;
+                    }
                 }
-                else if (clean_index > 0 || !code.internal_get())
+                else if (clean_index > 0 || !code.internal_get() || code == input_seq.not_code)
                 {
+                    clean_codes.append_code_to_sequence_plus(code);  //clean_codes += code;
                     clean_index++;
                 }
             }
 
-            input_seq cleaned_seq = new input_seq();
-            for (int i = 0; i < clean_index; i++)
-                cleaned_seq.append_code_to_sequence_plus(seq[i]);  //cleaned_seq += seq[i];
-
-            return cleaned_seq;
+            return clean_codes;
         }
 
 
@@ -1083,7 +1110,7 @@ namespace mame
 
             // special case: empty
             if (cleaned_seq[0] == input_seq.end_code)
-                return seq.length() == 0 ? "None" : "n/a";
+                return seq.empty() ? "None" : "n/a";
 
             // start with an empty buffer
             string str = "";

@@ -17,6 +17,10 @@ namespace mame
 {
     public static class osdcomm_global
     {
+        static uint32_t swapendian_int32_partial16(uint32_t val) { return ((val << 8) & 0xFF00FF00U) | ((val >> 8) & 0x00FF00FFU); }
+        public static uint32_t swapendian_int32(uint32_t val) { return (swapendian_int32_partial16(val) << 16) | (swapendian_int32_partial16(val) >> 16); }
+
+
         //#ifdef LSB_FIRST
         //constexpr uint16_t big_endianize_int16(uint16_t x) { return flipendian_int16(x); }
         //constexpr uint32_t big_endianize_int32(uint32_t x) { return flipendian_int32(x); }

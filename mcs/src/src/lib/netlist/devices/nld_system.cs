@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using netlist_time = mame.netlist.ptime_u64;  //using netlist_time = ptime<std::uint64_t, NETLIST_INTERNAL_RES>;
+using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
 
 
 namespace mame.netlist
@@ -41,8 +41,7 @@ namespace mame.netlist
             }
 
             //#define MAINCLOCK(name, freq)                                                   \
-            //        NET_REGISTER_DEV(MAINCLOCK, name)                                       \
-            //        PARAM(name.FREQ, freq)
+            //        NET_REGISTER_DEVEXT(MAINCLOCK, name, freq)
 
             //#define CLOCK(name, freq)                                                       \
             //        NET_REGISTER_DEV(CLOCK, name)                                           \
@@ -60,9 +59,9 @@ namespace mame.netlist
             //#define GNDA()                                                                  \
             //        NET_REGISTER_DEV(GNDA, GND)
 
-            //#define DUMMY_INPUT(name)                                                       \
-            //        NET_REGISTER_DEV(DUMMY_INPUT, name)
-            public static void DUMMY_INPUT(nlparse_t setup, string name) { nl_setup_global.NET_REGISTER_DEV(setup, "DUMMY_INPUT", name); }
+            //#define NC_PIN(name)                                                            \
+            //        NET_REGISTER_DEV(NC_PIN, name)
+            public static void NC_PIN(nlparse_t setup, string name) { nl_setup_global.NET_REGISTER_DEV(setup, "NC_PIN", name); }
 
             //FIXME: Usage discouraged, use OPTIMIZE_FRONTIER instead
             //#define FRONTIER_DEV(name, cIN, cG, cOUT)                                       \

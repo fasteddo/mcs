@@ -4,22 +4,20 @@
 using System;
 using System.Collections.Generic;
 
-using netlist_base_t = mame.netlist.netlist_state_t;
-
 
 namespace mame.netlist
 {
-    namespace devices
+    namespace solver
     {
         //template <typename FT>
-        class matrix_solver_direct1_t : matrix_solver_direct_t//<FT, 1>
+        class matrix_solver_direct1_t : matrix_solver_direct_t  //class matrix_solver_direct1_t: public matrix_solver_direct_t<FT, 1>
         {
             //typedef FT float_type;
             //typedef matrix_solver_direct_t<FT, 1> base_type;
 
 
-            public matrix_solver_direct1_t(netlist_state_t anetlist, string name, solver_parameters_t params_)
-                : base(1, anetlist, name, params_, 1)
+            public matrix_solver_direct1_t(netlist_state_t anetlist, string name, analog_net_t.list_t nets, solver_parameters_t params_)
+                : base(1, anetlist, name, nets, params_, 1)
                 {}
 
 
@@ -31,5 +29,5 @@ namespace mame.netlist
                 throw new emu_unimplemented();
             }
         }
-    } //namespace devices
-} // namespace netlist
+    }
+}

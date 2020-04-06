@@ -209,14 +209,6 @@ namespace mame.ui
         }
 
 
-        class pool
-        {
-            public pool next;    // chain to next one
-            //uint8_t    *top;     // top of the pool
-            //uint8_t    *end;     // end of the pool
-        }
-
-
         // menu-related events
         protected class menu_event
         {
@@ -243,7 +235,6 @@ namespace mame.ui
         render_container m_container;       // render_container we render to
         menu m_parent;           // pointer to parent menu
         menu_event m_event;            // the UI event that occurred
-        pool m_pool;            // list of memory pools
 
         float m_customtop;        // amount of extra height to add at the top
         float m_custombottom;     // amount of extra height to add at the bottom
@@ -266,6 +257,8 @@ namespace mame.ui
         //-------------------------------------------------
         protected menu(mame_ui_manager mui, render_container container)
         {
+            m_selected = 0;
+            m_items = new std.vector<menu_item>();
             m_visible_lines = 0;
             m_visible_items = 0;
             m_global_state = get_global_state(mui.machine());
@@ -274,7 +267,6 @@ namespace mame.ui
             m_container = container;
             m_parent = null;
             m_event = new menu_event();
-            m_pool = null;
             m_customtop = 0.0f;
             m_custombottom = 0.0f;
             m_resetpos = 0;
@@ -291,17 +283,6 @@ namespace mame.ui
 
             top_line = 0;
         }
-
-        //~menu()
-        //{
-        //    // free the pools
-        //    while (m_pool != null)
-        //    {
-        //        pool ppool = m_pool;
-        //        m_pool = m_pool.next;
-        //        ppool = null;  // global_free_array(ppool);
-        //    }
-        //}
 
         ~menu()
         {
@@ -510,10 +491,12 @@ namespace mame.ui
             bool customonly = (flags & PROCESS_CUSTOM_ONLY) != 0;
             bool noimage = (flags & PROCESS_NOIMAGE) != 0;
             bool noinput = (flags & PROCESS_NOINPUT) != 0;
+            float aspect = machine().render().ui_aspect(container());
             float line_height = ui().get_line_height();
-            float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-            float ud_arrow_width = line_height * machine().render().ui_aspect();
+            float lr_arrow_width = 0.4f * line_height * aspect;
+            float ud_arrow_width = line_height * aspect;
             float gutter_width = lr_arrow_width * 1.3f;
+            float lr_border = ui().box_lr_border() * aspect;
 
             if (machine().system() == ___empty.driver____empty && !noimage)
                 draw_background();
@@ -546,8 +529,8 @@ namespace mame.ui
             visible_main_menu_height += 0.01f;
 
             // if we are too wide or too tall, clamp it down
-            if (visible_width + 2.0f * ui().box_lr_border() > 1.0f)
-                visible_width = 1.0f - 2.0f * ui().box_lr_border();
+            if (visible_width + 2.0f * lr_border > 1.0f)
+                visible_width = 1.0f - 2.0f * lr_border;
 
             // if the menu and extra menu won't fit, take away part of the regular menu, it will scroll
             if (visible_main_menu_height + visible_extra_menu_height + 2.0f * ui().box_tb_border() > 1.0f)
@@ -561,9 +544,9 @@ namespace mame.ui
             float visible_top = ((1.0f - visible_main_menu_height - visible_extra_menu_height) * 0.5f) + m_customtop;
 
             // first add us a box
-            float x1 = visible_left - ui().box_lr_border();
+            float x1 = visible_left - lr_border;
             float y1 = visible_top - ui().box_tb_border();
-            float x2 = visible_left + visible_width + ui().box_lr_border();
+            float x2 = visible_left + visible_width + lr_border;
             float y2 = visible_top + visible_main_menu_height + ui().box_tb_border();
             if (!customonly)
                 ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
@@ -671,8 +654,8 @@ namespace mame.ui
                         if ((pitem.flags & FLAG_UI_HEADING) != 0)
                         {
                             float heading_width = ui().get_string_width(itemtext);
-                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - ui().box_lr_border(), line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + ui().box_lr_border(), line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                         }
 
                         float unused1;
@@ -771,15 +754,15 @@ namespace mame.ui
                             text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out target_width, out target_height);
 
                 // determine the target location
-                float target_x = visible_left + visible_width - target_width - ui().box_lr_border();
+                float target_x = visible_left + visible_width - target_width - lr_border;
                 float target_y = line_y + line_height + ui().box_tb_border();
                 if (target_y + target_height + ui().box_tb_border() > visible_main_menu_height)
                     target_y = line_y - target_height - ui().box_tb_border();
 
                 // add a box around that
-                ui().draw_outlined_box(container(), target_x - ui().box_lr_border(),
+                ui().draw_outlined_box(container(), target_x - lr_border,
                         target_y - ui().box_tb_border(),
-                        target_x + target_width + ui().box_lr_border(),
+                        target_x + target_width + lr_border,
                         target_y + target_height + ui().box_tb_border(),
                         subitem_invert ? ui().colors().selected_bg_color() : ui().colors().background_color());
 
@@ -803,9 +786,11 @@ namespace mame.ui
         {
             string text = m_items[0].text;
             string backtext = m_items[1].text;
+            float aspect = machine().render().ui_aspect(container());
             float line_height = mame_machine_manager.instance().ui().get_line_height();
-            float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+            float lr_arrow_width = 0.4f * line_height * aspect;
             float gutter_width = lr_arrow_width;
+            float lr_border = ui().box_lr_border() * aspect;
             float target_width;
             float target_height;
             float prior_width;
@@ -813,7 +798,7 @@ namespace mame.ui
             float target_y;
 
             // compute the multi-line target width/height
-            ui().draw_text_full(container(), text, 0, 0, 1.0f - 2.0f * ui().box_lr_border() - 2.0f * gutter_width,
+            ui().draw_text_full(container(), text, 0, 0, 1.0f - 2.0f * lr_border - 2.0f * gutter_width,
                         text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out target_width, out target_height);
             target_height += 2.0f * line_height;
             if (target_height > 1.0f - 2.0f * ui().box_tb_border())
@@ -828,19 +813,19 @@ namespace mame.ui
             target_y = 0.5f - 0.5f * target_height;
 
             // make sure we stay on-screen
-            if (target_x < ui().box_lr_border() + gutter_width)
-                target_x = ui().box_lr_border() + gutter_width;
-            if (target_x + target_width + gutter_width + ui().box_lr_border() > 1.0f)
-                target_x = 1.0f - ui().box_lr_border() - gutter_width - target_width;
+            if (target_x < lr_border + gutter_width)
+                target_x = lr_border + gutter_width;
+            if (target_x + target_width + gutter_width + lr_border > 1.0f)
+                target_x = 1.0f - lr_border - gutter_width - target_width;
             if (target_y < ui().box_tb_border())
                 target_y = ui().box_tb_border();
             if (target_y + target_height + ui().box_tb_border() > 1.0f)
                 target_y = 1.0f - ui().box_tb_border() - target_height;
 
             // add a box around that
-            ui().draw_outlined_box(container(), target_x - ui().box_lr_border() - gutter_width,
+            ui().draw_outlined_box(container(), target_x - lr_border - gutter_width,
                                     target_y - ui().box_tb_border(),
-                                    target_x + target_width + gutter_width + ui().box_lr_border(),
+                                    target_x + target_width + gutter_width + lr_border,
                                     target_y + target_height + ui().box_tb_border(),
                                     (m_items[0].flags & FLAG_REDTEXT) != 0 ? UI_RED_COLOR : ui().colors().background_color());
 
@@ -870,14 +855,9 @@ namespace mame.ui
         protected render_container container() { return m_container; }
 
 
-        // allocate temporary memory from the menu's memory pool
-        //void *m_pool_alloc(size_t size);
-
-
         // free all items in the menu, and all memory allocated from the memory pool
         //-------------------------------------------------
         //  reset - free all items in the menu,
-        //  and all memory allocated from the memory pool
         //-------------------------------------------------
         protected void reset(reset_options options)
         {
@@ -889,13 +869,7 @@ namespace mame.ui
             else if (options == reset_options.REMEMBER_REF)
                 m_resetref = get_selection_ref();
 
-            //throw new emu_unimplemented();
-#if false
-            // reset all the pools and the item.size() back to 0
-            for (pool *ppool = m_pool; ppool != null; ppool = ppool->next)
-                ppool->top = (uint8_t *)(ppool + 1);
-#endif
-
+            // reset the item count back to 0
             m_items.clear();
             m_visible_items = 0;
             m_selected = 0;
@@ -1100,6 +1074,7 @@ namespace mame.ui
                 rgb_t fgcolor, rgb_t bgcolor, float text_size)
         {
             // size up the text
+            float lrborder = ui().box_lr_border() * machine().render().ui_aspect(container());
             float maxwidth = origx2 - origx1;
             foreach (var it in iter)  //for (Iter it = begin; it != end; ++it)
             {
@@ -1110,7 +1085,7 @@ namespace mame.ui
                         0.0f, 0.0f, 1.0f, justify, wrap,
                         mame_ui_manager.draw_mode.NONE, rgb_t.black(), rgb_t.white(),
                         out width, out unused1, text_size);
-                width += 2.0f * ui().box_lr_border();
+                width += 2.0f * lrborder;
                 maxwidth = Math.Max(maxwidth, width);
             }
 
@@ -1126,8 +1101,8 @@ namespace mame.ui
             ui().draw_outlined_box(container(), x1, y1, x2, y2, bgcolor);
 
             // inset box and draw content
-            x1 += ui().box_lr_border();
-            x2 -= ui().box_lr_border();
+            x1 += lrborder;
+            x2 -= lrborder;
             y1 += ui().box_tb_border();
             y2 -= ui().box_tb_border();
             foreach (var it in iter)  //for (Iter it = begin; it != end; ++it)

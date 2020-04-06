@@ -358,7 +358,6 @@ namespace mame
             IPT_UI_EXPORT,
             IPT_UI_AUDIT_FAST,
             IPT_UI_AUDIT_ALL,
-            IPT_UI_TOGGLE_AUTOFIRE,
 
             // additional OSD-specified UI port types (up to 16)
             IPT_OSD_1,
@@ -866,15 +865,28 @@ namespace mame
 
         // read callbacks
         public static void PORT_CUSTOM_MEMBER(ioport_configurer configurer, string device, ioport_field_read_delegate callback) { configurer.field_set_dynamic_read(callback); }  //#define PORT_CUSTOM_MEMBER(_class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
-        //#define PORT_CUSTOM_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)nullptr));
+        //#define PORT_CUSTOM_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(owner, _device, &_class::_member, #_class "::" #_member));
 
         // write callbacks
-        //#define PORT_CHANGED_MEMBER(_device, _class, _member, _param) configurer.field_set_dynamic_write(ioport_field_write_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)nullptr), (_param));
+        //#define PORT_CHANGED_MEMBER(_device, _class, _member, _param) configurer.field_set_dynamic_write(ioport_field_write_delegate(owner, _device, &_class::_member, #_class "::" #_member), (_param));
 
         // input device handler
+        //#define PORT_READ_LINE_MEMBER(_class, _member) \
+        //    configurer.field_set_dynamic_read( \
+        //            ioport_field_read_delegate( \
+        //                owner, \
+        //                DEVICE_SELF, \
+        //                static_cast<ioport_value (*)(_class &)>([] (_class &device) -> ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; }), \
+        //                #_class "::" #_member));
+        //#define PORT_READ_LINE_DEVICE_MEMBER(_device, _class, _member) \
+        //    configurer.field_set_dynamic_read( \
+        //            ioport_field_read_delegate( \
+        //                owner, \
+        //                _device, \
+        //                static_cast<ioport_value (*)(_class &)>([] (_class &device) -> ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; }), \
+        //                #_class "::" #_member));
         public delegate int PORT_READ_LINE_DEVICE_MEMBER_delegate();
-        //#define PORT_READ_LINE_MEMBER(_class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate([](_class &device)->ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; } , #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
-        public static void PORT_READ_LINE_DEVICE_MEMBER(ioport_configurer configurer, string device, PORT_READ_LINE_DEVICE_MEMBER_delegate _member)  //define PORT_READ_LINE_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate([](_class &device)->ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; } , #_class "::" #_member, _device, (_class *)nullptr));
+        public static void PORT_READ_LINE_DEVICE_MEMBER(ioport_configurer configurer, string device, PORT_READ_LINE_DEVICE_MEMBER_delegate _member)
         {
             configurer.field_set_dynamic_read(() =>
             {
@@ -883,8 +895,20 @@ namespace mame
         }
 
         // output device handler
-        //#define PORT_WRITE_LINE_MEMBER(_class, _member) configurer.field_set_dynamic_write(ioport_field_write_delegate([](_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }, #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
-        //#define PORT_WRITE_LINE_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_write(ioport_field_write_delegate([](_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }, #_class "::" #_member, _device, (_class *)nullptr));
+        //#define PORT_WRITE_LINE_MEMBER(_class, _member) \
+        //    configurer.field_set_dynamic_write( \
+        //            ioport_field_write_delegate( \
+        //                owner, \
+        //                DEVICE_SELF, \
+        //                static_cast<void (*)(_class &, ioport_field &, u32, ioport_value, ioport_value)>([] (_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }), \
+        //                #_class "::" #_member));
+        //#define PORT_WRITE_LINE_DEVICE_MEMBER(_device, _class, _member) \
+        //    configurer.field_set_dynamic_write( \
+        //            ioport_field_write_delegate( \
+        //                owner, \
+        //                _device, \
+        //                static_cast<void (*)(_class &, ioport_field &, u32, ioport_value, ioport_value)>([] (_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }), \
+        //                #_class "::" #_member));
 
         // dip switch definition
         public static void PORT_DIPNAME(ioport_configurer configurer, ioport_value mask, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_DIPSWITCH, default_, mask, name); }
@@ -1079,17 +1103,16 @@ namespace mame
 
     // ======================> input_type_entry
     // describes a fundamental input type, including default input sequences
-    public class input_type_entry : simple_list_item<input_type_entry>
+    public class input_type_entry
     {
         // internal state
-        input_type_entry m_next;             // next description in the list
         ioport_type m_type;             // IPT_* for this entry
         ioport_group m_group;            // which group the port belongs to
-        byte m_player;           // player number (0 is player 1)
+        u8 m_player;           // player number (0 is player 1)
         string m_token;            // token used to store settings
         string m_name;             // user-friendly name
-        input_seq [] m_defseq = new input_seq[(int)input_seq_type.SEQ_TYPE_TOTAL];// default input sequence
-        input_seq [] m_seq = new input_seq[(int)input_seq_type.SEQ_TYPE_TOTAL];// currently configured sequences
+        std.array<input_seq> m_defseq = new std.array<input_seq>((int)input_seq_type.SEQ_TYPE_TOTAL); // default input sequence
+        std.array<input_seq> m_seq = new std.array<input_seq>((int)input_seq_type.SEQ_TYPE_TOTAL); // currently configured sequences
 
 
         // construction/destruction
@@ -1098,10 +1121,9 @@ namespace mame
         //-------------------------------------------------
         public input_type_entry(ioport_type type, ioport_group group, int player, string token, string name, input_seq standard)
         {
-            m_next = null;
             m_type = type;
             m_group = group;
-            m_player = (byte)player;
+            m_player = (u8)player;
             m_token = token;
             m_name = name;
 
@@ -1112,10 +1134,9 @@ namespace mame
 
         public input_type_entry(ioport_type type, ioport_group group, int player, string token, string name, input_seq standard, input_seq decrement, input_seq increment)
         {
-            m_next = null;
             m_type = type;
             m_group = group;
-            m_player = (byte)player;
+            m_player = (u8)player;
             m_token = token;
             m_name = name;
 
@@ -1130,9 +1151,6 @@ namespace mame
 
 
         // getters
-        public input_type_entry next() { return m_next; }
-        public input_type_entry m_next_get() { return m_next; }
-        public void m_next_set(input_type_entry value) { m_next = value; }
 
         public ioport_type type() { return m_type; }
         public ioport_group group() { return m_group; }
@@ -1142,19 +1160,24 @@ namespace mame
         input_seq defseq(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD) { return m_defseq[(int)seqtype]; }
         public input_seq seq(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD) { return m_seq[(int)seqtype]; }
 
+
+        // setters
+
+        public void restore_default_seq() { m_seq = m_defseq; }
+
+        //void set_seq(input_seq_type seqtype, const input_seq &seq) noexcept { m_seq[seqtype] = seq; }
+        //void replace_code(input_code oldcode, input_code newcode) noexcept;
+        //void configure_osd(const char *token, const char *name);
+
+
         //-------------------------------------------------
         //  restore_default_seq - restores the sequence
         //  from the default
         //-------------------------------------------------
-        public void restore_default_seq()
-        {
-            for (input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD; seqtype < input_seq_type.SEQ_TYPE_TOTAL; seqtype++)
-                m_seq[(int)seqtype] = defseq(seqtype);
-        }
-
-
-        // setters
-        //void configure_osd(const char *token, const char *name);
+        //void input_type_entry::restore_default_seq() noexcept
+        //{
+        //    m_seq = m_defseq;
+        //}
     }
 
 
@@ -1480,6 +1503,11 @@ namespace mame
     // a single bitfield within an input port
     public class ioport_field : global_object, simple_list_item<ioport_field>
     {
+        //friend class simple_list<ioport_field>;
+        //friend class ioport_configurer;
+        //friend class dynamic_field;
+
+
         // flags for ioport_fields
         const int FIELD_FLAG_OPTIONAL = 0x0001;    // set if this field is not required but recognized by hw
         public const int FIELD_FLAG_COCKTAIL = 0x0002;    // set if this field is relevant only for cocktail cabinets
@@ -1551,6 +1579,8 @@ namespace mame
             m_flags = 0;
             m_impulse = 0;
             m_name = name;
+            m_read = null;
+            m_write = null;
             m_write_param = 0;
             m_digital_value = false;
             m_min = 0;
@@ -1562,6 +1592,7 @@ namespace mame
             m_crosshair_scale = 1.0;
             m_crosshair_offset = 0;
             m_crosshair_altaxis = 0;
+            m_crosshair_mapper = null;
             m_full_turn_count = 0;
             m_remap_table = null;
             m_way = 0;
@@ -1599,6 +1630,21 @@ namespace mame
         }
 
 
+        public u32 flags { get { return m_flags; } set { m_flags = value; } }
+        public u8 impulse { get { return m_impulse; } set { m_impulse = value; } }
+        public ioport_value min { get { return m_min; } set { m_min = value; } }
+        public ioport_value max { get { return m_max; } set { m_max = value; } }
+        public s32 sensitivity { get { return m_sensitivity; } set { m_sensitivity = value; } }
+        public s32 delta { get { return m_delta; } set { m_delta = value; } }
+        public s32 centerdelta { get { return m_centerdelta; } set { m_centerdelta = value; } }
+        public input_seq seq_raw(input_seq_type which) { return m_seq[(int)which]; }
+        public ioport_field_read_delegate get_read() { return m_read; }
+        public ioport_field_write_delegate get_write() { return m_write; }
+        public u32 get_write_param() { return m_write_param; }
+        public void set_seq(input_seq_type which, input_seq value) { m_seq[(int)which] = value; }
+        public void set_way(u8 way) { m_way = way; }
+
+
         // getters
         public ioport_field next() { return m_next; }
         public ioport_field m_next_get() { return m_next; }
@@ -1618,14 +1664,7 @@ namespace mame
         public ioport_type type() { return m_type; }
         public u8 player() { return m_player; }
         public bool digital_value() { return m_digital_value; }
-        public u32 flags { get { return m_flags; } set { m_flags = value; } }
-        public u8 impulse { get { return m_impulse; } set { m_impulse = value; } }
         public void set_value(ioport_value value) { m_digital_value = value != 0; }
-        public ioport_value min { get { return m_min; } set { m_min = value; } }
-        public ioport_value max { get { return m_max; } set { m_max = value; } }
-        public s32 sensitivity { get { return m_sensitivity; } set { m_sensitivity = value; } }
-        public s32 delta { get { return m_delta; } set { m_delta = value; } }
-        public s32 centerdelta { get { return m_centerdelta; } set { m_centerdelta = value; } }
 
         bool optional() { return ((m_flags & FIELD_FLAG_OPTIONAL) != 0); }
         //bool cocktail() const { return ((m_flags & FIELD_FLAG_COCKTAIL) != 0); }
@@ -1636,7 +1675,7 @@ namespace mame
         public bool analog_wraps() { return (m_flags & ANALOG_FLAG_WRAPS) != 0; }
         public bool analog_invert() { return (m_flags & ANALOG_FLAG_INVERT) != 0; }
 
-        //UINT8 impulse() const { return m_impulse; }
+        //u8 impulse() const noexcept { return m_impulse; }
 
         //-------------------------------------------------
         //  name - return the field name for a given input
@@ -1689,7 +1728,6 @@ namespace mame
             return m_seq[(int)seqtype];
         }
 
-        public input_seq seq_raw(input_seq_type which) { return m_seq[(int)which]; }
         public input_seq defseq_unresolved(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD) { return m_seq[(int)seqtype]; }
         public void set_defseq(input_seq newseq) { set_defseq(input_seq_type.SEQ_TYPE_STANDARD, newseq); }
 
@@ -1709,19 +1747,23 @@ namespace mame
                 m_live.seq[(int)seqtype] = newseq;
         }
 
-        public ioport_field_read_delegate get_read() { return m_read; }
-        public ioport_field_write_delegate get_write() { return m_write; }
-        public u32 get_write_param() { return m_write_param; }
         public bool has_dynamic_read() { return m_read != null; }
         public bool has_dynamic_write() { return m_write != null; }
+
         public ioport_value minval() { return m_min; }
         public ioport_value maxval() { return m_max; }
+        //s32 sensitivity() const noexcept { return m_sensitivity; }
+        //s32 delta() const noexcept { return m_delta; }
+        //s32 centerdelta() const noexcept { return m_centerdelta; }
         public crosshair_axis_t crosshair_axis() { return m_crosshair_axis; }
         //double crosshair_scale() const { return m_crosshair_scale; }
         //double crosshair_offset() const { return m_crosshair_offset; }
-        //UINT16 full_turn_count() const { return m_full_turn_count; }
+        //u16 full_turn_count() const noexcept { return m_full_turn_count; }
         public ioport_value [] remap_table() { return m_remap_table; }
-        public u8 way { get { return m_way; } set { m_way = value; } }
+
+
+        u8 way() { return m_way; }
+
 
         //-------------------------------------------------
         //  keyboard_codes - accesses a particular keyboard
@@ -1821,7 +1863,6 @@ namespace mame
         //void set_crosshair_scale(double scale) { m_crosshair_scale = scale; }
         //void set_crosshair_offset(double offset) { m_crosshair_offset = offset; }
         public void set_player(u8 player) { m_player = player; }
-        public void set_seq(input_seq_type which, input_seq value) { m_seq[(int)which] = value; }
 
 
         // derived getters
@@ -1857,8 +1898,10 @@ namespace mame
             return ioport_type_class.INPUT_CLASS_INTERNAL;
         }
 
+
         public bool is_analog() { return m_type > ioport_type.IPT_ANALOG_FIRST && m_type < ioport_type.IPT_ANALOG_LAST; }
         public bool is_digital_joystick() { return m_type > ioport_type.IPT_DIGITAL_JOYSTICK_FIRST && m_type < ioport_type.IPT_DIGITAL_JOYSTICK_LAST; }
+
 
         // additional operations
         public bool enabled() { return m_condition.eval(); }
@@ -1972,9 +2015,9 @@ namespace mame
             //throw new emu_unimplemented();
 #if false
             // resolve callbacks
-            m_read.bind_relative_to(device());
-            m_write.bind_relative_to(device());
-            m_crosshair_mapper.bind_relative_to(device());
+            m_read.resolve();
+            m_write.resolve();
+            m_crosshair_mapper.resolve();
 #endif
 
             // allocate live state
@@ -2018,23 +2061,6 @@ namespace mame
 
             // if the state changed, look for switch down/switch up
             bool curstate = m_digital_value || machine().input().seq_pressed(seq());
-
-            if (m_live.autofire && !machine().ioport().get_autofire_toggle())
-            {
-                if (curstate)
-                {
-                    if (m_live.autopressed > machine().ioport().get_autofire_delay())
-                        m_live.autopressed = 0;
-                    else if (m_live.autopressed > machine().ioport().get_autofire_delay() / 2)
-                        curstate = false;
-                    m_live.autopressed++;
-                }
-                else
-                {
-                    m_live.autopressed = 0;
-                }
-            }
-
             bool changed = false;
             if (curstate != m_live.last)
             {
@@ -2123,14 +2149,13 @@ namespace mame
         // user-controllable settings for a field
         struct user_settings
         {
-            ioport_value    value;                  // for DIP switches
-            bool            autofire;               // for autofire settings
+            ioport_value    value = 0;              // for DIP switches
             input_seq       seq[SEQ_TYPE_TOTAL];    // sequences of all types
-            INT32           sensitivity;            // for analog controls
-            INT32           delta;                  // for analog controls
-            INT32           centerdelta;            // for analog controls
-            bool            reverse;                // for analog controls
-            bool            toggle;                 // for non-analog controls
+            s32             sensitivity = 0;        // for analog controls
+            s32             delta = 0;              // for analog controls
+            s32             centerdelta = 0;        // for analog controls
+            bool            reverse = false;        // for analog controls
+            bool            toggle = false;         // for non-analog controls
         };
 #endif
 
@@ -2247,8 +2272,6 @@ namespace mame
         public bool last;               // were we pressed last time?
         public bool toggle;             // current toggle setting
         public digital_joystick.direction_t joydir;       // digital joystick direction index
-        public bool autofire;           // autofire
-        public int autopressed;        // autofire status
         public bool lockout;            // user lockout
         public string name;               // overridden name
 
@@ -2266,8 +2289,6 @@ namespace mame
             last = false;
             toggle = field.toggle();
             joydir = digital_joystick.direction_t.JOYDIR_COUNT;
-            autofire = false;
-            autopressed = 0;
             lockout = false;
 
 
@@ -3376,9 +3397,9 @@ namespace mame
         //-------------------------------------------------
         //  field_add_code - add a character to a field
         //-------------------------------------------------
-        public ioport_configurer field_add_code(input_seq_type which, input_code code) { m_curfield.seq_raw(which).append_code_to_sequence_or(code); return this; } // m_curfield.m_seq[which] |= code; }
+        public ioport_configurer field_add_code(input_seq_type which, input_code code) { m_curfield.seq_raw(which).append_code_to_sequence_or(code); return this; }  //{ m_curfield.m_seq[which] |= code; return this; }
 
-        public ioport_configurer field_set_way(int way) { m_curfield.way = (byte)way; return this; }
+        public ioport_configurer field_set_way(int way) { m_curfield.set_way((u8)way); return this; }  //{ m_curfield->m_way = way; return *this; }
         //ioport_configurer field_set_rotated() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_ROTATED; }
         //ioport_configurer& field_set_name(const char *name) { assert(m_curfield != nullptr); m_curfield->m_name = string_from_token(name); return *this; }
         public ioport_configurer field_set_player(int player) { m_curfield.set_player((byte)(player - 1)); return this; }
@@ -3470,7 +3491,7 @@ namespace mame
         ioport_list m_portlist = new ioport_list();             // list of input port configurations
 
         // types
-        simple_list<input_type_entry> m_typelist = new simple_list<input_type_entry>();       // list of live type states
+        std.vector<input_type_entry> m_typelist = new std.vector<input_type_entry>();       // list of live type states
         input_type_entry [,] m_type_to_entry = new input_type_entry[(int)ioport_type.IPT_COUNT, ioport_global.MAX_PLAYERS]; // map from type/player to type state
 
         // specific special global input states
@@ -3489,10 +3510,6 @@ namespace mame
         emu_file m_timecode_file;        // timecode/frames playback file (nullptr if not recording)
         int m_timecode_count;
         attotime m_timecode_last_time;
-
-        // autofire
-        bool m_autofire_toggle;      // autofire toggle
-        int m_autofire_delay;       // autofire delay
 
 
         // construction/destruction
@@ -3513,8 +3530,6 @@ namespace mame
             m_timecode_file = new emu_file(machine.options().input_directory(), osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
             m_timecode_count = 0;
             m_timecode_last_time = attotime.zero;
-            m_autofire_toggle = false;
-            m_autofire_delay = 3;                 // 1 seems too fast for a bunch of games
 
 
             //memset(m_type_to_entry, 0, sizeof(m_type_to_entry));
@@ -3622,7 +3637,7 @@ namespace mame
 
         // type helpers
 
-        simple_list<input_type_entry> types() { return m_typelist; }
+        std.vector<input_type_entry> types() { return m_typelist; }
 
         //-------------------------------------------------
         //  type_pressed - return true if the sequence for
@@ -3752,13 +3767,6 @@ namespace mame
         //string input_type_to_token(ioport_type type, int player);
 
 
-        // autofire
-        public bool get_autofire_toggle() { return m_autofire_toggle; }
-        public void set_autofire_toggle(bool toggle) { m_autofire_toggle = toggle; }
-        public int get_autofire_delay() { return m_autofire_delay; }
-        //void set_autofire_delay(int delay) { m_autofire_delay = delay; }
-
-
         // internal helpers
 
         //-------------------------------------------------
@@ -3768,7 +3776,7 @@ namespace mame
         void init_port_types()
         {
             // convert the array into a list of type states that can be modified
-            inpttype_global.construct_core_types(m_typelist);
+            inpttype_global.emplace_core_types(m_typelist);
 
             // ask the OSD to customize the list
             machine().osd().customize_input_type_list(m_typelist);

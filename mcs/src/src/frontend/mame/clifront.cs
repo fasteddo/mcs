@@ -239,7 +239,7 @@ namespace mame
             {
                 // see if we match but just weren't a clone
                 if (original_count == 0)
-                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
                 else
                     osd_printf_info("Found {0} match(es) for '{1}' but none were clones\n", drivlist.count(), gamename);
 
@@ -272,7 +272,7 @@ namespace mame
             // start with a filtered list of drivers; return an error if none found
             driver_enumerator initial_drivlist = new driver_enumerator(m_options, gamename);
             if (initial_drivlist.count() == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // for the final list, start with an empty driver list
             driver_enumerator drivlist = new driver_enumerator(m_options);
@@ -419,7 +419,7 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // iterate over drivers, looking for SAMPLES devices
             bool first = true;
@@ -458,7 +458,7 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // iterate over drivers, looking for SAMPLES devices
             bool first = true;
@@ -548,7 +548,7 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // print header
             osd_printf_info("{0} {1} {2} {3}\n", "SYSTEM", "SLOT NAME", "SLOT OPTIONS", "SLOT DEVICE NAME");  // %-16s %-16s %-16s %s\n
@@ -620,7 +620,7 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // print header
             osd_printf_info("{0} {1} {2} {3}\n", "SYSTEM", "MEDIA NAME", "(brief)", "IMAGE FILE EXTENSIONS SUPPORTED");  // %-16s %-16s %-10s %s\n
@@ -769,7 +769,7 @@ namespace mame
             foreach (string pat in args)
             {
                 if (!it.Current)
-                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", pat.c_str());
+                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat.c_str());
 
                 it.MoveNext();
             }
@@ -832,7 +832,7 @@ namespace mame
 
             // return an error if none found
             if (matched == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // if we didn't get anything at all, display a generic end message
             if (matched > 0 && correct == 0 && incorrect == 0)
@@ -875,7 +875,7 @@ namespace mame
         {
             string gamename = args.empty() ? "*" : args[0].c_str();
 
-            Dictionary<string, object> list_map = new Dictionary<string, object>();  //int_map list_map;
+            std.unordered_set<string> list_map = new std.unordered_set<string>();
 
             int correct = 0;
             int incorrect = 0;
@@ -886,7 +886,7 @@ namespace mame
             // determine which drivers to process; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             throw new emu_unimplemented();
 #if false
@@ -959,7 +959,7 @@ namespace mame
 
             // return an error if none found
             if (matched == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // if we didn't get anything at all, display a generic end message
             if (matched > 0 && correct == 0 && incorrect == 0)
@@ -992,7 +992,7 @@ namespace mame
         {
             string gamename = args.empty() ? "*" : args[0].c_str();
 
-            Dictionary<string, object> list_map = new Dictionary<string, object>();  //int_map list_map;
+            std.unordered_set<string> list_map;
             int correct = 0;
             int incorrect = 0;
             int notfound = 0;
@@ -1072,7 +1072,7 @@ namespace mame
 
             // return an error if none found
             if (matched == 0)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching software lists found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching software lists found for '{0}'", gamename);
 
             // if we didn't get anything at all, display a generic end message
             if (matched > 0 && correct == 0 && incorrect == 0)
@@ -1183,7 +1183,7 @@ namespace mame
                 foreach (string pat in args)
                 {
                     if (!matched[itIdx])  //if (!*it)
-                        throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching systems found for '{0}'", pat.c_str());
+                        throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat.c_str());
 
                     ++itIdx;  //++it;
                 }
@@ -1359,7 +1359,7 @@ namespace mame
             {
                 // if we failed, check for no command and a system name first; in that case error on the name
                 if (m_options.command().empty() && mame_options.system(m_options) == null && !m_options.attempted_system_name().empty())
-                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "Unknown system '{0}'", m_options.attempted_system_name().c_str());
+                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "Unknown system '{0}'", m_options.attempted_system_name().c_str());
 
                 // otherwise, error on the options
                 throw new emu_fatalerror(global_object.EMU_ERR_INVALID_CONFIG, "{0}", ex.message().c_str());
@@ -1398,7 +1398,7 @@ namespace mame
             // if we can't find it, give an appropriate error
             game_driver system = mame_options.system(m_options);
             if (system == null && !string.IsNullOrEmpty(m_options.system_name()))
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "Unknown system '{0}'", m_options.system_name());
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "Unknown system '{0}'", m_options.system_name());
 
             // otherwise just run the game
             m_result = manager.execute();

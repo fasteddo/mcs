@@ -120,7 +120,34 @@ namespace mame
         //std::string &strtrimrightspace(std::string& str);
         //std::string &strmakeupper(std::string& str);
         //std::string &strmakelower(std::string& str);
-        //int strreplace(std::string &str, const std::string& search, const std::string& replace);
+
+
+        /**
+         * @fn  int strreplace(std::string &str, const std::string& search, const std::string& replace)
+         *
+         * @brief   Strreplaces.
+         *
+         * @param [in,out]  str The string.
+         * @param   search      The search.
+         * @param   replace     The replace.
+         *
+         * @return  An int.
+         */
+
+        public static int strreplace(ref string str, string search, string replace)
+        {
+            int searchlen = search.length();
+            int replacelen = replace.length();
+            int matches = 0;
+
+            for (int curindex = str.find(search, 0); curindex != -1; curindex = str.find(search, curindex + replacelen))
+            {
+                matches++;
+                str = str.Remove(curindex, searchlen).insert(curindex, replace);  //str.erase(curindex, searchlen).insert(curindex, replace);
+            }
+
+            return matches;
+        }
 
 
         /**

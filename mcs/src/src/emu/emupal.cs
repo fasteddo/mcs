@@ -262,41 +262,35 @@ namespace mame
 
         //template <typename T>
         //palette_device(const machine_config &mconfig, const char *tag, device_t *owner, rgb_444_prom_t, T &&region, u32 entries)
-        //    : palette_device(mconfig, tag, owner, init_delegate(FUNC(palette_device::palette_init_rgb_444_proms), tag, this), entries)
+        //    : palette_device(mconfig, tag, owner, init_delegate(*this, FUNC(palette_device::palette_init_rgb_444_proms)), entries)
         //{
         //    set_prom_region(std::forward<T>(region));
         //}
 
-        // FIXME: these should be aware of current device for resolving the tag
-        //template <class FunctionClass>
-        //palette_device(const machine_config &mconfig, const char *tag, device_t *owner, void (FunctionClass::*init)(palette_device &), const char *name, u32 entries = 0U, u32 indirect = 0U)
-        //    : palette_device(mconfig, tag, owner, init_delegate(init, name, nullptr, static_cast<FunctionClass *>(nullptr)), entries, indirect)
-        //{ }
+        //template <typename F>
+        //palette_device(const machine_config &mconfig, const char *tag, device_t *owner, F &&init, std::enable_if_t<init_delegate::supports_callback<F>::value, const char *> name, u32 entries = 0U, u32 indirect = 0U)
+        //    : palette_device(mconfig, tag, owner, 0U)
+        //{ set_init(std::forward<F>(init), name).set_entries(entries, indirect); }
+        //template <typename T, typename F>
+        //palette_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&devname, F &&init, std::enable_if_t<init_delegate::supports_callback<F>::value, const char *> name, u32 entries = 0U, u32 indirect = 0U)
+        //    : palette_device(mconfig, tag, owner, 0U)
+        //{ set_init(std::forward<T>(devname), std::forward<F>(init), name).set_entries(entries, indirect); }
+
         //template <class FunctionClass>
         palette_device(machine_config mconfig, string tag, device_t owner, init_delegate init, string name, u32 entries = 0U, u32 indirect = 0U)
             : this(mconfig, tag, owner, init, entries, indirect)
         { }
-        //template <class FunctionClass>
-        //palette_device(const machine_config &mconfig, const char *tag, device_t *owner, const char *devname, void (FunctionClass::*init)(palette_device &), const char *name, u32 entries = 0U, u32 indirect = 0U)
-        //    : palette_device(mconfig, tag, owner, init_delegate(init, name, devname, static_cast<FunctionClass *>(nullptr)), entries, indirect)
-        //{ }
-        //template <class FunctionClass>
-        //palette_device(const machine_config &mconfig, const char *tag, device_t *owner, const char *devname, void (FunctionClass::*init)(palette_device &) const, const char *name, u32 entries = 0U, u32 indirect = 0U)
-        //    : palette_device(mconfig, tag, owner, init_delegate(init, name, devname, static_cast<FunctionClass *>(nullptr)), entries, indirect)
-        //{ }
 
 
         public void palette_device_after_ctor(init_delegate init, u32 entries, u32 indirect)
         {
-            set_entries(entries);
-            set_indirect_entries(indirect);
+            set_entries(entries, indirect);
             set_init(init);
         }
 
 
         // configuration
-        public void set_init(init_delegate init) { m_init = init; }  //template <typename Object> void set_init(Object &&init) { m_init = std::forward<Object>(init); }
-        public void set_init(string devname, init_delegate init) { set_init(init); }
+        public palette_device set_init(init_delegate init) { m_init = init; return this; }  //template <typename... T> palette_device &set_init(T &&... args) { m_init.set(std::forward<T>(args)...); return *this; }
 
         //palette_device &set_format(raw_to_rgb_converter raw_to_rgb) { m_raw_to_rgb = raw_to_rgb; return *this; }
         //palette_device &set_format(int bytes_per_entry, raw_to_rgb_converter::raw_to_rgb_func func, u32 entries);
@@ -348,28 +342,6 @@ namespace mame
         //palette_device &enable_shadows() { m_enable_shadows = true; return *this; }
         //palette_device &enable_hilights() { m_enable_hilights = true; return *this; }
         //template <typename T> palette_device &set_prom_region(T &&region) { m_prom_region.set_tag(std::forward<T>(region)); return *this; }
-
-        // FIXME: these should be aware of current device for resolving the tag
-        //template <class FunctionClass>
-        //void set_init(void (FunctionClass::*init)(palette_device &), const char *name)
-        //{
-        //    m_init = init_delegate(init, name, nullptr, static_cast<FunctionClass *>(nullptr));
-        //}
-        //template <class FunctionClass>
-        //void set_init(void (FunctionClass::*init)(palette_device &) const, const char *name)
-        //{
-        //    m_init = init_delegate(init, name, nullptr, static_cast<FunctionClass *>(nullptr));
-        //}
-        //template <class FunctionClass>
-        //void set_init(const char *devname, void (FunctionClass::*init)(palette_device &), const char *name)
-        //{
-        //    m_init = init_delegate(init, name, devname, static_cast<FunctionClass *>(nullptr));
-        //}
-        //template <class FunctionClass>
-        //void set_init(const char *devname, void (FunctionClass::*init)(palette_device &) const, const char *name)
-        //{
-        //    m_init = init_delegate(init, name, devname, static_cast<FunctionClass *>(nullptr));
-        //}
 
 
         //void set_format(raw_to_rgb_converter raw_to_rgb) { m_raw_to_rgb = raw_to_rgb; }
@@ -430,7 +402,7 @@ namespace mame
         protected override void device_start()
         {
             // bind the init function
-            //m_init.bind_relative_to(*owner());
+            //m_init.resolve();
 
             // find the memory, if present
             memory_share share = memshare(tag());

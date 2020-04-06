@@ -587,10 +587,6 @@ namespace mame.ui
                         m_filter_highlight = (int)machine_filter.type.LAST;
                     break;
 
-                case (int)ioport_type.IPT_UI_CONFIGURE:
-                    inkey_navigation();
-                    break;
-
                 case (int)ioport_type.IPT_UI_EXPORT:
                     inkey_export();
                     break;

@@ -27,21 +27,6 @@ namespace mame
     }
 
 
-    public static class ExtensionSet
-    {
-        // custom
-        public static bool ContainsIf<T>(this HashSet<T> source, Func<T, bool> predicate)
-        {
-            foreach (var element in source)
-            {
-                if (predicate(element))
-                    return true;
-            }
-            return false;
-        }
-    }
-
-
     public static class ExtensionString
     {
         // custom
@@ -68,6 +53,7 @@ namespace mame
         public static int find(this String str, char c) { return str.IndexOf(c); }
         public static int find(this String str, char c, int start) { return str.IndexOf(c, start); }
         public static int find(this String str, string s) { return str.IndexOf(s); }
+        public static int find(this String str, string s, int start) { return str.IndexOf(s, start); }
         public static int find_first_of(this String str, string s, int pos = 0) { return str.IndexOf(s, pos); }
         public static int find_first_of(this String str, char c, int pos = 0) { return str.IndexOf(c, pos); }
         public static int find_last_of(this String str, string s) { return str.LastIndexOf(s, (str.Length - 1) > 0 ? str.Length - 1 : 0); }
@@ -79,6 +65,7 @@ namespace mame
         public static void reserve(this String str, int n) { }
         public static int rfind(this String str, char c) { return str.LastIndexOf(c); }
         public static int rfind(this String str, string s) { return str.LastIndexOf(s); }
+        public static int size(this String str) { return str.Length; }
         public static string str(this String str) { return str; }
         public static string substr(this String str, int pos) { return str.Substring(pos); }
         public static string substr(this String str, int pos, int count) { return str.Substring(pos, count); }

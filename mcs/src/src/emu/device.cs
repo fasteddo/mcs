@@ -859,16 +859,15 @@ namespace mame
             string tag = _tag.c_str();
             string result;
 
-            // if the tag begins with a colon, ignore our path and start from the root
             if (tag.StartsWith(":"))
             {
+                // if the tag begins with a colon, ignore our path and start from the root
                 tag = tag.Substring(1);
                 result = ":";
             }
             else
             {
                 // otherwise, start with our path
-
                 result = m_tag;
                 if (result != ":")
                     result += ":";
@@ -1187,9 +1186,11 @@ namespace mame
 
         void set_unscaled_clock(XTAL xtal) { set_unscaled_clock(xtal.value()); }
 
-
+        
+        //void set_unscaled_clock_int(u32 clock) { set_unscaled_clock(clock); } // non-overloaded name because binding to overloads is ugly
         //double clock_scale() const { return m_clock_scale; }
         //void set_clock_scale(double clockscale);
+
 
         //-------------------------------------------------
         //  clocks_to_attotime - converts a number of

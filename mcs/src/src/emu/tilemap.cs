@@ -134,11 +134,16 @@ namespace mame
     // core tilemap structure
     public class tilemap_t : global_object, simple_list_item<tilemap_t>
     {
+        //friend class tilemap_device;
+        //friend class tilemap_manager;
+        //friend class simple_list<tilemap_t>;
+        //friend resource_pool_object<tilemap_t>::~resource_pool_object();
+
         // global types
-        //typedef UINT32 tilemap_memory_index;
+        //typedef u32 tilemap_memory_index;
 
         // logical index
-        //typedef UINT32 logical_index;
+        //typedef u32 logical_index;
 
 
         // internal set of transparency states for rendering
@@ -174,7 +179,7 @@ namespace mame
 
         // managers and devices
         tilemap_manager m_manager;              // reference to the owning manager
-        tilemap_device m_device;               // pointer to our owning device
+        device_t m_device;               // pointer to our owning device
         device_palette_interface m_palette;              // palette used for drawing
         tilemap_t m_next;                 // pointer to next tilemap
         object m_user_data;            // user data value
@@ -228,8 +233,12 @@ namespace mame
         //-------------------------------------------------
         //  tilemap_t - constructor
         //-------------------------------------------------
-        public tilemap_t()
+        public tilemap_t(device_t owner)
         {
+            m_mapper = null;
+            m_tile_get_info = null;
+
+
             // until init() is called, data is floating; this is deliberate
         }
 
@@ -237,14 +246,14 @@ namespace mame
         //-------------------------------------------------
         //  init - initialize the tilemap
         //-------------------------------------------------
-        public tilemap_t init(tilemap_manager manager, device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_mapper_delegate mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)
+        void init_common(tilemap_manager manager, device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)
         {
             // populate managers and devices
             m_manager = manager;
 
             //throw new emu_unimplemented();
 #if false
-            m_device = (tilemap_device)this;
+            m_device = dynamic_cast<device_t *>(this);
 #endif
 
             m_palette = decoder.palette();
@@ -258,9 +267,6 @@ namespace mame
             m_tileheight = tileheight;
             m_width = cols * tilewidth;
             m_height = rows * tileheight;
-
-            // populate logical <-> memory mappings
-            m_mapper = mapper;
 
             // initialize tile information geters
             m_tile_get_info = tile_get_info;
@@ -320,14 +326,62 @@ namespace mame
 
             // reset everything after a load
             machine().save().register_postload(postload);
+        }
+
+
+        public tilemap_t init(
+                tilemap_manager manager,
+                device_gfx_interface decoder,
+                tilemap_get_info_delegate tile_get_info,
+                tilemap_mapper_delegate mapper,
+                u16 tilewidth,
+                u16 tileheight,
+                u32 cols,
+                u32 rows)
+        {
+            // populate logical <-> memory mappings
+            m_mapper = mapper;
+
+            init_common(manager, decoder, tile_get_info, tilewidth, tileheight, cols, rows);
+
+            return this;
+        }
+
+        public tilemap_t init(
+                tilemap_manager manager,
+                device_gfx_interface decoder,
+                tilemap_get_info_delegate tile_get_info,
+                tilemap_standard_mapper mapper,
+                u16 tilewidth,
+                u16 tileheight,
+                u32 cols,
+                u32 rows)
+        {
+            // populate logical <-> memory mappings
+            switch (mapper)
+            {
+                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS:         m_mapper = scan_rows;         break;
+                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_X:  m_mapper = scan_rows_flip_x;  break;
+                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_Y:  m_mapper = scan_rows_flip_y;  break;
+                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_XY: m_mapper = scan_rows_flip_xy; break;
+                case tilemap_standard_mapper.TILEMAP_SCAN_COLS:         m_mapper = scan_cols;         break;
+                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_X:  m_mapper = scan_cols_flip_x;  break;
+                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_Y:  m_mapper = scan_cols_flip_y;  break;
+                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_XY: m_mapper = scan_cols_flip_xy; break;
+                default: throw new emu_fatalerror("Tilemap init unknown mapper {0}", mapper);
+            }
+
+            init_common(manager, decoder, tile_get_info, tilewidth, tileheight, cols, rows);
 
             return this;
         }
 
 
+        public device_t device { get { return m_device; } }
+
+
         // getters
         running_machine machine() { return m_manager.machine(); }
-        public tilemap_device device() { return m_device; }
         //device_palette_interface *palette() const { return m_palette; }
         //device_gfx_interface &decoder() const { return *m_tileinfo.decoder; }
 
@@ -1570,25 +1624,43 @@ namespace mame
         public tilemap_manager(running_machine machine)
         {
             m_machine = machine;
+            m_instance = 0;
         }
+
 
         ~tilemap_manager()
         {
             assert(m_isDisposed);  // can remove
-        }
 
-        bool m_isDisposed = false;
-        public void Dispose()
-        {
-            // detach all device tilemaps since they will be destroyed
-            // as subdevices elsewhere
+            // detach all device tilemaps since they will be destroyed as subdevices elsewhere
             bool found = true;
             while (found)
             {
                 found = false;
-                for (tilemap_t tmap = m_tilemap_list.first(); tmap != null; tmap = tmap.next())
+                foreach (var tmap in m_tilemap_list)
                 {
-                    if (tmap.device() != null)
+                    if (tmap.device != null)
+                    {
+                        found = true;
+                        m_tilemap_list.detach(tmap);
+                        break;
+                    }
+                }
+            }
+        }
+
+
+        bool m_isDisposed = false;
+        public void Dispose()
+        {
+            // detach all device tilemaps since they will be destroyed as subdevices elsewhere
+            bool found = true;
+            while (found)
+            {
+                found = false;
+                foreach (var tmap in m_tilemap_list)
+                {
+                    if (tmap.device != null)
                     {
                         found = true;
                         m_tilemap_list.detach(tmap);
@@ -1606,32 +1678,15 @@ namespace mame
 
 
         // tilemap creation
-        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_mapper_delegate mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, tilemap_t allocated = null)
-        {
-            if (allocated == null)
-                allocated = new tilemap_t();
 
-            return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows));
-        }
-
-        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_standard_mapper mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, tilemap_t allocated = null)
-        {
-            if (allocated == null)
-                allocated = new tilemap_t();
-
-            switch (mapper)
-            {
-                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS:         return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_rows, tilewidth, tileheight, cols, rows));
-                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_X:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_rows_flip_x, tilewidth, tileheight, cols, rows));
-                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_Y:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_rows_flip_y, tilewidth, tileheight, cols, rows));
-                case tilemap_standard_mapper.TILEMAP_SCAN_ROWS_FLIP_XY: return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_rows_flip_xy, tilewidth, tileheight, cols, rows));
-                case tilemap_standard_mapper.TILEMAP_SCAN_COLS:         return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols, tilewidth, tileheight, cols, rows));
-                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_X:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_x, tilewidth, tileheight, cols, rows));
-                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_Y:  return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_y, tilewidth, tileheight, cols, rows));
-                case tilemap_standard_mapper.TILEMAP_SCAN_COLS_FLIP_XY: return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, tilemap_t.scan_cols_flip_xy, tilewidth, tileheight, cols, rows));
-                default: throw new emu_fatalerror("Tilemap manager create unknown mapper {0}\n", mapper);
-            }
-        }
+        //template <typename T, typename U>
+        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_mapper_delegate mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)  ////tilemap_t &create(device_gfx_interface &decoder, T &&tile_get_info, U &&mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)
+        { return create(decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows, null); }
+        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_standard_mapper mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)  ////tilemap_t &create(device_gfx_interface &decoder, T &&tile_get_info, U &&mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)
+        { return create(decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows, null); }
+        //template <typename T, typename U, class V>
+        //std::enable_if_t<std::is_base_of<device_t, V>::value, tilemap_t &> create(device_gfx_interface &decoder, T &&tile_get_info, U &&mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, V &allocated)
+        //{ return create(decoder, std::forward<T>(tile_get_info), std::forward<U>(mapper), tilewidth, tileheight, cols, rows, &static_cast<tilemap_t &>(allocated)); }
 
 
         // tilemap list information
@@ -1651,6 +1706,23 @@ namespace mame
         {
             for (tilemap_t tmap = m_tilemap_list.first(); tmap != null; tmap = tmap.next())
                 tmap.set_flip(attributes);
+        }
+
+
+        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_mapper_delegate mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, tilemap_t allocated)
+        {
+            if (allocated == null)
+                allocated = new tilemap_t(machine().root_device());  //allocated = global_alloc(tilemap_t)(machine().root_device());
+
+            return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows));
+        }
+
+        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_standard_mapper mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, tilemap_t allocated)
+        {
+            if (allocated == null)
+                allocated = new tilemap_t(machine().root_device());  //allocated = global_alloc(tilemap_t)(machine().root_device());
+
+            return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows));
         }
 
 
@@ -1736,29 +1808,28 @@ namespace mame
 
         //void set_bytes_per_entry(int bpe) { m_bytes_per_entry = bpe; }
 
-        //void set_info_callback(tilemap_get_info_delegate tile_get_info) { m_get_info = tile_get_info; }
-        //template <class FunctionClass> void set_info_callback(const char *devname, void (FunctionClass::*callback)(tilemap_t &, tile_data &, tilemap_memory_index), const char *name)
-        //{
-        //    set_info_callback(tilemap_get_info_delegate(callback, name, devname, static_cast<FunctionClass *>(nullptr)));
-        //}
-        //template <class FunctionClass> void set_info_callback(void (FunctionClass::*callback)(tilemap_t &, tile_data &, tilemap_memory_index), const char *name)
-        //{
-        //    set_info_callback(tilemap_get_info_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
-        //}
+        //template <typename... T> void set_info_callback(T &&... args) { m_get_info.set(std::forward<T>(args)...); }
 
-        //template <class FunctionClass> void set_layout(tilemap_memory_index (FunctionClass::*callback)(u32, u32, u32, u32), const char *name, u32 columns, u32 rows)
+        //void set_layout(tilemap_standard_mapper mapper, u32 columns, u32 rows)
         //{
-        //    set_layout(tilemap_mapper_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), columns, rows);
-        //}
-
-        //void set_layout(tilemap_standard_mapper mapper, u32 columns, u32 rows) {
+        //    assert(TILEMAP_STANDARD_COUNT > mapper);
         //    m_standard_mapper = mapper;
         //    m_num_columns = columns;
         //    m_num_rows = rows;
         //}
-        //void set_layout(tilemap_mapper_delegate mapper, u32 columns, u32 rows) {
+        //template <typename F>
+        //void set_layout(F &&callback, const char *name, u32 columns, u32 rows)
+        //{
         //    m_standard_mapper = TILEMAP_STANDARD_COUNT;
-        //    m_mapper = mapper;
+        //    m_mapper.set(std::forward<F>(callback), name);
+        //    m_num_columns = columns;
+        //    m_num_rows = rows;
+        //}
+        //template <typename T, typename F>
+        //void set_layout(T &&target, F &&callback, const char *name, u32 columns, u32 rows)
+        //{
+        //    m_standard_mapper = TILEMAP_STANDARD_COUNT;
+        //    m_mapper.set(std::forward<T>(target), std::forward<F>(callback), name);
         //    m_num_columns = columns;
         //    m_num_rows = rows;
         //}

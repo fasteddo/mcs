@@ -47,6 +47,11 @@ namespace mame
         //    return bitswap(val, b...);
         //}
 
+        public static int bitswap(int val, int B1, int B0)
+        {
+            return ((BIT(val,B1) << 1) | (BIT(val,B0) << 0));
+        }
+
         public static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0)
         {
             return ((BIT(val,B7) << 7) | (BIT(val,B6) << 6) | (BIT(val,B5) << 5) | (BIT(val,B4) << 4) |

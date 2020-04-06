@@ -3,23 +3,32 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-using default_layout_map = System.Collections.Generic.Dictionary<string, mame.internal_layout>;
+using default_layout_map = mame.std.map<string, mame.internal_layout>;  //std::map<char const *, internal_layout const *, bool (*)(char const *, char const *)> default_layout_map;
 using device_type = mame.emu.detail.device_type_impl_base;
+using maximum_quantum_map = mame.std.map<string, mame.attotime>;  //std::map<char const *, attotime, bool (*)(char const *, char const *)> maximum_quantum_map;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
 
 namespace mame
 {
+    /// \brief Internal layout description
+    ///
+    /// Holds the compressed and decompressed data size, compression method,
+    /// and a reference to the compressed layout data.  Note that copying
+    /// the structure will not copy the referenced data.
     public class internal_layout
     {
+        public enum compression { NONE, ZLIB }
+
         public int decompressed_size;
         public int compressed_size;
-        public u8 compression_type;
+        public compression compression_type;
         public u8 [] data;
 
-        public internal_layout(int decompressed_size, int compressed_size, u8 compression_type, u8 [] data) { this.decompressed_size = decompressed_size; this.compressed_size = compressed_size; this.compression_type = compression_type; this.data = data; }
+        public internal_layout(int decompressed_size, int compressed_size, compression compression_type, u8 [] data) { this.decompressed_size = decompressed_size; this.compressed_size = compressed_size; this.compression_type = compression_type; this.data = data; }
     }
 
 
@@ -27,6 +36,7 @@ namespace mame
     {
         //class current_device_stack;
         //typedef std::map<char const *, internal_layout const *, bool (*)(char const *, char const *)> default_layout_map;
+        //typedef std::map<char const *, attotime, bool (*)(char const *, char const *)> maximum_quantum_map;
 
 
         public class token : IDisposable
@@ -113,6 +123,8 @@ namespace mame
         device_t m_root_device;
         default_layout_map m_default_layouts;
         device_t m_current_device;
+        maximum_quantum_map m_maximum_quantums;
+        std.pair<device_t, string> m_perfect_quantum_device;
 
 
         //-------------------------------------------------
@@ -120,12 +132,13 @@ namespace mame
         //-------------------------------------------------
         public machine_config(game_driver gamedrv, emu_options options)
         {
-            m_minimum_quantum = attotime.zero;
             m_gamedrv = gamedrv;
             m_options = options;
             m_root_device = null;
-            m_default_layouts = new Dictionary<string, internal_layout>();  //([] (char const *a, char const *b) { return 0 > std::strcmp(a, b); })
+            m_default_layouts = new default_layout_map();  //([] (char const *a, char const *b) { return 0 > std::strcmp(a, b); })
             m_current_device = null;
+            m_maximum_quantums = new maximum_quantum_map();  //m_maximum_quantums([] (char const *a, char const *b) { return 0 > std::strcmp(a, b); });
+            m_perfect_quantum_device = new std.pair<device_t, string>(null, "");
 
 
             // add the root device
@@ -207,8 +220,53 @@ namespace mame
         device_t device(string tag) { return root_device().subdevice(tag); }
         //template<class DeviceClass> inline DeviceClass *device(const char *tag) const { return downcast<DeviceClass *>(device(tag)); }
 
+
+        public attotime maximum_quantum(attotime default_quantum)
+        {
+            //return std::accumulate(
+            //        m_maximum_quantums.begin(),
+            //        m_maximum_quantums.end(),
+            //        default_quantum,
+            //        [] (attotime const &lhs, maximum_quantum_map::value_type const &rhs) { return (std::min)(lhs, rhs.second); });
+            return Enumerable.Aggregate(m_maximum_quantums, default_quantum, (current, next) => { return std.min(current, next.second()); });
+        }
+
+
+        public device_execute_interface perfect_quantum_device()
+        {
+            if (m_perfect_quantum_device.first == null)
+                return null;
+
+            device_t found = m_perfect_quantum_device.first.subdevice(m_perfect_quantum_device.second.c_str());
+            if (found == null)
+            {
+                throw new emu_fatalerror(
+                        "Device {0} relative to {1} specified for perfect interleave is not present!\n",
+                        m_perfect_quantum_device.second,
+                        m_perfect_quantum_device.first.tag());
+            }
+
+            device_execute_interface result;
+            if (!found.interface_(out result))
+            {
+                throw new emu_fatalerror("Device {0} ({1}) specified for perfect interleave does not implement device_execute_interface!\n",
+                        found.tag(),
+                        found.shortname());
+            }
+
+            return result;
+        }
+
+
         public delegate void apply_default_layouts_func(device_t device, internal_layout layout);
 
+        /// \brief Apply visitor to internal layouts
+        ///
+        /// Calls the supplied visitor for each device with an internal
+        /// layout.  The order of devices is implementation-dependent.
+        /// \param [in] op The visitor.  It must provide a function call
+        //    operator that can be invoked with two arguments: a reference
+        //    to a #device_t and a const reference to an #internal_layout.
         //template <typename T>
         public void apply_default_layouts(apply_default_layouts_func op)  //T &&op) const
         {
@@ -217,11 +275,59 @@ namespace mame
         }
 
 
-        // configuration methods
+        /// \brief Get a device replacement helper
+        ///
+        /// Pass the result in place of the machine configuration itself to
+        /// replace an existing device.
+        /// \return A device replacement helper to pass to a device type
+        ///   when replacing an existing device.
+        //emu::detail::machine_config_replace replace() { return emu::detail::machine_config_replace(*this); };
+
+
+        /// \brief Set internal layout for current device
+        ///
+        /// Set internal layout for current device.  Each device in the
+        /// system can have its own internal layout.  Tags in the layout
+        /// will be resolved relative to the device.  Replaces previously
+        /// set layout if any.
+        /// \param [in] layout Reference to the internal layout description
+        ///   structure.  Neither the description structure nor the
+        ///   compressed data is copied.  It is the caller's responsibility
+        ///   to ensure both remain valid until layouts and views are
+        ///   instantiated.
         //void set_default_layout(internal_layout const &layout);
 
 
-        public attotime minimum_quantum { get { return m_minimum_quantum; } set { m_minimum_quantum = value; } }
+        /// \brief Set maximum scheduling quantum
+        ///
+        /// Set the maximum scheduling quantum required for the current
+        /// device.  The smallest maximum quantum requested by a device in
+        /// the system will be used.
+        /// \param [in] quantum Maximum scheduling quantum in attoseconds.
+        public void set_maximum_quantum(attotime quantum)
+        {
+            bool ins = m_maximum_quantums.emplace(current_device().tag(), quantum);  //std::pair<maximum_quantum_map::iterator, bool> const ins(m_maximum_quantums.emplace(current_device().tag(), quantum));
+            if (!ins)  //if (!ins.second)
+                m_maximum_quantums[current_device().tag()] = quantum;  //ins.first->second = quantum;
+        }
+
+
+        //template <typename T>
+        //void set_perfect_quantum(T &&tag)
+        //{
+        //    set_perfect_quantum(current_device(), std::forward<T>(tag));
+        //}
+        //template <class DeviceClass, bool Required>
+        //void set_perfect_quantum(device_finder<DeviceClass, Required> const &finder)
+        //{
+        //    std::pair<device_t &, char const *> const target(finder.finder_target());
+        //    set_perfect_quantum(target.first, target.second);
+        //}
+        //template <class DeviceClass, bool Required>
+        //void set_perfect_quantum(device_finder<DeviceClass, Required> &finder)
+        //{
+        //    set_perfect_quantum(const_cast<device_finder<DeviceClass, Required> const &>(finder));
+        //}
 
 
         // helpers during configuration; not for general use
@@ -232,9 +338,6 @@ namespace mame
             m_current_device = device;
             return new token(this, device);
         }
-
-
-        //emu::detail::machine_config_replace replace() { return emu::detail::machine_config_replace{ *this }; };
 
 
         //-------------------------------------------------
@@ -326,23 +429,6 @@ namespace mame
         }
 
 
-        //-------------------------------------------------
-        //  device_find - configuration helper to
-        //  locate a device
-        //-------------------------------------------------
-        public device_t device_find(device_t owner, string tag)
-        {
-            // find the original device by relative tag (must exist)
-            assert(owner != null);
-            device_t device = owner.subdevice(tag);
-            if (device == null)
-                throw new emu_fatalerror("Unable to find device '{0}'\n", tag);
-
-            // return the device
-            return device;
-        }
-
-
         // internal helpers
 
         //-------------------------------------------------
@@ -426,25 +512,10 @@ namespace mame
         //-------------------------------------------------
         void remove_references(device_t device)
         {
-            // remove default layouts for subdevices
-            string tag = device.tag();
-            int taglen = strlen(tag);
-
             throw new emu_unimplemented();
-#if false
-            default_layout_map.iterator it = m_default_layouts.lower_bound(tag);
-            while ((m_default_layouts.end() != it) && !global.strncmp(tag, it.first, taglen))
-            {
-                if (!it.first[taglen] || (':' == it.first[taglen]))
-                    it = m_default_layouts.erase(it);
-                else
-                    ++it;
-            }
-#endif
-
-            // iterate over all devices and remove any references
-            foreach (device_t scan in new device_iterator(root_device()))
-                scan.subdevices().m_tagmap.clear();
         }
+
+
+        //void set_perfect_quantum(device_t &device, std::string tag);
     }
 }

@@ -156,6 +156,7 @@ namespace mame
             11059200, /* 11.0592_MHz_XTAL       Used with MCS-51 to generate common baud rates */
             11200000, /* 11.2_MHz_XTAL          New York, New York */
             11289000, /* 11.289_MHz_XTAL        Vanguard */
+            11289600, /* 11.2896_MHz_XTAL       Frantic Fred */
             11400000, /* 11.4_MHz_XTAL          HP 9845 */
             11668800, /* 11.6688_MHz_XTAL       Gameplan pixel clock */
             11800000, /* 11.8_MHz_XTAL          IBM PC Music Feature Card */
@@ -410,6 +411,7 @@ namespace mame
            100000000, /* 100_MHz_XTAL           PSX-based Namco System 12, Vegas, Sony ZN1-2-based */
            101491200, /* 101.4912_MHz_XTAL      PSX-based Namco System 10 */
            108108000, /* 108.108_MHz_XTAL       HP 98550 high-res color card */
+           105561000, /* 105.561_MHz_XTAL       Sun cgsix */
            200000000  /* 200_MHz_XTAL           Base SH4 CPU (Naomi, Hikaru etc.) */
         };
 

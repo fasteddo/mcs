@@ -7,6 +7,19 @@ using System.Collections.Generic;
 
 namespace mame.plib
 {
+    public static class pfmtlog_global
+    {
+        //#define PERRMSGV(name, narg, str) \
+        //    struct name : public plib::perrmsg \
+        //    { \
+        //        template<typename... Args> explicit name(Args&&... args) \
+        //        : plib::perrmsg(str, std::forward<Args>(args)...) \
+        //        { static_assert(narg == sizeof...(args), "Argument count mismatch"); } \
+        //    };
+        public static string PERRMSGV(int narg, string format, params object [] args) { global_object.static_assert(narg == args.Length, "Argument count mismatch"); return String.Format(format, args); }
+    }
+
+
     public enum plog_level
     {
         DEBUG,
@@ -33,7 +46,7 @@ namespace mame.plib
 
         //pfmt &operator ()(const void *x) {return format_element("", 'p', x);  }
         //pfmt &operator ()(const pstring &x) {return format_element("", 's', x.c_str() );  }
-        public string op(params object [] o) { return string.Format(m_str, o); }
+        public string op(params object [] x) { return string.Format(m_str, x); }
 
         //template<typename T>
         //pfmt &operator ()(const T &x)

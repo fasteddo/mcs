@@ -23,7 +23,7 @@ namespace mame
 
         public static readonly internal_layout layout_noscreens = new internal_layout
         (
-            385, layout_noscreens_data.Length, 1, layout_noscreens_data
+            385, layout_noscreens_data.Length, internal_layout.compression.ZLIB, layout_noscreens_data
         );
     }
 }

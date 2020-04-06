@@ -11,16 +11,16 @@ namespace mame
     {
         //enum
         //{
-        public const int EMU_ERR_NONE             = 0;    /* no error */
-        public const int EMU_ERR_FAILED_VALIDITY  = 1;    /* failed validity checks */
-        public const int EMU_ERR_MISSING_FILES    = 2;    /* missing files */
-        const int EMU_ERR_FATALERROR       = 3;    /* some other fatal error */
-        public const int EMU_ERR_DEVICE           = 4;    /* device initialization error (MESS-specific) */
-        public const int EMU_ERR_NO_SUCH_GAME     = 5;    /* game was specified but doesn't exist */
-        public const int EMU_ERR_INVALID_CONFIG   = 6;    /* some sort of error in configuration */
-        const int EMU_ERR_IDENT_NONROMS    = 7;    /* identified all non-ROM files */
-        const int EMU_ERR_IDENT_PARTIAL    = 8;    /* identified some files but not all */
-        const int EMU_ERR_IDENT_NONE       = 9;    /* identified no files */
+        public const int EMU_ERR_NONE             = 0;    // no error
+        public const int EMU_ERR_FAILED_VALIDITY  = 1;    // failed validity checks
+        public const int EMU_ERR_MISSING_FILES    = 2;    // missing files
+        const int EMU_ERR_FATALERROR       = 3;    // some other fatal error
+        public const int EMU_ERR_DEVICE           = 4;    // device initialization error
+        public const int EMU_ERR_NO_SUCH_SYSTEM   = 5;    // system was specified but doesn't exist
+        public const int EMU_ERR_INVALID_CONFIG   = 6;    // some sort of error in configuration
+        const int EMU_ERR_IDENT_NONROMS    = 7;    // identified all non-ROM files
+        const int EMU_ERR_IDENT_PARTIAL    = 8;    // identified some files but not all
+        const int EMU_ERR_IDENT_NONE       = 9;    // identified no files
         //}
     }
 

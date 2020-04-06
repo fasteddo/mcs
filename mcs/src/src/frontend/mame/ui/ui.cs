@@ -27,15 +27,13 @@ namespace mame
     }
 
 
-    public static class ui_global
+    enum slider_id
     {
-        //enum
-        //{
-        //SLIDER_ID_VOLUME                = 0,
-        //SLIDER_ID_MIXERVOL,
-        //SLIDER_ID_MIXERVOL_LAST         = SLIDER_ID_MIXERVOL + ui_global.SLIDER_DEVICE_SPACING,
-        //SLIDER_ID_ADJUSTER,
-        //SLIDER_ID_ADJUSTER_LAST         = SLIDER_ID_ADJUSTER + ui_global.SLIDER_DEVICE_SPACING,
+        SLIDER_ID_VOLUME                = 0,
+        SLIDER_ID_MIXERVOL,
+        SLIDER_ID_MIXERVOL_LAST         = SLIDER_ID_MIXERVOL + ui_global.SLIDER_DEVICE_SPACING,
+        SLIDER_ID_ADJUSTER,
+        SLIDER_ID_ADJUSTER_LAST         = SLIDER_ID_ADJUSTER + ui_global.SLIDER_DEVICE_SPACING,
         //SLIDER_ID_OVERCLOCK,
         //SLIDER_ID_OVERCLOCK_LAST        = SLIDER_ID_OVERCLOCK + ui_global.SLIDER_DEVICE_SPACING,
         //SLIDER_ID_REFRESH,
@@ -77,9 +75,11 @@ namespace mame
 
         //SLIDER_ID_CORE_LAST         = SLIDER_ID_CROSSHAIR_OFFSET,
         //SLIDER_ID_CORE_COUNT
-        //}
+    }
 
 
+    public static class ui_global
+    {
         //enum
         //{
         //LOADSAVE_NONE,
@@ -1573,21 +1573,6 @@ namespace mame
             // toggle throttle?
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_THROTTLE))
                 machine().video().toggle_throttle();
-
-            // toggle autofire
-            if (machine().ui_input().pressed((int)ioport_type.IPT_UI_TOGGLE_AUTOFIRE))
-            {
-                if (!machine().options().cheat())
-                {
-                    machine().popmessage("Autofire can't be enabled");
-                }
-                else
-                {
-                    bool autofire_toggle = machine().ioport().get_autofire_toggle();
-                    machine().ioport().set_autofire_toggle(!autofire_toggle);
-                    machine().popmessage("Autofire {0}", autofire_toggle ? "Enabled" : "Disabled");
-                }
-            }
 
             // check for fast forward
             if (machine().ioport().type_pressed(ioport_type.IPT_UI_FAST_FORWARD))

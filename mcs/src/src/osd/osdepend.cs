@@ -36,6 +36,7 @@ namespace mame
         // general overridables
         void init(running_machine machine);
         void update(bool skip_redraw);
+        void input_update();
         void set_verbose(bool print_verbose);
 
         // debugger overridables
@@ -48,7 +49,7 @@ namespace mame
         bool no_sound();
 
         // input overridables
-        void customize_input_type_list(simple_list<input_type_entry> typelist);
+        void customize_input_type_list(std.vector<input_type_entry> typelist);
 
         // video overridables
         void add_audio_to_recording(ListPointer<int16_t> buffer, int samples_this_frame);  //const int16_t *buffer, int samples_this_frame) = 0;

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using netlist_sig_t = System.UInt32;
-using netlist_time = mame.netlist.ptime_u64;  //using netlist_time = ptime<std::uint64_t, NETLIST_INTERNAL_RES>;
+using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
 
 
 namespace mame.netlist
@@ -59,63 +59,37 @@ namespace mame.netlist
 
 
         // -----------------------------------------------------------------------------
-        // mainclock
+        // power pins - not a device, but a helper
         // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(mainclock)
-        class nld_mainclock : device_t
+        /// \brief Power pins class.
+        ///
+        /// Power Pins are passive inputs. Delegate noop will silently ignore any
+        /// updates.
+        class nld_power_pins
         {
-            logic_output_t m_Q;
-            netlist_time m_inc;
-            param_double_t m_freq;
+            analog_input_t m_VCC;
+            analog_input_t m_GND;
 
 
-            //NETLIB_CONSTRUCTOR(mainclock)
-            //detail.family_setter_t m_famsetter;
-            //template <class CLASS>
-            nld_mainclock(object owner, string name)
-                : base(owner, name)
+            public nld_power_pins(device_t owner, string sVCC = nl_errstr_global.sPowerVCC, string sGND = nl_errstr_global.sPowerGND)
             {
-                m_Q = new logic_output_t(this, "Q");
-                m_freq = new param_double_t(this, "FREQ", 7159000.0 * 5);
-
-
-                m_inc = netlist_time.from_double(1.0 / (m_freq.op*2.0));
+                m_VCC = new analog_input_t(owner, sVCC, noop);
+                m_GND = new analog_input_t(owner, sGND, noop);
             }
 
 
-            public logic_output_t Q { get { return m_Q; } }
-            public netlist_time inc { get { return m_inc; } }
-
-
-            //NETLIB_RESETI()
-            public override void reset()
+            analog_input_t VCC()
             {
-                throw new emu_unimplemented();
-#if false
-                m_Q.net().set_next_scheduled_time(netlist_time::zero());
-#endif
+                return m_VCC;
             }
 
-            //NETLIB_UPDATE_PARAMI()
-            public override void update_param()
+            analog_input_t GND()
             {
-                throw new emu_unimplemented();
-#if false
-                m_inc = netlist_time::from_double(1.0 / (m_freq()*2.0));
-#endif
+                return m_GND;
             }
 
-            //NETLIB_UPDATEI()
-            protected override void update()
-            {
-                throw new emu_unimplemented();
-#if false
-                logic_net_t &net = m_Q.net();
-                // this is only called during setup ...
-                net.toggle_new_Q();
-                net.set_next_scheduled_time(exec().time() + m_inc);
-#endif
-            }
+
+            void noop() { }
         }
 
 
@@ -153,6 +127,7 @@ namespace mame.netlist
 
             param_logic_t m_IN;
             param_model_t m_FAMILY;
+            nld_power_pins m_supply;  //NETLIB_NAME(power_pins) m_supply;
 
 
             //NETLIB_CONSTRUCTOR(logic_input)
@@ -163,11 +138,12 @@ namespace mame.netlist
             {
                 m_Q = new logic_output_t(this, "Q");
                 m_IN = new param_logic_t(this, "IN", false);
-                /* make sure we get the family first */
+                // make sure we get the family first
                 m_FAMILY = new param_model_t(this, "FAMILY", "FAMILY(TYPE=TTL)");
+                m_supply = new nld_power_pins(this);
 
 
-                set_logic_family(setup().family_from_model(m_FAMILY.op));
+                set_logic_family(state().setup().family_from_model(m_FAMILY.op()));
                 m_Q.set_logic_family(this.logic_family());
             }
 
@@ -179,7 +155,7 @@ namespace mame.netlist
             public override void reset() { m_Q.initial(0); }
 
             //NETLIB_UPDATE_PARAMI();
-            public override void update_param() { m_Q.push((netlist_sig_t)((m_IN.op ? 1 : 0) & 1), netlist_time.from_nsec(1)); }
+            public override void update_param() { m_Q.push((netlist_sig_t)((m_IN.op() ? 1 : 0) & 1), netlist_time.from_nsec(1)); }
         }
 
 
@@ -193,7 +169,7 @@ namespace mame.netlist
 
 
             analog_output_t m_Q;
-            param_double_t m_IN;
+            param_fp_t m_IN;
 
 
             //NETLIB_CONSTRUCTOR(analog_input)
@@ -203,7 +179,7 @@ namespace mame.netlist
                 : base(owner, name)
             {
                 m_Q = new analog_output_t(this, "Q");
-                m_IN = new param_double_t(this, "IN", 0.0);
+                m_IN = new param_fp_t(this, "IN", nlconst.zero());
             }
 
 
@@ -211,10 +187,10 @@ namespace mame.netlist
             protected override void update() { }
 
             //NETLIB_RESETI();
-            public override void reset() { m_Q.initial(0.0); }
+            public override void reset() { m_Q.initial(nlconst.zero()); }
 
             //NETLIB_UPDATE_PARAMI();
-            public override void update_param() { m_Q.push(m_IN.op); }
+            public override void update_param() { m_Q.push(m_IN.op()); }
         }
 
 
@@ -245,7 +221,7 @@ namespace mame.netlist
             //NETLIB_UPDATEI()
             protected override void update()
             {
-                m_Q.push(0.0);
+                m_Q.push(nlconst.zero());
             }
 
             //NETLIB_RESETI() { }
@@ -254,24 +230,24 @@ namespace mame.netlist
 
 
         // -----------------------------------------------------------------------------
-        // nld_dummy_input
+        // nld_nc_pin
         // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(dummy_input)
-        class nld_dummy_input : device_t
+        //NETLIB_OBJECT(nc_pin)
+        class nld_nc_pin : device_t
         {
-            //NETLIB_DEVICE_IMPL(dummy_input, "DUMMY_INPUT",            "")
-            static factory.element_t nld_dummy_input_c(string classname)
-            { return new factory.device_element_t<nld_dummy_input>("DUMMY_INPUT", classname, "", "__FILE__"); }
-            public static factory.constructor_ptr_t decl_dummy_input = nld_dummy_input_c;
+            //NETLIB_DEVICE_IMPL(nc_pin,              "NC_PIN",                 "")
+            static factory.element_t nld_nc_pin_c(string classname)
+            { return new factory.device_element_t<nld_nc_pin>("NC_PIN", classname, "", "__FILE__"); }
+            public static factory.constructor_ptr_t decl_nc_pin = nld_nc_pin_c;
 
 
             //analog_input_t m_I;
 
 
-            //NETLIB_CONSTRUCTOR(dummy_input)
+            //NETLIB_CONSTRUCTOR(nc_pin)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            nld_dummy_input(netlist_t owner, string name)
+            nld_nc_pin(netlist_t owner, string name)
                 : base(owner, name)
             {
                 throw new emu_unimplemented();

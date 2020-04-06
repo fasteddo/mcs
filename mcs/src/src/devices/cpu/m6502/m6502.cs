@@ -120,22 +120,14 @@ namespace mame
         }
 
 
-        class mi_default_normal : memory_interface
+        class mi_default : memory_interface
         {
-            //virtual ~mi_default_normal() {}
+            //virtual ~mi_default() {}
 
             public override uint8_t read(uint16_t adr) { return program.read_byte(adr); }
             public override uint8_t read_sync(uint16_t adr) { return scache.read_byte(adr); }
             public override uint8_t read_arg(uint16_t adr) { return cache.read_byte(adr); }
             public override void write(uint16_t adr, uint8_t val) { program.write_byte(adr, val); }
-        }
-
-
-        class mi_default_nd : mi_default_normal
-        {
-            //virtual ~mi_default_nd() {}
-            //virtual uint8_t read_sync(uint16_t adr) override;
-            //virtual uint8_t read_arg(uint16_t adr) override;
         }
 
 
@@ -168,13 +160,12 @@ namespace mame
         intref icountRef = new intref();  //int icount;
         int bcount;
         int count_before_instruction_step;
-        public bool nmi_state;
-        public bool irq_state;
-        public bool apu_irq_state;
-        public bool v_state;
+        bool nmi_state;
+        bool irq_state;
+        bool apu_irq_state;
+        bool v_state;
         bool irq_taken;
         bool sync;
-        bool cache_disabled;
         bool inhibit_interrupts;
 
 
@@ -220,9 +211,6 @@ namespace mame
             sync = false;
             inhibit_interrupts = false;
             count_before_instruction_step = 0;
-
-
-            cache_disabled = false;
         }
 
 
@@ -230,7 +218,6 @@ namespace mame
 
 
         //bool get_sync() const { return sync; }
-        //void disable_direct() { direct_disabled = true; }
 
         //auto sync_cb() { return sync_w.bind(); }
 
@@ -314,10 +301,7 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_m6502>();
 
 
-            if (cache_disabled)
-                mintf = new mi_default_nd();
-            else
-                mintf = new mi_default_normal();
+            mintf = new mi_default();
 
             init();
         }

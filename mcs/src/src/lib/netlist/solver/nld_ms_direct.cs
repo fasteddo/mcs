@@ -4,16 +4,13 @@
 using System;
 using System.Collections.Generic;
 
-using analog_net_t_list_t = mame.std.vector<mame.netlist.analog_net_t>;
-using netlist_base_t = mame.netlist.netlist_state_t;
-
 
 namespace mame.netlist
 {
-    namespace devices
+    namespace solver
     {
         //template <typename FT, int SIZE>
-        class matrix_solver_direct_t: matrix_solver_t
+        abstract class matrix_solver_direct_t : matrix_solver_ext_t
         {
             //friend class matrix_solver_t;
 
@@ -21,14 +18,19 @@ namespace mame.netlist
             //typedef FT float_type;
 
 
-            protected matrix_solver_direct_t(UInt32 SIZE, netlist_state_t anetlist, string name, solver_parameters_t params_, UInt32 size)
-                : base(anetlist, name, params_)
-            {
-                throw new emu_unimplemented();
-            }
+            //const std::size_t m_pitch;
 
 
-            protected override void vsetup(analog_net_t_list_t nets)
+            //static constexpr const std::size_t SIZEABS = plib::parray<FT, SIZE>::SIZEABS();
+            //static constexpr const std::size_t m_pitch_ABS = (((SIZEABS + 0) + 7) / 8) * 8;
+
+
+            //PALIGNAS_VECTOROPT()
+            //plib::parray2D<FT, SIZE, m_pitch_ABS> m_A;
+
+
+            protected matrix_solver_direct_t(int SIZE, netlist_state_t anetlist, string name, analog_net_t.list_t nets, solver_parameters_t params_, UInt32 size)
+                : base(SIZE, anetlist, name, nets, params_, size)
             {
                 throw new emu_unimplemented();
             }
@@ -51,12 +53,10 @@ namespace mame.netlist
 
             //unsigned solve_non_dynamic(const bool newton_raphson);
 
-            //constexpr std::size_t size() const { return (m_N == 0) ? m_dim : m_N; }
-
             //void LE_solve();
 
             //template <typename T>
             //void LE_back_subst(T * RESTRICT x);
         }
-    } //namespace devices
-} // namespace netlist
+    }
+}

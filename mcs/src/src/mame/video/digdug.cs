@@ -84,6 +84,26 @@ namespace mame
         }
 
 
+        /***************************************************************************
+          Callbacks for the TileMap code
+        ***************************************************************************/
+        /* convert from 32x32 to 36x28 */
+        //TILEMAP_MAPPER_MEMBER(digdug_state::tilemap_scan)
+        protected new tilemap_memory_index tilemap_scan(UInt32 col, UInt32 row, UInt32 num_cols, UInt32 num_rows)
+        {
+            int offs;
+
+            row += 2;
+            col -= 2;
+            if ((col & 0x20) != 0)
+                offs = (int)(row + ((col & 0x1f) << 5));
+            else
+                offs = (int)(col + (row << 5));
+
+            return (tilemap_memory_index)offs;
+        }
+
+
         //TILE_GET_INFO_MEMBER(digdug_state::bg_get_tile_info)
         void bg_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
@@ -144,8 +164,8 @@ namespace mame
             m_bg_disable = 0;
             m_bg_color_bank = 0;
 
-            m_bg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //tilemap_get_info_delegate(FUNC(digdug_state::bg_get_tile_info),this),tilemap_mapper_delegate(FUNC(digdug_state::tilemap_scan),this),8,8,36,28);
-            m_fg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //tilemap_get_info_delegate(FUNC(digdug_state::tx_get_tile_info),this),tilemap_mapper_delegate(FUNC(digdug_state::tilemap_scan),this),8,8,36,28);
+            m_bg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::bg_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
+            m_fg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::tx_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
 
             m_fg_tilemap.set_transparent_pen(0);
 

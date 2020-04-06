@@ -155,7 +155,7 @@ namespace mame
             {
                 // I don't really want this generally available, but MewUI seems to need it.  Please
                 // do not use
-                throw new emu_exception();  // false;
+                throw new emu_exception();  // abort();
             }
             protected virtual string minimum() { return null; }
             protected virtual string maximum() { return null; }
@@ -258,17 +258,13 @@ namespace mame
                 case option_type.INTEGER:
                 case option_type.FLOAT:
                 case option_type.STRING:
-                    result = m_data.c_str();
-                    break;
+                    return m_data.c_str();
 
                 default:
                     // this is an option type for which returning a value is
                     // a meaningless operation (e.g. - core_options::option_type::COMMAND)
-                    result = null;
-                    break;
+                    return null;
                 }
-
-                return result;
             }
 
             //-------------------------------------------------
@@ -697,6 +693,7 @@ namespace mame
         {
             // INI files are complete, so always start with a blank buffer
             string buffer = "";
+            //buffer.imbue(std::locale::classic());
 
             int num_valid_headers = 0;
             int unadorned_index = 0;
@@ -787,7 +784,8 @@ namespace mame
         //-------------------------------------------------
         public string value(string option)
         {
-            return get_entry(option).value();
+            var entry = get_entry(option);
+            return entry != null ? entry.value() : null;
         }
 
         //-------------------------------------------------
@@ -795,12 +793,39 @@ namespace mame
         //-------------------------------------------------
         public string description(string option)
         {
-            return get_entry(option).description();
+            var entry = get_entry(option);
+            return entry != null ? entry.description() : null;
         }
 
         public bool bool_value(string option) { return int_value(option) != 0; }
-        public int int_value(string option) { int i; if (int.TryParse(value(option), out i)) return i; else return 0; }
-        public float float_value(string option) { float i; if (float.TryParse(value(option), out i)) return i; else return 0; }
+
+        public int int_value(string option)
+        {
+            string data = value(option);
+            if (data == null)
+                return 0;
+            string str = data;  //std::istringstream str(data);
+            //str.imbue(std::locale::classic());
+            int ival;
+            if (int.TryParse(str, out ival))  //if (str >> ival)
+                return ival;
+            else
+                return 0;
+        }
+
+        public float float_value(string option)
+        {
+            string data = value(option);
+            if (data == null)
+                return 0.0f;
+            string str = data;  //std::istringstream str(data);
+            //str.imbue(std::locale::classic());
+            float fval;
+            if (float.TryParse(str, out fval))  //if (str >> fval)
+                return fval;
+            else
+                return 0.0f;
+        }
 
 
         // setting

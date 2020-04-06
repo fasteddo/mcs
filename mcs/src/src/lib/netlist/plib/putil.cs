@@ -7,41 +7,21 @@ using System.Collections.Generic;
 
 namespace mame.plib
 {
-    public class putil_global
+    public static class putil_global
     {
-        //template<typename T, bool CLOCALE, typename S>
-        //T pstonum(const S &arg)
-        public static bool pstonum_bool(string arg)
-        {
-            // Convert.ToBoolean() only matches "True" or "False"
-            if      (arg == "1" || arg == "true") return true;
-            else if (arg == "0" || arg == "false") return false;
-            else return Convert.ToBoolean(arg);
-        }
-        public static int pstonum_int(string arg) { return Convert.ToInt32(arg); }
-        public static float pstonum_float(string arg) { return Convert.ToSingle(arg); }
-        public static double pstonum_double(string arg) { return Convert.ToDouble(arg); }
+        // ----------------------------------------------------------------------------------------
+        // string list
+        // ----------------------------------------------------------------------------------------
 
-
-        //template<typename R, bool CLOCALE, typename T>
-        //R pstonum_ne(const T &str, bool &err) noexcept
-        public static bool pstonum_ne_bool(bool CLOCALE, string arg, out bool err)
+        public static string [] psplit(string str, string onstr, bool ignore_empty = false)
         {
-            // bool.TryParse() only matches "True" or "False"
-            err = false;
-            if      (arg == "1" || arg == "true") return true;
-            else if (arg == "0" || arg == "false") return false;
-            else
-            {
-                bool ret;
-                err = !bool.TryParse(arg, out ret);
-                return ret;
-            }
+            return str.Split(onstr.ToCharArray(), ignore_empty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
         }
-        public static int pstonum_ne_int(bool CLOCALE, string arg, out bool err) { int ret; err = !int.TryParse(arg, out ret); return ret; }
-        public static UInt32 pstonum_ne_unsigned(bool CLOCALE, string arg, out bool err) { UInt32 ret; err = !UInt32.TryParse(arg, out ret); return ret; }
-        public static float pstonum_ne_float(bool CLOCALE, string arg, out bool err) { float ret; err = !float.TryParse(arg, out ret); return ret; }
-        public static double pstonum_ne_double(bool CLOCALE, string arg, out bool err) { double ret; err = !double.TryParse(arg, out ret); return ret; }
+
+        //std::vector<pstring> psplit(const pstring &str, const std::vector<pstring> &onstrl);
+        //std::vector<std::string> psplit_r(const std::string &stri,
+        //        const std::string &token,
+        //        const std::size_t maxsplit);
     }
 
 
@@ -53,43 +33,62 @@ namespace mame.plib
 
         //P_ENUM
 
-        public static bool set_from_string(string s, out netlist.devices.matrix_type_e m_v)
+        public static bool set_from_string(string s, out netlist.solver.matrix_type_e m_v)
         {
             //int f = from_string_int(strings(), s); \
             //if (f>=0) { m_v = static_cast<E>(f); return true; } else { return false; } \
-            if (Enum.IsDefined(typeof(netlist.devices.matrix_type_e), s))
+            if (Enum.IsDefined(typeof(netlist.solver.matrix_type_e), s))
             {
-                m_v = (netlist.devices.matrix_type_e)Enum.Parse(typeof(netlist.devices.matrix_type_e), s);
+                m_v = (netlist.solver.matrix_type_e)Enum.Parse(typeof(netlist.solver.matrix_type_e), s);
                 return true;
             }
             else
             {
-                m_v = default(netlist.devices.matrix_type_e);
+                m_v = default;
                 return false;
             }
         }
 
-        public static bool set_from_string(string s, out netlist.devices.matrix_sort_type_e m_v)
+        public static bool set_from_string(string s, out netlist.solver.matrix_sort_type_e m_v)
         {
             //int f = from_string_int(strings(), s); \
             //if (f>=0) { m_v = static_cast<E>(f); return true; } else { return false; } \
-            if (Enum.IsDefined(typeof(netlist.devices.matrix_sort_type_e), s))
+            if (Enum.IsDefined(typeof(netlist.solver.matrix_sort_type_e), s))
             {
-                m_v = (netlist.devices.matrix_sort_type_e)Enum.Parse(typeof(netlist.devices.matrix_sort_type_e), s);
+                m_v = (netlist.solver.matrix_sort_type_e)Enum.Parse(typeof(netlist.solver.matrix_sort_type_e), s);
                 return true;
             }
             else
             {
-                m_v = default(netlist.devices.matrix_sort_type_e);
+                m_v = default;
+                return false;
+            }
+        }
+
+        public static bool set_from_string(string s, out netlist.solver.matrix_fp_type_e m_v)
+        {
+            //int f = from_string_int(strings(), s); \
+            //if (f>=0) { m_v = static_cast<E>(f); return true; } else { return false; } \
+            if (Enum.IsDefined(typeof(netlist.solver.matrix_fp_type_e), s))
+            {
+                m_v = (netlist.solver.matrix_fp_type_e)Enum.Parse(typeof(netlist.solver.matrix_fp_type_e), s);
+                return true;
+            }
+            else
+            {
+                m_v = default;
                 return false;
             }
         }
     }
 
 
-    // ----------------------------------------------------------------------------------------
-    // A Generic netlist sources implementation
-    // ----------------------------------------------------------------------------------------
+    /// \brief Base source class.
+    ///
+    /// Pure virtual class all other source implementations are based on.
+    /// Sources provide an abstraction to read input from a variety of
+    /// sources, e.g. files, memory, remote locations.
+    ///
     public abstract class psource_t
     {
         //using stream_ptr = plib::unique_ptr<std::istream>;
@@ -104,10 +103,10 @@ namespace mame.plib
     }
 
 
-    /**! Generic sources collection
-     *
-     * @tparam TS base stream class. Default is psource_t
-     */
+    /// \brief Generic sources collection.
+    ///
+    /// \tparam TS base stream class. Default is psource_t
+    ///
     //template <typename TS = psource_t>
     class psource_collection_t
     {
@@ -150,7 +149,7 @@ namespace mame.plib
         public delegate bool for_all_F(netlist.source_netlist_t source);
 
         //template <typename S, typename F>
-        public bool for_all(string name, for_all_F lambda)
+        public bool for_all(for_all_F lambda)
         {
             foreach (var s in m_collection)
             {

@@ -15,26 +15,32 @@ namespace mame.plib
     {
         public struct datatype_t
         {
-            int size;
-            bool is_integral;
-            bool is_float;
-            bool is_custom;
+            UInt32 m_size;
+            bool m_is_integral;
+            bool m_is_float;
+            bool m_is_custom;
 
-            public datatype_t(int bsize, bool bintegral, bool bfloat)
+            public datatype_t(UInt32 bsize, bool bintegral, bool bfloat)
             {
-                size = bsize;
-                is_integral = bintegral;
-                is_float = bfloat;
-                is_custom = false;
+                m_size = bsize;
+                m_is_integral = bintegral;
+                m_is_float = bfloat;
+                m_is_custom = false;
             }
 
             public datatype_t(bool bcustom)
             {
-                size = 0;
-                is_integral = false;
-                is_float = false;
-                is_custom = bcustom;
+                m_size = 0;
+                m_is_integral = false;
+                m_is_float = false;
+                m_is_custom = bcustom;
             }
+
+
+            //std::size_t size() const noexcept { return m_size; }
+            //bool is_integral() const noexcept { return m_is_integral; }
+            //bool is_float()    const noexcept { return m_is_float; }
+            //bool is_custom()   const noexcept { return m_is_custom; }
         }
 
 
@@ -64,23 +70,23 @@ namespace mame.plib
 
         class entry_t
         {
-            //using list_t = std::vector<plib::unique_ptr<entry_t>>;
+            //using list_t = std::vector<entry_t>;
 
             string             m_name;
             datatype_t    m_dt;
             object m_owner;  //const void *        m_owner;
             public callback_t m_callback;  //callback_t *        m_callback;
-            int m_count;
+            UInt32 m_count;
             object m_ptr;  //void *              m_ptr;
 
-        
+
             entry_t(string stname, datatype_t dt, object owner, int count, object ptr)
             {
                 m_name = stname;
                 m_dt = dt;
                 m_owner = owner;
                 m_callback = null;
-                m_count = count;
+                m_count = (UInt32)count;
                 m_ptr = ptr;
             }
 
@@ -93,6 +99,14 @@ namespace mame.plib
                 m_count = 0;
                 m_ptr = null;
             }
+
+
+            //pstring name() const noexcept { return m_name; }
+            //datatype_t dt() const noexcept { return m_dt; }
+            //const void * owner() const noexcept { return m_owner; }
+            //callback_t * callback() const noexcept { return m_callback; }
+            //std::size_t count() const noexcept { return m_count; }
+            //void * ptr() const noexcept { return m_ptr; }
         }
 
 
