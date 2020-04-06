@@ -166,7 +166,7 @@ namespace mame
             D = state[3];
             E = state[4];
 
-            /* Heavy mangling, in 4 sub-rounds of 20 interations each. */
+            /* Heavy mangling, in 4 sub-rounds of 20 iterations each. */
             subRound( A, ref B, C, D, ref E, f1, K1, data[ 0] );
             subRound( E, ref A, B, C, ref D, f1, K1, data[ 1] );
             subRound( D, ref E, A, B, ref C, f1, K1, data[ 2] );

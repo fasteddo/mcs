@@ -27,7 +27,7 @@ namespace mame.netlist
 
             //#define NETLIB_DEVICE_DECL(chip) extern factory::constructor_ptr_t decl_ ## chip;
 
-            static void LIB_DECL(string nic, factory.constructor_ptr_t decl) { initialize_factory_factory.register_device(decl(nic)); }  //#define LIB_DECL(nic, decl) factory.register_device( decl ( pstring(xstr(nic))) );
+            static void LIB_DECL(string nic, factory.constructor_ptr_t decl) { initialize_factory_factory.register_device(decl(nic)); }  //#define LIB_DECL(nic, decl) factory.register_device( decl ( xstr(nic)) );
             static void LIB_ENTRY(string nic, factory.constructor_ptr_t decl) { LIB_DECL("nld_" + nic, decl); }  //#define LIB_ENTRY(nic) { NETLIB_DEVICE_DECL(nic); LIB_DECL(NETLIB_NAME(nic), decl_ ## nic) }
 
 
@@ -75,7 +75,7 @@ namespace mame.netlist
                 //LIB_ENTRY(2102A_dip)
                 //LIB_ENTRY(2716)
                 //LIB_ENTRY(2716_dip)
-//#if !(USE_TRUTHTABLE_7448)
+//#if !(NL_USE_TRUTHTABLE_7448)
                 //LIB_ENTRY(7448)
                 //LIB_ENTRY(7448_dip)
 //#endif
@@ -101,7 +101,7 @@ namespace mame.netlist
                 //LIB_ENTRY(7493_dip)
                 //LIB_ENTRY(7497)
                 //LIB_ENTRY(7497_dip)
-//#if (!USE_TRUTHTABLE_74107)
+//#if (!NL_USE_TRUTHTABLE_74107)
                 //LIB_ENTRY(74107)
                 //LIB_ENTRY(74107_dip)
 //#endif

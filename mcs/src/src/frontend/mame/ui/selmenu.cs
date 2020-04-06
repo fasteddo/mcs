@@ -49,7 +49,8 @@ namespace mame.ui
         const uint8_t SCORES_VIEW   = FIRST_VIEW + 13;
         const uint8_t SELECT_VIEW   = FIRST_VIEW + 14;
         const uint8_t MARQUEES_VIEW = FIRST_VIEW + 15;
-        public const uint8_t LAST_VIEW     = MARQUEES_VIEW;
+        const uint8_t COVERS_VIEW   = FIRST_VIEW + 16;
+        const uint8_t LAST_VIEW     = COVERS_VIEW;
         //}
 
 
@@ -402,7 +403,8 @@ namespace mame.ui
         };
 
 
-        protected int visible_items;
+        protected int m_available_items;
+        protected int skip_main_items;
         protected object m_prev_selected;  //void    *m_prev_selected;
         int m_total_lines;
         protected int m_topline_datsview;   // right box top line
@@ -683,10 +685,10 @@ namespace mame.ui
             switch (get_focus())
             {
             case focused_menu.MAIN:
-                if (selected_index() <= visible_items)
+                if (selected_index() <= m_available_items)
                 {
                     m_prev_selected = get_selection_ref();
-                    set_selected_index(visible_items + 1);
+                    set_selected_index(m_available_items + 1);
                 }
                 else
                 {
@@ -975,7 +977,7 @@ namespace mame.ui
                         current.append(PATH_SEPARATOR);
                     current.append(listname);
                 }
-                osd_printf_verbose("Checking for icons in directory {0}\n", current.c_str());
+                osd_printf_verbose("Checking for icons in directory {0}\n", current);
 
                 // open and walk the directory
                 osd.directory dir = osdcore_global.m_osddirectory.open(current);
@@ -1615,7 +1617,7 @@ namespace mame.ui
                     m_topline_datsview--;
                     return;
                 }
-                else if (selected_index() == visible_items + 1 || is_first_selected() || m_ui_error)
+                else if (selected_index() == m_available_items + 1 || is_first_selected() || m_ui_error)
                 {
                     return;
                 }
@@ -1638,7 +1640,7 @@ namespace mame.ui
                     m_topline_datsview++;
                     return;
                 }
-                else if (is_last_selected() || selected_index() == visible_items - 1 || m_ui_error)
+                else if (is_last_selected() || selected_index() == m_available_items - 1 || m_ui_error)
                 {
                     return;
                 }
@@ -1659,11 +1661,11 @@ namespace mame.ui
                     return;
                 }
 
-                if (selected_index() < visible_items && !m_ui_error)
+                if (selected_index() < m_available_items && !m_ui_error)
                 {
                     set_selected_index(std.max(selected_index() - m_visible_items, 0));
 
-                    top_line -= m_visible_items - (top_line + (m_visible_lines == visible_items ? 1 : 0));
+                    top_line -= m_visible_items - (top_line + (m_visible_lines == m_available_items ? 1 : 0));
                 }
             }
 
@@ -1677,9 +1679,9 @@ namespace mame.ui
                     return;
                 }
 
-                if (selected_index() < visible_items && !m_ui_error)
+                if (selected_index() < m_available_items && !m_ui_error)
                 {
-                    set_selected_index(std.min(selected_index() + m_visible_lines - 2 + (selected_index() == 0 ? 1 : 0), visible_items - 1));
+                    set_selected_index(std.min(selected_index() + m_visible_lines - 2 + (selected_index() == 0 ? 1 : 0), m_available_items - 1));
 
                     top_line += m_visible_lines - 2;
                 }
@@ -1698,7 +1700,7 @@ namespace mame.ui
                     return;
                 }
 
-                if (selected_index() < visible_items && !m_ui_error)
+                if (selected_index() < m_available_items && !m_ui_error)
                     select_first_item();
             }
 
@@ -1715,8 +1717,8 @@ namespace mame.ui
                     return;
                 }
 
-                if (selected_index() < visible_items && !m_ui_error)
-                    set_selected_index(top_line = visible_items - 1);
+                if (selected_index() < m_available_items && !m_ui_error)
+                    set_selected_index(top_line = m_available_items - 1);
             }
 
             // pause enables/disables pause
@@ -1791,7 +1793,7 @@ namespace mame.ui
                         {
                             if (hover() >= 0 && hover() < item_count())
                             {
-                                if (hover() >= visible_items - 1 && selected_index() < visible_items)
+                                if (hover() >= m_available_items - 1 && selected_index() < m_available_items)
                                     m_prev_selected = get_selection_ref();
                                 set_selected_index(hover());
                                 m_focus = focused_menu.MAIN;
@@ -1799,12 +1801,12 @@ namespace mame.ui
                             else if (hover() == utils_global.HOVER_ARROW_UP)
                             {
                                 set_selected_index(std.max(selected_index() - m_visible_items, 0));
-                                top_line -= m_visible_items - (top_line + (m_visible_lines == visible_items ? 1 : 0));
+                                top_line -= m_visible_items - (top_line + (m_visible_lines == m_available_items ? 1 : 0));
                                 set_pressed();
                             }
                             else if (hover() == utils_global.HOVER_ARROW_DOWN)
                             {
-                                set_selected_index(std.min(selected_index() + m_visible_lines - 2 + (selected_index() == 0 ? 1 : 0), visible_items - 1));
+                                set_selected_index(std.min(selected_index() + m_visible_lines - 2 + (selected_index() == 0 ? 1 : 0), m_available_items - 1));
                                 top_line += m_visible_lines - 2;
                                 set_pressed();
                             }
@@ -1891,7 +1893,7 @@ namespace mame.ui
                         {
                             if (local_menu_event.zdelta > 0)
                             {
-                                if (selected_index() >= visible_items || is_first_selected() || m_ui_error)
+                                if (selected_index() >= m_available_items || is_first_selected() || m_ui_error)
                                     break;
                                 set_selected_index(selected_index() - local_menu_event.num_lines);
                                 if (selected_index() < top_line + ((top_line != 0) ? 1 : 0))
@@ -1899,9 +1901,9 @@ namespace mame.ui
                             }
                             else
                             {
-                                if (selected_index() >= visible_items - 1 || m_ui_error)
+                                if (selected_index() >= m_available_items - 1 || m_ui_error)
                                     break;
-                                set_selected_index(std.min(selected_index() + local_menu_event.num_lines, visible_items - 1));
+                                set_selected_index(std.min(selected_index() + local_menu_event.num_lines, m_available_items - 1));
                                 if (selected_index() >= top_line + m_visible_items + ((top_line != 0) ? 1 : 0))
                                     top_line += local_menu_event.num_lines;
                             }
@@ -1994,7 +1996,7 @@ namespace mame.ui
 #endif
 
             clear_hover();
-            visible_items = (m_is_swlist) ? item_count() - 2 : item_count() - 2 - skip_main_items;
+            m_available_items = (m_is_swlist) ? item_count() - 2 : item_count() - 2 - skip_main_items;
             float extra_height = (m_is_swlist) ? 2.0f * line_height : (2.0f + skip_main_items) * line_height;
             float visible_extra_menu_height = get_customtop() + get_custombottom() + extra_height;
 
@@ -2037,21 +2039,21 @@ namespace mame.ui
             float line = visible_top + ((float)m_visible_lines * line_height);
             ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
-            if (visible_items < m_visible_lines)
-                m_visible_lines = visible_items;
+            if (m_available_items < m_visible_lines)
+                m_visible_lines = m_available_items;
             if (top_line < 0 || is_first_selected())
                 top_line = 0;
-            if (selected_index() < visible_items && top_line + m_visible_lines >= visible_items)
-                top_line = visible_items - m_visible_lines;
+            if (selected_index() < m_available_items && top_line + m_visible_lines >= m_available_items)
+                top_line = m_available_items - m_visible_lines;
 
             // determine effective positions taking into account the hilighting arrows
             float effective_width = visible_width - 2.0f * gutter_width;
             float effective_left = visible_left + gutter_width;
 
-            if ((m_focus == focused_menu.MAIN) && (selected_index() < visible_items))
+            if ((m_focus == focused_menu.MAIN) && (selected_index() < m_available_items))
                 m_prev_selected = null;
 
-            int n_loop = Math.Min(m_visible_lines, visible_items);
+            int n_loop = std.min(m_visible_lines, m_available_items);
             for (int linenum = 0; linenum < n_loop; linenum++)
             {
                 float line_y = visible_top + (float)linenum * line_height;
@@ -2106,7 +2108,7 @@ namespace mame.ui
                     if (hover() == itemnum)
                         set_hover(utils_global.HOVER_ARROW_UP);
                 }
-                else if (linenum == m_visible_lines - 1 && itemnum != visible_items - 1)
+                else if (linenum == m_visible_lines - 1 && itemnum != m_available_items - 1)
                 {
                     // if we're on the bottom line, display the down arrow
                     draw_arrow(0.5f * (x1 + x2) - 0.5f * ud_arrow_width, line_y + 0.25f * line_height,
@@ -2180,7 +2182,7 @@ namespace mame.ui
                 }
             }
 
-            for (UInt32 count = (UInt32)visible_items; count < item_count(); count++)
+            for (int count = m_available_items; count < item_count(); count++)
             {
                 menu_item pitem = item((int)count);
                 string itemtext = pitem.text.c_str();
@@ -2237,7 +2239,7 @@ namespace mame.ui
             custom_render(get_selection_ref(), get_customtop(), get_custombottom(), x1, y1, x2, y2);
 
             // return the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
-            m_visible_items = m_visible_lines - ((top_line != 0) ? 1 : 0) - (top_line + (m_visible_lines != visible_items ? 1 : 0));
+            m_visible_items = m_visible_lines - (top_line != 0 ? 1 : 0) - (top_line + (m_visible_lines != m_available_items ? 1 : 0));
 
             // noinput
             if (noinput)

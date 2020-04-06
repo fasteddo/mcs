@@ -108,7 +108,7 @@ namespace mame
         //UINT8 bpp() const { return live().bpp(); }
         public bitmap_format format() { return m_format; }
         public texture_format texformat() { return m_texformat; }
-        //bool valid() const { return live().valid(); }
+        public bool valid() { return live().valid(); }
         //palette_t *palette() const { return live().palette(); }
         public rectangle cliprect() { return live().cliprect(); }
 
@@ -184,22 +184,44 @@ namespace mame
         public static readonly attotime DEFAULT_FRAME_PERIOD = attotime.from_hz(DEFAULT_FRAME_RATE);
 
         // screen_update callback flags
-        const UInt32 UPDATE_HAS_NOT_CHANGED = 0x0001;   // the video has not changed
+        const u32 UPDATE_HAS_NOT_CHANGED = 0x0001;   // the video has not changed
 
         // ----- flags for video_attributes -----
 
-        // should VIDEO_UPDATE by called at the start of VBLANK or at the end?
-        //#define VIDEO_UPDATE_BEFORE_VBLANK      0x0000
-        const UInt32 VIDEO_UPDATE_AFTER_VBLANK       = 0x0004;
+        /*!
+         @defgroup flags for video_attributes
+         @{
+         @def VIDEO_UPDATE_BEFORE_VBLANK
+         update_video called at the start of the VBLANK period
+         @todo hack, remove me
 
-        // indicates VIDEO_UPDATE will add container bits its
-        const UInt32 VIDEO_SELF_RENDER               = 0x0008;
+         @def VIDEO_UPDATE_AFTER_VBLANK
+         update_video called at the end of the VBLANK period
+         @todo hack, remove me
 
-        // force VIDEO_UPDATE to be called even for skipped frames
-        const UInt32 VIDEO_ALWAYS_UPDATE             = 0x0080;
+         @def VIDEO_SELF_RENDER
+         indicates VIDEO_UPDATE will add container bits itself
 
-        // calls VIDEO_UPDATE for every visible scanline, even for skipped frames
-        const UInt32 VIDEO_UPDATE_SCANLINE           = 0x0100;
+         @def VIDEO_ALWAYS_UPDATE
+         force VIDEO_UPDATE to be called even for skipped frames.
+         @todo in case you need this one for model updating, then you're doing it wrong (read: hack)
+
+         @def VIDEO_UPDATE_SCANLINE
+         calls VIDEO_UPDATE for every visible scanline, even for skipped frames
+
+         @def VIDEO_VARIABLE_WIDTH
+         causes the screen to construct its final bitmap from a composite upscale of individual scanline bitmaps
+
+         @}
+         */
+
+        //constexpr u32 VIDEO_UPDATE_BEFORE_VBLANK    = 0x0000;
+        const u32 VIDEO_UPDATE_AFTER_VBLANK       = 0x0004;
+
+        const u32 VIDEO_SELF_RENDER               = 0x0008;
+        const u32 VIDEO_ALWAYS_UPDATE             = 0x0080;
+        const u32 VIDEO_UPDATE_SCANLINE           = 0x0100;
+        const u32 VIDEO_VARIABLE_WIDTH            = 0x0200;
 
 
         // static data
@@ -224,21 +246,24 @@ namespace mame
         devcb_write32 m_scanline_cb;              // screen scanline callback
         optional_device<palette_device> m_paletteDevice;  //optional_device<device_palette_interface> m_palette;      // our palette
         u32 m_video_attributes;         // flags describing the video system
-        string m_svg_region;               // the region in which the svg data is in
+        optional_memory_region m_svg_region;               // the region in which the svg data is in
 
         // internal state
         render_container m_container;                // pointer to our container
         //std::unique_ptr<svg_renderer> m_svg; // the svg renderer
 
         // dimensions
+        int m_max_width;                // maximum width encountered
         int m_width;                    // current width (HTOTAL)
         int m_height;                   // current height (VTOTAL)
         rectangle m_visarea;                  // current visible area (HBLANK end/start, VBLANK end/start)
+        std.vector<int> m_scan_widths;              // current width, in samples, of each individual scanline
 
         // textures and bitmaps
         texture_format m_texformat;                // texture format
         render_texture [] m_texture = new render_texture[2];               // 2x textures for the screen bitmap
         screen_bitmap [] m_bitmap = new screen_bitmap[2];                // 2x bitmaps for rendering
+        std.vector<bitmap_t> [] m_scan_bitmaps = new std.vector<bitmap_t>[2];      // 2x bitmaps for each individual scanline
         bitmap_ind8 m_priority = new bitmap_ind8();                 // priority bitmap
         bitmap_ind64 m_burnin = new bitmap_ind64();                   // burn-in bitmap
         u8 m_curbitmap;                // current bitmap index
@@ -293,8 +318,9 @@ namespace mame
             m_scanline_cb = new devcb_write32(this);
             m_paletteDevice = new optional_device<palette_device>(this, finder_base.DUMMY_TAG);
             m_video_attributes = 0;
-            m_svg_region = tag;
+            m_svg_region = new optional_memory_region(this, DEVICE_SELF);
             m_container = null;
+            m_max_width = 100;
             m_width = 100;
             m_height = 100;
             m_visarea = new rectangle(0, 99, 0, 99);
@@ -425,7 +451,23 @@ namespace mame
         //void set_physical_aspect(unsigned x, unsigned y) { assert(!configured()); m_phys_aspect = std::make_pair(x, y); }
         //void set_native_aspect() { assert(!configured()); m_phys_aspect = std::make_pair(~0U, ~0U); }
 
-        public void set_raw(u32 pixclock, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart)
+        /// \brief Configure screen parameters
+        ///
+        /// \param [in] pixclock Pixel clock frequency in Hertz.
+        /// \param [in] htotal Total pixel clocks per line, including
+        ///   horizontal blanking period.
+        /// \param [in] hbend Index of first visible pixel after horizontal
+        ///   blanking period ends.
+        /// \param [in] hbstart Index of first pixel in horzontal blanking
+        ///   period after visible pixels.
+        /// \param [in] vtotal Total lines per frame, including vertical
+        ///   blanking period.
+        /// \param [in] vbend Index of first visible line after vertical
+        ///   blanking period ends.
+        /// \param [in] vbstart Index of first line in vertical blanking
+        ///   period after visible lines.
+        /// \return Reference to device for method chaining.
+        public screen_device set_raw(u32 pixclock, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart)
         {
             assert(pixclock != 0);
             clock_set(pixclock);
@@ -434,28 +476,89 @@ namespace mame
             m_width = htotal;
             m_height = vtotal;
             m_visarea.set(hbend, hbstart - 1, vbend, vbstart - 1);
+            return this;
         }
 
-        public void set_raw(XTAL xtal, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart) { set_raw(xtal.value(), htotal, hbend, hbstart, vtotal, vbend, vbstart); }
+        public screen_device set_raw(XTAL xtal, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart)
+        {
+            xtal.validate("Configuring screen " + tag());
+            return set_raw(xtal.value(), htotal, hbend, hbstart, vtotal, vbend, vbstart);
+        }
 
         public void set_refresh(attoseconds_t rate) { m_refresh = rate; }
-        public void set_refresh_hz(s32 hz) { set_refresh(attotime.HZ_TO_ATTOSECONDS(hz)); }  //template <typename T> void set_refresh_hz(T &&hz) { set_refresh(HZ_TO_ATTOSECONDS(std::forward<T>(hz))); }
 
-        public void set_vblank_time(attoseconds_t time)
+        /// \brief Set refresh rate in Hertz
+        ///
+        /// Sets refresh rate in Hertz (frames per second). Used in
+        /// conjunction with #set_vblank_time, #set_size and #set_visarea.
+        /// For raster displays, please use #set_raw to configure screen
+        /// parameters in terms of pixel clock.
+        /// \param [in] hz Desired refresh rate.
+        /// \return Reference to device for method chaining.
+        /// 
+        public screen_device set_refresh_hz(s32 hz) { set_refresh(attotime.HZ_TO_ATTOSECONDS(hz)); return this; }  //template <typename T> screen_device &set_refresh_hz(T &&hz) { set_refresh(HZ_TO_ATTOSECONDS(std::forward<T>(hz))); return *this; }
+
+        /// \brief Set vertical blanking interval time
+        ///
+        /// Sets vertical blanking interval period.  Used in conjunction
+        /// with #set_refresh_hz, #set_size and #set_visarea.  For raster
+        /// displays, please use #set_raw to configure screen parameters in
+        /// terms of pixel clock.
+        /// \param [in] time Length of vertical blanking interval.
+        /// \return Reference to device for method chaining.
+        public screen_device set_vblank_time(attoseconds_t time)
         {
             m_vblank = time;
             m_oldstyle_vblank_supplied = true;
+            return this;
         }
 
-        public void set_size(u16 width, u16 height)
+        /// \brief Set total screen size
+        ///
+        /// Set the total screen size in pixels, including blanking areas if
+        /// applicable.  This sets the size of the screen bitmap.  Used in
+        /// conjunction with #set_refresh_hz, #set_vblank_time and
+        /// #set_visarea.  For raster displays, please use #set_raw to
+        /// configure screen parameters in terms of pixel clock.
+        /// \param [in] width Total width in pixels, including horizontal
+        ///   blanking period if applicable.
+        /// \param [in] height Total height in lines, including vertical
+        ///   blanking period if applicable.
+        /// \return Reference to device for method chaining.
+        public screen_device set_size(u16 width, u16 height)
         {
             m_width = width;
             m_height = height;
+            return this;
         }
 
-        public void set_visarea(s16 minx, s16 maxx, s16 miny, s16 maxy) { m_visarea.set(minx, maxx, miny, maxy); }
+        /// \brief Set visible screen area
+        ///
+        /// Set visible screen area.  This should fit within the total
+        /// screen area.  Used in conjunction with #set_refresh_hz,
+        /// #set_vblank_time and #set_size.  For raster displays, please
+        /// use #set_raw to configure screen parameters in terms of pixel
+        /// clock.
+        /// \param [in] minx First visible pixel index after horizontal
+        ///   blanking period ends.
+        /// \param [in] maxx Last visible pixel index before horizontal
+        ///   blanking period starts.
+        /// \param [in] miny First visible line index after vertical
+        ///   blanking period ends.
+        /// \param [in] maxy Last visible line index before vertical
+        ///   blanking period starts.
+        /// \return Reference to device for method chaining.
+        public screen_device set_visarea(s16 minx, s16 maxx, s16 miny, s16 maxy) { m_visarea.set(minx, maxx, miny, maxy); return this; }
 
-        void set_visarea_full() { m_visarea.set(0, m_width - 1, 0, m_height - 1); } // call after set_size
+        /// \brief Set visible area to full area
+        ///
+        /// Set visible screen area to the full screen area (i.e. noi
+        /// horizontal or vertical blanking period).  This is generally not
+        /// possible for raster displays, but is useful for other display
+        /// simulations.  Must be called after calling #set_size.
+        /// \return Reference to device for method chaining.
+        /// \sa set_visarea
+        screen_device set_visarea_full() { m_visarea.set(0, m_width - 1, 0, m_height - 1); return this; }
 
         void set_default_position(double xscale, double xoffs, double yscale, double yoffs)
         {
@@ -503,12 +606,13 @@ namespace mame
         //auto scanline() { m_video_attributes |= VIDEO_UPDATE_SCANLINE; return m_scanline_cb.bind(); }
 
         //template<typename T>
-        public void set_palette(string tag) { m_paletteDevice.set_tag(tag); }
-        public void set_palette(finder_base finder) { m_paletteDevice.set_tag(finder); }
+        public screen_device set_palette(string tag) { m_paletteDevice.set_tag(tag); return this; }
+        public screen_device set_palette(finder_base finder) { m_paletteDevice.set_tag(finder); return this; }
 
-        //void set_video_attributes(u32 flags) { m_video_attributes = flags; }
-        void set_color(rgb_t color) { m_color = color; }
-        void set_svg_region(string region) { m_svg_region = region; }  // default region is device tag
+        //screen_device &set_no_palette() { m_palette.set_tag(finder_base::DUMMY_TAG); return *this; }
+        //screen_device set_video_attributes(u32 flags) { m_video_attributes = flags; return this; }
+        screen_device set_color(rgb_t color) { m_color = color; return this; }
+        //template <typename T> screen_device &set_svg_region(T &&tag) { m_svg_region.set_tag(std::forward<T>(tag)); return *this; } // default region is device tag
 
 
         // information getters
@@ -538,12 +642,20 @@ namespace mame
             assert(frame_period > 0);
 
             // fill in the new parameters
+            m_max_width = std.max(m_max_width, width);
             m_width = width;
             m_height = height;
             m_visarea = visarea;
 
             // reallocate bitmap if necessary
-            realloc_screen_bitmaps();
+            if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+            {
+                update_scan_bitmap_size(vpos());
+            }
+            else
+            {
+                realloc_screen_bitmaps();
+            }
 
             // compute timing parameters
             m_frame_period = frame_period;
@@ -733,9 +845,7 @@ namespace mame
 
             // set the range of scanlines to render
             rectangle clip = new rectangle(m_visarea);
-            clip.sety(
-                    Math.Max(clip.top(), m_last_partial_scan),
-                    Math.Min(clip.bottom(), scanline));
+            clip.sety(std.max(clip.top(), m_last_partial_scan), std.min(clip.bottom(), scanline));
 
             // skip if entirely outside of visible area
             if (clip.top() > clip.bottom())
@@ -755,13 +865,46 @@ namespace mame
             profiler_global.g_profiler.start(profile_type.PROFILER_VIDEO);
 
 
-            UInt32 flags;
-            screen_bitmap curbitmap = m_bitmap[m_curbitmap];
-            switch (curbitmap.format())
+            u32 flags = 0;
+            if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
             {
-                default:
-                case bitmap_format.BITMAP_FORMAT_IND16:   flags = m_screen_update_ind16(this, curbitmap.as_ind16(), clip);   break;
-                case bitmap_format.BITMAP_FORMAT_RGB32:   flags = m_screen_update_rgb32(this, curbitmap.as_rgb32(), clip);   break;
+                rectangle scan_clip = new rectangle(clip);
+                for (int y = clip.top(); y <= clip.bottom(); y++)
+                {
+                    scan_clip.sety(y, y);
+                    pre_update_scanline(y);
+
+                    screen_bitmap curbitmap = m_bitmap[m_curbitmap];
+                    switch (curbitmap.format())
+                    {
+                        default:
+                        case bitmap_format.BITMAP_FORMAT_IND16:   flags |= m_screen_update_ind16(this, (bitmap_ind16)m_scan_bitmaps[m_curbitmap][y], scan_clip);   break;
+                        case bitmap_format.BITMAP_FORMAT_RGB32:   flags |= m_screen_update_rgb32(this, (bitmap_rgb32)m_scan_bitmaps[m_curbitmap][y], scan_clip);   break;
+                    }
+
+                    m_partial_updates_this_frame++;
+                }
+            }
+            else
+            {
+                if (m_type != SCREEN_TYPE_SVG)
+                {
+                    screen_bitmap curbitmap = m_bitmap[m_curbitmap];
+                    switch (curbitmap.format())
+                    {
+                        default:
+                        case bitmap_format.BITMAP_FORMAT_IND16:   flags = m_screen_update_ind16(this, curbitmap.as_ind16(), clip);   break;
+                        case bitmap_format.BITMAP_FORMAT_RGB32:   flags = m_screen_update_rgb32(this, curbitmap.as_rgb32(), clip);   break;
+                    }
+                }
+                else
+                {
+                    throw new emu_unimplemented();
+#if false
+                    flags = m_svg.render(this, m_bitmap[m_curbitmap].as_rgb32(), clip);
+#endif
+                }
+                m_partial_updates_this_frame++;
             }
 
 
@@ -850,6 +993,11 @@ namespace mame
                     // if we're not skipping the frame and if the screen actually changed, then update the texture
                     if (!machine().video().skip_this_frame() && m_changed)
                     {
+                        if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+                        {
+                            create_composited_bitmap();
+                        }
+
                         m_texture[m_curbitmap].set_bitmap(m_bitmap[m_curbitmap].live(), m_visarea, m_bitmap[m_curbitmap].texformat());
                         m_curtexture = m_curbitmap;
                         m_curbitmap = (byte)(1 - m_curbitmap);
@@ -959,6 +1107,11 @@ namespace mame
                 if (m_screen_update_ind16 == null && m_screen_update_rgb32 == null)
                     osd_printf_error("Missing SCREEN_UPDATE function\n");
             }
+            else
+            {
+                if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+                    osd_printf_error("Non-raster display cannot have a variable width\n");
+            }
 
             // check for zero frame rate
             if (m_refresh == 0)
@@ -1027,12 +1180,14 @@ namespace mame
             }
 
             // configure bitmap formats and allocate screen bitmaps
-            texture_format texformat = m_screen_update_ind16 != null ? texture_format.TEXFORMAT_PALETTE16 : texture_format.TEXFORMAT_RGB32;
+            // svg is RGB32 too, and doesn't have any update method
+            bool screen16 = m_screen_update_ind16 != null;
+            texture_format texformat = screen16 ? texture_format.TEXFORMAT_PALETTE16 : texture_format.TEXFORMAT_RGB32;
 
-            for (int index = 0; index < m_bitmap.Length; index++)
+            foreach (var elem in m_bitmap)
             {
-                m_bitmap[index].set_format(format(), texformat);
-                register_screen_bitmap(m_bitmap[index].live());
+                elem.set_format(format(), texformat);
+                register_screen_bitmap(elem.live());
             }
             register_screen_bitmap(m_priority);
 
@@ -1041,6 +1196,25 @@ namespace mame
             m_texture[0].set_id((u64)m_unique_id << 57);
             m_texture[1] = machine().render().texture_alloc();
             m_texture[1].set_id(((u64)m_unique_id << 57) | 1);
+
+            if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+            {
+                for (int i = 0; i < m_height; i++)
+                {
+                    for (int j = 0; j < 2; j++)
+                    {
+                        if (screen16)
+                        {
+                            m_scan_bitmaps[j].push_back(new bitmap_ind16(m_width, 1));
+                        }
+                        else
+                        {
+                            m_scan_bitmaps[j].push_back(new bitmap_rgb32(m_width, 1));
+                        }
+                    }
+                    m_scan_widths.push_back(m_width);
+                }
+            }
 
             // configure the default cliparea
             render_container.user_settings settings;
@@ -1167,10 +1341,19 @@ namespace mame
                 // first scanline
                 case TID_SCANLINE0:
                     reset_partial_updates();
+                    if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+                    {
+                        pre_update_scanline(0);
+                    }
                     break;
 
                 // subsequent scanlines when scanline updates are enabled
                 case TID_SCANLINE:
+                    if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+                    {
+                        pre_update_scanline(param);
+                    }
+
                     if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0)
                     {
                         // force a partial update to the current scanline
@@ -1204,8 +1387,9 @@ namespace mame
                 return;
 
             // determine effective size to allocate
-            s32 effwidth = Math.Max(m_width, m_visarea.right() + 1);
-            s32 effheight = Math.Max(m_height, m_visarea.bottom() + 1);
+            bool per_scanline = (m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0;
+            s32 effwidth = std.max(per_scanline ? m_max_width : m_width, m_visarea.right() + 1);
+            s32 effheight = std.max(m_height, m_visarea.bottom() + 1);
 
             // reize all registered screen bitmaps
             foreach (var item in m_auto_bitmap_list)
@@ -1304,6 +1488,72 @@ namespace mame
             else
                 osd_printf_global.osd_printf_warning(string.Format("Unable to load effect PNG file '{0}'\n", fullname));
 #endif
+        }
+
+
+        void update_scan_bitmap_size(int y)
+        {
+            // determine effective size to allocate
+            s32 effwidth = std.max(m_max_width, m_visarea.right() + 1);
+
+            if (m_scan_widths[y] == effwidth)
+                return;
+
+            m_scan_bitmaps[m_curbitmap][y].resize(effwidth, 1);
+            m_scan_widths[y] = effwidth;
+        }
+
+
+        void pre_update_scanline(int y)
+        {
+            update_scan_bitmap_size(y);
+        }
+
+
+        void create_composited_bitmap()
+        {
+            screen_bitmap curbitmap = m_bitmap[m_curtexture];
+            if (!curbitmap.valid())
+                return;
+
+            s32 dstwidth = std.max(m_max_width, m_visarea.right() + 1);
+            int dstheight = curbitmap.height();
+
+            switch (curbitmap.format())
+            {
+                default:
+                case bitmap_format.BITMAP_FORMAT_IND16:
+                {
+                    for (int y = 0; y < dstheight; y++)
+                    {
+                        bitmap_ind16 srcbitmap = (bitmap_ind16)m_scan_bitmaps[m_curbitmap][y];
+                        UInt16BufferPointer dst = curbitmap.as_ind16().pix16(y);  //u16 *dst = &curbitmap.as_ind16().pix16(y);
+                        UInt16BufferPointer src = srcbitmap.pix16(0);  //const u16 *src = &srcbitmap.pix16(0);
+                        int dx = (m_scan_widths[y] << 15) / dstwidth;
+                        for (int x = 0; x < m_scan_widths[y]; x += dx)
+                        {
+                            dst[0] = src[x >> 15];  dst++;  //*dst++ = src[x >> 15];
+                        }
+                    }
+                    break;
+                }
+
+                case bitmap_format.BITMAP_FORMAT_RGB32:
+                {
+                    for (int y = 0; y < dstheight; y++)
+                    {
+                        bitmap_rgb32 srcbitmap = (bitmap_rgb32)m_scan_bitmaps[m_curbitmap][y];
+                        UInt32BufferPointer dst = curbitmap.as_rgb32().pix32(y);  //u32 *dst = &curbitmap.as_rgb32().pix32(y);
+                        UInt32BufferPointer src = srcbitmap.pix32(0);  //const u32 *src = &srcbitmap.pix32(0);
+                        int dx = (m_scan_widths[y] << 15) / dstwidth;
+                        for (int x = 0; x < dstwidth << 15; x += dx)
+                        {
+                            dst[0] = src[x >> 15];  dst++;  //*dst++ = src[x >> 15];
+                        }
+                    }
+                    break;
+                }
+            }
         }
     }
 

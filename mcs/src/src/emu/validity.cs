@@ -191,7 +191,7 @@ namespace mame
         //-------------------------------------------------
         //  error_output - error message output override
         //-------------------------------------------------
-        public override void output_callback(osd_output_channel channel, string msg)
+        public override void output_callback(osd_output_channel channel, string format, params object [] args)  //virtual void output_callback(osd_output_channel channel, const util::format_argument_pack<std::ostream> &args) override;
         {
             string output = "";
             switch (channel)
@@ -201,11 +201,11 @@ namespace mame
                     m_errors++;
 
                     // output the source(driver) device 'tag'
-                    build_output_prefix(out output);
+                    build_output_prefix(ref output);
 
                     // generate the string
-                    output += msg;
-                    m_error_text = output;
+                    output += string.Format(format, args);
+                    m_error_text.append(output.str());
                     break;
 
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING:
@@ -213,11 +213,11 @@ namespace mame
                     m_warnings++;
 
                     // output the source(driver) device 'tag'
-                    build_output_prefix(out output);
+                    build_output_prefix(ref output);
 
                     // generate the string and output to the original target
-                    output += msg;
-                    m_warning_text = output;
+                    output += string.Format(format, args);
+                    m_warning_text.append(output.str());
                     break;
 
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE:
@@ -225,15 +225,15 @@ namespace mame
                     if (!m_print_verbose) break;
 
                     // output the source(driver) device 'tag'
-                    build_output_prefix(out output);
+                    build_output_prefix(ref output);
 
                     // generate the string and output to the original target
-                    output += msg;
-                    m_verbose_text = output;
+                    output += string.Format(format, args);
+                    m_verbose_text.append(output.str());
                     break;
 
                 default:
-                    chain_output(channel, msg);
+                    chain_output(channel, format, args);
                     break;
             }
         }
@@ -494,18 +494,15 @@ namespace mame
         //  indicating the current source file, driver,
         //  and device
         //-------------------------------------------------
-        void build_output_prefix(out string str)
+        void build_output_prefix(ref string str)  //void build_output_prefix(std::ostream &str) const;
         {
-            // start empty
-            str = "";
-
             // if we have a current (non-root) device, indicate that
             if (m_current_device != null && m_current_device.owner() != null)
-                str += m_current_device.name() + " device '" + m_current_device.tag().Substring(1) + "': ";
+                str += string.Format("{0} device '{1}': ", m_current_device.name(), m_current_device.tag().Substring(1));
 
             // if we have a current port, indicate that as well
             if (m_current_ioport != null)
-                str += "ioport '" + m_current_ioport + "': ";
+                str += string.Format("ioport '{0}': ", m_current_ioport);
         }
 
 
@@ -514,14 +511,10 @@ namespace mame
         //  message via a varargs string, so the argptr
         //  can be forwarded onto the given delegate
         //-------------------------------------------------
-        void output_via_delegate(osd_output_channel channel, string format, params object [] args)
+        void output_via_delegate(osd_output_channel channel, string fmt, params object [] args)  //template <typename Format, typename... Params> void output_via_delegate(osd_output_channel channel, Format &&fmt, Params &&...args);
         {
-            //va_list argptr;
-
             // call through to the delegate with the proper parameters
-            //va_start(argptr, format);
-            chain_output(channel, string.Format(format, args));
-            //va_end(argptr);
+            chain_output(channel, fmt, args);
         }
 
 

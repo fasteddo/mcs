@@ -30,7 +30,8 @@ namespace mame
         IO_MIDIIN,      /* 17 - MIDI In port */
         IO_MIDIOUT,     /* 18 - MIDI Out port */
         IO_PICTURE,     /* 19 - A single-frame image */
-        IO_COUNT        /* 20 - Total Number of IO_devices for searching */
+        IO_VIDEO,       /* 20 - A video file */
+        IO_COUNT        /* 21 - Total Number of IO_devices for searching */
     }
 
 

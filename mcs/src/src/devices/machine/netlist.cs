@@ -110,13 +110,13 @@ namespace mame
                 case plib.plog_level.VERBOSE:
                     break;
                 case plib.plog_level.INFO:
-                    osd_printf_verbose("netlist INFO: {0}\n", ls.c_str());
+                    osd_printf_verbose("netlist INFO: {0}\n", ls);
                     break;
                 case plib.plog_level.WARNING:
-                    osd_printf_warning("netlist WARNING: {0}\n", ls.c_str());
+                    osd_printf_warning("netlist WARNING: {0}\n", ls);
                     break;
                 case plib.plog_level.ERROR:
-                    osd_printf_error("netlist ERROR: {0}\n", ls.c_str());
+                    osd_printf_error("netlist ERROR: {0}\n", ls);
                     break;
                 case plib.plog_level.FATAL:
                     throw new emu_fatalerror(1, "netlist FATAL: {0}\n", ls.c_str());
@@ -158,7 +158,7 @@ namespace mame
         netlist_time m_rem;
         netlist_time m_old;
 
-        netlist_mame_t m_netlist;  //netlist::poolptr<netlist_mame_t> m_netlist;
+        netlist_mame_t m_netlist;  //netlist::unique_pool_ptr<netlist_mame_t> m_netlist;
 
         func_type m_setup_func;
 
@@ -232,7 +232,7 @@ namespace mame
         {
             netlist_global.LOGDEVCALLS(this, "device_start entry\n");
 
-            m_netlist = new netlist_mame_t(this, "netlist");  //m_netlist = netlist::pool().make_poolptr<netlist_mame_t>(*this, "netlist");
+            m_netlist = new netlist_mame_t(this, "netlist");  //m_netlist = netlist::pool().make_unique<netlist_mame_t>(*this, "netlist");
 
             if (!machine().options().verbose())
             {
@@ -304,7 +304,7 @@ namespace mame
                 //netlist_mame_t lnetlist(*this, "netlist", plib::make_unique<netlist_validate_callbacks_t>());
                 var lnetlist = new netlist.netlist_t("netlist", new netlist_validate_callbacks_t());  //auto lnetlist = plib::make_unique<netlist::netlist_t>("netlist", plib::make_unique<netlist_validate_callbacks_t>());
                 // enable validation mode
-                lnetlist.nlstate().setup().enable_validation();
+                lnetlist.nlstate().setup().set_extended_validation(false);
                 common_dev_start(lnetlist);
 
                 foreach (device_t d in subdevices())
@@ -321,6 +321,7 @@ namespace mame
             }
             catch (memregion_not_set err)
             {
+                // Do not report an error. Validity check has no access to ROM area.
                 osd_printf_verbose("{0}\n", err);
             }
             catch (emu_fatalerror err)
@@ -634,7 +635,7 @@ namespace mame
             /* resort channels */
             foreach (var outdev in outdevs)
             {
-                int chan = outdev.channel.op();
+                int chan = outdev.channel.op;
 
                 netlist().log().verbose.op("Output {0} on channel {1}", outdev.name(), chan);
 
@@ -863,7 +864,7 @@ namespace mame
         void write(uint32_t val)
         {
             uint32_t v = (val >> (int)m_shift) & 1;
-            if ((v != 0) != m_param.op())
+            if ((v != 0) != m_param.op)
                 synchronize(0, (int)v);
         }
 
@@ -1065,19 +1066,18 @@ namespace mame
     //};
 
 
-    class netlist_data_memregions_t : netlist.source_t
+    class netlist_data_memregions_t : netlist.source_data_t
     {
         device_t m_dev;
 
 
-        public netlist_data_memregions_t(device_t dev)
-            : base(netlist.source_t.type_t.DATA)
+        public netlist_data_memregions_t(device_t dev) : base()
         {
             m_dev = dev;
         }
 
 
-        protected override plib.pistream stream(string name)  //virtual plib::unique_ptr<plib::pistream> stream(const pstring &name) override;
+        public override std.istream stream(string name)  //virtual plib::unique_ptr<std::istream> stream(const pstring &name) override;
         {
             throw new emu_unimplemented();
         }
@@ -1166,7 +1166,7 @@ namespace mame
         //NETLIB_UPDATEI()
         protected override void update()
         {
-            nl_double val = m_in.op() * m_mult.op() + m_offset.op();
+            nl_double val = m_in.op * m_mult.op + m_offset.op;
             sound_update(exec().time());
             /* ignore spikes */
             if (Math.Abs(val) < 32767.0)
@@ -1197,11 +1197,11 @@ namespace mame
 
         public class channel
         {
-            public netlist.param_str_t m_param_name;  //netlist::pool_owned_ptr<netlist::param_str_t> m_param_name;
+            public netlist.param_str_t m_param_name;  //netlist::unique_pool_ptr<netlist::param_str_t> m_param_name;
             public netlist.param_double_t m_param;  //netlist::param_double_t *m_param;
             public ListPointer<stream_sample_t> m_buffer;  //stream_sample_t *m_buffer;
-            public netlist.param_double_t m_param_mult;  //netlist::pool_owned_ptr<netlist::param_double_t> m_param_mult;
-            public netlist.param_double_t m_param_offset;  //netlist::pool_owned_ptr<netlist::param_double_t> m_param_offset;
+            public netlist.param_double_t m_param_mult;  //netlist::unique_pool_ptr<netlist::param_double_t> m_param_mult;
+            public netlist.param_double_t m_param_offset;  //netlist::unique_pool_ptr<netlist::param_double_t> m_param_offset;
         }
         channel [] m_channels = new channel [MAX_INPUT_CHANNELS];
         netlist_time m_inc;
@@ -1231,9 +1231,9 @@ namespace mame
             for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
             {
                 m_channels[i] = new channel();
-                m_channels[i].m_param_name = new netlist.param_str_t(this, new plib.pfmt("CHAN{0}").op(i), "");  //m_channels[i].m_param_name = netlist::pool().make_poolptr<netlist::param_str_t>(*this, plib::pfmt("CHAN{1}")(i), "");
-                m_channels[i].m_param_mult = new netlist.param_double_t(this, new plib.pfmt("MULT{0}").op(i), 1.0);  //m_channels[i].m_param_mult = netlist::pool().make_poolptr<netlist::param_double_t>(*this, plib::pfmt("MULT{1}")(i), 1.0);
-                m_channels[i].m_param_offset = new netlist.param_double_t(this, new plib.pfmt("OFFSET{0}").op(i), 0.0);  //m_channels[i].m_param_offset = netlist::pool().make_poolptr<netlist::param_double_t>(*this, plib::pfmt("OFFSET{1}")(i), 0.0);
+                m_channels[i].m_param_name = new netlist.param_str_t(this, new plib.pfmt("CHAN{0}").op(i), "");  //m_channels[i].m_param_name = netlist::pool().make_unique<netlist::param_str_t>(*this, plib::pfmt("CHAN{1}")(i), "");
+                m_channels[i].m_param_mult = new netlist.param_double_t(this, new plib.pfmt("MULT{0}").op(i), 1.0);  //m_channels[i].m_param_mult = netlist::pool().make_unique<netlist::param_double_t>(*this, plib::pfmt("MULT{1}")(i), 1.0);
+                m_channels[i].m_param_offset = new netlist.param_double_t(this, new plib.pfmt("OFFSET{0}").op(i), 0.0);  //m_channels[i].m_param_offset = netlist::pool().make_unique<netlist::param_double_t>(*this, plib::pfmt("OFFSET{1}")(i), 0.0);
             }
         }
 
@@ -1258,13 +1258,13 @@ namespace mame
             m_pos = 0;
             for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
             {
-                if (!string.IsNullOrEmpty(m_channels[i].m_param_name.op()))  //if ((*m_channels[i].m_param_name)() != pstring(""))
+                if (!string.IsNullOrEmpty(m_channels[i].m_param_name.op))  //if ((*m_channels[i].m_param_name)() != pstring(""))
                 {
                     if (i != m_num_channels)
                         state().log().fatal.op("sound input numbering has to be sequential!");
 
                     m_num_channels++;
-                    m_channels[i].m_param = (netlist.param_double_t)(setup().find_param(m_channels[i].m_param_name.op(), true));  //dynamic_cast<netlist::param_double_t *>(setup().find_param((*m_param_name[i])(), true));
+                    m_channels[i].m_param = (netlist.param_double_t)(setup().find_param(m_channels[i].m_param_name.op, true));  //dynamic_cast<netlist::param_double_t *>(setup().find_param((*m_param_name[i])(), true));
                 }
             }
         }
@@ -1279,7 +1279,7 @@ namespace mame
                     break; // stop, called outside of stream_update
 
                 nl_double v = m_channels[i].m_buffer[m_pos];
-                m_channels[i].m_param.setTo(v * m_channels[i].m_param_mult.op() + m_channels[i].m_param_offset.op());
+                m_channels[i].m_param.setTo(v * m_channels[i].m_param_mult.op + m_channels[i].m_param_offset.op);
             }
 
             m_pos++;

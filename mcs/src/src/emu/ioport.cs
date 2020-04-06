@@ -3524,7 +3524,7 @@ namespace mame
         //  initialize - walk the configured ports and
         //  create live state information
         //-------------------------------------------------
-        public s64 initialize()
+        public time_t initialize()
         {
             // add an exit callback and a frame callback
             machine().add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit);

@@ -39,6 +39,7 @@ namespace mame
         //public static void draw_user_interface(running_machine machine);
         //public static void periodic_check();
         //public static bool frame_hook();
+        public static void sound_hook() { mame_machine_manager.instance().lua().on_sound_update(); }
         //static void layout_file_cb(xml_data_node layout);
         //static bool standalone();
     }

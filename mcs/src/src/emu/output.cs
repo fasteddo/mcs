@@ -106,8 +106,7 @@ namespace mame
 
             //operator s32() const { return m_item->get(); }
             //s32 operator=(s32 value) { m_item->set(value); return m_item->get(); }
-            public s32 op() { return m_item.get(); }
-            public void op(s32 value) { m_item.set(value); }
+            public s32 op { get { return m_item.get(); } set { m_item.set(value); } }
         }
 
         //template <unsigned M, unsigned... N> struct item_proxy_array { typedef typename item_proxy_array<N...>::type type[M]; };
@@ -142,8 +141,8 @@ namespace mame
                     m_proxies[i] = new item_proxy();
             }
 
-            public s32 this[int n] { get { return m_proxies[n].op(); } set { m_proxies[n].op(value); } }  //auto &operator[](unsigned n) { return m_proxies[n]; }
-            public s32 this[UInt32 n] { get { return m_proxies[n].op(); } set { m_proxies[n].op(value); } }  //auto &operator[](unsigned n) { return m_proxies[n]; }
+            public s32 this[int n] { get { return m_proxies[n].op; } set { m_proxies[n].op = value; } }  //auto &operator[](unsigned n) { return m_proxies[n]; }
+            public s32 this[UInt32 n] { get { return m_proxies[n].op; } set { m_proxies[n].op = value; } }  //auto &operator[](unsigned n) { return m_proxies[n]; }
             //auto &operator[](unsigned n) const { return m_proxies[n]; }
 
             //auto begin() { return std::begin(m_proxies); }

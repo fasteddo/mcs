@@ -255,6 +255,12 @@ namespace mame
         }
 
 
+        public void on_sound_update()
+        {
+            //throw new emu_unimplemented();
+        }
+
+
         public void on_periodic()
         {
             //throw new emu_unimplemented();

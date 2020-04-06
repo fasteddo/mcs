@@ -473,15 +473,15 @@ namespace mame
             map.op(0x6000, 0x6001).mirror(0x07f8).w(start_lamp_w);
             map.op(0x6002, 0x6002).mirror(0x07f8).w(coin_lock_w);
             map.op(0x6003, 0x6003).mirror(0x07f8).w(coin_count_0_w);
-            //AM_RANGE(0x6004, 0x6007) AM_MIRROR(0x07f8) AM_DEVWRITE("cust", galaxian_sound_device, lfo_freq_w)
+            //map(0x6004, 0x6007).mirror(0x07f8).w("cust", FUNC(galaxian_sound_device::lfo_freq_w));
             map.op(0x6800, 0x6800).mirror(0x07ff).portr("IN1");
-            //AM_RANGE(0x6800, 0x6807) AM_MIRROR(0x07f8) AM_DEVWRITE("cust", galaxian_sound_device, sound_w)
+            //map(0x6800, 0x6807).mirror(0x07f8).w("cust", FUNC(galaxian_sound_device::sound_w));
             map.op(0x7000, 0x7000).mirror(0x07ff).portr("IN2");
             map.op(0x7001, 0x7001).mirror(0x07f8).w(irq_enable_w);
             map.op(0x7004, 0x7004).mirror(0x07f8).w(galaxian_stars_enable_w);
             map.op(0x7006, 0x7006).mirror(0x07f8).w(galaxian_flip_screen_x_w);
             map.op(0x7007, 0x7007).mirror(0x07f8).w(galaxian_flip_screen_y_w);
-            //AM_RANGE(0x7800, 0x7800) AM_MIRROR(0x07ff) AM_DEVWRITE("cust", galaxian_sound_device, pitch_w)
+            //map(0x7800, 0x7800).mirror(0x07ff).w("cust", FUNC(galaxian_sound_device::pitch_w));
             map.op(0x7800, 0x7800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)machine().config().device_find(this, "watchdog")).reset_r(space); });  //FUNC(watchdog_timer_device::reset_r));
         }
 

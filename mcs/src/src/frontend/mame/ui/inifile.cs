@@ -67,7 +67,7 @@ namespace mame
             emu_file fp = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
             if (fp.open(filename) != osd_file.error.NONE)
             {
-                osd_printf_error("Failed to open category file {0} for reading\n", filename.c_str());
+                osd_printf_error("Failed to open category file {0} for reading\n", filename);
                 return;
             }
 
@@ -75,7 +75,7 @@ namespace mame
             if (fp.seek(offset, emu_file.SEEK_SET) != 0 || (fp.tell() != (UInt64)offset))
             {
                 fp.close();
-                osd_printf_error("Failed to seek to category offset in file {0}\n", filename.c_str());
+                osd_printf_error("Failed to seek to category offset in file {0}\n", filename);
                 return;
             }
 

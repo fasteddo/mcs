@@ -126,7 +126,7 @@ namespace mame
              8867236, /* 8.867236_MHz_XTAL      RCA CDP1869 PAL color clock (~2x PAL subcarrier) */
              8867238, /* 8.867238_MHz_XTAL      ETI-660 (~2x PAL subcarrier) */
              8945000, /* 8.945_MHz_XTAL         Hit Me */
-             9216000, /* 9.216_MHz_XTAL         Conitec PROF-180X */
+             9216000, /* 9.216_MHz_XTAL         Univac UTS 20 */
              9600000, /* 9.6_MHz_XTAL           WD37C65 second clock (for 300 KB/sec rate) */
              9828000, /* 9.828_MHz_XTAL         Universal PCBs */
              9830400, /* 9.8304_MHz_XTAL        Epson PX-8 */
@@ -230,6 +230,7 @@ namespace mame
             16934400, /* 16.9344_MHz_XTAL       Usually used to drive 90's Yamaha OPL/FM chips (44100 * 384) */
             17010000, /* 17.01_MHz_XTAL         Epic 14E */
             17064000, /* 17.064_MHz_XTAL        Memorex 1377 */
+            17074800, /* 17.0748_MHz_XTAL       SWTPC 8212 */
             17350000, /* 17.35_MHz_XTAL         ITT Courier 1700 */
             17360000, /* 17.36_MHz_XTAL         OMTI Series 10 SCSI controller */
             17430000, /* 17.43_MHz_XTAL         Videx Videoterm */
@@ -243,9 +244,11 @@ namespace mame
             18432000, /* 18.432_MHz_XTAL        Extremely common, used on 100's of PCBs (48000 * 384) */
             18480000, /* 18.48_MHz_XTAL         Wyse WY-100 video */
             18575000, /* 18.575_MHz_XTAL        Visual 102, Visual 220 */
+            18600000, /* 18.6_MHz_XTAL          Teleray Model 10 */
             18720000, /* 18.72_MHz_XTAL         Nokia MikroMikko 1 */
             18867000, /* 18.867_MHz_XTAL        Decision Data IS-482 */
             18869600, /* 18.8696_MHz_XTAL       Memorex 2178 */
+            19170000, /* 19.17_MHz_XTAL         Ericsson ISA8 Monochrome HR Graphics Board */
             19339600, /* 19.3396_MHz_XTAL       TeleVideo TVI-955 80-column display clock */
             19584000, /* 19.584_MHz_XTAL        ADM-42 */
             19600000, /* 19.6_MHz_XTAL          Universal Mr. Do - Model 8021 PCB */
@@ -318,9 +321,11 @@ namespace mame
             29491200, /* 29.4912_MHz_XTAL       Xerox Alto-II system clock (tagged 29.4MHz in the schematics) */
             30000000, /* 30_MHz_XTAL            Impera Magic Card */
             30209800, /* 30.2098_MHz_XTAL       Philips CD-i NTSC (1920x NTSC line rate) */
-            30476100, /* 30.4761_MHz_XTAL       Taito JC */
+            30240000, /* 30.24_MHz_XTAL         Macintosh IIci RBV, 12- or 13-inch display */
+            30476180, /* 30.47618_MHz_XTAL      Taito F3, JC, Under Fire */
             30800000, /* 30.8_MHz_XTAL          15IE-00-013 */
             31279500, /* 31.2795_MHz_XTAL       Wyse WY-30+ */
+            31334400, /* 31.3344_MHz_XTAL       Macintosh II */
             31684000, /* 31.684_MHz_XTAL        TeleVideo TVI-955 132-column display clock */
             31948800, /* 31.9488_MHz_XTAL       NEC PC-88xx, PC-98xx */
             32000000, /* 32_MHz_XTAL            - */
@@ -383,6 +388,7 @@ namespace mame
             54000000, /* 54_MHz_XTAL            Taito JC */
             55000000, /* 55_MHz_XTAL            Eolith Vega */
             57272727, /* 57.272727_MHz_XTAL     Psikyo SH2 with /2 divider (16x NTSC subcarrier)*/
+            57283200, /* 57.2832_MHz_XTAL       Macintosh IIci RBV, 15-inch portrait display */
             58000000, /* 58_MHz_XTAL            Magic Reel (Play System) */
             59292000, /* 59.292_MHz_XTAL        Data General D461 */
             60000000, /* 60_MHz_XTAL            - */

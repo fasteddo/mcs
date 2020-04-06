@@ -9,7 +9,6 @@ using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
 using model_map_t = mame.std.unordered_map<string, string>;
 using netlist_base_t = mame.netlist.netlist_state_t;
 using nl_double = System.Double;
-using source_t_list_t = mame.std.vector<mame.netlist.source_t>;  //using list_t = std::vector<std::unique_ptr<source_t>>;
 
 
 namespace mame.netlist
@@ -92,7 +91,8 @@ namespace mame.netlist
 
         //#define SUBMODEL(model, name)                                                  \
         //        setup.namespace_push(# name);                                          \
-        //        NETLIST_NAME(model)(setup);                                            \
+        //        setup.include(# model);                                                \
+        //        /*NETLIST_NAME(model)(setup);*/                                        \
         //        setup.namespace_pop();
 
         //#define OPTIMIZE_FRONTIER(attach, r_in, r_out)                                  \
@@ -182,57 +182,36 @@ namespace mame.netlist
 
 
     // ----------------------------------------------------------------------------------------
-    // A Generic netlist sources implementation
+    // Specific netlist psource_t implementations
     // ----------------------------------------------------------------------------------------
-
-    public abstract class source_t
+    public abstract class source_netlist_t : plib.psource_t
     {
-        public enum type_t
-        {
-            SOURCE,
-            DATA
-        }
+        //friend class setup_t;
 
+        protected source_netlist_t() : base() { }
 
-        //using list_t = std::vector<plib::unique_ptr<source_t>>;
-
-
-        type_t m_type;
-
-
-        public source_t(type_t type = type_t.SOURCE)
-        {
-            m_type = type;
-        }
-
-        //COPYASSIGNMOVE(source_t, delete)
-
-        //~source_t() { }
-
+        //COPYASSIGNMOVE(source_netlist_t, delete)
+        //virtual ~source_netlist_t() noexcept = default;
 
         public virtual bool parse(nlparse_t setup, string name)
         {
-            if (m_type != type_t.SOURCE)
-            {
-                return false;
-            }
+            var strm = stream(name);
+            if (strm != null)
+                return setup.parse_stream(strm, name);
             else
-            {
-                throw new emu_unimplemented();
-#if false
-                auto strm(stream(name));
-                if (strm)
-                    return setup.parse_stream(std::move(strm), name);
-                else
-                    return false;
-#endif
-            }
+                return false;
         }
+    }
 
 
-        protected abstract plib.pistream stream(string name);  //virtual std::unique_ptr<plib::pistream> stream(const pstring &name) = 0;
+    abstract class source_data_t : plib.psource_t
+    {
+        //friend class setup_t;
 
-        //type_t type() const { return m_type; }
+        protected source_data_t() : base() { }
+
+        //COPYASSIGNMOVE(source_data_t, delete)
+        //virtual ~source_data_t() noexcept = default;
     }
 
 
@@ -252,8 +231,8 @@ namespace mame.netlist
             var pos = model_in.find(' ');
             if (pos == -1)
                 throw new nl_exception(nl_errstr_global.MF_UNABLE_TO_PARSE_MODEL_1(model_in));
-            string model = plib.pstring_global.ucase(plib.pstring_global.trim(plib.pstring_global.left(model_in, pos)));
-            string def = plib.pstring_global.trim(model_in.substr(pos + 1));
+            string model = plib.pstrutil_global.ucase(plib.pstrutil_global.trim(plib.pstrutil_global.left(model_in, pos)));
+            string def = plib.pstrutil_global.trim(model_in.substr(pos + 1));
             if (!m_models.insert(model, def))
                 throw new nl_exception(nl_errstr_global.MF_MODEL_ALREADY_EXISTS_1(model_in));
         }
@@ -269,7 +248,7 @@ namespace mame.netlist
 
             string ret;
 
-            if (entity != plib.pstring_global.ucase(entity))
+            if (entity != plib.pstrutil_global.ucase(entity))
                 throw new nl_exception(nl_errstr_global.MF_MODEL_PARAMETERS_NOT_UPPERCASE_1_2(entity, model_string(map)));
             if (map.find(entity) == null)
                 throw new nl_exception(nl_errstr_global.MF_ENTITY_1_NOT_FOUND_IN_MODEL_2(entity, model_string(map)));
@@ -294,7 +273,7 @@ namespace mame.netlist
             switch (p)
             {
                 case 'M': factor = 1e6; break;
-                case 'k': factor = 1e3; break;
+                case 'k':
                 case 'K': factor = 1e3; break;
                 case 'm': factor = 1e-3; break;
                 case 'u': factor = 1e-6; break;
@@ -308,7 +287,7 @@ namespace mame.netlist
                     break;
             }
             if (factor != 1)  //if (factor != plib::constants<nl_double>::one())
-                tmp = plib.pstring_global.left(tmp, tmp.Length - 1);
+                tmp = plib.pstrutil_global.left(tmp, tmp.Length - 1);
 
             // FIXME: check for errors
             //printf("%s %s %e %e\n", entity.c_str(), tmp.c_str(), plib::pstonum<nl_double>(tmp), factor);
@@ -335,14 +314,15 @@ namespace mame.netlist
                 pos = model.find('(');
                 if (pos != -1) break;
 
-                key = plib.pstring_global.ucase(model);
+                key = plib.pstrutil_global.ucase(model);
                 var i = m_models.find(key);
                 if (i == null)
                     throw new nl_exception(nl_errstr_global.MF_MODEL_NOT_FOUND(model));
+
                 model = i;
             }
 
-            string xmodel = plib.pstring_global.left(model, pos);
+            string xmodel = plib.pstrutil_global.left(model, pos);
 
             if (xmodel == "_")
             {
@@ -357,11 +337,11 @@ namespace mame.netlist
                     throw new nl_exception(nl_errstr_global.MF_MODEL_NOT_FOUND(model_in));
             }
 
-            string remainder = plib.pstring_global.trim(model.substr(pos + 1));
-            if (!plib.pstring_global.endsWith(remainder, ")"))
+            string remainder = plib.pstrutil_global.trim(model.substr(pos + 1));
+            if (!plib.pstrutil_global.endsWith(remainder, ")"))
                 throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_1(model));
             // FIMXE: Not optimal
-            remainder = plib.pstring_global.left(remainder, remainder.Length - 1);
+            remainder = plib.pstrutil_global.left(remainder, remainder.Length - 1);
 
             var pairs = remainder.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);  //(plib::psplit(remainder," ", true));
             foreach (string pe in pairs)
@@ -370,13 +350,14 @@ namespace mame.netlist
                 if (pose == -1)
                     throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_ON_PAIR_1(model));
 
-                map[plib.pstring_global.ucase(plib.pstring_global.left(pe, pose))] = pe.substr(pose + 1);
+                map[plib.pstrutil_global.ucase(plib.pstrutil_global.left(pe, pose))] = pe.substr(pose + 1);
             }
         }
 
 
         string model_string(model_map_t map)
         {
+            // operator [] has no const implementation
             string ret = map["COREMODEL"] + "(";
             foreach (var i in map)
                 ret += (i.first() + '=' + i.second() + ' ');
@@ -401,7 +382,7 @@ namespace mame.netlist
         protected std.vector<link_t> m_links = new std.vector<link_t>();
         protected std.unordered_map<string, string> m_param_values = new std.unordered_map<string, string>();
 
-        source_t_list_t m_sources = new source_t_list_t();  //source_t::list_t                            m_sources;
+        plib.psource_collection_t m_sources = new plib.psource_collection_t();  //plib::psource_collection_t<>                m_sources;
 
         factory.list_t m_factory;
 
@@ -410,6 +391,7 @@ namespace mame.netlist
 
 
         //plib::ppreprocessor::defines_map_type       m_defines;
+        //plib::psource_collection_t<>                m_includes;
 
         protected setup_t m_setup;
         log_type m_log;
@@ -510,9 +492,9 @@ namespace mame.netlist
 
 
         /* register a source */
-        public void register_source(source_t src)  //std::unique_ptr<source_t> &&src)
+        public void register_source(plib.psource_t src)  //void register_source(plib::unique_ptr<plib::psource_t> &&src)
         {
-            m_sources.push_back(src);  //std::move(src));
+            m_sources.add_source(src);  //m_sources.add_source(std::move(src));
         }
 
 
@@ -532,11 +514,21 @@ namespace mame.netlist
 
         public void include(string netlist_name)
         {
-            foreach (var source in m_sources)
+#if false
+            for (auto &base : m_sources)
             {
-                if (source.parse(this, netlist_name))
+                auto source(dynamic_cast<source_netlist_t *>(base.get()));
+                if (source && source->parse(*this, netlist_name))
                     return;
             }
+            log().fatal.op(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
+#endif
+
+            if (m_sources.for_all(netlist_name, (src) =>  //if (m_sources.for_all<source_netlist_t>(netlist_name, [this, &netlist_name] (auto &src)
+            {
+                return src.parse(this, netlist_name);
+            }))
+                return;
 
             log().fatal.op(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
         }
@@ -582,7 +574,16 @@ namespace mame.netlist
 
 
         /* FIXME: used by source_t - need a different approach at some time */
-        //bool parse_stream(plib::putf8_reader &istrm, const pstring &name);
+        public bool parse_stream(std.istream istrm, string name)  //bool nlparse_t::parse_stream(plib::psource_t::stream_ptr &&istrm, const pstring &name)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        //void add_include(plib::unique_ptr<plib::psource_t> &&inc)
+        //{
+        //    m_includes.add_source(std::move(inc));
+        //}
 
         //void add_define(const pstring &def, const pstring &val)
         //void add_define(const pstring &defstr);
@@ -639,16 +640,7 @@ namespace mame.netlist
             m_validation = false;
         }
 
-        //~setup_t()
-        //{
-        //    m_links.clear();
-        //    m_alias.clear();
-        //    m_params.clear();
-        //    m_terminals.clear();
-        //    m_param_values.clear();
-        //
-        //    m_sources.clear();
-        //}
+        //~setup_t() { }
 
         //COPYASSIGNMOVE(setup_t, delete)
 
@@ -794,7 +786,7 @@ namespace mame.netlist
                     var nc = factory().factory_by_name("LOG").Create(m_nlstate, name);
                     register_link(name + ".I", ll);
                     log().debug.op("    dynamic link {0}: <{1}>\n", ll, name);
-                    m_nlstate.add_dev(nc.name(), nc);
+                    m_nlstate.register_device(nc.name(), nc);
                 }
             }
         }
@@ -808,7 +800,7 @@ namespace mame.netlist
              * We therefore first park connecting inputs and retry
              * after all other terminals were connected.
              */
-            UInt32 tries = m_netlist_params.max_link_loops.op();
+            UInt32 tries = m_netlist_params.max_link_loops.op;
             while (m_links.size() > 0 && tries >  0)
             {
                 for (int liIdx = 0; liIdx < m_links.Count;  )  //for (auto li = m_links.begin(); li != m_links.end(); )
@@ -839,7 +831,7 @@ namespace mame.netlist
                 foreach (var link in m_links)
                     log().warning.op(nl_errstr_global.MF_CONNECTING_1_TO_2(setup().de_alias(link.first()), setup().de_alias(link.second())));
 
-                log().fatal.op(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(m_netlist_params.max_link_loops.op()));
+                log().fatal.op(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(m_netlist_params.max_link_loops.op));
             }
 
             log().verbose.op("deleting empty nets ...");
@@ -881,7 +873,7 @@ namespace mame.netlist
         }
 
 
-        //std::unique_ptr<plib::pistream> get_data_stream(const pstring &name);
+        //plib::psource_t::stream_ptr get_data_stream(const pstring &name);
 
 
         //factory::list_t &factory() { return m_factory; }
@@ -973,7 +965,7 @@ namespace mame.netlist
         {
             //netlist().nets().erase(
             //    std::remove_if(netlist().nets().begin(), netlist().nets().end(),
-            //        [](plib::owned_ptr<detail::net_t> &x)
+            //        [](owned_pool_ptr<detail::net_t> &x)
             //        {
             //            if (x->num_cons() == 0)
             //            {
@@ -1013,7 +1005,7 @@ namespace mame.netlist
             {
                 if (factory().is_class<devices.nld_solver>(e.second()) || factory().is_class<devices.nld_netlistparams>(e.second()))
                 {
-                    m_nlstate.add_dev(e.first(), e.second().Create(m_nlstate, e.first()));  //poolptr<device_t>(e.second->Create(netlist(), e.first)));
+                    m_nlstate.register_device(e.first(), e.second().Create(m_nlstate, e.first()));  //m_nlstate.register_device(e.first, e.second->Create(m_nlstate, e.first));
                 }
             }
 
@@ -1025,8 +1017,8 @@ namespace mame.netlist
 
             /* set default model parameters */
 
-            m_models.register_model(new plib.pfmt("NMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op()));
-            m_models.register_model(new plib.pfmt("PMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op()));
+            m_models.register_model(new plib.pfmt("NMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op));
+            m_models.register_model(new plib.pfmt("PMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.mos_capmodel.op));
 
 
             /* create devices */
@@ -1037,7 +1029,7 @@ namespace mame.netlist
                 if (!factory().is_class<devices.nld_solver>(e.second()) && !factory().is_class<devices.nld_netlistparams>(e.second()))
                 {
                     var dev = e.second().Create(m_nlstate, e.first());
-                    m_nlstate.add_dev(dev.name(), dev);
+                    m_nlstate.register_device(dev.name(), dev);
                 }
             }
 
@@ -1050,7 +1042,7 @@ namespace mame.netlist
                     if (p.first().endsWith(nl_errstr_global.sHINT_NO_DEACTIVATE))  //if (plib::endsWith(p.first, sHINT_NO_DEACTIVATE))
                     {
                         // FIXME: get device name, check for device
-                        var dev = m_nlstate.find_device(plib.pstring_global.replace_all(p.first(), nl_errstr_global.sHINT_NO_DEACTIVATE, ""));
+                        var dev = m_nlstate.find_device(plib.pstrutil_global.replace_all(p.first(), nl_errstr_global.sHINT_NO_DEACTIVATE, ""));
                         if (dev == null)
                             log().warning.op(nl_errstr_global.MW_DEVICE_NOT_FOUND_FOR_HINT(p.first()));
                     }
@@ -1061,7 +1053,7 @@ namespace mame.netlist
                 }
             }
 
-            bool use_deactivate = m_netlist_params.use_deactivate.op() ? true : false;
+            bool use_deactivate = m_netlist_params.use_deactivate.op ? true : false;
 
             foreach (var d in m_nlstate.devices())
             {
@@ -1098,7 +1090,7 @@ namespace mame.netlist
                             t.name(), t.N.net().name(), t.P.net().name()));
                     t.N.net().remove_terminal(t.N);
                     t.P.net().remove_terminal(t.P);
-                    m_nlstate.remove_dev(t);
+                    m_nlstate.remove_device(t);
                 }
                 else
                 {
@@ -1127,7 +1119,6 @@ namespace mame.netlist
             {
                 foreach (var term in n.core_terms())
                 {
-                    //core_device_t *dev = reinterpret_cast<core_device_t *>(term->m_delegate.object());
                     core_device_t dev = term.device();
                     dev.set_default_delegate(term);
                 }
@@ -1136,8 +1127,15 @@ namespace mame.netlist
 
 
         /* validation */
-        public void enable_validation() { m_validation = true; }
-        bool is_validation() { return m_validation; }
+        /* The extended validation mode is not intended for running.
+         * The intention is to identify power pins which are not properly
+         * connected. The downside is that this mode creates a netlist which
+         * is different (and not able to run).
+         *
+         * Extended validation is supported by nltool validate option.
+         */
+        public void set_extended_validation(bool val) { m_validation = val; }
+        bool is_extended_validation() { return m_validation; }
 
 
         void merge_nets(detail.net_t thisnet, detail.net_t othernet)
@@ -1185,7 +1183,7 @@ namespace mame.netlist
             {
                 log().debug.op("adding analog net ...\n");
                 // FIXME: Nets should have a unique name
-                var anet = new analog_net_t(m_nlstate, "net." + t1.name());  //plib::palloc<analog_net_t>(netlist(),"net." + t1.name());
+                var anet = new analog_net_t(m_nlstate, "net." + t1.name());  //auto anet = pool().make_owned<analog_net_t>(m_nlstate,"net." + t1.name());
                 //auto anetp = anet.get();
                 m_nlstate.register_net(anet);  //plib::owned_ptr<analog_net_t>(anet, true));
                 t1.set_net(anet);
@@ -1370,7 +1368,7 @@ namespace mame.netlist
 
                 proxy = new_proxy;
 
-                m_nlstate.add_dev(new_proxy.name(), new_proxy);
+                m_nlstate.register_device(new_proxy.name(), new_proxy);
             }
 
             return proxy;
@@ -1412,7 +1410,7 @@ namespace mame.netlist
                     inp.net().core_terms().clear(); // clear the list
                 }
                 ret.out_().net().add_terminal(inp);
-                m_nlstate.add_dev(new_proxy.name(), new_proxy);
+                m_nlstate.register_device(new_proxy.name(), new_proxy);
                 return ret;
             }
         }
@@ -1423,12 +1421,14 @@ namespace mame.netlist
     // base sources
     // ----------------------------------------------------------------------------------------
 
-    //class source_string_t : public source_t
+    //class source_string_t : public source_netlist_t
 
-    //class source_file_t : public source_t
+    //class source_file_t : public source_netlist_t
+
+    //class source_mem_t : public source_netlist_t
 
 
-    public class source_proc_t : source_t
+    public class source_proc_t : source_netlist_t
     {
         public delegate void setup_func_delegate(nlparse_t parse);
 
@@ -1459,7 +1459,7 @@ namespace mame.netlist
         }
 
 
-        protected override plib.pistream stream(string name)
+        public override std.istream stream(string name)
         {
             throw new emu_unimplemented();
         }
@@ -1476,11 +1476,11 @@ namespace mame.netlist
 
         public override devices.nld_base_d_to_a_proxy create_d_a_proxy(netlist_base_t anetlist, string name, logic_output_t proxied)
         {
-            return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return plib::owned_ptr<devices::nld_base_d_to_a_proxy>::Create<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
+            return new devices.nld_d_to_a_proxy(anetlist, name, proxied);  //return pool().make_unique<devices::nld_d_to_a_proxy>(anetlist, name, proxied);
         }
         public override devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_base_t anetlist, string name, logic_input_t proxied)
         {
-            return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return plib::owned_ptr<devices::nld_base_a_to_d_proxy>::Create<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
+            return new devices.nld_a_to_d_proxy(anetlist, name, proxied);  //return pool().make_unique<devices::nld_a_to_d_proxy>(anetlist, name, proxied);
         }
     }
 }

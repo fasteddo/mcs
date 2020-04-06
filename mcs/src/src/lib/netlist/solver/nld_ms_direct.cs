@@ -22,13 +22,7 @@ namespace mame.netlist
 
 
             protected matrix_solver_direct_t(UInt32 SIZE, netlist_state_t anetlist, string name, solver_parameters_t params_, UInt32 size)
-                : base(null, null, eSortType.NOSORT, params_)
-            {
-                throw new emu_unimplemented();
-            }
-
-            protected matrix_solver_direct_t(UInt32 SIZE, netlist_state_t anetlist, string name, eSortType sort, solver_parameters_t params_, UInt32 size)
-                : base(null, null, eSortType.NOSORT, params_)
+                : base(anetlist, name, params_)
             {
                 throw new emu_unimplemented();
             }

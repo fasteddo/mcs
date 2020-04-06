@@ -17,16 +17,12 @@ namespace mame.netlist
         //template <typename FT, int SIZE>
         class matrix_solver_GCR_t : matrix_solver_t
         {
-            //using mat_type = plib::matrix_compressed_rows_t<FT, SIZE>;
-            //using mat_index_type = typename plib::matrix_compressed_rows_t<FT, SIZE>::index_type;
+            //using mat_type = plib::pGEmatrix_cr_t<plib::pmatrix_cr_t<FT, SIZE>>;
+            //using mat_index_type = typename plib::pmatrix_cr_t<FT, SIZE>::index_type;
 
 
             // FIXME: dirty hack to make this compile
             const int storage_N = 100;
-
-
-            //using extsolver = void (*)(double * m_A, double * RHS, double * V);
-            delegate void extsolver(double m_A, double RHS, double V);
 
 
             // template parameters
@@ -37,14 +33,14 @@ namespace mame.netlist
             double [] RHS;  //plib::parray<FT, SIZE> RHS;
             double [] new_V;  //plib::parray<FT, SIZE> new_V;
 
-            plib.matrix_compressed_rows_t_double_uint16_t mat;  //mat_type mat;
+            plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16 mat;  //mat_type mat;
 
-            extsolver m_proc;
-            //plib::dynproc<void, double * , double * , double * > m_proc;
+            delegate void procCallback(double m_A, double RHS, double V);
+            procCallback m_proc;  //plib::dynproc<void, double * , double * , double * > m_proc;
 
 
             public matrix_solver_GCR_t(int SIZE, netlist_state_t anetlist, string name, solver_parameters_t params_, UInt32 size)
-                : base(anetlist, name, matrix_solver_t.eSortType.PREFER_IDENTITY_TOP_LEFT, params_)
+                : base(anetlist, name, params_)
             {
                 this.SIZE = SIZE;
 
@@ -52,7 +48,7 @@ namespace mame.netlist
                 m_dim = size;
                 RHS = new double [size];
                 new_V = new double [size];
-                mat = new plib.matrix_compressed_rows_t_double_uint16_t(SIZE, (uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
+                mat = new plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16(SIZE, (uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
                 m_proc = null;
             }
 
@@ -65,19 +61,6 @@ namespace mame.netlist
             // ----------------------------------------------------------------------------------------
             // matrix_solver - GCR
             // ----------------------------------------------------------------------------------------
-
-            // FIXME: namespace or static class member
-            //template <typename V>
-            UInt32 get_level(std.vector<std.vector<uint16_t>> v, uint16_t k)  //std::size_t inline get_level(const V &v, std::size_t k)
-            {
-                for (UInt32 i = 0; i < v.size(); i++)
-                {
-                    if (v[i].Contains(k))  //if (plib::container::contains(v[i], k))
-                        return i;
-                }
-
-                throw new Exception("Error in get_level");
-            }
 
             //template <typename FT, int SIZE>
             protected override void vsetup(analog_net_t_list_t nets)
@@ -95,7 +78,7 @@ namespace mame.netlist
                 for (UInt32 k = 0; k < iN; k++)
                 {
                     fill[k] = new std.vector<UInt32>();
-                    fill[k].resize((int)iN, (UInt32)plib.matrix_compressed_rows_t_double_uint16_t.constants_e.FILL_INFINITY);  //decltype(mat)::FILL_INFINITY);
+                    fill[k].resize((int)iN, (UInt32)plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16.constants_e.FILL_INFINITY);  //decltype(mat)::FILL_INFINITY);
                     foreach (var j in this.terms[k].nz)
                     {
                         fill[k][j] = 0;
@@ -105,54 +88,7 @@ namespace mame.netlist
 
                 var gr = mat.gaussian_extend_fill_mat(fill);
 
-                /* FIXME: move this to the cr matrix class and use computed
-                 * parallel ordering once it makes sense.
-                 */
-
-                std.vector<UInt32> levL = new std.vector<UInt32>(iN, 0);
-                std.vector<UInt32> levU = new std.vector<UInt32>(iN, 0);
-
-                // parallel scheme for L x = y
-                for (UInt32 k = 0; k < iN; k++)
-                {
-                    UInt32 lm = 0;
-                    for (UInt32 j = 0; j < k; j++)
-                    {
-                        if (fill[k][j] < (UInt32)plib.matrix_compressed_rows_t_double_uint16_t.constants_e.FILL_INFINITY)  //decltype(mat)::FILL_INFINITY)
-                            lm = std.max(lm, levL[j]);
-                    }
-                    levL[k] = 1 + lm;
-                }
-
-                // parallel scheme for U x = y
-                for (UInt32 k = iN; k-- > 0; )
-                {
-                    UInt32 lm = 0;
-                    for (UInt32 j = iN; --j > k; )
-                    {
-                        if (fill[k][j] < (UInt32)plib.matrix_compressed_rows_t_double_uint16_t.constants_e.FILL_INFINITY)  //decltype(mat)::FILL_INFINITY)
-                            lm = std.max(lm, levU[j]);
-                    }
-                    levU[k] = 1 + lm;
-                }
-
-                for (UInt32 k = 0; k < iN; k++)
-                {
-                    UInt32 fm = 0;
-                    string ml = "";
-                    for (UInt32 j = 0; j < iN; j++)
-                    {
-                        ml += fill[k][j] == 0 ? "X" : fill[k][j] < (UInt32)plib.matrix_compressed_rows_t_double_uint16_t.constants_e.FILL_INFINITY ? "+" : ".";  //decltype(mat)::FILL_INFINITY
-                        if (fill[k][j] < (UInt32)plib.matrix_compressed_rows_t_double_uint16_t.constants_e.FILL_INFINITY)  //decltype(mat)::FILL_INFINITY)
-                        {
-                            if (fill[k][j] > fm)
-                                fm = fill[k][j];
-                        }
-                    }
-
-                    this.log().verbose.op("{0} {1} {2} {3} {4} {5}", k, ml, levL[k], levU[k], get_level(mat.m_ge_par, (uint16_t)k), fm);  //verbose("{1:4} {2} {3:4} {4:4} {5:4} {6:4}", k, ml, levL[k], levU[k], get_level(mat.m_ge_par, k), fm);
-                }
-
+                log_fill(fill, mat);
 
                 mat.build_from_fill_mat(fill);
 
@@ -188,12 +124,16 @@ namespace mame.netlist
                 {
                     throw new emu_unimplemented();
 #if false
-                    string symname = static_compile_name();
-                    m_proc.load(this.state().lib(), symname);
+                    pstring symname = static_compile_name();
+                    m_proc.load(this->state().lib(), symname);
                     if (m_proc.resolved())
+                    {
                         this->log().info("External static solver {1} found ...", symname);
+                    }
                     else
-                        this.log().warning("External static solver {0} not found ...", symname);
+                    {
+                        this->log().warning("External static solver {1} not found ...", symname);
+                    }
 #endif
                 }
             }
@@ -211,7 +151,7 @@ namespace mame.netlist
             }
 
 
-            //void csc_private(plib::putf8_fmt_writer &strm);
+            //void generate_code(plib::putf8_fmt_writer &strm);
 
             //string static_compile_name()
         }

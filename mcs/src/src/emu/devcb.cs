@@ -2976,8 +2976,8 @@ namespace mame
 
             return result;
         }
-        public byte op(offs_t offset, u8 mem_mask = DefaultMask) { return op(default_space(), offset, mem_mask); }  // return this->operator()(this->default_space(), offset, mem_mask);
-        public byte op() { return op(default_space(), 0, DefaultMask); }  // return this->operator()(this->default_space(), 0U, DefaultMask);
+        public u8 op(offs_t offset, u8 mem_mask = DefaultMask) { return op(default_space(), offset, mem_mask); }  // return this->operator()(this->default_space(), offset, mem_mask);
+        public u8 op() { return op(default_space(), 0, DefaultMask); }  // return this->operator()(this->default_space(), 0U, DefaultMask);
     }
     //using devcb_read16 = devcb_read<u16>;
     //using devcb_read32 = devcb_read<u32>;

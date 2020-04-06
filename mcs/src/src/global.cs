@@ -92,6 +92,7 @@ namespace mame
         public static int core_stricmp(string s1, string s2) { return corestr_global.core_stricmp(s1, s2); }
         protected static int core_strwildcmp(string sp1, string sp2) { return corestr_global.core_strwildcmp(sp1, sp2); }
         protected static bool core_iswildstr(string sp) { return corestr_global.core_iswildstr(sp); }
+        protected static string strtrimspace(string str) { return corestr_global.strtrimspace(str); }
 
 
         // coretmpl
@@ -1115,6 +1116,12 @@ namespace mame
 
 
             public int size() { return m_data.Length; }
+        }
+
+
+        // c++ istream
+        public class istream
+        {
         }
 
 

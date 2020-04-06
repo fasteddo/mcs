@@ -286,6 +286,7 @@ namespace mame
         public u64 unique_id;          // unique identifier to pass to osd
         public u64 old_id;             // previously allocated id, if applicable
         public ListBase<rgb_t> palette;  // const rgb_t *       palette;            // palette for PALETTE16 textures, bcg lookup table for RGB32/YUY16
+        public u32 palette_length;
     }
 
 
@@ -888,7 +889,7 @@ namespace mame
         //  get_adjusted_palette - return the adjusted
         //  palette for a texture
         //-------------------------------------------------
-        public ListBase<rgb_t> get_adjusted_palette(render_container container)  //const rgb_t *render_texture::get_adjusted_palette(render_container &container)
+        public ListBase<rgb_t> get_adjusted_palette(render_container container, ref u32 out_length)  //const rgb_t *get_adjusted_palette(render_container &container, u32 &out_length);
         {
             // override the palette with our adjusted palette
             switch (m_format)
@@ -898,7 +899,7 @@ namespace mame
                     assert(m_bitmap.palette() != null);
 
                     // return our adjusted palette
-                    return container.bcg_lookup_table(m_format, m_bitmap.palette());
+                    return container.bcg_lookup_table(m_format, out out_length, m_bitmap.palette());
 
                 case texture_format.TEXFORMAT_RGB32:
                 case texture_format.TEXFORMAT_ARGB32:
@@ -907,7 +908,8 @@ namespace mame
                     // if no adjustment necessary, return NULL
                     if (!container.has_brightness_contrast_gamma_changes())
                         return null;
-                    return container.bcg_lookup_table(m_format);
+
+                    return container.bcg_lookup_table(m_format, out out_length);
 
                 default:
                     assert(false);
@@ -1190,7 +1192,7 @@ namespace mame
         //  brightness/contrast/gamma lookup table for a
         //  given texture mode
         //-------------------------------------------------
-        public ListBase<rgb_t> bcg_lookup_table(texture_format texformat, palette_t palette = null)  //const rgb_t *render_container::bcg_lookup_table(int texformat, palette_t *palette)
+        public ListBase<rgb_t> bcg_lookup_table(texture_format texformat, out u32 out_length, palette_t palette = null)  //const rgb_t *bcg_lookup_table(int texformat, u32 &out_length, palette_t *palette = nullptr);
         {
             switch (texformat)
             {
@@ -1202,14 +1204,17 @@ namespace mame
                         recompute_lookups();
                     }
                     //assert (palette == &m_palclient->palette());
+                    out_length = (u32)palette.max_index();
                     return m_bcglookup;
 
                 case texture_format.TEXFORMAT_RGB32:
                 case texture_format.TEXFORMAT_ARGB32:
                 case texture_format.TEXFORMAT_YUY16:
+                    out_length = 256;
                     return m_bcglookup256;
 
                 default:
+                    out_length = 0;
                     return null;
             }
         }
@@ -2993,7 +2998,7 @@ namespace mame
                             curitem.texture().get_scaled((UInt32)width, (UInt32)height, prim.texture, list, curitem.flags());
 
                             // set the palette
-                            prim.texture.palette = curitem.texture().get_adjusted_palette(container);
+                            prim.texture.palette = curitem.texture().get_adjusted_palette(container, ref prim.texture.palette_length);
 
                             // determine UV coordinates and apply clipping
                             prim.texcoords = new render_quad_texuv(render_global.oriented_texcoords[finalorient]);

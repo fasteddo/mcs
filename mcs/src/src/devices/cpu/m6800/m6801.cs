@@ -19,9 +19,9 @@ namespace mame
 {
     class m6801_cpu_device : m6800_cpu_device
     {
-        //DEFINE_DEVICE_TYPE(M6801, m6801_cpu_device, "m6801", "Motorola M6801")
+        //DEFINE_DEVICE_TYPE(M6801, m6801_cpu_device, "m6801", "Motorola MC6801")
         static device_t device_creator_m6801_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6801_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6801 = DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola M6801");
+        public static readonly device_type M6801 = DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola MC6801");
 
 
         class device_execute_interface_m6801 : device_execute_interface_m6800
@@ -56,8 +56,10 @@ namespace mame
         //#define LOG_RX      (1U << 3)
         //#define LOG_RXTICK  (1U << 4)
         const int LOG_PORT    = 1 << 5;
+        const int LOG_SER     = 1 << 6;
 
-        //#define VERBOSE (LOG_GENERAL | LOG_TX | LOG_RX | LOG_PORT)
+        //#define VERBOSE (LOG_SER)
+        //#define LOG_OUTPUT_STREAM std::cout
         //#define LOG_OUTPUT_STREAM std::cerr
         //#include "logmacro.h"
 
@@ -66,6 +68,7 @@ namespace mame
         //#define LOGRX(...)      LOGMASKED(LOG_RX, __VA_ARGS__)
         //#define LOGRXTICK(...)  LOGMASKED(LOG_RXTICK, __VA_ARGS__)
         public void LOGPORT(string format, params object [] args) { LOGMASKED(LOG_PORT, format, args); }
+        public void LOGSER(string format, params object [] args) { LOGMASKED(LOG_SER, format, args); }  //#define LOGSER(...)     LOGMASKED(LOG_SER, __VA_ARGS__)
 
 
         uint16_t CT { get { return m_counter.w.l; } set { m_counter.w.l = value; } }
@@ -724,13 +727,13 @@ namespace mame
                 break;
 
             case IO_RMCR:
-                LOG("Rate and Mode Control Register: {0}\n", data);
+                LOGSER("Rate and Mode Control Register: {0}\n", data);
 
                 set_rmcr(data);
                 break;
 
             case IO_TRCSR:
-                LOG("Transmit/Receive Control and Status Register: {0}\n", data);
+                LOGSER("Transmit/Receive Control and Status Register: {0}\n", data);
 
                 if ((data & M6801_TRCSR_TE) != 0 && (m_trcsr & M6801_TRCSR_TE) == 0)
                 {
@@ -748,7 +751,7 @@ namespace mame
                 break;
 
             case IO_TDR:
-                LOGTX("Transmit Data Register: {0}\n", data);
+                LOGSER("6801 Transmit Data Register: $%02x/%d\n", data, data);
 
                 if (m_trcsr_read_tdre != 0)
                 {
@@ -1066,11 +1069,13 @@ namespace mame
             switch ((m_rmcr & M6801_RMCR_CC_MASK) >> 2)
             {
             case 0:
+                LOGSER("6801: Using external serial clock: false\n");
                 m_sci_timer.enable(false);
                 m_use_ext_serclock = false;
                 break;
 
             case 3: // external clock
+                LOGSER("6801: Using external serial clock: true\n");
                 m_use_ext_serclock = true;
                 m_sci_timer.enable(false);
                 break;
@@ -1080,7 +1085,7 @@ namespace mame
                 {
                     int divisor = M6801_RMCR_SS[m_rmcr & M6801_RMCR_SS_MASK];
                     attotime period = cycles_to_attotime((u64)divisor);
-
+                    LOGSER("6801: Setting serial rate, Divisor: %d Hz: %d\n", divisor, period.as_hz());
                     m_sci_timer.adjust(period, 0, period);
                     m_use_ext_serclock = false;
                 }
@@ -1143,9 +1148,9 @@ namespace mame
 
     class m6803_cpu_device : m6801_cpu_device
     {
-        //DEFINE_DEVICE_TYPE(M6803, m6803_cpu_device, "m6803", "Motorola M6803")
+        //DEFINE_DEVICE_TYPE(M6803, m6803_cpu_device, "m6803", "Motorola MC6803")
         static device_t device_creator_m6803_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6803_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6803 = DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola M6803");
+        public static readonly device_type M6803 = DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola MC6803");
 
 
         class device_disasm_interface_m6803 : device_disasm_interface_m6801

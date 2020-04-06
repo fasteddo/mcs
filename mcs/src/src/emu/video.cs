@@ -19,7 +19,7 @@ namespace mame
     public class video_manager : global_object
     {
         // movie format options
-        enum movie_format
+        public enum movie_format
         {
             MF_MNG,
             MF_AVI
@@ -229,15 +229,6 @@ namespace mame
             {
                 m_snap_width = m_snap_height = 0;
             }
-
-            // start recording movie if specified
-            string filename = machine.options().mng_write();
-            if (!string.IsNullOrEmpty(filename))
-                begin_recording(filename, movie_format.MF_MNG);
-
-            filename = machine.options().avi_write();
-            if (!string.IsNullOrEmpty(filename))
-                begin_recording(filename, movie_format.MF_AVI);
 
             // if no screens, create a periodic timer to drive updates
             if (no_screens)
@@ -498,7 +489,7 @@ namespace mame
         //-------------------------------------------------
         //  begin_recording - begin recording of a movie
         //-------------------------------------------------
-        void begin_recording(string name, movie_format format)
+        public void begin_recording(string name, movie_format format)
         {
             throw new emu_unimplemented();
         }

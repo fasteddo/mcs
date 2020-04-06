@@ -97,8 +97,8 @@ namespace mame
         ///   int argument.
         /// \param [in] start Number to add to element index when
         ///   calculating values for string format argument.
-        /// \arg [in] Optional additional constructor argument(s) passed to
-        ///   all elements.
+        /// \param [in] arg Optional additional constructor argument(s) passed
+        ///   to all elements.
         /// \sa util::string_format
         //template <typename F, typename... Param>
         //object_array_finder(device_t &base, F const &fmt, unsigned start, Param const &... arg)
@@ -114,8 +114,8 @@ namespace mame
         /// \param [in] tags Tags to search for, e.g. { "player", "dips" }.
         ///   The tags are not copied, it is the caller's responsibility to
         ///   ensure the pointers remain valid until resolution time.
-        /// \arg [in] Optional additional constructor argument(s) passed to
-        ///   all elements.
+        /// \param [in] arg Optional additional constructor argument(s) passed
+        ///   to all elements.
         //template <typename... Param>
         //object_array_finder(device_t &base, std::array<char const *, Count> const &tags, Param const &... arg)
         //    : object_array_finder(base, tags, std::make_integer_sequence<unsigned, Count>(), arg...)

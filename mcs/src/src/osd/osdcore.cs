@@ -36,12 +36,25 @@ namespace mame
         /* Make sure we have a path separator (default to /) */
         public const string PATH_SEPARATOR         = "/";
 
-        /* flags controlling file access */
-        public const UInt32 OPEN_FLAG_READ         = 0x0001;      /* open for read */
-        public const UInt32 OPEN_FLAG_WRITE        = 0x0002;      /* open for write */
-        public const UInt32 OPEN_FLAG_CREATE       = 0x0004;      /* create & truncate file */
-        public const UInt32 OPEN_FLAG_CREATE_PATHS = 0x0008;      /* create paths as necessary */
-        public const UInt32 OPEN_FLAG_NO_PRELOAD   = 0x0010;      /* do not decompress on open */
+        /// \defgroup openflags File open flags
+        /// \{
+
+        /// Open file for reading.
+        public const UInt32 OPEN_FLAG_READ         = 0x0001;
+
+        /// Open file for writing.
+        public const UInt32 OPEN_FLAG_WRITE        = 0x0002;
+
+        /// Create the file, or truncate it if it exists.
+        public const UInt32 OPEN_FLAG_CREATE       = 0x0004;
+
+        /// Create non-existent directories in the path.
+        public const UInt32 OPEN_FLAG_CREATE_PATHS = 0x0008;
+
+        /// Do not decompress into memory on open.
+        public const UInt32 OPEN_FLAG_NO_PRELOAD   = 0x0010;
+
+        /// \}
 
 
         public static osdcore_interface m_osdcore;
@@ -68,180 +81,156 @@ namespace mame
     public delegate Object osd_work_callback(Object param, int threadid);
 
 
-    // osd_file is an interface which represents an open file/PTY/socket
+    /// \brief Interface to file-like resources
+    ///
+    /// This interface is used to access file-like and stream-like
+    /// resources.  Examples include plain files, TCP socket, named pipes,
+    /// pseudo-terminals, and compressed archive members.
     public abstract class osd_file
     {
-        // error codes returned by routines below
+        /// \brief Result of a file operation
+        ///
+        /// Returned by most members of osd_file, and also used by other
+        /// classes that access files or other file-like resources.
         public enum error
         {
+            /// Operation completed successfully.
             NONE,
+
+            /// Operation failed, but there is no more specific code to
+            /// describe the failure.
             FAILURE,
+
+            /// Operation failed due to an error allocating memory.
             OUT_OF_MEMORY,
+
+            /// The requested file, path or resource was not found.
             NOT_FOUND,
+
+            /// Current permissions do not allow the requested access.
             ACCESS_DENIED,
+
+            /// Requested access is not permitted because the file or
+            /// resource is currently open for exclusive access.
             ALREADY_OPEN,
+
+            /// Request cannot be completed due to resource exhaustion
+            /// (maximum number of open files or other objects has been
+            /// reached).
             TOO_MANY_FILES,
+
+            /// The request cannot be completed because invalid data was
+            /// encountered (for example an inconsistent filesystem, or a
+            /// corrupt archive file).
             INVALID_DATA,
+
+            /// The requested access mode is invalid, or not appropriate for
+            /// the file or resource.
             INVALID_ACCESS
         }
 
+
+        /// \brief Smart pointer to a file handle
         //typedef std::unique_ptr<osd_file> ptr;
 
 
-        /*-----------------------------------------------------------------------------
-            osd_file::open: open a new file.
-
-            Parameters:
-
-                path - path to the file to open
-
-                openflags - some combination of:
-
-                    OPEN_FLAG_READ - open the file for read access
-                    OPEN_FLAG_WRITE - open the file for write access
-                    OPEN_FLAG_CREATE - create/truncate the file when opening
-                    OPEN_FLAG_CREATE_PATHS - specifies that non-existant paths
-                            should be created if necessary
-
-                file - reference to an osd_file::ptr to receive the newly-opened file
-                    handle; this is only valid if the function returns FILERR_NONE
-
-                filesize - reference to a UINT64 to receive the size of the opened
-                    file; this is only valid if the function returns FILERR_NONE
-
-            Return value:
-
-                a file_error describing any error that occurred while opening
-                the file, or FILERR_NONE if no error occurred
-
-            Notes:
-
-                This function is called by core_fopen and several other places in
-                the core to access files. These functions will construct paths by
-                concatenating various search paths held in the options.c options
-                database with partial paths specified by the core. The core assumes
-                that the path separator is the first character of the string
-                PATH_SEPARATOR, but does not interpret any path separators in the
-                search paths, so if you use a different path separator in a search
-                path, you may get a mixture of PATH_SEPARATORs (from the core) and
-                alternate path separators (specified by users and placed into the
-                options database).
-        -----------------------------------------------------------------------------*/
+        /// \brief Open a new file handle
+        ///
+        /// This function is called by core_fopen and several other places
+        /// in the core to access files. These functions will construct
+        /// paths by concatenating various search paths held in the
+        /// options.c options database with partial paths specified by the
+        /// core.  The core assumes that the path separator is the first
+        /// character of the string PATH_SEPARATOR, but does not interpret
+        /// any path separators in the search paths, so if you use a
+        /// different path separator in a search path, you may get a mixture
+        /// of PATH_SEPARATORs (from the core) and alternate path separators
+        /// (specified by users and placed into the options database).
+        /// \param [in] path Path to the file to open.
+        /// \param [in] openflags Combination of #OPEN_FLAG_READ,
+        ///   #OPEN_FLAG_WRITE, #OPEN_FLAG_CREATE and
+        ///   #OPEN_FLAG_CREATE_PATHS specifying the requested access mode
+        ///   and open behaviour.
+        /// \param [out] file Receives the file handle if the operation
+        ///   succeeds.  Not valid if the operation fails.
+        /// \param [out] filesize Receives the size of the opened file if
+        ///   the operation succeeded.  Not valid if the operation failed.
+        ///   Will be zero for stream-like objects (e.g. TCP sockets or
+        ///   named pipes).
+        /// \return Result of the operation.
         public abstract error open(string path, uint32_t openflags, out osd_file file, out uint64_t filesize);
 
 
-        /*-----------------------------------------------------------------------------
-            osd_file::openpty: create a new PTY pair
-
-            Parameters:
-
-                file - reference to an osd_file::ptr to receive the handle of the master
-                    side of the newly-created PTY; this is only valid if the function
-                    returns FILERR_NONE
-
-                name - reference to string where slave filename will be stored
-
-            Return value:
-
-                a file_error describing any error that occurred while creating the
-                PTY, or FILERR_NONE if no error occurred
-        -----------------------------------------------------------------------------*/
+        /// \brief Create a new pseudo-terminal (PTY) pair
+        ///
+        /// \param [out] file Receives the handle of the master side of the
+        ///   pseudo-terminal if the operation succeeds.  Not valid if the
+        ///   operation fails.
+        /// \param [out] name Receives the name of the slave side of the
+        ///   pseudo-terminal if the operation succeeds.  Not valid if the
+        ///   operation fails.
+        /// \return Result of the operation.
         protected abstract error openpty(out osd_file file, out string name);
 
 
-        /*-----------------------------------------------------------------------------
-            osd_file::~osd_file: close an open file
-        -----------------------------------------------------------------------------*/
+        /// \brief Close an open file
         //~osd_file() { }
 
 
-        /*-----------------------------------------------------------------------------
-            osd_file::read: read from an open file
-
-            Parameters:
-
-                buffer - pointer to memory that will receive the data read
-
-                offset - offset within the file to read from
-
-                length - number of bytes to read from the file
-
-                actual - reference to a UINT32 to receive the number of bytes actually
-                    read during the operation; valid only if the function returns
-                    FILERR_NONE
-
-            Return value:
-
-                a file_error describing any error that occurred while reading
-                from the file, or FILERR_NONE if no error occurred
-        -----------------------------------------------------------------------------*/
+        /// \brief Read from an open file
+        ///
+        /// Read data from an open file at specified offset.  Note that the
+        /// seek and read are not guaranteed to be atomic, which may cause
+        /// issues in multi-threaded applications.
+        /// \param [out] buffer Pointer to memory that will receive the data
+        ///   read.
+        /// \param [in] offset Byte offset within the file to read at,
+        ///   relative to the start of the file.  Ignored for stream-like
+        ///   objects (e.g. TCP sockets or named pipes).
+        /// \param [in] length Number of bytes to read.  Fewer bytes may be
+        ///   read if the end of file is reached, or if no data is
+        ///   available.
+        /// \param [out] actual Receives the number of bytes read if the
+        ///   operation succeeds.  Not valid if the operation fails.
+        /// \return Result of the operation.
         public abstract error read(ListBytesPointer buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //void *buffer
 
-        /*-----------------------------------------------------------------------------
-            osd_file::write: write to an open file
 
-            Parameters:
-
-                buffer - pointer to memory that contains the data to write
-
-                offset - offset within the file to write to
-
-                length - number of bytes to write to the file
-
-                actual - reference to a UINT32 to receive the number of bytes actually
-                    written during the operation; valid only if the function returns
-                    FILERR_NONE
-
-            Return value:
-
-                a file_error describing any error that occurred while writing to
-                the file, or FILERR_NONE if no error occurred
-        -----------------------------------------------------------------------------*/
+        /// \brief Write to an open file
+        ///
+        /// Write data to an open file at specified offset.  Note that the
+        /// seek and write are not guaranteed to be atomic, which may cause
+        /// issues in multi-threaded applications.
+        /// \param [in] buffer Pointer to memory containing data to write.
+        /// \param [in] offset Byte offset within the file to write at,
+        ///   relative to the start of the file.  Ignored for stream-like
+        ///   objects (e.g. TCP sockets or named pipes).
+        /// \param [in] length Number of bytes to write.
+        /// \param [out] actual Receives the number of bytes written if the
+        ///   operation succeeds.  Not valid if the operation fails.
+        /// \return Result of the operation.
         public abstract error write(ListBytesPointer buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //void const *buffer
 
 
-        /*-----------------------------------------------------------------------------
-            osd_file::truncate: change the size of an open file
-
-            Parameters:
-
-    .           offset - future size of the file
-
-            Return value:
-
-                a file_error describing any error that occurred while writing to
-                the file, or FILERR_NONE if no error occurred
-        -----------------------------------------------------------------------------*/
+        /// \brief Change the size of an open file
+        ///
+        /// \param [in] offset Desired size of the file.
+        /// \return Result of the operation.
         //abstract error truncate(UInt64 offset);
 
 
-        /*-----------------------------------------------------------------------------
-            osd_file::flush: flush file buffers
-
-            Parameters:
-
-                file - handle to a file previously opened via osd_open
-
-            Return value:
-
-                a file_error describing any error that occurred while flushing file
-                buffers, or FILERR_NONE if no error occurred
-        -----------------------------------------------------------------------------*/
+        /// \brief Flush file buffers
+        ///
+        /// This flushes any data cached by the application, but does not
+        /// guarantee that all prior writes have reached persistent storage.
+        /// \return Result of the operation.
         //abstract error flush();
 
 
-        /*-----------------------------------------------------------------------------
-            osd_file::remove: deletes a file
-
-            Parameters:
-
-                filename - path to file to delete
-
-            Return value:
-
-                a file_error describing any error that occurred while deleting
-                the file, or FILERR_NONE if no error occurred
-        -----------------------------------------------------------------------------*/
+        /// \brief Delete a file
+        ///
+        /// \param [in] filename Path to the file to delete.
+        /// \return Result of the operation.
         public abstract error remove(string filename);
 
 
@@ -347,30 +336,21 @@ namespace mame
         ***************************************************************************/
 
 
-        /*-----------------------------------------------------------------------------
-            osd_getenv: return pointer to environment variable
-
-            Parameters:
-
-                name  - name of environment variable
-
-            Return value:
-
-                pointer to value
-        -----------------------------------------------------------------------------*/
+        /// \brief Get environment variable value
+        ///
+        /// \param [in] name Name of the environment variable as a
+        ///   NUL-terminated string.
+        /// \return Pointer to environment variable value as a NUL-terminated
+        ///   string if found, or nullptr if not found.
         public virtual string osd_getenv(string name)
         {
             return Environment.GetEnvironmentVariable(name);
         }
 
 
-        /*-----------------------------------------------------------------------------
-            osd_getpid: gets process id
-
-            Return value:
-
-                process id
-        -----------------------------------------------------------------------------*/
+        /// \brief Get current process ID
+        ///
+        /// \return The process ID of the current process.
         //int osd_getpid();
 
 
@@ -729,61 +709,33 @@ namespace mame
             MISCELLANEOUS INTERFACES
         ***************************************************************************/
 
-        /*-----------------------------------------------------------------------------
-            osd_alloc_executable: allocate memory that can contain executable code
-
-            Parameters:
-
-                size - the number of bytes to allocate
-
-            Return value:
-
-                a pointer to the allocated memory
-
-            Notes:
-
-                On many systems, this call may acceptably map to malloc(). On systems
-                where pages are tagged with "no execute" privileges, it may be
-                necessary to perform some kind of special allocation to ensure that
-                code placed into this buffer can be executed.
-        -----------------------------------------------------------------------------*/
+        /// \brief Allocate memory that can contain executable code
+        ///
+        /// Allocated memory must be both writable and executable.  Allocated
+        /// memory must be freed by calling #osd_free_executable passing the
+        /// same size.
+        /// \param [in] size Number of bytes to allocate.
+        /// \return Pointer to allocated memory, or nullptr if allocation
+        ///   failed.
+        /// \sa osd_free_executable
         //void *osd_alloc_executable(size_t size);
 
 
-        /*-----------------------------------------------------------------------------
-            osd_free_executable: free memory allocated by osd_alloc_executable
-
-            Parameters:
-
-                ptr - the pointer returned from osd_alloc_executable
-
-                size - the number of bytes originally requested
-
-            Return value:
-
-                None
-        -----------------------------------------------------------------------------*/
+        /// \brief Free memory allocated by osd_alloc_executable
+        ///
+        /// \param [in] ptr Pointer returned by #osd_alloc_executable.
+        /// \param [in] size Number of bytes originally requested.  Must match
+        ///   the value passed to #osd_alloc_executable.
+        /// \sa osd_alloc_executable
         //void osd_free_executable(void *ptr, size_t size);
 
 
-        /*-----------------------------------------------------------------------------
-            osd_break_into_debugger: break into the hosting system's debugger if one
-                is attached
-
-            Parameters:
-
-                message - pointer to string to output to the debugger
-
-            Return value:
-
-                None.
-
-            Notes:
-
-                This function is called when an assertion or other important error
-                occurs. If a debugger is attached to the current process, it should
-                break into the debugger and display the given message.
-        -----------------------------------------------------------------------------*/
+        /// \brief Break into host debugger if attached
+        ///
+        /// This function is called when a fatal error occurs.  If a debugger is
+        /// attached, it should break and display the specified message.
+        /// \param [in] message Message to output to the debugger as a
+        ///   NUL-terminated string.
         public abstract void osd_break_into_debugger(string message);
 
         public void osd_break_into_debugger(string format, params object [] args) { osd_break_into_debugger(string.Format(format, args)); }
@@ -793,9 +745,11 @@ namespace mame
           MESS specific code below
         -----------------------------------------------------------------------------*/
 
-        /*-----------------------------------------------------------------------------
-            osd_get_clipboard_text: retrieves text from the clipboard
-        -----------------------------------------------------------------------------*/
+        /// \brief Get clipboard text
+        ///
+        /// Gets current clipboard content as UTF-8 text.  Returns an empty
+        /// string if the clipboard contents cannot be converted to plain text.
+        /// \return Clipboard contents or an empty string.
         //std::string osd_get_clipboard_text(void);
 
 
@@ -896,18 +850,136 @@ namespace mame
         public abstract void osd_subst_env(out string dst, string src);
 
 
-        /* calls to be used by the code */
-        public static void osd_printf_error(string format) { if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, format); }
-        public static void osd_printf_warning(string format) { if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING, format); }
-        public static void osd_printf_info(string format) { if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_INFO, format); }
-        public static void osd_printf_verbose(string format) { if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE, format); }
-        public static void osd_printf_debug(string format) { if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_DEBUG, format); }
+        /*-------------------------------------------------
+            osd_vprintf_error - output an error to the
+            appropriate callback
+        -------------------------------------------------*/
+        static void osd_vprintf_error(string format, params object [] args)  //void osd_vprintf_error(util::format_argument_pack<std::ostream> const &args)
+        {
+#if false //defined(SDLMAME_ANDROID)
+            SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, "%s", util::string_format(args).c_str());
+#else
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_ERROR, args);
+#endif
+        }
 
-        public static void osd_printf_error(string format, params object [] args) { osd_printf_error(string.Format(format, args)); }
-        public static void osd_printf_warning(string format, params object [] args) { osd_printf_warning(string.Format(format, args)); }
-        public static void osd_printf_info(string format, params object [] args) { osd_printf_info(string.Format(format, args)); }
-        public static void osd_printf_verbose(string format, params object [] args) { osd_printf_verbose(string.Format(format, args)); }
-        public static void osd_printf_debug(string format, params object [] args) { osd_printf_debug(string.Format(format, args)); }
+        /*-------------------------------------------------
+            osd_vprintf_warning - output a warning to the
+            appropriate callback
+        -------------------------------------------------*/
+        static void osd_vprintf_warning(string format, params object [] args)  //void osd_vprintf_warning(util::format_argument_pack<std::ostream> const &args)
+        {
+#if false //defined(SDLMAME_ANDROID)
+            SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, "%s", util::string_format(args).c_str());
+#else
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_WARNING, args);
+#endif
+        }
+
+        /*-------------------------------------------------
+            osd_vprintf_info - output info text to the
+            appropriate callback
+        -------------------------------------------------*/
+        static void osd_vprintf_info(string format, params object [] args)  //void osd_vprintf_info(util::format_argument_pack<std::ostream> const &args)
+        {
+#if false //defined(SDLMAME_ANDROID)
+            SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, "%s", util::string_format(args).c_str());
+#else
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_INFO, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_INFO, args);
+#endif
+        }
+
+        /*-------------------------------------------------
+            osd_vprintf_verbose - output verbose text to
+            the appropriate callback
+        -------------------------------------------------*/
+        static void osd_vprintf_verbose(string format, params object [] args)  //void osd_vprintf_verbose(util::format_argument_pack<std::ostream> const &args)
+        {
+#if false //defined(SDLMAME_ANDROID)
+            SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE, "%s", util::string_format(args).c_str());
+#else
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_VERBOSE, args);
+#endif
+        }
+
+        /*-------------------------------------------------
+            osd_vprintf_debug - output debug text to the
+            appropriate callback
+        -------------------------------------------------*/
+        static void osd_vprintf_debug(string format, params object [] args)  //void osd_vprintf_debug(util::format_argument_pack<std::ostream> const &args)
+        {
+#if false //defined(SDLMAME_ANDROID)
+            SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG, "%s", util::string_format(args).c_str());
+#else
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_DEBUG, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_DEBUG, args);
+#endif
+        }
+
+
+        /// \brief Print error message
+        ///
+        /// By default, error messages are sent to standard error.  The relaxed
+        /// format rules used by util::string_format apply.
+        /// \param [in] fmt Message format string.
+        /// \param [in] args Optional message format arguments.
+        /// \sa util::string_format
+        public static void osd_printf_error(string fmt, params object [] args)  //template <typename Format, typename... Params> void osd_printf_error(Format &&fmt, Params &&...args)
+        {
+            osd_vprintf_error(fmt, args);  //return osd_vprintf_error(util::make_format_argument_pack(std::forward<Format>(fmt), std::forward<Params>(args)...));
+        }
+
+        /// \brief Print warning message
+        ///
+        /// By default, warning messages are sent to standard error.  The
+        /// relaxed format rules used by util::string_format apply.
+        /// \param [in] fmt Message format string.
+        /// \param [in] args Optional message format arguments.
+        /// \sa util::string_format
+        public static void osd_printf_warning(string fmt, params object [] args)  //template <typename Format, typename... Params> void osd_printf_warning(Format &&fmt, Params &&...args)
+        {
+            osd_vprintf_warning(fmt, args);  //return osd_vprintf_warning(util::make_format_argument_pack(std::forward<Format>(fmt), std::forward<Params>(args)...));
+        }
+
+        /// \brief Print informational message
+        ///
+        /// By default, informational messages are sent to standard output.
+        /// The relaxed format rules used by util::string_format apply.
+        /// \param [in] fmt Message format string.
+        /// \param [in] args Optional message format arguments.
+        /// \sa util::string_format
+        public static void osd_printf_info(string fmt, params object [] args)  //template <typename Format, typename... Params> void osd_printf_info(Format &&fmt, Params &&...args)
+        {
+            osd_vprintf_info(fmt, args);  //return osd_vprintf_info(util::make_format_argument_pack(std::forward<Format>(fmt), std::forward<Params>(args)...));
+        }
+
+        /// \brief Print verbose diagnostic message
+        ///
+        /// Verbose diagnostic messages are disabled by default.  If enabled,
+        /// they are sent to standard output by default.  The relaxed format
+        /// rules used by util::string_format apply.  Note that the format
+        /// string and arguments will always be evaluated, even if verbose
+        /// diagnostic messages are disabled.
+        /// \param [in] fmt Message format string.
+        /// \param [in] args Optional message format arguments.
+        /// \sa util::string_format
+        public static void osd_printf_verbose(string fmt, params object [] args)  //template <typename Format, typename... Params> void osd_printf_verbose(Format &&fmt, Params &&...args)
+        {
+            osd_vprintf_verbose(fmt, args);  //return osd_vprintf_verbose(util::make_format_argument_pack(std::forward<Format>(fmt), std::forward<Params>(args)...));
+        }
+
+        /// \brief Print debug message
+        ///
+        /// By default, debug messages are sent to standard output for debug
+        /// builds only.  The relaxed format rules used by util::string_format
+        /// apply.  Note that the format string and arguments will always be
+        /// evaluated, even if debug messages are disabled.
+        /// \param [in] fmt Message format string.
+        /// \param [in] args Optional message format arguments.
+        /// \sa util::string_format
+        public static void osd_printf_debug(string fmt, params object [] args)  //template <typename Format, typename... Params> void osd_printf_debug(Format &&fmt, Params &&...args)
+        {
+            osd_vprintf_debug(fmt, args);  //return osd_vprintf_debug(util::make_format_argument_pack(std::forward<Format>(fmt), std::forward<Params>(args)...));
+        }
 
 
         // returns command line arguments as an std::vector<std::string> in UTF-8
@@ -931,14 +1003,14 @@ namespace mame
         osd_output m_chain;
 
 
-        public osd_output() { m_chain = null; }
+        public osd_output() { }
 
 
         public static int ptr() { return m_ptr; }
         public static osd_output stack(int index) { return m_stack[index]; }
 
 
-        public abstract void output_callback(osd_output_channel channel, string msg);
+        public abstract void output_callback(osd_output_channel channel, string format, params object [] args);  //virtual void output_callback(osd_output_channel channel, util::format_argument_pack<std::ostream> const &args) = 0;
 
 
         public static void push(osd_output callback)
@@ -976,10 +1048,10 @@ namespace mame
         }
 
 
-        protected void chain_output(osd_output_channel channel, string msg)
+        protected void chain_output(osd_output_channel channel, string format, params object [] args)  //void chain_output(osd_output_channel channel, util::format_argument_pack<std::ostream> const &args) const
         {
             if (m_chain != null)
-                m_chain.output_callback(channel, msg);
+                m_chain.output_callback(channel, format, args);
         }
     }
 }

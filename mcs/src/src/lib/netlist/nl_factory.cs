@@ -30,7 +30,7 @@ namespace mame.netlist
             //    static plib::unique_ptr<factory::element_t> NETLIB_NAME(p_alias ## _c) \
             //            (const pstring &classname) \
             //    { \
-            //        return plib::make_unique<factory::device_element_t<ns :: NETLIB_NAME(chip)>>(p_name, classname, p_def_param, pstring(__FILE__)); \
+            //        return plib::make_unique<factory::device_element_t<ns :: NETLIB_NAME(chip)>>(p_name, classname, p_def_param, __FILE__); \
             //    } \
             //    \
             //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
@@ -69,7 +69,7 @@ namespace mame.netlist
             //COPYASSIGNMOVE(element_t, default)
 
 
-            public abstract device_t Create(netlist_state_t anetlist, string name);  //virtual poolptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) = 0;
+            public abstract device_t Create(netlist_state_t anetlist, string name);  //virtual unique_pool_ptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) = 0;
             public virtual void macro_actions(nlparse_t nparser, string name) { }
 
             public string name() { return m_name; }
@@ -86,7 +86,7 @@ namespace mame.netlist
             public device_element_t(string name, string classname, string def_param, string sourcefile) : base(name, classname, def_param, sourcefile) { }
 
 
-            //poolptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override { return pool().make_poolptr<C>(anetlist, name); }
+            //unique_pool_ptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override { return pool().make_unique<C>(anetlist, name); }
             public override device_t Create(netlist_state_t anetlist, string name)
             {
                 Type type = typeof(C);
@@ -174,7 +174,7 @@ namespace mame.netlist
                 : base(name, classname, def_param, source) {  }
 
 
-            public override device_t Create(netlist_state_t anetlist, string name)  //poolptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override;
+            public override device_t Create(netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> Create(netlist_state_t &anetlist, const pstring &name) override;
             {
                 throw new emu_unimplemented();
 #if false

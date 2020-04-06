@@ -79,7 +79,7 @@ namespace mame.netlist
                 m_freq = new param_double_t(this, "FREQ", 7159000.0 * 5);
 
 
-                m_inc = netlist_time.from_double(1.0 / (m_freq.op()*2.0));
+                m_inc = netlist_time.from_double(1.0 / (m_freq.op*2.0));
             }
 
 
@@ -167,7 +167,7 @@ namespace mame.netlist
                 m_FAMILY = new param_model_t(this, "FAMILY", "FAMILY(TYPE=TTL)");
 
 
-                set_logic_family(setup().family_from_model(m_FAMILY.op()));
+                set_logic_family(setup().family_from_model(m_FAMILY.op));
                 m_Q.set_logic_family(this.logic_family());
             }
 
@@ -179,7 +179,7 @@ namespace mame.netlist
             public override void reset() { m_Q.initial(0); }
 
             //NETLIB_UPDATE_PARAMI();
-            public override void update_param() { m_Q.push((netlist_sig_t)((m_IN.op() ? 1 : 0) & 1), netlist_time.from_nsec(1)); }
+            public override void update_param() { m_Q.push((netlist_sig_t)((m_IN.op ? 1 : 0) & 1), netlist_time.from_nsec(1)); }
         }
 
 
@@ -214,7 +214,7 @@ namespace mame.netlist
             public override void reset() { m_Q.initial(0.0); }
 
             //NETLIB_UPDATE_PARAMI();
-            public override void update_param() { m_Q.push(m_IN.op()); }
+            public override void update_param() { m_Q.push(m_IN.op); }
         }
 
 

@@ -16,8 +16,7 @@ namespace mame
 {
     public class irem_audio_device : device_t
     {
-        netlist_mame_logic_input_device m_audio_SINH;
-
+        optional_device<netlist_mame_logic_input_device> m_audio_SINH;
 
         required_device<cpu_device> m_cpu;  //required_device<cpu_device> m_cpu;
         required_device<msm5205_device> m_adpcm1;
@@ -41,6 +40,7 @@ namespace mame
         protected irem_audio_device(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock)
             : base(mconfig, type, tag, owner, clock)
         {
+            m_audio_SINH = new optional_device<netlist_mame_logic_input_device>(this, "snd_nl:sinh");
             m_cpu = new required_device<cpu_device>(this, "iremsound");
             m_adpcm1 = new required_device<msm5205_device>(this, "msm1");
             m_adpcm2 = new optional_device<msm5205_device>(this, "msm2");
@@ -341,8 +341,6 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            m_audio_SINH = (netlist_mame_logic_input_device)subdevice("snd_nl:sinh");
-
             save_item(m_port1, "m_port1");
             save_item(m_port2, "m_port2");
             save_item(m_soundlatch, "m_soundlatch");

@@ -68,8 +68,9 @@ namespace mame
         {
             PSG_DEFAULT = 0x0,
             PSG_PIN26_IS_CLKSEL = 0x1,
-            PSG_EXTENDED_ENVELOPE = 0x2,
-            PSG_HAS_EXPANDED_MODE = 0x4
+            PSG_HAS_INTERNAL_DIVIDER = 0x2,
+            PSG_EXTENDED_ENVELOPE = 0x4,
+            PSG_HAS_EXPANDED_MODE = 0x8
         }
 
 
@@ -478,7 +479,7 @@ namespace mame
         void ay_set_clock(int clock)
         {
             // FIXME: this doesn't belong here, it should be an input pin exposed via devcb
-            if ((m_feature & (int)config_t.PSG_PIN26_IS_CLKSEL) != 0 && (m_flags & YM2149_PIN26_LOW) != 0)
+            if (((m_feature & (int)config_t.PSG_PIN26_IS_CLKSEL) != 0 && (m_flags & YM2149_PIN26_LOW) != 0) || (m_feature & (int)config_t.PSG_HAS_INTERNAL_DIVIDER) != 0)
                 m_channel.set_sample_rate((m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? clock : clock / 16);
             else
                 m_channel.set_sample_rate((m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? clock * 2 : clock / 8);

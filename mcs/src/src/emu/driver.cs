@@ -26,12 +26,6 @@ namespace mame
         public static void MCFG_MACHINE_RESET_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_device.static_set_callback(config.root_device(), driver_device.callback_type.CB_MACHINE_RESET, func); }  //driver_callback_delegate(&_class::MACHINE_RESET_NAME(_func), #_class "::machine_reset_" #_func, downcast<_class *>(owner)));
         //define MCFG_MACHINE_RESET_REMOVE()             driver_device::static_set_callback(config.root_device(), driver_device::CB_MACHINE_RESET, driver_callback_delegate());
 
-
-        // core sound callbacks
-        //define MCFG_SOUND_START_OVERRIDE(_class, _func)             driver_device::static_set_callback(config.root_device(), driver_device::CB_SOUND_START, driver_callback_delegate(&_class::SOUND_START_NAME(_func), #_class "::sound_start_" #_func, downcast<_class *>(owner)));
-        //define MCFG_SOUND_RESET_OVERRIDE(_class, _func)             driver_device::static_set_callback(config.root_device(), driver_device::CB_SOUND_RESET, driver_callback_delegate(&_class::SOUND_RESET_NAME(_func), #_class "::sound_reset_" #_func, downcast<_class *>(owner)));
-
-
         // core video callbacks
         public static void MCFG_VIDEO_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_device.static_set_callback(config.root_device(), driver_device.callback_type.CB_VIDEO_START, func); }  //driver_callback_delegate(&_class::VIDEO_START_NAME(_func), #_class "::video_start_" #_func, downcast<_class *>(owner)));
         //define MCFG_VIDEO_RESET_OVERRIDE(_class, _func)             driver_device::static_set_callback(config.root_device(), driver_device::CB_VIDEO_RESET, driver_callback_delegate(&_class::VIDEO_RESET_NAME(_func), #_class "::video_reset_" #_func, downcast<_class *>(owner)));
@@ -47,8 +41,6 @@ namespace mame
         {
             CB_MACHINE_START,
             CB_MACHINE_RESET,
-            CB_SOUND_START,
-            CB_SOUND_RESET,
             CB_VIDEO_START,
             CB_VIDEO_RESET,
             CB_COUNT
@@ -250,10 +242,7 @@ namespace mame
             else
                 machine_start();
 
-            if (m_callbacks[(int)callback_type.CB_SOUND_START] != null)
-                m_callbacks[(int)callback_type.CB_SOUND_START]();
-            else
-                sound_start();
+            sound_start();
 
             if (m_callbacks[(int)callback_type.CB_VIDEO_START] != null)
                 m_callbacks[(int)callback_type.CB_VIDEO_START]();
@@ -280,10 +269,7 @@ namespace mame
             else
                 machine_reset();
 
-            if (m_callbacks[(int)callback_type.CB_SOUND_RESET] != null)
-                m_callbacks[(int)callback_type.CB_SOUND_RESET]();
-            else
-                sound_reset();
+            sound_reset();
 
             if (m_callbacks[(int)callback_type.CB_VIDEO_RESET] != null)
                 m_callbacks[(int)callback_type.CB_VIDEO_RESET]();

@@ -212,7 +212,7 @@ namespace mame
         //friend class memory_manager;
 
 
-        public delegate void logerror_callback(string str);  //typedef std::function<void (const char*)> logerror_callback;
+        public delegate void logerror_callback(string format, params object [] args);  //typedef std::function<void (const char*)> logerror_callback;
 
 
         class side_effects_disabler
@@ -1112,6 +1112,15 @@ namespace mame
             save().register_postload(postload_all_devices);
             manager().load_cheatfiles(this);
 
+            // start recording movie if specified
+            string filename = options().mng_write();
+            if (!string.IsNullOrEmpty(filename))
+                m_video.begin_recording(filename, video_manager.movie_format.MF_MNG);
+
+            filename = options().avi_write();
+            if (!string.IsNullOrEmpty(filename))
+                m_video.begin_recording(filename, video_manager.movie_format.MF_AVI);
+
             // if we're coming in with a savegame request, process it now
             string savegame = options().state();
             if (!string.IsNullOrEmpty(savegame))
@@ -1239,11 +1248,11 @@ namespace mame
         //  logfile_callback - callback for logging to
         //  logfile
         //-------------------------------------------------
-        void logfile_callback(string buffer)
+        void logfile_callback(string format, params object [] args)
         {
             if (m_logfile != null)
             {
-                m_logfile.puts(buffer);
+                m_logfile.puts(string.Format(format, args));
                 m_logfile.flush();
             }
         }

@@ -1206,10 +1206,10 @@ namespace mame
 
 
             // configure the blit parameters based on the input parameters
-            assert(dest.cliprect().contains(cliprect));
-            assert(screen.cliprect().contains(cliprect));
             blit_parameters blit;
             configure_blit_parameters(out blit, screen.priority(), cliprect, flags, priority, priority_mask);
+            assert(dest.cliprect().contains(cliprect));
+            assert(screen.cliprect().contains(cliprect) || blit.tilemap_priority_code == 0xff00);
 
             // flush the dirty state to all tiles as appropriate
             realize_all_dirty_tiles();

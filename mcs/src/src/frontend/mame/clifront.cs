@@ -200,7 +200,7 @@ namespace mame
 
         void listsource(std.vector<string> args)
         {
-            listsource_list_system_source list_system_source = (type) => { osd_printf_info("{0} {1}\n", type.shortname(), core_filename_extract_base(type.source()).c_str()); };
+            listsource_list_system_source list_system_source = (type) => { osd_printf_info("{0} {1}\n", type.shortname(), core_filename_extract_base(type.source())); };
 
             apply_action(
                     args,
@@ -305,7 +305,7 @@ namespace mame
                 if (clone_of != -1)
                     osd_printf_info("{0} {1} {2}\n", core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name, (clone_of == -1 ? "" : driver_list.driver(clone_of).name));  // %-20s %-16s %-16s\n
                 else
-                    osd_printf_info("{0} {1}\n", core_filename_extract_base(drivlist.driver().type.source()).c_str(), drivlist.driver().name);  // %-20s %s
+                    osd_printf_info("{0} {1}\n", core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name);  // %-20s %s
             }
         }
 
@@ -389,7 +389,7 @@ namespace mame
                                     {
                                         if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
                                             osd_printf_info(" BAD");
-                                        osd_printf_info(" {0}", hashes.macro_string().c_str());
+                                        osd_printf_info(" {0}", hashes.macro_string());
                                     }
                                     else
                                     {
@@ -1275,7 +1275,7 @@ namespace mame
             string option_errors;
             mame_options.parse_standard_inis(m_options, out option_errors);
             if (option_errors.Length > 0)
-                osd_printf_error("{0}\n", option_errors.str().c_str());
+                osd_printf_error("{0}\n", option_errors.str());
 
             // createconfig?
             if (m_options.command() == cli_options.CLICOMMAND_CREATECONFIG)
@@ -1392,7 +1392,7 @@ namespace mame
             if (option_errors.Length > 0)
             {
                 string option_errors_string = option_errors.str();
-                osd_printf_error("Error in command line:\n{0}\n", option_errors_string.Trim().c_str());
+                osd_printf_error("Error in command line:\n{0}\n", strtrimspace(option_errors_string));
             }
 
             // if we can't find it, give an appropriate error

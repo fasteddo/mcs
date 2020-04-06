@@ -747,7 +747,34 @@ namespace mame
 
 
         // device flags
+
+        /// \brief Report unemulated features
+        ///
+        /// Implement this member in a derived class to declare features
+        /// that are not emulated.  This will propagate to all other devices
+        /// and systems that use the device.  Unemulated features are shown
+        /// in the system selection UI, and cause a red warning to be
+        /// displayed on starting a system.
+        /// \return Bitwise or of the feature constants for unemulated
+        ///   features of the device.
+        /// \sa imperfect_features
         public static emu.detail.device_feature.type unemulated_features() { return emu.detail.device_feature.type.NONE; }
+
+        /// \brief Report imperfectly emulated features
+        ///
+        /// Implement this member in a derived class to declare features
+        /// that are imperfectly emulated.  This will propagate to all other
+        /// devices and systems that use the device.  Imperfectly emulated
+        /// features are shown in the system selection UI, and cause a
+        /// yellow warning to be displayed on starting a system (provided
+        /// there are no unemulated features, which take precedence and
+        /// cause the warning to be red).
+        ///
+        /// An exception is imperfectly emulated protection, which results
+        /// in a red warning being displayed when starting a system.
+        /// \return Bitwise or of the feature constants for imperfectly
+        ///   emulated features of the device.
+        /// \sa unemulated_features
         public static emu.detail.device_feature.type imperfect_features() { return emu.detail.device_feature.type.NONE; }
 
 
@@ -1511,12 +1538,37 @@ namespace mame
         //  operations now that the configuration is
         //  complete
         //-------------------------------------------------
+        /// \brief Finalise device configuration
+        ///
+        /// Perform any final configuration tasks after all devices in the
+        /// system have added machine configuration.  This is called after
+        /// any #device_interface mix-in interface_config_complete members
+        /// have completed.
+        ///
+        /// Note that automatic object finders will not have been resolved
+        /// at the time this member is called.
         protected virtual void device_config_complete() { }
 
         //-------------------------------------------------
         //  device_validity_check - validate a device after
         //  the configuration has been constructed
         //-------------------------------------------------
+        /// \brief Additional device validity checks
+        ///
+        /// Implement this member to provide additional validity checks.
+        /// Report errors using #osd_printf_error and report warnings using
+        /// #osd_printf_warning.  The system being validated, device type
+        /// and device tag are collected automatically.  Do not throw
+        /// exceptions to report errors.
+        ///
+        /// This provides an opportunity to check that the device has been
+        /// configured correctly.  Systems are validated on start, and also
+        /// when the user manually runs a validity check.  Validity checks
+        /// are only run for devices configured in runnable systems, not
+        /// when checking that a device can be instantiated in isolation.
+        /// \param [in] valid Reference to the validity checker object
+        ///   performing validation (provides some helper member functions).
+        /// \sa device_interface::interface_validity_check
         protected virtual void device_validity_check(validity_checker valid) { }
 
         //-------------------------------------------------
@@ -1524,14 +1576,51 @@ namespace mame
         //  may be needed for other devices to set
         //  initial conditions at start time
         //-------------------------------------------------
+        /// \brief Resolve objects that may be needed while starting
+        ///
+        /// Implement this member to complete object resolution before any
+        /// devices are started.  For example it may be necessary to resolve
+        /// callbacks before any devices start so initial input conditions
+        /// can be set.  This is called after all registerd automatic object
+        /// finders are resolved.
         protected virtual void device_resolve_objects() { }
 
+        /// \brief Device start handler
+        ///
+        /// Implement this member to set up the initial state of the device
+        /// on start.  This will be called after all #device_interface
+        // /mix-in interface_pre_start members have completed successfully.
+        /// If the device can't start until another device has completed
+        /// starting, throw a #device_missing_dependencies exception.
+        /// Starting will be postponed until additional devices have been
+        /// started.
+        ///
+        /// If a device's base class is not device_t, it's good practice to
+        /// check start order dependencies (and throw
+        /// #device_missing_dependencies if necessary) before calling the
+        /// base implementation.  This will ensure that the base
+        /// implementation won't be called twice if starting needs to be
+        /// postponed.
+        ///
+        /// This is the correct place to register for save states.
+        /// \sa device_reset device_stop
+        ///   device_interface::interface_pre_start
+        ///   device_interface::interface_post_start
         protected virtual void device_start() { }
 
         //-------------------------------------------------
         //  device_stop - clean up anything that needs to
         //  happen before the running_machine goes away
         //-------------------------------------------------
+        /// \brief Device stop handler
+        ///
+        /// Implement this member to perform additional tasks on ending an
+        /// emulation session.  You may deallocate memory here.  This is
+        /// called after interface_pre_stop is called for all
+        /// #device_interface mix-ins, and before interface_post_stop is
+        /// called for any #device_interface mix-ins.
+        /// \sa device_interface::interface_pre_stop
+        ///   device_interface::interface_post_stop
         protected virtual void device_stop() { }
 
         //-------------------------------------------------
@@ -1539,6 +1628,26 @@ namespace mame
         //  a device; designed to be overriden by the
         //  actual device implementation
         //-------------------------------------------------
+        /// \brief Device reset handler
+        ///
+        /// Implement this member to provide reset behaviour.  This is
+        /// called after all #device_interface mix-in interface_pre_reset
+        /// members have completed, and before any child devices are reset.
+        /// All devices are reset at the beginning of an emulation session
+        /// (after all devices have been started), and also when the user
+        /// requests a soft reset (by pressing F3 by default, and also
+        /// available from the debugger).
+        ///
+        /// Note that child devices are reset automatically when a device is
+        /// reset.  You should not reset child devices manually from this
+        /// member.  If you need to provide additional behaviour after child
+        /// devices are reset, implement #device_reset_after_children.
+        ///
+        /// Only implement warm reset behaviour in this member.  Initial
+        /// cold reset conditions should be set up in #device_start.
+        /// \sa device_reset_after_children device_start
+        ///   device_interface::interface_pre_reset
+        ///   device_interface::interface_post_reset
         protected virtual void device_reset() { }
 
         //-------------------------------------------------
@@ -1547,6 +1656,15 @@ namespace mame
         //  are reset; designed to be overriden by the
         //  actual device implementation
         //-------------------------------------------------
+        /// \brief Additional reset behaviour after child device reset
+        ///
+        /// Implement this member to provide additional reset behaviour
+        /// after child devices are reset.  This is called when resetting a
+        /// device after #device_reset has been called and all child devices
+        /// have been reset, and before any #device_interface mix-in
+        /// interface_post_reset members are called.
+        /// \sa device_reset device_interface::interface_pre_reset
+        ///   device_interface::interface_post_reset
         protected virtual void device_reset_after_children() { }
 
         //-------------------------------------------------
@@ -1554,6 +1672,14 @@ namespace mame
         //  state, so that registered variables can be
         //  properly normalized
         //-------------------------------------------------
+        /// \brief Prepare for a save state to be written
+        ///
+        /// Implement this member to perform any tasks necessary before any
+        /// registered save state items are recorded.  For example it may be
+        /// necessary to flush caches, serialise self-referencing members or
+        /// pointers into data structures.  This is called after all
+        /// #device_interface mix-in interface_pre_save members are called.
+        /// \sa device_post_load device_interface::interface_pre_save
         protected virtual void device_pre_save() { }
 
         //-------------------------------------------------
@@ -1561,6 +1687,14 @@ namespace mame
         //  saved state, so that registered variables can
         //  be expanded as necessary
         //-------------------------------------------------
+        /// \brief Complete save state loading
+        ///
+        /// Implement this member to perform any tasks necessary after
+        /// registered save state items are loaded.  For example it may be
+        /// necessary to update or invalidate caches, or de-serialise
+        /// pointers into data structures.  This is called after all
+        /// #device_interface mix-in interface_post_load members are called.
+        /// \sa device_pre_save device_interface::interface_post_load
         protected virtual void device_post_load() { }
 
         //-------------------------------------------------
@@ -1658,6 +1792,12 @@ namespace mame
 
     // ======================> device_interface
     // device_interface represents runtime information for a particular device interface
+    /// \brief Device mix-in base
+    ///
+    /// Provides a base for #device_t mix-ins that integrate with the device
+    /// lifecycle.  Derived classes are used to implement a number of
+    /// standard concepts and interfaces, and integrate with the scheduler,
+    /// debugger and user interface.
     public class device_interface : global_object
     {
         // internal state
@@ -1712,16 +1852,21 @@ namespace mame
 
 
         // optional operation overrides
-        //
-        // WARNING: interface_pre_start must be callable multiple times in
-        // case another interface throws a missing dependency.  In
-        // particular, state saving registrations should be done in post.
 
         //-------------------------------------------------
         //  interface_config_complete - perform any
         //  operations now that the configuration is
         //  complete
         //-------------------------------------------------
+        /// \brief Finalise mix-in configuration
+        ///
+        /// Perform any final configuration tasks after all devices in the
+        /// system have added machine configuration.  This is called before
+        /// device_config_complete is called for the device.
+        ///
+        /// Note that automatic object finders will not have been resolved
+        /// at this time.
+        /// \sa device_t::device_config_complete
         public virtual void interface_config_complete() { }
 
         //-------------------------------------------------
@@ -1729,42 +1874,124 @@ namespace mame
         //  for a device after the configuration has been
         //  constructed
         //-------------------------------------------------
+        /// \brief Additional mix-in validity checks
+        ///
+        /// Implement this member to provide additional validity checks.
+        /// Report errors using #osd_printf_error and report warnings using
+        /// #osd_printf_warning.  The system being validated, device type
+        /// and device tag are collected automatically.  Do not throw
+        /// exceptions to report errors.
+        ///
+        /// This provides an opportunity to check that the mix-in has been
+        /// configured correctly.  Systems are validated on start, and also
+        /// when the user manually runs a validity check.  Validity checks
+        /// are only run for devices configured in runnable systems, not
+        /// when checking that a device can be instantiated in isolation.
+        /// \param [in] valid Reference to the validity checker object
+        ///   performing validation (provides some helper member functions).
+        /// \sa device_t::device_validity_check
         protected virtual void interface_validity_check(validity_checker valid) { }
 
         //-------------------------------------------------
         //  interface_pre_start - called before the
         //  device's own start function
         //-------------------------------------------------
+        /// \brief Mix-in start handler
+        ///
+        /// Implement this member to set up the initial state of the mix-in
+        /// on start.  This is called before the device_start member is
+        /// called for the device.  If the mix-in can't be started until
+        /// another device has started, throw a #device_missing_dependencies
+        /// exception.  Starting will be postponed until additional devices
+        /// have been started.
+        ///
+        /// Note that this member may be called multiple times if another
+        /// device_interface mix-in throws a #device_missing_dependencies
+        /// exception from its interface_pre_start member, or if the device
+        /// throws a #device_missing_dependencies exception from its
+        /// device_start member.  You must check to ensure that operations
+        /// like resource allocation are not performed multiple times, or
+        /// postpone them until #interface_post_start is called.
+        ///
+        /// It's simpler to register for save states when
+        /// #interface_post_start is called.
+        /// \sa interface_post_start device_t::device_start
         public virtual void interface_pre_start() { }
 
         //-------------------------------------------------
         //  interface_post_start - called after the
         //  device's own start function
         //-------------------------------------------------
+        /// \brief Mix-in start completion handler
+        ///
+        /// Implement this member to complete mix-in start-up.  This is
+        /// called after #interface_pre_start is called for all
+        /// device_interface mix-ins, and after device_start is called for
+        /// the device.  This member will only be called once, it will not
+        /// be called multiple times if device starting is postponed.
+        ///
+        /// This member must not throw #device_missing_dependencies (start
+        /// order dependencies should be checked in #interface_pre_start).
+        /// This is the appropriate place to allocate resources like
+        /// timers and register for save states.
+        /// \sa interface_pre_start device_t::device_start
         public virtual void interface_post_start() { }
 
         //-------------------------------------------------
         //  interface_pre_reset - called before the
         //  device's own reset function
         //-------------------------------------------------
+        /// \brief Mix-in reset handler
+        ///
+        /// Implement this member to provide reset behaviour.  This is
+        /// called before device_reset is called for the device, and before
+        /// any child devices are reset.  Only implement warm reset
+        /// behaviour in this member.  Initial cold reset conditions should
+        /// be set up in #interface_pre_start and/or #interface_post_start.
+        /// If you need to provide additional behaviour after child devices
+        /// are reset, implement #interface_post_reset.
+        /// \sa interface_post_reset device_t::device_reset
         public virtual void interface_pre_reset() { }
 
         //-------------------------------------------------
         //  interface_post_reset - called after the
         //  device's own reset function
         //-------------------------------------------------
+        /// \brief Mix-in reset completion handler
+        ///
+        /// Implement this member to provide additional reset behaviour
+        /// after child devices are reset.  This is called after
+        /// device_reset_after_children has been called for the device.
+        /// \sa interface_pre_reset device_t::device_reset
+        ///   device_t::device_reset_after_children
         public virtual void interface_post_reset() { }
 
         //-------------------------------------------------
         //  interface_pre_stop - called before the
         //  device's own stop function
         //-------------------------------------------------
+        /// \brief Mix-in stop handler
+        ///
+        /// Implement this member to perform additional tasks on ending an
+        /// emulation session.  Do not deallocate anything that may need to
+        /// be referenced from another device_interface mix-in's
+        /// interface_pre_stop member or from the device's device_stop
+        /// member.  This is called before device_stop is called for the
+        /// device.
+        /// \sa interface_post_stop device_t::device_stop
         public virtual void interface_pre_stop() { }
 
         //-------------------------------------------------
         //  interface_post_stop - called after the
         //  device's own stop function
         //-------------------------------------------------
+        /// \brief Mix-in stop completion handler
+        ///
+        /// Implement this member to perform additional tasks on ending an
+        /// emulation session after the device is stopped.  You can
+        /// deallocate memory here.  This is called after device_stop is
+        /// called for the device.
+        /// \sa interface_pre_stop device_t::device_stop
         public virtual void interface_post_stop() { }
 
         //-------------------------------------------------
@@ -1772,6 +1999,14 @@ namespace mame
         //  state, so that registered variables can be
         //  properly normalized
         //-------------------------------------------------
+        /// \brief Prepare for a save state to be written
+        ///
+        /// Implement this member to perform any tasks necessary before any
+        /// registered save state items are recorded.  For example it may be
+        /// necessary to flush caches, serialise self-referencing members or
+        /// pointers into data structures.  This is called before
+        /// device_pre_save is called for the device.
+        /// \sa interface_post_load device_t::device_pre_save
         public virtual void interface_pre_save() { }
 
         //-------------------------------------------------
@@ -1779,6 +2014,14 @@ namespace mame
         //  saved state, so that registered variables can
         //  be expaneded as necessary
         //-------------------------------------------------
+        /// \brief Complete save state loading
+        ///
+        /// Implement this member to perform any tasks necessary after
+        /// registered save state items are loaded.  For example it may be
+        /// necessary to update or invalidate caches, or de-serialise
+        /// pointers into data structures.  This is called before
+        /// device_post_load is called for the device.
+        /// \sa interface_pre_save device_t::device_post_load
         public virtual void interface_post_load() { }
 
         //-------------------------------------------------

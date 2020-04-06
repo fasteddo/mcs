@@ -511,7 +511,7 @@ namespace mame
     {
         const bool MEM_DUMP = false;
         const bool VERBOSE = false;
-        public const bool VALIDATE_REFCOUNTS = true;
+        public const bool VALIDATE_REFCOUNTS = false;
 
 
         // address space names for common use

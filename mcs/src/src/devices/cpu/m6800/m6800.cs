@@ -17,9 +17,9 @@ namespace mame
 {
     partial class m6800_cpu_device : cpu_device
     {
-        //DEFINE_DEVICE_TYPE(M6800, m6800_cpu_device, "m6800", "Motorola M6800")
+        //DEFINE_DEVICE_TYPE(M6800, m6800_cpu_device, "m6800", "Motorola MC6800")
         static device_t device_creator_m6800_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6800_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6800 = DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola M6800");
+        public static readonly device_type M6800 = DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola MC6800");
 
 
         protected class device_execute_interface_m6800 : device_execute_interface

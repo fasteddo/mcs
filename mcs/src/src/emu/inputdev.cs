@@ -758,7 +758,7 @@ namespace mame
             if (!map.parse(mapstring))
                 return false;
 
-            osd_printf_verbose("Input: Changing default joystick map = {0}\n", map.to_string().c_str());
+            osd_printf_verbose("Input: Changing default joystick map = {0}\n", map.to_string());
 
             // iterate over joysticks and set the map
             for (int joynum = 0; joynum <= maxindex(); joynum++)

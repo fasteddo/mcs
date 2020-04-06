@@ -88,13 +88,18 @@ namespace mame
         // inline configuration helpers
 
         speaker_device set_position(double x, double y, double z) { m_x = x; m_y = y; m_z = z; return this; }
-        public speaker_device front_center() { set_position(0.0, 0.0, 1.0); return this; }
-        //speaker_device &front_left() { set_position(-0.2, 0.0, 1.0); return *this; }
-        //speaker_device &front_right() { set_position(0.2, 0.0, 1.0); return *this; }
-        //speaker_device &rear_center() { set_position(0.0, 0.0, -0.5); return *this; }
-        //speaker_device &rear_left() { set_position(-0.2, 0.0, -0.5); return *this; }
-        //speaker_device &rear_right() { set_position(0.2, 0.0, -0.5); return *this; }
-        //speaker_device &subwoofer() { set_position(0.0, 0.0, 0.0); return *this; }
+        public speaker_device front_center()  { set_position( 0.0,  0.0,  1.0); return this; }
+        //speaker_device &front_left()        { set_position(-0.2,  0.0,  1.0); return *this; }
+        //speaker_device &front_floor()       { set_position( 0.0, -0.5,  1.0); return *this; }
+        //speaker_device &front_right()       { set_position( 0.2,  0.0,  1.0); return *this; }
+        //speaker_device &rear_center()       { set_position( 0.0,  0.0, -0.5); return *this; }
+        //speaker_device &rear_left()         { set_position(-0.2,  0.0, -0.5); return *this; }
+        //speaker_device &rear_right()        { set_position( 0.2,  0.0, -0.5); return *this; }
+        //speaker_device &headrest_center()   { set_position( 0.0,  0.0, -0.1); return *this; }
+        //speaker_device &headrest_left()     { set_position(-0.1,  0.0, -0.1); return *this; }
+        //speaker_device &headrest_right()    { set_position( 0.1,  0.0, -0.1); return *this; }
+        //speaker_device &seat()              { set_position( 0.0, -0.5,  0.0); return *this; }
+        //speaker_device &backrest()          { set_position( 0.0, -0.2,  0.1); return *this; }
 
 
         // internally for use by the sound system

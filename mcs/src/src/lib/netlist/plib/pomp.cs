@@ -33,7 +33,7 @@ namespace mame.plib.omp
 
         public static int get_max_threads()
         {
-//#if HAS_OPENMP && USE_OPENMP
+//#if PHAS_OPENMP && PUSE_OPENMP
             //return omp_get_max_threads();
 //#else
             return 1;

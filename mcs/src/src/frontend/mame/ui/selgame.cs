@@ -724,7 +724,7 @@ namespace mame.ui
             line0 = string.Format("{0} {1} ( {2} / {3} machines ({4} BIOS) )",
                     emulator_info.get_appname(),
                     version_global.bare_build_version,
-                    visible_items,
+                    m_available_items,
                     (driver_list.total() - 1),
                     m_persistent_data.bios_count());
 

@@ -902,31 +902,27 @@ namespace mame
         //-------------------------------------------------
         //  output_callback  - callback for osd_printf_...
         //-------------------------------------------------
-        public override void output_callback(osd_output_channel channel, string msg)
+        public override void output_callback(osd_output_channel channel, string format, params object [] args)  //virtual void output_callback(osd_output_channel channel, const util::format_argument_pack<std::ostream> &args)  override;
         {
             switch (channel)
             {
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR:
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING:
-                    //Console.Write(msg);  //vfprintf(stderr, msg, args);
-                    System.Diagnostics.Debug.Write(msg);
+                    System.Diagnostics.Debug.Write(string.Format(format, args));  //util::stream_format(std::cerr, args);
                     break;
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_INFO:
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_LOG:
-                    //Console.Write(msg);  //vfprintf(stdout, msg, args);
-                    System.Diagnostics.Debug.Write(msg);
+                    System.Diagnostics.Debug.Write(string.Format(format, args));  //util::stream_format(std::cout, args);
                     break;
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE:
                     if (verbose())
                     {
-                        //Console.Write(msg);  //vfprintf(stdout, msg, args);
-                        System.Diagnostics.Debug.Write(msg);
+                        System.Diagnostics.Debug.Write(string.Format(format, args));  //util::stream_format(std::cout, args);
                     }
                     break;
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_DEBUG:
 //#if MAME_DEBUG
-                    //Console.Write(msg);  //vfprintf(stdout, msg, args);
-                    System.Diagnostics.Debug.Write(msg);
+                    System.Diagnostics.Debug.Write(string.Format(format, args));  //util::stream_format(std::cout, args);
 //#endif
                     break;
                 default:

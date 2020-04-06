@@ -233,7 +233,6 @@ namespace mame.ui
         std.vector<menu_item> m_items = new std.vector<menu_item>();      // array of items
 
         protected int top_line;           // main box top line
-        protected int skip_main_items;
         protected int m_visible_lines;    // main box visible lines
         protected int m_visible_items;    // number of visible items
 

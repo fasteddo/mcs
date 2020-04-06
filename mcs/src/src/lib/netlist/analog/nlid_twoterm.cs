@@ -179,7 +179,7 @@ namespace mame.netlist
             public override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
-                set_R(std.max(m_R.op(), exec().gmin()));
+                set_R(std.max(m_R.op, exec().gmin()));
             }
 
             //NETLIB_UPDATE_PARAMI();
@@ -187,7 +187,7 @@ namespace mame.netlist
             public override void update_param()
             {
                 solve_now();
-                set_R(std.max(m_R.op(), exec().gmin()));
+                set_R(std.max(m_R.op, exec().gmin()));
             }
 
             /* protect set_R ... it's a recipe to desaster when used to bypass the parameter */
@@ -243,12 +243,12 @@ namespace mame.netlist
             //NETLIB_RESETI();
             public override void reset()
             {
-                nl_double v = m_Dial.op();
-                if (m_DialIsLog.op())
+                nl_double v = m_Dial.op;
+                if (m_DialIsLog.op)
                     v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
 
-                m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
-                m_R2.set_R(std.max(m_R.op() * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
+                m_R1.set_R(std.max(m_R.op * v, exec().gmin()));
+                m_R2.set_R(std.max(m_R.op * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
             }
 
             //NETLIB_UPDATE_PARAMI();
@@ -258,14 +258,14 @@ namespace mame.netlist
                 m_R1.solve_now();
                 m_R2.solve_now();
 
-                nl_double v = m_Dial.op();
-                if (m_DialIsLog.op())
+                nl_double v = m_Dial.op;
+                if (m_DialIsLog.op)
                     v = (std.exp(v) - 1.0) / (std.exp(1.0) - 1.0);
-                if (m_Reverse.op())
+                if (m_Reverse.op)
                     v = 1.0 - v;
 
-                m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
-                m_R2.set_R(std.max(m_R.op() * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
+                m_R1.set_R(std.max(m_R.op * v, exec().gmin()));
+                m_R2.set_R(std.max(m_R.op * (1.0 - v), exec().gmin()));  //m_R2.set_R(std::max(m_R() * (plib::constants<nl_double>::one() - v), exec().gmin()));
             }
         }
 
@@ -316,8 +316,8 @@ namespace mame.netlist
             //NETLIB_UPDATE_TERMINALSI()
             public override void update_terminals()
             {
-                nl_double I = m_cap.Ieq(m_C.op(), deltaV());
-                nl_double G = m_cap.G(m_C.op());
+                nl_double I = m_cap.Ieq(m_C.op, deltaV());
+                nl_double G = m_cap.G(m_C.op);
                 set_mat( G, -G, -I,
                         -G,  G,  I);
             }

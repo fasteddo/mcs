@@ -171,7 +171,7 @@ namespace mame.util
                         m7z_file_impl result;
                         result = s_cache[cachenum];  //std::swap(s_cache[cachenum], result);
                         s_cache[cachenum] = null;
-                        osd_printf_verbose("un7z: found {0} in cache\n", filename.c_str());
+                        osd_printf_verbose("un7z: found {0} in cache\n", filename);
                         return result;
                     }
                 }
@@ -242,7 +242,7 @@ namespace mame.util
             if (err != osd_file.error.NONE)
                 return archive_file.error.FILE_ERROR;
 
-            //global.osd_printf_verbose("un7z: opened archive file {0}\n", m_filename.c_str());
+            //global.osd_printf_verbose("un7z: opened archive file {0}\n", m_filename);
 
 #if false
             CrcGenerateTable(); // FIXME: doesn't belong here - it should be called once statically
@@ -252,7 +252,7 @@ namespace mame.util
             SRes const res = SzArEx_Open(&m_db, &m_look_stream.s, &m_alloc_imp, &m_alloc_temp_imp);
             if (res != SZ_OK)
             {
-                osd_printf_error("un7z: error opening %s as 7z archive (%d)\n", m_filename.c_str(), int(res));
+                osd_printf_error("un7z: error opening %s as 7z archive (%d)\n", m_filename, int(res));
                 switch (res)
                 {
                 case SZ_ERROR_UNSUPPORTED:  return archive_file.error.UNSUPPORTED;
@@ -299,7 +299,7 @@ namespace mame.util
             // if we don't have enough buffer, error
             if (length < m_curr_length)
             {
-                osd_printf_error("un7z: buffer too small to decompress %s from %s\n", m_curr_name.c_str(), m_filename.c_str());
+                osd_printf_error("un7z: buffer too small to decompress %s from %s\n", m_curr_name, m_filename);
                 return archive_file::error::BUFFER_TOO_SMALL;
             }
 
@@ -310,10 +310,10 @@ namespace mame.util
                 osd_file::error const err = osd_file::open(m_filename, OPEN_FLAG_READ, m_archive_stream.osdfile, m_archive_stream.length);
                 if (err != osd_file::error::NONE)
                 {
-                    osd_printf_error("un7z: error reopening archive file %s (%d)\n", m_filename.c_str(), int(err));
+                    osd_printf_error("un7z: error reopening archive file %s (%d)\n", m_filename, int(err));
                     return archive_file::error::FILE_ERROR;
                 }
-                osd_printf_verbose("un7z: reopened archive file %s\n", m_filename.c_str());
+                osd_printf_verbose("un7z: reopened archive file %s\n", m_filename);
             }
 
             std::size_t offset(0);
@@ -325,7 +325,7 @@ namespace mame.util
                     &m_alloc_imp, &m_alloc_temp_imp);                   // allocator helpers
             if (res != SZ_OK)
             {
-                osd_printf_error("un7z: error decompressing %s from %s (%d)\n", m_curr_name.c_str(), m_filename.c_str(), int(res));
+                osd_printf_error("un7z: error decompressing %s from %s (%d)\n", m_curr_name, m_filename, int(res));
                 switch (res)
                 {
                 case SZ_ERROR_UNSUPPORTED:  return archive_file::error::UNSUPPORTED;

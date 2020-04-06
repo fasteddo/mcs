@@ -1141,6 +1141,9 @@ namespace mame
             foreach (var stream in m_stream_list)
                 stream.apply_sample_rate_changes();
 
+            // notify that new samples have been generated
+            emulator_info.sound_hook();
+
 
             profiler_global.g_profiler.stop();
         }

@@ -33,24 +33,7 @@ namespace mame.netlist
             logic_input_t m_fb_step;
             logic_output_t m_Q_step;
 
-            param_double_t m_freq;
-            param_double_t m_gs_sor;
-            param_str_t m_method;
-            param_double_t m_accuracy;
-            param_int_t m_gs_loops;
-            param_double_t m_gmin;
-            param_logic_t  m_pivot;
-            param_int_t m_nr_loops;
-            param_double_t m_nr_recalc_delay;
-            param_int_t m_parallel;
-            param_logic_t  m_dynamic_ts;
-            param_double_t m_dynamic_lte;
-            param_double_t m_dynamic_min_ts;
-
-            param_logic_t m_use_gabs;
-            param_logic_t m_use_linear_prediction;
-
-            std.vector<matrix_solver_t> m_mat_solvers;  //std::vector<poolptr<matrix_solver_t>> m_mat_solvers;
+            std.vector<matrix_solver_t> m_mat_solvers;  //std::vector<plib::unique_ptr<matrix_solver_t>> m_mat_solvers;
             std.vector<matrix_solver_t> m_mat_solvers_all = new std.vector<matrix_solver_t>();  //std::vector<std::unique_ptr<matrix_solver_t>> m_mat_solvers;
             std.vector<matrix_solver_t> m_mat_solvers_timestepping = new std.vector<matrix_solver_t>();  //std::vector<matrix_solver_t *> m_mat_solvers_timestepping;
 
@@ -65,31 +48,7 @@ namespace mame.netlist
             {
                 m_fb_step = new logic_input_t(this, "FB_step");
                 m_Q_step = new logic_output_t(this, "Q_step");
-                m_freq = new param_double_t(this, "FREQ", 48000.0);
-
-                /* iteration parameters */
-                m_gs_sor = new param_double_t(this, "SOR_FACTOR", 1.059);
-                m_method = new param_str_t(this, "METHOD", "MAT_CR");
-                m_accuracy = new param_double_t(this, "ACCURACY", 1e-7);
-                m_gs_loops = new param_int_t(this, "GS_LOOPS", 9);              // Gauss-Seidel loops
-
-                /* general parameters */
-                m_gmin = new param_double_t(this, "GMIN", 1e-9);
-                m_pivot = new param_logic_t(this, "PIVOT", false);                    // use pivoting - on supported solvers
-                m_nr_loops = new param_int_t(this, "NR_LOOPS", 250);            // Newton-Raphson loops
-                m_nr_recalc_delay = new param_double_t(this, "NR_RECALC_DELAY", netlist_time.quantum().as_double());  // Delay to next solve attempt if nr loops exceeded
-                m_parallel = new param_int_t(this, "PARALLEL", 0);
-
-                /* automatic time step */
-                m_dynamic_ts = new param_logic_t(this, "DYNAMIC_TS", false);
-                m_dynamic_lte = new param_double_t(this, "DYNAMIC_LTE", 1e-5);                     // diff/timestep
-                m_dynamic_min_ts = new param_double_t(this, "DYNAMIC_MIN_TIMESTEP", 1e-6);   // nl_double timestep resolution
-
-                /* special */
-                m_use_gabs = new param_logic_t(this, "USE_GABS", true);
-                m_use_linear_prediction = new param_logic_t(this, "USE_LINEAR_PREDICTION", false); // // savings are eaten up by effort
-
-                m_params = new solver_parameters_t();
+                m_params = new solver_parameters_t(this);
 
 
                 // internal staff
@@ -100,34 +59,6 @@ namespace mame.netlist
 
             public void post_start()
             {
-                m_params.m_pivot = m_pivot.op();
-                m_params.m_accuracy = m_accuracy.op();
-                /* FIXME: Throw when negative */
-                m_params.m_gs_loops = (UInt32)m_gs_loops.op();
-                m_params.m_nr_loops = (UInt32)m_nr_loops.op();
-                m_params.m_nr_recalc_delay = netlist_time.from_double(m_nr_recalc_delay.op());
-                m_params.m_dynamic_lte = m_dynamic_lte.op();
-                m_params.m_gs_sor = m_gs_sor.op();
-
-                m_params.m_min_timestep = m_dynamic_min_ts.op();
-                m_params.m_dynamic_ts = (m_dynamic_ts.op() == true ? true : false);
-                m_params.m_max_timestep = netlist_time.from_double(1.0 / m_freq.op()).as_double();
-
-                m_params.m_use_gabs = m_use_gabs.op();
-                m_params.m_use_linear_prediction = m_use_linear_prediction.op();
-
-
-                if (m_params.m_dynamic_ts)
-                {
-                    m_params.m_max_timestep *= 1;//NL_FCONST(1000.0);
-                }
-                else
-                {
-                    m_params.m_min_timestep = m_params.m_max_timestep;
-                }
-
-                //m_params.m_max_timestep = std::max(m_params.m_max_timestep, m_params.m_max_timestep::)
-
                 log().verbose.op("Scanning net groups ...");
                 // determine net groups
 
@@ -145,15 +76,15 @@ namespace mame.netlist
 
                     switch (net_count)
                     {
-#if true
                         case 1:
                             throw new emu_unimplemented();
-                            ms = new matrix_solver_direct1_t(state(), sname, m_params);  //ms = pool().make_poolptr<matrix_solver_direct1_t<double>>(state(), sname, &m_params);
+                            ms = new matrix_solver_direct1_t(state(), sname, m_params);  //ms = plib::make_unique<matrix_solver_direct1_t<double>>(state(), sname, &m_params);
                             break;
                         case 2:
                             throw new emu_unimplemented();
-                            ms = new matrix_solver_direct2_t(state(), sname, m_params);  //ms = pool().make_poolptr<matrix_solver_direct2_t<double>>(state(), sname, &m_params);
+                            ms = new matrix_solver_direct2_t(state(), sname, m_params);  //ms = plib::make_unique<matrix_solver_direct2_t<double>>(state(), sname, &m_params);
                             break;
+#if true
 #if false
                         case 3:
                             ms = create_solver<double, 3>(3, sname);
@@ -179,6 +110,7 @@ namespace mame.netlist
                         case 10:
                             ms = create_solver<double, 10>(10, sname);
                             break;
+#if false
                         case 11:
                             ms = create_solver<double, 11>(11, sname);
                             break;
@@ -201,14 +133,18 @@ namespace mame.netlist
                             ms = create_solver<double, 49>(49, sname);
                             break;
 #endif
+#endif
 #if false
-                        case 87:
-                            ms = create_solver<87,87>(87, sname);
+#if true
+                        case 86:
+                            ms = create_solver<double,86>(86, sname);
                             break;
+#endif
 #endif
 #endif
                         default:
                             throw new emu_unimplemented();
+#if false
                             log().info.op(nl_errstr_global.MI_NO_SPECIFIC_SOLVER(net_count));
                             if (net_count <= 8)
                             {
@@ -222,22 +158,28 @@ namespace mame.netlist
                             {
                                 ms = create_solver/*<double, -32>*/(-32, net_count, sname);
                             }
-                            else
-                                if (net_count <= 64)
+                            else if (net_count <= 64)
                             {
                                 ms = create_solver/*<double, -64>*/(-64, net_count, sname);
                             }
-                            else
-                                if (net_count <= 128)
+                            else if (net_count <= 128)
                             {
                                 ms = create_solver/*<double, -128>*/(-128, net_count, sname);
                             }
+                            else if (net_count <= 256)
+                            {
+                                ms = create_solver/*<double, -256>*/(-256, net_count, sname);
+                            }
+                            else if (net_count <= 512)
+                            {
+                                ms = create_solver/*<double, -512>*/(-512, net_count, sname);
+                            }
                             else
                             {
-                                log().fatal.op(nl_errstr_global.MF_NETGROUP_SIZE_EXCEEDED_1(128));
-                                return; /* tease compilers */
+                                ms = create_solver/*<double, 0>*/(0, net_count, sname);
                             }
                             break;
+#endif
                     }
 
                     // FIXME ...
@@ -273,7 +215,7 @@ namespace mame.netlist
             }
 
 
-            public nl_double gmin() { return m_gmin.op(); }
+            public nl_double gmin() { return m_params.m_gmin.op; }
 
 
             //void create_solver_code(std::map<pstring, pstring> &mp);
@@ -282,7 +224,7 @@ namespace mame.netlist
             //NETLIB_UPDATE(solver)
             protected override void update()
             {
-                if (m_params.m_dynamic_ts)
+                if (m_params.m_dynamic_ts.op)
                     return;
 
                 netlist_time now = exec().time();
@@ -290,7 +232,7 @@ namespace mame.netlist
                 /* FIXME: Needs a more elegant solution */
                 bool force_solve = (now < netlist_time.from_double(2 * m_params.m_max_timestep));
 
-                int nthreads = std.min(m_parallel.op(), plib.omp.pomp_global.get_max_threads());
+                int nthreads = std.min(m_params.m_parallel.op, plib.omp.pomp_global.get_max_threads());
 
                 std.vector<matrix_solver_t> solvers = force_solve ? m_mat_solvers_all : m_mat_solvers_timestepping;
 
@@ -339,53 +281,35 @@ namespace mame.netlist
 
 
             //template <typename FT, int SIZE>
-            matrix_solver_t create_solver(int SIZE, UInt32 size, string solvername)  //poolptr<matrix_solver_t> create_solver(std::size_t size, const pstring &solvername);
+            matrix_solver_t create_solver(int SIZE, UInt32 size, string solvername)  //plib::unique_ptr<matrix_solver_t> create_solver(std::size_t size, const pstring &solvername);
             {
-                if (m_method.op() == "SOR_MAT")
+                switch (m_params.m_method.op)
                 {
-                    throw new emu_unimplemented();
-                }
-                else if (m_method.op() == "MAT_CR")
-                {
-                    if (size > 0) // GCR always outperforms MAT solver
-                    {
-                        return new matrix_solver_GCR_t(SIZE, state(), solvername, m_params, size);  //return create_it<matrix_solver_SOR_mat_t<FT, SIZE>>(state(), solvername, m_params, size);
-                    }
-                    else
-                    {
+                    case matrix_type_e.MAT_CR:
+                        if (size > 0) // GCR always outperforms MAT solver
+                        {
+                            return new matrix_solver_GCR_t(SIZE, state(), solvername, m_params, size);  //return create_it<matrix_solver_SOR_mat_t<FT, SIZE>>(state(), solvername, m_params, size);
+                        }
+                        else
+                        {
+                            throw new emu_unimplemented();
+                        }
+                    case matrix_type_e.SOR_MAT:
                         throw new emu_unimplemented();
-                    }
+                    case matrix_type_e.MAT:
+                        throw new emu_unimplemented();
+                    case matrix_type_e.SM:
+                        throw new emu_unimplemented();
+                    case matrix_type_e.W:
+                        throw new emu_unimplemented();
+                    case matrix_type_e.SOR:
+                        throw new emu_unimplemented();
+                    case matrix_type_e.GMRES:
+                        throw new emu_unimplemented();
                 }
-                else if (m_method.op() == "MAT")
-                {
-                    throw new emu_unimplemented();
-                }
-                else if (m_method.op() == "SM")
-                {
-                    throw new emu_unimplemented();
-                }
-                else if (m_method.op() == "W")
-                {
-                    throw new emu_unimplemented();
-                }
-                else if (m_method.op() == "SOR")
-                {
-                    throw new emu_unimplemented();
-                }
-                else if (m_method.op() == "GMRES")
-                {
-                    throw new emu_unimplemented();
-                }
-                else
-                {
-                    log().fatal.op(nl_errstr_global.MF_UNKNOWN_SOLVER_TYPE(m_method.op()));
-                    return null;
-                }
+
+                return null;  //return plib::unique_ptr<matrix_solver_t>();
             }
-
-
-            //template <typename FT, int SIZE>
-            //poolptr<matrix_solver_t> create_solver_x(std::size_t size, const pstring &solvername);
         }
 
 

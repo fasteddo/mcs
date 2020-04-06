@@ -212,7 +212,11 @@ namespace mame
                 LOGSETUP("I8257 Command Register: {0}\n", m_transfer_mode);
             }
 
-            trigger(1);
+            if ((m_transfer_mode & m_request & 0x0f) != 0)
+            {
+                machine().scheduler().eat_all_cycles();
+                trigger(1);
+            }
         }
 
 
@@ -315,7 +319,6 @@ namespace mame
             m_state = STATE_SI;
             m_transfer_mode = 0;
             m_status = 0;
-            m_request = 0;
             m_msb = 0;
             m_current_channel = -1;
             m_last_channel = 3;
@@ -351,8 +354,8 @@ namespace mame
                     }
                     else
                     {
-                        suspend_until_trigger(1, true);
                         m_icountRef.i = 0;
+                        suspend_until_trigger(1, true);
                     }
                     break;
 
@@ -365,8 +368,8 @@ namespace mame
                     }
                     else
                     {
-                        suspend_until_trigger(1, true);
                         m_icountRef.i = 0;
+                        suspend_until_trigger(1, true);
                     }
                     break;
 
@@ -388,11 +391,25 @@ namespace mame
                         dma_write();
                     }
 
-                    m_state = m_ready != 0 ? STATE_S4 : STATE_SW;
+                    if (m_ready != 0)
+                    {
+                        m_state = STATE_S4;
+                        if (m_channel[m_current_channel].m_count == 0)
+                            set_tc(1);
+                    }
+                    else
+                    {
+                        m_state = STATE_SW;
+                    }
                     break;
 
                 case STATE_SW:
-                    m_state = m_ready != 0 ? STATE_S4 : STATE_SW;
+                    if (m_ready != 0)
+                    {
+                        m_state = STATE_S4;
+                        if (m_channel[m_current_channel].m_count == 0)
+                            set_tc(1);
+                    }
                     break;
 
                 case STATE_S4:
@@ -403,7 +420,7 @@ namespace mame
 
                     advance();
 
-                    if (next_channel())
+                    if (m_hack != 0 && next_channel())
                     {
                         m_state = STATE_S1;
                     }
@@ -426,6 +443,7 @@ namespace mame
         void dma_request(int channel, int state)
         {
             LOG("I8257 Channel {0} DMA Request: {1}\n", channel, state);
+            LOG("I8257 Channel {0} DMA Request: {2} ({3}abled)\n", channel, state, MODE_CHAN_ENABLE(channel) ? "en" : "dis");
 
             if (state != 0)
                 m_request |= (uint8_t)(1 << channel);
@@ -450,6 +468,7 @@ namespace mame
             {
                 m_out_hrq_cb.op(state);
                 m_hreq = state;
+                m_diexec.abort_timeslice();
             }
         }
 
@@ -518,13 +537,13 @@ namespace mame
         void advance()
         {
             LOG("{0}\n", "advance");
-            bool tc = (m_channel[m_current_channel].m_count == 0);
+            bool tc = m_tc;
             bool al = (MODE_AUTOLOAD && (m_current_channel == 2));
 
+            set_tc(0);
             if (tc)
             {
                 m_status |= (uint8_t)(1 << m_current_channel);
-                set_tc(1);
 
                 if (al)
                 {

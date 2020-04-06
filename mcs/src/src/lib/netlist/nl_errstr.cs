@@ -67,6 +67,7 @@ namespace mame.netlist
         public static string MF_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1(params object [] args) { return PERRMSGV(1, "You must pass an equal number of pins to DIPPINS {0}", args); }
         public static string MF_UNKNOWN_OBJECT_TYPE_1(params object [] args)        { return PERRMSGV(1, "Unknown object type {0}", args); }
         public static string MF_INVALID_NUMBER_CONVERSION_1_2(params object [] args) { return PERRMSGV(2, "Invalid number conversion {0} : {1}", args); }
+        public static string MF_INVALID_ENUM_CONVERSION_1_2(params object [] args)  { return PERRMSGV(2, "Invalid element found {0} : {1}", args); }
         public static string MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(params object [] args) { return PERRMSGV(1, "Error adding parameter {0} to parameter list", args); }
         public static string MF_ADDING_1_2_TO_TERMINAL_LIST(params object [] args)  { return PERRMSGV(2, "Error adding {0} {1} to terminal list", args); }
         public static string MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL(params object [] args) { return PERRMSGV(0, "You must pass at least 2 terminals to NET_C", args); }
@@ -122,9 +123,6 @@ namespace mame.netlist
 
         // nld_solver.cpp
 
-        public static string MF_UNKNOWN_SOLVER_TYPE(params object [] args) { return PERRMSGV(1, "Unknown solver type: {0}", args); }
-        public static string MF_NETGROUP_SIZE_EXCEEDED_1(params object [] args) { return PERRMSGV(1, "Encountered netgroup with > {0} nets", args); }
-
         public static string MI_NO_SPECIFIC_SOLVER(params object [] args) { return PERRMSGV(1, "No specific solver found for netlist of size {0}", args); }
 
         // nld_mm5837.cpp
@@ -139,5 +137,9 @@ namespace mame.netlist
         // nld_mosfet.cpp
 
         //PERRMSGV(MW_MOSFET_THRESHOLD_VOLTAGE,           1, "Mosfet: Threshold voltage not specified for {1}")
+
+        // nl_tool.cpp
+
+        //PERRMSGV(MF_FILE_OPEN_ERROR,                    1, "Error opening file: {1}")
     }
 }

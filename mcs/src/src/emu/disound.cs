@@ -275,7 +275,7 @@ namespace mame
                 // find a device with the requested tag
                 device_t target = route.m_base.get().subdevice(route.m_target.c_str());
                 if (target == null)
-                    osd_printf_error("Attempting to route sound to non-existent device '{0}'\n", route.m_base.get().subtag(route.m_target.c_str()).c_str());
+                    osd_printf_error("Attempting to route sound to non-existent device '{0}'\n", route.m_base.get().subtag(route.m_target.c_str()));
 
                 // if it's not a speaker or a sound device, error
                 device_sound_interface sound;

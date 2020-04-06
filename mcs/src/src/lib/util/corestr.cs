@@ -107,11 +107,16 @@ namespace mame
         public static bool core_iswildstr(string sp) { throw new emu_unimplemented(); }
 
 
-        //int strcatvprintf(std::string &str, const char *format, va_list args);
-
         //void strdelchr(std::string& str, char chr);
         //void strreplacechr(std::string& str, char ch, char newch);
-        //std::string &strtrimspace(std::string& str);
+
+
+        public static string strtrimspace(string str)
+        {
+            return str.Trim();  //return internal_strtrimspace(str, false);
+        }
+
+
         //std::string &strtrimrightspace(std::string& str);
         //std::string &strmakeupper(std::string& str);
         //std::string &strmakelower(std::string& str);
