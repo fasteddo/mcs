@@ -122,13 +122,8 @@ namespace mame
                 samples_this_update = numsamples;
 
                 // reset the mixing streams
-                //memset(leftmix, 0, samples_this_update * sizeof(*leftmix));
-                //memset(rightmix, 0, samples_this_update * sizeof(*rightmix));
-                for (int i = 0; i < samples_this_update; i++)
-                {
-                    leftmix[i] = 0;
-                    rightmix[i] = 0;
-                }
+                std.fill_n(leftmix, samples_this_update, 0);
+                std.fill_n(rightmix, samples_this_update, 0);
             }
 
             assert(samples_this_update == numsamples);

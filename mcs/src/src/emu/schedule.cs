@@ -236,34 +236,6 @@ namespace mame
         {
             //throw new emu_unimplemented();
 #if false
-            // determine our instance number and name
-            int index = 0;
-            astring name;
-
-            // for non-device timers, it is an index based on the callback function name
-            if (m_device == NULL)
-            {
-                name = m_callback.name();
-                for (emu_timer *curtimer = machine().scheduler().first_timer(); curtimer != NULL; curtimer = curtimer->next())
-                    if (!curtimer->m_temporary && curtimer->m_device == NULL && strcmp(curtimer->m_callback.name(), m_callback.name()) == 0)
-                        index++;
-            }
-
-            // for device timers, it is an index based on the device and timer ID
-            else
-            {
-                name.printf("%s/%d", m_device->tag(), m_id);
-                for (emu_timer *curtimer = machine().scheduler().first_timer(); curtimer != NULL; curtimer = curtimer->next())
-                    if (!curtimer->m_temporary && curtimer->m_device != NULL && curtimer->m_device == m_device && curtimer->m_id == m_id)
-                        index++;
-            }
-
-            // save the bits
-            machine().save().save_item("timer", name, index, NAME(m_param));
-            machine().save().save_item("timer", name, index, NAME(m_enabled));
-            machine().save().save_item("timer", name, index, NAME(m_period));
-            machine().save().save_item("timer", name, index, NAME(m_start));
-            machine().save().save_item("timer", name, index, NAME(m_expire));
 #endif
         }
 

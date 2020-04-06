@@ -52,7 +52,7 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            m_list_type(SOFTWARE_LIST_ORIGINAL_SYSTEM),
+            m_list_type(softlist_type::ORIGINAL_SYSTEM),
             m_filter(nullptr),
             m_parsed(false),
             m_file(mconfig.options().hash_path(), OPEN_FLAG_READ),
@@ -63,14 +63,16 @@ namespace mame
 
         // inline configuration helpers
         //software_list_device &set_type(const char *list, softlist_type list_type) { m_list_name.assign(list); m_list_type = list_type; return *this; }
-        //software_list_device &set_original(const char *list) { return set_type(list, SOFTWARE_LIST_ORIGINAL_SYSTEM); }
-        //software_list_device &set_compatible(const char *list) { return set_type(list, SOFTWARE_LIST_COMPATIBLE_SYSTEM); }
+        //software_list_device &set_original(const char *list) { return set_type(list, softlist_type::ORIGINAL_SYSTEM); }
+        //software_list_device &set_compatible(const char *list) { return set_type(list, softlist_type::COMPATIBLE_SYSTEM); }
         //software_list_device &set_filter(const char *filter) { m_filter = filter; return *this; }
 
 
         // getters
         public string list_name() { return m_list_name; }
         //softlist_type list_type() const { return m_list_type; }
+        //bool is_original() const { return softlist_type::ORIGINAL_SYSTEM == m_list_type; }
+        //bool is_compatible() const { return softlist_type::COMPATIBLE_SYSTEM == m_list_type; }
         //const char *filter() const { return m_filter; }
         //const char *filename() { return m_file.filename(); }
 

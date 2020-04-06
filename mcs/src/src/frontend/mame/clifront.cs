@@ -41,7 +41,7 @@ namespace mame
         const string CLICOMMAND_ROMIDENT            = "romident";
         const string CLICOMMAND_LISTDEVICES         = "listdevices";
         const string CLICOMMAND_LISTSLOTS           = "listslots";
-        const string CLICOMMAND_LISTMEDIA           = "listmedia";     // needed by MESS
+        const string CLICOMMAND_LISTMEDIA           = "listmedia";
         const string CLICOMMAND_LISTSOFTWARE        = "listsoftware";
         const string CLICOMMAND_VERIFYSOFTWARE      = "verifysoftware";
         const string CLICOMMAND_GETSOFTLIST         = "getsoftlist";
@@ -329,8 +329,8 @@ namespace mame
                                 {
                                     // if we have a CRC, display it
                                     uint32_t crc;
-                                    if (new util.hash_collection(rom[romOffset].hashdata).crc(out crc))
-                                        osd_printf_info("{0} {1}\t{2}\t{3}\n", crc, rom[romOffset].name, device.shortname(), device.name());  //"%08x %-32s\t%-16s\t%s\n"
+                                    if (new util.hash_collection(rom[romOffset].hashdata_).crc(out crc))
+                                        osd_printf_info("{0} {1}\t{2}\t{3}\n", crc, rom[romOffset].name_, device.shortname(), device.name());  //"%08x %-32s\t%-16s\t%s\n"
                                 }
                             }
                         }
@@ -890,68 +890,6 @@ namespace mame
 
             throw new emu_unimplemented();
 #if false
-            media_auditor auditor = new media_auditor(drivlist);
-            while (drivlist.next())
-            {
-                matched++;
-
-                foreach (software_list_device swlistdev in new software_list_device_iterator(drivlist.config().root_device()))
-                {
-                    if (swlistdev.list_type() == softlist_type.SOFTWARE_LIST_ORIGINAL_SYSTEM)
-                    {
-                        if (list_map.add(swlistdev.list_name(), 0, false))  // != TMERR_DUPLICATE)
-                        {
-                            if (!swlistdev.get_info().empty())
-                            {
-                                nrlists++;
-                                foreach (software_info swinfo in swlistdev.get_info())
-                                {
-                                    media_auditor.summary summary = auditor.audit_software(swlistdev.list_name(), swinfo, media_auditor.AUDIT_VALIDATE_FAST);
-
-                                    // if not found, count that and leave it at that
-                                    if (summary == media_auditor.summary.NOTFOUND)
-                                    {
-                                        notfound++;
-                                    }
-                                    // else display information about what we discovered
-                                    else if(summary != media_auditor.summary.NONE_NEEDED)
-                                    {
-                                        // output the summary of the audit
-                                        string summary_string;
-                                        auditor.summarize(swinfo.shortname(), out summary_string);
-                                        global.osd_printf_info("{0}", summary_string);
-
-                                        // display information about what we discovered
-                                        global.osd_printf_info("romset {0}:{1} ", swlistdev.list_name(), swinfo.shortname());
-
-                                        // switch off of the result
-                                        switch (summary)
-                                        {
-                                            case media_auditor.summary.INCORRECT:
-                                                global.osd_printf_info("is bad\n");
-                                                incorrect++;
-                                                break;
-
-                                            case media_auditor.summary.CORRECT:
-                                                global.osd_printf_info("is good\n");
-                                                correct++;
-                                                break;
-
-                                            case media_auditor.summary.BEST_AVAILABLE:
-                                                global.osd_printf_info("is best available\n");
-                                                correct++;
-                                                break;
-
-                                            default:
-                                                break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 #endif
 
             // clear out any cached files
@@ -1338,7 +1276,7 @@ namespace mame
         }
 
 
-        //void output_single_softlist(FILE *out, software_list_device &swlist);
+        //void output_single_softlist(std::ostream &out, software_list_device &swlist);
 
 
         void start_execution(mame_machine_manager manager, std.vector<string> args)

@@ -115,29 +115,29 @@ namespace mame
     }
 
 
-    public interface simple_list_item<_ElementType>
+    public interface simple_list_item<ElementType>
     {
-        _ElementType next();
-        void m_next_set(_ElementType obj);
-        _ElementType m_next_get();
+        ElementType next();
+        void m_next_set(ElementType obj);
+        ElementType m_next_get();
     }
 
 
     // ======================> simple_list
     // a simple_list is a singly-linked list whose 'next' pointer is owned
     // by the object
-    //template<class _ElementType>
-    public class simple_list<_ElementType> : IEnumerable<_ElementType> where _ElementType : simple_list_item<_ElementType>
+    //template<class ElementType>
+    public class simple_list<ElementType> : IEnumerable<ElementType> where ElementType : simple_list_item<ElementType>
     {
         public class auto_iterator
         {
             // private state
-            _ElementType m_current;
+            ElementType m_current;
 
             // construction/destruction
-            public auto_iterator(_ElementType ptr) { m_current = ptr; }
+            public auto_iterator(ElementType ptr) { m_current = ptr; }
 
-            public _ElementType current() { return m_current; }
+            public ElementType current() { return m_current; }
             public void advance() { m_current = m_current.next(); }
 
             // required operator overrides
@@ -149,9 +149,9 @@ namespace mame
 
 
         // internal state
-        _ElementType m_head;         // head of the singly-linked list
-        _ElementType m_tail;         // tail of the singly-linked list
-        int m_count;        // number of objects in the list
+        ElementType m_head = default;         // head of the singly-linked list
+        ElementType m_tail = default;         // tail of the singly-linked list
+        int m_count = 0;        // number of objects in the list
 
 
         // construction/destruction
@@ -160,7 +160,7 @@ namespace mame
 
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
-        public IEnumerator<_ElementType> GetEnumerator()
+        public IEnumerator<ElementType> GetEnumerator()
         {
             auto_iterator iter = new auto_iterator(m_head);
 
@@ -173,14 +173,14 @@ namespace mame
 
 
         // simple getters
-        public _ElementType first() { return m_head; }
-        public _ElementType last() { return m_tail; }
+        public ElementType first() { return m_head; }
+        public ElementType last() { return m_tail; }
         public int count() { return m_count; }
         public bool empty() { return count() == 0; }
 
         // range iterators
         public auto_iterator begin() { return new auto_iterator(m_head); }
-        public auto_iterator end() { return new auto_iterator(default(_ElementType)); }
+        public auto_iterator end() { return new auto_iterator(default); }
 
         // remove (free) all objects in the list, leaving an empty list
         public void reset()
@@ -190,7 +190,7 @@ namespace mame
         }
 
         // add the given object to the head of the list
-        public _ElementType prepend(_ElementType obj)
+        public ElementType prepend(ElementType obj)
         {
             obj.m_next_set(m_head);
             m_head = obj;
@@ -201,13 +201,13 @@ namespace mame
         }
 
         // add the given list to the head of the list
-        public void prepend_list(simple_list<_ElementType> list)
+        public void prepend_list(simple_list<ElementType> list)
         {
             int count = list.count();
             if (count == 0)
                 return;
-            _ElementType tail = list.last();
-            _ElementType head = list.detach_all();
+            ElementType tail = list.last();
+            ElementType head = list.detach_all();
             tail.m_next_set(m_head);
             m_head = head;
             if (m_tail == null)
@@ -216,9 +216,9 @@ namespace mame
         }
 
         // add the given object to the tail of the list
-        public _ElementType append(_ElementType obj)
+        public ElementType append(ElementType obj)
         {
-            obj.m_next_set(default(_ElementType));
+            obj.m_next_set(default);
             if (m_tail != null)
             {
                 m_tail.m_next_set(obj);
@@ -251,7 +251,7 @@ namespace mame
 #endif
 
         // insert the given object after a particular object (NULL means prepend)
-        public _ElementType insert_after(_ElementType obj, _ElementType insert_after)
+        public ElementType insert_after(ElementType obj, ElementType insert_after)
         {
             if (insert_after == null)
                 return prepend(obj);
@@ -265,12 +265,12 @@ namespace mame
         }
 
         // insert the given object before a particular object (NULL means append)
-        public _ElementType insert_before(_ElementType obj, _ElementType insert_before)
+        public ElementType insert_before(ElementType obj, ElementType insert_before)
         {
             if (insert_before == null)
                 return append(obj);
 
-            for (_ElementType curptr = m_head; curptr != null; curptr = curptr.m_next_get())
+            for (ElementType curptr = m_head; curptr != null; curptr = curptr.m_next_get())
             {
                 if (curptr.Equals(insert_before))
                 {
@@ -312,24 +312,24 @@ namespace mame
 #endif
 
         // detach the head item from the list, but don't free its memory
-        public _ElementType detach_head()
+        public ElementType detach_head()
         {
-            _ElementType result = m_head;
+            ElementType result = m_head;
             if (result != null)
             {
                 m_head = result.m_next_get();
                 m_count--;
                 if (m_head == null)
-                    m_tail = default(_ElementType);
+                    m_tail = default;
             }
             return result;
         }
 
         // detach the given item from the list, but don't free its memory
-        public _ElementType detach(_ElementType obj)
+        public ElementType detach(ElementType obj)
         {
-            _ElementType prev = default(_ElementType);
-            for (_ElementType cur = m_head; cur != null; prev = cur, cur = cur.m_next_get())
+            ElementType prev = default;
+            for (ElementType cur = m_head; cur != null; prev = cur, cur = cur.m_next_get())
             {
                 if (cur.Equals(obj))
                 {
@@ -349,37 +349,37 @@ namespace mame
         }
 
         // deatch the entire list, returning the head, but don't free memory
-        public _ElementType detach_all()
+        public ElementType detach_all()
         {
-            _ElementType result = m_head;
-            m_head = m_tail = default(_ElementType);
+            ElementType result = m_head;
+            m_head = m_tail = default;
             m_count = 0;
             return result;
         }
 
         // remove the given object and free its memory
-        public void remove(_ElementType obj)
+        public void remove(ElementType obj)
         {
             //global_free(&detach(object));
             detach(obj);
         }
 
         // find an object by index in the list
-        public _ElementType find(int index)
+        public ElementType find(int index)
         {
-            for (_ElementType cur = m_head; cur != null; cur = cur.m_next_get())
+            for (ElementType cur = m_head; cur != null; cur = cur.m_next_get())
             {
                 if (index-- == 0)
                     return cur;
             }
-            return default(_ElementType);
+            return default;
         }
 
         // return the index of the given object in the list
-        public int indexof(_ElementType obj)
+        public int indexof(ElementType obj)
         {
             int index = 0;
-            for (_ElementType cur = m_head; cur != null; cur = cur.m_next_get())
+            for (ElementType cur = m_head; cur != null; cur = cur.m_next_get())
             {
                 if (cur.Equals(obj))
                     return index;
@@ -397,51 +397,51 @@ namespace mame
     // can live in a simple_list without requiring the object to have a next
     // pointer
     //template<class _ObjectType>
-    public class simple_list_wrapper<_ObjectType> : simple_list_item<simple_list_wrapper<_ObjectType>> // where _ObjectType : simple_list_item<_ObjectType>
+    public class simple_list_wrapper<ObjectType> : simple_list_item<simple_list_wrapper<ObjectType>> // where _ObjectType : simple_list_item<_ObjectType>
     {
         // internal state
-        simple_list_wrapper<_ObjectType> m_next;
-        _ObjectType m_object;
+        simple_list_wrapper<ObjectType> m_next;
+        ObjectType m_object;
 
 
         // construction/destruction
-        public simple_list_wrapper(_ObjectType obj)
+        public simple_list_wrapper(ObjectType obj)
         {
             m_next = null;
             m_object = obj;
         }
 
         // operators
-        //operator _ObjectType *() { return m_object; }
-        //operator _ObjectType *() const { return m_object; }
-        //_ObjectType *operator *() { return m_object; }
-        //_ObjectType *operator *() const { return m_object; }
+        //operator ObjectType *() { return m_object; }
+        //operator ObjectType *() const { return m_object; }
+        //ObjectType *operator *() { return m_object; }
+        //ObjectType *operator *() const { return m_object; }
 
         // getters
-        public simple_list_wrapper<_ObjectType> next() { return m_next; }
-        public simple_list_wrapper<_ObjectType> m_next_get() { return m_next; }
-        public void m_next_set(simple_list_wrapper<_ObjectType> value) { m_next = value; }
+        public simple_list_wrapper<ObjectType> next() { return m_next; }
+        public simple_list_wrapper<ObjectType> m_next_get() { return m_next; }
+        public void m_next_set(simple_list_wrapper<ObjectType> value) { m_next = value; }
 
-        public _ObjectType obj() { return m_object; }
+        public ObjectType obj() { return m_object; }
     }
 
 
     // ======================> fixed_allocator
     // a fixed_allocator is a simple class that maintains a free pool of objects
-    //template<class _ItemType>
-    class fixed_allocator<T> where T : simple_list_item<T>, new()
+    //template<class ItemType>
+    class fixed_allocator<ItemType> where ItemType : simple_list_item<ItemType>, new()
     {
         // allocate a new item, either by recycling an old one, or by allocating a new one
-        public T alloc()
+        public ItemType alloc()
         {
-            return new T();
+            return new ItemType();
         }
 
         // reclaim an item by adding it to the free list
-        public void reclaim(T item) {}
+        public void reclaim(ItemType item) { }
 
         // reclaim all items from a list
-        public void reclaim_all(simple_list<T> _list) { _list.detach_all(); }
+        public void reclaim_all(simple_list<ItemType> _list) { _list.detach_all(); }
     }
 
 

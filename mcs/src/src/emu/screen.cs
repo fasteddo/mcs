@@ -656,7 +656,6 @@ namespace mame
 
             // reallocate bitmap(s) if necessary
             realloc_screen_bitmaps();
-            if (machine().input().code_pressed(input_global.KEYCODE_E)) osd_printf_warning("CONFIGURE\n");
 
             // compute timing parameters
             m_frame_period = frame_period;

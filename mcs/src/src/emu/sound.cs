@@ -439,7 +439,7 @@ namespace mame
                 for (int outputnum = 0; outputnum < m_output.size(); outputnum++)  // for (auto & elem : m_output)
                 {
                     var elem = m_output[outputnum];
-                    memset(elem.m_buffer, 0, (UInt32)m_max_samples_per_update);  //memset(&elem.m_buffer[0], 0, m_max_samples_per_update * sizeof(elem.m_buffer[0]));
+                    std.fill_n(elem.m_buffer, m_max_samples_per_update, 0);  //std::fill_n(&elem.m_buffer[0], m_max_samples_per_update, 0);
                 }
             }
         }
@@ -559,8 +559,8 @@ namespace mame
                 m_resample_bufalloc = (UInt32)bufsize;
 
                 // iterate over outputs and realloc their buffers
-                for (int inputnum = 0; inputnum < m_input.size(); inputnum++)
-                    m_input[inputnum].m_resample.resize((int)m_resample_bufalloc);
+                foreach (var elem in m_input)
+                    elem.m_resample.resize((int)m_resample_bufalloc, 0);
             }
         }
 
@@ -578,8 +578,8 @@ namespace mame
                 m_output_bufalloc = (UInt32)bufsize;
 
                 // iterate over outputs and realloc their buffers
-                for (int outputnum = 0; outputnum < m_output.size(); outputnum++)
-                    m_output[outputnum].m_buffer.resize((int)m_output_bufalloc);
+                foreach (var elem in m_output)
+                    elem.m_buffer.resize((int)m_output_bufalloc, 0);
             }
         }
 
@@ -592,11 +592,8 @@ namespace mame
             recompute_sample_rate_data();
 
             // make sure our output buffers are fully cleared
-            for (int outputnum = 0; outputnum < m_output.size(); outputnum++)  //for (auto & elem : m_output)
-            {
-                var elem = m_output[outputnum];
-                memset(elem.m_buffer, 0, m_output_bufalloc);  //memset(&elem.m_buffer[0], 0, m_output_bufalloc * sizeof(elem.m_buffer[0]));
-            }
+            foreach (var elem in m_output)
+                std.fill_n(elem.m_buffer, (int)m_output_bufalloc, 0);
 
             // recompute the sample indexes to make sense
             m_output_sampindex = m_attoseconds_per_sample != 0 ? (s32)(m_device.machine().sound().last_update().attoseconds() / m_attoseconds_per_sample) : 0;
@@ -663,7 +660,7 @@ namespace mame
             ListPointer<stream_sample_t> dest = new ListPointer<stream_sample_t>(input.m_resample);  // stream_sample_t *dest = input.m_resample;
             if (input.m_source == null || input.m_source.m_stream.m_attoseconds_per_sample == 0)
             {
-                memset(dest, 0, numsamples);  //memset(dest, 0, numsamples * sizeof(*dest));
+                std.fill_n(dest, (int)numsamples, 0);
                 return new ListPointer<stream_sample_t>(input.m_resample);
             }
 

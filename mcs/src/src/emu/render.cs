@@ -12,6 +12,7 @@ using environment = mame.emu.render.detail.layout_environment;
 using ioport_value = System.UInt32;
 using item_list = mame.std.list<mame.layout_view.item>;
 using make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;
+using render_screen_list = mame.std.list<mame.screen_device>;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -287,56 +288,6 @@ namespace mame
         public u64 old_id;             // previously allocated id, if applicable
         public ListBase<rgb_t> palette;  // const rgb_t *       palette;            // palette for PALETTE16 textures, bcg lookup table for RGB32/YUY16
         public u32 palette_length;
-    }
-
-
-    // ======================> render_screen_list
-    // a render_screen_list is a list of screen_devices
-    public class render_screen_list
-    {
-        // screen list item
-        class item : simple_list_item<item>
-        {
-            // state
-            item m_next = null;             // next screen in list
-            public screen_device m_screen;           // reference to screen device
-
-
-            // construction/destruction
-            public item(screen_device screen) { m_screen = screen; }
-
-            // getters
-            public item next() { return m_next; }
-            public item m_next_get() { return m_next; }
-            public void m_next_set(item value) { m_next = value; }
-        }
-
-
-        // internal state
-        simple_list<item> m_list = new simple_list<item>();
-
-
-        // getters
-        public int count() { return m_list.count(); }
-
-
-        // operations
-        public void add(screen_device screen) { m_list.append(new item(screen)); }
-        public void reset() { m_list.reset(); }
-
-
-        // query
-        public int contains(screen_device screen)
-        {
-            int count = 0;
-            for (item curitem = m_list.first(); curitem != null; curitem = curitem.next())
-            {
-                if (curitem.m_screen == screen)
-                    count++;
-            }
-
-            return count;
-        }
     }
 
 
@@ -1585,7 +1536,9 @@ namespace mame
     public partial class layout_view : global_object
     {
         //using environment = emu::render::detail::layout_environment;
+        //using element_map = std::unordered_map<std::string, layout_element>;
         //using group_map = std::unordered_map<std::string, layout_group>;
+        //using render_screen_list = std::list<std::reference_wrapper<screen_device>>;
         //using item_list = std::list<item>;
 
 
@@ -1690,11 +1643,15 @@ namespace mame
         //render_bounds bounds() { return m_bounds; }
         //render_bounds screen_bounds() { return m_scrbounds; }
         public render_screen_list screens() { return m_screens; }
+        public UInt32 screen_count() { return (UInt32)m_screens.size(); }
+
+        // rendlay.cs
+        //bool has_screen(screen_device screen) const;
 
         //
         public bool has_art() { return m_has_art; }
 
-        public float effective_aspect(render_layer_config config) { return (config.zoom_to_screen() && m_screens.count() != 0) ? m_scraspect : m_aspect; }
+        public float effective_aspect(render_layer_config config) { return (config.zoom_to_screen() && !m_screens.empty()) ? m_scraspect : m_aspect; }
 
 
         // operations
@@ -1770,9 +1727,6 @@ namespace mame
         // constants
         const int NUM_PRIMLISTS = 3;
         const int MAX_CLEAR_EXTENTS = 1000;
-
-
-        static render_screen_list s_empty_screen_list = new render_screen_list();
 
 
         // internal state
@@ -1908,7 +1862,7 @@ namespace mame
         public float max_update_rate() { return m_max_refresh; }
         public int orientation() { return m_orientation; }
         //render_layer_config layer_config() const { return m_layerconfig; }
-        //layout_view *current_view() const { return m_curview; }
+        public layout_view current_view() { return m_curview; }
         public int view() { return view_index(m_curview); }
         public bool hidden() { return ((m_flags & render_global.RENDER_CREATE_HIDDEN) != 0); }
 
@@ -2004,17 +1958,18 @@ namespace mame
                 {
                     int ourindex = index() % scrcount;
                     screen_device screen = iter.byindex(ourindex);
+                    assert(screen != null);
 
                     // find the first view with this screen and this screen only
                     for (view = view_by_index(viewindex = 0); view != null; view = view_by_index(++viewindex))
                     {
-                        render_screen_list viewscreens = view.screens();
-                        if (viewscreens.count() == 0)
+                        var viewscreens = view.screens();
+                        if (viewscreens.empty())
                         {
                             view = null;
                             break;
                         }
-                        else if (viewscreens.count() == viewscreens.contains(screen))
+                        else if (std.find_if(viewscreens, (scr) => { return scr.get() != screen; }) == null)  //else if (std::find_if(viewscreens.begin(), viewscreens.end(), [&screen](auto const &scr) { return &scr.get() != screen; }) == viewscreens.end())
                         {
                             break;
                         }
@@ -2026,13 +1981,12 @@ namespace mame
                 {
                     for (view = view_by_index(viewindex = 0); view != null; view = view_by_index(++viewindex))
                     {
-                        render_screen_list viewscreens = view.screens();
-                        if (viewscreens.count() >= scrcount)
+                        if (view.screen_count() >= scrcount)
                         {
                             bool screen_missing = false;
                             foreach (screen_device screen in iter)
                             {
-                                if (viewscreens.contains(screen) == 0)
+                                if (!view.has_screen(screen))
                                 {
                                     screen_missing = true;
                                     break;
@@ -2054,17 +2008,6 @@ namespace mame
         // view information
 
         //const char *view_name(int viewindex);
-
-        //-------------------------------------------------
-        //  render_target_get_view_screens - return a
-        //  bitmask of which screens are visible on a
-        //  given view
-        //-------------------------------------------------
-        public render_screen_list view_screens(int viewindex)
-        {
-            layout_view view = view_by_index(viewindex);
-            return view != null ? view.screens() : s_empty_screen_list;
-        }
 
 
         // bounds computations
@@ -2755,13 +2698,12 @@ namespace mame
                     int viewindex = 0;
                     for (layout_view view = view_by_index(viewindex); need_tiles && view != null; view = view_by_index(++viewindex))
                     {
-                        render_screen_list viewscreens = view.screens();
-                        if (viewscreens.count() >= screens.size())
+                        if (view.screen_count() >= screens.size())
                         {
                             bool screen_missing = false;
                             foreach (screen_device screen in iter)
                             {
-                                if (viewscreens.contains(screen) == 0)
+                                if (!view.has_screen(screen))
                                 {
                                     screen_missing = true;
                                     break;
@@ -3664,8 +3606,12 @@ namespace mame
             // iterate over all live targets and or together their screen masks
             foreach (render_target target in m_targetlist)
             {
-                if (!target.hidden() && target.view_screens(target.view()).contains(screen) != 0)
-                    return true;
+                if (!target.hidden())
+                {
+                    layout_view view = target.current_view();
+                    if (view != null && view.has_screen(screen))
+                        return true;
+                }
             }
 
             return false;

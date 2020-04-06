@@ -1052,11 +1052,9 @@ namespace mame
         protected static int memcmp<T>(ListPointer<T> ptr1, ListPointer<T> ptr2, UInt32 num) { return ptr1.compare(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
         protected static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { std.memcpy<T>(destination, source, num); }  //  void * destination, const void * source, size_t num );
         protected static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { std.memcpy<T>(destination, source, num); }  //  void * destination, const void * source, size_t num );
-        protected static void memset<T>(ListBase<T> destination, T value) { std.memset(destination, value, (UInt32)destination.Count); }
-        protected static void memset<T>(ListBase<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
+        protected static void memset<T>(IList<T> destination, T value) { std.memset(destination, value, (UInt32)destination.Count); }
+        protected static void memset<T>(IList<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
         protected static void memset<T>(ListPointer<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
-        protected static void memset<T>(T [] destination, T value) { std.memset(destination, value); }
-        protected static void memset<T>(T [] destination, T value, UInt32 num) { std.memset(destination, value, num); }
         protected static void memset<T>(T [,] destination, T value) { std.memset(destination, value); }
 
 
@@ -1070,8 +1068,10 @@ namespace mame
     public static class std
     {
         // c++ algorithm
-        public static void fill<T>(ListBase<T> destination, T value) { std.memset(destination, value); }
-        public static void fill<T>(T [] destination, T value) { std.memset(destination, value); }
+        public static void fill<T>(IList<T> destination, T value) { std.memset(destination, value); }
+        public static void fill_n<T>(IList<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
+        public static void fill_n<T>(ListPointer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
+        public static T find_if<T>(IEnumerable<T> list, Func<T, bool> pred) { foreach (var item in list) { if (pred(item)) return item; } return default;  }
         public static int max(int a, int b) { return Math.Max(a, b); }
         public static UInt32 max(UInt32 a, UInt32 b) { return Math.Max(a, b); }
         public static Int64 max(Int64 a, Int64 b) { return Math.Max(a, b); }
@@ -1109,11 +1109,9 @@ namespace mame
         // c++ cstring
         public static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
         public static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
-        public static void memset<T>(ListBase<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
-        public static void memset<T>(ListBase<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
+        public static void memset<T>(IList<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
+        public static void memset<T>(IList<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
         public static void memset<T>(ListPointer<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
-        public static void memset<T>(T [] destination, T value) { memset(destination, value, (UInt32)destination.Length); }
-        public static void memset<T>(T [] destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
         public static void memset<T>(T [,] destination, T value) { for (int i = 0; i < destination.GetLength(0); i++) for (int j = 0; j < destination.GetLength(1); j++) destination[i, j] = value; }
         public static int strchr(string str, char character) { return str.IndexOf(character); }
         public static int strcmp(string str1, string str2) { return string.Compare(str1, str2); }
@@ -1408,7 +1406,7 @@ namespace mame
 
 
     // this is a re-implementation of C# List so that it can be interchanged with RawBuffer
-    public class ListBase<T> : global_object, IEnumerable<T>//, ICollection<T>
+    public class ListBase<T> : global_object, IEnumerable<T>, IList<T>//, ICollection<T>
     {
         List<T> m_list;
 
@@ -1418,6 +1416,8 @@ namespace mame
         public ListBase(IEnumerable<T> collection) { m_list = new List<T>(collection); }
 
 
+        // IEnumerable
+
         public virtual IEnumerator<T> GetEnumerator() { return m_list.GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
@@ -1426,13 +1426,13 @@ namespace mame
 
         public virtual int Count { get { return m_list.Count; } }
         public virtual int Capacity { get { return m_list.Capacity; } set { m_list.Capacity = value; } }
-        //public virtual bool IsReadOnly { get; }
+        bool ICollection<T>.IsReadOnly { get { return ((ICollection<T>)m_list).IsReadOnly; } }
 
 
         public virtual void Add(T item) { m_list.Add(item); }
         public virtual void Clear() { m_list.Clear(); }
         public virtual bool Contains(T item) { return m_list.Contains(item); }
-        //public virtual void CopyTo(T[] array, int arrayIndex) { m_list.CopyTo(array, arrayIndex); }
+        public virtual void CopyTo(T[] array, int arrayIndex) { m_list.CopyTo(array, arrayIndex); }
         public virtual void CopyTo(int index, T[] array, int arrayIndex, int count) { m_list.CopyTo(index, array, arrayIndex, count); }
         public virtual T Find(Predicate<T> match) { return m_list.Find(match); }
         public virtual int IndexOf(T item, int index, int count) { return m_list.IndexOf(item, index, count); }
@@ -1725,7 +1725,7 @@ namespace mame
 
         public override bool Contains(byte item) { throw new emu_unimplemented(); }
 
-        //public override void CopyTo(T[] array, int arrayIndex) { m_list.CopyTo(array, arrayIndex); }
+        public override void CopyTo(byte[] array, int arrayIndex) { throw new emu_unimplemented(); }
 
         public override void CopyTo(int index, byte[] array, int arrayIndex, int count)
         {

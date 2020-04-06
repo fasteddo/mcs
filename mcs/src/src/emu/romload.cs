@@ -51,12 +51,12 @@ namespace mame
         public static bool ROMREGION_ISDISKDATA(rom_entry_interface r) { return ROMREGION_GETDATATYPE(r) == romentry_global.ROMREGION_DATATYPEDISK; }
 
         /* ----- per-ROM macros ----- */
-        public static string ROM_GETNAME(rom_entry_interface r) { return r.get_name(); }
+        public static string ROM_GETNAME(rom_entry_interface r) { return r.name(); }
         //#define ROM_SAFEGETNAME(r)          (ROMENTRY_ISFILL(r) ? "fill" : ROMENTRY_ISCOPY(r) ? "copy" : ROM_GETNAME(r))
         public static UInt32 ROM_GETOFFSET(rom_entry_interface r) { return r.get_offset(); }
         public static UInt32 ROM_GETLENGTH(rom_entry_interface r) { return r.get_length(); }
         public static UInt32 ROM_GETFLAGS(rom_entry_interface r) { return r.get_flags(); }
-        public static string ROM_GETHASHDATA(rom_entry_interface r) { return r.get_hashdata(); }
+        public static string ROM_GETHASHDATA(rom_entry_interface r) { return r.hashdata(); }
         public static bool ROM_ISOPTIONAL(rom_entry_interface r) { return (ROM_GETFLAGS(r) & romentry_global.ROM_OPTIONALMASK) == romentry_global.ROM_OPTIONAL; }
         public static UInt32 ROM_GETGROUPSIZE(rom_entry_interface r) { return ((ROM_GETFLAGS(r) & romentry_global.ROM_GROUPMASK) >> 8) + 1; }
         public static UInt32 ROM_GETSKIPCOUNT(rom_entry_interface r) {return (ROM_GETFLAGS(r) & romentry_global.ROM_SKIPMASK) >> 12; }
@@ -202,16 +202,6 @@ namespace mame
             return maxlength;
         }
 
-        /* return the appropriate name for a rom region */
-        /*-------------------------------------------------
-            rom_region_name - return the appropriate name
-            for a rom region
-        -------------------------------------------------*/
-        public static string rom_region_name(device_t device, rom_entry romp)
-        {
-            return device.subtag(ROM_GETNAME(romp));
-        }
-
 
         /* return pointer to the first per-game parameter */
         /*-------------------------------------------------
@@ -244,28 +234,6 @@ namespace mame
                 curIndex++;
 
             return ROMENTRY_ISEND(romp[curIndex]) ? null : romp[curIndex];
-        }
-
-
-        /* return the appropriate name for a per-game parameter */
-        /*-------------------------------------------------
-            rom_parameter_name - return the appropriate name
-            for a per-game parameter
-        -------------------------------------------------*/
-        public static string rom_parameter_name(device_t device, rom_entry romp)
-        {
-            return device.subtag(romp.get_name());
-        } 
-
-
-        /* return the value for a per-game parameter */
-        /*-------------------------------------------------
-            rom_parameter_name - return the value for a
-            per-game parameter
-        -------------------------------------------------*/
-        public static string rom_parameter_value(rom_entry romp)
-        {
-            return romp.get_hashdata();
         }
 
 
@@ -432,7 +400,7 @@ namespace mame
             //region &operator=(region const &) = delete;
 
 
-            public static string get_tag(tiny_rom_entry rom) { return rom.name; }
+            public static string get_tag(tiny_rom_entry rom) { return rom.name_; }
             //constexpr u32         get_length()      const { return length; }
             //constexpr u32         get_width()       const { return 8 << ((flags & ROMREGION_WIDTHMASK) >> 8); }
             //constexpr bool        is_littleendian() const { return (flags & ROMREGION_ENDIANMASK) == ROMREGION_LE; }
@@ -989,13 +957,8 @@ namespace mame
             region_post_process - post-process a region,
             byte swapping and inverting data as necessary
         -------------------------------------------------*/
-        void region_post_process(string rgntag, bool invert)
+        void region_post_process(memory_region region, bool invert)
         {
-            memory_region region = machine().root_device().memregion(rgntag);
-            ListBytesPointer base_;  //u8 *base;
-            int i;
-            int j;
-
             // do nothing if no region
             if (region == null)
                 return;
@@ -1007,10 +970,10 @@ namespace mame
             if (invert)
             {
                 LOG(("+ Inverting region\n"));
-                for (i = 0, base_ = new ListBytesPointer(region.base_()); i < region.bytes(); i++)  //for (i = 0, base = region->base(); i < region->bytes(); i++)
+                var base_ = new ListBytesPointer(region.base_());  //u8 *base_ = region->base_();
+                for (int i = 0; i < region.bytes(); i++)
                 {
-                    base_[0] ^= 0xff;  // *base_++ ^= 0xff;
-                    base_++;
+                    base_[0] ^= 0xff;  base_++;  //*base_++ ^= 0xff;
                 }
             }
 
@@ -1019,14 +982,14 @@ namespace mame
             {
                 LOG("+ Byte swapping region\n");
                 int datawidth = region.bytewidth();
-                for (i = 0, base_ = new ListBytesPointer(region.base_()); i < region.bytes(); i += datawidth)  //for (i = 0, base = region->base(); i < region->bytes(); i += datawidth)
+                var base_ = new ListBytesPointer(region.base_());  //u8 *base = region->base();
+                for (int i = 0; i < region.bytes(); i += datawidth)
                 {
                     RawBuffer temp = new RawBuffer(8);  //u8 temp[8];
                     memcpy(new ListBytesPointer(temp), base_, (UInt32)datawidth);  //memcpy(temp, base, datawidth);
-                    for (j = datawidth - 1; j >= 0; j--)
+                    for (int j = datawidth - 1; j >= 0; j--)
                     {
-                        base_[0] = temp[j];  //*base++ = temp[j];
-                        base_++;
+                        base_[0] = temp[j];  base_++;  //*base++ = temp[j];
                     }
                 }
             }
@@ -1606,8 +1569,6 @@ namespace mame
         -------------------------------------------------*/
         void process_region_list()
         {
-            string regiontag;
-
             /* loop until we hit the end */
             device_iterator deviter = new device_iterator(machine().root_device());
             foreach (device_t device in deviter)
@@ -1616,7 +1577,7 @@ namespace mame
                 {
                     u32 regionlength = romload_global.ROMREGION_GETLENGTH(region[0]);
 
-                    regiontag = romload_global.rom_region_name(device, region[0]);
+                    string regiontag = device.subtag(ROM_GETNAME(region[0]));
                     LOG("Processing region \"{0}\" (length={1})\n", regiontag, regionlength);
 
                     /* the first entry must be a region */
@@ -1666,8 +1627,7 @@ namespace mame
             {
                 for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
-                    regiontag = romload_global.rom_region_name(device, region[0]);
-                    region_post_process(regiontag, romload_global.ROMREGION_ISINVERTED(region[0]));
+                    region_post_process(device.memregion(ROM_GETNAME(region[0])), romload_global.ROMREGION_ISINVERTED(region[0]));
                 }
             }
 
@@ -1677,8 +1637,8 @@ namespace mame
                 int curIndex = 0;
                 for (rom_entry param = romload_global.rom_first_parameter(device, ref curIndex); param != null; param = romload_global.rom_next_parameter(device, ref curIndex))
                 {
-                    regiontag = romload_global.rom_parameter_name(device, param);
-                    machine().parameters().add(regiontag, romload_global.rom_parameter_value(param));
+                    string regiontag = device.subtag(param.name().c_str());
+                    machine().parameters().add(regiontag, param.hashdata());
                 }
             }
         }

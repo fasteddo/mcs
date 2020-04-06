@@ -1096,8 +1096,6 @@ namespace mame
                 m_debugger = new debugger_manager(this);
             }
 
-            m_render.resolve_tags();
-
             manager().create_custom(this);
 
             // resolve objects that are created by memory maps
@@ -1110,6 +1108,13 @@ namespace mame
             save().register_presave(presave_all_devices);
             start_all_devices();
             save().register_postload(postload_all_devices);
+
+            // save outputs created before start time
+            output().register_save();
+
+            m_render.resolve_tags();
+
+            // load cheat files
             manager().load_cheatfiles(this);
 
             // start recording movie if specified

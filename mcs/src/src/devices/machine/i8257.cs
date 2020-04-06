@@ -298,18 +298,12 @@ namespace mame
             save_item(m_status, "m_status");
             save_item(m_request, "m_request");
 
-            save_item(m_channel[0].m_address, "m_channel[0].m_address");
-            save_item(m_channel[0].m_count, "m_channel[0].m_count");
-            save_item(m_channel[0].m_mode, "m_channel[0].m_mode");
-            save_item(m_channel[1].m_address, "m_channel[1].m_address");
-            save_item(m_channel[1].m_count, "m_channel[1].m_count");
-            save_item(m_channel[1].m_mode, "m_channel[1].m_mode");
-            save_item(m_channel[2].m_address, "m_channel[2].m_address");
-            save_item(m_channel[2].m_count, "m_channel[2].m_count");
-            save_item(m_channel[2].m_mode, "m_channel[2].m_mode");
-            save_item(m_channel[3].m_address, "m_channel[3].m_address");
-            save_item(m_channel[3].m_count, "m_channel[3].m_count");
-            save_item(m_channel[3].m_mode, "m_channel[3].m_mode");
+            //throw new emu_unimplemented();
+#if false
+            save_item(STRUCT_MEMBER(m_channel, m_address));
+            save_item(STRUCT_MEMBER(m_channel, m_count));
+            save_item(STRUCT_MEMBER(m_channel, m_mode));
+#endif
         }
 
 

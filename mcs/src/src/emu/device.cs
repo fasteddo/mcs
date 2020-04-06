@@ -1082,12 +1082,12 @@ namespace mame
 
                             if (string.IsNullOrEmpty(defbios))
                                 twopass = true;
-                            else if (strcmp(rom.name, defbios) == 0)
+                            else if (strcmp(rom.name_, defbios) == 0)
                                 m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
                         }
                         else if (string.IsNullOrEmpty(defbios) && ROMENTRY_ISDEFAULT_BIOS(rom))
                         {
-                            defbios = rom.name;
+                            defbios = rom.name_;
                         }
                     }
                 }
@@ -1100,7 +1100,7 @@ namespace mame
                         int romIdx = 0;
                         for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])
                         {
-                            if (ROMENTRY_ISSYSTEM_BIOS(rom) && strcmp(rom.name, defbios) == 0)
+                            if (ROMENTRY_ISSYSTEM_BIOS(rom) && strcmp(rom.name_, defbios) == 0)
                                 m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
                         }
                     }
@@ -1241,8 +1241,28 @@ namespace mame
 
         // state saving interfaces
         //template<typename _ItemType>
-        public void save_item<ItemType>(ItemType value, string valname, int index = 0) { assert(m_save != null);  m_save.save_item(this, name(), tag(), index, value, valname); }
-        //template<typename ItemType> void save_pointer<ItemType>(ItemType value, string valname, UInt32 count, int index = 0) { /*assert(m_save != NULL);*/ m_save.save_pointer(this, name(), tag(), index, value, valname, count); }
+        public void save_item<ItemType>(ItemType value, string valname, int index = 0)
+        {
+            assert(m_save != null);
+            m_save.save_item(this, name(), tag(), index, value, valname);
+        }
+        //template<typename ItemType, typename StructType, typename ElementType>
+        //void ATTR_COLD save_item(ItemType &value, ElementType StructType::*element, const char *valname, int index = 0)
+        //{
+        //    assert(m_save);
+        //    m_save->save_item(this, name(), tag(), index, value, element, valname);
+        //}
+        //void ATTR_COLD save_pointer(ItemType &&value, const char *valname, u32 count, int index = 0)
+        //{
+        //    assert(m_save);
+        //    m_save->save_pointer(this, name(), tag(), index, std::forward<ItemType>(value), valname, count);
+        //}
+        //template<typename ItemType, typename StructType, typename ElementType>
+        //void ATTR_COLD save_pointer(ItemType &&value, ElementType StructType::*element, const char *valname, u32 count, int index = 0)
+        //{
+        //    assert(m_save);
+        //    m_save->save_pointer(this, name(), tag(), index, std::forward<ItemType>(value), element, valname, count);
+        //}
 
 
         // debugging

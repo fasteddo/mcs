@@ -482,7 +482,7 @@ namespace mame
             // clear output buffers
             for (int output = 0; output < m_outputs; output++)
             {
-                memset(outputs[output], 0, (UInt32)samples);  //memset(outputs[output], 0, samples * sizeof(outputs[0][0]));
+                std.fill_n(outputs[output], samples, 0);
             }
 
             // loop over samples

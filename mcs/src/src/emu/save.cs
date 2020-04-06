@@ -4,44 +4,53 @@
 using System;
 using System.Collections.Generic;
 
+using u8 = System.Byte;
+using u32 = System.UInt32;
+
 
 namespace mame
 {
     // callback delegate for presave/postload
+    //typedef named_delegate<void ()> save_prepost_delegate;
     public delegate void save_prepost_delegate();
-
-
-    class state_entry
-    {
-        // state
-        //void *              m_data;                 // pointer to the memory to save/restore
-        //astring             m_name;                 // full name
-        //device_t *          m_device;               // associated device, NULL if none
-        //std::string         m_module;               // module name
-        //std::string         m_tag;                  // tag name
-        //int                 m_index;                // index
-        //UINT8               m_typesize;             // size of the raw data type
-        //UINT32              m_typecount;            // number of items
-        //UINT32              m_offset;               // offset within the final structure
-
-
-        // construction/destruction
-        //-------------------------------------------------
-        //  state_entry - constructor
-        //-------------------------------------------------
-        public state_entry(object data, string name, device_t device, string module, string tag, int index, byte size, UInt32 count)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        // helpers
-        //void flip_data();
-    }
 
 
     public class save_manager
     {
+        //friend class ram_state;
+        //friend class rewinder;
+
+
+        class state_entry
+        {
+            // state
+            //void *          m_data;                 // pointer to the memory to save/restore
+            //std::string     m_name;                 // full name
+            //device_t *      m_device;               // associated device, nullptr if none
+            //std::string     m_module;               // module name
+            //std::string     m_tag;                  // tag name
+            //int             m_index;                // index
+            //u8              m_typesize;             // size of the raw data type
+            //u32             m_typecount;            // number of items in each block
+            //u32             m_blockcount;           // number of blocks of items
+            //u32             m_stride;               // stride between blocks of items in units of item size
+
+
+            // construction/destruction
+            //-------------------------------------------------
+            //  state_entry - constructor
+            //-------------------------------------------------
+            public state_entry(object data, string name, device_t device, string module, string tag, int index, u8 size, u32 valcount, u32 blockcount, u32 stride)
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            // helpers
+            //void flip_data();
+        }
+
+
         // internal state
         running_machine m_machine;              // reference to our machine
         //rewinder m_rewind;               // rewinder
@@ -80,7 +89,7 @@ namespace mame
             //throw new emu_unimplemented();
         }
 
-        //const char *indexed_item(int index, void *&base, UINT32 &valsize, UINT32 &valcount) const;
+        //const char *indexed_item(int index, void *&base, u32 &valsize, u32 &valcount, u32 &blockcount, u32 &stride) const;
 
 
         // function registration
@@ -131,42 +140,91 @@ namespace mame
         }
 
 
-        // templatized wrapper for general objects
-        //template<typename _ItemType>
-        public void save_item<_ItemType>(device_t device, string module, string tag, int index, _ItemType value, string valname)
+        // callback dispatching
+        //void dispatch_presave();
+        //void dispatch_postload();
+
+
+        // generic memory registration
+        //void save_memory(device_t *device, const char *module, const char *tag, u32 index, const char *name, void *val, u32 valsize, u32 valcount = 1, u32 blockcount = 1, u32 stride = 0);
+
+
+        // templatized wrapper for general objects and arrays
+        //template <typename ItemType>
+        public void save_item<ItemType>(device_t device, string module, string tag, int index, ItemType value, string valname)  //void save_item(device_t *device, const char *module, const char *tag, int index, ItemType &value, const char *valname)
         {
             //throw new emu_unimplemented();
 #if false
-            if (type_checker<_ItemType>::is_pointer) throw emu_fatalerror("Called save_item on a pointer with no count!");
-            if (!type_checker<_ItemType>::is_atom) throw emu_fatalerror("Called save_item on a non-fundamental type!");
-            save_memory(module, tag, index, valname, &value, sizeof(value));
+            static_assert(!type_checker<ItemType>::is_pointer, "Called save_item on a pointer with no count!");
+            static_assert(type_checker<typename array_unwrap<ItemType>::underlying_type>::is_atom, "Called save_item on a non-fundamental type!");
+            save_memory(device, module, tag, index, valname, array_unwrap<ItemType>::ptr(value), array_unwrap<ItemType>::SIZE, array_unwrap<ItemType>::SAVE_COUNT);
 #endif
         }
 
-        // templatized wrapper for 1-dimensional arrays
-        //template<typename _ItemType, std::size_t N>
-        void save_item<_ItemType, N>(device_t device, string module, string tag, int index, _ItemType [] value, string valname)
-        {
-            throw new emu_unimplemented();
-        }
 
-#if false
-        // templatized wrapper for 2-dimensional arrays
-        template<typename _ItemType, std::size_t M, std::size_t N>
-        void save_item(const char *module, const char *tag, int index, _ItemType (&value)[M][N], const char *valname)
-        {
-            if (!type_checker<_ItemType>::is_atom) throw emu_fatalerror("Called save_item on a non-fundamental type!");
-            save_memory(module, tag, index, valname, &value[0][0], sizeof(value[0][0]), M * N);
-        }
-#endif
+        // templatized wrapper for structure members
+        //template <typename ItemType, typename StructType, typename ElementType>
+        //void save_item(device_t *device, const char *module, const char *tag, int index, ItemType &value, ElementType StructType::*element, const char *valname)
+        //{
+        //    static_assert(std::is_base_of<StructType, typename array_unwrap<ItemType>::underlying_type>::value, "Called save_item on a non-matching struct member pointer!");
+        //    static_assert(!(sizeof(typename array_unwrap<ItemType>::underlying_type) % sizeof(typename array_unwrap<ElementType>::underlying_type)), "Called save_item on an unaligned struct member!");
+        //    static_assert(!type_checker<ElementType>::is_pointer, "Called save_item on a struct member pointer!");
+        //    static_assert(type_checker<typename array_unwrap<ElementType>::underlying_type>::is_atom, "Called save_item on a non-fundamental type!");
+        //    save_memory(device, module, tag, index, valname, array_unwrap<ElementType>::ptr(array_unwrap<ItemType>::ptr(value)->*element), array_unwrap<ElementType>::SIZE, array_unwrap<ElementType>::SAVE_COUNT, array_unwrap<ItemType>::SAVE_COUNT, sizeof(typename array_unwrap<ItemType>::underlying_type) / sizeof(typename array_unwrap<ElementType>::underlying_type));
+        //}
+
+        // templatized wrapper for pointers
+        //template <typename ItemType>
+        //void save_pointer(device_t *device, const char *module, const char *tag, int index, ItemType *value, const char *valname, u32 count)
+        //{
+        //    static_assert(type_checker<typename array_unwrap<ItemType>::underlying_type>::is_atom, "Called save_pointer on a non-fundamental type!");
+        //    save_memory(device, module, tag, index, valname, array_unwrap<ItemType>::ptr(value[0]), array_unwrap<ItemType>::SIZE, array_unwrap<ItemType>::SAVE_COUNT * count);
+        //}
+
+        //template <typename ItemType, typename StructType, typename ElementType>
+        //void save_pointer(device_t *device, const char *module, const char *tag, int index, ItemType *value, ElementType StructType::*element, const char *valname, u32 count)
+        //{
+        //    static_assert(std::is_base_of<StructType, typename array_unwrap<ItemType>::underlying_type>::value, "Called save_pointer on a non-matching struct member pointer!");
+        //    static_assert(!(sizeof(typename array_unwrap<ItemType>::underlying_type) % sizeof(typename array_unwrap<ElementType>::underlying_type)), "Called save_pointer on an unaligned struct member!");
+        //    static_assert(!type_checker<ElementType>::is_pointer, "Called save_pointer on a struct member pointer!");
+        //    static_assert(type_checker<typename array_unwrap<ElementType>::underlying_type>::is_atom, "Called save_pointer on a non-fundamental type!");
+        //    save_memory(device, module, tag, index, valname, array_unwrap<ElementType>::ptr(array_unwrap<ItemType>::ptr(value[0])->*element), array_unwrap<ElementType>::SIZE, array_unwrap<ElementType>::SAVE_COUNT, array_unwrap<ItemType>::SAVE_COUNT * count, sizeof(typename array_unwrap<ItemType>::underlying_type) / sizeof(typename array_unwrap<ElementType>::underlying_type));
+        //}
+
+        // templatized wrapper for std::unique_ptr
+        //template <typename ItemType>
+        //void save_pointer(device_t *device, const char *module, const char *tag, int index, const std::unique_ptr<ItemType []> &value, const char *valname, u32 count)
+        //{
+        //    static_assert(type_checker<typename array_unwrap<ItemType>::underlying_type>::is_atom, "Called save_pointer on a non-fundamental type!");
+        //    save_memory(device, module, tag, index, valname, array_unwrap<ItemType>::ptr(value[0]), array_unwrap<ItemType>::SIZE, array_unwrap<ItemType>::SAVE_COUNT * count);
+        //}
+
+        //template <typename ItemType, typename StructType, typename ElementType>
+        //void save_pointer(device_t *device, const char *module, const char *tag, int index, const std::unique_ptr<ItemType []> &value, ElementType StructType::*element, const char *valname, u32 count)
+        //{
+        //    static_assert(std::is_base_of<StructType, typename array_unwrap<ItemType>::underlying_type>::value, "Called save_pointer on a non-matching struct member pointer!");
+        //    static_assert(!(sizeof(typename array_unwrap<ItemType>::underlying_type) % sizeof(typename array_unwrap<ElementType>::underlying_type)), "Called save_pointer on an unaligned struct member!");
+        //    static_assert(!type_checker<ElementType>::is_pointer, "Called save_pointer on a struct member pointer!");
+        //    static_assert(type_checker<typename array_unwrap<ElementType>::underlying_type>::is_atom, "Called save_pointer on a non-fundamental type!");
+        //    save_memory(device, module, tag, index, valname, array_unwrap<ElementType>::ptr(array_unwrap<ItemType>::ptr(value[0])->*element), array_unwrap<ElementType>::SIZE, array_unwrap<ElementType>::SAVE_COUNT, array_unwrap<ItemType>::SAVE_COUNT * count, sizeof(typename array_unwrap<ItemType>::underlying_type) / sizeof(typename array_unwrap<ElementType>::underlying_type));
+        //}
 
 
         // global memory registration
-        //template<typename _ItemType>
-        public void save_item<_ItemType>(_ItemType value, string valname, int index = 0) { save_item(null, "global", null, index, value, valname); }
+        //template<typename ItemType>
+        public void save_item<ItemType>(ItemType value, string valname, int index = 0)
+        { save_item(null, "global", null, index, value, valname); }
 
-        //template<typename _ItemType>
-        //void save_pointer(_ItemType *value, const char *valname, UINT32 count, int index = 0) { save_pointer(NULL, "global", NULL, index, value, valname, count); }
+        //template <typename ItemType, typename StructType, typename ElementType>
+        //void save_item(ItemType &value, ElementType StructType::*element, const char *valname, int index = 0)
+        //{ save_item(nullptr, "global", nullptr, index, value, element, valname); }
+
+        //template <typename ItemType>
+        //void save_pointer(ItemType &&value, const char *valname, u32 count, int index = 0)
+        //{ save_pointer(nullptr, "global", nullptr, index, std::forward<ItemType>(value), valname, count); }
+        //template <typename ItemType, typename StructType, typename ElementType>
+        //void save_pointer(ItemType &&value, ElementType StructType::*element, const char *valname, u32 count, int index = 0)
+        //{ save_pointer(nullptr, "global", nullptr, index, std::forward<ItemType>(value), element, valname, count); }
 
 
         // file processing
@@ -176,8 +234,8 @@ namespace mame
 
 
         // internal helpers
-        //UINT32 signature() const;
+        //u32 signature() const;
         //void dump_registry() const;
-        //static save_error validate_header(const UINT8 *header, const char *gamename, UINT32 signature, void (CLIB_DECL *errormsg)(const char *fmt, ...), const char *error_prefix);
+        //static save_error validate_header(const u8 *header, const char *gamename, u32 signature, void (CLIB_DECL *errormsg)(const char *fmt, ...), const char *error_prefix);
     }
 }

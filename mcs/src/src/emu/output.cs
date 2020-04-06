@@ -11,22 +11,22 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    //typedef void (*output_notifier_func)(const char *outname, INT32 value, void *param);
-    public delegate void output_notifier_func(string outname, int value, object param);
-
-
     // ======================> output_manager
     public class output_manager : global_object
     {
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask> friend class devcb_write;
 
 
+        //typedef void (*notifier_func)(const char *outname, s32 value, void *param);
+        public delegate void notifier_func(string outname, int value, object param);
+
+
         public class output_notify
         {
-            output_notifier_func m_notifier;       // callback to call
+            notifier_func m_notifier;       // callback to call
             object m_param;  //void *                  m_param;          // parameter to pass the callback
 
-            public output_notify(output_notifier_func callback, object param)  // void *param)
+            public output_notify(notifier_func callback, object param)  // void *param)
             {
                 m_notifier = callback;
                 m_param = param;
@@ -65,7 +65,8 @@ namespace mame
                 m_notifylist = new notify_vector();
             }
 
-            //std::string const &name() const { return m_name; }
+
+            public string name() { return m_name; }
             //u32 id() const { return m_id; }
             public s32 get() { return m_value; }
             public void set(s32 value) { if (m_value != value) { notify(value); } }
@@ -85,7 +86,7 @@ namespace mame
                     notify.notify(m_name.c_str(), value);
             }
 
-            public void set_notifier(output_notifier_func callback, object param) { m_notifylist.emplace_back(new output_notify(callback, param)); }
+            public void set_notifier(notifier_func callback, object param) { m_notifylist.emplace_back(new output_notify(callback, param)); }
         }
 
 
@@ -204,22 +205,56 @@ namespace mame
         running_machine m_machine;                  // reference to our machine
         std.unordered_map<string, output_item> m_itemtable = new std.unordered_map<string, output_item>();
         notify_vector m_global_notifylist = new notify_vector();
+        std.vector<output_item> m_save_order = new std.vector<output_item>();  //std::vector<std::reference_wrapper<output_item> > m_save_order;
+        s32 [] m_save_data;  //std::unique_ptr<s32 []> m_save_data;
         u32 m_uniqueid;
 
 
         // construction/destruction
-        //-------------------------------------------------
-        //  output_manager - constructor
-        //-------------------------------------------------
+        /*-------------------------------------------------
+            output_manager - constructor
+        -------------------------------------------------*/
         public output_manager(running_machine machine)
         {
             m_machine = machine;
             m_uniqueid = 12345;
 
 
-            /* add pause callback */
+            // add callbacks
             machine.add_notifier(machine_notification.MACHINE_NOTIFY_PAUSE, pause);
             machine.add_notifier(machine_notification.MACHINE_NOTIFY_RESUME, resume);
+            machine.save().register_presave(presave);  //machine.save().register_presave(save_prepost_delegate(FUNC(output_manager::presave), this));
+            machine.save().register_postload(postload);  //machine.save().register_postload(save_prepost_delegate(FUNC(output_manager::postload), this));
+        }
+
+
+        // register for save states
+        /*-------------------------------------------------
+            register_save - register for save states
+        -------------------------------------------------*/
+        public void register_save()
+        {
+            assert(m_save_order.empty());
+            assert(m_save_data == null);
+
+            // make space for the data
+            m_save_order.clear();
+            m_save_order.reserve(m_itemtable.size());
+            m_save_data = new s32 [m_itemtable.size()];  //m_save_data = std::make_unique<s32 []>(m_itemtable.size());
+
+            // sort existing outputs by name and register for save
+            foreach (var item in m_itemtable)
+                m_save_order.emplace_back(item.second());
+            m_save_order.Sort((l, r) => { return string.Compare(l.name(), r.name()); });  //std::sort(m_save_order.begin(), m_save_order.end(), [] (auto const &l, auto const &r) { return l.get().name() < r.get().name(); });
+
+            // register the reserved space for saving
+            //throw new emu_unimplemented();
+#if false
+            machine().save().save_pointer(nullptr, "output", nullptr, 0, NAME(m_save_data), m_itemtable.size());
+#endif
+
+            if (OUTPUT_VERBOSE)
+                osd_printf_verbose("Registered {0} outputs for save states\n", m_itemtable.size());
         }
 
 
@@ -263,7 +298,7 @@ namespace mame
             for a particular output, or for all outputs
             if nullptr is specified
         -------------------------------------------------*/
-        public void set_notifier(string outname, output_notifier_func callback, object param)  //void *param)
+        public void set_notifier(string outname, notifier_func callback, object param)  //void *param)
         {
             // if an item is specified, find/create it
             if (outname != null)
@@ -278,58 +313,20 @@ namespace mame
         }
 
 
-        // set a notifier on a particular output, or globally if nullptr
-        //void notify_all(output_module *module);
+        // immdediately call a notifier for all outputs
+        //template <typename T> void notify_all(T &&notifier) const
+        //{
+        //    for (auto const &item : m_itemtable)
+        //        notifier(item.second.name().c_str(), item.second.get());
+        //}
 
 
         // map a name to a unique ID
-        //UINT32 name_to_id(const char *outname);
+        //u32 name_to_id(const char *outname);
 
 
         // map a unique ID back to a name
-        //const char *id_to_name(UINT32 id);
-
-
-        /*-------------------------------------------------
-            output_pause - send pause message
-        -------------------------------------------------*/
-        void pause(running_machine machine)
-        {
-            set_value("pause", 1);
-        }
-
-        void resume(running_machine machine)
-        {
-            set_value("pause", 0);
-        }
-
-
-        // set an indexed value for an output (concatenates basename + index)
-        /*-------------------------------------------------
-            output_set_indexed_value - set the value of an
-            indexed output
-        -------------------------------------------------*/
-        void set_indexed_value(string basename, int index, int value)
-        {
-            //char [] buffer = new char[100];
-            //char *dest = buffer;
-
-            /* copy the string */
-            //while (*basename != 0)
-            //    *dest++ = *basename++;
-
-            string buffer = basename;
-
-            /* append the index */
-            if (index >= 1000) buffer += '0' + ((index / 1000) % 10);  // *dest++ = '0' + ((index / 1000) % 10);
-            if (index >= 100) buffer += '0' + ((index / 100) % 10);  // *dest++ = '0' + ((index / 100) % 10);
-            if (index >= 10) buffer += '0' + ((index / 10) % 10);  // *dest++ = '0' + ((index / 10) % 10);
-            buffer += '0' + (index % 10);  // *dest++ = '0' + (index % 10);
-            //*dest++ = 0;
-
-            /* set the value */
-            set_value(buffer, value);
-        }
+        //const char *id_to_name(u32 id);
 
 
         /*-------------------------------------------------
@@ -350,6 +347,9 @@ namespace mame
         -------------------------------------------------*/
         output_item create_new_item(string outname, int value)
         {
+            if (OUTPUT_VERBOSE)
+                osd_printf_verbose("Creating output {0} = {1}{2}\n", outname, value, m_save_data != null ? " (will not be saved)" : "");
+
             var output_item = new output_item(this, outname, m_uniqueid++, value);
             var ins = m_itemtable.emplace(
                     //std::piecewise_construct,
@@ -364,6 +364,40 @@ namespace mame
         {
             output_item item = find_item(outname);
             return item != null ? item : create_new_item(outname, value);
+        }
+
+
+        /*-------------------------------------------------
+            output_pause - send pause message
+        -------------------------------------------------*/
+        void pause(running_machine machine)
+        {
+            set_value("pause", 1);
+        }
+
+        void resume(running_machine machine)
+        {
+            set_value("pause", 0);
+        }
+
+
+        /*-------------------------------------------------
+            presave - prepare data for save state
+        -------------------------------------------------*/
+        void presave()
+        {
+            for (UInt32 i = 0; m_save_order.size() > i; ++i)
+                m_save_data[i] = m_save_order[i].get();
+        }
+
+
+        /*-------------------------------------------------
+            postload - restore loaded data
+        -------------------------------------------------*/
+        void postload()
+        {
+            for (UInt32 i = 0; m_save_order.size() > i; ++i)
+                 m_save_order[i].set(m_save_data[i]);
         }
     }
 

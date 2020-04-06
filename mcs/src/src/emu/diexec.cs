@@ -126,11 +126,6 @@ namespace mame
                 m_linenum = linenum;
 
                 reset();
-
-                device_t device = m_execute.device();
-                device.save_item(m_stored_vector, "m_stored_vector", m_linenum);
-                device.save_item(m_curvector, "m_curvector", m_linenum);
-                device.save_item(m_curstate, "m_curstate", m_linenum);
             }
 
 
@@ -796,6 +791,14 @@ namespace mame
             device().save_item(m_trigger,       "m_trigger");
             device().save_item(m_totalcycles,   "m_totalcycles");
             device().save_item(m_localtime,     "m_localtime");
+
+            //throw new emu_unimplemented();
+#if false
+            // it's more efficient and causes less clutter to save these this way
+            device().save_item(STRUCT_MEMBER(m_input, m_stored_vector));
+            device().save_item(STRUCT_MEMBER(m_input, m_curvector));
+            device().save_item(STRUCT_MEMBER(m_input, m_curstate));
+#endif
 
             // fill in the input states and IRQ callback information
             for (int line = 0; line < m_input.Length; line++)

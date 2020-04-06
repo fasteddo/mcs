@@ -612,7 +612,6 @@ namespace mame
             ROM_LOAD( "c_5ct_g.bin",  0x1000, 0x1000, CRC("5ec461ec") + SHA1("acb11a8fbdbb3ab46068385fe465f681e3c824bd") ),
             ROM_LOAD( "c_5bt_g.bin",  0x2000, 0x1000, CRC("1c97d324") + SHA1("c7966261f3a1d3296927e0b6ee1c58039fc53c1f") ),
             ROM_LOAD( "c_5at_g.bin",  0x3000, 0x1000, CRC("b9005ac0") + SHA1("3fe3599f6fa7c496f782053ddf7bacb453d197c4") ),
-            ROM_LOAD( "diag.bin",     0x4000, 0x1000, NO_DUMP ),
 
             ROM_REGION( 0x1800, "soundcpu", 0 ), /* sound */
             ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, CRC("45a4ed06") + SHA1("144d24464c1f9f01894eb12f846952290e6e32ef") ),

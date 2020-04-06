@@ -962,7 +962,7 @@ namespace mame
         {
             // some command line arguments require that the system name be set, so we can get slot options
             if (command_arguments().size() == 1 && !core_iswildstr(command_arguments()[0].c_str()) &&
-                (command() == "listdevices" || (command() == "listslots") || (command() == "listmedia")))
+                (command() == "listdevices" || (command() == "listslots") || (command() == "listmedia") || (command() == "listsoftware")))
             {
                 set_system_name(command_arguments()[0]);
             }

@@ -1979,10 +1979,6 @@ namespace mame
                 m_blend_mode = get_blend_mode(env, itemnode);
 
 
-                // outputs need resolving
-                if (m_have_output)
-                    throw new emu_unimplemented();
-
                 // fetch common data
                 int index = env.get_attribute_int(itemnode, "index", -1);
                 if (index != -1)
@@ -1990,9 +1986,6 @@ namespace mame
 
                 for (u32 mask = m_input_mask; (mask != 0) && ((~mask & 1) != 0); mask >>= 1)
                     m_input_shift++;
-
-                if (m_have_output && m_element != null)
-                    throw new emu_unimplemented();
 
                 // sanity checks
                 if (strcmp(itemnode.get_name(), "screen") == 0)
@@ -2060,6 +2053,16 @@ namespace mame
             //---------------------------------------------
             public void resolve_tags()
             {
+                if (m_have_output)
+                {
+                    throw new emu_unimplemented();
+#if false
+                    m_output.resolve();
+                    if (m_element)
+                        m_output = m_element->default_state();
+#endif
+                }
+
                 if (!m_input_tag.empty())
                 {
                     m_input_port = m_element.machine().root_device().ioport(m_input_tag);
@@ -2235,6 +2238,16 @@ namespace mame
         }
 
 
+        //-------------------------------------------------
+        //  has_screen - return true if this view contains
+        //  the given screen
+        //-------------------------------------------------
+        public bool has_screen(screen_device screen)
+        {
+            return std.find_if(m_screens, (scr) => { return scr.get() == screen; }) != null;  //return std::find_if(m_screens.begin(), m_screens.end(), [&screen](auto const &scr) { return &scr.get() == &screen; }) != m_screens.end();
+        }
+
+
         // operations
         //-------------------------------------------------
         //  recompute - recompute the bounds and aspect
@@ -2251,7 +2264,7 @@ namespace mame
             m_scrbounds.y0 = 0.0f;
             m_scrbounds.x1 = 0.0f;
             m_scrbounds.y1 = 0.0f;
-            m_screens.reset();
+            m_screens.clear();
 
             // loop over all layers
             bool first = true;
@@ -2275,7 +2288,7 @@ namespace mame
                     scrfirst = false;
 
                     // accumulate the screens in use while we're scanning
-                    m_screens.add(curitem.screen());
+                    m_screens.emplace_back(curitem.screen());
                 }
             }
 
@@ -2285,7 +2298,7 @@ namespace mame
 
             // if we're handling things normally, the target bounds are (0,0)-(1,1)
             render_bounds target_bounds = new render_bounds();
-            if (!layerconfig.zoom_to_screen() || m_screens.count() == 0)
+            if (!layerconfig.zoom_to_screen() || m_screens.empty())
             {
                 // compute the aspect ratio of the view
                 m_aspect = (m_bounds.x1 - m_bounds.x0) / (m_bounds.y1 - m_bounds.y0);

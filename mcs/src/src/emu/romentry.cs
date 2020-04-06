@@ -171,8 +171,8 @@ namespace mame
 
     public interface rom_entry_interface
     {
-        string get_name();
-        string get_hashdata();
+        string name();
+        string hashdata();
         u32 get_offset();
         u32 get_length();
         u32 get_flags();
@@ -182,18 +182,18 @@ namespace mame
     // ======================> tiny_rom_entry
     public class tiny_rom_entry : rom_entry_interface
     {
-        public string name;
-        public string hashdata;
+        public string name_;
+        public string hashdata_;
         public u32 offset;
         public u32 length;
         public u32 flags;
 
         public tiny_rom_entry() { }
-        public tiny_rom_entry(string name, string hashdata, u32 offset, u32 length, u32 flags) { this.name = name; this.hashdata = hashdata; this.offset = offset; this.length = length; this.flags = flags; }
+        public tiny_rom_entry(string name, string hashdata, u32 offset, u32 length, u32 flags) { this.name_ = name; this.hashdata_ = hashdata; this.offset = offset; this.length = length; this.flags = flags; }
 
 
-        public string get_name() { return name; }
-        public string get_hashdata() { return hashdata; }
+        public string name() { return name_; }
+        public string hashdata() { return hashdata_; }
         public u32 get_offset() { return offset; }
         public u32 get_length() { return length; }
         public u32 get_flags() { return flags; }
@@ -228,7 +228,7 @@ namespace mame
         //-------------------------------------------------
         public rom_entry(tiny_rom_entry ent)
         {
-            m_name = ent.name != null ? ent.name : "";
+            m_name = ent.name_ != null ? ent.name_ : "";
             m_hashdata = hashdata_from_tiny_rom_entry(ent);
             m_offset = ent.offset;
             m_length = ent.length;
@@ -242,8 +242,8 @@ namespace mame
 
 
         // accessors
-        public string get_name() { return m_name; }
-        public string get_hashdata() { return m_hashdata; }
+        public string name() { return m_name; }
+        public string hashdata() { return m_hashdata; }
         public u32 get_offset() { return m_offset; }
         public u32 get_length() { return m_length; }
         public u32 get_flags() { return m_flags; }
@@ -263,12 +263,12 @@ namespace mame
                 case romentry_global.ROMENTRYTYPE_FILL:
                 case romentry_global.ROMENTRYTYPE_COPY:
                     // for these types, tiny_rom_entry::hashdata is an integer typecasted to a pointer
-                    result = string.Format("0x{0}", ent.hashdata);  //(unsigned)(uintptr_t)ent.hashdata);  // 0x%x
+                    result = string.Format("0x{0}", ent.hashdata_);  //(unsigned)(uintptr_t)ent.hashdata);  // 0x%x
                     break;
 
                 default:
-                    if (ent.hashdata != null)
-                        result = ent.hashdata;
+                    if (ent.hashdata_ != null)
+                        result = ent.hashdata_;
                     break;
             }
 
