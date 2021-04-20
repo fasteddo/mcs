@@ -253,7 +253,8 @@ namespace mame.netlist
 
         // FIXME: can be cleared before run
         std.unordered_map<string, detail.core_terminal_t> m_terminals;
-        std.unordered_map<terminal_t, terminal_t> m_connected_terminals;
+        // FIXME: Limited to 3 additional terminals
+        std.unordered_map<terminal_t, std.array<terminal_t, uint32_constant_4>> m_connected_terminals;
         std.unordered_map<string, param_ref_t> m_params;
         std.unordered_map<detail.core_terminal_t, devices.nld_base_proxy> m_proxies;
         std.vector<param_t> m_defparam_lifetime;
@@ -349,15 +350,24 @@ namespace mame.netlist
             }
         }
 
-        public void register_term(terminal_t term, terminal_t other_term)
+        public void register_term(terminal_t term, terminal_t other_term, std.array<terminal_t, uint32_constant_2> splitter_terms)
         {
             this.register_term(term);
-            m_connected_terminals.insert(term, other_term);
+            m_connected_terminals.insert(term, new std.array<terminal_t, uint32_constant_4>(other_term, splitter_terms[0], splitter_terms[1], null));  //m_connected_terminals.insert({&term, {other_term, splitter_terms[0], splitter_terms[1], nullptr}});
+        }
+
+
+        // called from matrix_solver_t::get_connected_net
+        // returns the terminal being part of a two terminal device.
+        public terminal_t get_connected_terminal(terminal_t term)
+        {
+            var ret = m_connected_terminals.find(term);
+            return (ret != default) ? ret[0] : null;
         }
 
 
         // called from net_splitter
-        public terminal_t get_connected_terminal(terminal_t term)
+        public std.array<terminal_t, uint32_constant_4> get_connected_terminals(terminal_t term)
         {
             var ret = m_connected_terminals.find(term);
             return (ret != default) ? ret : null;
@@ -734,7 +744,7 @@ namespace mame.netlist
 
             foreach (var n in m_nlstate.nets())
             {
-                foreach (var term in n.core_terms())
+                foreach (var term in m_nlstate.core_terms(n))
                 {
                     if (term.delegate_() == null)  //if (!term->delegate())
                     {
@@ -751,7 +761,7 @@ namespace mame.netlist
         public models_t models() { return m_models; }
 
 
-        netlist_state_t nlstate() { return m_nlstate; }
+        public netlist_state_t nlstate() { return m_nlstate; }
 
 
         public nlparse_t parser() { return m_parser; }
@@ -763,7 +773,7 @@ namespace mame.netlist
         // FIXME: needed from matrix_solver_t
         public void add_terminal(detail.net_t net, detail.core_terminal_t terminal)
         {
-            foreach (var t in net.core_terms())
+            foreach (var t in nlstate().core_terms(net))
             {
                 if (t == terminal)
                 {
@@ -774,7 +784,7 @@ namespace mame.netlist
 
             terminal.set_net(net);
 
-            net.core_terms().push_back(terminal);
+            nlstate().core_terms(net).push_back(terminal);
         }
 
 
@@ -861,7 +871,7 @@ namespace mame.netlist
                     log().error.op(nl_errstr_global.ME_TERMINAL_1_WITHOUT_NET(name_da));
                     err = true;
                 }
-                else if (!term.net().has_connections())
+                else if (nlstate().core_terms(term.net()).empty())
                 {
                     if (term.is_logic_input())
                     {
@@ -1091,7 +1101,7 @@ namespace mame.netlist
 
                 if (!ret)
                 {
-                    foreach (var t in t1.net().core_terms())
+                    foreach (var t in nlstate().core_terms(t1.net()))
                     {
                         if (t.is_type(detail.terminal_type.TERMINAL))
                             ret = connect(t2, t);
@@ -1109,7 +1119,7 @@ namespace mame.netlist
 
                 if (!ret)
                 {
-                    foreach (var t in t2.net().core_terms())
+                    foreach (var t in nlstate().core_terms(t2.net()))
                     {
                         if (t.is_type(detail.terminal_type.TERMINAL))
                             ret = connect(t1, t);
@@ -1160,7 +1170,7 @@ namespace mame.netlist
             m_proxy_cnt++;
             // connect all existing terminals to new net
 
-            foreach (var p in out_.net().core_terms())
+            foreach (var p in nlstate().core_terms(out_.net()))
             {
                 p.clear_net(); // de-link from all nets ...
                 if (!connect(new_proxy.proxy_term(), p))
@@ -1170,7 +1180,7 @@ namespace mame.netlist
                 }
             }
 
-            out_.net().core_terms().clear();
+            nlstate().core_terms(out_.net()).clear();
 
             add_terminal(out_.net(), new_proxy.in_());
 
@@ -1212,7 +1222,7 @@ namespace mame.netlist
 
             if (inp.has_net())
             {
-                foreach (detail.core_terminal_t p in inp.net().core_terms())
+                foreach (detail.core_terminal_t p in nlstate().core_terms(inp.net()))
                 {
                     // inp may already belongs to the logic net. Thus skip it here.
                     // It will be removed by the clear further down.
@@ -1229,7 +1239,7 @@ namespace mame.netlist
                     }
                 }
 
-                inp.net().core_terms().clear(); // clear the list
+                nlstate().core_terms(inp.net()).clear(); // clear the list
             }
 
             inp.clear_net();
@@ -1257,10 +1267,10 @@ namespace mame.netlist
 
         void remove_terminal(detail.net_t net, detail.core_terminal_t terminal)
         {
-            if (plib.container.contains(net.core_terms(), terminal))
+            if (plib.container.contains(nlstate().core_terms(net), terminal))
             {
                 terminal.set_net(null);
-                plib.container.remove(net.core_terms(), terminal);
+                plib.container.remove(nlstate().core_terms(net), terminal);
             }
             else
             {
@@ -1272,9 +1282,9 @@ namespace mame.netlist
 
         void move_connections(detail.net_t net, detail.net_t dest_net)
         {
-            foreach (var ct in net.core_terms())
+            foreach (var ct in nlstate().core_terms(net))
                 add_terminal(dest_net, ct);
-            net.core_terms().clear();
+            nlstate().core_terms(net).clear();
         }
 
 
@@ -1286,8 +1296,9 @@ namespace mame.netlist
                 std::remove_if(m_nlstate.nets().begin(), m_nlstate.nets().end(),
                     [](device_arena::owned_ptr<detail::net_t> &net)
                     {
-                        if (!net->has_connections())
+                        if (net->state().core_terms(*net).empty())
                         {
+                            // FIXME: need to remove from state->m_core_terms as well.
                             net->state().log().verbose("Deleting net {1} ...", net->name());
                             net->state().run_state_manager().remove_save_items(net.get());
                             return true;

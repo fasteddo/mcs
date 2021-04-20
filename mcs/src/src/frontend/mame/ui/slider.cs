@@ -18,12 +18,12 @@ namespace mame
         public const int SLIDER_NOCHANGE     = 0x12345678;
 
         public slider_update   update;             /* callback */
-        public object arg;  //void *          arg;                /* argument */
-        public int32_t minval;             /* minimum value */
-        public int32_t defval;             /* default value */
-        public int32_t maxval;             /* maximum value */
-        public int32_t incval;             /* increment value */
-        public int32_t id;
+        public object arg = null;  //void *          arg;                /* argument */
+        public int32_t minval = 0;             /* minimum value */
+        public int32_t defval = 0;             /* default value */
+        public int32_t maxval = 0;             /* maximum value */
+        public int32_t incval = 0;             /* increment value */
+        public int32_t id = 0;
         public string description;     /* textual description */
     }
 }

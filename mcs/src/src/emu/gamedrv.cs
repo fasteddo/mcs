@@ -105,7 +105,7 @@ namespace mame
         //    #NAME                                                               \
         //};
 
-        public static game_driver GAME(device_type.create_func creator, List<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, UInt32 MONITOR, string COMPANY, string FULLNAME, UInt64 FLAGS)
+        public static game_driver GAME(device_type.create_func creator, MemoryContainer<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, UInt32 MONITOR, string COMPANY, string FULLNAME, UInt64 FLAGS)
         {
             var traits = GAME_DRIVER_TRAITS(NAME, FULLNAME);
 
@@ -252,14 +252,14 @@ namespace mame
         public machine_creator_wrapper machine_creator;  // machine driver tokens
         public ioport_constructor ipt;            // pointer to constructor for input ports
         public driver_init_wrapper driver_init;      // DRIVER_INIT callback
-        public List<tiny_rom_entry> rom;               // pointer to list of ROMs for the game
+        public Pointer<tiny_rom_entry> rom;               // pointer to list of ROMs for the game
         public string compatible_with;
         public internal_layout default_layout;             // default internally defined layout
         public machine_flags.type flags;                      // orientation and other flags; see defines below
         public string name;                       // short name of the game
 
 
-        public game_driver(device_type type, string parent, string year, string manufacturer, machine_creator_wrapper machine_creator, ioport_constructor ipt, driver_init_wrapper driver_init, List<tiny_rom_entry> rom, UInt32 monitor, UInt64 flags, string name, string fullname)
+        public game_driver(device_type type, string parent, string year, string manufacturer, machine_creator_wrapper machine_creator, ioport_constructor ipt, driver_init_wrapper driver_init, MemoryContainer<tiny_rom_entry> rom, UInt32 monitor, UInt64 flags, string name, string fullname)
         {
             this.type = type;
             this.parent = parent;
@@ -268,7 +268,7 @@ namespace mame
             this.machine_creator = machine_creator;
             this.ipt = ipt;
             this.driver_init = driver_init;
-            this.rom = rom;
+            this.rom = new Pointer<tiny_rom_entry>(rom);
             this.compatible_with = null;
             this.default_layout = null;
             this.flags = (machine_flags.type)(monitor | flags | MACHINE_TYPE_ARCADE);

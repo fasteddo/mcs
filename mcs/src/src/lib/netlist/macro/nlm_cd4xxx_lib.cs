@@ -634,6 +634,8 @@ namespace mame
             TRUTHTABLE_ENTRY(CD4049_GATE);
             TRUTHTABLE_ENTRY(CD4069_GATE);
             TRUTHTABLE_ENTRY(CD4070_GATE);
+            TRUTHTABLE_ENTRY(CD4071_GATE)
+            TRUTHTABLE_ENTRY(CD4081_GATE)
 
             LOCAL_LIB_ENTRY(CD4001_DIP);
             LOCAL_LIB_ENTRY(CD4011_DIP);
@@ -641,6 +643,8 @@ namespace mame
             LOCAL_LIB_ENTRY(CD4049_DIP);
             LOCAL_LIB_ENTRY(CD4069_DIP);
             LOCAL_LIB_ENTRY(CD4070_DIP);
+            LOCAL_LIB_ENTRY(CD4071_DIP)
+            LOCAL_LIB_ENTRY(CD4081_DIP)
 
             /* DIP ONLY */
             LOCAL_LIB_ENTRY(CD4006_DIP);

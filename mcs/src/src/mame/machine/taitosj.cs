@@ -49,7 +49,7 @@ namespace mame
             m_ay2.target.disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
             m_ay3.target.disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
             m_ay4.target.disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_dac.target.disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_dac.target.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
 
             if ((data & 0x80) != 0) membank("bank1").set_entry(1);
             else membank("bank1").set_entry(0);

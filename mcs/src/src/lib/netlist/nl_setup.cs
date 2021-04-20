@@ -410,7 +410,7 @@ namespace mame.netlist
 
         public void register_link(string sin, string sout)
         {
-            register_link_fqn(build_fqn(sin), build_fqn(sout));
+            register_link_fqn(build_fqn(plib.pglobal.trim(sin)), build_fqn(plib.pglobal.trim(sout)));
         }
 
 

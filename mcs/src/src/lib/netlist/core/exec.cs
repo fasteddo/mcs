@@ -26,8 +26,8 @@ namespace mame.netlist
         netlist_time_ext m_time;
         devices.nld_mainclock m_mainclock;
 
-        queue_t m_queue;
         bool m_use_stats;
+        queue_t m_queue;
 
         // performance
         //plib::pperftime_t<true>             m_stat_mainloop;
@@ -40,12 +40,12 @@ namespace mame.netlist
             m_solver = null;
             m_time = netlist_time_ext.zero();
             m_mainclock = null;
+            m_use_stats = false;
             m_queue = new queue_t(false, config.MAX_QUEUE_SIZE,
                 (net) => { return state.find_net_id(net); },  //detail::queue_t::id_delegate(&netlist_state_t :: find_net_id, &state),
                 (id) => { return state.net_by_id(id); });  //detail::queue_t::obj_delegate(&netlist_state_t :: net_by_id, &state))
-            m_use_stats = false;
-        
-        
+
+
             state.save(this, (plib.state_manager_t.callback_t)m_queue, aname, "m_queue");
             state.save(this, m_time, aname, "m_time");
         }
@@ -80,10 +80,8 @@ namespace mame.netlist
 
         //void abort_current_queue_slice() noexcept
         //{
-        //    if (!NL_USE_QUEUE_STATS || !m_use_stats)
-        //        m_queue.retime<false>(detail::queue_t::entry_t(m_time, nullptr));
-        //    else
-        //        m_queue.retime<true>(detail::queue_t::entry_t(m_time, nullptr));
+        //    qremove(nullptr);
+        //    qpush(m_time, nullptr);
         //}
 
         //const detail::queue_t &queue() const noexcept { return m_queue; }

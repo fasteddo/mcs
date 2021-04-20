@@ -358,7 +358,7 @@ namespace mame.ui
 
                     // render the background of the character (if present)
                     if (ch.style.bgcolor.a() != 0)
-                        container.add_rect(char_x, char_y, char_x + char_width, char_y + char_height, ch.style.bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                        container.add_rect(char_x, char_y, char_x + char_width, char_y + char_height, ch.style.bgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                     // render the foreground
                     container.add_char(
@@ -508,7 +508,7 @@ namespace mame.ui
             m_truncating = false;
 
             // append it
-            m_lines.push_back(new_line);
+            m_lines.emplace_back(new_line);
         }
 
 

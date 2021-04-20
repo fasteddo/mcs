@@ -227,7 +227,7 @@ namespace mame
                 int offs;
 
                 rectangle spriteclip = new rectangle(2*8, 34*8-1, 0*8, 28*8-1);
-                spriteclip.intersection(cliprect); // spriteclip &= cliprect;
+                spriteclip &= cliprect;
 
                 /* Draw the sprites. Note that it is important to draw them exactly in this */
                 /* order, to have the correct priorities. */

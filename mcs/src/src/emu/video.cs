@@ -1048,14 +1048,14 @@ namespace mame
             if (machine().options().snap_bilinear())
             {
                 //typedef software_renderer<u32, 0,0,0, 16,8,0, false, true> snap_renderer_bilinear;
-                //snap_renderer_bilinear::draw_primitives(primlist, &m_snap_bitmap.pix32(0), width, height, m_snap_bitmap.rowpixels());
-                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, true), primlist, m_snap_bitmap.pix32(0), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
+                //snap_renderer_bilinear::draw_primitives(primlist, &m_snap_bitmap.pix(0), width, height, m_snap_bitmap.rowpixels());
+                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, true), primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
             }
             else
             {
                 //typedef software_renderer<u32, 0,0,0, 16,8,0, false, false> snap_renderer;
-                //snap_renderer::draw_primitives(primlist, &m_snap_bitmap.pix32(0), width, height, m_snap_bitmap.rowpixels());
-                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, false), primlist, m_snap_bitmap.pix32(0), (UInt32)width, (UInt32)height, (UInt32)m_snap_bitmap.rowpixels());
+                //snap_renderer::draw_primitives(primlist, &m_snap_bitmap.pix(0), width, height, m_snap_bitmap.rowpixels());
+                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, false), primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
             }
             primlist.release_lock();
         }

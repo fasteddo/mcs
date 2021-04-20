@@ -1771,7 +1771,7 @@ namespace mame
 
             public override bool apply(ui_system_info system)
             {
-                List<tiny_rom_entry> rom = system.driver.rom;
+                Pointer<tiny_rom_entry> rom = system.driver.rom;
                 for (int romOffset = 0; !romload_global.ROMENTRY_ISEND(rom[romOffset]); ++romOffset)
                 {
                     if (romload_global.ROMENTRY_ISREGION(rom[romOffset]) && romload_global.ROMREGION_ISDISKDATA(rom[romOffset]))

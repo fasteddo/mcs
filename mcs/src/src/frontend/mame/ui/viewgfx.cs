@@ -452,7 +452,7 @@ cancel:
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
                 if (skip != 0)
-                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(global_object.BLENDMODE_ALPHA));
+                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
             }
 
             // draw the side column headers
@@ -469,7 +469,7 @@ cancel:
                     x0 = boxbounds.x0 + 5.5f * chwidth;
                     y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
                     if (skip != 0)
-                        container.add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(global_object.BLENDMODE_ALPHA));
+                        container.add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                     // draw the row header
                     buffer = string.Format("{0:X5}", state.palette.offset + y * state.palette.columns);  // %5X
@@ -492,7 +492,7 @@ cancel:
                         pen_t pen = state.palette.which != 0 ? palette.indirect_color(index) : raw_color[index];
                         container.add_rect(cellboxbounds.x0 + x * cellwidth, cellboxbounds.y0 + y * cellheight,
                                            cellboxbounds.x0 + (x + 1) * cellwidth, cellboxbounds.y0 + (y + 1) * cellheight,
-                                           new rgb_t(0xff000000 | pen), global_object.PRIMFLAG_BLENDMODE(global_object.BLENDMODE_ALPHA));
+                                           new rgb_t(0xff000000 | pen), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                     }
                 }
             }
@@ -757,7 +757,7 @@ cancel:
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
                 if (skip != 0)
-                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(global_object.BLENDMODE_ALPHA));
+                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
             }
 
             // draw the side column headers
@@ -774,7 +774,7 @@ cancel:
                     x0 = boxbounds.x0 + 5.5f * chwidth;
                     y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
                     if (skip != 0)
-                        container.add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(global_object.BLENDMODE_ALPHA));
+                        container.add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                     // draw the row header
                     buffer = string.Format("{0:X5}", info.offset[set] + y * xcells);
@@ -791,7 +791,7 @@ cancel:
 
             // add the final quad
             container.add_quad(cellboxbounds.x0, cellboxbounds.y0, cellboxbounds.x1, cellboxbounds.y1,
-                               rgb_t.white(), state.texture, global_object.PRIMFLAG_BLENDMODE(global_object.BLENDMODE_ALPHA));
+                               rgb_t.white(), state.texture, global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
             // handle keyboard navigation before drawing
             gfxset_handle_keys(mui.machine(), state, xcells, ycells);
@@ -987,17 +987,15 @@ cancel:
             int width = (rotate & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width();
             int height = (rotate & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height();
             Pointer<rgb_t> palette = new Pointer<rgb_t>(dpalette.palette().entry_list_raw(), (int)gfx.colorbase() + color * gfx.granularity());  //const rgb_t *palette = dpalette->palette()->entry_list_raw() + gfx.colorbase() + color * gfx.granularity();
-            int x;
-            int y;
 
             // loop over rows in the cell
-            for (y = 0; y < height; y++)
+            for (int y = 0; y < height; y++)
             {
-                PointerU32 dest = bitmap.pix32(dsty + y, dstx);  //uint32_t *dest = &bitmap.pix32(dsty + y, dstx);
+                PointerU32 dest = bitmap.pix(dsty + y, dstx);  //uint32_t *dest = &bitmap.pix(dsty + y, dstx);
                 Pointer<uint8_t> src = gfx.get_data((UInt32)index);  //const uint8_t *src = gfx.get_data(index);
 
                 // loop over columns in the cell
-                for (x = 0; x < width; x++)
+                for (int x = 0; x < width; x++)
                 {
                     int effx = x;
                     int effy = y;
@@ -1171,7 +1169,7 @@ cancel:
             container.add_quad(mapboxbounds.x0, mapboxbounds.y0,
                                mapboxbounds.x1, mapboxbounds.y1,
                                rgb_t.white(), state.texture,
-                               global_object.PRIMFLAG_BLENDMODE(global_object.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(state.tilemap.rotate));
+                               global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(state.tilemap.rotate));
 
             // handle keyboard input
             tilemap_handle_keys(mui.machine(), state, mapboxwidth, mapboxheight);

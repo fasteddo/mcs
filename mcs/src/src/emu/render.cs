@@ -5,7 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using ioport_value = System.UInt32;
-using layout_element_component_bounds_vector = mame.std.vector<mame.layout_element.component.bounds_step>;  //using bounds_vector = std::vector<bounds_step>;
+using layout_element_component_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = emu::render::detail::bounds_vector;
+using layout_element_component_color_vector = mame.std.vector<mame.emu.render.detail.color_step>;  //using color_vector = emu::render::detail::color_vector;
 using layout_element_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
 using layout_element_make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;  //typedef std::map<std::string, make_component_func> make_component_map;
 using layout_file_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
@@ -15,6 +16,8 @@ using layout_file_view_list = mame.std.list<mame.layout_view>;  //using view_lis
 using layout_group_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
 using layout_view_edge_vector = mame.std.vector<mame.layout_view.edge>;  //using edge_vector = std::vector<edge>;
 using layout_view_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
+using layout_view_item_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = emu::render::detail::bounds_vector;
+using layout_view_item_color_vector = mame.std.vector<mame.emu.render.detail.color_step>;  //using color_vector = emu::render::detail::color_vector;
 using layout_view_item_list = mame.std.list<mame.layout_view.item>;  //using item_list = std::list<item>;
 using layout_view_item_ref_vector = mame.std.vector<mame.layout_view.item>;  //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
 using layout_view_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
@@ -40,18 +43,6 @@ namespace mame
 
     public static class render_global
     {
-        // blending modes
-        //enum
-        //{
-        public const int BLENDMODE_NONE  = 0;                                 // no blending
-        public const int BLENDMODE_ALPHA = 1;                                 // standard alpha blend
-        public const int BLENDMODE_RGB_MULTIPLY = 2;                          // apply source alpha to source pix, then multiply RGB values
-        public const int BLENDMODE_ADD   = 3;                                 // apply source alpha to source pix, then add to destination
-
-        const int BLENDMODE_COUNT = 4;
-        //}
-
-
         // render scaling modes
         //enum
         //{
@@ -223,74 +214,6 @@ namespace mame
     }
 
 
-    // render_bounds - floating point bounding rectangle
-    public class render_bounds
-    {
-        public float x0;                 // leftmost X coordinate
-        public float y0;                 // topmost Y coordinate
-        public float x1;                 // rightmost X coordinate
-        public float y1;                 // bottommost Y coordinate
-
-        public render_bounds() { }
-        public render_bounds(float x0, float y0, float x1, float y1) { this.x0 = x0; this.y0 = y0; this.x1 = x1; this.y1 = y1; }
-        public render_bounds(render_bounds rhs) { x0 = rhs.x0; y0 = rhs.y0; x1 = rhs.x1; y1 = rhs.y1; }
-
-        public float width() { return x1 - x0; }
-        public float height() { return y1 - y0; }
-        public float aspect() { return width() / height(); }
-        public bool includes(float x, float y) { return (x >= x0) && (x <= x1) && (y >= y0) && (y <= y1); }
-    }
-
-
-    // render_color - floating point set of ARGB values
-    public class render_color
-    {
-        public float a;                  // alpha component (0.0 = transparent, 1.0 = opaque)
-        public float r;                  // red component (0.0 = none, 1.0 = max)
-        public float g;                  // green component (0.0 = none, 1.0 = max)
-        public float b;                  // blue component (0.0 = none, 1.0 = max)
-
-        public render_color() { }
-        public render_color(float a, float r, float g, float b) { this.a = a; this.r = r; this.g = g; this.b = b; }
-    }
-
-
-    // render_texuv - floating point set of UV texture coordinates
-    public class render_texuv
-    {
-        public float u;                  // U coodinate (0.0-1.0)
-        public float v;                  // V coordinate (0.0-1.0)
-
-        public render_texuv() { }
-        public render_texuv(render_texuv quad) { u = quad.u; v = quad.v; }
-    }
-
-
-    // render_quad_texuv - floating point set of UV texture coordinates
-    public class render_quad_texuv
-    {
-        public render_texuv tl;                 // top-left UV coordinate
-        public render_texuv tr;                 // top-right UV coordinate
-        public render_texuv bl;                 // bottom-left UV coordinate
-        public render_texuv br;                 // bottom-right UV coordinate
-
-        public render_quad_texuv()
-        {
-            tl = new render_texuv();
-            tr = new render_texuv();
-            bl = new render_texuv();
-            br = new render_texuv();
-        }
-        public render_quad_texuv(render_quad_texuv quad)
-        {
-            tl = new render_texuv(quad.tl);
-            tr = new render_texuv(quad.tr);
-            bl = new render_texuv(quad.bl);
-            br = new render_texuv(quad.br);
-        }
-    }
-
-
     // render_texinfo - texture information
     public class render_texinfo
     {
@@ -304,6 +227,27 @@ namespace mame
         public MemoryContainer<rgb_t> palette;  // const rgb_t *       palette;            // palette for PALETTE16 textures, bcg lookup table for RGB32/YUY16
         public u32 palette_length;
     }
+
+
+    namespace emu.render.detail
+    {
+        public class bounds_step
+        {
+            public int state;
+            public render_bounds bounds;
+            public render_bounds delta;
+        }
+        //using bounds_vector = std::vector<bounds_step>;
+
+        public class color_step
+        {
+            public int state;
+            public render_color color;
+            public render_color delta;
+        }
+        //using color_vector = std::vector<color_step>;
+
+    } // namespace emu::render::detail
 
 
     // ======================> render_layer_config
@@ -392,33 +336,15 @@ namespace mame
         //-------------------------------------------------
         public void reset()
         {
-            // public state
+            // do not clear m_next!
+            //memset(&type, 0, uintptr_t(&texcoords + 1) - uintptr_t(&type));
             type = primitive_type.INVALID;
             bounds = new render_bounds();
-            bounds.x0 = 0;
-            bounds.y0 = 0;
-            bounds.x1 = 0;
-            bounds.y1 = 0;
             color = new render_color();
-            color.a = 0;
-            color.r = 0;
-            color.g = 0;
-            color.b = 0;
             flags = 0;
             width = 0.0f;
             texture = new render_texinfo();
             texcoords = new render_quad_texuv();
-            texcoords.bl.u = 0.0f;
-            texcoords.bl.v = 0.0f;
-            texcoords.br.u = 0.0f;
-            texcoords.br.v = 0.0f;
-            texcoords.tl.u = 0.0f;
-            texcoords.tl.v = 0.0f;
-            texcoords.tr.u = 0.0f;
-            texcoords.tr.v = 0.0f;
-
-            // do not clear m_next!
-            // memset(&type, 0, FPTR(&texcoords + 1) - FPTR(&type));
         }
     }
 
@@ -598,7 +524,7 @@ namespace mame
         // a scaled_texture contains a single scaled entry for a texture
         struct scaled_texture
         {
-            public bitmap_argb32 bitmap;                 // final bitmap
+            public bitmap_argb32 bitmap;  // final bitmap  //std::unique_ptr<bitmap_argb32>  bitmap;     // final bitmap
             public u32 seqid;                  // sequence number
         }
 
@@ -673,12 +599,13 @@ namespace mame
         public void release()
         {
             // free all scaled versions
-            for (int scalenum = 0; scalenum < m_scaled.Length; scalenum++)
+            for (int i = 0; i < m_scaled.Length; i++)  //for (auto &elem : m_scaled)
             {
-                m_manager.invalidate_all(m_scaled[scalenum].bitmap);
-                //global_free(m_scaled[scalenum].bitmap);
-                m_scaled[scalenum].bitmap = null;
-                m_scaled[scalenum].seqid = 0;
+                var elem = m_scaled[i];
+
+                m_manager.invalidate_all(elem.bitmap);
+                elem.bitmap = null;  //elem.bitmap.reset();
+                elem.seqid = 0;
             }
 
             // invalidate references to the original bitmap as well
@@ -711,7 +638,9 @@ namespace mame
             if (format == texture_format.TEXFORMAT_PALETTE16)
             {
                 //throw new emu_unimplemented();
-                //assert(bitmap.palette() != NULL);
+#if false
+                assert(bitmap.palette() != NULL);
+#endif
             }
 
             // invalidate references to the old bitmap
@@ -724,16 +653,14 @@ namespace mame
             m_format = format;
 
             // invalidate all scaled versions
-            for (int scalenum = 0; scalenum < m_scaled.Length; scalenum++)
+            for (int i = 0; i < m_scaled.Length; i++)  //for (auto & elem : m_scaled)
             {
-                if (m_scaled[scalenum].bitmap != null)
-                {
-                    m_manager.invalidate_all(m_scaled[scalenum].bitmap);
-                    //global_free(m_scaled[scalenum].bitmap);
-                    m_scaled[scalenum].bitmap = null;
-                }
-                m_scaled[scalenum].bitmap = null;
-                m_scaled[scalenum].seqid = 0;
+                var elem = m_scaled[i];
+
+                if (elem.bitmap != null)
+                    m_manager.invalidate_all(elem.bitmap);
+                elem.bitmap = null;  //elem.bitmap.reset();
+                elem.seqid = 0;
             }
         }
 
@@ -842,8 +769,8 @@ namespace mame
 
                 // finally fill out the new info
                 primlist.add_reference(scaled.bitmap);
-                texinfo.base_ = scaled.bitmap.raw_pixptr(0);  //texinfo.base = &scaled->bitmap->pix32(0);
-                texinfo.rowpixels = (UInt32)scaled.bitmap.rowpixels();
+                texinfo.base_ = scaled.bitmap.pix(0);
+                texinfo.rowpixels = (u32)scaled.bitmap.rowpixels();
                 texinfo.width = dwidth;
                 texinfo.height = dheight;
                 // palette will be set later
@@ -1118,7 +1045,7 @@ namespace mame
             // add it like a quad
             item newitem = add_generic(render_global.CONTAINER_ITEM_QUAD, bounds.x0, bounds.y0, bounds.x1, bounds.y1, argb);
             newitem.m_texture = texture;
-            newitem.m_flags = render_global.PRIMFLAG_TEXORIENT(emucore_global.ROT0) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | render_global.PRIMFLAG_PACKABLE;
+            newitem.m_flags = render_global.PRIMFLAG_TEXORIENT(emucore_global.ROT0) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | render_global.PRIMFLAG_PACKABLE;
             newitem.m_internal = render_global.INTERNAL_FLAG_CHAR;
         }
 
@@ -1189,8 +1116,8 @@ namespace mame
             {
                 throw new emu_unimplemented();
 #if false
-                UINT32 *src = &source.pix32(y % source.height());
-                UINT32 *dst = &dest.pix32(y);
+                u32 const *const src = &source.pix(y % source.height());
+                u32 *dst = &dest.pix(y);
                 int sx = 0;
 
                 // loop over columns
@@ -1387,42 +1314,19 @@ namespace mame
             }
 
 
-            public class bounds_step
-            {
-                int state;
-                public render_bounds bounds;
-                render_bounds delta;
-            }
-
-
-            //using bounds_vector = std::vector<bounds_step>;
-
-
-            //struct color_step
-            //{
-            //    int             state;
-            //    render_color    color;
-            //    render_color    delta;
-            //}
-
-            //using color_vector = std::vector<color_step>;
-
-
-            //typedef std::unique_ptr<component> ptr;
+            //using bounds_vector = emu::render::detail::bounds_vector;
+            //using color_vector = emu::render::detail::color_vector;
 
 
             // internal state
             int m_statemask;                // bits of state used to control visibility
             int m_stateval;                 // masked state value to make component visible
             layout_element_component_bounds_vector m_bounds;                   // bounds of the element
-            //color_vector        m_color;                    // color of the element
+            layout_element_component_color_vector m_color;                    // color of the element
 
 
             // rendlay.cs
-            //component(environment &env, util::xml::data_node const &compnode, const char *dirname);
-
-
-            // setup
+            //component(environment &env, util::xml::data_node const &compnode);
             //void normalize_bounds(float xoffs, float yoffs, float xscale, float yscale);
 
 
@@ -1431,90 +1335,15 @@ namespace mame
             public int stateval() { return m_stateval; }
 
 
-            //-------------------------------------------------
-            //  statewrap - get state wraparound requirements
-            //-------------------------------------------------
-            public std.pair<int, bool> statewrap()
-            {
-                throw new emu_unimplemented();
-#if false
-                int result(0);
-                bool fold;
-                auto const adjustmask =
-                        [&result, &fold] (int val, int mask)
-                        {
-                            assert(!(val & ~mask));
-                            auto const splatright =
-                                    [] (int x)
-                                    {
-                                        for (unsigned shift = 1; (sizeof(x) * 4) >= shift; shift <<= 1)
-                                            x |= (x >> shift);
-                                        return x;
-                                    };
-                            int const unfolded(splatright(mask));
-                            int const folded(splatright(~mask | splatright(val)));
-                            if (unsigned(folded) < unsigned(unfolded))
-                            {
-                                result |= folded;
-                                fold = true;
-                            }
-                            else
-                            {
-                                result |= unfolded;
-                            }
-                        };
-                adjustmask(stateval(), statemask());
-                int max(maxstate());
-                if (m_bounds.size() > 1U)
-                    max = (std::max)(max, m_bounds.back().state);
-                if (m_color.size() > 1U)
-                    max = (std::max)(max, m_color.back().state);
-                if (0 <= max)
-                    adjustmask(max, ~0);
-                return std::make_pair(result, fold);
-#endif
-            }
-
-
-            //-------------------------------------------------
-            //  overall_bounds - maximum bounds for all states
-            //-------------------------------------------------
-            public render_bounds overall_bounds()
-            {
-                //var i = m_bounds.begin();
-                //render_bounds result = i.bounds;
-                //while (m_bounds.end() != ++i)
-                //    rendutil_global.union_render_bounds(result, i.bounds);
-                render_bounds result = new render_bounds();
-                foreach (var i in m_bounds)
-                    rendutil_global.union_render_bounds(result, i.bounds);
-
-                return result;
-            }
-
-
-            public render_bounds bounds(int state)
-            {
-                throw new emu_unimplemented();
-            }
-
-
-            //render_color color(int state) const;
-
-
-            // operations
-            //-------------------------------------------------
-            //  draw - draw a component
-            //-------------------------------------------------
-            public abstract void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state);
-
-
-            // helpers
-            public virtual int maxstate() { return -1; }
-
-
-            // drawing helpers
             // rendlay.cs
+            //std::pair<int, bool> layout_element::component::statewrap() const
+            //render_bounds layout_element::component::overall_bounds() const
+            //render_bounds layout_element::component::bounds(int state) const
+            //render_color color(int state) const;
+            //virtual void preload(running_machine &machine);
+            //virtual void draw(running_machine &machine, bitmap_argb32 &dest, int state);
+            //virtual int maxstate() const;
+            //virtual void draw_aligned(running_machine &machine, bitmap_argb32 &dest, const rectangle &bounds, int state);
             //void draw_text(render_font font, bitmap_argb32 dest, rectangle bounds, string str, int align)
             //void draw_segment_horizontal_caps(bitmap_argb32 dest, int minx, int maxx, int midy, int width, int caps, rgb_t color)
             //void draw_segment_horizontal(bitmap_argb32 dest, int minx, int maxx, int midy, int width, rgb_t color)
@@ -1549,8 +1378,9 @@ namespace mame
         }
 
 
-        //typedef component::ptr (*make_component_func)(environment &env, util::xml::data_node const &compnode, const char *dirname);
-        public delegate component make_component_func(layout_element_environment env, util.xml.data_node compnode, string dirname);
+        //typedef component::ptr (*make_component_func)(environment &env, util::xml::data_node const &compnode);
+        public delegate component make_component_func(layout_element_environment env, util.xml.data_node compnode);
+
         //typedef std::map<std::string, make_component_func> make_component_map;
 
 
@@ -1567,7 +1397,7 @@ namespace mame
 
 
         // rendlay.cs
-        //layout_element(environment &env, util::xml::data_node const &elemnode, const char *dirname);
+        //layout_element(environment &env, util::xml::data_node const &elemnode);
 
 
         // getters
@@ -1577,16 +1407,12 @@ namespace mame
 
         // rendlay.cs
         //public render_texture state_texture(int state)
-
-
-        // internal helpers
-
-        // rendlay.cs
+        //void preload();
         //void element_scale(bitmap_argb32 dest, bitmap_argb32 source, rectangle sbounds, layout_element.texture param) //, void *param)
 
 
-        //template <typename T> static component::ptr make_component(environment &env, util::xml::data_node const &compnode, const char *dirname);
-        //template <int D> static component::ptr make_dotmatrix_component(environment &env, util::xml::data_node const &compnode, const char *dirname);
+        //template <typename T> static component::ptr make_component(environment &env, util::xml::data_node const &compnode);
+        //template <int D> static component::ptr make_dotmatrix_component(environment &env, util::xml::data_node const &compnode);
     }
 
 
@@ -1658,11 +1484,19 @@ namespace mame
         {
             //friend class layout_view;
 
+            //using bounds_vector = emu::render::detail::bounds_vector;
+            //using color_vector = emu::render::detail::color_vector;
+
 
             // internal state
             layout_element m_element;          // pointer to the associated element (non-screens only)
             //output_finder<>     m_output;           // associated output
+            //output_finder<>         m_animoutput;       // associated output for animation if different
             bool m_have_output;      // whether we actually have an output
+            bool m_have_animoutput;  // whether we actually have an output for animation
+            ioport_port m_animinput_port;   // input port used for animation
+            ioport_value m_animmask;         // mask for animation state
+            u8 m_animshift;        // shift for animation state
             ioport_port m_input_port;       // input port of this item
             ioport_field m_input_field;      // input port field of this item
             ioport_value m_input_mask;       // input mask of this item
@@ -1671,14 +1505,15 @@ namespace mame
             bool m_clickthrough;     // should click pass through to lower elements
             screen_device m_screen;           // pointer to screen
             int m_orientation;      // orientation of this item
-            public render_bounds m_bounds = new render_bounds();           // bounds of the item
-            render_color m_color = new render_color();            // color of the item
+            public layout_view_item_bounds_vector m_bounds;           // bounds of the item
+            layout_view_item_color_vector m_color;            // color of the item
             public int m_blend_mode;       // blending mode to use when drawing
             public u32 m_visibility_mask;  // combined mask of parent visibility groups
 
             // cold items
             string m_input_tag;        // input tag of this item
-            public render_bounds m_rawbounds;        // raw (original) bounds of the item
+            string m_animinput_tag;    // tag of input port for animation state
+            public layout_view_item_bounds_vector m_rawbounds;        // raw (original) bounds of the item
             bool m_has_clickthrough; // whether clickthrough was explicitly configured
 
 
@@ -1695,31 +1530,37 @@ namespace mame
             // getters
             public layout_element element() { return m_element; }
             public screen_device screen() { return m_screen; }
-            public render_bounds bounds() { return m_bounds; }
-            public render_bounds rawbounds() { return m_rawbounds; }
-            public render_color color() { return m_color; }
+
+
+            // rendlay.cs
+            //render_bounds bounds();
+            //render_color color();
+
+
             public int blend_mode() { return m_blend_mode; }
             public u32 visibility_mask() { return m_visibility_mask; }
             public int orientation() { return m_orientation; }
-            //render_container *screen_container(running_machine &machine) const;
+            //render_container *screen_container() const { return m_screen ? &m_screen->container() : nullptr; }
 
             // interactivity
             public bool has_input() { return m_input_port != null; }
-            public ioport_port input_tag_and_mask(out ioport_value mask) { mask = m_input_mask; return m_input_port; }
+            public std.pair<ioport_port, ioport_value> input_tag_and_mask() { return std.make_pair(m_input_port, m_input_mask); }
             public bool clickthrough() { return m_clickthrough; }
 
 
             // rendlay.cs
             //public int state()
             //public void resolve_tags()
-
-
-            // rendlay.cs
+            //int animation_state() const;
             //static layout_element find_element(view_environment env, util.xml.data_node itemnode, element_map elemmap);
-            //static render_bounds make_bounds(view_environment env, util.xml.data_node itemnode, float [,] trans);  //layout_group.transform trans
+            //static bounds_vector make_bounds(view_environment &env, util::xml::data_node const &itemnode, layout_group::transform const &trans);
+            //static color_vector make_color(view_environment &env, util::xml::data_node const &itemnode, render_color const &mult);
+            //static std::string make_animoutput_tag(view_environment &env, util::xml::data_node const &itemnode);
+            //static std::string make_animinput_tag(view_environment &env, util::xml::data_node const &itemnode);
+            //static ioport_value make_animmask(view_environment &env, util::xml::data_node const &itemnode);
             //static string make_input_tag(view_environment env, util.xml.data_node itemnode);
             //static int get_blend_mode(view_environment env, util.xml.data_node itemnode);
-            //static unsigned get_input_shift(ioport_value mask);
+            //static unsigned get_state_shift(ioport_value mask);
         }
 
 
@@ -1803,6 +1644,7 @@ namespace mame
         float m_effaspect;        // X/Y of the layout in current configuration
         render_bounds m_bounds;           // computed bounds of the view in current configuration
         layout_view_item_list m_items;            // list of layout items
+        layout_view_item_ref_vector m_visible_items = new layout_view_item_ref_vector();    // all visible items
         layout_view_item_ref_vector m_screen_items = new layout_view_item_ref_vector();     // visible items that represent screens to draw
         layout_view_item_ref_vector m_interactive_items = new layout_view_item_ref_vector();// visible items that can accept pointer input
         layout_view_edge_vector m_interactive_edges_x = new layout_view_edge_vector();
@@ -1830,16 +1672,26 @@ namespace mame
         // getters
 
         public layout_view_item_list items() { return m_items; }
+
+        // rendlay.cs
+        //bool has_screen(screen_device &screen);
+
         public string name() { return m_name; }
-        public size_t screen_count() { return (size_t)m_screens.size(); }
+        //size_t visible_screen_count() const { return m_screens.size(); }
         public float effective_aspect() { return m_effaspect; }
         //const render_bounds &bounds() const { return m_bounds; }
-        //bool has_screen(screen_device &screen) const;
-        public layout_view_item_ref_vector screen_items() { return m_screen_items; }
+
+
+        // rendlay.cs
+        //bool has_visible_screen(screen_device &screen) const;
+
+
+        public layout_view_item_ref_vector visible_items() { return m_visible_items; }
+        public layout_view_item_ref_vector visible_screen_items() { return m_screen_items; }
         public layout_view_item_ref_vector interactive_items() { return m_interactive_items; }
         public layout_view_edge_vector interactive_edges_x() { return m_interactive_edges_x; }
         public layout_view_edge_vector interactive_edges_y() { return m_interactive_edges_y; }
-        public layout_view_screen_ref_vector screens() { return m_screens; }
+        //const screen_ref_vector &visible_screens() const { return m_screens; }
         //const visibility_toggle_vector &visibility_toggles() const { return m_vistoggles; }
         public u32 default_visibility_mask() { return m_defvismask; }
 
@@ -1854,12 +1706,8 @@ namespace mame
 
         // rendlay.cs
         //void recompute(u32 visibility_mask, bool zoom_to_screens);
-
-        // rendlay.cs
+        //void preload();
         //public void resolve_tags()
-
-        // rendlay.cs
-        // add items, recursing for groups
         //void add_items(
         //        layer_lists &layers,
         //        view_environment &env,
@@ -1872,8 +1720,6 @@ namespace mame
         //        bool root,
         //        bool repeat,
         //        bool init);
-
-        // rendlay.cs
         //static std::string make_name(layout_environment &env, util::xml::data_node const &viewnode);
     }
 
@@ -1895,7 +1741,7 @@ namespace mame
 
 
         // rendlay.cs
-        //layout_file(device_t &device, util::xml::data_node const &rootnode, char const *dirname);
+        //layout_file(device_t &device, util::xml::data_node const &rootnode, char const *searchpath, char const *dirname);
 
 
         // getters
@@ -1907,7 +1753,6 @@ namespace mame
 
         // add elements and parameters
         //void add_elements(
-        //        char const *dirname,
         //        environment &env,
         //        util::xml::data_node const &parentnode,
         //        group_map &groupmap,
@@ -2119,6 +1964,7 @@ namespace mame
             {
                 m_curview = viewindex;
                 current_view().recompute(visibility_mask(), m_layerconfig.zoom_to_screen());
+                current_view().preload();
             }
         }
 
@@ -2171,16 +2017,18 @@ namespace mame
                 // if we have enough targets to be one per screen, assign in order
                 if (numtargets >= screens.size())
                 {
+                    // find the first view with this screen and this screen only
                     screen_device screen = screens[index() % screens.size()];
                     for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
                     {
-                        foreach (screen_device viewscreen in m_views[i].first.screens())
+                        foreach (layout_view.item viewitem in m_views[i].first.items())
                         {
+                            screen_device viewscreen = viewitem.screen();
                             if (viewscreen == screen)
                             {
                                 view = m_views[i].first;
                             }
-                            else
+                            else if (viewscreen != null)
                             {
                                 view = null;
                                 break;
@@ -2195,11 +2043,8 @@ namespace mame
                     for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
                     {
                         layout_view curview = m_views[i].first;
-                        if (curview.screen_count() >= screens.size())
-                        {
-                            if (std.find_if(screens, (screen_device screen) => { return !curview.has_screen(screen); }) == null)  //if (std::find_if(screens.begin(), screens.end(), [&curview] (screen_device &screen) { return !curview.has_screen(screen); }) == screens.end())
-                                view = curview;
-                        }
+                        if (std.find_if(screens, (screen_device screen) => { return !curview.has_screen(screen); }) == default)
+                            view = curview;
                     }
                 }
             }
@@ -2432,55 +2277,49 @@ namespace mame
             if (m_manager.machine().phase() >= machine_phase.RESET)
             {
                 // we're running - iterate over items in the view
-                foreach (layout_view.item curitem in current_view().items())
+                foreach (layout_view.item curitem in current_view().visible_items())
                 {
-                    if ((visibility_mask() & curitem.visibility_mask()) == curitem.visibility_mask())
-                    {
-                        // first apply orientation to the bounds
-                        render_bounds bounds = curitem.bounds();
-                        render_global.apply_orientation(bounds, root_xform.orientation);
-                        render_global.normalize_bounds(bounds);
+                    // first apply orientation to the bounds
+                    render_bounds bounds = curitem.bounds();
+                    render_global.apply_orientation(bounds, root_xform.orientation);
+                    render_global.normalize_bounds(bounds);
 
-                        // apply the transform to the item
-                        object_transform item_xform = new object_transform();
-                        item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
-                        item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
-                        item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
-                        item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
-                        item_xform.color.r = curitem.color().r * root_xform.color.r;
-                        item_xform.color.g = curitem.color().g * root_xform.color.g;
-                        item_xform.color.b = curitem.color().b * root_xform.color.b;
-                        item_xform.color.a = curitem.color().a * root_xform.color.a;
-                        item_xform.orientation = rendutil_global.orientation_add(curitem.orientation(), root_xform.orientation);
-                        item_xform.no_center = false;
+                    // apply the transform to the item
+                    object_transform item_xform = new object_transform();
+                    item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
+                    item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
+                    item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
+                    item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
+                    item_xform.color = curitem.color() * root_xform.color;
+                    item_xform.orientation = rendutil_global.orientation_add(curitem.orientation(), root_xform.orientation);
+                    item_xform.no_center = false;
 
-                        // if there is no associated element, it must be a screen element
-                        if (curitem.screen() != null)
-                            add_container_primitives(list, root_xform, item_xform, curitem.screen().container(), curitem.blend_mode());
-                        else
-                            add_element_primitives(list, item_xform, curitem.element(), curitem.state(), curitem.blend_mode());
-                    }
+                    // if there is no associated element, it must be a screen element
+                    if (curitem.screen() != null)
+                        add_container_primitives(list, root_xform, item_xform, curitem.screen().container(), curitem.blend_mode());
+                    else
+                        add_element_primitives(list, item_xform, curitem.element(), curitem.state(), curitem.blend_mode());
                 }
             }
             else
             {
                 // if we are not in the running stage, draw an outer box
                 render_primitive prim = list.alloc(render_primitive.primitive_type.QUAD);
-                rendutil_global.set_render_bounds_xy(prim.bounds, 0.0f, 0.0f, (float)m_width, (float)m_height);
+                prim.bounds.set_xy(0.0f, 0.0f, (float)m_width, (float)m_height);
                 prim.full_bounds = prim.bounds;
-                rendutil_global.set_render_color(prim.color, 1.0f, 0.1f, 0.1f, 0.1f);
+                prim.color.set(1.0f, 0.1f, 0.1f, 0.1f);
                 prim.texture.base_ = null;
-                prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+                prim.flags = PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA);
                 list.append(prim);
 
                 if (m_width > 1 && m_height > 1)
                 {
                     prim = list.alloc(render_primitive.primitive_type.QUAD);
-                    rendutil_global.set_render_bounds_xy(prim.bounds, 1.0f, 1.0f, (float)(m_width - 1), (float)(m_height - 1));
+                    prim.bounds.set_xy(1.0f, 1.0f, (float)(m_width - 1), (float)(m_height - 1));
                     prim.full_bounds = prim.bounds;
-                    rendutil_global.set_render_color(prim.color, 1.0f, 0.0f, 0.0f, 0.0f);
+                    prim.color.set(1.0f, 0.0f, 0.0f, 0.0f);
                     prim.texture.base_ = null;
-                    prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+                    prim.flags = PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA);
                     list.append(prim);
                 }
             }
@@ -2500,7 +2339,7 @@ namespace mame
                 ui_xform.no_center = true;
 
                 // add UI elements
-                add_container_primitives(list, root_xform, ui_xform, debug, BLENDMODE_ALPHA);
+                add_container_primitives(list, root_xform, ui_xform, debug, rendertypes_global.BLENDMODE_ALPHA);
             }
 
             // process the UI if we are the UI target
@@ -2518,7 +2357,7 @@ namespace mame
                 ui_xform.no_center = false;
 
                 // add UI elements
-                add_container_primitives(list, root_xform, ui_xform, m_manager.ui_container(), BLENDMODE_ALPHA);
+                add_container_primitives(list, root_xform, ui_xform, m_manager.ui_container(), rendertypes_global.BLENDMODE_ALPHA);
             }
 
             // optimize the list before handing it off
@@ -2560,20 +2399,19 @@ namespace mame
                     target_f = new std.pair<float, float>(target_f.second, target_f.first);  //std::swap(target_f.first, target_f.second);
 
                 // try to find the right container
-                var items = current_view().screen_items();
-                //auto const found(std::find_if(
-                //           items.begin(),
-                //           items.end(),
-                //           [&container] (layout_view::item &item) { return &item.screen()->container() == &container; }));
-                var found = std.find_if(items, (layout_view.item item) => { return item.screen().container() == container; });
+                var items = current_view().visible_screen_items();
+                var found = std.find_if(
+                           items,
+                           (layout_view.item item) => { return item.screen().container() == container; });
                 if (default != found)
                 {
                     layout_view.item item = found;
-                    if (item.bounds().includes(target_f.first, target_f.second))
+                    render_bounds bounds = item.bounds();
+                    if (bounds.includes(target_f.first, target_f.second))
                     {
                         // point successfully mapped
-                        container_x = (target_f.first - item.bounds().x0) / item.bounds().width();
-                        container_y = (target_f.second - item.bounds().y0) / item.bounds().height();
+                        container_x = (target_f.first - bounds.x0) / bounds.width();
+                        container_y = (target_f.second - bounds.y0) / bounds.height();
                         return true;
                     }
                 }
@@ -2625,17 +2463,25 @@ namespace mame
                 if (m_hit_test[i] && m_hit_test[items.size() + (int)i])
                 {
                     layout_view.item item = items[i];
-                    if (item.has_input())
+                    render_bounds bounds = item.bounds();
+                    if (bounds.includes(target_f.first, target_f.second))
                     {
-                        // point successfully mapped
-                        input_port = item.input_tag_and_mask(out input_mask);
-                        input_x = (target_f.first - item.bounds().x0) / item.bounds().width();
-                        input_y = (target_f.second - item.bounds().y0) / item.bounds().height();
-                        return true;
-                    }
-                    else
-                    {
-                        break;
+                        if (item.has_input())
+                        {
+                            // point successfully mapped
+                            //std::tie(input_port, input_mask) = item.input_tag_and_mask();
+                            var ret = item.input_tag_and_mask();
+                            input_port = ret.first;
+                            input_mask = ret.second; 
+
+                            input_x = (target_f.first - bounds.x0) / bounds.width();
+                            input_y = (target_f.second - bounds.y0) / bounds.height();
+                            return true;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -2682,7 +2528,10 @@ namespace mame
                 {
                     view.resolve_tags();
                     if (current_view() == view)
+                    { 
                         view.recompute(visibility_mask(), m_layerconfig.zoom_to_screen());
+                        view.preload();
+                    }
                 }
             }
         }
@@ -2738,7 +2587,7 @@ namespace mame
 
             // if there's an explicit file, load that first
             string basename = m_manager.machine().basename();
-            have_artwork |= load_layout_file(m_manager.machine().root_device(), basename.c_str(), rootnode);
+            have_artwork |= load_layout_file(m_manager.machine().root_device(), rootnode, m_manager.machine().options().art_path(), basename.c_str());
 
             // if we're only loading this file, we know our final result
             if (!singlefile)
@@ -3015,21 +2864,18 @@ namespace mame
                     int viewindex = 0;
                     for (layout_view view = nth_view((unsigned)viewindex); need_tiles && view != null; view = nth_view((unsigned)(++viewindex)))
                     {
-                        if (view.screen_count() >= screens.size())
+                        bool screen_missing = false;
+                        foreach (screen_device screen in iter)
                         {
-                            bool screen_missing = false;
-                            foreach (screen_device screen in iter)
+                            if (!view.has_screen(screen))
                             {
-                                if (!view.has_screen(screen))
-                                {
-                                    screen_missing = true;
-                                    break;
-                                }
+                                screen_missing = true;
+                                break;
                             }
-
-                            if (!screen_missing)
-                                need_tiles = false;
                         }
+
+                        if (!screen_missing)
+                            need_tiles = false;
                     }
                 }
 
@@ -3039,7 +2885,7 @@ namespace mame
                 }
 
                 // try to parse it
-                if (!load_layout_file(m_manager.machine().root_device(), null, root))
+                if (!load_layout_file(m_manager.machine().root_device(), root, m_manager.machine().options().art_path(), null))
                     throw new emu_fatalerror("Couldn't parse generated layout??");
             }
         }
@@ -3058,39 +2904,60 @@ namespace mame
         bool load_layout_file(string dirname, string filename)
         {
             // build the path and optionally prepend the directory
-            string fname = filename.append_(".lay");
+            string fname = "";
             if (dirname != null)
-                fname = fname.insert_(0, PATH_SEPARATOR).insert_(0, dirname);
+                fname = fname.append_(dirname).append_(PATH_SEPARATOR);
+            fname = fname.append_(filename).append_(".lay");
 
-            // attempt to open the file; bail if we can't
+            // attempt to open matching files
+            util.xml.parse_options parseopt = new util.xml.parse_options();
+            util.xml.parse_error parseerr = new util.xml.parse_error();
+            parseopt.error = parseerr;
             emu_file layoutfile = new emu_file(m_manager.machine().options().art_path(), OPEN_FLAG_READ);
             layoutfile.set_restrict_to_mediapath(1);
-            osd_file.error filerr = layoutfile.open(fname);
-            if (filerr != osd_file.error.NONE)
-                return false;
-
-            // read the file
-            util.xml.file rootnode = util.xml.file.read(layoutfile.core_file_get(), null);
-
-            // if we didn't get a properly-formatted XML file, record a warning and exit
-            if (!load_layout_file(m_manager.machine().root_device(), dirname, rootnode))
+            bool result = false;
+            for (osd_file.error filerr = layoutfile.open(fname); osd_file.error.NONE == filerr; filerr = layoutfile.open_next())
             {
-                osd_printf_warning("Improperly formatted XML file '{0}', ignoring\n", filename);
-                return false;
+                // read the file and parse as XML
+                util.xml.file rootnode = util.xml.file.read(layoutfile.core_file_get(), parseopt);
+                if (rootnode != null)
+                {
+                    // extract directory name from location of layout file
+                    string artdir = layoutfile.fullpath();
+                    var dirsep = artdir.LastIndexOf(PATH_SEPARATOR[0]);  //auto const dirsep(std::find_if(artdir.rbegin(), artdir.rend(), &util::is_directory_separator));
+                    artdir = artdir.Substring(0, dirsep);  //artdir.erase(dirsep.base(), artdir.end());
+
+                    // record a warning if we didn't get a properly-formatted XML file
+                    if (!load_layout_file(m_manager.machine().root_device(), rootnode, null, artdir.c_str()))
+                        osd_printf_warning("Improperly formatted XML layout file '{0}', ignoring\n", filename);
+                    else
+                        result = true;
+                }
+                else if (parseerr.error_message != null)
+                {
+                    osd_printf_warning(
+                            "Error parsing XML layout file '{0}' at line {1} column {2}: {3}, ignoring\n",
+                            filename,
+                            parseerr.error_line,
+                            parseerr.error_column,
+                            parseerr.error_message);
+                }
+                else
+                {
+                    osd_printf_warning("Error parsing XML layout file '{0}', ignorning\n", filename);
+                }
             }
-            else
-            {
-                return true;
-            }
+
+            return result;
         }
 
 
-        bool load_layout_file(device_t device, string dirname, util.xml.data_node rootnode)
+        bool load_layout_file(device_t device, util.xml.data_node rootnode, string searchpath, string dirname)
         {
             // parse and catch any errors
             try
             {
-                m_filelist.emplace_back(new layout_file(device, rootnode, dirname));
+                m_filelist.emplace_back(new layout_file(device, rootnode, searchpath, dirname));
             }
             catch (emu_fatalerror)
             {
@@ -3118,7 +2985,7 @@ namespace mame
             cliprect.y0 = xform.yoffs;
             cliprect.x1 = xform.xoffs + xform.xscale;
             cliprect.y1 = xform.yoffs + xform.yscale;
-            rendutil_global.sect_render_bounds(cliprect, m_bounds);
+            cliprect &= m_bounds;
 
             float root_xoffs = root_xform.xoffs + Math.Abs(root_xform.xscale - xform.xscale) * 0.5f;
             float root_yoffs = root_xform.yoffs + Math.Abs(root_xform.yscale - xform.yscale) * 0.5f;
@@ -3128,7 +2995,7 @@ namespace mame
             root_cliprect.y0 = root_yoffs;
             root_cliprect.x1 = root_xoffs + root_xform.xscale;
             root_cliprect.y1 = root_yoffs + root_xform.yscale;
-            rendutil_global.sect_render_bounds(root_cliprect, m_bounds);
+            root_cliprect &= m_bounds;
 
             // compute the container transform
             object_transform container_xform = new object_transform();
@@ -3338,7 +3205,7 @@ namespace mame
                             {
                                 // set the basic flags
                                 prim.flags |= (curitem.flags() & ~render_global.PRIMFLAG_BLENDMODE_MASK)
-                                    | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+                                    | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA);
 
                                 // apply clipping
                                 clipped = rendutil_global.render_clip_quad(prim.bounds, cliprect, null);
@@ -3359,7 +3226,7 @@ namespace mame
 
                 // allocate a primitive
                 render_primitive prim = list.alloc(render_primitive.primitive_type.QUAD);
-                rendutil_global.set_render_bounds_wh(prim.bounds, xform.xoffs, xform.yoffs, xform.xscale, xform.yscale);
+                prim.bounds.set_wh(xform.xoffs, xform.yoffs, xform.xscale, xform.yscale);
                 prim.full_bounds = prim.bounds;
                 prim.color = container_xform.color;
                 width = (int)(rendutil_global.render_round_nearest(prim.bounds.x1) - rendutil_global.render_round_nearest(prim.bounds.x0));
@@ -3374,7 +3241,7 @@ namespace mame
 
                 // set the flags and add it to the list
                 prim.flags = render_global.PRIMFLAG_TEXORIENT((UInt32)container_xform.orientation)
-                    | render_global.PRIMFLAG_BLENDMODE(render_global.BLENDMODE_RGB_MULTIPLY)
+                    | render_global.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_RGB_MULTIPLY)
                     | render_global.PRIMFLAG_TEXFORMAT((UInt32)container.overlay().format())
                     | render_global.PRIMFLAG_TEXSHADE(1);
 
@@ -3405,24 +3272,18 @@ namespace mame
                 // compute the bounds
                 int width = (int)rendutil_global.render_round_nearest(xform.xscale);
                 int height = (int)rendutil_global.render_round_nearest(xform.yscale);
-                rendutil_global.set_render_bounds_wh(prim.bounds, rendutil_global.render_round_nearest(xform.xoffs), rendutil_global.render_round_nearest(xform.yoffs), (float)width, (float)height);
+                prim.bounds.set_wh(rendutil_global.render_round_nearest(xform.xoffs), rendutil_global.render_round_nearest(xform.yoffs), (float)width, (float)height);
                 prim.full_bounds = prim.bounds;
                 if ((xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0)
                     std.swap(ref width, ref height);
-                width = Math.Min(width, m_maxtexwidth);
-                height = Math.Min(height, m_maxtexheight);
+                width = std.min(width, m_maxtexwidth);
+                height = std.min(height, m_maxtexheight);
 
                 // get the scaled texture and append it
-
                 texture.get_scaled((UInt32)width, (UInt32)height, prim.texture, list, prim.flags);
 
                 // compute the clip rect
-                render_bounds cliprect = new render_bounds();
-                cliprect.x0 = rendutil_global.render_round_nearest(xform.xoffs);
-                cliprect.y0 = rendutil_global.render_round_nearest(xform.yoffs);
-                cliprect.x1 = rendutil_global.render_round_nearest(xform.xoffs + xform.xscale);
-                cliprect.y1 = rendutil_global.render_round_nearest(xform.yoffs + xform.yscale);
-                rendutil_global.sect_render_bounds(cliprect, m_bounds);
+                render_bounds cliprect = prim.bounds & m_bounds;
 
                 // determine UV coordinates and apply clipping
                 prim.texcoords = new render_quad_texuv(render_global.oriented_texcoords[xform.orientation]);
@@ -3686,11 +3547,11 @@ namespace mame
                     if (x1 - x0 > 0)
                     {
                         render_primitive prim = list.alloc(render_primitive.primitive_type.QUAD);
-                        rendutil_global.set_render_bounds_xy(prim.bounds, (float)x0, (float)y0, (float)x1, (float)y1);
+                        prim.bounds.set_xy((float)x0, (float)y0, (float)x1, (float)y1);
                         prim.full_bounds = prim.bounds;
-                        rendutil_global.set_render_color(prim.color, 1.0f, 1.0f, 1.0f, 0.0f);
+                        prim.color.set(1.0f, 0.0f, 0.0f, 0.0f);
                         prim.texture.base_ = null;
-                        prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+                        prim.flags = PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA);
                         clearlist.append(prim);
                     }
 
@@ -3738,17 +3599,17 @@ namespace mame
                             goto done;
 
                         // change the blendmode on the first primitive to be NONE
-                        if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == render_global.BLENDMODE_RGB_MULTIPLY)
+                        if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_RGB_MULTIPLY)
                         {
                             // RGB multiply will multiply against 0, leaving nothing
-                            rendutil_global.set_render_color(prim.color, 1.0f, 0.0f, 0.0f, 0.0f);
+                            prim.color.set(1.0f, 0.0f, 0.0f, 0.0f);
                             prim.texture.base_ = null;
-                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE);
+                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE);
                         }
                         else
                         {
                             // for alpha or add modes, we will blend against 0 or add to 0; treat it like none
-                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE);
+                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE);
                         }
 
                         // since alpha is disabled, premultiply the RGB values and reset the alpha to 1.0
@@ -3856,7 +3717,7 @@ namespace mame
                 if (!target.hidden())
                 {
                     layout_view view = target.current_view();
-                    if (view.has_screen(screen))
+                    if (view.has_visible_screen(screen))
                         return true;
                 }
             }
@@ -4026,15 +3887,6 @@ namespace mame
         //  font_alloc - allocate a new font instance
         //-------------------------------------------------
         public render_font font_alloc(string filename = null) { return new render_font(this, filename); }
-
-        //-------------------------------------------------
-        //  font_free - release a font instance
-        //-------------------------------------------------
-        public void font_free(render_font font)
-        {
-            //global_free(font);
-            font.Dispose();
-        }
 
 
         // reference tracking

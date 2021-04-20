@@ -98,16 +98,16 @@ namespace mame.ui
                 m_imperfect_features |= device.type().imperfect_features();
 
                 // look for BIOS options
-                List<tiny_rom_entry> rom = device.rom_region();
-                for (int romOffset = 0; !m_has_bioses && rom != null && rom[romOffset] != null && !romload_global.ROMENTRY_ISEND(rom[romOffset]); ++romOffset)
+                device_t parent = device.owner();
+                device_slot_interface slot = device.GetClassInterface<device_slot_interface>();  //device_slot_interface const *const slot(dynamic_cast<device_slot_interface const *>(parent));
+                if (parent == null || (slot != null && (slot.get_card_device() == device)))
                 {
-                    if (romload_global.ROMENTRY_ISSYSTEM_BIOS(rom[romOffset]))
-                        m_has_bioses = true;
+                    for (Pointer<tiny_rom_entry> rom = device.rom_region(); !m_has_bioses && rom != null && !romload_global.ROMENTRY_ISEND(rom[0]); ++rom)  //for (tiny_rom_entry const *rom = device.rom_region(); !m_has_bioses && rom && !ROMENTRY_ISEND(rom); ++rom)
+                    {
+                        if (romload_global.ROMENTRY_ISSYSTEM_BIOS(rom[0]))
+                            m_has_bioses = true;
+                    }
                 }
-
-                // if we don't have ports passed in, build here
-                if (ports == null)
-                    local_ports.append(device, out sink);
             }
 
             // suppress "requires external artwork" warning when external artwork was loaded

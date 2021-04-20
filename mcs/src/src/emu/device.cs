@@ -834,7 +834,7 @@ namespace mame
             return m_rom_entries;
         }
 
-        public List<tiny_rom_entry> rom_region() { return device_rom_region(); }
+        public Pointer<tiny_rom_entry> rom_region() { return device_rom_region(); }
         public ioport_constructor input_ports() { return device_input_ports(); }
         //string get_default_bios_tag() { return m_default_bios_tag; }
         public u8 default_bios() { assert(configured());  return m_default_bios; }
@@ -1076,7 +1076,7 @@ namespace mame
         public void config_complete()
         {
             // resolve default BIOS
-            List<tiny_rom_entry> roms = rom_region();
+            Pointer<tiny_rom_entry> roms = rom_region();
             if (roms != null)
             {
                 // first pass: try to find default BIOS from ROM region or machine configuration
@@ -1557,7 +1557,7 @@ namespace mame
         //  rom_region - return a pointer to the implicit
         //  rom region description for this device
         //-------------------------------------------------
-        protected virtual List<tiny_rom_entry> device_rom_region() { return null; }
+        protected virtual Pointer<tiny_rom_entry> device_rom_region() { return null; }
 
         //-------------------------------------------------
         //  device_add_mconfig - add device-specific

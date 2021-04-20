@@ -578,10 +578,10 @@ namespace mame
                 return;
 
             // only support alpha and "none" blendmodes
-            assert(render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == render_global.BLENDMODE_NONE || render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_ALPHA);
+            assert(render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_NONE || render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_ALPHA);
 
             // fast case: no alpha
-            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == render_global.BLENDMODE_NONE || is_opaque(t, prim.color.a))
+            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_NONE || is_opaque(t, prim.color.a))
             {
                 u32 r = (u32)(256.0f * prim.color.r);
                 u32 g = (u32)(256.0f * prim.color.g);
@@ -1531,36 +1531,36 @@ namespace mame
             u32 primflags = prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK);
             //switch (prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK))
             {
-                if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)) ||
-                    primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
+                if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)) ||
+                    primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)))
                     draw_quad_palette16_none(t, prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
                     draw_quad_palette16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)))
                     draw_quad_yuy16_none(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
                     draw_quad_yuy16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)))
                     draw_quad_rgb32(t, prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_RGB_MULTIPLY)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_RGB_MULTIPLY)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_RGB_MULTIPLY)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_RGB_MULTIPLY)))
                     draw_quad_rgb32_multiply(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
                     draw_quad_rgb32_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)))
                     draw_quad_argb32_alpha(t, prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(render_global.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
                     draw_quad_argb32_add(prim, dstdata, pitch, setup);
 
                 else

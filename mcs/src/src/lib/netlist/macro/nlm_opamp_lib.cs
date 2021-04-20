@@ -714,6 +714,7 @@ namespace mame
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL082_DIP", netlist_TL082_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL084_DIP", netlist_TL084_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM324_DIP", netlist_LM324_DIP);
+            LOCAL_LIB_ENTRY(LM348_DIP)
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM358_DIP", netlist_LM358_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM2902_DIP", netlist_LM2902_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP8", netlist_UA741_DIP8);

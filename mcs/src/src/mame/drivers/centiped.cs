@@ -486,7 +486,7 @@ namespace mame
         */
 
         //ROM_START( centiped )
-        static readonly List<tiny_rom_entry> rom_centiped = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_centiped = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "136001-407.d1",  0x2000, 0x0800, CRC("c4d995eb") + SHA1("d0b2f0461cfa35842045d40ffb65e777703b773e") ),

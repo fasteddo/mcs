@@ -23,7 +23,7 @@ namespace mame
 
 
         //ROM_START( namco_51xx )
-        static readonly List<tiny_rom_entry> rom_namco_51xx = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_namco_51xx = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x400, "mcu", 0 ),
             ROM_LOAD( "51xx.bin",     0x0000, 0x0400, CRC("c2f57ef8") + SHA1("50de79e0d6a76bda95ffb02fcce369a79e6abfec") ),
@@ -121,9 +121,9 @@ namespace mame
         //  device_rom_region - return a pointer to the
         //  the device's ROM definitions
         //-------------------------------------------------
-        protected override List<tiny_rom_entry> device_rom_region()
+        protected override Pointer<tiny_rom_entry> device_rom_region()
         {
-            return rom_namco_51xx;
+            return new Pointer<tiny_rom_entry>(rom_namco_51xx);
         }
 
         //-------------------------------------------------

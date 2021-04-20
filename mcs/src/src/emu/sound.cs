@@ -8,10 +8,8 @@ using attoseconds_t = System.Int64;
 using s16 = System.Int16;
 using s32 = System.Int32;
 using s64 = System.Int64;
-using stream_sample_t = System.Int32;  //typedef s32 stream_sample_t;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using stream_update_delegate = System.Action<mame.sound_stream, mame.std.vector<mame.read_stream_view>, mame.std.vector<mame.write_stream_view>>;  //using stream_update_delegate = delegate<void (sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs)>;
-using stream_update_legacy_delegate = System.Action<mame.sound_stream, mame.Pointer<System.Int32> [], mame.Pointer<System.Int32> [], int>;  //using stream_update_legacy_delegate = delegate<void (sound_stream &stream, stream_sample_t const * const *inputs, stream_sample_t * const *outputs, int samples)>;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -1001,10 +999,7 @@ namespace mame
     }
 
 
-    // ======================> stream_update_legacy_delegate/stream_update_delegate
-
-    // old-style callback; eventually should be deprecated
-    //using stream_update_legacy_delegate = delegate<void (sound_stream &stream, stream_sample_t const * const *inputs, stream_sample_t * const *outputs, int samples)>;
+    // ======================> stream_update_delegate
 
     // new-style callback
     //using stream_update_delegate = delegate<void (sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs)>;
@@ -1053,7 +1048,6 @@ namespace mame
 
         // input information
         std.vector<sound_stream_input> m_input;       // list of streams we directly depend upon
-        std.vector<stream_sample_t> m_input_array;  // array of inputs for passing to the callback  //std::vector<stream_sample_t *> m_input_array;  // array of inputs for passing to the callback
         std.vector<read_stream_view> m_input_view;    // array of output views for passing to the callback
         std.vector<sound_stream> m_resampler_list = new std.vector<sound_stream>(); // internal list of resamplers
         stream_buffer m_empty_buffer;                  // empty buffer for invalid inputs
@@ -1061,11 +1055,9 @@ namespace mame
         // output information
         u32 m_output_base;                             // base index of our outputs, relative to our device
         std.vector<sound_stream_output> m_output;     // list of streams which directly depend upon us
-        std.vector<stream_sample_t> m_output_array; // array of outputs for passing to the callback  //std::vector<stream_sample_t *> m_output_array; // array of outputs for passing to the callback
         std.vector<write_stream_view> m_output_view;  // array of output views for passing to the callback
 
         // callback information
-        stream_update_legacy_delegate m_callback;             // callback function
         stream_update_delegate m_callback_ex;       // extended callback function
 
 
@@ -1083,12 +1075,10 @@ namespace mame
             m_resampling_disabled = (flags & sound_stream_flags.STREAM_DISABLE_INPUT_RESAMPLING) != 0;
             m_sync_timer = null;
             m_input = new std.vector<sound_stream_input>(inputs);  m_input.Fill(() => { return new sound_stream_input(); });
-            m_input_array = new std.vector<stream_sample_t>(inputs);
             m_input_view = new std.vector<read_stream_view>(inputs);
             m_empty_buffer = new stream_buffer(100);
             m_output_base = output_base;
             m_output = new std.vector<sound_stream_output>(outputs);  m_output.Fill(() => { return new sound_stream_output(); });
-            m_output_array = new std.vector<stream_sample_t>(outputs);
             m_output_view = new std.vector<write_stream_view>(outputs);
 
 
@@ -1106,6 +1096,12 @@ namespace mame
             // create a unique tag for saving
             string state_tag = global_object.string_format("{0}", m_device.machine().sound().unique_id());
             var save = m_device.machine().save();
+
+            //throw new emu_unimplemented();
+#if false
+            save.save_item(m_device, "stream.sample_rate", state_tag.c_str(), 0, NAME(m_sample_rate));
+#endif
+
             save.register_postload(postload);
 
             // initialize all inputs
@@ -1133,15 +1129,6 @@ namespace mame
 
             // force an update to the sample rates
             sample_rate_changed();
-        }
-
-
-        // construction/destruction
-        public sound_stream(device_t device, u32 inputs, u32 outputs, u32 output_base, u32 sample_rate, stream_update_legacy_delegate callback, sound_stream_flags flags = sound_stream_flags.STREAM_DEFAULT_FLAGS)  //sound_stream(device_t &device, u32 inputs, u32 outputs, u32 output_base, u32 sample_rate, stream_update_legacy_delegate callback, sound_stream_flags flags = STREAM_DEFAULT_FLAGS);
-            : this(device, inputs, outputs, output_base, sample_rate, flags)
-        {
-            m_callback = callback;
-            m_callback_ex = stream_update_legacy;
         }
 
 
@@ -1391,13 +1378,6 @@ namespace mame
         {
             update();
             reprime_sync_timer();
-        }
-
-
-        // new callback which wrapps calls through to the old-style callbacks
-        void stream_update_legacy(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //void stream_update_legacy(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs);
-        {
-            throw new emu_unimplemented();
         }
 
 
@@ -1699,25 +1679,6 @@ namespace mame
         //attotime last_update() const { return m_last_update; }
         //int sample_count() const { return m_samples_this_update; }
         public int unique_id() { return m_unique_id++; }
-
-
-        // allocate a new stream with the old-style callback
-        //-------------------------------------------------
-        //  stream_alloc_legacy - allocate a new stream
-        //-------------------------------------------------
-        public sound_stream stream_alloc_legacy(device_t device, u32 inputs, u32 outputs, u32 sample_rate, stream_update_legacy_delegate callback)  //sound_stream *stream_alloc_legacy(device_t &device, u32 inputs, u32 outputs, u32 sample_rate, stream_update_legacy_delegate callback);
-        {
-            // determine output base
-            u32 output_base = 0;
-            foreach (var stream in m_stream_list)
-            {
-                if (stream.device() == device)
-                    output_base += stream.output_count();
-            }
-
-            m_stream_list.push_back(new sound_stream(device, inputs, outputs, output_base, sample_rate, callback));  //m_stream_list.push_back(std::make_unique<sound_stream>(device, inputs, outputs, output_base, sample_rate, callback));
-            return m_stream_list.back();
-        }
 
 
         // allocate a new stream with a new-style callback

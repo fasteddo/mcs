@@ -328,7 +328,6 @@ namespace mame
 
                 var lnetlist = new netlist.netlist_state_t("netlist");                // enable validation mode  //auto lnetlist = std::make_unique<netlist::netlist_state_t>("netlist", plib::plog_delegate(&validity_logger::log, &logger));                // enable validation mode
                 lnetlist.netlist_state_t_after_ctor(logger.log);
-                lnetlist.set_extended_validation(true);
 
                 lnetlist.set_static_solver_lib(new plib.dynlib_static(null));  //lnetlist->set_static_solver_lib(std::make_unique<plib::dynlib_static>(nullptr));
 

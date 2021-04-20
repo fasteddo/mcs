@@ -59,19 +59,19 @@ namespace mame
         // internal state
         running_machine m_machine;                  // reference to our machine
 
-        /* pressed states; retrieved with ui_input_pressed() */
+        // pressed states; retrieved with ui_input_pressed()
         bool m_presses_enabled;
         osd_ticks_t [] m_next_repeat = new osd_ticks_t[(int)ioport_type.IPT_COUNT];
         u8 [] m_seqpressed = new u8[(int)ioport_type.IPT_COUNT];
 
-        /* mouse position/info */
+        // mouse position/info
         render_target m_current_mouse_target;
         s32 m_current_mouse_x;
         s32 m_current_mouse_y;
         bool m_current_mouse_down;
         ioport_field m_current_mouse_field;
 
-        /* popped states; ring buffer of ui_events */
+        // popped states; ring buffer of ui_events
         ui_event [] m_events = new ui_event[EVENT_QUEUE_SIZE];
         int m_events_start;
         int m_events_end;
@@ -86,15 +86,17 @@ namespace mame
             m_machine = machine;
             m_presses_enabled = true;
             m_current_mouse_target = null;
+            m_current_mouse_x = -1;
+            m_current_mouse_y = -1;
             m_current_mouse_down = false;
             m_current_mouse_field = null;
             m_events_start = 0;
             m_events_end = 0;
 
 
-            // create the private data
-            m_current_mouse_x = -1;
-            m_current_mouse_y = -1;
+            std.fill(m_next_repeat, (osd_ticks_t)0);
+            std.fill(m_seqpressed, (u8)0);
+
 
             // add a frame callback to poll inputs
             machine.add_notifier(machine_notification.MACHINE_NOTIFY_FRAME, frame_update);
@@ -142,7 +144,7 @@ namespace mame
         }
 
 
-        /* pushes a single event onto the queue */
+        // pushes a single event onto the queue
         /*-------------------------------------------------
             push_event - pushes a single event
             onto the queue
@@ -190,7 +192,7 @@ namespace mame
         }
 
 
-        /* pops an event off of the queue */
+        // pops an event off of the queue
         /*-------------------------------------------------
             pop_event - pops an event off of the queue
         -------------------------------------------------*/
@@ -210,11 +212,11 @@ namespace mame
         }
 
 
-        /* check the next event type without removing it */
+        // check the next event type without removing it
         public ui_event.type peek_event_type() { return (m_events_start != m_events_end) ? m_events[m_events_start].event_type : ui_event.type.NONE; }
 
 
-        /* clears all outstanding events */
+        // clears all outstanding events
         /*-------------------------------------------------
             reset - clears all outstanding events
             and resets the sequence states
@@ -233,7 +235,7 @@ namespace mame
         }
 
 
-        /* retrieves the current location of the mouse */
+        // retrieves the current location of the mouse
         /*-------------------------------------------------
             find_mouse - retrieves the current
             location of the mouse
@@ -273,7 +275,7 @@ namespace mame
         }
 
 
-        /* return TRUE if a key down for the given user interface sequence is detected */
+        // return TRUE if a key down for the given user interface sequence is detected
         /*-------------------------------------------------
             pressed - return TRUE if a key down
             for the given user interface sequence is
@@ -290,8 +292,7 @@ namespace mame
         //void set_presses_enabled(bool enabled) { m_presses_enabled = enabled; }
 
 
-        /* return TRUE if a key down for the given user interface sequence is detected, or if
-        autorepeat at the given speed is triggered */
+        // return true if a key down for the given user interface sequence is detected, or if autorepeat at the given speed is triggered
         /*-------------------------------------------------
             pressed_repeat - return TRUE if a key
             down for the given user interface sequence is
@@ -348,6 +349,8 @@ namespace mame
         // getters
         running_machine machine() { return m_machine; }
 
+
+        // queueing events
 
         /*-------------------------------------------------
             push_mouse_move_event - pushes a mouse

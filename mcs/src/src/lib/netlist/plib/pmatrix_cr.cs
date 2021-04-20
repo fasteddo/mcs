@@ -172,6 +172,10 @@ namespace mame.plib
     class pGEmatrix_cr<B, int_N> : pmatrix_cr<B, int_N>  //struct pGEmatrix_cr : public B
         where int_N : int_constant, new()
     {
+        //using base_type = B;
+        //using index_type = typename base_type::index_type;
+
+
         public std.vector<std.vector<size_t>> m_ge_par = new std.vector<std.vector<size_t>>();  // parallel execution support for Gauss
 
 

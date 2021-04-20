@@ -414,7 +414,7 @@ namespace mame
          *************************************/
 
         //ROM_START( dkong ) /* Confirmed TKG-04 Upgrade as mentioned in Nintendo Service Department Bulletin # TKG-02 12-11-81 */
-        static readonly List<tiny_rom_entry> rom_dkong = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_dkong = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "c_5et_g.bin",  0x0000, 0x1000, CRC("ba70b88b") + SHA1("d76ebecfea1af098d843ee7e578e480cd658ac1a") ),

@@ -3567,8 +3567,9 @@ namespace mame
                         {
                             if (field.type_class() == ioport_type_class.INPUT_CLASS_CONTROLLER)
                             {
-                                if (players < field.player() + 1) players = field.player() + 1;
-                                field.set_player((byte)(field.player() + player_offset));
+                                if (players < field.player() + 1)
+                                    players = field.player() + 1;
+                                field.set_player((u8)(field.player() + player_offset));
                             }
                         }
                     }
@@ -3912,6 +3913,8 @@ namespace mame
                 load_remap_table(parentnode);
 
             throw new emu_unimplemented();
+#if false
+#endif
         }
 
         //-------------------------------------------------

@@ -582,11 +582,11 @@ namespace mame.netlist
                 {
                     analog_net_t net = nets[k];
 
-                    log().debug.op("adding net with {0} populated connections\n", net.core_terms().size());
+                    log().debug.op("adding net with {0} populated connections\n", setup.nlstate().core_terms(net).size());
 
                     net.set_solver(this);
 
-                    foreach (var p in net.core_terms())
+                    foreach (var p in setup.nlstate().core_terms(net))
                     {
                         log().debug.op("{0} {1} {2}\n", p.name(), net.name(), net.is_rail_net());
 

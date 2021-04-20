@@ -1015,20 +1015,6 @@ namespace mame.ui
         }
 
 
-        static string make_error_text(bool summary, media_auditor auditor)
-        {
-            string str = "";  //std::ostringstream str;
-            str += "The selected machine is missing one or more required ROM or CHD images. Please select a different machine.\n\n";
-            if (summary)
-            {
-                auditor.summarize(null, ref str);
-                str += "\n";
-            }
-            str += "Press any key to continue.";
-            return str.str();
-        }
-
-
         // General info
         //-------------------------------------------------
         //  generate general info
@@ -1251,9 +1237,19 @@ namespace mame.ui
             {
                 // anything else is a driver
 
-                // audit the game first to see if we're going to work
                 driver_enumerator enumerator = new driver_enumerator(machine().options(), driver);
                 enumerator.next();
+
+                // if there are software entries, show a software selection menu
+                foreach (software_list_device swlistdev in new software_list_device_iterator(enumerator.config().root_device()))
+                {
+                    if (!swlistdev.get_info().empty())
+                    {
+                        throw new emu_unimplemented();
+                    }
+                }
+
+                // audit the system ROMs first to see if we're going to work
                 media_auditor auditor = new media_auditor(enumerator);
                 media_auditor.summary summary = auditor.audit_media(media_auditor.AUDIT_VALIDATE_FAST);
 
@@ -1266,21 +1262,13 @@ namespace mame.ui
                 // if everything looks good, schedule the new driver
                 if (summary == media_auditor.summary.CORRECT || summary == media_auditor.summary.BEST_AVAILABLE || summary == media_auditor.summary.NONE_NEEDED)
                 {
-                    foreach (software_list_device swlistdev in new software_list_device_iterator(enumerator.config().root_device()))
-                    {
-                        if (!swlistdev.get_info().empty())
-                        {
-                            throw new emu_unimplemented();
-                        }
-                    }
-
                     if (!select_bios(driver, false))
                         launch_system(driver);
                 }
                 else
                 {
                     // otherwise, display an error
-                    set_error(reset_options.REMEMBER_REF, make_error_text(media_auditor.summary.NOTFOUND != summary, auditor));
+                    set_error(reset_options.REMEMBER_REF, make_audit_fail_text(media_auditor.summary.NOTFOUND != summary, auditor));
                 }
             }
         }
@@ -1315,20 +1303,35 @@ namespace mame.ui
             }
             else if (ui_swinfo.startempty == 1)
             {
-                // audit the game first to see if we're going to work
                 driver_enumerator enumerator = new driver_enumerator(machine().options(), ui_swinfo.driver);
                 enumerator.next();
+
+                // if there are software entries, show a software selection menu
+                foreach (software_list_device swlistdev in new software_list_device_iterator(enumerator.config().root_device()))
+                {
+                    if (!swlistdev.get_info().empty())
+                    {
+                        throw new emu_unimplemented();
+                    }
+                }
+
+                // audit the system ROMs first to see if we're going to work
                 media_auditor auditor = new media_auditor(enumerator);
                 media_auditor.summary summary = auditor.audit_media(media_auditor.AUDIT_VALIDATE_FAST);
 
                 if (summary == media_auditor.summary.CORRECT || summary == media_auditor.summary.BEST_AVAILABLE || summary == media_auditor.summary.NONE_NEEDED)
                 {
-                    throw new emu_unimplemented();
+                    // if everything looks good, schedule the new driver
+                    if (!select_bios(ui_swinfo.driver, false))
+                    {
+                        reselect_last.reselect(true);
+                        launch_system(ui_swinfo.driver);
+                    }
                 }
                 else
                 {
                     // otherwise, display an error
-                    set_error(reset_options.REMEMBER_REF, make_error_text(media_auditor.summary.NOTFOUND != summary, auditor));
+                    set_error(reset_options.REMEMBER_REF, make_audit_fail_text(media_auditor.summary.NOTFOUND != summary, auditor));
                 }
             }
             else
@@ -1349,7 +1352,7 @@ namespace mame.ui
                 else
                 {
                     // otherwise, display an error
-                    set_error(reset_options.REMEMBER_POSITION, make_error_text(media_auditor.summary.NOTFOUND != summary, auditor));
+                    set_error(reset_options.REMEMBER_POSITION, make_audit_fail_text(media_auditor.summary.NOTFOUND != summary, auditor));
                 }
             }
         }

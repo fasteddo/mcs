@@ -537,10 +537,10 @@ namespace mame
         // drawing
 
         public void draw(screen_device screen, bitmap_ind16 dest, rectangle cliprect, u32 flags = tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES, u8 priority = 0, u8 priority_mask = 0xff)
-        { draw_common<bitmap_ind16, u16, PointerU16>(screen, dest, cliprect, flags, priority, priority_mask); }
+        { draw_common<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(screen, dest, cliprect, flags, priority, priority_mask); }
 
         public void draw(screen_device screen, bitmap_rgb32 dest, rectangle cliprect, u32 flags = tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES, u8 priority = 0, u8 priority_mask = 0xff)
-        { draw_common<bitmap_rgb32, u32, PointerU32>(screen, dest, cliprect, flags, priority, priority_mask); }
+        { draw_common<bitmap_rgb32, u32, PixelType_operators_u32, PointerU32>(screen, dest, cliprect, flags, priority, priority_mask); }
 
         //void draw_roz(screen_device &screen, bitmap_ind16 &dest, const rectangle &cliprect, u32 startx, u32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, u32 flags = TILEMAP_DRAW_ALL_CATEGORIES, u8 priority = 0, u8 priority_mask = 0xff);
         //void draw_roz(screen_device &screen, bitmap_rgb32 &dest, const rectangle &cliprect, u32 startx, u32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, u32 flags = TILEMAP_DRAW_ALL_CATEGORIES, u8 priority = 0, u8 priority_mask = 0xff);
@@ -571,7 +571,7 @@ namespace mame
             for (int ypos = (int)(scrolly - m_height); ypos <= blit.cliprect.bottom(); ypos += (int)m_height)
             {
                 for (int xpos = (int)(scrollx - m_width); xpos <= blit.cliprect.right(); xpos += (int)m_width)
-                    draw_instance<bitmap_rgb32, u32, PointerU32>(screen, dest, blit, xpos, ypos);
+                    draw_instance<bitmap_rgb32, u32, PixelType_operators_u32, PointerU32>(screen, dest, blit, xpos, ypos);
             }
         }
 
@@ -1106,8 +1106,8 @@ namespace mame
             u8 ormask = 0;
             for (int ty = 0; ty < m_tileheight; ty++)
             {
-                PointerU16 pixptr = m_pixmap.pix16((int)y0, (int)x0);  //u16 *pixptr = &m_pixmap.pix16(y0, x0);
-                PointerU8 flagsptr = m_flagsmap.pix8((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix8(y0, x0);
+                PointerU16 pixptr = m_pixmap.pix((int)y0, (int)x0);  //u16 *pixptr = &m_pixmap.pix(y0, x0);
+                PointerU8 flagsptr = m_flagsmap.pix((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix(y0, x0);
 
                 // pre-advance to the next row
                 y0 += (UInt32)dy0;
@@ -1160,7 +1160,7 @@ namespace mame
             for (UInt16 ty = 0; ty < m_tileheight; ty++)
             {
                 // pre-advance to the next row
-                PointerU8 flagsptr = m_flagsmap.pix8((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix8(y0, x0);
+                PointerU8 flagsptr = m_flagsmap.pix((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix(y0, x0);
 
                 y0 += (UInt32)dy0;
 
@@ -1236,7 +1236,7 @@ namespace mame
         //-------------------------------------------------
         //template<class _BitmapClass>
         //void tilemap_t::draw_common(screen_device &screen, _BitmapClass &dest, const rectangle &cliprect, u32 flags, u8 priority, u8 priority_mask)
-        void draw_common<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
+        void draw_common<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelType_OPS, _BitmapClass_PixelTypePointer>
         (
             screen_device screen,
             _BitmapClass dest,
@@ -1245,8 +1245,9 @@ namespace mame
             u8 priority,
             u8 priority_mask
         )
-            where _BitmapClass : bitmap_specific<_BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
-            where _BitmapClass_PixelTypeBufferPointer : PointerU8
+            where _BitmapClass : bitmap_specific<_BitmapClass_PixelType, _BitmapClass_PixelType_OPS, _BitmapClass_PixelTypePointer>
+            where _BitmapClass_PixelType_OPS : PixelType_operators, new()
+            where _BitmapClass_PixelTypePointer : PointerU8
         {
             // skip if disabled
             if (!m_enable)
@@ -1279,7 +1280,7 @@ namespace mame
                 for (int ypos = (int)(scrolly - m_height); ypos <= blit.cliprect.bottom(); ypos += (int)m_height)
                 {
                     for (int xpos = (int)(scrollx - m_width); xpos <= blit.cliprect.right(); xpos += (int)m_width)
-                        draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>(screen, dest, blit, xpos, ypos);
+                        draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelType_OPS, _BitmapClass_PixelTypePointer>(screen, dest, blit, xpos, ypos);
                 }
             }
 
@@ -1312,11 +1313,11 @@ namespace mame
 
                         // update the cliprect just for this set of rows
                         blit.cliprect.sety(currow * rowheight + ypos, nextrow * rowheight - 1 + ypos);
-                        blit.cliprect.intersection(original_cliprect);  //blit.cliprect &= original_cliprect;
+                        blit.cliprect &= original_cliprect;
 
                         // iterate over X to handle wraparound
                         for (int xpos = (int)(scrollx - m_width); xpos <= original_cliprect.right(); xpos += (int)m_width)
-                            draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>(screen, dest, blit, xpos, ypos);
+                            draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelType_OPS, _BitmapClass_PixelTypePointer>(screen, dest, blit, xpos, ypos);
                     }
                 }
             }
@@ -1349,11 +1350,11 @@ namespace mame
                     {
                         // update the cliprect just for this set of columns
                         blit.cliprect.setx(curcol * colwidth + xpos, nextcol * colwidth - 1 + xpos);
-                        blit.cliprect.intersection(original_cliprect);  //blit.cliprect &= original_cliprect;
+                        blit.cliprect &= original_cliprect;
 
                         // iterate over Y to handle wraparound
                         for (int ypos = (int)(scrolly - m_height); ypos <= original_cliprect.bottom(); ypos += (int)m_height)
-                            draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>(screen, dest, blit, xpos, ypos);
+                            draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelType_OPS, _BitmapClass_PixelTypePointer>(screen, dest, blit, xpos, ypos);
                     }
                 }
             }
@@ -1373,7 +1374,7 @@ namespace mame
         //-------------------------------------------------
         //template<class _BitmapClass>
         //void tilemap_t::draw_instance(screen_device &screen, _BitmapClass &dest, const blit_parameters &blit, int xpos, int ypos)
-        void draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
+        void draw_instance<_BitmapClass, _BitmapClass_PixelType, _BitmapClass_PixelType_OPS, _BitmapClass_PixelTypePointer>
         (
             screen_device screen,
             _BitmapClass dest,
@@ -1381,8 +1382,9 @@ namespace mame
             int xpos,
             int ypos
         )
-            where _BitmapClass : bitmap_specific<_BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
-            where _BitmapClass_PixelTypeBufferPointer : PointerU8
+            where _BitmapClass : bitmap_specific<_BitmapClass_PixelType, _BitmapClass_PixelType_OPS, _BitmapClass_PixelTypePointer>
+            where _BitmapClass_PixelType_OPS : PixelType_operators, new()
+            where _BitmapClass_PixelTypePointer : PointerU8
         {
             // clip destination coordinates to the tilemap
             // note that x2/y2 are exclusive, not inclusive
@@ -1397,7 +1399,7 @@ namespace mame
 
             // look up priority and destination base addresses for y1
             bitmap_ind8 priority_bitmap = blit.priority;
-            PointerU8 priority_baseaddr = priority_bitmap.pix8(y1, xpos);  //u8 *priority_baseaddr = &priority_bitmap.pix8(y1, xpos);
+            PointerU8 priority_baseaddr = priority_bitmap.pix(y1, xpos);  //u8 *priority_baseaddr = &priority_bitmap.pix(y1, xpos);
 
             //typename _BitmapClass::pixel_t *dest_baseaddr = NULL;
             PointerU8 dest_baseaddr8 = null;
@@ -1428,8 +1430,8 @@ namespace mame
             y2 -= ypos;
 
             // get tilemap pixels
-            PointerU16 source_baseaddr = m_pixmap.pix16(y1);  //const u16 *source_baseaddr = &m_pixmap.pix16(y1);
-            PointerU8 mask_baseaddr = m_flagsmap.pix8(y1);  //const u8 *mask_baseaddr = &m_flagsmap.pix8(y1);
+            PointerU16 source_baseaddr = m_pixmap.pix(y1);  //const u16 *source_baseaddr = &m_pixmap.pix(y1);
+            PointerU8 mask_baseaddr = m_flagsmap.pix(y1);  //const u8 *mask_baseaddr = &m_flagsmap.pix(y1);
 
             // get start/stop columns, rounding outward
             int mincol = (int)(x1 / m_tilewidth);
@@ -1709,7 +1711,7 @@ namespace mame
         public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_mapper_delegate mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, tilemap_t allocated)
         {
             if (allocated == null)
-                allocated = new tilemap_t(machine().root_device());  //allocated = global_alloc(tilemap_t)(machine().root_device());
+                allocated = new tilemap_t(machine().root_device());
 
             return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows));
         }
@@ -1717,7 +1719,7 @@ namespace mame
         public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_standard_mapper mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, tilemap_t allocated)
         {
             if (allocated == null)
-                allocated = new tilemap_t(machine().root_device());  //allocated = global_alloc(tilemap_t)(machine().root_device());
+                allocated = new tilemap_t(machine().root_device());
 
             return m_tilemap_list.append(allocated.init(this, decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows));
         }

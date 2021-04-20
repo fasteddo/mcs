@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using stream_sample_t = System.Int32;  //typedef s32 stream_sample_t;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
@@ -19,7 +18,7 @@ namespace mame
 
 
     // ======================> device_sound_interface
-    public abstract class device_sound_interface : device_interface
+    public class device_sound_interface : device_interface
     {
         public class sound_route
         {
@@ -46,6 +45,7 @@ namespace mame
         std.vector<sound_route> m_route_list = new std.vector<sound_route>();      // list of sound routes
         int m_outputs;                  // number of outputs from this instance
         protected int m_auto_allocated_inputs;    // number of auto-allocated inputs targeting us
+        public u32 m_specified_inputs_mask;    // mask of inputs explicitly specified (not counting auto-allocated)
 
 
         // construction/destruction
@@ -55,6 +55,9 @@ namespace mame
         public device_sound_interface(machine_config mconfig, device_t device)
             : base(device, "sound")
         {
+            m_outputs = 0;
+            m_auto_allocated_inputs = 0;
+            m_specified_inputs_mask = 0;
         }
 
 
@@ -107,16 +110,6 @@ namespace mame
         // sound stream update overrides
 
         //-------------------------------------------------
-        //  sound_stream_update_legacy - implementation
-        //  that should be overridden by legacy devices
-        //-------------------------------------------------
-        public virtual void sound_stream_update_legacy(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)  //void device_sound_interface::sound_stream_update_legacy(sound_stream &stream, stream_sample_t const * const *inputs, stream_sample_t * const *outputs, int samples)
-        {
-            throw new emu_fatalerror("sound_stream_update_legacy called but not overridden by owning class");
-        }
-
-
-        //-------------------------------------------------
         //  sound_stream_update - default implementation
         //  that should be overridden
         //-------------------------------------------------
@@ -131,11 +124,6 @@ namespace mame
         //  stream_alloc - allocate a stream implicitly
         //  associated with this device
         //-------------------------------------------------
-        sound_stream stream_alloc_legacy(int inputs, int outputs, u32 sample_rate)
-        {
-            return device().machine().sound().stream_alloc_legacy(this.device(), (u32)inputs, (u32)outputs, sample_rate, sound_stream_update_legacy);
-        }
-
 
         public sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate)
         {
@@ -328,10 +316,15 @@ namespace mame
                 // scan each route on the device
                 foreach (sound_route route in sound.routes())
                 {
-                    // see if we are the target of this route; if we are, make sure the source device is started
                     device_t target_device = route.m_base.get().subdevice(route.m_target.c_str());
-                    if ((target_device == device()) && !sound.device().started())
-                        throw new device_missing_dependencies();
+                    if (target_device == device())
+                    {
+                        // see if we are the target of this route; if we are, make sure the source device is started
+                        if (!sound.device().started())
+                            throw new device_missing_dependencies();
+                        if (route.m_input != AUTO_ALLOC_INPUT)
+                            m_specified_inputs_mask |= 1U << (int)route.m_input;
+                    }
                 }
             }
 
@@ -344,9 +337,9 @@ namespace mame
                 {
                     // see if we are the target of this route
                     device_t target_device = route.m_base.get().subdevice(route.m_target.c_str());
-                    if ((target_device == device()) && (route.m_input == AUTO_ALLOC_INPUT))
+                    if (target_device == device() && route.m_input == AUTO_ALLOC_INPUT)
                     {
-                        route.m_input = (UInt32)m_auto_allocated_inputs;
+                        route.m_input = (u32)m_auto_allocated_inputs;
                         m_auto_allocated_inputs += (route.m_output == ALL_OUTPUTS) ? sound.outputs() : 1;
                     }
                 }
@@ -374,7 +367,7 @@ namespace mame
                         int numoutputs = sound.outputs();
                         for (int outputnum = 0; outputnum < numoutputs; outputnum++)
                         {
-                            if ((route.m_output == outputnum) || (route.m_output == ALL_OUTPUTS))
+                            if (route.m_output == outputnum || route.m_output == ALL_OUTPUTS)
                             {
                                 // find the output stream to connect from
                                 int streamoutputnum;
@@ -475,7 +468,7 @@ namespace mame
                 {
                     // see if we are the target of this route
                     device_t target_device = route.m_base.get().subdevice(route.m_target.c_str());
-                    if ((target_device == device()) && (route.m_input < m_auto_allocated_inputs))
+                    if (target_device == device() && route.m_input < m_auto_allocated_inputs)
                     {
                         int count = (route.m_output == ALL_OUTPUTS) ? sound.outputs() : 1;
                         for (int output = 0; output < count; output++)

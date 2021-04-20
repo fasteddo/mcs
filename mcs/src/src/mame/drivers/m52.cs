@@ -314,7 +314,7 @@ namespace mame
         *************************************/
 
         //ROM_START(mpatrol)
-        static readonly List<tiny_rom_entry> rom_mpatrol = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_mpatrol = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION(0x10000, "maincpu", 0),
             ROM_LOAD("mpa-1.3m", 0x0000, 0x1000, CRC("5873a860") + SHA1("8c03726d6e049c3edbc277440184e31679f78258")),

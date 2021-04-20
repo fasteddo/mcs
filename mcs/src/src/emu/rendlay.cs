@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using emu_render_detail_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = std::vector<bounds_step>;
+using emu_render_detail_color_vector = mame.std.vector<mame.emu.render.detail.color_step>;  //using color_vector = std::vector<color_step>;
 using ioport_value = System.UInt32;
 using layout_element_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
 using layout_element_make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;  //typedef std::map<std::string, make_component_func> make_component_map;
@@ -17,8 +19,11 @@ using layout_group_environment = mame.emu.render.detail.layout_environment;  //u
 using layout_group_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
 using layout_view_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
 using layout_view_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
+using layout_view_item_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = emu::render::detail::bounds_vector;
+using layout_view_item_color_vector = mame.std.vector<mame.emu.render.detail.color_step>;  //using color_vector = emu::render::detail::color_vector;
 using layout_view_item_list = mame.std.list<mame.layout_view.item>;  //using item_list = std::list<item>;
 using layout_view_view_environment = mame.emu.render.detail.view_environment;  //using view_environment = emu::render::detail::view_environment;
+using s32 = System.Int32;
 using s64 = System.Int64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -31,8 +36,10 @@ namespace mame
     {
         public const int LOG_GROUP_BOUNDS_RESOLUTION = 1 << 1;
         public const int LOG_INTERACTIVE_ITEMS       = 1 << 2;
+        //#define LOG_DISK_DRAW               (1U << 3)
+        //#define LOG_IMAGE_LOAD              (1U << 4)
 
-        ////#define VERBOSE (LOG_GROUP_BOUNDS_RESOLUTION | LOG_INTERACTIVE_ITEMS)
+        ////#define VERBOSE (LOG_GROUP_BOUNDS_RESOLUTION | LOG_INTERACTIVE_ITEMS | LOG_DISK_DRAW | LOG_IMAGE_LOAD)
         public const int VERBOSE = 0;
         //#define LOG_OUTPUT_FUNC osd_printf_verbose
         //#include "logmacro.h"
@@ -65,9 +72,222 @@ namespace mame
         }
 
 
-        public static render_color render_color_multiply(render_color x, render_color y)
+        static void alpha_blend(ref u32 dest, u32 a, u32 r, u32 g, u32 b, u32 inva)  //inline void alpha_blend(u32 &dest, u32 a, u32 r, u32 g, u32 b, u32 inva)
         {
-            return new render_color() { a = x.a * y.a, r = x.r * y.r, g = x.g * y.g, b = x.b * y.b };
+            rgb_t dpix = new rgb_t(dest);
+            u32 da = dpix.a();
+            u32 finala = (a * 255) + (da * inva);
+            u32 finalr = r + ((u32)dpix.r() * da * inva);
+            u32 finalg = g + ((u32)dpix.g() * da * inva);
+            u32 finalb = b + ((u32)dpix.b() * da * inva);
+            dest = new rgb_t((u8)(finala / 255), (u8)(finalr / finala), (u8)(finalg / finala), (u8)(finalb / finala));
+        }
+
+        static void alpha_blend(ref u32 dest, render_color c, float fill)  //inline void alpha_blend(u32 &dest, render_color const &c, float fill)
+        {
+            u32 a = (u32)(c.a * fill * 255.0F);
+            if (a != 0)
+            {
+                u32 r = (u32)(c.r * (255.0F * 255.0F)) * a;
+                u32 g = (u32)(c.g * (255.0F * 255.0F)) * a;
+                u32 b = (u32)(c.b * (255.0F * 255.0F)) * a;
+                alpha_blend(ref dest, a, r, g, b, 255 - a);
+            }
+        }
+
+
+        public static bool add_bounds_step(emu.render.detail.layout_environment env, emu_render_detail_bounds_vector steps, util.xml.data_node node)
+        {
+            int state = env.get_attribute_int(node, "state", 0);
+            var posIdx = std.lower_bound(
+                        steps,
+                        state,
+                        (emu.render.detail.bounds_step lhs, int rhs) => { return lhs.state < rhs; });
+
+            if ((-1 != posIdx) && (state == steps[posIdx].state))  //if ((steps.end() != pos) && (state == pos->state))
+                return false;
+
+            //auto &ins(*steps.emplace(pos, emu::render::detail::bounds_step{ state, { 0.0F, 0.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F, 0.0F } }));
+            var ins = new emu.render.detail.bounds_step() { state = state, bounds = new render_bounds() { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F }, delta = new render_bounds() { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } };
+            if (posIdx == -1) steps.push_back(ins); else steps.emplace(posIdx, ins);  //steps.emplace(posIdx, ins);
+
+            env.parse_bounds(node, out ins.bounds);
+            return true;
+        }
+
+
+        public static void set_bounds_deltas(emu_render_detail_bounds_vector steps)
+        {
+            if (steps.empty())
+            {
+                steps.emplace_back(new emu.render.detail.bounds_step() { state = 0, bounds = new render_bounds() { x0 = 0.0F, y0 = 0.0F, x1 = 1.0F, y1 = 1.0F }, delta = new render_bounds() { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } });
+            }
+            else
+            {
+                var iIdx = 0;  //auto i(steps.begin());
+                var jIdx = iIdx;  //auto j(i);
+                while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
+                {
+                    var i = steps[iIdx];
+                    var j = steps[jIdx];
+
+                    //throw new emu_unimplemented();
+#if false
+                    assert(j->state > i->state);
+#endif
+
+                    i.delta.x0 = (j.bounds.x0 - i.bounds.x0) / (j.state - i.state);
+                    i.delta.x1 = (j.bounds.x1 - i.bounds.x1) / (j.state - i.state);
+                    i.delta.y0 = (j.bounds.y0 - i.bounds.y0) / (j.state - i.state);
+                    i.delta.y1 = (j.bounds.y1 - i.bounds.y1) / (j.state - i.state);
+
+                    iIdx = jIdx;  //i = j;
+                }
+            }
+        }
+
+
+        public static void normalize_bounds(emu_render_detail_bounds_vector steps, float x0, float y0, float xoffs, float yoffs, float xscale, float yscale)
+        {
+            var iIdx = 0;  //auto i(steps.begin());
+            var i = steps[iIdx];
+            i.bounds.x0 = x0 + (i.bounds.x0 - xoffs) * xscale;
+            i.bounds.x1 = x0 + (i.bounds.x1 - xoffs) * xscale;
+            i.bounds.y0 = y0 + (i.bounds.y0 - yoffs) * yscale;
+            i.bounds.y1 = y0 + (i.bounds.y1 - yoffs) * yscale;
+
+            var jIdx = iIdx;  //auto j(i);
+            while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
+            {
+                var j = steps[jIdx];
+                j.bounds.x0 = x0 + (j.bounds.x0 - xoffs) * xscale;
+                j.bounds.x1 = x0 + (j.bounds.x1 - xoffs) * xscale;
+                j.bounds.y0 = y0 + (j.bounds.y0 - yoffs) * yscale;
+                j.bounds.y1 = y0 + (j.bounds.y1 - yoffs) * yscale;
+
+                i.delta.x0 = (j.bounds.x0 - i.bounds.x0) / (j.state - i.state);
+                i.delta.x1 = (j.bounds.x1 - i.bounds.x1) / (j.state - i.state);
+                i.delta.y0 = (j.bounds.y0 - i.bounds.y0) / (j.state - i.state);
+                i.delta.y1 = (j.bounds.y1 - i.bounds.y1) / (j.state - i.state);
+
+                iIdx = jIdx;  //i = j;
+                i = steps[iIdx];
+            }
+        }
+
+
+        public static render_bounds accumulate_bounds(emu_render_detail_bounds_vector steps)
+        {
+            var iIdx = 0;  //auto i(steps.begin());
+            var i = steps[iIdx];
+            render_bounds result = i.bounds;
+            while (steps.Count != ++iIdx)  //while (steps.end() != ++i)
+                result |= i.bounds;
+
+            return result;
+        }
+
+
+        public static render_bounds interpolate_bounds(emu_render_detail_bounds_vector steps, int state)
+        {
+            var posIdx = std.lower_bound(
+                        steps,
+                        state,
+                        (emu.render.detail.bounds_step lhs, int rhs) => { return lhs.state < rhs; });
+
+            if (0 == posIdx)  //if (steps.begin() == pos)
+            {
+                var pos = steps[posIdx];
+                return pos.bounds;
+            }
+            else
+            {
+                //--pos;
+                --posIdx;
+                var pos = steps[posIdx];
+                render_bounds result = pos.bounds;
+                result.x0 += pos.delta.x0 * (state - pos.state);
+                result.x1 += pos.delta.x1 * (state - pos.state);
+                result.y0 += pos.delta.y0 * (state - pos.state);
+                result.y1 += pos.delta.y1 * (state - pos.state);
+
+                return result;
+            }
+        }
+
+
+        public static bool add_color_step(emu.render.detail.layout_environment env, emu_render_detail_color_vector steps, util.xml.data_node node)
+        {
+            int state = env.get_attribute_int(node, "state", 0);
+            var posIdx = std.lower_bound(
+                        steps,
+                        state,
+                        (emu.render.detail.color_step lhs, int rhs) => { return lhs.state < rhs; });
+
+            if ((-1 != posIdx) && (state == steps[posIdx].state))  //if ((steps.end() != pos) && (state == pos->state))
+                return false;
+
+            steps.emplace(posIdx, new emu.render.detail.color_step() { state = state, color = env.parse_color(node), delta = new render_color() { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+            return true;
+        }
+
+
+        public static void set_color_deltas(emu_render_detail_color_vector steps)
+        {
+            if (steps.empty())
+            {
+                steps.emplace_back(new emu.render.detail.color_step() { state = 0, color = new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, delta = new render_color() { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+            }
+            else
+            {
+                var iIdx = 0;  //auto i(steps.begin());
+                var jIdx = iIdx;  //auto j(i);
+                while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
+                {
+                    var i = steps[iIdx];
+                    var j = steps[jIdx];
+
+                    //throw new emu_unimplemented();
+#if false
+                    assert(j->state > i->state);
+#endif
+
+                    i.delta.a = (j.color.a - i.color.a) / (j.state - i.state);
+                    i.delta.r = (j.color.r - i.color.r) / (j.state - i.state);
+                    i.delta.g = (j.color.g - i.color.g) / (j.state - i.state);
+                    i.delta.b = (j.color.b - i.color.b) / (j.state - i.state);
+
+                    iIdx = jIdx;  //i = j;
+                }
+            }
+        }
+
+
+        public static render_color interpolate_color(emu_render_detail_color_vector steps, int state)
+        {
+            var posIdx = std.lower_bound(
+                        steps,
+                        state,
+                        (emu.render.detail.color_step lhs, int rhs) => { return lhs.state < rhs; });
+
+            if (0 == posIdx)  //if (steps.begin() == pos)
+            {
+                var pos = steps[posIdx];
+                return pos.color;
+            }
+            else
+            {
+                //--pos;
+                --posIdx;
+                var pos = steps[posIdx];
+
+                render_color result = new render_color(pos.color);
+                result.a += pos.delta.a * (state - pos.state);
+                result.r += pos.delta.r * (state - pos.state);
+                result.g += pos.delta.g * (state - pos.state);
+                result.b += pos.delta.b * (state - pos.state);
+                return result;
+            }
         }
     }
 
@@ -410,20 +630,48 @@ namespace mame
 
             layout_environment_entry_vector m_entries = new layout_environment_entry_vector();
             string m_buffer;  //util::ovectorstream m_buffer;
+            //std::shared_ptr<NSVGrasterizer> const m_svg_rasterizer;
             device_t m_device;
+            string m_search_path;
+            string m_directory_name;
             layout_environment m_next = null;
             //bool m_cached = false;
 
 
-            public layout_environment(device_t device) { m_device = device; }
-            public layout_environment(layout_environment next) { m_device = next.m_device; m_next = next; }
-            //layout_environment(layout_environment const &) = delete;
+            public layout_environment(device_t device, string searchpath, string dirname)
+            {
+                //throw new emu_unimplemented();
+#if false
+                : m_svg_rasterizer(nsvgCreateRasterizer(), util::nsvg_deleter())
+#endif
+
+                m_device = device;
+                m_search_path = searchpath;
+                m_directory_name = dirname;
+            }
+
+
+            public layout_environment(layout_environment next)
+            {
+                //throw new emu_unimplemented();
+#if false
+                : m_svg_rasterizer(next.m_svg_rasterizer)
+#endif
+
+                m_device = next.m_device;
+                m_search_path = next.m_search_path;
+                m_directory_name = next.m_directory_name;
+                m_next = next;
+            }
 
 
             public device_t device() { return m_device; }
             public running_machine machine() { return device().machine(); }
 
             public bool is_root_device() { return device() == machine().root_device(); }
+            public string search_path() { return m_search_path; }
+            public string directory_name() { return m_directory_name; }
+            //std::shared_ptr<NSVGrasterizer> const &svg_rasterizer() const { return m_svg_rasterizer; }
 
             public void set_parameter(string name, string value) { set(name, value); }
             public void set_parameter(string name, s64 value) { set(name, value); }
@@ -632,41 +880,50 @@ namespace mame
             {
                 result = new render_bounds();
 
-                // default to unit rectangle
                 if (node == null)
                 {
-                    result.x0 = 0.0F;
-                    result.y0 = 0.0F;
-                    result.x1 = 1.0F;
-                    result.y1 = 1.0F;
+                    // default to unit rectangle
+                    result.x0 = result.y0 = 0.0F;
+                    result.x1 = result.y1 = 1.0F;
                 }
                 else
                 {
-                    // parse attributes
+                    // horizontal position/size
                     if (node.has_attribute("left"))
                     {
-                        // left/right/top/bottom format
                         result.x0 = get_attribute_float(node, "left", 0.0F);
                         result.x1 = get_attribute_float(node, "right", 1.0F);
-                        result.y0 = get_attribute_float(node, "top", 0.0F);
-                        result.y1 = get_attribute_float(node, "bottom", 1.0F);
-                    }
-                    else if (node.has_attribute("x"))
-                    {
-                        // x/y/width/height format
-                        result.x0 = get_attribute_float(node, "x", 0.0F);
-                        result.x1 = result.x0 + get_attribute_float(node, "width", 1.0F);
-                        result.y0 = get_attribute_float(node, "y", 0.0F);
-                        result.y1 = result.y0 + get_attribute_float(node, "height", 1.0F);
                     }
                     else
                     {
-                        throw new layout_syntax_error("bounds element requires either left or x attribute");
+                        float width = get_attribute_float(node, "width", 1.0F);
+                        if (node.has_attribute("xc"))
+                            result.x0 = get_attribute_float(node, "xc", 0.0F) - (width / 2.0F);
+                        else
+                            result.x0 = get_attribute_float(node, "x", 0.0F);
+                        result.x1 = result.x0 + width;
+                    }
+
+                    // vertical position/size
+                    if (node.has_attribute("top"))
+                    {
+                        result.y0 = get_attribute_float(node, "top", 0.0F);
+                        result.y1 = get_attribute_float(node, "bottom", 1.0F);
+                    }
+                    else
+                    {
+                        float height = get_attribute_float(node, "height", 1.0F);
+                        if (node.has_attribute("yc"))
+                            result.y0 = get_attribute_float(node, "yc", 0.0F) - (height / 2.0F);
+                        else
+                            result.y0 = get_attribute_float(node, "y", 0.0F);
+
+                        result.y1 = result.y0 + height;
                     }
 
                     // check for errors
                     if ((result.x0 > result.x1) || (result.y0 > result.y1))
-                        throw new layout_syntax_error(string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
+                        throw new layout_syntax_error(util_.string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
                 }
             }
 
@@ -771,7 +1028,7 @@ namespace mame
             //-------------------------------------------------
             //  component - constructor
             //-------------------------------------------------
-            public component(layout_element_environment env, util.xml.data_node compnode, string dirname)
+            public component(layout_element_environment env, util.xml.data_node compnode)
             {
                 throw new emu_unimplemented();
 #if false
@@ -782,21 +1039,79 @@ namespace mame
             // helpers
 
             //-------------------------------------------------
+            //  normalize_bounds - normalize component bounds
+            //-------------------------------------------------
+            public void normalize_bounds(float xoffs, float yoffs, float xscale, float yscale)
+            {
+                rendlay_global.normalize_bounds(m_bounds, 0.0F, 0.0F, xoffs, yoffs, xscale, yscale);
+            }
+
+
+            //-------------------------------------------------
             //  statewrap - get state wraparound requirements
             //-------------------------------------------------
-            //std::pair<int, bool> layout_element::component::statewrap() const
+            public std.pair<int, bool> statewrap()
+            {
+                int result = 0;
+                bool fold = false;
+                Action<int, int> adjustmask =
+                        (int val, int mask) =>
+                        {
+                            throw new emu_unimplemented();
+#if false
+                            assert(!(val & ~mask));
+#endif
+
+                            Func<int, int> splatright =
+                                    (int x) =>
+                                    {
+                                        for (unsigned shift = 1; (4 /*sizeof(x)*/ * 4) >= shift; shift <<= 1)
+                                            x |= (x >> (int)shift);
+                                        return x;
+                                    };
+
+                            int unfolded = splatright(mask);
+                            int folded = splatright(~mask | splatright(val));
+                            if ((unsigned)folded < (unsigned)unfolded)
+                            {
+                                result |= folded;
+                                fold = true;
+                            }
+                            else
+                            {
+                                result |= unfolded;
+                            }
+                        };
+
+                adjustmask(stateval(), statemask());
+                int max = maxstate();
+                if (m_bounds.size() > 1U)
+                    max = std.max(max, m_bounds.back().state);
+                if (m_color.size() > 1U)
+                    max = std.max(max, m_color.back().state);
+                if (0 <= max)
+                    adjustmask(max, ~0);
+
+                return std.make_pair(result, fold);
+            }
 
 
             //-------------------------------------------------
             //  overall_bounds - maximum bounds for all states
             //-------------------------------------------------
-            //render_bounds layout_element::component::overall_bounds() const
+            public render_bounds overall_bounds()
+            {
+                return rendlay_global.accumulate_bounds(m_bounds);
+            }
 
 
             //-------------------------------------------------
             //  bounds - bounds for a given state
             //-------------------------------------------------
-            //render_bounds layout_element::component::bounds(int state) const
+            render_bounds bounds(int state)
+            {
+                return rendlay_global.interpolate_bounds(m_bounds, state);
+            }
 
 
             //-------------------------------------------------
@@ -805,12 +1120,44 @@ namespace mame
             //render_color layout_element::component::color(int state) const
 
 
-            //-------------------------------------------------
-            //  normalize_bounds - normalize component bounds
-            //-------------------------------------------------
-            public void normalize_bounds(float xoffs, float yoffs, float xscale, float yscale)
+            public virtual void preload(running_machine machine)
             {
-                throw new emu_unimplemented();
+            }
+
+
+            //-------------------------------------------------
+            //  draw - draw element to texture for a given
+            //  state
+            //-------------------------------------------------
+            public virtual void draw(running_machine machine, bitmap_argb32 dest, int state)
+            {
+                // get the local scaled bounds
+                render_bounds curbounds = bounds(state);
+                rectangle pixelbounds = new rectangle(
+                        (s32)(curbounds.x0 * (float)(dest.width()) + 0.5F),
+                        (s32)(std.floorf(curbounds.x1 * (float)(dest.width()) - 0.5F)),
+                        (s32)(curbounds.y0 * (float)(dest.height()) + 0.5F),
+                        (s32)(std.floorf(curbounds.y1 * (float)(dest.height()) - 0.5F)));
+
+                // based on the component type, add to the texture
+                if (!pixelbounds.empty())
+                    draw_aligned(machine, dest, pixelbounds, state);
+            }
+
+
+            protected virtual void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                // derived classes must override one form or other
+                throw new Exception();
+            }
+
+
+            //-------------------------------------------------
+            //  maxstate - maximum state drawn differently
+            //-------------------------------------------------
+            public virtual int maxstate()
+            {
+                return -1;
             }
 
 
@@ -890,8 +1237,8 @@ namespace mame
                         {
                             throw new emu_unimplemented();
 #if false
-                            UInt32 *src = &tempbitmap.pix32(y);
-                            UInt32 *d = &dest.pix32(effy);
+                            u32 const *const src = &tempbitmap.pix(y);
+                            u32 *const d = &dest.pix(effy);
                             for (int x = 0; x < chbounds.width(); x++)
                             {
                                 int effx = curx + x + chbounds.get_min_x();
@@ -931,8 +1278,8 @@ namespace mame
                 {
                     throw new emu_unimplemented();
 #if false
-                    UInt32 *d0 = &dest.pix32(midy - y);
-                    UInt32 *d1 = &dest.pix32(midy + y);
+                    u32 *const d0 = &dest.pix(midy - y);
+                    u32 *const d1 = &dest.pix(midy + y);
                     int ty = (y < width / 8) ? width / 8 : y;
 
                     // loop over the length of the segment
@@ -963,8 +1310,8 @@ namespace mame
                 {
                     throw new emu_unimplemented();
 #if false
-                    UInt32 *d0 = &dest.pix32(0, midx - x);
-                    UInt32 *d1 = &dest.pix32(0, midx + x);
+                    u32 *const d0 = &dest.pix(0, midx - x);
+                    u32 *const d1 = &dest.pix(0, midx + x);
                     int tx = (x < width / 8) ? width / 8 : x;
 
                     // loop over the length of the segment
@@ -1000,7 +1347,7 @@ namespace mame
                     {
                         throw new emu_unimplemented();
 #if false
-                        UInt32 *d = &dest.pix32(0, x);
+                        u32 *const d = &dest.pix(0, x);
                         int step = (int)((x - minx) * ratio);
 
                         for (int y = maxy - width - step; y < maxy - step; y++)
@@ -1030,7 +1377,7 @@ namespace mame
                     {
                         throw new emu_unimplemented();
 #if false
-                        UInt32 *d = &dest.pix32(0, x);
+                        u32 *const d = &dest.pix(0, x);
                         int step = (int)((x - minx) * ratio);
 
                         for (int y = miny + step; y < miny + step + width; y++)
@@ -1057,8 +1404,8 @@ namespace mame
                 {
                     throw new emu_unimplemented();
 #if false
-                    UInt32 *d0 = &dest.pix32(midy - y);
-                    UInt32 *d1 = &dest.pix32(midy + y);
+                    u32 *const d0 = &dest.pix(midy - y);
+                    u32 *const d1 = &dest.pix(midy + y);
                     float xval = width * Math.Sqrt(1.0f - (float)(y * y) * ooradius2);
                     int left;
                     int right;
@@ -1085,7 +1432,7 @@ namespace mame
                 {
                     throw new emu_unimplemented();
 #if false
-                    UInt32 *destrow = &dest.pix32(y);
+                    u32 *const d = &dest.pix(0, x);
                     int offs = skewwidth * (dest.height() - y) / dest.height();
                     for (int x = dest.width() - skewwidth - 1; x >= 0; x--)
                         destrow[x + offs] = destrow[x];
@@ -1132,31 +1479,82 @@ namespace mame
         class image_component : component
         {
             // internal state
-            //bitmap_argb32       m_bitmap;                   // source bitmap for images
-            string m_dirname;                  // directory name of image file (for lazy loading)
-            string m_imagefile;                // name of the image file (for lazy loading)
-            string m_alphafile;                // name of the alpha file (for lazy loading)
-            bool m_hasalpha = false;         // is there any alpha component present?
+            //util::nsvg_image_ptr            m_svg;              // parsed SVG image
+            //std::shared_ptr<NSVGrasterizer> m_rasterizer;       // SVG rasteriser
+            bitmap_argb32 m_bitmap;           // source bitmap for images
+            //bool                            m_hasalpha = false; // is there any alpha component present?
+
+            // cold state
+            string m_searchpath;       // asset search path (for lazy loading)
+            string m_dirname;          // directory name of image file (for lazy loading)
+            string m_imagefile;        // name of the image file (for lazy loading)
+            string m_alphafile;        // name of the alpha file (for lazy loading)
+            string m_data;             // embedded image data
 
 
             // construction/destruction
-            public image_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            public image_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
-                m_dirname = !string.IsNullOrEmpty(dirname) ? dirname : "";
+                throw new emu_unimplemented();
+#if false
+                , m_rasterizer(env.svg_rasterizer())
+#endif
+
+                m_searchpath = env.search_path() != null ? env.search_path() : "";
+                m_dirname = env.directory_name() != null ? env.directory_name() : "";
                 m_imagefile = env.get_attribute_string(compnode, "file", "");
                 m_alphafile = env.get_attribute_string(compnode, "alphafile", "");
+                m_data = get_data(compnode);
             }
 
 
             // overrides
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+
+            public override void preload(running_machine machine)
+            {
+                throw new emu_unimplemented();
+#if false
+                if (!m_bitmap.valid() && !m_svg)
+                    load_image(machine);
+#endif
+            }
+
+
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
 
 
             // internal helpers
+            //void draw_bitmap(bitmap_argb32 &dest, rectangle const &bounds, int state)
+            //void draw_svg(bitmap_argb32 &dest, rectangle const &bounds, int state)
+            //void alpha_blend(bitmap_argb32 const &srcbitmap, bitmap_argb32 &dstbitmap, rectangle const &bounds)
+
+
+            void load_image(running_machine machine)
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            //void load_image_data()
+            //bool load_bitmap(util::core_file &file)
+            //void load_svg(util::core_file &file)
+            //void parse_svg(char *svgdata)
+
+
+            static string get_data(util.xml.data_node compnode)
+            {
+                util.xml.data_node datanode = compnode.get_child("data");
+                if (datanode != null && datanode.get_value() != null)
+                    return datanode.get_value();
+                else
+                    return "";
+            }
+
+
             //void load_bitmap(running_machine &machine)
         }
 
@@ -1165,14 +1563,14 @@ namespace mame
         class rect_component : component
         {
             // construction/destruction
-            rect_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            rect_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
             }
 
 
             // overrides
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1183,14 +1581,14 @@ namespace mame
         class disk_component : component
         {
             // construction/destruction
-            disk_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            disk_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
             }
 
 
             // overrides
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            public override void draw(running_machine machine, bitmap_argb32 dest, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1206,8 +1604,8 @@ namespace mame
 
 
             // construction/destruction
-            text_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            text_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
                 m_string = env.get_attribute_string(compnode, "string", "");
                 m_textalign = env.get_attribute_int(compnode, "align", 0);
@@ -1215,7 +1613,7 @@ namespace mame
 
 
             // overrides
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1226,8 +1624,8 @@ namespace mame
         class led7seg_component : component
         {
             // construction/destruction
-            led7seg_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            led7seg_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
             }
 
@@ -1236,7 +1634,7 @@ namespace mame
             public override int maxstate() { return 255; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1247,8 +1645,8 @@ namespace mame
         class led8seg_gts1_component : component
         {
             // construction/destruction
-            led8seg_gts1_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            led8seg_gts1_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
             }
 
@@ -1257,7 +1655,7 @@ namespace mame
             public override int maxstate() { return 255; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1268,8 +1666,8 @@ namespace mame
         class led14seg_component : component
         {
             // construction/destruction
-            led14seg_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            led14seg_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
             }
 
@@ -1278,7 +1676,7 @@ namespace mame
             public override int maxstate() { return 16383; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1289,8 +1687,8 @@ namespace mame
         class led16seg_component : component
         {
             // construction/destruction
-            led16seg_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            led16seg_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
             }
 
@@ -1299,7 +1697,7 @@ namespace mame
             public override int maxstate() { return 65535; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1310,8 +1708,8 @@ namespace mame
         class led14segsc_component : component
         {
             // construction/destruction
-            led14segsc_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            led14segsc_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
             }
 
@@ -1320,7 +1718,7 @@ namespace mame
             public override int maxstate() { return 65535; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1331,8 +1729,8 @@ namespace mame
         class led16segsc_component : component
         {
             // construction/destruction
-            led16segsc_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            led16segsc_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
             }
 
@@ -1341,7 +1739,7 @@ namespace mame
             public override int maxstate() { return 262143; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1356,8 +1754,8 @@ namespace mame
 
 
             // construction/destruction
-            public dotmatrix_component(int dots, layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            public dotmatrix_component(int dots, layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
                 m_dots = dots;
             }
@@ -1367,7 +1765,7 @@ namespace mame
             public override int maxstate() { return (1 << m_dots) - 1; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1384,8 +1782,8 @@ namespace mame
 
 
             // construction/destruction
-            simplecounter_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            simplecounter_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
                 m_digits = env.get_attribute_int(compnode, "digits", 2);
                 m_textalign = env.get_attribute_int(compnode, "align", 0);
@@ -1397,7 +1795,7 @@ namespace mame
             public override int maxstate() { return m_maxstate; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1411,11 +1809,9 @@ namespace mame
 
             // internal state
             //bitmap_argb32       m_bitmap[MAX_BITMAPS];      // source bitmap for images
+            string m_searchpath;               // asset search path (for lazy loading)
             string m_dirname;                  // directory name of image file (for lazy loading)
-            emu_file [] m_file = new emu_file [MAX_BITMAPS];        // file object for reading image/alpha files
             string [] m_imagefile = new string [MAX_BITMAPS];   // name of the image file (for lazy loading)
-            //std::string         m_alphafile[MAX_BITMAPS];   // name of the alpha file (for lazy loading)
-            bool [] m_hasalpha = new bool [MAX_BITMAPS];    // is there any alpha component present?
 
             // basically made up of multiple text strings / gfx
             int m_numstops;
@@ -1427,49 +1823,33 @@ namespace mame
 
 
             // construction/destruction
-            reel_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
-                : base(env, compnode, dirname)
+            reel_component(layout_element_environment env, util.xml.data_node compnode)
+                : base(env, compnode)
             {
-                for (int i = 0; i < m_hasalpha.Length; i++)
-                    m_hasalpha[i] = false;
+                m_searchpath = env.search_path() != null ? env.search_path() : "";
+                m_dirname = env.directory_name() != null ? env.directory_name() : "";
+
 
                 string symbollist = env.get_attribute_string(compnode, "symbollist", "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15");
 
                 // split out position names from string and figure out our number of symbols
-                int location;
                 m_numstops = 0;
-                location = symbollist.find(',');
-                while (location != -1)
+                for (var location = symbollist.find(','); -1 != location; location = symbollist.find(','))  //for (std::string::size_type location = symbollist.find(','); std::string::npos != location; location = symbollist.find(','))
                 {
-                    m_stopnames[m_numstops] = symbollist;
-                    m_stopnames[m_numstops] = m_stopnames[m_numstops].substr(0, location);
-                    symbollist = symbollist.substr(location+1, symbollist.length()-(location-1));
+                    m_stopnames[m_numstops] = symbollist.substr(0, location);
+                    symbollist = symbollist.Substring(location + 1);  //symbollist.erase(0, location + 1);
                     m_numstops++;
-                    location = symbollist.find(',');
                 }
-                m_stopnames[m_numstops++] = symbollist;
 
-                // careful, dirname is nullptr if we're coming from internal layout, and our string assignment doesn't like that
-                if (dirname != null)
-                    m_dirname = dirname;
+                m_stopnames[m_numstops++] = symbollist;
 
                 for (int i = 0; i < m_numstops; i++)
                 {
-                    location = m_stopnames[i].find(":");
+                    var location = m_stopnames[i].find(':');  //std::string::size_type const location = m_stopnames[i].find(':');
                     if (location != -1)
                     {
-                        m_imagefile[i] = m_stopnames[i];
-                        m_stopnames[i] = m_stopnames[i].substr(0, location);
-                        m_imagefile[i] = m_imagefile[i].substr(location+1, m_imagefile[i].length()-(location-1));
-
-                        //m_alphafile[i] =
-                        m_file[i] = new emu_file(env.machine().options().art_path(), OPEN_FLAG_READ);
-                    }
-                    else
-                    {
-                        //m_imagefile[i] = 0;
-                        //m_alphafile[i] = 0;
-                        m_file[i] = null;  //m_file[i].reset();
+                        m_imagefile[i] = m_stopnames[i].substr(location + 1);
+                        m_stopnames[i] = m_stopnames[i].Remove(location, 1);  //m_stopnames[i].erase(location);
                     }
                 }
 
@@ -1481,10 +1861,17 @@ namespace mame
 
 
             // overrides
+
+            public override void preload(running_machine machine)
+            {
+                throw new emu_unimplemented();
+            }
+
+
             public override int maxstate() { return 65535; }
 
 
-            public override void draw(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
             {
                 throw new emu_unimplemented();
             }
@@ -1520,7 +1907,7 @@ namespace mame
         //-------------------------------------------------
         //  layout_element - constructor
         //-------------------------------------------------
-        public layout_element(layout_element_environment env, util.xml.data_node elemnode, string dirname)
+        public layout_element(layout_element_environment env, util.xml.data_node elemnode)
         {
             m_machine = env.machine();
             m_defstate = env.get_attribute_int(elemnode, "defstate", -1);
@@ -1538,15 +1925,15 @@ namespace mame
                     throw new layout_syntax_error(string_format("unknown element component {0}", compnode.get_name()));
 
                 // insert the new component into the list
-                //m_complist.emplace(m_complist.end(), make_func->second(env, compnode, dirname));
-                component newcomp = make_func(env, compnode, dirname);
+                //component const &newcomp(**m_complist.emplace(m_complist.end(), make_func->second(env, *compnode)));
+                component newcomp = make_func(env, compnode);
                 m_complist.push_back(newcomp);
 
                 // accumulate bounds
                 if (first)
                     bounds = newcomp.overall_bounds();
                 else
-                    rendutil_global.union_render_bounds(bounds, newcomp.overall_bounds());
+                    bounds |= newcomp.overall_bounds();
 
                 first = false;
 
@@ -1599,6 +1986,17 @@ namespace mame
         }
 
 
+        //-------------------------------------------------
+        //  preload - perform expensive loading upfront
+        //  for all components
+        //-------------------------------------------------
+        public void preload()
+        {
+            foreach (component curcomp in m_complist)
+                curcomp.preload(machine());
+        }
+
+
         // internal helpers
         //-------------------------------------------------
         //  element_scale - scale an element by rendering
@@ -1609,23 +2007,11 @@ namespace mame
         {
             texture elemtex = (texture)param;
 
-            // iterate over components that are part of the current state
+            // draw components that are visible in the current state
             foreach (var curcomp in elemtex.m_element.m_complist)
             {
                 if ((elemtex.m_state & curcomp.statemask()) == curcomp.stateval())
-                {
-                    // get the local scaled bounds
-                    render_bounds compbounds = curcomp.bounds(elemtex.m_state);
-                    rectangle bounds = new rectangle(
-                            (int)rendutil_global.render_round_nearest(compbounds.x0 * dest.width()),
-                            (int)rendutil_global.render_round_nearest(compbounds.x1 * dest.width()),
-                            (int)rendutil_global.render_round_nearest(compbounds.y0 * dest.height()),
-                            (int)rendutil_global.render_round_nearest(compbounds.y1 * dest.height()));
-                    bounds.intersection(dest.cliprect());  //bounds &= dest.cliprect();
-
-                    // based on the component type, add to the texture
-                    curcomp.draw(elemtex.m_element.machine(), dest, bounds, elemtex.m_state);
-                }
+                    curcomp.draw(elemtex.m_element.machine(), dest, elemtex.m_state);
             }
         }
 
@@ -1634,25 +2020,25 @@ namespace mame
         //  make_component - create component of given type
         //-------------------------------------------------
         //template <typename T>
-        static component make_component<T>(layout_element_environment env, util.xml.data_node compnode, string dirname) where T : component
+        static component make_component<T>(layout_element_environment env, util.xml.data_node compnode) where T : component
         {
-            // return std::make_unique<T>(env, compnode, dirname);
+            // return std::make_unique<T>(env, compnode);
             if (typeof(T) is image_component)
-                return new image_component(env, compnode, dirname);
+                return new image_component(env, compnode);
             else
                 throw new emu_unimplemented();
         }
 
 
         //template <int D>
-        static component make_dotmatrix_component(int D, layout_element_environment env, util.xml.data_node compnode, string dirname)
+        static component make_dotmatrix_component(int D, layout_element_environment env, util.xml.data_node compnode)
         {
-            return new dotmatrix_component(D, env, compnode, dirname);  //return std::make_unique<dotmatrix_component>(D, env, compnode, dirname);
+            return new dotmatrix_component(D, env, compnode);  //return std::make_unique<dotmatrix_component>(D, env, compnode);
         }
 
-        static component make_dotmatrix_component_1(layout_element_environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(1, env, compnode, dirname); }
-        static component make_dotmatrix_component_5(layout_element_environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(5, env, compnode, dirname); }
-        static component make_dotmatrix_component_8(layout_element_environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(8, env, compnode, dirname); }
+        static component make_dotmatrix_component_1(layout_element_environment env, util.xml.data_node compnode) { return make_dotmatrix_component(1, env, compnode); }
+        static component make_dotmatrix_component_5(layout_element_environment env, util.xml.data_node compnode) { return make_dotmatrix_component(5, env, compnode); }
+        static component make_dotmatrix_component_8(layout_element_environment env, util.xml.data_node compnode) { return make_dotmatrix_component(8, env, compnode); }
     }
 
 
@@ -1664,7 +2050,7 @@ namespace mame
         public layout_group(util.xml.data_node groupnode)
         {
             m_groupnode = groupnode;
-            m_bounds = new render_bounds(0.0f, 0.0f, 0.0f, 0.0f);
+            m_bounds = new render_bounds() { x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f };
             m_bounds_resolved = false;
         }
 
@@ -1771,7 +2157,7 @@ namespace mame
             seen.push_back(this);
             if (!m_bounds_resolved)
             {
-                rendutil_global.set_render_bounds_xy(m_bounds, 0.0F, 0.0F, 1.0F, 1.0F);
+                m_bounds.set_xy(0.0F, 0.0F, 1.0F, 1.0F);
                 layout_group_environment local = new layout_group_environment(env);
                 bool empty = true;
                 resolve_bounds(local, m_groupnode, groupmap, seen, ref empty, false, false, true);
@@ -1828,11 +2214,23 @@ namespace mame
                     strcmp(itemnode.get_name(), "marquee") == 0)
                 {
                     render_bounds itembounds;
-                    env.parse_bounds(itemnode.get_child("bounds"), out itembounds);
+                    util.xml.data_node boundsnode = itemnode.get_child("bounds");
+                    env.parse_bounds(boundsnode, out itembounds);
+                    while (boundsnode != null)
+                    {
+                        boundsnode = boundsnode.get_next_sibling("bounds");
+                        if (boundsnode != null)
+                        {
+                            render_bounds b;
+                            env.parse_bounds(boundsnode, out b);
+                            itembounds |= b;
+                        }
+                    }
+
                     if (empty)
                         m_bounds = itembounds;
                     else
-                        rendutil_global.union_render_bounds(m_bounds, itembounds);
+                        m_bounds |= itembounds;
 
                     empty = false;
 
@@ -1850,7 +2248,7 @@ namespace mame
                         if (empty)
                             m_bounds = itembounds;
                         else
-                            rendutil_global.union_render_bounds(m_bounds, itembounds);
+                            m_bounds |= itembounds;
 
                         empty = false;
 
@@ -1883,7 +2281,7 @@ namespace mame
                         if (empty)
                             m_bounds = itembounds;
                         else
-                            rendutil_global.union_render_bounds(m_bounds, itembounds);
+                            m_bounds |= itembounds;
 
                         empty = false;
 
@@ -1959,21 +2357,26 @@ namespace mame
                 //throw new emu_unimplemented();
 #if false
                 m_output(env.device(), env.get_attribute_string(itemnode, "name", ""))
+                m_animoutput(env.device(), make_animoutput_tag(env, itemnode));
 #endif
 
                 m_have_output = env.get_attribute_string(itemnode, "name", "").Length != 0;
+                m_have_animoutput = !make_animoutput_tag(env, itemnode).empty();
+                m_animinput_port = null;
+                m_animmask = make_animmask(env, itemnode);
+                m_animshift = (u8)get_state_shift(m_animmask);
                 m_input_port = null;
                 m_input_field = null;
                 m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
-                m_input_shift = (u8)get_input_shift(m_input_mask);
+                m_input_shift = (u8)get_state_shift(m_input_mask);
                 m_input_raw = env.get_attribute_bool(itemnode, "inputraw", false);  //, m_input_raw(env.get_attribute_bool(itemnode, "inputraw", 0))
                 m_clickthrough = env.get_attribute_bool(itemnode, "clickthrough", true);  //, m_clickthrough(env.get_attribute_bool(itemnode, "clickthrough", "yes"))
                 m_screen = null;
-                m_orientation = rendutil_global.orientation_add(env.parse_orientation(itemnode.get_child("orientation")), orientation);
-                m_color = rendlay_global.render_color_multiply(env.parse_color(itemnode.get_child("color")), color);
+                m_color = make_color(env, itemnode, color);
                 m_blend_mode = get_blend_mode(env, itemnode);
                 m_visibility_mask = env.visibility_mask();
                 m_input_tag = make_input_tag(env, itemnode);
+                m_animinput_tag = make_animinput_tag(env, itemnode);
                 m_rawbounds = make_bounds(env, itemnode, trans);
                 m_has_clickthrough = !string.IsNullOrEmpty(env.get_attribute_string(itemnode, "clickthrough", ""));  //, m_has_clickthrough(env.get_attribute_string(itemnode, "clickthrough", "")[0])
 
@@ -2002,6 +2405,30 @@ namespace mame
                 {
                     throw new layout_syntax_error(string_format("item of type {0} require an element tag", itemnode.get_name()));
                 }
+            }
+
+
+            //-------------------------------------------------
+            //  bounds - get bounds for current state
+            //-------------------------------------------------
+            public render_bounds bounds()
+            {
+                if (m_bounds.size() == 1U)
+                    return m_bounds[0].bounds;  //return m_bounds.front().bounds;
+                else
+                    return rendlay_global.interpolate_bounds(m_bounds, animation_state());
+            }
+
+
+            //-------------------------------------------------
+            //  color - get color for current state
+            //-------------------------------------------------
+            public render_color color()
+            {
+                if (m_color.size() == 1U)
+                    return m_color[0].color;  //return m_color.front().color;
+                else
+                    return rendlay_global.interpolate_color(m_color, animation_state());
             }
 
 
@@ -2057,6 +2484,17 @@ namespace mame
 #endif
                 }
 
+                if (m_have_animoutput)
+                {
+                    throw new emu_unimplemented();
+#if false
+                    m_animoutput.resolve();
+#endif
+                }
+
+                if (!m_animinput_tag.empty())
+                    m_animinput_port = m_element.machine().root_device().ioport(m_animinput_tag);
+
                 if (!m_input_tag.empty())
                 {
                     m_input_port = m_element.machine().root_device().ioport(m_input_tag);
@@ -2085,7 +2523,26 @@ namespace mame
             //---------------------------------------------
             //  find_element - find element definition
             //---------------------------------------------
-            layout_element find_element(layout_view_view_environment env, util.xml.data_node itemnode, layout_view_element_map elemmap)
+            int animation_state()
+            {
+                if (m_have_animoutput)
+                {
+                    throw new emu_unimplemented();
+#if false
+                    return ((s32)m_animoutput & m_animmask) >> m_animshift;
+#endif
+                }
+                else if (m_animinput_port != null)
+                    return (int)((m_animinput_port.read() & m_animmask) >> m_animshift);
+                else
+                    return state();
+            }
+
+
+            //---------------------------------------------
+            //  find_element - find element definition
+            //---------------------------------------------
+            static layout_element find_element(layout_view_view_environment env, util.xml.data_node itemnode, layout_view_element_map elemmap)
             {
                 string name = env.get_attribute_string(itemnode, strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element", null);
                 if (string.IsNullOrEmpty(name))
@@ -2103,67 +2560,164 @@ namespace mame
             //---------------------------------------------
             //  make_bounds - get transformed bounds
             //---------------------------------------------
-            render_bounds make_bounds(
+            static layout_view_item_bounds_vector make_bounds(
                     layout_view_view_environment env,
                     util.xml.data_node itemnode,
                     float [,] trans)  //layout_group.transform trans)
             {
-                render_bounds bounds;
-                env.parse_bounds(itemnode.get_child("bounds"), out bounds);
-                rendlay_global.render_bounds_transform(ref bounds, trans);
-                if (bounds.x0 > bounds.x1)
-                    std.swap(ref bounds.x0, ref bounds.x1);
-                if (bounds.y0 > bounds.y1)
-                    std.swap(ref bounds.y0, ref bounds.y1);
-                return bounds;
+                layout_view_item_bounds_vector result = new emu_render_detail_bounds_vector();
+                for (util.xml.data_node bounds = itemnode.get_child("bounds"); bounds != null; bounds = bounds.get_next_sibling("bounds"))
+                {
+                    if (!rendlay_global.add_bounds_step(env, result, bounds))
+                    {
+                        throw new layout_syntax_error(
+                                util_.string_format(
+                                    "{0} item has duplicate bounds for state",
+                                    itemnode.get_name()));
+                    }
+                }
+
+                foreach (emu.render.detail.bounds_step step in result)
+                {
+                    rendlay_global.render_bounds_transform(ref step.bounds, trans);
+                    if (step.bounds.x0 > step.bounds.x1)
+                        std.swap(ref step.bounds.x0, ref step.bounds.x1);
+                    if (step.bounds.y0 > step.bounds.y1)
+                        std.swap(ref step.bounds.y0, ref step.bounds.y1);
+                }
+
+                rendlay_global.set_bounds_deltas(result);
+                return result;
+            }
+
+
+            //---------------------------------------------
+            //  make_color - get color inflection points
+            //---------------------------------------------
+            static layout_view_item_color_vector make_color(
+                    layout_view_view_environment env,
+                    util.xml.data_node itemnode,
+                    render_color mult)
+            {
+                layout_view_item_color_vector result = new emu_render_detail_color_vector();
+                for (util.xml.data_node color = itemnode.get_child("color"); color != null; color = color.get_next_sibling("color"))
+                {
+                    if (!rendlay_global.add_color_step(env, result, color))
+                    {
+                        throw new layout_syntax_error(
+                                util_.string_format(
+                                    "{0} item has duplicate color for state",
+                                    itemnode.get_name()));
+                    }
+                }
+
+                if (result.empty())
+                {
+                    result.emplace_back(new emu.render.detail.color_step() { state = 0, color = mult, delta = new render_color() { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+                }
+                else
+                {
+                    foreach (emu.render.detail.color_step step in result)
+                        step.color *= mult;
+
+                    rendlay_global.set_color_deltas(result);
+                }
+
+                return result;
+            }
+
+
+            //---------------------------------------------
+            //  make_animoutput_tag - get animation output
+            //  tag
+            //---------------------------------------------
+            string make_animoutput_tag(layout_view_view_environment env, util.xml.data_node itemnode)
+            {
+                util.xml.data_node animate = itemnode.get_child("animate");
+                if (animate != null)
+                    return env.get_attribute_string(animate, "name", "");
+                else
+                    return null;
+            }
+
+
+            //---------------------------------------------
+            //  make_animmask - get animation state mask
+            //---------------------------------------------
+            static ioport_value make_animmask(layout_view_view_environment env, util.xml.data_node itemnode)
+            {
+                util.xml.data_node animate = itemnode.get_child("animate");
+
+                //return animate ? env.get_attribute_int(*animate, "mask", ~ioport_value(0)) : ~ioport_value(0);
+                if (animate != null)
+                {
+                    var ret = env.get_attribute_int(animate, "mask", s32.MaxValue);
+                    return ret == s32.MaxValue ? ~(ioport_value)0 : (ioport_value)ret;
+                }
+                else
+                {
+                    return ~(ioport_value)0;
+                }
+            }
+
+
+            //---------------------------------------------
+            //  make_animinput_tag - get absolute tag for
+            //  animation input
+            //---------------------------------------------
+            static string make_animinput_tag(layout_view_view_environment env, util.xml.data_node itemnode)
+            {
+                util.xml.data_node animate = itemnode.get_child("animate");
+                string tag = animate != null ? env.get_attribute_string(animate, "inputtag", null) : null;
+                return tag != null ? env.device().subtag(tag) : null;
             }
 
 
             //---------------------------------------------
             //  make_input_tag - get absolute input tag
             //---------------------------------------------
-            string make_input_tag(layout_view_view_environment env, util.xml.data_node itemnode)
+            static string make_input_tag(layout_view_view_environment env, util.xml.data_node itemnode)
             {
                 string tag = env.get_attribute_string(itemnode, "inputtag", null);
-                return !string.IsNullOrEmpty(tag) ? env.device().subtag(tag) : "";
+                return tag != null ? env.device().subtag(tag) : null;
             }
 
 
             //---------------------------------------------
             //  get_blend_mode - explicit or implicit blend
             //---------------------------------------------
-            int get_blend_mode(layout_view_view_environment env, util.xml.data_node itemnode)
+            static int get_blend_mode(layout_view_view_environment env, util.xml.data_node itemnode)
             {
                 // see if there's a blend mode attribute
                 string mode = env.get_attribute_string(itemnode, "blend", null);
-                if (!string.IsNullOrEmpty(mode))
+                if (mode != null)
                 {
                     if (strcmp(mode, "none") == 0)
-                        return BLENDMODE_NONE;
+                        return rendertypes_global.BLENDMODE_NONE;
                     else if (strcmp(mode, "alpha") == 0)
-                        return BLENDMODE_ALPHA;
+                        return rendertypes_global.BLENDMODE_ALPHA;
                     else if (strcmp(mode, "multiply") == 0)
-                        return BLENDMODE_RGB_MULTIPLY;
+                        return rendertypes_global.BLENDMODE_RGB_MULTIPLY;
                     else if (strcmp(mode, "add") == 0)
-                        return BLENDMODE_ADD;
+                        return rendertypes_global.BLENDMODE_ADD;
                     else
-                        throw new layout_syntax_error("unknown blend mode {0}", mode);
+                        throw new layout_syntax_error(util_.string_format("unknown blend mode {0}", mode));
                 }
 
                 // fall back to implicit blend mode based on element type
                 if (strcmp(itemnode.get_name(), "screen") == 0)
                     return -1; // magic number recognised by render.cpp to allow per-element blend mode
                 else if (strcmp(itemnode.get_name(), "overlay") == 0)
-                    return BLENDMODE_RGB_MULTIPLY;
+                    return rendertypes_global.BLENDMODE_RGB_MULTIPLY;
                 else
-                    return BLENDMODE_ALPHA;
+                    return rendertypes_global.BLENDMODE_ALPHA;
             }
 
 
             //---------------------------------------------
-            //  get_input_shift - shift to right-align LSB
+            //  get_state_shift - shift to right-align LSB
             //---------------------------------------------
-            unsigned get_input_shift(ioport_value mask)
+            static unsigned get_state_shift(ioport_value mask)
             {
                 unsigned result = 0;
                 while (mask != 0 && BIT(mask, 0) == 0)
@@ -2210,7 +2764,7 @@ namespace mame
             layout_view_view_environment local = new layout_view_view_environment(env, m_name.c_str());
             layer_lists layers = new layer_lists();
             local.set_parameter("viewname", m_name);
-            add_items(layers, local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color(1.0F, 1.0F, 1.0F, 1.0F), true, false, true);
+            add_items(layers, local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
 
             // can't support legacy layers and modern visibility toggles at the same time
             if (!m_vistoggles.empty() && (!layers.backdrops.empty() || !layers.overlays.empty() || !layers.bezels.empty() || !layers.cpanels.empty() || !layers.marquees.empty()))
@@ -2268,7 +2822,7 @@ namespace mame
             {
                 // screens (-1) + overlays (RGB multiply) + backdrop (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
                 foreach (item backdrop in layers.backdrops)
-                    backdrop.m_blend_mode = BLENDMODE_ADD;
+                    backdrop.m_blend_mode = rendertypes_global.BLENDMODE_ADD;
 
                 foreach (var item in layers.screens) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.screens);
                 foreach (var item in layers.overlays) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.overlays);
@@ -2284,7 +2838,7 @@ namespace mame
                 foreach (item screen in layers.screens)
                 {
                     if (screen.blend_mode() == -1)
-                        screen.m_blend_mode = BLENDMODE_ADD;
+                        screen.m_blend_mode = rendertypes_global.BLENDMODE_ADD;
                 }
 
                 foreach (var item in layers.backdrops) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.backdrops);
@@ -2307,7 +2861,18 @@ namespace mame
         //-------------------------------------------------
         public bool has_screen(screen_device screen)
         {
-            return std.find_if(m_screens, (scr) => { return scr.get() == screen; }) != null;  //return std::find_if(m_screens.begin(), m_screens.end(), [&screen](auto const &scr) { return &scr.get() == &screen; }) != m_screens.end();
+            return std.find_if(m_items, (itm) => { return itm.screen() == screen; }) != default;  //return std::find_if(m_items.begin(), m_items.end(), [&screen] (auto &itm) { return itm.screen() == &screen; }) != m_items.end();
+        }
+
+
+        //-------------------------------------------------
+        //  has_visible_screen - return true if this view
+        //  has the given screen visble
+        //-------------------------------------------------
+
+        public bool has_visible_screen(screen_device screen)
+        {
+            return std.find_if(m_screens, (scr) => { return scr.get() == screen; }) != default;  //return std::find_if(m_screens.begin(), m_screens.end(), [&screen] (auto const &scr) { return &scr.get() == &screen; }) != m_screens.end();
         }
 
 
@@ -2319,8 +2884,9 @@ namespace mame
         public void recompute(u32 visibility_mask, bool zoom_to_screen)
         {
             // reset the bounds and collected active items
-            render_bounds scrbounds = new render_bounds(0.0f, 0.0f, 0.0f, 0.0f);
+            render_bounds scrbounds = new render_bounds() { x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f };
             m_bounds = scrbounds;
+            m_visible_items.clear();
             m_screen_items.clear();
             m_interactive_items.clear();
             m_interactive_edges_x.clear();
@@ -2334,11 +2900,14 @@ namespace mame
             {
                 if ((visibility_mask & curitem.visibility_mask()) == curitem.visibility_mask())
                 {
+                    render_bounds rawbounds = rendlay_global.accumulate_bounds(curitem.m_rawbounds);
+
                     // accumulate bounds
+                    m_visible_items.emplace_back(curitem);
                     if (first)
-                        m_bounds = curitem.m_rawbounds;
+                        m_bounds = rawbounds;
                     else
-                        rendutil_global.union_render_bounds(m_bounds, curitem.m_rawbounds);
+                        m_bounds |= rawbounds;
 
                     first = false;
 
@@ -2346,9 +2915,10 @@ namespace mame
                     if (curitem.screen() != null)
                     {
                         if (scrfirst)
-                            scrbounds = curitem.m_rawbounds;
+                            scrbounds = rawbounds;
                         else
-                            rendutil_global.union_render_bounds(scrbounds, curitem.m_rawbounds);
+                            scrbounds |= rawbounds;
+
                         scrfirst = false;
 
                         // accumulate active screens
@@ -2393,10 +2963,8 @@ namespace mame
             // normalize all the item bounds
             foreach (item curitem in items())
             {
-                curitem.m_bounds.x0 = target_bounds.x0 + (curitem.m_rawbounds.x0 - xoffs) * xscale;
-                curitem.m_bounds.x1 = target_bounds.x0 + (curitem.m_rawbounds.x1 - xoffs) * xscale;
-                curitem.m_bounds.y0 = target_bounds.y0 + (curitem.m_rawbounds.y0 - yoffs) * yscale;
-                curitem.m_bounds.y1 = target_bounds.y0 + (curitem.m_rawbounds.y1 - yoffs) * yscale;
+                curitem.m_bounds = curitem.m_rawbounds;
+                rendlay_global.normalize_bounds(curitem.m_bounds, target_bounds.x0, target_bounds.y0, xoffs, yoffs, xscale, yscale);
             }
 
             // sort edges of interactive items
@@ -2406,11 +2974,13 @@ namespace mame
             for (unsigned i = 0; m_interactive_items.size() > i; ++i)
             {
                 item curitem = m_interactive_items[i];
-                rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "{0}: ({1} {2} {3} {4}) hasinput={5} clickthrough={6}\n", i, curitem.bounds().x0, curitem.bounds().y0, curitem.bounds().x1, curitem.bounds().y1, curitem.has_input(), curitem.clickthrough());
-                m_interactive_edges_x.emplace_back(new edge(i, curitem.bounds().x0, false));
-                m_interactive_edges_x.emplace_back(new edge(i, curitem.bounds().x1, true));
-                m_interactive_edges_y.emplace_back(new edge(i, curitem.bounds().y0, false));
-                m_interactive_edges_y.emplace_back(new edge(i, curitem.bounds().y1, true));
+                render_bounds curbounds = rendlay_global.accumulate_bounds(curitem.m_bounds);
+                rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "{0}: ({1} {2} {3} {4}) hasinput={5} clickthrough={6}\n",
+                        i, curbounds.x0, curbounds.y0, curbounds.x1, curbounds.y1, curitem.has_input(), curitem.clickthrough());
+                m_interactive_edges_x.emplace_back(new edge(i, curbounds.x0, false));
+                m_interactive_edges_x.emplace_back(new edge(i, curbounds.x1, true));
+                m_interactive_edges_y.emplace_back(new edge(i, curbounds.y0, false));
+                m_interactive_edges_y.emplace_back(new edge(i, curbounds.y1, true));
             }
 
             m_interactive_edges_x.Sort();  //std::sort(m_interactive_edges_x.begin(), m_interactive_edges_x.end());
@@ -2422,6 +2992,20 @@ namespace mame
                     rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "x={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
                 foreach (edge e in m_interactive_edges_y)
                     rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "y={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
+            }
+        }
+
+
+        //-------------------------------------------------
+        //  preload - perform expensive loading upfront
+        //  for visible elements
+        //-------------------------------------------------
+        public void preload()
+        {
+            foreach (item curitem in m_visible_items)
+            {
+                if (curitem.element() != null)
+                    curitem.element().preload();
             }
         }
 
@@ -2562,7 +3146,7 @@ namespace mame
                             groupmap,
                             rendutil_global.orientation_add(grouporient, orientation),
                             grouptrans,
-                            rendlay_global.render_color_multiply(env.parse_color(itemnode.get_child("color")), color),
+                            env.parse_color(itemnode.get_child("color")) * color,
                             false,
                             false,
                             true);
@@ -2637,7 +3221,11 @@ namespace mame
         //-------------------------------------------------
         //  layout_file - constructor
         //-------------------------------------------------
-        public layout_file(device_t device, util.xml.data_node rootnode, string dirname)
+        public layout_file(
+            device_t device,
+            util.xml.data_node rootnode,
+            string searchpath,
+            string dirname)
         {
             m_elemmap = new layout_file_element_map();
             m_viewlist = new layout_file_view_list();
@@ -2645,7 +3233,7 @@ namespace mame
 
             try
             {
-                layout_file_environment env = new layout_file_environment(device);
+                layout_file_environment env = new layout_file_environment(device, searchpath, dirname);
 
                 // find the layout node
                 util.xml.data_node mamelayoutnode = rootnode.get_child("mamelayout");
@@ -2659,7 +3247,7 @@ namespace mame
 
                 // parse all the parameters, elements and groups
                 layout_file_group_map groupmap = new layout_file_group_map();
-                add_elements(dirname, env, mamelayoutnode, groupmap, false, true);
+                add_elements(env, mamelayoutnode, groupmap, false, true);
 
                 // parse all the views
                 for (util.xml.data_node viewnode = mamelayoutnode.get_child("view"); viewnode != null; viewnode = viewnode.get_next_sibling("view"))
@@ -2687,7 +3275,6 @@ namespace mame
 
 
         void add_elements(
-                string dirname,
                 layout_file_environment env,
                 util.xml.data_node parentnode,
                 layout_file_group_map groupmap,
@@ -2708,9 +3295,9 @@ namespace mame
                     string name = env.get_attribute_string(childnode, "name", null);
                     if (name == null)
                         throw new layout_syntax_error("element lacks name attribute");
-                    if (!m_elemmap.emplace(name, new layout_element(env, childnode, dirname)))  //if (!m_elemmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(env, childnode, dirname)).second)
+                    if (!m_elemmap.emplace(name, new layout_element(env, childnode)))  //if (!m_elemmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(env, *childnode)).second)
                         throw new layout_syntax_error(string_format("duplicate element name {0}", name));
-                    m_elemmap.emplace(name, new layout_element(env, childnode, dirname));
+                    m_elemmap.emplace(name, new layout_element(env, childnode));
                 }
                 else if (strcmp(childnode.get_name(), "group") == 0)
                 {
@@ -2729,7 +3316,7 @@ namespace mame
                     layout_file_environment local = new layout_file_environment(env);
                     for (int i = 0; count > i; ++i)
                     {
-                        add_elements(dirname, local, childnode, groupmap, true, i == 0);
+                        add_elements(local, childnode, groupmap, true, i == 0);
                         local.increment_parameters();
                     }
                 }

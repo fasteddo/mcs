@@ -611,7 +611,7 @@ namespace mame
 
                 if (enable_star != 0 && (star & 0x80) != 0 && (star & starmask) != 0)
                 {
-                    bitmap.pix32(y, m_x_scale * x + 0)[0] = m_star_color[star & 0x3f];
+                    bitmap.pix(y, m_x_scale * x + 0)[0] = m_star_color[star & 0x3f];
                 }
 
                 /* second RNG clock: two pixels */
@@ -621,8 +621,8 @@ namespace mame
 
                 if (enable_star != 0 && (star & 0x80) != 0 && (star & starmask) != 0)
                 {
-                    bitmap.pix32(y, m_x_scale * x + 1)[0] = m_star_color[star & 0x3f];
-                    bitmap.pix32(y, m_x_scale * x + 2)[0] = m_star_color[star & 0x3f];
+                    bitmap.pix(y, m_x_scale * x + 1)[0] = m_star_color[star & 0x3f];
+                    bitmap.pix(y, m_x_scale * x + 2)[0] = m_star_color[star & 0x3f];
                 }
             }
         }
@@ -709,19 +709,19 @@ namespace mame
                 x += GALAXIAN_H0START;
                 if (x >= cliprect.min_x && x <= cliprect.max_x)
                 {
-                    bitmap.pix32(y, x)[0] = color;
+                    bitmap.pix(y, x)[0] = color;
                 }
 
                 x++;
                 if (x >= cliprect.min_x && x <= cliprect.max_x)
                 {
-                    bitmap.pix32(y, x)[0] = color;
+                    bitmap.pix(y, x)[0] = color;
                 }
 
                 x++;
                 if (x >= cliprect.min_x && x <= cliprect.max_x)
                 {
-                    bitmap.pix32(y, x)[0] = color;
+                    bitmap.pix(y, x)[0] = color;
                 }
             }
         }

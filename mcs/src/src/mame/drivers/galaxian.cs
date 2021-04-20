@@ -877,7 +877,7 @@ namespace mame
          *************************************/
 
         //ROM_START( galaxian )
-        static readonly List<tiny_rom_entry> rom_galaxian = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_galaxian = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x4000, "maincpu", 0 ),
             ROM_LOAD( "galmidw.u",    0x0000, 0x0800, CRC("745e2d61") + SHA1("e65f74e35b1bfaccd407e168ea55678ae9b68edf") ),
@@ -905,7 +905,7 @@ namespace mame
          *************************************/
 
         //ROM_START( frogger )
-        static readonly List<tiny_rom_entry> rom_frogger = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_frogger = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "frogger.26",   0x0000, 0x1000, CRC("597696d6") + SHA1("e7e021776cad00f095a1ebbef407b7c0a8f5d835") ),

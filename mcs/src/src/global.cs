@@ -117,11 +117,6 @@ namespace mame
         protected static address_map_bank_device ADDRESS_MAP_BANK(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<address_map_bank_device>(mconfig, tag, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
 
 
-        // corealloc
-        public static MemoryContainer<T> global_alloc_array<T>(UInt32 num) where T : new() { return corealloc_global.global_alloc_array<T>(num); }
-        public static MemoryContainer<T> global_alloc_array_clear<T>(UInt32 num) where T : new() { return corealloc_global.global_alloc_array_clear<T>(num); }
-
-
         // corefile
         protected static string core_filename_extract_base(string name, bool strip_extension = false) { return util.corefile_global.core_filename_extract_base(name, strip_extension); }
         protected static bool core_filename_ends_with(string filename, string extension) { return util.corefile_global.core_filename_ends_with(filename, extension); }
@@ -586,7 +581,7 @@ namespace mame
         protected const UInt64 MACHINE_NODEVICE_PRINTER = gamedrv_global.MACHINE_NODEVICE_PRINTER;
         protected const UInt64 MACHINE_NODEVICE_LAN = gamedrv_global.MACHINE_NODEVICE_LAN;
         protected const UInt64 MACHINE_IMPERFECT_TIMING = gamedrv_global.MACHINE_IMPERFECT_TIMING;
-        protected static game_driver GAME(device_type.create_func creator, List<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, UInt32 MONITOR, string COMPANY, string FULLNAME, UInt64 FLAGS) { return gamedrv_global.GAME(creator, roms, YEAR, NAME, PARENT, MACHINE, INPUT, INIT, MONITOR, COMPANY, FULLNAME, FLAGS); }
+        protected static game_driver GAME(device_type.create_func creator, MemoryContainer<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, UInt32 MONITOR, string COMPANY, string FULLNAME, UInt64 FLAGS) { return gamedrv_global.GAME(creator, roms, YEAR, NAME, PARENT, MACHINE, INPUT, INIT, MONITOR, COMPANY, FULLNAME, FLAGS); }
 
 
         // gen_latch
@@ -946,16 +941,12 @@ namespace mame
         // render
         public static u32 PRIMFLAG_BLENDMODE(u32 x) { return render_global.PRIMFLAG_BLENDMODE(x); }
         protected static u32 PRIMFLAG_TEXWRAP(u32 x) { return render_global.PRIMFLAG_TEXWRAP(x); }
-        protected const int BLENDMODE_NONE = render_global.BLENDMODE_NONE;
-        public const int BLENDMODE_ALPHA = render_global.BLENDMODE_ALPHA;
-        protected const int BLENDMODE_RGB_MULTIPLY = render_global.BLENDMODE_RGB_MULTIPLY;
-        protected const int BLENDMODE_ADD = render_global.BLENDMODE_ADD;
         protected const u32 PRIMFLAG_PACKABLE = render_global.PRIMFLAG_PACKABLE;
 
 
         // rendutil
-        protected static void render_load_jpeg(out bitmap_argb32 bitmap, emu_file file, string dirname, string filename) { rendutil_global.render_load_jpeg(out bitmap, file, dirname, filename); }
-        protected static bool render_load_png(out bitmap_argb32 bitmap, emu_file file, string dirname, string filename, bool load_as_alpha_to_existing = false) { return rendutil_global.render_load_png(out bitmap, file, dirname, filename, load_as_alpha_to_existing); }
+        protected static void render_load_jpeg(out bitmap_argb32 bitmap, util.core_file file) { rendutil_global.render_load_jpeg(out bitmap, file); }
+        protected static bool render_load_png(out bitmap_argb32 bitmap, util.core_file file, bool load_as_alpha_to_existing = false) { return rendutil_global.render_load_png(out bitmap, file, load_as_alpha_to_existing); }
 
 
         // rescap
@@ -1008,7 +999,7 @@ namespace mame
         protected static string ROM_GETNAME(rom_entry_interface r) { return romload_global.ROM_GETNAME(r); }
         protected static string ROM_GETHASHDATA(rom_entry_interface r) { return romload_global.ROM_GETHASHDATA(r); }
         protected static UInt32 ROM_GETBIOSFLAGS(rom_entry_interface r) { return romload_global.ROM_GETBIOSFLAGS(r); }
-        protected static std.vector<rom_entry> rom_build_entries(List<tiny_rom_entry> tinyentries) { return romload_global.rom_build_entries(tinyentries); }
+        protected static std.vector<rom_entry> rom_build_entries(Pointer<tiny_rom_entry> tinyentries) { return romload_global.rom_build_entries(tinyentries); }
 
 
         // screen
@@ -1049,7 +1040,7 @@ namespace mame
 
 
         // strformat
-        public static string string_format(string format, params object [] args) { return strformat_global.string_format(format, args); }
+        public static string string_format(string format, params object [] args) { return util_.string_format(format, args); }
 
 
         // t11
@@ -1212,6 +1203,32 @@ namespace mame
         public static void fill_n(PointerU64 destination, int count, UInt64 value) { std.memset(destination, value, (UInt32)count); }
         public static void fill_n<T>(IList<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
         public static T find_if<T>(IEnumerable<T> list, Func<T, bool> pred) { foreach (var item in list) { if (pred(item)) return item; } return default;  }
+        public static int lower_bound<C, I, V>(C collection, V value, Func<I, V, bool> func)
+            where C : IList<I>
+        {
+            int first = 0;
+            int count = collection.Count;
+
+            if (count == 0)
+                return -1;
+
+            while (0 < count)
+            {
+                int count2 = count / 2;
+                int mid = first + count2;
+                if (func(collection[mid], value))
+                {
+                    first = mid + 1;
+                    count -= count2 + 1;
+                }
+                else
+                {
+                    count = count2;
+                }
+            }
+
+            return first;
+        }
         public static int max(int a, int b) { return Math.Max(a, b); }
         public static UInt32 max(UInt32 a, UInt32 b) { return Math.Max(a, b); }
         public static Int64 max(Int64 a, Int64 b) { return Math.Max(a, b); }
@@ -1225,6 +1242,7 @@ namespace mame
         public static float min(float a, float b) { return Math.Min(a, b); }
         public static double min(double a, double b) { return Math.Min(a, b); }
         public static attotime min(attotime a, attotime b) { return attotime.Min(a, b); }
+        public static void sort<T>(MemoryContainer<T> list, Comparison<T> pred) { list.Sort(pred); }
 
 
         // c++ cmath
@@ -1239,6 +1257,7 @@ namespace mame
         public static float fabsf(float arg) { return Math.Abs(arg); }
         public static float floor(float arg) { return (float)Math.Floor(arg); }
         public static double floor(double arg) { return Math.Floor(arg); }
+        public static float floorf(float arg) { return (float)Math.Floor(arg); }
         public static float log(float arg) { return (float)Math.Log(arg); }
         public static double log(double arg) { return Math.Log(arg); }
         public static float pow(float base_, float exponent) { return (float)Math.Pow(base_, exponent); }
@@ -1310,14 +1329,22 @@ namespace mame
             protected static size_t_constant N = new size_t_N();
 
 
-            T [] m_data = new T[N.value];
+            MemoryContainer<T> m_data = new MemoryContainer<T>((int)N.value, true);
 
 
             public array() { }
+            public array(params T [] args)
+            {
+                if (args.Length != N.value)
+                    throw new emu_fatalerror("array() parameter count doen't match size. Provided: {0}, Expected: {1}", args.Length, N.value);
+
+                for (int i = 0; i < args.Length; i++)
+                    m_data[i] = args[i];
+            }
 
 
             // IList
-            public int IndexOf(T value) { return Array.IndexOf(m_data, value); }
+            public int IndexOf(T value) { return m_data.IndexOf(value); }
             void IList<T>.Insert(int index, T value) { throw new emu_unimplemented(); }
             void IList<T>.RemoveAt(int index) { throw new emu_unimplemented(); }
             void ICollection<T>.Add(T value) { throw new emu_unimplemented(); }
@@ -1325,7 +1352,7 @@ namespace mame
             void ICollection<T>.Clear() { throw new emu_unimplemented(); }
             void ICollection<T>.CopyTo(T [] array, int index) { throw new emu_unimplemented(); }
             bool ICollection<T>.Remove(T value) { throw new emu_unimplemented(); }
-            public int Count { get { return m_data.Length; } }
+            public int Count { get { return m_data.Count; } }
             bool ICollection<T>.IsReadOnly { get { throw new emu_unimplemented(); } }
             IEnumerator IEnumerable.GetEnumerator() { return m_data.GetEnumerator(); }
             IEnumerator<T> IEnumerable<T>.GetEnumerator() { return ((IEnumerable<T>)m_data).GetEnumerator(); }
@@ -1375,8 +1402,9 @@ namespace mame
             public T this[UInt32 index] { get { return m_data[index]; } set { m_data[index] = value; } }
 
 
-            public int size() { return m_data.Length; }
+            public int size() { return Count; }
             public void fill(T value) { std.fill(this, value); }
+            public Pointer<T> data() { return new Pointer<T>(m_data); }
         }
 
 

@@ -4,6 +4,10 @@
 using System;
 using System.Collections.Generic;
 
+using bitmap8_t = mame.bitmap_specific<System.Byte, mame.PixelType_operators_u8, mame.Pointer<System.Byte>>;  //using bitmap8_t = bitmap_specific<uint8_t>;
+using bitmap16_t = mame.bitmap_specific<System.UInt16, mame.PixelType_operators_u16, mame.PointerU16>;  //using bitmap16_t = bitmap_specific<uint16_t>;
+using bitmap32_t = mame.bitmap_specific<System.UInt32, mame.PixelType_operators_u32, mame.PointerU32>;  //using bitmap16_t = bitmap_specific<uint16_t>;
+using bitmap64_t = mame.bitmap_specific<System.UInt64, mame.PixelType_operators_u64, mame.PointerU64>;  //using bitmap16_t = bitmap_specific<uint16_t>;
 using int32_t = System.Int32;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using PointerU8 = mame.Pointer<System.Byte>;
@@ -53,23 +57,25 @@ namespace mame
 
 
         // compute intersection with another rect
-        public rectangle intersection(rectangle src)  //rectangle &operator&=(const rectangle &src)
+        public static rectangle operator&(rectangle left, rectangle right)  //rectangle &operator&=(const rectangle &src)
         {
-            if (src.min_x > min_x) min_x = src.min_x;
-            if (src.max_x < max_x) max_x = src.max_x;
-            if (src.min_y > min_y) min_y = src.min_y;
-            if (src.max_y < max_y) max_y = src.max_y;
-            return this;
+            rectangle ret = left;
+            if (right.min_x > ret.min_x) ret.min_x = right.min_x;
+            if (right.max_x < ret.max_x) ret.max_x = right.max_x;
+            if (right.min_y > ret.min_y) ret.min_y = right.min_y;
+            if (right.max_y < ret.max_y) ret.max_y = right.max_y;
+            return ret;
         }
 
         // compute union with another rect
-        public rectangle union(rectangle src)  //rectangle &operator|=(const rectangle &src)
+        public static rectangle operator|(rectangle left, rectangle right)  //rectangle &operator|=(const rectangle &src)
         {
-            if (src.min_x < min_x) min_x = src.min_x;
-            if (src.max_x > max_x) max_x = src.max_x;
-            if (src.min_y < min_y) min_y = src.min_y;
-            if (src.max_y > max_y) max_y = src.max_y;
-            return this;
+            rectangle ret = left;
+            if (right.min_x < ret.min_x) ret.min_x = right.min_x;
+            if (right.max_x > ret.max_x) ret.max_x = right.max_x;
+            if (right.min_y < ret.min_y) ret.min_y = right.min_y;
+            if (right.max_y > ret.max_y) ret.max_y = right.max_y;
+            return ret;
         }
 
 
@@ -107,6 +113,13 @@ namespace mame
         void offsetx(int32_t delta) { min_x += delta; max_x += delta; }
         void offsety(int32_t delta) { min_y += delta; max_y += delta; }
     }
+
+
+    public interface PixelType_operators { PointerU8 new_pointer(PointerU8 memory, int offset = 0); }
+    public class PixelType_operators_u8 : PixelType_operators { public PointerU8 new_pointer(PointerU8 memory, int offset = 0) { return new PointerU8(memory, offset); } }
+    public class PixelType_operators_u16 : PixelType_operators { public PointerU8 new_pointer(PointerU8 memory, int offset = 0) { return new PointerU16(memory, offset); } }
+    public class PixelType_operators_u32 : PixelType_operators { public PointerU8 new_pointer(PointerU8 memory, int offset = 0) { return new PointerU32(memory, offset); } }
+    public class PixelType_operators_u64 : PixelType_operators { public PointerU8 new_pointer(PointerU8 memory, int offset = 0) { return new PointerU64(memory, offset); } }
 
 
     // ======================> bitmap_t
@@ -382,7 +395,7 @@ namespace mame
             }
         }
 
-        public void fill(uint32_t color) { fill(color, m_cliprect); }
+        public void fill(uint64_t color) { fill(color, m_cliprect); }
 
         /**
          * @fn  void bitmap_t::fill(UINT32 color, const rectangle &cliprect)
@@ -394,11 +407,11 @@ namespace mame
          * @param   color       The color.
          * @param   cliprect    The cliprect.
          */
-        public void fill(uint32_t color, rectangle cliprect)
+        public void fill(uint64_t color, rectangle bounds)
         {
             // if we have a cliprect, intersect with that
-            rectangle fill = cliprect;
-            fill.intersection(m_cliprect);  //fill &= m_cliprect;
+            rectangle fill = bounds;
+            fill &= m_cliprect;
             if (!fill.empty())
             {
                 // based on the bpp go from there
@@ -407,58 +420,51 @@ namespace mame
                 case 8:
                     for (int32_t y = fill.top(); y <= fill.bottom(); y++)
                     { 
-                        std.fill_n(pixt<uint8_t>(y, fill.left()), fill.width(), (uint8_t)color);  //std::fill_n(&pixt<uint8_t>(y, fill.left()), fill.width(), uint8_t(color));
+                        std.fill_n(pixt<uint8_t, PixelType_operators_u8>(y, fill.left()), fill.width(), (uint8_t)color);  //std::fill_n(&pixt<uint8_t>(y, fill.left()), fill.width(), uint8_t(color));
                     }
                     break;
 
                 case 16:
                     for (int32_t y = fill.top(); y <= fill.bottom(); ++y)
-                        std.fill_n((PointerU16)pixt<uint16_t>(y, fill.left()), fill.width(), (uint16_t)color);  //std::fill_n(&pixt<uint16_t>(y, fill.left()), fill.width(), uint16_t(color));
+                        std.fill_n((PointerU16)pixt<uint16_t, PixelType_operators_u16>(y, fill.left()), fill.width(), (uint16_t)color);  //std::fill_n(&pixt<uint16_t>(y, fill.left()), fill.width(), uint16_t(color));
                     break;
 
                 case 32:
                     for (int32_t y = fill.top(); y <= fill.bottom(); ++y)
-                        std.fill_n((PointerU32)pixt<uint32_t>(y, fill.left()), fill.width(), (uint32_t)color);  //std::fill_n(&pixt<uint32_t>(y, fill.left()), fill.width(), uint32_t(color));
+                        std.fill_n((PointerU32)pixt<uint32_t, PixelType_operators_u32>(y, fill.left()), fill.width(), (uint32_t)color);  //std::fill_n(&pixt<uint32_t>(y, fill.left()), fill.width(), uint32_t(color));
                     break;
 
                 case 64:
                     for (int32_t y = fill.top(); y <= fill.bottom(); ++y)
-                        std.fill_n((PointerU64)pixt<uint64_t>(y, fill.left()), fill.width(), (uint64_t)color);  //std::fill_n(&pixt<uint64_t>(y, fill.left()), fill.width(), uint64_t(color));
+                        std.fill_n((PointerU64)pixt<uint64_t, PixelType_operators_u64>(y, fill.left()), fill.width(), (uint64_t)color);  //std::fill_n(&pixt<uint64_t>(y, fill.left()), fill.width(), uint64_t(color));
                     break;
                 }
             }
         }
 
 
-        void plot_box(int x, int y, int width, int height, uint32_t color)
+        void plot_box(int32_t x, int32_t y, int32_t width, int32_t height, uint64_t color)
         {
-            rectangle clip = new rectangle(x, x + width - 1, y, y + height - 1);
-            fill(color, clip);
+            fill(color, new rectangle(x, x + width - 1, y, y + height - 1));
         }
 
 
         // pixel access
 
-        //template<typename PixelType>
-        //PixelType &pixt(int32_t y, int32_t x = 0) const { return *(reinterpret_cast<PixelType *>(m_base) + y * m_rowpixels + x); }
-        protected PointerU8 pixt<PixelType>(int32_t y, int32_t x = 0)
-        {
-            if      (typeof(PixelType) == typeof(uint8_t))  return new PointerU8(m_base) + (y * m_rowpixels + x);
-            else if (typeof(PixelType) == typeof(uint16_t)) return new PointerU16(m_base) + (y * m_rowpixels + x);
-            else if (typeof(PixelType) == typeof(uint32_t)) return new PointerU32(m_base) + (y * m_rowpixels + x);
-            else if (typeof(PixelType) == typeof(uint64_t)) return new PointerU64(m_base) + (y * m_rowpixels + x);
-            else throw new emu_fatalerror("bitmap_t.pix() - Unknown type. {0}", typeof(PixelType));
-        }
-
-        public PointerU8 raw_pixptr(int32_t y, int32_t x = 0)  //void *raw_pixptr(int32_t y, int32_t x = 0) const
-        {
-            return new PointerU8(m_base, (y * m_rowpixels + x) * m_bpp / 8);  //return reinterpret_cast<uint8_t *>(m_base) + (y * m_rowpixels + x) * m_bpp / 8; }
-        }
+        public PointerU8 raw_pixptr(int32_t y, int32_t x = 0) { return new PointerU8(m_base, (y * m_rowpixels + x) * m_bpp / 8); }  //void *raw_pixptr(int32_t y, int32_t x = 0) { return reinterpret_cast<uint8_t *>(m_base) + (y * m_rowpixels + x) * m_bpp / 8; }
 
 
         // for use by subclasses only to ensure type correctness
+        protected PointerU8 pixt<PixelType, PixelType_OPS>(int32_t y, int32_t x = 0)  //template <typename PixelType> PixelType &pixt(int32_t y, int32_t x = 0) { return *(reinterpret_cast<PixelType *>(m_base) + y * m_rowpixels + x); }
+            where PixelType_OPS : PixelType_operators, new()
+        {
+            PixelType_OPS ops = new PixelType_OPS();
+            return ops.new_pointer(m_base, y * m_rowpixels + x);
+        }
+
+
         //void wrap(void *base, int width, int height, int rowpixels);
-        //void wrap(const bitmap_t &source, const rectangle &subrect);
+        //void wrap(bitmap_t &source, const rectangle &subrect);
 
 
         // internal helpers
@@ -521,16 +527,18 @@ namespace mame
     // ======================> bitmap_specific, bitmap8_t, bitmap16_t, bitmap32_t, bitmap64_t
 
     //template<typename PixelType>
-    public class bitmap_specific<PixelType, PixelTypeBufferPointer> : bitmap_t where PixelTypeBufferPointer : PointerU8
+    public class bitmap_specific<PixelType, PixelType_OPS, PixelTypePointer> : bitmap_t
+        where PixelType_OPS : PixelType_operators, new()
+        where PixelTypePointer : PointerU8
     {
-        int PixelBits;  //static constexpr int PixelBits = 8 * sizeof(PixelType);
+        int PIXEL_BITS;  //static constexpr int PixelBits = 8 * sizeof(PixelType);
 
 
         // construction/destruction -- subclasses only
         //bitmap_specific(bitmap_specific<PixelType> &&) = default;
-        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(format, (uint8_t)(8 * sizeof_PixelType), width, height, xslop, yslop) { PixelBits = 8 * sizeof_PixelType; }  //bitmap_specific(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap_t(format, PixelBits, width, height, xslop, yslop) { }
-        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, PixelTypeBufferPointer base_, int width, int height, int rowpixels) : base(format, (uint8_t)(8 * sizeof_PixelType), base_, width, height, rowpixels) { PixelBits = 8 * sizeof_PixelType; }  //bitmap_specific(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : bitmap_t(format, PixelBits, base, width, height, rowpixels) { }
-        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, bitmap_specific<PixelType, PixelTypeBufferPointer> source, rectangle subrect) : base(format, (uint8_t)(8 * sizeof_PixelType), source, subrect) { PixelBits = 8 * sizeof_PixelType; }  //bitmap_specific(bitmap_format format, bitmap_specific<PixelType> &source, const rectangle &subrect) : bitmap_t(format, PixelBits, source, subrect) { }
+        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(format, (uint8_t)(8 * sizeof_PixelType), width, height, xslop, yslop) { PIXEL_BITS = 8 * sizeof_PixelType; }  //bitmap_specific(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap_t(format, PixelBits, width, height, xslop, yslop) { }
+        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, PixelTypePointer base_, int width, int height, int rowpixels) : base(format, (uint8_t)(8 * sizeof_PixelType), base_, width, height, rowpixels) { PIXEL_BITS = 8 * sizeof_PixelType; }  //bitmap_specific(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : bitmap_t(format, PixelBits, base, width, height, rowpixels) { }
+        protected bitmap_specific(int sizeof_PixelType, bitmap_format format, bitmap_specific<PixelType, PixelType_OPS, PixelTypePointer> source, rectangle subrect) : base(format, (uint8_t)(8 * sizeof_PixelType), source, subrect) { PIXEL_BITS = 8 * sizeof_PixelType; }  //bitmap_specific(bitmap_format format, bitmap_specific<PixelType> &source, const rectangle &subrect) : bitmap_t(format, PixelBits, source, subrect) { }
 
 
         //bitmap_specific<PixelType> &operator=(bitmap_specific<PixelType> &&) = default;
@@ -540,63 +548,44 @@ namespace mame
 
 
         // getters
-        public new uint8_t bpp() { return (uint8_t)PixelBits; }
+        public new uint8_t bpp() { return (uint8_t)PIXEL_BITS; }
 
 
         // pixel accessors
-        public PixelTypeBufferPointer pix(int32_t y, int32_t x = 0) { return (PixelTypeBufferPointer)pixt<PixelType>(y, x); }  //PixelType &pix(int32_t y, int32_t x = 0) const { return pixt<PixelType>(y, x); }
-        public PointerU8 pix8(int32_t y, int32_t x = 0) { static_assert(PixelBits == 8, "must be 8bpp"); return pixt<PixelType>(y, x); }  //PixelType &pix8(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 8, "must be 8bpp"); return pixt<PixelType>(y, x); }
-        public PointerU16 pix16(int32_t y, int32_t x = 0) { static_assert(PixelBits == 16, "must be 16bpp"); return (PointerU16)pixt<PixelType>(y, x); }  //PixelType &pix16(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 16, "must be 16bpp"); return pixt<PixelType>(y, x); }
-        public PointerU32 pix32(int32_t y, int32_t x = 0) { static_assert(PixelBits == 32, "must be 32bpp"); return (PointerU32)pixt<PixelType>(y, x); }  //PixelType &pix32(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 32, "must be 32bpp"); return pixt<PixelType>(y, x); }
-        public PointerU64 pix64(int32_t y, int32_t x = 0) { static_assert(PixelBits == 64, "must be 64bpp"); return (PointerU64)pixt<PixelType>(y, x); }  //PixelType &pix64(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 64, "must be 64bpp"); return pixt<PixelType>(y, x); }
+        public PixelTypePointer pix(int32_t y, int32_t x = 0) { return (PixelTypePointer)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix(int32_t y, int32_t x = 0) { return pixt<PixelType>(y, x); }
+
+        public PointerU8 pix8(int32_t y, int32_t x = 0) { static_assert(PIXEL_BITS == 8, "must be 8bpp"); return pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix8(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 8, "must be 8bpp"); return pixt<PixelType>(y, x); }
+        public PointerU16 pix16(int32_t y, int32_t x = 0) { static_assert(PIXEL_BITS == 16, "must be 16bpp"); return (PointerU16)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix16(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 16, "must be 16bpp"); return pixt<PixelType>(y, x); }
+        public PointerU32 pix32(int32_t y, int32_t x = 0) { static_assert(PIXEL_BITS == 32, "must be 32bpp"); return (PointerU32)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix32(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 32, "must be 32bpp"); return pixt<PixelType>(y, x); }
+        public PointerU64 pix64(int32_t y, int32_t x = 0) { static_assert(PIXEL_BITS == 64, "must be 64bpp"); return (PointerU64)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix64(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 64, "must be 64bpp"); return pixt<PixelType>(y, x); }
+
+
+        // operations
+        void fill(PixelType color) { fill(color, cliprect()); }
+        void fill(PixelType color, rectangle bounds)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        void plot_box(int32_t x, int32_t y, int32_t width, int32_t height, PixelType color)
+        {
+            fill(color, new rectangle(x, x + width - 1, y, y + height - 1));
+        }
     }
 
 
     // 8bpp bitmaps
     //using bitmap8_t = bitmap_specific<uint8_t>;
-    public class bitmap8_t : bitmap_specific<uint8_t, PointerU8>
-    {
-        //bitmap8_t(bitmap_specific<PixelType> &&) = default;
-        protected bitmap8_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(1, format, width, height, xslop, yslop) { }
-#if false
-        bitmap8_t(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : base(format, PixelBits, base, width, height, rowpixels) { }
-#endif
-        protected bitmap8_t(bitmap_format format, bitmap_specific<uint8_t, PointerU8> source, rectangle subrect) : base(1, format, source, subrect) { }
-    }
 
     // 16bpp bitmaps
     //using bitmap16_t = bitmap_specific<uint16_t>;
-    public class bitmap16_t : bitmap_specific<uint16_t, PointerU16>
-    {
-        //bitmap16_t(bitmap_specific<PixelType> &&) = default;
-        protected bitmap16_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(2, format, width, height, xslop, yslop) { }
-        protected bitmap16_t(bitmap_format format, PointerU16 base_, int width, int height, int rowpixels) : base(2, format, base_, width, height, rowpixels) { }  //bitmap_specific(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : bitmap_t(format, PixelBits, base, width, height, rowpixels) { }
-        protected bitmap16_t(bitmap_format format, bitmap_specific<uint16_t, PointerU16> source, rectangle subrect) : base(2, format, source, subrect) { }
-    }
 
     // 32bpp bitmaps
     //using bitmap32_t = bitmap_specific<uint32_t>;
-    public class bitmap32_t : bitmap_specific<uint32_t, PointerU32>
-    {
-        //bitmap32_t(bitmap_specific<PixelType> &&) = default;
-        protected bitmap32_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(4, format, width, height, xslop, yslop) { }
-#if false
-        bitmap32_t(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : base(format, PixelBits, base, width, height, rowpixels) { }
-#endif
-        protected bitmap32_t(bitmap_format format, bitmap_specific<uint32_t, PointerU32> source, rectangle subrect) : base(4, format, source, subrect) { }
-    }
 
     // 64bpp bitmaps
     //using bitmap64_t = bitmap_specific<uint64_t>;
-    public class bitmap64_t : bitmap_specific<uint64_t, PointerU64>
-    {
-        //bitmap64_t(bitmap_specific<PixelType> &&) = default;
-        protected bitmap64_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(8, format, width, height, xslop, yslop) { }
-#if false
-        bitmap64_t(bitmap_format format, PixelType *base, int width, int height, int rowpixels) : base(format, PixelBits, base, width, height, rowpixels) { }
-#endif
-        protected bitmap64_t(bitmap_format format, bitmap_specific<uint64_t, PointerU64> source, rectangle subrect) : base(8, format, source, subrect) { }
-    }
 
 
     // ======================> bitmap_ind8, bitmap_ind16, bitmap_ind32, bitmap_ind64
@@ -608,11 +597,9 @@ namespace mame
 
         // construction/destruction
         //bitmap_ind8(bitmap_ind8 &&) = default;
-        public bitmap_ind8(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(k_bitmap_format, width, height, xslop, yslop) { }
-#if false
-        bitmap_ind8(uint8_t *base, int width, int height, int rowpixels) : bitmap8_t(k_bitmap_format, base, width, height, rowpixels) { }
-#endif
-        public bitmap_ind8(bitmap_ind8 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
+        public bitmap_ind8(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(1, k_bitmap_format, width, height, xslop, yslop) { }
+        //bitmap_ind8(uint8_t *base, int width, int height, int rowpixels) : bitmap8_t(k_bitmap_format, base, width, height, rowpixels) { }
+        public bitmap_ind8(bitmap_ind8 source, rectangle subrect) : base(1, k_bitmap_format, source, subrect) { }
 
         //void wrap(uint8_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
         //void wrap(const bitmap_ind8 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
@@ -631,9 +618,9 @@ namespace mame
         // construction/destruction
         //bitmap_ind16(bitmap_ind16 &&) = default;
         public bitmap_ind16() : this(0, 0, 0, 0) { }
-        public bitmap_ind16(int width, int height = 0, int xslop = 0, int yslop = 0) : base(k_bitmap_format, width, height, xslop, yslop) { }
-        public bitmap_ind16(PointerU16 base_, int width, int height, int rowpixels) : base(k_bitmap_format, base_, width, height, rowpixels) { }  //bitmap_ind16(uint16_t *base, int width, int height, int rowpixels) : bitmap16_t(k_bitmap_format, base, width, height, rowpixels) { }
-        public bitmap_ind16(bitmap_ind16 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
+        public bitmap_ind16(int width, int height = 0, int xslop = 0, int yslop = 0) : base(2, k_bitmap_format, width, height, xslop, yslop) { }
+        public bitmap_ind16(PointerU16 base_, int width, int height, int rowpixels) : base(2, k_bitmap_format, base_, width, height, rowpixels) { }  //bitmap_ind16(uint16_t *base, int width, int height, int rowpixels) : bitmap16_t(k_bitmap_format, base, width, height, rowpixels) { }
+        public bitmap_ind16(bitmap_ind16 source, rectangle subrect) : base(2, k_bitmap_format, source, subrect) { }
 
         //void wrap(uint16_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
         //void wrap(const bitmap_ind8 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
@@ -651,11 +638,9 @@ namespace mame
 
         // construction/destruction
         //bitmap_ind32(bitmap_ind32 &&) = default;
-        bitmap_ind32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(k_bitmap_format, width, height, xslop, yslop) { }
-#if false
-        bitmap_ind32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
-#endif
-        bitmap_ind32(bitmap_ind32 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
+        bitmap_ind32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(4, k_bitmap_format, width, height, xslop, yslop) { }
+        //bitmap_ind32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
+        bitmap_ind32(bitmap_ind32 source, rectangle subrect) : base(4, k_bitmap_format, source, subrect) { }
 
         //void wrap(uint32_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
         //void wrap(const bitmap_ind8 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
@@ -673,11 +658,9 @@ namespace mame
 
         // construction/destruction
         //bitmap_ind64(bitmap_ind64 &&) = default;
-        public bitmap_ind64(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(k_bitmap_format, width, height, xslop, yslop) { }
-#if false
-        bitmap_ind64(uint64_t *base, int width, int height, int rowpixels) : bitmap64_t(k_bitmap_format, base, width, height, rowpixels) { }
-#endif
-        public bitmap_ind64(bitmap_ind64 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
+        public bitmap_ind64(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(8, k_bitmap_format, width, height, xslop, yslop) { }
+        //bitmap_ind64(uint64_t *base, int width, int height, int rowpixels) : bitmap64_t(k_bitmap_format, base, width, height, rowpixels) { }
+        public bitmap_ind64(bitmap_ind64 source, rectangle subrect) : base(8, k_bitmap_format, source, subrect) { }
 
         //void wrap(uint64_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
         //void wrap(const bitmap_ind8 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
@@ -698,11 +681,9 @@ namespace mame
 
         // construction/destruction
         //bitmap_yuy16(bitmap_yuy16 &&) = default;
-        bitmap_yuy16(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(k_bitmap_format, width, height, xslop, yslop) { }
-#if false
-        bitmap_yuy16(uint16_t *base, int width, int height, int rowpixels) : bitmap16_t(k_bitmap_format, base, width, height, rowpixels) { }
-#endif
-        bitmap_yuy16(bitmap_yuy16 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
+        bitmap_yuy16(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(2, k_bitmap_format, width, height, xslop, yslop) { }
+        //bitmap_yuy16(uint16_t *base, int width, int height, int rowpixels) : bitmap16_t(k_bitmap_format, base, width, height, rowpixels) { }
+        bitmap_yuy16(bitmap_yuy16 source, rectangle subrect) : base(2, k_bitmap_format, source, subrect) { }
 
         //void wrap(uint16_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
         //void wrap(const bitmap_yuy16 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
@@ -720,11 +701,9 @@ namespace mame
 
         // construction/destruction
         //bitmap_rgb32(bitmap_rgb32 &&) = default;
-        public bitmap_rgb32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(k_bitmap_format, width, height, xslop, yslop) { }
-#if false
-        bitmap_rgb32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
-#endif
-        public bitmap_rgb32(bitmap_rgb32 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
+        public bitmap_rgb32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(4, k_bitmap_format, width, height, xslop, yslop) { }
+        //bitmap_rgb32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
+        public bitmap_rgb32(bitmap_rgb32 source, rectangle subrect) : base(4, k_bitmap_format, source, subrect) { }
 
         //void wrap(uint32_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
         //void wrap(const bitmap_rgb32 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
@@ -742,11 +721,9 @@ namespace mame
 
         // construction/destruction
         //bitmap_argb32(bitmap_argb32 &&) = default;
-        public bitmap_argb32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(k_bitmap_format, width, height, xslop, yslop) { }
-#if false
-        bitmap_argb32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
-#endif
-        public bitmap_argb32(bitmap_argb32 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
+        public bitmap_argb32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : base(4, k_bitmap_format, width, height, xslop, yslop) { }
+        //bitmap_argb32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
+        public bitmap_argb32(bitmap_argb32 source, rectangle subrect) : base(4, k_bitmap_format, source, subrect) { }
 
         //void wrap(uint32_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
         //void wrap(const bitmap_argb32 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }

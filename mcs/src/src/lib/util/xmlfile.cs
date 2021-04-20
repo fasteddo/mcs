@@ -31,16 +31,16 @@ namespace mame.util.xml
     /* extended error information from parsing */
     class parse_error
     {
-        string error_message;
-        int error_line;
-        int error_column;
+        public string error_message;
+        public int error_line;
+        public int error_column;
     }
 
 
     // parsing options
     class parse_options
     {
-        parse_error error;
+        public parse_error error;
         //void                (*init_parser)(XML_ParserStruct *parser);
         uint32_t flags;
     }

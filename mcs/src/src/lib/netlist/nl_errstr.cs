@@ -150,6 +150,17 @@ namespace mame.netlist
         public static string MI_NO_SPECIFIC_SOLVER(params object [] args) { return PERRMSGV(1, "No specific solver found for netlist of size {0}", args); }
         public static string MW_SOLVER_METHOD_NOT_SUPPORTED(params object [] args) { return PERRMSGV(2, "Solver method {0} not supported. Falling back to {1}", args); }
 
+        public static string ME_SOLVER_CONSISTENCY_NOT_ANALOG_NET(params object [] args) { return PERRMSGV(1, "Solver consistency: {0} is not an analog net", args); }
+        public static string ME_SOLVER_CONSISTENCY_RAIL_NET(params object [] args) { return PERRMSGV(1, "Solver consistency: {0} is a rail net", args); }
+        public static string ME_SOLVER_TERMINAL_NO_NET(params object [] args) { return PERRMSGV(1, "Solver consistency: Terminal {0} has no net", args); }
+        public static string ME_SOLVER_NO_RAIL_TERMINAL(params object [] args) { return PERRMSGV(1, "Solver consistency: No rail terminals in group with nets: {0}\n" +
+            "At least one rail terminal (like ANALOG_INPUT) needs to be part of a group of nets\n" +
+            "solved by a solver. Without a singular matrix would be created\n" +
+            "which has the potential to cause a crash now or in the future.\n" +
+            "A common cause of this error are BJT or FET devices which\n" +
+            "are defined but not used in the netlist.", args); }
+        public static string MF_SOLVER_CONSISTENCY_ERRORS(params object [] args) { return PERRMSGV(1, "Found {0} errors during solver consistency test", args); }
+
         // nld_mm5837.cpp
 
         public static string MW_FREQUENCY_OUTSIDE_OF_SPECS_1(params object [] args) { return PERRMSGV(1, "MM5837: Frequency outside of specs: {0}", args); }

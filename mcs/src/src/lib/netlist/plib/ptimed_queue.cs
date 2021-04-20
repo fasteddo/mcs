@@ -90,7 +90,6 @@ namespace mame.plib
         //pperfcount_t<true> m_prof_sortmove; // NOLINT
         //pperfcount_t<true> m_prof_call; // NOLINT
         //pperfcount_t<true> m_prof_remove; // NOLINT
-        //pperfcount_t<true> m_prof_retime; // NOLINT
 
 
         protected timed_queue_linear(bool TS, size_t list_size)
@@ -197,10 +196,6 @@ namespace mame.plib
             }
 #endif
         }
-
-
-        //template <bool KEEPSTAT, class R>
-        //void retime(R && elem) noexcept
 
 
         public void clear()

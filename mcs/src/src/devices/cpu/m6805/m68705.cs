@@ -859,7 +859,7 @@ namespace mame
 
 
         //ROM_START( m68705p5 )
-        static readonly List<tiny_rom_entry> rom_m68705p5 = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_m68705p5 = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION(0x0073, "bootstrap", 0),
             ROM_LOAD("bootstrap.bin", 0x0000, 0x0073, CRC("f70a8620") + SHA1("c154f78c23f10bb903a531cb19e99121d5f7c19c")),
@@ -872,9 +872,9 @@ namespace mame
         { }
 
 
-        protected override List<tiny_rom_entry> device_rom_region()
+        protected override Pointer<tiny_rom_entry> device_rom_region()
         {
-            return rom_m68705p5;
+            return new Pointer<tiny_rom_entry>(rom_m68705p5);
         }
 
         protected override u8 get_mask_options()

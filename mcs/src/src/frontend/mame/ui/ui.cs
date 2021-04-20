@@ -361,7 +361,7 @@ namespace mame
                     config_save);
 
             // create mouse bitmap
-            PointerU32 dst = m_mouse_bitmap.pix32(0);  //uint32_t *dst = &m_mouse_bitmap.pix32(0);
+            PointerU32 dst = m_mouse_bitmap.pix(0);  //uint32_t *dst = &m_mouse_bitmap.pix(0);
             //memcpy(dst,mouse_bitmap,32*32*sizeof(UINT32));
             for (int i = 0; i < 32*32; i++)
                 dst[i] = ui_global.mouse_bitmap[i];
@@ -712,7 +712,7 @@ namespace mame
                 if (alpha > 255)
                     alpha = 255;
                 if (alpha >= 0)
-                    container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t(alpha,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t(alpha,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
             }
 
             // render any cheat stuff at the bottom
@@ -743,7 +743,7 @@ namespace mame
                     if (mouse_target.map_point_container(mouse_target_x, mouse_target_y, container, out mouse_x, out mouse_y))
                     {
                         float cursor_size = 0.6f * get_line_height();
-                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, colors().text_color(), m_mouse_arrow_texture, render_global.PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, colors().text_color(), m_mouse_arrow_texture, render_global.PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                     }
                 }
             }
@@ -846,11 +846,11 @@ namespace mame
 
         public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t fgcolor, rgb_t bgcolor)
         {
-            container.add_rect(x0, y0, x1, y1, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_rect(x0, y0, x1, y1, bgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
         }
 
         //-------------------------------------------------
@@ -1274,10 +1274,10 @@ namespace mame
         public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture, UInt32 flags)  // render_texture texture = null, UInt32 flags = render_global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA))
         {
             container.add_quad(x0, y0, x1, y1, backcolor, texture, flags);
-            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
         }
 
 
@@ -1624,11 +1624,7 @@ namespace mame
             m_mouse_arrow_texture = null;
 
             // free the font
-            if (m_font != null)
-            {
-                machine().render().font_free(m_font);
-                m_font = null;
-            }
+            m_font = null;  //m_font.reset();
         }
 
 

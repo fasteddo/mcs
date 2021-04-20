@@ -71,7 +71,6 @@ namespace mame
         /* data about the sound system */
         protected sound_channel [] m_channel_list = new sound_channel[MAX_VOICES];
         sound_channel m_last_channel;
-        protected uint8_t [] m_soundregs;  //uint8_t *m_soundregs;
         Pointer<uint8_t> m_wavedata;  //uint8_t *m_wavedata;
 
         /* global sound parameters */
@@ -85,8 +84,10 @@ namespace mame
         protected int m_voices;     /* number of voices */
         bool m_stereo;     /* set to indicate stereo (e.g., System 1) */
 
+        MemoryContainer<uint8_t> m_waveram_alloc;  //std::unique_ptr<uint8_t[]> m_waveram_alloc;
+
         /* decoded waveform table */
-        MemoryContainer<int16_t> [] m_waveform = new MemoryContainer<int16_t>[MAX_VOLUME];  //int16_t *m_waveform[MAX_VOLUME];
+        MemoryContainer<int16_t> [] m_waveform = new MemoryContainer<int16_t>[MAX_VOLUME];  //std::unique_ptr<int16_t[]> m_waveform[MAX_VOLUME];
 
 
         public namco_audio_device(machine_config mconfig, device_type type, string tag, device_t owner, UInt32 clock)
@@ -97,7 +98,6 @@ namespace mame
 
             m_wave_ptr = new optional_region_ptr_uint8_t(this, DEVICE_SELF);
             m_last_channel = null;
-            m_soundregs = null;
             m_wavedata = null;
             m_wave_size = 0;
             m_sound_enable = false;
@@ -134,12 +134,8 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            int voiceIdx;  // sound_channel *voice;
-
             /* extract globals from the interface */
             m_last_channel = m_channel_list[m_voices];
-
-            m_soundregs = new uint8_t[0x400];  //auto_alloc_array_clear(machine(), uint8_t, 0x400);
 
             /* build the waveform table */
             build_decoded_waveform(m_wave_ptr.target);
@@ -155,23 +151,19 @@ namespace mame
 
             //throw new emu_unimplemented();
 #if false
-            /* register with the save state system */
-            save_pointer(m_soundregs, "m_soundregs", 0x400);
-
             if (m_wave_ptr == null)
                 save_pointer(m_wavedata, "m_wavedata", 0x400);
 
             save_item(m_voices, "m_voices");
             save_item(m_sound_enable, "m_sound_enable");
-            save_pointer(NAME(m_waveform[0]), MAX_VOLUME * 32 * 8 * (1 + m_wave_size));
+            for (int v = 0; v < MAX_VOLUME; v++)
+                save_pointer(NAME(m_waveform[v]), 32 * 8 * (1+m_wave_size), v);
 #endif
 
             /* reset all the voices */
-            for (voiceIdx = 0; m_channel_list[voiceIdx] != m_last_channel; voiceIdx++)  //for (voice = m_channel_list; voice < m_last_channel; voice++)
+            for (int voiceIdx = 0; m_channel_list[voiceIdx] != m_last_channel; voiceIdx++)  //for (sound_channel *voice = m_channel_list; voice < m_last_channel; voice++)
             {
                 sound_channel voice = m_channel_list[voiceIdx];
-
-                int voicenum = voiceIdx;  // voice - m_channel_list;
 
                 voice.frequency = 0;
                 voice.volume[0] = voice.volume[1] = 0;
@@ -182,18 +174,21 @@ namespace mame
                 voice.noise_seed = 1;
                 voice.noise_counter = 0;
                 voice.noise_hold = 0;
-
-                /* register with the save state system */
-                save_item(NAME(new { voice.frequency }), voicenum);
-                save_item(NAME(new { voice.counter }), voicenum);
-                save_item(NAME(new { voice.volume }), voicenum);
-                save_item(NAME(new { voice.noise_sw }), voicenum);
-                save_item(NAME(new { voice.noise_state }), voicenum);
-                save_item(NAME(new { voice.noise_seed }), voicenum);
-                save_item(NAME(new { voice.noise_hold }), voicenum);
-                save_item(NAME(new { voice.noise_counter }), voicenum);
-                save_item(NAME(new { voice.waveform_select }), voicenum);
             }
+
+            //throw new emu_unimplemented();
+#if false
+            /* register with the save state system */
+            save_pointer(STRUCT_MEMBER(m_channel_list, frequency), m_voices);
+            save_pointer(STRUCT_MEMBER(m_channel_list, counter), m_voices);
+            save_pointer(STRUCT_MEMBER(m_channel_list, volume), m_voices);
+            save_pointer(STRUCT_MEMBER(m_channel_list, noise_sw), m_voices);
+            save_pointer(STRUCT_MEMBER(m_channel_list, noise_state), m_voices);
+            save_pointer(STRUCT_MEMBER(m_channel_list, noise_seed), m_voices);
+            save_pointer(STRUCT_MEMBER(m_channel_list, noise_hold), m_voices);
+            save_pointer(STRUCT_MEMBER(m_channel_list, noise_counter), m_voices);
+            save_pointer(STRUCT_MEMBER(m_channel_list, waveform_select), m_voices);
+#endif
         }
 
 
@@ -220,14 +215,18 @@ namespace mame
         /* build the decoded waveform table */
         void build_decoded_waveform(Pointer<uint8_t> rgnbase)  //uint8_t *rgnbase)
         {
-            MemoryContainer<int16_t> p;  //int16_t *p;
-            int size;
-            int offset;
-            int v;
-
-            m_wavedata = (rgnbase != null) ? new Pointer<uint8_t>(rgnbase) : new Pointer<uint8_t>(auto_alloc_array_clear<uint8_t>(machine(), 0x400));  //m_wavedata = (rgnbase != nullptr) ? rgnbase : auto_alloc_array_clear(machine(), uint8_t, 0x400);
+            if (rgnbase != null)
+            {
+                m_wavedata = rgnbase;
+            }
+            else
+            {
+                m_waveram_alloc = new MemoryContainer<uint8_t>(0x400);  //m_waveram_alloc = make_unique_clear<uint8_t[]>(0x400);
+                m_wavedata = new Pointer<uint8_t>(m_waveram_alloc);
+            }
 
             /* 20pacgal has waves in RAM but old sound system */
+            int size;
             if (rgnbase == null && m_voices != 3)
             {
                 m_wave_size = 1;
@@ -239,21 +238,11 @@ namespace mame
                 size = 32 * 8;      /* 32 samples, 8 waveforms */
             }
 
-            //p = auto_alloc_array(machine(), int16_t, size * MAX_VOLUME);
+            for (int v = 0; v < MAX_VOLUME; v++)
+                m_waveform[v] = new MemoryContainer<int16_t>(size);  //m_waveform[v] = std::make_unique<int16_t[]>(size);
 
-            for (v = 0; v < MAX_VOLUME; v++)
-            {
-                p = auto_alloc_array<int16_t>(machine(), (UInt32)size * MAX_VOLUME);  //p = auto_alloc_array(machine(), int16_t, size * MAX_VOLUME);
-                m_waveform[v] = p;
-                //p += size;
-            }
-
-            /* We need waveform data. It fails if region is not specified. */
-            if (m_wavedata != null)
-            {
-                for (offset = 0; offset < 256; offset++)
-                    update_namco_waveform(offset, m_wavedata[offset]);
-            }
+            for (int offset = 0; offset < 256; offset++)
+                update_namco_waveform(offset, m_wavedata[offset]);
         }
 
         /* update the decoded waveform data */
@@ -500,9 +489,14 @@ namespace mame
         public static readonly device_type NAMCO = DEFINE_DEVICE_TYPE(device_creator_namco_device, "namco",       "Namco");
 
 
+        uint8_t [] m_soundregs;  //std::unique_ptr<uint8_t[]> m_soundregs;
+
+
         public namco_device(machine_config mconfig, string tag, device_t owner, u32 clock)
             : base(mconfig, NAMCO, tag, owner, clock)
-        { }
+        {
+            m_soundregs = null;
+        }
 
 
         public void pacman_sound_w(offs_t offset, uint8_t data)
@@ -559,10 +553,22 @@ namespace mame
         }
 
 
-        //void polepos_sound_enable(int enable);
-
         //uint8_t polepos_sound_r(offs_t offset);
         //void polepos_sound_w(offs_t offset, uint8_t data);
+
+
+        // device-level overrides
+        protected override void device_start()
+        {
+            base.device_start();
+
+            m_soundregs = new uint8_t [0x400];  //m_soundregs = make_unique_clear<uint8_t[]>(0x400);
+
+            //throw new emu_unimplemented();
+#if false
+            save_pointer(NAME(m_soundregs), 0x400);
+#endif
+        }
 
 
         void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;

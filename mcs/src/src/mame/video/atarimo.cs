@@ -452,7 +452,7 @@ namespace mame
                     bandclip.set_height(1 << m_slipshift);
 
                     // keep within the cliprect
-                    bandclip.intersection(cliprect);  //bandclip &= cliprect;
+                    bandclip &= cliprect;
                 }
 
                 // if this matches the last link, we don't need to re-process the list

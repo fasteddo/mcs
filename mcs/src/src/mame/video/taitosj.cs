@@ -225,8 +225,6 @@ namespace mame
 
         int check_sprite_sprite_bitpattern(int sx1, int sy1, int which1,int sx2, int sy2, int which2)
         {
-            int x;
-            int y;
             int minx;
             int miny;
             int maxx = 16;
@@ -279,12 +277,12 @@ namespace mame
                     m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 2] & 0x02,
                     sx2, sy2, 0);
 
-            for (y = miny; y < maxy; y++)
+            for (int y = miny; y < maxy; y++)
             {
-                for (x = minx; x < maxx; x++)
+                for (int x = minx; x < maxx; x++)
                 {
-                    if ((m_sprite_sprite_collbitmap1.pix16(y, x)[0] != TRANSPARENT_PEN) &&
-                        (m_sprite_sprite_collbitmap2.pix16(y, x)[0] != TRANSPARENT_PEN))
+                    if ((m_sprite_sprite_collbitmap1.pix(y, x)[0] != TRANSPARENT_PEN) &&
+                        (m_sprite_sprite_collbitmap2.pix(y, x)[0] != TRANSPARENT_PEN))
                         return 1;  /* collided */
                 }
             }
@@ -409,8 +407,6 @@ namespace mame
 
         int check_sprite_layer_bitpattern(int which, rectangle [] sprite_areas)
         {
-            int y;
-            int x;
             offs_t offs = (offs_t)(which * 4);
             int result = 0;  /* no collisions */
 
@@ -434,19 +430,19 @@ namespace mame
                     flip_x, flip_y,
                     0,0,0);
 
-            for (y = miny; y < maxy; y++)
+            for (int y = miny; y < maxy; y++)
             {
-                for (x = minx; x < maxx; x++)
+                for (int x = minx; x < maxx; x++)
                 {
                     if (m_sprite_layer_collbitmap1.pix16(y - miny, x - minx)[0] != TRANSPARENT_PEN) /* is there anything to check for ? */
                     {
-                        if (check_layer_1 != 0 && (m_sprite_layer_collbitmap2[0].pix16(y, x)[0] != TRANSPARENT_PEN))
+                        if (check_layer_1 != 0 && (m_sprite_layer_collbitmap2[0].pix(y, x)[0] != TRANSPARENT_PEN))
                             result |= 0x01;  /* collided with layer 1 */
 
-                        if (check_layer_2 != 0 && (m_sprite_layer_collbitmap2[1].pix16(y, x)[0] != TRANSPARENT_PEN))
+                        if (check_layer_2 != 0 && (m_sprite_layer_collbitmap2[1].pix(y, x)[0] != TRANSPARENT_PEN))
                             result |= 0x02;  /* collided with layer 2 */
 
-                        if (check_layer_3 != 0 && (m_sprite_layer_collbitmap2[2].pix16(y, x)[0] != TRANSPARENT_PEN))
+                        if (check_layer_3 != 0 && (m_sprite_layer_collbitmap2[2].pix(y, x)[0] != TRANSPARENT_PEN))
                             result |= 0x04;  /* collided with layer 3 */
                     }
                 }
@@ -460,10 +456,8 @@ namespace mame
         {
             if (SPRITES_ON)
             {
-                int which;
-
                 /* check each sprite */
-                for (which = 0; which < 0x20; which++)
+                for (int which = 0; which < 0x20; which++)
                 {
                     if ((which >= 0x10) && (which <= 0x17)) continue;   /* no sprites here */
 

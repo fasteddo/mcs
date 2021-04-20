@@ -34,7 +34,7 @@ namespace mame.netlist
         plib.state_manager_t m_state;
         log_type m_log;
 
-        // FIXME: should only be available during device construcion
+        // FIXME: should only be available during device construction
         setup_t m_setup;  //host_arena::unique_ptr<setup_t>            m_setup;
 
         netlist_state_t_nets_collection_type m_nets;
@@ -42,7 +42,8 @@ namespace mame.netlist
         netlist_state_t_devices_collection_type m_devices = new netlist_state_t_devices_collection_type();
         // sole use is to manage lifetime of family objects
         netlist_state_t_family_collection_type m_family_cache;
-        bool m_extended_validation;
+        // all terms for a net
+        std.unordered_map<detail.net_t, std.vector<detail.core_terminal_t>> m_core_terms;  //std::unordered_map<const detail::net_t *, std::vector<detail::core_terminal_t *>> m_core_terms;
 
         // dummy version
         int m_dummy_version;
@@ -51,7 +52,6 @@ namespace mame.netlist
         public netlist_state_t(string name)  //netlist_state_t(const pstring &name, plib::plog_delegate logger);
         {
             //see netlist_state_t_after_ctor()  //: m_log(logger)
-            m_extended_validation = false;
             m_dummy_version = 1;
 
 
@@ -90,9 +90,9 @@ namespace mame.netlist
 
             //throw new emu_unimplemented();
 #if false
-            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/nlm_{1}.cpp");
-            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/generated/nlm_{1}.cpp");
-            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/modules/nlmod_{1}.cpp");
+            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/nlm_{1}.cpp", true);
+            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/generated/nlm_{1}.cpp", true);
+            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/modules/nlmod_{1}.cpp", true);
             m_setup->parser().include("base_lib");
 #endif
         }
@@ -343,26 +343,6 @@ namespace mame.netlist
         public device_arena pool() { return m_pool; }
 
 
-        /// \brief set extended validation mode.
-        ///
-        /// The extended validation mode is not intended for running.
-        /// The intention is to identify power pins which are not properly
-        /// connected. The downside is that this mode creates a netlist which
-        /// is different (and not able to run).
-        ///
-        /// Extended validation is supported by nltool validate option.
-        ///
-        /// \param val Boolean value enabling/disabling extended validation mode
-        public void set_extended_validation(bool val) { m_extended_validation = val; }
-
-
-        /// \brief State of extended validation mode.
-        ///
-        /// \returns boolean value indicating if extended validation mode is
-        /// turned on.
-        public bool is_extended_validation() { return m_extended_validation; }
-
-
         //struct stats_info
         //{
         //    const detail::queue_t               &m_queue;// performance
@@ -418,7 +398,7 @@ namespace mame.netlist
                     foreach (var n in m_nets)
                     {
                         n.update_inputs(); // only used if USE_COPY_INSTEAD_OF_REFERENCE == 1
-                        foreach (var term in n.core_terms())
+                        foreach (var term in core_terms(n))
                         {
                             if (!plib.container.contains(t, term.delegate_()))
                             {
@@ -461,6 +441,12 @@ namespace mame.netlist
         public void free_setup_resources()
         {
             m_setup = null;
+        }
+
+
+        public std.vector<detail.core_terminal_t> core_terms(detail.net_t net)  //std::vector<detail::core_terminal_t *> &core_terms(const detail::net_t &net) noexcept
+        {
+            return m_core_terms[net];
         }
     }
 } // namespace netlist

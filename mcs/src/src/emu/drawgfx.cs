@@ -268,7 +268,7 @@ namespace mame
         {
             color = colorbase() + granularity() * (color % colors());
             code %= elements();
-            drawgfx_core<bitmap_ind16, u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_OPAQUE(color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_OPAQUE(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_OPAQUE(color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_OPAQUE(destp, srcp); });
         }
 
 
@@ -319,7 +319,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_ind16, u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
         }
 
 
@@ -353,7 +353,7 @@ namespace mame
 
             // render
             Pointer<rgb_t> paldata = new Pointer<rgb_t>(m_palette.pens(), (int)(colorbase() + granularity() * (color % colors())));  //const pen_t *paldata = m_palette.pens() + colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_rgb32, u32, PointerU32>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REMAP_TRANSPEN(trans_pen, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_rgb32, u32, PixelType_operators_u32, PointerU32>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REMAP_TRANSPEN(trans_pen, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSPEN(destp, srcp); });
         }
 
 
@@ -372,7 +372,7 @@ namespace mame
                 return;
 
             // render
-            drawgfx_core<bitmap_ind16, u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
         }
 
         public void transpen_raw(bitmap_rgb32 dest, rectangle cliprect,
@@ -418,7 +418,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_ind16, u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSMASK(color, trans_mask, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSMASK(color, trans_mask, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
         }
 
         public void transmask(bitmap_rgb32 dest, rectangle cliprect,
@@ -651,7 +651,7 @@ namespace mame
         // copy from one bitmap to another, copying all unclipped pixels
         static void copybitmap(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
         {
-            drawgfxt_global.copybitmap_core<bitmap_ind16, u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_OPAQUE(ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_OPAQUE(destp, srcp); });
+            drawgfxt_global.copybitmap_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_OPAQUE(ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_OPAQUE(destp, srcp); });
         }
 
         static void copybitmap(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
@@ -671,7 +671,7 @@ namespace mame
             if (trans_pen > 0xffff)
                 copybitmap(dest, src, flipx, flipy, destx, desty, cliprect);
             else
-                drawgfxt_global.copybitmap_core<bitmap_ind16, u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_TRANSPEN(trans_pen, ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [trans_pen](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_TRANSPEN(destp, srcp); });
+                drawgfxt_global.copybitmap_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_TRANSPEN(trans_pen, ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [trans_pen](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_TRANSPEN(destp, srcp); });
         }
 
         static void copybitmap_trans(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 transpen)
@@ -775,7 +775,7 @@ namespace mame
                     {
                         // compute the cliprect for this group
                         subclip.setx(col * colwidth + sx, (col + groupcols) * colwidth - 1 + sx);
-                        subclip.intersection(cliprect);  //subclip &= cliprect;
+                        subclip &= cliprect;
 
                         // iterate over all portions of the scroll that overlap the destination
                         for (s32 sy = yscroll - src.height(); sy < dest.height(); sy += src.height())
@@ -811,7 +811,7 @@ namespace mame
                     {
                         // compute the cliprect for this group
                         subclip.sety(row * rowheight + sy, (row + grouprows) * rowheight - 1 + sy);
-                        subclip.intersection(cliprect);  //subclip &= cliprect;
+                        subclip &= cliprect;
 
                         // iterate over all portions of the scroll that overlap the destination
                         for (s32 sx = xscroll - src.width(); sx < dest.width(); sx += src.width())

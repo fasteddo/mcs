@@ -16,10 +16,10 @@ namespace mame
 {
     // ======================> render_font
     // a render_font describes and provides an interface to a font
-    public class render_font : global_object,
-                               IDisposable
+    public class render_font : global_object
     {
         //friend class render_manager;
+
 
         const bool VERBOSE = false;
         static void LOG(string format, params object [] args) { if (VERBOSE) osd_printf_verbose(format, args); }
@@ -147,47 +147,6 @@ namespace mame
             ramfile.close();
 
             render_font_command_glyph();
-        }
-
-        ~render_font()
-        {
-            assert(m_isDisposed);  // can remove
-        }
-
-        bool m_isDisposed = false;
-        public void Dispose()
-        {
-            //throw new emu_unimplemented();
-#if false
-            // free all the subtables
-            foreach (var elem in m_glyphs)
-            {
-                if (elem != null)
-                {
-                    for (int charnum = 0; charnum < 256; charnum++)
-                    {
-                        glyph gl = elem[charnum];
-                        m_manager.texture_free(gl.texture);
-                    }
-                    //delete[] elem;
-                }
-            }
-
-            foreach (var elem in m_glyphs_cmd)
-            {
-                if (elem != null)
-                {
-                    for (int charnum = 0; charnum < 256; charnum++)
-                    {
-                        glyph gl = elem[charnum];
-                        m_manager.texture_free(gl.texture);
-                    }
-                    //delete[] elem;
-                }
-            }
-#endif
-
-            m_isDisposed = true;
         }
 
 
@@ -420,7 +379,7 @@ namespace mame
                 for (int y = 0; y < gl.bmheight; y++)
                 {
                     int desty = y + m_height_cmd + m_yoffs_cmd - gl.yoffs - gl.bmheight;
-                    UINT32 *dest = (desty >= 0 && desty < m_height_cmd) ? &gl.bitmap.pix32(desty, 0) : null;
+                    u32 *dest = (desty >= 0 && desty < m_height_cmd) ? &gl.bitmap.pix(desty, 0) : nullptr;
                     {
                         for (int x = 0; x < gl.bmwidth; x++)
                         {
@@ -463,7 +422,7 @@ namespace mame
                 for (int y = 0; y < gl.bmheight; y++)
                 {
                     int desty = y + m_height + m_yoffs - gl.yoffs - gl.bmheight;
-                    PointerU32 dest = ((0 <= desty) && (m_height > desty)) ? gl.bitmap.pix32(desty) : null;  //u32 *dest(((0 <= desty) && (m_height > desty)) ? &gl.bitmap.pix32(desty) : nullptr);
+                    PointerU32 dest = ((0 <= desty) && (m_height > desty)) ? gl.bitmap.pix(desty) : null;  //u32 *dest(((0 <= desty) && (m_height > desty)) ? &gl.bitmap.pix(desty) : nullptr);
 
                     if (m_format == format.TEXT)
                     {
@@ -689,6 +648,8 @@ namespace mame
         bool save_cached(string filename, UInt64 length, UInt32 hash)
         {
             throw new emu_unimplemented();
+#if false
+#endif
         }
 
 

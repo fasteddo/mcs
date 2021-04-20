@@ -65,7 +65,7 @@ namespace mame
         game_driver m_new_driver_pending;   // pointer to the next pending driver
         bool m_firstrun;
 
-        static mame_machine_manager m_manager;
+        static mame_machine_manager s_manager;
 
         emu_timer m_autoboot_timer;      // autoboot timer
         mame_ui_manager m_ui;                  // internal data from ui.cpp
@@ -88,34 +88,30 @@ namespace mame
             m_autoboot_timer = null;
         }
 
-        //mame_machine_manager(mame_machine_manager const &) = delete;
-        //mame_machine_manager(mame_machine_manager &&) = delete;
-        //mame_machine_manager &operator=(mame_machine_manager const &) = delete;
-        //mame_machine_manager &operator=(mame_machine_manager &&) = delete;
-
 
         public static mame_machine_manager instance(emu_options options, osd_interface osd)
         {
-            if (m_manager == null)
-                m_manager = new mame_machine_manager(options, osd);
-            return m_manager;
+            if (s_manager == null)
+                s_manager = new mame_machine_manager(options, osd);
+            return s_manager;
         }
 
-        public static mame_machine_manager instance() { return m_manager; }
+        public static mame_machine_manager instance() { return s_manager; }
 
 
         //~mame_machine_manager()
         //{
-        //    m_lua = null;  //global_free(m_lua);
-        //    m_manager = null;
+        //    m_lua.reset();
+        //    s_manager = nullptr;
         //}
+
 
         public static void close_instance()
         {
-            if (m_manager != null)
+            if (s_manager != null)
             {
-                m_manager.m_lua.Dispose();
-                m_manager = null;
+                s_manager.m_lua.Dispose();
+                s_manager = null;
             }
         }
 

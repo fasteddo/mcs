@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    public static class strformat_global
+    public static partial class util_
     {
         public static string string_format(string format, params object [] args) { return string.Format(format, args); }
     }

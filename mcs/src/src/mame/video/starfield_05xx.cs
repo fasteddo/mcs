@@ -166,7 +166,7 @@ namespace mame
                                     color |= (uint8_t)((m_lfsr << 2) & 0x20);
                                     color = (uint8_t)((~color) & 0x3F);
 
-                                    bitmap.pix16(y, dx)[0] = (uint16_t)(STARS_COLOR_BASE + color);
+                                    bitmap.pix(y, dx)[0] = (uint16_t)(STARS_COLOR_BASE + color);
                                 }
                             }
                         }

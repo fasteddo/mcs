@@ -78,8 +78,58 @@ namespace mame.netlist
 
                 splitter.run(state());
 
+                log().verbose.op("Found {1} net groups in {2} nets\n", splitter.groups.size(), state().nets().size());
+
+                int num_errors = 0;
+
+                log().verbose.op("checking net consistency  ...");
+                foreach (var grp in splitter.groups)
+                {
+                    int railterms = 0;
+                    string nets_in_grp = "";
+                    foreach (var n in grp)
+                    {
+                        nets_in_grp += (n.name() + " ");
+                        if (!n.is_analog())
+                        {
+                            state().log().error.op(nl_errstr_global.ME_SOLVER_CONSISTENCY_NOT_ANALOG_NET(n.name()));
+                            num_errors++;
+                        }
+
+                        if (n.is_rail_net())
+                        {
+                            state().log().error.op(nl_errstr_global.ME_SOLVER_CONSISTENCY_RAIL_NET(n.name()));
+                            num_errors++;
+                        }
+
+                        foreach (var t in state().core_terms(n))
+                        {
+                            if (!t.has_net())
+                            {
+                                state().log().error.op(nl_errstr_global.ME_SOLVER_TERMINAL_NO_NET(t.name()));
+                                num_errors++;
+                            }
+                            else
+                            {
+                                var otherterm = (terminal_t)t;
+                                if (otherterm != null)
+                                    if (state().setup().get_connected_terminal(otherterm).net().is_rail_net())
+                                        railterms++;
+                            }
+                        }
+                    }
+
+                    if (railterms == 0)
+                    {
+                        state().log().error.op(nl_errstr_global.ME_SOLVER_NO_RAIL_TERMINAL(nets_in_grp));
+                        num_errors++;
+                    }
+                }
+
+                if (num_errors > 0)
+                    throw new nl_exception(nl_errstr_global.MF_SOLVER_CONSISTENCY_ERRORS(num_errors));
+
                 // setup the solvers
-                log().verbose.op("Found {0} net groups in {1} nets\n", splitter.groups.size(), state().nets().size());
                 foreach (var grp in splitter.groups)
                 {
                     nld_solver_solver_ptr ms = null;
@@ -120,9 +170,9 @@ namespace mame.netlist
                     foreach (var n in grp)
                     {
                         log().verbose.op("Net {0}", n.name());
-                        foreach (var pcore in n.core_terms())
+                        foreach (var t in state().core_terms(n))
                         {
-                            log().verbose.op("   {0}", pcore.name());
+                            log().verbose.op("   {0}", t.name());
                         }
                     }
 
@@ -240,7 +290,7 @@ namespace mame.netlist
             //NETLIB_RESET(solver)
             public override void reset()
             {
-                if (exec().use_stats())
+                if (exec().stats_enabled())
                     m_fb_step.set_delegate(fb_step);  //m_fb_step.set_delegate(NETLIB_DELEGATE(fb_step<true>));
                 foreach (var s in m_mat_solvers)
                     s.reset();
@@ -440,20 +490,20 @@ namespace mame.netlist
             std.vector<nld_solver_net_list_t> groupspre;
 
 
-            public void run(netlist_state_t netlist)
+            public void run(netlist_state_t nlstate)
             {
-                foreach (var net in netlist.nets())
+                foreach (var net in nlstate.nets())
                 {
-                    netlist.log().verbose.op("processing {0}", net.name());
-                    if (!net.is_rail_net() && net.has_connections())
+                    nlstate.log().verbose.op("processing {0}", net.name());
+                    if (!net.is_rail_net() && !nlstate.core_terms(net).empty())
                     {
-                        netlist.log().verbose.op("   ==> not a rail net");
+                        nlstate.log().verbose.op("   ==> not a rail net");
                         // Must be an analog net
                         var n = (analog_net_t)net;  //auto &n = dynamic_cast<analog_net_t &>(*net);
                         if (!already_processed(n))
                         {
                             groupspre.emplace_back(new nld_solver_net_list_t());
-                            process_net(netlist, n);
+                            process_net(nlstate, n);
                         }
                     }
                 }
@@ -511,27 +561,31 @@ namespace mame.netlist
             }
 
 
-            void process_net(netlist_state_t netlist, analog_net_t n)
+            void process_net(netlist_state_t nlstate, analog_net_t n)
             {
                 // ignore empty nets. FIXME: print a warning message
-                netlist.log().verbose.op("Net {0}", n.name());
-                if (n.has_connections())
+                nlstate.log().verbose.op("Net {0}", n.name());
+                if (!nlstate.core_terms(n).empty())
                 {
                     // add the net
                     groupspre.back().push_back(n);
                     // process all terminals connected to this net
-                    foreach (var term in n.core_terms())
+                    foreach (var term in nlstate.core_terms(n))
                     {
-                        netlist.log().verbose.op("Term {0} {1}", term.name(), (int)term.type());
+                        nlstate.log().verbose.op("Term {0} {1}", term.name(), (int)term.type());
                         // only process analog terminals
                         if (term.is_type(detail.terminal_type.TERMINAL))
                         {
                             var pt = (terminal_t)term;  //auto &pt = dynamic_cast<terminal_t &>(*term);
                             // check the connected terminal
-                            analog_net_t connected_net = netlist.setup().get_connected_terminal(pt).net();
-                            netlist.log().verbose.op("  Connected net {0}", connected_net.name());
-                            if (!check_if_processed_and_join(connected_net))
-                                process_net(netlist, connected_net);
+                            var connected_terminals = nlstate.setup().get_connected_terminals(pt);
+                            foreach (var ct in connected_terminals)  //for (auto ct = connected_terminals->begin(); *ct != nullptr; ct++)
+                            {
+                                analog_net_t connected_net = ct.net();
+                                nlstate.log().verbose.op("  Connected net {0}", connected_net.name());
+                                if (!check_if_processed_and_join(connected_net))
+                                    process_net(nlstate, connected_net);
+                            }
                         }
                     }
                 }

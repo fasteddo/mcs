@@ -181,9 +181,9 @@ namespace mame
         //  device_rom_region - return a pointer to the
         //  game's ROMs
         //-------------------------------------------------
-        protected override List<tiny_rom_entry> device_rom_region()
+        protected override Pointer<tiny_rom_entry> device_rom_region()
         {
-            return m_system.rom;
+            return new Pointer<tiny_rom_entry>(m_system.rom);
         }
 
 

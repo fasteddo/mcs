@@ -432,7 +432,7 @@ namespace mame
          *************************************/
 
         //ROM_START( puckman )
-        static readonly List<tiny_rom_entry> rom_puckman = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_puckman = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "pm1_prg1.6e",  0x0000, 0x0800, CRC("f36e88ab") + SHA1("813cecf44bf5464b1aed64b36f5047e4c79ba176") ),
@@ -463,7 +463,7 @@ namespace mame
 
 
         // ROM_START( pacman )
-        static readonly List<tiny_rom_entry> rom_pacman = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_pacman = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "pacman.6e",    0x0000, 0x1000, CRC("c1e6ab10") + SHA1("e87e059c5be45753f7e9f33dff851f16d6751181") ),
@@ -488,7 +488,7 @@ namespace mame
 
 
         //ROM_START( mspacman )
-        static readonly List<tiny_rom_entry> rom_mspacman = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_mspacman = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x20000, "maincpu", 0 ), /* 64k for code+64k for decrypted code */
             ROM_LOAD( "pacman.6e",    0x0000, 0x1000, CRC("c1e6ab10") + SHA1("e87e059c5be45753f7e9f33dff851f16d6751181") ),
@@ -516,7 +516,7 @@ namespace mame
 
 
         //ROM_START( pacplus )
-        static readonly List<tiny_rom_entry> rom_pacplus = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_pacplus = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "pacplus.6e",   0x0000, 0x1000, CRC("d611ef68") + SHA1("8531c54ca6b0de0ea4ccc34e0e801ba9847e75bc") ),

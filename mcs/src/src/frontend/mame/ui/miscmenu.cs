@@ -7,28 +7,6 @@ using System.Collections.Generic;
 
 namespace mame.ui
 {
-    class menu_keyboard_mode : menu
-    {
-        /*-------------------------------------------------
-            ui_menu_keyboard_mode - menu that
-        -------------------------------------------------*/
-        public menu_keyboard_mode(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        //~menu_keyboard_mode() { }
-
-
-        protected override void populate(ref float customtop, ref float custombottom)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        protected override void handle()
-        {
-            throw new emu_unimplemented();
-        }
-    }
-
-
     class menu_network_devices : menu
     {
         public menu_network_devices(mame_ui_manager mui, render_container container) : base(mui, container) { }

@@ -47,6 +47,9 @@ namespace mame.netlist
             protected terminal_t m_OP1;
             protected terminal_t m_ON1;
 
+            ////terminal_t m_IPx;
+            ////terminal_t m_INx;
+
             nl_fptype m_gfac;
 
 
@@ -58,24 +61,29 @@ namespace mame.netlist
                 m_G = new param_fp_t(this, "G", nlconst.one());
                 m_RI = new param_fp_t(this, "RI", ri);
 
-                m_OP = new terminal_t(this, "OP", termhandler);//, &m_IP, NETLIB_DELEGATE(termhandler))
-                m_ON = new terminal_t(this, "ON", termhandler);//, &m_IP, NETLIB_DELEGATE(termhandler))
-                m_IP = new terminal_t(this, "IP", termhandler);//, &m_IN, NETLIB_DELEGATE(termhandler))   // <= this should be NULL and terminal be filtered out prior to solving...
-                m_IN = new terminal_t(this, "IN", termhandler);//, &m_IP, NETLIB_DELEGATE(termhandler))   // <= this should be NULL and terminal be filtered out prior to solving...
-                m_OP1 = new terminal_t(this, "_OP1", termhandler);//, &m_IN, NETLIB_DELEGATE(termhandler))
-                m_ON1 = new terminal_t(this, "_ON1", termhandler);//, &m_IN, NETLIB_DELEGATE(termhandler))
-                m_OP.terminal_t_after_ctor(m_IP);
-                m_ON.terminal_t_after_ctor(m_IP);
-                m_IP.terminal_t_after_ctor(m_IN);
-                m_IN.terminal_t_after_ctor(m_IP);
+                m_OP = new terminal_t(this, "OP", termhandler);  //m_OP(*this, "OP", &m_IP, {&m_ON, &m_IN}, NETLIB_DELEGATE(termhandler));
+                m_ON = new terminal_t(this, "ON", termhandler);  //m_ON(*this, "ON", &m_IP, {&m_OP, &m_IN}, NETLIB_DELEGATE(termhandler));
+                m_IP = new terminal_t(this, "IP", termhandler);  //m_IP(*this, "IP", &m_IN, {&m_OP, &m_ON}, NETLIB_DELEGATE(termhandler));
+                m_IN = new terminal_t(this, "IN", termhandler);  //m_IN(*this, "IN", &m_IP, {&m_OP, &m_ON}, NETLIB_DELEGATE(termhandler));
+                m_OP1 = new terminal_t(this, "_OP1", termhandler);//, m_OP1(*this, "_OP1", &m_IN, NETLIB_DELEGATE(termhandler))
+                m_ON1 = new terminal_t(this, "_ON1", termhandler);//, m_ON1(*this, "_ON1", &m_IN, NETLIB_DELEGATE(termhandler))
+                m_OP.terminal_t_after_ctor(m_IP, new std.array<terminal_t, uint32_constant_2>(m_ON, m_IN));
+                m_ON.terminal_t_after_ctor(m_IP, new std.array<terminal_t, uint32_constant_2>(m_OP, m_IN));
+                m_IP.terminal_t_after_ctor(m_IN, new std.array<terminal_t, uint32_constant_2>(m_OP, m_ON));
+                m_IN.terminal_t_after_ctor(m_IP, new std.array<terminal_t, uint32_constant_2>(m_OP, m_ON));
                 m_OP1.terminal_t_after_ctor(m_IN);
                 m_ON1.terminal_t_after_ctor(m_IN);
+
+                ////, m_IPx(*this, "_IPx", &m_OP, NETLIB_DELEGATE(termhandler))   // <= this should be NULL and terminal be filtered out prior to solving...
+                ////, m_INx(*this, "_INx", &m_ON, NETLIB_DELEGATE(termhandler))   // <= this should be NULL and terminal be filtered out prior to solving...
 
                 m_gfac = nlconst.one();
 
 
                 connect(m_OP, m_OP1);
                 connect(m_ON, m_ON1);
+                ////connect(m_IP, m_IPx);
+                ////connect(m_IN, m_INx);
             }
 
 

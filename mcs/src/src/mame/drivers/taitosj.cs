@@ -577,10 +577,10 @@ namespace mame
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 128); // 74LS393 on CPU board, counts 128 vblanks before firing watchdog
 
-            DAC_8BIT_R2R(config, m_dac, 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.15); // 30k r-2r network
+            DAC_8BIT_R2R(config, m_dac, 0).add_route(ALL_OUTPUTS, "speaker", 0.15); // 30k r-2r network
             DISCRETE(config, m_dacvol, taitosj_dacvol_discrete);
-            m_dacvol.target.disound.add_route(0, "dac", 1.0, dac_global.DAC_VREF_POS_INPUT);
-            m_dacvol.target.disound.add_route(0, "dac", -1.0, dac_global.DAC_VREF_NEG_INPUT);
+            m_dacvol.target.disound.add_route(0, "dac", 1.0, dac_global.DAC_INPUT_RANGE_HI);
+            m_dacvol.target.disound.add_route(0, "dac", -1.0, dac_global.DAC_INPUT_RANGE_LO);
         }
 
 
@@ -611,7 +611,7 @@ namespace mame
         ***************************************************************************/
 
         //ROM_START( junglek )
-        static readonly List<tiny_rom_entry> rom_junglek = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_junglek = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x12000, "maincpu", 0 ),
             ROM_LOAD( "kn21-1.bin",   0x00000, 0x1000, CRC("45f55d30") + SHA1("bb9518d7728938f673a663801e47ae0438cdbea1") ),
@@ -648,7 +648,7 @@ namespace mame
 
 
         //ROM_START( jungleh )
-        static readonly List<tiny_rom_entry> rom_jungleh = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_jungleh = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x12000, "maincpu", 0 ),
             ROM_LOAD( "kn41a",        0x00000, 0x1000, CRC("6bf118d8") + SHA1("d6de28766aab90b5dbca7f74612ec8eafd144348") ),
@@ -685,7 +685,7 @@ namespace mame
 
 
         //ROM_START( elevator ) // later 4 board set, with rom data on 2764s, split between gfx and cpu data.
-        static readonly List<tiny_rom_entry> rom_elevator = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_elevator = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x12000, "maincpu", 0 ), // on L-shaped rom board
             ROM_LOAD( "ba3__01.2764.ic1",  0x0000, 0x2000, CRC("da775a24") + SHA1("b4341d2c87285d7a3d1773e2d94b3f621ebb4489") ), // == ea_12.2732.ic69 + ea_13.2732.ic68
@@ -718,7 +718,7 @@ namespace mame
 
 
         //ROM_START( elevatora ) // 5 board set, using 2732s on both mainboard and square rom board, and 68705 on daughterboard at bottom of stack, upside down
-        static readonly List<tiny_rom_entry> rom_elevatora = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_elevatora = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x12000, "maincpu", 0 ), // on CPU BOARD
             ROM_LOAD( "ea_12.2732.ic69",  0x0000, 0x1000, CRC("24e277ef") + SHA1("764e3b3a34bf0ec849d58023f710e5b0a0d0ccb5") ), // needs label verified
@@ -776,7 +776,7 @@ namespace mame
             m_ay2.target.disound.set_output_gain(0, 0.0f);
             m_ay3.target.disound.set_output_gain(0, 0.0f);
             m_ay4.target.disound.set_output_gain(0, 0.0f);
-            m_dac.target.disound.set_output_gain(0, 0.0f);
+            m_dac.target.set_output_gain(0, 0.0f);
             m_input_port_4_f0 = 0;
             /* start in 1st gear */
             m_kikstart_gears[0] = 0x02;

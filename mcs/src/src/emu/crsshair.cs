@@ -196,8 +196,6 @@ namespace mame
         //-------------------------------------------------
         void create_bitmap()
         {
-            int x;
-            int y;
             rgb_t color = m_player < crosshair_colors.Length ? crosshair_colors[m_player] : rgb_t.white();
 
             // if we have a bitmap and texture for this player, kill it
@@ -206,26 +204,38 @@ namespace mame
                 m_bitmap = new bitmap_argb32();
                 m_texture = m_machine.render().texture_alloc(render_texture.hq_scale);
             }
+            else
+            {
+                m_bitmap.reset();
+            }
 
             emu_file crossfile = new emu_file(m_machine.options().crosshair_path(), OPEN_FLAG_READ);
             if (!m_name.empty())
             {
                 // look for user specified file
-                string filename = m_name + ".png";
-                render_load_png(out m_bitmap, crossfile, null, filename.c_str());
+                if (crossfile.open(m_name + ".png") == osd_file.error.NONE)
+                {
+                    render_load_png(out m_bitmap, crossfile.core_file_get());
+                    crossfile.close();
+                }
             }
             else
             {
                 // look for default cross?.png in crsshair/game dir
-                string filename = string.Format("cross{0}.png", m_player + 1);
-                render_load_png(out m_bitmap, crossfile, m_machine.system().name, filename.c_str());
+                string filename = string_format("cross{0}.png", m_player + 1);
+                if (crossfile.open(m_machine.system().name + (PATH_SEPARATOR + filename)) == osd_file.error.NONE)
+                {
+                    render_load_png(out m_bitmap, crossfile.core_file_get());
+                    crossfile.close();
+                }
 
                 // look for default cross?.png in crsshair dir
-                if (!m_bitmap.valid())
-                    render_load_png(out m_bitmap, crossfile, null, filename.c_str());
+                if (!m_bitmap.valid() && (crossfile.open(filename) == osd_file.error.NONE))
+                {
+                    render_load_png(out m_bitmap, crossfile.core_file_get());
+                    crossfile.close();
+                }
             }
-
-            crossfile.close();
 
             /* if that didn't work, use the built-in one */
             if (!m_bitmap.valid())
@@ -235,14 +245,14 @@ namespace mame
                 m_bitmap.fill(new rgb_t(0x00,0xff,0xff,0xff));
 
                 /* extract the raw source data to it */
-                for (y = 0; y < CROSSHAIR_RAW_SIZE / 2; y++)
+                for (int y = 0; y < CROSSHAIR_RAW_SIZE / 2; y++)
                 {
                     /* assume it is mirrored vertically */
-                    PointerU32 dest0 = m_bitmap.pix32(y);  //u32 *dest0 = &m_bitmap->pix32(y);
-                    PointerU32 dest1 = m_bitmap.pix32(CROSSHAIR_RAW_SIZE - 1 - y);  //u32 *dest1 = &m_bitmap->pix32(CROSSHAIR_RAW_SIZE - 1 - y);
+                    PointerU32 dest0 = m_bitmap.pix(y);  //u32 *dest0 = &m_bitmap->pix(y);
+                    PointerU32 dest1 = m_bitmap.pix(CROSSHAIR_RAW_SIZE - 1 - y);  //u32 *dest1 = &m_bitmap->pix(CROSSHAIR_RAW_SIZE - 1 - y);
 
                     /* extract to two rows simultaneously */
-                    for (x = 0; x < CROSSHAIR_RAW_SIZE; x++)
+                    for (int x = 0; x < CROSSHAIR_RAW_SIZE; x++)
                     {
                         if (((crosshair_raw_top[y * CROSSHAIR_RAW_ROWBYTES + x / 8] << (x % 8)) & 0x80) != 0)
                         {

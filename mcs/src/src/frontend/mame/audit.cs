@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using media_auditor_record_list = mame.std.list<mame.media_auditor.audit_record>;  //using record_list = std::list<audit_record>;
 using size_t = System.UInt32;
 using uint32_t = System.UInt32;
@@ -72,7 +74,7 @@ namespace mame
             uint64_t m_length;               /* actual length of item */
             util.hash_collection m_exphashes = new util.hash_collection();            /* expected hash data */
             util.hash_collection m_hashes;               /* actual hash information */
-            device_t m_shared_device;        /* device that shares the rom */
+            device_type m_shared_device;        /* device that shares the rom */  //std::add_pointer_t<device_type> m_shared_device;    // device that shares the ROM
 
 
             // construction/destruction
@@ -120,7 +122,7 @@ namespace mame
             public uint64_t actual_length() { return m_length; }
             public util.hash_collection expected_hashes() { return m_exphashes; }
             public util.hash_collection actual_hashes() { return m_hashes; }
-            public device_t shared_device() { return m_shared_device; }
+            public device_type shared_device() { return m_shared_device; }
 
 
             // setters
@@ -139,7 +141,7 @@ namespace mame
             }
 
 
-            public void set_shared_device(device_t shared_device)
+            public void set_shared_device(device_type shared_device)
             {
                 m_shared_device = shared_device;
             }
@@ -200,10 +202,29 @@ namespace mame
             // store validation for later
             m_validation = validation;
 
-            int found = 0;
-            int required = 0;
-            int shared_found = 0;
-            int shared_required = 0;
+            // first walk the parent chain for required ROMs
+            parent_rom_vector parentroms = new parent_rom_vector();
+            for (var drvindex = driver_list.find(m_enumerator.driver().parent); 0 <= drvindex; drvindex = driver_list.find(driver_list.driver(drvindex).parent))  //for (auto drvindex = m_enumerator.find(m_enumerator.driver().parent); 0 <= drvindex; drvindex = m_enumerator.find(m_enumerator.driver(drvindex).parent))
+            {
+                game_driver parent = driver_list.driver(drvindex);
+                LOG(null, "Checking parent {0} for ROM files\n", parent.type.shortname());
+                std.vector<rom_entry> roms = rom_build_entries(parent.rom);
+                for (Pointer<rom_entry> region = romload_global.rom_first_region(new Pointer<rom_entry>(roms)); region != null; region = romload_global.rom_next_region(region))  //for (rom_entry const *region = rom_first_region(&roms.front()); region; region = rom_next_region(region))
+                {
+                    for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))  //for (rom_entry const *rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+                    {
+                        LOG(null, "Adding parent ROM {0}\n", rom[0].name());
+                        parentroms.emplace_back(new parent_rom(parent.type, rom));
+                    }
+                }
+            }
+
+            // count ROMs required/found
+            size_t found = 0;
+            size_t required = 0;
+            size_t shared_found = 0;
+            size_t shared_required = 0;
+            size_t parent_found = 0;
 
             // iterate over devices and regions
             std.vector<string> searchpath = new std.vector<string>();
@@ -217,14 +238,23 @@ namespace mame
                     for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
                         if (searchpath.empty())
+                        {
+                            LOG(null, "Audit media for device {0}({1})\n", device.shortname(), device.tag());
                             searchpath = device.searchpath();
+                        }
 
+                        // look for a matching parent or device ROM
                         string name = romload_global.ROM_GETNAME(rom[0]);
                         util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
-                        device_t shared_device = find_shared_device(device, name, hashes, romload_global.ROM_GETLENGTH(rom[0]));
+                        bool dumped = !hashes.flag(util.hash_collection.FLAG_NO_DUMP);
+                        device_type shared_device = parentroms.find_shared_device(device, name, hashes, romload_global.rom_file_size(rom));
+                        if (shared_device != null)
+                            LOG(null, "File '{0}' {1}{2}dumped shared with {3}\n", name, romload_global.ROM_ISOPTIONAL(rom[0]) ? "optional " : "", dumped ? "" : "un", shared_device.shortname());
+                        else
+                            LOG(null, "File '{0}' {1}{2}dumped\n", name, romload_global.ROM_ISOPTIONAL(rom[0]) ? "optional " : "", dumped ? "" : "un");
 
                         // count the number of files with hashes
-                        if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP) && !romload_global.ROM_ISOPTIONAL(rom[0]))
+                        if (dumped && !romload_global.ROM_ISOPTIONAL(rom[0]))
                         {
                             required++;
                             if (shared_device != null)
@@ -242,12 +272,19 @@ namespace mame
 
                         if (record != null)
                         {
+                            // see if the actual content found belongs to a parent
+                            var matchesshared = parentroms.actual_matches_shared(device, record);
+                            if (matchesshared.first != null)
+                                LOG(null, "Actual ROM file shared with {0}parent {1}\n", matchesshared.second ? "immediate " : "", matchesshared.first.shortname());
+
                             // count the number of files that are found.
-                            if ((record.status() == audit_status.GOOD) || ((record.status() == audit_status.FOUND_INVALID) && find_shared_device(device, name, record.actual_hashes(), record.actual_length()) == null))
+                            if ((record.status() == audit_status.GOOD) || ((record.status() == audit_status.FOUND_INVALID) && (matchesshared.first == null)))
                             {
                                 found++;
                                 if (shared_device != null)
                                     shared_found++;
+                                if (matchesshared.second)
+                                    parent_found++;
                             }
 
                             record.set_shared_device(shared_device);
@@ -256,8 +293,11 @@ namespace mame
                 }
             }
 
+            if (!searchpath.empty())
+                LOG(null, "Total required={0} (shared={1}) found={2} (shared={3} parent={4})\n", required, shared_required, found, shared_found, parent_found);
+
             // if we only find files that are in the parent & either the set has no unique files or the parent is not found, then assume we don't have the set at all
-            if (found == shared_found && required > 0 && (required != shared_required || shared_found == 0))
+            if ((found == shared_found) && required != 0 && ((required != shared_required) || parent_found == 0))
             {
                 m_record_list.clear();
                 return summary.NOTFOUND;
@@ -501,7 +541,7 @@ namespace mame
                     case audit_substatus.NOT_FOUND:
                         if (output != null)
                         {
-                            device_t shared_device = record.shared_device();
+                            device_type shared_device = record.shared_device();
                             if (shared_device == null)
                                 output += "NOT FOUND\n";
                             else
@@ -656,57 +696,113 @@ namespace mame
                     record.set_status(audit_status.GOOD, audit_substatus.GOOD);
             }
         }
+    }
 
 
-        //-------------------------------------------------
-        //  find_shared_device - return the source that
-        //  shares a media entry with the same hashes
-        //-------------------------------------------------
-        device_t find_shared_device(device_t device, string name, util.hash_collection romhashes, UInt64 romlength)
+    class parent_rom
+    {
+        public device_type type;  //std::reference_wrapper<std::remove_reference_t<device_type> >   type;
+        public string name;
+        public util.hash_collection hashes;
+        public uint64_t length;
+
+
+        public parent_rom(device_type t, Pointer<rom_entry> r)
         {
-            bool dumped = !romhashes.flag(util.hash_collection.FLAG_NO_DUMP);
+            throw new emu_unimplemented();
+#if false
+            type = t;
+            name = ROM_GETNAME(r);
+            hashes = ROM_GETHASHDATA(r);
+            length = rom_file_size(r);
+#endif
+        }
+    }
 
-            // special case for non-root devices
-            device_t highest_device = null;
-            if (device.owner() != null)
+
+    class parent_rom_vector : std.vector<parent_rom>
+    {
+        //using std::vector<parent_rom>::vector;
+
+
+        public device_type find_shared_device(device_t current, string name, util.hash_collection hashes, uint64_t length)  //std::add_pointer_t<device_type> find_shared_device(device_t &current, char const *name, util::hash_collection const &hashes, uint64_t length) const
+        {
+            // if we're examining a child device, it will always have a perfect match
+            if (current.owner() != null)
+                return current.type();
+
+            // scan backwards through parents for a matching definition
+            bool dumped = !hashes.flag(util.hash_collection.FLAG_NO_DUMP);
+            device_type best = null;
+            foreach (var it in this.Reverse())  //for (const_reverse_iterator it = crbegin(); crend() != it; ++it)
             {
-                for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                if (it.length == length)
+                {
+                    if (dumped)
+                    {
+                        if (it.hashes == hashes)
+                            return it.type;
+                    }
+                    else if (it.name == name)
+                    {
+                        if (it.hashes.flag(util.hash_collection.FLAG_NO_DUMP))
+                            return it.type;
+                        else if (best == null)
+                            best = it.type;
+                    }
+                }
+            }
+
+            return best;
+        }
+
+
+        public std.pair<device_type, bool> actual_matches_shared(device_t current, media_auditor.audit_record record)  //std::pair<std::add_pointer_t<device_type>, bool> actual_matches_shared(device_t &current, media_auditor::audit_record const &record)
+        {
+            // no result if no matching file was found
+            if ((record.status() != media_auditor.audit_status.GOOD) && (record.status() != media_auditor.audit_status.FOUND_INVALID))
+                return std.make_pair((device_type)null, false);
+
+            // if we're examining a child device, scan it first
+            bool matches_device_undumped = false;
+            if (current.owner() != null)
+            {
+                for (Pointer<rom_entry> region = romload_global.rom_first_region(current); region != null; region = romload_global.rom_next_region(region))
                 {
                     for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
-                        if (romload_global.rom_file_size(rom) == romlength)
+                        if (romload_global.rom_file_size(rom) == record.actual_length())
                         {
                             util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
-                            if ((dumped && hashes == romhashes) || (!dumped && romload_global.ROM_GETNAME(rom[0]) == name))
-                                highest_device = device;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // iterate up the parent chain
-                for (int drvindex = driver_enumerator.find(m_enumerator.driver().parent); drvindex != -1; drvindex = driver_enumerator.find(driver_enumerator.driver(drvindex).parent))
-                {
-                    foreach (device_t scandevice in new device_iterator(m_enumerator.config(drvindex).root_device()))
-                    {
-                        for (Pointer<rom_entry> region = romload_global.rom_first_region(scandevice); region != null; region = romload_global.rom_next_region(region))
-                        {
-                            for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
-                            {
-                                if (romload_global.rom_file_size(rom) == romlength)
-                                {
-                                    util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
-                                    if ((dumped && hashes == romhashes) || (!dumped && romload_global.ROM_GETNAME(rom[0]) == name))
-                                        highest_device = scandevice;
-                                }
-                            }
+                            if (hashes == record.actual_hashes())
+                                return std.make_pair(current.type(), empty());
+                            else if (hashes.flag(util.hash_collection.FLAG_NO_DUMP) && (rom[0].name() == record.name()))
+                                matches_device_undumped = true;
                         }
                     }
                 }
             }
 
-            return highest_device;
+            // look for a matching parent ROM
+            device_type closest_bad = null;
+            foreach (var it in this.Reverse())  //for (const_reverse_iterator it = crbegin(); crend() != it; ++it)
+            {
+                if (it.length == record.actual_length())
+                {
+                    if (it.hashes == record.actual_hashes())
+                        return std.make_pair(it.type, it.type == this[0].type);
+                    else if (it.hashes.flag(util.hash_collection.FLAG_NO_DUMP) && (it.name == record.name()))
+                        closest_bad = it.type;
+                }
+            }
+
+            // fall back to the nearest bad dump
+            if (closest_bad != null)
+                return std.make_pair(closest_bad, this[0].type == closest_bad);
+            else if (matches_device_undumped)
+                return std.make_pair(current.type(), empty());
+            else
+                return std.make_pair((device_type)null, false);
         }
     }
 }

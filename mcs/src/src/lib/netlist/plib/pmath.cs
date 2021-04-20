@@ -41,6 +41,9 @@ namespace mame.plib
         bool equals(T a, T b);
         bool not_equals(T a, T b);
         bool greater_than(T a, T b);
+        bool greater_than_or_equal(T a, T b);
+        bool less_than(T a, T b);
+        bool less_than_or_equal(T a, T b);
 
         T pstonum_ne(bool CLOCALE, string arg, out bool err);
     }
@@ -78,6 +81,9 @@ namespace mame.plib
         public bool equals(double a, double b) { return a == b; }
         public bool not_equals(double a, double b) { return a != b; }
         public bool greater_than(double a, double b) { return a > b; }
+        public bool greater_than_or_equal(double a, double b) { return a >= b; }
+        public bool less_than(double a, double b) { return a < b; }
+        public bool less_than_or_equal(double a, double b) { return a <= b; }
 
         public double pstonum_ne(bool CLOCALE, string arg, out bool err) { return plib.pglobal.pstonum_ne_nl_fptype(CLOCALE, arg, out err); }
     }

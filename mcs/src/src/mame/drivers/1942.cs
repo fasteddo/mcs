@@ -312,7 +312,7 @@ namespace mame
         ***************************************************************************/
 
         //ROM_START( 1942 )
-        static readonly List<tiny_rom_entry> rom_1942 = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_1942 = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x20000, "maincpu", ROMREGION_ERASEFF ), /* 64k for code + 3*16k for the banked ROMs images */
             ROM_LOAD( "srb-03.m3", 0x00000, 0x4000, CRC("d9dafcc3") + SHA1("a089a9bc55fb7d6d0ac53f91b258396d5d62677a") ),

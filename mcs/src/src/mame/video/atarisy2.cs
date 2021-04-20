@@ -268,9 +268,9 @@ namespace mame
             {
                 for (int y = rect.m_rect.top(); y <= rect.m_rect.bottom(); y++)
                 {
-                    PointerU16 mo = mobitmap.pix16(y);  //uint16_t *mo = &mobitmap.pix16(y);
-                    PointerU16 pf = bitmap.pix16(y);  //uint16_t *pf = &bitmap.pix16(y);
-                    PointerU8 pri = priority_bitmap.pix8(y);  //uint8_t *pri = &priority_bitmap.pix8(y);
+                    PointerU16 mo = mobitmap.pix(y);  //uint16_t const *const mo = &mobitmap.pix(y);
+                    PointerU16 pf = bitmap.pix(y);  //uint16_t *const pf = &bitmap.pix(y);
+                    PointerU8 pri = priority_bitmap.pix(y);  //uint8_t const *const pri = &priority_bitmap.pix(y);
                     for (int x = rect.m_rect.left(); x <= rect.m_rect.right(); x++)
                     {
                         if (mo[x] != 0xffff)

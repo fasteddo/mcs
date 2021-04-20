@@ -102,10 +102,7 @@ namespace mame.netlist
                 // FIXME: Move me
                 //
 
-                // During extended validation there is no reason to check for
-                // differences in the generated code since during
-                // extended validation this will be different (and non-functional)
-                if (!this.state().is_extended_validation() && this.state().static_solver_lib().isLoaded())
+                if (this.state().static_solver_lib().isLoaded())
                 {
                     string symname = static_compile_name();
                     m_proc.load(this.state().static_solver_lib(), symname);
@@ -238,7 +235,6 @@ namespace mame.netlist
                 {
                     throw new emu_unimplemented();
 #if false
-                    //old var nzbd = this.m_terms[i].m_nzbd;
                     //const auto &nzbd = this->m_terms[i].m_nzbd;
                     var nzbd = mat.nzbd(i);
                     var nzbd_count = mat.nzbd_count(i);
@@ -253,7 +249,6 @@ namespace mame.netlist
                         size_t piie = mat.row_idx[i+1];
 
                         //for (auto & j : nzbd)
-                        //old foreach (size_t j in nzbd)
                         for (size_t jj = 0; jj < nzbd_count; jj++)
                         {
                             size_t j = nzbd[jj];

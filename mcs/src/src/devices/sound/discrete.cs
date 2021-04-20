@@ -4,12 +4,19 @@
 using System;
 using System.Collections.Generic;
 
+using discrete_device_node_list_t = mame.std.vector<mame.discrete_base_node>;  //typedef std::vector<std::unique_ptr<discrete_base_node> > node_list_t;
+using discrete_device_node_step_list_t = mame.std.vector<mame.discrete_step_interface>;  //typedef std::vector<discrete_step_interface *> node_step_list_t;
+using discrete_device_sound_block_list_t = mame.std.vector<mame.discrete_block>;  //typedef std::vector<const discrete_block *> sound_block_list_t;
+using discrete_device_task_list_t = mame.std.vector<mame.discrete_task>;  //typedef std::vector<std::unique_ptr<discrete_task> > task_list_t;
+using discrete_sound_device_istream_node_list_t = mame.std.vector<mame.discrete_dss_input_stream_node>;  //typedef std::vector<discrete_dss_input_stream_node *> istream_node_list_t;
+using discrete_sound_device_node_output_list_t = mame.std.vector<mame.discrete_sound_output_interface>;  //typedef std::vector<discrete_sound_output_interface *> node_output_list_t;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;
 using osd_ticks_t = System.UInt64;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+using uint64_t = System.UInt64;
 
 
 namespace mame
@@ -758,8 +765,7 @@ namespace mame
          *
          *************************************/
 
-        //template <class C> discrete_base_node *discrete_create_node(discrete_device * pdev, const discrete_block *block) { return discrete_node_factory< C >().Create(pdev, block); }
-        static discrete_base_node discrete_create_node<class_type>(discrete_device pdev, discrete_block block) where class_type : discrete_base_node, new() { return new discrete_node_factory<class_type>().Create(pdev, block); }
+        static discrete_base_node discrete_create_node<C>(discrete_device pdev, discrete_block block) where C : discrete_base_node, new() { return discrete_node_factory<C>.create(pdev, block); }
 
         //#define DISCRETE_SOUND_EXTERN(name) extern const discrete_block name[]
         //#define DISCRETE_SOUND_START(name) const discrete_block name[] = {
@@ -1006,102 +1012,6 @@ namespace mame
         *
         *************************************/
 
-    //#define for_each(_T, _e, _l) for (_T _e = (_l)->begin_ptr() ;  _e <= (_l)->end_ptr(); _e++)
-
-    /*
-    * add and delete may be slow - the focus is on access!
-    */
-
-        // TODO: replace with dynamic_array from utils
-    //template<class _ElementType> struct dynamic_array_t
-    public class vector_t<_ElementType>
-    {
-        //_ElementType    *m_arr;
-        //int m_count;
-        //int m_allocated;
-        protected List<_ElementType> m_buffer = new List<_ElementType>();
-
-
-        public vector_t(int initial)
-        {
-            //m_count = 0;
-            //m_allocated = initial;
-            //m_arr = global_alloc_array_clear(_ElementType, m_allocated);
-            m_buffer = new List<_ElementType>(initial);
-        }
-        public vector_t()
-        {
-            //m_count = 0;
-            //m_allocated = 16;
-            //m_arr = global_alloc_array_clear(_ElementType, m_allocated);
-        }
-        //~vector_t()
-        //{
-        //    //global_free_array(m_arr);
-        //}
-
-        //_ElementType& operator [] (unsigned int index) const { return m_arr[index]; }  // get array item
-        public _ElementType this[int index] { get { return m_buffer[index]; } set { m_buffer[index] = value; } }
-        public _ElementType this[UInt32 index] { get { return m_buffer[(int)index]; } set { m_buffer[(int)index] = value; } }
-
-#if false
-        dynamic_array_t(const dynamic_array_t &a)  // copy constructor
-        {
-            m_allocated = a.count();
-            if (m_allocated < 16)
-                m_allocated = 16;
-            m_count = a.count();
-            m_arr = global_alloc_array_clear(_ElementType, m_allocated);
-            for (int i=0; i < m_count; i++)
-                m_arr[i] = a[i];
-        }
-        dynamic_array_t& operator = (const dynamic_array_t &a) // assignment operator
-        {
-            if (this == &a) return *this;
-            m_allocated = a.count();
-            if (m_allocated < 16)
-                m_allocated = 16;
-            m_count = a.count();
-            m_arr = global_alloc_array_clear(_ElementType, m_allocated);
-            for (int i=0; i < m_count; i++)
-                m_arr[i] = a[i];
-            return *this;
-        }
-#endif
-
-        public _ElementType add(_ElementType obj)
-        {
-            //if (m_count >= m_allocated)
-            //{
-            //    m_allocated *= 2;
-            //    _ElementType *newarr = global_alloc_array_clear(_ElementType, m_allocated);
-            //    for (int i=0; i < m_count; i++)
-            //        newarr[i] = m_arr[i];
-            //    global_free_array(m_arr);
-            //    m_arr = newarr;
-            //}
-            //m_arr[m_count] = obj;
-            //m_count++;
-            //return &m_arr[m_count-1];
-
-            m_buffer.Add(obj);
-            return obj;
-        }
-        public void remove(int index)
-        {
-            //for (int i=index+1; i < m_count; i++)
-            //    m_arr[i-1] = m_arr[i];
-            //m_count--;
-
-            m_buffer.RemoveAt(index);
-        }
-        public void clear() { m_buffer.Clear();  }
-        public int count() { return m_buffer.Count; }
-        //_ElementType *begin_ptr() { return m_arr; }
-        //_ElementType *end_ptr() { return m_arr + (m_count - 1); }
-    }
-
-
     /*************************************
      *
      *  Node-specific struct types
@@ -1233,9 +1143,6 @@ namespace mame
     }
 
 
-    //discrete_base_node *(*factory)(discrete_device * pdev, const discrete_block *block);
-    public delegate discrete_base_node discrete_block_factory(discrete_device pdev, discrete_block block);
-
     /*************************************
      *
      *  The discrete sound blocks as
@@ -1245,7 +1152,7 @@ namespace mame
     public class discrete_block : global_object
     {
         public int node;                           /* Output node number */
-        public discrete_block_factory factory;  //discrete_base_node *(*factory)(discrete_device * pdev, const discrete_block *block);
+        public Func<discrete_device, discrete_block, discrete_base_node> factory;  //std::unique_ptr<discrete_base_node> (*factory)(discrete_device &pdev, const discrete_block &block);
         public int type;                           /* see defines below */
         public int active_inputs;                  /* Number of active inputs on this node type */
         public int [] input_node = new int[DISCRETE_MAX_INPUTS];/* input/control nodes */
@@ -1254,7 +1161,7 @@ namespace mame
         string name;                        /* Node Name */
         public string mod_name;                       /* Module / class name */
 
-        public discrete_block(int node, discrete_block_factory factory, int type, int active_inputs, int [] input_node, Pointer<double> initial, Object custom, string name, string mod_name)
+        public discrete_block(int node, Func<discrete_device, discrete_block, discrete_base_node> factory, int type, int active_inputs, int [] input_node, Pointer<double> initial, Object custom, string name, string mod_name)
         {
             this.node = node;
             this.factory = factory;
@@ -1291,8 +1198,6 @@ namespace mame
         void step();
     }
 
-    //typedef dynamic_array_t<discrete_step_interface *> node_step_list_t;
-
 
     public interface discrete_input_interface
     {
@@ -1313,6 +1218,12 @@ namespace mame
     // ======================> discrete_device
     public class discrete_device : device_t
     {
+        //typedef std::vector<std::unique_ptr<discrete_task> > task_list_t;
+        //typedef std::vector<std::unique_ptr<discrete_base_node> > node_list_t;
+        //typedef std::vector<discrete_step_interface *> node_step_list_t;
+        //typedef std::vector<const discrete_block *> sound_block_list_t;
+
+
         // configuration state
         discrete_block [] m_intf;  //const discrete_block *m_intf;
 
@@ -1326,14 +1237,14 @@ namespace mame
         double m_neg_sample_time;
 
         /* list of all nodes */
-        protected vector_t<discrete_base_node> m_node_list = new vector_t<discrete_base_node>();        /* node_description * */
+        protected discrete_device_node_list_t m_node_list;        /* node_description * */
 
 
         /* internal node tracking */
-        discrete_base_node [] m_indexed_node;  //discrete_base_node **   m_indexed_node;
+        discrete_base_node [] m_indexed_node;  //std::unique_ptr<discrete_base_node * []>   m_indexed_node;
 
         /* tasks */
-        vector_t<discrete_task> task_list = new vector_t<discrete_task>();      /* discrete_task_context * */
+        discrete_device_task_list_t task_list = new discrete_device_task_list_t();      /* discrete_task_context * */
 
         /* debugging statistics */
         //FILE *                  m_disclogfile;
@@ -1343,8 +1254,8 @@ namespace mame
 
         /* profiling */
         int m_profiling;
-        UInt64 m_total_samples;
-        UInt64 m_total_stream_updates;
+        uint64_t m_total_samples;
+        uint64_t m_total_stream_updates;
 
 
         //friend class discrete_base_node;
@@ -1446,7 +1357,7 @@ namespace mame
         //  discrete_device_process - process a number of
         //  samples.
         //
-        //  input / output buffers are stream_sample_t
+        //  input / output buffers are s32
         //  to not to have to convert the buffers.
         //  a "discrete cpu" device will pass NULL here
         //-------------------------------------------------
@@ -1456,21 +1367,18 @@ namespace mame
                 return;
 
             /* Setup tasks */
-            for (int i = 0; i < task_list.count(); i++)  //for_each(discrete_task **, task, &task_list)
+            foreach (var task in task_list)
             {
-                discrete_task task = task_list[i];
-
                 /* unlock the thread */
                 task.unlock();
 
                 task.prepare_for_queue(samples);
             }
 
-            for (int i = 0; i < task_list.count(); i++)  //for_each(discrete_task **, task, &task_list)
+            foreach (var task in task_list)
             {
-                discrete_task task = task_list[i];
-
                 /* Fire a work item for each task */
+                //(void)task;
                 osdcore_global.m_osdcore.osd_work_item_queue(m_queue, discrete_task.task_callback, task_list, osdcore_interface.WORK_ITEM_FLAG_AUTO_RELEASE);
             }
 
@@ -1526,8 +1434,10 @@ namespace mame
             }
         }
 
+
         /* FIXME: this is used by csv and wav logs - going forward, identifiers should be explicitly passed */
         //int same_module_index(const discrete_base_node &node);
+
 
         /* get node */
         public discrete_base_node discrete_find_node(int node)
@@ -1589,8 +1499,8 @@ namespace mame
 #endif
 
             /* Build the final block list */
-            vector_t<discrete_block> block_list = new vector_t<discrete_block>();  //sound_block_list_t block_list;
-            discrete_build_list(intf_start, ref block_list);
+            discrete_device_sound_block_list_t block_list = new discrete_device_sound_block_list_t();
+            discrete_build_list(intf_start, block_list);
 
             /* first pass through the nodes: sanity check, fill in the indexed_nodes, and make a total count */
             discrete_sanity_check(block_list);
@@ -1599,16 +1509,14 @@ namespace mame
             m_node_list.clear();
 
             /* allocate memory to hold pointers to nodes by index */
-            m_indexed_node = new discrete_base_node [DISCRETE_MAX_NODES];  // m_indexed_node = auto_alloc_array_clear(this->machine(), discrete_base_node *, DISCRETE_MAX_NODES);
+            m_indexed_node = new discrete_base_node [DISCRETE_MAX_NODES];  //m_indexed_node = make_unique_clear<discrete_base_node * []>(DISCRETE_MAX_NODES);
 
             /* initialize the node data */
             init_nodes(block_list);
 
             /* now go back and find pointers to all input nodes */
-            for (int i = 0; i < m_node_list.count(); i++)  //for_each(discrete_base_node **, node, &m_node_list)
+            foreach (var node in m_node_list)
             {
-                discrete_base_node node = m_node_list[i];
-
                 node.resolve_input_nodes();
             }
 
@@ -1616,22 +1524,16 @@ namespace mame
             m_queue = osdcore_global.m_osdcore.osd_work_queue_alloc((int)(osdcore_interface.WORK_QUEUE_FLAG_MULTI | osdcore_interface.WORK_QUEUE_FLAG_HIGH_FREQ));
 
             /* Process nodes which have a start func */
-            for (int i = 0; i < m_node_list.count(); i++)  //for_each(discrete_base_node **, node, &m_node_list)
+            foreach (var node in m_node_list)
             {
-                discrete_base_node node = m_node_list[i];
-
                 node.start();
             }
 
             /* Now set up tasks */
-            for (int i = 0; i < task_list.count(); i++)  //for_each(discrete_task **, task, &task_list)
+            foreach (var task in task_list)
             {
-                discrete_task task = task_list[i];
-
-                for (int j = 0; j < task_list.count(); j++)  //for_each(discrete_task **, dest_task, &task_list)
+                foreach (var dest_task in task_list)
                 {
-                    discrete_task dest_task = task_list[j];
-
                     if (task.task_group > dest_task.task_group)
                         dest_task.check(task);
                 }
@@ -1652,10 +1554,8 @@ namespace mame
 
             /* Process nodes which have a stop func */
 
-            for (int i = 0; i < m_node_list.count(); i++)  //for_each(discrete_base_node **, node, &m_node_list)
+            foreach (var node in m_node_list)
             {
-                discrete_base_node node = m_node_list[i];
-
                 node.stop();
             }
 
@@ -1679,10 +1579,8 @@ namespace mame
             update_to_current_time();
 
             /* loop over all nodes */
-            for (int i = 0; i < m_node_list.count(); i++)  //for_each (discrete_base_node **, node, &m_node_list)
+            foreach (var node in m_node_list)
             {
-                discrete_base_node node = m_node_list[i];
-
                 /* Fimxe : node_level */
                 //node.m_output[0][0] = 0;
 
@@ -1694,7 +1592,7 @@ namespace mame
         //-------------------------------------------------
         //  discrete_build_list: Build import list
         //-------------------------------------------------
-        void discrete_build_list(discrete_block [] intf, ref vector_t<discrete_block> block_list)
+        void discrete_build_list(discrete_block [] intf, discrete_device_sound_block_list_t block_list)
         {
             int node_count = 0;
 
@@ -1704,7 +1602,7 @@ namespace mame
                 if (intf[node_count].type == (int)discrete_node_type.DSO_IMPORT)
                 {
                     discrete_log("discrete_build_list() - DISCRETE_IMPORT @ NODE_{0}", NODE_INDEX(intf[node_count].node));
-                    discrete_build_list((discrete_block [])intf[node_count].custom, ref block_list);
+                    discrete_build_list((discrete_block [])intf[node_count].custom, block_list);
                 }
                 else if (intf[node_count].type == (int)discrete_node_type.DSO_REPLACE)
                 {
@@ -1713,7 +1611,7 @@ namespace mame
                     if (intf[node_count].type == (int)discrete_node_type.DSS_NULL)
                         throw new emu_fatalerror("discrete_build_list: DISCRETE_REPLACE at end of node_list\n");
 
-                    for (int i=0; i < block_list.count(); i++)
+                    for (int i=0; i < block_list.size(); i++)
                     {
                         discrete_block block = block_list[i];
 
@@ -1735,9 +1633,9 @@ namespace mame
                 }
                 else if (intf[node_count].type == (int)discrete_node_type.DSO_DELETE)
                 {
-                    vector_t<int> deletethem = new vector_t<int>();
+                    std.vector<int> deletethem = new std.vector<int>();
 
-                    for (int i=0; i<block_list.count(); i++)
+                    for (int i = 0; i < block_list.size(); i++)
                     {
                         discrete_block block = block_list[i];
 
@@ -1745,17 +1643,17 @@ namespace mame
                                 (block.node <= intf[node_count].input_node[1]))
                         {
                             discrete_log("discrete_build_list() - DISCRETE_DELETE deleted NODE_{0}", NODE_INDEX(block.node));
-                            deletethem.add(i);
+                            deletethem.push_back(i);
                         }
                     }
 
-                    for (int i = 0; i < deletethem.count(); i++)  //for_each (int *, i, &deletethem)
-                        block_list.remove(deletethem[i]);
+                    foreach (int i in deletethem)
+                        block_list.erase(i); // FIXME: how is this supposed to work if there's more than one item to remove?  indices are shifted back on each removal  //block_list.erase(block_list.begin() + i);
                 }
                 else
                 {
                     discrete_log("discrete_build_list() - adding node {0}\n", node_count);
-                    block_list.add(intf[node_count]);
+                    block_list.push_back(intf[node_count]);
                 }
 
                 node_count++;
@@ -1765,12 +1663,12 @@ namespace mame
         //-------------------------------------------------
         // discrete_sanity_check: Sanity check list
         //-------------------------------------------------
-        void discrete_sanity_check(vector_t<discrete_block> block_list)
+        void discrete_sanity_check(discrete_device_sound_block_list_t block_list)
         {
             int node_count = 0;
 
             discrete_log("discrete_start() - Doing node list sanity check");
-            for (int i=0; i < block_list.count(); i++)
+            for (int i=0; i < block_list.size(); i++)
             {
                 discrete_block block = block_list[i];
 
@@ -1803,14 +1701,12 @@ namespace mame
          *
          *************************************/
 
-        static UInt64 list_run_time(vector_t<discrete_base_node> list)
+        static uint64_t list_run_time(discrete_device_node_list_t list)
         {
-            UInt64 total = 0;
+            uint64_t total = 0;
 
-            for (int i = 0; i < list.count(); i++)  //for_each(discrete_base_node **, node, &list)
+            foreach (var node in list)
             {
-                discrete_base_node node = list[i];
-
                 discrete_step_interface step;
                 if (node.interface_get(out step))
                     total += step.run_time;
@@ -1819,37 +1715,33 @@ namespace mame
             return total;
         }
 
-        static UInt64 step_list_run_time(vector_t<discrete_step_interface> list)
+        static uint64_t step_list_run_time(discrete_device_node_step_list_t list)
         {
-            UInt64 total = 0;
+            uint64_t total = 0;
 
-            for (int i = 0; i < list.count(); i++)  //for_each(discrete_step_interface **, node, &list)
+            foreach (discrete_step_interface node in list)
             {
-                discrete_step_interface node = list[i];
-
                 total += node.run_time;
             }
+
             return total;
         }
 
         void display_profiling()
         {
             int count;
-            UInt64 total;
-            UInt64 tresh;
-            double tt;
+            uint64_t total;
+            uint64_t tresh;
 
             /* calculate total time */
             total = list_run_time(m_node_list);
-            count = m_node_list.count();
+            count = m_node_list.size();
             /* print statistics */
             osd_printf_info("Total Samples  : {0}\n", m_total_samples);
-            tresh = total / (UInt64)count;
+            tresh = total / (uint64_t)count;
             osd_printf_info("Threshold (mean): {0}\n", tresh / m_total_samples);
-            for (int i = 0; i < m_node_list.count(); i++)  //for_each(discrete_base_node **, node, &m_node_list)
+            foreach (var node in m_node_list)
             {
-                discrete_base_node node = m_node_list[i];
-
                 discrete_step_interface step;
                 if (node.interface_get(out step))
                     if (step.run_time > tresh)
@@ -1857,11 +1749,9 @@ namespace mame
             }
 
             /* Task information */
-            for (int i = 0; i < task_list.count(); i++)  //for_each(discrete_task **, task, &task_list)
+            foreach (var task in task_list)
             {
-                discrete_task task = task_list[i];
-
-                tt =  step_list_run_time(task.step_list);
+                double tt = step_list_run_time(task.step_list);
 
                 osd_printf_info("Task({0}): {1} {2}\n", task.task_group, tt / (double)total * 100.0, tt / (double)m_total_samples);
             }
@@ -1874,41 +1764,43 @@ namespace mame
          *  First pass init of nodes
          *
          *************************************/
-        void init_nodes(vector_t<discrete_block> block_list)
+        void init_nodes(discrete_device_sound_block_list_t block_list)
         {
             discrete_task task = null;
             /* list tail pointers */
-            int has_tasks = 0;
+            bool has_tasks = false;
 
             /* check whether we have tasks ... */
             if (USE_DISCRETE_TASKS != 0)
             {
-                for (int i = 0; i < block_list.count(); i++)
+                for (int i = 0; !has_tasks && i < block_list.size(); i++)
                 {
                     if (block_list[i].type == (int)discrete_node_type.DSO_TASK_START)
-                        has_tasks = 1;
+                        has_tasks = true;
                 }
             }
 
-            if (has_tasks == 0)
+            if (!has_tasks)
             {
                 /* make sure we have one simple task
                  * No need to create a node since there are no dependencies.
                  */
-                task = new discrete_task(this);  // auto_alloc_clear(machine(), discrete_task(*this));
-                task_list.add(task);
+                task_list.push_back(new discrete_task(this));
+                task = task_list.back();
             }
 
             /* loop over all nodes */
-            for (int i = 0; i < block_list.count(); i++)
+            for (int i = 0; i < block_list.size(); i++)
             {
                 discrete_block block = block_list[i];
 
-                //discrete_base_node *node = block->factory->Create(this, block);
-                discrete_base_node node = block.factory(this, block);
-                /* keep track of special nodes */
+                // add to node list
+                m_node_list.push_back(block.factory(this, block));
+                discrete_base_node node = m_node_list.back();
+
                 if (block.node == NODE_SPECIAL)
                 {
+                    // keep track of special nodes
                     switch (block.type)
                     {
                         /* Output Node */
@@ -1931,13 +1823,12 @@ namespace mame
                                 if (task != null)
                                     throw new emu_fatalerror("init_nodes() - Nested DISCRETE_START_TASK.\n");
 
-                                task = new discrete_task(this);  // auto_alloc_clear(machine(), discrete_task(*this));
+                                task_list.push_back(new discrete_task(this));
+                                task = task_list.back();
                                 task.task_group = (int)block.initial[0];
                                 if (task.task_group < 0 || task.task_group >= DISCRETE_MAX_TASK_GROUPS)
-                                    throw new emu_fatalerror("discrete_dso_task: illegal task_group {0}\n", task.task_group);
-
-                                //printf("task group %d\n", task->task_group);
-                                task_list.add(task);
+                                    fatalerror("discrete_dso_task: illegal task_group {0}\n", task.task_group);
+                                //logerror("task group %d\n", task->task_group);
                             }
                             break;
 
@@ -1953,21 +1844,18 @@ namespace mame
                             throw new emu_fatalerror("init_nodes() - Failed, trying to create unknown special discrete node.\n");
                     }
                 }
-
-                /* otherwise, make sure we are not a duplicate, and put ourselves into the indexed list */
                 else
                 {
+                    // otherwise, make sure we are not a duplicate, and put ourselves into the indexed list
+
                     if (m_indexed_node[NODE_INDEX(block.node)] != null)
                         throw new emu_fatalerror("init_nodes() - Duplicate entries for NODE_{0}\n", NODE_INDEX(block.node));
 
                     m_indexed_node[NODE_INDEX(block.node)] = node;
                 }
 
-                /* add to node list */
-                m_node_list.add(node);
-
-                /* our running order just follows the order specified */
-                /* does the node step ? */
+                // our running order just follows the order specified
+                // does the node step?
                 discrete_step_interface step;
                 if (node.interface_get(out step))
                 {
@@ -1975,7 +1863,7 @@ namespace mame
                     if (task == null)
                         throw new emu_fatalerror("init_nodes() - found node outside of task: {0}\n", node.module_name());
                     else
-                        task.step_list.add(step);
+                        task.step_list.push_back(step);
                 }
 
                 if (USE_DISCRETE_TASKS != 0 && block.type == (int)discrete_node_type.DSO_TASK_END)
@@ -1987,7 +1875,7 @@ namespace mame
                 node.save_state();
             }
 
-            if (has_tasks == 0)
+            if (!has_tasks)
             {
             }
         }
@@ -2001,6 +1889,10 @@ namespace mame
         //DEFINE_DEVICE_TYPE(DISCRETE, discrete_sound_device, "discrete", "Discrete Sound")
         static device_t device_creator_discrete_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new discrete_sound_device(mconfig, tag, owner, clock); }
         public static readonly device_type DISCRETE = DEFINE_DEVICE_TYPE(device_creator_discrete_sound_device, "discrete", "Discrete Sound");
+
+
+        //typedef std::vector<discrete_dss_input_stream_node *> istream_node_list_t;
+        //typedef std::vector<discrete_sound_output_interface *> node_output_list_t;
 
 
         public class device_sound_interface_discrete : device_sound_interface
@@ -2018,9 +1910,9 @@ namespace mame
         sound_stream m_stream;
 
         /* the input streams */
-        vector_t<discrete_dss_input_stream_node> m_input_stream_list = new vector_t<discrete_dss_input_stream_node>();
+        discrete_sound_device_istream_node_list_t m_input_stream_list = new discrete_sound_device_istream_node_list_t();
         /* output node tracking */
-        vector_t<discrete_sound_output_interface> m_output_list = new vector_t<discrete_sound_output_interface>();
+        discrete_sound_device_node_output_list_t m_output_list = new discrete_sound_device_node_output_list_t();
 
 
         // construction/destruction
@@ -2075,35 +1967,31 @@ namespace mame
             base.device_start();
 
             /* look for input stream nodes */
-            for (int i = 0; i < m_node_list.count(); i++)  //for_each(discrete_base_node **, node, &m_node_list)
+            foreach (var node in m_node_list)
             {
-                discrete_base_node node = m_node_list[i];
-
                 /* if we are an stream input node, track that */
                 discrete_dss_input_stream_node input_stream = (node is discrete_dss_input_stream_node) ? (discrete_dss_input_stream_node)node : null;
                 if (input_stream != null)
                 {
-                    m_input_stream_list.add(input_stream);
+                    m_input_stream_list.push_back(input_stream);
                 }
 
                 /* if this is an output interface, add it the output list */
                 discrete_sound_output_interface out_intf;
                 if (node.interface_get(out out_intf))
-                    m_output_list.add(out_intf);
+                    m_output_list.push_back(out_intf);
             }
 
             /* if no outputs, give an error */
-            if (m_output_list.count() == 0)
+            if (m_output_list.empty())
                 throw new emu_fatalerror("init_nodes() - Couldn't find an output node\n");
 
             /* initialize the stream(s) */
-            m_stream = m_disound.stream_alloc(m_input_stream_list.count(), m_output_list.count(), (u32)m_sample_rate);
+            m_stream = m_disound.stream_alloc(m_input_stream_list.size(), m_output_list.size(), (u32)m_sample_rate);
 
             /* Finalize stream_input_nodes */
-            for (int i = 0; i < m_input_stream_list.count(); i++)  //for_each(discrete_dss_input_stream_node **, node, &m_input_stream_list)
+            foreach (discrete_dss_input_stream_node node in m_input_stream_list)
             {
-                discrete_dss_input_stream_node node = m_input_stream_list[i];
-
                 node.stream_start();
             }
         }
@@ -2120,19 +2008,15 @@ namespace mame
             int outputnum = 0;
 
             /* Setup any output streams */
-            for (int i = 0; i < m_output_list.count(); i++)  //for_each(discrete_sound_output_interface **, node, &m_output_list)
+            foreach (discrete_sound_output_interface node in m_output_list)
             {
-                discrete_sound_output_interface node = m_output_list[i];
-
                 node.set_output_ptr(outputs[outputnum]);
                 outputnum++;
             }
 
             /* Setup any input streams */
-            for (int i = 0; i < m_input_stream_list.count(); i++)  //for_each(discrete_dss_input_stream_node **, node, &m_input_stream_list)
+            foreach (discrete_dss_input_stream_node node in m_input_stream_list)
             {
-                discrete_dss_input_stream_node node = m_input_stream_list[i];
-
                 node.m_inview = inputs[node.m_stream_in_number];  //(*node)->m_inview = &inputs[(*node)->m_stream_in_number];
                 node.m_inview_sample = 0;
             }
@@ -2328,11 +2212,13 @@ namespace mame
     }
 
 
-    class discrete_node_factory<class_type> where class_type : discrete_base_node, new()
+    //template <class C>
+    class discrete_node_factory<C>
+        where C : discrete_base_node, new()
     {
-        public discrete_base_node Create(discrete_device pdev, discrete_block block)
+        public static discrete_base_node create(discrete_device pdev, discrete_block block)
         {
-            discrete_base_node r = new class_type();  // auto_alloc_clear(pdev->machine(), C);
+            discrete_base_node r = new C();  //std::unique_ptr<discrete_base_node> r = make_unique_clear<C>();
 
             r.init(pdev, block);
             return r;
@@ -2342,7 +2228,7 @@ namespace mame
 
     class output_buffer
     {
-        public MemoryContainer<double> node_buf;  //double                      *node_buf;
+        public MemoryContainer<double> node_buf;  //std::unique_ptr<double []>  node_buf;
         public PointerRef<double> source;  //const double                *source;
         public Pointer<double> ptr;  //volatile double             *ptr;
         public int node_num;
@@ -2362,34 +2248,31 @@ namespace mame
         //friend class discrete_device;
 
 
-        //const linked_list_entry *list;
-        public vector_t<discrete_step_interface> step_list = new vector_t<discrete_step_interface>();
+        public discrete_device_node_step_list_t step_list;
 
         /* list of source nodes */
-        vector_t<input_buffer> source_list = new vector_t<input_buffer>();      /* discrete_source_node */
+        std.vector<input_buffer> source_list = new std.vector<input_buffer>();      /* discrete_source_node */
 
-        public int task_group;
+        public int task_group = 0;
 
 
-        vector_t<output_buffer> m_buffers = new vector_t<output_buffer>();
+        std.vector<output_buffer> m_buffers = new std.vector<output_buffer>();
         discrete_device m_device;
 
         int32_t m_threadid;  //std::atomic<int32_t>      m_threadid;
-        int m_samples;  //volatile int            m_samples;
+        int m_samples = 0;  //volatile int            m_samples = 0;
 
 
         public discrete_task(discrete_device pdev)
         {
-            task_group = 0;
             m_device = pdev;
             m_threadid = -1;
-            m_samples = 0;
 
 
-            source_list.clear();
-            step_list.clear();
-            m_buffers.clear();
+            // FIXME: the code expects to be able to take pointers to members of elements of this vector before it's filled
+            source_list.reserve(16);
         }
+
         //~discrete_task() { }
 
 
@@ -2401,20 +2284,16 @@ namespace mame
 
         void step_nodes()
         {
-            for (int i = 0; i < source_list.count(); i++)  //for_each(input_buffer *, sn, &source_list)
+            foreach (input_buffer sn in source_list)
             {
-                input_buffer sn = source_list[i];
-
                 sn.buffer.m_pointer = new Pointer<double>(new MemoryContainer<double>(new double [] { sn.ptr[0] }));  //sn.buffer = *sn.ptr++;
                 sn.ptr++;
             }
 
             if (m_device.profiling() == 0)
             {
-                for (int i = 0; i < step_list.count(); i++)  //for_each(discrete_step_interface **, entry, &step_list)
+                foreach (discrete_step_interface entry in step_list)
                 {
-                    discrete_step_interface entry = step_list[i];
-
                     /* Now step the node */
                     entry.step();
                 }
@@ -2423,12 +2302,8 @@ namespace mame
             {
                 osd_ticks_t last = (osd_ticks_t)get_profile_ticks();
 
-                for (int i = 0; i < step_list.count(); i++)  //for_each(discrete_step_interface **, entry, &step_list)
+                foreach (discrete_step_interface node in step_list)
                 {
-                    discrete_step_interface entry = step_list[i];
-
-                    discrete_step_interface node = entry;
-
                     node.run_time -= last;
                     node.step();
                     last = (osd_ticks_t)get_profile_ticks();
@@ -2437,10 +2312,8 @@ namespace mame
             }
 
             /* buffer the outputs */
-            for (int i = 0; i < m_buffers.count(); i++)  //for_each(output_buffer *, outbuf, &m_buffers)
+            foreach (output_buffer outbuf in m_buffers)
             {
-                output_buffer outbuf = m_buffers[i];
-
                 outbuf.ptr.Buffer[0] = outbuf.source.m_pointer[0];  //*(outbuf.ptr++) = *outbuf.source;
                 outbuf.ptr++;
             }
@@ -2458,14 +2331,12 @@ namespace mame
 
         public static Object task_callback(Object param, int threadid)
         {
-            vector_t<discrete_task> list = (vector_t<discrete_task>)param;
+            var list = (discrete_device_task_list_t)param;  //const auto &list = *reinterpret_cast<const discrete_sound_device::task_list_t *>(param);
 
             do
             {
-                for (int i = 0; i < list.count(); i++)  //for_each(discrete_task **, task, list)
+                foreach (var task in list)
                 {
-                    discrete_task task = list[i];
-
                     /* try to lock */
                     if (task.lock_threadid(threadid))
                     {
@@ -2486,16 +2357,12 @@ namespace mame
             int samples = std.min(m_samples, MAX_SAMPLES_PER_TASK_SLICE);
 
             /* check dependencies */
-            for (int i = 0; i < source_list.count(); i++)  //for_each(input_buffer *, sn, &source_list)
+            foreach (input_buffer sn in source_list)
             {
-                input_buffer sn = source_list[i];
-
-                int avail;
-
                 // make sure buffer pointers are equal, so we can perform math operation on the offsets
                 assert(sn.linked_outbuf.ptr.Buffer == sn.ptr.Buffer);
 
-                avail = sn.linked_outbuf.ptr.Offset - sn.ptr.Offset;  // avail = sn.linked_outbuf.ptr - sn.ptr;
+                int avail = sn.linked_outbuf.ptr.Offset - sn.ptr.Offset;  // avail = sn.linked_outbuf.ptr - sn.ptr;
 
                 if (avail < 0)
                     throw new emu_fatalerror("discrete_task::process: available samples are negative");
@@ -2528,25 +2395,23 @@ namespace mame
 
         public void check(discrete_task dest_task)
         {
-            int inputnum;
+            // FIXME: this function takes addresses of elements of a vector that has items added later
+            // 16 is enough for the systems in MAME, but the code should be fixed properly
+            m_buffers.reserve(16);
 
             /* Determine, which nodes in the task are referenced by nodes in dest_task
              * and add them to the list of nodes to be buffered for further processing
              */
-            for (int i1 = 0; i1 < step_list.count(); i1++)  //for_each(discrete_step_interface **, node_entry, &step_list)
+            foreach (discrete_step_interface node_entry in step_list)
             {
-                discrete_step_interface node_entry = step_list[i1];
-
                 discrete_base_node task_node = node_entry.self;
 
-                for (int j1 = 0; j1 < dest_task.step_list.count(); j1++)  //for_each(discrete_step_interface **, step_entry, &dest_task->step_list)
+                foreach (discrete_step_interface step_entry in dest_task.step_list)
                 {
-                    discrete_step_interface step_entry = dest_task.step_list[j1];
-
                     discrete_base_node dest_node = step_entry.self;
 
                     /* loop over all active inputs */
-                    for (inputnum = 0; inputnum < dest_node.active_inputs(); inputnum++)
+                    for (int inputnum = 0; inputnum < dest_node.active_inputs(); inputnum++)
                     {
                         int inputnode_num = dest_node.input_node(inputnum);
                         if (IS_VALUE_A_NODE(inputnode_num))
@@ -2554,12 +2419,10 @@ namespace mame
                             /* Fixme: sub nodes ! */
                             if (NODE_DEFAULT_NODE(task_node.block_node()) == NODE_DEFAULT_NODE(inputnode_num))
                             {
-                                input_buffer source = new input_buffer();
-                                int i;
                                 int found = -1;
                                 output_buffer pbuf = null;
 
-                                for (i = 0; i < m_buffers.count(); i++)
+                                for (int i = 0; i < m_buffers.size(); i++)
                                 {
                                     //if (m_buffers[i].node->block_node() == inputnode_num)
                                     if (m_buffers[i].node_num == inputnode_num)
@@ -2574,28 +2437,21 @@ namespace mame
                                 {
                                     output_buffer buf = new output_buffer();
 
-                                    buf.node_buf = auto_alloc_array<double>(m_device.machine(), (UInt32)((task_node.sample_rate() + sound_manager.STREAMS_UPDATE_FREQUENCY) / sound_manager.STREAMS_UPDATE_FREQUENCY));
+                                    buf.node_buf = new MemoryContainer<double>((task_node.sample_rate() + sound_manager.STREAMS_UPDATE_FREQUENCY) / sound_manager.STREAMS_UPDATE_FREQUENCY);  //buf.node_buf = std::make_unique<double []>((task_node->sample_rate() + sound_manager::STREAMS_UPDATE_FREQUENCY) / sound_manager::STREAMS_UPDATE_FREQUENCY);
                                     buf.ptr = new Pointer<double>(buf.node_buf);  //buf.ptr = buf.node_buf;
                                     buf.source = dest_node.m_input[inputnum];  //buf.source = dest_node->m_input[inputnum];
                                     buf.node_num = inputnode_num;
                                     //buf.node = device->discrete_find_node(inputnode);
-                                    m_buffers.count();
-                                    pbuf = m_buffers.add(buf);
+                                    m_buffers.push_back(buf);
+                                    pbuf = m_buffers.back();
                                 }
 
                                 m_device.discrete_log("dso_task_start - buffering {0}({1}) in task {2} group {3} referenced by {4} group {5}", NODE_INDEX(inputnode_num), NODE_CHILD_NODE_NUM(inputnode_num), this, task_group, dest_node.index(), dest_task.task_group);
 
                                 /* register into source list */
-                                //source = auto_alloc(device->machine(), discrete_source_node);
-                                //source.task = this;
-                                //source.output_node = i;
-                                source.linked_outbuf = pbuf;
-                                source.buffer = new PointerRef<double>(new Pointer<double>(new MemoryContainer<double>(new double [] { 0 })));  //source.buffer = 0.0; /* please compiler */
-                                source.ptr = null;
-                                dest_task.source_list.add(source);
-
-                                /* point the input to a buffered location */
-                                dest_node.m_input[inputnum] = dest_task.source_list[dest_task.source_list.count() - 1].buffer;  //dest_node->m_input[inputnum] = &dest_task->source_list[dest_task->source_list.count()-1].buffer; // was copied!   &source.buffer;
+                                dest_task.source_list.push_back(new input_buffer() { ptr = null, linked_outbuf = pbuf, buffer = new PointerRef<double>(new Pointer<double>(new MemoryContainer<double>(new double [] { 0.0 })))});
+                                // FIXME: taking address of element of vector before it's filled
+                                dest_node.m_input[inputnum] = dest_task.source_list.back().buffer;
                             }
                         }
                     }
@@ -2608,18 +2464,14 @@ namespace mame
             m_samples = samples;
 
             /* set up task buffers */
-            for (int i = 0; i < m_buffers.count(); i++)  //for_each(output_buffer *, ob, &m_buffers)
+            foreach (output_buffer ob in m_buffers)
             {
-                output_buffer ob = m_buffers[i];
-
                 ob.ptr = new Pointer<double>(ob.node_buf);
             }
 
             /* initialize sources */
-            for (int i = 0; i < source_list.count(); i++)  //for_each(input_buffer *, sn, &source_list)
+            foreach (input_buffer sn in source_list)
             {
-                input_buffer sn = source_list[i];
-
                 sn.ptr = new Pointer<double>(sn.linked_outbuf.node_buf);
             }
         }

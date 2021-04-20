@@ -49,7 +49,7 @@ namespace mame
     class ___empty : global_object
     {
         //ROM_START( ___empty )
-        static readonly List<tiny_rom_entry> rom____empty = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom____empty = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_END,
         };

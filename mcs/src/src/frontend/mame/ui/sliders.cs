@@ -274,15 +274,15 @@ namespace mame.ui
                 current_x = bar_left + bar_width * percentage;
 
                 // fill in the percentage
-                container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui().colors().slider_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui().colors().slider_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                 // draw the top and bottom lines
-                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                 // draw default marker
-                container().add_line(default_x, bar_area_top, default_x, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_area_top, default_x, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                 // draw the actual text
                 ui().draw_text_full(container(), tempstring.c_str(), x1 + lr_border, y1 + line_height, x2 - x1 - 2.0f * lr_border,

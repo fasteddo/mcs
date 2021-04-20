@@ -59,7 +59,7 @@ namespace mame.ui
             //input_seq           seq;                /* copy of the live sequence */
             //const input_seq *   defseq;             /* pointer to the default sequence */
             //const char *        name;               /* pointer to the base name of the item */
-            //const char *        owner_name;         /* pointer to the name of the owner of the item */
+            //const device_t *    owner = nullptr;            // pointer to the owner of the item
             //ioport_group group;              /* group type */
             //uint8_t type;               /* type of port */
             //bool                is_optional;        /* true if this input is considered optional */

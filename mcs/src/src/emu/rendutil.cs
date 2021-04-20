@@ -24,7 +24,7 @@ namespace mame
                 return;
 
             /* adjust the source base */
-            PointerU32 sbase = source.pix32(0);  //const u32 *sbase = &source.pix32(0);
+            PointerU32 sbase = source.pix(0);  //const u32 *sbase = &source.pix(0);
 
             /* determine the steppings */
             u32 swidth = (u32)source.width();
@@ -216,28 +216,36 @@ namespace mame
 
 
         /*-------------------------------------------------
-            render_load_jpeg - load a JPG file into a
-            bitmap
+            render_load_msdib - load a Microsoft DIB file
+            into a bitmap
         -------------------------------------------------*/
-        public static void render_load_jpeg(out bitmap_argb32 bitmap, emu_file file, string dirname, string filename)
+        public static void render_load_msdib(out bitmap_argb32 bitmap, util.core_file file)
         {
             bitmap = new bitmap_argb32();
 
             // deallocate previous bitmap
             bitmap.reset();
 
-            // define file's full name
-            string fname;
+            throw new emu_unimplemented();
+#if false
+#endif
+        }
 
-            if (dirname == null)
-                fname = filename;
-            else
-                fname = dirname + global_object.PATH_SEPARATOR + filename;
 
-            if (file.open(fname) != osd_file.error.NONE)
-                return;
+        /*-------------------------------------------------
+            render_load_jpeg - load a JPEG file into a
+            bitmap
+        -------------------------------------------------*/
+        public static void render_load_jpeg(out bitmap_argb32 bitmap, util.core_file file)
+        {
+            bitmap = new bitmap_argb32();
+
+            // deallocate previous bitmap
+            bitmap.reset();
 
             throw new emu_unimplemented();
+#if false
+#endif
         }
 
 
@@ -245,7 +253,7 @@ namespace mame
             render_load_png - load a PNG file into a
             bitmap
         -------------------------------------------------*/
-        public static bool render_load_png(out bitmap_argb32 bitmap, emu_file file, string dirname, string filename, bool load_as_alpha_to_existing = false)
+        public static bool render_load_png(out bitmap_argb32 bitmap, util.core_file file, bool load_as_alpha_to_existing = false)
         {
             bitmap = new bitmap_argb32();
 
@@ -253,92 +261,20 @@ namespace mame
             if (!load_as_alpha_to_existing)
                 bitmap.reset();
 
-            // open the file
-            string fname;
-            if (dirname != null)
-                fname = dirname + global_object.PATH_SEPARATOR + filename;
-            else
-                fname = filename;
-            osd_file.error filerr = file.open(fname);
-            if (filerr != osd_file.error.NONE)
-                return false;
-
             throw new emu_unimplemented();
+#if false
+#endif
         }
 
 
-        //ru_imgformat render_detect_image(emu_file &file, const char *dirname, const char *filename);
+        //ru_imgformat render_detect_image(util::core_file &file);
 
 
         /*-------------------------------------------------
             render_round_nearest - floating point
             round-to-nearest
         -------------------------------------------------*/
-        public static float render_round_nearest(float f) { return std.floor(f + 0.5f); }
-
-
-        /*-------------------------------------------------
-            set_render_bounds_xy - cleaner way to set the
-            bounds
-        -------------------------------------------------*/
-        public static void set_render_bounds_xy(render_bounds bounds, float x0, float y0, float x1, float y1)
-        {
-            bounds.x0 = x0;
-            bounds.y0 = y0;
-            bounds.x1 = x1;
-            bounds.y1 = y1;
-        }
-
-
-        /*-------------------------------------------------
-            set_render_bounds_wh - cleaner way to set the
-            bounds
-        -------------------------------------------------*/
-        public static void set_render_bounds_wh(render_bounds bounds, float x0, float y0, float width, float height)
-        {
-            bounds.x0 = x0;
-            bounds.y0 = y0;
-            bounds.x1 = x0 + width;
-            bounds.y1 = y0 + height;
-        }
-
-
-        /*-------------------------------------------------
-            sect_render_bounds - compute the intersection
-            of two render_bounds
-        -------------------------------------------------*/
-        public static void sect_render_bounds(render_bounds dest, render_bounds src)
-        {
-            dest.x0 = std.max(dest.x0, src.x0);
-            dest.x1 = std.min(dest.x1, src.x1);
-            dest.y0 = std.max(dest.y0, src.y0);
-            dest.y1 = std.min(dest.y1, src.y1);
-        }
-
-
-        /*-------------------------------------------------
-            union_render_bounds - compute the union of two
-            render_bounds
-        -------------------------------------------------*/
-        public static void union_render_bounds(render_bounds dest, render_bounds src)
-        {
-            dest.x0 = std.min(dest.x0, src.x0);
-            dest.x1 = std.max(dest.x1, src.x1);
-            dest.y0 = std.min(dest.y0, src.y0);
-            dest.y1 = std.max(dest.y1, src.y1);
-        }
-
-
-        /*-------------------------------------------------
-            set_render_color - cleaner way to set a color
-        -------------------------------------------------*/
-        public static void set_render_color(render_color color, float a, float r, float g, float b)
-        {
-            color.a = a;
-            color.r = r;
-            color.g = g;
-            color.b = b;
-        }
+        public static float render_round_nearest(float f) { return std.floorf(f + 0.5f); }
 
 
         /*-------------------------------------------------

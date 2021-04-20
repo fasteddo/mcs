@@ -53,24 +53,27 @@ namespace mame.netlist
         /// @param dev core_devict_t object owning the terminal
         /// @param aname name of this terminal
         /// @param otherterm pointer to the sibling terminal
-        public terminal_t(core_device_t dev, string aname, nldelegate delegate_)  //terminal_t(core_device_t &dev, const pstring &aname, terminal_t *otherterm, nldelegate delegate);
+        public terminal_t(core_device_t dev, string aname, nldelegate delegate_)  //terminal_t(core_device_t &dev, const pstring &aname, terminal_t *otherterm, const std::array<terminal_t *, 2> &splitterterms, nldelegate delegate)
             : base(dev, aname, state_e.STATE_BIDIR, delegate_)
         {
             // NOTE - make sure to call terminal_t_after_ctor()
-    
+
             m_Idr = null;
             m_go = null;
             m_gt = null;
-    
-    
+
+
             // this is handled below so that recursive links can be handled properly.  see nld_twoterm()
-            //state().setup().register_term(this, otherterm);
+            //state().setup().register_term(*this, otherterm, splitterterms);
         }
 
-    
-        public void terminal_t_after_ctor(terminal_t otherterm)
+
+        public void terminal_t_after_ctor(terminal_t otherterm, std.array<terminal_t, uint32_constant_2> splitterterms = null)
         {
-            state().setup().register_term(this, otherterm);
+            if (splitterterms == null)
+                splitterterms = new std.array<terminal_t, uint32_constant_2>(null, null);
+
+            state().setup().register_term(this, otherterm, splitterterms);
         }
 
 

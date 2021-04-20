@@ -35,7 +35,6 @@ namespace mame.netlist
             state_var<netlist_time_ext> m_next_scheduled_time;
 
             core_terminal_t m_railterminal;
-            std.vector<core_terminal_t> m_core_terms; // save post-start m_list ...
 
 
             protected net_t(netlist_state_t nl, string aname, core_terminal_t railterminal = null)
@@ -73,7 +72,7 @@ namespace mame.netlist
                 // rebuild m_list and reset terminals to active or analog out state
 
                 m_list_active.clear();
-                foreach (core_terminal_t ct in core_terms())
+                foreach (core_terminal_t ct in exec().nlstate().core_terms(this))
                 {
                     ct.reset();
                     if (ct.terminal_state() != logic_t.state_e.STATE_INP_PASSIVE)
@@ -101,27 +100,24 @@ namespace mame.netlist
 
             void push_to_queue(netlist_time delay)
             {
-                if (has_connections())
-                {
-                    if (!!is_queued())
-                        exec().qremove(this);
+                if (!!is_queued())
+                    exec().qremove(this);
 
-                    m_next_scheduled_time.op = exec().time() + delay;
+                m_next_scheduled_time.op = exec().time() + delay;
 #if (AVOID_NOOP_QUEUE_PUSHES)
-                    m_in_queue = (m_list_active.empty() ? queue_status::DELAYED_DUE_TO_INACTIVE
-                        : (m_new_Q != m_cur_Q ? queue_status::QUEUED : queue_status::DELIVERED));
-                    if (m_in_queue == queue_status::QUEUED)
-                        exec().qpush(m_next_scheduled_time, this);
-                    else
-                        update_inputs();
+                m_in_queue = (m_list_active.empty() ? queue_status::DELAYED_DUE_TO_INACTIVE
+                    : (m_new_Q != m_cur_Q ? queue_status::QUEUED : queue_status::DELIVERED));
+                if (m_in_queue == queue_status::QUEUED)
+                    exec().qpush(m_next_scheduled_time, this);
+                else
+                    update_inputs();
 #else
-                    m_in_queue.op = m_list_active.empty() ? queue_status.DELAYED_DUE_TO_INACTIVE : queue_status.QUEUED;
-                    if (m_in_queue.op == queue_status.QUEUED)
-                        exec().qpush(new plib.pqentry_t<netlist_time, net_t>(m_next_scheduled_time.op, this));
-                    else
-                        update_inputs();
+                m_in_queue.op = m_list_active.empty() ? queue_status.DELAYED_DUE_TO_INACTIVE : queue_status.QUEUED;
+                if (m_in_queue.op == queue_status.QUEUED)
+                    exec().qpush(new plib.pqentry_t<netlist_time, net_t>(m_next_scheduled_time.op, this));
+                else
+                    update_inputs();
 #endif
-                }
             }
 
 
@@ -192,9 +188,6 @@ namespace mame.netlist
             public core_terminal_t railterminal() { return m_railterminal; }
 
 
-            public bool has_connections() { return !m_core_terms.empty(); }
-
-
             //void add_to_active_list(core_terminal_t &term) noexcept;
             //void remove_from_active_list(core_terminal_t &term) noexcept;
 
@@ -212,7 +205,7 @@ namespace mame.netlist
                 // rebuild m_list
 
                 m_list_active.clear();
-                foreach (var term in core_terms())
+                foreach (var term in exec().nlstate().core_terms(this))
                 {
                     if (term.terminal_state() != logic_t.state_e.STATE_INP_PASSIVE)
                     {
@@ -223,7 +216,7 @@ namespace mame.netlist
             }
 
 
-            public std.vector<core_terminal_t> core_terms() { return m_core_terms; }
+            ////public std.vector<core_terminal_t> core_terms() { return m_core_terms; }
 
 
             public void update_inputs()

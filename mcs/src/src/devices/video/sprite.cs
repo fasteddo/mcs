@@ -154,7 +154,7 @@ namespace mame
                     if (dirtybase[x] == 0)
                     {
                         if (currect != null)
-                            currect.m_rect.intersection(cliprect);  //*currect &= cliprect;
+                            currect.m_rect &= cliprect;  //*currect &= cliprect;
                         currect = null;
                         continue;
                     }
@@ -181,7 +181,7 @@ namespace mame
 
                 // clip the last rect to the cliprect
                 if (currect != null)
-                    currect.m_rect.intersection(cliprect);  //*currect &= cliprect;
+                    currect.m_rect &= cliprect;
             }
 
             // mark the list as valid

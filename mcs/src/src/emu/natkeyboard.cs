@@ -5,8 +5,9 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using keycode_map_entries = mame.std.vector<mame.natural_keyboard.keycode_map_entry>; //typedef std::vector<keycode_map_entry> keycode_map_entries;
-using keycode_map = mame.std.unordered_map<System.UInt32, mame.std.vector<mame.natural_keyboard.keycode_map_entry>>;  //typedef std::unordered_map<char32_t, keycode_map_entries> keycode_map;
+using natural_keyboard_keycode_map_entries = mame.std.vector<mame.natural_keyboard.keycode_map_entry>; //typedef std::vector<keycode_map_entry> keycode_map_entries;
+using natural_keyboard_keycode_map = mame.std.unordered_map<System.UInt32, mame.std.vector<mame.natural_keyboard.keycode_map_entry>>;  //typedef std::unordered_map<char32_t, keycode_map_entries> keycode_map;
+using size_t = System.UInt32;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 
@@ -21,13 +22,13 @@ namespace mame
 
 
         // keyboard helper function delegates
-        //typedef delegate<int (const char32_t *, size_t)> ioport_queue_chars_delegate;
-        delegate int ioport_queue_chars_delegate(Pointer<char32_t> param1, UInt32 param2);
+        //using ioport_queue_chars_delegate = delegate<int (const char32_t *, size_t)>;
+        delegate int ioport_queue_chars_delegate(Pointer<char32_t> param1, size_t param2);
 
-        //typedef delegate<bool (char32_t)> ioport_accept_char_delegate;
+        //using ioport_accept_char_delegate = delegate<bool (char32_t)>;
         delegate bool ioport_accept_char_delegate(char32_t param1);
 
-        //typedef delegate<bool ()> ioport_charqueue_empty_delegate;
+        //using ioport_charqueue_empty_delegate = delegate<bool ()>;
         delegate bool ioport_charqueue_empty_delegate();
 
 
@@ -53,18 +54,39 @@ namespace mame
         //typedef std::unordered_map<char32_t, keycode_map_entries> keycode_map;
 
 
+        // per-device character-to-key mapping
+        class kbd_dev_info
+        {
+            public device_t device;
+            public std.vector<ioport_field> keyfields;
+            public natural_keyboard_keycode_map codemap;
+            public bool keyboard = false;
+            public bool keypad = false;
+            public bool enabled = false;
+
+
+            public kbd_dev_info(device_t dev)
+            {
+                device = dev;
+            }
+        }
+
+
         const bool LOG_NATURAL_KEYBOARD = false;
         const int KEY_BUFFER_SIZE = 4096;
         const char32_t INVALID_CHAR = '?';
 
 
         // internal state
+        std.vector<kbd_dev_info> m_keyboards = new std.vector<kbd_dev_info>();        // info on keyboard devices in system
         running_machine m_machine;          // reference to our machine
+        bool m_have_charkeys;    // are there keys with character?
         bool m_in_use;           // is natural keyboard in use?
         u32 m_bufbegin;         // index of starting character
         u32 m_bufend;           // index of ending character
         std.vector<char32_t> m_buffer;           // actual buffer
-        UInt32 m_fieldnum;         // current step in multi-key sequence
+        keycode_map_entry m_current_code;     // current code being typed
+        unsigned m_fieldnum;         // current step in multi-key sequence
         bool m_status_keydown;   // current keydown status
         bool m_last_cr;          // was the last char a CR?
         emu_timer m_timer;            // timer for posting characters
@@ -72,7 +94,6 @@ namespace mame
         ioport_queue_chars_delegate m_queue_chars;      // queue characters callback
         ioport_accept_char_delegate m_accept_char;      // accept character callback
         ioport_charqueue_empty_delegate m_charqueue_empty;  // character queue empty callback
-        keycode_map m_keycode_map = new keycode_map();      // keycode map
 
 
         // construction/destruction
@@ -82,9 +103,11 @@ namespace mame
         public natural_keyboard(running_machine machine)
         {
             m_machine = machine;
+            m_have_charkeys = false;
             m_in_use = false;
             m_bufbegin = 0;
             m_bufend = 0;
+            m_current_code = null;
             m_fieldnum = 0;
             m_status_keydown = false;
             m_last_cr = false;
@@ -96,8 +119,8 @@ namespace mame
 
 
             // try building a list of keycodes; if none are available, don't bother
-            build_codes(machine.ioport());
-            if (!m_keycode_map.empty())
+            build_codes();
+            if (!m_keyboards.empty())
             {
                 m_buffer.resize(KEY_BUFFER_SIZE);
                 m_timer = machine.scheduler().timer_alloc(timer);
@@ -112,7 +135,7 @@ namespace mame
         running_machine machine() { return m_machine; }
         bool empty() { return m_bufbegin == m_bufend; }
         //bool full() const { return ((m_bufend + 1) % m_buffer.size()) == m_bufbegin; }
-        //bool can_post() const { return (!m_queue_chars.isnull() || !m_keycode_map.empty()); }
+        //bool can_post() const { return m_have_charkeys || !m_queue_chars.isnull(); }
         //bool is_posting() const { return (!empty() || (!m_charqueue_empty.isnull() && !m_charqueue_empty())); }
         public bool in_use() { return m_in_use; }
 
@@ -135,22 +158,28 @@ namespace mame
                 machine().options().set_value(emu_options.OPTION_NATURAL_KEYBOARD, usage ? 1 : 0, emu_options.OPTION_PRIORITY_CMDLINE);
 
                 // lock out (or unlock) all keyboard inputs
-                foreach (var port in machine().ioport().ports())
+                foreach (kbd_dev_info devinfo in m_keyboards)
                 {
-                    foreach (ioport_field field in port.Value.fields())
+                    foreach (ioport_field field in devinfo.keyfields)
                     {
-                        if (field.type() == ioport_type.IPT_KEYBOARD)
-                        {
-                            field.live().lockout = usage;
+                        bool is_keyboard = field.type() == ioport_type.IPT_KEYBOARD;
+                        field.live().lockout = !devinfo.enabled || (is_keyboard && usage);
 
-                            // clear pressed status when going out of use
-                            if (!usage)
-                                field.set_value(0);
-                        }
+                        // clear pressed status when going out of use
+                        if (is_keyboard && !usage)
+                            field.set_value(0);
                     }
                 }
             }
         }
+
+
+        //size_t keyboard_count() const { return m_keyboards.size(); }
+        //device_t &keyboard_device(size_t n) const { return m_keyboards[n].device; }
+        //bool keyboard_is_keypad(size_t n) const { return !m_keyboards[n].keyboard; }
+        //bool keyboard_enabled(size_t n) const { return m_keyboards[n].enabled; }
+        //void enable_keyboard(size_t n) { set_keyboard_enabled(n, true); }
+        //void disable_keyboard(size_t n) { set_keyboard_enabled(n, false); }
 
 
         // posting
@@ -183,15 +212,68 @@ namespace mame
         //  an input code table useful for mapping unicode
         //  chars
         //-------------------------------------------------
-        void build_codes(ioport_manager manager)
+        void build_codes()
         {
-            // find all shift keys
-            unsigned mask = 0;
-            std.array<ioport_field, size_t_constant_SHIFT_COUNT> shift = new std.array<ioport_field, size_t_constant_SHIFT_COUNT>();
-            std.fill(shift, null);
+            ioport_manager manager = machine().ioport();
+
+            // find all the devices with keyboard or keypad inputs
             foreach (var port in manager.ports())
             {
-                foreach (ioport_field field in port.Value.fields())
+                var devinfo = 
+                        std.find_if(
+                            m_keyboards,
+                            (kbd_dev_info info) =>
+                            {
+                                return port.second().device() == info.device.get();
+                            });
+
+                foreach (ioport_field field in port.second().fields())
+                {
+                    bool is_keyboard = field.type() == ioport_type.IPT_KEYBOARD;
+                    if (is_keyboard || (field.type() == ioport_type.IPT_KEYPAD))
+                    {
+                        if (default == devinfo)
+                        {
+                            //devinfo = m_keyboards.emplace(devinfo, port.second->device());
+                            devinfo = new kbd_dev_info(port.second().device());
+                            m_keyboards.push_back(devinfo);
+                        }
+
+                        devinfo.keyfields.emplace_back(field);
+
+                        if (is_keyboard)
+                            devinfo.keyboard = true;
+                        else
+                            devinfo.keypad = true;
+                    }
+                }
+            }
+
+            std.sort(
+                    m_keyboards,
+                    (kbd_dev_info l, kbd_dev_info r) =>
+                    {
+                        return std.strcmp(l.device.get().tag(), r.device.get().tag());
+                    });
+
+            // set up key mappings for each keyboard
+            std.array<ioport_field, size_t_constant_SHIFT_COUNT> shift = new std.array<ioport_field, size_t_constant_SHIFT_COUNT>();
+            unsigned mask;
+            bool have_keyboard = false;
+            foreach (kbd_dev_info devinfo in m_keyboards)
+            {
+                if (LOG_NATURAL_KEYBOARD)
+                    machine().logerror("natural_keyboard: building codes for {0}... ({1} fields)\n", devinfo.device.get().tag(), devinfo.keyfields.size());
+
+                // enable all pure keypads and the first keyboard
+                if (!devinfo.keyboard || !have_keyboard)
+                    devinfo.enabled = true;
+                have_keyboard = have_keyboard || devinfo.keyboard;
+
+                // find all shift keys
+                std.fill(shift, null);  //std::fill(std::begin(shift), std::end(shift), nullptr);
+                mask = 0;
+                foreach (ioport_field field in devinfo.keyfields)
                 {
                     if (field.type() == ioport_type.IPT_KEYBOARD)
                     {
@@ -202,17 +284,17 @@ namespace mame
                             {
                                 mask |= 1U << (int)(code - ioport_global.UCHAR_SHIFT_BEGIN);
                                 shift[code - ioport_global.UCHAR_SHIFT_BEGIN] = field;
+                                if (LOG_NATURAL_KEYBOARD)
+                                    machine().logerror("natural_keyboard: UCHAR_SHIFT_{0} found\n", code - ioport_global.UCHAR_SHIFT_BEGIN + 1);
                             }
                         }
                     }
                 }
-            }
 
-            // iterate over ports and fields
-            foreach (var port in manager.ports())
-            {
-                foreach (ioport_field field in port.Value.fields())
+                // iterate over keyboard/keypad fields
+                foreach (ioport_field field in devinfo.keyfields)
                 {
+                    field.live().lockout = !devinfo.enabled;
                     if (field.type() == ioport_type.IPT_KEYBOARD)
                     {
                         // iterate over all shift states
@@ -226,25 +308,26 @@ namespace mame
                                 {
                                     if (((code < ioport_global.UCHAR_SHIFT_BEGIN) || (code > ioport_global.UCHAR_SHIFT_END)) && (code != 0))
                                     {
-                                        var found = m_keycode_map.find(code);
+                                        m_have_charkeys = true;
+                                        var found = devinfo.codemap.find(code);  //keycode_map::iterator const found(devinfo.codemap.find(code));
                                         keycode_map_entry newcode = new keycode_map_entry();
-                                        std.fill(newcode.field, null);
+                                        std.fill(newcode.field, null);  //std::fill(std::begin(newcode.field), std::end(newcode.field), nullptr);
                                         newcode.shift = curshift;
                                         newcode.condition = field.condition();
 
                                         unsigned fieldnum = 0;
-                                        for (unsigned i = 0, bits = curshift; (i < SHIFT_COUNT) && bits != 0; ++i, bits >>= 1)
+                                        for (unsigned i = 0, bits = curshift; (i < SHIFT_COUNT) && (bits != 0); ++i, bits >>= 1)
                                         {
                                             if (BIT(bits, 0) != 0)
                                                 newcode.field[fieldnum++] = shift[i];
                                         }
 
                                         newcode.field[fieldnum] = field;
-                                        if (null == found)
+                                        if (default == found)
                                         {
-                                            keycode_map_entries entries = new keycode_map_entries();
+                                            natural_keyboard_keycode_map_entries entries = new natural_keyboard_keycode_map_entries();
                                             entries.emplace_back(newcode);
-                                            m_keycode_map.emplace(code, entries);
+                                            devinfo.codemap.emplace(code, entries);
                                         }
                                         else
                                         {
@@ -253,8 +336,8 @@ namespace mame
 
                                         if (LOG_NATURAL_KEYBOARD)
                                         {
-                                            machine().logerror("natural_keyboard: code={0} ({1}) port={2} field.name='{3}'\n",  // code=%u (%s) port=%p field.name='%s'\n
-                                                    code, unicode_to_string(code), port, field.name());
+                                            machine().logerror("natural_keyboard: code={0} ({1}) port={2} field.name='{3}'\n",
+                                                    code, unicode_to_string(code), field.port(), field.name());
                                         }
                                     }
                                 }
@@ -262,20 +345,19 @@ namespace mame
                         }
                     }
                 }
-            }
 
-            // sort mapping entries by shift state
-            foreach (var mapping in m_keycode_map)
-            {
-                //std::sort(
-                //        mapping.second.begin(),
-                //        mapping.second.end(),
-                //        [] (keycode_map_entry const &x, keycode_map_entry const &y) { return x.shift < y.shift; });
-                mapping.second().Sort((x, y) => { return x.shift < y.shift ? -1 : 1; });
+                // sort mapping entries by shift state
+                foreach (var mapping in devinfo.codemap)
+                {
+                    std.sort(
+                            mapping.second(),
+                            (keycode_map_entry x, keycode_map_entry y) => { return x.shift.CompareTo(y.shift); });  //[] (keycode_map_entry const &x, keycode_map_entry const &y) { return x.shift < y.shift; });
+                }
             }
         }
 
 
+        //void set_keyboard_enabled(size_t n, bool enable);
         //bool can_post_directly(char32_t ch);
         //bool can_post_alternate(char32_t ch);
 
@@ -323,10 +405,15 @@ namespace mame
                 // the driver does not have a queue_chars handler
 
                 // loop through this character's component codes
-                keycode_map_entry code = find_code(m_buffer[(int)m_bufbegin]);
+                if (m_fieldnum == 0)
+                    m_current_code = find_code(m_buffer[m_bufbegin]);
+
                 bool advance;
-                if (code != null)
+
+                if (m_current_code != null)
                 {
+                    keycode_map_entry code = m_current_code;
+
                     do
                     {
                         ioport_field field = code.field[m_fieldnum];
@@ -340,6 +427,7 @@ namespace mame
                         }
                     }
                     while (code.field[m_fieldnum] != null && (++m_fieldnum < code.field.size()) && m_status_keydown);
+
                     advance = (m_fieldnum >= code.field.size()) || code.field[m_fieldnum] == null;
                 }
                 else
@@ -409,14 +497,20 @@ namespace mame
         //-------------------------------------------------
         keycode_map_entry find_code(char32_t ch)
         {
-            var found = m_keycode_map.find(ch);
-            if (null == found)
-                return null;
-
-            foreach (keycode_map_entry entry in found)
+            foreach (kbd_dev_info devinfo in m_keyboards)
             {
-                if (entry.condition.eval())
-                    return entry;
+                if (devinfo.enabled)
+                {
+                    var found = devinfo.codemap.find(ch);  //keycode_map::const_iterator found = devinfo.codemap.find(ch);
+                    if (default != found)
+                    {
+                        foreach (keycode_map_entry entry in found)
+                        {
+                            if (entry.condition.eval())
+                                return entry;
+                        }
+                    }
+                }
             }
 
             return null;

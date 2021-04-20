@@ -77,7 +77,7 @@ namespace mame.ui
             if (network_interface_iterator(machine().root_device()).first() != nullptr)
                 item_append("Network Devices", "", 0, ui_menu_main_options.NETWORK_DEVICES);
 
-            if (ui().machine_info().has_keyboard() && machine().ioport().natkeyboard().can_post())
+            if (machine().ioport().natkeyboard().keyboard_count())
                 item_append("Keyboard Mode", "", 0, ui_menu_main_options.KEYBOARD_MODE);
 #endif
 

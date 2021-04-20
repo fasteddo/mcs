@@ -369,7 +369,7 @@ namespace mame
         //  open_next - open the next file that matches
         //  the filename by iterating over paths
         //-------------------------------------------------
-        osd_file.error open_next()
+        public osd_file.error open_next()
         {
             // if we're open from a previous attempt, close up now
             if (m_file != null)
@@ -830,16 +830,21 @@ namespace mame
                     int header = -1;
 
                     // see if we can find a file with the right name and (if available) CRC
-                    if ((m_openflags & OPEN_FLAG_HAS_CRC) != 0) header = zip.search(m_crc, filename, false);
-                    if (header < 0 && ((m_openflags & OPEN_FLAG_HAS_CRC) != 0)) header = zip.search(m_crc, filename, true);
+                    if ((m_openflags & OPEN_FLAG_HAS_CRC) != 0)
+                        header = zip.search(m_crc, filename, false);
+                    if (header < 0 && ((m_openflags & OPEN_FLAG_HAS_CRC) != 0))
+                        header = zip.search(m_crc, filename, true);
 
                     // if that failed, look for a file with the right CRC, but the wrong filename
-                    if (header < 0 && ((m_openflags & OPEN_FLAG_HAS_CRC) != 0)) header = zip.search(m_crc);
+                    if (header < 0 && ((m_openflags & OPEN_FLAG_HAS_CRC) != 0))
+                        header = zip.search(m_crc);
 
                     // if that failed, look for a file with the right name;
                     // reporting a bad checksum is more helpful and less confusing than reporting "ROM not found"
-                    if (header < 0) header = zip.search(filename, false);
-                    if (header < 0) header = zip.search(filename, true);
+                    if (header < 0)
+                        header = zip.search(filename, false);
+                    if (header < 0)
+                        header = zip.search(filename, true);
 
                     // if we got it, read the data
                     if (header >= 0)
@@ -850,6 +855,7 @@ namespace mame
                         // build a hash with just the CRC
                         m_hashes.reset();
                         m_hashes.add_crc(m_zipfile.current_crc());
+                        m_fullpath = savepath;
                         return ((m_openflags & OPEN_FLAG_NO_PRELOAD) != 0) ? osd_file.error.NONE : load_zipped_file();
                     }
 

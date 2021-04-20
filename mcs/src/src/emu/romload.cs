@@ -130,11 +130,17 @@ namespace mame
         -------------------------------------------------*/
         public static Pointer<rom_entry> rom_first_region(device_t device)  //const rom_entry *rom_first_region(const device_t &device);
         {
-            Pointer<rom_entry> romp = new Pointer<rom_entry>(device.rom_region_vector());  //const rom_entry *romp = &device.rom_region_vector().front();
+            return rom_first_region(new Pointer<rom_entry>(device.rom_region_vector()));
+        }
+
+
+        public static Pointer<rom_entry> rom_first_region(Pointer<rom_entry> romp)  //const rom_entry *rom_first_region(const rom_entry *romp);
+        {
             while (ROMENTRY_ISPARAMETER(romp[0]) || ROMENTRY_ISSYSTEM_BIOS(romp[0]) || ROMENTRY_ISDEFAULT_BIOS(romp[0]))
                 romp++;
             return !ROMENTRY_ISEND(romp[0]) ? romp : null;
         }
+
 
         /* return pointer to the next ROM region within a source */
         /*-------------------------------------------------
@@ -254,7 +260,7 @@ namespace mame
         // rom_build_entries - builds a rom_entry vector
         // from a tiny_rom_entry array
         // -------------------------------------------------
-        public static std.vector<rom_entry> rom_build_entries(List<tiny_rom_entry> tinyentries)
+        public static std.vector<rom_entry> rom_build_entries(Pointer<tiny_rom_entry> tinyentries)
         {
             std.vector<rom_entry> result = new std.vector<rom_entry>();
 
@@ -290,11 +296,11 @@ namespace mame
             //typedef std::forward_iterator_tag iterator_category;
 
 
-            protected List<tiny_rom_entry> m_data;
+            protected Pointer<tiny_rom_entry> m_data;
             protected int m_dataOffset;
 
             protected const_entry_iterator() { m_data = null; }
-            protected const_entry_iterator(List<tiny_rom_entry> data, int dataOffset) { m_data = data; m_dataOffset = dataOffset; }
+            protected const_entry_iterator(Pointer<tiny_rom_entry> data, int dataOffset) { m_data = data; m_dataOffset = dataOffset; }
             //constexpr const_entry_iterator(const_entry_iterator const &) noexcept = default;
             //const_entry_iterator(const_entry_iterator &&) noexcept = default;
             //const_entry_iterator &operator=(const_entry_iterator const &) noexcept = default;
@@ -420,7 +426,7 @@ namespace mame
             {
                 //friend class regions;
 
-                public const_iterator(List<tiny_rom_entry> data, int dataOffset) : base(data, dataOffset) { }
+                public const_iterator(Pointer<tiny_rom_entry> data, int dataOffset) : base(data, dataOffset) { }
 
 
                 //constexpr const_iterator() noexcept = default;
@@ -462,11 +468,11 @@ namespace mame
             }
 
 
-            List<tiny_rom_entry> m_data;
+            Pointer<tiny_rom_entry> m_data;
             int m_dataOffset = 0;
 
 
-            public regions(List<tiny_rom_entry> data)
+            public regions(Pointer<tiny_rom_entry> data)
             {
                 m_data = data;
 
@@ -582,9 +588,9 @@ namespace mame
 
         class entries
         {
-            List<tiny_rom_entry> m_data;
+            Pointer<tiny_rom_entry> m_data;
 
-            public entries(List<tiny_rom_entry> data) { m_data = data; }
+            public entries(Pointer<tiny_rom_entry> data) { m_data = new Pointer<tiny_rom_entry>(data); }
 
             public regions get_regions() { return new regions(m_data); }
             //system_bioses get_system_bioses() const { return system_bioses(m_data); }
@@ -627,11 +633,11 @@ namespace mame
         u64 m_romsloadedsize;     // total size of ROMs loaded so far
         u64 m_romstotalsize;      // total size of ROMs to read
 
-        std.vector<open_chd> m_chd_list = new std.vector<open_chd>();  //std::vector<std::unique_ptr<open_chd>> m_chd_list;     /* disks */
+        std.vector<open_chd> m_chd_list;  //std::vector<std::unique_ptr<open_chd>> m_chd_list;     /* disks */
 
         memory_region m_region;           // info about current region
 
-        string m_errorstring = "";        // error string
+        string m_errorstring;        // error string
         string m_softwarningstring;       // software warning string
 
 
@@ -643,6 +649,17 @@ namespace mame
         public rom_load_manager(running_machine machine)
         {
             m_machine = machine;
+            m_warnings = 0;
+            m_knownbad = 0;
+            m_errors = 0;
+            m_romsloaded = 0;
+            m_romstotal = 0;
+            m_romsloadedsize = 0;
+            m_romstotalsize = 0;
+            m_chd_list = new std.vector<open_chd>();
+            m_region = null;
+            m_errorstring = null;
+            m_softwarningstring = null;
 
 
             // figure out which BIOS we are using

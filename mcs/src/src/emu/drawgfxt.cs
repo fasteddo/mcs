@@ -295,7 +295,7 @@ namespace mame
 
         //template <typename BitmapType, typename FunctionClass>
         //inline void gfx_element::drawgfx_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, FunctionClass pixel_op)
-        void drawgfx_core<BitmapType, BitmapType_PixelType, BitmapType_PixelTypeBufferPointer>
+        void drawgfx_core<BitmapType, BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer>
         (
             BitmapType dest,
             rectangle cliprect,
@@ -306,8 +306,9 @@ namespace mame
             s32 desty,
             FunctionClass pixel_op
         )
-            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelTypeBufferPointer> 
-            where BitmapType_PixelTypeBufferPointer : PointerU8
+            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer> 
+            where BitmapType_PixelType_OPS : PixelType_operators, new()
+            where BitmapType_PixelTypePointer : PointerU8
         {
             profiler_global.g_profiler.start(profile_type.PROFILER_DRAWGFX);
 
@@ -573,7 +574,7 @@ namespace mame
 
         //template <typename BitmapType, typename PriorityType, typename FunctionClass>
         //inline void gfx_element::drawgfx_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, PriorityType &priority, FunctionClass pixel_op)
-        void drawgfx_core<BitmapType, BitmapType_PixelType, BitmapType_PixelTypeBufferPointer, PriorityType>
+        void drawgfx_core<BitmapType, BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer, PriorityType>
         (
             BitmapType dest,
             rectangle cliprect,
@@ -585,8 +586,9 @@ namespace mame
             PriorityType priority,
             FunctionClass pixel_op
         )
-            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelTypeBufferPointer> 
-            where BitmapType_PixelTypeBufferPointer : PointerU8
+            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer> 
+            where BitmapType_PixelType_OPS : PixelType_operators, new()
+            where BitmapType_PixelTypePointer : PointerU8
         {
             throw new emu_unimplemented();
         }
@@ -614,7 +616,7 @@ namespace mame
 
         //template <typename BitmapType, typename FunctionClass>
         //inline void copybitmap_core(BitmapType &dest, const BitmapType &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, FunctionClass pixel_op)
-        public static void copybitmap_core<BitmapType, BitmapType_PixelType, BitmapType_PixelTypeBufferPointer>
+        public static void copybitmap_core<BitmapType, BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer>
         (
             BitmapType dest,
             BitmapType src,
@@ -625,8 +627,9 @@ namespace mame
             rectangle cliprect,
             gfx_element.FunctionClass pixel_op
         )
-            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelTypeBufferPointer> 
-            where BitmapType_PixelTypeBufferPointer : PointerU8
+            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer> 
+            where BitmapType_PixelType_OPS : PixelType_operators, new()
+            where BitmapType_PixelTypePointer : PointerU8
         {
             profiler_global.g_profiler.start(profile_type.PROFILER_COPYBITMAP);
 
@@ -945,7 +948,7 @@ namespace mame
 
         //template <typename BitmapType, typename PriorityType, typename FunctionClass>
         //inline void copybitmap_core(BitmapType &dest, const BitmapType &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, PriorityType &priority, FunctionClass pixel_op)
-        public static void copybitmap_core<BitmapType, BitmapType_PixelType, BitmapType_PixelTypeBufferPointer, PriorityType>
+        public static void copybitmap_core<BitmapType, BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer, PriorityType>
         (
             BitmapType dest,
             BitmapType src,
@@ -957,8 +960,9 @@ namespace mame
             PriorityType priority,
             gfx_element.FunctionClass pixel_op
         )
-            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelTypeBufferPointer> 
-            where BitmapType_PixelTypeBufferPointer : PointerU8
+            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer> 
+            where BitmapType_PixelType_OPS : PixelType_operators, new()
+            where BitmapType_PixelTypePointer : PointerU8
         {
             throw new emu_unimplemented();
         }

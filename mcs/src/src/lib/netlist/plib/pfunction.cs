@@ -67,24 +67,59 @@ namespace mame.plib
 
         class rpn_inst
         {
-            public rpn_cmd m_cmd;
+            rpn_cmd m_cmd;
             //union
             //{
             //    NT          val;
             //    std::size_t index;
             //} m_param;
-            public struct param_union
+            struct param_union
             {
                 public NT val;
                 public size_t index;
             }
-            public param_union m_param;
+            param_union m_param;
+
 
             public rpn_inst() { m_cmd = rpn_cmd.ADD;  m_param = new param_union() { val = plib.constants<NT, NT_OPS>.zero(), index = 0 }; }
+
+            public rpn_inst(rpn_cmd cmd, size_t index = 0)
+            {
+                m_cmd = cmd;
+
+
+                m_param.index = index;
+            }
+
+            public rpn_inst(NT v)
+            {
+                m_cmd = rpn_cmd.PUSH_CONST;
+
+
+                m_param.val = v;
+            }
+
+
+            public rpn_cmd cmd()
+            {
+                return m_cmd;
+            }
+
+            public NT value()
+            {
+                return m_param.val; // NOLINT
+            }
+
+            public size_t index()
+            {
+                return m_param.index; // NOLINT
+            }
         }
 
 
         const size_t MAX_STACK = 32;
+
+        public class size_t_constant_MAX_STACK : uint32_constant { public UInt32 value { get { return MAX_STACK; } } }
 
 
         class pcmd_t
@@ -419,7 +454,7 @@ namespace mame.plib
 
         //template <typename NT>
         //static inline typename std::enable_if<std::is_floating_point<NT>::value, NT>::type
-        NT lfsr_random_nl_fptype(ref uint16_t lfsr)  //lfsr_random(std::uint16_t &lfsr) noexcept
+        NT lfsr_random(ref uint16_t lfsr)  //lfsr_random(std::uint16_t &lfsr) noexcept
         {
             uint16_t lsb = (uint16_t)(lfsr & 1);
             lfsr >>= 1;
@@ -429,23 +464,29 @@ namespace mame.plib
         }
 
 
-        //template <typename NT>
-        //static inline typename std::enable_if<std::is_integral<NT>::value, NT>::type
-        //lfsr_random(std::uint16_t &lfsr) noexcept
-
-
-        static NT ST1(std.array<NT, size_t_constant_20> stack, UInt32 ptr) { return stack[ptr]; }  //#define ST1 stack[ptr]
-        static NT ST2(std.array<NT, size_t_constant_20> stack, UInt32 ptr) { return stack[ptr - 1]; }  //#define ST2 stack[ptr-1]
+        static NT ST0(Pointer<NT> ptr) { return (ptr + 1)[0]; }  //#define ST0 *(ptr+1)
+        static NT ST1(Pointer<NT> ptr) { return ptr[0]; }  //#define ST1 *ptr
+        static NT ST2(Pointer<NT> ptr) { return (ptr - 1)[0]; }  //#define ST2 *(ptr-1)
 
         //#define OP(OP, ADJ, EXPR) \
         //case OP: \
         //    ptr-= (ADJ); \
-        //    stack[ptr-1] = (EXPR); \
+        //    *(ptr-1) = (EXPR); \
         //    break;
-        static void OP(ref UInt32 ptr, std.array<NT, size_t_constant_20> stack, rpn_cmd OP, UInt32 ADJ, NT EXPR)
+        static void OP(Pointer<NT> ptr, rpn_cmd OP, UInt32 ADJ, NT EXPR)
         {
             ptr -= ADJ;
-            stack[ptr - 1] = EXPR;
+            (ptr - 1)[0] = EXPR;  //*(ptr-1) = (EXPR); \
+        }
+
+
+        //#define OP0(OP, EXPR) \
+        //case OP: \
+        //    *(ptr++) = (EXPR); \
+        //    break;
+        static void OP0(Pointer<NT> ptr, rpn_cmd OP, NT EXPR)
+        {
+            (ptr++)[0] = EXPR;
         }
 
 
@@ -457,39 +498,44 @@ namespace mame.plib
         //template <typename NT>
         public NT evaluate(std.vector<NT> values = null)  //value_type evaluate(const values_container &values = values_container()) noexcept;
         {
-            if (values == null)
-                values = new std.vector<NT>();
-
-            std.array<NT, size_t_constant_20> stack = new std.array<NT, size_t_constant_20>();  //std::array<NT, 20> stack = { plib::constants<NT>::zero() };
-            UInt32 ptr = 0;
-            stack[0] = plib.constants<NT, NT_OPS>.zero();
+            std.array<NT, size_t_constant_MAX_STACK> stack = new std.array<NT, size_t_constant_MAX_STACK>(); // NOLINT  //std::array<value_type, MAX_STACK> stack; // NOLINT
+            Pointer<NT> ptr = stack.data();  //value_type *ptr = stack.data();
+            var zero = plib.constants<NT, NT_OPS>.zero();  //var zero = plib.constants<value_type>.zero();
+            var one = plib.constants<NT, NT_OPS>.one();  //var one = plib.constants<value_type>.one();
             foreach (var rc in m_precompiled)
             {
-                switch (rc.m_cmd)
+                switch (rc.cmd())
                 {
-                    case rpn_cmd.ADD: OP(ref ptr, stack, rpn_cmd.ADD, 1, ops.add(ST2(stack, ptr), ST1(stack, ptr)));  break;  //case OP(ADD,  1, ST2 + ST1):
-                    case rpn_cmd.MULT: OP(ref ptr, stack, rpn_cmd.MULT, 1, ops.multiply(ST2(stack, ptr), ST1(stack, ptr)));  break;  //case OP(MULT, 1, ST2 * ST1):
-                    case rpn_cmd.SUB: OP(ref ptr, stack, rpn_cmd.SUB,  1, ops.subtract(ST2(stack, ptr), ST1(stack, ptr)));  break;  //case OP(SUB,  1, ST2 - ST1):
-                    case rpn_cmd.DIV: OP(ref ptr, stack, rpn_cmd.DIV,  1, ops.divide(ST2(stack, ptr), ST1(stack, ptr)));  break;  //case OP(DIV,  1, ST2 / ST1):
-                    case rpn_cmd.POW: OP(ref ptr, stack, rpn_cmd.POW,  1, plib.pglobal.pow<NT, NT_OPS>(ST2(stack, ptr), ST1(stack, ptr)));  break;  //case OP(POW,  1, plib.pow(ST2, ST1)):
-                    case rpn_cmd.SIN: OP(ref ptr, stack, rpn_cmd.SIN,  0, plib.pglobal.sin<NT, NT_OPS>(ST2(stack, ptr)));  break;  //case OP(SIN,  0, plib.sin(ST2)):
-                    case rpn_cmd.COS: OP(ref ptr, stack, rpn_cmd.COS,  0, plib.pglobal.cos<NT, NT_OPS>(ST2(stack, ptr)));  break;  //case OP(COS,  0, plib.cos(ST2)):
-                    case rpn_cmd.MAX: OP(ref ptr, stack, rpn_cmd.MAX,  1, ops.max(ST2(stack, ptr), ST1(stack, ptr)));  break;  //case OP(MAX,  1, std.max(ST2, ST1)):
-                    case rpn_cmd.MIN: OP(ref ptr, stack, rpn_cmd.MIN,  1, ops.min(ST2(stack, ptr), ST1(stack, ptr)));  break;  //case OP(MIN,  1, std.min(ST2, ST1)):
-                    case rpn_cmd.TRUNC: OP(ref ptr, stack, rpn_cmd.TRUNC,  0, plib.pglobal.trunc<NT, NT_OPS>(ST2(stack, ptr)));  break;  //case OP(TRUNC,  0, plib.trunc(ST2)):
-                    case rpn_cmd.RAND:
-                        stack[ptr++] = lfsr_random_nl_fptype(ref m_lfsr);
-                        break;
-                    case rpn_cmd.PUSH_INPUT:
-                        stack[ptr++] = values[rc.m_param.index];  //stack[ptr++] = values[rc.m_param.index];
-                        break;
-                    case rpn_cmd.PUSH_CONST:
-                        stack[ptr++] = rc.m_param.val;
+                    case rpn_cmd.ADD:   OP(ptr, rpn_cmd.ADD,  1, ops.add(ST2(ptr), ST1(ptr))); break;
+                    case rpn_cmd.MULT:  OP(ptr, rpn_cmd.MULT, 1, ops.multiply(ST2(ptr), ST1(ptr))); break;
+                    case rpn_cmd.SUB:   OP(ptr, rpn_cmd.SUB,  1, ops.subtract(ST2(ptr), ST1(ptr))); break;
+                    case rpn_cmd.DIV:   OP(ptr, rpn_cmd.DIV,  1, ops.divide(ST2(ptr), ST1(ptr))); break;
+                    case rpn_cmd.EQ:    OP(ptr, rpn_cmd.EQ,   1, ops.equals(ST2(ptr), ST1(ptr)) ? one : zero); break;
+                    case rpn_cmd.NE:    OP(ptr, rpn_cmd.NE,   1, ops.not_equals(ST2(ptr), ST1(ptr)) ? one : zero); break;
+                    case rpn_cmd.GT:    OP(ptr, rpn_cmd.GT,   1, ops.greater_than(ST2(ptr), ST1(ptr)) ? one : zero); break;
+                    case rpn_cmd.LT:    OP(ptr, rpn_cmd.LT,   1, ops.less_than(ST2(ptr), ST1(ptr)) ? one : zero); break;
+                    case rpn_cmd.LE:    OP(ptr, rpn_cmd.LE,   1, ops.less_than_or_equal(ST2(ptr), ST1(ptr)) ? one : zero); break;
+                    case rpn_cmd.GE:    OP(ptr, rpn_cmd.GE,   1, ops.greater_than_or_equal(ST2(ptr), ST1(ptr)) ? one : zero); break;
+                    case rpn_cmd.IF:    OP(ptr, rpn_cmd.IF,   2, ops.not_equals(ST2(ptr), zero) ? ST1(ptr) : ST0(ptr)); break;
+                    case rpn_cmd.NEG:   OP(ptr, rpn_cmd.NEG,  0, ops.neg(ST2(ptr))); break;
+                    case rpn_cmd.POW:   OP(ptr, rpn_cmd.POW,  1, ops.pow(ST2(ptr), ST1(ptr))); break;
+                    case rpn_cmd.LOG:   OP(ptr, rpn_cmd.LOG,  0, ops.log(ST2(ptr))); break;
+                    case rpn_cmd.SIN:   OP(ptr, rpn_cmd.SIN,  0, ops.sin(ST2(ptr))); break;
+                    case rpn_cmd.COS:   OP(ptr, rpn_cmd.COS,  0, ops.cos(ST2(ptr))); break;
+                    case rpn_cmd.MAX:   OP(ptr, rpn_cmd.MAX,  1, ops.max(ST2(ptr), ST1(ptr))); break;
+                    case rpn_cmd.MIN:   OP(ptr, rpn_cmd.MIN,  1, ops.min(ST2(ptr), ST1(ptr))); break;
+                    case rpn_cmd.TRUNC: OP(ptr, rpn_cmd.TRUNC, 0, ops.trunc(ST2(ptr))); break;
+                    case rpn_cmd.RAND:  OP0(ptr, rpn_cmd.RAND, lfsr_random(ref m_lfsr)); break;
+                    case rpn_cmd.PUSH_INPUT: OP0(ptr, rpn_cmd.PUSH_INPUT, values[rc.index()]); break;
+                    case rpn_cmd.PUSH_CONST: OP0(ptr, rpn_cmd.PUSH_CONST, rc.value()); break;
+                    // please compiler
+                    case rpn_cmd.LP:
+                    case rpn_cmd.RP:
                         break;
                 }
             }
 
-            return stack[ptr - 1];
+            return (ptr - 1)[0];  //return *(ptr-1);
         }
 
 
@@ -498,6 +544,12 @@ namespace mame.plib
         //{
         //    st.save_item(m_lfsr, "m_lfsr");
         //}
+
+
+        void compress()
+        {
+            throw new emu_unimplemented();
+        }
 
 
         //template <typename NT>
@@ -512,7 +564,7 @@ namespace mame.plib
                 var p = pcmds().find(cmd);
                 if (p != default)
                 {
-                    rc.m_cmd = p.cmd;
+                    rc = new rpn_inst(p.cmd);
                     stk -= p.adj;
                 }
                 else
@@ -521,31 +573,24 @@ namespace mame.plib
                     {
                         if (inputs[i] == cmd)
                         {
-                            rc.m_cmd = rpn_cmd.PUSH_INPUT;
-                            rc.m_param.val = ops.cast(i);
-                            rc.m_param.index = i;
+                            rc = new rpn_inst(rpn_cmd.PUSH_INPUT, i);
                             stk += 1;
                             break;
                         }
                     }
 
-                    if (rc.m_cmd != rpn_cmd.PUSH_INPUT)
+                    if (rc.cmd() != rpn_cmd.PUSH_INPUT)
                     {
-                        //using fl_t = decltype(rc.m_param.val);
-
-                        rc.m_cmd = rpn_cmd.PUSH_CONST;
                         bool err = false;
                         var rs = plib.pglobal.right(cmd, 1);
-                        var r = units_si().find(rs);  //auto r=units_si<fl_t>().find(rs);
-                        if (ops.equals(r, ops.default_))  //if (r == units_si<fl_t>().end())
+                        var r = units_si().find(rs);  //auto r=units_si<NT>().find(rs);
+                        if (ops.equals(r, ops.default_))  //if (r == units_si<NT>().end())
                         {
-                            rc.m_param.val = ops.pstonum_ne(false, cmd, out err);  //rc.m_param.val = plib::pstonum_ne<fl_t>(cmd, err);
-                            rc.m_param.index = (size_t)ops.cast_int(rc.m_param.val);
+                            rc = new rpn_inst(ops.pstonum_ne(false, cmd, out err));  //rc = rpn_inst(plib::pstonum_ne<NT>(cmd, err));
                         }
                         else
                         {
-                            rc.m_param.val = ops.multiply(ops.pstonum_ne(false, plib.pglobal.left(cmd, cmd.length() - 1), out err), r);  //rc.m_param.val = plib::pstonum_ne<fl_t>(plib::left(cmd, cmd.size()-1), err) * r->second;
-                            rc.m_param.index = (size_t)ops.cast_int(rc.m_param.val);
+                            rc = new rpn_inst(ops.multiply(ops.pstonum_ne(false, plib.pglobal.left(cmd, cmd.length() - 1), out err), r));  //rc = rpn_inst(plib::pstonum_ne<NT>(plib::left(cmd, cmd.length()-1), err) * r->second);
                         }
 
                         if (err)
@@ -561,11 +606,16 @@ namespace mame.plib
                 if (stk >= MAX_STACK)
                     throw new pexception(new plib.pfmt("pfunction: stack overflow on token <{0}> in <{1}>").op(cmd, expr));
 
+                if (rc.cmd() == rpn_cmd.LP || rc.cmd() == rpn_cmd.RP)
+                    throw new pexception(new plib.pfmt("pfunction: parenthesis inequality on token <{1}> in <{2}>").op(cmd, expr));
+
                 m_precompiled.push_back(rc);
             }
 
             if (stk != 1)
                 throw new pexception(new plib.pfmt("pfunction: stack count {0} different to one on <{1}>").op(stk, expr));
+
+            compress();
         }
     }
 

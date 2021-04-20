@@ -858,7 +858,7 @@ namespace mame
          *************************************/
 
         //ROM_START( paperboy ) // ALL of these roms should be 136034-xxx but the correct labels aren't known per game rev!
-        static readonly List<tiny_rom_entry> rom_paperboy = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_paperboy = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x90000, "maincpu", 0 ), // 9*64k for T11 code
             ROM_LOAD16_BYTE( "cpu_l07.rv3", 0x008000, 0x004000, CRC("4024bb9b") + SHA1("9030ce5a6a1a3d769c699a92b32a55013f9766aa") ),
@@ -909,7 +909,7 @@ namespace mame
 
 
         //ROM_START( 720 )
-        static readonly List<tiny_rom_entry> rom_720 = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_720 = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x90000, "maincpu", 0 ),     // 9 * 64k T11 code
             ROM_LOAD16_BYTE( "136047-3126.7lm", 0x008000, 0x004000, CRC("43abd367") + SHA1("bb58c42f25ef0ee5357782652e9e2b28df0ba82e") ),

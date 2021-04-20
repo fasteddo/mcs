@@ -10,6 +10,7 @@ using flags_cache = mame.util.lru_cache_map<mame.game_driver, mame.ui.menu_selec
 using osd_ticks_t = System.UInt64;
 using s_bios = mame.std.vector<System.Collections.Generic.KeyValuePair<string, int>>;
 using s_parts = mame.std.unordered_map<string, string>;
+using size_t = System.UInt32;
 using texture_ptr = mame.render_texture;
 using texture_ptr_vector = mame.std.vector<mame.render_texture>;
 using uint8_t = System.Byte;
@@ -18,6 +19,67 @@ using uint32_t = System.UInt32;
 
 namespace mame.ui
 {
+    static class selmenu_global
+    {
+        public static void load_image(out bitmap_argb32 bitmap, emu_file file, string base_)
+        {
+            bitmap = new bitmap_argb32();
+
+            if (file.open(base_ + ".png") == osd_file.error.NONE)
+            {
+                rendutil_global.render_load_png(out bitmap, file.core_file_get());
+                file.close();
+            }
+
+            if (!bitmap.valid() && (file.open(base_ + ".jpg") == osd_file.error.NONE))
+            {
+                rendutil_global.render_load_jpeg(out bitmap, file.core_file_get());
+                file.close();
+            }
+
+            if (!bitmap.valid() && (file.open(base_ + ".bmp") == osd_file.error.NONE))
+            {
+                rendutil_global.render_load_msdib(out bitmap, file.core_file_get());
+                file.close();
+            }
+        }
+
+
+        public static void load_driver_image(out bitmap_argb32 bitmap, emu_file file, game_driver driver)
+        {
+            // try to load snapshot first from saved "0000.png" file
+            string fullname = driver.name;
+            load_image(out bitmap, file, fullname + global_object.PATH_SEPARATOR + "0000");
+
+            // if fail, attempt to load from standard file
+            if (!bitmap.valid())
+                load_image(out bitmap, file, fullname);
+
+            // if fail again, attempt to load from parent file
+            if (!bitmap.valid())
+            {
+                // ignore BIOS sets
+                bool isclone = std.strcmp(driver.parent, "0") != 0;
+                if (isclone)
+                {
+                    int cx = driver_list.find(driver.parent);
+                    if ((0 <= cx) && (driver_list.driver(cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0)
+                        isclone = false;
+                }
+
+                if (isclone)
+                {
+                    fullname = driver.parent;
+                    load_image(out bitmap, file, fullname + global_object.PATH_SEPARATOR + "0000");
+
+                    if (!bitmap.valid())
+                        load_image(out bitmap, file, fullname);
+                }
+            }
+        }
+    }
+
+
     abstract class menu_select_launch : menu
     {
         // tab navigation
@@ -176,14 +238,14 @@ namespace mame.ui
                 // create a texture for snapshot
                 m_snapx_texture = render.texture_alloc(render_texture.hq_scale);  //m_snapx_texture.reset(render.texture_alloc(render_texture::hq_scale));
 
-                //std::memcpy(&m_no_avail_bitmap.pix32(0), no_avail_bmp, 256 * 256 * sizeof(uint32_t));
-                PointerU32 m_no_avail_bitmapBuf = m_no_avail_bitmap.pix32(0);
-                for (int i = 0; i < 256 * 256; i++)  // sizeof(UInt32)
+                //std::memcpy(&m_no_avail_bitmap.pix(0), no_avail_bmp, 256 * 256 * sizeof(uint32_t));
+                PointerU32 m_no_avail_bitmapBuf = m_no_avail_bitmap.pix(0);
+                for (int i = 0; i < 256 * 256; i++)
                     m_no_avail_bitmapBuf[i] = defimg_global.no_avail_bmp[i];
 
-                //std::memcpy(&m_star_bitmap.pix32(0), favorite_star_bmp, 32 * 32 * sizeof(uint32_t));
-                PointerU32 m_star_bitmapBuf = m_star_bitmap.pix32(0);
-                for (int i = 0; i < 32 * 32; i++)  // sizeof(UInt32)
+                //std::memcpy(&m_star_bitmap.pix(0), favorite_star_bmp, 32 * 32 * sizeof(uint32_t));
+                PointerU32 m_star_bitmapBuf = m_star_bitmap.pix(0);
+                for (int i = 0; i < 32 * 32; i++)
                     m_star_bitmapBuf[i] = starimg_global.favorite_star_bmp[i];
 
                 m_star_texture = render.texture_alloc();  //m_star_texture.reset(render.texture_alloc());
@@ -194,16 +256,16 @@ namespace mame.ui
                 m_toolbar_texture.reserve(toolbar_global.UI_TOOLBAR_BUTTONS);
                 m_sw_toolbar_texture.reserve(toolbar_global.UI_TOOLBAR_BUTTONS);
 
-                for (UInt32 i = 0; i < toolbar_global.UI_TOOLBAR_BUTTONS; ++i)
+                for (size_t i = 0; i < toolbar_global.UI_TOOLBAR_BUTTONS; ++i)
                 {
                     m_toolbar_bitmap.emplace_back(new bitmap_argb32(32, 32));
                     m_sw_toolbar_bitmap.emplace_back(new bitmap_argb32(32, 32));
                     m_toolbar_texture.emplace_back(render.texture_alloc());  //m_toolbar_texture.emplace_back(render.texture_alloc(), render);
                     m_sw_toolbar_texture.emplace_back(render.texture_alloc());  //m_sw_toolbar_texture.emplace_back(render.texture_alloc(), render);
 
-                    //std::memcpy(&m_toolbar_bitmap.back().pix32(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
-                    PointerU32 m_toolbar_bitmapBuf = m_toolbar_bitmap.back().pix32(0);
-                    for (int idx = 0; idx < 32 * 32; idx++)  // sizeof(uint32_t)
+                    //std::memcpy(&m_toolbar_bitmap.back().pix(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
+                    PointerU32 m_toolbar_bitmapBuf = m_toolbar_bitmap.back().pix(0);
+                    for (int idx = 0; idx < 32 * 32; idx++)
                         m_toolbar_bitmapBuf[idx] = toolbar_global.toolbar_bitmap_bmp[i, idx];
 
                     if (m_toolbar_bitmap.back().valid())
@@ -213,9 +275,9 @@ namespace mame.ui
 
                     if ((i == 0U) || (i == 2U))
                     {
-                        //std::memcpy(&m_sw_toolbar_bitmap.back().pix32(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
-                        PointerU32 m_sw_toolbar_bitmapBuf = m_sw_toolbar_bitmap.back().pix32(0);
-                        for (int idx = 0; idx < 32 * 32; idx++)  // sizeof(uint32_t)
+                        //std::memcpy(&m_sw_toolbar_bitmap.back().pix(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
+                        PointerU32 m_sw_toolbar_bitmapBuf = m_sw_toolbar_bitmap.back().pix(0);
+                        for (int idx = 0; idx < 32 * 32; idx++)
                             m_sw_toolbar_bitmapBuf[idx] = toolbar_global.toolbar_bitmap_bmp[i, idx];
 
                         if (m_sw_toolbar_bitmap.back().valid())
@@ -797,14 +859,14 @@ namespace mame.ui
             if (mouse_in_rect(ar_x0, ar_y0, ar_x1, ar_y1) && current != dmax)
             {
                 ui().draw_textured_box(container(), ar_x0 + 0.01f, ar_y0, ar_x1 - 0.01f, ar_y1, ui().colors().mouseover_bg_color(), new rgb_t(43, 43, 43),
-                        hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 set_hover(utils_global.HOVER_UI_RIGHT);
                 fgcolor_right = ui().colors().mouseover_color();
             }
             else if (mouse_in_rect(al_x0, al_y0, al_x1, al_y1) && current != dmin)
             {
                 ui().draw_textured_box(container(), al_x0 + 0.01f, al_y0, al_x1 - 0.01f, al_y1, ui().colors().mouseover_bg_color(), new rgb_t(43, 43, 43),
-                        hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 set_hover(utils_global.HOVER_UI_LEFT);
                 fgcolor_left = ui().colors().mouseover_color();
             }
@@ -835,7 +897,7 @@ namespace mame.ui
             if (mouse_in_rect(origx1, oy1, origx2, oy1 + (line_height * text_size)))
             {
                 ui().draw_textured_box(container(), origx1 + 0.01f, oy1, origx2 - 0.01f, oy1 + (line_height * text_size), ui().colors().mouseover_bg_color(),
-                        new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 set_hover((ub == 0) ? utils_global.HOVER_DAT_UP : utils_global.HOVER_DAT_DOWN);
                 fgcolor = ui().colors().mouseover_color();
             }
@@ -938,7 +1000,7 @@ namespace mame.ui
                             container(),
                             x1, y1, x2, y1 + line_height_max,
                             bgcolor, new rgb_t(255, 43, 43, 43),
-                            hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
 
                 // finally draw the text itself and move to the next line
@@ -1094,6 +1156,21 @@ namespace mame.ui
             {
                 throw new emu_unimplemented();  // put a check for whatever type is the ref object
             }
+        }
+
+
+        protected static string make_audit_fail_text(bool found, media_auditor auditor)
+        {
+            string str = "";  //std::ostringstream str;
+            str += "The selected machine is missing one or more required ROM or CHD images. Please select a different machine.\n\n";
+            if (found)
+            {
+                auditor.summarize(null, ref str);
+                str += "\n";
+            }
+
+            str += "Press any key to continue.";
+            return str.str();
         }
 
 
@@ -1287,7 +1364,7 @@ namespace mame.ui
             if (bgcolor != ui().colors().text_bg_color())
             {
                 ui().draw_textured_box(container(), origx1 + ((middle - title_size) * 0.5f), origy1, origx1 + ((middle + title_size) * 0.5f),
-                        origy1 + line_height, bgcolor, new rgb_t(255, 43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        origy1 + line_height, bgcolor, new rgb_t(255, 43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
             }
 
             float unused1;
@@ -1477,7 +1554,7 @@ namespace mame.ui
                         ui().draw_text_box(container(), hover_msg[z], text_layout.text_justify.CENTER, 0.5f, ypos, ui().colors().background_color());
                     }
 
-                    container().add_quad(x1, y1, x2, y2, color, t_texture[z], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                    container().add_quad(x1, y1, x2, y2, color, t_texture[z], PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                     x1 += space_x + ((z < toolbar_global.UI_TOOLBAR_BUTTONS - 1) ? 0.001f : 0.0f);
                     x2 = x1 + space_x;
                 }
@@ -1492,7 +1569,7 @@ namespace mame.ui
         {
             float y1 = y0 + ui().get_line_height();
             float x1 = x0 + ui().get_line_height() * container().manager().ui_aspect(container());
-            container().add_quad(x0, y0, x1, y1, rgb_t.white(), m_cache.star_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_PACKABLE);
+            container().add_quad(x0, y0, x1, y1, rgb_t.white(), m_cache.star_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_PACKABLE);
         }
 
 
@@ -1507,7 +1584,7 @@ namespace mame.ui
                 float ud_arrow_width = ui().get_line_height() * container().manager().ui_aspect(container());
                 float x1 = x0 + ud_arrow_width;
                 float y1 = y0 + ui().get_line_height();
-                container().add_quad(x0, y0, x1, y1, rgb_t.white(), icon, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_quad(x0, y0, x1, y1, rgb_t.white(), icon, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
             }
         }
 
@@ -2156,7 +2233,7 @@ namespace mame.ui
                             container(),
                             line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, 
                             bgcolor, new rgb_t(43, 43, 43),
-                            hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
                 else if (itemnum == hover())
                 {
@@ -2170,7 +2247,7 @@ namespace mame.ui
                     fgcolor = fgcolor3 = ui().options().mouseover_color();
                     bgcolor = ui().colors().mouseover_bg_color();
                     ui().draw_textured_box(container(), line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, bgcolor, new rgb_t(43, 43, 43),
-                            hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
 
                 if (linenum == 0 && top_line != 0)
@@ -2195,7 +2272,7 @@ namespace mame.ui
                 {
                     // if we're just a divider, draw a line
                     container().add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height,
-                            UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                 }
                 else if (pitem.subtext.empty())
                 {
@@ -2276,7 +2353,7 @@ namespace mame.ui
                     fgcolor = new rgb_t(0xff, 0xff, 0x00);
                     bgcolor = new rgb_t(0xff, 0xff, 0xff);
                     ui().draw_textured_box(container(), line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, bgcolor, new rgb_t(43, 43, 43),
-                            hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
                 // else if the mouse is over this item, draw with a different background
                 else if (count == hover())
@@ -2289,7 +2366,7 @@ namespace mame.ui
                 if (pitem.type == menu_item_type.SEPARATOR)
                 {
                     container().add_line(visible_left, line + 0.5f * line_height, visible_left + visible_width, line + 0.5f * line_height,
-                            UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                 }
                 else
                 {
@@ -2322,7 +2399,7 @@ namespace mame.ui
                 if (alpha > 255)
                     alpha = 255;
                 if (alpha >= 0)
-                    container().add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t((byte)alpha, 0x00, 0x00, 0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                    container().add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t((byte)alpha, 0x00, 0x00, 0x00), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
             }
         }
 
@@ -2383,7 +2460,7 @@ namespace mame.ui
             ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
             // add separator line
-            container().add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container().add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
             string [] buffer = new string[utils_global.RP_LAST + 1];
             buffer[utils_global.RP_IMAGES] = "Images";
@@ -2416,7 +2493,7 @@ namespace mame.ui
                 if (ui_globals.rpanel != cells)
                 {
                     container().add_line(x1, y1 + line_height, x1 + midl, y1 + line_height, UI_LINE_WIDTH,
-                            ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                     if (fgcolor != ui().colors().mouseover_color())
                         fgcolor = ui().colors().clone_color();
                 }
@@ -2426,12 +2503,12 @@ namespace mame.ui
                     fgcolor = new rgb_t(0xff, 0xff, 0x00);
                     bgcolor = new rgb_t(0xff, 0xff, 0xff);
                     ui().draw_textured_box(container(), x1 + UI_LINE_WIDTH, y1 + UI_LINE_WIDTH, x1 + midl - UI_LINE_WIDTH, y1 + line_height,
-                            bgcolor, new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            bgcolor, new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
                 else if (bgcolor == ui().colors().mouseover_bg_color())
                 {
                     container().add_rect(x1 + UI_LINE_WIDTH, y1 + UI_LINE_WIDTH, x1 + midl - UI_LINE_WIDTH, y1 + line_height,
-                            bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            bgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
 
                 float unused1;
@@ -2476,44 +2553,16 @@ namespace mame.ui
                     if (software.startempty == 1)
                     {
                         // Load driver snapshot
-                        string fullname = software.driver.name + ".png";
-                        render_load_png(out tmp_bitmap, snapfile, null, fullname.c_str());
-
-                        if (!tmp_bitmap.valid())
-                        {
-                            fullname = software.driver.name + ".jpg";
-                            render_load_jpeg(out tmp_bitmap, snapfile, null, fullname.c_str());
-                        }
+                        selmenu_global.load_driver_image(out tmp_bitmap, snapfile, software.driver);
                     }
                     else
                     {
-                        // First attempt from name list
-                        string pathname = software.listname;
-                        string fullname = software.shortname + ".png";
-                        render_load_png(out tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
+                        selmenu_global.load_image(out tmp_bitmap, snapfile, software.listname + PATH_SEPARATOR + software.shortname);
 
+                        // Second attempt from driver name + part name
                         if (!tmp_bitmap.valid())
-                        {
-                            fullname = software.shortname + ".jpg";
-                            render_load_jpeg(out tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
-                        }
-
-                        if (!tmp_bitmap.valid())
-                        {
-                            // Second attempt from driver name + part name
-                            pathname = software.driver.name + software.part;
-                            fullname = software.shortname + ".png";
-                            render_load_png(out tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
-
-                            if (!tmp_bitmap.valid())
-                            {
-                                fullname = software.shortname + ".jpg";
-                                render_load_jpeg(out tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
-                            }
-                        }
+                            selmenu_global.load_image(out tmp_bitmap, snapfile, software.driver.name + software.part + PATH_SEPARATOR + software.shortname);
                     }
-
-                    snapfile.close();
 
                     m_cache.set_snapx_software(software);
                     m_switch_image = false;
@@ -2538,52 +2587,7 @@ namespace mame.ui
                     emu_file snapfile = new emu_file(searchstr, OPEN_FLAG_READ);
                     bitmap_argb32 tmp_bitmap;
 
-                    // try to load snapshot first from saved "0000.png" file
-                    string fullname = driver.name;
-                    render_load_png(out tmp_bitmap, snapfile, fullname.c_str(), "0000.png");
-
-                    if (!tmp_bitmap.valid())
-                        render_load_jpeg(out tmp_bitmap, snapfile, fullname.c_str(), "0000.jpg");
-
-                    // if fail, attemp to load from standard file
-                    if (!tmp_bitmap.valid())
-                    {
-                        fullname = driver.name + ".png";
-                        render_load_png(out tmp_bitmap, snapfile, null, fullname.c_str());
-
-                        if (!tmp_bitmap.valid())
-                        {
-                            fullname = driver.name + ".jpg";
-                            render_load_jpeg(out tmp_bitmap, snapfile, null, fullname.c_str());
-                        }
-                    }
-
-                    // if fail again, attemp to load from parent file
-                    if (!tmp_bitmap.valid())
-                    {
-                        // set clone status
-                        bool cloneof = strcmp(driver.parent, "0") != 0;
-                        if (cloneof)
-                        {
-                            int cx = driver_list.find(driver.parent);
-                            if ((cx >= 0) && (driver_list.driver(cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0)
-                                cloneof = false;
-                        }
-
-                        if (cloneof)
-                        {
-                            fullname = driver.parent + ".png";
-                            render_load_png(out tmp_bitmap, snapfile, null, fullname.c_str());
-
-                            if (!tmp_bitmap.valid())
-                            {
-                                fullname = driver.parent + ".jpg";
-                                render_load_jpeg(out tmp_bitmap, snapfile, null, fullname.c_str());
-                            }
-                        }
-                    }
-
-                    snapfile.close();
+                    selmenu_global.load_driver_image(out tmp_bitmap, snapfile, driver);
 
                     m_cache.set_snapx_driver(driver);
                     m_switch_image = false;
@@ -2637,7 +2641,7 @@ namespace mame.ui
                         origx1 + ((middle - title_size) * 0.5f), origy1 + ui().box_tb_border(),
                         origx1 + ((middle + title_size) * 0.5f), origy1 + ui().box_tb_border() + line_height,
                         bgcolor, new rgb_t(43, 43, 43),
-                        hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
             }
 
             float unused1;
@@ -2670,7 +2674,7 @@ namespace mame.ui
                 {
                     for (int y = 0; y < 256; y++)
                     {
-                        tmp_bitmap.pix32(y, x)[0] = src.pix32(y, x)[0];
+                        tmp_bitmap.pix(y, x)[0] = src.pix(y, x)[0];
                     }
                 }
                 no_available = true;
@@ -2739,7 +2743,7 @@ namespace mame.ui
                 {
                     for (int y = 0; y < dest_yPixel; y++)
                     {
-                        snapx_bitmap.pix32(y + y1, x + x1)[0] = dest_bitmap.pix32(y, x)[0];
+                        snapx_bitmap.pix(y + y1, x + x1)[0] = dest_bitmap.pix(y, x)[0];
                     }
                 }
 
@@ -2768,7 +2772,7 @@ namespace mame.ui
                 float y2 = origy2 - ui().box_tb_border() - line_height;
 
                 // apply texture
-                container().add_quad(x1, y1, x2, y2, rgb_t.white(), m_cache.snapx_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_quad(x1, y1, x2, y2, rgb_t.white(), m_cache.snapx_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
             }
         }
 

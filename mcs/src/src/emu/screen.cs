@@ -1161,7 +1161,7 @@ namespace mame
 
                     // create an empty container with a single quad
                     m_container.empty();
-                    m_container.add_quad(0.0f, 0.0f, 1.0f, 1.0f, color, m_texture[m_curtexture], PRIMFLAG_BLENDMODE(render_global.BLENDMODE_NONE) | render_global.PRIMFLAG_SCREENTEX(1));
+                    m_container.add_quad(0.0f, 0.0f, 1.0f, 1.0f, color, m_texture[m_curtexture], PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE) | render_global.PRIMFLAG_SCREENTEX(1));
                 }
             }
 
@@ -1597,8 +1597,8 @@ namespace mame
                     for (int y = 0; y < dstheight; y++)
                     {
                         bitmap_ind16 srcbitmap = (bitmap_ind16)m_scan_bitmaps[m_curbitmap][y];
-                        PointerU16 dst = curbitmap.as_ind16().pix16(y);  //u16 *dst = &curbitmap.as_ind16().pix16(y);
-                        PointerU16 src = srcbitmap.pix16(0);  //const u16 *src = &srcbitmap.pix16(0);
+                        PointerU16 dst = curbitmap.as_ind16().pix(y);  //u16 *dst = &curbitmap.as_ind16().pix(y);
+                        PointerU16 src = srcbitmap.pix(0);  //const u16 *src = &srcbitmap.pix(0);
                         int dx = (m_scan_widths[y] << 15) / dstwidth;
                         for (int x = 0; x < m_scan_widths[y]; x += dx)
                         {
@@ -1613,8 +1613,8 @@ namespace mame
                     for (int y = 0; y < dstheight; y++)
                     {
                         bitmap_rgb32 srcbitmap = (bitmap_rgb32)m_scan_bitmaps[m_curbitmap][y];
-                        PointerU32 dst = curbitmap.as_rgb32().pix32(y);  //u32 *dst = &curbitmap.as_rgb32().pix32(y);
-                        PointerU32 src = srcbitmap.pix32(0);  //const u32 *src = &srcbitmap.pix32(0);
+                        PointerU32 dst = curbitmap.as_rgb32().pix(y);  //u32 *dst = &curbitmap.as_rgb32().pix(y);
+                        PointerU32 src = srcbitmap.pix(0);  //const u32 *src = &srcbitmap.pix(0);
                         int dx = (m_scan_widths[y] << 15) / dstwidth;
                         for (int x = 0; x < dstwidth << 15; x += dx)
                         {

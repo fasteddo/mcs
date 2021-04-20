@@ -630,6 +630,8 @@ namespace mame
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count(m_screen, 8);
 
+            config.set_maximum_quantum(attotime.from_hz(6000));
+
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
             m_screen.target.set_raw(MASTER_CLOCK/3, 384, 0, 288, 264, 0, 224);
@@ -713,6 +715,8 @@ namespace mame
             n06xx.chip_select_callback(3).set("54xx", (int state) => { ((namco_54xx_device)subdevice("54xx")).chip_select(state); }).reg();
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count(m_screen, 8);
+
+            config.set_maximum_quantum(attotime.from_hz(6000));
 
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
@@ -801,6 +805,8 @@ namespace mame
 
             WATCHDOG_TIMER(config, "watchdog");
 
+            config.set_maximum_quantum(attotime.from_hz(6000));
+
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
             m_screen.target.set_raw(MASTER_CLOCK/3, 384, 0, 288, 264, 0, 224);
@@ -833,7 +839,7 @@ namespace mame
         ***************************************************************************/
 
         //ROM_START( galaga )
-        static readonly List<tiny_rom_entry> rom_galaga = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_galaga = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),     /* 64k for code for the first CPU  */
             ROM_LOAD( "gg1_1b.3p",    0x0000, 0x1000, CRC("ab036c9f") + SHA1("ca7f5da42d4e76fd89bb0b35198a23c01462fbfe") ),
@@ -868,7 +874,7 @@ namespace mame
 
 
         //ROM_START( xevious )
-        static readonly List<tiny_rom_entry> rom_xevious = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_xevious = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ), /* 64k for the first CPU */
             ROM_LOAD( "xvi_1.3p",     0x0000, 0x1000, CRC("09964dda") + SHA1("4882b25b0938a903f3a367455ba788a30759b5b0") ),
@@ -924,7 +930,7 @@ namespace mame
 
 
         //ROM_START( digdug )
-        static readonly List<tiny_rom_entry> rom_digdug = new List<tiny_rom_entry>()
+        static readonly MemoryContainer<tiny_rom_entry> rom_digdug = new MemoryContainer<tiny_rom_entry>()
         {
             ROM_REGION( 0x10000, "maincpu", 0 ), /* 64k for code for the first CPU  */
             ROM_LOAD( "dd1a.1",       0x0000, 0x1000, CRC("a80ec984") + SHA1("86689980410b9429cd7582c7a76342721c87d030") ),

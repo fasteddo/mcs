@@ -190,6 +190,7 @@ namespace mame
         uint8_t       m_dbbo;               /* 8-bit output data buffer (UPI-41 only) */
 
         bool          m_irq_state;          /* true if the IRQ line is active */
+        bool          m_irq_polled;         /* true if last instruction was JNI (and not taken) */
         bool          m_irq_in_progress;    /* true if an IRQ is in progress */
         bool          m_timer_overflow;     /* true on a timer overflow; cleared by taking interrupt */
         bool          m_timer_flag;         /* true on a timer overflow; cleared on JTF */
@@ -321,14 +322,14 @@ namespace mame
         void dis_i()          { burn_cycles(1); m_xirq_enabled = false; }
         void dis_tcnti()      { burn_cycles(1); m_tirq_enabled = false; m_timer_overflow = false; }
 
-        void djnz_r0()        { burn_cycles(2); execute_jcc(--R0 != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void djnz_r1()        { burn_cycles(2); execute_jcc(--R1 != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void djnz_r2()        { burn_cycles(2); execute_jcc(--R2 != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void djnz_r3()        { burn_cycles(2); execute_jcc(--R3 != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void djnz_r4()        { burn_cycles(2); execute_jcc(--R4 != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void djnz_r5()        { burn_cycles(2); execute_jcc(--R5 != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void djnz_r6()        { burn_cycles(2); execute_jcc(--R6 != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void djnz_r7()        { burn_cycles(2); execute_jcc(--R7 != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void djnz_r0()        { burn_cycles(2); execute_jcc(--R0 != 0); }
+        void djnz_r1()        { burn_cycles(2); execute_jcc(--R1 != 0); }
+        void djnz_r2()        { burn_cycles(2); execute_jcc(--R2 != 0); }
+        void djnz_r3()        { burn_cycles(2); execute_jcc(--R3 != 0); }
+        void djnz_r4()        { burn_cycles(2); execute_jcc(--R4 != 0); }
+        void djnz_r5()        { burn_cycles(2); execute_jcc(--R5 != 0); }
+        void djnz_r6()        { burn_cycles(2); execute_jcc(--R6 != 0); }
+        void djnz_r7()        { burn_cycles(2); execute_jcc(--R7 != 0); }
 
         void en_i()           { burn_cycles(1); m_xirq_enabled = true; }
         void en_tcnti()       { burn_cycles(1); m_tirq_enabled = true; }
@@ -375,28 +376,28 @@ namespace mame
         void inc_xr0()        { burn_cycles(1); ram_w(R0, (uint8_t)(ram_r(R0) + 1)); }
         void inc_xr1()        { burn_cycles(1); ram_w(R1, (uint8_t)(ram_r(R1) + 1)); }
 
-        void jb_0()           { burn_cycles(2); execute_jcc((m_a & 0x01) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jb_1()           { burn_cycles(2); execute_jcc((m_a & 0x02) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jb_2()           { burn_cycles(2); execute_jcc((m_a & 0x04) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jb_3()           { burn_cycles(2); execute_jcc((m_a & 0x08) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jb_4()           { burn_cycles(2); execute_jcc((m_a & 0x10) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jb_5()           { burn_cycles(2); execute_jcc((m_a & 0x20) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jb_6()           { burn_cycles(2); execute_jcc((m_a & 0x40) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jb_7()           { burn_cycles(2); execute_jcc((m_a & 0x80) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jc()             { burn_cycles(2); execute_jcc((m_psw & C_FLAG) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jf0()            { burn_cycles(2); execute_jcc((m_psw & F_FLAG) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jf1()            { burn_cycles(2); execute_jcc((m_sts & STS_F1) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jnc()            { burn_cycles(2); execute_jcc((m_psw & C_FLAG) == 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jni()            { burn_cycles(2); execute_jcc(m_irq_state ? (uint8_t)1 : (uint8_t)0); }
-        void jnibf()          { burn_cycles(2); execute_jcc((m_sts & STS_IBF) == 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jnt_0()          { burn_cycles(2); execute_jcc(test_r(0) == 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jnt_1()          { burn_cycles(2); execute_jcc(test_r(1) == 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jnz()            { burn_cycles(2); execute_jcc(m_a != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jobf()           { burn_cycles(2); execute_jcc((m_sts & STS_OBF) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jtf()            { burn_cycles(2); execute_jcc(m_timer_flag ? (uint8_t)1 : (uint8_t)0); m_timer_flag = false; }
-        void jt_0()           { burn_cycles(2); execute_jcc(test_r(0) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jt_1()           { burn_cycles(2); execute_jcc(test_r(1) != 0 ? (uint8_t)1 : (uint8_t)0); }
-        void jz()             { burn_cycles(2); execute_jcc(m_a == 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jb_0()           { burn_cycles(2); execute_jcc((m_a & 0x01) != 0); }
+        void jb_1()           { burn_cycles(2); execute_jcc((m_a & 0x02) != 0); }
+        void jb_2()           { burn_cycles(2); execute_jcc((m_a & 0x04) != 0); }
+        void jb_3()           { burn_cycles(2); execute_jcc((m_a & 0x08) != 0); }
+        void jb_4()           { burn_cycles(2); execute_jcc((m_a & 0x10) != 0); }
+        void jb_5()           { burn_cycles(2); execute_jcc((m_a & 0x20) != 0); }
+        void jb_6()           { burn_cycles(2); execute_jcc((m_a & 0x40) != 0); }
+        void jb_7()           { burn_cycles(2); execute_jcc((m_a & 0x80) != 0); }
+        void jc()             { burn_cycles(2); execute_jcc((m_psw & C_FLAG) != 0); }
+        void jf0()            { burn_cycles(2); execute_jcc((m_psw & F_FLAG) != 0); }
+        void jf1()            { burn_cycles(2); execute_jcc((m_sts & STS_F1) != 0); }
+        void jnc()            { burn_cycles(2); execute_jcc((m_psw & C_FLAG) == 0); }
+        void jni()            { burn_cycles(2); m_irq_polled = (m_irq_state == false); execute_jcc(m_irq_state); }
+        void jnibf()          { burn_cycles(2); m_irq_polled = (m_sts & STS_IBF) != 0; execute_jcc((m_sts & STS_IBF) == 0); }
+        void jnt_0()          { burn_cycles(2); execute_jcc(test_r(0) == 0); }
+        void jnt_1()          { burn_cycles(2); execute_jcc(test_r(1) == 0); }
+        void jnz()            { burn_cycles(2); execute_jcc(m_a != 0); }
+        void jobf()           { burn_cycles(2); execute_jcc((m_sts & STS_OBF) != 0); }
+        void jtf()            { burn_cycles(2); execute_jcc(m_timer_flag); m_timer_flag = false; }
+        void jt_0()           { burn_cycles(2); execute_jcc(test_r(0) != 0); }
+        void jt_1()           { burn_cycles(2); execute_jcc(test_r(1) != 0); }
+        void jz()             { burn_cycles(2); execute_jcc(m_a == 0); }
 
         void jmp_0()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x000)); }
         void jmp_1()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x100)); }
@@ -831,6 +832,7 @@ namespace mame
             save_item(NAME(new { m_dbbo }));
 
             save_item(NAME(new { m_irq_state }));
+            save_item(NAME(new { m_irq_polled }));
             save_item(NAME(new { m_irq_in_progress }));
             save_item(NAME(new { m_timer_overflow }));
             save_item(NAME(new { m_timer_flag }));
@@ -885,6 +887,8 @@ namespace mame
             /* confirmed from interrupt logic description */
             m_irq_in_progress = false;
             m_timer_overflow = false;
+
+            m_irq_polled = false;
         }
 
 
@@ -902,15 +906,16 @@ namespace mame
             // iterate over remaining cycles, guaranteeing at least one instruction
             do
             {
+                // check interrupts
+                check_irqs();
+                m_irq_polled = false;
+
                 m_prevpc = m_pc;
                 debugger_instruction_hook(m_pc);
 
                 // fetch and process opcode
                 unsigned opcode = opcode_fetch();
                 this.m_opcode_table[opcode](this);
-
-                // check interrupts
-                check_irqs();
 
             } while (m_icount.i > 0);
         }
@@ -1110,11 +1115,11 @@ namespace mame
             execute_jcc - perform the logic of a
             conditional jump instruction
         -------------------------------------------------*/
-        void execute_jcc(uint8_t result)
+        void execute_jcc(bool result)
         {
             uint16_t pch = (uint16_t)(m_pc & 0xf00);
             uint8_t offset = argument_fetch();
-            if (result != 0)
+            if (result)
                 m_pc = (uint16_t)(pch | offset);
         }
 
@@ -1182,6 +1187,13 @@ namespace mame
                 burn_cycles(2);
 
                 m_irq_in_progress = true;
+
+                // force JNI to be taken (hack)
+                if (m_irq_polled)
+                {
+                    m_pc = (uint16_t)(((m_prevpc + 1) & 0x7ff) | (m_prevpc & 0x800));
+                    execute_jcc(true);
+                }
 
                 /* transfer to location 0x03 */
                 push_pc_psw();

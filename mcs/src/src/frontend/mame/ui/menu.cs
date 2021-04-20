@@ -115,7 +115,7 @@ namespace mame.ui
                 m_machine = machine;
                 m_cleanup_callbacks = new cleanup_callback_vector();
                 m_bgrnd_bitmap = null;
-                //, m_bgrnd_texture(nullptr, machine.render())
+                m_bgrnd_texture = null;  //, m_bgrnd_texture(nullptr, machine.render())
                 m_stack = null;
                 m_free = null;
 
@@ -128,12 +128,17 @@ namespace mame.ui
                 {
                     m_bgrnd_bitmap = new bitmap_argb32(0, 0);
                     emu_file backgroundfile = new emu_file(".", OPEN_FLAG_READ);
-                    render_load_jpeg(out m_bgrnd_bitmap, backgroundfile, null, "background.jpg");
+                    if (backgroundfile.open("background.jpg") == osd_file.error.NONE)
+                    {
+                        render_load_jpeg(out m_bgrnd_bitmap, backgroundfile.core_file_get());
+                        backgroundfile.close();
+                    }
 
-                    if (!m_bgrnd_bitmap.valid())
-                        render_load_png(out m_bgrnd_bitmap, backgroundfile, null, "background.png");
-
-                    backgroundfile.close();
+                    if (!m_bgrnd_bitmap.valid() && (backgroundfile.open("background.png") == osd_file.error.NONE))
+                    {
+                        render_load_png(out m_bgrnd_bitmap, backgroundfile.core_file_get());
+                        backgroundfile.close();
+                    }
 
                     if (m_bgrnd_bitmap.valid())
                         m_bgrnd_texture.set_bitmap(m_bgrnd_bitmap, m_bgrnd_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
@@ -678,7 +683,7 @@ namespace mame.ui
                     else if (itemtext == menu_item.MENU_SEPARATOR_ITEM)
                     {
                         // if we're just a divider, draw a line
-                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                     }
                     else if (pitem.subtext == null)
                     {
@@ -686,8 +691,8 @@ namespace mame.ui
                         if ((pitem.flags & FLAG_UI_HEADING) != 0)
                         {
                             float heading_width = ui().get_string_width(itemtext);
-                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                         }
 
                         float unused1;
@@ -1075,7 +1080,7 @@ namespace mame.ui
         //-------------------------------------------------
         public void highlight(float x0, float y0, float x1, float y1, rgb_t bgcolor)
         {
-            container().add_quad(x0, y0, x1, y1, bgcolor, m_global_state.hilight_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXWRAP(1) | render_global.PRIMFLAG_PACKABLE);
+            container().add_quad(x0, y0, x1, y1, bgcolor, m_global_state.hilight_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXWRAP(1) | render_global.PRIMFLAG_PACKABLE);
         }
 
 
@@ -1088,7 +1093,7 @@ namespace mame.ui
         //-------------------------------------------------
         protected void draw_arrow(float x0, float y0, float x1, float y1, rgb_t fgcolor, UInt32 orientation)
         {
-            container().add_quad(x0, y0, x1, y1, fgcolor, m_global_state.arrow_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(orientation) | render_global.PRIMFLAG_PACKABLE);
+            container().add_quad(x0, y0, x1, y1, fgcolor, m_global_state.arrow_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(orientation) | render_global.PRIMFLAG_PACKABLE);
         }
 
 
@@ -1158,7 +1163,7 @@ namespace mame.ui
         {
             // draw background image if available
             if (ui().options().use_background_image() && m_global_state.bgrnd_bitmap() != null && m_global_state.bgrnd_bitmap().valid())
-                container().add_quad(0.0f, 0.0f, 1.0f, 1.0f, rgb_t.white(), m_global_state.bgrnd_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_quad(0.0f, 0.0f, 1.0f, 1.0f, rgb_t.white(), m_global_state.bgrnd_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
         }
 
 
