@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using indirect_pen_t = System.UInt16;
+using palette_interface_enumerator = mame.device_interface_enumerator<mame.device_palette_interface>;  //typedef device_interface_enumerator<device_palette_interface> palette_interface_enumerator;
 using pen_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -35,7 +36,7 @@ namespace mame
         // internal state
         palette_t m_palette;              // the palette itself
         Pointer<rgb_t> m_pens = new Pointer<rgb_t>();  //const pen_t *       m_pens;                 // remapped palette pen numbers
-        bitmap_format m_format;               // format assumed for palette data
+        public bitmap_format m_format;               // format assumed for palette data
         Pointer<pen_t> m_shadow_table;  //pen_t *             m_shadow_table;         // table for looking up a shadowed pen
         u32 m_shadow_group;         // index of the shadow group, or 0 if none
         u32 m_hilight_group;        // index of the hilight group, or 0 if none
@@ -467,9 +468,5 @@ namespace mame
 
 
     // interface type iterator
-    //typedef device_interface_iterator<device_palette_interface> palette_interface_iterator;
-    public class palette_interface_iterator : device_interface_iterator<device_palette_interface>
-    {
-        public palette_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_palette_interface> palette_interface_enumerator;
 }

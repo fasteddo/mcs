@@ -43,13 +43,13 @@ namespace mame
                 amplitude-overdrive-mute stuff done by
                 bit 1 here should be done on a netlist.
             */
-            m_ay1.target.disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
-            m_ay1.target.disound.set_output_gain(1, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay1.target.disound.set_output_gain(2, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay2.target.disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay3.target.disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay4.target.disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_dac.target.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay1.op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
+            m_ay1.op[0].disound.set_output_gain(1, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay1.op[0].disound.set_output_gain(2, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay2.op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay3.op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay4.op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_dac.op[0].set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
 
             if ((data & 0x80) != 0) membank("bank1").set_entry(1);
             else membank("bank1").set_entry(0);
@@ -71,33 +71,33 @@ namespace mame
         ***************************************************************************/
         uint8_t taitosj_fake_data_r()
         {
-            LOG("{0}: protection read\n", m_maincpu.target.state().pc());
+            LOG("{0}: protection read\n", m_maincpu.op[0].state().pc());
             return 0;
         }
 
 
         void taitosj_fake_data_w(uint8_t data)
         {
-            LOG("{0}: protection write {1}\n", m_maincpu.target.state().pc(), data);
+            LOG("{0}: protection write {1}\n", m_maincpu.op[0].state().pc(), data);
         }
 
 
         uint8_t taitosj_fake_status_r()
         {
-            LOG("{0}: protection status read\n", m_maincpu.target.state().pc());
+            LOG("{0}: protection status read\n", m_maincpu.op[0].state().pc());
             return 0xff;
         }
 
 
         uint8_t mcu_mem_r(offs_t offset)
         {
-            return m_maincpu.target.memory().space(AS_PROGRAM).read_byte(offset);
+            return m_maincpu.op[0].memory().space(AS_PROGRAM).read_byte(offset);
         }
 
 
         void mcu_mem_w(offs_t offset, uint8_t data)
         {
-            m_maincpu.target.memory().space(AS_PROGRAM).write_byte(offset, data);
+            m_maincpu.op[0].memory().space(AS_PROGRAM).write_byte(offset, data);
         }
 
 
@@ -115,7 +115,7 @@ namespace mame
         {
             // this actually goes to the Z80 BUSRQ (aka WAIT) pin, and the MCU waits for the bus to become available
             // we're pretending this happens immediately to make life easier
-            m_mcu.target.busak_w(state);
+            m_mcu.op[0].busak_w(state);
         }
     }
 }

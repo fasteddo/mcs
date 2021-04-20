@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
 using device_timer_id = System.UInt32;
+using execute_interface_enumerator = mame.device_interface_enumerator<mame.device_execute_interface>;  //typedef device_interface_enumerator<device_execute_interface> execute_interface_enumerator;
 using s32 = System.Int32;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -786,7 +787,7 @@ namespace mame
 
 
             // iterate over all devices
-            foreach (device_execute_interface exec in new execute_interface_iterator(machine().root_device()))
+            foreach (device_execute_interface exec in new execute_interface_enumerator(machine().root_device()))
             {
                 // append to the appropriate list
                 exec.m_nextexec = null;

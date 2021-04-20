@@ -70,7 +70,7 @@ namespace mame
         public void reset(int state)
         {
             // The incoming signal is active low
-            m_cpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+            m_cpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
 
@@ -96,16 +96,16 @@ namespace mame
         {
             uint8_t out_ = (uint8_t)(data & 0x0f);
             if ((data & 0x10) != 0)
-                m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_1_DATA(m_basenode), out_);
+                m_discrete.op[0].write((offs_t)namco54_global.NAMCO_54XX_1_DATA(m_basenode), out_);
             else
-                m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_0_DATA(m_basenode), out_);
+                m_discrete.op[0].write((offs_t)namco54_global.NAMCO_54XX_0_DATA(m_basenode), out_);
         }
 
         void R1_w(uint8_t data)
         {
             uint8_t out_ = (uint8_t)(data & 0x0f);
 
-            m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_2_DATA(m_basenode), out_);
+            m_discrete.op[0].write((offs_t)namco54_global.NAMCO_54XX_2_DATA(m_basenode), out_);
         }
 
         public void write(uint8_t data)
@@ -113,7 +113,7 @@ namespace mame
             machine().scheduler().synchronize(latch_callback, data);  //timer_expired_delegate(FUNC(namco_54xx_device::latch_callback),this), data);
 
             // TODO: should use chip_select line for this
-            m_cpu.target.pulse_input_line(0, m_irq_duration);
+            m_cpu.op[0].pulse_input_line(0, m_irq_duration);
         }
 
 
@@ -143,10 +143,10 @@ namespace mame
         protected override void device_add_mconfig(machine_config config)
         {
             MB8844(config, m_cpu, DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
-            m_cpu.target.read_k().set(K_r).reg();
-            m_cpu.target.write_o().set(O_w).reg();
-            m_cpu.target.read_r(0).set(R0_r).reg();
-            m_cpu.target.write_r(1).set(R1_w).reg();
+            m_cpu.op[0].read_k().set(K_r).reg();
+            m_cpu.op[0].write_o().set(O_w).reg();
+            m_cpu.op[0].read_r(0).set(R0_r).reg();
+            m_cpu.op[0].write_r(1).set(R1_w).reg();
         }
 
 

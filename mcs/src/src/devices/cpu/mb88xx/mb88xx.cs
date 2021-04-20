@@ -196,9 +196,9 @@ namespace mame
         /* IRQ handling */
         uint8_t m_pending_interrupt;
 
-        memory_access.cache m_cache = new memory_access(11, 0, 0, endianness_t.ENDIANNESS_BIG).m_cache;  //memory_access<11, 0, 0, ENDIANNESS_BIG>::cache m_cache;
-        memory_access.specific m_program = new memory_access(11, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access<11, 0, 0, ENDIANNESS_BIG>::specific m_program;
-        memory_access.specific m_data = new memory_access(7, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access< 7, 0, 0, ENDIANNESS_BIG>::specific m_data;
+        memory_access<int_constant_11, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache m_cache = new memory_access<int_constant_11, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache();  //memory_access<11, 0, 0, ENDIANNESS_BIG>::cache m_cache;
+        memory_access<int_constant_11, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific m_program = new memory_access<int_constant_11, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific();  //memory_access<11, 0, 0, ENDIANNESS_BIG>::specific m_program;
+        memory_access<int_constant_7, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific m_data = new memory_access<int_constant_7, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific();  //memory_access< 7, 0, 0, ENDIANNESS_BIG>::specific m_data;
 
         //int m_icount;
         intref m_icount = new intref();
@@ -291,9 +291,9 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_mb88>();
 
 
-            m_dimemory.space(AS_PROGRAM).cache(m_cache.Width, m_cache.AddrShift, m_cache.Endian, m_cache);
-            m_dimemory.space(AS_PROGRAM).specific(m_program.Level, m_program.Width, m_program.AddrShift, m_program.Endian, m_program);
-            m_dimemory.space(AS_DATA).specific(m_data.Level, m_data.Width, m_data.AddrShift, m_data.Endian, m_data);
+            m_dimemory.space(AS_PROGRAM).cache(m_cache);
+            m_dimemory.space(AS_PROGRAM).specific(m_program);
+            m_dimemory.space(AS_DATA).specific(m_data);
 
             m_read_k.resolve_safe(0);
             m_write_o.resolve_safe();

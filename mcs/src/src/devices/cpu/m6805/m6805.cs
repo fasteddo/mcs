@@ -312,10 +312,10 @@ namespace mame
         protected intref m_icount = new intref();  //int     m_icount;
 
         // address spaces
-        memory_access.cache m_cprogram16 = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_BIG).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_cprogram16;
-        memory_access.cache m_cprogram13 = new memory_access(13, 0, 0, endianness_t.ENDIANNESS_BIG).m_cache;  //memory_access<13, 0, 0, ENDIANNESS_BIG>::cache m_cprogram13;
-        memory_access.specific m_program16 = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_BIG>::specific m_program16;
-        memory_access.specific m_program13 = new memory_access(13, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access<13, 0, 0, ENDIANNESS_BIG>::specific m_program13;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache m_cprogram16 = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_cprogram16;
+        memory_access<int_constant_13, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache m_cprogram13 = new memory_access<int_constant_13, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache();  //memory_access<13, 0, 0, ENDIANNESS_BIG>::cache m_cprogram13;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific m_program16 = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::specific m_program16;
+        memory_access<int_constant_13, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific m_program13 = new memory_access<int_constant_13, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific();  //memory_access<13, 0, 0, ENDIANNESS_BIG>::specific m_program13;
 
 
         protected m6805_base_device(
@@ -387,13 +387,13 @@ namespace mame
         {
             if (m_params.m_addr_width > 13)
             {
-                m_dimemory.space(AS_PROGRAM).cache(m_cprogram16.Width, m_cprogram16.AddrShift, m_cprogram16.Endian, m_cprogram16);
-                m_dimemory.space(AS_PROGRAM).specific(m_program16.Level, m_program16.Width, m_program16.AddrShift, m_program16.Endian, m_program16);
+                m_dimemory.space(AS_PROGRAM).cache(m_cprogram16);
+                m_dimemory.space(AS_PROGRAM).specific(m_program16);
             }
             else
             {
-                m_dimemory.space(AS_PROGRAM).cache(m_cprogram13.Width, m_cprogram13.AddrShift, m_cprogram13.Endian, m_cprogram13);
-                m_dimemory.space(AS_PROGRAM).specific(m_program13.Level, m_program13.Width, m_program13.AddrShift, m_program13.Endian, m_program13);
+                m_dimemory.space(AS_PROGRAM).cache(m_cprogram13);
+                m_dimemory.space(AS_PROGRAM).specific(m_program13);
             }
 
             // get the minimum not including the zero placeholders for illegal instructions

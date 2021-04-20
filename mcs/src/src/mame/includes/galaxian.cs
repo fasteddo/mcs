@@ -62,24 +62,26 @@ namespace mame
         optional_device<cpu_device> m_audiocpu;
         optional_device<cpu_device> m_audio2;
         optional_device<dac_byte_interface> m_dac;
-        optional_device_array_ay8910_device m_ay8910;  //optional_device_array<ay8910_device, 3> m_ay8910;
+        optional_device_array<ay8910_device, uint32_constant_3> m_ay8910;
         optional_device<ay8910_device> m_ay8910_cclimber;
         optional_device<digitalker_device> m_digitalker;
-        optional_device_array_i8255_device m_ppi8255;  //optional_device_array<i8255_device, 3> m_ppi8255;
+        optional_device_array<i8255_device, uint32_constant_3> m_ppi8255;
         required_device<gfxdecode_device> m_gfxdecode;
         required_device<screen_device> m_screen;
         required_device<palette_device> m_palette;
         optional_device<generic_latch_8_device> m_soundlatch;
         optional_device<netlist_mame_sound_device> m_netlist;
-        optional_device_array_netlist_mame_logic_input_device m_filter_ctl;  //optional_device_array<netlist_mame_logic_input_device, 12> m_filter_ctl;
+        optional_device_array<netlist_mame_logic_input_device, uint32_constant_12> m_filter_ctl;
+        optional_ioport m_ckong_coinage;
 
         optional_ioport m_fake_select;
-        optional_ioport_array m_tenspot_game_dsw;  //optional_ioport_array<10> m_tenspot_game_dsw;
+        optional_ioport_array<uint32_constant_10> m_tenspot_game_dsw;
 
-        required_shared_ptr_uint8_t m_spriteram;
-        required_shared_ptr_uint8_t m_videoram;
-        optional_shared_ptr_uint8_t m_decrypted_opcodes;
-        output_finder/*<2>*/ m_lamps;
+        required_shared_ptr<uint8_t> m_spriteram;
+        required_shared_ptr<uint8_t> m_videoram;
+        optional_shared_ptr<uint8_t> m_decrypted_opcodes;
+        output_finder<uint32_constant_2> m_lamps;
+        memory_bank_creator m_bank1;
 
         int m_bullets_base;
         int m_sprites_base;
@@ -104,17 +106,10 @@ namespace mame
         uint8_t m_sfx_tilemap;
 
         /* video extension callbacks */
-        //typedef void (galaxian_state::*galaxian_extend_tile_info_func)(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x);
-        delegate void galaxian_extend_tile_info_func(ref uint16_t code, ref uint8_t color, uint8_t attrib, uint8_t x);
-
-        //typedef void (galaxian_state::*galaxian_extend_sprite_info_func)(const uint8_t *base, uint8_t *sx, uint8_t *sy, uint8_t *flipx, uint8_t *flipy, uint16_t *code, uint8_t *color);
-        delegate void galaxian_extend_sprite_info_func(Pointer<uint8_t> basePtr, ref uint8_t sx, ref uint8_t sy, ref uint8_t flipx, ref uint8_t flipy, ref uint16_t code, ref uint8_t color);
-
-        //typedef void (galaxian_state::*galaxian_draw_bullet_func)(bitmap_rgb32 &bitmap, const rectangle &cliprect, int offs, int x, int y);
-        delegate void galaxian_draw_bullet_func(bitmap_rgb32 bitmap, rectangle cliprect, int offs, int x, int y);
-
-        //typedef void (galaxian_state::*galaxian_draw_background_func)(bitmap_rgb32 &bitmap, const rectangle &cliprect);
-        delegate void galaxian_draw_background_func(bitmap_rgb32 bitmap, rectangle cliprect);
+        delegate void galaxian_extend_tile_info_func(ref uint16_t code, ref uint8_t color, uint8_t attrib, uint8_t x);  //typedef void (galaxian_state::*galaxian_extend_tile_info_func)(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x);
+        delegate void galaxian_extend_sprite_info_func(Pointer<uint8_t> basePtr, ref uint8_t sx, ref uint8_t sy, ref uint8_t flipx, ref uint8_t flipy, ref uint16_t code, ref uint8_t color);  //typedef void (galaxian_state::*galaxian_extend_sprite_info_func)(const uint8_t *base, uint8_t *sx, uint8_t *sy, uint8_t *flipx, uint8_t *flipy, uint16_t *code, uint8_t *color);
+        delegate void galaxian_draw_bullet_func(bitmap_rgb32 bitmap, rectangle cliprect, int offs, int x, int y);  //typedef void (galaxian_state::*galaxian_draw_bullet_func)(bitmap_rgb32 &bitmap, const rectangle &cliprect, int offs, int x, int y);
+        delegate void galaxian_draw_background_func(bitmap_rgb32 bitmap, rectangle cliprect);  //typedef void (galaxian_state::*galaxian_draw_background_func)(bitmap_rgb32 &bitmap, const rectangle &cliprect);
 
 
         galaxian_extend_tile_info_func m_extend_tile_info_ptr;
@@ -146,22 +141,24 @@ namespace mame
             m_audiocpu = new optional_device<cpu_device>(this, "audiocpu");
             m_audio2 = new optional_device<cpu_device>(this, "audio2");
             m_dac = new optional_device<dac_byte_interface>(this, "dac");
-            m_ay8910 = new optional_device_array_ay8910_device(3, this, "8910.{0}", 0);  // "8910.%u"
+            m_ay8910 = new optional_device_array<ay8910_device, uint32_constant_3>(this, "8910.{0}", 0, (base_, tag_) => { return new device_finder<ay8910_device, bool_constant_false>(base_, tag_); });  // "8910.%u"
             m_ay8910_cclimber = new optional_device<ay8910_device>(this, "cclimber_audio:aysnd");
             m_digitalker = new optional_device<digitalker_device>(this, "digitalker");
-            m_ppi8255 = new optional_device_array_i8255_device(3, this, "ppi8255_{0}", 0);  // ppi8255_%u
+            m_ppi8255 = new optional_device_array<i8255_device, uint32_constant_3>(this, "ppi8255_{0}", 0, (base_, tag_) => { return new device_finder<i8255_device, bool_constant_false>(base_, tag_); });  // ppi8255_%u
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new required_device<screen_device>(this, "screen");
             m_palette = new required_device<palette_device>(this, "palette");
             m_soundlatch = new optional_device<generic_latch_8_device>(this, "soundlatch");
             m_netlist = new optional_device<netlist_mame_sound_device>(this, "konami");
-            m_filter_ctl = new optional_device_array_netlist_mame_logic_input_device(12, this, "konami:ctl{0}", 0);
+            m_filter_ctl = new optional_device_array<netlist_mame_logic_input_device, uint32_constant_12>(this, "konami:ctl{0}", 0, (base_, tag_) => { return new device_finder<netlist_mame_logic_input_device, bool_constant_false>(base_, tag_); });
+            m_ckong_coinage = new optional_ioport(this, "COINAGE");
             m_fake_select = new optional_ioport(this, "FAKE_SELECT");
-            m_tenspot_game_dsw = new optional_ioport_array(10, this, "IN2_GAME{0}", 0);  //{"IN2_GAME0", "IN2_GAME1", "IN2_GAME2", "IN2_GAME3", "IN2_GAME4", "IN2_GAME5", "IN2_GAME6", "IN2_GAME7", "IN2_GAME8", "IN2_GAME9"});
-            m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
-            m_videoram = new required_shared_ptr_uint8_t(this, "videoram");
-            m_decrypted_opcodes = new optional_shared_ptr_uint8_t(this, "decrypted_opcodes");
-            m_lamps = new output_finder(2, this, "lamp{0}", 0U);  //"lamp%u"
+            m_tenspot_game_dsw = new optional_ioport_array<uint32_constant_10>(this, "IN2_GAME{0}", 0);  //{"IN2_GAME0", "IN2_GAME1", "IN2_GAME2", "IN2_GAME3", "IN2_GAME4", "IN2_GAME5", "IN2_GAME6", "IN2_GAME7", "IN2_GAME8", "IN2_GAME9"});
+            m_spriteram = new required_shared_ptr<uint8_t>(this, "spriteram");
+            m_videoram = new required_shared_ptr<uint8_t>(this, "videoram");
+            m_decrypted_opcodes = new optional_shared_ptr<uint8_t>(this, "decrypted_opcodes");
+            m_lamps = new output_finder<uint32_constant_2>(this, "lamp{0}", 0U);  //"lamp%u"
+            m_bank1 = new memory_bank_creator(this, "bank1");
         }
 
 

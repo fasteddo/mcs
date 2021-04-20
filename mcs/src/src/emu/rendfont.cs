@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using char32_t = System.UInt32;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using s32 = System.Int32;
+using size_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -171,11 +172,18 @@ namespace mame
         {
             // loop over the string and accumulate widths
             int totwidth = 0;
-            foreach (var c in str)  //for (const unsigned char *ptr = (const unsigned char *)string; *ptr != 0; ptr++)
-                totwidth += get_char(c).width;
+            char schar;  //char32_t schar;
+
+            // loop over characters
+            while (!str.empty())
+            {
+                int scharcount = unicode_global.uchar_from_utf8(out schar, str);
+                totwidth += get_char(schar).width;
+                str = str.Substring(scharcount);  //string.remove_prefix(scharcount);
+            }
 
             // scale the final result based on height
-            return (float)(totwidth) * m_scale * height * aspect;
+            return (float)totwidth * m_scale * height * aspect;
         }
 
 
@@ -185,19 +193,17 @@ namespace mame
         //-------------------------------------------------
         public float utf8string_width(float height, float aspect, string utf8string)
         {
-            int length = utf8string.Length;
-
             // loop over the string and accumulate widths
-            int count;
             s32 totwidth = 0;
-            for (int offset = 0; offset < length; offset += count)
+            while (!utf8string.empty())
             {
                 char uchar;  //char32_t uchar;
-                count = unicode_global.uchar_from_utf8(out uchar, utf8string.Substring(offset), length - offset);
+                int count = unicode_global.uchar_from_utf8(out uchar, utf8string);
                 if (count < 0)
                     break;
 
                 totwidth += get_char(uchar).width;
+                utf8string = utf8string.Substring(count);  //utf8string.remove_prefix(count);
             }
 
             // scale the final result based on height
@@ -781,42 +787,35 @@ namespace mame
         }
 
 
-        public static void convert_command_glyph(ref string str)
+        public static string convert_command_glyph(ref string str)
         {
             // TODO check accuracy
             //throw new emu_unimplemented();
 
-            //(void)str.c_str(); // force NUL-termination - we depend on it later
-            UInt32 len = (UInt32)str.length();
-            std.vector<char> buf = new std.vector<char>(2 * ((int)len + 1));
-            buf.resize(2 * ((int)len + 1));
-            UInt32 j = 0;
-            for (UInt32 i = 0; len > i; )
+            std.vector<char> buf = new std.vector<char>(2 * (str.length() + 1));
+            size_t j = 0;
+            while (!str.empty())
             {
                 // decode UTF-8
                 char uchar;  //char32_t uchar;
-                int codelen = unicode_global.uchar_from_utf8(out uchar, str.Substring((int)i), (int)(len - i));
+                int codelen = unicode_global.uchar_from_utf8(out uchar, str);  //int const codelen(uchar_from_utf8(&uchar, str));
                 if (0 >= codelen)
                     break;
-                i += (UInt32)codelen;
+                str = str.Substring(codelen);  //str.remove_prefix(codelen);
 
                 // check for three metacharacters
-                fix_command_t [] fixcmd = null;
+                cmddata_global.fix_command_t [] fixcmd = null;  //fix_command_t const *fixcmd(nullptr);
                 int fixcmdOffset = 0;
                 switch (uchar)
                 {
                 case cmddata_global.COMMAND_CONVERT_TEXT:
-                    fix_strings_t [] fixtext = cmddata_global.convert_text;
-                    int fixtextOffset = 0;
-                    for (; fixtext[fixtextOffset].glyph_code != 0; ++fixtextOffset)
+                    for (int fixtextOffset = 0; cmddata_global.convert_text[fixtextOffset].glyph_code != null; ++fixtextOffset)  //for (fix_strings_t const *fixtext = convert_text; fixtext->glyph_code; ++fixtext)
                     {
-                        if (fixtext[fixtextOffset].glyph_str_len == 0)
-                            fixtext[fixtextOffset].glyph_str_len = (UInt32)strlen(fixtext[fixtextOffset].glyph_str);
-
-                        if (strncmp(fixtext[fixtextOffset].glyph_str, str.Substring((int)i), (int)fixtext[fixtextOffset].glyph_str_len) == 0)
+                        var fixtext = cmddata_global.convert_text[fixtextOffset];
+                        if (str.substr(0, fixtext.glyph_str.length()) == fixtext.glyph_str)
                         {
-                            uchar = (char)(fixtext[fixtextOffset].glyph_code + cmddata_global.COMMAND_UNICODE);  //uchar = fixtext->glyph_code + COMMAND_UNICODE;
-                            i += (UInt32)strlen(fixtext[fixtextOffset].glyph_str);
+                            uchar = (char)(fixtext.glyph_code + cmddata_global.COMMAND_UNICODE);
+                            str = str.Substring(fixtext.glyph_str.length());  //str.remove_prefix(fixtext->glyph_str.length());
                             break;
                         }
                     }
@@ -832,28 +831,28 @@ namespace mame
                 }
 
                 // this substitutes a single character
-                if (fixcmd != null)
+                if (fixcmd != null && !str.empty())
                 {
-                    if (str[(int)i] == uchar)
+                    if (str[0] == uchar)
                     {
-                        ++i;
+                        str = str.Substring(1);  //str.remove_prefix(1);
                     }
                     else
                     {
-                        while ((fixcmd[fixcmdOffset].glyph_code != 0) && (fixcmd[fixcmdOffset].glyph_char != str[(int)i]))
+                        while (fixcmd[fixcmdOffset].glyph_code != 0 && !str.empty() && fixcmd[fixcmdOffset].glyph_char != str[0])
                             ++fixcmdOffset;
 
-                        if (fixcmd[fixcmdOffset].glyph_code != 0)
+                        if (fixcmd[fixcmdOffset].glyph_code != 0 && !str.empty())
                         {
                             uchar = (char)(cmddata_global.COMMAND_UNICODE + fixcmd[fixcmdOffset].glyph_code);
-                            ++i;
+                            str = str.Substring(1);  //str.remove_prefix(1);
                         }
                     }
                 }
 
                 // copy character to output
                 string temp;
-                int outlen = unicode_global.utf8_from_uchar(out temp, /*buf.Length - j,*/ uchar);
+                int outlen = unicode_global.utf8_from_uchar(out temp, /*buf.Length - j,*/ uchar);  //int const outlen(utf8_from_uchar(&buf[j], buf.size() - j, uchar));
                 if (0 >= outlen)
                     break;
 
@@ -863,8 +862,7 @@ namespace mame
                 j += (UInt32)outlen;
             }
 
-            buf[(int)j] = '\0';
-            str = new string(buf.ToArray());  //.assign(&buf[0], j);
+            return new string(buf.ToArray()).Substring(0, (int)j);  //return std::string(&buf[0], j);
         }
     }
 

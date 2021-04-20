@@ -271,7 +271,7 @@ namespace mame
                 have_keyboard = have_keyboard || devinfo.keyboard;
 
                 // find all shift keys
-                std.fill(shift, null);  //std::fill(std::begin(shift), std::end(shift), nullptr);
+                std.fill(shift, (ioport_field)null);  //std::fill(std::begin(shift), std::end(shift), nullptr);
                 mask = 0;
                 foreach (ioport_field field in devinfo.keyfields)
                 {
@@ -311,7 +311,7 @@ namespace mame
                                         m_have_charkeys = true;
                                         var found = devinfo.codemap.find(code);  //keycode_map::iterator const found(devinfo.codemap.find(code));
                                         keycode_map_entry newcode = new keycode_map_entry();
-                                        std.fill(newcode.field, null);  //std::fill(std::begin(newcode.field), std::end(newcode.field), nullptr);
+                                        std.fill(newcode.field, (ioport_field)null);  //std::fill(std::begin(newcode.field), std::end(newcode.field), nullptr);
                                         newcode.shift = curshift;
                                         newcode.condition = field.condition();
 

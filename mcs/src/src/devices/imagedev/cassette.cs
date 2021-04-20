@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using cassette_device_enumerator = mame.device_type_enumerator<mame.cassette_image_device>;  //typedef device_type_enumerator<cassette_image_device> cassette_device_enumerator;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
 
@@ -140,9 +141,5 @@ namespace mame
 
 
     // device iterator
-    //typedef device_type_iterator<&device_creator<cassette_image_device>, cassette_image_device> cassette_device_iterator;
-    public class cassette_device_iterator : device_type_iterator<cassette_image_device>
-    {
-        public cassette_device_iterator(device_t root, int maxdepth = 255) : base(cassette_image_device.CASSETTE, root, maxdepth) { }
-    }
+    //typedef device_type_enumerator<cassette_image_device> cassette_device_enumerator;
 }

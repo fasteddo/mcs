@@ -31,6 +31,7 @@ namespace mame
         //{
         //    return T((n < (8 * sizeof(T)) ? (std::make_unsigned_t<T>(1) << n) : std::make_unsigned_t<T>(0)) - 1);
         //}
+        //template <typename T, typename U>
         public static u8 make_bitmask8(u32 n) { return make_bitmask8((s32)n); }
         public static u8 make_bitmask8(s32 n) { return (u8)((n < (8 * 1) ? (1U << n) : 0U) - 1); }
         public static u16 make_bitmask16(u32 n) { return make_bitmask16((s32)n); }
@@ -39,6 +40,8 @@ namespace mame
         public static u32 make_bitmask32(s32 n) { return (u32)((n < (8 * 4) ? (1U << n) : 0U) - 1); }
         public static u64 make_bitmask64(u32 n) { return make_bitmask64((s32)n); }
         public static u64 make_bitmask64(s32 n) { return (u64)((n < (8 * 8) ? (1U << n) : 0U) - 1); }
+        public static uX make_bitmask_uX(int width, u32 n) { return make_bitmask_uX(width, (s32)n); }
+        public static uX make_bitmask_uX(int width, s32 n) { return new uX(width, (u64)((n < (8 * 8) ? (1U << n) : 0U) - 1)); }
 
 
         /// \brief Extract a single bit from an integer
@@ -188,18 +191,11 @@ namespace mame
         public static Int64 iabs(Int64 v) { return Math.Abs(v); }
 
 
-        // returns greatest common divisor of a and b using the Euclidean algorithm
-        //template <typename M, typename N>
-        static UInt32 euclid_gcd(UInt32 a, UInt32 b)  //constexpr std::common_type_t<M, N> euclid_gcd(M a, N b)
-        {
-            return b != 0 ? euclid_gcd(b, a % b) : a;
-        }
-
         // reduce a fraction
         //template <typename M, typename N>
         public static void reduce_fraction(ref UInt32 num, ref UInt32 den)
         {
-            var div = euclid_gcd(num, den);
+            var div = std.gcd(num, den);
             if (div != 0)
             {
                 num /= div;

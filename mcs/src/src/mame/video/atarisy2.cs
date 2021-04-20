@@ -29,7 +29,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(atarisy2_state::get_alpha_tile_info)
         void get_alpha_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            uint16_t data = (uint16_t)m_alpha_tilemap.target.basemem_read(tile_index);
+            uint16_t data = (uint16_t)m_alpha_tilemap.op[0].basemem_read(tile_index);
             int code = data & 0x3ff;
             int color = (data >> 13) & 0x07;
             tileinfo.set(2, (uint32_t)code, (uint32_t)color, 0);
@@ -39,7 +39,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(atarisy2_state::get_playfield_tile_info)
         void get_playfield_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            uint16_t data = (uint16_t)m_playfield_tilemap.target.basemem_read(tile_index);
+            uint16_t data = (uint16_t)m_playfield_tilemap.op[0].basemem_read(tile_index);
             int code = (int)(m_playfield_tile_bank[(data >> 10) & 1] << 10) | (data & 0x3ff);
             int color = (data >> 11) & 7;
             tileinfo.set(0, (uint32_t)code, (uint32_t)color, 0);
@@ -91,7 +91,7 @@ namespace mame
         {
             // reset the statics
             m_yscroll_reset_timer = machine().scheduler().timer_alloc(reset_yscroll_callback, this);
-            m_vrambank.target.set_bank(0);
+            m_vrambank.op[0].set_bank(0);
 
             // save states
             save_item(NAME(new { m_playfield_tile_bank }));
@@ -105,61 +105,61 @@ namespace mame
          *************************************/
         void xscroll_w(offs_t offset, uint16_t data, uint16_t mem_mask)
         {
-            uint16_t oldscroll = m_xscroll[0];  //uint16_t oldscroll = *m_xscroll;
+            uint16_t oldscroll = m_xscroll[0].op;  //uint16_t oldscroll = *m_xscroll;
             uint16_t newscroll = oldscroll;
             COMBINE_DATA(ref newscroll, data, mem_mask);
 
             /* if anything has changed, force a partial update */
             if (newscroll != oldscroll)
-                m_screen.target.update_partial(m_screen.target.vpos());
+                m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
             /* update the playfield scrolling - hscroll is clocked on the following scanline */
-            m_playfield_tilemap.target.tilemap.set_scrollx(0, newscroll >> 6);
+            m_playfield_tilemap.op[0].tilemap.set_scrollx(0, newscroll >> 6);
 
             /* update the playfield banking */
             if (m_playfield_tile_bank[0] != (newscroll & 0x0f))
             {
                 m_playfield_tile_bank[0] = (uint32_t)(newscroll & 0x0f);
-                m_playfield_tilemap.target.tilemap.mark_all_dirty();
+                m_playfield_tilemap.op[0].tilemap.mark_all_dirty();
             }
 
             /* update the data */
-            m_xscroll[0] = newscroll;  //*m_xscroll = newscroll;
+            m_xscroll[0].op = newscroll;  //*m_xscroll = newscroll;
         }
 
 
         //TIMER_CALLBACK_MEMBER(atarisy2_state::reset_yscroll_callback)
         void reset_yscroll_callback(object ptr, int param)
         {
-            m_playfield_tilemap.target.tilemap.set_scrolly(0, param);
+            m_playfield_tilemap.op[0].tilemap.set_scrolly(0, param);
         }
 
 
         void yscroll_w(offs_t offset, uint16_t data, uint16_t mem_mask)
         {
-            uint16_t oldscroll = m_yscroll[0];  //uint16_t oldscroll = *m_yscroll;
+            uint16_t oldscroll = m_yscroll[0].op;  //uint16_t oldscroll = *m_yscroll;
             uint16_t newscroll = oldscroll;
             COMBINE_DATA(ref newscroll, data, mem_mask);
 
             /* if anything has changed, force a partial update */
             if (newscroll != oldscroll)
-                m_screen.target.update_partial(m_screen.target.vpos());
+                m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
             /* if bit 4 is zero, the scroll value is clocked in right away */
             if ((newscroll & 0x10) == 0)
-                m_playfield_tilemap.target.tilemap.set_scrolly(0, (newscroll >> 6) - m_screen.target.vpos());
+                m_playfield_tilemap.op[0].tilemap.set_scrolly(0, (newscroll >> 6) - m_screen.op[0].vpos());
             else
-                m_yscroll_reset_timer.adjust(m_screen.target.time_until_pos(0), newscroll >> 6);
+                m_yscroll_reset_timer.adjust(m_screen.op[0].time_until_pos(0), newscroll >> 6);
 
             /* update the playfield banking */
             if (m_playfield_tile_bank[1] != (newscroll & 0x0f))
             {
                 m_playfield_tile_bank[1] = (uint32_t)(newscroll & 0x0f);
-                m_playfield_tilemap.target.tilemap.mark_all_dirty();
+                m_playfield_tilemap.op[0].tilemap.mark_all_dirty();
             }
 
             /* update the data */
-            m_yscroll[0] = newscroll;  //*m_yscroll = newscroll;
+            m_yscroll[0].op = newscroll;  //*m_yscroll = newscroll;
         }
 
 
@@ -203,23 +203,23 @@ namespace mame
          *
          *************************************/
 
-        uint16_t slapstic_r(address_space space, offs_t offset)
+        uint16_t slapstic_r(offs_t offset)
         {
-            uint16_t result = m_slapstic_base[offset];  //int result = m_slapstic_base[offset];
-            m_slapstic.target.slapstic_tweak(space, offset);
+            int result = m_slapstic_region[offset + 0100000 / 2].op;
+            m_slapstic.op[0].tweak(offset);
 
             /* an extra tweak for the next opcode fetch */
-            m_vrambank.target.set_bank((offs_t)m_slapstic.target.slapstic_tweak(space, 0x1234));
-            return result;
+            m_vrambank.op[0].set_bank((offs_t)m_slapstic.op[0].tweak(0x1234));
+            return (uint16_t)result;
         }
 
 
-        void slapstic_w(address_space space, offs_t offset, uint16_t data)
+        void slapstic_w(offs_t offset, uint16_t data)
         {
-            m_slapstic.target.slapstic_tweak(space, offset);
+            m_slapstic.op[0].tweak(offset);
 
             /* an extra tweak for the next opcode fetch */
-            m_vrambank.target.set_bank((offs_t)m_slapstic.target.slapstic_tweak(space, 0x1234));
+            m_vrambank.op[0].set_bank((offs_t)m_slapstic.op[0].tweak(0x1234));
         }
 
 
@@ -233,12 +233,12 @@ namespace mame
         {
             /* force an update if the link of object 0 is about to change */
             if (offset == 0x0003)
-                m_screen.target.update_partial(m_screen.target.vpos());
+                m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
             //COMBINE_DATA(&m_mob->spriteram()[offset]);
-            var temp = m_mob.target.spriteram().GetUInt16((int)offset);
+            var temp = m_mob.op[0].spriteram().GetUInt16((int)offset);
             COMBINE_DATA(ref temp, data, mem_mask);
-            m_mob.target.spriteram().SetUInt16((int)offset, temp);
+            m_mob.op[0].spriteram().SetUInt16((int)offset, temp);
         }
 
 
@@ -250,21 +250,21 @@ namespace mame
         uint32_t screen_update_atarisy2(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             // start drawing
-            m_mob.target.draw_async(cliprect);
+            m_mob.op[0].draw_async(cliprect);
 
             // reset priorities
             bitmap_ind8 priority_bitmap = screen.priority();
             priority_bitmap.fill(0, cliprect);
 
             // draw the playfield
-            m_playfield_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 0, 0);
-            m_playfield_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 1, 1);
-            m_playfield_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 2, 2);
-            m_playfield_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 3, 3);
+            m_playfield_tilemap.op[0].tilemap.draw(screen, bitmap, cliprect, 0, 0);
+            m_playfield_tilemap.op[0].tilemap.draw(screen, bitmap, cliprect, 1, 1);
+            m_playfield_tilemap.op[0].tilemap.draw(screen, bitmap, cliprect, 2, 2);
+            m_playfield_tilemap.op[0].tilemap.draw(screen, bitmap, cliprect, 3, 3);
 
             // draw and merge the MO
-            bitmap_ind16 mobitmap = m_mob.target.bitmap();
-            for (sparse_dirty_rect rect = m_mob.target.first_dirty_rect(cliprect); rect != null; rect = rect.next())
+            bitmap_ind16 mobitmap = m_mob.op[0].bitmap();
+            for (sparse_dirty_rect rect = m_mob.op[0].first_dirty_rect(cliprect); rect != null; rect = rect.next())
             {
                 for (int y = rect.m_rect.top(); y <= rect.m_rect.bottom(); y++)
                 {
@@ -296,7 +296,7 @@ namespace mame
             }
 
             // add the alpha on top
-            m_alpha_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 0, 0);
+            m_alpha_tilemap.op[0].tilemap.draw(screen, bitmap, cliprect, 0, 0);
             return 0;
         }
     }

@@ -39,21 +39,21 @@ namespace mame
             int scanline = param;
 
             if (scanline == 0x2c) // audio irq point 1
-                m_audiocpu.target.set_input_line(0, HOLD_LINE);
+                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
 
             if (scanline == 0x6d) // periodic irq (writes to the soundlatch and drives freeze dip-switch), + audio irq point 2
             {
-                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xcf);   /* Z80 - RST 08h */
-                m_audiocpu.target.set_input_line(0, HOLD_LINE);
+                m_maincpu.op[0].set_input_line_and_vector(0, HOLD_LINE, 0xcf);   /* Z80 - RST 08h */
+                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
             }
 
             if (scanline == 0xaf) // audio irq point 3
-                m_audiocpu.target.set_input_line(0, HOLD_LINE);
+                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
 
             if (scanline == 0xf0) // vblank-out irq, audio irq point 4
             {
-                m_maincpu.target.set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* Z80 - RST 10h - vblank */
-                m_audiocpu.target.set_input_line(0, HOLD_LINE);
+                m_maincpu.op[0].set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* Z80 - RST 10h - vblank */
+                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
             }
         }
 
@@ -67,7 +67,7 @@ namespace mame
             map.op(0xc002, 0xc002).portr("P2");
             map.op(0xc003, 0xc003).portr("DSWA");
             map.op(0xc004, 0xc004).portr("DSWB");
-            map.op(0xc800, 0xc800).w(m_soundlatch.target, (data) => { m_soundlatch.target.write(data); });
+            map.op(0xc800, 0xc800).w(m_soundlatch, (data) => { m_soundlatch.op[0].write(data); });
             map.op(0xc802, 0xc803).w(_1942_scroll_w);
             map.op(0xc804, 0xc804).w(_1942_c804_w);
             map.op(0xc805, 0xc805).w(_1942_palette_bank_w);
@@ -83,7 +83,7 @@ namespace mame
         {
             map.op(0x0000, 0x3fff).rom();
             map.op(0x4000, 0x47ff).ram();
-            map.op(0x6000, 0x6000).r(m_soundlatch.target, () => { return m_soundlatch.target.read(); });  //r(m_soundlatch, FUNC(generic_latch_8_device::read));
+            map.op(0x6000, 0x6000).r(m_soundlatch, () => { return m_soundlatch.op[0].read(); });  //r(m_soundlatch, FUNC(generic_latch_8_device::read));
             map.op(0x8000, 0x8001).w("ay1", (offset, data) => { ((ay8910_device)subdevice("ay1")).address_data_w(offset, data); });  //w("ay1", FUNC(ay8910_device::address_data_w));
             map.op(0xc000, 0xc001).w("ay2", (offset, data) => { ((ay8910_device)subdevice("ay2")).address_data_w(offset, data); });  //w("ay2", FUNC(ay8910_device::address_data_w));
         }
@@ -245,12 +245,12 @@ namespace mame
         {
             /* basic machine hardware */
             Z80(config, m_maincpu, MAIN_CPU_CLOCK);    /* 4 MHz ??? */
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, _1942_map);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, _1942_map);
 
             TIMER(config, "scantimer").configure_scanline(_1942_scanline, "screen", 0, 1);
 
             Z80(config, m_audiocpu, SOUND_CPU_CLOCK);  /* 3 MHz ??? */
-            m_audiocpu.target.memory().set_addrmap(AS_PROGRAM, sound_map);
+            m_audiocpu.op[0].memory().set_addrmap(AS_PROGRAM, sound_map);
 
             /* video hardware */
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_1942);
@@ -258,12 +258,12 @@ namespace mame
             PALETTE(config, m_palette, _1942_palette, 64*4+4*32*8+16*16, 256);
 
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
-            m_screen.target.set_refresh_hz(60);
-            m_screen.target.set_vblank_time(ATTOSECONDS_IN_USEC(0));
-            m_screen.target.set_size(32*8, 32*8);
-            m_screen.target.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
-            m_screen.target.set_screen_update(screen_update);
-            m_screen.target.set_palette(m_palette);
+            m_screen.op[0].set_refresh_hz(60);
+            m_screen.op[0].set_vblank_time(ATTOSECONDS_IN_USEC(0));
+            m_screen.op[0].set_size(32*8, 32*8);
+            m_screen.op[0].set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
+            m_screen.op[0].set_screen_update(screen_update);
+            m_screen.op[0].set_palette(m_palette);
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();

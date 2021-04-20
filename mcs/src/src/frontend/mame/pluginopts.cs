@@ -7,20 +7,20 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    // ======================> plugin
-    class plugin
-    {
-        string m_name;
-        string m_description;
-        string m_type;
-        string m_directory;
-        public bool m_start;
-    }
-
-
     // ======================> plugin_options
     class plugin_options
     {
+        // ======================> plugin
+        public class plugin
+        {
+            string m_name;
+            string m_description;
+            string m_type;
+            string m_directory;
+            public bool m_start;
+        }
+
+
         //std::list<plugin> m_plugins;
 
 

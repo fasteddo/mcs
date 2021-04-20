@@ -19,7 +19,10 @@ namespace mame
         public BinaryWriter writer;
         public uint32_t total_offs;
         public uint32_t data_offs;
-    };
+    }
+
+
+    //struct wav_deleter
 
 
 

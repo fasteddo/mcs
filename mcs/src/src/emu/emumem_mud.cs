@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using offs_t = System.UInt32;
 using s8 = System.SByte;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -17,9 +18,17 @@ namespace mame
     // Descriptors for subunit support
 
     //template<int Width, int AddrShift, endianness_t Endian>
-    public class memory_units_descriptor : global_object
+    public class memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> : global_object
+        where int_Width : int_constant, new()
+        where int_AddrShift : int_constant, new()
+        where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
+
+
+        protected static readonly int Width = new int_Width().value;
+        protected static readonly int AddrShift = new int_AddrShift().value;
+        protected static readonly endianness_t Endian = new endianness_t_Endian().value;
 
 
         public struct entry
@@ -34,12 +43,6 @@ namespace mame
         }
 
 
-        // template parameters
-        int Width;
-        int AddrShift;
-        endianness_t Endian;
-
-
         std.map<u8, std.vector<entry>> m_entries_for_key = new std.map<u8, std.vector<entry>>();
         offs_t m_addrstart;
         offs_t m_addrend;
@@ -52,20 +55,15 @@ namespace mame
 
 
         //template<int Width, int AddrShift, int Endian>
-        public memory_units_descriptor(int Width, int AddrShift, endianness_t Endian, u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth)  //memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth);
+        public memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth)  //memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth);
         {
-            this.Width = Width;
-            this.AddrShift = AddrShift;
-            this.Endian = Endian;
-
-
             m_handler = handler;
             m_access_width = access_width;
             m_access_endian = access_endian;
 
 
             u32 bits_per_access = 8U << access_width;
-            u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask32((u32)(Width + AddrShift)) : 0;
+            u32 NATIVE_MASK = Width + AddrShift >= 0 ? coretmpl_global.make_bitmask32(Width + AddrShift) : 0;
 
             // Compute the real base addresses
             m_addrstart = addrstart & ~NATIVE_MASK;
@@ -79,47 +77,13 @@ namespace mame
             uX emask;
             if (Endian == endianness_t.ENDIANNESS_BIG)
             {
-                //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
-                switch (Width)
-                {
-                    case 0: smask = new uX(0, make_bitmask8(8 * sizeof_(typeof(u8)) - (int)((addrstart - m_addrstart) << (3 - AddrShift)))); break;
-                    case 1: smask = new uX(1, make_bitmask16(8 * sizeof_(typeof(u16)) - (int)((addrstart - m_addrstart) << (3 - AddrShift)))); break;
-                    case 2: smask = new uX(2, make_bitmask32(8 * sizeof_(typeof(u32)) - (int)((addrstart - m_addrstart) << (3 - AddrShift)))); break;
-                    case 3: smask = new uX(3, make_bitmask64(8 * sizeof_(typeof(u64)) - (int)((addrstart - m_addrstart) << (3 - AddrShift)))); break;
-                    default: throw new emu_unimplemented();
-                }
-
-                //emask = ~make_bitmask<uX>(8 * sizeof(uX) - ((addrend - m_addrend + 1) << (3 - AddrShift)));
-                switch (Width)
-                {
-                    case 0: emask = new uX(0, (u8)~make_bitmask8(8 * sizeof_(typeof(u8)) - (int)((addrend - m_addrend + 1) << (3 - AddrShift)))); break;
-                    case 1: emask = new uX(1, (u16)~make_bitmask16(8 * sizeof_(typeof(u16)) - (int)((addrend - m_addrend + 1) << (3 - AddrShift)))); break;
-                    case 2: emask = new uX(2, ~make_bitmask32(8 * sizeof_(typeof(u32)) - (int)((addrend - m_addrend + 1) << (3 - AddrShift)))); break;
-                    case 3: emask = new uX(3, ~make_bitmask64(8 * sizeof_(typeof(u64)) - (int)((addrend - m_addrend + 1) << (3 - AddrShift)))); break;
-                    default: throw new emu_unimplemented();
-                }
+                smask = coretmpl_global.make_bitmask_uX(Width, 8 * new uX(Width, 0).sizeof_() - ((addrstart - m_addrstart) << (3 - AddrShift)));  //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
+                emask = ~coretmpl_global.make_bitmask_uX(Width, 8 * new uX(Width, 0).sizeof_() - ((addrend - m_addrend + 1) << (3 - AddrShift)));  //emask = ~make_bitmask<uX>(8 * sizeof(uX) - ((addrend - m_addrend + 1) << (3 - AddrShift)));
             }
             else
             {
-                //smask = ~make_bitmask<uX>((addrstart - m_addrstart) << (3 - AddrShift));
-                switch (Width)
-                {
-                    case 0: smask = new uX(0, (u8)~make_bitmask8((addrstart - m_addrstart) << (3 - AddrShift))); break;
-                    case 1: smask = new uX(1, (u16)~make_bitmask16((addrstart - m_addrstart) << (3 - AddrShift))); break;
-                    case 2: smask = new uX(2, ~make_bitmask32((addrstart - m_addrstart) << (3 - AddrShift))); break;
-                    case 3: smask = new uX(3, ~make_bitmask64((addrstart - m_addrstart) << (3 - AddrShift))); break;
-                    default: throw new emu_unimplemented();
-                }
-
-                //emask =  make_bitmask<uX>((addrend - m_addrend + 1) << (3 - AddrShift));
-                switch (Width)
-                {
-                    case 0: emask = new uX(0, make_bitmask8((addrend - m_addrend + 1) << (3 - AddrShift))); break;
-                    case 1: emask = new uX(1, make_bitmask16((addrend - m_addrend + 1) << (3 - AddrShift))); break;
-                    case 2: emask = new uX(2, make_bitmask32((addrend - m_addrend + 1) << (3 - AddrShift))); break;
-                    case 3: emask = new uX(3, make_bitmask64((addrend - m_addrend + 1) << (3 - AddrShift))); break;
-                    default: throw new emu_unimplemented();
-                }
+                smask = ~coretmpl_global.make_bitmask_uX(Width, (addrstart - m_addrstart) << (3 - AddrShift));  //smask = ~make_bitmask<uX>((addrstart - m_addrstart) << (3 - AddrShift));
+                emask = coretmpl_global.make_bitmask_uX(Width, (addrend - m_addrend + 1) << (3 - AddrShift));  //emask =  make_bitmask<uX>((addrend - m_addrend + 1) << (3 - AddrShift));
             }
 
             umasks[handler_entry.START]                     &= smask;
@@ -130,21 +94,11 @@ namespace mame
                 m_keymap[i] = mask_to_ukey(umasks[i]);  //m_keymap[i] = mask_to_ukey<uX>(umasks[i]);
 
             // Compute the shift
-            //uX dmask = make_bitmask<uX>(bits_per_access);
-            uX dmask;
-            switch (Width)
-            {
-                case 0: dmask = new uX(0, make_bitmask8(bits_per_access)); break;
-                case 1: dmask = new uX(1, make_bitmask16(bits_per_access)); break;
-                case 2: dmask = new uX(2, make_bitmask32(bits_per_access)); break;
-                case 3: dmask = new uX(3, make_bitmask64(bits_per_access)); break;
-                default: throw new emu_unimplemented();
-            }
-
+            uX dmask = coretmpl_global.make_bitmask_uX(Width, bits_per_access);  //uX dmask = make_bitmask<uX>(bits_per_access);
             u32 active_count = 0;
-            for (int i = 0; i != 8 << Width; i += (int)bits_per_access)
+            for (u32 i = 0; i != 8 << Width; i += (u32)bits_per_access)
             {
-                if ((unitmask & (dmask << i)) != 0)
+                if ((unitmask & (dmask << (int)i)) != 0)
                     active_count++;
             }
 
@@ -194,27 +148,8 @@ namespace mame
             if (cswidth == 0)
                 cswidth = bits_per_access;
 
-            //uX csmask = make_bitmask<uX>(cswidth);
-            uX csmask;
-            switch (Width)
-            {
-                case 0: csmask = new uX(0, make_bitmask8(cswidth)); break;
-                case 1: csmask = new uX(1, make_bitmask16(cswidth)); break;
-                case 2: csmask = new uX(2, make_bitmask32(cswidth)); break;
-                case 3: csmask = new uX(3, make_bitmask64(cswidth)); break;
-                default: throw new emu_unimplemented();
-            }
-
-            //uX dmask = make_bitmask<uX>(bits_per_access);
-            uX dmask;
-            switch (Width)
-            {
-                case 0: dmask = new uX(0, make_bitmask8(bits_per_access)); break;
-                case 1: dmask = new uX(1, make_bitmask16(bits_per_access)); break;
-                case 2: dmask = new uX(2, make_bitmask32(bits_per_access)); break;
-                case 3: dmask = new uX(3, make_bitmask64(bits_per_access)); break;
-                default: throw new emu_unimplemented();
-            }
+            uX csmask = coretmpl_global.make_bitmask_uX(Width, cswidth);  //uX csmask = make_bitmask<uX>(cswidth);
+            uX dmask = coretmpl_global.make_bitmask_uX(Width, bits_per_access);  //uX dmask = make_bitmask<uX>(bits_per_access);
 
             u32 offset = 0;
 

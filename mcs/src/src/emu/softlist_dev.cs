@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using software_list_device_enumerator = mame.device_type_enumerator<mame.software_list_device>;  //typedef device_type_enumerator<software_list_device> software_list_device_enumerator;
 using u32 = System.UInt32;
 
 
@@ -109,9 +110,5 @@ namespace mame
 
 
     // device type iterator
-    //typedef device_type_iterator<&device_creator<software_list_device>, software_list_device> software_list_device_iterator;
-    public class software_list_device_iterator : device_type_iterator<software_list_device>
-    {
-        public software_list_device_iterator(device_t root, int maxdepth = 255) : base(software_list_device.SOFTWARE_LIST, root, maxdepth) { }
-    }
+    //typedef device_type_enumerator<software_list_device> software_list_device_enumerator;
 }

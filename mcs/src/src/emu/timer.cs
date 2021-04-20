@@ -99,7 +99,8 @@ namespace mame
         //}
 
 
-        public void configure_scanline(expired_delegate callback, device_finder<screen_device> screen, int first_vpos, int increment)  //template <typename F, typename U> void configure_scanline(F &&callback, const char *name, U &&screen, int first_vpos, int increment)
+        public void configure_scanline<bool_Required>(expired_delegate callback, device_finder<screen_device, bool_Required> screen, int first_vpos, int increment)  //template <typename F, typename U> void configure_scanline(F &&callback, const char *name, U &&screen, int first_vpos, int increment)
+            where bool_Required : bool_constant, new()
         {
             m_type = timer_type.TIMER_TYPE_SCANLINE;
             m_callback = callback;  //m_callback.set(std::forward<F>(callback), name);
@@ -287,18 +288,18 @@ namespace mame
                     if (!m_first_time)
                     {
                         // call the real callback
-                        int vpos = m_screen.target.vpos();
+                        int vpos = m_screen.op[0].vpos();
                         if (m_callback != null)
                             m_callback(this, m_ptr, vpos);
 
                         // advance by the increment only if we will still be within the screen bounds
-                        if (m_increment != 0 && (vpos + m_increment) < m_screen.target.height())
+                        if (m_increment != 0 && (vpos + m_increment) < m_screen.op[0].height())
                             next_vpos = vpos + (int)m_increment;
                     }
                     m_first_time = false;
 
                     // adjust the timer
-                    m_timer.adjust(m_screen.target.time_until_pos(next_vpos));
+                    m_timer.adjust(m_screen.op[0].time_until_pos(next_vpos));
                     break;
                 }
             }

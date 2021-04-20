@@ -319,7 +319,8 @@ namespace mame
         uint32_t m_yscroll;            // yscroll offset
 
         // arrays
-        optional_shared_ptr_uint16_t m_slipram;    // pointer to the SLIP RAM
+        Pointer<uint16_t> m_slipram;  //uint16_t *              m_slipram;    // pointer to the SLIP RAM  //uint16_t *              m_slipram;    // pointer to the SLIP RAM
+        optional_shared_ptr<u16> m_slipramshare;
         std.vector<uint32_t> m_codelookup = new std.vector<uint32_t>();       // lookup table for codes
         std.vector<uint8_t> m_colorlookup = new std.vector<uint8_t>();       // lookup table for colors
         std.vector<uint8_t> m_gfxlookup = new std.vector<uint8_t>();         // lookup table for graphics
@@ -339,8 +340,10 @@ namespace mame
         {
             if (screen_tag is string)
                 m_divideo.set_screen((string)screen_tag);
-            else if (screen_tag is device_finder<screen_device>)
-                m_divideo.set_screen((device_finder<screen_device>)screen_tag);
+            else if (screen_tag is device_finder<screen_device, bool_constant_true>)
+                m_divideo.set_screen((device_finder<screen_device, bool_constant_true>)screen_tag);
+            else if (screen_tag is device_finder<screen_device, bool_constant_false>)
+                m_divideo.set_screen((device_finder<screen_device, bool_constant_false>)screen_tag);
             else
                 throw new emu_unimplemented();
 
@@ -372,7 +375,8 @@ namespace mame
             m_bank = 0;
             m_xscroll = 0;
             m_yscroll = 0;
-            m_slipram = new optional_shared_ptr_uint16_t(this, "slip");
+            m_slipram = null;
+            m_slipramshare = new optional_shared_ptr<u16>(this, "slip");
             m_activelast = null;
             m_last_xpos = 0;
             m_next_xpos = 0;
@@ -384,8 +388,10 @@ namespace mame
         {
             if (screen_tag is string)
                 m_divideo.set_screen((string)screen_tag);
-            else if (screen_tag is device_finder<screen_device>)
-                m_divideo.set_screen((device_finder<screen_device>)screen_tag);
+            else if (screen_tag is device_finder<screen_device, bool_constant_false>)
+                m_divideo.set_screen((device_finder<screen_device, bool_constant_false>)screen_tag);
+            else if (screen_tag is device_finder<screen_device, bool_constant_true>)
+                m_divideo.set_screen((device_finder<screen_device, bool_constant_true>)screen_tag);
             else
                 throw new emu_unimplemented();
 
@@ -396,7 +402,9 @@ namespace mame
         // configuration
         //template <typename T> void set_gfxdecode(T &&tag) { m_gfxdecode.set_tag(std::forward<T>(tag)); }
         public void set_gfxdecode(string tag) { m_gfxdecode.set_tag(tag); }
-        public void set_gfxdecode(device_finder<gfxdecode_device> tag) { m_gfxdecode.set_tag(tag); }
+        public void set_gfxdecode<bool_Required>(device_finder<gfxdecode_device, bool_Required> tag)
+            where bool_Required : bool_constant, new()
+        { m_gfxdecode.set_tag(tag); }
 
         void set_config(atari_motion_objects_config config) { m_atari_motion_objects_config = config; }  //void set_config(const atari_motion_objects_config &config) { static_cast<atari_motion_objects_config &>(*this) = config; }
 
@@ -414,7 +422,7 @@ namespace mame
         //void set_xscroll(int xscroll) { m_xscroll = xscroll & m_bitmapxmask; }
         //void set_yscroll(int yscroll) { m_yscroll = yscroll & m_bitmapymask; }
         //void set_scroll(int xscroll, int yscroll) { set_xscroll(xscroll); set_yscroll(yscroll); }
-        //void set_slipram(uint16_t *ram) { m_slipram.set_target(ram, 2); }
+        //void set_slipram(uint16_t *ram) { m_slipram = ram; }
 
 
         // rendering
@@ -441,7 +449,7 @@ namespace mame
                 if (m_slipshift != 0)
                 {
                     // extract the link from the SLIP RAM
-                    link = (m_slipram.target[band & m_sliprammask] >> m_linkmask.shift()) & m_linkmask.mask();
+                    link = (m_slipram[band & m_sliprammask] >> m_linkmask.shift()) & m_linkmask.mask();
 
                     // compute minimum Y and wrap around if necessary
                     bandclip.min_y = ((band << m_slipshift) - (int)m_yscroll + m_atari_motion_objects_config.m_slipoffset) & m_bitmapymask;
@@ -510,7 +518,7 @@ namespace mame
             base.device_start();
 
             // verify configuration
-            gfx_element gfx = m_gfxdecode.target.digfx.gfx(m_atari_motion_objects_config.m_gfxindex);
+            gfx_element gfx = m_gfxdecode.op[0].digfx.gfx(m_atari_motion_objects_config.m_gfxindex);
             if (gfx == null)
                 throw new emu_fatalerror("No gfxelement #{0}!", m_atari_motion_objects_config.m_gfxindex);
 
@@ -550,6 +558,10 @@ namespace mame
             m_sliprammask = m_slipramsize - 1;
             if (m_atari_motion_objects_config.m_maxperline == 0)
                 m_atari_motion_objects_config.m_maxperline = MAX_PER_BANK;
+
+            // Get the slipram from the share if not already explicitly set
+            if (m_slipram == null)
+                m_slipram = new Pointer<u16>(m_slipramshare.op);
 
             // allocate and initialize the code lookup
             int codesize = round_to_powerof2((int)m_codemask.mask());
@@ -715,7 +727,7 @@ namespace mame
         {
             // select the gfx element and save off key information
             int rawcode = (int)m_codemask.extract(entry);
-            gfx_element gfx = m_gfxdecode.target.digfx.gfx(m_gfxlookup[rawcode >> 8]);
+            gfx_element gfx = m_gfxdecode.op[0].digfx.gfx(m_gfxlookup[rawcode >> 8]);
             int save_granularity = gfx.granularity();
             int save_colorbase = (int)gfx.colorbase();
             int save_colors = (int)gfx.colors();

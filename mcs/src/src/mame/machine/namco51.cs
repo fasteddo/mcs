@@ -61,7 +61,7 @@ namespace mame
         public void reset(int state)
         {
             // Reset line is active low.
-            m_cpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+            m_cpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
 
@@ -69,7 +69,7 @@ namespace mame
         public void vblank(int state)
         {
             // The timer is active on falling edges.
-            m_cpu.target.clock_w(state == 0 ? 1 : 0);
+            m_cpu.op[0].clock_w(state == 0 ? 1 : 0);
         }
 
 
@@ -83,7 +83,7 @@ namespace mame
         //WRITE_LINE_MEMBER( namco_51xx_device::chip_select )
         public void chip_select(int state)
         {
-            m_cpu.target.set_input_line(0, state);
+            m_cpu.op[0].set_input_line(0, state);
         }
 
 
@@ -132,13 +132,13 @@ namespace mame
         protected override void device_add_mconfig(machine_config config)
         {
             MB8843(config, m_cpu, DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
-            m_cpu.target.read_k().set(K_r).reg();
-            m_cpu.target.read_r(0).set(R0_r).reg();
-            m_cpu.target.read_r(1).set(R1_r).reg();
-            m_cpu.target.read_r(2).set(R2_r).reg();
-            m_cpu.target.read_r(3).set(R3_r).reg();
-            m_cpu.target.write_o().set(O_w).reg();
-            m_cpu.target.write_p().set(P_w).reg();
+            m_cpu.op[0].read_k().set(K_r).reg();
+            m_cpu.op[0].read_r(0).set(R0_r).reg();
+            m_cpu.op[0].read_r(1).set(R1_r).reg();
+            m_cpu.op[0].read_r(2).set(R2_r).reg();
+            m_cpu.op[0].read_r(3).set(R3_r).reg();
+            m_cpu.op[0].write_o().set(O_w).reg();
+            m_cpu.op[0].write_p().set(P_w).reg();
         }
 
 

@@ -28,12 +28,12 @@ namespace mame
 
 
 #if false
-    namespace emu { namespace detail {
+    namespace emu::detail {
 
     template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read_line_delegate, std::remove_reference_t<T> > > > { using type = read_line_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
     template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write_line_delegate, std::remove_reference_t<T> > > > { using type = write_line_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
 
-    } } // namespace emu::detail
+    } // namespace emu::detail
 #endif
 
 
@@ -74,16 +74,16 @@ namespace mame
         //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form4 { static constexpr bool value = false; };
         //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form5 { static constexpr bool value = false; };
         //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form6 { static constexpr bool value = false; };
-        //template <typename Input, typename Result, typename Func> struct is_transform_form3<Input, Result, Func, std::enable_if_t<std::is_convertible<std::result_of_t<Func (offs_t &, Input, std::make_unsigned_t<Input> &)>, Result>::value> > { static constexpr bool value = true; };
-        //template <typename Input, typename Result, typename Func> struct is_transform_form4<Input, Result, Func, std::enable_if_t<std::is_convertible<std::result_of_t<Func (offs_t &, Input)>, Result>::value> > { static constexpr bool value = true; };
-        //template <typename Input, typename Result, typename Func> struct is_transform_form6<Input, Result, Func, std::enable_if_t<std::is_convertible<std::result_of_t<Func (Input)>, Result>::value> > { static constexpr bool value = true; };
+        //template <typename Input, typename Result, typename Func> struct is_transform_form3<Input, Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, offs_t &, Input, std::make_unsigned_t<Input> &>, Result>::value> > { static constexpr bool value = true; };
+        //template <typename Input, typename Result, typename Func> struct is_transform_form4<Input, Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, offs_t &, Input>, Result>::value> > { static constexpr bool value = true; };
+        //template <typename Input, typename Result, typename Func> struct is_transform_form6<Input, Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, Input>, Result>::value> > { static constexpr bool value = true; };
         //template <typename Input, typename Result, typename Func> struct is_transform { static constexpr bool value = is_transform_form1<Input, Result, Func>::value || is_transform_form2<Input, Result, Func>::value || is_transform_form3<Input, Result, Func>::value || is_transform_form4<Input, Result, Func>::value || is_transform_form5<Input, Result, Func>::value || is_transform_form6<Input, Result, Func>::value; };
 
         // Determining the result type of a transform function
         //template <typename Input, typename Result, typename Func, typename Enable = void> struct transform_result;
-        //template <typename Input, typename Result, typename Func> struct transform_result<Input, Result, Func, std::enable_if_t<is_transform_form3<Input, Result, Func>::value> > { using type = std::result_of_t<Func (offs_t &, Input, std::make_unsigned_t<Input> &)>; };
-        //template <typename Input, typename Result, typename Func> struct transform_result<Input, Result, Func, std::enable_if_t<is_transform_form4<Input, Result, Func>::value> > { using type = std::result_of_t<Func (offs_t &, Input)>; };
-        //template <typename Input, typename Result, typename Func> struct transform_result<Input, Result, Func, std::enable_if_t<is_transform_form6<Input, Result, Func>::value> > { using type = std::result_of_t<Func (Input)>; };
+        //template <typename Input, typename Result, typename Func> struct transform_result<Input, Result, Func, std::enable_if_t<is_transform_form3<Input, Result, Func>::value> > { using type = std::invoke_result_t<Func, offs_t &, Input, std::make_unsigned_t<Input> &>; };
+        //template <typename Input, typename Result, typename Func> struct transform_result<Input, Result, Func, std::enable_if_t<is_transform_form4<Input, Result, Func>::value> > { using type = std::invoke_result_t<Func, offs_t &, Input>; };
+        //template <typename Input, typename Result, typename Func> struct transform_result<Input, Result, Func, std::enable_if_t<is_transform_form6<Input, Result, Func>::value> > { using type = std::invoke_result_t<Func, Input>; };
         //template <typename Input, typename Result, typename Func> using transform_result_t = typename transform_result<Input, Result, Func>::type;
 
         // Mapping method types to delegate types
@@ -99,8 +99,13 @@ namespace mame
         // Working with devices and interfaces
         //template <typename T> static std::enable_if_t<emu::detail::is_device_implementation<T>::value, const char *> get_tag(T &obj) { return obj.tag(); }
         //template <typename T> static std::enable_if_t<emu::detail::is_device_interface<T>::value, const char *> get_tag(T &obj) { return obj.device().tag(); }
-        //template <typename T, typename U> static std::enable_if_t<std::is_convertible<std::add_pointer_t<U>, std::add_pointer_t<T> >::value, T &> cast_reference(U &obj) { return downcast<T &>(obj); }
-        //template <typename T, typename U> static std::enable_if_t<!std::is_convertible<std::add_pointer_t<U>, std::add_pointer_t<T> >::value, T &> cast_reference(U &obj) { return dynamic_cast<T &>(obj); }
+        //template <typename T, typename U> static T &cast_reference(U &obj)
+        //{
+        //    if constexpr (std::is_convertible_v<std::add_pointer_t<U>, std::add_pointer_t<T> >)
+        //        return downcast<T &>(obj);
+        //    else
+        //        return dynamic_cast<T &>(obj);
+        //}
 
 
         /// \brief Base transform helper
@@ -209,16 +214,16 @@ namespace mame
         //template <typename Result, typename Func, typename Enable = void> struct is_read_form1 { static constexpr bool value = false; };
         //template <typename Result, typename Func, typename Enable = void> struct is_read_form2 { static constexpr bool value = false; };
         //template <typename Result, typename Func, typename Enable = void> struct is_read_form3 { static constexpr bool value = false; };
-        //template <typename Result, typename Func> struct is_read_form1<Result, Func, std::enable_if_t<std::is_convertible<std::result_of_t<Func (offs_t, Result)>, Result>::value> > { static constexpr bool value = true; };
-        //template <typename Result, typename Func> struct is_read_form2<Result, Func, std::enable_if_t<std::is_convertible<std::result_of_t<Func (offs_t)>, Result>::value> > { static constexpr bool value = true; };
-        //template <typename Result, typename Func> struct is_read_form3<Result, Func, std::enable_if_t<std::is_convertible<std::result_of_t<Func ()>, Result>::value> > { static constexpr bool value = true; };
+        //template <typename Result, typename Func> struct is_read_form1<Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, offs_t, Result>, Result>::value> > { static constexpr bool value = true; };
+        //template <typename Result, typename Func> struct is_read_form2<Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, offs_t>, Result>::value> > { static constexpr bool value = true; };
+        //template <typename Result, typename Func> struct is_read_form3<Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func>, Result>::value> > { static constexpr bool value = true; };
         //template <typename Result, typename Func> struct is_read { static constexpr bool value = is_read_form1<Result, Func>::value || is_read_form2<Result, Func>::value || is_read_form3<Result, Func>::value; };
 
         // Determining the result type of a read function
         //template <typename Result, typename Func, typename Enable = void> struct read_result;
-        //template <typename Result, typename Func> struct read_result<Result, Func, std::enable_if_t<is_read_form1<Result, Func>::value> > { using type = std::result_of_t<Func (offs_t, std::make_unsigned_t<Result>)>; };
-        //template <typename Result, typename Func> struct read_result<Result, Func, std::enable_if_t<is_read_form2<Result, Func>::value> > { using type = std::result_of_t<Func (offs_t)>; };
-        //template <typename Result, typename Func> struct read_result<Result, Func, std::enable_if_t<is_read_form3<Result, Func>::value> > { using type = std::result_of_t<Func ()>; };
+        //template <typename Result, typename Func> struct read_result<Result, Func, std::enable_if_t<is_read_form1<Result, Func>::value> > { using type = std::invoke_result_t<Func, offs_t, std::make_unsigned_t<Result>>; };
+        //template <typename Result, typename Func> struct read_result<Result, Func, std::enable_if_t<is_read_form2<Result, Func>::value> > { using type = std::invoke_result_t<Func, offs_t>; };
+        //template <typename Result, typename Func> struct read_result<Result, Func, std::enable_if_t<is_read_form3<Result, Func>::value> > { using type = std::invoke_result_t<Func>; };
         //template <typename Result, typename Func> using read_result_t = typename read_result<Result, Func>::type;
 
         // Detecting candidates for read delegates
@@ -276,9 +281,9 @@ namespace mame
         //template <typename Input, typename Func, typename Enable = void> struct is_write_form1 { static constexpr bool value = false; };
         //template <typename Input, typename Func, typename Enable = void> struct is_write_form2 { static constexpr bool value = false; };
         //template <typename Input, typename Func, typename Enable = void> struct is_write_form3 { static constexpr bool value = false; };
-        //template <typename Input, typename Func> struct is_write_form1<Input, Func, void_t<std::result_of_t<Func (offs_t, Input, std::make_unsigned_t<Input>)> > > { static constexpr bool value = true; };
-        //template <typename Input, typename Func> struct is_write_form2<Input, Func, void_t<std::result_of_t<Func (offs_t, Input)> > > { static constexpr bool value = true; };
-        //template <typename Input, typename Func> struct is_write_form3<Input, Func, void_t<std::result_of_t<Func (Input)> > > { static constexpr bool value = true; };
+        //template <typename Input, typename Func> struct is_write_form1<Input, Func, void_t<std::invoke_result_t<Func, offs_t, Input, std::make_unsigned_t<Input>> > > { static constexpr bool value = true; };
+        //template <typename Input, typename Func> struct is_write_form2<Input, Func, void_t<std::invoke_result_t<Func, offs_t, Input> > > { static constexpr bool value = true; };
+        //template <typename Input, typename Func> struct is_write_form3<Input, Func, void_t<std::invoke_result_t<Func, Input> > > { static constexpr bool value = true; };
         //template <typename Input, typename Func> struct is_write { static constexpr bool value = is_write_form1<Input, Func>::value || is_write_form2<Input, Func>::value || is_write_form3<Input, Func>::value; };
 
         // Detecting candidates for write delegates
@@ -916,14 +921,18 @@ namespace mame
             //template <typename T, typename U, bool R>
             //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
             //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
-            public delegate_builder set<U>(device_finder<U> finder, read8_delegate func) where U : class //, char const *name)
+            public delegate_builder set<U, bool_R>(device_finder<U, bool_R> finder, read8_delegate func)  //, char const *name)
+                where U : class
+                where bool_R : bool_constant, new()
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
                 return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
             }
 
-            public delegate_builder set<U>(device_finder<U> finder, read_line_delegate func) where U : class //, char const *name)
+            public delegate_builder set<U, bool_R>(device_finder<U, bool_R> finder, read_line_delegate func)  //, char const *name)
+                where U : class
+                where bool_R : bool_constant, new()
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
@@ -1825,14 +1834,18 @@ namespace mame
             //template <typename T, typename U, bool R>
             //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
             //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
-            public delegate_builder set<U>(device_finder<U> finder, write8_delegate func) where U : class //, string name)
+            public delegate_builder set<U, bool_R>(device_finder<U, bool_R> finder, write8_delegate func)  //, string name)
+                where U : class
+                where bool_R : bool_constant, new()
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
                 return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
             }
 
-            public delegate_builder set<U>(device_finder<U> finder, write_line_delegate func) where U : class //, string name)
+            public delegate_builder set<U, bool_R>(device_finder<U, bool_R> finder, write_line_delegate func)  //, string name)
+                where U : class
+                where bool_R : bool_constant, new()
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
@@ -1878,7 +1891,9 @@ namespace mame
 
 
             //template <typename T, bool R>
-            public inputline_builder set_inputline<T>(device_finder<T> finder, int linenum) where T : class
+            public inputline_builder set_inputline<T, bool_R>(device_finder<T, bool_R> finder, int linenum)
+                where T : class
+                where bool_R : bool_constant, new()
             {
                 //set_used();
                 std.pair<device_t, string> target = finder.finder_target();

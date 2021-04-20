@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using slot_interface_enumerator = mame.device_interface_enumerator<mame.device_slot_interface>;  //typedef device_interface_enumerator<device_slot_interface> slot_interface_enumerator;
 using u32 = System.UInt32;
 
 
@@ -167,9 +168,5 @@ namespace mame
     }
 
 
-    //typedef device_interface_iterator<device_slot_interface> slot_interface_iterator;
-    public class slot_interface_iterator : device_interface_iterator<device_slot_interface>
-    {
-        public slot_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_slot_interface> slot_interface_enumerator;
 }

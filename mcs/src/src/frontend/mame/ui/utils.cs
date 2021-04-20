@@ -6,9 +6,13 @@ using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using filter_map = mame.std.map<mame.ui.machine_filter.type, mame.ui.machine_filter>;
+using std_string = System.String;
+using std_string_view = System.String;
+using std_string_view_size_type = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -283,10 +287,6 @@ namespace mame
         //template <class Impl, typename Entry>
         public abstract class filter_base<Impl, Entry> : global_object
         {
-            //std::function<void (Impl &)> &&handler);
-            public delegate void filter_handler(Impl filter);
-
-
             //typedef std::unique_ptr<Impl> ptr;
 
             //using entry_type = Entry;
@@ -301,25 +301,22 @@ namespace mame
 
             public abstract bool apply(Entry info);
 
-            public abstract void show_ui(mame_ui_manager mui, render_container container, filter_handler handler);  //, std::function<void (Impl &)> &&handler);
+            public abstract void show_ui(mame_ui_manager mui, render_container container, Action<Impl> handler);  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Impl &)> &&handler) = 0;
 
             public abstract bool wants_adjuster();
             public abstract string adjust_text();
-            public abstract UInt32 arrow_flags();
+            public abstract uint32_t arrow_flags();
             public abstract bool adjust_left();
             public abstract bool adjust_right();
 
-            public abstract void save_ini(emu_file file, UInt32 indent);
+            public abstract void save_ini(emu_file file, unsigned indent);
 
             // moved to derived classes since templates are different
             //template <typename InputIt, class OutputIt>
             //void apply<InputIt, OutputIt>(InputIt first, InputIt last, OutputIt dest)
             //{
-            //    std::copy_if(first, last, dest);//, [this] (auto const &info) { return this->apply(info); });
+            //    std::copy_if(first, last, dest, [this] (auto const &info) { return this->apply(info); });
             //}
-
-            // dup of abstract version above, c++ pointer version, not needed
-            //bool apply(Entry info) { return apply(info); }
         }
 
 
@@ -478,15 +475,15 @@ namespace mame
             }
 
 
-            protected static machine_filter create(emu_file file, machine_filter_data data, UInt32 indent)
+            protected static machine_filter create(emu_file file, machine_filter_data data, unsigned indent)
             {
                 string buffer;  //= new char[utils_global.MAX_CHAR_INFO];
                 if (file.gets(out buffer, utils_global.MAX_CHAR_INFO) == null)
                     return null;
 
                 // split it into a key/value or bail
-                string key = buffer;
-                for (UInt32 i = 0; (2 * indent) > i; ++i)
+                std_string_view key = buffer;
+                for (std_string_view_size_type i = 0; (2 * indent) > i; ++i)
                 {
                     if ((key.length() <= i) || (' ' != key[(int)i]))
                         return null;
@@ -497,7 +494,7 @@ namespace mame
                     return null;
                 int nl = key.find_first_of("\r\n", split);
                 string value = key.substr(split + 3, (-1 == nl) ? nl : (nl - split - 3));
-                key = key.Substring(split);  // key.resize(split);
+                key = key.substr(0, split);
 
                 // look for a filter type that matches
                 for (type n = type.FIRST; type.COUNT > n; ++n)
@@ -628,17 +625,17 @@ namespace mame
             }
 
 
-            protected static software_filter create(emu_file file, software_filter_data data, UInt32 indent)
+            protected static software_filter create(emu_file file, software_filter_data data, unsigned indent)
             {
                 string buffer;  //char buffer[MAX_CHAR_INFO];
                 if (file.gets(out buffer, utils_global.MAX_CHAR_INFO) == null)
                     return null;
 
                 // split it into a key/value or bail
-                string key = buffer;
-                for (int i = 0; (2 * indent) > i; ++i)
+                std_string_view key = buffer;
+                for (std_string_view_size_type i = 0; (2 * indent) > i; ++i)
                 {
-                    if ((key.length() <= i) || (' ' != key[i]))
+                    if ((key.length() <= i) || (' ' != key[(int)i]))
                         return null;
                 }
                 key = key.substr(2 * (int)indent);
@@ -647,7 +644,7 @@ namespace mame
                     return null;
                 int nl = key.find_first_of("\r\n", split);
                 string value = key.substr(split + 3, (-1 == nl) ? nl : (nl - split - 3));
-                key = key.Substring(split);  // key.resize(split);
+                key = key.substr(0, split);
 
                 // look for a filter type that matches
                 for (type n = type.FIRST; type.COUNT > n; ++n)
@@ -903,7 +900,7 @@ namespace mame
             public override string display_name() { return display_name(Type); }
             public override string filter_text() { return null; }
 
-            public override void show_ui(mame_ui_manager mui, render_container container, filter_handler handler)  //, std::function<void (Base &)> &&handler)
+            public override void show_ui(mame_ui_manager mui, render_container container, Action<machine_filter> handler)  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Base &)> &&handler) override
             {
                 handler(this);
             }
@@ -927,10 +924,7 @@ namespace mame
                 if (Type == n)
                 {
                     result = "_> ";
-                    //throw new emu_unimplemented();
-#if false
                     render_font.convert_command_glyph(ref result);
-#endif
                 }
                 result += display_name(n);
                 return result;
@@ -954,7 +948,7 @@ namespace mame
             public override string display_name() { return display_name(Type); }
             public override string filter_text() { return null; }
 
-            public override void show_ui(mame_ui_manager mui, render_container container, filter_handler handler)  //, std::function<void (Base &)> &&handler)
+            public override void show_ui(mame_ui_manager mui, render_container container, Action<software_filter> handler)  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Base &)> &&handler) override
             {
                 handler(this);
             }
@@ -978,10 +972,7 @@ namespace mame
                 if (Type == n)
                 {
                     result = "_> ";
-                    //throw new emu_unimplemented();
-#if false
                     render_font.convert_command_glyph(ref result);
-#endif
                 }
                 result += display_name(n);
                 return result;
@@ -1017,7 +1008,7 @@ namespace mame
 
             public override string filter_text() { return selection_valid() ? selection_text().c_str() : null; }
 
-            public override void show_ui(mame_ui_manager mui, render_container container, filter_handler handler)  //, std::function<void (Base &)> &&handler)
+            public override void show_ui(mame_ui_manager mui, render_container container, Action<machine_filter> handler)  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Base &)> &&handler) override
             {
                 if (m_choices.empty())
                 {
@@ -1091,7 +1082,7 @@ namespace mame
 
             public override string filter_text() { return selection_valid() ? selection_text().c_str() : null; }
 
-            public override void show_ui(mame_ui_manager mui, render_container container, filter_handler handler)  //, std::function<void (Base &)> &&handler)
+            public override void show_ui(mame_ui_manager mui, render_container container, Action<software_filter> handler)  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Base &)> &&handler) override
             {
                 if (m_choices.empty())
                 {
@@ -1164,7 +1155,7 @@ namespace mame
 
                 composite_filter_impl_base_machine_filter m_parent;  // Impl m_parent;
                 std.map<type, machine_filter> [] m_saved_filters = new std.map<type, machine_filter>[MAX];  //std::map<typename Base::type, typename Base::ptr> m_saved_filters[MAX];
-                filter_handler m_handler;  //std::function<void (Base &)> m_handler;
+                Action<machine_filter> m_handler;  //std::function<void (Base &)> m_handler;
                 bool m_added;
 
 
@@ -1172,7 +1163,7 @@ namespace mame
                         mame_ui_manager mui,
                         render_container container,
                         composite_filter_impl_base_machine_filter parent,  // Impl parent
-                        filter_handler handler)  //<void (Base &filter)> &&handler)
+                        Action<machine_filter> handler)  //<void (Base &filter)> &&handler)
                     : base(mui, container)
                 {
                     m_parent = parent;
@@ -1207,7 +1198,7 @@ namespace mame
                 protected override void populate(ref float customtop, ref float custombottom)
                 {
                     // add items for each active filter
-                    UInt32 i = 0;
+                    unsigned i = 0;
                     for (i = 0; (MAX > i) && m_parent.m_filters[i] != null; ++i)
                     {
                         item_append(string.Format("Filter {0}", i + 1), m_parent.m_filters[i].display_name(), get_arrow_flags(i), (UInt32)FILTER.FILTER_FIRST + i);  // %1$u
@@ -1216,7 +1207,7 @@ namespace mame
 
                         if (m_parent.m_filters[i].wants_adjuster())
                         {
-                            string name = "^!";
+                            std_string name = "^!";
                             render_font.convert_command_glyph(ref name);
                             item_append(name, m_parent.m_filters[i].adjust_text(), m_parent.m_filters[i].arrow_flags(), (UInt32)FILTER.ADJUST_FIRST + i);
                         }
@@ -1228,9 +1219,9 @@ namespace mame
 
                     // add remove/add handlers
                     if (1 < i)
-                        item_append("Remove last filter", "", 0, FILTER.REMOVE_FILTER);
+                        item_append("Remove last filter", 0, FILTER.REMOVE_FILTER);
                     if (MAX > i)
-                        item_append("Add filter", "", 0, FILTER.ADD_FILTER);
+                        item_append("Add filter", 0, FILTER.ADD_FILTER);
 
                     item_append(menu_item_type.SEPARATOR);
 
@@ -1361,7 +1352,7 @@ namespace mame
             protected composite_filter_impl_base_machine_filter(type Type) : base(Type) { }
 
 
-            public override void show_ui(mame_ui_manager mui, render_container container, filter_handler handler)  //, std::function<void (Base &)> &&handler) override
+            public override void show_ui(mame_ui_manager mui, render_container container, Action<machine_filter> handler)  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Base &)> &&handler) override
             {
                 menu.stack_push(new menu_configure(mui, container, this, handler));
             }
@@ -1380,18 +1371,15 @@ namespace mame
                 if (Type == n)
                 {
                     result = "_> ";
-                    //throw new emu_unimplemented();
-#if false
                     render_font.convert_command_glyph(ref result);
-#endif
                 }
                 else
                 {
-                    for (UInt32 i = 0; (MAX > i) && m_filters[i] != null; ++i)
+                    for (unsigned i = 0; (MAX > i) && m_filters[i] != null; ++i)
                     {
                         if (m_filters[i].get_type() == n)
                         {
-                            result = string.Format("@custom{0} ", i + 1);
+                            result = util_.string_format("@custom{0} ", i + 1);
                             render_font.convert_command_glyph(ref result);
                             break;
                         }
@@ -1456,7 +1444,7 @@ namespace mame
 
                 composite_filter_impl_base_software_filter m_parent;  // Impl m_parent;
                 //std::map<typename Base::type, typename Base::ptr> m_saved_filters[MAX];
-                filter_handler m_handler;  //std::function<void (Base &)> m_handler;
+                Action<software_filter> m_handler;  //std::function<void (Base &)> m_handler;
                 bool m_added;
 
 
@@ -1464,7 +1452,7 @@ namespace mame
                         mame_ui_manager mui,
                         render_container container,
                         composite_filter_impl_base_software_filter parent,  //Impl parent,
-                        filter_handler handler)  //<void (Base &filter)> &&handler)
+                        Action<software_filter> handler)  //<void (Base &filter)> &&handler)
                     : base(mui, container)
                 {
                     m_parent = parent;
@@ -1520,9 +1508,9 @@ namespace mame
 
                     // add remove/add handlers
                     if (1 < i)
-                        item_append("Remove last filter", "", 0, FILTER.REMOVE_FILTER);
+                        item_append("Remove last filter", 0, FILTER.REMOVE_FILTER);
                     if (MAX > i)
-                        item_append("Add filter", "", 0, FILTER.ADD_FILTER);
+                        item_append("Add filter", 0, FILTER.ADD_FILTER);
 
                     item_append(menu_item_type.SEPARATOR);
 
@@ -1638,7 +1626,7 @@ namespace mame
             protected composite_filter_impl_base_software_filter(software_filter.type Type) : base(Type) { }
 
 
-            public override void show_ui(mame_ui_manager mui, render_container container, filter_handler handler)  //, std::function<void (Base &)> &&handler) override
+            public override void show_ui(mame_ui_manager mui, render_container container, Action<software_filter> handler)  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Base &)> &&handler) override
             {
                 menu.stack_push(new menu_configure(mui, container, this, handler));
             }
@@ -1959,21 +1947,21 @@ namespace mame
 
 
                 category_machine_filter m_parent;
-                filter_handler m_handler;  //std::function<void (machine_filter &)> m_handler;
-                std.pair<UInt32, bool> [] m_state;  //std::unique_ptr<std::pair<unsigned, bool> []> const m_state;
-                UInt32 m_ini;
+                Action<machine_filter> m_handler;  //std::function<void (machine_filter &)> m_handler;
+                std.pair<unsigned, bool> [] m_state;  //std::unique_ptr<std::pair<unsigned, bool> []> const m_state;
+                unsigned m_ini;
 
 
                 public menu_configure(
                         mame_ui_manager mui,
                         render_container container,
                         category_machine_filter parent,
-                        filter_handler handler)  //std::function<void (machine_filter &filter)> &&handler)
+                        Action<machine_filter> handler)  //std::function<void (machine_filter &filter)> &&handler)
                     : base(mui, container)
                 {
                     m_parent = parent;
                     m_handler = handler;
-                    m_state = new std.pair<UInt32, bool>[mame_machine_manager.instance().inifile().get_file_count()];  //m_state(std::make_unique<std::pair<UInt32, bool> []>(mame_machine_manager.instance().inifile().get_file_count()));
+                    m_state = new std.pair<unsigned, bool> [mame_machine_manager.instance().inifile().get_file_count()];  //m_state(std::make_unique<std::pair<UInt32, bool> []>(mame_machine_manager.instance().inifile().get_file_count()));
                     m_ini = parent.m_ini;
 
 
@@ -2015,7 +2003,7 @@ namespace mame
                     UInt32 filecnt = mgr.get_file_count();
                     if (filecnt == 0)
                     {
-                        item_append("No category INI files found", "", FLAG_DISABLE, null);
+                        item_append("No category INI files found", FLAG_DISABLE, null);
                     }
                     else
                     {
@@ -2062,23 +2050,19 @@ namespace mame
                 inifile_manager mgr = mame_machine_manager.instance().inifile();
                 if (value != null)
                 {
-                    //string split = std::strchr(value, '/');
-                    int splitIdx = value.IndexOf("/");
-                    string ini;
-                    if (splitIdx != -1)
-                        ini = value.Substring(splitIdx);  // assign(value, split);
-                    else
-                        ini = value;
+                    std_string_view s = value;
+                    std_string_view_size_type split = (std_string_view_size_type)s.find('/');
+                    std_string_view ini = s.substr(0, (int)split);
 
-                    for (UInt32 i = 0; mgr.get_file_count() > i; ++i)
+                    for (unsigned i = 0; mgr.get_file_count() > i; ++i)
                     {
                         if (mgr.get_file_name(i) == ini)
                         {
                             m_ini = i;
-                            if (splitIdx != -1)
+                            if (UInt32.MaxValue != split)  //if (std::string_view::npos != split)
                             {
-                                string group = value.Substring(splitIdx + 1);  // split + 1;
-                                for (UInt32 j = 0; mgr.get_category_count(i) > j; ++j)
+                                std_string_view group = s.substr((int)split + 1);
+                                for (unsigned j = 0; mgr.get_category_count(i) > j; ++j)
                                 {
                                     if (mgr.get_category_name(i, j) == group)
                                     {
@@ -2104,7 +2088,7 @@ namespace mame
                 return ((mgr.get_file_count() > m_ini) && (mgr.get_category_count(m_ini) > m_group)) ? m_adjust_text.c_str() : null;
             }
 
-            public override void show_ui(mame_ui_manager mui, render_container container, filter_handler handler)  //, std::function<void (machine_filter &)> &&handler) override;
+            public override void show_ui(mame_ui_manager mui, render_container container, Action<machine_filter> handler)  //, std::function<void (machine_filter &)> &&handler) override;
             {
                 menu.stack_push(new menu_configure(mui, container, this, handler));
             }

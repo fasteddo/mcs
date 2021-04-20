@@ -116,7 +116,7 @@ namespace mame
             {
                 // fetch the screen
                 if (m_screen != null)
-                    m_screen.target.register_vblank_callback(watchdog_vblank);
+                    m_screen.op[0].register_vblank_callback(watchdog_vblank);
             }
 
             save_item(NAME(new { m_enabled }));

@@ -6,7 +6,9 @@ using System.Collections.Generic;
 
 using notify_vector = mame.std.vector<mame.output_manager.output_notify>;
 using s32 = System.Int32;
+using std_string = System.String;
 using u32 = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -17,8 +19,7 @@ namespace mame
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask> friend class devcb_write;
 
 
-        //typedef void (*notifier_func)(const char *outname, s32 value, void *param);
-        public delegate void notifier_func(string outname, int value, object param);
+        public delegate void notifier_func(string outname, int value, object param);  //typedef void (*notifier_func)(const char *outname, s32 value, void *param);
 
 
         public class output_notify
@@ -110,41 +111,47 @@ namespace mame
             public s32 op { get { return m_item.get(); } set { m_item.set(value); } }
         }
 
+
         //template <unsigned M, unsigned... N> struct item_proxy_array { typedef typename item_proxy_array<N...>::type type[M]; };
         //template <unsigned N> struct item_proxy_array<N> { typedef item_proxy type[N]; };
         //template <unsigned... N> using item_proxy_array_t = typename item_proxy_array<N...>::type;
 
         //template <typename X, unsigned... N>
-        public class output_finder
+        public class output_finder<X, unsigned_N>
+            where unsigned_N : uint32_constant, new()
         {
-            int N;
+            static readonly unsigned N = new unsigned_N().value;
+
 
             device_t m_device;
-            string m_format;
+            std_string m_format;
             u32 m_start;
-            u32 [] m_start_args;  //unsigned const              m_start_args[sizeof...(N)];
+            unsigned [] m_start_args;  //unsigned const              m_start_args[sizeof...(N)];
             item_proxy [] m_proxies;  //item_proxy_array_t<N...>    m_proxies;
 
 
             //template <typename... T>
-            public output_finder(int N, device_t device, string format, u32 start)//, T &&... start_args)
+            public output_finder(device_t device, std_string format, u32 start)
             {
-                this.N = N;
-
                 m_device = device;
                 m_format = format;
 
                 m_start = start;
                 //m_start_args;//{ std::forward<T>(start_args)... };
-                m_start_args = new UInt32[N];
+                m_start_args = new unsigned[N];
                 m_proxies = new item_proxy[N];
                 for (int i = 0; i < m_proxies.Length; i++)
                     m_proxies[i] = new item_proxy();
             }
 
+
             public s32 this[int n] { get { return m_proxies[n].op; } set { m_proxies[n].op = value; } }  //auto &operator[](unsigned n) { return m_proxies[n]; }
             public s32 this[UInt32 n] { get { return m_proxies[n].op; } set { m_proxies[n].op = value; } }  //auto &operator[](unsigned n) { return m_proxies[n]; }
             //auto &operator[](unsigned n) const { return m_proxies[n]; }
+
+
+            public item_proxy op { get { return m_proxies[0]; } }
+
 
             //auto begin() { return std::begin(m_proxies); }
             //auto end() { return std::end(m_proxies); }
@@ -178,24 +185,25 @@ namespace mame
             //}
         }
 
+
         //template <typename X>
-        class output_finder<X>
-        {
-            device_t m_device;
-            string m_format;
-            //item_proxy          m_proxy;
-
-            output_finder(device_t device, string format)
-            {
-                m_device = device;
-                m_format = format;
-            }
-
-            //operator s32() const { return m_proxy; }
-            //s32 operator=(s32 value) { return m_proxy = value; }
-
-            //void resolve() { m_proxy.resolve(m_device, m_format); }
-        }
+        //class output_finder<X>
+        //{
+        //    device_t m_device;
+        //    string m_format;
+        //    //item_proxy          m_proxy;
+        //
+        //    output_finder(device_t device, string format)
+        //    {
+        //        m_device = device;
+        //        m_format = format;
+        //    }
+        //
+        //    //operator s32() const { return m_proxy; }
+        //    //s32 operator=(s32 value) { return m_proxy = value; }
+        //
+        //    //void resolve() { m_proxy.resolve(m_device, m_format); }
+        //}
 
 
         public const bool OUTPUT_VERBOSE = false;
@@ -370,12 +378,12 @@ namespace mame
         /*-------------------------------------------------
             output_pause - send pause message
         -------------------------------------------------*/
-        void pause(running_machine machine)
+        void pause(running_machine machine_)
         {
             set_value("pause", 1);
         }
 
-        void resume(running_machine machine)
+        void resume(running_machine machine_)
         {
             set_value("pause", 0);
         }
@@ -403,5 +411,5 @@ namespace mame
 
 
     //template <unsigned... N> using output_finder = output_manager::output_finder<void, N...>;
-    public class output_finder : output_manager.output_finder { public output_finder(int N, device_t device, string format, u32 start) : base(N, device, format, start) { } }
+    public class output_finder<unsigned_N> : output_manager.output_finder<int, unsigned_N> where unsigned_N : uint32_constant, new() { public output_finder(device_t device, string format, u32 start) : base(device, format, start) { } }
 }

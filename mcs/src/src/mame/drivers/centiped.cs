@@ -27,28 +27,25 @@ namespace mame
 
             /* IRQ is clocked on the rising edge of 16V, equal to the previous 32V */
             if ((scanline & 16) != 0)
-                m_maincpu.target.set_input_line(0, ((scanline - 1) & 32) != 0 ? ASSERT_LINE : CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(0, ((scanline - 1) & 32) != 0 ? ASSERT_LINE : CLEAR_LINE);
 
             /* do a partial update now to handle sprite multiplexing (Maze Invaders) */
-            m_screen.target.update_partial(scanline);
+            m_screen.op[0].update_partial(scanline);
         }
 
 
-        //MACHINE_START_MEMBER(centiped_state,centiped)
-        void machine_start_centiped()
+        protected override void machine_start()
         {
             save_item(NAME(new { m_oldpos }));
             save_item(NAME(new { m_sign }));
             save_item(NAME(new { m_dsw_select }));
-            save_item(NAME(new { m_prg_bank }));
         }
 
 
         //MACHINE_RESET_MEMBER(centiped_state,centiped)
         void machine_reset_centiped()
         {
-            m_maincpu.target.set_input_line(0, CLEAR_LINE);
-            m_prg_bank = 0;
+            m_maincpu.op[0].set_input_line(0, CLEAR_LINE);
 
             if (m_earom.found())
                 earom_control_w(0);
@@ -57,7 +54,7 @@ namespace mame
 
         void irq_ack_w(uint8_t data)
         {
-            m_maincpu.target.set_input_line(0, CLEAR_LINE);
+            m_maincpu.op[0].set_input_line(0, CLEAR_LINE);
         }
 
 
@@ -190,22 +187,22 @@ namespace mame
 
         uint8_t earom_read()
         {
-            return m_earom.target.data();
+            return m_earom.op[0].data();
         }
 
 
         void earom_write(offs_t offset, uint8_t data)
         {
-            m_earom.target.set_address((uint8_t)(offset & 0x3f));
-            m_earom.target.set_data(data);
+            m_earom.op[0].set_address((uint8_t)(offset & 0x3f));
+            m_earom.op[0].set_data(data);
         }
 
 
         void earom_control_w(uint8_t data)
         {
             // CK = DB0, C1 = /DB1, C2 = DB2, CS1 = DB3, /CS2 = GND
-            m_earom.target.set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
-            m_earom.target.set_clk(BIT(data, 0));
+            m_earom.op[0].set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
+            m_earom.op[0].set_clk(BIT(data, 0));
         }
 
 
@@ -415,30 +412,29 @@ namespace mame
             /* basic machine hardware */
             M6502(config, m_maincpu, 12096000/8);  /* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
 
-            MCFG_MACHINE_START_OVERRIDE(config, machine_start_centiped);
             MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_centiped);
 
             ER2055(config, m_earom);
 
             LS259(config, m_outlatch);
-            m_outlatch.target.q_out_cb(0).set((write_line_delegate)coin_counter_left_w).reg();
-            m_outlatch.target.q_out_cb(1).set((write_line_delegate)coin_counter_center_w).reg();
-            m_outlatch.target.q_out_cb(2).set((write_line_delegate)coin_counter_right_w).reg();
-            m_outlatch.target.q_out_cb(3).set_output("led0").invert().reg(); // LED 1
-            m_outlatch.target.q_out_cb(4).set_output("led1").invert().reg(); // LED 2
+            m_outlatch.op[0].q_out_cb(0).set((write_line_delegate)coin_counter_left_w).reg();
+            m_outlatch.op[0].q_out_cb(1).set((write_line_delegate)coin_counter_center_w).reg();
+            m_outlatch.op[0].q_out_cb(2).set((write_line_delegate)coin_counter_right_w).reg();
+            m_outlatch.op[0].q_out_cb(3).set_output("led0").invert().reg(); // LED 1
+            m_outlatch.op[0].q_out_cb(4).set_output("led1").invert().reg(); // LED 2
 
-            WATCHDOG_TIMER(config, "watchdog");
+            WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 8);
 
             /* timer */
             TIMER(config, "32v").configure_scanline(generate_interrupt, "screen", 0, 16);
 
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
-            m_screen.target.set_refresh_hz(60);
-            m_screen.target.set_size(32*8, 32*8);
-            m_screen.target.set_visarea(0*8, 32*8-1, 0*8, 30*8-1);
-            m_screen.target.set_screen_update(screen_update_centiped);
-            m_screen.target.set_palette(m_palette);
+            m_screen.op[0].set_refresh_hz(60);
+            m_screen.op[0].set_size(32*8, 32*8);
+            m_screen.op[0].set_visarea(0*8, 32*8-1, 0*8, 30*8-1);
+            m_screen.op[0].set_screen_update(screen_update_centiped);
+            m_screen.op[0].set_palette(m_palette);
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_centiped);
             PALETTE(config, m_palette).set_entries(4+4*4*4*4);
@@ -451,10 +447,10 @@ namespace mame
         {
             centiped_base(config);
 
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, centiped_map);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, centiped_map);
 
             // M10
-            m_outlatch.target.q_out_cb(7).set((write_line_delegate)flip_screen_w).reg();
+            m_outlatch.op[0].q_out_cb(7).set((write_line_delegate)flip_screen_w).reg();
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();

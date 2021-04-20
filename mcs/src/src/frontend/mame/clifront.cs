@@ -4,7 +4,10 @@
 using System;
 using System.Collections.Generic;
 
+using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
 using int64_t = System.Int64;
+using samples_device_enumerator = mame.device_type_enumerator<mame.samples_device>;  //typedef device_type_enumerator<samples_device> samples_device_enumerator;
+using slot_interface_enumerator = mame.device_interface_enumerator<mame.device_slot_interface>;  //typedef device_interface_enumerator<device_slot_interface> slot_interface_enumerator;
 using uint32_t = System.UInt32;
 
 
@@ -329,7 +332,7 @@ namespace mame
                     args,
                     (root, type, first) =>
                     {
-                        foreach (device_t device in new device_iterator(root))
+                        foreach (device_t device in new device_enumerator(root))
                         {
                             var rom = device.rom_region();
                             for (int romOffset = 0; rom[romOffset] != null && !ROMENTRY_ISEND(rom[romOffset]); ++romOffset)  //for (tiny_rom_entry rom = device.rom_region(); rom != null && !ROMENTRY_ISEND(rom); ++rom)
@@ -363,7 +366,7 @@ namespace mame
 
                         // iterate through ROMs
                         bool hasroms = false;
-                        foreach (device_t device in new device_iterator(root))
+                        foreach (device_t device in new device_enumerator(root))
                         {
                             for (var region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                             {
@@ -435,7 +438,7 @@ namespace mame
             while (drivlist.next())
             {
                 // see if we have samples
-                samples_device_iterator iter = new samples_device_iterator(drivlist.config().root_device());
+                samples_device_enumerator iter = new samples_device_enumerator(drivlist.config().root_device());
                 if (iter.count() == 0)
                     continue;
 
@@ -481,7 +484,7 @@ namespace mame
 
                 // build a list of devices
                 std.vector<device_t> device_list = new std.vector<device_t>();
-                foreach (device_t device in new device_iterator(drivlist.config().root_device()))
+                foreach (device_t device in new device_enumerator(drivlist.config().root_device()))
                     device_list.push_back(device);
 
                 // sort them by tag
@@ -568,7 +571,7 @@ namespace mame
             {
                 // iterate
                 bool first = true;
-                foreach (device_slot_interface slot in new slot_interface_iterator(drivlist.config().root_device()))
+                foreach (device_slot_interface slot in new slot_interface_enumerator(drivlist.config().root_device()))
                 {
                     if (slot.fixed_())
                         continue;
@@ -640,7 +643,7 @@ namespace mame
             {
                 // iterate
                 bool first = true;
-                foreach (device_image_interface imagedev in new image_interface_iterator(drivlist.config().root_device()))
+                foreach (device_image_interface imagedev in new image_interface_enumerator(drivlist.config().root_device()))
                 {
                     if (!imagedev.user_loadable())
                         continue;

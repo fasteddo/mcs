@@ -22,9 +22,9 @@ namespace mame
 
 
         /* memory pointers */
-        required_shared_ptr_uint8_t m_videoram;
-        required_shared_ptr_uint8_t m_colorram;
-        optional_shared_ptr_uint8_t m_spriteram;
+        required_shared_ptr<uint8_t> m_videoram;
+        required_shared_ptr<uint8_t> m_colorram;
+        optional_shared_ptr<uint8_t> m_spriteram;
 
         /* video-related */
         uint8_t                m_bg1xpos;
@@ -47,9 +47,9 @@ namespace mame
         {
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_screen = new required_device<screen_device>(this, "screen");
-            m_videoram = new required_shared_ptr_uint8_t(this, "videoram");
-            m_colorram = new required_shared_ptr_uint8_t(this, "colorram");
-            m_spriteram = new optional_shared_ptr_uint8_t(this, "spriteram");
+            m_videoram = new required_shared_ptr<uint8_t>(this, "videoram");
+            m_colorram = new required_shared_ptr<uint8_t>(this, "colorram");
+            m_spriteram = new optional_shared_ptr<uint8_t>(this, "spriteram");
             m_sp_gfxdecode = new required_device<gfxdecode_device>(this, "sp_gfxdecode");
             m_tx_gfxdecode = new required_device<gfxdecode_device>(this, "tx_gfxdecode");
             m_bg_gfxdecode = new required_device<gfxdecode_device>(this, "bg_gfxdecode");

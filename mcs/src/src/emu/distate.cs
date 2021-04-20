@@ -660,4 +660,8 @@ namespace mame
                 throw new emu_fatalerror("No state registered for device '{0}' that supports it!\n", device().tag());
         }
     }
+
+
+    // iterator
+    //typedef device_interface_enumerator<device_state_interface> state_interface_enumerator;
 }

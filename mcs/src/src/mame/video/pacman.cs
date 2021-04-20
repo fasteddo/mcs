@@ -152,8 +152,8 @@ namespace mame
         //TILE_GET_INFO_MEMBER(pacman_state::pacman_get_tile_info)
         void pacman_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            int code = m_videoram[tile_index] | (m_charbank << 8);
-            int attr = (m_colorram[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6 );
+            int code = m_videoram.op[tile_index] | (m_charbank << 8);
+            int attr = (m_colorram.op[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6 );
 
             tileinfo.set(0, (u32)code, (u32)attr, 0);
         }
@@ -167,6 +167,8 @@ namespace mame
             save_item(NAME(new { m_colortablebank }));
             save_item(NAME(new { m_flipscreen }));
             save_item(NAME(new { m_bgpriority }));
+            save_item(NAME(new { m_irq_mask }));
+            save_item(NAME(new { m_interrupt_vector }));
         }
 
 
@@ -182,25 +184,26 @@ namespace mame
             m_flipscreen = 0;
             m_bgpriority = 0;
             m_inv_spr = 0;
+            m_interrupt_vector = 0;
 
             /* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
             /* one pixel to the left to get a more correct placement */
             m_xoffsethack = 1;
 
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, pacman_get_tile_info, pacman_scan_rows, 8, 8, 36, 28);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, pacman_get_tile_info, pacman_scan_rows, 8, 8, 36, 28);
         }
 
 
         void pacman_videoram_w(offs_t offset, uint8_t data)
         {
-            m_videoram[offset] = data;
+            m_videoram[offset].op = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
 
         void pacman_colorram_w(offs_t offset, uint8_t data)
         {
-            m_colorram[offset] = data;
+            m_colorram[offset].op = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
@@ -222,8 +225,8 @@ namespace mame
 
             if ( m_spriteram != null )
             {
-                Pointer<uint8_t> spriteram = m_spriteram.target;  //uint8_t *spriteram = m_spriteram;
-                Pointer<uint8_t> spriteram_2 = m_spriteram2.target;  //uint8_t *spriteram_2 = m_spriteram2;
+                Pointer<uint8_t> spriteram = m_spriteram.op;  //uint8_t *spriteram = m_spriteram;
+                Pointer<uint8_t> spriteram_2 = m_spriteram2.op;  //uint8_t *spriteram_2 = m_spriteram2;
                 int offs;
 
                 rectangle spriteclip = new rectangle(2*8, 34*8-1, 0*8, 28*8-1);
@@ -255,20 +258,20 @@ namespace mame
 
                     color = ( spriteram[offs + 1] & 0x1f ) | (m_colortablebank << 5) | (m_palettebank << 6 );
 
-                    m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip,
+                    m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
                             (UInt32)(( spriteram[offs] >> 2 ) | (m_spritebank << 6)),
                             (UInt32)color,
                             fx,fy,
                             sx,sy,
-                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
-                    m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip,
+                    m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
                             (UInt32)(( spriteram[offs] >> 2 ) | (m_spritebank << 6)),
                             (UInt32)color,
                             fx,fy,
                             sx - 256,sy,
-                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color & 0x3f, 0));
                 }
 
                 /* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
@@ -297,20 +300,20 @@ namespace mame
                     fx = (byte)((spriteram[offs] & 1) ^ m_inv_spr);
                     fy = (byte)((spriteram[offs] & 2) ^ ((m_inv_spr) << 1));
 
-                    m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip,
+                    m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
                             (UInt32)(( spriteram[offs] >> 2 ) | (m_spritebank << 6)),
                             (UInt32)color,
                             fx,fy,
                             sx,sy + m_xoffsethack,
-                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
-                    m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip,
+                    m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
                             (UInt32)(( spriteram[offs] >> 2 ) | (m_spritebank << 6)),
                             (UInt32)color,
                             fx,fy,
                             sx - 256,sy + m_xoffsethack,
-                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color & 0x3f, 0));
                 }
             }
 

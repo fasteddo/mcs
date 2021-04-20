@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using memory_interface_enumerator = mame.device_interface_enumerator<mame.device_memory_interface>;  //typedef device_interface_enumerator<device_memory_interface> memory_interface_enumerator;
 using u32 = System.UInt32;
 
 
@@ -68,17 +69,18 @@ namespace mame
         //template <typename T, typename U, typename Ret, typename... Params>
         //std::enable_if_t<is_unrelated_interface<T, U>::value> set_addrmap(int spacenum, T &obj, Ret (U::*func)(Params...)) { set_addrmap(spacenum, address_map_constructor(func, obj.device().tag(), &dynamic_cast<U &>(obj))); }
         //template <typename T, typename Ret, typename... Params>
-        //std::enable_if_t<is_related_class<device_t, T>::value> set_addrmap(int spacenum, Ret (T::*func)(Params...));
-        //template <typename T, typename Ret, typename... Params>
-        //std::enable_if_t<!is_related_class<device_t, T>::value> set_addrmap(int spacenum, Ret (T::*func)(Params...));
+        //void set_addrmap(int spacenum, Ret (T::*func)(Params...));
+
 
         //-------------------------------------------------
         //  set_addrmap - connect an address map to a device
         //-------------------------------------------------
         public void set_addrmap(int spacenum, address_map_constructor map)
         {
+            assert(0 <= spacenum);
+
             if (spacenum >= (int)(m_address_map.size()))
-                m_address_map.resize(spacenum + 1, null);
+                m_address_map.resize(spacenum + 1);
 
             m_address_map[spacenum] = map;
         }
@@ -109,8 +111,6 @@ namespace mame
         }
         public void prepare_maps() { foreach (var space in m_addrspace) { if (space != null) { space.prepare_map(); } } }
         public void populate_from_maps() { foreach (var space in m_addrspace) { if (space != null) { space.populate_from_map(); } } }
-        public void allocate_memory() { foreach (var space in m_addrspace) { if (space != null) { space.allocate_memory(); } } }
-        public void locate_memory() { foreach (var space in m_addrspace) { if (space != null) { space.locate_memory(); } } }
         public void set_log_unmap(bool log) { foreach (var space in m_addrspace) { if (space != null) { space.set_log_unmap(log); } } }
 
 
@@ -159,9 +159,5 @@ namespace mame
 
 
     // iterator
-    //typedef device_interface_iterator<device_memory_interface> memory_interface_iterator;
-    public class memory_interface_iterator : device_interface_iterator<device_memory_interface>
-    {
-        public memory_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_memory_interface> memory_interface_enumerator;
 }

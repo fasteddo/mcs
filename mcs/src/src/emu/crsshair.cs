@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
@@ -137,7 +138,7 @@ namespace mame
 
 
             // for now, use the main screen
-            m_screen = new screen_device_iterator(machine.root_device()).first();
+            m_screen = new screen_device_enumerator(machine.root_device()).first();
         }
 
         ~render_crosshair()
@@ -328,7 +329,7 @@ namespace mame
                 machine.configuration().config_register("crosshairs", config_load, config_save);
 
             /* register the animation callback */
-            screen_device first_screen = new screen_device_iterator(machine.root_device()).first();
+            screen_device first_screen = new screen_device_enumerator(machine.root_device()).first();
             if (first_screen != null)
                 first_screen.register_vblank_callback(animate);
         }
@@ -355,7 +356,7 @@ namespace mame
         exit - free memory allocated for
         the crosshairs
         -------------------------------------------------*/
-        void exit(running_machine machine)
+        void exit(running_machine machine_)
         {
             /* free bitmaps and textures for each player */
             for (int player = 0; player < MAX_PLAYERS; player++)

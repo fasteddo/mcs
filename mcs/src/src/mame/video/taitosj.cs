@@ -17,10 +17,10 @@ namespace mame
 {
     partial class taitosj_state : driver_device
     {
-        bool GLOBAL_FLIP_X { get { return (m_video_mode[0] & 0x01) != 0; } }
-        bool GLOBAL_FLIP_Y { get { return (m_video_mode[0] & 0x02) != 0; } }
-        int SPRITE_RAM_PAGE_OFFSET { get { return (m_video_mode[0] & 0x04) != 0 ? 0x80 : 0x00; } }
-        bool SPRITES_ON { get { return (m_video_mode[0] & 0x80) != 0; } }
+        bool GLOBAL_FLIP_X { get { return (m_video_mode.op[0] & 0x01) != 0; } }
+        bool GLOBAL_FLIP_Y { get { return (m_video_mode.op[0] & 0x02) != 0; } }
+        int SPRITE_RAM_PAGE_OFFSET { get { return (m_video_mode.op[0] & 0x04) != 0 ? 0x80 : 0x00; } }
+        bool SPRITES_ON { get { return (m_video_mode.op[0] & 0x80) != 0; } }
         const uint32_t TRANSPARENT_PEN         = 0x40;
 
 
@@ -70,28 +70,28 @@ namespace mame
                 int val;
 
                 /* red component */
-                val = m_paletteram[(i << 1) | 0x01];
+                val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 6) & 0x01;
                 bit1 = (~val >> 7) & 0x01;
-                val = m_paletteram[(i << 1) | 0x00];
+                val = m_paletteram.op[(i << 1) | 0x00];
                 bit2 = (~val >> 0) & 0x01;
                 r = combine_weights(rweights, bit0, bit1, bit2);
 
                 /* green component */
-                val = m_paletteram[(i << 1) | 0x01];
+                val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 3) & 0x01;
                 bit1 = (~val >> 4) & 0x01;
                 bit2 = (~val >> 5) & 0x01;
                 g = combine_weights(gweights, bit0, bit1, bit2);
 
                 /* blue component */
-                val = m_paletteram[(i << 1) | 0x01];
+                val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 0) & 0x01;
                 bit1 = (~val >> 1) & 0x01;
                 bit2 = (~val >> 2) & 0x01;
                 b = combine_weights(bweights, bit0, bit1, bit2);
 
-                m_palette.target.dipalette.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
+                m_palette.op[0].dipalette.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
             }
         }
 
@@ -138,18 +138,18 @@ namespace mame
             for (i = 0; i < 3; i++)
             {
                 m_layer_bitmap[i] = new bitmap_ind16();
-                m_screen.target.register_screen_bitmap(m_layer_bitmap[i]);
+                m_screen.op[0].register_screen_bitmap(m_layer_bitmap[i]);
                 m_sprite_layer_collbitmap2[i] = new bitmap_ind16();
-                m_screen.target.register_screen_bitmap(m_sprite_layer_collbitmap2[i]);
+                m_screen.op[0].register_screen_bitmap(m_sprite_layer_collbitmap2[i]);
             }
 
             m_sprite_sprite_collbitmap1.allocate(32,32);
             m_sprite_sprite_collbitmap2.allocate(32,32);
 
-            m_gfxdecode.target.digfx.gfx(0).set_source(new Pointer<uint8_t>(m_characterram.target));
-            m_gfxdecode.target.digfx.gfx(1).set_source(new Pointer<uint8_t>(m_characterram.target));
-            m_gfxdecode.target.digfx.gfx(2).set_source(new Pointer<uint8_t>(m_characterram.target, 0x1800));
-            m_gfxdecode.target.digfx.gfx(3).set_source(new Pointer<uint8_t>(m_characterram.target, 0x1800));
+            m_gfxdecode.op[0].digfx.gfx(0).set_source(new Pointer<uint8_t>(m_characterram.op));
+            m_gfxdecode.op[0].digfx.gfx(1).set_source(new Pointer<uint8_t>(m_characterram.op));
+            m_gfxdecode.op[0].digfx.gfx(2).set_source(new Pointer<uint8_t>(m_characterram.op, 0x1800));
+            m_gfxdecode.op[0].digfx.gfx(3).set_source(new Pointer<uint8_t>(m_characterram.op, 0x1800));
 
             compute_draw_order();
         }
@@ -159,7 +159,7 @@ namespace mame
         {
             uint8_t ret;
 
-            offs_t offs = (offs_t)(m_gfxpointer[0] | (m_gfxpointer[1] << 8));
+            offs_t offs = (offs_t)(m_gfxpointer.op[0] | (m_gfxpointer.op[1] << 8));
 
             if (offs < 0x8000)
                 ret = memregion("gfx1").base_()[offs];
@@ -168,8 +168,8 @@ namespace mame
 
             offs = offs + 1;
 
-            m_gfxpointer[0] = (uint8_t)(offs & 0xff);
-            m_gfxpointer[1] = (uint8_t)(offs >> 8);
+            m_gfxpointer[0].op = (uint8_t)(offs & 0xff);
+            m_gfxpointer[1].op = (uint8_t)(offs >> 8);
 
             return ret;
         }
@@ -177,30 +177,30 @@ namespace mame
 
         void taitosj_characterram_w(offs_t offset, uint8_t data)
         {
-            if (m_characterram[offset] != data)
+            if (m_characterram.op[offset] != data)
             {
                 if (offset < 0x1800)
                 {
-                    m_gfxdecode.target.digfx.gfx(0).mark_dirty((offset / 8) & 0xff);
-                    m_gfxdecode.target.digfx.gfx(1).mark_dirty((offset / 32) & 0x3f);
+                    m_gfxdecode.op[0].digfx.gfx(0).mark_dirty((offset / 8) & 0xff);
+                    m_gfxdecode.op[0].digfx.gfx(1).mark_dirty((offset / 32) & 0x3f);
                 }
                 else
                 {
-                    m_gfxdecode.target.digfx.gfx(2).mark_dirty((offset / 8) & 0xff);
-                    m_gfxdecode.target.digfx.gfx(3).mark_dirty((offset / 32) & 0x3f);
+                    m_gfxdecode.op[0].digfx.gfx(2).mark_dirty((offset / 8) & 0xff);
+                    m_gfxdecode.op[0].digfx.gfx(3).mark_dirty((offset / 32) & 0x3f);
                 }
 
-                m_characterram[offset] = data;
+                m_characterram[offset].op = data;
             }
         }
 
 
         void taitosj_collision_reg_clear_w(uint8_t data)
         {
-            m_collision_reg[0] = 0;
-            m_collision_reg[1] = 0;
-            m_collision_reg[2] = 0;
-            m_collision_reg[3] = 0;
+            m_collision_reg[0].op = 0;
+            m_collision_reg[1].op = 0;
+            m_collision_reg[2].op = 0;
+            m_collision_reg[3].op = 0;
         }
 
 
@@ -208,8 +208,8 @@ namespace mame
         {
             offs_t offs = (offs_t)(which * 4);
 
-            sx = (uint8_t)(      m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 0] - 1);
-            sy = (uint8_t)(240 - m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 1]);
+            sx = (uint8_t)(      m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 0] - 1);
+            sy = (uint8_t)(240 - m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 1]);
 
             return sy < 240;
         }
@@ -219,7 +219,7 @@ namespace mame
         {
             offs_t offs = (offs_t)(which * 4);
 
-            return m_gfxdecode.target.digfx.gfx((m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x40) != 0 ? 3 : 1);
+            return m_gfxdecode.op[0].digfx.gfx((m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x40) != 0 ? 3 : 1);
         }
 
 
@@ -263,18 +263,18 @@ namespace mame
             /* draw the sprites into separate bitmaps and check overlapping region */
             m_sprite_layer_collbitmap1.fill(TRANSPARENT_PEN);
                 get_sprite_gfx_element((uint8_t)which1).transpen(m_sprite_sprite_collbitmap1,m_sprite_sprite_collbitmap1.cliprect(),
-                    (u32)(m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs1 + 3] & 0x3f),
+                    (u32)(m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs1 + 3] & 0x3f),
                     0,
-                    m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs1 + 2] & 0x01,
-                    m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs1 + 2] & 0x02,
+                    m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs1 + 2] & 0x01,
+                    m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs1 + 2] & 0x02,
                     sx1, sy1, 0);
 
             m_sprite_sprite_collbitmap2.fill(TRANSPARENT_PEN);
                 get_sprite_gfx_element((uint8_t)which2).transpen(m_sprite_sprite_collbitmap2,m_sprite_sprite_collbitmap2.cliprect(),
-                    (u32)(m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 3] & 0x3f),
+                    (u32)(m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 3] & 0x3f),
                     0,
-                    m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 2] & 0x01,
-                    m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 2] & 0x02,
+                    m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 2] & 0x01,
+                    m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 2] & 0x02,
                     sx2, sy2, 0);
 
             for (int y = miny; y < maxy; y++)
@@ -336,14 +336,14 @@ namespace mame
                                 reg = which1 >> 3;
                                 if (reg == 3)  reg = 2;
 
-                                m_collision_reg[reg] |= (uint8_t)(1 << (which1 & 0x07));
+                                m_collision_reg.op[reg] |= (uint8_t)(1 << (which1 & 0x07));
                             }
                             else
                             {
                                 reg = which2 >> 3;
                                 if (reg == 3)  reg = 2;
 
-                                m_collision_reg[reg] |= (uint8_t)(1 << (which2 & 0x07));
+                                m_collision_reg.op[reg] |= (uint8_t)(1 << (which2 & 0x07));
                             }
                         }
                     }
@@ -355,8 +355,8 @@ namespace mame
         void calculate_sprite_areas(int [] sprites_on, rectangle [] sprite_areas)
         {
             int which;
-            int width = m_screen.target.width();
-            int height = m_screen.target.height();
+            int width = m_screen.op[0].width();
+            int height = m_screen.op[0].height();
 
             for (which = 0; which < 0x20; which++)
             {
@@ -410,22 +410,22 @@ namespace mame
             offs_t offs = (offs_t)(which * 4);
             int result = 0;  /* no collisions */
 
-            int check_layer_1 = m_video_mode[0] & layer_enable_mask[0];
-            int check_layer_2 = m_video_mode[0] & layer_enable_mask[1];
-            int check_layer_3 = m_video_mode[0] & layer_enable_mask[2];
+            int check_layer_1 = m_video_mode.op[0] & layer_enable_mask[0];
+            int check_layer_2 = m_video_mode.op[0] & layer_enable_mask[1];
+            int check_layer_3 = m_video_mode.op[0] & layer_enable_mask[2];
 
             int minx = sprite_areas[which].min_x;
             int miny = sprite_areas[which].min_y;
             int maxx = sprite_areas[which].max_x + 1;
             int maxy = sprite_areas[which].max_y + 1;
 
-            int flip_x = (m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x01) ^ (GLOBAL_FLIP_X ? 1 : 0);
-            int flip_y = (m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x02) ^ (GLOBAL_FLIP_Y ? 1 : 0);
+            int flip_x = (m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x01) ^ (GLOBAL_FLIP_X ? 1 : 0);
+            int flip_y = (m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x02) ^ (GLOBAL_FLIP_Y ? 1 : 0);
 
             /* draw sprite into a bitmap and check if layers collide */
             m_sprite_layer_collbitmap1.fill(TRANSPARENT_PEN);
             get_sprite_gfx_element((uint8_t)which).transpen(m_sprite_layer_collbitmap1,m_sprite_layer_collbitmap1.cliprect(),
-                    (u32)(m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x3f),
+                    (u32)(m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x3f),
                     0,
                     flip_x, flip_y,
                     0,0,0);
@@ -462,7 +462,7 @@ namespace mame
                     if ((which >= 0x10) && (which <= 0x17)) continue;   /* no sprites here */
 
                     if (sprites_on[which] != 0)
-                        m_collision_reg[3] |= (uint8_t)check_sprite_layer_bitpattern(which, sprite_areas);
+                        m_collision_reg.op[3] |= (uint8_t)check_sprite_layer_bitpattern(which, sprite_areas);
                 }
             }
         }
@@ -484,21 +484,21 @@ namespace mame
                 if (GLOBAL_FLIP_X) sx = 31 - sx;
                 if (GLOBAL_FLIP_Y) sy = 31 - sy;
 
-                m_gfxdecode.target.digfx.gfx((m_colorbank[0] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[0],m_layer_bitmap[0].cliprect(),
-                        m_videoram_1[offs],
-                        (u32)(m_colorbank[0] & 0x07),
+                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[0] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[0],m_layer_bitmap[0].cliprect(),
+                        m_videoram_1.op[offs],
+                        (u32)(m_colorbank.op[0] & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
                         8*sx,8*sy,0);
 
-                m_gfxdecode.target.digfx.gfx((m_colorbank[0] & 0x80) != 0 ? 2 : 0).transpen(m_layer_bitmap[1],m_layer_bitmap[1].cliprect(),
-                        m_videoram_2[offs],
-                        (u32)((m_colorbank[0] >> 4) & 0x07),
+                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[0] & 0x80) != 0 ? 2 : 0).transpen(m_layer_bitmap[1],m_layer_bitmap[1].cliprect(),
+                        m_videoram_2.op[offs],
+                        (u32)((m_colorbank.op[0] >> 4) & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
                         8*sx,8*sy,0);
 
-                m_gfxdecode.target.digfx.gfx((m_colorbank[1] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[2],m_layer_bitmap[2].cliprect(),
-                        m_videoram_3[offs],
-                        (u32)(m_colorbank[1] & 0x07),
+                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[1] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[2],m_layer_bitmap[2].cliprect(),
+                        m_videoram_3.op[offs],
+                        (u32)(m_colorbank.op[1] & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
                         8*sx,8*sy,0);
             }
@@ -533,10 +533,10 @@ namespace mame
 
                     if (get_sprite_xy((uint8_t)which, out sx, out sy))
                     {
-                        int code = m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x3f;
-                        int color = 2 * ((m_colorbank[1] >> 4) & 0x03) + ((m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] >> 2) & 0x01);
-                        int flip_x = m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x01;
-                        int flip_y = m_spriteram[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x02;
+                        int code = m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x3f;
+                        int color = 2 * ((m_colorbank.op[1] >> 4) & 0x03) + ((m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] >> 2) & 0x01);
+                        int flip_x = m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x01;
+                        int flip_y = m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x02;
 
                         if (GLOBAL_FLIP_X)
                         {
@@ -567,13 +567,13 @@ namespace mame
             int [] fudge1 = new int [3] { 3,  1, -1 };
             int [] fudge2 = new int [3] { 8, 10, 12 };
 
-            if ((m_video_mode[0] & layer_enable_mask[which]) != 0)
+            if ((m_video_mode.op[0] & layer_enable_mask[which]) != 0)
             {
                 int i;
                 int scrollx;
                 int [] scrolly = new int [32];
 
-                scrollx = m_scroll[2 * which];
+                scrollx = m_scroll.op[2 * which];
 
                 if (GLOBAL_FLIP_X)
                     scrollx =  (scrollx & 0xf8) + ((scrollx + fudge1[which]) & 7) + fudge2[which];
@@ -583,12 +583,12 @@ namespace mame
                 if (GLOBAL_FLIP_Y)
                 {
                     for (i = 0;i < 32;i++)
-                        scrolly[31 - i] =  m_colscrolly[32 * which + i] + m_scroll[2 * which + 1];
+                        scrolly[31 - i] =  m_colscrolly.op[32 * which + i] + m_scroll.op[2 * which + 1];
                 }
                 else
                 {
                     for (i = 0;i < 32;i++)
-                        scrolly[i]      = -m_colscrolly[32 * which + i] - m_scroll[2 * which + 1];
+                        scrolly[i]      = -m_colscrolly.op[32 * which + i] - m_scroll.op[2 * which + 1];
                 }
 
                 copyscrollbitmap_trans(bitmap, m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, cliprect, TRANSPARENT_PEN);
@@ -619,11 +619,11 @@ namespace mame
             int i = 0;
 
             /* fill the screen with the background color */
-            bitmap.fill((uint32_t)(8 * (m_colorbank[1] & 0x07)), cliprect);
+            bitmap.fill((uint32_t)(8 * (m_colorbank.op[1] & 0x07)), cliprect);
 
             for (i = 0; i < 4; i++)
             {
-                int which = m_draw_order[m_video_priority[0] & 0x1f, i];
+                int which = m_draw_order[m_video_priority.op[0] & 0x1f, i];
 
                 copy_layer(bitmap, cliprect, copy_layer_func, which, sprites_on, sprite_areas);
             }

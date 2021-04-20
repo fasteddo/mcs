@@ -5,8 +5,10 @@ using System;
 using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
+using execute_interface_enumerator = mame.device_interface_enumerator<mame.device_execute_interface>;  //typedef device_interface_enumerator<device_execute_interface> execute_interface_enumerator;
 using offs_t = System.UInt32;
 using s32 = System.Int32;
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using seconds_t = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -441,10 +443,13 @@ namespace mame
         //}
 
 
-        //template <typename... T> void set_irq_acknowledge_callback(T &&... args)
-        //{
-        //    m_driver_irq.set(std::forward<T>(args)...);
-        //}
+        //template <typename... T>
+        public void set_irq_acknowledge_callback(device_irq_acknowledge_delegate args)  //void set_irq_acknowledge_callback(T &&... args)
+        {
+            m_driver_irq = args;  //m_driver_irq.set(std::forward<T>(args)...);
+        }
+
+
         //void remove_irq_acknowledge_callback()
         //{
         //    m_driver_irq = device_irq_acknowledge_delegate(*this);
@@ -710,7 +715,7 @@ namespace mame
             // validate the interrupts
             if (m_vblank_interrupt != null)
             {
-                screen_device_iterator iter = new screen_device_iterator(device().mconfig().root_device());
+                screen_device_enumerator iter = new screen_device_enumerator(device().mconfig().root_device());
                 if (iter.first() == null)
                     osd_printf_error("VBLANK interrupt specified, but the driver is screenless\n");
                 else if (m_vblank_interrupt_screen != null && device().siblingdevice(m_vblank_interrupt_screen) == null)
@@ -737,8 +742,7 @@ namespace mame
             //m_driver_irq.resolve();
 
             // fill in the initial states
-            device_iterator iter = new device_iterator(device().machine().root_device());
-            int index = iter.indexof(device());
+            int index = new device_enumerator(device().machine().root_device()).indexof(device());
             m_suspend = SUSPEND_REASON_RESET;
             m_profiler = (profile_type)(index + profile_type.PROFILER_DEVICE_FIRST);
             m_inttrigger = index + TRIGGER_INT;
@@ -994,9 +998,5 @@ namespace mame
 
 
     // iterator
-    //typedef device_interface_iterator<device_execute_interface> execute_interface_iterator;
-    public class execute_interface_iterator : device_interface_iterator<device_execute_interface>
-    {
-        public execute_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_execute_interface> execute_interface_enumerator;
 }

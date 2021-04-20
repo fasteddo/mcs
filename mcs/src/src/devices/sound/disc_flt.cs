@@ -353,8 +353,7 @@ namespace mame
                     else
                         m_rTotal = RES_2_PARALLEL(info.r1, info.r2);
 
-                    // fall through to below
-                    goto case DISC_OP_AMP_FILTER_IS_BAND_PASS_1M;
+                    goto case DISC_OP_AMP_FILTER_IS_BAND_PASS_1M;  //[[fallthrough]];
 
                 case DISC_OP_AMP_FILTER_IS_BAND_PASS_1M:
                 {

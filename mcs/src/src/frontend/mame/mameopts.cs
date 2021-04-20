@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
+
 
 namespace mame
 {
@@ -83,7 +85,7 @@ namespace mame
             }
 
             machine_config config = new machine_config(cursystem, options);
-            foreach (screen_device device in new screen_device_iterator(config.root_device()))
+            foreach (screen_device device in new screen_device_enumerator(config.root_device()))
             {
                 // parse "raster.ini" for raster games
                 if (device.screen_type() == screen_type_enum.SCREEN_TYPE_RASTER)

@@ -9,6 +9,7 @@ using int64_t = System.Int64;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -80,6 +81,24 @@ namespace mame
             uint32_t res = divu_64x32(a, b);
             remainder = (uint32_t)(a - ((uint64_t)b * res));
             return res;
+        }
+
+
+        /*-------------------------------------------------
+            population_count_32 - return the number of
+            one bits in a 32-bit value
+        -------------------------------------------------*/
+        public static unsigned population_count_32(uint32_t val)
+        {
+            // optimal Hamming weight assuming fast 32*32->32
+            uint32_t m1 = 0x55555555;
+            uint32_t m2 = 0x33333333;
+            uint32_t m4 = 0x0f0f0f0f;
+            uint32_t h01 = 0x01010101;
+            val -= (val >> 1) & m1;
+            val = (val & m2) + ((val >> 2) & m2);
+            val = (val + (val >> 4)) & m4;
+            return (unsigned)((val * h01) >> 24);
         }
 
 

@@ -350,6 +350,7 @@ namespace mame
         // operators
         public static bool operator ==(input_code left, input_code right) { return left.m_internal == right.m_internal; }
         public static bool operator !=(input_code left, input_code right) { return left.m_internal != right.m_internal; }
+        //constexpr bool operator<(const input_code &rhs) const noexcept { return m_internal < rhs.m_internal; }
 
 
         // getters
@@ -595,7 +596,7 @@ namespace mame
         //  code_value - return the value of a given
         //  input code
         //-------------------------------------------------
-        int code_value(input_code code)
+        public int code_value(input_code code)
         {
             profiler_global.g_profiler.start(profile_type.PROFILER_INPUT);
 
@@ -682,7 +683,7 @@ namespace mame
                 if (m_switch_memory[memnum] == code)
                 {
                     // if no longer pressed, clear entry
-                    if (curvalue == false)
+                    if (!curvalue)
                         m_switch_memory[memnum] = input_code.INPUT_CODE_INVALID;
 
                     // always return false
@@ -695,140 +696,16 @@ namespace mame
             }
 
             // if we get here, we were not previously pressed; if still not pressed, return 0
-            if (curvalue == false)
+            if (!curvalue)
                 return false;
 
-            // otherwise, add ourself to the memory and return 1
+            // otherwise, add the code to the memory and return true
             //assert(empty != -1);
             if (empty != -1)
                 m_switch_memory[empty] = code;
 
             return true;
         }
-
-
-        // input code polling
-
-        //-------------------------------------------------
-        //  reset_polling - reset memories in preparation
-        //  for polling
-        //-------------------------------------------------
-        public void reset_polling()
-        {
-            // reset switch memory
-            reset_memory();
-
-            // iterate over device classes and devices
-            for (input_device_class devclass = input_device_class.DEVICE_CLASS_FIRST_VALID; devclass <= input_device_class.DEVICE_CLASS_LAST_VALID; devclass++)
-            {
-                for (int devnum = 0; devnum <= m_class[(int)devclass].maxindex(); devnum++)
-                {
-                    // fetch the device; ignore if NULL
-                    input_device device = m_class[(int)devclass].device(devnum);
-                    if (device == null)
-                        continue;
-
-                    // iterate over items within each device
-                    for (input_item_id itemid = input_item_id.ITEM_ID_FIRST_VALID; itemid <= device.maxitem(); itemid++)
-                    {
-                        // for any non-switch items, set memory equal to the current value
-                        input_device_item item = device.item(itemid);
-                        if (item != null && item.itemclass() != input_item_class.ITEM_CLASS_SWITCH)
-                            item.set_memory(code_value(item.code()));
-                    }
-                }
-            }
-        }
-
-
-        //input_code poll_axes();
-
-
-        //-------------------------------------------------
-        //  poll_switches - poll for any input
-        //-------------------------------------------------
-        public input_code poll_switches()
-        {
-            // iterate over device classes and devices
-            for (input_device_class devclass = input_device_class.DEVICE_CLASS_FIRST_VALID; devclass <= input_device_class.DEVICE_CLASS_LAST_VALID; devclass++)
-            {
-                // skip device class if disabled
-                if (!m_class[(int)devclass].enabled())
-                    continue;
-
-                for (int devnum = 0; devnum <= m_class[(int)devclass].maxindex(); devnum++)
-                {
-                    // fetch the device; ignore if NULL
-                    input_device device = m_class[(int)devclass].device(devnum);
-                    if (device == null)
-                        continue;
-
-                    // iterate over items within each device
-                    for (input_item_id itemid = input_item_id.ITEM_ID_FIRST_VALID; itemid <= device.maxitem(); itemid++)
-                    {
-                        input_device_item item = device.item(itemid);
-                        if (item != null)
-                        {
-                            input_code code = item.code();
-
-                            // if the item is natively a switch, poll it
-                            if (item.itemclass() == input_item_class.ITEM_CLASS_SWITCH)
-                            {
-                                if (code_pressed_once(code))
-                                    return code;
-                                else
-                                    continue;
-                            }
-
-                            // skip if there is not enough axis movement
-                            if (!item.check_axis(code.item_modifier()))
-                                continue;
-
-                            // otherwise, poll axes digitally
-                            code.set_item_class(input_item_class.ITEM_CLASS_SWITCH);
-
-                            // if this is a joystick X axis, check with left/right modifiers
-                            if (devclass == input_device_class.DEVICE_CLASS_JOYSTICK && code.item_id() == input_item_id.ITEM_ID_XAXIS)
-                            {
-                                code.set_item_modifier(input_item_modifier.ITEM_MODIFIER_LEFT);
-                                if (code_pressed_once(code))
-                                    return code;
-                                code.set_item_modifier(input_item_modifier.ITEM_MODIFIER_RIGHT);
-                                if (code_pressed_once(code))
-                                    return code;
-                            }
-
-                            // if this is a joystick Y axis, check with up/down modifiers
-                            else if (devclass == input_device_class.DEVICE_CLASS_JOYSTICK && code.item_id() == input_item_id.ITEM_ID_YAXIS)
-                            {
-                                code.set_item_modifier(input_item_modifier.ITEM_MODIFIER_UP);
-                                if (code_pressed_once(code))
-                                    return code;
-                                code.set_item_modifier(input_item_modifier.ITEM_MODIFIER_DOWN);
-                                if (code_pressed_once(code))
-                                    return code;
-                            }
-
-                            // any other axis, check with pos/neg modifiers
-                            else
-                            {
-                                code.set_item_modifier(input_item_modifier.ITEM_MODIFIER_POS);
-                                if (code_pressed_once(code))
-                                    return code;
-                                code.set_item_modifier(input_item_modifier.ITEM_MODIFIER_NEG);
-                                if (code_pressed_once(code))
-                                    return code;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // if nothing, return an invalid code
-            return input_code.INPUT_CODE_INVALID;
-        }
-
-        //input_code poll_keyboard_switches();
 
 
         // input code helpers

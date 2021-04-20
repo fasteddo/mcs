@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using nvram_interface_enumerator = mame.device_interface_enumerator<mame.device_nvram_interface>;  //typedef device_interface_enumerator<device_nvram_interface> nvram_interface_enumerator;
+
 
 namespace mame
 {
@@ -39,9 +41,5 @@ namespace mame
 
 
     // iterator
-    //typedef device_interface_iterator<device_nvram_interface> nvram_interface_iterator;
-    public class nvram_interface_iterator : device_interface_iterator<device_nvram_interface>
-    {
-        public nvram_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_nvram_interface> nvram_interface_enumerator;
 }

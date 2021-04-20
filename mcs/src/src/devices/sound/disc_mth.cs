@@ -1024,7 +1024,7 @@ namespace mame
                                 break;
                             }
                             /* else, fall through and just use the resistor value */
-                            goto case DISC_MIXER_IS_OP_AMP;
+                            goto case DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
 
                         case DISC_MIXER_IS_OP_AMP:
                             rTemp = info.r[bit];
@@ -1146,7 +1146,7 @@ namespace mame
                                                 break;
                                             }
                                             /* else, fall through and just use the resistor value */
-                                            goto case DISC_MIXER_IS_OP_AMP;
+                                            goto case DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
 
                                         case DISC_MIXER_IS_OP_AMP:
                                             rTemp2 = rTemp;

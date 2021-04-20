@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using char32_t = System.UInt32;
 using cleanup_callback_vector = mame.std.vector<mame.ui.menu.cleanup_callback>;
 using global_state_map = mame.std.map<mame.running_machine, mame.ui.menu.global_state>;
+using std_string = System.String;
+using std_string_view = System.String;
 using texture_ptr = mame.render_texture;
 using uint32_t = System.UInt32;
 
@@ -190,7 +192,6 @@ namespace mame.ui
             {
                 menu.m_parent = m_stack;
                 m_stack = menu;
-                m_stack.reset(reset_options.SELECT_FIRST);
                 m_stack.machine().ui_input().reset();
             }
 
@@ -338,7 +339,10 @@ namespace mame.ui
         //  item_append - append a new item to the
         //  end of the menu
         //-------------------------------------------------
-        public void item_append(string text, string subtext, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN)  // void *ref
+        protected void item_append(std_string text, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN) { item_append(text, std_string.Empty, flags, ref_, type); }  //void item_append(const std::string &text, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(std::string(text), std::string(), flags, ref, type); }
+        //void item_append(const std::string &text, const std::string &subtext, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(std::string(text), std::string(subtext), flags, ref, type); }
+        //void item_append(std::string &&text, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(text, std::string(), flags, ref, type); }
+        protected void item_append(std_string text, std_string subtext, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN)  //void item_append(std::string &&text, std::string &&subtext, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN);
         {
             // only allow multiline as the first item
             if ((flags & FLAG_MULTILINE) != 0)
@@ -384,20 +388,17 @@ namespace mame.ui
         //  item_append - append a new item to the
         //  end of the menu
         //-------------------------------------------------
-        public void item_append(menu_item item)
-        {
-            item_append(item.text, item.subtext, item.flags, item.ref_, item.type);
-        }
+        protected void item_append(menu_item item) { item_append(item.text, item.subtext, item.flags, item.ref_, item.type); }
 
 
         //-------------------------------------------------
         //  item_append - append a new item to the
         //  end of the menu
         //-------------------------------------------------
-        public void item_append(menu_item_type type, uint32_t flags = 0)
+        protected void item_append(menu_item_type type, uint32_t flags = 0)
         {
             if (type == menu_item_type.SEPARATOR)
-                item_append(menu_item.MENU_SEPARATOR_ITEM, "", flags, null, menu_item_type.SEPARATOR);
+                item_append(menu_item.MENU_SEPARATOR_ITEM, flags, null, menu_item_type.SEPARATOR);
         }
 
 
@@ -505,8 +506,32 @@ namespace mame.ui
 
         void do_handle()
         {
-            if (m_items.size() < 2)
+            if (m_items.empty())
+            {
+                // add an item to return - this is a really hacky way of doing this
+                if (m_parent == null)
+                {
+                    item_append(__("Return to Machine"), 0, null);
+                }
+                else if (m_parent.is_special_main_menu())
+                {
+                    if (machine().options().ui() == emu_options.ui_option.UI_SIMPLE)
+                        item_append(__("Exit"), 0, null);
+                    else
+                        item_append(__("Exit"), FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW, null);
+                }
+                else
+                {
+                    if (machine().options().ui() != emu_options.ui_option.UI_SIMPLE && stack_has_special_main_menu())
+                        item_append(__("Return to Previous Menu"), FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW, null);
+                    else
+                        item_append(__("Return to Previous Menu"), 0, null);
+                }
+
+                // let implementation add other items
                 populate(ref m_customtop, ref m_custombottom);
+            }
+
             handle();
         }
 
@@ -519,10 +544,8 @@ namespace mame.ui
             // first draw the FPS counter
             if (mame_machine_manager.instance().ui().show_fps_counter())
             {
-                float unused1;
-                float unused2;
                 ui().draw_text_full(container(), machine().video().speed_text(), 0.0f, 0.0f, 1.0f,
-                    text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out unused1, out unused2);
+                    text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out _, out _);
             }
 
             bool customonly = (flags & PROCESS_CUSTOM_ONLY) != 0;
@@ -695,27 +718,23 @@ namespace mame.ui
                             container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                         }
 
-                        float unused1;
-                        float unused2;
                         ui().draw_text_full(container(), itemtext, effective_left, line_y0, effective_width,
-                            text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out unused1, out unused2);
+                            text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out _, out _);
                     }
                     else
                     {
                         // otherwise, draw the item on the left and the subitem text on the right
                         bool subitem_invert = (pitem.flags & FLAG_INVERT) != 0;
-                        string subitem_text = pitem.subtext;
                         float item_width;
                         float subitem_width;
-                        float unused;
 
                         // draw the left-side text
                         ui().draw_text_full(container(), itemtext, effective_left, line_y0, effective_width,
-                                    text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out item_width, out unused);
+                                    text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out item_width, out _);
 
                         if ((pitem.flags & FLAG_COLOR_BOX) != 0)
                         {
-                            rgb_t color = new rgb_t((UInt32)Convert.ToInt64(subitem_text, 16));  //(UInt32)global.strtoul(subitem_text, null, 16));
+                            rgb_t color = new rgb_t((UInt32)Convert.ToInt64(pitem.subtext, 16));  //rgb_t color = rgb_t((uint32_t)strtoul(pitem.subtext.c_str(), nullptr, 16));
 
                             // give 2 spaces worth of padding
                             subitem_width = ui().get_string_width("FF00FF00");
@@ -725,6 +744,8 @@ namespace mame.ui
                         }
                         else
                         {
+                            std_string_view subitem_text = pitem.subtext;
+
                             // give 2 spaces worth of padding
                             item_width += 2.0f * gutter_width;
 
@@ -737,19 +758,18 @@ namespace mame.ui
                             }
 
                             // customize subitem text color
-                            if (core_stricmp(subitem_text, "On") == 0)
+                            if (core_stricmp(pitem.subtext, "On") == 0)
                                 fgcolor2 = new rgb_t(0x00,0xff,0x00);
 
-                            if (core_stricmp(subitem_text, "Off") == 0)
+                            if (core_stricmp(pitem.subtext, "Off") == 0)
                                 fgcolor2 = new rgb_t(0xff,0x00,0x00);
 
-                            if (core_stricmp(subitem_text, "Auto") == 0)
+                            if (core_stricmp(pitem.subtext, "Auto") == 0)
                                 fgcolor2 = new rgb_t(0xff,0xff,0x00);
 
                             // draw the subitem right-justified
-                            float unused1;
                             ui().draw_text_full(container(), subitem_text, effective_left + item_width, line_y0, effective_width - item_width,
-                                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, subitem_invert ? fgcolor3 : fgcolor2, bgcolor, out subitem_width, out unused1);
+                                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, subitem_invert ? fgcolor3 : fgcolor2, bgcolor, out subitem_width, out _);
                         }
 
                         // apply arrows
@@ -803,10 +823,8 @@ namespace mame.ui
                         target_y + target_height + ui().box_tb_border(),
                         subitem_invert ? ui().colors().selected_bg_color() : ui().colors().background_color());
 
-                float unused1;
-                float unused2;
-                ui().draw_text_full(container(), pitem.subtext.c_str(), target_x, target_y, target_width,
-                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(), out unused1, out unused2);
+                ui().draw_text_full(container(), pitem.subtext, target_x, target_y, target_width,
+                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(), out _, out _);
             }
 
             // if there is something special to add, do it by calling the virtual method
@@ -866,10 +884,8 @@ namespace mame.ui
                                     target_y + target_height + ui().box_tb_border(),
                                     (m_items[0].flags & FLAG_REDTEXT) != 0 ? UI_RED_COLOR : ui().colors().background_color());
 
-            float unused1;
-            float unused2;
             ui().draw_text_full(container(), text, target_x, target_y, target_width,
-                        text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out unused1, out unused2);
+                        text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out _, out _);
 
             // draw the "return to prior menu" text with a hilight behind it
             highlight(
@@ -880,7 +896,7 @@ namespace mame.ui
                         ui().colors().selected_bg_color());
 
             ui().draw_text_full(container(), backtext, target_x, target_y + target_height - line_height, target_width,
-                        text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(), out unused1, out unused2);
+                        text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(), out _, out _);
 
             // artificially set the hover to the last item so a double-click exits
             m_hover = m_items.size() - 1;
@@ -910,26 +926,6 @@ namespace mame.ui
             m_items.clear();
             m_visible_items = 0;
             m_selected = 0;
-
-            // add an item to return
-            if (m_parent == null)
-            {
-                item_append("Return to Machine", "", 0, null);
-            }
-            else if (m_parent.is_special_main_menu())
-            {
-                if (machine().options().ui() == emu_options.ui_option.UI_SIMPLE)
-                    item_append("Exit", "", 0, null);
-                else
-                    item_append("Exit", "", FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW, null);
-            }
-            else
-            {
-                if (machine().options().ui() != emu_options.ui_option.UI_SIMPLE && stack_has_special_main_menu())
-                    item_append("Return to Previous Menu", "", FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW, null);
-                else
-                    item_append("Return to Previous Menu", "", 0, null);
-            }
         }
 
 
@@ -944,10 +940,6 @@ namespace mame.ui
         protected bool stack_has_special_main_menu() { return m_global_state.stack_has_special_main_menu(); }
 
         protected void add_cleanup_callback(cleanup_callback callback) { m_global_state.add_cleanup_callback(callback); }
-
-
-        // repopulate the menu items
-        //void repopulate(reset_options options);
 
 
         // process a menu, drawing it and returning any interesting events
@@ -1098,7 +1090,7 @@ namespace mame.ui
 
 
         // draw header and footer text
-        //void extra_text_render(float top, float bottom, float origx1, float origy1, float origx2, float origy2, const char *header, const char *footer);
+        //void extra_text_render(float top, float bottom, float origx1, float origy1, float origx2, float origy2, std::string_view header, std::string_view footer);
         //void extra_text_position(float origx1, float origx2, float origy, float yspan, text_layout &layout, int direction, float &x1, float &y1, float &x2, float &y2);
 
 
@@ -1116,12 +1108,11 @@ namespace mame.ui
             foreach (var it in iter)  //for (Iter it = begin; it != end; ++it)
             {
                 float width;
-                float unused1;
                 ui().draw_text_full(
-                        container(), get_c_str(it),
+                        container(), it,
                         0.0f, 0.0f, 1.0f, justify, wrap,
                         mame_ui_manager.draw_mode.NONE, rgb_t.black(), rgb_t.white(),
-                        out width, out unused1, text_size);
+                        out width, out _, text_size);
                 width += 2.0f * lrborder;
                 maxwidth = Math.Max(maxwidth, width);
             }
@@ -1144,13 +1135,11 @@ namespace mame.ui
             y2 -= ui().box_tb_border();
             foreach (var it in iter)  //for (Iter it = begin; it != end; ++it)
             {
-                float unused1;
-                float unused2;
                 ui().draw_text_full(
-                        container(), get_c_str(it),
+                        container(), it,
                         x1, y1, x2 - x1, justify, wrap,
                         mame_ui_manager.draw_mode.NORMAL, fgcolor, ui().colors().text_bg_color(),
-                        out unused1, out unused2, text_size);
+                        out _, out _, text_size);
                 y1 += ui().get_line_height();
             }
 
@@ -1552,7 +1541,7 @@ namespace mame.ui
         static void stack_push_internal(menu menu) { get_global_state(menu.machine()).stack_push(menu); }
 
 
-        //void extra_text_draw_box(float origx1, float origx2, float origy, float yspan, const char *text, int direction);
+        //void extra_text_draw_box(float origx1, float origx2, float origy, float yspan, std::string_view text, int direction);
 
 
         bool first_item_visible() { return top_line <= 0; }
@@ -1587,10 +1576,5 @@ namespace mame.ui
             var it = s_global_states.find(machine);
             return it;  //return (it != null) ? it : new global_state();
         }
-
-
-        //static char const *get_c_str(std::string const &str) { return str.c_str(); }
-        //static char const *get_c_str(char const *str) { return str; }
-        static string get_c_str(string str) { return str; }
     }
 }

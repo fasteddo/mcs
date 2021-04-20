@@ -30,7 +30,8 @@ namespace mame
         AMH_DEVICE_DELEGATE_SMO,
         AMH_PORT,
         AMH_BANK,
-        AMH_DEVICE_SUBMAP
+        AMH_DEVICE_SUBMAP,
+        AMH_VIEW
     }
 
 
@@ -60,21 +61,27 @@ namespace mame
         //static std::enable_if_t<is_addrmap_method<T, Ret, Params...>::value, address_map_constructor> make_delegate(Ret (T::*func)(Params...), const char *name, T *obj)
         //{ return address_map_constructor(func, name, obj); }
 
+
         //template <typename T, bool Reqd>
-        //static device_t &find_device(const device_finder<T, Reqd> &finder) {
-        //    const std::pair<device_t &, const char *> target(finder.finder_target());
-        //    device_t *device(target.first.subdevice(target.second));
-        //    if (!device)
-        //        throw emu_fatalerror("Device %s not found in %s\n", target.second, target.first.tag());
-        //    return *device;
-        //}
+        static device_t find_device<T, Reqd>(device_finder<T, Reqd> finder)  //static device_t &find_device(const device_finder<T, Reqd> &finder) {
+            where Reqd : bool_constant, new()
+        {
+            std.pair<device_t, string> target = finder.finder_target();  //const std::pair<device_t &, const char *> target(finder.finder_target());
+            device_t device = target.first.subdevice(target.second);  //device_t *device(target.first.subdevice(target.second));
+            if (device == null)
+                throw new emu_fatalerror("Device {0} not found in %s\n", target.second, target.first.tag());
+            return device;
+        }
+
 
         //template <typename T, typename U>
-        //static std::enable_if_t<std::is_convertible<std::add_pointer_t<U>, std::add_pointer_t<T> >::value, T *> make_pointer(U &obj)
-        //{ return &downcast<T &>(obj); }
-        //template <typename T, typename U>
-        //static std::enable_if_t<!std::is_convertible<std::add_pointer_t<U>, std::add_pointer_t<T> >::value, T *> make_pointer(U &obj)
-        //{ return &dynamic_cast<T &>(obj); }
+        //static T *make_pointer(U &obj)
+        //{
+        //    if constexpr (std::is_convertible_v<std::add_pointer_t<U>, std::add_pointer_t<T> >)
+        //        return &downcast<T &>(obj);
+        //    else
+        //        return &dynamic_cast<T &>(obj);
+        //}
 
         //template <typename T> static std::enable_if_t<emu::detail::is_device_implementation<T>::value, const char *> get_tag(T &obj) { return obj.tag(); }
         //template <typename T> static std::enable_if_t<emu::detail::is_device_interface<T>::value, const char *> get_tag(T &obj) { return obj.device().tag(); }
@@ -109,53 +116,54 @@ namespace mame
         public write32_delegate        m_wproto32;             // 32-bit write proto-delegate
         public write64_delegate        m_wproto64;             // 64-bit write proto-delegate
 
-        read8m_delegate         m_rproto8m;             // 8-bit read proto-delegate
-        read16m_delegate        m_rproto16m;            // 16-bit read proto-delegate
-        //read32m_delegate        m_rproto32m;            // 32-bit read proto-delegate
-        //read64m_delegate        m_rproto64m;            // 64-bit read proto-delegate
-        write8m_delegate        m_wproto8m;             // 8-bit write proto-delegate
-        write16m_delegate       m_wproto16m;            // 16-bit write proto-delegate
-        //write32m_delegate       m_wproto32m;            // 32-bit write proto-delegate
-        //write64m_delegate       m_wproto64m;            // 64-bit write proto-delegate
+        public read8m_delegate         m_rproto8m;             // 8-bit read proto-delegate
+        public read16m_delegate        m_rproto16m;            // 16-bit read proto-delegate
+        public read32m_delegate        m_rproto32m;            // 32-bit read proto-delegate
+        public read64m_delegate        m_rproto64m;            // 64-bit read proto-delegate
+        public write8m_delegate        m_wproto8m;             // 8-bit write proto-delegate
+        public write16m_delegate       m_wproto16m;            // 16-bit write proto-delegate
+        public write32m_delegate       m_wproto32m;            // 32-bit write proto-delegate
+        public write64m_delegate       m_wproto64m;            // 64-bit write proto-delegate
 
-        read8s_delegate         m_rproto8s;             // 8-bit read proto-delegate
+        public read8s_delegate         m_rproto8s;             // 8-bit read proto-delegate
         public read16s_delegate        m_rproto16s;            // 16-bit read proto-delegate
-        //read32s_delegate        m_rproto32s;            // 32-bit read proto-delegate
-        //read64s_delegate        m_rproto64s;            // 64-bit read proto-delegate
+        public read32s_delegate        m_rproto32s;            // 32-bit read proto-delegate
+        public read64s_delegate        m_rproto64s;            // 64-bit read proto-delegate
         public write8s_delegate        m_wproto8s;             // 8-bit write proto-delegate
         public write16s_delegate       m_wproto16s;            // 16-bit write proto-delegate
-        //write32s_delegate       m_wproto32s;            // 32-bit write proto-delegate
-        //write64s_delegate       m_wproto64s;            // 64-bit write proto-delegate
+        public write32s_delegate       m_wproto32s;            // 32-bit write proto-delegate
+        public write64s_delegate       m_wproto64s;            // 64-bit write proto-delegate
 
         public read8sm_delegate        m_rproto8sm;            // 8-bit read proto-delegate
-        read16sm_delegate       m_rproto16sm;           // 16-bit read proto-delegate
-        //read32sm_delegate       m_rproto32sm;           // 32-bit read proto-delegate
-        //read64sm_delegate       m_rproto64sm;           // 64-bit read proto-delegate
+        public read16sm_delegate       m_rproto16sm;           // 16-bit read proto-delegate
+        public read32sm_delegate       m_rproto32sm;           // 32-bit read proto-delegate
+        public read64sm_delegate       m_rproto64sm;           // 64-bit read proto-delegate
         public write8sm_delegate       m_wproto8sm;            // 8-bit write proto-delegate
-        write16sm_delegate      m_wproto16sm;           // 16-bit write proto-delegate
-        //write32sm_delegate      m_wproto32sm;           // 32-bit write proto-delegate
-        //write64sm_delegate      m_wproto64sm;           // 64-bit write proto-delegate
+        public write16sm_delegate      m_wproto16sm;           // 16-bit write proto-delegate
+        public write32sm_delegate      m_wproto32sm;           // 32-bit write proto-delegate
+        public write64sm_delegate      m_wproto64sm;           // 64-bit write proto-delegate
 
-        read8mo_delegate        m_rproto8mo;            // 8-bit read proto-delegate
-        //read16mo_delegate       m_rproto16mo;           // 16-bit read proto-delegate
-        //read32mo_delegate       m_rproto32mo;           // 32-bit read proto-delegate
-        //read64mo_delegate       m_rproto64mo;           // 64-bit read proto-delegate
-        write8mo_delegate       m_wproto8mo;            // 8-bit write proto-delegate
-        //write16mo_delegate      m_wproto16mo;           // 16-bit write proto-delegate
-        //write32mo_delegate      m_wproto32mo;           // 32-bit write proto-delegate
-        //write64mo_delegate      m_wproto64mo;           // 64-bit write proto-delegate
+        public read8mo_delegate        m_rproto8mo;            // 8-bit read proto-delegate
+        public read16mo_delegate       m_rproto16mo;           // 16-bit read proto-delegate
+        public read32mo_delegate       m_rproto32mo;           // 32-bit read proto-delegate
+        public read64mo_delegate       m_rproto64mo;           // 64-bit read proto-delegate
+        public write8mo_delegate       m_wproto8mo;            // 8-bit write proto-delegate
+        public write16mo_delegate      m_wproto16mo;           // 16-bit write proto-delegate
+        public write32mo_delegate      m_wproto32mo;           // 32-bit write proto-delegate
+        public write64mo_delegate      m_wproto64mo;           // 64-bit write proto-delegate
 
         public read8smo_delegate       m_rproto8smo;           // 8-bit read proto-delegate
         public read16smo_delegate      m_rproto16smo;          // 16-bit read proto-delegate
-        //read32smo_delegate      m_rproto32smo;          // 32-bit read proto-delegate
-        //read64smo_delegate      m_rproto64smo;          // 64-bit read proto-delegate
+        public read32smo_delegate      m_rproto32smo;          // 32-bit read proto-delegate
+        public read64smo_delegate      m_rproto64smo;          // 64-bit read proto-delegate
         public write8smo_delegate      m_wproto8smo;           // 8-bit write proto-delegate
         public write16smo_delegate     m_wproto16smo;          // 16-bit write proto-delegate
-        //write32smo_delegate     m_wproto32smo;          // 32-bit write proto-delegate
-        //write64smo_delegate     m_wproto64smo;          // 64-bit write proto-delegate
+        public write32smo_delegate     m_wproto32smo;          // 32-bit write proto-delegate
+        public write64smo_delegate     m_wproto64smo;          // 64-bit write proto-delegate
 
         public device_t m_submap_device;
         public address_map_constructor m_submap_delegate;
+        public memory_view m_view;
 
         // information used during processing
         public PointerU8 m_memory;  //void *                  m_memory;               // pointer to memory backing this entry
@@ -189,46 +197,46 @@ namespace mame
             m_wproto16 = null;
             m_wproto32 = null;
             m_wproto64 = null;
-            //m_rproto8m(device)
-            //m_rproto16m(device)
-            //m_rproto32m(device)
-            //m_rproto64m(device)
-            //m_wproto8m(device)
-            //m_wproto16m(device)
-            //m_wproto32m(device)
-            //m_wproto64m(device)
+            m_rproto8m = null;
+            m_rproto16m = null;
+            m_rproto32m = null;
+            m_rproto64m = null;
+            m_wproto8m = null;
+            m_wproto16m = null;
+            m_wproto32m = null;
+            m_wproto64m = null;
             m_rproto8s = null;
             m_rproto16s = null;
-            //m_rproto32s(device)
-            //m_rproto64s(device)
-            //m_wproto8s(device)
-            //m_wproto16s(device)
-            //m_wproto32s(device)
-            //m_wproto64s(device)
+            m_rproto32s = null;
+            m_rproto64s = null;
+            m_wproto8s = null;
+            m_wproto16s = null;
+            m_wproto32s = null;
+            m_wproto64s = null;
             m_rproto8sm = null;
-            //m_rproto16sm(device)
-            //m_rproto32sm(device)
-            //m_rproto64sm(device)
+            m_rproto16sm = null;
+            m_rproto32sm = null;
+            m_rproto64sm = null;
             m_wproto8sm = null;
-            //m_wproto16sm(device)
-            //m_wproto32sm(device)
-            //m_wproto64sm(device)
+            m_wproto16sm = null;
+            m_wproto32sm = null;
+            m_wproto64sm = null;
             m_rproto8mo = null;
-            //m_rproto16mo(device)
-            //m_rproto32mo(device)
-            //m_rproto64mo(device)
+            m_rproto16mo = null;
+            m_rproto32mo = null;
+            m_rproto64mo = null;
             m_wproto8mo = null;
-            //m_wproto16mo(device)
-            //m_wproto32mo(device)
-            //m_wproto64mo(device)
+            m_wproto16mo = null;
+            m_wproto32mo = null;
+            m_wproto64mo = null;
             m_rproto8smo = null;
             m_rproto16smo = null;
-            //m_rproto32smo(device)
-            //m_rproto64smo(device)
+            m_rproto32smo = null;
+            m_rproto64smo = null;
             m_wproto8smo = null;
             m_wproto16smo = null;
-            //m_wproto32smo(device)
-            //m_wproto64smo(device)
+            m_wproto32smo = null;
+            m_wproto64smo = null;
             m_submap_device = null;
             m_memory = null;
         }
@@ -353,6 +361,10 @@ namespace mame
         }
 
 
+        // view initialization
+        //void view(memory_view &mv);
+
+
         // implicit base -> delegate converter
         //template <typename T, typename Ret, typename... Params>
         //address_map_entry &r(Ret (T::*read)(Params...), const char *read_name)
@@ -373,6 +385,7 @@ namespace mame
         public address_map_entry rw(read16_delegate rfunc, write16_delegate wfunc) { return r(rfunc).w(wfunc); }
         public address_map_entry rw(read16m_delegate rfunc, write16m_delegate wfunc) { return r(rfunc).w(wfunc); }
         public address_map_entry rw(read16s_delegate rfunc, write16s_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(read16sm_delegate rfunc, write16sm_delegate wfunc) { return r(rfunc).w(wfunc); }
 
         //template <typename T, typename Ret, typename... Params>
         //address_map_entry &m(Ret (T::*map)(Params...), const char *map_name)
@@ -413,76 +426,123 @@ namespace mame
         //address_map_entry &m(const char *tag, Ret (T::*map)(Params...), const char *map_name)
         //{ return m(tag, make_delegate(map, map_name, static_cast<T *>(nullptr))); }
 
-#if false
+
         // device reference -> delegate converter
-        template <typename T, typename U, typename Ret, typename... Params>
-        address_map_entry &r(T &obj, Ret (U::*read)(Params...), const char *read_name)
-        { return r(emu::detail::make_delegate(*make_pointer<U>(obj), read, read_name)); }
+        //template <typename T, typename U, typename Ret, typename... Params>
+        //address_map_entry &r(T &obj, Ret (U::*read)(Params...), const char *read_name)
+        //{ return r(emu::detail::make_delegate(*make_pointer<U>(obj), read, read_name)); }
 
-        template <typename T, typename U, typename Ret, typename... Params>
-        address_map_entry &w(T &obj, Ret (U::*write)(Params...), const char *write_name)
-        { return w(emu::detail::make_delegate(*make_pointer<U>(obj), write, write_name)); }
+        //template <typename T, typename U, typename Ret, typename... Params>
+        //address_map_entry &w(T &obj, Ret (U::*write)(Params...), const char *write_name)
+        //{ return w(emu::detail::make_delegate(*make_pointer<U>(obj), write, write_name)); }
 
-        template <typename T, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
-        address_map_entry &rw(T &obj, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name)
-        { return r(emu::detail::make_delegate(*make_pointer<U>(obj), read, read_name)).w(emu::detail::make_delegate(make_pointer<V>(obj), write, write_name)); }
+        //template <typename T, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
+        //address_map_entry &rw(T &obj, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name)
+        //{ return r(emu::detail::make_delegate(*make_pointer<U>(obj), read, read_name)).w(emu::detail::make_delegate(make_pointer<V>(obj), write, write_name)); }
 
-        template <typename T, typename U, typename Ret, typename... Params>
-        address_map_entry &m(T &obj, Ret (U::*map)(Params...), const char *map_name)
-        { return m(make_pointer<device_t>(obj), make_delegate(map, map_name, make_pointer<U>(obj))); }
+        //template <typename T, typename U, typename Ret, typename... Params>
+        //address_map_entry &m(T &obj, Ret (U::*map)(Params...), const char *map_name)
+        //{ return m(make_pointer<device_t>(obj), make_delegate(map, map_name, make_pointer<U>(obj))); }
 
 
         // device finder -> delegate converter
-        template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
-        address_map_entry &r(device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
-            device_t &device(find_device(finder));
-            return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name));
+        //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
+        public address_map_entry r<T, Reqd>(device_finder<T, Reqd> finder, read8sm_delegate read)  //address_map_entry &r(device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
+            where Reqd : bool_constant, new()
+        {
+            device_t device = find_device(finder);
+            return r(read);
         }
 
-        template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
-        address_map_entry &r(const device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
-            device_t &device(find_device(finder));
-            return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name));
+        public address_map_entry r<T, Reqd>(device_finder<T, Reqd> finder, read8smo_delegate read)  //address_map_entry &r(device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
+            where Reqd : bool_constant, new()
+        {
+            device_t device = find_device(finder);
+            return r(read);
         }
 
-        template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
-        address_map_entry &w(device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
-            device_t &device(find_device(finder));
-            return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
+        public address_map_entry r<T, Reqd>(device_finder<T, Reqd> finder, read16smo_delegate read)  //address_map_entry &r(device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
+            where Reqd : bool_constant, new()
+        {
+            device_t device = find_device(finder);
+            return r(read);
         }
 
-        template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
-        address_map_entry &w(const device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
-            device_t &device(find_device(finder));
-            return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
+        //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
+        //address_map_entry &r(const device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
+        //    device_t &device(find_device(finder));
+        //    return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name));
+        //}
+
+
+        //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
+        public address_map_entry w<T, Reqd>(device_finder<T, Reqd> finder, write16s_delegate write)  //address_map_entry &w(device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
+            where Reqd : bool_constant, new()
+        {
+            device_t device = find_device(finder);
+            return w(write);  //return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
         }
 
-        template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
-        address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
-            device_t &device(find_device(finder));
-            return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name))
-                    .w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
+        //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
+        public address_map_entry w<T, Reqd>(device_finder<T, Reqd> finder, write8sm_delegate write)  //address_map_entry &w(device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
+            where Reqd : bool_constant, new()
+        {
+            device_t device = find_device(finder);
+            return w(write);  //return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
         }
 
-        template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
-        address_map_entry &rw(const device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
-            device_t &device(find_device(finder));
-            return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name))
-                    .w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
+        public address_map_entry w<T, Reqd>(device_finder<T, Reqd> finder, write8smo_delegate write)  //address_map_entry &w(device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
+            where Reqd : bool_constant, new()
+        {
+            device_t device = find_device(finder);
+            return w(write);  //return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
         }
 
-        template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
-        address_map_entry &m(device_finder<T, Reqd> &finder, Ret (U::*map)(Params...), const char *map_name) {
-            device_t &device(find_device(finder));
-            return m(&device, make_delegate(map, map_name, make_pointer<U>(device)));
+        //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
+        //address_map_entry &w(const device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
+        //    device_t &device(find_device(finder));
+        //    return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
+        //}
+
+
+        //template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
+        public address_map_entry rw<T, Reqd>(device_finder<T, Reqd> finder, read8sm_delegate read, write8sm_delegate write)  //address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
+            where Reqd : bool_constant, new()
+        { 
+            device_t device = find_device(finder);
+            return r(read).w(write);  //return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name)).w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
         }
 
-        template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
-        address_map_entry &m(const device_finder<T, Reqd> &finder, Ret (U::*map)(Params...), const char *map_name) {
-            device_t &device(find_device(finder));
-            return m(&device, make_delegate(map, map_name, make_pointer<U>(device)));
+        //template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
+        public address_map_entry rw<T, Reqd>(device_finder<T, Reqd> finder, read8m_delegate read, write8sm_delegate write)  //address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
+            where Reqd : bool_constant, new()
+        { 
+            device_t device = find_device(finder);
+            return r(read).w(write);  //return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name)).w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
         }
-#endif
+
+        //template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
+        //address_map_entry &rw(const device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
+        //    device_t &device(find_device(finder));
+        //    return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name))
+        //            .w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
+        //}
+
+
+        //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
+        public address_map_entry m<T, Reqd>(device_finder<T, Reqd> finder, address_map_constructor map)  //address_map_entry &m(device_finder<T, Reqd> &finder, Ret (U::*map)(Params...), const char *map_name) {
+            where Reqd : bool_constant, new()
+        {
+            device_t device = find_device(finder);
+            return m(device, map);
+        }
+
+        //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
+        //address_map_entry &m(const device_finder<T, Reqd> &finder, Ret (U::*map)(Params...), const char *map_name) {
+        //    device_t &device(find_device(finder));
+        //    return m(&device, make_delegate(map, map_name, make_pointer<U>(device)));
+        //}
+
 
         // lambda -> delegate converter
         //template <typename T> address_map_entry &lr8(T &&read, const char *name)
@@ -524,20 +584,6 @@ namespace mame
 
         //template <typename T, typename U> address_map_entry &lrw64(T &&read, const char *read_name, U &&write, const char *write_name)
         //{ return r(emu::detail::make_lr64_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw64_delegate(m_devbase, std::forward<U>(write), write_name)); }
-
-
-        // device pointer/finder -> delegate converter
-        public address_map_entry r(global_object tag, read8_delegate func) { return r(func); }
-        public address_map_entry r(global_object tag, read8smo_delegate func) { return r(func); }
-        public address_map_entry w(global_object tag, write8_delegate func) { return w(func); }
-        public address_map_entry w(global_object tag, write8sm_delegate func) { return w(func); }
-        public address_map_entry w(global_object tag, write8smo_delegate func) { return w(func); }
-        public address_map_entry w(global_object tag, write16_delegate func) { return w(func); }
-        public address_map_entry w(global_object tag, write16s_delegate func) { return w(func); }
-        public address_map_entry rw(global_object tag, read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
-        public address_map_entry rw(global_object tag, read8m_delegate rfunc, write8m_delegate wfunc) { return r(rfunc).w(wfunc); }
-        public address_map_entry rw(global_object tag, read8sm_delegate rfunc, write8sm_delegate wfunc) { return r(rfunc).w(wfunc); }
-        public address_map_entry rw(global_object tag, read8m_delegate rfunc, write8sm_delegate wfunc) { return r(rfunc).w(wfunc); }
 
 
         // handler setters for 8-bit delegates
@@ -771,8 +817,26 @@ namespace mame
         }
 
 
-        //address_map_entry &r(read16mo_delegate func);
-        //address_map_entry &w(write16mo_delegate func);
+        public address_map_entry r(read16mo_delegate func)
+        {
+            assert(func != null);
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_MO;
+            m_read.m_bits = 16;
+            m_read.m_name = func.GetMethodInfo().Name;
+            m_rproto16mo = func;
+            return this;
+        }
+
+
+        public address_map_entry w(write16mo_delegate func)
+        {
+            assert(func != null);
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_MO;
+            m_write.m_bits = 16;
+            m_write.m_name = func.GetMethodInfo().Name;
+            m_wproto16mo = func;
+            return this;
+        }
 
 
         public address_map_entry r(read16smo_delegate func)
@@ -960,7 +1024,8 @@ namespace mame
         // public data
         int m_spacenum;         // space number of the map
         device_t m_device;       // associated device
-        u8 m_databits;         // data bits represented by the map
+        //memory_view *                   m_view;         // view, when in one
+        //const address_space_config *    m_config;       // space configuration
         public u8 m_unmapval;         // unmapped memory value
         public offs_t m_globalmask;       // global mask
         public simple_list<address_map_entry> m_entrylist = new simple_list<address_map_entry>(); // list of entries
@@ -1002,6 +1067,10 @@ namespace mame
                 spaceconfig.m_internal_map(this, m_device);
         }
 
+
+        //address_map(memory_view &view);
+
+
         //-------------------------------------------------
         //  address_map - constructor in the submap case
         //-------------------------------------------------
@@ -1025,7 +1094,7 @@ namespace mame
         {
             m_spacenum = space.spacenum();
             m_device = device;
-            m_unmapval = (byte)space.unmap();
+            m_unmapval = (u8)space.unmap();
             m_globalmask = space.addrmask();
 
 
@@ -1165,12 +1234,12 @@ namespace mame
                                 }
                                 subentry_ratio = data_width / subentry_ratio;
                                 if (ratio * subentry_ratio > data_width / 8)
-                                    fatalerror("import_submap: In range {0}-{1} mask {2} mirror {3} select {4} of device {5}, the import unitmask of {6} combined with an entry unitmask of {7} does not fit in {8} bits.\n", subentry.m_addrstart, subentry.m_addrend, subentry.m_addrmask, subentry.m_addrmirror, subentry.m_addrselect, entry.m_read.m_tag, core_i64_hex_format(entry.m_mask, (byte)(data_width / 4)), core_i64_hex_format(subentry.m_mask, (byte)(data_width / 4)), data_width);
+                                    fatalerror("import_submap: In range {0}-{1} mask {2} mirror {3} select {4} of device {5}, the import unitmask of {6}{7} combined with an entry unitmask of {8}{9} does not fit in {10} bits.\n", subentry.m_addrstart, subentry.m_addrend, subentry.m_addrmask, subentry.m_addrmirror, subentry.m_addrselect, entry.m_read.m_tag, data_width / 4, entry.m_mask, data_width / 4, subentry.m_mask, data_width);
 
                                 // Regenerate the unitmask
                                 u64 newmask = 0;
                                 int bit_in_subentry = 0;
-                                for (int i=0; i != data_width; i++)
+                                for (int i = 0; i != data_width; i++)
                                 {
                                     if (((entry.m_mask >> i) & 1) != 0)
                                     {
@@ -1235,5 +1304,6 @@ namespace mame
 
 
         //void map_validity_check(validity_checker &valid, int spacenum) const;
+        //const address_space_config &get_config() const;
     }
 }

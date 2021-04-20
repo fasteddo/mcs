@@ -127,10 +127,10 @@ namespace mame
                timing signals, while x flip is done by selecting the 2nd character set.
                We reproduce this here, but since the tilemap system automatically flips
                characters when screen is flipped, we have to flip them back. */
-            int color = m_videoram[tile_index + 0x400] & 0x3f;
+            int color = m_videoram.op[tile_index + 0x400] & 0x3f;
 
             tileinfo.set(0,
-                    (u32)((m_videoram[tile_index] & 0x7f) | (flip_screen() != 0 ? 0x80 : 0) | (m_galaga_gfxbank << 8)),
+                    (u32)((m_videoram.op[tile_index] & 0x7f) | (flip_screen() != 0 ? 0x80 : 0) | (m_galaga_gfxbank << 8)),
                     (u32)color,
                     flip_screen() != 0 ? TILE_FLIPX : (u8)0);
 
@@ -146,8 +146,8 @@ namespace mame
         //VIDEO_START_MEMBER(galaga_state,galaga)
         void video_start_galaga()
         {
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, get_tile_info, tilemap_scan, 8, 8, 36, 28);  //tilemap_get_info_delegate(FUNC(galaga_state::get_tile_info),this),tilemap_mapper_delegate(FUNC(galaga_state::tilemap_scan),this),8,8,36,28);
-            m_fg_tilemap.configure_groups(m_gfxdecode.target.digfx.gfx(0), 0x1f);
+            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_tile_info, tilemap_scan, 8, 8, 36, 28);  //tilemap_get_info_delegate(FUNC(galaga_state::get_tile_info),this),tilemap_mapper_delegate(FUNC(galaga_state::tilemap_scan),this),8,8,36,28);
+            m_fg_tilemap.configure_groups(m_gfxdecode.op[0].digfx.gfx(0), 0x1f);
 
             m_galaga_gfxbank = 0;
 
@@ -160,7 +160,7 @@ namespace mame
         ***************************************************************************/
         void galaga_videoram_w(offs_t offset, uint8_t data)
         {
-            m_videoram[offset] = data;
+            m_videoram[offset].op = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);
         }
 
@@ -177,22 +177,20 @@ namespace mame
 
         protected virtual void draw_sprites(bitmap_ind16 bitmap, rectangle cliprect)
         {
-            Pointer<uint8_t> spriteram = new Pointer<uint8_t>(m_galaga_ram1.target, 0x380);  //uint8_t *spriteram = m_galaga_ram1 + 0x380;
-            Pointer<uint8_t> spriteram_2 = new Pointer<uint8_t>(m_galaga_ram2.target, 0x380);  //uint8_t *spriteram_2 = m_galaga_ram2 + 0x380;
-            Pointer<uint8_t> spriteram_3 = new Pointer<uint8_t>(m_galaga_ram3.target, 0x380);  //uint8_t *spriteram_3 = m_galaga_ram3 + 0x380;
-            int offs;
+            Pointer<uint8_t> spriteram = new Pointer<uint8_t>(m_galaga_ram1.op, 0x380);  //uint8_t *spriteram = &m_galaga_ram1[0x380];
+            Pointer<uint8_t> spriteram_2 = new Pointer<uint8_t>(m_galaga_ram2.op, 0x380);  //uint8_t *spriteram_2 = &m_galaga_ram2[0x380];
+            Pointer<uint8_t> spriteram_3 = new Pointer<uint8_t>(m_galaga_ram3.op, 0x380);  //uint8_t *spriteram_3 = &m_galaga_ram3[0x380];
 
-            for (offs = 0; offs < 0x80; offs += 2)
+            for (int offs = 0; offs < 0x80; offs += 2)
             {
                 int sprite = spriteram[offs] & 0x7f;
-                int color = spriteram[offs+1] & 0x3f;
-                int sx = spriteram_2[offs+1] - 40 + 0x100*(spriteram_3[offs+1] & 3);
+                int color = spriteram[offs + 1] & 0x3f;
+                int sx = spriteram_2[offs + 1] - 40 + 0x100 * (spriteram_3[offs + 1] & 3);
                 int sy = 256 - spriteram_2[offs] + 1;   // sprites are buffered and delayed by one scanline
                 int flipx = (spriteram_3[offs] & 0x01);
                 int flipy = (spriteram_3[offs] & 0x02) >> 1;
                 int sizex = (spriteram_3[offs] & 0x04) >> 2;
                 int sizey = (spriteram_3[offs] & 0x08) >> 3;
-                int x,y;
 
                 sy -= 16 * sizey;
                 sy = (sy & 0xff) - 32;  // fix wraparound
@@ -203,16 +201,16 @@ namespace mame
                     flipy ^= 1;
                 }
 
-                for (y = 0; y <= sizey; y++)
+                for (int y = 0; y <= sizey; y++)
                 {
-                    for (x = 0; x <= sizex; x++)
+                    for (int x = 0; x <= sizex; x++)
                     {
-                        m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,cliprect,
-                            (UInt32)(sprite + gfx_offs[y ^ (sizey * flipy), x ^ (sizex * flipx)]),
-                            (UInt32)color,
+                        m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap, cliprect,
+                            (u32)(sprite + gfx_offs[y ^ (sizey * flipy), x ^ (sizex * flipx)]),
+                            (u32)color,
                             flipx,flipy,
-                            sx + 16*x, sy + 16*y,
-                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x0f));
+                            sx + 16 * x, sy + 16 * y,
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color, 0x0f));
                     }
                 }
             }
@@ -221,8 +219,8 @@ namespace mame
 
         u32 screen_update_galaga(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            bitmap.fill(m_palette.target.dipalette.black_pen(), cliprect);
-            m_starfield.target.draw_starfield(bitmap, cliprect, 0);
+            bitmap.fill(m_palette.op[0].dipalette.black_pen(), cliprect);
+            m_starfield.op[0].draw_starfield(bitmap, cliprect, 0);
             draw_sprites(bitmap,cliprect);
             m_fg_tilemap.draw(screen, bitmap, cliprect);
             return 0;
@@ -234,14 +232,14 @@ namespace mame
         {
             // Galaga only scrolls in X direction - the SCROLL_Y pins
             // of the 05XX chip are tied to ground.
-            uint8_t speed_index_X = (uint8_t)((m_videolatch.target.q2_r() << 2) | (m_videolatch.target.q1_r() << 1) | (m_videolatch.target.q0_r() << 0));
+            uint8_t speed_index_X = (uint8_t)((m_videolatch.op[0].q2_r() << 2) | (m_videolatch.op[0].q1_r() << 1) | (m_videolatch.op[0].q0_r() << 0));
             uint8_t speed_index_Y = 0;
-            m_starfield.target.set_scroll_speed(speed_index_X,speed_index_Y);
+            m_starfield.op[0].set_scroll_speed(speed_index_X,speed_index_Y);
 
-            m_starfield.target.set_active_starfield_sets((uint8_t)m_videolatch.target.q3_r(), (uint8_t)(m_videolatch.target.q4_r() | 2));
+            m_starfield.op[0].set_active_starfield_sets((uint8_t)m_videolatch.op[0].q3_r(), (uint8_t)(m_videolatch.op[0].q4_r() | 2));
 
             // _STARCLR signal enables/disables starfield
-            m_starfield.target.enable_starfield((uint8_t)m_videolatch.target.q5_r());
+            m_starfield.op[0].enable_starfield((uint8_t)m_videolatch.op[0].q5_r());
         }
     }
 }

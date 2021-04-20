@@ -185,7 +185,7 @@ namespace mame
         public int region_length(string tag) { return (int)m_region_map.find(tag); }
 
 
-        //bool ioport_missing(const char *tag) { return !m_checking_card && (m_ioport_set.find(tag) == m_ioport_set.end()); }
+        public bool ioport_missing(string tag) { return !m_checking_card && (m_ioport_set.find(tag)); }
 
 
         // generic registry of already-checked stuff

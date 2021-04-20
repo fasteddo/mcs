@@ -18,7 +18,7 @@ namespace mame
         void taitosj_sndnmi_msk_w(uint8_t data)
         {
             /* B0 is the sound nmi enable, active low */
-            m_soundnmi.target.in_w(0, (~data) & 1);
+            m_soundnmi.op[0].in_w(0, (~data) & 1);
         }
 
 
@@ -72,8 +72,8 @@ namespace mame
             map.op(0xd40b, 0xd40b).mirror(0x00f0).portr("IN2");
             map.op(0xd40c, 0xd40c).mirror(0x00f0).portr("IN3");          /* Service */
             map.op(0xd40d, 0xd40d).mirror(0x00f0).portr("IN4");
-            map.op(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay1, (offset, data) => { m_ay1.target.address_data_w(offset, data); });  //m_ay1, FUNC(ay8910_device::address_data_w));
-            map.op(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay1, () => { return m_ay1.target.data_r(); });  //m_ay1, FUNC(ay8910_device::data_r));   /* DSW2 and DSW3 */
+            map.op(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay1, (offset, data) => { m_ay1.op[0].address_data_w(offset, data); });  //m_ay1, FUNC(ay8910_device::address_data_w));
+            map.op(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay1, () => { return m_ay1.op[0].data_r(); });  //m_ay1, FUNC(ay8910_device::data_r));   /* DSW2 and DSW3 */
             map.op(0xd500, 0xd505).mirror(0x00f0).writeonly().share("scroll");
             map.op(0xd506, 0xd507).mirror(0x00f0).writeonly().share("colorbank");
             map.op(0xd508, 0xd508).mirror(0x00f0).w(taitosj_collision_reg_clear_w);
@@ -93,7 +93,7 @@ namespace mame
         void taitosj_main_mcu_map(address_map map, device_t device)
         {
             taitosj_main_nomcu_map(map, m_globals.helper_device);
-            map.op(0x8800, 0x8801).mirror(0x07fe).rw(m_mcu, (space, offset) => { return m_mcu.target.data_r(space, offset); }, (offset, data) => { m_mcu.target.data_w(offset, data); });  //map(0x8800, 0x8801).mirror(0x07fe).rw(m_mcu, FUNC(taito_sj_security_mcu_device::data_r), FUNC(taito_sj_security_mcu_device::data_w));
+            map.op(0x8800, 0x8801).mirror(0x07fe).rw(m_mcu, (space, offset) => { return m_mcu.op[0].data_r(space, offset); }, (offset, data) => { m_mcu.op[0].data_w(offset, data); });  //map(0x8800, 0x8801).mirror(0x07fe).rw(m_mcu, FUNC(taito_sj_security_mcu_device::data_r), FUNC(taito_sj_security_mcu_device::data_w));
         }
 
 
@@ -105,7 +105,7 @@ namespace mame
 
             m_soundlatch_data = (uint8_t)param;
             m_soundlatch_flag = true;
-            m_soundnmi.target.in_w(1, 1);
+            m_soundnmi.op[0].in_w(1, 1);
         }
 
 
@@ -123,7 +123,7 @@ namespace mame
         void sound_semaphore2_w_cb(object ptr, int param)
         {
             m_sound_semaphore2 = (param & 1) != 0;
-            m_soundnmi2.target.in_w(1, (param & 1));
+            m_soundnmi2.op[0].in_w(1, (param & 1));
         }
 
 
@@ -131,7 +131,7 @@ namespace mame
         void sound_semaphore2_clear_w_cb(object ptr, int param)
         {
             m_sound_semaphore2 = false;
-            m_soundnmi2.target.in_w(1, 0);
+            m_soundnmi2.op[0].in_w(1, 0);
         }
 
 
@@ -141,7 +141,7 @@ namespace mame
             if (!machine().side_effects_disabled())
             {
                 m_soundlatch_flag = false;
-                m_soundnmi.target.in_w(1, 0);
+                m_soundnmi.op[0].in_w(1, 0);
             }
 
             return m_soundlatch_data;
@@ -173,12 +173,12 @@ namespace mame
         {
             map.op(0x0000, 0x3fff).rom();
             map.op(0x4000, 0x43ff).ram();
-            map.op(0x4800, 0x4801).mirror(0x07f8).w(m_ay2, (data) => { m_ay2.target.data_w(data); });  //FUNC(ay8910_device::address_data_w));
-            map.op(0x4801, 0x4801).mirror(0x07f8).r(m_ay2, () => { return m_ay2.target.data_r(); });  //FUNC(ay8910_device::data_r));
-            map.op(0x4802, 0x4803).mirror(0x07f8).w(m_ay3, (data) => { m_ay3.target.data_w(data); });  //FUNC(ay8910_device::address_data_w));
-            map.op(0x4803, 0x4803).mirror(0x07f8).r(m_ay3, () => { return m_ay3.target.data_r(); });  //FUNC(ay8910_device::data_r));
-            map.op(0x4804, 0x4805).mirror(0x07fa).w(m_ay4, (data) => { m_ay4.target.data_w(data); });  //FUNC(ay8910_device::address_data_w));
-            map.op(0x4805, 0x4805).mirror(0x07fa).r(m_ay4, () => { return m_ay4.target.data_r(); });  //FUNC(ay8910_device::data_r));
+            map.op(0x4800, 0x4801).mirror(0x07f8).w(m_ay2, (data) => { m_ay2.op[0].data_w(data); });  //FUNC(ay8910_device::address_data_w));
+            map.op(0x4801, 0x4801).mirror(0x07f8).r(m_ay2, () => { return m_ay2.op[0].data_r(); });  //FUNC(ay8910_device::data_r));
+            map.op(0x4802, 0x4803).mirror(0x07f8).w(m_ay3, (data) => { m_ay3.op[0].data_w(data); });  //FUNC(ay8910_device::address_data_w));
+            map.op(0x4803, 0x4803).mirror(0x07f8).r(m_ay3, () => { return m_ay3.op[0].data_r(); });  //FUNC(ay8910_device::data_r));
+            map.op(0x4804, 0x4805).mirror(0x07fa).w(m_ay4, (data) => { m_ay4.op[0].data_w(data); });  //FUNC(ay8910_device::address_data_w));
+            map.op(0x4805, 0x4805).mirror(0x07fa).r(m_ay4, () => { return m_ay4.op[0].data_r(); });  //FUNC(ay8910_device::data_r));
             map.op(0x5000, 0x5000).mirror(0x07fc).rw(soundlatch_r, soundlatch_clear7_w);
             map.op(0x5001, 0x5001).mirror(0x07fc).rw(soundlatch_flags_r, sound_semaphore2_clear_w);
             map.op(0xe000, 0xefff).rom(); /* space for diagnostic ROM */
@@ -510,7 +510,7 @@ namespace mame
 
         void taitosj_dacvol_w(uint8_t data)
         {
-            m_dacvol.target.write(NODE_01, (uint8_t)(data ^ 0xff)); // 7416 hex inverter
+            m_dacvol.op[0].write(NODE_01, (uint8_t)(data ^ 0xff)); // 7416 hex inverter
         }
 
 
@@ -518,25 +518,25 @@ namespace mame
         {
             /* basic machine hardware */
             Z80(config, m_maincpu, new XTAL(8000000)/2);      /* 8 MHz / 2, on CPU board */
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, taitosj_main_nomcu_map);
-            m_maincpu.target.execute().set_vblank_int("screen", irq0_line_hold);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, taitosj_main_nomcu_map);
+            m_maincpu.op[0].execute().set_vblank_int("screen", irq0_line_hold);
 
             Z80(config, m_audiocpu, new XTAL(6000000)/2);    /* 6 MHz / 2, on GAME board */
-            m_audiocpu.target.memory().set_addrmap(AS_PROGRAM, taitosj_audio_map);
+            m_audiocpu.op[0].memory().set_addrmap(AS_PROGRAM, taitosj_audio_map);
                     /* interrupts: */
                     /* - no interrupts synced with vblank */
                     /* - NMI triggered by the main CPU */
                     /* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
-            m_audiocpu.target.execute().set_periodic_int(irq0_line_hold, attotime.from_hz(new XTAL(6000000)/(4*16*16*10*16)));
+            m_audiocpu.op[0].execute().set_periodic_int(irq0_line_hold, attotime.from_hz(new XTAL(6000000)/(4*16*16*10*16)));
 
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
-            m_screen.target.set_refresh_hz(60);
-            m_screen.target.set_vblank_time(ATTOSECONDS_IN_USEC(2500) /* not accurate */);
-            m_screen.target.set_size(32*8, 32*8);
-            m_screen.target.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
-            m_screen.target.set_screen_update(screen_update_taitosj);
-            m_screen.target.set_palette(m_palette);
+            m_screen.op[0].set_refresh_hz(60);
+            m_screen.op[0].set_vblank_time(ATTOSECONDS_IN_USEC(2500) /* not accurate */);
+            m_screen.op[0].set_size(32*8, 32*8);
+            m_screen.op[0].set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
+            m_screen.op[0].set_screen_update(screen_update_taitosj);
+            m_screen.op[0].set_palette(m_palette);
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_taitosj);
             PALETTE(config, m_palette).set_entries(64);
@@ -544,43 +544,43 @@ namespace mame
             /* sound hardware */
             SPEAKER(config, "speaker").front_center();
 
-            INPUT_MERGER_ALL_HIGH(config, m_soundnmi).output_handler().set(m_soundnmi2, (state) => { m_soundnmi2.target.in_w(0, state); }).reg();  //FUNC(input_merger_device::in_w<0>));
+            INPUT_MERGER_ALL_HIGH(config, m_soundnmi).output_handler().set(m_soundnmi2, (state) => { m_soundnmi2.op[0].in_w(0, state); }).reg();  //FUNC(input_merger_device::in_w<0>));
 
             INPUT_MERGER_ANY_HIGH(config, m_soundnmi2).output_handler().set_inputline(m_audiocpu, device_execute_interface.INPUT_LINE_NMI).reg();
 
             AY8910(config, m_ay1, new XTAL(6000000)/4); // 6mhz/4 on GAME board, AY-3-8910 @ IC53 (this is the only AY which uses proper mixing resistors, the 3 below have outputs tied together)
-            m_ay1.target.port_a_read_callback().set_ioport("DSW2").reg();
-            m_ay1.target.port_b_read_callback().set_ioport("DSW3").reg();
-            m_ay1.target.disound.add_route(ALL_OUTPUTS, "speaker", 0.15);
+            m_ay1.op[0].port_a_read_callback().set_ioport("DSW2").reg();
+            m_ay1.op[0].port_b_read_callback().set_ioport("DSW3").reg();
+            m_ay1.op[0].disound.add_route(ALL_OUTPUTS, "speaker", 0.15);
 
             AY8910(config, m_ay2, new XTAL(6000000)/4); // 6mhz/4 on GAME board, AY-3-8910 @ IC51
-            m_ay2.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
-            m_ay2.target.port_a_write_callback().set(m_dac, (space, offset, data, mem_mask) => { m_dac.target.data_w(data); }).reg();  //FUNC(dac_byte_interface::data_w));
-            m_ay2.target.port_b_write_callback().set(taitosj_dacvol_w).reg();
-            m_ay2.target.disound.add_route(ALL_OUTPUTS, "speaker", 0.5);
+            m_ay2.op[0].set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
+            m_ay2.op[0].port_a_write_callback().set(m_dac, (space, offset, data, mem_mask) => { m_dac.op[0].data_w(data); }).reg();  //FUNC(dac_byte_interface::data_w));
+            m_ay2.op[0].port_b_write_callback().set(taitosj_dacvol_w).reg();
+            m_ay2.op[0].disound.add_route(ALL_OUTPUTS, "speaker", 0.5);
 
             AY8910(config, m_ay3, new XTAL(6000000)/4); // 6mhz/4 on GAME board, AY-3-8910 @ IC49
-            m_ay3.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
-            m_ay3.target.port_a_write_callback().set(input_port_4_f0_w).reg();
-            m_ay3.target.disound.add_route(ALL_OUTPUTS, "speaker", 0.5);
+            m_ay3.op[0].set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
+            m_ay3.op[0].port_a_write_callback().set(input_port_4_f0_w).reg();
+            m_ay3.op[0].disound.add_route(ALL_OUTPUTS, "speaker", 0.5);
 
             AY8910(config, m_ay4, new XTAL(6000000)/4); // 6mhz/4 on GAME board, AY-3-8910 @ IC50
-            m_ay4.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
+            m_ay4.op[0].set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
             /* TODO: Implement ay4 Port A bits 0 and 1 which connect to a 7416 open
                collector inverter, to selectively tie none, either or both of two
                capacitors between the ay4 audio output signal and ground, or between
                audio output signal and high-z (i.e. do nothing).
                Bio Attack uses this?
             */
-            m_ay4.target.port_b_write_callback().set(taitosj_sndnmi_msk_w).reg();
-            m_ay4.target.disound.add_route(ALL_OUTPUTS, "speaker", 1.0);
+            m_ay4.op[0].port_b_write_callback().set(taitosj_sndnmi_msk_w).reg();
+            m_ay4.op[0].disound.add_route(ALL_OUTPUTS, "speaker", 1.0);
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 128); // 74LS393 on CPU board, counts 128 vblanks before firing watchdog
 
             DAC_8BIT_R2R(config, m_dac, 0).add_route(ALL_OUTPUTS, "speaker", 0.15); // 30k r-2r network
             DISCRETE(config, m_dacvol, taitosj_dacvol_discrete);
-            m_dacvol.target.disound.add_route(0, "dac", 1.0, dac_global.DAC_INPUT_RANGE_HI);
-            m_dacvol.target.disound.add_route(0, "dac", -1.0, dac_global.DAC_INPUT_RANGE_LO);
+            m_dacvol.op[0].disound.add_route(0, "dac", 1.0, dac_global.DAC_INPUT_RANGE_HI);
+            m_dacvol.op[0].disound.add_route(0, "dac", -1.0, dac_global.DAC_INPUT_RANGE_LO);
         }
 
 
@@ -590,14 +590,14 @@ namespace mame
             nomcu(config);
 
             /* basic machine hardware */
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, taitosj_main_mcu_map);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, taitosj_main_mcu_map);
 
             TAITO_SJ_SECURITY_MCU(config, m_mcu, new XTAL(3000000));   /* xtal is 3MHz, divided by 4 internally */
-            m_mcu.target.set_int_mode(taito_sj_security_mcu_device.int_mode.LATCH);
-            m_mcu.target.m68read_cb().set(mcu_mem_r).reg();
-            m_mcu.target.m68write_cb().set(mcu_mem_w).reg();
-            m_mcu.target.m68intrq_cb().set((write_line_delegate)mcu_intrq_w).reg();
-            m_mcu.target.busrq_cb().set((write_line_delegate)mcu_busrq_w).reg();
+            m_mcu.op[0].set_int_mode(taito_sj_security_mcu_device.int_mode.LATCH);
+            m_mcu.op[0].m68read_cb().set(mcu_mem_r).reg();
+            m_mcu.op[0].m68write_cb().set(mcu_mem_w).reg();
+            m_mcu.op[0].m68intrq_cb().set((write_line_delegate)mcu_intrq_w).reg();
+            m_mcu.op[0].busrq_cb().set((write_line_delegate)mcu_busrq_w).reg();
 
             config.set_maximum_quantum(attotime.from_hz(6000));
         }
@@ -761,22 +761,22 @@ namespace mame
 
     partial class taitosj_state : driver_device
     {
-        void reset_common(running_machine machine)
+        void reset_common(running_machine machine_)
         {
             m_sound_semaphore2 = false;
-            m_soundnmi2.target.in_w(1, 0);
+            m_soundnmi2.op[0].in_w(1, 0);
             m_soundlatch_data = 0xff;
             m_soundlatch_flag = false;
-            m_soundnmi.target.in_w(1, 0);
-            m_soundnmi.target.in_w(0, 0);
+            m_soundnmi.op[0].in_w(1, 0);
+            m_soundnmi.op[0].in_w(0, 0);
             m_sound_semaphore2 = false;
-            m_ay1.target.disound.set_output_gain(0, 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
-            m_ay1.target.disound.set_output_gain(1, 0.0f);
-            m_ay1.target.disound.set_output_gain(2, 0.0f);
-            m_ay2.target.disound.set_output_gain(0, 0.0f);
-            m_ay3.target.disound.set_output_gain(0, 0.0f);
-            m_ay4.target.disound.set_output_gain(0, 0.0f);
-            m_dac.target.set_output_gain(0, 0.0f);
+            m_ay1.op[0].disound.set_output_gain(0, 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
+            m_ay1.op[0].disound.set_output_gain(1, 0.0f);
+            m_ay1.op[0].disound.set_output_gain(2, 0.0f);
+            m_ay2.op[0].disound.set_output_gain(0, 0.0f);
+            m_ay3.op[0].disound.set_output_gain(0, 0.0f);
+            m_ay4.op[0].disound.set_output_gain(0, 0.0f);
+            m_dac.op[0].set_output_gain(0, 0.0f);
             m_input_port_4_f0 = 0;
             /* start in 1st gear */
             m_kikstart_gears[0] = 0x02;

@@ -5,7 +5,10 @@ using System;
 using System.Collections.Generic;
 
 using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
+using execute_interface_enumerator = mame.device_interface_enumerator<mame.device_execute_interface>;  //typedef device_interface_enumerator<device_execute_interface> execute_interface_enumerator;
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using size_t = System.UInt32;
+using sound_interface_enumerator = mame.device_interface_enumerator<mame.device_sound_interface>;  //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
 using u32 = System.UInt32;
 
 
@@ -87,7 +90,7 @@ namespace mame.ui
 
             ioport_list local_ports = new ioport_list();
             string sink;
-            foreach (device_t device in new device_iterator(config.root_device()))
+            foreach (device_t device in new device_enumerator(config.root_device()))
             {
                 // the "no sound hardware" warning doesn't make sense when you plug in a sound card
                 if (device.GetClassInterface<device_sound_interface>() != null)  // dynamic_cast<device_sound_interface *>(&device))
@@ -356,7 +359,7 @@ namespace mame.ui
                     core_filename_extract_base(m_machine.system().type.source()));
 
             // loop over all CPUs
-            execute_interface_iterator execiter = new execute_interface_iterator(m_machine.root_device());
+            execute_interface_enumerator execiter = new execute_interface_enumerator(m_machine.root_device());
             std.unordered_set<string> exectags = new std.unordered_set<string>();
             foreach (device_execute_interface exec in execiter)
             {
@@ -396,7 +399,7 @@ namespace mame.ui
             }
 
             // loop over all sound chips
-            sound_interface_iterator snditer = new sound_interface_iterator(m_machine.root_device());
+            sound_interface_enumerator snditer = new sound_interface_enumerator(m_machine.root_device());
             std.unordered_set<string> soundtags = new std.unordered_set<string>();
             bool found_sound = false;
             foreach (device_sound_interface sound in snditer)
@@ -441,7 +444,7 @@ namespace mame.ui
 
             // display screen information
             buf += "\nVideo:\n";
-            screen_device_iterator scriter = new screen_device_iterator(m_machine.root_device());
+            screen_device_enumerator scriter = new screen_device_enumerator(m_machine.root_device());
             int scrcount = scriter.count();
             if (scrcount == 0)
             {
@@ -486,7 +489,7 @@ namespace mame.ui
         //-------------------------------------------------
         protected string get_screen_desc(screen_device screen)
         {
-            if (new screen_device_iterator(m_machine.root_device()).count() > 1)
+            if (new screen_device_enumerator(m_machine.root_device()).count() > 1)
                 return string.Format("Screen '{0}'", screen.tag());
             else
                 return "Screen";

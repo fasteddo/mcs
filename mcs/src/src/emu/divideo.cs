@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
+
 
 namespace mame
 {
@@ -59,7 +61,8 @@ namespace mame
 
 
         //template <class ObjectClass, bool Required>
-        public void set_screen(device_finder<screen_device> finder)  //void set_screen(device_finder<ObjectClass, Required> &finder)
+        public void set_screen<ObjectClass, bool_Required>(device_finder<ObjectClass, bool_Required> finder)  //void set_screen(device_finder<ObjectClass, Required> &finder)
+            where bool_Required : bool_constant, new()
         {
             m_screen_base = finder.finder_target().first;
             m_screen_tag = finder.finder_target().second;
@@ -106,7 +109,7 @@ namespace mame
                 else
                 {
                     // otherwise, look for a single match
-                    screen_device_iterator iter = new screen_device_iterator(device().machine().root_device());
+                    screen_device_enumerator iter = new screen_device_enumerator(device().machine().root_device());
                     m_screen = iter.first();
                     if (iter.count() > 1)
                         throw new emu_fatalerror("No screen specified for device '{0}', but multiple screens found", device().tag());
@@ -132,6 +135,7 @@ namespace mame
         }
     }
 
+
     // iterator
-    //typedef device_interface_iterator<device_video_interface> video_interface_iterator;
+    //typedef device_interface_enumerator<device_video_interface> video_interface_enumerator;
 }

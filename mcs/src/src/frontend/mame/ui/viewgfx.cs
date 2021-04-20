@@ -4,7 +4,10 @@
 using System;
 using System.Collections.Generic;
 
+using gfx_interface_enumerator = mame.device_interface_enumerator<mame.device_gfx_interface>;  //typedef device_interface_enumerator<device_gfx_interface> gfx_interface_enumerator;
+using palette_interface_enumerator = mame.device_interface_enumerator<mame.device_palette_interface>;  //typedef device_interface_enumerator<device_palette_interface> palette_interface_enumerator;
 using pen_t = System.UInt32;
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -176,12 +179,12 @@ namespace mame
 
         // master handler
 
-        public static UInt32 ui_gfx_ui_handler(render_container container, mame_ui_manager mui) { return ui_gfx_ui_handler(container, mui, false); }  // added default for set_handler() in handler_ingame()
+        public static uint32_t ui_gfx_ui_handler(render_container container, mame_ui_manager mui) { return ui_gfx_ui_handler(container, mui, false); }  // added default for set_handler() in handler_ingame()
 
         //-------------------------------------------------
         //  ui_gfx_ui_handler - primary UI handler
         //-------------------------------------------------
-        public static UInt32 ui_gfx_ui_handler(render_container container, mame_ui_manager mui, bool uistate)
+        public static uint32_t ui_gfx_ui_handler(render_container container, mame_ui_manager mui, bool uistate)
         {
             ui_gfx_state state = ui_gfx;
 
@@ -197,7 +200,7 @@ namespace mame
 again:
             switch (state.mode)
             {
-                case (byte)ui_gfx_modes.UI_GFX_PALETTE:
+                case (uint8_t)ui_gfx_modes.UI_GFX_PALETTE:
                     // if we have a palette, display it
                     if (state.palette.devcount > 0)
                     {
@@ -205,11 +208,10 @@ again:
                         break;
                     }
 
-                    // fall through...
                     state.mode++;
-                    goto case (byte)ui_gfx_modes.UI_GFX_GFXSET;
+                    goto case (uint8_t)ui_gfx_modes.UI_GFX_GFXSET;  //[[fallthrough]];
 
-                case (byte)ui_gfx_modes.UI_GFX_GFXSET:
+                case (uint8_t)ui_gfx_modes.UI_GFX_GFXSET:
                     // if we have graphics sets, display them
                     if (state.gfxset.devcount > 0)
                     {
@@ -217,11 +219,10 @@ again:
                         break;
                     }
 
-                    // fall through...
                     state.mode++;
-                    goto case (byte)ui_gfx_modes.UI_GFX_TILEMAP;
+                    goto case (uint8_t)ui_gfx_modes.UI_GFX_TILEMAP;  //[[fallthrough]];
 
-                case (byte)ui_gfx_modes.UI_GFX_TILEMAP:
+                case (uint8_t)ui_gfx_modes.UI_GFX_TILEMAP:
                     // if we have tilemaps, display them
                     if (mui.machine().tilemap().count() > 0)
                     {
@@ -229,7 +230,7 @@ again:
                         break;
                     }
 
-                    state.mode = (byte)ui_gfx_modes.UI_GFX_PALETTE;
+                    state.mode = (uint8_t)ui_gfx_modes.UI_GFX_PALETTE;
                     goto again;
             }
 
@@ -251,7 +252,7 @@ again:
             if (mui.machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL) || mui.machine().ui_input().pressed((int)ioport_type.IPT_UI_SHOW_GFX))
                 goto cancel;
 
-            return uistate ? (UInt32)1 : (UInt32)0;
+            return uistate ? 1U : 0;
 
 cancel:
             if (!uistate)
@@ -270,7 +271,7 @@ cancel:
         static void ui_gfx_count_devices(running_machine machine, ui_gfx_state state)
         {
             // count the palette devices
-            state.palette.devcount = new palette_interface_iterator(machine.root_device()).count();
+            state.palette.devcount = new palette_interface_enumerator(machine.root_device()).count();
 
             // set the pointer to the first palette
             if (state.palette.devcount > 0)
@@ -278,7 +279,7 @@ cancel:
 
             // count the gfx devices
             state.gfxset.devcount = 0;
-            foreach (device_gfx_interface interface_ in new gfx_interface_iterator(machine.root_device()))
+            foreach (device_gfx_interface interface_ in new gfx_interface_enumerator(machine.root_device()))
             {
                 // count the gfx sets in each device, skipping devices with none
                 byte count = 0;
@@ -341,7 +342,7 @@ cancel:
         //-------------------------------------------------
         static void palette_set_device(running_machine machine, ui_gfx_state state)
         {
-            palette_interface_iterator pal_iter = new palette_interface_iterator(machine.root_device());
+            palette_interface_enumerator pal_iter = new palette_interface_enumerator(machine.root_device());
             state.palette.interface_ = pal_iter.byindex(state.palette.devindex);
         }
 
@@ -1332,7 +1333,7 @@ cancel:
                 state.bitmap.fill(0);
                 tilemap_t tilemap = machine.tilemap().find(state.tilemap.which);
 
-                screen_device first_screen = new screen_device_iterator(machine.root_device()).first();
+                screen_device first_screen = new screen_device_enumerator(machine.root_device()).first();
                 if (first_screen != null)
                 {
                     tilemap.draw_debug(first_screen, state.bitmap, (UInt32)state.tilemap.xoffs, (UInt32)state.tilemap.yoffs, state.tilemap.flags);

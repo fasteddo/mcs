@@ -220,7 +220,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(dkong_state::dkong_bg_tile_info)
         void dkong_bg_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            int code = m_video_ram[tile_index] + 256 * m_gfx_bank;
+            int code = m_video_ram.op[tile_index] + 256 * m_gfx_bank;
             int color = (m_color_codes[tile_index % 32 + 32 * (tile_index / 32 / 4)] & 0x0f) + 0x10 * m_palette_bank;
 
             tileinfo.set(0, (u32)code, (u32)color, 0);
@@ -230,7 +230,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(dkong_state::radarscp1_bg_tile_info)
         void radarscp1_bg_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            int code = m_video_ram[tile_index] + 256 * m_gfx_bank;
+            int code = m_video_ram.op[tile_index] + 256 * m_gfx_bank;
             int color = (m_color_codes[tile_index % 32] & 0x0f);
             color = color | (m_palette_bank<<4);
 
@@ -246,9 +246,9 @@ namespace mame
 
         void dkong_videoram_w(offs_t offset, uint8_t data)
         {
-            if (m_video_ram[offset] != data)
+            if (m_video_ram.op[offset] != data)
             {
-                m_video_ram[offset] = data;
+                m_video_ram[offset].op = data;
                 m_bg_tilemap.mark_tile_dirty(offset);
             }
         }
@@ -370,7 +370,7 @@ namespace mame
 
             for (offs = m_sprite_bank<<9, num_sprt=0; (num_sprt < 16) && (offs < (m_sprite_bank<<9) + 0x200) /* sprite_ram_size */; offs += 4)
             {
-                int y = m_sprite_ram[offs];
+                int y = m_sprite_ram.op[offs];
                 int do_draw = (((y + add_y + 1 + scanline_vf) & 0xF0) == 0xF0) ? 1 : 0;
 
                 if (do_draw != 0)
@@ -381,17 +381,17 @@ namespace mame
                     /* has similar hardware, uses a memory mapped port to change */
                     /* palette bank, so it's limited to 16 color codes) */
 
-                    int code = (int)((m_sprite_ram[offs + 1] & 0x7f) + ((m_sprite_ram[offs + 2] & mask_bank) << (int)shift_bits));
-                    int color = (m_sprite_ram[offs + 2] & 0x0f) + 16 * m_palette_bank;
-                    int flipx = m_sprite_ram[offs + 2] & 0x80;
-                    int flipy = m_sprite_ram[offs + 1] & 0x80;
+                    int code = (int)((m_sprite_ram.op[offs + 1] & 0x7f) + ((m_sprite_ram.op[offs + 2] & mask_bank) << (int)shift_bits));
+                    int color = (m_sprite_ram.op[offs + 2] & 0x0f) + 16 * m_palette_bank;
+                    int flipx = m_sprite_ram.op[offs + 2] & 0x80;
+                    int flipy = m_sprite_ram.op[offs + 1] & 0x80;
 
                     /* On the real board, the x and y are read inverted after the first
                      * buffer stage. This due to the fact that the 82S09 delivers complements
                      * of stored data on read!
                      */
 
-                    int x = (m_sprite_ram[offs + 3] + add_x + 1) & 0xFF;
+                    int x = (m_sprite_ram.op[offs + 3] + add_x + 1) & 0xFF;
                     if (m_flip != 0)
                     {
                         x = (x ^ 0xFF) - 15;
@@ -399,11 +399,11 @@ namespace mame
                     }
                     y = scanline - ((y + add_y + 1 + scanline_vfc) & 0x0F);
 
-                    m_gfxdecode.target.digfx.gfx(1).transpen(bitmap, cliprect, (u32)code, (u32)color, flipx, flipy, x, y, 0);
+                    m_gfxdecode.op[0].digfx.gfx(1).transpen(bitmap, cliprect, (u32)code, (u32)color, flipx, flipy, x, y, 0);
 
                     // wraparound
-                    m_gfxdecode.target.digfx.gfx(1).transpen(bitmap, cliprect, (u32)code, (u32)color, flipx, flipy, m_flip != 0 ? x + 256 : x - 256, y, 0);
-                    m_gfxdecode.target.digfx.gfx(1).transpen(bitmap, cliprect, (u32)code, (u32)color, flipx, flipy, x, y - 256, 0);
+                    m_gfxdecode.op[0].digfx.gfx(1).transpen(bitmap, cliprect, (u32)code, (u32)color, flipx, flipy, m_flip != 0 ? x + 256 : x - 256, y, 0);
+                    m_gfxdecode.op[0].digfx.gfx(1).transpen(bitmap, cliprect, (u32)code, (u32)color, flipx, flipy, x, y - 256, 0);
 
                     num_sprt++;
                 }
@@ -433,11 +433,11 @@ namespace mame
 
             /* update any video up to the current scanline */
             //m_screen->update_now();
-            m_screen.target.update_partial(m_screen.target.vpos());
+            m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
             scanline = (scanline + 1) % VTOTAL;
             /* come back at the next appropriate scanline */
-            m_scanline_timer.adjust(m_screen.target.time_until_pos(scanline), scanline);
+            m_scanline_timer.adjust(m_screen.op[0].time_until_pos(scanline), scanline);
         }
 
 
@@ -456,10 +456,10 @@ namespace mame
                     switch (newset)
                     {
                         case DKONG_RADARSCP_CONVERSION:
-                            radarscp_palette(m_palette.target);
+                            radarscp_palette(m_palette.op[0]);
                             break;
                         case DKONG_BOARD:
-                            dkong2b_palette(m_palette.target);
+                            dkong2b_palette(m_palette.op[0]);
                             break;
                     }
                 }
@@ -515,25 +515,23 @@ namespace mame
             video_start_dkong_base();
 
             m_scanline_timer = machine().scheduler().timer_alloc(scanline_callback);
-            m_scanline_timer.adjust(m_screen.target.time_until_pos(0));
+            m_scanline_timer.adjust(m_screen.op[0].time_until_pos(0));
 
             switch (m_hardware_type)
             {
                 case HARDWARE_TRS02:
-                    m_screen.target.register_screen_bitmap(m_bg_bits);
+                    m_screen.op[0].register_screen_bitmap(m_bg_bits);
                     m_gfx3 = memregion("gfx3").base_();
                     m_gfx3_len = (int)memregion("gfx3").bytes();
-                    /* fall through */
-                    m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, dkong_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS,  8, 8, 32, 32);
-                    break;
+                    goto case HARDWARE_TKG04;  //[[fallthrough]];
                 case HARDWARE_TKG04:
                 case HARDWARE_TKG02:
-                    m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, dkong_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS,  8, 8, 32, 32);
+                    m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, dkong_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS,  8, 8, 32, 32);
                     break;
                 case HARDWARE_TRS01:
-                    m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, radarscp1_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS,  8, 8, 32, 32);
+                    m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, radarscp1_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS,  8, 8, 32, 32);
 
-                    m_screen.target.register_screen_bitmap(m_bg_bits);
+                    m_screen.op[0].register_screen_bitmap(m_bg_bits);
                     m_gfx4 = memregion("gfx4").base_();
                     m_gfx3 = memregion("gfx3").base_();
                     m_gfx3_len = (int)memregion("gfx3").bytes();

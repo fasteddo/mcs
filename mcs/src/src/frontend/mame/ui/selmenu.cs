@@ -11,6 +11,7 @@ using osd_ticks_t = System.UInt64;
 using s_bios = mame.std.vector<System.Collections.Generic.KeyValuePair<string, int>>;
 using s_parts = mame.std.unordered_map<string, string>;
 using size_t = System.UInt32;
+using std_string = System.String;
 using texture_ptr = mame.render_texture;
 using texture_ptr_vector = mame.std.vector<mame.render_texture>;
 using uint8_t = System.Byte;
@@ -937,9 +938,10 @@ namespace mame.ui
             }
 
             // calculate horizontal offset for unadorned names
-            string tmp = "_# ";
-            render_font.convert_command_glyph(ref tmp);
-            float text_sign = ui().get_string_width(tmp.c_str(), text_size);
+            //std::string tmp(convert_command_glyph("_# "));
+            std_string tmp = "_# ";
+            tmp = render_font.convert_command_glyph(ref tmp);
+            float text_sign = ui().get_string_width(tmp, text_size);
 
             // get the maximum width of a filter name
             float left_width = 0.0f;
@@ -972,11 +974,9 @@ namespace mame.ui
                     if (current == filter)
                     {
                         str = "_> ";
-                        //throw new emu_unimplemented();
-#if false
-                        render_font.convert_command_glyph(ref str);
-#endif
+                        str = render_font.convert_command_glyph(ref str);
                     }
+
                     str += machine_filter.display_name(filter);
                 }
 

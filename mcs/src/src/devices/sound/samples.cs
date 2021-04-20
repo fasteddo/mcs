@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using samples_device_enumerator = mame.device_type_enumerator<mame.samples_device>;  //typedef device_type_enumerator<samples_device> samples_device_enumerator;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -586,11 +587,7 @@ namespace mame
 
 
     // iterator, since lots of people are interested in these devices
-    //typedef device_type_iterator<&device_creator<samples_device>, samples_device> samples_device_iterator;
-    public class samples_device_iterator : device_type_iterator<samples_device>
-    {
-        public samples_device_iterator(device_t root, int maxdepth = 255) : base(samples_device.SAMPLES, root, maxdepth) { }
-    }
+    //typedef device_type_enumerator<samples_device> samples_device_enumerator;
 
 
     // ======================> samples_iterator

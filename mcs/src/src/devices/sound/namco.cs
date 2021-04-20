@@ -66,7 +66,7 @@ namespace mame
         device_sound_interface_namco_audio m_disound;
 
         /* waveform region */
-        optional_region_ptr_uint8_t m_wave_ptr;
+        optional_region_ptr<uint8_t> m_wave_ptr;
 
         /* data about the sound system */
         protected sound_channel [] m_channel_list = new sound_channel[MAX_VOICES];
@@ -96,7 +96,7 @@ namespace mame
             m_class_interfaces.Add(new device_sound_interface_namco_audio(mconfig, this));  //device_sound_interface(mconfig, *this),
             m_disound = GetClassInterface<device_sound_interface_namco_audio>();
 
-            m_wave_ptr = new optional_region_ptr_uint8_t(this, DEVICE_SELF);
+            m_wave_ptr = new optional_region_ptr<uint8_t>(this, DEVICE_SELF);
             m_last_channel = null;
             m_wavedata = null;
             m_wave_size = 0;
@@ -138,7 +138,7 @@ namespace mame
             m_last_channel = m_channel_list[m_voices];
 
             /* build the waveform table */
-            build_decoded_waveform(m_wave_ptr.target);
+            build_decoded_waveform(m_wave_ptr.op);
 
             /* get stream channels */
             if (m_stereo)

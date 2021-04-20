@@ -8,7 +8,9 @@ using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -85,10 +87,10 @@ namespace mame
         timer_options m_options;  //u8 m_options;
 
         // internal state
-        UInt32 m_divisor;
+        unsigned m_divisor;
         timer_source m_source;
         bool m_timer;
-        UInt32 m_timer_edges;  //unsigned m_timer_edges;
+        unsigned m_timer_edges;
         u8 m_prescale;
 
         // visible state
@@ -629,7 +631,7 @@ namespace mame
         device_nvram_interface_m68705 m_nvram_interface;
 
 
-        required_region_ptr_uint8_t m_user_rom;
+        required_region_ptr<u8> m_user_rom;
 
 
         // EPROM control
@@ -649,7 +651,7 @@ namespace mame
             m_nvram_interface = GetClassInterface<device_nvram_interface_m68705>();
 
 
-            m_user_rom = new required_region_ptr_uint8_t(this, DEVICE_SELF, 1U << (int)addr_width);
+            m_user_rom = new required_region_ptr<u8>(this, DEVICE_SELF);
             m_vihtp = CLEAR_LINE;
             m_pcr = 0xff;
             m_pl_data = 0xff;
@@ -760,7 +762,7 @@ namespace mame
                 LOGEPROM("read EPROM {0} prevented when Vpp high and /PLE = 0\n", B + offset);
 
             // read locked out when /VPON and /PLE are asserted
-            return (!pcr_vpon() || !pcr_ple()) ? m_user_rom.target[B + offset] : (u8)0xff;
+            return (!pcr_vpon() || !pcr_ple()) ? m_user_rom[B + offset].op : (u8)0xff;
         }
 
         protected u8 eprom_r_0x0080(offs_t offset) { return eprom_r(0x0080, offset); }
@@ -788,7 +790,7 @@ namespace mame
         }
 
 
-        protected Pointer<u8> get_user_rom() { return m_user_rom.target; }  //u8 *const get_user_rom() const { return &m_user_rom[0]; }
+        protected Pointer<u8> get_user_rom() { return m_user_rom[0]; }  //u8 *const get_user_rom() const { return &m_user_rom[0]; }
         protected abstract u8 get_mask_options();
 
 

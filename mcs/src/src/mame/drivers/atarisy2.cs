@@ -32,24 +32,24 @@ namespace mame
         protected void update_interrupts()
         {
             if (m_video_int_state)
-                m_maincpu.target.set_input_line(3, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(3, ASSERT_LINE);
             else
-                m_maincpu.target.set_input_line(3, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(3, CLEAR_LINE);
 
             if (m_scanline_int_state)
-                m_maincpu.target.set_input_line(2, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(2, ASSERT_LINE);
             else
-                m_maincpu.target.set_input_line(2, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(2, CLEAR_LINE);
 
             if (m_p2portwr_state)
-                m_maincpu.target.set_input_line(1, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(1, ASSERT_LINE);
             else
-                m_maincpu.target.set_input_line(1, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(1, CLEAR_LINE);
 
             if (m_p2portrd_state)
-                m_maincpu.target.set_input_line(0, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(0, ASSERT_LINE);
             else
-                m_maincpu.target.set_input_line(0, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(0, CLEAR_LINE);
         }
 
 
@@ -77,7 +77,7 @@ namespace mame
         protected void scanline_update(timer_device timer, object ptr, int param)
         {
             int scanline = param;
-            if (scanline <= m_screen.target.height())
+            if (scanline <= m_screen.op[0].height())
             {
                 // generate the 32V interrupt (IRQ 2)
                 if ((scanline % 64) == 0)
@@ -112,14 +112,12 @@ namespace mame
             save_item(NAME(new { m_sound_reset_state }));
 
             for (int bank = 0; bank < 2; bank++)
-                m_rombank.op(bank).target.configure_entries(0, 64, new PointerU8(memregion("maincpu").base_()) + 0x10000, 0x2000);
+                m_rombank.op(bank).op[0].configure_entries(0, 64, new PointerU8(memregion("maincpu").base_()) + 0x10000, 0x2000);
         }
 
 
         protected override void machine_reset()
         {
-            m_slapstic.target.slapstic_reset();
-
             m_interrupt_enable = 0;
 
             sound_reset_w(1);
@@ -154,7 +152,7 @@ namespace mame
         void sound_reset_w(uint8_t data)
         {
             // reset sound CPU
-            m_audiocpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, BIT(data, 0) != 0 ? ASSERT_LINE : CLEAR_LINE);
+            m_audiocpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_RESET, BIT(data, 0) != 0 ? ASSERT_LINE : CLEAR_LINE);
 
             sndrst_6502_w(0);
             coincount_w(0);
@@ -178,13 +176,13 @@ namespace mame
         //INTERRUPT_GEN_MEMBER(atarisy2_state::sound_irq_gen)
         void sound_irq_gen(device_t device)
         {
-            m_audiocpu.target.set_input_line(m6502_device.IRQ_LINE, ASSERT_LINE);
+            m_audiocpu.op[0].set_input_line(m6502_device.IRQ_LINE, ASSERT_LINE);
         }
 
 
         void sound_irq_ack_w(uint8_t data)
         {
-            m_audiocpu.target.set_input_line(m6502_device.IRQ_LINE, CLEAR_LINE);
+            m_audiocpu.op[0].set_input_line(m6502_device.IRQ_LINE, CLEAR_LINE);
         }
 
 
@@ -228,7 +226,7 @@ namespace mame
             uint8_t banknumber = (uint8_t)((((uint32_t)data >> 10) & 077) ^ 0x03);
             banknumber = (uint8_t)bitswap(banknumber, 5, 4, 1, 0, 3, 2);  //banknumber = bitswap<6>(banknumber, 5, 4, 1, 0, 3, 2);
 
-            m_rombank.op((int)offset).target.set_entry(banknumber);
+            m_rombank.op((int)offset).op[0].set_entry(banknumber);
         }
 
 
@@ -252,7 +250,7 @@ namespace mame
         {
             int result = (int)ioport("1840").read();
 
-            if (m_tms5220.found() && (m_tms5220.target.readyq_r() == 0))
+            if (m_tms5220.found() && (m_tms5220.op[0].readyq_r() == 0))
                 result &= ~0x04;
 
             if ((ioport("1801").read() & 0x80) == 0) result |= 0x10;
@@ -268,7 +266,7 @@ namespace mame
             if (m_tms5220.found())
             {
                 data = (uint8_t)(12 | (((uint32_t)data >> 5) & 1));
-                m_tms5220.target.set_unscaled_clock(MASTER_CLOCK / 4 / (16 - data) / 2);
+                m_tms5220.op[0].set_unscaled_clock(MASTER_CLOCK / 4 / (16 - data) / 2);
             }
         }
 
@@ -309,7 +307,7 @@ namespace mame
             if ((data & 0x02) == 0) rbott += 1.0 / 47;
             if ((data & 0x04) == 0) rbott += 1.0 / 22;
             gain = (rbott == 0) ? 1.0 : ((1.0 / rbott) / (rtop + (1.0 / rbott)));
-            m_ym2151.target.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+            m_ym2151.op[0].disound.set_output_gain(ALL_OUTPUTS, (float)gain);
 
             // bits 3-4 control the volume of the POKEYs, using 47k and 100k resistors
             rtop = 1.0 / (1.0 / 100 + 1.0 / 100);
@@ -317,8 +315,8 @@ namespace mame
             if ((data & 0x08) == 0) rbott += 1.0 / 47;
             if ((data & 0x10) == 0) rbott += 1.0 / 22;
             gain = (rbott == 0) ? 1.0 : ((1.0 / rbott) / (rtop + (1.0 / rbott)));
-            m_pokey.op(0).target.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
-            m_pokey.op(1).target.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+            m_pokey.op(0).op[0].disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+            m_pokey.op(1).op[0].disound.set_output_gain(ALL_OUTPUTS, (float)gain);
 
             // bits 5-7 control the volume of the TMS5220, using 22k, 47k, and 100k resistors
             if (m_tms5220.found())
@@ -329,7 +327,7 @@ namespace mame
                 if ((data & 0x40) == 0) rbott += 1.0 / 47;
                 if ((data & 0x80) == 0) rbott += 1.0 / 22;
                 gain = (rbott == 0) ? 1.0 : ((1.0 / rbott) / (rtop + (1.0 / rbott)));
-                m_tms5220.target.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+                m_tms5220.op[0].disound.set_output_gain(ALL_OUTPUTS, (float)gain);
             }
         }
 
@@ -341,7 +339,7 @@ namespace mame
                 return;
 
             m_sound_reset_state = (uint8_t)(data & 1);
-            m_ym2151.target.reset_w(m_sound_reset_state);
+            m_ym2151.op[0].reset_w(m_sound_reset_state);
 
             // only track the 0 -> 1 transition
             if (m_sound_reset_state == 0)
@@ -349,7 +347,7 @@ namespace mame
 
             if (m_tms5220.found())
             {
-                m_tms5220.target.reset(); // technically what happens is the tms5220 gets a long stream of 0xFF written to it when sound_reset_state is 0 which halts the chip after a few frames, but this works just as well, even if it isn't exactly true to hardware... The hardware may not have worked either, the resistors to pull input to 0xFF are fighting against the ls263 gate holding the latched value to be sent to the chip.
+                m_tms5220.op[0].reset(); // technically what happens is the tms5220 gets a long stream of 0xFF written to it when sound_reset_state is 0 which halts the chip after a few frames, but this works just as well, even if it isn't exactly true to hardware... The hardware may not have worked either, the resistors to pull input to 0xFF are fighting against the ls263 gate holding the latched value to be sent to the chip.
             }
 
             mixer_w(0);
@@ -366,7 +364,7 @@ namespace mame
             }
 
             // handle it normally otherwise
-            return (uint16_t)(m_mainlatch.target.read() | 0xff00);
+            return (uint16_t)(m_mainlatch.op[0].read() | 0xff00);
         }
 
 
@@ -377,7 +375,7 @@ namespace mame
             update_interrupts();
 
             // handle it normally otherwise
-            m_mainlatch.target.write(data);
+            m_mainlatch.op[0].write(data);
         }
 
 
@@ -391,7 +389,7 @@ namespace mame
             }
 
             // handle it normally otherwise
-            return m_soundlatch.target.read();
+            return m_soundlatch.op[0].read();
         }
 
 
@@ -404,7 +402,7 @@ namespace mame
         {
             if (m_tms5220.found())
             {
-                m_tms5220.target.data_w(data);
+                m_tms5220.op[0].data_w(data);
             }
         }
 
@@ -413,7 +411,7 @@ namespace mame
         {
             if (m_tms5220.found())
             {
-                m_tms5220.target.wsq_w(1 - ((int)offset & 1));
+                m_tms5220.op[0].wsq_w(1 - ((int)offset & 1));
             }
         }
 
@@ -450,11 +448,11 @@ namespace mame
             map.op(0014000, 0014001).mirror(01776).r(switch_r);
             map.op(0014000, 0014000).mirror(01776).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });
             map.op(0016000, 0016001).mirror(01776).r(sound_r);
-            map.op(0020000, 0037777).m(m_vrambank.target, (map_, owner_) => { ((address_map_bank_device)subdevice("vrambank")).amap16(map_); });
+            map.op(0020000, 0037777).m(m_vrambank, (map_, owner_) => { ((address_map_bank_device)subdevice("vrambank")).amap16(map_); });
             map.op(0040000, 0057777).bankr("rombank1");
             map.op(0060000, 0077777).bankr("rombank2");
             map.op(0100000, 0177777).rom();
-            map.op(0100000, 0100777).rw(slapstic_r, slapstic_w).share("slapstic_base");
+            map.op(0100000, 0100777).rw(slapstic_r, slapstic_w);
         }
 
 
@@ -467,10 +465,10 @@ namespace mame
         void vrambank_map(address_map map, device_t owner)
         {
             map.unmap_value_high();
-            map.op(000000, 013777).ram().w(m_alpha_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_alpha_tilemap.target.write16(offset, data, mem_mask); }).share("alpha");
+            map.op(000000, 013777).ram().w(m_alpha_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_alpha_tilemap.op[0].write16(offset, data, mem_mask); }).share("alpha");
             map.op(014000, 017777).ram().w((write16s_delegate)spriteram_w).share("mob");
             map.op(020000, 037777).ram();
-            map.op(040000, 077777).ram().w(m_playfield_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_playfield_tilemap.target.write16(offset, data, mem_mask); }).share("playfield");
+            map.op(040000, 077777).ram().w(m_playfield_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_playfield_tilemap.op[0].write16(offset, data, mem_mask); }).share("playfield");
         }
 
 
@@ -484,11 +482,11 @@ namespace mame
         {
             map.op(0x0000, 0x0fff).mirror(0x2000).ram();
             map.op(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", (address_space space, offs_t offset) => { return ((eeprom_parallel_28xx_device)subdevice("eeprom")).read(space, offset); }, (offs_t offset, u8 data) => { ((eeprom_parallel_28xx_device)subdevice("eeprom")).write(offset, data); });  //map(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", FUNC(eeprom_parallel_28xx_device::read), FUNC(eeprom_parallel_28xx_device::write));
-            map.op(0x1800, 0x180f).mirror(0x2780).rw(m_pokey.op(0), (offset) => { return m_pokey.op(0).target.read(offset); }, (offs_t offset, u8 data) => { m_pokey.op(0).target.write(offset, data); });  //map(0x1800, 0x180f).mirror(0x2780).rw(m_pokey[0], FUNC(pokey_device::read), FUNC(pokey_device::write));
+            map.op(0x1800, 0x180f).mirror(0x2780).rw(m_pokey.op(0), (offset) => { return m_pokey.op(0).op[0].read(offset); }, (offs_t offset, u8 data) => { m_pokey.op(0).op[0].write(offset, data); });  //map(0x1800, 0x180f).mirror(0x2780).rw(m_pokey[0], FUNC(pokey_device::read), FUNC(pokey_device::write));
             map.op(0x1810, 0x1813).mirror(0x278c).r(leta_r);
-            map.op(0x1830, 0x183f).mirror(0x2780).rw(m_pokey.op(1), (offset) => { return m_pokey.op(1).target.read(offset); }, (offs_t offset, u8 data) => { m_pokey.op(1).target.write(offset, data); });  //map(0x1830, 0x183f).mirror(0x2780).rw(m_pokey[1], FUNC(pokey_device::read), FUNC(pokey_device::write));
+            map.op(0x1830, 0x183f).mirror(0x2780).rw(m_pokey.op(1), (offset) => { return m_pokey.op(1).op[0].read(offset); }, (offs_t offset, u8 data) => { m_pokey.op(1).op[0].write(offset, data); });  //map(0x1830, 0x183f).mirror(0x2780).rw(m_pokey[1], FUNC(pokey_device::read), FUNC(pokey_device::write));
             map.op(0x1840, 0x1840).mirror(0x278f).r(switch_6502_r);
-            map.op(0x1850, 0x1851).mirror(0x278e).rw(m_ym2151, (offset) => { return m_ym2151.target.read(offset); }, (offs_t offset, u8 data) => { m_ym2151.target.write(offset, data); });  //map(0x1850, 0x1851).mirror(0x278e).rw(m_ym2151, FUNC(ym2151_device::read), FUNC(ym2151_device::write));
+            map.op(0x1850, 0x1851).mirror(0x278e).rw(m_ym2151, (offset) => { return m_ym2151.op[0].read(offset); }, (offs_t offset, u8 data) => { m_ym2151.op[0].write(offset, data); });  //map(0x1850, 0x1851).mirror(0x278e).rw(m_ym2151, FUNC(ym2151_device::read), FUNC(ym2151_device::write));
             map.op(0x1860, 0x1860).mirror(0x278f).r(sound_6502_r);
             map.op(0x1870, 0x1870).mirror(0x2781).w(tms5220_w);
             map.op(0x1872, 0x1873).mirror(0x2780).w(tms5220_strobe_w);
@@ -755,12 +753,12 @@ namespace mame
         {
             // basic machine hardware
             T11(config, m_maincpu, MASTER_CLOCK / 2);
-            m_maincpu.target.set_initial_mode(0x36ff); // initial mode word has DAL15,14,11,8 pulled low
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, main_map);
+            m_maincpu.op[0].set_initial_mode(0x36ff); // initial mode word has DAL15,14,11,8 pulled low
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, main_map);
 
             M6502(config, m_audiocpu, SOUND_CLOCK / 8);
-            m_audiocpu.target.memory().set_addrmap(AS_PROGRAM, sound_map);
-            m_audiocpu.target.execute().set_periodic_int(sound_irq_gen, attotime.from_hz(MASTER_CLOCK/2/16/16/16/10));
+            m_audiocpu.op[0].memory().set_addrmap(AS_PROGRAM, sound_map);
+            m_audiocpu.op[0].execute().set_periodic_int(sound_irq_gen, attotime.from_hz(MASTER_CLOCK/2/16/16/16/10));
 
             adc0809_device adc = ADC0809(config, "adc", MASTER_CLOCK / 32); // 625 kHz
             adc.in_callback(0).set_ioport("ADC0").reg(); // J102 pin 5 (POT1)
@@ -786,7 +784,7 @@ namespace mame
             TILEMAP(config, m_alpha_tilemap, "gfxdecode", 2, 8,8, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 64,48, 0).set_info_callback(get_alpha_tile_info);
 
             ATARI_MOTION_OBJECTS(config, m_mob, 0, m_screen, s_mob_config);
-            m_mob.target.set_gfxdecode(m_gfxdecode);
+            m_mob.op[0].set_gfxdecode(m_gfxdecode);
 
             screen_device screen = SCREEN(config, "screen", SCREEN_TYPE_RASTER);
             screen.set_video_attributes(screen_device.VIDEO_UPDATE_BEFORE_VBLANK);
@@ -802,33 +800,33 @@ namespace mame
             SPEAKER(config, "rspeaker").front_right();
 
             GENERIC_LATCH_8(config, m_soundlatch);
-            m_soundlatch.target.data_pending_callback().set_inputline(m_audiocpu, m6502_device.NMI_LINE).reg();
-            m_soundlatch.target.data_pending_callback().append(boost_interleave_hack).reg();
+            m_soundlatch.op[0].data_pending_callback().set_inputline(m_audiocpu, m6502_device.NMI_LINE).reg();
+            m_soundlatch.op[0].data_pending_callback().append(boost_interleave_hack).reg();
 
             GENERIC_LATCH_8(config, m_mainlatch);
 
             YM2151(config, m_ym2151, SOUND_CLOCK / 4);
-            m_ym2151.target.disound.add_route(0, "lspeaker", 0.60);
-            m_ym2151.target.disound.add_route(1, "rspeaker", 0.60);
+            m_ym2151.op[0].disound.add_route(0, "lspeaker", 0.60);
+            m_ym2151.op[0].disound.add_route(1, "rspeaker", 0.60);
 
             POKEY(config, m_pokey.op(0), SOUND_CLOCK / 8);
-            m_pokey.op(0).target.allpot_r().set_ioport("DSW0").reg();
-            m_pokey.op(0).target.disound.add_route(ALL_OUTPUTS, "lspeaker", 1.35);
+            m_pokey.op(0).op[0].allpot_r().set_ioport("DSW0").reg();
+            m_pokey.op(0).op[0].disound.add_route(ALL_OUTPUTS, "lspeaker", 1.35);
 
             POKEY(config, m_pokey.op(1), SOUND_CLOCK / 8);
-            m_pokey.op(1).target.allpot_r().set_ioport("DSW1").reg();
-            m_pokey.op(1).target.disound.add_route(ALL_OUTPUTS, "rspeaker", 1.35);
+            m_pokey.op(1).op[0].allpot_r().set_ioport("DSW1").reg();
+            m_pokey.op(1).op[0].disound.add_route(ALL_OUTPUTS, "rspeaker", 1.35);
 
             TMS5220C(config, m_tms5220, MASTER_CLOCK / 4 / 4 / 2);
-            m_tms5220.target.disound.add_route(ALL_OUTPUTS, "lspeaker", 0.75);
-            m_tms5220.target.disound.add_route(ALL_OUTPUTS, "rspeaker", 0.75);
+            m_tms5220.op[0].disound.add_route(ALL_OUTPUTS, "lspeaker", 0.75);
+            m_tms5220.op[0].disound.add_route(ALL_OUTPUTS, "rspeaker", 0.75);
         }
 
 
         public void paperboy(machine_config config)
         {
             atarisy2(config);
-            SLAPSTIC(config, m_slapstic, 105, false);
+            SLAPSTIC<bool_constant_true>(config, m_slapstic, 105);
         }
 
 
@@ -839,7 +837,7 @@ namespace mame
                issues with the sound CPU; temporarily increasing the sound CPU frequency
                to ~2.2MHz "fixes" the problem */
 
-            SLAPSTIC(config, m_slapstic, 107, false);
+            SLAPSTIC<bool_constant_true>(config, m_slapstic, 107);
         }
 
 
@@ -1023,8 +1021,6 @@ namespace mame
         {
             MemoryU8 cpu1 = memregion("maincpu").base_();  //uint8_t *cpu1 = memregion("maincpu")->base();
 
-            m_slapstic.target.slapstic_init();
-
             // expand the 16k program ROMs into full 64k chunks
             for (int i = 0x10000; i < 0x90000; i += 0x20000)
             {
@@ -1034,16 +1030,14 @@ namespace mame
             }
 
             m_pedal_count = 0;
-            m_tms5220.target.rsq_w(1); // /RS is tied high on sys2 hw
+            m_tms5220.op[0].rsq_w(1); // /RS is tied high on sys2 hw
         }
 
 
         public void init_720()
         {
-            m_slapstic.target.slapstic_init();
-
             m_pedal_count = -1;
-            m_tms5220.target.rsq_w(1); // /RS is tied high on sys2 hw
+            m_tms5220.op[0].rsq_w(1); // /RS is tied high on sys2 hw
         }
 
 

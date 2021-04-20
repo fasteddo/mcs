@@ -478,7 +478,7 @@ namespace mame
             new options_entry(OPTION_WAVWRITE,                                   null,        OPTION_STRING,     "optional filename to write a WAV file of the current session"),
             new options_entry(OPTION_SNAPNAME,                                   "%g/%i",     OPTION_STRING,     "override of the default snapshot/movie naming; %g == gamename, %i == index"),
             new options_entry(OPTION_SNAPSIZE,                                   "auto",      OPTION_STRING,     "specify snapshot/movie resolution (<width>x<height>) or 'auto' to use minimal size "),
-            new options_entry(OPTION_SNAPVIEW,                                   "internal",  OPTION_STRING,     "specify snapshot/movie view or 'internal' to use internal pixel-aspect views"),
+            new options_entry(OPTION_SNAPVIEW,                                   "auto",      OPTION_STRING,     "snapshot/movie view - 'auto' for default, or 'native' for per-screen pixel-aspect views"),
             new options_entry(OPTION_SNAPBILINEAR,                               "1",         OPTION_BOOLEAN,    "specify if the snapshot/movie should have bilinear filtering applied"),
             new options_entry(OPTION_STATENAME,                                  "%g",        OPTION_STRING,     "override of the default state subfolder naming; %g == gamename"),
             new options_entry(OPTION_BURNIN,                                     "0",         OPTION_BOOLEAN,    "create burn-in snapshots for each screen"),

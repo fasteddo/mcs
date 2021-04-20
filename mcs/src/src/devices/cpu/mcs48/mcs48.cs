@@ -205,11 +205,11 @@ namespace mame
         intref m_icount = new intref();  //int         m_icount;
 
         /* Memory spaces */
-        memory_access.cache m_program = new memory_access(12, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<12, 0, 0, ENDIANNESS_LITTLE>::cache m_program;
-        memory_access.specific m_data = new memory_access(8, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<8, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
-        memory_access.specific m_io = new memory_access(8, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<8, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
+        memory_access<int_constant_12, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache m_program = new memory_access<int_constant_12, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<12, 0, 0, ENDIANNESS_LITTLE>::cache m_program;
+        memory_access<int_constant_8, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_data = new memory_access<int_constant_8, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<8, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
+        memory_access<int_constant_8, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_io = new memory_access<int_constant_8, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<8, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
 
-        required_shared_ptr_uint8_t m_dataptr;
+        required_shared_ptr<uint8_t> m_dataptr;
 
         uint8_t       m_feature_mask;       /* processor feature flags */
         uint16_t      m_int_rom_size;       /* internal rom size */
@@ -660,7 +660,7 @@ namespace mame
             m_t0_clk_func = null;
             m_prog_out_cb = new devcb_write_line(this);
             m_psw = 0;
-            m_dataptr = new required_shared_ptr_uint8_t(this, "data");
+            m_dataptr = new required_shared_ptr<uint8_t>(this, "data");
             m_feature_mask = feature_mask;
             m_int_rom_size = (uint16_t)rom_size;
             m_opcode_table = opcode_table;
@@ -768,10 +768,10 @@ namespace mame
             /* FIXME: Current implementation suboptimal */
             m_ea = m_int_rom_size != 0 ? (uint8_t)0 : (uint8_t)1;
 
-            m_dimemory.space(AS_PROGRAM).cache(m_program.Width, m_program.AddrShift, m_program.Endian, m_program);
-            m_dimemory.space(AS_DATA).specific(m_data.Level, m_data.Width, m_data.AddrShift, m_data.Endian, m_data);
+            m_dimemory.space(AS_PROGRAM).cache(m_program);
+            m_dimemory.space(AS_DATA).specific(m_data);
             if ((m_feature_mask & EXT_BUS_FEATURE) != 0)
-                m_dimemory.space(AS_IO).specific(m_io.Level, m_io.Width, m_io.AddrShift, m_io.Endian, m_io);
+                m_dimemory.space(AS_IO).specific(m_io);
 
             // resolve callbacks
             m_port_in_cb.resolve_all_safe(0xff);
@@ -1010,7 +1010,7 @@ namespace mame
         -------------------------------------------------*/
         void update_regptr()
         {
-            m_regptr = new Pointer<u8>(m_dataptr.target, (m_psw & B_FLAG) != 0 ? 24 : 0);  //m_regptr = &m_dataptr[(m_psw & B_FLAG) ? 24 : 0];
+            m_regptr = m_dataptr[(m_psw & B_FLAG) != 0 ? 24 : 0];  //m_regptr = &m_dataptr[(m_psw & B_FLAG) ? 24 : 0];
         }
 
 

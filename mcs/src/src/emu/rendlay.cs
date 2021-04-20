@@ -25,6 +25,7 @@ using layout_view_item_list = mame.std.list<mame.layout_view.item>;  //using ite
 using layout_view_view_environment = mame.emu.render.detail.view_environment;  //using view_environment = emu::render::detail::view_environment;
 using s32 = System.Int32;
 using s64 = System.Int64;
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
@@ -1217,23 +1218,23 @@ namespace mame
                 bitmap_argb32 tempbitmap = new bitmap_argb32(dest.width(), dest.height());
 
                 // loop over characters
-                //const char *origs = str;
-                //const char *ends = origs + strlen(origs);
-                //const char *s = origs;
-                //char32_t schar;
-
-                // loop over characters
-                foreach (var s in str)
+                while (!str.empty())
                 {
+                    char schar;  //char32_t schar;
+                    int scharcount = unicode_global.uchar_from_utf8(out schar, str);  //int scharcount = uchar_from_utf8(&schar, str);
+
+                    if (scharcount == -1)
+                        break;
+
                     // get the font bitmap
                     rectangle chbounds;
-                    font.get_scaled_bitmap_and_bounds(tempbitmap, bounds.height(), aspect, s, out chbounds);
+                    font.get_scaled_bitmap_and_bounds(tempbitmap, bounds.height(), aspect, schar, out chbounds);
 
                     // copy the data into the target
                     for (int y = 0; y < chbounds.height(); y++)
                     {
-                        int effy = bounds.min_y + y;
-                        if (effy >= bounds.min_y && effy <= bounds.max_y)
+                        int effy = bounds.top() + y;
+                        if (effy >= bounds.top() && effy <= bounds.bottom())
                         {
                             throw new emu_unimplemented();
 #if false
@@ -1261,7 +1262,8 @@ namespace mame
                     }
 
                     // advance in the X direction
-                    curx += (int)font.char_width(bounds.height(), aspect, s);
+                    curx += (int)font.char_width(bounds.height(), aspect, schar);
+                    str = str.Substring(scharcount);  //str.remove_prefix(scharcount);
                 }
             }
 
@@ -1925,7 +1927,7 @@ namespace mame
                     throw new layout_syntax_error(string_format("unknown element component {0}", compnode.get_name()));
 
                 // insert the new component into the list
-                //component const &newcomp(**m_complist.emplace(m_complist.end(), make_func->second(env, *compnode)));
+                //component const &newcomp(*m_complist.emplace_back(make_func->second(env, *compnode)));
                 component newcomp = make_func(env, compnode);
                 m_complist.push_back(newcomp);
 
@@ -2360,31 +2362,33 @@ namespace mame
                 m_animoutput(env.device(), make_animoutput_tag(env, itemnode));
 #endif
 
-                m_have_output = env.get_attribute_string(itemnode, "name", "").Length != 0;
-                m_have_animoutput = !make_animoutput_tag(env, itemnode).empty();
                 m_animinput_port = null;
+                m_elem_state = m_element != null ? m_element.default_state() : 0;
                 m_animmask = make_animmask(env, itemnode);
                 m_animshift = (u8)get_state_shift(m_animmask);
                 m_input_port = null;
                 m_input_field = null;
                 m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
                 m_input_shift = (u8)get_state_shift(m_input_mask);
-                m_input_raw = env.get_attribute_bool(itemnode, "inputraw", false);  //, m_input_raw(env.get_attribute_bool(itemnode, "inputraw", 0))
-                m_clickthrough = env.get_attribute_bool(itemnode, "clickthrough", true);  //, m_clickthrough(env.get_attribute_bool(itemnode, "clickthrough", "yes"))
+                m_clickthrough = env.get_attribute_bool(itemnode, "clickthrough", true);  //m_clickthrough(env.get_attribute_bool(itemnode, "clickthrough", "yes"))
                 m_screen = null;
                 m_color = make_color(env, itemnode, color);
                 m_blend_mode = get_blend_mode(env, itemnode);
                 m_visibility_mask = env.visibility_mask();
+                m_id = env.get_attribute_string(itemnode, "id", "");
                 m_input_tag = make_input_tag(env, itemnode);
                 m_animinput_tag = make_animinput_tag(env, itemnode);
                 m_rawbounds = make_bounds(env, itemnode, trans);
-                m_has_clickthrough = !string.IsNullOrEmpty(env.get_attribute_string(itemnode, "clickthrough", ""));  //, m_has_clickthrough(env.get_attribute_string(itemnode, "clickthrough", "")[0])
+                m_have_output = !string.IsNullOrEmpty(env.get_attribute_string(itemnode, "name", ""));  //m_have_output(env.get_attribute_string(itemnode, "name", "")[0])
+                m_input_raw = env.get_attribute_bool(itemnode, "inputraw", false);
+                m_have_animoutput = !make_animoutput_tag(env, itemnode).empty();
+                m_has_clickthrough = !string.IsNullOrEmpty(env.get_attribute_string(itemnode, "clickthrough", ""));  //m_has_clickthrough(env.get_attribute_string(itemnode, "clickthrough", "")[0])
 
 
                 // fetch common data
                 int index = env.get_attribute_int(itemnode, "index", -1);
                 if (index != -1)
-                    m_screen = new screen_device_iterator(env.machine().root_device()).byindex(index);
+                    m_screen = new screen_device_enumerator(env.machine().root_device()).byindex(index);
 
                 // sanity checks
                 if (strcmp(itemnode.get_name(), "screen") == 0)
@@ -2405,30 +2409,10 @@ namespace mame
                 {
                     throw new layout_syntax_error(string_format("item of type {0} require an element tag", itemnode.get_name()));
                 }
-            }
 
-
-            //-------------------------------------------------
-            //  bounds - get bounds for current state
-            //-------------------------------------------------
-            public render_bounds bounds()
-            {
-                if (m_bounds.size() == 1U)
-                    return m_bounds[0].bounds;  //return m_bounds.front().bounds;
-                else
-                    return rendlay_global.interpolate_bounds(m_bounds, animation_state());
-            }
-
-
-            //-------------------------------------------------
-            //  color - get color for current state
-            //-------------------------------------------------
-            public render_color color()
-            {
-                if (m_color.size() == 1U)
-                    return m_color[0].color;  //return m_color.front().color;
-                else
-                    return rendlay_global.interpolate_color(m_color, animation_state());
+                // this can be called before resolving tags, make it return something valid
+                m_bounds = m_rawbounds;
+                m_get_bounds = (out render_bounds bounds) => { m_bounds.front().get(out bounds); };  //m_get_bounds = bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front());
             }
 
 
@@ -2474,6 +2458,7 @@ namespace mame
             //---------------------------------------------
             public void resolve_tags()
             {
+                // resolve element state output and set default value
                 if (m_have_output)
                 {
                     throw new emu_unimplemented();
@@ -2484,6 +2469,7 @@ namespace mame
 #endif
                 }
 
+                // resolve animation state output
                 if (m_have_animoutput)
                 {
                     throw new emu_unimplemented();
@@ -2492,9 +2478,11 @@ namespace mame
 #endif
                 }
 
+                // resolve animation state input
                 if (!m_animinput_tag.empty())
                     m_animinput_port = m_element.machine().root_device().ioport(m_animinput_tag);
 
+                // resolve element state input
                 if (!m_input_tag.empty())
                 {
                     m_input_port = m_element.machine().root_device().ioport(m_input_tag);
@@ -2517,25 +2505,160 @@ namespace mame
                             m_clickthrough = false;
                     }
                 }
+
+                // choose optimal handlers
+                m_get_elem_state = default_get_elem_state();
+                m_get_anim_state = default_get_anim_state();
+                m_get_bounds = default_get_bounds();
+                m_get_color = default_get_color();
             }
 
 
-            //---------------------------------------------
-            //  find_element - find element definition
-            //---------------------------------------------
-            int animation_state()
+            //-------------------------------------------------
+            //  default_get_elem_state - get default element
+            //  state handler
+            //-------------------------------------------------
+            state_delegate default_get_elem_state()
+            {
+                if (m_have_output)
+                    return get_output;  //return state_delegate(&item::get_output, this);
+                else if (m_input_port == null)
+                    return get_state;  //return state_delegate(&item::get_state, this);
+                else if (m_input_raw)
+                    return get_input_raw;  //return state_delegate(&item::get_input_raw, this);
+                else if (m_input_field != null)
+                    return get_input_field_cached;  //return state_delegate(&item::get_input_field_cached, this);
+                else
+                    return get_input_field_conditional;  //return state_delegate(&item::get_input_field_conditional, this);
+            }
+
+
+            //-------------------------------------------------
+            //  default_get_anim_state - get default animation
+            //  state handler
+            //-------------------------------------------------
+            state_delegate default_get_anim_state()
             {
                 if (m_have_animoutput)
-                {
-                    throw new emu_unimplemented();
-#if false
-                    return ((s32)m_animoutput & m_animmask) >> m_animshift;
-#endif
-                }
+                    return get_anim_output;  //return state_delegate(&item::get_anim_output, this);
                 else if (m_animinput_port != null)
-                    return (int)((m_animinput_port.read() & m_animmask) >> m_animshift);
+                    return get_anim_input;  //return state_delegate(&item::get_anim_input, this);
                 else
-                    return state();
+                    return default_get_elem_state();
+            }
+
+
+            //-------------------------------------------------
+            //  default_get_bounds - get default bounds handler
+            //-------------------------------------------------
+            bounds_delegate default_get_bounds()
+            {
+                return (m_bounds.size() == 1U)
+                        ? (out render_bounds bounds) => { m_bounds.front().get(out bounds); }  //? bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front())
+                        : (bounds_delegate)get_interpolated_bounds;  //: bounds_delegate(&item::get_interpolated_bounds, this);
+            }
+
+
+            //-------------------------------------------------
+            //  default_get_color - get default color handler
+            //-------------------------------------------------
+            color_delegate default_get_color()
+            {
+                return (m_color.size() == 1U)
+                        ? (out render_color result) => { m_color.front().get(out result); }  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
+                        : (color_delegate)get_interpolated_color;  //: color_delegate(&item::get_interpolated_color, this);
+            }
+
+
+            //-------------------------------------------------
+            //  get_state - get state when no bindings
+            //-------------------------------------------------
+            int get_state()
+            {
+                return m_elem_state;
+            }
+
+
+            //-------------------------------------------------
+            //  get_output - get element state output
+            //-------------------------------------------------
+            int get_output()
+            {
+                assert(m_have_output);
+                return (int)(s32)m_output.op.op;
+            }
+
+
+            //-------------------------------------------------
+            //  get_input_raw - get element state input
+            //-------------------------------------------------
+            int get_input_raw()
+            {
+                assert(m_input_port != null);
+                return (int)(s32)((m_input_port.read() & m_input_mask) >> m_input_shift);  //return int(std::make_signed_t<ioport_value>((m_input_port->read() & m_input_mask) >> m_input_shift));
+            }
+
+
+            //-------------------------------------------------
+            //  get_input_field_cached - element state
+            //-------------------------------------------------
+            int get_input_field_cached()
+            {
+                assert(m_input_port != null);
+                assert(m_input_field != null);
+                return ((m_input_port.read() ^ m_input_field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
+            }
+
+
+            //-------------------------------------------------
+            //  get_input_field_conditional - element state
+            //-------------------------------------------------
+            int get_input_field_conditional()
+            {
+                assert(m_input_port != null);
+                assert(m_input_field == null);
+                ioport_field field = m_input_port.field(m_input_mask);
+                return (field != null && ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0) ? 1 : 0;
+            }
+
+
+            //-------------------------------------------------
+            //  get_anim_output - get animation output
+            //-------------------------------------------------
+            int get_anim_output()
+            {
+                assert(m_have_animoutput);
+                return (int)(unsigned)((u32)((s32)m_animoutput.op.op & m_animmask) >> m_animshift);
+            }
+
+
+            //-------------------------------------------------
+            //  get_anim_input - get animation input
+            //-------------------------------------------------
+            int get_anim_input()
+            {
+                assert(m_animinput_port != null);
+                return (int)(s32)((m_animinput_port.read() & m_animmask) >> m_animshift);  //return int(std::make_signed_t<ioport_value>((m_animinput_port->read() & m_animmask) >> m_animshift));
+            }
+
+
+            //-------------------------------------------------
+            //  get_interpolated_bounds - animated bounds
+            //-------------------------------------------------
+            void get_interpolated_bounds(out render_bounds result)
+            {
+                assert(m_bounds.size() > 1U);
+                result = rendlay_global.interpolate_bounds(m_bounds, m_get_anim_state());
+            }
+
+
+            //-------------------------------------------------
+            //  get_interpolated_color - animated color
+            //-------------------------------------------------
+            void get_interpolated_color(out render_color result)
+            {
+                assert(m_color.size() > 1U);
+                result = rendlay_global.interpolate_color(m_color, m_get_anim_state());
             }
 
 
@@ -2752,9 +2875,9 @@ namespace mame
                 layout_view_element_map elemmap,
                 layout_view_group_map groupmap)
         {
-            m_name = make_name(env, viewnode);
             m_effaspect = 1.0f;
-            m_items = new layout_view_item_list();
+            m_name = make_name(env, viewnode);
+            m_unqualified_name = env.get_attribute_string(viewnode, "name", "");
             m_defvismask = 0;
             m_has_art = false;
 
@@ -2848,6 +2971,16 @@ namespace mame
                 foreach (var item in layers.marquees) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.marquees);
             }
 
+            // index items with keys supplied
+            foreach (item curitem in m_items)
+            {
+                if (!curitem.id().empty())
+                {
+                    if (!m_items_by_id.emplace(curitem.id(), curitem))
+                        throw new layout_syntax_error("view contains item with duplicate id attribute");
+                }
+            }
+
             // calculate metrics
             recompute(default_visibility_mask(), false);
             foreach (var group in groupmap)  //for (group_map::value_type &group : groupmap)
@@ -2857,7 +2990,7 @@ namespace mame
 
         //-------------------------------------------------
         //  has_screen - return true if this view contains
-        //  the given screen
+        //  the specified screen
         //-------------------------------------------------
         public bool has_screen(screen_device screen)
         {
@@ -2963,7 +3096,12 @@ namespace mame
             // normalize all the item bounds
             foreach (item curitem in items())
             {
-                curitem.m_bounds = curitem.m_rawbounds;
+                assert(curitem.m_rawbounds.size() == curitem.m_bounds.size());
+
+                //std::copy(curitem.m_rawbounds.begin(), curitem.m_rawbounds.end(), curitem.m_bounds.begin());
+                foreach (var it in curitem.m_rawbounds)
+                    curitem.m_bounds.Add(it);
+
                 rendlay_global.normalize_bounds(curitem.m_bounds, target_bounds.x0, target_bounds.y0, xoffs, yoffs, xscale, yscale);
             }
 
@@ -2993,6 +3131,10 @@ namespace mame
                 foreach (edge e in m_interactive_edges_y)
                     rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "y={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
             }
+
+            // additional actions typically supplied by script
+            if (m_recomputed != null)
+                m_recomputed();
         }
 
 
@@ -3007,6 +3149,9 @@ namespace mame
                 if (curitem.element() != null)
                     curitem.element().preload();
             }
+
+            if (m_preload != null)
+                m_preload();
         }
 
 
@@ -3196,8 +3341,8 @@ namespace mame
         string make_name(emu.render.detail.layout_environment env, util.xml.data_node viewnode)
         {
             string name = env.get_attribute_string(viewnode, "name", null);
-            if (name == null)
-                throw new layout_syntax_error("view must have name attribute");
+            if (string.IsNullOrEmpty(name))  //if (!name || !*name)
+                throw new layout_syntax_error("view must have non-empty name attribute");
 
             if (env.is_root_device())
             {
@@ -3215,7 +3360,7 @@ namespace mame
     }
 
 
-    partial class layout_file : global_object
+    public partial class layout_file : global_object
     {
         // construction/destruction
         //-------------------------------------------------
@@ -3227,6 +3372,7 @@ namespace mame
             string searchpath,
             string dirname)
         {
+            m_device = device;
             m_elemmap = new layout_file_element_map();
             m_viewlist = new layout_file_view_list();
 
@@ -3264,6 +3410,14 @@ namespace mame
                     {
                         osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name", ""), err);
                     }
+                }
+
+                // load the content of the first script node
+                if (!m_viewlist.empty())
+                {
+                    util.xml.data_node scriptnode = mamelayoutnode.get_child("script");
+                    if (scriptnode != null)
+                        emulator_info.layout_script_cb(this, scriptnode.get_value());
                 }
             }
             catch (layout_syntax_error err)

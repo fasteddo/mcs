@@ -347,23 +347,24 @@ namespace mame
             int new_rowpixels = compute_rowpixels(width, xslop);
             uint32_t new_allocbytes = (uint32_t)(new_rowpixels * (height + 2 * yslop) * m_bpp / 8);
 
-            // if we need more memory, just realloc
             if (new_allocbytes > m_allocbytes)
             {
+                // if we need more memory, just realloc
                 palette_t palette = m_palette;
                 allocate(width, height, xslop, yslop);
                 set_palette(palette);
-                return;
             }
+            else
+            {
+                // otherwise, reconfigure
+                m_rowpixels = new_rowpixels;
+                m_width = width;
+                m_height = height;
+                m_cliprect.set(0, width - 1, 0, height - 1);
 
-            // otherwise, reconfigure
-            m_rowpixels = new_rowpixels;
-            m_width = width;
-            m_height = height;
-            m_cliprect.set(0, width - 1, 0, height - 1);
-
-            // re-compute the base
-            compute_base(xslop, yslop);
+                // re-compute the base
+                compute_base(xslop, yslop);
+            }
         }
 
 

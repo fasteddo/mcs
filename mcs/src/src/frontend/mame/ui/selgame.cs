@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using icon_cache = mame.util.lru_cache_map<mame.game_driver, mame.ui.menu_select_game.texture_and_bitmap>;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using software_list_device_enumerator = mame.device_type_enumerator<mame.software_list_device>;  //typedef device_type_enumerator<software_list_device> software_list_device_enumerator;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -441,7 +442,7 @@ namespace mame.ui
                             cloneof = false;
                     }
 
-                    item_append(elem.driver.type.fullname(), "", (cloneof) ? (FLAGS_UI | FLAG_INVERT) : FLAGS_UI, elem.driver);
+                    item_append(elem.driver.type.fullname(), (cloneof) ? (FLAGS_UI | FLAG_INVERT) : FLAGS_UI, elem.driver);
                     curitem++;
                 }
             }
@@ -467,7 +468,7 @@ namespace mame.ui
                                 cloneof = false;
                         }
 
-                        item_append(info.longname, "", cloneof ? (FLAGS_UI | FLAG_INVERT) : FLAGS_UI, info);
+                        item_append(info.longname, cloneof ? (FLAGS_UI | FLAG_INVERT) : FLAGS_UI, info);
                     }
                     else
                     {
@@ -485,12 +486,12 @@ namespace mame.ui
             // add special items
             if (stack_has_special_main_menu())
             {
-                item_append("Configure Options", "", FLAGS_UI, CONF_OPTS);
-                item_append("Configure Machine", "", FLAGS_UI, CONF_MACHINE);
+                item_append("Configure Options", FLAGS_UI, CONF_OPTS);
+                item_append("Configure Machine", FLAGS_UI, CONF_MACHINE);
                 skip_main_items = 2;
                 if (machine().options().plugins())
                 {
-                    item_append("Plugins", "", FLAGS_UI, CONF_PLUGINS);
+                    item_append("Plugins", FLAGS_UI, CONF_PLUGINS);
                     skip_main_items++;
                 }
             }
@@ -1241,7 +1242,7 @@ namespace mame.ui
                 enumerator.next();
 
                 // if there are software entries, show a software selection menu
-                foreach (software_list_device swlistdev in new software_list_device_iterator(enumerator.config().root_device()))
+                foreach (software_list_device swlistdev in new software_list_device_enumerator(enumerator.config().root_device()))
                 {
                     if (!swlistdev.get_info().empty())
                     {
@@ -1307,7 +1308,7 @@ namespace mame.ui
                 enumerator.next();
 
                 // if there are software entries, show a software selection menu
-                foreach (software_list_device swlistdev in new software_list_device_iterator(enumerator.config().root_device()))
+                foreach (software_list_device swlistdev in new software_list_device_enumerator(enumerator.config().root_device()))
                 {
                     if (!swlistdev.get_info().empty())
                     {

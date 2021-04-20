@@ -14,9 +14,9 @@ namespace mame
         required_device<screen_device> m_screen;
 
         /* memory pointers */
-        required_shared_ptr_uint8_t m_spriteram;
-        required_shared_ptr_uint8_t m_fg_videoram;
-        required_shared_ptr_uint8_t m_bg_videoram;
+        required_shared_ptr<uint8_t> m_spriteram;
+        required_shared_ptr<uint8_t> m_fg_videoram;
+        required_shared_ptr<uint8_t> m_bg_videoram;
 
         required_device<cpu_device> m_audiocpu;
         required_device<cpu_device> m_maincpu;
@@ -36,9 +36,9 @@ namespace mame
             : base(mconfig, type, tag)
         {
             m_screen = new required_device<screen_device>(this, "screen");
-            m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
-            m_fg_videoram = new required_shared_ptr_uint8_t(this, "fg_videoram");
-            m_bg_videoram = new required_shared_ptr_uint8_t(this, "bg_videoram");
+            m_spriteram = new required_shared_ptr<uint8_t>(this, "spriteram");
+            m_fg_videoram = new required_shared_ptr<uint8_t>(this, "fg_videoram");
+            m_bg_videoram = new required_shared_ptr<uint8_t>(this, "bg_videoram");
             m_audiocpu = new required_device<cpu_device>(this, "audiocpu");
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");

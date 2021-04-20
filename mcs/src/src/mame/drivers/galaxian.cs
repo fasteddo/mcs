@@ -28,7 +28,7 @@ namespace mame
             /* interrupt line is clocked at VBLANK */
             /* a flip-flop at 6F is held in the preset state based on the NMI ON signal */
             if (state != 0 && m_irq_enabled != 0)
-                m_maincpu.target.set_input_line(m_irq_line, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(m_irq_line, ASSERT_LINE);
         }
 
 
@@ -42,7 +42,7 @@ namespace mame
 
             /* if CLEAR is held low, we must make sure the interrupt signal is clear */
             if (m_irq_enabled == 0)
-                m_maincpu.target.set_input_line(m_irq_line, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(m_irq_line, CLEAR_LINE);
         }
 
 
@@ -97,7 +97,7 @@ namespace mame
             /* the inverse of bit 3 clocks the flip flop to signal an INT */
             /* it is automatically cleared on the acknowledge */
             if ((old & 0x08) != 0 && (data & 0x08) == 0)
-                m_audiocpu.target.set_input_line(0, HOLD_LINE);
+                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
 
             /* bit 4 is sound disable */
             machine().sound().system_mute((data & 0x10) != 0);
@@ -121,7 +121,7 @@ namespace mame
                 16*16*2*8*5*2.
             */
 
-            uint32_t cycles = (uint32_t)((m_audiocpu.target.total_cycles() * 8) % (uint64_t)(16*16*2*8*5*2));
+            uint32_t cycles = (uint32_t)((m_audiocpu.op[0].total_cycles() * 8) % (uint64_t)(16*16*2*8*5*2));
             uint8_t hibit = 0;
 
             /* separate the high bit from the others */
@@ -151,7 +151,7 @@ namespace mame
                 /* AV6 .. AV11 ==> AY8910 #1 - 3D */
                 for (int which = 0; which < 2; which++)
                 {
-                    if (m_ay8910.op(which).target != null)
+                    if (m_ay8910.op(which).op[0] != null)
                     {
                         for (int flt = 0; flt < 6; flt++)
                         {
@@ -160,7 +160,7 @@ namespace mame
 
                             /* low bit goes to 0.22uF capacitor = 220000pF  */
                             /* high bit goes to 0.047uF capacitor = 47000pF */
-                            m_filter_ctl.op(fltnum).target.write(bit);
+                            m_filter_ctl.op(fltnum).op[0].write(bit);
                         }
                     }
                 }
@@ -190,8 +190,8 @@ namespace mame
         {
             /* the decoding here is very simplistic, and you can address both simultaneously */
             uint8_t result = 0xff;
-            if ((offset & 0x1000) != 0) result &= m_ppi8255.op(1).target.read((offset >> 1) & 3);
-            if ((offset & 0x2000) != 0) result &= m_ppi8255.op(0).target.read((offset >> 1) & 3);
+            if ((offset & 0x1000) != 0) result &= m_ppi8255.op(1).op[0].read((offset >> 1) & 3);
+            if ((offset & 0x2000) != 0) result &= m_ppi8255.op(0).op[0].read((offset >> 1) & 3);
             return result;
         }
 
@@ -199,8 +199,8 @@ namespace mame
         void frogger_ppi8255_w(offs_t offset, uint8_t data)
         {
             /* the decoding here is very simplistic, and you can address both simultaneously */
-            if ((offset & 0x1000) != 0) m_ppi8255.op(1).target.write((offset >> 1) & 3, data);
-            if ((offset & 0x2000) != 0) m_ppi8255.op(0).target.write((offset >> 1) & 3, data);
+            if ((offset & 0x1000) != 0) m_ppi8255.op(1).op[0].write((offset >> 1) & 3, data);
+            if ((offset & 0x2000) != 0) m_ppi8255.op(0).op[0].write((offset >> 1) & 3, data);
         }
 
 
@@ -208,7 +208,7 @@ namespace mame
         {
             /* the decoding here is very simplistic */
             uint8_t result = 0xff;
-            if ((offset & 0x40) != 0) result &= m_ay8910.op(0).target.data_r();
+            if ((offset & 0x40) != 0) result &= m_ay8910.op(0).op[0].data_r();
             return result;
         }
 
@@ -218,9 +218,9 @@ namespace mame
             /* the decoding here is very simplistic */
             /* AV6,7 ==> AY8910 #1 */
             if ((offset & 0x40) != 0)
-                m_ay8910.op(0).target.data_w(data);
+                m_ay8910.op(0).op[0].data_w(data);
             else if ((offset & 0x80) != 0)
-                m_ay8910.op(0).target.address_w(data);
+                m_ay8910.op(0).op[0].address_w(data);
         }
 
 
@@ -709,7 +709,7 @@ namespace mame
         {
             // basic machine hardware
             Z80(config, m_maincpu, GALAXIAN_PIXEL_CLOCK/3/2);
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, galaxian_map);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, galaxian_map);
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 8);
 
@@ -718,9 +718,9 @@ namespace mame
             PALETTE(config, m_palette, galaxian_palette, 32);
 
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
-            m_screen.target.set_raw(GALAXIAN_PIXEL_CLOCK, GALAXIAN_HTOTAL, GALAXIAN_HBEND, GALAXIAN_HBSTART, GALAXIAN_VTOTAL, GALAXIAN_VBEND, GALAXIAN_VBSTART);
-            m_screen.target.set_screen_update(screen_update_galaxian);
-            m_screen.target.screen_vblank().set((write_line_delegate)vblank_interrupt_w).reg();
+            m_screen.op[0].set_raw(GALAXIAN_PIXEL_CLOCK, GALAXIAN_HTOTAL, GALAXIAN_HBEND, GALAXIAN_HBSTART, GALAXIAN_VTOTAL, GALAXIAN_VBEND, GALAXIAN_VBSTART);
+            m_screen.op[0].set_screen_update(screen_update_galaxian);
+            m_screen.op[0].screen_vblank().set((write_line_delegate)vblank_interrupt_w).reg();
 
             // sound hardware
             SPEAKER(config, "speaker").front_center();
@@ -733,16 +733,16 @@ namespace mame
             galaxian_base(config);
 
             I8255A(config, m_ppi8255.op(0));
-            m_ppi8255.op(0).target.in_pa_callback().set_ioport("IN0").reg();
-            m_ppi8255.op(0).target.in_pb_callback().set_ioport("IN1").reg();
-            m_ppi8255.op(0).target.in_pc_callback().set_ioport("IN2").reg();
-            m_ppi8255.op(0).target.out_pc_callback().set(konami_portc_0_w).reg();
+            m_ppi8255.op(0).op[0].in_pa_callback().set_ioport("IN0").reg();
+            m_ppi8255.op(0).op[0].in_pb_callback().set_ioport("IN1").reg();
+            m_ppi8255.op(0).op[0].in_pc_callback().set_ioport("IN2").reg();
+            m_ppi8255.op(0).op[0].out_pc_callback().set(konami_portc_0_w).reg();
 
             I8255A(config, m_ppi8255.op(1));
-            m_ppi8255.op(1).target.out_pa_callback().set(m_soundlatch, (space, offset, data, mem_mask) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); }).reg();  //FUNC(generic_latch_8_device::write));
-            m_ppi8255.op(1).target.out_pb_callback().set(konami_sound_control_w).reg();
-            m_ppi8255.op(1).target.in_pc_callback().set_ioport("IN3").reg();
-            m_ppi8255.op(1).target.out_pc_callback().set(konami_portc_1_w).reg();
+            m_ppi8255.op(1).op[0].out_pa_callback().set(m_soundlatch, (space, offset, data, mem_mask) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); }).reg();  //FUNC(generic_latch_8_device::write));
+            m_ppi8255.op(1).op[0].out_pb_callback().set(konami_sound_control_w).reg();
+            m_ppi8255.op(1).op[0].in_pc_callback().set_ioport("IN3").reg();
+            m_ppi8255.op(1).op[0].out_pc_callback().set(konami_portc_1_w).reg();
         }
 
 
@@ -750,20 +750,20 @@ namespace mame
         {
             /* 2nd CPU to drive sound */
             Z80(config, m_audiocpu, KONAMI_SOUND_CLOCK/8);
-            m_audiocpu.target.memory().set_addrmap(AS_PROGRAM, frogger_sound_map);
-            m_audiocpu.target.memory().set_addrmap(AS_IO, frogger_sound_portmap);
+            m_audiocpu.op[0].memory().set_addrmap(AS_PROGRAM, frogger_sound_map);
+            m_audiocpu.op[0].memory().set_addrmap(AS_IO, frogger_sound_portmap);
 
             GENERIC_LATCH_8(config, m_soundlatch);
 
             /* sound hardware */
             AY8910(config, m_ay8910.op(0), KONAMI_SOUND_CLOCK/8);
-            m_ay8910.op(0).target.set_flags(ay8910_global.AY8910_RESISTOR_OUTPUT);
-            m_ay8910.op(0).target.set_resistors_load((int)1000.0, (int)1000.0, (int)1000.0);
-            m_ay8910.op(0).target.port_a_read_callback().set(m_soundlatch, (space, offset, mem_mask) => { return ((generic_latch_8_device)subdevice("soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
-            m_ay8910.op(0).target.port_b_read_callback().set(frogger_sound_timer_r).reg();
-            m_ay8910.op(0).target.disound.add_route(0, "konami", 1.0, 0);
-            m_ay8910.op(0).target.disound.add_route(1, "konami", 1.0, 1);
-            m_ay8910.op(0).target.disound.add_route(2, "konami", 1.0, 2);
+            m_ay8910.op(0).op[0].set_flags(ay8910_global.AY8910_RESISTOR_OUTPUT);
+            m_ay8910.op(0).op[0].set_resistors_load((int)1000.0, (int)1000.0, (int)1000.0);
+            m_ay8910.op(0).op[0].port_a_read_callback().set(m_soundlatch, (space, offset, mem_mask) => { return ((generic_latch_8_device)subdevice("soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
+            m_ay8910.op(0).op[0].port_b_read_callback().set(frogger_sound_timer_r).reg();
+            m_ay8910.op(0).op[0].disound.add_route(0, "konami", 1.0, 0);
+            m_ay8910.op(0).op[0].disound.add_route(1, "konami", 1.0, 1);
+            m_ay8910.op(0).op[0].disound.add_route(2, "konami", 1.0, 2);
 
             NETLIST_SOUND(config, "konami", 48000)
                 .set_source(netlist_konami1x)
@@ -806,7 +806,7 @@ namespace mame
             konami_sound_1x_ay8910(config);
 
             // alternate memory map
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, frogger_map);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, frogger_map);
         }
 
 

@@ -11,20 +11,20 @@ namespace mame
 {
     partial class taitosj_state : driver_device
     {
-        required_shared_ptr_uint8_t m_videoram_1;
-        required_shared_ptr_uint8_t m_videoram_2;
-        required_shared_ptr_uint8_t m_videoram_3;
-        required_shared_ptr_uint8_t m_spriteram;
-        required_shared_ptr_uint8_t m_paletteram;
-        required_shared_ptr_uint8_t m_characterram;
-        required_shared_ptr_uint8_t m_scroll;
-        required_shared_ptr_uint8_t m_colscrolly;
-        required_shared_ptr_uint8_t m_gfxpointer;
-        required_shared_ptr_uint8_t m_colorbank;
-        required_shared_ptr_uint8_t m_video_mode;
-        required_shared_ptr_uint8_t m_video_priority;
-        required_shared_ptr_uint8_t m_collision_reg;
-        optional_shared_ptr_uint8_t m_kikstart_scrollram;  //required_shared_ptr_uint8_t m_kikstart_scrollram;
+        required_shared_ptr<uint8_t> m_videoram_1;
+        required_shared_ptr<uint8_t> m_videoram_2;
+        required_shared_ptr<uint8_t> m_videoram_3;
+        required_shared_ptr<uint8_t> m_spriteram;
+        required_shared_ptr<uint8_t> m_paletteram;
+        required_shared_ptr<uint8_t> m_characterram;
+        required_shared_ptr<uint8_t> m_scroll;
+        required_shared_ptr<uint8_t> m_colscrolly;
+        required_shared_ptr<uint8_t> m_gfxpointer;
+        required_shared_ptr<uint8_t> m_colorbank;
+        required_shared_ptr<uint8_t> m_video_mode;
+        required_shared_ptr<uint8_t> m_video_priority;
+        required_shared_ptr<uint8_t> m_collision_reg;
+        optional_shared_ptr<uint8_t> m_kikstart_scrollram;
 
         required_device<cpu_device> m_maincpu;
         required_device<cpu_device> m_audiocpu;
@@ -63,20 +63,20 @@ namespace mame
         public taitosj_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_videoram_1 = new required_shared_ptr_uint8_t(this, "videoram_1");
-            m_videoram_2 = new required_shared_ptr_uint8_t(this, "videoram_2");
-            m_videoram_3 = new required_shared_ptr_uint8_t(this, "videoram_3");
-            m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
-            m_paletteram = new required_shared_ptr_uint8_t(this, "paletteram");
-            m_characterram = new required_shared_ptr_uint8_t(this, "characterram");
-            m_scroll = new required_shared_ptr_uint8_t(this, "scroll");
-            m_colscrolly = new required_shared_ptr_uint8_t(this, "colscrolly");
-            m_gfxpointer = new required_shared_ptr_uint8_t(this, "gfxpointer");
-            m_colorbank = new required_shared_ptr_uint8_t(this, "colorbank");
-            m_video_mode = new required_shared_ptr_uint8_t(this, "video_mode");
-            m_video_priority = new required_shared_ptr_uint8_t(this, "video_priority");
-            m_collision_reg = new required_shared_ptr_uint8_t(this, "collision_reg");
-            m_kikstart_scrollram = new optional_shared_ptr_uint8_t(this, "kikstart_scroll");  //m_kikstart_scrollram = new required_shared_ptr_uint8_t(this, "kikstart_scroll");
+            m_videoram_1 = new required_shared_ptr<uint8_t>(this, "videoram_1");
+            m_videoram_2 = new required_shared_ptr<uint8_t>(this, "videoram_2");
+            m_videoram_3 = new required_shared_ptr<uint8_t>(this, "videoram_3");
+            m_spriteram = new required_shared_ptr<uint8_t>(this, "spriteram");
+            m_paletteram = new required_shared_ptr<uint8_t>(this, "paletteram");
+            m_characterram = new required_shared_ptr<uint8_t>(this, "characterram");
+            m_scroll = new required_shared_ptr<uint8_t>(this, "scroll");
+            m_colscrolly = new required_shared_ptr<uint8_t>(this, "colscrolly");
+            m_gfxpointer = new required_shared_ptr<uint8_t>(this, "gfxpointer");
+            m_colorbank = new required_shared_ptr<uint8_t>(this, "colorbank");
+            m_video_mode = new required_shared_ptr<uint8_t>(this, "video_mode");
+            m_video_priority = new required_shared_ptr<uint8_t>(this, "video_priority");
+            m_collision_reg = new required_shared_ptr<uint8_t>(this, "collision_reg");
+            m_kikstart_scrollram = new optional_shared_ptr<uint8_t>(this, "kikstart_scroll");  //m_kikstart_scrollram = new required_shared_ptr_uint8_t(this, "kikstart_scroll");
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_audiocpu = new required_device<cpu_device>(this, "audiocpu");
             m_mcu = new optional_device<taito_sj_security_mcu_device>(this, "bmcu");

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using gfx_interface_enumerator = mame.device_interface_enumerator<mame.device_gfx_interface>;  //typedef device_interface_enumerator<device_gfx_interface> gfx_interface_enumerator;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -181,7 +182,7 @@ namespace mame
         //static const gfx_decode_entry empty[];
 
 
-        optional_device<palette_device> m_paletteDevice;  //optional_device<device_palette_interface> m_palette; // configured tag for palette device
+        optional_device<device_palette_interface> m_palette; // configured tag for palette device
         gfx_element [] m_gfx = new gfx_element[digfx_global.MAX_GFX_ELEMENTS];    // array of pointers to graphic sets
 
         // configuration
@@ -199,7 +200,7 @@ namespace mame
         public device_gfx_interface(machine_config mconfig, device_t device, gfx_decode_entry [] gfxinfo = null, string palette_tag = finder_base.DUMMY_TAG)
             : base(device, "gfx")
         {
-            m_paletteDevice = new optional_device<palette_device>(this.device(), palette_tag);  //m_palette(*this, palette_tag),
+            m_palette = new optional_device<device_palette_interface>(this.op, palette_tag);
             m_gfxdecodeinfo = gfxinfo;
             m_palette_is_disabled = false;
             m_decoded = false;
@@ -210,8 +211,8 @@ namespace mame
 
         public void set_info(gfx_decode_entry [] gfxinfo) { m_gfxdecodeinfo = gfxinfo; }
         //template <typename T> void set_palette(T &&tag) { m_palette.set_tag(std::forward<T>(tag)); }
-        public void set_palette(string tag) { m_paletteDevice.set_tag(tag); }
-        public void set_palette(finder_base tag) { m_paletteDevice.set_tag(tag); }
+        public void set_palette(string tag) { m_palette.set_tag(tag); }
+        public void set_palette(finder_base tag) { m_palette.set_tag(tag); }
 
 
         //-------------------------------------------------
@@ -225,7 +226,7 @@ namespace mame
 
 
         // getters
-        public device_palette_interface palette() { assert(m_paletteDevice != null); return m_paletteDevice.target.dipalette; }  //{ assert(m_palette); return *m_palette; }
+        public device_palette_interface palette() { assert(m_palette != null); return m_palette.op[0]; }  //{ assert(m_palette); return *m_palette; }
         public gfx_element gfx(int index) { assert(index < digfx_global.MAX_GFX_ELEMENTS); return m_gfx[index]; }
 
 
@@ -402,8 +403,7 @@ namespace mame
                 }
 
                 // allocate the graphics
-                //m_gfx[curgfx] = new gfx_element(m_palette, glcopy, region_base != null ? region_base + gfx.start : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
-                m_gfx[curgfx] = new gfx_element(m_paletteDevice.target.dipalette, glcopy, region_base != null ? new Pointer<u8>(region_base, (int)gfx.start) : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
+                m_gfx[curgfx] = new gfx_element(m_palette.op[0], glcopy, region_base != null ? new Pointer<u8>(region_base, (int)gfx.start) : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
             }
 
             m_decoded = true;
@@ -423,9 +423,9 @@ namespace mame
         //-------------------------------------------------
         protected override void interface_validity_check(validity_checker valid)
         {
-            if (!m_palette_is_disabled && m_paletteDevice == null)
+            if (!m_palette_is_disabled && m_palette == null)
             {
-                std.pair<device_t, string> target = m_paletteDevice.finder_target();
+                std.pair<device_t, string> target = m_palette.finder_target();
                 if (target.second == finder_base.DUMMY_TAG)
                 {
                     osd_printf_error("No palette specified for device '{0}'\n", device().tag());
@@ -515,9 +515,9 @@ namespace mame
         //-------------------------------------------------
         public override void interface_pre_start()
         {
-            if (!m_palette_is_disabled && m_paletteDevice == null)
+            if (!m_palette_is_disabled && m_palette == null)
             {
-                std.pair<device_t, string> target = m_paletteDevice.finder_target();
+                std.pair<device_t, string> target = m_palette.finder_target();
                 if (target.second == finder_base.DUMMY_TAG)
                 {
                     fatalerror("No palette specified for device {0}\n", device().tag());
@@ -550,9 +550,5 @@ namespace mame
 
 
     // iterator
-    //typedef device_interface_iterator<device_gfx_interface> gfx_interface_iterator;
-    public class gfx_interface_iterator : device_interface_iterator<device_gfx_interface>
-    {
-        public gfx_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_gfx_interface> gfx_interface_enumerator;
 }

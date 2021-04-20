@@ -90,8 +90,8 @@ namespace mame
         //TILE_GET_INFO_MEMBER(_1942_state::get_fg_tile_info)
         void get_fg_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            int code = m_fg_videoram[tile_index];
-            int color = m_fg_videoram[tile_index + 0x400];
+            int code = m_fg_videoram.op[tile_index];
+            int color = m_fg_videoram.op[tile_index + 0x400];
             tileinfo.set(0,
                     (u32)(code + ((color & 0x80) << 1)),
                     (u32)(color & 0x3f),
@@ -103,8 +103,8 @@ namespace mame
         {
             tile_index = (tile_index & 0x0f) | ((tile_index & 0x01f0) << 1);
 
-            int code = m_bg_videoram[tile_index];
-            int color = m_bg_videoram[tile_index + 0x10];
+            int code = m_bg_videoram.op[tile_index];
+            int color = m_bg_videoram.op[tile_index + 0x10];
             tileinfo.set(1,
                     (u32)(code + ((color & 0x80) << 1)),
                     (u32)((color & 0x1f) + (0x20 * m_palette_bank)),
@@ -119,8 +119,8 @@ namespace mame
         ***************************************************************************/
         protected override void video_start()
         {
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, 16, 16, 32, 16);
+            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, 16, 16, 32, 16);
 
             m_fg_tilemap.set_transparent_pen(0);
         }
@@ -134,14 +134,14 @@ namespace mame
 
         void _1942_fgvideoram_w(offs_t offset, uint8_t data)
         {
-            m_fg_videoram[offset] = data;
+            m_fg_videoram[offset].op = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);
         }
 
 
         void _1942_bgvideoram_w(offs_t offset, uint8_t data)
         {
-            m_bg_videoram[offset] = data;
+            m_bg_videoram[offset].op = data;
             m_bg_tilemap.mark_tile_dirty((offset & 0x0f) | ((offset >> 1) & 0x01f0));
         }
 
@@ -171,7 +171,7 @@ namespace mame
 
             machine().bookkeeping().coin_counter_w(0, data & 0x01);
 
-            m_audiocpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, (data & 0x10) != 0 ? ASSERT_LINE : CLEAR_LINE);
+            m_audiocpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_RESET, (data & 0x10) != 0 ? ASSERT_LINE : CLEAR_LINE);
 
             flip_screen_set((u32)(data & 0x80));
         }
@@ -217,7 +217,7 @@ namespace mame
                     obj_idx |= objcnt4 ? (uint8_t)0x10 : (uint8_t)0x00;
                     obj_idx <<= 2;
                     for (int i = 0; i < 4; i++)
-                        objdata[i] = m_spriteram[obj_idx | i];
+                        objdata[i] = m_spriteram[obj_idx | i].op;
 
                     int code = (objdata[0] & 0x7f) + ((objdata[1] & 0x20) << 2) + ((objdata[0] & 0x80) << 1);
                     int col = objdata[1] & 0x0f;
@@ -266,7 +266,7 @@ namespace mame
                         {
                             do
                             {
-                                m_gfxdecode.target.digfx.gfx(2).transpen(bitmap, cliprecty, (u32)(code + i), (u32)col, (int)flip_screen(), (int)flip_screen(), sx, sy + 16 * i * dir, 15);
+                                m_gfxdecode.op[0].digfx.gfx(2).transpen(bitmap, cliprecty, (u32)(code + i), (u32)col, (int)flip_screen(), (int)flip_screen(), sx, sy + 16 * i * dir, 15);
                             } while (i-- > 0);
                         }
                     }

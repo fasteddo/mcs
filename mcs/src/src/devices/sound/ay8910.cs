@@ -971,8 +971,6 @@ namespace mame
                     m_tone[2].set_volume(m_regs[AY_CVOL]);
                     break;
                 case AY_EACOARSE:
-                    if ((v & 0x0f) > 0)
-                        osd_printf_verbose("ECoarse\n");
                     goto case AY_EAFINE;  // intentional fall-through
                 case AY_EAFINE:
                     m_envelope[0].set_period(m_regs[AY_EAFINE], m_regs[AY_EACOARSE]);
@@ -1016,9 +1014,6 @@ namespace mame
                             }
                         }
                     }
-                    if ((v & 0x0f) > 0)
-                        osd_printf_verbose("EShape\n");
-
                     m_envelope[0].set_shape(m_regs[AY_EASHAPE], m_env_step_mask);
                     break;
                 case AY_PORTA:

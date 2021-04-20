@@ -273,9 +273,9 @@ namespace mame
         uint8_t [] m_irq_state = new uint8_t [3];   /* IRQ line state [IRQ1,TIN,SC1] */
 
         /* Memory spaces */
-        memory_access.cache m_cprogram = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_BIG).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_cprogram;
-        memory_access.cache m_copcodes = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_BIG).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_copcodes;
-        memory_access.specific m_program = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_BIG>::specific m_program;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache m_cprogram = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_cprogram;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache m_copcodes = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_copcodes;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific m_program = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::specific m_program;
 
         op_func [] m_insn;
         uint8_t [] m_cycles;            /* clock cycle of instruction table */
@@ -372,9 +372,9 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_m6800>();
 
 
-            m_dimemory.space(AS_PROGRAM).cache(m_cprogram.Width, m_cprogram.AddrShift, m_cprogram.Endian, m_cprogram);
-            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_copcodes.Width, m_copcodes.AddrShift, m_copcodes.Endian, m_copcodes);
-            m_dimemory.space(AS_PROGRAM).specific(m_program.Level, m_program.Width, m_program.AddrShift, m_program.Endian, m_program);
+            m_dimemory.space(AS_PROGRAM).cache(m_cprogram);
+            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_copcodes);
+            m_dimemory.space(AS_PROGRAM).specific(m_program);
 
             m_pc.d = 0;
             m_s.d = 0;

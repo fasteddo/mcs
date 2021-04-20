@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
+
 
 namespace mame
 {
@@ -21,7 +23,7 @@ namespace mame
 
 
             // make sure that any required devices have been allocated
-            foreach (device_image_interface image in new image_interface_iterator(machine.root_device()))
+            foreach (device_image_interface image in new image_interface_enumerator(machine.root_device()))
             {
                 // ignore things not user loadable
                 if (!image.user_loadable())
@@ -38,12 +40,12 @@ namespace mame
         //  unload_all - unload all images and
         //  extract options
         //-------------------------------------------------
-        void unload_all(running_machine machine)
+        void unload_all(running_machine machine_)
         {
             // extract the options
             options_extract();
 
-            foreach (device_image_interface image in new image_interface_iterator(machine.root_device()))
+            foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
             {
                 // unload this image
                 image.unload();
@@ -58,7 +60,7 @@ namespace mame
         public void postdevice_init()
         {
             /* make sure that any required devices have been allocated */
-            foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
+            foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
             {
                 image_init_result result = image.finish_load();
 
@@ -88,10 +90,6 @@ namespace mame
 
         void config_load(config_type cfg_type, util.xml.data_node parentnode)
         {
-            util.xml.data_node node;
-            string dev_instance;
-            string working_directory;
-
             if ((cfg_type == config_type.GAME) && (parentnode != null))
             {
                 throw new emu_unimplemented();
@@ -105,15 +103,12 @@ namespace mame
         -------------------------------------------------*/
         void config_save(config_type cfg_type, util.xml.data_node parentnode)
         {
-            util.xml.data_node node;
-            string dev_instance;
-
             /* only care about game-specific data */
             if (cfg_type == config_type.GAME)
             {
-                foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
+                foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
                 {
-                    dev_instance = image.instance_name();
+                    string dev_instance = image.instance_name();
 
                     throw new emu_unimplemented();
                 }
@@ -127,7 +122,7 @@ namespace mame
         -------------------------------------------------*/
         void options_extract()
         {
-            foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
+            foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
             {
                 // There are two scenarios where we want to extract the option:
                 //

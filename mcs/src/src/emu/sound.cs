@@ -5,9 +5,12 @@ using System;
 using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
+using mixer_interface_enumerator = mame.device_interface_enumerator<mame.device_mixer_interface>;  //typedef device_interface_enumerator<device_mixer_interface> mixer_interface_enumerator;
 using s16 = System.Int16;
 using s32 = System.Int32;
 using s64 = System.Int64;
+using sound_interface_enumerator = mame.device_interface_enumerator<mame.device_sound_interface>;  //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
+using speaker_device_enumerator = mame.device_type_enumerator<mame.speaker_device>;  //using speaker_device_enumerator = device_type_enumerator<speaker_device>;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using stream_update_delegate = System.Action<mame.sound_stream, mame.std.vector<mame.read_stream_view>, mame.std.vector<mame.write_stream_view>>;  //using stream_update_delegate = delegate<void (sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs)>;
 using u8 = System.Byte;
@@ -485,10 +488,9 @@ namespace mame
         // for debugging, provide an interface to write a WAV stream
         void open_wav(char const *filename);
         void flush_wav();
-        void close_wav();
 
         // internal debugging state
-        wav_file *m_wav_file = nullptr;       // pointer to the current WAV file
+        util::wav_file_ptr m_wav_file;        // pointer to the current WAV file
         u32 m_last_written = 0;               // last written sample index
 #endif
     }
@@ -1591,6 +1593,7 @@ namespace mame
         // internal state
         running_machine m_machine;           // reference to the running machine  //running_machine &m_machine;           // reference to the running machine
         emu_timer m_update_timer;            // timer that runs the update function  //emu_timer *m_update_timer;            // timer that runs the update function
+        std.vector<speaker_device> m_speakers;  //std::vector<std::reference_wrapper<speaker_device> > m_speakers;
 
         u32 m_update_number;                  // current update index; used for sample rate updates
         attotime m_last_update;               // time of the last update
@@ -1607,7 +1610,7 @@ namespace mame
         bool m_nosound_mode;                  // true if we're in "nosound" mode
         int m_attenuation;                    // current attentuation level (at the OSD)
         int m_unique_id;                      // unique ID used for stream identification
-        wav_file m_wavfile;                  // WAV file for streaming  //wav_file *m_wavfile;                  // WAV file for streaming
+        wav_file m_wavfile;                  // WAV file for streaming  //util::wav_file_ptr m_wavfile;         // WAV file for streaming
 
         // streams data
         std.vector<sound_stream> m_stream_list = new std.vector<sound_stream>(); // list of streams  //std::vector<std::unique_ptr<sound_stream>> m_stream_list; // list of streams
@@ -1647,7 +1650,7 @@ namespace mame
 
             // count the mixers
 #if VERBOSE
-            mixer_interface_iterator iter(machine.root_device());
+            mixer_interface_enumerator iter(machine.root_device());
             VPRINTF(("total mixers = %d\n", iter.count()));
 #endif
 
@@ -1701,30 +1704,34 @@ namespace mame
         }
 
 
-        // begin recording a WAV file if options has requested it
+        // WAV recording
+        //bool is_recording() const { return bool(m_wavfile); }
+
+
         //-------------------------------------------------
         //  start_recording - begin audio recording
         //-------------------------------------------------
-        public void start_recording()
+        public bool start_recording()
         {
             // open the output WAV file if specified
-            string wavfile = machine().options().wav_write();
-            if (!string.IsNullOrEmpty(wavfile) && m_wavfile == null)
-                m_wavfile = wavwrite_global.wav_open(wavfile, machine().sample_rate(), 2);
+            string filename = machine().options().wav_write();
+            return filename != null ? start_recording(filename) : false;
         }
 
 
-        // stop recording the WAV file
+        bool start_recording(string filename)
+        {
+            throw new emu_unimplemented();
+        }
+
+
         //-------------------------------------------------
         //  stop_recording - end audio recording
         //-------------------------------------------------
         void stop_recording(running_machine machine)
         {
             // close any open WAV file
-            if (m_wavfile != null)
-                wavwrite_global.wav_close(m_wavfile);
-
-            m_wavfile = null;
+            m_wavfile = null;  //m_wavfile.reset();
         }
 
 
@@ -1741,10 +1748,14 @@ namespace mame
 
 
         // mute sound for one of various independent reasons
-        public void ui_mute(bool turn_off = true) { mute(turn_off, MUTE_REASON_UI); }
-        //void debugger_mute(bool turn_off = true) { mute(turn_off, MUTE_REASON_DEBUGGER); }
-        public void system_mute(bool turn_off = true) { mute(turn_off, MUTE_REASON_SYSTEM); }
-        //void system_enable(bool turn_on = true) { mute(!turn_on, MUTE_REASON_SYSTEM); }
+        //bool muted() const { return bool(m_muted); }
+        public bool ui_mute() { return (m_muted & MUTE_REASON_UI) != 0; }
+        //bool debugger_mute() const { return bool(m_muted & MUTE_REASON_DEBUGGER); }
+        public bool system_mute() { return (m_muted & MUTE_REASON_SYSTEM) != 0; }
+        public void ui_mute(bool turn_off) { mute(turn_off, MUTE_REASON_UI); }
+        //void debugger_mute(bool turn_off) { mute(turn_off, MUTE_REASON_DEBUGGER); }
+        public void system_mute(bool turn_off) { mute(turn_off, MUTE_REASON_SYSTEM); }
+
 
         // return information about the given mixer input, by index
         //-------------------------------------------------
@@ -1757,7 +1768,7 @@ namespace mame
             info = new mixer_input();
 
             // scan through the mixers until we find the indexed input
-            foreach (device_mixer_interface mixer in new mixer_interface_iterator(machine().root_device()))
+            foreach (device_mixer_interface mixer in new mixer_interface_enumerator(machine().root_device()))
             {
                 if (index < mixer.inputs())
                 {
@@ -1826,7 +1837,7 @@ namespace mame
         void apply_sample_rate_changes()
         {
             // update sample rates if they have changed
-            foreach (var speaker in new speaker_device_iterator(machine().root_device()))
+            foreach (var speaker in new speaker_device_enumerator(machine().root_device()))
             {
                 int stream_out;
                 sound_stream stream = speaker.device_sound_interface_output_to_stream_output(0, out stream_out);
@@ -1852,7 +1863,7 @@ namespace mame
         void reset(running_machine machine_)
         {
             // reset all the sound chips
-            foreach (device_sound_interface sound in new sound_interface_iterator(machine().root_device()))
+            foreach (device_sound_interface sound in new sound_interface_enumerator(machine().root_device()))
                 sound.device().reset();
 
             // apply any sample rate changes now
@@ -1868,17 +1879,19 @@ namespace mame
                     m_orphan_stream_list[stream] = 0;
 
                 // then walk the graph like we do on update and remove any we touch
-                foreach (speaker_device speaker in new speaker_device_iterator(machine().root_device()))
+                foreach (speaker_device speaker in new speaker_device_enumerator(machine().root_device()))
                 {
                     int dummy;
                     sound_stream output = speaker.device_sound_interface_output_to_stream_output(0, out dummy);
                     if (output != null)
                         recursive_remove_stream_from_orphan_list(output);
+
+                    m_speakers.emplace_back(speaker);
                 }
 
 #if (SOUND_DEBUG)
                 // dump the sound graph when we start up
-                for (speaker_device &speaker : speaker_device_iterator(machine().root_device()))
+                for (speaker_device &speaker : speaker_device_enumerator(machine().root_device()))
                 {
                     int index;
                     sound_stream *output = speaker.output_to_stream_output(0, index);

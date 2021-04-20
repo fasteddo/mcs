@@ -280,9 +280,9 @@ namespace mame
         {
             /* basic machine hardware */
             Z80(config, m_maincpu, MASTER_CLOCK / 6);
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, main_map);
-            m_maincpu.target.memory().set_addrmap(AS_IO, main_portmap);
-            m_maincpu.target.execute().set_vblank_int("screen", irq0_line_hold);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, main_map);
+            m_maincpu.op[0].memory().set_addrmap(AS_IO, main_portmap);
+            m_maincpu.op[0].execute().set_vblank_int("screen", irq0_line_hold);
 
             /* video hardware */
             PALETTE(config, m_sp_palette).set_entries(256, 32);
@@ -295,8 +295,8 @@ namespace mame
             GFXDECODE(config, m_bg_gfxdecode, m_bg_palette, gfx_m52_bg);
 
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
-            m_screen.target.set_raw(MASTER_CLOCK / 3, 384, 136, 376, 282, 22, 274);
-            m_screen.target.set_screen_update(screen_update_m52);
+            m_screen.op[0].set_raw(MASTER_CLOCK / 3, 384, 136, 376, 282, 22, 274);
+            m_screen.op[0].set_screen_update(screen_update_m52);
 
             /* sound hardware */
             //m52_sound_c_audio(config);

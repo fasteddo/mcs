@@ -121,17 +121,17 @@ namespace mame
             m_zaccept = true;
             m_zready = false;
             if (int_mode.LATCH == m_int_mode)
-                m_mcu.target.set_input_line(m68705_global.M68705_IRQ_LINE, CLEAR_LINE);
+                m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, CLEAR_LINE);
         }
 
 
         protected override void device_add_mconfig(machine_config config)
         {
             M68705P5(config, m_mcu, DERIVED_CLOCK(1, 1));
-            m_mcu.target.porta_r().set(mcu_pa_r).reg();
-            m_mcu.target.portc_r().set(mcu_pc_r).reg();
-            m_mcu.target.porta_w().set(mcu_pa_w).reg();
-            m_mcu.target.portb_w().set(mcu_pb_w).reg();
+            m_mcu.op[0].porta_r().set(mcu_pa_r).reg();
+            m_mcu.op[0].portc_r().set(mcu_pc_r).reg();
+            m_mcu.op[0].porta_w().set(mcu_pa_w).reg();
+            m_mcu.op[0].portb_w().set(mcu_pb_w).reg();
         }
 
 
@@ -165,7 +165,7 @@ namespace mame
                 // if jumpered this way, the Z80 write strobe pulses the MCU interrupt line
                 // should be PULSE_LINE because it's edge sensitive, but diexec only allows PULSE_LINE on reset and NMI
                 if (int_mode.WRITE == m_int_mode)
-                    m_mcu.target.set_input_line(m68705_global.M68705_IRQ_LINE, HOLD_LINE);
+                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, HOLD_LINE);
             }
             else
             {
@@ -226,7 +226,7 @@ namespace mame
             {
                 machine().scheduler().synchronize(do_mcu_read);
                 if (int_mode.LATCH == m_int_mode)
-                    m_mcu.target.set_input_line(m68705_global.M68705_IRQ_LINE, CLEAR_LINE);
+                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, CLEAR_LINE);
             }
 
             // 68LWR
@@ -296,7 +296,7 @@ namespace mame
             {
                 m_zready = true;
                 if (int_mode.LATCH == m_int_mode)
-                    m_mcu.target.set_input_line(m68705_global.M68705_IRQ_LINE, ASSERT_LINE);
+                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, ASSERT_LINE);
             }
         }
     }

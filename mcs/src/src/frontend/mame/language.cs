@@ -50,13 +50,18 @@ namespace mame
         static std.unordered_map<string, string> f_translation_map = new std.unordered_map<string, string>();  //std::unordered_map<char const *, char const *, cstr_hash, cstr_compare> f_translation_map;
 
 
-#if false
-        char const *lang_translate(char const *word)
+        //**************************************************************************
+        //  LOCALIZATION SUPPORT
+        //**************************************************************************
+
+        public static string __(string param) { return lang_translate(param); }  //#define _(param)    lang_translate(param)
+
+
+        static string lang_translate(string word)
         {
-            auto const found = f_translation_map.find(word);
-            return (f_translation_map.end() != found) ? found->second : word;
+            var found = f_translation_map.find(word);
+            return (default != found) ? found : word;
         }
-#endif
 
 
         public static void load_translation(emu_options m_options)

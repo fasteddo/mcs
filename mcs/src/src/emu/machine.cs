@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using nvram_interface_enumerator = mame.device_interface_enumerator<mame.device_nvram_interface>;  //typedef device_interface_enumerator<device_nvram_interface> nvram_interface_enumerator;
 using offs_t = System.UInt32;
 using s64 = System.Int64;
 using time_t = System.Int64;
@@ -372,7 +373,7 @@ namespace mame
             m_dummy_space.config_complete();
 
             // set the machine on all devices
-            device_iterator iter = new device_iterator(root_device());
+            device_enumerator iter = new device_enumerator(root_device());
             foreach (device_t device in iter)
                 device.set_machine(this);
 
@@ -1009,7 +1010,7 @@ namespace mame
                     device_memory_interface memory = cpu.memory();
                     device_state_interface state = cpu.state();
                     address_space prg = memory.space(AS_PROGRAM);
-                    return string.Format(prg.is_octal() ? "'{0}' ({1})" :  "'{0}' ({1})", cpu.tag(), prg.logaddrchars(), state.pc());  // "'%s' (%0*o)" :  "'%s' (%0*X)"
+                    return string_format(prg.is_octal() ? "'{0}' ({1})" :  "'{0}' ({1})", cpu.tag(), prg.logaddrchars(), state.pc());  // "'%s' (%0*o)" :  "'%s' (%0*X)"
                 }
             }
 
@@ -1079,7 +1080,7 @@ namespace mame
             m_sound = new sound_manager(this);
 
             // resolve objects that can be used by memory maps
-            foreach (device_t device in new device_iterator(root_device()))
+            foreach (device_t device in new device_enumerator(root_device()))
                 device.resolve_pre_map();
 
             // configure the address spaces, load ROMs (which needs
@@ -1109,7 +1110,7 @@ namespace mame
             manager().create_custom(this);
 
             // resolve objects that are created by memory maps
-            foreach (device_t device in new device_iterator(root_device()))
+            foreach (device_t device in new device_enumerator(root_device()))
                 device.resolve_post_map();
 
             // register callbacks for the devices, then start them
@@ -1222,7 +1223,7 @@ namespace mame
         -------------------------------------------------*/
         void nvram_load()
         {
-            foreach (device_nvram_interface nvram in new nvram_interface_iterator(root_device()))
+            foreach (device_nvram_interface nvram in new nvram_interface_enumerator(root_device()))
             {
                 emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_READ);
                 if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
@@ -1242,7 +1243,7 @@ namespace mame
         -------------------------------------------------*/
         void nvram_save()
         {
-            foreach (device_nvram_interface nvram in new nvram_interface_iterator(root_device()))
+            foreach (device_nvram_interface nvram in new nvram_interface_enumerator(root_device()))
             {
                 if (nvram.nvram_can_save())
                 {
@@ -1291,7 +1292,7 @@ namespace mame
             {
                 // iterate over all devices
                 int failed_starts = 0;
-                foreach (device_t device in new device_iterator(root_device()))
+                foreach (device_t device in new device_enumerator(root_device()))
                 {
                     if (!device.started())
                     {
@@ -1328,7 +1329,7 @@ namespace mame
         //  reset_all_devices - reset all devices in the
         //  hierarchy
         //-------------------------------------------------
-        void reset_all_devices(running_machine machine)
+        void reset_all_devices(running_machine machine_)
         {
             // reset the root and it will reset children
             root_device().reset();
@@ -1338,7 +1339,7 @@ namespace mame
         //  stop_all_devices - stop all the devices in the
         //  hierarchy
         //-------------------------------------------------
-        void stop_all_devices(running_machine machine)
+        void stop_all_devices(running_machine machine_)
         {
             //throw new emu_unimplemented();
 #if false
@@ -1348,7 +1349,7 @@ namespace mame
 #endif
 
             // iterate over devices and stop them
-            foreach (device_t device in new device_iterator(root_device()))
+            foreach (device_t device in new device_enumerator(root_device()))
                 device.stop();
 
             m_dummy_space.stop();
@@ -1360,7 +1361,7 @@ namespace mame
         //-------------------------------------------------
         void presave_all_devices()
         {
-            foreach (device_t device in new device_iterator(root_device()))
+            foreach (device_t device in new device_enumerator(root_device()))
                 device.pre_save();
         }
 
@@ -1370,7 +1371,7 @@ namespace mame
         //-------------------------------------------------
         void postload_all_devices()
         {
-            foreach (device_t device in new device_iterator(root_device()))
+            foreach (device_t device in new device_enumerator(root_device()))
                 device.post_load();
         }
     }

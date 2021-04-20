@@ -85,58 +85,58 @@ namespace mame
         optional_device<watchdog_timer_device> m_watchdog;
 
         /* memory pointers */
-        required_shared_ptr_uint8_t m_video_ram;
-        required_shared_ptr_uint8_t m_sprite_ram;
+        required_shared_ptr<uint8_t> m_video_ram;
+        required_shared_ptr<uint8_t> m_sprite_ram;
 
         /* machine states */
-        uint8_t               m_hardware_type;
-        uint8_t               m_nmi_mask;
+        uint8_t m_hardware_type;
+        uint8_t m_nmi_mask;
 
         //std::unique_ptr<uint8_t[]> m_decrypted;
 
         /* sound state */
-        optional_region_ptr_uint8_t  m_snd_rom;
+        optional_region_ptr<uint8_t> m_snd_rom;
 
         /* video state */
         tilemap_t m_bg_tilemap;
 
-        bitmap_ind16  m_bg_bits;
+        bitmap_ind16 m_bg_bits;
         Pointer<uint8_t> m_color_codes;  //const uint8_t *     m_color_codes;
         emu_timer m_scanline_timer;
-        int8_t              m_vidhw;          /* Selected video hardware RS Conversion / TKG04 */
+        int8_t m_vidhw;          /* Selected video hardware RS Conversion / TKG04 */
 
         /* radar scope */
 
         MemoryU8 m_gfx4;  //uint8_t *           m_gfx4;
         MemoryU8 m_gfx3;  //uint8_t *           m_gfx3;
-        int               m_gfx3_len;
+        int m_gfx3_len;
 
-        uint8_t             m_sig30Hz;
-        uint8_t             m_lfsr_5I;
-        uint8_t             m_grid_sig;
-        uint8_t             m_rflip_sig;
-        uint8_t             m_star_ff;
-        uint8_t             m_blue_level;
-        double            m_cd4049_a;
-        double            m_cd4049_b;
+        uint8_t m_sig30Hz;
+        uint8_t m_lfsr_5I;
+        uint8_t m_grid_sig;
+        uint8_t m_rflip_sig;
+        uint8_t m_star_ff;
+        uint8_t m_blue_level;
+        double m_cd4049_a;
+        double m_cd4049_b;
 
         /* Specific states */
-        int8_t              m_decrypt_counter;
+        int8_t m_decrypt_counter;
 
         /* 2650 protection */
-        uint8_t             m_protect_type;
-        uint8_t             m_hunchloopback;
-        uint8_t             m_prot_cnt;
-        uint8_t             m_main_fo;
+        uint8_t m_protect_type;
+        uint8_t m_hunchloopback;
+        uint8_t m_prot_cnt;
+        uint8_t m_main_fo;
 
         /* Save state relevant */
-        uint8_t             m_gfx_bank;
-        uint8_t             m_palette_bank;
-        uint8_t             m_grid_on;
-        uint16_t            m_grid_col;
-        uint8_t             m_sprite_bank;
-        uint8_t             m_dma_latch;
-        uint8_t             m_flip;
+        uint8_t m_gfx_bank;
+        uint8_t m_palette_bank;
+        uint8_t m_grid_on;
+        uint16_t m_grid_col;
+        uint8_t m_sprite_bank;
+        uint8_t m_dma_latch;
+        uint8_t m_flip;
 
         /* radarscp_step */
         double m_cv1;
@@ -154,6 +154,8 @@ namespace mame
         required_device<palette_device> m_palette;
         optional_device<intref> m_z80dma;  //optional_device<z80dma_device> m_z80dma;
         optional_device<i8257_device> m_dma8257;
+        memory_bank_creator m_bank1;
+        memory_bank_creator m_bank2;
 
         /* radarscp_scanline */
         int m_counter;
@@ -173,9 +175,9 @@ namespace mame
             m_discrete = new optional_device<discrete_device>(this, "discrete");
             m_m58817 = new optional_device<intref>(this, "tms");
             m_watchdog = new optional_device<watchdog_timer_device>(this, "watchdog");
-            m_video_ram = new required_shared_ptr_uint8_t(this,"video_ram");
-            m_sprite_ram = new required_shared_ptr_uint8_t(this,"sprite_ram");
-            m_snd_rom = new optional_region_ptr_uint8_t(this, "soundcpu");
+            m_video_ram = new required_shared_ptr<uint8_t>(this,"video_ram");
+            m_sprite_ram = new required_shared_ptr<uint8_t>(this,"sprite_ram");
+            m_snd_rom = new optional_region_ptr<uint8_t>(this, "soundcpu");
             m_vidhw = DKONG_BOARD;
             m_sig30Hz = 0;
             m_blue_level = 0;
@@ -191,6 +193,8 @@ namespace mame
             m_palette = new required_device<palette_device>(this, "palette");
             m_z80dma = new optional_device<intref>(this, "z80dma");
             m_dma8257 = new optional_device<i8257_device>(this, "dma8257");
+            m_bank1 = new memory_bank_creator(this, "bank1");
+            m_bank2 = new memory_bank_creator(this, "bank2");
         }
     }
 }

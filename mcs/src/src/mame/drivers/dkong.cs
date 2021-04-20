@@ -22,14 +22,14 @@ namespace mame
 
         uint8_t memory_read_byte(offs_t offset)
         {
-            address_space prog_space = m_maincpu.target.memory().space(AS_PROGRAM);
+            address_space prog_space = m_maincpu.op[0].memory().space(AS_PROGRAM);
             return prog_space.read_byte(offset);
         }
 
 
         void memory_write_byte(offs_t offset, uint8_t data)
         {
-            address_space prog_space = m_maincpu.target.memory().space(AS_PROGRAM);
+            address_space prog_space = m_maincpu.op[0].memory().space(AS_PROGRAM);
             prog_space.write_byte(offset, data);
         }
 
@@ -90,8 +90,8 @@ namespace mame
 
         void p8257_drq_w(uint8_t data)
         {
-            m_dma8257.target.dreq0_w(data & 0x01);
-            m_dma8257.target.dreq1_w(data & 0x01);
+            m_dma8257.op[0].dreq0_w(data & 0x01);
+            m_dma8257.op[0].dreq1_w(data & 0x01);
             machine().scheduler().abort_timeslice(); // transfer occurs immediately
             machine().scheduler().boost_interleave(attotime.zero, attotime.from_usec(100)); // smooth things out a bit
         }
@@ -100,8 +100,8 @@ namespace mame
         uint8_t dkong_in2_r(offs_t offset)
         {
             // 2 board DK and all DKjr has a watchdog
-            if (m_watchdog.target != null)
-                m_watchdog.target.watchdog_reset();
+            if (m_watchdog.op[0] != null)
+                m_watchdog.op[0].watchdog_reset();
 
             uint8_t r = (uint8_t)ioport("IN2").read();
             machine().bookkeeping().coin_counter_w((int)offset, r >> 7);
@@ -126,7 +126,7 @@ namespace mame
         {
             m_nmi_mask = (uint8_t)(data & 1);
             if (m_nmi_mask == 0)
-                m_maincpu.target.set_input_line(device_execute_interface.INPUT_LINE_NMI, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_NMI, CLEAR_LINE);
         }
 
 
@@ -142,12 +142,12 @@ namespace mame
             map.op(0x6000, 0x6bff).ram();
             map.op(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
             map.op(0x7400, 0x77ff).ram().w(dkong_videoram_w).share("video_ram");
-            map.op(0x7800, 0x780f).rw(m_dma8257, (offset) => { return m_dma8257.target.read(offset); }, (offset, data) => { m_dma8257.target.write(offset, data); });  //FUNC(i8257_device::read), FUNC(i8257_device::write));   /* P8257 control registers */
+            map.op(0x7800, 0x780f).rw(m_dma8257, (offset) => { return m_dma8257.op[0].read(offset); }, (offset, data) => { m_dma8257.op[0].write(offset, data); });  //FUNC(i8257_device::read), FUNC(i8257_device::write));   /* P8257 control registers */
             map.op(0x7c00, 0x7c00).portr("IN0").w("ls175.3d", (offset, data) => { ((latch8_device)subdevice("ls175.3d")).write(offset, data); });  //FUNC(latch8_device::write));    /* IN0, sound CPU intf */
             map.op(0x7c80, 0x7c80).portr("IN1").w(radarscp_grid_color_w);/* IN1 */
 
             map.op(0x7d00, 0x7d00).r(dkong_in2_r);                               /* IN2 */
-            map.op(0x7d00, 0x7d07).w(m_dev_6h.target, (offset, data) => { m_dev_6h.target.bit0_w(offset, data); });  //FUNC(latch8_device::bit0_w));          /* Sound signals */
+            map.op(0x7d00, 0x7d07).w(m_dev_6h, (offset, data) => { m_dev_6h.op[0].bit0_w(offset, data); });  //FUNC(latch8_device::bit0_w));          /* Sound signals */
 
             map.op(0x7d80, 0x7d80).portr("DSW0").w(dkong_audio_irq_w);   /* DSW0 */
             map.op(0x7d81, 0x7d81).w(radarscp_grid_enable_w);
@@ -340,7 +340,7 @@ namespace mame
         void vblank_irq(int state)
         {
             if (state != 0 && m_nmi_mask != 0)
-                m_maincpu.target.set_input_line(device_execute_interface.INPUT_LINE_NMI, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_NMI, ASSERT_LINE);
         }
 
 
@@ -348,13 +348,13 @@ namespace mame
         void busreq_w(int state)
         {
             // since our Z80 has no support for BUSACK, we assume it is granted immediately
-            m_maincpu.target.set_input_line(z80_device.Z80_INPUT_LINE_BUSRQ, state);
-            m_maincpu.target.set_input_line(device_execute_interface.INPUT_LINE_HALT, state); // do we need this?
+            m_maincpu.op[0].set_input_line(z80_device.Z80_INPUT_LINE_BUSRQ, state);
+            m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_HALT, state); // do we need this?
 
-            if (m_z80dma.target != null)
+            if (m_z80dma.op[0] != null)
                 throw new emu_unimplemented();
-            else if (m_dma8257.target != null)
-                m_dma8257.target.hlda_w(state);
+            else if (m_dma8257.op[0] != null)
+                m_dma8257.op[0].hlda_w(state);
         }
 
 
@@ -362,25 +362,25 @@ namespace mame
         {
             /* basic machine hardware */
             Z80(config, m_maincpu, CLOCK_1H);
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, dkong_map);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, dkong_map);
 
             MCFG_MACHINE_START_OVERRIDE(config, machine_start_dkong2b);
             MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_dkong);
 
             I8257(config, m_dma8257, CLOCK_1H);
-            m_dma8257.target.out_hrq_cb().set((write_line_delegate)busreq_w).reg();
-            m_dma8257.target.in_memr_cb().set(memory_read_byte).reg();
-            m_dma8257.target.out_memw_cb().set(memory_write_byte).reg();
-            m_dma8257.target.in_ior_cb(1).set(p8257_ctl_r).reg();
-            m_dma8257.target.out_iow_cb(0).set(p8257_ctl_w).reg();
-            m_dma8257.target.set_reverse_rw_mode(true); // why?
+            m_dma8257.op[0].out_hrq_cb().set((write_line_delegate)busreq_w).reg();
+            m_dma8257.op[0].in_memr_cb().set(memory_read_byte).reg();
+            m_dma8257.op[0].out_memw_cb().set(memory_write_byte).reg();
+            m_dma8257.op[0].in_ior_cb(1).set(p8257_ctl_r).reg();
+            m_dma8257.op[0].out_iow_cb(0).set(p8257_ctl_w).reg();
+            m_dma8257.op[0].set_reverse_rw_mode(true); // why?
 
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
-            m_screen.target.set_raw(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART);
-            m_screen.target.set_screen_update(screen_update_dkong);
-            m_screen.target.set_palette(m_palette);
-            m_screen.target.screen_vblank().set((write_line_delegate)vblank_irq).reg();
+            m_screen.op[0].set_raw(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART);
+            m_screen.op[0].set_screen_update(screen_update_dkong);
+            m_screen.op[0].set_palette(m_palette);
+            m_screen.op[0].screen_vblank().set((write_line_delegate)vblank_irq).reg();
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_dkong);
             PALETTE(config, m_palette, dkong2b_palette, DK2B_PALETTE_LENGTH);
@@ -395,7 +395,7 @@ namespace mame
 
             /* basic machine hardware */
             MCFG_MACHINE_START_OVERRIDE(config, machine_start_dkong2b);
-            m_palette.target.set_entries(DK2B_PALETTE_LENGTH);
+            m_palette.op[0].set_entries(DK2B_PALETTE_LENGTH);
 
             /* sound hardware */
             dkong2b_audio(config);

@@ -493,13 +493,12 @@ namespace mame
                 {
                     case 1:
                         r_discharge = DSD_555_CC__RDIS;
-                        break;
+                        goto case 0;  //[[fallthrough]];
                     case 0:
                         break;
                     case 3:
                         r_discharge = RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
-                        r_charge = DSD_555_CC__RGND;
-                        break;
+                        goto case 2;  //[[fallthrough]];
                     case 2:
                         r_charge = DSD_555_CC__RGND;
                         break;
@@ -733,14 +732,12 @@ namespace mame
                 {
                     case 1:
                         r_discharge = DSD_555_CC__RDIS;
-                        break;
+                        goto case 0;  //[[fallthrough]];
                     case 0:
                         break;
                     case 3:
                         r_discharge = RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
-                        r_charge = DSD_555_CC__RGND;
-                        vi       = i * r_charge;
-                        break;
+                        goto case 2;  //[[fallthrough]];
                     case 2:
                         r_charge = DSD_555_CC__RGND;
                         vi       = i * r_charge;

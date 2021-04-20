@@ -664,7 +664,7 @@ namespace mame
 
             // figure out which BIOS we are using
             std.map<string, string> card_bios = new std.map<string, string>();
-            foreach (device_t device in new device_iterator(machine.config().root_device()))
+            foreach (device_t device in new device_enumerator(machine.config().root_device()))
             {
                 device_slot_interface slot = device.GetClassInterface<device_slot_interface>();  //device_slot_interface const *const slot(dynamic_cast<device_slot_interface *>(&device));
                 if (slot != null)
@@ -801,7 +801,7 @@ namespace mame
             m_romstotalsize = 0;
 
             /* loop over regions, then over files */
-            foreach (device_t device in new device_iterator(machine().config().root_device()))
+            foreach (device_t device in new device_enumerator(machine().config().root_device()))
             {
                 for (region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
@@ -1545,7 +1545,7 @@ namespace mame
         void process_region_list()
         {
             // loop until we hit the end
-            device_iterator deviter = new device_iterator(machine().root_device());
+            device_enumerator deviter = new device_enumerator(machine().root_device());
             std.vector<string> searchpath = new std.vector<string>();
             foreach (device_t device in deviter)
             {

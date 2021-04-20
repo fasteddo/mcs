@@ -1926,7 +1926,7 @@ namespace mame
             if (m_standard_mapper == tilemap_standard_mapper.TILEMAP_STANDARD_COUNT && m_mapper == null)  //if (m_standard_mapper == TILEMAP_STANDARD_COUNT && m_mapper.isnull())
                 throw new emu_fatalerror("Tilemap device '{0}' has no mapper callback!", tag());
 
-            if (!m_gfxdecode.target.started())
+            if (!m_gfxdecode.op[0].started())
                 throw new device_missing_dependencies();
 
             // bind our callbacks
@@ -1935,9 +1935,9 @@ namespace mame
 
             // allocate the tilemap
             if (m_standard_mapper == tilemap_standard_mapper.TILEMAP_STANDARD_COUNT)
-                machine().tilemap().create(m_gfxdecode.target.digfx, m_get_info, m_mapper, m_tile_width, m_tile_height, m_num_columns, m_num_rows, this.m_tilemap_t);
+                machine().tilemap().create(m_gfxdecode.op[0].digfx, m_get_info, m_mapper, m_tile_width, m_tile_height, m_num_columns, m_num_rows, this.m_tilemap_t);
             else
-                machine().tilemap().create(m_gfxdecode.target.digfx, m_get_info, m_standard_mapper, m_tile_width, m_tile_height, m_num_columns, m_num_rows, this.m_tilemap_t);
+                machine().tilemap().create(m_gfxdecode.op[0].digfx, m_get_info, m_standard_mapper, m_tile_width, m_tile_height, m_num_columns, m_num_rows, this.m_tilemap_t);
 
             // find the memory, if present
             memory_share share = memshare(tag());

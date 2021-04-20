@@ -7,6 +7,7 @@ using System.Linq;
 
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using media_auditor_record_list = mame.std.list<mame.media_auditor.audit_record>;  //using record_list = std::list<audit_record>;
+using samples_device_enumerator = mame.device_type_enumerator<mame.samples_device>;  //typedef device_type_enumerator<samples_device> samples_device_enumerator;
 using size_t = System.UInt32;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
@@ -219,6 +220,8 @@ namespace mame
                 }
             }
 
+            parentroms.remove_redundant_parents();
+
             // count ROMs required/found
             size_t found = 0;
             size_t required = 0;
@@ -228,7 +231,7 @@ namespace mame
 
             // iterate over devices and regions
             std.vector<string> searchpath = new std.vector<string>();
-            foreach (device_t device in new device_iterator(m_enumerator.config().root_device()))
+            foreach (device_t device in new device_enumerator(m_enumerator.config().root_device()))
             {
                 searchpath.clear();
 
@@ -423,7 +426,7 @@ namespace mame
             int found = 0;
 
             // iterate over sample entries
-            foreach (samples_device device in new samples_device_iterator(m_enumerator.config().root_device()))
+            foreach (samples_device device in new samples_device_enumerator(m_enumerator.config().root_device()))
             {
                 // by default we just search using the driver name
                 string searchpath = m_enumerator.driver().name;
@@ -723,6 +726,41 @@ namespace mame
     class parent_rom_vector : std.vector<parent_rom>
     {
         //using std::vector<parent_rom>::vector;
+
+
+        public void remove_redundant_parents()
+        {
+            while (!empty())
+            {
+                // find where the next parent starts
+                //auto const last(
+                //        std::find_if(
+                //            std::next(cbegin()),
+                //            cend(),
+                //            [this] (parent_rom const &r) { return &front().type.get() != &r.type.get(); }));
+                var last = this.FindIndex(1, (parent_rom r) => { return front().type != r.type; });
+
+                // examine dumped ROMs in this generation
+                for (var iIdx = 0; last != iIdx; ++iIdx)  //for (auto i = cbegin(); last != i; ++i)
+                {
+                    var i = this[iIdx];
+
+                    if (!i.hashes.flag(util.hash_collection.FLAG_NO_DUMP))
+                    {
+                        //auto const match(
+                        //        std::find_if(
+                        //            last,
+                        //            cend(),
+                        //            [&i] (parent_rom const &r) { return (i->length == r.length) && (i->hashes == r.hashes); }));
+                        var match = this.FindIndex(last, (parent_rom r) => { return (i.length == r.length) && (i.hashes == r.hashes); });
+                        if (-1 == match)  //if (cend() == match)
+                            return;
+                    }
+                }
+
+                RemoveRange(0, last);  //erase(cbegin(), last);
+            }
+        }
 
 
         public device_type find_shared_device(device_t current, string name, util.hash_collection hashes, uint64_t length)  //std::add_pointer_t<device_type> find_shared_device(device_t &current, char const *name, util::hash_collection const &hashes, uint64_t length) const

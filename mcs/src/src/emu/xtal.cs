@@ -112,6 +112,7 @@ namespace mame
              5911000, /* 5.911_MHz_XTAL         Philips Videopac Plus G7400 */
              5990400, /* 5.9904_MHz_XTAL        Luxor ABC 800 keyboard (Keytronic custom part #48-300-008 is equivalent) */
              6000000, /* 6_MHz_XTAL             American Poker II, Taito SJ System */
+             6048000, /* 6.048_MHz_XTAL         Hektor II */
              6144000, /* 6.144_MHz_XTAL         Used on Alpha Denshi early 80's games sound board, Casio FP-200 and Namco Universal System 16 */
              6400000, /* 6.4_MHz_XTAL           Textel Compact */
              6500000, /* 6.5_MHz_XTAL           Jupiter Ace, Roland QDD interface */
@@ -132,6 +133,7 @@ namespace mame
              8467200, /* 8.4672_MHz_XTAL        Subsino's Ying Hua Lian */
              8664000, /* 8.664_MHz_XTAL         Touchmaster */
              8700000, /* 8.7_MHz_XTAL           Tandberg TDV 2324 */
+             8860000, /* 8.86_MHz_XTAL          AlphaTantel */
              8867000, /* 8.867_MHz_XTAL         Philips G7400 (~2x PAL subcarrier) */
              8867236, /* 8.867236_MHz_XTAL      RCA CDP1869 PAL color clock (~2x PAL subcarrier) */
              8867238, /* 8.867238_MHz_XTAL      ETI-660 (~2x PAL subcarrier) */
@@ -139,6 +141,7 @@ namespace mame
              8960000, /* 8.96_MHz_XTAL          Casio CZ-101 (divided by 2 for Music LSI) */
              9000000, /* 9_MHz_XTAL             Homedata PCBs */
              9216000, /* 9.216_MHz_XTAL         Univac UTS 20 */
+             9400000, /* 9.4_MHz_XTAL           Yamaha MU-5 and TG-100 */
              9600000, /* 9.6_MHz_XTAL           WD37C65 second clock (for 300 KB/sec rate) */
              9732000, /* 9.732_MHz_XTAL         CTA Invader */
              9828000, /* 9.828_MHz_XTAL         Universal PCBs */

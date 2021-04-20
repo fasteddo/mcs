@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using machine_config_cache = mame.util.lru_cache_map<System.Int32, mame.machine_config>;
+using software_list_device_enumerator = mame.device_type_enumerator<mame.software_list_device>;  //typedef device_type_enumerator<software_list_device> software_list_device_enumerator;
 
 
 namespace mame
@@ -439,7 +440,7 @@ namespace mame
                 if (cached != null)
                 {
                     // iterate over software lists in this entry and reset
-                    foreach (software_list_device swlistdev in new software_list_device_iterator(cached.root_device()))
+                    foreach (software_list_device swlistdev in new software_list_device_enumerator(cached.root_device()))
                         swlistdev.release();
                 }
             }

@@ -261,10 +261,10 @@ namespace mame
         address_space_config m_program_config;
         address_space_config m_opcodes_config;
         address_space_config m_io_config;
-        memory_access.cache m_args = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_args;
-        memory_access.cache m_opcodes = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_opcodes;
-        memory_access.specific m_data = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
-        memory_access.specific m_io = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache m_args = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_args;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache m_opcodes = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_opcodes;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_data = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
+        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_io = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
 
         devcb_write_line m_irqack_cb;
         devcb_write8 m_refresh_cb;
@@ -563,10 +563,10 @@ namespace mame
             m_after_ldair = false;
             m_ea = 0;
 
-            m_dimemory.space(AS_PROGRAM).cache(m_args.Width, m_args.AddrShift, m_args.Endian, m_args);
-            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_opcodes.Width, m_opcodes.AddrShift, m_opcodes.Endian, m_opcodes);
-            m_dimemory.space(AS_PROGRAM).specific(m_data.Level, m_data.Width, m_data.AddrShift, m_data.Endian, m_data);
-            m_dimemory.space(AS_IO).specific(m_io.Level, m_io.Width, m_io.AddrShift, m_io.Endian, m_io);
+            m_dimemory.space(AS_PROGRAM).cache(m_args);
+            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_opcodes);
+            m_dimemory.space(AS_PROGRAM).specific(m_data);
+            m_dimemory.space(AS_IO).specific(m_io);
 
             IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
             F = ZF;           /* Zero flag is set */

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using offs_t = System.UInt32;
+using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
 using PointerU8 = mame.Pointer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -252,15 +253,15 @@ namespace mame
             // populate from a memory region if present
             if (m_region.found())
             {
-                if (m_region.target.bytes() != eeprom_bytes)
+                if (m_region.op[0].bytes() != eeprom_bytes)
                     fatalerror("eeprom region '{0}' wrong size (expected size = 0x{1})\n", tag(), eeprom_bytes);
-                if (m_data_bits == 8 && m_region.target.bytewidth() != 1)
+                if (m_data_bits == 8 && m_region.op[0].bytewidth() != 1)
                     fatalerror("eeprom region '{0}' needs to be an 8-bit region\n", tag());
-                if (m_data_bits == 16 && m_region.target.bytewidth() != 2)
+                if (m_data_bits == 16 && m_region.op[0].bytewidth() != 2)
                     fatalerror("eeprom region '{0}' needs to be a 16-bit region\n", tag());
                 osd_printf_verbose("Loading data from EEPROM region '{0}'\n", tag());
 
-                memcpy(m_data, m_region.target.base_(), eeprom_bytes);
+                memcpy(m_data, m_region.op[0].base_(), eeprom_bytes);
             }
         }
 

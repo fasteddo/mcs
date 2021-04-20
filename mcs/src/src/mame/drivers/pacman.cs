@@ -39,25 +39,32 @@ namespace mame
         //WRITE_LINE_MEMBER(pacman_state::vblank_irq)
         void vblank_irq(int state)
         {
-            if (state != 0 && m_irq_mask != 0)
-                m_maincpu.target.set_input_line(0, HOLD_LINE);
+            if (state != 0 && m_irq_mask)
+                m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_IRQ0, ASSERT_LINE);
         }
 
         //INTERRUPT_GEN_MEMBER(periodic_irq);
-        //DECLARE_WRITE_LINE_MEMBER(rocktrv2_vblank_irq);
         //WRITE_LINE_MEMBER(pacman_state::vblank_nmi)
         //DECLARE_WRITE_LINE_MEMBER(s2650_interrupt);
 
         //WRITE_LINE_MEMBER(pacman_state::irq_mask_w)
         void irq_mask_w(int state)
         {
-            m_irq_mask = (byte)state;
+            m_irq_mask = state != 0;
+            if (state == 0)
+                m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_IRQ0, CLEAR_LINE);
         }
 
         void pacman_interrupt_vector_w(uint8_t data)
         {
-            m_maincpu.target.set_input_line_vector(0, data); // Z80
-            m_maincpu.target.set_input_line(0, CLEAR_LINE);
+            m_interrupt_vector = data;
+        }
+
+
+        //IRQ_CALLBACK_MEMBER(pacman_state::interrupt_vector_r)
+        int interrupt_vector_r(device_t device, int irqline)
+        {
+            return m_interrupt_vector;
         }
 
 
@@ -126,12 +133,12 @@ namespace mame
             map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_read_nop).nopw();
             map.op(0x4c00, 0x4fef).mirror(0xa000).ram();
             map.op(0x4ff0, 0x4fff).mirror(0xa000).ram().share("spriteram");
-            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (offset, data) => { m_mainlatch.target.write_d0(offset, data); });  //FUNC(addressable_latch_device::write_d0));
-            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (offset, data) => { m_namco_sound.target.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
+            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch, (offset, data) => { m_mainlatch.op[0].write_d0(offset, data); });  //FUNC(addressable_latch_device::write_d0));
+            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound, (offset, data) => { m_namco_sound.op[0].pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
             map.op(0x5080, 0x5080).mirror(0xaf3f).nopw();
-            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (data) => { m_watchdog.target.reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog, (data) => { m_watchdog.op[0].reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x5000, 0x5000).mirror(0xaf3f).portr("IN0");
             map.op(0x5040, 0x5040).mirror(0xaf3f).portr("IN1");
             map.op(0x5080, 0x5080).mirror(0xaf3f).portr("DSW1");
@@ -150,12 +157,12 @@ namespace mame
             map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_read_nop).nopw();
             map.op(0x4c00, 0x4fef).mirror(0xa000).ram();
             map.op(0x4ff0, 0x4fff).mirror(0xa000).ram().share("spriteram");
-            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (offset, data) => { m_mainlatch.target.write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
-            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (offset, data) => { m_namco_sound.target.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
+            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch, (offset, data) => { m_mainlatch.op[0].write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
+            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound, (offset, data) => { m_namco_sound.op[0].pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
             map.op(0x5080, 0x5080).mirror(0xaf3f).nopw();
-            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (data) => { m_watchdog.target.reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog, (data) => { m_watchdog.op[0].reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x5000, 0x5000).mirror(0xaf3f).portr("IN0");
             map.op(0x5040, 0x5040).mirror(0xaf3f).portr("IN1");
             map.op(0x5080, 0x5080).mirror(0xaf3f).portr("DSW1");
@@ -366,18 +373,19 @@ namespace mame
         {
             m_globals.helper_config = config;
 
-            /* basic machine hardware */
+            // Basic machine hardware
             Z80(config, m_maincpu, MASTER_CLOCK/6);
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, pacman_map);
-            m_maincpu.target.memory().set_addrmap(AS_IO, writeport);
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, pacman_map);
+            m_maincpu.op[0].memory().set_addrmap(AS_IO, writeport);
+            m_maincpu.op[0].execute().set_irq_acknowledge_callback(interrupt_vector_r);
 
             if (latch)
             {
                 LS259(config, m_mainlatch); // 74LS259 at 8K or 4099 at 7K
-                m_mainlatch.target.q_out_cb(0).set((write_line_delegate)irq_mask_w).reg();
-                m_mainlatch.target.q_out_cb(1).set("namco", (write_line_delegate)((state) => { ((namco_device)subdevice("namco")).sound_enable_w(state); })).reg();  //FUNC(namco_device::sound_enable_w));
-                m_mainlatch.target.q_out_cb(3).set((write_line_delegate)flipscreen_w).reg();
-                m_mainlatch.target.q_out_cb(7).set((write_line_delegate)coin_counter_w).reg();
+                m_mainlatch.op[0].q_out_cb(0).set((write_line_delegate)irq_mask_w).reg();
+                m_mainlatch.op[0].q_out_cb(1).set("namco", (write_line_delegate)((state) => { ((namco_device)subdevice("namco")).sound_enable_w(state); })).reg();  //FUNC(namco_device::sound_enable_w));
+                m_mainlatch.op[0].q_out_cb(3).set((write_line_delegate)flipscreen_w).reg();
+                m_mainlatch.op[0].q_out_cb(7).set((write_line_delegate)coin_counter_w).reg();
 
                 // NOTE(dwidel): The Pacman code uses $5004 and $5005 for LEDs and $5007 for coin lockout.  This hardware does not
                 // exist on any Pacman or Puckman board I have seen.
@@ -387,9 +395,9 @@ namespace mame
             }
 
             WATCHDOG_TIMER(config, m_watchdog);
-            m_watchdog.target.set_vblank_count("screen", 16);
+            m_watchdog.op[0].set_vblank_count("screen", 16);
 
-            /* video hardware */
+            // Video hardware
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_pacman);
 
             PALETTE(config, m_palette, pacman_palette, 128*4, 32);
@@ -402,12 +410,12 @@ namespace mame
 
             MCFG_VIDEO_START_OVERRIDE(config, video_start_pacman);
 
-            /* sound hardware */
+            // Sound hardware
             SPEAKER(config, "mono").front_center();
 
             NAMCO(config, m_namco_sound, MASTER_CLOCK/6/32);
-            m_namco_sound.target.set_voices(3);
-            m_namco_sound.target.disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+            m_namco_sound.op[0].set_voices(3);
+            m_namco_sound.op[0].disound.add_route(ALL_OUTPUTS, "mono", 1.0);
         }
 
 
@@ -415,10 +423,10 @@ namespace mame
         {
             pacman(config);
 
-            /* basic machine hardware */
-            m_maincpu.target.memory().set_addrmap(AS_PROGRAM, mspacman_map);
+            // Basic machine hardware
+            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, mspacman_map);
 
-            m_mainlatch.target.q_out_cb(6).set((write_line_delegate)coin_lockout_global_w).reg();
+            m_mainlatch.op[0].q_out_cb(6).set((write_line_delegate)coin_lockout_global_w).reg();
         }
     }
 
@@ -454,7 +462,7 @@ namespace mame
             ROM_LOAD( "pm1-1.7f",     0x0000, 0x0020, CRC("2fc650bd") + SHA1("8d0268dee78e47c712202b0ec4f1f51109b1f2a5") ), // 82s123
             ROM_LOAD( "pm1-4.4a",     0x0020, 0x0100, CRC("3eb3a8e4") + SHA1("19097b5f60d1030f8b82d9f1d3a241f93e5c75d6") ), // 82s126
 
-            ROM_REGION( 0x0200, "namco", 0 ),    /* sound PROMs */
+            ROM_REGION( 0x0200, "namco", 0 ),    // Sound PROMs
             ROM_LOAD( "pm1-3.1m",     0x0000, 0x0100, CRC("a9cc86bf") + SHA1("bbcec0570aeceb582ff8238a4bc8546a23430081") ), // 82s126
             ROM_LOAD( "pm1-2.3m",     0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ), // 82s126 - timing - not used
 
@@ -479,9 +487,9 @@ namespace mame
             ROM_LOAD( "82s123.7f",    0x0000, 0x0020, CRC("2fc650bd") + SHA1("8d0268dee78e47c712202b0ec4f1f51109b1f2a5") ),
             ROM_LOAD( "82s126.4a",    0x0020, 0x0100, CRC("3eb3a8e4") + SHA1("19097b5f60d1030f8b82d9f1d3a241f93e5c75d6") ),
 
-            ROM_REGION( 0x0200, "namco", 0 ),    /* sound PROMs */
+            ROM_REGION( 0x0200, "namco", 0 ),    // Sound PROMs
             ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC("a9cc86bf") + SHA1("bbcec0570aeceb582ff8238a4bc8546a23430081") ),
-            ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    /* timing - not used */
+            ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    // Timing - not used
 
             ROM_END,
         };
@@ -490,7 +498,7 @@ namespace mame
         //ROM_START( mspacman )
         static readonly MemoryContainer<tiny_rom_entry> rom_mspacman = new MemoryContainer<tiny_rom_entry>()
         {
-            ROM_REGION( 0x20000, "maincpu", 0 ), /* 64k for code+64k for decrypted code */
+            ROM_REGION( 0x20000, "maincpu", 0 ), // 64k for code+64k for decrypted code
             ROM_LOAD( "pacman.6e",    0x0000, 0x1000, CRC("c1e6ab10") + SHA1("e87e059c5be45753f7e9f33dff851f16d6751181") ),
             ROM_LOAD( "pacman.6f",    0x1000, 0x1000, CRC("1a6fb2d4") + SHA1("674d3a7f00d8be5e38b1fdc208ebef5a92d38329") ),
             ROM_LOAD( "pacman.6h",    0x2000, 0x1000, CRC("bcdd1beb") + SHA1("8e47e8c2c4d6117d174cdac150392042d3e0a881") ),
@@ -507,9 +515,9 @@ namespace mame
             ROM_LOAD( "82s123.7f",    0x0000, 0x0020, CRC("2fc650bd") + SHA1("8d0268dee78e47c712202b0ec4f1f51109b1f2a5") ),
             ROM_LOAD( "82s126.4a",    0x0020, 0x0100, CRC("3eb3a8e4") + SHA1("19097b5f60d1030f8b82d9f1d3a241f93e5c75d6") ),
 
-            ROM_REGION( 0x0200, "namco", 0 ),    /* sound PROMs */
+            ROM_REGION( 0x0200, "namco", 0 ),    // Sound PROMs
             ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC("a9cc86bf") + SHA1("bbcec0570aeceb582ff8238a4bc8546a23430081") ),
-            ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    /* timing - not used */
+            ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    // Timing - not used
 
             ROM_END,
         };
@@ -532,9 +540,9 @@ namespace mame
             ROM_LOAD( "pacplus.7f",   0x0000, 0x0020, CRC("063dd53a") + SHA1("2e43b46ec3b101d1babab87cdaddfa944116ec06") ),
             ROM_LOAD( "pacplus.4a",   0x0020, 0x0100, CRC("e271a166") + SHA1("cf006536215a7a1d488eebc1d8a2e2a8134ce1a6") ),
 
-            ROM_REGION( 0x0200, "namco", 0 ),    /* sound PROMs */
+            ROM_REGION( 0x0200, "namco", 0 ),    // Sound PROMs
             ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC("a9cc86bf") + SHA1("bbcec0570aeceb582ff8238a4bc8546a23430081") ),
-            ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    /* timing - not used */
+            ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC("77245b66") + SHA1("0c4d0bee858b97632411c440bea6948a74759746") ),    // Timing - not used
 
             ROM_END,
         };

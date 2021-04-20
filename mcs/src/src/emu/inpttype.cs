@@ -229,6 +229,7 @@ namespace mame
         const ioport_type UI_ROTATE = ioport_type.IPT_UI_ROTATE;
         const ioport_type UI_SHOW_PROFILER = ioport_type.IPT_UI_SHOW_PROFILER;
         const ioport_type UI_TOGGLE_UI = ioport_type.IPT_UI_TOGGLE_UI;
+        const ioport_type UI_RELEASE_POINTER = ioport_type.IPT_UI_RELEASE_POINTER;
         const ioport_type UI_TOGGLE_DEBUG = ioport_type.IPT_UI_TOGGLE_DEBUG;
         const ioport_type UI_PASTE = ioport_type.IPT_UI_PASTE;
         const ioport_type UI_SAVE_STATE = ioport_type.IPT_UI_SAVE_STATE;
@@ -1301,14 +1302,14 @@ namespace mame
 
         static void emplace_core_types_ui(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(ui)
         {
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_ON_SCREEN_DISPLAY,"On Screen Display",      new input_seq(KEYCODE_TILDE, input_seq.not_code, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_DEBUG_BREAK,      "Break in Debugger",      new input_seq(KEYCODE_TILDE, input_seq.not_code, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_ON_SCREEN_DISPLAY,"On Screen Display",      new input_seq(KEYCODE_TILDE, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_DEBUG_BREAK,      "Break in Debugger",      new input_seq(KEYCODE_TILDE, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_CONFIGURE,        "Config Menu",            new input_seq(KEYCODE_TAB) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PAUSE,            "Pause",                  new input_seq(KEYCODE_P, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PAUSE_SINGLE,     "Pause - Single Step",    new input_seq(KEYCODE_P, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PAUSE_SINGLE,     "Pause - Single Step",    new input_seq(KEYCODE_P, KEYCODE_LSHIFT, input_seq.or_code, KEYCODE_P, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_REWIND_SINGLE,    "Rewind - Single Step",   new input_seq(KEYCODE_TILDE, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_RESET_MACHINE,    "Reset Machine",          new input_seq(KEYCODE_F3, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SOFT_RESET,       "Soft Reset",             new input_seq(KEYCODE_F3, input_seq.not_code, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_RESET_MACHINE,    "Reset Machine",          new input_seq(KEYCODE_F3, KEYCODE_LSHIFT, input_seq.or_code, KEYCODE_F3, KEYCODE_RSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SOFT_RESET,       "Soft Reset",             new input_seq(KEYCODE_F3, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SHOW_GFX,         "Show Gfx",               new input_seq(KEYCODE_F4) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_FRAMESKIP_DEC,    "Frameskip Dec",          new input_seq(KEYCODE_F8) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_FRAMESKIP_INC,    "Frameskip Inc",          new input_seq(KEYCODE_F9) );
@@ -1328,8 +1329,8 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_END,              "UI End",                 new input_seq(KEYCODE_END) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PAGE_UP,          "UI Page Up",             new input_seq(KEYCODE_PGUP) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PAGE_DOWN,        "UI Page Down",           new input_seq(KEYCODE_PGDN) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_FOCUS_NEXT,       "UI Focus Next",          new input_seq(KEYCODE_TAB, input_seq.not_code, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_FOCUS_PREV,       "UI Focus Previous",      new input_seq(KEYCODE_TAB, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_FOCUS_NEXT,       "UI Focus Next",          new input_seq(KEYCODE_TAB, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_FOCUS_PREV,       "UI Focus Previous",      new input_seq(KEYCODE_TAB, KEYCODE_LSHIFT, input_seq.or_code, KEYCODE_TAB, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SELECT,           "UI Select",              new input_seq(KEYCODE_ENTER, input_seq.or_code, JOYCODE_BUTTON1_INDEXED(0), input_seq.or_code, KEYCODE_ENTER_PAD) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_CANCEL,           "UI Cancel",              new input_seq(KEYCODE_ESC) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_DISPLAY_COMMENT,  "UI Display Comment",     new input_seq(KEYCODE_SPACE) );
@@ -1341,6 +1342,7 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_ROTATE,           "UI Rotate",              new input_seq(KEYCODE_R) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SHOW_PROFILER,    "Show Profiler",          new input_seq(KEYCODE_F11, KEYCODE_LSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TOGGLE_UI,        "UI Toggle",              new input_seq(KEYCODE_SCRLOCK, input_seq.not_code, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_RELEASE_POINTER,  "UI Release Pointer",     new input_seq(KEYCODE_RCONTROL, KEYCODE_RALT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PASTE,            "UI Paste Text",          new input_seq(KEYCODE_SCRLOCK, KEYCODE_LSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TOGGLE_DEBUG,     "Toggle Debugger",        new input_seq(KEYCODE_F5) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SAVE_STATE,       "Save State",             new input_seq(KEYCODE_F7, KEYCODE_LSHIFT) );

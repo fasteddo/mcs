@@ -127,7 +127,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(digdug_state::tx_get_tile_info)
         void tx_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            byte code = m_videoram[tile_index];
+            byte code = m_videoram.op[tile_index];
             int color;
 
             /* the hardware has two ways to pick the color, either straight from the
@@ -164,8 +164,8 @@ namespace mame
             m_bg_disable = 0;
             m_bg_color_bank = 0;
 
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::bg_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::tx_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::bg_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
+            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::tx_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
 
             m_fg_tilemap.set_transparent_pen(0);
 
@@ -188,9 +188,9 @@ namespace mame
 
         protected override void draw_sprites(bitmap_ind16 bitmap, rectangle cliprect)
         {
-            Pointer<uint8_t> spriteram = new Pointer<uint8_t>(m_digdug_objram.target, 0x380);  //uint8_t *spriteram = m_digdug_objram + 0x380;
-            Pointer<uint8_t> spriteram_2 = new Pointer<uint8_t>(m_digdug_posram.target, 0x380);  //uint8_t *spriteram_2 = m_digdug_posram + 0x380;
-            Pointer<uint8_t> spriteram_3 = new Pointer<uint8_t>(m_digdug_flpram.target, 0x380);  //uint8_t *spriteram_3 = m_digdug_flpram + 0x380;
+            Pointer<uint8_t> spriteram = new Pointer<uint8_t>(m_digdug_objram.op, 0x380);  //uint8_t *spriteram = m_digdug_objram + 0x380;
+            Pointer<uint8_t> spriteram_2 = new Pointer<uint8_t>(m_digdug_posram.op, 0x380);  //uint8_t *spriteram_2 = m_digdug_posram + 0x380;
+            Pointer<uint8_t> spriteram_3 = new Pointer<uint8_t>(m_digdug_flpram.op, 0x380);  //uint8_t *spriteram_3 = m_digdug_flpram + 0x380;
             int offs;
 
             // mask upper and lower columns
@@ -225,14 +225,14 @@ namespace mame
                 {
                     for (x = 0;x <= size;x++)
                     {
-                        UInt32 transmask =  m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x1f);
-                        m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
+                        UInt32 transmask =  m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color, 0x1f);
+                        m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,visarea,
                             (UInt32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
                             (UInt32)color,
                             flipx,flipy,
                             ((sx + 16*x) & 0xff), sy + 16*y,transmask);
                         /* wraparound */
-                        m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
+                        m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,visarea,
                             (UInt32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
                             (UInt32)color,
                             flipx,flipy,
@@ -259,7 +259,7 @@ namespace mame
 
         void digdug_videoram_w(offs_t offset, uint8_t data)
         {
-            m_videoram[offset] = data;
+            m_videoram[offset].op = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);
         }
 

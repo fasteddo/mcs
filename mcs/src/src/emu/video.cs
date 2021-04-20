@@ -9,6 +9,7 @@ using osd_ticks_t = System.UInt64;
 using s8 = System.SByte;
 using s16 = System.Int16;
 using s32 = System.Int32;
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
@@ -160,12 +161,12 @@ namespace mame
             // extract initial execution state from global configuration settings
             update_refresh_speed();
 
-            UInt32 screen_count = (UInt32)(new screen_device_iterator(machine.root_device()).count());
+            UInt32 screen_count = (UInt32)(new screen_device_enumerator(machine.root_device()).count());
             bool no_screens = screen_count == 0;
 
             // create a render target for snapshots
             string viewname = machine.options().snap_view();
-            m_snap_native = !no_screens && (viewname[0] == 0 || strcmp(viewname, "native") == 0);
+            m_snap_native = !no_screens && strcmp(viewname, "native") == 0;
 
             // the native target is hard-coded to our internal layout and has all options disabled
             if (m_snap_native)
@@ -213,16 +214,6 @@ namespace mame
         bool fastforward() { return m_fastforward; }
 
 
-        //-------------------------------------------------
-        //  is_recording - returns whether or not any
-        //  screen is currently recording
-        //-------------------------------------------------
-        public bool is_recording()
-        {
-            return !m_movie_recordings.empty();
-        }
-
-
         // setters
 
         //-------------------------------------------------
@@ -231,33 +222,28 @@ namespace mame
         //-------------------------------------------------
         public void set_frameskip(int frameskip)
         {
-            // -1 means autoframeskip
-            if (frameskip == -1)
+            if (0 > frameskip)
             {
+                // -1 means autoframeskip
+                if (!m_auto_frameskip)
+                    m_frameskip_level = 0;
                 m_auto_frameskip = true;
-                m_frameskip_level = 0;
             }
-
-            // any other level is a direct control
-            else if (frameskip >= 0 && frameskip <= MAX_FRAMESKIP)
+            else
             {
+                // any other level is a direct control
                 m_auto_frameskip = false;
-                m_frameskip_level = (byte)frameskip;
+                m_frameskip_level = (u8)std.min(frameskip, MAX_FRAMESKIP);
             }
         }
 
-        void set_throttled(bool throttled = true) { m_throttled = throttled; }
+        public void set_throttled(bool throttled) { m_throttled = throttled; }
         void set_throttle_rate(float throttle_rate) { m_throttle_rate = throttle_rate; }
-        public void set_fastforward(bool ffwd = true) { m_fastforward = ffwd; }
+        public void set_fastforward(bool ffwd) { m_fastforward = ffwd; }
         void set_output_changed() { m_output_changed = true; }
 
 
         // misc
-
-        //-------------------------------------------------
-        //  toggle_throttle
-        //-------------------------------------------------
-        public void toggle_throttle() { set_throttled(!throttled()); }
 
         //-------------------------------------------------
         //  toggle_record_movie
@@ -325,23 +311,26 @@ namespace mame
 
             emulator_info.periodic_check();
 
-            // perform tasks for this frame
             if (!from_debugger)
+            {
+                // perform tasks for this frame
                 machine().call_notifiers(machine_notification.MACHINE_NOTIFY_FRAME);
 
-            // update frameskipping
-            if (!from_debugger && phase > machine_phase.INIT)
-                update_frameskip();
+                // update frameskipping
+                if (phase > machine_phase.INIT)
+                    update_frameskip();
 
-            // update speed computations
-            if (!from_debugger && !skipped_it && phase > machine_phase.INIT)
-                recompute_speed(current_time);
+                // update speed computations
+                if (!skipped_it && phase > machine_phase.INIT)
+                    recompute_speed(current_time);
+            }
+
 
             // call the end-of-frame callback
             if (phase == machine_phase.RUNNING)
             {
                 // reset partial updates if we're paused or if the debugger is active
-                screen_device screen = new screen_device_iterator(machine().root_device()).first();
+                screen_device screen = new screen_device_enumerator(machine().root_device()).first();
                 bool debugger_enabled = (machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0;
                 bool within_instruction_hook = debugger_enabled && machine().debugger().within_instruction_hook();
                 if (screen != null && ((machine().paused() && machine().options().update_in_pause()) || from_debugger || within_instruction_hook))
@@ -383,7 +372,7 @@ namespace mame
 
             // display the number of partial updates as well
             UInt32 partials = 0;
-            foreach (screen_device screen in new screen_device_iterator(machine().root_device()))
+            foreach (screen_device screen in new screen_device_enumerator(machine().root_device()))
                 partials += screen.partial_updates();
 
             if (partials > 1)
@@ -397,6 +386,10 @@ namespace mame
 
 
         // snapshots
+
+        //bool snap_native() const { return m_snap_native; }
+        //render_target &snapshot_target() { return *m_snap_target; }
+
 
         //-------------------------------------------------
         //  save_snapshot - save a snapshot to the given
@@ -457,6 +450,9 @@ namespace mame
             foreach (var recording in m_movie_recordings)
                 recording.add_sound_to_recording(sound, numsamples);
         }
+
+
+        public bool is_recording() { return !m_movie_recordings.empty(); }
 
 
         public void set_timecode_enabled(bool value) { m_timecode_enabled = value; }
@@ -608,7 +604,7 @@ namespace mame
         bool finish_screen_updates()
         {
             // finish updating the screens
-            screen_device_iterator iter = new screen_device_iterator(machine().root_device());
+            screen_device_enumerator iter = new screen_device_enumerator(machine().root_device());
 
             bool has_live_screen = false;
             foreach (screen_device screen in iter)
@@ -651,17 +647,6 @@ namespace mame
             return anything_changed;
         }
 
-        static readonly byte [] update_throttle_popcount = new byte[256]
-        {
-            0,1,1,2,1,2,2,3, 1,2,2,3,2,3,3,4, 1,2,2,3,2,3,3,4, 2,3,3,4,3,4,4,5,
-            1,2,2,3,2,3,3,4, 2,3,3,4,3,4,4,5, 2,3,3,4,3,4,4,5, 3,4,4,5,4,5,5,6,
-            1,2,2,3,2,3,3,4, 2,3,3,4,3,4,4,5, 2,3,3,4,3,4,4,5, 3,4,4,5,4,5,5,6,
-            2,3,3,4,3,4,4,5, 3,4,4,5,4,5,5,6, 3,4,4,5,4,5,5,6, 4,5,5,6,5,6,6,7,
-            1,2,2,3,2,3,3,4, 2,3,3,4,3,4,4,5, 2,3,3,4,3,4,4,5, 3,4,4,5,4,5,5,6,
-            2,3,3,4,3,4,4,5, 3,4,4,5,4,5,5,6, 3,4,4,5,4,5,5,6, 4,5,5,6,5,6,6,7,
-            2,3,3,4,3,4,4,5, 3,4,4,5,4,5,5,6, 3,4,4,5,4,5,5,6, 4,5,5,6,5,6,6,7,
-            3,4,4,5,4,5,5,6, 4,5,5,6,5,6,6,7, 4,5,5,6,5,6,6,7, 5,6,6,7,6,7,7,8
-        };
 
         //-------------------------------------------------
         //  update_throttle - throttle to the game's
@@ -774,7 +759,7 @@ namespace mame
                 // if we're more than 1/10th of a second out, or if we are behind at all and emulation
                 // is taking longer than the real frame, we just need to resync
                 if (real_is_ahead_attoseconds < -attotime.ATTOSECONDS_PER_SECOND / 10 ||
-                    (real_is_ahead_attoseconds < 0 && update_throttle_popcount[m_throttle_history & 0xff] < 6))
+                    (real_is_ahead_attoseconds < 0 && eminline_global.population_count_32(m_throttle_history & 0xff) < 6))
                 {
                     if (LOG_THROTTLE)
                         machine().logerror("Resync due to being behind: {0} (history={1})\n", new attotime(0, -real_is_ahead_attoseconds).as_string(18), m_throttle_history);
@@ -867,10 +852,10 @@ namespace mame
                 // calibrate the "adjusted speed" based on the target
                 double adjusted_speed_percent = m_speed_percent / (double)m_throttle_rate;
 
-                // if we're too fast, attempt to decrease the frameskip
                 double speed = m_speed * 0.001;
                 if (adjusted_speed_percent >= 0.995 * speed)
                 {
+                    // if we're too fast, attempt to decrease the frameskip
                     // but only after 3 consecutive frames where we are too fast
                     if (++m_frameskip_adjust >= 3)
                     {
@@ -879,16 +864,12 @@ namespace mame
                             m_frameskip_level--;
                     }
                 }
-
-                // if we're too slow, attempt to increase the frameskip
                 else
                 {
-                    // if below 80% speed, be more aggressive
-                    if (adjusted_speed_percent < 0.80 *  speed)
-                        m_frameskip_adjust -= (sbyte)((0.90 * speed - m_speed_percent) / 0.05);
-
-                    // if we're close, only force it up to frameskip 8
-                    else if (m_frameskip_level < 8)
+                    // if we're too slow, attempt to increase the frameskip
+                    if (adjusted_speed_percent < 0.80 *  speed) // if below 80% speed, be more aggressive
+                        m_frameskip_adjust -= (s8)((0.90 * speed - m_speed_percent) / 0.05);
+                    else if (m_frameskip_level < 8) // if we're close, only force it up to frameskip 8
                         m_frameskip_adjust--;
 
                     // perform the adjustment
@@ -921,7 +902,7 @@ namespace mame
                     // find the screen with the shortest frame period (max refresh rate)
                     // note that we first check the token since this can get called before all screens are created
                     attoseconds_t min_frame_period = attotime.ATTOSECONDS_PER_SECOND;
-                    foreach (screen_device screen in new screen_device_iterator(machine().root_device()))
+                    foreach (screen_device screen in new screen_device_enumerator(machine().root_device()))
                     {
                         attoseconds_t period = screen.frame_period().attoseconds();
                         if (period != 0)
@@ -1026,21 +1007,19 @@ namespace mame
             // select the appropriate view in our dummy target
             if (m_snap_native && screen != null)
             {
-                screen_device_iterator iter = new screen_device_iterator(machine().root_device());
+                screen_device_enumerator iter = new screen_device_enumerator(machine().root_device());
                 int view_index = iter.indexof(screen);
                 assert(view_index != -1);
                 m_snap_target.set_view((unsigned)view_index);
             }
 
-            // get the minimum width/height and set it on the target
+            // get the minimum width/height and set it on the target and bitmap
             s32 width;
             s32 height;
             compute_snapshot_size(out width, out height);
             m_snap_target.set_bounds(width, height);
-
-            // if we don't have a bitmap, or if it's not the right size, allocate a new one
-            if (!m_snap_bitmap.valid() || width != m_snap_bitmap.width() || height != m_snap_bitmap.height())
-                m_snap_bitmap.allocate(width, height);
+            if (width != m_snap_bitmap.width() || height != m_snap_bitmap.height())
+                m_snap_bitmap.resize(width, height);
 
             // render the screen there
             render_primitive_list primlist = m_snap_target.get_primitives();

@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
+
 
 namespace mame
 {
@@ -34,21 +36,11 @@ namespace mame
 
         public static bool frame_hook() { return mame_machine_manager.instance().lua().frame_hook(); }
 
-        public static void layout_file_cb(util.xml.data_node layout)
+        public static void layout_script_cb(layout_file file, string script)
         {
-            util.xml.data_node mamelayout = layout.get_child("mamelayout");
-            if (mamelayout != null)
-            {
-                util.xml.data_node script = mamelayout.get_child("script");
-                if (script != null)
-                {
-                    throw new emu_unimplemented();
-#if false
-                    mame_machine_manager.instance().lua().call_plugin_set("layout", script.get_value());
-#endif
-                }
-            }
+            throw new emu_unimplemented();
         }
+
 
         public static bool standalone() { return false; }
     }
@@ -223,7 +215,7 @@ namespace mame
             assert(machine() != null);
 
             // make sure that any required image has a mounted file
-            foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
+            foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
             {
                 if (image.must_be_loaded())
                 {
@@ -390,18 +382,18 @@ namespace mame
                 // process includes
                 foreach (string incl in split(options().plugin(), ','))
                 {
-                    plugin p = m_plugins.find(incl);
-                    if (p == null)
-                        fatalerror("Fatal error: Could not load plugin: {0}\n", incl.c_str());
+                    plugin_options::plugin *p = m_plugins->find(incl);
+                    if (!p)
+                        fatalerror("Fatal error: Could not load plugin: %s\n", incl);
                     p.m_start = true;
                 }
 
                 // process excludes
                 foreach (string excl in split(options().no_plugin(), ','))
                 {
-                    plugin p = m_plugins.find(excl);
-                    if (p == null)
-                        fatalerror("Fatal error: Unknown plugin: {0}\n", excl.c_str());
+                    plugin_options::plugin *p = m_plugins->find(excl);
+                    if (!p)
+                        fatalerror("Fatal error: Unknown plugin: %s\n", excl);
                     p.m_start = false;
                 }
 #endif
@@ -410,7 +402,7 @@ namespace mame
             // we have a special way to open the console plugin
             if (options().console())
             {
-                plugin p = m_plugins.find(emu_options.OPTION_CONSOLE);
+                plugin_options.plugin p = m_plugins.find(emu_options.OPTION_CONSOLE);
                 if (p == null)
                     fatalerror("Fatal error: Console plugin not found.\n");
 

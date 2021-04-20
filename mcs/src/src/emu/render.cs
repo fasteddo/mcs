@@ -18,16 +18,20 @@ using layout_view_edge_vector = mame.std.vector<mame.layout_view.edge>;  //using
 using layout_view_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
 using layout_view_item_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = emu::render::detail::bounds_vector;
 using layout_view_item_color_vector = mame.std.vector<mame.emu.render.detail.color_step>;  //using color_vector = emu::render::detail::color_vector;
+using layout_view_item_id_map = mame.std.unordered_map<string, mame.layout_view.item>;  //using item_id_map = std::unordered_map<std::reference_wrapper<std::string const>, item &, std::hash<std::string>, std::equal_to<std::string> >;
 using layout_view_item_list = mame.std.list<mame.layout_view.item>;  //using item_list = std::list<item>;
 using layout_view_item_ref_vector = mame.std.vector<mame.layout_view.item>;  //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
 using layout_view_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
 using layout_view_screen_ref_vector = mame.std.vector<mame.screen_device>;  //using screen_ref_vector = std::vector<std::reference_wrapper<screen_device> >;
 using layout_view_view_environment = mame.emu.render.detail.view_environment;  //using view_environment = emu::render::detail::view_environment;
 using layout_view_visibility_toggle_vector = mame.std.vector<mame.layout_view.visibility_toggle>;  //using visibility_toggle_vector = std::vector<visibility_toggle>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using PointerU8 = mame.Pointer<System.Byte>;
 using render_target_view_mask_vector = mame.std.vector<mame.std.pair<mame.layout_view, System.UInt32>>;  //using view_mask_vector = std::vector<view_mask_pair>;
 using s32 = System.Int32;
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using size_t = System.UInt32;
+using std_string = System.String;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -236,15 +240,22 @@ namespace mame
             public int state;
             public render_bounds bounds;
             public render_bounds delta;
+
+            public void get(out render_bounds result) { result = bounds; }
         }
+
         //using bounds_vector = std::vector<bounds_step>;
+
 
         public class color_step
         {
             public int state;
             public render_color color;
             public render_color delta;
+
+            public void get(out render_color result) { result = color; }
         }
+
         //using color_vector = std::vector<color_step>;
 
     } // namespace emu::render::detail
@@ -970,8 +981,8 @@ namespace mame
         public float yscale() { return m_user.m_yscale; }
         public float xoffset() { return m_user.m_xoffset; }
         public float yoffset() { return m_user.m_yoffset; }
-        bool is_empty() { return m_itemlist.count() == 0; }
-        public void get_user_settings(out user_settings settings) { settings = m_user; }
+        bool is_empty() { return m_itemlist.empty(); }
+        public user_settings get_user_settings() { return m_user; }
 
 
         // setters
@@ -1473,6 +1484,9 @@ namespace mame
         //using element_map = std::unordered_map<std::string, layout_element>;
         //using group_map = std::unordered_map<std::string, layout_group>;
         //using screen_ref_vector = std::vector<std::reference_wrapper<screen_device> >;
+        delegate void prepare_items_delegate();  //using prepare_items_delegate = delegate<void ()>;
+        delegate void preload_delegate();  //using preload_delegate = delegate<void ()>;
+        delegate void recomputed_delegate();  //using recomputed_delegate = delegate<void ()>;
 
 
         /// \brief A single item in a view
@@ -1483,25 +1497,29 @@ namespace mame
         public partial class item : global_object
         {
             //friend class layout_view;
-
+            delegate int state_delegate();  //using state_delegate = delegate<int ()>;
+            delegate void bounds_delegate(out render_bounds bounds);  //using bounds_delegate = delegate<void (render_bounds &)>;
+            delegate void color_delegate(out render_color color);  //using color_delegate = delegate<void (render_color &)>;
             //using bounds_vector = emu::render::detail::bounds_vector;
             //using color_vector = emu::render::detail::color_vector;
 
 
             // internal state
             layout_element m_element;          // pointer to the associated element (non-screens only)
-            //output_finder<>     m_output;           // associated output
-            //output_finder<>         m_animoutput;       // associated output for animation if different
-            bool m_have_output;      // whether we actually have an output
-            bool m_have_animoutput;  // whether we actually have an output for animation
+            state_delegate m_get_elem_state;   // resolved element state function
+            state_delegate m_get_anim_state;   // resolved animation state function
+            bounds_delegate m_get_bounds;       // resolved bounds function
+            color_delegate m_get_color;        // resolved color function
+            output_finder<uint32_constant_1> m_output;           // associated output  //output_finder<>     m_output;           // associated output
+            output_finder<uint32_constant_1> m_animoutput;       // associated output for animation if different  //output_finder<>         m_animoutput;       // associated output for animation if different
             ioport_port m_animinput_port;   // input port used for animation
+            int m_elem_state;       // element state used in absence of bindings
             ioport_value m_animmask;         // mask for animation state
             u8 m_animshift;        // shift for animation state
             ioport_port m_input_port;       // input port of this item
             ioport_field m_input_field;      // input port field of this item
             ioport_value m_input_mask;       // input mask of this item
             u8 m_input_shift;      // input mask rightshift for raw (trailing 0s)
-            bool m_input_raw;        // get raw data from input port
             bool m_clickthrough;     // should click pass through to lower elements
             screen_device m_screen;           // pointer to screen
             int m_orientation;      // orientation of this item
@@ -1511,9 +1529,13 @@ namespace mame
             public u32 m_visibility_mask;  // combined mask of parent visibility groups
 
             // cold items
+            std_string m_id;               // optional unique item identifier
             string m_input_tag;        // input tag of this item
             string m_animinput_tag;    // tag of input port for animation state
             public layout_view_item_bounds_vector m_rawbounds;        // raw (original) bounds of the item
+            bool m_have_output;      // whether we actually have an output
+            bool m_input_raw;        // get raw data from input port
+            bool m_have_animoutput;  // whether we actually have an output for animation
             bool m_has_clickthrough; // whether clickthrough was explicitly configured
 
 
@@ -1528,13 +1550,13 @@ namespace mame
 
 
             // getters
+            public std_string id() { return m_id; }
             public layout_element element() { return m_element; }
             public screen_device screen() { return m_screen; }
-
-
-            // rendlay.cs
-            //render_bounds bounds();
-            //render_color color();
+            //bool bounds_animated() const { return m_bounds.size() > 1U; }
+            //bool color_animated() const { return m_color.size() > 1U; }
+            public render_bounds bounds() { render_bounds result; m_get_bounds(out result); return result; }
+            public render_color color() { render_color result; m_get_color(out result); return result; }
 
 
             public int blend_mode() { return m_blend_mode; }
@@ -1548,10 +1570,33 @@ namespace mame
             public bool clickthrough() { return m_clickthrough; }
 
 
+            public int element_state() { return m_get_elem_state(); }
+            //int animation_state() const { return m_get_anim_state(); }
+
+            // set state
+            //void set_state(int state) { m_elem_state = state; }
+
+
             // rendlay.cs
-            //public int state()
+            // set handlers
+            //void set_element_state_callback(state_delegate &&handler);
+            //void set_animation_state_callback(state_delegate &&handler);
+            //void set_bounds_callback(bounds_delegate &&handler);
+            //void set_color_callback(color_delegate &&handler);
             //public void resolve_tags()
-            //int animation_state() const;
+            //state_delegate default_get_elem_state();
+            //state_delegate default_get_anim_state();
+            //bounds_delegate default_get_bounds();
+            //color_delegate default_get_color();
+            //int get_state() const;
+            //int get_output() const;
+            //int get_input_raw() const;
+            //int get_input_field_cached() const;
+            //int get_input_field_conditional() const;
+            //int get_anim_output() const;
+            //int get_anim_input() const;
+            //void get_interpolated_bounds(render_bounds &result) const;
+            //void get_interpolated_color(render_color &result) const;
             //static layout_element find_element(view_environment env, util.xml.data_node itemnode, element_map elemmap);
             //static bounds_vector make_bounds(view_environment &env, util::xml::data_node const &itemnode, layout_group::transform const &trans);
             //static color_vector make_color(view_environment &env, util::xml::data_node const &itemnode, render_color const &mult);
@@ -1566,6 +1611,7 @@ namespace mame
 
         //using item_list = std::list<item>;
         //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
+        //using item_id_map = std::unordered_map<std::reference_wrapper<std::string const>, item &, std::hash<std::string>, std::equal_to<std::string> >;
 
 
         /// \brief A subset of items in a view that can be hidden or shown
@@ -1640,10 +1686,9 @@ namespace mame
 
 
         // internal state
-        string m_name;             // name of the layout
         float m_effaspect;        // X/Y of the layout in current configuration
         render_bounds m_bounds;           // computed bounds of the view in current configuration
-        layout_view_item_list m_items;            // list of layout items
+        layout_view_item_list m_items = new layout_view_item_list();            // list of layout items
         layout_view_item_ref_vector m_visible_items = new layout_view_item_ref_vector();    // all visible items
         layout_view_item_ref_vector m_screen_items = new layout_view_item_ref_vector();     // visible items that represent screens to draw
         layout_view_item_ref_vector m_interactive_items = new layout_view_item_ref_vector();// visible items that can accept pointer input
@@ -1651,7 +1696,15 @@ namespace mame
         layout_view_edge_vector m_interactive_edges_y = new layout_view_edge_vector();
         layout_view_screen_ref_vector m_screens = new layout_view_screen_ref_vector();          // list screens visible in current configuration
 
+        // handlers
+        prepare_items_delegate m_prepare_items;    // prepare items for adding to render container
+        preload_delegate m_preload;          // additional actions when visible items change
+        recomputed_delegate m_recomputed;       // additional actions on resizing/visibility change
+
         // cold items
+        std_string m_name;             // display name for the view
+        std_string m_unqualified_name; // the name exactly as specified in the layout file
+        layout_view_item_id_map m_items_by_id;      // items with non-empty ID indexed by ID
         layout_view_visibility_toggle_vector m_vistoggles = new layout_view_visibility_toggle_vector();       // collections of items that can be shown/hidden
         render_bounds m_expbounds = new render_bounds();        // explicit bounds of the view
         u32 m_defvismask;       // default visibility mask
@@ -1671,12 +1724,14 @@ namespace mame
 
         // getters
 
+        //item *get_item(std::string const &id);
         public layout_view_item_list items() { return m_items; }
 
         // rendlay.cs
         //bool has_screen(screen_device &screen);
 
         public string name() { return m_name; }
+        //const std::string &unqualified_name() const { return m_unqualified_name; }
         //size_t visible_screen_count() const { return m_screens.size(); }
         public float effective_aspect() { return m_effaspect; }
         //const render_bounds &bounds() const { return m_bounds; }
@@ -1702,7 +1757,16 @@ namespace mame
         public bool has_art() { return m_has_art; }
 
 
+        // set handlers
+        //void set_prepare_items_callback(prepare_items_delegate &&handler);
+        //void set_preload_callback(preload_delegate &&handler);
+        //void set_recomputed_callback(recomputed_delegate &&handler);
+
+
         // operations
+
+        public void prepare_items() { if (m_prepare_items != null) m_prepare_items(); }
+
 
         // rendlay.cs
         //void recompute(u32 visibility_mask, bool zoom_to_screens);
@@ -1728,16 +1792,19 @@ namespace mame
     ///
     /// Comprises a list of elements and a list of views.  The elements are
     /// reusable items that the views reference.
-    partial class layout_file
+    public partial class layout_file : global_object
     {
         //using element_map = std::unordered_map<std::string, layout_element>;
         //using group_map = std::unordered_map<std::string, layout_group>;
         //using view_list = std::list<layout_view>;
+        delegate void resolve_tags_delegate();  //using resolve_tags_delegate = delegate<void ()>;
 
 
         // internal state
+        device_t m_device;       // device that caused file to be loaded
         layout_file_element_map m_elemmap = new layout_file_element_map();    // list of shared layout elements
         layout_file_view_list m_viewlist = new layout_file_view_list();    // list of views
+        resolve_tags_delegate m_resolve_tags; // additional actions after resolving tags
 
 
         // rendlay.cs
@@ -1745,8 +1812,27 @@ namespace mame
 
 
         // getters
+        //device_t &device() const { return m_device; }
         layout_file_element_map elements() { return m_elemmap; }
         public layout_file_view_list views() { return m_viewlist; }
+
+
+        // resolve tags, if any
+        //-------------------------------------------------
+        //  resolve_tags - resolve tags
+        //-------------------------------------------------
+        public void resolve_tags()
+        {
+            foreach (layout_view view in views())
+                view.resolve_tags();
+
+            if (m_resolve_tags != null)
+                m_resolve_tags();
+        }
+
+
+        // set handlers
+        //void set_resolve_tags_callback(resolve_tags_delegate &&handler);
 
 
         //using environment = emu::render::detail::layout_environment;
@@ -1913,6 +1999,7 @@ namespace mame
         public int width() { return m_width; }
         public int height() { return m_height; }
         public float pixel_aspect() { return m_pixel_aspect; }
+        //bool keepaspect() const { return m_keepaspect; }
         int scale_mode() { return m_scale_mode; }
         public float max_update_rate() { return m_max_refresh; }
         public int orientation() { return m_orientation; }
@@ -1995,8 +2082,8 @@ namespace mame
         {
             layout_view view = null;
 
-            // auto view just selects the nth view
-            if (viewname != "auto")
+            // if it isn't "auto" or an empty string, try to match it as a view name prefix
+            if (viewname != null && !string.IsNullOrEmpty(viewname) && strcmp(viewname, "auto") != 0)
             {
                 // scan for a matching view name
                 size_t viewlen = (size_t)strlen(viewname);
@@ -2009,7 +2096,7 @@ namespace mame
 
             // if we don't have a match, default to the nth view
             std.vector<screen_device> screens = new std.vector<screen_device>();  //std::vector<std::reference_wrapper<screen_device> > screens;
-            foreach (screen_device screen in new screen_device_iterator(m_manager.machine().root_device()))
+            foreach (screen_device screen in new screen_device_enumerator(m_manager.machine().root_device()))
                 screens.push_back(screen);
 
             if ((view == null) && !screens.empty())
@@ -2194,10 +2281,10 @@ namespace mame
             foreach (layout_view.item curitem in current_view().items())
             {
                 // iterate over items in the layer
-                if (curitem.screen() != null)
+                screen_device screen = curitem.screen();
+                if (screen != null)
                 {
                     // use a hard-coded default visible area for vector screens
-                    screen_device screen = curitem.screen();
                     rectangle vectorvis = new rectangle(0, 639, 0, 479);
                     rectangle visarea = (screen.screen_type() == screen_type_enum.SCREEN_TYPE_VECTOR) ? vectorvis : screen.visible_area();
 
@@ -2277,6 +2364,7 @@ namespace mame
             if (m_manager.machine().phase() >= machine_phase.RESET)
             {
                 // we're running - iterate over items in the view
+                current_view().prepare_items();
                 foreach (layout_view.item curitem in current_view().visible_items())
                 {
                     // first apply orientation to the bounds
@@ -2298,7 +2386,7 @@ namespace mame
                     if (curitem.screen() != null)
                         add_container_primitives(list, root_xform, item_xform, curitem.screen().container(), curitem.blend_mode());
                     else
-                        add_element_primitives(list, item_xform, curitem.element(), curitem.state(), curitem.blend_mode());
+                        add_element_primitives(list, item_xform, curitem.element(), curitem.element_state(), curitem.blend_mode());
                 }
             }
             else
@@ -2523,17 +2611,10 @@ namespace mame
         public void resolve_tags()
         {
             foreach (layout_file file in m_filelist)
-            {
-                foreach (layout_view view in file.views())
-                {
-                    view.resolve_tags();
-                    if (current_view() == view)
-                    { 
-                        view.recompute(visibility_mask(), m_layerconfig.zoom_to_screen());
-                        view.preload();
-                    }
-                }
-            }
+                file.resolve_tags();
+
+            current_view().recompute(visibility_mask(), m_layerconfig.zoom_to_screen());
+            current_view().preload();
         }
 
 
@@ -2712,7 +2793,7 @@ namespace mame
                 }
             }
 
-            screen_device_iterator iter = new screen_device_iterator(m_manager.machine().root_device());
+            screen_device_enumerator iter = new screen_device_enumerator(m_manager.machine().root_device());
             std.vector<load_additional_layout_files_screen_info> screens = new std.vector<load_additional_layout_files_screen_info>();  //std::vector<screen_info> const screens(std::begin(iter), std::end(iter));
             foreach (var screen in iter)
                 screens.push_back(new load_additional_layout_files_screen_info(screen));
@@ -2959,12 +3040,11 @@ namespace mame
             {
                 m_filelist.emplace_back(new layout_file(device, rootnode, searchpath, dirname));
             }
-            catch (emu_fatalerror)
+            catch (emu_fatalerror err)
             {
+                osd_printf_warning("{0}\n", err.what());
                 return false;
             }
-
-            emulator_info.layout_file_cb(rootnode);
 
             return true;
         }
@@ -3671,7 +3751,7 @@ namespace mame
             machine.configuration().config_register("video", config_load, config_save);
 
             // create one container per screen
-            foreach (screen_device screen in new screen_device_iterator(machine.root_device()))
+            foreach (screen_device screen in new screen_device_enumerator(machine.root_device()))
                 screen.set_container(container_alloc(screen));
         }
 

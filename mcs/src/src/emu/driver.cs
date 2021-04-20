@@ -212,7 +212,7 @@ namespace mame
         protected override void device_start()
         {
             // reschedule ourselves to be last
-            foreach (device_t test in new device_iterator(this))
+            foreach (device_t test in new device_enumerator(this))
             {
                 if (test != this && !test.started())
                     throw new device_missing_dependencies();

@@ -171,8 +171,8 @@ namespace mame
         bool m_power_fail;
         bool m_ext_halt;
         intref m_icount = new intref();  //int m_icount;
-        memory_access.cache m_cache = new memory_access(16, 1, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::cache m_cache;
-        memory_access.specific m_program = new memory_access(16, 1, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::specific m_program;
+        memory_access<int_constant_16, int_constant_1, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache m_cache = new memory_access<int_constant_16, int_constant_1, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::cache m_cache;
+        memory_access<int_constant_16, int_constant_1, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_program = new memory_access<int_constant_16, int_constant_1, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::specific m_program;
 
         devcb_write_line m_out_reset_func;
         devcb_read8 m_in_iack_func;
@@ -262,8 +262,8 @@ namespace mame
 
 
             m_initial_pc = device_start_initial_pc[c_initial_mode >> 13];
-            m_dimemory.space(AS_PROGRAM).cache(m_cache.Width, m_cache.AddrShift, m_cache.Endian, m_cache);
-            m_dimemory.space(AS_PROGRAM).specific(m_program.Level, m_program.Width, m_program.AddrShift, m_program.Endian, m_program);
+            m_dimemory.space(AS_PROGRAM).cache(m_cache);
+            m_dimemory.space(AS_PROGRAM).specific(m_program);
             m_out_reset_func.resolve_safe();
             m_in_iack_func.resolve_safe(0); // default vector (T-11 User's Guide, p. A-11)
 

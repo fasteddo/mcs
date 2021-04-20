@@ -346,6 +346,7 @@ namespace mame
             IPT_UI_ROTATE,
             IPT_UI_SHOW_PROFILER,
             IPT_UI_TOGGLE_UI,
+            IPT_UI_RELEASE_POINTER,
             IPT_UI_TOGGLE_DEBUG,
             IPT_UI_PASTE,
             IPT_UI_SAVE_STATE,
@@ -3545,7 +3546,7 @@ namespace mame
             init_port_types();
 
             // if we have a token list, proceed
-            device_iterator iter = new device_iterator(machine().root_device());
+            device_enumerator iter = new device_enumerator(machine().root_device());
             foreach (var device in iter)
             {
                 string errors;
@@ -3878,7 +3879,7 @@ namespace mame
         //  exit - exit callback to ensure we clean up
         //  and close our files
         //-------------------------------------------------
-        void exit(running_machine machine)
+        void exit(running_machine machine_)
         {
             // close any playback or recording files
             playback_end();

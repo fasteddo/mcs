@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using offs_t = System.UInt32;
+using optional_memory_bank = mame.memory_bank_finder<mame.bool_constant_false>;  //using optional_memory_bank = memory_bank_finder<false>;
+using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -276,17 +278,18 @@ namespace mame
 
         slapstic_data slapstic = new slapstic_data();
 
+        optional_memory_bank m_bank;
+
 
         // construction/destruction
-        atari_slapstic_device(machine_config mconfig, string tag, device_t owner, int chipnum, bool m68k_mode)
-            : this(mconfig, tag, owner, (uint32_t)0)
+        atari_slapstic_device(machine_config mconfig, string tag, device_t owner, int chipnum)
+            : this(mconfig, tag, owner, (u32)0)
         {
-            set_chipnum(chipnum);
-            set_access68k(m68k_mode ? 1 : 0);
+            m_chipnum = chipnum;
         }
 
 
-        atari_slapstic_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
+        atari_slapstic_device(machine_config mconfig, string tag, device_t owner, u32 clock)
             : base(mconfig, SLAPSTIC, tag, owner, clock)
         {
             state = 0;
@@ -296,6 +299,7 @@ namespace mame
             bit_bank = 0;
             add_bank = 0;
             bit_xor = 0;
+            m_bank = new optional_memory_bank(this, finder_base.DUMMY_TAG);
 
 
             slapstic.bankstart = 0;
@@ -333,45 +337,14 @@ namespace mame
             slapstic.add3.value = 0;
         }
 
-        public void atari_slapstic_device_after_ctor(int chipnum, bool m68k_mode)
+
+        public void atari_slapstic_device_after_ctor(int chipnum)
         {
-            set_chipnum(chipnum);
-            set_access68k(m68k_mode ? 1 : 0);
+            m_chipnum = chipnum;
         }
 
 
-        /*************************************
-         *
-         *  Initialization
-         *
-         *************************************/
-        public void slapstic_init()
-        {
-            /* set up the parameters */
-            slapstic = slapstic_table[m_chipnum - 101];
-
-            /* reset the chip */
-            slapstic_reset();
-
-
-            /* save state */
-            save_item(NAME(new { state }));
-            save_item(NAME(new { current_bank }));
-            save_item(NAME(new { alt_bank }));
-            save_item(NAME(new { bit_bank }));
-            save_item(NAME(new { add_bank }));
-            save_item(NAME(new { bit_xor }));
-        }
-
-
-        public void slapstic_reset()
-        {
-            /* reset the chip */
-            state = DISABLED;
-
-            /* the 111 and later chips seem to reset to bank 0 */
-            current_bank = (uint8_t)slapstic.bankstart;
-        }
+        //template <typename T> void set_bank(T &&tag) { m_bank.set_tag(std::forward<T>(tag)); }
 
 
         /*************************************
@@ -379,7 +352,7 @@ namespace mame
          *  Returns active bank without tweaking
          *
          *************************************/
-        public int slapstic_bank()
+        public int bank()
         {
             return current_bank;
         }
@@ -390,8 +363,10 @@ namespace mame
          *  Call this *after* every access
          *
          *************************************/
-        public int slapstic_tweak(address_space space, offs_t offset)
+        public int tweak(offs_t offset)
         {
+            offset &= 0x3fff;
+
             /* reset is universal */
             if (offset == 0x0000)
             {
@@ -428,13 +403,6 @@ namespace mame
                             state = ALTERNATE1;
                         }
 
-                        /* special kludge for catching the second alternate address if */
-                        /* the first one was missed (since it's usually an opcode fetch) */
-                        else if (MATCHES_MASK_VALUE(offset, slapstic.alt2))
-                        {
-                            state = (uint8_t)alt2_kludge(space, offset);
-                        }
-
                         /* check for standard bankswitches */
                         else if (offset == slapstic.bank[0])
                         {
@@ -463,6 +431,10 @@ namespace mame
                         if (MATCHES_MASK_VALUE(offset, slapstic.alt2))
                         {
                             state = ALTERNATE2;
+                        }
+                        else if (MATCHES_MASK_VALUE(offset, slapstic.add1))
+                        {
+                            state = ADDITIVE1;
                         }
                         else
                         {
@@ -586,10 +558,9 @@ namespace mame
                         }
                         break;
 
-                    /* ADDITIVE3 state: waiting for a bank to seal the deal */
+                    /* ADDITIVE3 state: waiting for the commit, which is common with alt, but can be delayed */
                     case ADDITIVE3:
-                        if (offset == slapstic.bank[0] || offset == slapstic.bank[1] ||
-                            offset == slapstic.bank[2] || offset == slapstic.bank[3])
+                        if (MATCHES_MASK_VALUE(offset, slapstic.alt4))
                         {
                             state = DISABLED;
                             current_bank = add_bank;
@@ -602,30 +573,54 @@ namespace mame
             if (LOG_SLAPSTIC)
                 slapstic_log(machine(), offset);
 
+            if (m_bank != null)
+                m_bank.op[0].set_entry(current_bank);
+
             /* return the active bank */
             return current_bank;
         }
 
 
-        int alt2_kludge(address_space space, offs_t offset) { throw new emu_unimplemented(); }
+        //void set_chipnum(int chipnum) { m_chipnum = chipnum; }
+
+        //int alt2_kludge(address_space space, offs_t offset) { throw new emu_unimplemented(); }
+
+        //void set_access68k(int type) { access_68k = type; }
+
+        //void set_chipnum(int chipnum) { m_chipnum = chipnum; }
 
 
-        void set_access68k(int type) { access_68k = type; }
-
-        void set_chipnum(int chipnum) { m_chipnum = chipnum; }
-
-
-        void slapstic_log(running_machine machine, offs_t offset) { throw new emu_unimplemented(); }
-        //FILE *slapsticlog;
+        void slapstic_log(running_machine machine, offs_t offset)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         protected override void device_start()
         {
+            /* set up the parameters */
+            slapstic = slapstic_table[m_chipnum - 101];
+
+            /* save state */
+            save_item(NAME(new { state }));
+            save_item(NAME(new { current_bank }));
+            save_item(NAME(new { alt_bank }));
+            save_item(NAME(new { bit_bank }));
+            save_item(NAME(new { add_bank }));
+            save_item(NAME(new { bit_xor }));
         }
 
 
         protected override void device_reset()
         {
+            /* reset the chip */
+            state = DISABLED;
+
+            /* the 111 and later chips seem to reset to bank 0 */
+            current_bank = (uint8_t)slapstic.bankstart;
+
+            if (m_bank != null)
+                m_bank.op[0].set_entry(current_bank);
         }
 
 

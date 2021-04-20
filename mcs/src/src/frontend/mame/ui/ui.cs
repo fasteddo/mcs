@@ -4,11 +4,14 @@
 using System;
 using System.Collections.Generic;
 
+using cassette_device_enumerator = mame.device_type_enumerator<mame.cassette_image_device>;  //typedef device_type_enumerator<cassette_image_device> cassette_device_enumerator;
 using char32_t = System.UInt32;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
-using mame_ui_manager_handler_callback_func = System.Func<mame.render_container, mame.mame_ui_manager, System.UInt32>;  //using handler_callback_func = std::function<uint32_t (render_container &)>;
+using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
 using mame_ui_manager_device_feature_set = mame.std.set<mame.std.pair<string, string>>;  //using device_feature_set = std::set<std::pair<std::string, std::string> >;
 using osd_ticks_t = System.UInt64;
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
+using std_string = System.String;
 using std_time_t = System.Int64;
 using uint32_t = System.UInt32;
 
@@ -255,7 +258,7 @@ namespace mame
     public class mame_ui_manager : ui_manager
                                    //slider_changed_notifier
     {
-        //using handler_callback_func = std::function<uint32_t (render_container &)>;
+        delegate uint32_t handler_callback_func(render_container container, mame_ui_manager mui);  //using handler_callback_func = std::function<uint32_t (render_container &)>;
         //using device_feature_set = std::set<std::pair<std::string, std::string> >;
 
 
@@ -269,7 +272,7 @@ namespace mame
 
         // instance variables
         render_font m_font;
-        mame_ui_manager_handler_callback_func m_handler_callback;
+        handler_callback_func m_handler_callback;
         ui_callback_type m_handler_callback_type;
         uint32_t m_handler_param;
         bool m_single_step;
@@ -295,7 +298,6 @@ namespace mame
         // static variables
         static string messagebox_text;
         static string messagebox_poptext;
-        static rgb_t messagebox_backcolor;
 
         static std.vector<ui.menu_item> slider_list;
         static slider_state slider_current;  //static slider_state     *slider_current;
@@ -348,8 +350,13 @@ namespace mame
             update_target_font_height();
 
             // more initialization
-            //using namespace std::placeholders;
-            set_handler(ui_callback_type.GENERAL, handler_messagebox);
+            set_handler(
+                    ui_callback_type.GENERAL,
+                    (render_container container, mame_ui_manager mui) =>
+                    {
+                        draw_text_box(container, messagebox_text, ui.text_layout.text_justify.LEFT, 0.5f, 0.5f, colors().background_color());
+                        return 0;
+                    });
             m_non_char_keys_down = new byte [(ui_global.non_char_keys.Length + 7) / 8]; // auto_alloc_array(machine, UINT8, (ARRAY_LENGTH(non_char_keys) + 7) / 8);
             m_mouse_show = ((UInt64)machine().system().flags & MACHINE_CLICKABLE_ARTWORK) == MACHINE_CLICKABLE_ARTWORK ? true : false;
 
@@ -460,7 +467,7 @@ namespace mame
         //  set_handler - set a callback/parameter
         //  pair for the current UI handler
         //-------------------------------------------------
-        void set_handler(ui_callback_type callback_type, Func<render_container, mame_ui_manager, uint32_t> callback)  //void mame_ui_manager::set_handler(ui_callback_type callback_type, const std::function<uint32_t (render_container &)> &&callback)
+        void set_handler(ui_callback_type callback_type, handler_callback_func callback)  //void mame_ui_manager::set_handler(ui_callback_type callback_type, const std::function<uint32_t (render_container &)> &&callback)
         {
             m_handler_callback = callback;
             m_handler_callback_type = callback_type;
@@ -517,32 +524,58 @@ namespace mame
             show_gameinfo = show_warnings = show_mandatory_fileman = false;
 
 
-            // loop over states
+            // set up event handlers
             //using namespace std::placeholders;
+            switch_code_poller poller = new switch_code_poller(machine().input());
+            std_string warning_text = "";
+            rgb_t warning_color = new rgb_t();
+            handler_callback_func handler_messagebox_anykey =
+                (render_container container, mame_ui_manager mui) =>
+                {
+                    // draw a standard message window
+                    draw_text_box(container, warning_text, ui.text_layout.text_justify.LEFT, 0.5f, 0.5f, warning_color);
+
+                    if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL))
+                    {
+                        // if the user cancels, exit out completely
+                        machine().schedule_exit();
+                        return UI_HANDLER_CANCEL;
+                    }
+                    else if (poller.poll() != input_code.INPUT_CODE_INVALID)
+                    {
+                        // if any key is pressed, just exit
+                        return UI_HANDLER_CANCEL;
+                    }
+
+                    return 0;
+                };
+
             set_handler(ui_callback_type.GENERAL, handler_ingame);
+
+            // loop over states
             for (int state = 0; state < maxstate && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(machine()); state++)
             {
                 // default to standard colors
-                messagebox_backcolor = colors().background_color();
-                messagebox_text = "";
+                warning_color = colors().background_color();
+                warning_text = "";  //warning_text.clear();
 
                 // pick the next state
                 switch (state)
                 {
                     case 0:
                         if (show_gameinfo)
-                            messagebox_text = machine_info().game_info_string();
+                            warning_text = machine_info().game_info_string();
 
-                        if (!messagebox_text.empty())
+                        if (!warning_text.empty())
                         {
-                            messagebox_text += "\n\nPress any key to continue";
+                            warning_text += "\n\nPress any key to continue";
                             set_handler(ui_callback_type.MODAL, handler_messagebox_anykey);
                         }
                         break;
 
                     case 1:
-                        messagebox_text = machine_info().warnings_string();
-                        m_has_warnings = !messagebox_text.empty();
+                        warning_text = machine_info().warnings_string();
+                        m_has_warnings = !warning_text.empty();
                         if (show_warnings)
                         {
                             bool need_warning = m_has_warnings;
@@ -563,7 +596,7 @@ namespace mame
                                 // non-critical warnings - map current unemulated/imperfect features
                                 mame_ui_manager_device_feature_set unemulated_features = new mame_ui_manager_device_feature_set();
                                 mame_ui_manager_device_feature_set imperfect_features = new mame_ui_manager_device_feature_set();
-                                foreach (device_t device in new device_iterator(machine().root_device()))
+                                foreach (device_t device in new device_enumerator(machine().root_device()))
                                 {
                                     device_t_feature_type unemulated = device.type().unemulated_features();
                                     for (device_t_feature_type feature = (device_t_feature_type)1; unemulated != 0; feature = (device_t_feature_type)((uint32_t)feature << 1))  //for (std::underlying_type_t<device_t::feature_type> feature = 1U; unemulated; feature <<= 1)
@@ -621,9 +654,9 @@ namespace mame
 
                             if (need_warning)
                             {
-                                messagebox_text += "\n\nPress any key to continue";
+                                warning_text += "\n\nPress any key to continue";
                                 set_handler(ui_callback_type.MODAL, handler_messagebox_anykey);
-                                messagebox_backcolor = machine_info().warnings_color();
+                                warning_color = machine_info().warnings_color();
                             }
                         }
                         break;
@@ -644,17 +677,13 @@ namespace mame
                         break;
                 }
 
-                // clear the input memory
-                machine().input().reset_polling();
-                while (machine().input().poll_switches() != input_code.INPUT_CODE_INVALID)
-                {
-                }
+                // clear the input memory and wait for all keys to be released
+                poller.reset();
+                while (poller.poll() != input_code.INPUT_CODE_INVALID) { }
 
                 // loop while we have a handler
                 while (m_handler_callback_type == ui_callback_type.MODAL && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(machine()))
-                {
                     machine().video().frame_update();
-                }
 
                 // clear the handler and force an update
                 set_handler(ui_callback_type.GENERAL, handler_ingame);
@@ -684,7 +713,6 @@ namespace mame
 
             // copy in the new text
             messagebox_text = text;
-            messagebox_backcolor = colors().background_color();
 
             // don't update more than 4 times/second
             if (force || (curtime - lastupdatetime_set_startup_text) > osdcore_global.m_osdcore.osd_ticks_per_second() / 4)
@@ -724,7 +752,7 @@ namespace mame
 
             // display any popup messages
             if (osdcore_global.m_osdcore.osd_ticks() < m_popup_text_end)
-                draw_text_box(container, messagebox_poptext, ui.text_layout.text_justify.CENTER, 0.5f, 0.9f, messagebox_backcolor);
+                draw_text_box(container, messagebox_poptext, ui.text_layout.text_justify.CENTER, 0.5f, 0.9f, colors().background_color());
             else
                 m_popup_text_end = 0;
 
@@ -978,7 +1006,6 @@ namespace mame
         {
             // extract the text
             messagebox_poptext = text;
-            messagebox_backcolor = colors().background_color();
 
             // set a timer
             m_popup_text_end = osdcore_global.m_osdcore.osd_ticks() + osdcore_global.m_osdcore.osd_ticks_per_second() * (UInt64)seconds;
@@ -1085,7 +1112,7 @@ namespace mame
                 var layout = create_layout(machine().render().ui_container());
 
                 // loop through all devices, build their text into the layout
-                foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
+                foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
                 {
                     string str = image.call_display();
                     if (!str.empty())
@@ -1285,7 +1312,6 @@ namespace mame
         {
             // extract the text
             messagebox_poptext = message;
-            messagebox_backcolor = colors().background_color();
 
             // set a timer
             m_popup_text_end = osdcore_global.m_osdcore.osd_ticks() + osdcore_global.m_osdcore.osd_ticks_per_second() * (osd_ticks_t)seconds;
@@ -1299,43 +1325,6 @@ namespace mame
 
 
         // UI handlers
-        //-------------------------------------------------
-        //  handler_messagebox - displays the current
-        //  messagebox_text string but handles no input
-        //-------------------------------------------------
-        uint32_t handler_messagebox(render_container container, mame_ui_manager mui)
-        {
-            draw_text_box(container, messagebox_text, ui.text_layout.text_justify.LEFT, 0.5f, 0.5f, messagebox_backcolor);
-            return 0;
-        }
-
-
-        //-------------------------------------------------
-        //  handler_messagebox_anykey - displays the
-        //  current messagebox_text string and waits for
-        //  any keypress
-        //-------------------------------------------------
-        uint32_t handler_messagebox_anykey(render_container container, mame_ui_manager mui)
-        {
-            uint32_t state = 0;
-
-            // draw a standard message window
-            draw_text_box(container, messagebox_text, ui.text_layout.text_justify.LEFT, 0.5f, 0.5f, messagebox_backcolor);
-
-            // if the user cancels, exit out completely
-            if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL))
-            {
-                machine().schedule_exit();
-                state = UI_HANDLER_CANCEL;
-            }
-
-            // if any key is pressed, just exit
-            else if (machine().input().poll_switches() != input_code.INPUT_CODE_INVALID)
-                state = UI_HANDLER_CANCEL;
-
-            return state;
-        }
-
 
         //-------------------------------------------------
         //  handler_ingame - in-game handler takes care
@@ -1464,7 +1453,7 @@ namespace mame
             // handle a tape control key
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_TAPE_START))
             {
-                foreach (cassette_image_device cass in new cassette_device_iterator(machine().root_device()))
+                foreach (cassette_image_device cass in new cassette_device_enumerator(machine().root_device()))
                 {
                     cass.change_state(cassette_state.CASSETTE_PLAY, cassette_state.CASSETTE_MASK_UISTATE);
                     return 0;
@@ -1472,7 +1461,7 @@ namespace mame
             }
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_TAPE_STOP))
             {
-                foreach (cassette_image_device cass in new cassette_device_iterator(machine().root_device()))
+                foreach (cassette_image_device cass in new cassette_device_enumerator(machine().root_device()))
                 {
                     cass.change_state(cassette_state.CASSETTE_STOPPED, cassette_state.CASSETTE_MASK_UISTATE);
                     return 0;
@@ -1549,7 +1538,7 @@ namespace mame
 
             // toggle throttle?
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_THROTTLE))
-                machine().video().toggle_throttle();
+                machine().video().set_throttled(!machine().video().throttled());
 
             // check for fast forward
             if (machine().ioport().type_pressed(ioport_type.IPT_UI_FAST_FORWARD))
@@ -1757,7 +1746,7 @@ namespace mame
         //-------------------------------------------------
         public static string slider_get_screen_desc(screen_device screen)
         {
-            if (new screen_device_iterator(screen.machine().root_device()).count() > 1)
+            if (new screen_device_enumerator(screen.machine().root_device()).count() > 1)
                 return string.Format("Screen '{0}'", screen.tag());  // %1$s
             else
                 return "Screen";

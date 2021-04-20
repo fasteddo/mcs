@@ -113,10 +113,10 @@ namespace mame
 
         abstract class memory_interface
         {
-            public memory_access.cache cprogram = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache cprogram;
-            public memory_access.cache csprogram = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache csprogram;
-            public memory_access.specific program = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific program;
-            public memory_access.specific program14 = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<14, 0, 0, ENDIANNESS_LITTLE>::specific program14;
+            public memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache cprogram = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache cprogram;
+            public memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache csprogram = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache csprogram;
+            public memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific program = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific program;
+            public memory_access<int_constant_14, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific program14 = new memory_access<int_constant_14, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<14, 0, 0, ENDIANNESS_LITTLE>::specific program14;
 
             //virtual ~memory_interface() {}
             public abstract uint8_t read(uint16_t adr);
@@ -248,12 +248,12 @@ namespace mame
 
         protected virtual void init()
         {
-            m_dimemory.space(AS_PROGRAM).cache(mintf.cprogram.Width, mintf.cprogram.AddrShift, mintf.cprogram.Endian, mintf.cprogram);
-            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(mintf.cprogram.Width, mintf.cprogram.AddrShift, mintf.cprogram.Endian, mintf.csprogram);
+            m_dimemory.space(AS_PROGRAM).cache(mintf.cprogram);
+            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(mintf.csprogram);
             if (m_dimemory.space(AS_PROGRAM).addr_width() > 14)
-                m_dimemory.space(AS_PROGRAM).specific(mintf.program.Level, mintf.program.Width, mintf.program.AddrShift, mintf.program.Endian, mintf.program);
+                m_dimemory.space(AS_PROGRAM).specific(mintf.program);
             else
-                m_dimemory.space(AS_PROGRAM).specific(mintf.program14.Level, mintf.program14.Width, mintf.program14.AddrShift, mintf.program14.Endian, mintf.program14);
+                m_dimemory.space(AS_PROGRAM).specific(mintf.program14);
 
             sync_w.resolve_safe();
 

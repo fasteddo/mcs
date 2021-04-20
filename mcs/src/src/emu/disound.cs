@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using mixer_interface_enumerator = mame.device_interface_enumerator<mame.device_mixer_interface>;  //typedef device_interface_enumerator<device_mixer_interface> mixer_interface_enumerator;
+using sound_interface_enumerator = mame.device_interface_enumerator<mame.device_sound_interface>;  //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
@@ -310,7 +312,7 @@ namespace mame
         public override void interface_pre_start()
         {
             // scan all the sound devices
-            sound_interface_iterator iter = new sound_interface_iterator(device().machine().root_device());
+            sound_interface_enumerator iter = new sound_interface_enumerator(device().machine().root_device());
             foreach (device_sound_interface sound in iter)
             {
                 // scan each route on the device
@@ -353,7 +355,7 @@ namespace mame
         public override void interface_post_start()
         {
             // iterate over all the sound devices
-            foreach (device_sound_interface sound in new sound_interface_iterator(device().machine().root_device()))
+            foreach (device_sound_interface sound in new sound_interface_enumerator(device().machine().root_device()))
             {
                 // scan each route on the device
                 foreach (sound_route route in sound.routes())
@@ -407,11 +409,7 @@ namespace mame
 
 
     // iterator
-    //typedef device_interface_iterator<device_sound_interface> sound_interface_iterator;
-    public class sound_interface_iterator : device_interface_iterator<device_sound_interface>
-    {
-        public sound_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
 
 
     // ======================> device_mixer_interface
@@ -462,7 +460,7 @@ namespace mame
             m_outputmap.resize(m_auto_allocated_inputs);
 
             // iterate through all routes that point to us and note their mixer output
-            foreach (device_sound_interface sound in new sound_interface_iterator(device().machine().root_device()))
+            foreach (device_sound_interface sound in new sound_interface_enumerator(device().machine().root_device()))
             {
                 foreach (sound_route route in sound.routes())
                 {
@@ -544,9 +542,5 @@ namespace mame
 
 
     // iterator
-    //typedef device_interface_iterator<device_mixer_interface> mixer_interface_iterator;
-    public class mixer_interface_iterator : device_interface_iterator<device_mixer_interface>
-    {
-        public mixer_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_mixer_interface> mixer_interface_enumerator;
 }

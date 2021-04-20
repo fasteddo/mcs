@@ -71,6 +71,7 @@ namespace mame
         //        extern template class device_finder<Class, true>;
 
         //#define DECLARE_DEVICE_TYPE_NS(Type, Namespace, Class) \
+        //        namespace Namespace { class Class; } \
         //        extern emu::detail::device_type_impl<Namespace::Class> const &Type; \
         //        extern template class device_finder<Namespace::Class, false>; \
         //        extern template class device_finder<Namespace::Class, true>;
@@ -275,7 +276,7 @@ namespace mame
 
 
             create_func m_creator;
-            //std::type_info const &m_type;
+            Type m_type;  //std::type_info const &m_type;
             string m_shortname;
             string m_fullname;
             string m_source;
@@ -291,9 +292,7 @@ namespace mame
             public device_type_impl_base()
             {
                 m_creator = null;
-#if false
-                m_type = typeid(std::nullptr_t);
-#endif
+                m_type = null;  //, m_type(typeid(std::nullptr_t))
                 m_shortname = null;
                 m_fullname = null;
                 m_source = null;
@@ -308,11 +307,7 @@ namespace mame
             public device_type_impl_base(device_tag_struct device_tag)
             {
                 m_creator = device_tag.m_creator;  // &create_device<DeviceClass>;
-
-                //throw new emu_unimplemented();
-#if false
-                m_type = typeid(DeviceClass);
-#endif
+                m_type = typeof(device_t);  //, m_type(typeid(DeviceClass))
                 m_shortname = device_tag.ShortName;
                 m_fullname = device_tag.FullName;
                 m_source = device_tag.Source;
@@ -331,11 +326,7 @@ namespace mame
             public device_type_impl_base(driver_tag_struct driver_tag)
             {
                 m_creator = driver_tag.m_creator;  // &create_driver<DriverClass>)
-
-                //throw new emu_unimplemented();
-#if false
-                m_type(typeid(DriverClass))
-#endif
+                m_type = typeof(device_interface);  //, m_type(typeid(DriverClass))
                 m_shortname = driver_tag.ShortName;
                 m_fullname = driver_tag.FullName;
                 m_source = driver_tag.Source;
@@ -368,7 +359,7 @@ namespace mame
             //}
 
 
-            //std::type_info const &type() const { return m_type; }
+            public Type type() { return m_type; }  //std::type_info const &type() const { return m_type; }
             public string shortname() { return m_shortname; }
             public string fullname() { return m_fullname; }
             public string source() { return m_source; }
@@ -412,29 +403,37 @@ namespace mame
             //**************************************************************************
 
             //template <class DeviceClass> template <typename... Params>
-            public static DeviceClass op<DeviceClass>(machine_config mconfig, string tag, device_type type, u32 clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, char const *tag, Params &&... args) const
+            public static DeviceClass op<DeviceClass>(machine_config mconfig, string tag, device_type type, u32 clock)  //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, char const *tag, Params &&... args) const
+                where DeviceClass : device_t
             {
-                return (DeviceClass)mconfig.device_add(tag, type, clock);//, std::forward<Params>(args)...));
+                return (DeviceClass)mconfig.device_add(tag, type, clock);
             }
 
-            public static DeviceClass op<DeviceClass>(machine_config mconfig, string tag, device_type type, XTAL clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, char const *tag, Params &&... args) const
+            public static DeviceClass op<DeviceClass>(machine_config mconfig, string tag, device_type type, XTAL clock)  //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, char const *tag, Params &&... args) const
+                where DeviceClass : device_t
             {
-                return op<DeviceClass>(mconfig, tag, type, clock.value());//, std::forward<Params>(args)...));
+                return op<DeviceClass>(mconfig, tag, type, clock.value());
             }
 
             //template <class DeviceClass> template <typename Exposed, bool Required, typename... Params>
-            public static DeviceClass op<DeviceClass>(machine_config mconfig, device_finder<DeviceClass> finder, device_type type, u32 clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
+            public static DeviceClass op<DeviceClass, bool_Required>(machine_config mconfig, device_finder<DeviceClass, bool_Required> finder, device_type type, u32 clock)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
+                where DeviceClass : device_t
+                where bool_Required : bool_constant, new()
             {
-                var target = finder.finder_target();  // std::pair<device_t &, char const *> const target(finder.finder_target());
+                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
                 assert(mconfig.current_device() == target.first);
-                DeviceClass result = (DeviceClass)mconfig.device_add(target.second, type, clock);//, std::forward<Params>(args)...)));  //DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
-                finder.target = result;
-                return result;  //return finder = result;
+                DeviceClass result = (DeviceClass)mconfig.device_add(target.second, type, clock);  //DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
+
+                //return finder = result;
+                finder.assign(result);
+                return result;
             }
 
-            public static DeviceClass op<DeviceClass>(machine_config mconfig, device_finder<DeviceClass> finder, device_type type, XTAL clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
+            public static DeviceClass op<DeviceClass, bool_Required>(machine_config mconfig, device_finder<DeviceClass, bool_Required> finder, device_type type, XTAL clock)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
+                where DeviceClass : device_t
+                where bool_Required : bool_constant, new()
             {
-                return op(mconfig, finder, type, clock.value());//, std::forward<Params>(args)...));
+                return op(mconfig, finder, type, clock.value());
             }
 
 #if false
@@ -706,6 +705,7 @@ namespace mame
         finder_base m_auto_finder_list;     // list of objects to auto-find
         std.vector<rom_entry> m_rom_entries = new std.vector<rom_entry>();
         std.list<devcb_base> m_callbacks = new std.list<devcb_base>();
+        std.vector<memory_view> m_viewlist = new std.vector<memory_view>();          // list of views
 
         // string formatting buffer for logerror
         string m_string_buffer;  //mutable util::ovectorstream m_string_buffer;
@@ -1355,6 +1355,9 @@ namespace mame
         }
 
 
+        //void view_register(memory_view *view);
+
+
         // miscellaneous helpers
 
         //-------------------------------------------------
@@ -1445,6 +1448,12 @@ namespace mame
             save_item(NAME(new { m_clock }));
             save_item(NAME(new { m_unscaled_clock }));
             save_item(NAME(new { m_clock_scale }));
+
+            // have the views register their state
+            if (!m_viewlist.empty())
+                osd_printf_verbose("{0}: Registering {1} views\n", m_tag, (int)m_viewlist.size());
+            foreach (memory_view view in m_viewlist)
+                view.register_state();
 
             // we're now officially started
             m_started = true;
@@ -1867,6 +1876,7 @@ namespace mame
         public device_t device() { return m_device; }
         //const device_t &device() const { return m_device; }
         //operator device_t &() { return m_device; }
+        public device_t op { get { return m_device; } }
 
 
         // iteration helpers
@@ -2063,12 +2073,19 @@ namespace mame
     }
 
 
-    // ======================> device_iterator
+    // ======================> device_enumerator
     // helper class to iterate over the hierarchy of devices depth-first
-    public class device_iterator : IEnumerable<device_t>
+    public class device_enumerator : IEnumerable<device_t>
     {
-        public class auto_iterator
+        public class iterator
         {
+            //typedef std::ptrdiff_t difference_type;
+            //typedef device_t value_type;
+            //typedef device_t *pointer;
+            //typedef device_t &reference;
+            //typedef std::forward_iterator_tag iterator_category;
+
+
             // protected state
             protected device_t m_curdevice;
             int m_curdepth;
@@ -2076,24 +2093,25 @@ namespace mame
 
 
             // construction
-            public auto_iterator(device_t devptr, int curdepth, int maxdepth)
+            public iterator(device_t devptr, int curdepth, int maxdepth)
             {
                 m_curdevice = devptr;
                 m_curdepth = curdepth;
                 m_maxdepth = maxdepth;
             }
 
+
             // getters
             public device_t current() { return m_curdevice; }
             int depth() { return m_curdepth; }
 
             // required operator overrides
-            //bool operator==(auto_iterator const &iter) const { return m_curdevice == iter.m_curdevice; }
-            //bool operator!=(auto_iterator const &iter) const { return m_curdevice != iter.m_curdevice; }
+            //bool operator==(iterator const &iter) const { return m_curdevice == iter.m_curdevice; }
+            //bool operator!=(iterator const &iter) const { return m_curdevice != iter.m_curdevice; }
             //device_t &operator*() const { assert(m_curdevice); return *m_curdevice; }
             //device_t *operator->() const { return m_curdevice; }
-            //auto_iterator &operator++() { advance(); return *this; }
-            //auto_iterator operator++(int) { auto_iterator const result(*this); ++*this; return result; }
+            //iterator &operator++() { advance(); return *this; }
+            //iterator operator++(int) { iterator const result(*this); ++*this; return result; }
 
 
             // search depth-first for the next device
@@ -2141,7 +2159,7 @@ namespace mame
 
 
         // construction
-        public device_iterator(device_t root, int maxdepth = 255)
+        public device_enumerator(device_t root, int maxdepth = 255)
         {
             m_root = root;
             m_maxdepth = maxdepth;
@@ -2151,7 +2169,7 @@ namespace mame
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public IEnumerator<device_t> GetEnumerator()
         {
-            auto_iterator iter = new auto_iterator(m_root, 0, m_maxdepth);
+            iterator iter = new iterator(m_root, 0, m_maxdepth);
 
             while (iter.current() != null)
             {
@@ -2162,8 +2180,8 @@ namespace mame
 
 
         // standard iterators
-        auto_iterator begin() { return new auto_iterator(m_root, 0, m_maxdepth); }
-        auto_iterator end() { return new auto_iterator(null, 0, m_maxdepth); }
+        iterator begin() { return new iterator(m_root, 0, m_maxdepth); }
+        iterator end() { return new iterator(null, 0, m_maxdepth); }
 
         // return first item
         device_t first() { return begin().current(); }
@@ -2204,31 +2222,46 @@ namespace mame
     }
 
 
-    // ======================> device_type_iterator
+    // ======================> device_type_enumerator
+    public class device_type_enumerator<DeviceType> : device_type_enumerator<DeviceType, DeviceType>
+        where DeviceType : device_t
+    {
+        public device_type_enumerator(device_t root, int maxdepth = 255)
+            : base(root, maxdepth)
+        { }
+    }
+
+
     // helper class to find devices of a given type in the device hierarchy
-    //template<device_type _DeviceType, class _DeviceClass = device_t>
-    public class device_type_iterator</*DeviceType,*/ DeviceClass> : IEnumerable<DeviceClass>
-        //where DeviceType : device_type
+    //template <class DeviceType, class DeviceClass = DeviceType>
+    public class device_type_enumerator<DeviceType, DeviceClass> : IEnumerable<DeviceClass>
         where DeviceClass : device_t
     {
-        class auto_iterator : device_iterator.auto_iterator
+        class iterator : device_enumerator.iterator
         {
-            device_type m_type;
+            //using device_enumerator::iterator::difference_type;
+            //using device_enumerator::iterator::iterator_category;
+            //using device_enumerator::iterator::depth;
+
+            //typedef DeviceClass value_type;
+            //typedef DeviceClass *pointer;
+            //typedef DeviceClass &reference;
+
 
             // construction
-            public auto_iterator(device_type type, device_t devptr, int curdepth, int maxdepth)
+            public iterator(device_t devptr, int curdepth, int maxdepth)
                 : base(devptr, curdepth, maxdepth)
             {
-                m_type = type;
-
                 // make sure the first device is of the specified type
-                while (m_curdevice != null && m_curdevice.type() != m_type)
+                while (m_curdevice != null && m_curdevice.GetType() != typeof(DeviceType))  //while (m_curdevice && (m_curdevice->type().type() != typeid(DeviceType)))
                     advance();
             }
 
+
             // required operator overrides
-            //bool operator==(auto_iterator const &iter) const { return m_curdevice == iter.m_curdevice; }
-            //bool operator!=(auto_iterator const &iter) const { return m_curdevice != iter.m_curdevice; }
+            //bool operator==(iterator const &iter) const { return m_curdevice == iter.m_curdevice; }
+            //bool operator!=(iterator const &iter) const { return m_curdevice != iter.m_curdevice; }
+
 
             // getters returning specified device type
             public new DeviceClass current() { return (DeviceClass)m_curdevice; }
@@ -2236,34 +2269,30 @@ namespace mame
             //DeviceClass *operator->() const { return downcast<DeviceClass *>(m_curdevice); }
 
             // search for devices of the specified type
-            //const auto_iterator &operator++()
+            //iterator &operator++()
             //{
-            //    advance();
-            //    while (m_curdevice != nullptr && m_curdevice->type() != _DeviceType)
-            //        advance();
+            //    do { advance(); } while (m_curdevice && (m_curdevice->type().type() != typeid(DeviceType)));
             //    return *this;
             //}
-            //auto_iterator operator++(int) { auto_iterator const result(*this); ++*this; return result; }
+            //iterator operator++(int) { iterator const result(*this); ++*this; return result; }
 
-            public void advance_device_type()
+
+            public iterator advance_device_type()
             {
-                advance();
-                while (m_curdevice != null && m_curdevice.type() != m_type)
-                    advance();
+                do { advance(); } while (m_curdevice != null && (m_curdevice.GetType() != typeof(DeviceType)));  //do { advance(); } while (m_curdevice && (m_curdevice->type().type() != typeid(DeviceType)));
+                return this;
             }
         }
 
 
         // internal state
-        device_type DeviceType;
         device_t m_root;
         int m_maxdepth;
 
 
         // construction
-        public device_type_iterator(device_type type, device_t root, int maxdepth = 255)
+        public device_type_enumerator(device_t root, int maxdepth = 255)
         {
-            DeviceType = type;
             m_root = root;
             m_maxdepth = maxdepth;
         }
@@ -2272,7 +2301,7 @@ namespace mame
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public IEnumerator<DeviceClass> GetEnumerator()
         {
-            auto_iterator iter = new auto_iterator(DeviceType, m_root, 0, m_maxdepth);
+            iterator iter = new iterator(m_root, 0, m_maxdepth);
 
             while (iter.current() != null)
             {
@@ -2283,10 +2312,10 @@ namespace mame
 
 
         // standard iterators
-        auto_iterator begin() { return new auto_iterator(DeviceType, m_root, 0, m_maxdepth); }
-        auto_iterator end() { return new auto_iterator(DeviceType, null, 0, m_maxdepth); }
-        auto_iterator cbegin() { return new auto_iterator(DeviceType, m_root, 0, m_maxdepth); }
-        auto_iterator cend() { return new auto_iterator(DeviceType, null, 0, m_maxdepth); }
+        iterator begin() { return new iterator(m_root, 0, m_maxdepth); }
+        iterator end() { return new iterator(null, 0, m_maxdepth); }
+        iterator cbegin() { return new iterator(m_root, 0, m_maxdepth); }
+        iterator cend() { return new iterator(null, 0, m_maxdepth); }
 
 
         // getters
@@ -2329,25 +2358,25 @@ namespace mame
                     return item;
             }
 
-            return null;
+            return default;
         }
     }
 
 
-    // ======================> device_interface_iterator
+    // ======================> device_interface_enumerator
     // helper class to find devices with a given interface in the device hierarchy
     // also works for finding devices derived from a given subclass
-    //template<class _InterfaceClass>
-    public class device_interface_iterator<InterfaceClass> : IEnumerable<InterfaceClass> where InterfaceClass : device_interface
+    //template <class InterfaceClass>
+    public class device_interface_enumerator<InterfaceClass> : IEnumerable<InterfaceClass> where InterfaceClass : device_interface
     {
-        class auto_iterator : device_iterator.auto_iterator
+        class iterator : device_enumerator.iterator
         {
             // private state
             InterfaceClass m_interface;
 
 
             // construction
-            public auto_iterator(device_t devptr, int curdepth, int maxdepth)
+            public iterator(device_t devptr, int curdepth, int maxdepth)
                 : base(devptr, curdepth, maxdepth)
             {
                 // set the iterator for the first device with the interface
@@ -2359,7 +2388,8 @@ namespace mame
             //_InterfaceClass &operator*() const { assert(m_interface != nullptr); return *m_interface; }
 
             // search for devices with the specified interface
-            //const auto_iterator &operator++() { advance(); find_interface(); return *this; }
+            //const iterator &operator++() { advance(); find_interface(); return *this; }
+            //iterator operator++(int) { iterator const result(*this); ++*this; return result; }
 
 
             // private helper
@@ -2384,7 +2414,7 @@ namespace mame
 
 
         // construction
-        public device_interface_iterator(device_t root, int maxdepth = 255)
+        public device_interface_enumerator(device_t root, int maxdepth = 255)
         {
             m_root = root;
             m_maxdepth = maxdepth;
@@ -2394,7 +2424,7 @@ namespace mame
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public IEnumerator<InterfaceClass> GetEnumerator()
         {
-            auto_iterator iter = new auto_iterator(m_root, 0, m_maxdepth);
+            iterator iter = new iterator(m_root, 0, m_maxdepth);
 
             while (iter.current() != null)
             {
@@ -2406,8 +2436,8 @@ namespace mame
 
 
         // standard iterators
-        auto_iterator begin() { return new auto_iterator(m_root, 0, m_maxdepth); }
-        auto_iterator end() { return new auto_iterator(null, 0, m_maxdepth); }
+        iterator begin() { return new iterator(m_root, 0, m_maxdepth); }
+        iterator end() { return new iterator(null, 0, m_maxdepth); }
 
 
         // return first item

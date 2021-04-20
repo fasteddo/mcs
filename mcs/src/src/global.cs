@@ -8,6 +8,7 @@ using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 
 using attoseconds_t = System.Int64;
@@ -15,10 +16,12 @@ using int16_t = System.Int16;
 using int32_t = System.Int32;
 using int64_t = System.Int64;
 using ioport_value = System.UInt32;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nlsetup_func = System.Action<mame.netlist.nlparse_t>;  //using nlsetup_func = void (*)(nlparse_t &);
 using offs_t = System.UInt32;
 using pen_t = System.UInt32;
+using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using size_t = System.UInt32;
 using size_t_constant = mame.uint32_constant;
@@ -31,6 +34,7 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -40,16 +44,59 @@ namespace mame
     public class bool_constant_false : bool_constant { public bool value { get { return false; } } }
 
     public interface int_constant { int value { get; } }
+    public class int_constant_n3 : int_constant { public int value { get { return -3; } } }
+    public class int_constant_n2 : int_constant { public int value { get { return -2; } } }
+    public class int_constant_n1 : int_constant { public int value { get { return -1; } } }
+    public class int_constant_0 : int_constant { public int value { get { return 0; } } }
     public class int_constant_1 : int_constant { public int value { get { return 1; } } }
     public class int_constant_2 : int_constant { public int value { get { return 2; } } }
+    public class int_constant_3 : int_constant { public int value { get { return 3; } } }
+    public class int_constant_4 : int_constant { public int value { get { return 4; } } }
+    public class int_constant_5 : int_constant { public int value { get { return 5; } } }
+    public class int_constant_6 : int_constant { public int value { get { return 6; } } }
+    public class int_constant_7 : int_constant { public int value { get { return 7; } } }
+    public class int_constant_8 : int_constant { public int value { get { return 8; } } }
+    public class int_constant_9 : int_constant { public int value { get { return 9; } } }
+    public class int_constant_10 : int_constant { public int value { get { return 10; } } }
+    public class int_constant_11 : int_constant { public int value { get { return 11; } } }
+    public class int_constant_12 : int_constant { public int value { get { return 12; } } }
+    public class int_constant_13 : int_constant { public int value { get { return 13; } } }
+    public class int_constant_14 : int_constant { public int value { get { return 14; } } }
+    public class int_constant_15 : int_constant { public int value { get { return 15; } } }
+    public class int_constant_16 : int_constant { public int value { get { return 16; } } }
+    public class int_constant_17 : int_constant { public int value { get { return 17; } } }
+    public class int_constant_18 : int_constant { public int value { get { return 18; } } }
+    public class int_constant_19 : int_constant { public int value { get { return 19; } } }
+    public class int_constant_20 : int_constant { public int value { get { return 20; } } }
+    public class int_constant_21 : int_constant { public int value { get { return 21; } } }
+    public class int_constant_22 : int_constant { public int value { get { return 22; } } }
+    public class int_constant_23 : int_constant { public int value { get { return 23; } } }
+    public class int_constant_24 : int_constant { public int value { get { return 24; } } }
+    public class int_constant_25 : int_constant { public int value { get { return 25; } } }
+    public class int_constant_26 : int_constant { public int value { get { return 26; } } }
+    public class int_constant_27 : int_constant { public int value { get { return 27; } } }
+    public class int_constant_28 : int_constant { public int value { get { return 28; } } }
+    public class int_constant_29 : int_constant { public int value { get { return 29; } } }
+    public class int_constant_30 : int_constant { public int value { get { return 30; } } }
+    public class int_constant_31 : int_constant { public int value { get { return 31; } } }
+    public class int_constant_32 : int_constant { public int value { get { return 32; } } }
 
     public interface uint32_constant { UInt32 value { get; } }
+    public class uint32_constant_0 : uint32_constant { public UInt32 value { get { return 0; } } }
+    public class uint32_constant_1 : uint32_constant { public UInt32 value { get { return 1; } } }
     public class uint32_constant_2 : uint32_constant { public UInt32 value { get { return 2; } } }
+    public class uint32_constant_3 : uint32_constant { public UInt32 value { get { return 3; } } }
     public class uint32_constant_4 : uint32_constant { public UInt32 value { get { return 4; } } }
     public class uint32_constant_5 : uint32_constant { public UInt32 value { get { return 5; } } }
     public class uint32_constant_8 : uint32_constant { public UInt32 value { get { return 8; } } }
+    public class uint32_constant_10 : uint32_constant { public UInt32 value { get { return 10; } } }
+    public class uint32_constant_12 : uint32_constant { public UInt32 value { get { return 12; } } }
     public class uint32_constant_16 : uint32_constant { public UInt32 value { get { return 16; } } }
     public class uint32_constant_20 : uint32_constant { public UInt32 value { get { return 20; } } }
+
+    public interface endianness_t_constant { endianness_t value { get; } }
+    public class endianness_t_constant_ENDIANNESS_LITTLE : endianness_t_constant { public endianness_t value { get { return endianness_t.ENDIANNESS_LITTLE; } } }
+    public class endianness_t_constant_ENDIANNESS_BIG : endianness_t_constant { public endianness_t value { get { return endianness_t.ENDIANNESS_BIG; } } }
 
 
     public class global_object
@@ -85,7 +132,9 @@ namespace mame
 
         // _74259
         protected static ls259_device LS259(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ls259_device>(mconfig, tag, ls259_device.LS259, clock); }
-        protected static ls259_device LS259(machine_config mconfig, device_finder<ls259_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, ls259_device.LS259, clock); }
+        protected static ls259_device LS259<bool_Required>(machine_config mconfig, device_finder<ls259_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op<ls259_device, bool_Required>(mconfig, finder, ls259_device.LS259, clock); }
 
 
         // adc0808
@@ -93,7 +142,8 @@ namespace mame
 
 
         // atarimo
-        protected static atari_motion_objects_device ATARI_MOTION_OBJECTS(machine_config mconfig, device_finder<atari_motion_objects_device> finder, uint32_t clock, device_finder<screen_device> screen_tag, atari_motion_objects_config config)
+        protected static atari_motion_objects_device ATARI_MOTION_OBJECTS<bool_Required>(machine_config mconfig, device_finder<atari_motion_objects_device, bool_Required> finder, uint32_t clock, device_finder<screen_device, bool_Required> screen_tag, atari_motion_objects_config config)
+            where bool_Required : bool_constant, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, atari_motion_objects_device.ATARI_MOTION_OBJECTS, 0);
             device.atari_motion_objects_device_after_ctor(screen_tag, config);
@@ -109,8 +159,12 @@ namespace mame
         protected const int AY8910_INTERNAL_RESISTANCE = ay8910_global.AY8910_INTERNAL_RESISTANCE;
         protected static ay8910_device AY8910(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
         protected static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
-        protected static ay8910_device AY8910(machine_config mconfig, device_finder<ay8910_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
-        protected static ay8910_device AY8910(machine_config mconfig, device_finder<ay8910_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
+        protected static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
+        protected static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
 
 
         // bankdev
@@ -137,7 +191,7 @@ namespace mame
         protected static u8 make_bitmask8(s32 n) { return coretmpl_global.make_bitmask8(n); }
         protected static u16 make_bitmask16(s32 n) { return coretmpl_global.make_bitmask16(n); }
         protected static u16 make_bitmask16(u32 n) { return coretmpl_global.make_bitmask16(n); }
-        public static u32 make_bitmask32(s32 n) { return coretmpl_global.make_bitmask32(n); }
+        protected static u32 make_bitmask32(s32 n) { return coretmpl_global.make_bitmask32(n); }
         protected static u32 make_bitmask32(u32 n) { return coretmpl_global.make_bitmask32(n); }
         protected static u64 make_bitmask64(s32 n) { return coretmpl_global.make_bitmask64(n); }
         protected static u64 make_bitmask64(u32 n) { return coretmpl_global.make_bitmask64(n); }
@@ -164,11 +218,13 @@ namespace mame
 
 
         // dac
-        protected static dac_8bit_r2r_device DAC_8BIT_R2R(machine_config mconfig, device_finder<dac_8bit_r2r_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
+        protected static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
 
 
         // device
-        protected const string DEVICE_SELF = device_global.DEVICE_SELF;
+        public const string DEVICE_SELF = device_global.DEVICE_SELF;
         protected const string DEVICE_SELF_OWNER = device_global.DEVICE_SELF_OWNER;
         protected static u32 DERIVED_CLOCK(u32 num, u32 den) { return device_global.DERIVED_CLOCK(num, den); }
         protected static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname) { return device_global.DEFINE_DEVICE_TYPE(func, shortname, fullname); }
@@ -216,8 +272,11 @@ namespace mame
             device.set_intf(intf);
             return device;
         }
-        protected static discrete_sound_device DISCRETE(machine_config mconfig, device_finder<discrete_sound_device> finder) { return emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0); }
-        protected static discrete_sound_device DISCRETE(machine_config mconfig, device_finder<discrete_sound_device> finder, discrete_block [] intf)
+        protected static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0); }
+        protected static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder, discrete_block [] intf)
+            where bool_Required : bool_constant, new()
         {
             var device = DISCRETE(mconfig, finder);
             device.set_intf(intf);
@@ -464,13 +523,15 @@ namespace mame
             device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
             return device;
         }
-        protected static gfxdecode_device GFXDECODE(machine_config mconfig, device_finder<gfxdecode_device> finder, string palette_tag, gfx_decode_entry [] gfxinfo)
+        protected static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, string palette_tag, gfx_decode_entry [] gfxinfo)
+            where bool_Required : bool_constant, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, gfxdecode_device.GFXDECODE, 0);
             device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
             return device;
         }
-        protected static gfxdecode_device GFXDECODE(machine_config mconfig, device_finder<gfxdecode_device> finder, finder_base palette, gfx_decode_entry [] gfxinfo)
+        protected static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, finder_base palette, gfx_decode_entry [] gfxinfo)
+            where bool_Required : bool_constant, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, gfxdecode_device.GFXDECODE, 0);
             device.gfxdecode_device_after_ctor(palette, gfxinfo);
@@ -528,10 +589,6 @@ namespace mame
         protected const int AS_OPCODES = emumem_global.AS_OPCODES;
         public static void COMBINE_DATA(ref u16 varptr, u16 data, u16 mem_mask) { emumem_global.COMBINE_DATA(ref varptr, data, mem_mask); }
         protected static bool ACCESSING_BITS_0_7(u16 mem_mask) { return emumem_global.ACCESSING_BITS_0_7(mem_mask); }
-        protected static uX memory_read_generic(int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, Func<offs_t, uX, uX> rop, offs_t address, uX mask) { return emumem_global.memory_read_generic(Width, AddrShift, Endian, TargetWidth, Aligned, rop, address, mask); }
-        protected static void memory_write_generic(int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, Action<offs_t, uX, uX> wop, offs_t address, uX data, uX mask) { emumem_global.memory_write_generic(Width, AddrShift, Endian, TargetWidth, Aligned, wop, address, data, mask); }
-        protected static string core_i64_hex_format(u64 value, u8 mindigits) { return emumem_global.core_i64_hex_format(value, mindigits); }
-        protected static int handler_entry_dispatch_lowbits(int highbits, int width, int ashift) { return emumem_global.handler_entry_dispatch_lowbits(highbits, width, ashift); }
 
 
         // emuopts
@@ -540,14 +597,17 @@ namespace mame
 
         // emupal
         protected static palette_device PALETTE(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0); }
-        protected static palette_device PALETTE(machine_config mconfig, device_finder<palette_device> finder) { return emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0); }
+        protected static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0); }
         protected static palette_device PALETTE(machine_config mconfig, string tag, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
         {
             var device = emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0);
             device.palette_device_after_ctor(init, entries, indirect);
             return device;
         }
-        protected static palette_device PALETTE(machine_config mconfig, device_finder<palette_device> finder, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
+        protected static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
+            where bool_Required : bool_constant, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0);
             device.palette_device_after_ctor(init, entries, indirect);
@@ -556,7 +616,9 @@ namespace mame
 
 
         // er2055
-        protected static er2055_device ER2055(machine_config mconfig, device_finder<er2055_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, er2055_device.ER2055, clock); }
+        protected static er2055_device ER2055<bool_Required>(machine_config mconfig, device_finder<er2055_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, er2055_device.ER2055, clock); }
 
 
         // galaxian
@@ -586,7 +648,9 @@ namespace mame
 
         // gen_latch
         protected static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<generic_latch_8_device>(mconfig, tag, generic_latch_8_device.GENERIC_LATCH_8, clock); }
-        protected static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, device_finder<generic_latch_8_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, generic_latch_8_device.GENERIC_LATCH_8, clock); }
+        protected static generic_latch_8_device GENERIC_LATCH_8<bool_Required>(machine_config mconfig, device_finder<generic_latch_8_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, generic_latch_8_device.GENERIC_LATCH_8, clock); }
 
 
         // hash
@@ -597,11 +661,15 @@ namespace mame
 
         // i8255
         protected static i8255_device I8255A(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<i8255_device>(mconfig, tag, i8255_device.I8255A, clock); }
-        protected static i8255_device I8255A(machine_config mconfig, device_finder<i8255_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255A, clock); }
+        protected static i8255_device I8255A<bool_Required>(machine_config mconfig, device_finder<i8255_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255A, clock); }
 
 
         // i8257
-        protected static i8257_device I8257(machine_config mconfig, device_finder<i8257_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, i8257_device.I8257, clock); }
+        protected static i8257_device I8257<bool_Required>(machine_config mconfig, device_finder<i8257_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, i8257_device.I8257, clock); }
 
 
         // input
@@ -609,8 +677,12 @@ namespace mame
 
 
         // input_merger
-        protected static input_merger_device INPUT_MERGER_ANY_HIGH(machine_config mconfig, device_finder<input_merger_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
-        protected static input_merger_device INPUT_MERGER_ALL_HIGH(machine_config mconfig, device_finder<input_merger_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_all_high_device.INPUT_MERGER_ALL_HIGH, clock); }
+        protected static input_merger_device INPUT_MERGER_ANY_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
+        protected static input_merger_device INPUT_MERGER_ALL_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_all_high_device.INPUT_MERGER_ALL_HIGH, clock); }
 
 
         // ioport
@@ -762,8 +834,14 @@ namespace mame
         protected static m52_soundc_audio_device IREM_M52_SOUNDC_AUDIO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<m52_soundc_audio_device>(mconfig, tag, m52_soundc_audio_device.IREM_M52_SOUNDC_AUDIO, clock); }
 
 
+        // language
+        protected static string __(string param) { return language_global.__(param); }
+
+
         // latch8
-        protected static latch8_device LATCH8(machine_config mconfig, device_finder<latch8_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, latch8_device.LATCH8, clock); }
+        protected static latch8_device LATCH8<bool_Required>(machine_config mconfig, device_finder<latch8_device, bool_Required> finder, u32 clock = 0)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, latch8_device.LATCH8, clock); }
 
 
         // logmacro
@@ -783,16 +861,24 @@ namespace mame
 
 
         // m6502
-        protected static m6502_device M6502(machine_config mconfig, device_finder<m6502_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
-        protected static m6502_device M6502(machine_config mconfig, device_finder<m6502_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
+        protected static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, u32 clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
+        protected static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
 
 
         // m6801
-        protected static m6803_cpu_device M6803(machine_config mconfig, device_finder<m6803_cpu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
+        protected static m6803_cpu_device M6803<bool_Required>(machine_config mconfig, device_finder<m6803_cpu_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
 
 
         // m68705
-        protected static m68705p_device M68705P5(machine_config mconfig, device_finder<m68705p_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, m68705p5_device.M68705P5, clock); }
+        protected static m68705p_device M68705P5<bool_Required>(machine_config mconfig, device_finder<m68705p_device, bool_Required> finder, u32 clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, m68705p5_device.M68705P5, clock); }
 
 
         // machine
@@ -802,23 +888,37 @@ namespace mame
 
 
         // mcs48
-        protected static mcs48_cpu_device MB8884(machine_config mconfig, device_finder<mcs48_cpu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, mb8884_device.MB8884, clock); }
+        protected static mcs48_cpu_device MB8884<bool_Required>(machine_config mconfig, device_finder<mcs48_cpu_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, mb8884_device.MB8884, clock); }
 
 
         // mb88xx
-        protected static mb88_cpu_device MB8842(machine_config mconfig, device_finder<mb88_cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, mb8842_cpu_device.MB8842, clock); }
-        protected static mb88_cpu_device MB8843(machine_config mconfig, device_finder<mb88_cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, mb8843_cpu_device.MB8843, clock); }
-        protected static mb88_cpu_device MB8844(machine_config mconfig, device_finder<mb88_cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, mb8844_cpu_device.MB8844, clock); }
+        protected static mb88_cpu_device MB8842<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, mb8842_cpu_device.MB8842, clock); }
+        protected static mb88_cpu_device MB8843<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, mb8843_cpu_device.MB8843, clock); }
+        protected static mb88_cpu_device MB8844<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, mb8844_cpu_device.MB8844, clock); }
 
 
         // msm5205
-        protected static msm5205_device MSM5205(machine_config mconfig, device_finder<msm5205_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
+        protected static msm5205_device MSM5205<bool_Required>(machine_config mconfig, device_finder<msm5205_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
 
 
         // namco
         protected static namco_device NAMCO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_device>(mconfig, tag, namco_device.NAMCO, clock); }
-        protected static namco_device NAMCO(machine_config mconfig, device_finder<namco_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
-        protected static namco_device NAMCO(machine_config mconfig, device_finder<namco_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
+        protected static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, u32 clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
+        protected static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
 
 
         // namco06
@@ -935,7 +1035,9 @@ namespace mame
 
         // pokey
         protected static pokey_device POKEY(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
-        protected static pokey_device POKEY(machine_config mconfig, device_finder<pokey_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, pokey_device.POKEY, clock); }
+        protected static pokey_device POKEY<bool_Required>(machine_config mconfig, device_finder<pokey_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, pokey_device.POKEY, clock); }
 
 
         // render
@@ -1009,7 +1111,8 @@ namespace mame
             device.screen_device_after_ctor(type);
             return device;
         }
-        protected static screen_device SCREEN(machine_config mconfig, device_finder<screen_device> finder, screen_type_enum type)
+        protected static screen_device SCREEN<bool_Required>(machine_config mconfig, device_finder<screen_device, bool_Required> finder, screen_type_enum type)
+            where bool_Required : bool_constant, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, screen_device.SCREEN, 0);
             device.screen_device_after_ctor(type);
@@ -1023,10 +1126,11 @@ namespace mame
 
 
         // slapstic
-        protected static atari_slapstic_device SLAPSTIC(machine_config mconfig, device_finder<atari_slapstic_device> finder, int chipnum, bool m68k_mode)
+        protected static atari_slapstic_device SLAPSTIC<bool_Required>(machine_config mconfig, device_finder<atari_slapstic_device, bool_Required> finder, int chipnum)
+            where bool_Required : bool_constant, new()
         {
-            var device = emu.detail.device_type_impl.op<atari_slapstic_device>(mconfig, finder, atari_slapstic_device.SLAPSTIC, 0);
-            device.atari_slapstic_device_after_ctor(chipnum, m68k_mode);
+            var device = emu.detail.device_type_impl.op<atari_slapstic_device, bool_Required>(mconfig, finder, atari_slapstic_device.SLAPSTIC, 0);
+            device.atari_slapstic_device_after_ctor(chipnum);
             return device;
         }
 
@@ -1036,7 +1140,9 @@ namespace mame
 
 
         // starfield
-        protected static starfield_05xx_device STARFIELD_05XX(machine_config mconfig, device_finder<starfield_05xx_device> finder, uint32_t clock) { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, clock); }
+        protected static starfield_05xx_device STARFIELD_05XX<bool_Required>(machine_config mconfig, device_finder<starfield_05xx_device, bool_Required> finder, uint32_t clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, clock); }
 
 
         // strformat
@@ -1044,11 +1150,15 @@ namespace mame
 
 
         // t11
-        protected static t11_device T11(machine_config mconfig, device_finder<t11_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
+        protected static t11_device T11<bool_Required>(machine_config mconfig, device_finder<t11_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
 
 
         // taitosjsec
-        protected static taito_sj_security_mcu_device TAITO_SJ_SECURITY_MCU(machine_config mconfig, device_finder<taito_sj_security_mcu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, taito_sj_security_mcu_device.TAITO_SJ_SECURITY_MCU, clock); }
+        protected static taito_sj_security_mcu_device TAITO_SJ_SECURITY_MCU<bool_Required>(machine_config mconfig, device_finder<taito_sj_security_mcu_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, taito_sj_security_mcu_device.TAITO_SJ_SECURITY_MCU, clock); }
 
 
         // tilemap
@@ -1058,13 +1168,15 @@ namespace mame
         protected const u32 TILEMAP_FLIPX = tilemap_global.TILEMAP_FLIPX;
         protected const u32 TILEMAP_FLIPY = tilemap_global.TILEMAP_FLIPY;
         protected static u8 TILE_FLIPYX(int YX) { return tilemap_global.TILE_FLIPYX(YX); }
-        protected static tilemap_device TILEMAP(machine_config mconfig, device_finder<tilemap_device> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows)
+        protected static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows)
+            where bool_Required : bool_constant, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
             device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows);
             return device;
         }
-        protected static tilemap_device TILEMAP(machine_config mconfig, device_finder<tilemap_device> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows, pen_t transpen)
+        protected static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows, pen_t transpen)
+            where bool_Required : bool_constant, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
             device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows, transpen);
@@ -1077,7 +1189,9 @@ namespace mame
 
 
         // tms5220
-        protected static tms5220c_device TMS5220C(machine_config mconfig, device_finder<tms5220c_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
+        protected static tms5220c_device TMS5220C<bool_Required>(machine_config mconfig, device_finder<tms5220c_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
 
 
         // ui
@@ -1094,17 +1208,25 @@ namespace mame
 
         // watchdog
         protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
-        protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, device_finder<watchdog_timer_device> finder) { return emu.detail.device_type_impl.op(mconfig, finder, watchdog_timer_device.WATCHDOG_TIMER, 0); }
+        protected static watchdog_timer_device WATCHDOG_TIMER<bool_Required>(machine_config mconfig, device_finder<watchdog_timer_device, bool_Required> finder)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, watchdog_timer_device.WATCHDOG_TIMER, 0); }
 
 
         // ym2151
-        protected static ym2151_device YM2151(machine_config mconfig, device_finder<ym2151_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, ym2151_device.YM2151, clock); }
+        protected static ym2151_device YM2151<bool_Required>(machine_config mconfig, device_finder<ym2151_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, ym2151_device.YM2151, clock); }
 
 
         // z80
         protected static cpu_device Z80(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<cpu_device>(mconfig, tag, z80_device.Z80, clock); }
-        protected static cpu_device Z80(machine_config mconfig, device_finder<cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
-        protected static cpu_device Z80(machine_config mconfig, device_finder<cpu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
+        protected static cpu_device Z80<bool_Required>(machine_config mconfig, device_finder<cpu_device, bool_Required> finder, u32 clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
+        protected static cpu_device Z80<bool_Required>(machine_config mconfig, device_finder<cpu_device, bool_Required> finder, XTAL clock)
+            where bool_Required : bool_constant, new()
+        { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
 
 
         // c++
@@ -1196,6 +1318,7 @@ namespace mame
         // c++ algorithm
         public static void fill<T>(MemoryContainer<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, T value) { std.memset(destination, value); }
+        public static void fill<T>(IList<T> destination, Func<T> value) { std.memset(destination, value); }
         public static void fill_n<T>(MemoryContainer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
         public static void fill_n<T>(Pointer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
         public static void fill_n(PointerU16 destination, int count, UInt16 value) { std.memset(destination, value, (UInt32)count); }
@@ -1287,6 +1410,8 @@ namespace mame
         public static void memset(PointerU64 destination, UInt64 value, UInt32 num) { destination.Fill(value, (int)num); }
         public static void memset<T>(IList<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
         public static void memset<T>(IList<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
+        public static void memset<T>(IList<T> destination, Func<T> value) { memset(destination, value, (UInt32)destination.Count); }
+        public static void memset<T>(IList<T> destination, Func<T> value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value(); }
         public static void memset<T>(T [,] destination, T value) { for (int i = 0; i < destination.GetLength(0); i++) for (int j = 0; j < destination.GetLength(1); j++) destination[i, j] = value; }
         public static int strchr(string str, char character) { return str.IndexOf(character); }
         public static int strcmp(string str1, string str2) { return string.Compare(str1, str2); }
@@ -1307,6 +1432,13 @@ namespace mame
 
         // c++ iostream
         public static void cerr(string s) { osdcore_interface.osd_printf_debug(s); }
+
+
+        // c++ numeric
+        public static UInt32 gcd(UInt32 a, UInt32 b)
+        {
+            return b != 0 ? gcd(b, a % b) : a;
+        }
 
 
         // c++ utility
@@ -1577,6 +1709,14 @@ namespace mame
         }
 
 
+        // c++ stdexcept
+        public class out_of_range : ArgumentOutOfRangeException
+        {
+            public out_of_range() : base() { }
+            public out_of_range(string paramName) : base(paramName) { }
+        }
+
+
         // c++ unordered_map
         public class unordered_map<K, V> : IEnumerable<KeyValuePair<K, V>>
         {
@@ -1664,6 +1804,7 @@ namespace mame
 
 
             // std::vector functions
+            public T front() { return this[0]; }
             public T back() { return empty() ? default : this[Count - 1]; }
             public void clear() { Clear(); }
             public Pointer<T> data() { return new Pointer<T>(this); }
@@ -1792,6 +1933,9 @@ namespace mame
 
         public virtual int Capacity { get { return m_data.Length; } set { } }
         public virtual void CopyTo(int index, T[] array, int arrayIndex, int count) { CopyTo(index, new Span<T>(array, arrayIndex, count), count); }
+        public virtual int FindIndex(int startIndex, int count, Predicate<T> match) { return Array.FindIndex(m_data, startIndex, count, match); }
+        public virtual int FindIndex(int startIndex, Predicate<T> match) { return Array.FindIndex(m_data, startIndex, match); }
+        public virtual int FindIndex(Predicate<T> match) { return Array.FindIndex(m_data, match); }
         public virtual int RemoveAll(Predicate<T> match)
         {
             int count = 0;

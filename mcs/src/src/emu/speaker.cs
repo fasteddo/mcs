@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using s32 = System.Int32;
+using speaker_device_enumerator = mame.device_type_enumerator<mame.speaker_device>;  //using speaker_device_enumerator = device_type_enumerator<speaker_device>;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;
 
@@ -236,9 +237,5 @@ namespace mame
     }
 
 
-    //using speaker_device_iterator = device_type_iterator<speaker_device>;
-    public class speaker_device_iterator : device_type_iterator<speaker_device>
-    {
-        public speaker_device_iterator(device_t root, int maxdepth = 255) : base(speaker_device.SPEAKER, root, maxdepth) { }
-    }
+    //using speaker_device_enumerator = device_type_enumerator<speaker_device>;
 }

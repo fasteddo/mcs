@@ -374,7 +374,6 @@ namespace mame.ui
         }
 
 
-
         public void add_text(string text, rgb_t fgcolor = null, rgb_t bgcolor = null, float size = 1.0f)  // fgcolor = rgb_t.white, rgb_t bgcolor = rgb_t.transparent
         {
             if (fgcolor == null)
@@ -401,10 +400,7 @@ namespace mame.ui
         //-------------------------------------------------
         void add_text(string text, char_style style)
         {
-            UInt32 position = 0;
-            UInt32 text_length = (UInt32)text.Length;
-
-            while (position < text_length)
+            while (!text.empty())
             {
                 // adding a character - we might change the width
                 invalidate_calculated_actual_width();
@@ -414,7 +410,7 @@ namespace mame.ui
                 {
                     // get the current character
                     char schar;  //char32_t schar;
-                    int scharcount = unicode_global.uchar_from_utf8(out schar, text.Substring((int)position), (int)(text_length - position));  //  &text[position]
+                    int scharcount = unicode_global.uchar_from_utf8(out schar, text);  //int const scharcount = uchar_from_utf8(&schar, text);
                     if (scharcount < 0)
                         break;
 
@@ -422,7 +418,7 @@ namespace mame.ui
                     text_justify line_justify = justify();
                     if (schar == '\t')
                     {
-                        position += (UInt32)scharcount;
+                        text = text.Substring(scharcount);  //text.remove_prefix(scharcount);
                         line_justify = text_justify.CENTER;
                     }
 
@@ -433,10 +429,10 @@ namespace mame.ui
                 {
                     // get the current character
                     char ch;  //char32_t ch;
-                    int scharcount = unicode_global.uchar_from_utf8(out ch, text.Substring((int)position), (int)(text_length - position));  // &text[position], text_length - position);
+                    int scharcount = unicode_global.uchar_from_utf8(out ch, text);  //int const scharcount = uchar_from_utf8(&ch, text);
                     if (scharcount < 0)
                         break;
-                    position += (UInt32)scharcount;
+                    text = text.Substring(scharcount);  //text.remove_prefix(scharcount);
 
                     // set up source information
                     source_info source;

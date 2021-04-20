@@ -33,7 +33,7 @@ namespace mame
 
         ***************************************************************************/
 
-        int TOTAL_COLORS(int gfxn) { return (int)(m_gfxdecode.target.digfx.gfx(gfxn).colors() * m_gfxdecode.target.digfx.gfx(gfxn).granularity()); }
+        int TOTAL_COLORS(int gfxn) { return (int)(m_gfxdecode.op[0].digfx.gfx(gfxn).colors() * m_gfxdecode.op[0].digfx.gfx(gfxn).granularity()); }
 
         void xevious_palette(palette_device palette)
         {
@@ -80,7 +80,7 @@ namespace mame
             for (int i = 0; i < TOTAL_COLORS(1); i++)
             {
                 palette.dipalette.set_pen_indirect(
-                        (pen_t)(m_gfxdecode.target.digfx.gfx(1).colorbase() + i),
+                        (pen_t)(m_gfxdecode.op[0].digfx.gfx(1).colorbase() + i),
                         (UInt16)((color_prom[0] & 0x0f) | ((color_prom[TOTAL_COLORS(1)] & 0x0f) << 4)));
 
                 color_prom++;
@@ -94,7 +94,7 @@ namespace mame
                 int c = (color_prom[0] & 0x0f) | ((color_prom[TOTAL_COLORS(2)] & 0x0f) << 4);
 
                 palette.dipalette.set_pen_indirect(
-                        (pen_t)(m_gfxdecode.target.digfx.gfx(2).colorbase() + i),
+                        (pen_t)(m_gfxdecode.op[0].digfx.gfx(2).colorbase() + i),
                         (c & 0x80) != 0 ? (UInt16)(c & 0x7f) : (UInt16)0x80);
 
                 color_prom++;
@@ -106,7 +106,7 @@ namespace mame
             for (int i = 0; i < TOTAL_COLORS(0); i++)
             {
                 palette.dipalette.set_pen_indirect(
-                        (pen_t)(m_gfxdecode.target.digfx.gfx(0).colorbase() + i),
+                        (pen_t)(m_gfxdecode.op[0].digfx.gfx(0).colorbase() + i),
                         BIT(i, 0) != 0 ? (UInt16)(i >> 1) : (UInt16)0x80);
             }
         }
@@ -119,7 +119,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(xevious_state::get_fg_tile_info)
         void get_fg_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            uint8_t attr = m_xevious_fg_colorram.target[tile_index];
+            uint8_t attr = m_xevious_fg_colorram.op[tile_index];
 
             /* the hardware has two character sets, one normal and one x-flipped. When
                screen is flipped, character y flip is done by the hardware inverting the
@@ -128,7 +128,7 @@ namespace mame
                characters when screen is flipped, we have to flip them back. */
             uint8_t color = (uint8_t)(((attr & 0x03) << 4) | ((attr & 0x3c) >> 2));
             tileinfo.set(0,
-                    (u32)(m_xevious_fg_videoram.target[tile_index] | (flip_screen() != 0 ? 0x100 : 0)),
+                    (u32)(m_xevious_fg_videoram.op[tile_index] | (flip_screen() != 0 ? 0x100 : 0)),
                     color,
                     (u8)(TILE_FLIPYX((attr & 0xc0) >> 6) ^ (flip_screen() != 0 ? TILE_FLIPX : 0)));
         }
@@ -136,8 +136,8 @@ namespace mame
         //TILE_GET_INFO_MEMBER(xevious_state::get_bg_tile_info)
         void get_bg_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            uint8_t code = m_xevious_bg_videoram.target[tile_index];
-            uint8_t attr = m_xevious_bg_colorram.target[tile_index];
+            uint8_t code = m_xevious_bg_videoram.op[tile_index];
+            uint8_t attr = m_xevious_bg_colorram.op[tile_index];
             uint8_t color = (uint8_t)(((attr & 0x3c) >> 2) | ((code & 0x80) >> 3) | ((attr & 0x03) << 5));
             tileinfo.set(1,
                     (u32)(code + ((attr & 0x01) << 8)),
@@ -154,8 +154,8 @@ namespace mame
         //VIDEO_START_MEMBER(xevious_state,xevious)
         void video_start_xevious()
         {
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_bg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_fg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_bg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
+            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_fg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
 
             m_bg_tilemap.set_scrolldx(-20,288+27);
             m_bg_tilemap.set_scrolldy(-16,-16);
@@ -171,9 +171,9 @@ namespace mame
 
         protected override void draw_sprites(bitmap_ind16 bitmap, rectangle cliprect)
         {
-            Pointer<uint8_t> spriteram = new Pointer<uint8_t>(m_xevious_sr3.target, 0x780);  //uint8_t *spriteram = m_xevious_sr3 + 0x780;
-            Pointer<uint8_t> spriteram_2 = new Pointer<uint8_t>(m_xevious_sr1.target, 0x780);  //uint8_t *spriteram_2 = m_xevious_sr1 + 0x780;
-            Pointer<uint8_t> spriteram_3 = new Pointer<uint8_t>(m_xevious_sr2.target, 0x780);  //uint8_t *spriteram_3 = m_xevious_sr2 + 0x780;
+            Pointer<uint8_t> spriteram = new Pointer<uint8_t>(m_xevious_sr3.op, 0x780);  //uint8_t *spriteram = m_xevious_sr3 + 0x780;
+            Pointer<uint8_t> spriteram_2 = new Pointer<uint8_t>(m_xevious_sr1.op, 0x780);  //uint8_t *spriteram_2 = m_xevious_sr1 + 0x780;
+            Pointer<uint8_t> spriteram_3 = new Pointer<uint8_t>(m_xevious_sr2.op, 0x780);  //uint8_t *spriteram_3 = m_xevious_sr2 + 0x780;
             int offs;
             int sx;
             int sy;
@@ -213,41 +213,41 @@ namespace mame
                         flipy = flipy == 0 ? 1 : 0;
                     }
 
-                    transmask = m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(bank), (UInt32)color, 0x80);
+                    transmask = m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(bank), (UInt32)color, 0x80);
 
                     if ((spriteram_3[offs] & 2) != 0)  /* double height (?) */
                     {
                         if ((spriteram_3[offs] & 1) != 0)  /* double width, double height */
                         {
                             code &= ~3;
-                            m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                            m_gfxdecode.op[0].digfx.gfx(bank).transmask(bitmap,cliprect,
                                     (UInt32)(code+3),(UInt32)color,flipx,flipy,
                                     (flipx != 0) ? sx : sx+16, (flipy != 0) ? sy-16 : sy,transmask);
-                            m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                            m_gfxdecode.op[0].digfx.gfx(bank).transmask(bitmap,cliprect,
                                     (UInt32)(code+1),(UInt32)color,flipx,flipy,
                                     (flipx != 0) ? sx : sx+16, (flipy != 0) ? sy : sy-16,transmask);
                         }
                         code &= ~2;
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        m_gfxdecode.op[0].digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)(code+2),(UInt32)color,flipx,flipy,
                                 (flipx != 0) ? sx+16 : sx, (flipy != 0) ? sy-16 : sy,transmask);
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        m_gfxdecode.op[0].digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)code,(UInt32)color,flipx,flipy,
                                 (flipx != 0) ? sx+16 : sx, (flipy != 0) ? sy : sy-16,transmask);
                     }
                     else if ((spriteram_3[offs] & 1) != 0) /* double width */
                     {
                         code &= ~1;
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        m_gfxdecode.op[0].digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)code,(UInt32)color,flipx,flipy,
                                 (flipx != 0) ? sx+16 : sx, (flipy != 0) ? sy-16 : sy,transmask);
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        m_gfxdecode.op[0].digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)(code+1),(UInt32)color,flipx,flipy,
                                 (flipx != 0) ? sx : sx+16, (flipy != 0) ? sy-16 : sy,transmask);
                     }
                     else    /* normal */
                     {
-                        m_gfxdecode.target.digfx.gfx(bank).transmask(bitmap,cliprect,
+                        m_gfxdecode.op[0].digfx.gfx(bank).transmask(bitmap,cliprect,
                                 (UInt32)code,(UInt32)color,flipx,flipy,sx,sy,transmask);
                     }
                 }
@@ -271,25 +271,25 @@ namespace mame
 
         void xevious_fg_videoram_w(offs_t offset, uint8_t data)
         {
-            m_xevious_fg_videoram.target[offset] = data;
+            m_xevious_fg_videoram.op[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset);
         }
 
         void xevious_fg_colorram_w(offs_t offset, uint8_t data)
         {
-            m_xevious_fg_colorram.target[offset] = data;
+            m_xevious_fg_colorram.op[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset);
         }
 
         void xevious_bg_videoram_w(offs_t offset, uint8_t data)
         {
-            m_xevious_bg_videoram.target[offset] = data;
+            m_xevious_bg_videoram.op[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
         void xevious_bg_colorram_w(offs_t offset, uint8_t data)
         {
-            m_xevious_bg_colorram.target[offset] = data;
+            m_xevious_bg_colorram.op[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 

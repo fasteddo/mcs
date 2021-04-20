@@ -4,11 +4,18 @@
 using System;
 using System.Collections.Generic;
 
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using optional_memory_bank = mame.memory_bank_finder<mame.bool_constant_false>;  //using optional_memory_bank = memory_bank_finder<false>;
+using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
+using PointerU8 = mame.Pointer<System.Byte>;
+using required_memory_bank = mame.memory_bank_finder<mame.bool_constant_true>;  //using required_memory_bank = memory_bank_finder<true>;
+using required_memory_region = mame.memory_region_finder<mame.bool_constant_true>;  //using required_memory_region = memory_region_finder<true>;
 using size_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -20,24 +27,12 @@ namespace mame
     /// and number of elements in the array.  It's assumed that the element
     /// can be constructed with a device_t reference and a C string tag.
     //template <typename T, unsigned Count>
-    public class object_array_finder<T>
+    public class object_array_finder<T, unsigned_Count>
+        where T : finder_base
+        where unsigned_Count : uint32_constant, new()
     {
-        int Count;
+        protected static readonly unsigned Count = new unsigned_Count().value;
 
-        /// \brief Generated tag names
-        ///
-        /// Finder objects do not copy the search tag supplied at
-        /// construction.  Tags that are programmatically generated at
-        /// construction are stored here so they persist until resolution
-        /// time (and beyond).
-        protected string [] m_tag;  //std::string const m_tag[Count];
-
-        /// \brief The object discovery elements
-        ///
-        /// These are the actual object discovery helpers.  Note that this
-        /// member must be initialised after m_tag, as it may depend on
-        /// programmatically generated tags.
-        protected T [] m_array;  //T m_array[Count];
 
         /// \brief Element type for Container concept
         //typedef T value_type;
@@ -61,6 +56,37 @@ namespace mame
         //typedef std::make_unsigned_t<difference_type> size_type;
 
 
+        /// \brief Generated tag names
+        ///
+        /// Finder objects do not copy the search tag supplied at
+        /// construction.  Tags that are programmatically generated at
+        /// construction are stored here so they persist until resolution
+        /// time (and beyond).
+        protected string [] m_tag = new string [Count];  //std::string const m_tag[Count];
+
+        /// \brief The object discovery elements
+        ///
+        /// These are the actual object discovery helpers.  Note that this
+        /// member must be initialised after m_tag, as it may depend on
+        /// programmatically generated tags.
+        protected T [] m_array = new T [Count];  //T m_array[Count];
+
+
+        /// \brief Construct with programmatically generated tags
+        ///
+        /// Specify a format string and starting number.  A single unsigned
+        /// int format argument is supplied containing the (zero-based)
+        /// element index added to the starting number.  For example if
+        /// Count = 2, ("p%u_joy", 1) expands to ("p1_joy", "p2_joy").  The
+        /// relaxed format rules used by util::string_format apply.
+        /// \param [in] base Base device to search from.
+        /// \param [in] fmt Search tag format, should expect single unsigned
+        ///   int argument.
+        /// \param [in] start Number to add to element index when
+        ///   calculating values for string format argument.
+        /// \param [in] arg Optional additional constructor argument(s) passed
+        ///   to all elements.
+        /// \sa util::string_format
         //template <typename F, typename... Param, unsigned... V>
         //object_array_finder(device_t &base, F const &fmt, unsigned start, std::integer_sequence<unsigned, V...>, Param const &... arg)
         //    : m_tag{ util::string_format(fmt, start + V)... }
@@ -68,18 +94,20 @@ namespace mame
         //{
         //}
 
-        protected object_array_finder(int Count, device_t basedevice, string fmt, int start)
+        protected object_array_finder(device_t base_, string fmt, int start, Func<device_t, string, finder_base> creator_func = null)
         {
-            this.Count = Count;
-
-
             //m_tag{ util::string_format(fmt, start + V)... }
-            m_tag = new string[Count];
             for (int i = 0; i < Count; i++)
                 m_tag[i] = string.Format(fmt, start + i);
 
             //m_array{ { base, m_tag[V].c_str(), arg... }... }
+            if (creator_func != null)
+            {
+                for (int i = 0; i < Count; i++)
+                    m_array[i] = (T)creator_func(base_, m_tag[i]);
+            }
         }
+
 
         //template <typename... Param, unsigned... V>
         //object_array_finder(device_t &base, std::array<char const *, Count> const &tags, std::integer_sequence<unsigned, V...>, Param const &... arg)
@@ -146,7 +174,7 @@ namespace mame
 
         /// \brief Get constant iterator beyond last element
         ///
-        /// Returns aconstant iterator one past the last element in the
+        /// Returns a constant iterator one past the last element in the
         /// array.
         /// \return Constant iterator one past last element.
         //const_iterator cend() const { return m_array + Count; }
@@ -166,7 +194,7 @@ namespace mame
 
         /// \brief Does array have no elements
         ///
-        /// Returns whether the arary has no elements (compile-time
+        /// Returns whether the array has no elements (compile-time
         /// constant).
         /// \return True if the array has no elements, false otherwise.
         //constexpr bool empty() const { return !Count; }
@@ -198,9 +226,9 @@ namespace mame
         /// \param [in] index Index of desired element (zero-based).
         /// \return Reference to element at specified index.
         //T &operator[](unsigned index) { assert(index < Count); return m_array[index]; }
-        public virtual T op(int index) { return at(index); }
+        public virtual T op(int index) { global_object.assert(index < Count);  return at(index); }
 
-        /// \brief Checked element accesor
+        /// \brief Checked element accessor
         ///
         /// Returns a reference to the element at the supplied index if less
         /// than the size of the array, or throws std::out_of_range
@@ -210,7 +238,7 @@ namespace mame
         /// \throw std::out_of_range
         //T const &at(unsigned index) const { if (Count > index) return m_array[index]; else throw std::out_of_range("Index out of range"); }
         //T &at(unsigned index) { if (Count > index) return m_array[index]; else throw std::out_of_range("Index out of range"); }
-        public virtual T at(int index) { return m_array[index]; }
+        public virtual T at(int index) { if (Count > index) return m_array[index]; else throw new std.out_of_range("Index out of range"); }
     }
 
 
@@ -230,13 +258,13 @@ namespace mame
 
         /// \brief Pointer to next registered discovery helper
         ///
-        /// This is a polymorphic class, so it can't be held in a standardlist
-        /// container that requires elements of the same type.  Hence it
-        /// implements basic single-linked list behaviour.
+        /// This is a polymorphic class, so it can't be held in a standard
+        /// list container that requires elements of the same type.  Hence
+        /// it implements basic intrusive single-linked list behaviour.
         finder_base m_next;
 
         /// \brief Base device to search from
-        device_t m_base;
+        protected device_t m_base;
 
         /// \brief Object tag to search for
         protected string m_tag;
@@ -249,11 +277,12 @@ namespace mame
         //-------------------------------------------------
         //  finder_base - constructor
         //-------------------------------------------------
-        protected finder_base(device_t base_device, string tag)
+        protected finder_base(device_t base_, string tag)
         {
-            m_next = base_device.register_auto_finder(this);
-            m_base = base_device;
+            m_next = base_.register_auto_finder(this);
+            m_base = base_;
             m_tag = tag;
+            m_resolved = false;
         }
 
 
@@ -292,9 +321,6 @@ namespace mame
         ///   relative to and the relative tag.
         public std.pair<device_t, string> finder_target() { return std.make_pair(m_base, m_tag); }
 
-        public virtual device_t base_() { return m_base; }
-        public virtual string tag() { return m_tag; }
-
 
         // setter for setting the object
 
@@ -332,16 +358,42 @@ namespace mame
 
         // helpers
 
-        //void *find_memregion(UINT8 width, size_t &length, bool required);
+        //-------------------------------------------------
+        //  find_memregion - find memory region
+        //-------------------------------------------------
+        protected MemoryU8 find_memregion(u8 width, out size_t length, bool required)  //void *finder_base::find_memregion(u8 width, size_t &length, bool required) const
+        {
+            // look up the region and return nullptr if not found
+            memory_region region = m_base.get().memregion(m_tag);
+            if (region == null)
+            {
+                length = 0;
+                return null;
+            }
 
-        protected bool validate_memregion(UInt32 bytes, bool required)
+            // check the width and warn if not correct
+            if (region.bytewidth() != width)
+            {
+                if (required)
+                    osd_printf_warning("Region '{0}' found but is width {1}, not {2} as requested\n", m_tag, region.bitwidth(), width * 8);
+                length = 0;
+                return null;
+            }
+
+            // return results
+            length = region.bytes() / width;
+            return region.base_();
+        }
+
+
+        protected bool validate_memregion(bool required)
         {
             // make sure we can resolve the full path to the region
-            UInt32 bytes_found = 0;
+            size_t bytes_found = 0;
             string region_fulltag = m_base.get().subtag(m_tag);
 
             // look for the region
-            foreach (device_t dev in new device_iterator(m_base.get().mconfig().root_device()))
+            foreach (device_t dev in new device_enumerator(m_base.get().mconfig().root_device()))
             {
                 foreach (tiny_rom_entry region in new romload.entries(dev.rom_region()).get_regions())
                 {
@@ -356,18 +408,31 @@ namespace mame
                     break;
             }
 
-            // check the length and warn if other than specified
-            if ((bytes_found != 0) && (bytes != 0) && (bytes != bytes_found))
-            {
-                osd_printf_warning("Region '{0}' found but has {1} bytes, not {2} as requested\n", m_tag, bytes_found, bytes);
-                bytes_found = 0;
-            }
-
             return report_missing(bytes_found != 0, "memory region", required);
         }
 
 
-        //void *find_memshare(UINT8 width, size_t &bytes, bool required);  // moved to object_finder_base below
+        //-------------------------------------------------
+        //  find_memshare - find memory share
+        //-------------------------------------------------
+        protected PointerU8 find_memshare(u8 width, ref size_t bytes, bool required)  //void *finder_base::find_memshare(u8 width, size_t &bytes, bool required) const
+        {
+            // look up the share and return nullptr if not found
+            memory_share share = m_base.get().memshare(m_tag);
+            if (share == null)
+                return null;
+
+            // check the width and warn if not correct
+            if (width != 0 && share.bitwidth() != width)
+            {
+                osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", m_tag, share.bitwidth(), width);
+                return null;
+            }
+
+            // return results
+            bytes = (size_t)share.bytes();
+            return new PointerU8(share.ptr());
+        }
 
 
         //address_space *find_addrspace(int spacenum, u8 width, bool required) const;
@@ -405,6 +470,55 @@ namespace mame
     }
 
 
+    public interface object_finder_operations<T>
+    {
+        T cast(device_t device);
+        Pointer<T> cast(PointerU8 memory);
+    }
+
+
+    public class object_finder_operations_null<T> : object_finder_operations<T>
+    {
+        public T cast(device_t device) { throw new emu_unimplemented(); }
+        public Pointer<T> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+
+    public class object_finder_operations_device_palette_interface : object_finder_operations<device_palette_interface>
+    {
+        public device_palette_interface cast(device_t device) { return null; }
+        public Pointer<device_palette_interface> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+
+    public class object_finder_operations_memory_region : object_finder_operations<memory_region>
+    {
+        public memory_region cast(device_t device) { throw new emu_unimplemented(); }
+        public Pointer<memory_region> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+
+    public class object_finder_operations_memory_bank : object_finder_operations<memory_bank>
+    {
+        public memory_bank cast(device_t device) { throw new emu_unimplemented(); }
+        public Pointer<memory_bank> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+
+    public class object_finder_operations_ioport_port : object_finder_operations<ioport_port>
+    {
+        public ioport_port cast(device_t device) { throw new emu_unimplemented(); }
+        public Pointer<ioport_port> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+
+    public class object_finder_operations_u8 : object_finder_operations<u8>
+    {
+        public u8 cast(device_t device) { throw new emu_unimplemented(); }
+        public Pointer<u8> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+
     /// \brief Base class for object discovery helpers
     ///
     /// Abstract template base for auto-discovery of objects of a particular
@@ -413,23 +527,35 @@ namespace mame
     /// and whether failure to find the object is considered an error.
     /// Assumes that non-null pointer is found, and null pointer is not
     /// found.
-    public abstract class object_finder_base<ObjectClass /*, bool Required>*/> : finder_base where ObjectClass : class
+    //template <class ObjectClass, bool Required>
+    public abstract class object_finder_common_base<ObjectClass, bool_Required> : finder_base
+        where bool_Required : bool_constant, new()
     {
-        protected bool Required;
+        static object_finder_operations<ObjectClass> create_object_finder_operations()
+        {
+            if      (typeof(ObjectClass) == typeof(device_palette_interface)) return (object_finder_operations<ObjectClass>)new object_finder_operations_device_palette_interface();
+            else if (typeof(ObjectClass) == typeof(memory_region))            return (object_finder_operations<ObjectClass>)new object_finder_operations_memory_region();
+            else return new object_finder_operations_null<ObjectClass>();
+        }
+        protected static readonly object_finder_operations<ObjectClass> ops = create_object_finder_operations();
+        protected static readonly bool Required = new bool_Required().value;
+
 
         // internal state
-        ObjectClass m_target = null;
+        protected Pointer<ObjectClass> m_target = default;  //ObjectClass *m_target = nullptr;
 
 
-        // construction/destruction
-        protected object_finder_base(bool required, device_t base_, string tag) : base(base_, tag) { Required = required; }
+        /// \brief Designated constructor
+        ///
+        /// Construct base, register with base device to be invoked at
+        /// resolution time, and initialise target object pointer to
+        /// nullptr.
+        /// \param [in] base Base device to search from.
+        /// \param [in] tag Object tag to search for.  This is not copied,
+        ///   it is the caller's responsibility to ensure this pointer
+        ///   remains valid until resolution time.
+        protected object_finder_common_base(device_t base_, string tag) : base(base_, tag) { }
 
-        // operators to make use transparent
-        //operator _ObjectClass *() const { return m_target; }
-        //_ObjectClass *operator->() const { assert(m_target != NULL); return m_target; }
-
-        // getters for explicit fetching
-        public virtual bool found() { return target != null; }
 
         /// \brief Clear temporary binding from configuration
         ///
@@ -437,13 +563,81 @@ namespace mame
         /// target during configuration.  This needs to be cleared to ensure
         /// the correct target is found if a device further up the hierarchy
         /// subsequently removes or replaces devices.
-        public override void end_configuration() { assert(!m_resolved); m_target = null; }
+        public override void end_configuration() { assert(!m_resolved); m_target = default; }
 
-        // setter for setting the object
-        public virtual ObjectClass target { get { return m_target; } set { m_target = value; } }
 
-        protected bool report_missing(string objname) { return report_missing(found(), objname, Required); }
+        /// \brief Get pointer to target object
+        ///
+        /// \return Pointer to target object if found, or nullptr otherwise.
+        public Pointer<ObjectClass> target() { return new Pointer<ObjectClass>(m_target); }  //ObjectClass *target() const { return m_target; }
+
+
+        /// \brief Cast-to-pointer operator
+        ///
+        /// Allows implicit casting to a pointer to the target object.
+        /// Returns a null pointer if resolution has not been attempted or
+        // object was not found.
+        /// \return Pointer to target object if found, or nullptr otherwise.
+        //operator ObjectClass *() const { return m_target; }
+        public Pointer<ObjectClass> op { get { return new Pointer<ObjectClass>(m_target); } }
+
+
+        /// \brief Pointer member access operator
+        ///
+        /// Allows pointer-member-style access to members of the target
+        /// object.  Asserts that the target object has been found.
+        /// \return Pointer to target object if found, or nullptr otherwise.
+        //ObjectClass *operator->() const { assert(m_target); return m_target; }
+
+
+        protected bool report_missing(string objname) { return base.report_missing(m_target != null, objname, Required); }
     }
+
+
+    /// \brief Base class for object discovery helpers
+    ///
+    /// Allows partial specialisations to add members based on object class
+    /// and/or whether the object is required.  Template arguments are the
+    /// type of object to discover, and whether failure to find the object
+    /// is considered an error.
+    //template <class ObjectClass, bool Required>
+    public abstract class object_finder_base<ObjectClass, bool_Required> : object_finder_common_base<ObjectClass, bool_Required>
+        where bool_Required : bool_constant, new()
+    {
+        //using object_finder_common_base<ObjectClass, Required>::object_finder_common_base;
+
+
+        protected object_finder_base(device_t base_, string tag) : base(base_, tag) { }
+
+
+        // EDF - following two functions borrowed from specialized version of this class below
+
+        /// \brief Return whether target has been found
+        ///
+        /// Works on the assumption that the target object pointer will
+        /// be non-null if the target has been found, and null
+        /// otherwise.
+        /// \return True if object has been found, or false otherwise.
+        public bool found() { return this.m_target != null; }
+
+
+        /// \brief Cast-to-Boolean operator
+        ///
+        /// Allows truth tests to test whether it's safe to dereference
+        /// the object, similar to pointers and various C++ standard
+        /// library objects.
+        /// \return True if safe to dereference, or false otherwise.
+        //explicit operator bool() const { return this->m_target != nullptr; }
+    }
+
+
+    /// \brief Base class for optional object discovery helpers
+    ///
+    /// Adds helpers for to test whether the object was found, and by
+    /// extension whether it's safe to dereference.  Template argument is
+    /// the type of object to discover.
+    //template <class ObjectClass>
+    //class object_finder_base<ObjectClass, false> : object_finder_common_base<ObjectClass, false>
 
 
     /// \brief Device finder template
@@ -455,22 +649,19 @@ namespace mame
     /// is generally not used directly, instead the optional_device and
     /// required_device helpers are used.
     /// \sa optional_device required_device
-    //template<class _DeviceClass, bool Required>
-    public class device_finder<DeviceClass> : object_finder_base<DeviceClass> where DeviceClass : class
+    //template<class DeviceClass, bool Required>
+    public class device_finder<DeviceClass, bool_Required> : object_finder_base<DeviceClass, bool_Required>
+        where bool_Required : bool_constant, new()
     {
         //using object_finder_base<DeviceClass, Required>::set_tag;
 
 
-        object m_targetObject;  // some uses of optional_device<> and required_device<> don't actually use devices (eg, dac_byte_interface)
-
-
-        // construction/destruction
-        public device_finder(bool required, device_t basedevice, string tag) : base(required, basedevice, tag) { }
-
-        // make reference use transparent as well
-        //operator _DeviceClass &() { assert(object_finder_base<_DeviceClass>::m_target != NULL); return *object_finder_base<_DeviceClass>::m_target; }
-
-        public override DeviceClass target { get { return (m_targetObject is DeviceClass) ? (DeviceClass)m_targetObject : default; } set { m_targetObject = value; } }
+        /// \brief Device finder constructor
+        /// \param [in] base Base device to search from.
+        /// \param [in] tag Device tag to search for.  This is not copied,
+        ///   it is the caller's responsibility to ensure this pointer
+        ///   remains valid until resolution time.
+        public device_finder(device_t base_, string tag) : base(base_, tag) { }
 
 
         /// \brief Set search tag
@@ -495,32 +686,38 @@ namespace mame
         /// \return The same reference supplied by the caller.
         //template <typename T>
         //std::enable_if_t<std::is_convertible<T *, DeviceClass *>::value, T &> operator=(T &device)
-        //{
-        //    assert(!this->m_resolved);
-        //    assert(is_expected_tag(device));
-        //    this->m_target = &device;
-        //    return device;
-        //}
+        public DeviceClass assign(DeviceClass device)
+        {
+            assert(!this.m_resolved);
+
+            //assert(is_expected_tag(device));
+            if (device is device_t d) assert(is_expected_tag_device_t(d));
+            else if (device is device_interface di) assert(is_expected_tag_device_interface(di));
+            else throw new emu_unimplemented();
+
+            this.m_target = new Pointer<DeviceClass>(new MemoryContainer<DeviceClass>() { device });
+            return device;
+        }
 
         /// \brief Check that device implementation has expected tag
         /// \param [in] device Reference to device.
         /// \return True if supplied device matches the configured target
         ///   tag, or false otherwise.
         //template <typename T>
-        //std::enable_if_t<emu::detail::is_device_implementation<T>::value, bool> is_expected_tag(T const &device) const
-        //{
-        //    return this->m_base.get().subtag(this->m_tag) == device.tag();
-        //}
+        bool is_expected_tag_device_t(device_t device)  //std::enable_if_t<emu::detail::is_device_implementation<T>::value, bool> is_expected_tag(T const &device) const
+        {
+            return this.m_base.get().subtag(this.m_tag) == device.tag();  //return this->m_base.get().subtag(this->m_tag) == device.tag();
+        }
 
         /// \brief Check that device mixin has expected tag
         /// \param [in] device Reference to interface/mixin.
         /// \return True if supplied mixin matches the configured target
         ///   tag, or false otherwise.
         //template <typename T>
-        //std::enable_if_t<emu::detail::is_device_interface<T>::value, bool> is_expected_tag(T const &interface) const
-        //{
-        //    return this->m_base.get().subtag(this->m_tag) == interface.device().tag();
-        //}
+        bool is_expected_tag_device_interface(device_interface interface_)  //std::enable_if_t<emu::detail::is_device_interface<T>::value, bool> is_expected_tag(T const &interface) const
+        {
+            return this.m_base.get().subtag(this.m_tag) == interface_.device().tag();  //return this->m_base.get().subtag(this->m_tag) == interface.device().tag();
+        }
 
         // finder
         /// \brief Find device
@@ -542,21 +739,21 @@ namespace mame
                 this.m_resolved = true;
             }
 
-            device_t device = base_().get().subdevice(tag());
-            m_targetObject = device;
-            if (device != null && target == null)
+            device_t device = this.m_base.get().subdevice(this.m_tag);  //device_t *const device = this->m_base.get().subdevice(this->m_tag);
+            this.m_target = new Pointer<DeviceClass>(new MemoryContainer<DeviceClass>() { ops.cast(device) });  //this->m_target = dynamic_cast<DeviceClass *>(device);
+            if (device != null && this.m_target == default)
             {
                 osd_printf_warning("Device '{0}' found but is of incorrect type (actual type is {1})\n", this.m_tag, device.name());
             }
 
-            return report_missing("device");
+            return this.report_missing("device");
         }
     }
 
 
     /// \brief Optional device finder
     ///
-    /// Finds device with maching type and tag.  If a device with matching
+    /// Finds device with matching type and tag.  If a device with matching
     /// tag is found but the type does not match, a message is printed at
     /// warning level.  No error is generated if a matching device is not
     /// found (the target object pointer will be null).  If you have a
@@ -564,84 +761,49 @@ namespace mame
     /// optional_device_array.
     /// \sa required_device optional_device_array device_finder
     //template <class DeviceClass> using optional_device = device_finder<DeviceClass, false>;
-    public class optional_device<DeviceClass> : device_finder<DeviceClass> where DeviceClass : class
+    public class optional_device<DeviceClass> : device_finder<DeviceClass, bool_constant_false>
     {
-        public optional_device(device_t basedevice, string tag) : base(false, basedevice, tag) { }
+        public optional_device(device_t base_, string tag) : base(base_, tag) { }
     }
+
 
     /// \brief Required device finder
     ///
-    /// Finds device with maching type and tag.  If a device with matching
+    /// Finds device with matching type and tag.  If a device with matching
     /// tag is found but the type does not match, a message is printed at
     /// warning level.  A validation error is generated if a matching device
     /// is not found.  If you have a number of similar required devices,
     /// consider using required_device_array.
     /// \sa optional_device required_device_array device_finder
     //template <class DeviceClass> using required_device = device_finder<DeviceClass, true>;
-    public class required_device<DeviceClass> : device_finder<DeviceClass> where DeviceClass : class
+    public class required_device<DeviceClass> : device_finder<DeviceClass, bool_constant_true>
     {
-        public required_device(device_t basedevice, string tag) : base(true, basedevice, tag) { }
+        public required_device(device_t base_, string tag) : base(base_, tag) { }
     }
 
 
     //template <class DeviceClass, unsigned Count, bool Required> using device_array_finder = object_array_finder<device_finder<DeviceClass, Required>, Count>;
-    public class device_array_finder<DeviceClass> : object_array_finder<device_finder<DeviceClass>> where DeviceClass : class
+    public class device_array_finder<DeviceClass, unsigned_Count, bool_Required> : object_array_finder<device_finder<DeviceClass, bool_Required>, unsigned_Count>
+        where unsigned_Count : uint32_constant, new()
+        where bool_Required : bool_constant, new()
     {
-        bool Required;
-
-        protected device_array_finder(int Count, bool Required, device_t basedevice, string format, int start) : base(Count, basedevice, format, start) { this.Required = Required; }
+        protected device_array_finder(device_t base_, string format, int start, Func<device_t, string, finder_base> creator_func) : base(base_, format, start, creator_func) { }
     }
+
 
     //template <class DeviceClass, unsigned Count> using optional_device_array = device_array_finder<DeviceClass, Count, false>;
-    public class optional_device_array<DeviceClass> : device_array_finder<DeviceClass> where DeviceClass : class
+    public class optional_device_array<DeviceClass, unsigned_Count> : device_array_finder<DeviceClass, unsigned_Count, bool_constant_false>
+        where unsigned_Count : uint32_constant, new()
     {
-        public optional_device_array(int Count, device_t basedevice, string format, int start) : base(Count, false, basedevice, format, start) { }
+        public optional_device_array(device_t base_, string format, int start, Func<device_t, string, device_finder<DeviceClass, bool_constant_false>> creator_func) : base(base_, format, start, creator_func) { }
     }
 
-    public class optional_device_array_ay8910_device : optional_device_array<ay8910_device>
-    {
-        public optional_device_array_ay8910_device(int Count, device_t basedevice, string format, int start) : base(Count, basedevice, format, start)
-        {
-            m_array = new device_finder<ay8910_device>[Count];
-            for (int i = 0; i < Count; i++)
-                m_array[i] = new device_finder<ay8910_device>(false, basedevice, m_tag[i]);
-        }
-    }
-
-    public class optional_device_array_i8255_device : optional_device_array<i8255_device>
-    {
-        public optional_device_array_i8255_device(int Count, device_t basedevice, string format, int start) : base(Count, basedevice, format, start)
-        {
-            m_array = new device_finder<i8255_device>[Count];
-            for (int i = 0; i < Count; i++)
-                m_array[i] = new device_finder<i8255_device>(false, basedevice, m_tag[i]);
-        }
-    }
-
-    public class optional_device_array_netlist_mame_logic_input_device : optional_device_array<netlist_mame_logic_input_device>
-    {
-        public optional_device_array_netlist_mame_logic_input_device(int Count, device_t basedevice, string format, int start) : base(Count, basedevice, format, start)
-        {
-            m_array = new device_finder<netlist_mame_logic_input_device>[Count];
-            for (int i = 0; i < Count; i++)
-                m_array[i] = new device_finder<netlist_mame_logic_input_device>(false, basedevice, m_tag[i]);
-        }
-    }
 
     //template <class DeviceClass, unsigned Count> using required_device_array = device_array_finder<DeviceClass, Count, true>;
-    public class required_device_array<DeviceClass> : device_array_finder<DeviceClass> where DeviceClass : class
+    public class required_device_array<DeviceClass, unsigned_Count> : device_array_finder<DeviceClass, unsigned_Count, bool_constant_true>
+        where unsigned_Count : uint32_constant, new()
     {
-        public required_device_array(int Count, device_t basedevice, string format, int start) : base(Count, false, basedevice, format, start) { }
-    }
-
-    public class required_device_array_pokey_device : optional_device_array<pokey_device>
-    {
-        public required_device_array_pokey_device(int Count, device_t basedevice, string format, int start) : base(Count, basedevice, format, start)
-        {
-            m_array = new device_finder<pokey_device>[Count];
-            for (int i = 0; i < Count; i++)
-                m_array[i] = new device_finder<pokey_device>(false, basedevice, m_tag[i]);
-        }
+        public required_device_array(device_t base_, string format, int start, Func<device_t, string, device_finder<DeviceClass, bool_constant_true>> creator_func) : base(base_, format, start, creator_func) { }
     }
 
 
@@ -653,14 +815,15 @@ namespace mame
     /// optional_memory_region and required_memory_region helpers are used.
     /// \sa optional_memory_region required_memory_region
     //template <bool Required>
-    public class memory_region_finder : object_finder_base<memory_region>  //, Required>
+    public class memory_region_finder<bool_Required> : object_finder_base<memory_region, bool_Required>
+        where bool_Required : bool_constant, new()
     {
         /// \brief Memory region finder constructor
         /// \param [in] base Base device to search from.
         /// \param [in] tag Memory region tag to search for.  This is not
         ///   copied, it is the caller's responsibility to ensure this
         ///   pointer remains valid until resolution time.
-        protected memory_region_finder(bool required, device_t base_device, string tag) : base(required, base_device, tag) { }
+        public memory_region_finder(device_t base_device, string tag) : base(base_device, tag) { }
 
 
         /// \brief Find memory region
@@ -676,11 +839,11 @@ namespace mame
         public override bool findit(validity_checker valid)
         {
             if (valid != null)
-                return validate_memregion(0, Required);
+                return this.validate_memregion(Required);
 
             assert(!this.m_resolved);
             this.m_resolved = true;
-            target = base_().get().memregion(tag());
+            this.m_target = new Pointer<memory_region>(new MemoryContainer<memory_region>() { this.m_base.get().memregion(this.m_tag) });  //this->m_target = this->m_base.get().memregion(this->m_tag);
             return report_missing("memory region");
         }
     }
@@ -695,10 +858,6 @@ namespace mame
     /// \sa required_memory_region optional_memory_region_array
     ///   memory_region_finder
     //using optional_memory_region = memory_region_finder<false>;
-    public class optional_memory_region : memory_region_finder
-    {
-        public optional_memory_region(device_t basedevice, string tag) : base(false, basedevice, tag) { }
-    }
 
     /// \brief Required memory region finder
     ///
@@ -709,11 +868,6 @@ namespace mame
     /// \sa optional_memory_region required_memory_region_array
     ///   memory_region_finder
     //using required_memory_region = memory_region_finder<true>;
-    public class required_memory_region : memory_region_finder
-    {
-        public required_memory_region(device_t basedevice, string tag) : base(true, basedevice, tag) { }
-    }
-
 
     //template <unsigned Count, bool Required> using memory_region_array_finder = object_array_finder<memory_region_finder<Required>, Count>;
     //template <unsigned Count> using optional_memory_region_array = memory_region_array_finder<Count, false>;
@@ -728,14 +882,15 @@ namespace mame
     /// required_memory_bank helpers are used.
     /// \sa optional_memory_bank required_memory_bank
     //template <bool Required>
-    public class memory_bank_finder : object_finder_base<memory_bank>  //, Required>
+    public class memory_bank_finder<bool_Required> : object_finder_base<memory_bank, bool_Required>
+        where bool_Required : bool_constant, new()
     {
         /// \brief Memory bank finder constructor
         /// \param [in] base Base device to search from.
         /// \param [in] tag Memory bank tag to search for.  This is not
         ///   copied, it is the caller's responsibility to ensure this
         ///   pointer remains valid until resolution time.
-        public memory_bank_finder(bool Required, device_t base_, string tag) : base(Required, base_, tag) { }
+        public memory_bank_finder(device_t base_, string tag) : base(base_, tag) { }
 
 
         /// \brief Find memory bank
@@ -755,7 +910,7 @@ namespace mame
 
             assert(!this.m_resolved);
             this.m_resolved = true;
-            this.target = this.base_().get().membank(this.tag());
+            this.m_target = new Pointer<memory_bank>(new MemoryContainer<memory_bank>() { this.m_base.get().membank(this.m_tag) });  //this->m_target = this->m_base.get().membank(this->m_tag);
             return this.report_missing("memory bank");
         }
     }
@@ -763,60 +918,114 @@ namespace mame
 
     /// \brief Optional memory bank finder
     ///
-    /// Finds memory bank with maching tag.  No error is generated if a
+    /// Finds memory bank with matching tag.  No error is generated if a
     /// matching memory bank is not found (the target object pointer will
     /// be null).  If you have a number of similar optional memory banks,
     /// consider using optional_memory_bank_array.
     /// \sa required_memory_bank optional_memory_bank_array
     ///   memory_bank_finder
     //using optional_memory_bank = memory_bank_finder<false>;
-    public class optional_memory_bank : memory_bank_finder
-    {
-        public optional_memory_bank(device_t basedevice, string tag) : base(false, basedevice, tag) { }
-    }
-
 
     /// \brief Required memory bank finder
     ///
-    /// Finds memory bank with maching tag.  A validation error is
+    /// Finds memory bank with matching tag.  A validation error is
     /// generated if a matching memory bank is not found.  If you have a
     /// number of similar required memory banks, consider using
     /// required_memory_bank_array.
     /// \sa optional_memory_bank required_memory_bank_array
     ///   memory_bank_finder
     //using required_memory_bank = memory_bank_finder<true>;
-    public class required_memory_bank : memory_bank_finder
-    {
-        public required_memory_bank(device_t basedevice, string tag) : base(true, basedevice, tag) { }
-    }
 
 
     //template <unsigned Count, bool Required> using memory_bank_array_finder = object_array_finder<memory_bank_finder<Required>, Count>;
-    public class memory_bank_array_finder : object_array_finder<memory_bank_finder>
+    public class memory_bank_array_finder<unsigned_Count, bool_Required> : object_array_finder<memory_bank_finder<bool_Required>, unsigned_Count>
+        where unsigned_Count : uint32_constant, new()
+        where bool_Required : bool_constant, new()
     {
-        bool Required;
-
-        protected memory_bank_array_finder(int Count, bool Required, device_t basedevice, string format, int start) : base(Count, basedevice, format, start)
+        protected memory_bank_array_finder(device_t base_, string format, int start) : base(base_, format, start)
         {
-            this.Required = Required;
-
-            m_array = new memory_bank_finder[Count];
             for (int i = 0; i < Count; i++)
-                m_array[i] = new memory_bank_finder(Required, basedevice, m_tag[i]);
+                m_array[i] = new memory_bank_finder<bool_Required>(base_, m_tag[i]);
         }
     }
 
+
     //template <unsigned Count> using optional_memory_bank_array = memory_bank_array_finder<Count, false>;
-    public class optional_memory_bank_array : memory_bank_array_finder
+    public class optional_memory_bank_array<unsigned_Count> : memory_bank_array_finder<unsigned_Count, bool_constant_false>
+        where unsigned_Count : uint32_constant, new()
     {
-        public optional_memory_bank_array(int Count, device_t basedevice, string format, int start) : base(Count, false, basedevice, format, start) { }
+        public optional_memory_bank_array(device_t base_, string format, int start) : base(base_, format, start) { }
     }
 
     //template <unsigned Count> using required_memory_bank_array = memory_bank_array_finder<Count, true>;
-    public class required_memory_bank_array : memory_bank_array_finder
+    public class required_memory_bank_array<unsigned_Count> : memory_bank_array_finder<unsigned_Count, bool_constant_true>
+        where unsigned_Count : uint32_constant, new()
     {
-        public required_memory_bank_array(int Count, device_t basedevice, string format, int start) : base(Count, true, basedevice, format, start) { }
+        public required_memory_bank_array(device_t base_, string format, int start) : base(base_, format, start) { }
     }
+
+
+    /// \brief Memory bank creator
+    ///
+    /// Creates a memory bank or finds an existing one instantiated via an
+    /// address map.
+    class memory_bank_creator : finder_base
+    {
+        /// \brief Pointer to target object
+        ///
+        /// Pointer to target memory bank object, or nullptr if creation has
+        /// not been attempted yet.
+        memory_bank m_target = null;
+
+
+        /// \brief Memory bank creator constructor
+        /// \param [in] base Base device to search from.
+        /// \param [in] tag Memory bank tag to search for or create.  This
+        ///   is not copied, it is the caller's responsibility to ensure
+        ///   this pointer remains valid until resolution time.
+        public memory_bank_creator(device_t base_, string tag) : base(base_, tag) { }
+
+        /// \brief Get pointer to memory bank object
+        /// \return Pointer to found or created bank object.
+        //memory_bank *target() const { return m_target; }
+
+        /// \brief Cast-to-pointer operator
+        ///
+        /// Allows implicit casting to a pointer to the target
+        /// memory bank object.
+        /// \return Pointer to found or created memory bank object.
+        //operator memory_bank *() const { return m_target; }
+
+        /// \brief Pointer member access operator
+        ///
+        /// Allows pointer-member-style access to members of the target
+        /// memory bank object.  Asserts that the target has been found.
+        /// \return Pointer to found or created bank object.
+        //memory_bank *operator->() const { assert(m_target); return m_target; }
+
+
+        public override bool findit(validity_checker valid)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        public override void end_configuration()
+        {
+            m_target = null;
+        }
+    }
+
+
+    //template <unsigned Count> using memory_bank_array_creator = object_array_finder<memory_bank_creator, Count>;
+
+
+    /// \brief Base class for optional I/O port finders
+    ///
+    /// Adds helpers for to test whether the I/O port was found, and to read
+    /// the port value or return a default if the I/O port was not found.
+    //template <>
+    //class object_finder_base<ioport_port, false> : public object_finder_common_base<ioport_port, false>
 
 
     /// \brief I/O port finder template
@@ -827,25 +1036,15 @@ namespace mame
     /// required_ioport helpers are used.
     /// \sa optional_ioport required_ioport
     //template <bool Required>
-    public class ioport_finder : object_finder_base<ioport_port>
+    public class ioport_finder<bool_Required> : object_finder_base<ioport_port, bool_Required>
+        where bool_Required : bool_constant, new()
     {
         /// \brief I/O port finder constructor
         /// \param [in] base Base device to search from.
         /// \param [in] tag I/O port tag to search for.  This is not copied,
         ///   it is the caller's responsibility to ensure this pointer
         ///   remains valid until resolution time.
-        public ioport_finder(bool Required, device_t basedevice, string tag) : base(Required, basedevice, tag) { }
-
-
-        /// \brief Read I/O port if found or return default value
-        ///
-        /// If the I/O port was found, this reads a value from the I/O port
-        /// and returns it.  If the I/O port was not found, the default
-        /// value (supplied as a parameter) is returned.
-        /// \param [in] defval Value to return if I/O port was not found.
-        /// \return Value read from I/O port if found, or supplied default
-        ///   value otherwise.
-        //ioport_value read_safe(ioport_value defval) { return this->m_target ? this->m_target->read() : defval; }
+        public ioport_finder(device_t base_, string tag) : base(base_, tag) { }
 
 
         /// \brief Find I/O port
@@ -861,68 +1060,94 @@ namespace mame
         public override bool findit(validity_checker valid)
         {
             if (valid != null)
-                return true;
+                return base.report_missing(!valid.ioport_missing(this.m_base.get().subtag(this.m_tag).c_str()), "I/O port", Required);
 
             assert(!this.m_resolved);
             this.m_resolved = true;
-            target = base_().get().ioport(tag());
-            return report_missing("I/O port");
+            this.m_target = new Pointer<ioport_port>(new MemoryContainer<ioport_port>() { this.m_base.get().ioport(this.m_tag) });  //this->m_target = this->m_base.get().ioport(this->m_tag);
+            return this.report_missing("I/O port");
         }
     }
 
 
     /// \brief Optional I/O port finder
     ///
-    /// Finds I/O port with maching tag.  No error is generated if a
+    /// Finds I/O port with matching tag.  No error is generated if a
     /// matching I/O port is not found (the target object pointer will be
     /// null).  If you have a number of similar optional I/O ports, consider
     /// using optional_ioport_array.
     /// \sa required_ioport optional_ioport_array ioport_finder
     //using optional_ioport = ioport_finder<false>;
-    public class optional_ioport : ioport_finder
+    public class optional_ioport : ioport_finder<bool_constant_false>
     {
-        public optional_ioport(device_t basedevice, string tag) : base(false, basedevice, tag) { }
+        public optional_ioport(device_t base_, string tag) : base(base_, tag) { }
     }
 
     /// \brief Required I/O port finder
     ///
-    /// Finds I/O port with maching tag.  A validation error is generated if
-    /// a matching I/O port is not found.  If you have a number of similar
-    /// required I/O ports, consider using required_ioport_array.
+    /// Finds I/O port with matching tag.  A validation error is generated
+    /// if a matching I/O port is not found.  If you have a number of
+    /// similar required I/O ports, consider using required_ioport_array.
     /// \sa optional_ioport required_ioport_array ioport_finder
     //using required_ioport = ioport_finder<true>;
-    public class required_ioport : ioport_finder
+    public class required_ioport : ioport_finder<bool_constant_true>
     {
-        public required_ioport(device_t basedevice, string tag) : base(true, basedevice, tag) { }
+        public required_ioport(device_t base_, string tag) : base(base_, tag) { }
     }
 
 
     //template <unsigned Count, bool Required> using ioport_array_finder = object_array_finder<ioport_finder<Required>, Count>;
-    public class ioport_array_finder : object_array_finder<ioport_finder>
+    public class ioport_array_finder<unsigned_Count, bool_Required> : object_array_finder<ioport_finder<bool_Required>, unsigned_Count>
+        where unsigned_Count : uint32_constant, new()
+        where bool_Required : bool_constant, new()
     {
-        bool Required;
-
-        protected ioport_array_finder(int Count, bool Required, device_t basedevice, string format, int start) : base(Count, basedevice, format, start)
+        protected ioport_array_finder(device_t base_, string format, int start) : base(base_, format, start)
         {
-            this.Required = Required;
-
-            m_array = new ioport_finder[Count];
             for (int i = 0; i < Count; i++)
-                m_array[i] = new ioport_finder(Required, basedevice, m_tag[i]);
+                m_array[i] = new ioport_finder<bool_Required>(base_, m_tag[i]);
         }
     }
 
+
     //template <unsigned Count> using optional_ioport_array = ioport_array_finder<Count, false>;
-    public class optional_ioport_array : ioport_array_finder
+    public class optional_ioport_array<unsigned_Count> : ioport_array_finder<unsigned_Count, bool_constant_false>
+        where unsigned_Count : uint32_constant, new()
     {
-        public optional_ioport_array(int Count, device_t basedevice, string format, int start) : base(Count, false, basedevice, format, start) { }
+        public optional_ioport_array(device_t base_, string format, int start) : base(base_, format, start) { }
     }
 
     //template <unsigned Count> using required_ioport_array = ioport_array_finder<Count, true>;
-    public class required_ioport_array : ioport_array_finder
+    public class required_ioport_array<unsigned_Count> : ioport_array_finder<unsigned_Count, bool_constant_true>
+        where unsigned_Count : uint32_constant, new()
     {
-        public required_ioport_array(int Count, device_t basedevice, string format, int start) : base(Count, true, basedevice, format, start) { }
+        public required_ioport_array(device_t base_, string format, int start) : base(base_, format, start) { }
     }
+
+
+    /// \brief Address space finder template
+    ///
+    /// Template argument is whether the address space is required.  It is a
+    /// validation error if a required address space is not found.  This
+    /// class is generally not used directly, instead the
+    /// optional_address_space and required_address_space helpers are used.
+    /// \sa optional_address_space required_address_space
+    //template <bool Required>
+    //class address_space_finder : public object_finder_base<address_space, Required>
+
+    /// \brief Optional address space finder
+    ///
+    /// Finds address space with matching tag and number.  No error is
+    /// generated if a matching address space is not found (the target
+    /// object pointer will be null).
+    /// \sa required_address_space address_space_finder
+    //using optional_address_space = address_space_finder<false>;
+
+    /// \brief Required address space finder
+    ///
+    /// Finds address space with matching tag and number.  A validation
+    /// error is generated if a matching address space is not found.
+    /// \sa optional_address_space address_space_finder
+    //using required_address_space = address_space_finder<true>;
 
 
     /// \brief Memory region base pointer finder
@@ -934,221 +1159,176 @@ namespace mame
     /// required_region_ptr helpers are used.
     /// \sa optional_region_ptr required_region_ptr
     //template<typename PointerType, bool Required>
-    class region_ptr_finder<PointerType/*, bool Required*/> : object_finder_base<Pointer<PointerType>>
+    class region_ptr_finder<PointerType, bool_Required> : object_finder_base<PointerType, bool_Required>  //class region_ptr_finder : public object_finder_base<PointerType, Required>
+        where bool_Required : bool_constant, new()
     {
-        bool Required;
-
-
-        // internal state
-
-        /// \brief Desired region length
-        ///
-        /// Desired region length in units of elements.
-        UInt32 m_desired_length;  //size_t const m_desired_length;
-
-        /// \brief Matched region length
+        /// \brief Region length
         ///
         /// Actual length of the region that was found in units of
         /// elements, or zero if no matching region has been found.
-        UInt32 m_length;  //size_t m_length;
+        size_t m_length;
 
 
         // construction/destruction
-        public region_ptr_finder(bool required, device_t basedevice, string tag, UInt32 length = 0)
-            : base(required, basedevice, tag)
+        protected region_ptr_finder(device_t base_, string tag)
+            : base(base_, tag)
         {
-            Required = required;
-
-            m_length = length;
+            m_length = 0;
         }
 
 
-        // operators to make use transparent
-        //PointerType operator[](int index) const { assert(index < m_length); return this->m_target[index]; }
-        //PointerType &operator[](int index) { assert(index < m_length); return this->m_target[index]; }
+        /// \brief Array access operator
+        ///
+        /// Returns a non-const reference to the element of the memory
+        /// region at the supplied zero-based index.  Behaviour is undefined
+        /// for negative element indices.
+        /// \param [in] index Non-negative element index.
+        /// \return Non-const reference to element at requested index.
+        //PointerType &operator[](int index) const { assert(index < m_length); return this->m_target[index]; }
+        public Pointer<PointerType> this[int index] { get { assert(index < m_length); return new Pointer<PointerType>(this.m_target, index); } set { throw new emu_unimplemented(); } }
+        public Pointer<PointerType> this[UInt32 index] { get { assert(index < m_length); return new Pointer<PointerType>(this.m_target, (int)index); } set { throw new emu_unimplemented(); } }
 
 
-        // setter for setting the object and its length
-        //void set_target(PointerType *target, size_t length) { this->m_target = target; m_length = length; }
+        /// \brief Get length in units of elements
+        ///
+        /// \return Length in units of elements or zero if no matching
+        ///   memory region has been found.
+        //size_t length() const { return m_length; }
+
+        /// \brief Get length in units of bytes
+        ///
+        /// \return Length in units of bytes or zero if no matching memory
+        ///   region has been found.
+        //size_t bytes() const { return m_length * sizeof(PointerType); }
 
 
-        // getter for explicit fetching
-        //UINT32 length() const { return m_length; }
-        //UINT32 bytes() const { return m_length * sizeof(PointerType); }
-        //UINT32 mask() const { return m_length - 1; } // only valid if length is known to be a power of 2
-
-
-        // finder
+        /// \brief Find memory region base pointer
+        ///
+        /// Find base pointer of memory region with with requested tag,
+        /// width and length.  Width of memory region is checked against
+        /// sizeof(PointerType).  For a dry run, only the tag and length are
+        /// checked - the width is not checked and the target pointer is not
+        /// set.  This method is called by the base device at resolution
+        /// time.
+        /// \param [in] valid Pass a pointer to the validity checker if this
+        ///   is a dry run (i.e. no intention to actually start the device),
+        ///   or nullptr otherwise.
+        /// \return True if the memory region is optional or a matching
+        ///   memory region is found, or false otherwise.
         public override bool findit(validity_checker valid)
         {
             if (valid != null)
-                return validate_memregion((UInt32)sizeof_(typeof(PointerType)) * m_length, Required);
+                return this.validate_memregion(Required);
 
             assert(!this.m_resolved);
             this.m_resolved = true;
-            m_length = m_desired_length;
-            target = find_memregion((byte)sizeof_(typeof(PointerType)), ref m_length, Required);  //reinterpret_cast<PointerType *>(find_memregion(sizeof(PointerType), m_length, m_required));
-            return report_missing(target != null, "memory region", Required);
-        }
-
-
-        public virtual Pointer<PointerType> find_memregion(byte width, ref UInt32 length, bool required) { return null; }
-    }
-
-
-    // optional region pointer finder
-    //template<class PointerType>
-    class optional_region_ptr<PointerType> : region_ptr_finder<PointerType/*, false*/>
-    {
-        public optional_region_ptr(device_t basedevice, string tag, UInt32 length = 0) : base(false, basedevice, tag, length) { }
-    }
-
-
-    class optional_region_ptr_uint8_t : optional_region_ptr<uint8_t/*, false*/>
-    {
-        public optional_region_ptr_uint8_t(device_t basedevice, string tag, UInt32 length = 0) : base(basedevice, tag, length) { }
-
-
-        //-------------------------------------------------
-        //  find_memregion - find memory region
-        //-------------------------------------------------
-        public override Pointer<uint8_t> find_memregion(byte width, ref UInt32 length, bool required)
-        {
-            // look up the region and return nullptr if not found
-            memory_region region = base_().memregion(tag());
-            if (region == null)
-            {
-                length = 0;
-                return null;
-            }
-
-            // check the width and warn if not correct
-            if (region.bytewidth() != width)
-            {
-                if (required)
-                    osd_printf_warning("Region '{0}' found but is width {1}, not {2} as requested\n", tag(), region.bitwidth(), width*8);
-                length = 0;
-                return null;
-            }
-
-            // check the length and warn if other than specified
-            UInt32 length_found = region.bytes() / width;
-            if (length != 0 && length != length_found)
-            {
-                if (required)
-                    osd_printf_warning("Region '{0}' found but has {1} bytes, not {2} as requested\n", tag(), region.bytes(), (int)length*width);
-                length = 0;
-                return null;
-            }
-
-            // return results
-            length = length_found;
-            return new Pointer<uint8_t>(region.base_());
+            this.m_target = ops.cast(new PointerU8(this.find_memregion((u8)sizeof_(typeof(PointerType)), out m_length, Required)));  //this->m_target = reinterpret_cast<PointerType *>(this->find_memregion(sizeof(PointerType), m_length, Required));
+            return this.report_missing("memory region");
         }
     }
 
 
-    // required region pointer finder
-    //template<class PointerType>
-    class required_region_ptr<PointerType> : region_ptr_finder<PointerType/*, true*/>
+    /// \brief Optional memory region base pointer finder
+    ///
+    /// Finds base pointer of memory region with matching tag, width and
+    /// length.  No error is generated if a matching memory region is not
+    /// found (the target pointer will be null).  If you have a number of
+    /// similar optional memory regions, consider using
+    /// optional_region_ptr_array.
+    /// \sa required_region_ptr optional_region_ptr_array region_ptr_finder
+    //template <typename PointerType> using optional_region_ptr = region_ptr_finder<PointerType, false>;
+    class optional_region_ptr<PointerType> : region_ptr_finder<PointerType, bool_constant_false>
     {
-        public required_region_ptr(device_t basedevice, string tag, UInt32 length = 0) : base(true, basedevice, tag, length) { }
+        public optional_region_ptr(device_t base_, string tag) : base(base_, tag) { }
+    }
+
+    /// \brief Required memory region base pointer finder
+    ///
+    /// Finds base pointer of memory region with matching tag, width and
+    /// length.  A validation error is generated if a matching memory region
+    /// is not found.  If you have a number of similar required memory
+    /// regions, consider using required_region_ptr_array.
+    /// \sa optional_region_ptr required_region_ptr_array region_ptr_finder
+    //template <typename PointerType> using required_region_ptr = region_ptr_finder<PointerType, true>;
+    class required_region_ptr<PointerType> : region_ptr_finder<PointerType, bool_constant_true>
+    {
+        public required_region_ptr(device_t base_, string tag) : base(base_, tag) { }
     }
 
 
-    class required_region_ptr_uint8_t : required_region_ptr<uint8_t/*, true*/>
-    {
-        public required_region_ptr_uint8_t(device_t basedevice, string tag, UInt32 length = 0) : base(basedevice, tag, length) { }
+    //template <typename PointerType, unsigned Count, bool Required> using region_ptr_array_finder = object_array_finder<region_ptr_finder<PointerType, Required>, Count>;
+    //template <typename PointerType, unsigned Count> using optional_region_ptr_array = region_ptr_array_finder<PointerType, Count, false>;
+    //template <typename PointerType, unsigned Count> using required_region_ptr_array = region_ptr_array_finder<PointerType, Count, true>;
 
 
-        //-------------------------------------------------
-        //  find_memregion - find memory region
-        //-------------------------------------------------
-        public override Pointer<uint8_t> find_memregion(byte width, ref UInt32 length, bool required)
-        {
-            // look up the region and return nullptr if not found
-            memory_region region = base_().memregion(tag());
-            if (region == null)
-            {
-                length = 0;
-                return null;
-            }
-
-            // check the width and warn if not correct
-            if (region.bytewidth() != width)
-            {
-                if (required)
-                    osd_printf_warning("Region '{0}' found but is width {1}, not {2} as requested\n", tag(), region.bitwidth(), width*8);
-                length = 0;
-                return null;
-            }
-
-            // check the length and warn if other than specified
-            UInt32 length_found = region.bytes() / width;
-            if (length != 0 && length != length_found)
-            {
-                if (required)
-                    osd_printf_warning("Region '{0}' found but has {1} bytes, not {2} as requested\n", tag(), region.bytes(), (int)length*width);
-                length = 0;
-                return null;
-            }
-
-            // return results
-            length = length_found;
-            return new Pointer<uint8_t>(region.base_());
-        }
-    }
-
-
-    // ======================> shared_ptr_finder
-    // shared pointer finder template
+    /// \brief Memory share base pointer finder
+    ///
+    /// Template arguments are the element type of the memory share and
+    /// whether the memory share is required.  It is a validation error if a
+    /// required memory share is not found.  This class is generally not
+    /// used directly, instead the optional_shared_ptr and
+    /// required_shared_ptr helpers are used.
+    /// \sa optional_shared_ptr required_shared_ptr
     //template<typename PointerType, bool Required>
-    public class shared_ptr_finder<PointerType/*, bool Required*/> : object_finder_base<Pointer<PointerType>>
+    public class shared_ptr_finder<PointerType, bool_Required> : object_finder_base<PointerType, bool_Required>
+        where bool_Required : bool_constant, new()
     {
-        bool Required;
-
-        // internal state
-        u8 m_width;
+        /// \brief Memory share length
+        ///
+        /// Actual length of the memory share that was found in bytes, or
+        /// zero if no matching region has been found.
         size_t m_bytes;
-        //std::unique_ptr<PointerType []> m_allocated;
-
-        Pointer<PointerType> m_targetPtr;
 
 
-        // construction/destruction
-        public shared_ptr_finder(bool required, device_t basedevice, string tag, u8 width = 255) // = sizeof(PointerType) * 8)
-            : base(required, basedevice, tag)
+        /// \brief Memory share finder constructor
+        ///
+        /// Desired width is implied by sizeof(PointerType).
+        /// \param [in] base Base device to search from.
+        /// \param [in] tag Memory share tag to search for.  This is not
+        ///   copied, it is the caller's responsibility to ensure this
+        ///   pointer remains valid until resolution time.
+        public shared_ptr_finder(device_t base_, string tag)
+            : base(base_, tag)
         {
-            Required = required;
-            if (width == 255)
-                width = (u8)(sizeof_(typeof(PointerType)) * 8);
-
-            m_width = width;
             m_bytes = 0;
         }
 
-        // operators to make use transparent
-        //PointerType operator[](int index) const { return this->m_target[index]; }
-        //PointerType &operator[](int index) { return this->m_target[index]; }
 
-        // getter for explicit fetching
-        public u32 bytes() { return m_bytes; }
-        //u32 mask() const { return m_bytes - 1; } // FIXME: wrong when sizeof(PointerType) != 1
-
-        // setter for setting the object
-        //void set_target(PointerType *target, size_t bytes) { this->m_target = target; m_bytes = bytes; }
-
-
-        public override Pointer<PointerType> target { get { return m_targetPtr; } set { m_targetPtr = value; } }
+        /// \brief Array access operator
+        ///
+        /// Returns a non-const reference to the element of the memory
+        /// share at the supplied zero-based index.  Behaviour is undefined
+        /// for negative element indices.
+        /// \param [in] index Non-negative element index.
+        /// \return Non-const reference to element at requested index.
+        //PointerType &operator[](int index) const { return this->m_target[index]; }
+        public Pointer<PointerType> this[int index] { get { return new Pointer<PointerType>(this.m_target, index); } set { throw new emu_unimplemented(); } }
+        public Pointer<PointerType> this[UInt32 index] { get { return new Pointer<PointerType>(this.m_target, (int)index); } set { throw new emu_unimplemented(); } }
 
 
-        // dynamic allocation of a shared pointer
-        //void allocate(u32 entries)
+        /// \brief Get length in units of elements
+        ///
+        /// \return Length in units of elements or zero if no matching
+        ///   memory region has been found.
+        //size_t length() const { return m_bytes / sizeof(PointerType); }
+
+        /// \brief Get length in bytes
+        ///
+        /// \return Length in bytes or zero if no matching memory share has
+        ///   been found.
+        public size_t bytes() { return m_bytes; }
 
 
-        public virtual Pointer<PointerType> find_memshare(byte width, out UInt32 bytes, bool required) { bytes = 0; return null; }
-
-        // finder
+        /// \brief Find memory share base pointer
+        ///
+        /// Find base pointer of memory share with with requested tag.
+        /// Width of memory share is checked against sizeof(PointerType).
+        /// This method is called by the base device at resolution time.
+        /// \param [in] valid Pass a pointer to the validity checker if this
+        ///   is a dry run (i.e. no intention to actually start the device),
+        ///   or nullptr otherwise.
+        /// \return True if the memory share is optional or a matching
+        ///   memory share is found, or false otherwise.
         public override bool findit(validity_checker valid)
         {
             if (valid != null)
@@ -1156,163 +1336,55 @@ namespace mame
 
             assert(!this.m_resolved);
             this.m_resolved = true;
-            target = find_memshare(0, out m_bytes, Required);  // reinterpret_cast<_PointerType *>(this.find_memshare(m_width, m_bytes, _Required));
-            return report_missing(this.target != null, "shared pointer", Required);
+            this.m_target = ops.cast(this.find_memshare((u8)(sizeof_(typeof(PointerType)) * 8), ref m_bytes, Required));  //this->m_target = reinterpret_cast<PointerType *>(this->find_memshare(sizeof(PointerType)*8, m_bytes, Required));
+            return this.report_missing("shared pointer");
         }
     }
 
 
-    // optional shared pointer finder
-    //template<class PointerType>
-    public class optional_shared_ptr<PointerType> : shared_ptr_finder<PointerType/*, false*/>
+    /// \brief Optional memory share base pointer finder
+    ///
+    /// Finds base pointer of memory share with matching tag and width.  No
+    /// error is generated if a matching memory share is not found (the
+    /// target pointer will be null).  If you have a number of similar
+    /// optional memory regions, consider using optional_shared_ptr_array.
+    /// \sa required_shared_ptr optional_shared_ptr_array shared_ptr_finder
+    //template <typename PointerType> using optional_shared_ptr = shared_ptr_finder<PointerType, false>;
+    public class optional_shared_ptr<PointerType> : shared_ptr_finder<PointerType, bool_constant_false>
     {
-        public optional_shared_ptr(device_t basedevice, string tag, u8 width = 255)//, UINT8 width = sizeof(PointerType) * 8)
-            : base(false, basedevice, tag, width) { }
-    }
-
-    public class optional_shared_ptr_uint8_t : optional_shared_ptr<uint8_t/*, false*/>
-    {
-        public optional_shared_ptr_uint8_t(device_t basedevice, string tag, u8 width = 255)//, UINT8 width = sizeof(PointerType) * 8)
-            : base(basedevice, tag, width) { }
-
-        //-------------------------------------------------
-        //  find_memshare - find memory share
-        //-------------------------------------------------
-        public override Pointer<uint8_t> find_memshare(u8 width, out UInt32 bytes, bool required)
-        {
-            bytes = 0;
-
-            // look up the share and return NULL if not found
-            memory_share share = base_().memshare(tag());
-            if (share == null)
-                return null;
-
-            // check the width and warn if not correct
-            if (width != 0 && share.bitwidth() != width)
-            {
-                if (required)
-                    osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", tag(), share.bitwidth(), width);
-                return null;
-            }
-
-            // return results
-            bytes = (UInt32)share.bytes();
-            return share.ptr();
-        }
-
-        public byte this[int i] { get { return target[i]; } set { target[i] = value; } }
-        public byte this[UInt32 i] { get { return target[i]; } set { target[i] = value; } }
-    }
-
-    class optional_shared_ptr_uint16_t : optional_shared_ptr<uint8_t/*, false*/>
-    {
-        public optional_shared_ptr_uint16_t(device_t basedevice, string tag, u8 width = 255)  //, UINT8 width = sizeof(PointerType) * 8)
-            : base(basedevice, tag, width) { }
-
-        //-------------------------------------------------
-        //  find_memshare - find memory share
-        //-------------------------------------------------
-        public override Pointer<uint8_t> find_memshare(u8 width, out UInt32 bytes, bool required)
-        {
-            bytes = 0;
-
-            // look up the share and return NULL if not found
-            memory_share share = base_().memshare(tag());
-            if (share == null)
-                return null;
-
-            // check the width and warn if not correct
-            if (width != 0 && share.bitwidth() != width)
-            {
-                if (required)
-                    osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", tag(), share.bitwidth(), width);
-                return null;
-            }
-
-            // return results
-            bytes = (UInt32)share.bytes();
-            return share.ptr();
-        }
-
-        public uint16_t this[int i] { get { return target.GetUInt16(i); } set { target.SetUInt16(i, value); } }
-        public uint16_t this[UInt32 i] { get { return this[(int)i]; } set { this[(int)i] = value; } }
+        public optional_shared_ptr(device_t base_, string tag)
+            : base(base_, tag) { }
     }
 
 
-    // required shared pointer finder
-    //template<class PointerType>
-    class required_shared_ptr<PointerType> : shared_ptr_finder<PointerType/*, true*/>
+    /// \brief Required memory share base pointer finder
+    ///
+    /// Finds base pointer of memory share with matching tag and width.  A
+    /// validation error is generated if a matching memory share is not
+    /// found.  If you have a number of similar required memory shares,
+    /// consider using required_shared_ptr_array.
+    /// \sa optional_shared_ptr required_shared_ptr_array shared_ptr_finder
+    //template <typename PointerType> using required_shared_ptr = shared_ptr_finder<PointerType, true>;
+    class required_shared_ptr<PointerType> : shared_ptr_finder<PointerType, bool_constant_true>
     {
-        public required_shared_ptr(device_t basedevice, string tag, u8 width = 255)  //, UINT8 width = sizeof(PointerType) * 8)
-            : base(true, basedevice, tag, width) { }
-    }
-
-    class required_shared_ptr_uint8_t : required_shared_ptr<uint8_t/*, true*/>
-    {
-        public required_shared_ptr_uint8_t(device_t basedevice, string tag, u8 width = 255)  //, UINT8 width = sizeof(PointerType) * 8)
-            : base(basedevice, tag, width) { }
-
-        //-------------------------------------------------
-        //  find_memshare - find memory share
-        //-------------------------------------------------
-        public override Pointer<uint8_t> find_memshare(u8 width, out UInt32 bytes, bool required)
-        {
-            bytes = 0;
-
-            // look up the share and return NULL if not found
-            memory_share share = base_().memshare(tag());
-            if (share == null)
-                return null;
-
-            // check the width and warn if not correct
-            if (width != 0 && share.bitwidth() != width)
-            {
-                if (required)
-                    osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", tag(), share.bitwidth(), width);
-                return null;
-            }
-
-            // return results
-            bytes = (UInt32)share.bytes();
-            return share.ptr();
-        }
-
-        public byte this[int i] { get { return target[i]; } set { target[i] = value; } }
-        public byte this[UInt32 i] { get { return target[i]; } set { target[i] = value; } }
+        public required_shared_ptr(device_t base_, string tag)
+            : base(base_, tag) { }
     }
 
 
-    class required_shared_ptr_uint16_t : required_shared_ptr<uint8_t/*, true*/>
-    {
-        public required_shared_ptr_uint16_t(device_t basedevice, string tag, u8 width = 255)  //, UINT8 width = sizeof(PointerType) * 8)
-            : base(basedevice, tag, width) { }
+    //template <typename PointerType, unsigned Count, bool Required> using shared_ptr_array_finder = object_array_finder<shared_ptr_finder<PointerType, Required>, Count>;
+    //template <typename PointerType, unsigned Count> using optional_shared_ptr_array = shared_ptr_array_finder<PointerType, Count, false>;
+    //template <typename PointerType, unsigned Count> using required_shared_ptr_array = shared_ptr_array_finder<PointerType, Count, true>;
 
-        //-------------------------------------------------
-        //  find_memshare - find memory share
-        //-------------------------------------------------
-        public override Pointer<uint8_t> find_memshare(u8 width, out UInt32 bytes, bool required)
-        {
-            bytes = 0;
 
-            // look up the share and return NULL if not found
-            memory_share share = base_().memshare(tag());
-            if (share == null)
-                return null;
+    /// \brief Memory share creator template
+    ///
+    /// Creates a memory share or finds an existing one instantiated via an
+    /// address map.  Template argument is the element type of the memory
+    /// share.  If an existing memory share is found, it is an error if it
+    /// doesn't match the requested width, length and endianness.
+    //template <typename PointerType>
+    //class memory_share_creator : finder_base
 
-            // check the width and warn if not correct
-            if (width != 0 && share.bitwidth() != width)
-            {
-                if (required)
-                    osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", tag(), share.bitwidth(), width);
-                return null;
-            }
-
-            // return results
-            bytes = (UInt32)share.bytes();
-            return share.ptr();
-        }
-
-        public uint16_t this[int i] { get { return target.GetUInt16(i); } set { target.SetUInt16(i, value); } }
-        public uint16_t this[UInt32 i] { get { return this[(int)i]; } set { this[(int)i] = value; } }
-    }
+    //template <typename PointerType, unsigned Count> using memory_share_array_creator = object_array_finder<memory_share_creator<PointerType>, Count>;
 }

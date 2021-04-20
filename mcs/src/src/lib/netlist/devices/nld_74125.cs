@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 
 
-namespace mame.netlist
+namespace mame
 {
-    //template <typename T>
-    //struct uptr : public device_arena::unique_ptr<T>
-} // namespace netlist
+}

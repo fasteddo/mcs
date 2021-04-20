@@ -178,13 +178,13 @@ namespace mame
             if (m_sfx_tilemap == 0)
             {
                 /* normal galaxian hardware is row-based and individually scrolling columns */
-                m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, GALAXIAN_XSCALE*8,8, 32,32);
+                m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, GALAXIAN_XSCALE*8,8, 32,32);
                 m_bg_tilemap.set_scroll_cols(32);
             }
             else
             {
                 /* sfx hardware is column-based and individually scrolling rows */
-                m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, GALAXIAN_XSCALE*8,8, 32,32);
+                m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, GALAXIAN_XSCALE*8,8, 32,32);
                 m_bg_tilemap.set_scroll_rows(32);
             }
             m_bg_tilemap.set_transparent_pen(0);
@@ -229,10 +229,10 @@ namespace mame
         {
             /* update any video up to the current scanline */
             //m_screen->update_now();
-            m_screen.target.update_partial(m_screen.target.vpos());
+            m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
             /* store the data and mark the corresponding tile dirty */
-            m_videoram[offset] = data;
+            m_videoram[offset].op = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
@@ -241,10 +241,10 @@ namespace mame
         {
             /* update any video up to the current scanline */
             //  m_screen->update_now();
-            m_screen.target.update_partial(m_screen.target.vpos());
+            m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
             /* store the data */
-            m_spriteram[offset] = data;
+            m_spriteram[offset].op = data;
 
             /* the first $40 bytes affect the tilemap */
             if (offset < 0x40)
@@ -287,11 +287,11 @@ namespace mame
 
             /* render the sprites next. Some custom pcbs (eg. zigzag, fantastc) have more than one sprite generator (ideally, this should be rendered in parallel) */
             for (int i = 0; i < m_numspritegens; i++)
-                sprites_draw(bitmap, cliprect, new Pointer<uint8_t>(m_spriteram.target, m_sprites_base + i * 0x20));
+                sprites_draw(bitmap, cliprect, new Pointer<uint8_t>(m_spriteram.op, m_sprites_base + i * 0x20));
 
             /* if we have bullets to draw, render them following */
             if (m_draw_bullet_ptr != null)
-                bullets_draw(bitmap, cliprect, new Pointer<uint8_t>(m_spriteram.target, m_bullets_base));
+                bullets_draw(bitmap, cliprect, new Pointer<uint8_t>(m_spriteram.op, m_bullets_base));
 
             return 0;
         }
@@ -306,11 +306,11 @@ namespace mame
         //TILE_GET_INFO_MEMBER(galaxian_state::bg_get_tile_info)
         void bg_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            var videoram = m_videoram.target;  //uint8_t *videoram = m_videoram;
+            var videoram = m_videoram.op;  //uint8_t *videoram = m_videoram;
             uint8_t x = (uint8_t)(tile_index & 0x1f);
 
             uint16_t code = videoram[tile_index];
-            uint8_t attrib = m_spriteram[x*2+1];
+            uint8_t attrib = m_spriteram.op[x * 2 + 1];
             uint8_t color = (uint8_t)(attrib & 7);
 
             if (m_extend_tile_info_ptr != null)
@@ -376,7 +376,7 @@ namespace mame
 
                 /* draw */
 
-                m_gfxdecode.target.digfx.gfx(1).transpen(bitmap,clip,
+                m_gfxdecode.op[0].digfx.gfx(1).transpen(bitmap,clip,
                 code, color,
                 flipx, flipy,
                 m_h0_start + m_x_scale * sx, sy, 0);
@@ -441,7 +441,7 @@ namespace mame
             if (m_flipscreen_x != (data & 0x01))
             {
                 //      m_screen->update_now();
-                m_screen.target.update_partial(m_screen.target.vpos());
+                m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
                 /* when the direction changes, we count a different number of clocks */
                 /* per frame, so we need to reset the origin of the stars to the current */
@@ -458,7 +458,7 @@ namespace mame
             if (m_flipscreen_y != (data & 0x01))
             {
                 //m_screen->update_now();
-                m_screen.target.update_partial(m_screen.target.vpos());
+                m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
                 m_flipscreen_y = (uint8_t)(data & 0x01);
                 m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? TILEMAP_FLIPY : 0));
@@ -483,7 +483,7 @@ namespace mame
             if (((m_stars_enabled ^ data) & 0x01) != 0)
             {
                 //m_screen->update_now();
-                m_screen.target.update_partial(m_screen.target.vpos());
+                m_screen.op[0].update_partial(m_screen.op[0].vpos());
             }
 
             if (m_stars_enabled == 0 && (data & 0x01) != 0)
@@ -491,8 +491,8 @@ namespace mame
                 /* on the rising edge of this, the CLR on the shift registers is released */
                 /* this resets the "origin" of this frame to 0 minus the number of clocks */
                 /* we have counted so far */
-                m_star_rng_origin = (uint32_t)(STAR_RNG_PERIOD - (m_screen.target.vpos() * 512 + m_screen.target.hpos()));
-                m_star_rng_origin_frame = (uint32_t)m_screen.target.frame_number();
+                m_star_rng_origin = (uint32_t)(STAR_RNG_PERIOD - (m_screen.op[0].vpos() * 512 + m_screen.op[0].hpos()));
+                m_star_rng_origin_frame = (uint32_t)m_screen.op[0].frame_number();
             }
 
             m_stars_enabled = (uint8_t)(data & 0x01);
@@ -542,7 +542,7 @@ namespace mame
 
         void stars_update_origin()
         {
-            int curframe = (int)m_screen.target.frame_number();
+            int curframe = (int)m_screen.op[0].frame_number();
 
             /* only update on a different frame */
             if (curframe != m_star_rng_origin_frame)

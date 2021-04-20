@@ -6,9 +6,11 @@ using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
 using device_timer_id = System.UInt32;
+using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
 using s8  = System.SByte;
 using s16 = System.Int16;
 using s32 = System.Int32;
+using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using u8  = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -242,7 +244,7 @@ namespace mame
         screen_update_rgb32_delegate m_screen_update_rgb32; // screen update callback (32-bit RGB)
         devcb_write_line m_screen_vblank;         // screen vblank line callback
         devcb_write32 m_scanline_cb;              // screen scanline callback
-        optional_device<palette_device> m_paletteDevice;  //optional_device<device_palette_interface> m_palette;      // our palette
+        optional_device<device_palette_interface> m_palette;  //optional_device<device_palette_interface> m_palette;      // our palette
         u32 m_video_attributes;         // flags describing the video system
         optional_memory_region m_svg_region;               // the region in which the svg data is in
 
@@ -316,7 +318,7 @@ namespace mame
             m_screen_update_rgb32 = null;
             m_screen_vblank = new devcb_write_line(this);
             m_scanline_cb = new devcb_write32(this);
-            m_paletteDevice = new optional_device<palette_device>(this, finder_base.DUMMY_TAG);
+            m_palette = new optional_device<device_palette_interface>(this, finder_base.DUMMY_TAG);
             m_video_attributes = 0;
             m_svg_region = new optional_memory_region(this, DEVICE_SELF);
             m_container = null;
@@ -552,7 +554,7 @@ namespace mame
 
         /// \brief Set visible area to full area
         ///
-        /// Set visible screen area to the full screen area (i.e. noi
+        /// Set visible screen area to the full screen area (i.e. no
         /// horizontal or vertical blanking period).  This is generally not
         /// possible for raster displays, but is useful for other display
         /// simulations.  Must be called after calling #set_size.
@@ -611,8 +613,8 @@ namespace mame
         //auto scanline() { m_video_attributes |= VIDEO_UPDATE_SCANLINE; return m_scanline_cb.bind(); }
 
         //template<typename T>
-        public screen_device set_palette(string tag) { m_paletteDevice.set_tag(tag); return this; }
-        public screen_device set_palette(finder_base finder) { m_paletteDevice.set_tag(finder); return this; }
+        public screen_device set_palette(string tag) { m_palette.set_tag(tag); return this; }
+        public screen_device set_palette(finder_base finder) { m_palette.set_tag(finder); return this; }
 
         //screen_device &set_no_palette() { m_palette.set_tag(finder_base::DUMMY_TAG); return *this; }
         public screen_device set_video_attributes(u32 flags) { m_video_attributes = flags; return this; }
@@ -621,10 +623,10 @@ namespace mame
 
 
         // information getters
-        public render_container container() { /*assert(m_container != NULL);*/ return m_container; }
+        public render_container container() { assert(m_container != null); return m_container; }
         public bitmap_ind8 priority() { return m_priority; }
-        public device_palette_interface palette() { assert(m_paletteDevice != null); return m_paletteDevice.target.dipalette; }
-        public bool has_palette() { return m_paletteDevice != null; }
+        public device_palette_interface palette() { assert(m_palette != null); return m_palette.op[0]; }
+        public bool has_palette() { return m_palette != null; }
         //screen_bitmap &curbitmap() { return m_bitmap[m_curtexture]; }
 
 
@@ -1124,8 +1126,8 @@ namespace mame
 
             // if allocating now, just do it
             bitmap.allocate(width(), height());
-            if (m_paletteDevice != null && m_paletteDevice.target != null)
-                bitmap.set_palette(m_paletteDevice.target.dipalette.palette());
+            if (m_palette != null && m_palette.op != null && m_palette.op[0] != null)
+                bitmap.set_palette(m_palette.op[0].palette());
         }
 
 
@@ -1215,10 +1217,10 @@ namespace mame
                 osd_printf_error("Invalid (zero) refresh rate\n");
 
             texture_format texformat = m_screen_update_ind16 != null ? texture_format.TEXFORMAT_PALETTE16 : texture_format.TEXFORMAT_RGB32;
-            if (m_paletteDevice.finder_tag() != finder_base.DUMMY_TAG)
+            if (m_palette.finder_tag() != finder_base.DUMMY_TAG)
             {
-                if (m_paletteDevice == null)
-                    osd_printf_error("Screen references non-existent palette tag {0}\n", m_paletteDevice.finder_tag());
+                if (m_palette == null)
+                    osd_printf_error("Screen references non-existent palette tag {0}\n", m_palette.finder_tag());
 
                 if (texformat == texture_format.TEXFORMAT_RGB32)
                     osd_printf_warning("Screen does not need palette defined\n");
@@ -1258,8 +1260,8 @@ namespace mame
             m_scanline_cb.resolve();
 
             // assign our format to the palette before it starts
-            if (m_paletteDevice != null && m_paletteDevice.target != null)
-                m_paletteDevice.target.dipalette.set_format(format());
+            if (m_palette != null && m_palette.op != null && m_palette.op[0] != null)
+                m_palette.op[0].m_format = format();  //m_palette->m_format = format();
         }
 
         //-------------------------------------------------
@@ -1268,7 +1270,7 @@ namespace mame
         protected override void device_start()
         {
             // if we have a palette and it's not started, wait for it
-            if (m_paletteDevice != null && m_paletteDevice.target != null && !m_paletteDevice.target.dipalette.device().started())
+            if (m_palette != null && m_palette.op != null && m_palette.op[0] != null && !m_palette.op[0].device().started())
                 throw new device_missing_dependencies();
 
             if (m_type == screen_type_enum.SCREEN_TYPE_SVG)
@@ -1295,8 +1297,7 @@ namespace mame
             m_texture[1].set_id(((u64)m_unique_id << 57) | 1);
 
             // configure the default cliparea
-            render_container.user_settings settings;
-            m_container.get_user_settings(out settings);
+            render_container.user_settings settings = m_container.get_user_settings();
             settings.m_xoffset = m_xoffset;
             settings.m_yoffset = m_yoffset;
             settings.m_xscale = m_xscale;
@@ -1363,7 +1364,7 @@ namespace mame
             if (m_oldstyle_vblank_supplied)
                 logerror("{0}: Deprecated legacy Old Style screen configured (MCFG_SCREEN_VBLANK_TIME), please use MCFG_SCREEN_RAW_PARAMS instead.\n", tag());
 
-            m_is_primary_screen = (this == new screen_device_iterator(machine().root_device()).first());
+            m_is_primary_screen = (this == new screen_device_enumerator(machine().root_device()).first());
         }
 
 
@@ -1474,10 +1475,10 @@ namespace mame
                 item.m_bitmap.resize(effwidth, effheight);
 
             // re-set up textures
-            if (m_paletteDevice != null && m_paletteDevice.target != null)
+            if (m_palette != null && m_palette.op != null && m_palette.op[0] != null)
             {
-                m_bitmap[0].set_palette(m_paletteDevice.target.dipalette.palette());
-                m_bitmap[1].set_palette(m_paletteDevice.target.dipalette.palette());
+                m_bitmap[0].set_palette(m_palette.op[0].palette());
+                m_bitmap[1].set_palette(m_palette.op[0].palette());
             }
             m_texture[0].set_bitmap(m_bitmap[0].live(), m_visarea, m_bitmap[0].texformat());
             m_texture[1].set_bitmap(m_bitmap[1].live(), m_visarea, m_bitmap[1].texformat());
@@ -1677,9 +1678,5 @@ namespace mame
 
 
     // iterator helper
-    //typedef device_type_iterator<&device_creator<screen_device>, screen_device> screen_device_iterator;
-    public class screen_device_iterator : device_type_iterator<screen_device>
-    {
-        public screen_device_iterator(device_t root, int maxdepth = 255) : base(screen_device.SCREEN, root, maxdepth) { }
-    }
+    //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 }

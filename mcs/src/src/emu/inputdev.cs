@@ -225,7 +225,6 @@ namespace mame
 
         // live state
         protected s32 m_current;              // current raw value
-        s32 m_memory;               // "memory" value, to remember where we started during polling
 
 
         // construction/destruction
@@ -241,18 +240,17 @@ namespace mame
             m_itemclass = itemclass;
             m_getstate = getstate;
             m_current = 0;
-            m_memory = 0;
 
 
-            // use a standard token name for know item IDs
             string standard_token = manager().standard_token(itemid);
             if (standard_token != null)
             {
+                // use a standard token name for know item IDs
                 m_token = standard_token;
             }
-            // otherwise, create a tokenized name
             else
             {
+                // otherwise, create a tokenized name
                 m_token = name;
                 m_token = m_token.ToUpper();
                 m_token = m_token.Replace(" ", "");  //strdelchr(m_token, ' ');
@@ -273,32 +271,21 @@ namespace mame
 
         //const char *token() const { return m_token.c_str(); }
         //s32 current() const { return m_current; }
-        public s32 memory() { return m_memory; }
 
 
         // helpers
 
         public s32 update_value() { return m_current = m_getstate(m_device.internalobj(), m_internal); }
-        public void set_memory(s32 value) { m_memory = value; }
 
 
         //-------------------------------------------------
         //  check_axis - see if axis has moved far enough
         //  to trigger a read when polling
         //-------------------------------------------------
-        public bool check_axis(input_item_modifier modifier)
+        public bool check_axis(input_item_modifier modifier, s32 memory)
         {
-            // if we've already reported this one, don't bother
-            if (m_memory == inputdev_global.INVALID_AXIS_VALUE)
-                return false;
-
-            if (item_check_axis(modifier))
-            {
-                m_memory = inputdev_global.INVALID_AXIS_VALUE;
-                return true;
-            }
-
-            return false;
+            // use INVALID_AXIS_VALUE as a short-circuit
+            return (memory != inputdev_global.INVALID_AXIS_VALUE) && item_check_axis(modifier, memory);
         }
 
 
@@ -306,7 +293,7 @@ namespace mame
         public abstract s32 read_as_switch(input_item_modifier modifier);
         public abstract s32 read_as_relative(input_item_modifier modifier);
         public abstract s32 read_as_absolute(input_item_modifier modifier);
-        public abstract bool item_check_axis(input_item_modifier modifier);
+        public abstract bool item_check_axis(input_item_modifier modifiers, s32 memory);
     }
 
 
@@ -710,7 +697,7 @@ namespace mame
         //  frame_callback - per-frame callback for various
         //  bookkeeping
         //-------------------------------------------------
-        void frame_callback(running_machine machine)
+        void frame_callback(running_machine machine_)
         {
             // iterate over all devices in our class
             for (int devnum = 0; devnum <= maxindex(); devnum++)
@@ -898,7 +885,7 @@ namespace mame
         //  item_check_axis - see if axis has moved far
         //  enough to trigger a read when polling
         //-------------------------------------------------
-        public override bool item_check_axis(input_item_modifier modifier)
+        public override bool item_check_axis(input_item_modifier modifiers, s32 memory)
         {
             return false;
         }
@@ -947,7 +934,7 @@ namespace mame
         public override int read_as_switch(input_item_modifier modifier) { throw new emu_unimplemented(); }
         public override int read_as_relative(input_item_modifier modifier) { throw new emu_unimplemented(); }
         public override int read_as_absolute(input_item_modifier modifier) { throw new emu_unimplemented(); }
-        public override bool item_check_axis(input_item_modifier modifier) { throw new emu_unimplemented(); }
+        public override bool item_check_axis(input_item_modifier modifiers, s32 memory) { throw new emu_unimplemented(); }
     }
 
 
@@ -969,6 +956,6 @@ namespace mame
         public override s32 read_as_switch(input_item_modifier modifier) { throw new emu_unimplemented(); }
         public override s32 read_as_relative(input_item_modifier modifier) { throw new emu_unimplemented(); }
         public override s32 read_as_absolute(input_item_modifier modifier) { throw new emu_unimplemented(); }
-        public override bool item_check_axis(input_item_modifier modifier) { throw new emu_unimplemented(); }
+        public override bool item_check_axis(input_item_modifier modifier, s32 memory) { throw new emu_unimplemented(); }
     }
 }

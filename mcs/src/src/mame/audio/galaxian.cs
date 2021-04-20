@@ -71,31 +71,31 @@ namespace mame
         /* IC 9J */
         public void pitch_w(uint8_t data)
         {
-            m_discrete.target.write(galaxian_state.GAL_INP_PITCH, data);
+            m_discrete.op[0].write(galaxian_state.GAL_INP_PITCH, data);
         }
 
 
         void vol_w(offs_t offset, uint8_t data)
         {
-            m_discrete.target.write((offs_t)NODE_RELATIVE(galaxian_state.GAL_INP_VOL1, (int)offset), (uint8_t)(data & 0x01));
+            m_discrete.op[0].write((offs_t)NODE_RELATIVE(galaxian_state.GAL_INP_VOL1, (int)offset), (uint8_t)(data & 0x01));
         }
 
 
         void noise_enable_w(uint8_t data)
         {
-            m_discrete.target.write(galaxian_state.GAL_INP_HIT, (uint8_t)(data & 0x01));
+            m_discrete.op[0].write(galaxian_state.GAL_INP_HIT, (uint8_t)(data & 0x01));
         }
 
 
         void background_enable_w(offs_t offset, uint8_t data)
         {
-            m_discrete.target.write((offs_t)NODE_RELATIVE(galaxian_state.GAL_INP_FS1, (int)offset), (uint8_t)(data & 0x01));
+            m_discrete.op[0].write((offs_t)NODE_RELATIVE(galaxian_state.GAL_INP_FS1, (int)offset), (uint8_t)(data & 0x01));
         }
 
 
         void fire_enable_w(uint8_t data)
         {
-            m_discrete.target.write(galaxian_state.GAL_INP_FIRE, (uint8_t)(data & 0x01));
+            m_discrete.op[0].write(galaxian_state.GAL_INP_FIRE, (uint8_t)(data & 0x01));
         }
 
 
@@ -106,7 +106,7 @@ namespace mame
             if (m_lfo_val != lfo_val_new)
             {
                 m_lfo_val = lfo_val_new;
-                m_discrete.target.write(galaxian_state.GAL_INP_BG_DAC, m_lfo_val);
+                m_discrete.op[0].write(galaxian_state.GAL_INP_BG_DAC, m_lfo_val);
             }
         }
 
@@ -130,7 +130,7 @@ namespace mame
         {
             // sound hardware
             DISCRETE(config, m_discrete).disound.add_route(ALL_OUTPUTS, ":speaker", 1.0);
-            m_discrete.target.set_intf(galaxian_state.galaxian_discrete);
+            m_discrete.op[0].set_intf(galaxian_state.galaxian_discrete);
         }
     }
 

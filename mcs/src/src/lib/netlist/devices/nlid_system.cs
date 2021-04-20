@@ -11,144 +11,140 @@ using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_op
 using unsigned = System.UInt32;
 
 
-namespace mame.netlist
+namespace mame.netlist.devices
 {
-    namespace devices
+    // -----------------------------------------------------------------------------
+    // clock
+    // -----------------------------------------------------------------------------
+    //NETLIB_OBJECT(clock)
+
+
+    // -----------------------------------------------------------------------------
+    // varclock
+    // -----------------------------------------------------------------------------
+    //NETLIB_OBJECT(varclock)
+
+
+    // -----------------------------------------------------------------------------
+    // extclock
+    // -----------------------------------------------------------------------------
+    //NETLIB_OBJECT(extclock)
+
+
+    // -----------------------------------------------------------------------------
+    // Special support devices ...
+    // -----------------------------------------------------------------------------
+    //NETLIB_OBJECT(logic_input)
+    class nld_logic_input : device_t
     {
-        // -----------------------------------------------------------------------------
-        // clock
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(clock)
+        //NETLIB_DEVICE_IMPL(logic_input, "LOGIC_INPUT", "IN,FAMILY")
+        public static readonly factory.constructor_ptr_t decl_logic_input = NETLIB_DEVICE_IMPL<nld_logic_input>("LOGIC_INPUT", "IN,FAMILY");
+
+        //NETLIB_DEVICE_IMPL_ALIAS(logic_input_ttl, logic_input, "TTL_INPUT", "IN")
+        public static readonly factory.constructor_ptr_t decl_logic_input_ttl = NETLIB_DEVICE_IMPL_ALIAS<nld_logic_input>("logic_input_ttl", "TTL_INPUT", "IN");
 
 
-        // -----------------------------------------------------------------------------
-        // varclock
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(varclock)
+        logic_output_t m_Q;
+
+        param_logic_t m_IN;
+        nld_power_pins m_supply;  //NETLIB_NAME(power_pins) m_supply;
 
 
-        // -----------------------------------------------------------------------------
-        // extclock
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(extclock)
-
-
-        // -----------------------------------------------------------------------------
-        // Special support devices ...
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(logic_input)
-        class nld_logic_input : device_t
+        //NETLIB_CONSTRUCTOR(logic_input)
+        //detail.family_setter_t m_famsetter;
+        //template <class CLASS>
+        public nld_logic_input(object owner, string name)
+            : base(owner, name)
         {
-            //NETLIB_DEVICE_IMPL(logic_input, "LOGIC_INPUT", "IN,FAMILY")
-            public static readonly factory.constructor_ptr_t decl_logic_input = NETLIB_DEVICE_IMPL<nld_logic_input>("LOGIC_INPUT", "IN,FAMILY");
-
-            //NETLIB_DEVICE_IMPL_ALIAS(logic_input_ttl, logic_input, "TTL_INPUT", "IN")
-            public static readonly factory.constructor_ptr_t decl_logic_input_ttl = NETLIB_DEVICE_IMPL_ALIAS<nld_logic_input>("logic_input_ttl", "TTL_INPUT", "IN");
-
-
-            logic_output_t m_Q;
-
-            param_logic_t m_IN;
-            nld_power_pins m_supply;  //NETLIB_NAME(power_pins) m_supply;
-
-
-            //NETLIB_CONSTRUCTOR(logic_input)
-            //detail.family_setter_t m_famsetter;
-            //template <class CLASS>
-            public nld_logic_input(object owner, string name)
-                : base(owner, name)
-            {
-                m_Q = new logic_output_t(this, "Q");
-                m_IN = new param_logic_t(this, "IN", false);
-                m_supply = new nld_power_pins(this);
-            }
-
-
-            //NETLIB_RESETI();
-            public override void reset() { m_Q.initial(0); }
-
-            //NETLIB_UPDATE_PARAMI();
-            public override void update_param()
-            {
-                //printf("%s %d\n", name().c_str(), m_IN());
-                m_Q.push((netlist_sig_t)((m_IN.op() ? 1 : 0) & 1), netlist_time.from_nsec(1));
-            }
+            m_Q = new logic_output_t(this, "Q");
+            m_IN = new param_logic_t(this, "IN", false);
+            m_supply = new nld_power_pins(this);
         }
 
 
-        //template<std::size_t N>
-        //NETLIB_OBJECT(logic_inputN)
+        //NETLIB_RESETI();
+        public override void reset() { m_Q.initial(0); }
 
-
-        //NETLIB_OBJECT(analog_input)
-        class nld_analog_input : device_t
+        //NETLIB_UPDATE_PARAMI();
+        public override void update_param()
         {
-            //NETLIB_DEVICE_IMPL(analog_input,        "ANALOG_INPUT",           "IN")
-            public static readonly factory.constructor_ptr_t decl_analog_input = NETLIB_DEVICE_IMPL<nld_analog_input>("ANALOG_INPUT", "IN");
+            //printf("%s %d\n", name().c_str(), m_IN());
+            m_Q.push((netlist_sig_t)((m_IN.op() ? 1 : 0) & 1), netlist_time.from_nsec(1));
+        }
+    }
 
 
-            analog_output_t m_Q;
-            param_fp_t m_IN;
+    //template<std::size_t N>
+    //NETLIB_OBJECT(logic_inputN)
 
 
-            //NETLIB_CONSTRUCTOR(analog_input)
-            //detail.family_setter_t m_famsetter;
-            //template <class CLASS>
-            public nld_analog_input(object owner, string name)
-                : base(owner, name)
-            {
-                m_Q = new analog_output_t(this, "Q");
-                m_IN = new param_fp_t(this, "IN", nlconst.zero());
-            }
+    //NETLIB_OBJECT(analog_input)
+    class nld_analog_input : device_t
+    {
+        //NETLIB_DEVICE_IMPL(analog_input,        "ANALOG_INPUT",           "IN")
+        public static readonly factory.constructor_ptr_t decl_analog_input = NETLIB_DEVICE_IMPL<nld_analog_input>("ANALOG_INPUT", "IN");
 
 
-            //NETLIB_RESETI();
-            public override void reset() { m_Q.initial(nlconst.zero()); }
+        analog_output_t m_Q;
+        param_fp_t m_IN;
 
-            //NETLIB_UPDATE_PARAMI();
-            public override void update_param() { m_Q.push(m_IN.op()); }
+
+        //NETLIB_CONSTRUCTOR(analog_input)
+        //detail.family_setter_t m_famsetter;
+        //template <class CLASS>
+        public nld_analog_input(object owner, string name)
+            : base(owner, name)
+        {
+            m_Q = new analog_output_t(this, "Q");
+            m_IN = new param_fp_t(this, "IN", nlconst.zero());
         }
 
 
-        // -----------------------------------------------------------------------------
-        // nld_frontier
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(frontier)
+        //NETLIB_RESETI();
+        public override void reset() { m_Q.initial(nlconst.zero()); }
+
+        //NETLIB_UPDATE_PARAMI();
+        public override void update_param() { m_Q.push(m_IN.op()); }
+    }
 
 
-        /* -----------------------------------------------------------------------------
-         * nld_function
-         *
-         * FIXME: Currently a proof of concept to get congo bongo working
-         * ----------------------------------------------------------------------------- */
-        //NETLIB_OBJECT(function)
+    // -----------------------------------------------------------------------------
+    // nld_frontier
+    // -----------------------------------------------------------------------------
+    //NETLIB_OBJECT(frontier)
 
 
-        // -----------------------------------------------------------------------------
-        // nld_sys_dsw1
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(sys_dsw1)
+    /* -----------------------------------------------------------------------------
+        * nld_function
+        *
+        * FIXME: Currently a proof of concept to get congo bongo working
+        * ----------------------------------------------------------------------------- */
+    //NETLIB_OBJECT(function)
 
 
-        // -----------------------------------------------------------------------------
-        // nld_sys_dsw2
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(sys_dsw2)
+    // -----------------------------------------------------------------------------
+    // nld_sys_dsw1
+    // -----------------------------------------------------------------------------
+    //NETLIB_OBJECT(sys_dsw1)
 
 
-        // -----------------------------------------------------------------------------
-        // nld_sys_comp
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(sys_compd)
+    // -----------------------------------------------------------------------------
+    // nld_sys_dsw2
+    // -----------------------------------------------------------------------------
+    //NETLIB_OBJECT(sys_dsw2)
 
 
-        // -----------------------------------------------------------------------------
-        // nld_sys_noise - noise source
-        //
-        // An externally clocked noise source.
-        // -----------------------------------------------------------------------------
-        //template <typename E, template<class> class D>
-        //NETLIB_OBJECT(sys_noise)
+    // -----------------------------------------------------------------------------
+    // nld_sys_comp
+    // -----------------------------------------------------------------------------
+    //NETLIB_OBJECT(sys_compd)
 
-    } //namespace devices
-} // namespace netlist
+
+    // -----------------------------------------------------------------------------
+    // nld_sys_noise - noise source
+    //
+    // An externally clocked noise source.
+    // -----------------------------------------------------------------------------
+    //template <typename E, template<class> class D>
+    //NETLIB_OBJECT(sys_noise)
+}

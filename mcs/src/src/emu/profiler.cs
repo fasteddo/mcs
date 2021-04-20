@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using osd_ticks_t = System.UInt64;
+using u64 = System.UInt64;
 
 
 namespace mame
@@ -207,18 +208,18 @@ namespace mame
         void update_text(running_machine machine)
         {
             // compute the total time for all bits, not including profiler or idle
-            UInt64 computed = 0;
+            u64 computed = 0;
             profile_type curtype;
             for (curtype = profile_type.PROFILER_DEVICE_FIRST; curtype < profile_type.PROFILER_PROFILER; curtype++)
                 computed += m_data[(int)curtype];
 
             // save that result in normalize, and continue adding the rest
-            UInt64 normalize = computed;
+            u64 normalize = computed;
             for ( ; curtype < profile_type.PROFILER_TOTAL; curtype++)
                 computed += m_data[(int)curtype];
 
             // this becomes the total; if we end up with 0 for anything, we were just started, so return empty
-            UInt64 total = computed;
+            u64 total = computed;
             if (total == 0 || normalize == 0)
             {
                 m_text = "";
@@ -226,7 +227,7 @@ namespace mame
             }
 
             // loop over all types and generate the string
-            device_iterator iter = new device_iterator(machine.root_device());
+            device_enumerator iter = new device_enumerator(machine.root_device());
             string stream = "";
             for (curtype = profile_type.PROFILER_DEVICE_FIRST; curtype < profile_type.PROFILER_TOTAL; curtype++)
             {

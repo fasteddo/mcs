@@ -24,7 +24,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(centiped_state::centiped_get_tile_info)
         void centiped_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            var videoram = m_videoram.target;  //uint8_t *videoram = m_videoram;
+            var videoram = m_videoram.op;  //uint8_t *videoram = m_videoram;
 
             int data = videoram[tile_index];
             tileinfo.set(0, ((u32)data & 0x3f) + 0x40, 0, TILE_FLIPYX(data >> 6));
@@ -70,7 +70,7 @@ namespace mame
             init_common();
             init_penmask();
 
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, centiped_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8, 8, 32, 32);  //tilemap_get_info_delegate(FUNC(centiped_state::centiped_get_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, centiped_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8, 8, 32, 32);  //tilemap_get_info_delegate(FUNC(centiped_state::centiped_get_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
         }
 
 
@@ -82,7 +82,7 @@ namespace mame
 
         void centiped_videoram_w(offs_t offset, uint8_t data)
         {
-            m_videoram[offset] = data;
+            m_videoram[offset].op = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
@@ -140,7 +140,7 @@ namespace mame
 
         void centiped_paletteram_w(offs_t offset, uint8_t data)
         {
-            m_paletteram[offset] = data;
+            m_paletteram[offset].op = data;
 
             /* bit 2 of the output palette RAM is always pulled high, so we ignore */
             /* any palette changes unless the write is to a palette RAM address */
@@ -165,7 +165,7 @@ namespace mame
 
                 /* character colors, set directly */
                 if ((offset & 0x08) == 0)
-                    m_palette.target.dipalette.set_pen_color(offset & 0x03, color);
+                    m_palette.op[0].dipalette.set_pen_color(offset & 0x03, color);
 
                 /* sprite colors - set all the applicable ones */
                 else
@@ -177,13 +177,13 @@ namespace mame
                     for (i = 0; i < 0x100; i += 4)
                     {
                         if (offset == ((i >> 2) & 0x03))
-                            m_palette.target.dipalette.set_pen_color((UInt32)i + 4 + 1, color);
+                            m_palette.op[0].dipalette.set_pen_color((UInt32)i + 4 + 1, color);
 
                         if (offset == ((i >> 4) & 0x03))
-                            m_palette.target.dipalette.set_pen_color((UInt32)i + 4 + 2, color);
+                            m_palette.op[0].dipalette.set_pen_color((UInt32)i + 4 + 2, color);
 
                         if (offset == ((i >> 6) & 0x03))
-                            m_palette.target.dipalette.set_pen_color((UInt32)i + 4 + 3, color);
+                            m_palette.op[0].dipalette.set_pen_color((UInt32)i + 4 + 3, color);
                     }
                 }
             }
@@ -198,7 +198,7 @@ namespace mame
 
         u32 screen_update_centiped(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            Pointer<uint8_t> spriteram = m_spriteram.target;  //uint8_t *spriteram = m_spriteram;
+            Pointer<uint8_t> spriteram = m_spriteram.op;  //uint8_t *spriteram = m_spriteram;
             rectangle spriteclip = cliprect;
             int offs;
 
@@ -221,7 +221,7 @@ namespace mame
                 int x = spriteram[offs + 0x20];
                 int y = 240 - spriteram[offs + 0x10];
 
-                m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip, (UInt32)code, (UInt32)color, flipx, flipy, x, y, m_penmask[color & 0x3f]);
+                m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip, (UInt32)code, (UInt32)color, flipx, flipy, x, y, m_penmask[color & 0x3f]);
             }
 
             return 0;

@@ -172,9 +172,9 @@ namespace mame
 
         void set_nmi(int state)
         {
-            if (!m_nmicpu.target.suspended(device_execute_interface.SUSPEND_REASON_HALT | device_execute_interface.SUSPEND_REASON_RESET | device_execute_interface.SUSPEND_REASON_DISABLE))
+            if (!m_nmicpu.op[0].suspended(device_execute_interface.SUSPEND_REASON_HALT | device_execute_interface.SUSPEND_REASON_RESET | device_execute_interface.SUSPEND_REASON_DISABLE))
             {
-                m_nmicpu.target.set_input_line(device_execute_interface.INPUT_LINE_NMI, state);
+                m_nmicpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_NMI, state);
             }
         }
 

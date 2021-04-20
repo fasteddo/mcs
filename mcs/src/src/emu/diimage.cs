@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
+
 
 namespace mame
 {
@@ -88,17 +90,11 @@ namespace mame
         // working directory; persists across mounts
         //std::string m_working_directory;
 
-        /* info read from the hash file/software list */
-        //astring m_longname;
-        //astring m_manufacturer;
-        //astring m_year;
-        //UINT32  m_supported;
-
-        /* flags */
+        // flags
         //bool m_readonly;
         //bool m_created;
 
-        /* special - used when creating */
+        // special - used when creating
         //int m_create_format;
         //option_resolution *m_create_args;
 
@@ -108,8 +104,8 @@ namespace mame
         string m_brief_instance_name;          // e.g. - "cart", "flop2"
         string m_canonical_instance_name;      // e.g. - "cartridge1", "floppydisk2" - only used internally in emuopts.cpp
 
-        /* in the case of arcade cabinet with fixed carts inserted,
-         we want to disable command line cart loading... */
+        // in the case of arcade cabinet with fixed carts inserted,
+        // we want to disable command line cart loading...
         bool m_user_loadable;
 
         bool m_is_loading;
@@ -229,8 +225,8 @@ namespace mame
         //u64 length() { check_for_file(); return m_file->size(); }
         //bool is_readonly() const noexcept { return m_readonly; }
         //u32 fread(void *buffer, u32 length) { check_for_file(); return m_file->read(buffer, length); }
-        //u32 fread(optional_shared_ptr<u8> &ptr, u32 length) { ptr.allocate(length); return fread(ptr.target(), length); }
-        //u32 fread(optional_shared_ptr<u8> &ptr, u32 length, offs_t offset) { ptr.allocate(length); return fread(ptr + offset, length - offset); }
+        //u32 fread(std::unique_ptr<u8[]> &ptr, u32 length) { ptr = std::make_unique<u8[]>(length); return fread(ptr.get(), length); }
+        //u32 fread(std::unique_ptr<u8[]> &ptr, u32 length, offs_t offset) { ptr = std::make_unique<u8[]>(length); return fread(ptr.get() + offset, length - offset); }
         //u32 fwrite(const void *buffer, u32 length) { check_for_file(); return m_file->write(buffer, length); }
         //int fseek(s64 offset, int whence) { check_for_file(); return m_file->seek(offset, whence); }
         //u64 ftell() { check_for_file(); return m_file->tell(); }
@@ -242,12 +238,6 @@ namespace mame
 
         // configuration access
 
-        //const char* longname() { return m_longname; }
-        //const char* manufacturer() { return m_manufacturer; }
-        //const char* year() { return m_year; }
-        //UINT32 supported() { return m_supported; }
-
-
         public software_info software_entry() { return (m_software_part_ptr == null) ? null : m_software_part_ptr.info(); }
         public software_part part_entry() { return m_software_part_ptr; }
         public string software_list_name() { return m_software_list_name; }
@@ -258,13 +248,13 @@ namespace mame
         //const char * working_directory();
 
 
-        //UINT8 *get_software_region(const char *tag);
-        //UINT32 get_software_region_length(const char *tag);
-        //const char *get_feature(const char *feature_name);
-        //bool load_software_region(const char *tag, optional_shared_ptr<UINT8> &ptr);
+        //u8 *get_software_region(const char *tag);
+        //u32 get_software_region_length(const char *tag);
+        //const char *get_feature(const char *feature_name) const;
+        //bool load_software_region(const char *tag, std::unique_ptr<u8[]> &ptr);
 
 
-        //UINT32 crc();
+        //u32 crc();
         //hash_collection& hash() { return m_hash; }
         //util::hash_collection calculate_hash_on_file(util::core_file &file) const;
 
@@ -404,9 +394,5 @@ namespace mame
 
 
     // iterator
-    //typedef device_interface_iterator<device_image_interface> image_interface_iterator;
-    public class image_interface_iterator : device_interface_iterator<device_image_interface>
-    {
-        public image_interface_iterator(device_t root, int maxdepth = 255) : base(root, maxdepth) { }
-    }
+    //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
 }
