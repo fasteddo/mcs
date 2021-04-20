@@ -42,17 +42,18 @@ namespace mame.netlist
         // -----------------------------------------------------------------------------
         // nld_twoterm
         // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(twoterm)
-        class nld_twoterm : device_t
+        //NETLIB_BASE_OBJECT(twoterm)
+        public class nld_twoterm : base_device_t
         {
             public terminal_t m_P;
             public terminal_t m_N;
 
 
+            // FIXME locate use case of owned = true and eliminate them if possible
             //NETLIB_CONSTRUCTOR_EX(twoterm, bool terminals_owned = false)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            public nld_twoterm(object owner, string name, bool terminals_owned = false)
+            public nld_twoterm(base_device_t owner, string name, bool terminals_owned = false)
                 : base(owner, name)
             {
                 m_P = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "1");//, m_N);
@@ -134,6 +135,39 @@ namespace mame.netlist
                 m_P.set_go_gt_I(a12, a11, rhs1);
                 m_N.set_go_gt_I(a21, a22, rhs2);
             }
+
+
+            /// \brief Get a const reference to the m_P terminal
+            ///
+            /// This is typically called during initialization to connect
+            /// terminals.
+            ///
+            /// \returns Reference to m_P terminal.
+            public terminal_t P() { return m_P; }
+
+            /// \brief Get a const reference to the m_N terminal
+            ///
+            /// This is typically called during initialization to connect
+            /// terminals.
+            ///
+            /// \returns Reference to m_N terminal.
+            public terminal_t N() { return m_N; }
+
+            /// \brief Get a reference to the m_P terminal
+            ///
+            /// This call is only allowed from the core. Device code should never
+            /// need to call this.
+            ///
+            /// \returns Reference to m_P terminal.
+            public terminal_t setup_P() { return m_P; }
+
+            /// \brief Get a reference to the m_N terminal
+            ///
+            /// This call is only allowed from the core. Device code should never
+            /// need to call this.
+            ///
+            /// \returns Reference to m_P terminal.
+            public terminal_t setup_N() { return m_N; }
         }
 
 
@@ -143,10 +177,10 @@ namespace mame.netlist
         //NETLIB_OBJECT_DERIVED(R_base, twoterm)
         class nld_R_base : nld_twoterm
         {
-            //NETLIB_CONSTRUCTOR_DERIVED(R_base, twoterm)
+            //NETLIB_CONSTRUCTOR(R_base)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            public nld_R_base(object owner, string name)
+            public nld_R_base(base_device_t owner, string name)
                 : base(owner, name)
             {
             }
@@ -158,6 +192,13 @@ namespace mame.netlist
                 set_mat( G, -G, nlconst.zero(),
                         -G,  G, nlconst.zero());
             }
+
+
+            //void set_G(nl_fptype G) const noexcept
+            //{
+            //    set_mat( G, -G, nlconst::zero(),
+            //            -G,  G, nlconst::zero());
+            //}
 
 
             //NETLIB_RESETI();
@@ -181,15 +222,16 @@ namespace mame.netlist
 
             // protect set_R ... it's a recipe to desaster when used to bypass the parameter
             //using NETLIB_NAME(R_base)::set_R;
+            //using NETLIB_NAME(R_base)::set_G;
 
 
             param_fp_t m_R;
 
 
-            //NETLIB_CONSTRUCTOR_DERIVED(R, R_base)
+            //NETLIB_CONSTRUCTOR(R)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            public nld_R(object owner, string name)
+            public nld_R(base_device_t owner, string name)
                 : base(owner, name)
             {
                 m_R = new param_fp_t(this, "R", nlconst.magic(1e9));
@@ -202,7 +244,6 @@ namespace mame.netlist
             //NETLIB_RESETI();
             public override void reset()
             {
-                base.reset();  //NETLIB_NAME(twoterm)::reset();
                 set_R(std.max(m_R.op(), exec().gmin()));
             }
 
@@ -224,8 +265,8 @@ namespace mame.netlist
         // -----------------------------------------------------------------------------
         // nld_POT
         // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(POT)
-        class nld_POT : device_t
+        //NETLIB_BASE_OBJECT(POT)
+        class nld_POT : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, POT,  "POT",   "R")
             public static readonly factory.constructor_ptr_t decl_POT = NETLIB_DEVICE_IMPL_NS<nld_POT>("analog", "POT", "R");
@@ -254,11 +295,11 @@ namespace mame.netlist
                 m_Reverse = new param_logic_t(this, "REVERSE", false);
 
 
-                register_subalias("1", m_R1.m_P);
-                register_subalias("2", m_R1.m_N);
-                register_subalias("3", m_R2.m_N);
+                register_subalias("1", m_R1.P());
+                register_subalias("2", m_R1.N());
+                register_subalias("3", m_R2.N());
 
-                connect(m_R2.m_P, m_R1.m_N);
+                connect(m_R2.P(), m_R1.N());
             }
 
 
@@ -305,21 +346,20 @@ namespace mame.netlist
         // nld_C
         // -----------------------------------------------------------------------------
         //NETLIB_OBJECT_DERIVED(C, twoterm)
-        class nld_C : nld_twoterm
+        public class nld_C : nld_twoterm
         {
             //NETLIB_DEVICE_IMPL_NS(analog, C,    "CAP",   "C")
             public static readonly factory.constructor_ptr_t decl_C = NETLIB_DEVICE_IMPL_NS<nld_C>("analog", "CAP", "C");
 
 
-            public param_fp_t m_C;
-
+            param_fp_t m_C;
             generic_capacitor_const m_cap;
 
 
-            //NETLIB_CONSTRUCTOR_DERIVED(C, twoterm)
+            //NETLIB_CONSTRUCTOR(C)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            public nld_C(object owner, string name)
+            public nld_C(base_device_t owner, string name)
                 : base(owner, name)
             {
                 m_C = new param_fp_t(this, "C", nlconst.magic(1e-6));
@@ -328,11 +368,11 @@ namespace mame.netlist
 
 
             //NETLIB_IS_TIMESTEP(true)
-            public override bool is_timestep() { return true; }
+            protected override bool is_timestep() { return true; }
 
 
             //NETLIB_TIMESTEPI()
-            public override void timestep(nl_fptype step)
+            protected override void timestep(nl_fptype step)
             {
                 // G, Ieq
                 var res = m_cap.timestep(m_C.op(), deltaV(), step);
@@ -350,6 +390,20 @@ namespace mame.netlist
             }
 
 
+            /// \brief Set capacitance
+            ///
+            /// This call will set the capacitance. The typical use case are
+            /// are components like BJTs which use this component to model
+            /// internal capacitances. Typically called during initialization.
+            ///
+            /// \param val Capacitance value
+            ///
+            public void set_cap_embedded(nl_fptype val)
+            {
+                m_C.set(val);
+            }
+
+
             //NETLIB_UPDATEI();
 
             //FIXME: should be able to change
@@ -358,43 +412,47 @@ namespace mame.netlist
         }
 
 
-        class diode_model_t : param_model_t
+        class diode_model_t
         {
-            public value_t m_IS;    //!< saturation current.
-            public value_t m_N;     //!< emission coefficient.
+            public param_model_t.value_t m_IS;    //!< saturation current.
+            public param_model_t.value_t m_N;     //!< emission coefficient.
 
 
-            public diode_model_t(device_t device, string name, string val)
-                : base(device, name, val)
+            public diode_model_t(param_model_t model)
             {
-                m_IS = new value_t(this, "IS");
-                m_N = new value_t(this, "N");
+                m_IS = new param_model_t.value_t(model, "IS");
+                m_N = new param_model_t.value_t(model, "N");
             }
         }
 
 
+        //class zdiode_model_t : public diode_model_t
+
+
         //NETLIB_OBJECT_DERIVED(D, twoterm)
-        class nld_D : nld_twoterm
+        public class nld_D : nld_twoterm
         {
-            diode_model_t m_model;
-            generic_diode m_D;
+            param_model_t m_model;
+            diode_model_t m_modacc;
+            generic_diode m_D;  //generic_diode<diode_e::BIPOLAR> m_D;
 
 
-            //NETLIB_CONSTRUCTOR_DERIVED_EX(D, twoterm, const pstring &model = "D")
-            public nld_D(object owner, string name, string model = "D")
+            //NETLIB_CONSTRUCTOR_EX(D, const pstring &model = "D")
+            public nld_D(base_device_t owner, string name, string model = "D")
                 : base(owner, name)
             {
-                m_model = new diode_model_t(this, "MODEL", model);
+                m_model = new param_model_t(this, "MODEL", model);
+                m_modacc = new diode_model_t(m_model);
                 m_D = new generic_diode(diode_e.BIPOLAR, this, "m_D");
 
 
-                register_subalias("A", m_P);
-                register_subalias("K", m_N);
+                register_subalias("A", P());
+                register_subalias("K", N());
             }
 
 
             //NETLIB_IS_DYNAMIC(true)
-            public override bool is_dynamic() { return true; }
+            protected override bool is_dynamic() { return true; }
 
 
             //NETLIB_UPDATE_TERMINALSI();
@@ -414,8 +472,8 @@ namespace mame.netlist
             //NETLIB_RESET(D)
             public override void reset()
             {
-                nl_fptype Is = m_model.m_IS.op();
-                nl_fptype n = m_model.m_N.op();
+                nl_fptype Is = m_modacc.m_IS.op();
+                nl_fptype n = m_modacc.m_N.op();
 
                 m_D.set_param(Is, n, exec().gmin(), nlconst.T0());
                 set_G_V_I(m_D.G(), nlconst.zero(), m_D.Ieq());
@@ -429,12 +487,32 @@ namespace mame.netlist
             //NETLIB_UPDATE_PARAM(D)
             public override void update_param()
             {
-                nl_fptype Is = m_model.m_IS.op();
-                nl_fptype n = m_model.m_N.op();
+                nl_fptype Is = m_modacc.m_IS.op();
+                nl_fptype n = m_modacc.m_N.op();
 
                 m_D.set_param(Is, n, exec().gmin(), nlconst.T0());
             }
         }
+
+
+        // -----------------------------------------------------------------------------
+        // nld_Z - Zener Diode
+        // -----------------------------------------------------------------------------
+        //NETLIB_OBJECT_DERIVED(Z, twoterm)
+
+
+        // -----------------------------------------------------------------------------
+        // nld_VS - Voltage source
+        //
+        // netlist voltage source must have inner resistance
+        // -----------------------------------------------------------------------------
+        //NETLIB_OBJECT_DERIVED(VS, twoterm)
+
+
+        // -----------------------------------------------------------------------------
+        // nld_CS - Current source
+        // -----------------------------------------------------------------------------
+        //NETLIB_OBJECT_DERIVED(CS, twoterm)
     } //namespace analog
 
 
@@ -446,6 +524,7 @@ namespace mame.netlist
         //NETLIB_DEVICE_IMPL_NS(analog, C,    "CAP",   "C")
         //NETLIB_DEVICE_IMPL_NS(analog, L,    "IND",   "L")
         //NETLIB_DEVICE_IMPL_NS(analog, D,    "DIODE", "MODEL")
+        //NETLIB_DEVICE_IMPL_NS(analog, Z,    "ZDIODE", "MODEL")
         //NETLIB_DEVICE_IMPL_NS(analog, VS,   "VS",    "V")
         //NETLIB_DEVICE_IMPL_NS(analog, CS,   "CS",    "I")
     }

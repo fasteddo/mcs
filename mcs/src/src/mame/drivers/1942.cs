@@ -27,8 +27,7 @@ namespace mame
         //#define AUDIO_CLOCK_1942P     (MASTER_CLOCK_1942P/16)
 
 
-        //WRITE8_MEMBER(_1942_state::_1942_bankswitch_w)
-        void _1942_bankswitch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_bankswitch_w(uint8_t data)
         {
             membank("bank1").set_entry(data & 0x03);
         }

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
 using nl_fptype = System.Double;
 
 
@@ -12,17 +13,15 @@ namespace mame.netlist
     namespace solver
     {
         //template <typename FT, int SIZE>
-        class matrix_solver_SOR_mat_t: matrix_solver_direct_t  //class matrix_solver_SOR_mat_t: public matrix_solver_direct_t<FT, SIZE>
+        class matrix_solver_SOR_mat_t : matrix_solver_direct_t_nl_fptype  //class matrix_solver_SOR_mat_t: public matrix_solver_direct_t<FT, SIZE>
         {
-            //friend class matrix_solver_t;
-
             //using float_type = FT;
 
 
             state_var<double> m_omega;
 
 
-            public matrix_solver_SOR_mat_t(int SIZE, netlist_state_t anetlist, string name, analog_net_t.list_t nets, solver_parameters_t params_, UInt32 size)
+            public matrix_solver_SOR_mat_t(int SIZE, netlist_state_t anetlist, string name, analog_net_t_list_t nets, solver_parameters_t params_, UInt32 size)
                 : base(SIZE, anetlist, name, nets, params_, size)
             {
                 m_omega = new state_var<double>(this, "m_omega", (double)params_.m_gs_sor.op());
@@ -35,7 +34,7 @@ namespace mame.netlist
                 // the optimized code which works directly on the data structures.
                 // Need something like that for gaussian elimination as well.
 
-                int iN = this.size();
+                int iN = (int)this.size();
 
                 this.clear_square_mat(this.m_A);
                 this.fill_matrix_and_rhs();
@@ -86,7 +85,7 @@ namespace mame.netlist
                 do
                 {
                     resched = false;
-                    double cerr = plib.constants.zero();
+                    double cerr = plib.constants_nl_fptype.zero();
 
                     for (int k = 0; k < iN; k++)
                     {
@@ -101,17 +100,17 @@ namespace mame.netlist
                         double w = m_omega.op / this.m_A[k][k];
                         if (this.m_params.m_use_gabs.op())
                         {
-                            double gabs_t = plib.constants.zero();
+                            double gabs_t = plib.constants_nl_fptype.zero();
                             for (int i = 0; i < e; i++)
                             {
                                 if (p[i] != k)
                                     gabs_t = gabs_t + plib.pglobal.abs(this.m_A[k][p[i]]);
                             }
 
-                            gabs_t *= plib.constants.one(); // derived by try and error
+                            gabs_t *= plib.constants_nl_fptype.one(); // derived by try and error
                             if (gabs_t > this.m_A[k][k])
                             {
-                                w = plib.constants.one() / (this.m_A[k][k] + gabs_t);
+                                w = plib.constants_nl_fptype.one() / (this.m_A[k][k] + gabs_t);
                             }
                         }
 

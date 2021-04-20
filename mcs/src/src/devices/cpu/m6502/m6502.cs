@@ -18,9 +18,9 @@ namespace mame
 {
     public partial class m6502_device : cpu_device
     {
-        //DEFINE_DEVICE_TYPE(M6502, m6502_device, "m6502", "MOS Technology M6502")
+        //DEFINE_DEVICE_TYPE(M6502, m6502_device, "m6502", "MOS Technology 6502")
         static device_t device_creator_mb6502_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6502_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6502 = DEFINE_DEVICE_TYPE(device_creator_mb6502_cpu_device, "m6502", "MOS Technology M6502");
+        public static readonly device_type M6502 = DEFINE_DEVICE_TYPE(device_creator_mb6502_cpu_device, "m6502", "MOS Technology 6502");
 
 
         class device_execute_interface_m6502 : device_execute_interface
@@ -113,10 +113,10 @@ namespace mame
 
         abstract class memory_interface
         {
-            public address_space program;
-            public address_space sprogram;
-            public memory_access_cache/*<0, 0, ENDIANNESS_LITTLE>*/ cache;
-            public memory_access_cache/*<0, 0, ENDIANNESS_LITTLE>*/ scache;
+            public memory_access.cache cprogram = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache cprogram;
+            public memory_access.cache csprogram = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache csprogram;
+            public memory_access.specific program = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific program;
+            public memory_access.specific program14 = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<14, 0, 0, ENDIANNESS_LITTLE>::specific program14;
 
             //virtual ~memory_interface() {}
             public abstract uint8_t read(uint16_t adr);
@@ -133,9 +133,18 @@ namespace mame
             //virtual ~mi_default() {}
 
             public override uint8_t read(uint16_t adr) { return program.read_byte(adr); }
-            public override uint8_t read_sync(uint16_t adr) { return scache.read_byte(adr); }
-            public override uint8_t read_arg(uint16_t adr) { return cache.read_byte(adr); }
+            public override uint8_t read_sync(uint16_t adr) { return csprogram.read_byte(adr); }
+            public override uint8_t read_arg(uint16_t adr) { return cprogram.read_byte(adr); }
             public override void write(uint16_t adr, uint8_t val) { program.write_byte(adr, val); }
+        }
+
+
+        class mi_default14 : mi_default
+        {
+            //virtual ~mi_default14() = default;
+
+            public override uint8_t read(uint16_t adr) { throw new emu_unimplemented(); }
+            public override void write(uint16_t adr, uint8_t val) { throw new emu_unimplemented(); }
         }
 
 
@@ -237,15 +246,16 @@ namespace mame
 
         protected virtual void init()
         {
-            mintf.program  = m_dimemory.space(AS_PROGRAM);
-            mintf.sprogram = m_dimemory.has_space(AS_OPCODES) ? m_dimemory.space(AS_OPCODES) : mintf.program;
-
-            mintf.cache  = mintf.program.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
-            mintf.scache = mintf.sprogram.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
-
-            XPC = 0;
+            m_dimemory.space(AS_PROGRAM).cache(mintf.cprogram.Width, mintf.cprogram.AddrShift, mintf.cprogram.Endian, mintf.cprogram);
+            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(mintf.cprogram.Width, mintf.cprogram.AddrShift, mintf.cprogram.Endian, mintf.csprogram);
+            if (m_dimemory.space(AS_PROGRAM).addr_width() > 14)
+                m_dimemory.space(AS_PROGRAM).specific(mintf.program.Level, mintf.program.Width, mintf.program.AddrShift, mintf.program.Endian, mintf.program);
+            else
+                m_dimemory.space(AS_PROGRAM).specific(mintf.program14.Level, mintf.program14.Width, mintf.program14.AddrShift, mintf.program14.Endian, mintf.program14);
 
             sync_w.resolve_safe();
+
+            XPC = 0;
 
             m_distate.state_add(STATE_GENPC,     "GENPC",     XPC).callexport().noshow();
             m_distate.state_add(STATE_GENPCBASE, "CURPC",     XPC).callexport().noshow();
@@ -314,7 +324,7 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_m6502>();
 
 
-            mintf = new mi_default();
+            mintf = m_dimemory.space(AS_PROGRAM).addr_width() > 14 ? new mi_default() : new mi_default14();
 
             init();
         }
@@ -322,10 +332,6 @@ namespace mame
 
         protected override void device_stop()
         {
-            if (mintf.scache != null) mintf.scache.Dispose();
-            if (mintf.cache != null) mintf.cache.Dispose();
-            if (mintf.sprogram != null) mintf.sprogram.Dispose();
-            if (mintf.program != null) mintf.program.Dispose();
         }
 
 
@@ -829,4 +835,9 @@ namespace mame
 
         //#undef O
     }
+
+
+    //class m6502_mcu_device : public m6502_device {
+
+    //class m6512_device : public m6502_device {
 }

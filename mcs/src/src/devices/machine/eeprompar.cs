@@ -70,7 +70,7 @@ namespace mame
         //-------------------------------------------------
         //  read/write - read/write handlers
         //-------------------------------------------------
-        public void write(address_space space, offs_t offset, uint8_t data, uint8_t mem_mask = 0xff)
+        public void write(offs_t offset, uint8_t data)
         {
             if (m_oe == 0)
             {
@@ -88,8 +88,7 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(eeprom_parallel_28xx_device::read)
-        public uint8_t read(address_space space, offs_t offset, uint8_t mem_mask = 0xff)
+        public uint8_t read(address_space space, offs_t offset)
         {
             if (m_oe == 1)
             {
@@ -112,9 +111,9 @@ namespace mame
 
         // control lines
         //DECLARE_WRITE_LINE_MEMBER(oe_w);
-        //DECLARE_WRITE8_MEMBER(unlock_write8);
-        //DECLARE_WRITE16_MEMBER(unlock_write16);
-        //DECLARE_WRITE32_MEMBER(unlock_write32);
+        //void unlock_write8(uint8_t data);
+        //void unlock_write16(uint16_t data);
+        //void unlock_write32(uint32_t data);
 
 
         // device-level overrides

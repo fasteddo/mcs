@@ -261,11 +261,11 @@ namespace mame
         address_space_config m_program_config;
         address_space_config m_opcodes_config;
         address_space_config m_io_config;
-        address_space m_program;
-        address_space m_opcodes;
-        address_space m_io;
-        memory_access_cache/*<0, 0, ENDIANNESS_LITTLE>*/ m_cache;
-        memory_access_cache/*<0, 0, ENDIANNESS_LITTLE>*/ m_opcodes_cache;
+        memory_access.cache m_args = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_args;
+        memory_access.cache m_opcodes = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_opcodes;
+        memory_access.specific m_data = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
+        memory_access.specific m_io = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
+
         devcb_write_line m_irqack_cb;
         devcb_write8 m_refresh_cb;
         devcb_write_line m_halt_cb;
@@ -563,11 +563,10 @@ namespace mame
             m_after_ldair = false;
             m_ea = 0;
 
-            m_program = m_dimemory.space(AS_PROGRAM);
-            m_opcodes = m_dimemory.has_space(AS_OPCODES) ? m_dimemory.space(AS_OPCODES) : m_program;
-            m_cache = m_program.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
-            m_opcodes_cache = m_opcodes.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
-            m_io = m_dimemory.space(AS_IO);
+            m_dimemory.space(AS_PROGRAM).cache(m_args.Width, m_args.AddrShift, m_args.Endian, m_args);
+            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_opcodes.Width, m_opcodes.AddrShift, m_opcodes.Endian, m_opcodes);
+            m_dimemory.space(AS_PROGRAM).specific(m_data.Level, m_data.Width, m_data.AddrShift, m_data.Endian, m_data);
+            m_dimemory.space(AS_IO).specific(m_io.Level, m_io.Width, m_io.AddrShift, m_io.Endian, m_io);
 
             IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
             F = ZF;           /* Zero flag is set */
@@ -624,11 +623,6 @@ namespace mame
 
         protected override void device_stop()
         {
-            if (m_io != null) m_io.Dispose();
-            if (m_opcodes_cache != null) m_opcodes_cache.Dispose();
-            if (m_cache != null) m_cache.Dispose();
-            if (m_opcodes != null) m_opcodes.Dispose();
-            if (m_program != null) m_program.Dispose();
         }
 
 
@@ -2162,7 +2156,7 @@ namespace mame
         void dd_ff() { illegal_1(); op_ff();                            } /* DB   DD          */
 
 
-        void illegal_2() { logerror("Z80 ill. opcode $ed ${0}\n", m_opcodes_cache.read_byte((PCD-1)&0xffff)); }  // $%02x
+        void illegal_2() { logerror("Z80 ill. opcode $ed ${0}\n", m_opcodes.read_byte((PCD-1)&0xffff)); }  // $%02x
 
 
         //PROTOTYPES(ed);
@@ -3046,7 +3040,7 @@ namespace mame
         void xycb_ff() { A = set(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  7,A=(XY+o)  */
 
 
-        void illegal_1() { logerror("Z80 ill. opcode ${0} ${1} (${2})\n", m_opcodes_cache.read_byte((PCD-1)&0xffff), m_opcodes_cache.read_byte(PCD), PCD-1); }  // $%02x $%02x ($%04x)
+        void illegal_1() { logerror("Z80 ill. opcode ${0} ${1} (${2})\n", m_opcodes.read_byte((PCD-1)&0xffff), m_opcodes.read_byte(PCD), PCD-1); }  // $%02x $%02x ($%04x)
 
 
         /***************************************************************
@@ -3088,7 +3082,7 @@ namespace mame
          ***************************************************************/
         public uint8_t rm(uint16_t addr)
         {
-            return m_program.read_byte(addr);
+            return m_data.read_byte(addr);
         }
 
         /***************************************************************
@@ -3105,7 +3099,7 @@ namespace mame
         ***************************************************************/
         public void wm(uint16_t addr, uint8_t value)
         {
-            m_program.write_byte(addr, value);
+            m_data.write_byte(addr, value);
         }
 
         /***************************************************************
@@ -3126,7 +3120,7 @@ namespace mame
         {
             UInt32 pc = PCD;
             PC++;
-            uint8_t res = m_opcodes_cache.read_byte(pc);
+            uint8_t res = m_opcodes.read_byte(pc);
             m_icount.i -= 2;  // m_icount -= 2;
             m_refresh_cb.op((UInt16)((m_i << 8) | (m_r2 & 0x80) | ((m_r-1) & 0x7f)), 0x00, 0xff);
             m_icount.i += 2;  //m_icount += 2;
@@ -3143,14 +3137,14 @@ namespace mame
         {
             UInt32 pc = PCD;
             PC++;
-            return m_cache.read_byte(pc);
+            return m_args.read_byte(pc);
         }
 
         uint16_t arg16()
         {
             UInt32 pc = PCD;
             PC += 2;
-            return (uint16_t)(m_cache.read_byte(pc) | (m_cache.read_byte((pc+1)&0xffff) << 8));
+            return m_args.read_word(pc);
         }
 
         /***************************************************************

@@ -26,17 +26,15 @@ namespace mame
 
         protected override void machine_reset()
         {
-            address_space space = m_maincpu.target.memory().space(AS_PROGRAM);
             /* set the default ROM bank (many games only have one bank and */
             /* never write to the bank selector register) */
-            taitosj_bankswitch_w(space, 0, 0);
+            taitosj_bankswitch_w(0);
 
             m_spacecr_prot_value = 0;
         }
 
 
-        //WRITE8_MEMBER(taitosj_state::taitosj_bankswitch_w)
-        void taitosj_bankswitch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void taitosj_bankswitch_w(uint8_t data)
         {
             machine().bookkeeping().coin_lockout_global_w(~data & 1);
 
@@ -71,38 +69,33 @@ namespace mame
          direct access to the Z80 memory space. It can also trigger IRQs on the Z80.
 
         ***************************************************************************/
-        //READ8_MEMBER(taitosj_state::taitosj_fake_data_r)
-        u8 taitosj_fake_data_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t taitosj_fake_data_r()
         {
             LOG("{0}: protection read\n", m_maincpu.target.state().pc());
             return 0;
         }
 
 
-        //WRITE8_MEMBER(taitosj_state::taitosj_fake_data_w)
-        void taitosj_fake_data_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void taitosj_fake_data_w(uint8_t data)
         {
             LOG("{0}: protection write {1}\n", m_maincpu.target.state().pc(), data);
         }
 
 
-        //READ8_MEMBER(taitosj_state::taitosj_fake_status_r)
-        u8 taitosj_fake_status_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t taitosj_fake_status_r()
         {
             LOG("{0}: protection status read\n", m_maincpu.target.state().pc());
             return 0xff;
         }
 
 
-        //READ8_MEMBER(taitosj_state::mcu_mem_r)
-        u8 mcu_mem_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t mcu_mem_r(offs_t offset)
         {
             return m_maincpu.target.memory().space(AS_PROGRAM).read_byte(offset);
         }
 
 
-        //WRITE8_MEMBER(taitosj_state::mcu_mem_w)
-        void mcu_mem_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void mcu_mem_w(offs_t offset, uint8_t data)
         {
             m_maincpu.target.memory().space(AS_PROGRAM).write_byte(offset, data);
         }

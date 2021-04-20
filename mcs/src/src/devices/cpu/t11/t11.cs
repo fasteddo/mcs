@@ -19,21 +19,41 @@ namespace mame
     //#define T11_IRQ2        2      /* IRQ2 */
     //#define T11_IRQ3        3      /* IRQ3 */
 
-    //#define T11_RESERVED    0x000   /* Reserved vector */
-    //#define T11_TIMEOUT     0x004   /* Time-out/system error vector */
-    //#define T11_ILLINST     0x008   /* Illegal and reserved instruction vector */
-    //#define T11_BPT         0x00C   /* BPT instruction vector */
-    //#define T11_IOT         0x010   /* IOT instruction vector */
-    //#define T11_PWRFAIL     0x014   /* Power fail vector */
-    //#define T11_EMT         0x018   /* EMT instruction vector */
-    //#define T11_TRAP        0x01C   /* TRAP instruction vector */
-
 
     public partial class t11_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(T11,      t11_device,      "t11",      "DEC T11")
         static device_t device_creator_t11_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new t11_device(mconfig, tag, owner, clock); }
         public static readonly device_type T11 = DEFINE_DEVICE_TYPE(device_creator_t11_device, "t11", "DEC T11");
+
+
+        static uint8_t OCTAL_U8(int value) { return Convert.ToByte(value.ToString(), 8); }
+        static uint16_t OCTAL_U16(int value) { return Convert.ToUInt16(value.ToString(), 8); }
+
+
+        //enum
+        //{
+        const int CP0_LINE = 0;           // -AI4 (at PI time)
+        const int CP1_LINE = 1;           // -AI3 (at PI time)
+        const int CP2_LINE = 2;           // -AI2 (at PI time)
+        const int CP3_LINE = 3;           // -AI1 (at PI time)
+        const int VEC_LINE = 4;           // -AI5 (at PI time)
+        const int PF_LINE  = 5;            // -AI6 (at PI time)
+        const int HLT_LINE = 6;            // -AI7 (at PI time)
+        //};
+
+
+        //enum
+        //{
+        static readonly uint8_t T11_RESERVED    = OCTAL_U8(000);  // Reserved vector
+        static readonly uint8_t T11_TIMEOUT     = OCTAL_U8(004);  // Time-out/system error vector
+        static readonly uint8_t T11_ILLINST     = OCTAL_U8(010);  // Illegal and reserved instruction vector
+        static readonly uint8_t T11_BPT         = OCTAL_U8(014);  // BPT instruction vector
+        static readonly uint8_t T11_IOT         = OCTAL_U8(020);  // IOT instruction vector
+        static readonly uint8_t T11_PWRFAIL     = OCTAL_U8(024);  // Power fail vector
+        static readonly uint8_t T11_EMT         = OCTAL_U8(030);  // EMT instruction vector
+        static readonly uint8_t T11_TRAP        = OCTAL_U8(034);  // TRAP instruction vector
+        //};
 
 
         //enum
@@ -100,10 +120,10 @@ namespace mame
 
             protected override uint32_t execute_min_cycles() { return 12; }
             protected override uint32_t execute_max_cycles() { return 114; }
-            protected override uint32_t execute_input_lines() { return 4; }
+            protected override uint32_t execute_input_lines() { return 7; }
+            protected override bool execute_input_edge_triggered(int inputnum) { return inputnum == PF_LINE || inputnum == HLT_LINE; }
             protected override void execute_run() { ((t11_device)device()).device_execute_interface_execute_run(); }
             protected override void execute_set_input(int inputnum, int state) { ((t11_device)device()).device_execute_interface_execute_set_input(inputnum, state); }
-            protected override uint32_t execute_default_irq_vector(int inputnum) { return uint32_t.MaxValue; }  //return -1; }
         }
 
 
@@ -144,11 +164,18 @@ namespace mame
         PAIR m_psw;
         uint16_t m_initial_pc;
         uint8_t m_wait_state;
-        uint8_t m_irq_state;
+        uint8_t m_cp_state;
+        bool m_vec_active;
+        bool m_pf_active;
+        bool m_hlt_active;
+        bool m_power_fail;
+        bool m_ext_halt;
         intref m_icount = new intref();  //int m_icount;
-        address_space m_program;
-        memory_access_cache m_cache;  //memory_access_cache<1, 0, ENDIANNESS_LITTLE> *m_cache;
+        memory_access.cache m_cache = new memory_access(16, 1, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::cache m_cache;
+        memory_access.specific m_program = new memory_access(16, 1, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::specific m_program;
+
         devcb_write_line m_out_reset_func;
+        devcb_read8 m_in_iack_func;
 
 
         device_execute_interface m_diexec;
@@ -190,19 +217,27 @@ namespace mame
 
             m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_LITTLE, 16, 16, 0);
             c_initial_mode = 0;
+            m_cp_state = 0;
+            m_vec_active = false;
+            m_pf_active = false;
+            m_hlt_active = false;
             m_out_reset_func = new devcb_write_line(this);
+            m_in_iack_func = new devcb_read8(this);
 
 
             m_program_config.m_is_octal = true;
 
-            //memset(m_reg, 0x00, sizeof(m_reg));
-            //memset(&m_psw, 0x00, sizeof(m_psw));
+            for (int i = 0; i < m_reg.Length; i++)  //for (auto &reg : m_reg)
+                m_reg[i].d = 0;
+            m_psw.d = 0;
+            m_ppc.d = 0;
         }
 
 
         // configuration helpers
         public void set_initial_mode(uint16_t mode) { c_initial_mode = mode; }
         //auto out_reset() { return m_out_reset_func.bind(); }
+        //auto in_iack() { return m_in_iack_func.bind(); }
 
 
         // device-level overrides
@@ -227,9 +262,10 @@ namespace mame
 
 
             m_initial_pc = device_start_initial_pc[c_initial_mode >> 13];
-            m_program = m_dimemory.space(AS_PROGRAM);
-            m_cache = m_program.cache(1, 0, (int)endianness_t.ENDIANNESS_LITTLE);
+            m_dimemory.space(AS_PROGRAM).cache(m_cache.Width, m_cache.AddrShift, m_cache.Endian, m_cache);
+            m_dimemory.space(AS_PROGRAM).specific(m_program.Level, m_program.Width, m_program.AddrShift, m_program.Endian, m_program);
             m_out_reset_func.resolve_safe();
+            m_in_iack_func.resolve_safe(0); // default vector (T-11 User's Guide, p. A-11)
 
             save_item(NAME(new { m_ppc.w.l }));
             save_item(NAME(new { m_reg[0].w.l }));
@@ -243,7 +279,12 @@ namespace mame
             save_item(NAME(new { m_psw.w.l }));
             save_item(NAME(new { m_initial_pc }));
             save_item(NAME(new { m_wait_state }));
-            save_item(NAME(new { m_irq_state }));
+            save_item(NAME(new { m_cp_state }));
+            save_item(NAME(new { m_vec_active }));
+            save_item(NAME(new { m_pf_active }));
+            save_item(NAME(new { m_hlt_active }));
+            save_item(NAME(new { m_power_fail }));
+            save_item(NAME(new { m_ext_halt }));
 
             // Register debugger state
             m_distate.state_add( T11_PC,  "PC",  m_reg[7].w.l).formatstr("%06O");
@@ -271,35 +312,22 @@ namespace mame
          *************************************/
         protected override void device_reset()
         {
-            /* initial SP is 376 octal, or 0xfe */
-            SP = 0x00fe;
+            // initial SP is 376 octal, or 0xfe
+            SP = OCTAL_U16(0376);
 
-            /* initial PC comes from the setup word */
+            // initial PC comes from the setup word
             PC = m_initial_pc;
 
-            /* PSW starts off at highest priority */
-            PSW = 0xe0;
+            // PSW starts off at highest priority
+            PSW = OCTAL_U8(0340);
 
-            /* initialize the IRQ state */
-            m_irq_state = 0;
-
-            /* reset the remaining state */
-            REGD(0) = 0;
-            REGD(1) = 0;
-            REGD(2) = 0;
-            REGD(3) = 0;
-            REGD(4) = 0;
-            REGD(5) = 0;
-            m_ppc.d = 0;
             m_wait_state = 0;
+            m_power_fail = false;
+            m_ext_halt = false;
         }
 
 
         // device_execute_interface overrides
-        //virtual uint32_t execute_min_cycles() const noexcept override { return 12; }
-        //virtual uint32_t execute_max_cycles() const noexcept override { return 114; }
-        //virtual uint32_t execute_input_lines() const noexcept override { return 4; }
-
 
         /*************************************
          *
@@ -359,11 +387,35 @@ namespace mame
          *************************************/
         void device_execute_interface_execute_set_input(int irqline, int state)
         {
-            /* set the appropriate bit */
-            if (state == CLEAR_LINE)
-                m_irq_state &= (uint8_t)~(1U << irqline);
-            else
-                m_irq_state |= (uint8_t)(1U << irqline);
+            switch (irqline)
+            {
+            case CP0_LINE:
+            case CP1_LINE:
+            case CP2_LINE:
+            case CP3_LINE:
+                // set the appropriate bit
+                if (state == CLEAR_LINE)
+                    m_cp_state &= (uint8_t)(~(1 << irqline));
+                else
+                    m_cp_state |= (uint8_t)(1 << irqline);
+                break;
+
+            case VEC_LINE:
+                m_vec_active = (state != CLEAR_LINE);
+                break;
+
+            case PF_LINE:
+                if (state != CLEAR_LINE && !m_pf_active)
+                    m_power_fail = true;
+                m_pf_active = (state != CLEAR_LINE);
+                break;
+
+            case HLT_LINE:
+                if (state != CLEAR_LINE && !m_hlt_active)
+                    m_ext_halt = true;
+                m_hlt_active = (state != CLEAR_LINE);
+                break;
+            }
         }
 
 
@@ -463,57 +515,80 @@ namespace mame
 
         static readonly irq_table_entry [] irq_table = new irq_table_entry []
         {
-            new irq_table_entry( 0<<5, 0x00 ),
-            new irq_table_entry( 4<<5, 0x38 ),
-            new irq_table_entry( 4<<5, 0x34 ),
-            new irq_table_entry( 4<<5, 0x30 ),
-            new irq_table_entry( 5<<5, 0x5c ),
-            new irq_table_entry( 5<<5, 0x58 ),
-            new irq_table_entry( 5<<5, 0x54 ),
-            new irq_table_entry( 5<<5, 0x50 ),
-            new irq_table_entry( 6<<5, 0x4c ),
-            new irq_table_entry( 6<<5, 0x48 ),
-            new irq_table_entry( 6<<5, 0x44 ),
-            new irq_table_entry( 6<<5, 0x40 ),
-            new irq_table_entry( 7<<5, 0x6c ),
-            new irq_table_entry( 7<<5, 0x68 ),
-            new irq_table_entry( 7<<5, 0x64 ),
-            new irq_table_entry( 7<<5, 0x60 )
+            new irq_table_entry( 0<<5, OCTAL_U8(0000)),
+            new irq_table_entry( 4<<5, OCTAL_U8(0070)),
+            new irq_table_entry( 4<<5, OCTAL_U8(0064)),
+            new irq_table_entry( 4<<5, OCTAL_U8(0060)),
+            new irq_table_entry( 5<<5, OCTAL_U8(0134)),
+            new irq_table_entry( 5<<5, OCTAL_U8(0130)),
+            new irq_table_entry( 5<<5, OCTAL_U8(0124)),
+            new irq_table_entry( 5<<5, OCTAL_U8(0120)),
+            new irq_table_entry( 6<<5, OCTAL_U8(0114)),
+            new irq_table_entry( 6<<5, OCTAL_U8(0110)),
+            new irq_table_entry( 6<<5, OCTAL_U8(0104)),
+            new irq_table_entry( 6<<5, OCTAL_U8(0100)),
+            new irq_table_entry( 7<<5, OCTAL_U8(0154)),
+            new irq_table_entry( 7<<5, OCTAL_U8(0150)),
+            new irq_table_entry( 7<<5, OCTAL_U8(0144)),
+            new irq_table_entry( 7<<5, OCTAL_U8(0140))
         };
 
         void t11_check_irqs()
         {
-            irq_table_entry irq = irq_table[m_irq_state & 15];
-            int priority = PSW & 0xe0;
-
-            /* compare the priority of the interrupt to the PSW */
-            if (irq.priority > priority)
+            // HLT is nonmaskable
+            if (m_ext_halt)
             {
-                int vector = irq.vector;
-                int new_pc;
-                int new_psw;
+                m_ext_halt = false;
 
-                /* call the callback; if we don't get -1 back, use the return value as our vector */
-                int new_vector = standard_irq_callback(m_irq_state & 15);
-                if (new_vector != -1)
-                    vector = new_vector;
-
-                /* fetch the new PC and PSW from that vector */
-                assert((vector & 3) == 0);
-                new_pc = RWORD(vector);
-                new_psw = RWORD(vector + 2);
-
-                /* push the old state, set the new one */
+                // push the old state, set the new one
                 PUSH(PSW);
                 PUSH(PC);
-                PCD = (uint32_t)new_pc;
-                PSW = (uint8_t)new_psw;
-                //t11_check_irqs();
+                PCD = m_initial_pc + 4U;
+                PSW = OCTAL_U8(0340);
 
-                /* count cycles and clear the WAIT flag */
+                // count cycles and clear the WAIT flag
                 m_icount.i -= 114;
                 m_wait_state = 0;
+
+                return;
             }
+
+            // PF has next-highest priority
+            int priority = PSW & 0340;
+            if (m_power_fail && priority != 0340)
+            {
+                m_power_fail = false;
+                take_interrupt(T11_PWRFAIL);
+                return;
+            }
+
+            // compare the priority of the CP interrupt to the PSW
+            ref irq_table_entry irq = ref irq_table[m_cp_state & 15];
+            if (irq.priority > priority)
+            {
+                // call the callback
+                standard_irq_callback(m_cp_state & 15);
+
+                // T11 encodes the interrupt level on DAL<12:8>
+                uint8_t iaddr = (uint8_t)bitswap(~m_cp_state & 15, 0, 1, 2, 3);
+                if (!m_vec_active)
+                    iaddr |= 16;
+
+                // vector is input on DAL<7:2>
+                uint8_t vector = m_in_iack_func.op(iaddr);
+
+                // nonvectored or vectored interrupt depending on VEC
+                if (BIT(iaddr, 4) != 0)
+                    take_interrupt(irq.vector);
+                else
+                    take_interrupt((uint8_t)(vector & ~3));
+            }
+        }
+
+
+        void take_interrupt(uint8_t vector)
+        {
+            throw new emu_unimplemented();
         }
     }
 

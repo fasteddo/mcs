@@ -1754,6 +1754,7 @@ namespace mame
         s32 [] m_clear_extents = new s32[MAX_CLEAR_EXTENTS]; // array of clear extents
         bool m_transform_container;      // determines whether the screen container is transformed by the core renderer,
                                          // otherwise the respective render API will handle the transformation (scale, offset)
+        bool m_external_artwork;         // external artwork was loaded (driver file or override)
 
 
         // construction/destruction
@@ -1785,6 +1786,7 @@ namespace mame
             m_maxtexwidth = 65536;
             m_maxtexheight = 65536;
             m_transform_container = true;
+            m_external_artwork = false;
 
 
             // determine the base layer configuration based on options
@@ -1859,6 +1861,7 @@ namespace mame
         //render_layer_config layer_config() const { return m_layerconfig; }
         public layout_view current_view() { return m_curview; }
         public int view() { return view_index(m_curview); }
+        public bool external_artwork() { return m_external_artwork; }
         public bool hidden() { return ((m_flags & render_global.RENDER_CREATE_HIDDEN) != 0); }
 
         //-------------------------------------------------
@@ -2485,31 +2488,31 @@ namespace mame
 
         void load_additional_layout_files(string basename, bool have_artwork)
         {
-            bool have_default  = false;
-            bool have_override = false;
+            m_external_artwork = false;
 
             // if override_artwork defined, load that and skip artwork other than default
             string override_art = m_manager.machine().options().override_artwork();
             if (override_art != null)
             {
                 if (load_layout_file(override_art, override_art))
-                    have_override = true;
+                    m_external_artwork = true;
                 else if (load_layout_file(override_art, "default"))
-                    have_override = true;
+                    m_external_artwork = true;
             }
 
             game_driver system = m_manager.machine().system();
 
             // Skip if override_artwork has found artwork
-            if (!have_override)
+            if (!m_external_artwork)
             {
                 // try to load a file based on the driver name
                 if (!load_layout_file(basename, system.name))
-                    have_artwork |= load_layout_file(basename, "default");
+                    m_external_artwork |= load_layout_file(basename, "default");
                 else
-                    have_artwork = true;
+                    m_external_artwork = true;
 
                 // if a default view has been specified, use that as a fallback
+                bool have_default = false;
                 if (system.default_layout != null)
                     have_default |= load_layout_file(null, system.default_layout);
 
@@ -2522,14 +2525,16 @@ namespace mame
                 while (0 <= cloneof)
                 {
                     if (!load_layout_file(driver_list.driver(cloneof).name, driver_list.driver(cloneof).name))
-                        have_artwork |= load_layout_file(driver_list.driver(cloneof).name, "default");
+                        m_external_artwork |= load_layout_file(driver_list.driver(cloneof).name, "default");
                     else
-                        have_artwork = true;
+                        m_external_artwork = true;
 
                     // Check the parent of the parent to cover bios based artwork
                     game_driver parent = driver_list.driver(cloneof);
                     cloneof = driver_list.clone(parent);
                 }
+
+                have_artwork |= m_external_artwork;
 
                 // Use fallback artwork if defined and no artwork has been found yet
                 if (!have_artwork)

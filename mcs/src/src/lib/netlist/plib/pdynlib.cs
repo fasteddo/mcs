@@ -15,7 +15,7 @@ namespace mame.plib
 
     public abstract class dynlib_base
     {
-        protected bool m_is_loaded;
+        bool m_is_loaded;
 
 
         protected dynlib_base() { m_is_loaded = false; }
@@ -32,6 +32,8 @@ namespace mame.plib
         {
             return getsym_p(name);  //return reinterpret_cast<T>(getsym_p(name));
         }
+
+        protected void set_loaded(bool v) { m_is_loaded = v; }
 
         protected abstract Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> getsym_p(string name);  //virtual void *getsym_p(const pstring &name) const noexcept = 0;
     }
@@ -58,7 +60,7 @@ namespace mame.plib
 
 
             if (syms != null)
-                m_is_loaded = true;
+                set_loaded(true);
         }
 
 

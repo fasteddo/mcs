@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
 using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
 using netlist_time_ext = mame.plib.ptime_i64;  //netlist_time
 using nl_fptype = System.Double;
@@ -22,7 +23,7 @@ namespace mame.netlist
         }
 
 
-        public enum matrix_sort_type_e  //P_ENUM(matrix_sort_type_e,
+        public enum matrix_sort_type_e  //PENUM(matrix_sort_type_e,
         {
             NOSORT,
             ASCENDING,
@@ -32,7 +33,7 @@ namespace mame.netlist
         }
 
 
-        public enum matrix_type_e  //P_ENUM(matrix_type_e,
+        public enum matrix_type_e  //PENUM(matrix_type_e,
         {
             SOR_MAT,
             MAT_CR,
@@ -44,7 +45,7 @@ namespace mame.netlist
         }
 
 
-        public enum matrix_fp_type_e  //P_ENUM(matrix_fp_type_e,
+        public enum matrix_fp_type_e  //PENUM(matrix_fp_type_e,
         {
             FLOAT,
             DOUBLE,
@@ -133,15 +134,15 @@ namespace mame.netlist
 
         public class terms_for_net_t
         {
-            public plib.aligned_vector<UInt32> m_nz = new plib.aligned_vector<UInt32>();   //!< all non zero for multiplication
-            public plib.aligned_vector<UInt32> m_nzrd = new plib.aligned_vector<UInt32>(); //!< non zero right of the diagonal for elimination, may include RHS element
-            public plib.aligned_vector<UInt32> m_nzbd = new plib.aligned_vector<UInt32>(); //!< non zero below of the diagonal for elimination
+            public plib.aligned_vector<unsigned> m_nz = new plib.aligned_vector<unsigned>();   //!< all non zero for multiplication
+            public plib.aligned_vector<unsigned> m_nzrd = new plib.aligned_vector<unsigned>(); //!< non zero right of the diagonal for elimination, may include RHS element
+            public plib.aligned_vector<unsigned> m_nzbd = new plib.aligned_vector<unsigned>(); //!< non zero below of the diagonal for elimination
 
             public plib.aligned_vector<int> m_connected_net_idx = new plib.aligned_vector<int>();
 
             analog_net_t m_net;
             plib.aligned_vector<terminal_t> m_terms = new plib.aligned_vector<terminal_t>();
-            UInt32 m_railstart;  //std::size_t m_railstart;
+            size_t m_railstart;
 
 
             public terms_for_net_t(analog_net_t net = null)
@@ -171,9 +172,9 @@ namespace mame.netlist
             }
 
 
-            public UInt32 count() { return (UInt32)m_terms.size(); }  //std::size_t count() const { return m_terms.size(); }
+            public size_t count() { return (size_t)m_terms.size(); }  //std::size_t count() const { return m_terms.size(); }
 
-            public UInt32 railstart() { return m_railstart; }
+            public size_t railstart() { return m_railstart; }
 
             public std.vector<terminal_t> terms() { return m_terms; }  //inline terminal_t **terms() { return m_terms.data(); }
 
@@ -186,7 +187,7 @@ namespace mame.netlist
             public bool is_net(analog_net_t net) { return net == m_net; }
 
 
-            public void set_railstart(UInt32 val) { m_railstart = val; }
+            public void set_railstart(size_t val) { m_railstart = val; }
         }
 
 
@@ -209,58 +210,63 @@ namespace mame.netlist
         public abstract class matrix_solver_t : device_t
         {
             //using list_t = std::vector<matrix_solver_t *>;
-            //template <typename T> using aligned_alloc = plib::aligned_allocator<T, PALIGN_VECTOROPT>;
+            //using fptype = nl_fptype;
+            //using arena_type = plib::mempool_arena<plib::aligned_arena>;
 
 
-            protected plib.pmatrix2d_nl_fptype m_gonn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_gonn;
-            protected plib.pmatrix2d_nl_fptype m_gtn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_gtn;
-            protected plib.pmatrix2d_nl_fptype m_Idrn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_Idrn;
-            protected plib.pmatrix2d_listpointer_nl_fptype m_connected_net_Vn = new plib.pmatrix2d_listpointer_nl_fptype();  //plib::pmatrix2d<nl_fptype *, aligned_alloc<nl_fptype *>>    m_connected_net_Vn;
-
-            protected plib.aligned_vector<terms_for_net_t> m_terms = new plib.aligned_vector<terms_for_net_t>();
+            protected plib.pmatrix2d_vrl_nl_fptype m_gonn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gonn;
+            protected plib.pmatrix2d_vrl_nl_fptype m_gtn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gtn;
+            protected plib.pmatrix2d_vrl_nl_fptype m_Idrn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_Idrn;
+            protected plib.pmatrix2d_vrl_listpointer_nl_fptype m_connected_net_Vn;  //plib::pmatrix2d_vrl<fptype *, arena_type>  m_connected_net_Vn;
 
             protected solver_parameters_t m_params;
 
-            protected state_var<UInt32> m_iterative_fail;
-            protected state_var<UInt32> m_iterative_total;
+            protected state_var<size_t> m_iterative_fail;
+            protected state_var<size_t> m_iterative_total;
 
-            plib.aligned_vector<terms_for_net_t> m_rails_temp = new plib.aligned_vector<terms_for_net_t>();
-            std.vector<proxied_analog_output_t> m_inps = new std.vector<proxied_analog_output_t>();  //std::vector<unique_pool_ptr<proxied_analog_output_t>> m_inps;
+            protected plib.aligned_vector<terms_for_net_t> m_terms = new plib.aligned_vector<terms_for_net_t>();  // setup only
 
-            state_var<UInt32> m_stat_calculations;
-            state_var<UInt32> m_stat_newton_raphson;
-            state_var<UInt32> m_stat_vsolver_calls;
+            state_var<size_t> m_stat_calculations;
+            state_var<size_t> m_stat_newton_raphson;
+            state_var<size_t> m_stat_vsolver_calls;
 
             state_var<netlist_time_ext> m_last_step;
-            plib.aligned_vector<nldelegate_ts> m_step_funcs = new plib.aligned_vector<nldelegate_ts>();
-            plib.aligned_vector<nldelegate_dyn> m_dynamic_funcs = new plib.aligned_vector<nldelegate_dyn>();
+            plib.aligned_vector<nldelegate_ts> m_step_funcs;
+            plib.aligned_vector<nldelegate_dyn> m_dynamic_funcs;
+            plib.aligned_vector<proxied_analog_output_t> m_inps;  //plib::aligned_vector<device_arena::unique_ptr<proxied_analog_output_t>> m_inps;
 
             logic_input_t m_fb_sync;
             logic_output_t m_Q_sync;
 
-            UInt32 m_ops;
+            size_t m_ops;
+
+            plib.aligned_vector<terms_for_net_t> m_rails_temp; // setup only
 
 
             // ----------------------------------------------------------------------------------------
             // matrix_solver
             // ----------------------------------------------------------------------------------------
-            protected matrix_solver_t(netlist_state_t anetlist, string name, analog_net_t.list_t nets, solver_parameters_t params_)
+            protected matrix_solver_t(netlist_state_t anetlist, string name, analog_net_t_list_t nets, solver_parameters_t params_)
                 : base(anetlist, name)
             {
                 m_params = params_;
-                m_iterative_fail = new state_var<UInt32>(this, "m_iterative_fail", 0);
-                m_iterative_total = new state_var<UInt32>(this, "m_iterative_total", 0);
-                m_stat_calculations = new state_var<UInt32>(this, "m_stat_calculations", 0);
-                m_stat_newton_raphson = new state_var<UInt32>(this, "m_stat_newton_raphson", 0);
-                m_stat_vsolver_calls = new state_var<UInt32>(this, "m_stat_vsolver_calls", 0);
+                m_iterative_fail = new state_var<size_t>(this, "m_iterative_fail", 0);
+                m_iterative_total = new state_var<size_t>(this, "m_iterative_total", 0);
+                m_stat_calculations = new state_var<size_t>(this, "m_stat_calculations", 0);
+                m_stat_newton_raphson = new state_var<size_t>(this, "m_stat_newton_raphson", 0);
+                m_stat_vsolver_calls = new state_var<size_t>(this, "m_stat_vsolver_calls", 0);
                 m_last_step = new state_var<netlist_time_ext>(this, "m_last_step", netlist_time_ext.zero());
                 m_fb_sync = new logic_input_t(this, "FB_sync");
                 m_Q_sync = new logic_output_t(this, "Q_sync");
                 m_ops = 0;
 
 
-                connect_post_start(m_fb_sync, m_Q_sync);
-                setup_base(nets);
+                if (!anetlist.setup().connect(m_fb_sync, m_Q_sync))
+                {
+                    log().fatal.op(nl_errstr_global.MF_ERROR_CONNECTING_1_TO_2(m_fb_sync.name(), m_Q_sync.name()));
+                    throw new nl_exception(nl_errstr_global.MF_ERROR_CONNECTING_1_TO_2(m_fb_sync.name(), m_Q_sync.name()));
+                }
+                setup_base(anetlist.setup(), nets);
 
                 // now setup the matrix
                 setup_matrix();
@@ -371,7 +377,11 @@ namespace mame.netlist
             {
                 // We only need to update the net first if this is a time stepping net
                 if (timestep_device_count() > 0)
-                    solve_now();
+                {
+                    netlist_time new_timestep = solve(exec().time());
+                    //plib::unused_var(new_timestep);
+                    update_inputs();
+                }
 
                 f();
 
@@ -426,7 +436,7 @@ namespace mame.netlist
 
 
             // base setup - called from constructor
-            protected void setup_base(analog_net_t.list_t nets)
+            protected void setup_base(setup_t setup, analog_net_t_list_t nets)
             {
                 log().debug.op("New solver setup\n");
                 std.vector<core_device_t> step_devices = new std.vector<core_device_t>();
@@ -455,6 +465,8 @@ namespace mame.netlist
                         switch (p.type())
                         {
                             case detail.terminal_type.TERMINAL:
+                                throw new emu_unimplemented();
+#if false
                                 if (p.device().is_timestep())
                                 {
                                     if (!plib.container.contains(step_devices, p.device()))
@@ -473,6 +485,7 @@ namespace mame.netlist
                                 }
 
                                 log().debug.op("Added terminal {0}\n", p.name());
+#endif
                                 break;
 
                             case detail.terminal_type.INPUT:
@@ -491,12 +504,12 @@ namespace mame.netlist
                                     {
                                         string nname = this.name() + "." + new plib.pfmt("m{0}").op(m_inps.size());
                                         nl_config_global.nl_assert(p.net().is_analog());
-                                        var net_proxy_output_u = new proxied_analog_output_t(this, nname, (analog_net_t)p.net());  //auto net_proxy_output_u = state().make_object<proxied_analog_output_t>(*this, nname, static_cast<analog_net_t *>(&p->net()));
+                                        var net_proxy_output_u = new proxied_analog_output_t(this, nname, (analog_net_t)p.net());  //auto net_proxy_output_u = state().make_pool_object<proxied_analog_output_t>(*this, nname, &dynamic_cast<analog_net_t &>(p->net()));
                                         net_proxy_output = net_proxy_output_u;
                                         m_inps.emplace_back(net_proxy_output_u);
                                     }
 
-                                    net_proxy_output.net().add_terminal(p);
+                                    setup.add_terminal(net_proxy_output.net(), p);
 
                                     // FIXME: repeated calling - kind of brute force
                                     net_proxy_output.net().rebuild_list();
@@ -512,10 +525,13 @@ namespace mame.netlist
                     }
                 }
 
+                throw new emu_unimplemented();
+#if false
                 foreach (var d in step_devices)
                     m_step_funcs.emplace_back(d.timestep);
                 foreach (var d in dynamic_devices)
                     m_dynamic_funcs.emplace_back(d.update_terminals);
+#endif
             }
 
 
@@ -902,15 +918,30 @@ namespace mame.netlist
                 m_Idrn.resize(iN, max_count);
                 m_connected_net_Vn.resize(iN, max_count);
 
-                for (UInt32 k = 0; k < iN; k++)
+                // Initialize arrays to 0 (in case the vrl one is used
+                for (size_t k = 0; k < iN; k++)
+                {
+                    for (size_t j = 0; j < m_terms[k].count(); j++)
+                    {
+                        m_gtn.set(k,j, nlconst.zero());
+                        m_gonn.set(k,j, nlconst.zero());
+                        m_Idrn.set(k,j, nlconst.zero());
+                        m_connected_net_Vn.set(k, j, null);
+                    }
+                }
+
+                for (size_t k = 0; k < iN; k++)
                 {
                     var count = m_terms[k].count();
 
-                    for (int i = 0; i < count; i++)
+                    for (size_t i = 0; i < count; i++)
                     {
+                        throw new emu_unimplemented();
+#if false
                         m_terms[k].terms()[i].set_ptrs(new Pointer<nl_fptype>(m_gtn.op(k), i), new Pointer<nl_fptype>(m_gonn.op(k), i), new Pointer<nl_fptype>(m_Idrn.op(k), i));  //m_terms[k].terms()[i]->set_ptrs(&m_gtn[k][i], &m_gonn[k][i], &m_Idrn[k][i]);
                         //m_connected_net_Vn[k][i] = m_terms[k].terms()[i]->connected_terminal()->net().Q_Analog_state_ptr();
                         m_connected_net_Vn.op(k)[i] = new Pointer<nl_fptype>(get_connected_net(m_terms[k].terms()[i]).Q_Analog_state_ptr());  //m_connected_net_Vn[k][i] = get_connected_net(m_terms[k].terms()[i])->Q_Analog_state_ptr();
+#endif
                     }
                 }
             }
@@ -919,292 +950,6 @@ namespace mame.netlist
             analog_net_t get_connected_net(terminal_t term)
             {
                 return state().setup().get_connected_terminal(term).net();
-            }
-        }
-
-
-        //template <typename FT, int SIZE>
-        abstract class matrix_solver_ext_t : matrix_solver_t
-        {
-            //friend class matrix_solver_t;
-
-            //using float_type = FT;
-
-
-            // template parameters
-            protected int SIZE;
-
-
-            UInt32 m_dim;  //const std::size_t m_dim;
-
-            //static constexpr const std::size_t SIZEABS = plib::parray<FT, SIZE>::SIZEABS();
-            //static constexpr const std::size_t m_pitch_ABS = (((SIZEABS + 0) + 7) / 8) * 8;
-
-            //PALIGNAS_VECTOROPT()
-            protected MemoryContainer<nl_fptype> m_new_V;  //plib::parray<float_type, SIZE> m_new_V;
-            //PALIGNAS_VECTOROPT()
-            protected nl_fptype [] m_RHS;  //plib::parray<float_type, SIZE> m_RHS;
-
-            //PALIGNAS_VECTOROPT()
-            protected MemoryContainer<MemoryContainer<Pointer<nl_fptype>>> m_mat_ptr;  //plib::pmatrix2d<float_type *> m_mat_ptr;
-
-            // FIXME: below should be private
-            // state - variable time_stepping
-            //PALIGNAS_VECTOROPT()
-            nl_fptype [] m_last_V;  //plib::parray<nl_fptype, SIZE> m_last_V;
-            //PALIGNAS_VECTOROPT()
-            nl_fptype [] m_DD_n_m_1;  //plib::parray<nl_fptype, SIZE> m_DD_n_m_1;
-            //PALIGNAS_VECTOROPT()
-            nl_fptype [] m_h_n_m_1;  //plib::parray<nl_fptype, SIZE> m_h_n_m_1;
-
-
-            protected matrix_solver_ext_t(int SIZE, netlist_state_t anetlist, string name,
-                analog_net_t.list_t nets,
-                solver_parameters_t params_, UInt32 size)
-                : base(anetlist, name, nets, params_)
-            {
-                this.SIZE = SIZE;
-
-
-                m_dim = size;
-                m_new_V = new MemoryContainer<nl_fptype>((int)size, true);
-                m_RHS = new nl_fptype[size];
-                //, m_mat_ptr(size, this->max_railstart() + 1)
-                m_mat_ptr = new MemoryContainer<MemoryContainer<Pointer<nl_fptype>>>((int)size, true);
-                m_mat_ptr.Fill(() => { return new MemoryContainer<Pointer<nl_fptype>>((int)this.max_railstart() + 1); });
-                m_last_V = new nl_fptype[size];
-                m_last_V.Fill(nlconst.zero());
-                m_DD_n_m_1 = new nl_fptype[size];
-                m_DD_n_m_1.Fill(nlconst.zero());
-                m_h_n_m_1 = new nl_fptype[size];
-                m_h_n_m_1.Fill(nlconst.magic(1e-6));  // we need a non zero value here
-
-
-                //
-                // save states
-                //
-                state().save(this, m_last_V, this.name(), "m_last_V");
-                state().save(this, m_DD_n_m_1, this.name(), "m_DD_n_m_1");
-                state().save(this, m_h_n_m_1, this.name(), "m_h_n_m_1");
-            }
-
-
-            UInt32 max_railstart()
-            {
-                UInt32 max_rail = 0;
-                for (UInt32 k = 0; k < m_terms.size(); k++)
-                    max_rail = std.max(max_rail, m_terms[k].railstart());
-                return max_rail;
-            }
-
-
-            //template <typename T, typename M>
-            protected void log_fill(std.vector<std.vector<size_t>> fill, plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16 mat)  //void log_fill(const T &fill, M &mat)
-            {
-                size_t iN = (size_t)fill.size();
-
-                // FIXME: Not yet working, mat_cr.h needs some more work
-#if false
-                auto mat_GE = dynamic_cast<plib::pGEmatrix_cr_t<typename M::base> *>(&mat);
-#else
-                //plib::unused_var(mat);
-#endif
-                std.vector<unsigned> levL = new std.vector<unsigned>(iN, 0);
-                std.vector<unsigned> levU = new std.vector<unsigned>(iN, 0);
-
-                // parallel scheme for L x = y
-                for (size_t k = 0; k < iN; k++)
-                {
-                    unsigned lm = 0;
-                    for (size_t j = 0; j < k; j++)
-                        if (fill[k][j] < (size_t)plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16.constants_e.FILL_INFINITY)
-                            lm = std.max(lm, levL[j]);
-                    levL[k] = 1 + lm;
-                }
-
-                // parallel scheme for U x = y
-                for (size_t k = iN; k-- > 0; )
-                {
-                    unsigned lm = 0;
-                    for (size_t j = iN; --j > k; )
-                        if (fill[k][j] < (size_t)plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16.constants_e.FILL_INFINITY)
-                            lm = std.max(lm, levU[j]);
-                    levU[k] = 1 + lm;
-                }
-
-                for (size_t k = 0; k < iN; k++)
-                {
-                    unsigned fm = 0;
-                    string ml = "";
-                    for (size_t j = 0; j < iN; j++)
-                    {
-                        ml += fill[k][j] == 0 ? 'X' : fill[k][j] < (size_t)plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16.constants_e.FILL_INFINITY ? '+' : '.';
-                        if (fill[k][j] < (size_t)plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16.constants_e.FILL_INFINITY)
-                            if (fill[k][j] > fm)
-                                fm = fill[k][j];
-                    }
-#if false
-                    this->log().verbose("{1:4} {2} {3:4} {4:4} {5:4} {6:4}", k, ml,
-                        levL[k], levU[k], mat_GE ? mat_GE->get_parallel_level(k) : 0, fm);
-#else
-                    this.log().verbose.op("{0:4} {1} {2:4} {3:4} {4:4} {5:4}", k, ml,
-                        levL[k], levU[k], 0, fm);
-#endif
-                }
-            }
-
-
-            protected int size()
-            {
-                return (SIZE > 0) ? SIZE : (int)m_dim;  //return (SIZE > 0) ? static_cast<std::size_t>(SIZE) : m_dim;
-            }
-
-
-            protected override void store()
-            {
-                int iN = size();
-                for (int i = 0; i < iN; i++)
-                    this.m_terms[i].setV((nl_fptype)m_new_V[i]);
-            }
-
-
-            protected override bool check_err()
-            {
-                // NOTE: Ideally we should also include currents (RHS) here. This would
-                // need a reevaluation of the right hand side after voltages have been updated
-                // and thus belong into a different calculation. This applies to all solvers.
-
-                int iN = size();
-                var reltol = (nl_fptype)m_params.m_reltol.op();
-                var vntol = (nl_fptype)m_params.m_vntol.op();
-                for (int i = 0; i < iN; i++)
-                {
-                    var vold = (nl_fptype)this.m_terms[i].getV();
-                    var vnew = m_new_V[i];
-                    var tol = vntol + reltol * std.max(plib.pglobal.abs(vnew), plib.pglobal.abs(vold));
-                    if (plib.pglobal.abs(vnew - vold) > tol)
-                        return true;
-                }
-
-                return false;
-            }
-
-
-            protected override netlist_time compute_next_timestep(nl_fptype cur_ts, nl_fptype max_ts)
-            {
-                nl_fptype new_solver_timestep = max_ts;
-
-                for (UInt32 k = 0; k < size(); k++)
-                {
-                    var t = m_terms[k];
-                    var v = (nl_fptype)t.getV();
-                    // avoid floating point exceptions
-                    nl_fptype DD_n = std.max(-fp_constants.TIMESTEP_MAXDIFF(),
-                        std.min(+fp_constants.TIMESTEP_MAXDIFF(), (v - m_last_V[k])));
-
-                    m_last_V[k] = v;
-                    nl_fptype hn = cur_ts;
-
-                    //printf("%g %g %g %g\n", DD_n, hn, t.m_DD_n_m_1, t.m_h_n_m_1);
-                    nl_fptype DD2 = (DD_n / hn - m_DD_n_m_1[k] / m_h_n_m_1[k]) / (hn + m_h_n_m_1[k]);
-                    nl_fptype new_net_timestep = 0;
-
-                    m_h_n_m_1[k] = hn;
-                    m_DD_n_m_1[k] = DD_n;
-                    if (plib.pglobal.abs(DD2) > fp_constants.TIMESTEP_MINDIV()) // avoid div-by-zero
-                        new_net_timestep = plib.pglobal.sqrt(m_params.m_dynamic_lte.op() / plib.pglobal.abs(nlconst.magic(0.5) * DD2));
-                    else
-                        new_net_timestep = m_params.m_max_timestep;
-
-                    new_solver_timestep = std.min(new_net_timestep, new_solver_timestep);
-                }
-
-                new_solver_timestep = std.max(new_solver_timestep, m_params.m_min_timestep);
-
-                // FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
-                return std.max(netlist_time.from_fp(new_solver_timestep), netlist_time.quantum() * 2);
-            }
-
-
-            //template <typename M>
-            protected void build_mat_ptr(MemoryContainer<MemoryContainer<nl_fptype>> mat)
-            {
-                int iN = size();
-
-                for (int k = 0; k < iN; k++)
-                {
-                    int cnt = 0;
-                    // build pointers into the compressed row format matrix for each terminal
-                    for (int j = 0; j < this.m_terms[k].railstart(); j++)
-                    {
-                        int other = this.m_terms[k].m_connected_net_idx[j];
-                        if (other >= 0)
-                        {
-                            m_mat_ptr[k][j] = new Pointer<nl_fptype>(mat[k], other);  //m_mat_ptr[k][j] = &(mat[k][static_cast<std::size_t>(other)]);
-                            cnt++;
-                        }
-                    }
-
-                    nl_config_global.nl_assert_always(cnt == this.m_terms[k].railstart(), "Count and railstart mismatch");
-                    m_mat_ptr[k][this.m_terms[k].railstart()] = new Pointer<nl_fptype>(mat[k], k);  //m_mat_ptr[k][this->m_terms[k].railstart()] = &(mat[k][k]);
-                }
-            }
-
-
-            //template <typename M>
-            public void clear_square_mat(MemoryContainer<MemoryContainer<double>> m)  //void clear_square_mat(M &m)
-            {
-                int n = size();
-                for (int k = 0; k < n; k++)
-                {
-                    var p = new Pointer<double>(m[k], 0);  //auto *p = &(m[k][0]);
-                    //using mat_elem_type = typename std::decay<decltype(*p)>::type;
-                    for (int i = 0; i < n; i++)
-                        p[i] = plib.constants.zero();
-                }
-            }
-
-
-            public void fill_matrix_and_rhs()
-            {
-                UInt32 N = (UInt32)size();
-
-                for (UInt32 k = 0; k < N; k++)
-                {
-                    var net = m_terms[k];  //auto &net = m_terms[k];
-                    var tcr_r = m_mat_ptr[k][0];  //auto **tcr_r = &(m_mat_ptr[k][0]);
-
-                    //using source_type = typename decltype(m_gtn)::value_type;
-                    UInt32 term_count = net.count();
-                    UInt32 railstart = net.railstart();
-                    var go = m_gonn.op(k);
-                    var gt = m_gtn.op(k);
-                    var Idr = m_Idrn.op(k);
-                    var cnV = m_connected_net_Vn.op(k);
-
-                    // FIXME: gonn, gtn and Idr - which float types should they have?
-
-                    //auto gtot_t = std::accumulate(gt, gt + term_count, plib::constants<source_type>::zero());
-                    var gtot_t = plib.constants.zero();
-                    for (int i = 0; i < term_count; i++)
-                        gtot_t += gt[i];
-
-                    // update diagonal element ...
-                    tcr_r[railstart] = (nl_fptype)gtot_t;  //*tcr_r[railstart] = static_cast<FT>(gtot_t); //mat.A[mat.diag[k]] += gtot_t;
-
-                    for (UInt32 i = 0; i < railstart; i++)
-                        tcr_r[i]       += (nl_fptype)go[i];  //*tcr_r[i]       += static_cast<FT>(go[i]);
-
-                    //auto RHS_t(std::accumulate(Idr, Idr + term_count, plib::constants<source_type>::zero()));
-                    var RHS_t = plib.constants.zero();
-                    for (int i = 0; i < term_count; i++)
-                        RHS_t += Idr[i];
-
-                    for (UInt32 i = railstart; i < term_count; i++)
-                        RHS_t +=  (- go[i]) * cnV[i][0];
-
-                    m_RHS[k] = (nl_fptype)RHS_t;  //m_RHS[k] = static_cast<FT>(RHS_t);
-                }
             }
         }
     }

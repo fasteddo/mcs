@@ -54,8 +54,7 @@ namespace mame
             m_irq_mask = (byte)state;
         }
 
-        //WRITE8_MEMBER(pacman_state::pacman_interrupt_vector_w)
-        void pacman_interrupt_vector_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void pacman_interrupt_vector_w(uint8_t data)
         {
             m_maincpu.target.set_input_line_vector(0, data); // Z80
             m_maincpu.target.set_input_line(0, CLEAR_LINE);
@@ -86,32 +85,21 @@ namespace mame
         void mspacman_disable_decode_latch(running_machine m) { m.root_device().membank("bank1").set_entry(0); }  //#define mspacman_disable_decode_latch(m) m.root_device().membank("bank1")->set_entry(0)
 
         // any access to these ROM addresses disables the decoder, and all you see is the original Pac-Man code
-        //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x0038){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x0038]; }
-        u8 mspacman_disable_decode_r_0x0038(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset + 0x0038]; }
-        //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x03b0){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x03b0]; }
-        u8 mspacman_disable_decode_r_0x03b0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x03b0]; }
-        //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x1600){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x1600]; }
-        u8 mspacman_disable_decode_r_0x1600(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x1600]; }
-        //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x2120){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x2120]; }
-        u8 mspacman_disable_decode_r_0x2120(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x2120]; }
-        //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x3ff0){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x3ff0]; }
-        u8 mspacman_disable_decode_r_0x3ff0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x3ff0]; }
-        //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x8000){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x8000]; }
-        u8 mspacman_disable_decode_r_0x8000(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x8000]; }
-        //READ8_MEMBER(pacman_state::mspacman_disable_decode_r_0x97f0){ mspacman_disable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x97f0]; }
-        u8 mspacman_disable_decode_r_0x97f0(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x97f0]; }
-        //WRITE8_MEMBER(pacman_state::mspacman_disable_decode_w){ mspacman_disable_decode_latch(machine()); }
-        void mspacman_disable_decode_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { mspacman_disable_decode_latch(machine()); }
+        uint8_t mspacman_disable_decode_r_0x0038(offs_t offset) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset + 0x0038]; }
+        uint8_t mspacman_disable_decode_r_0x03b0(offs_t offset) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x03b0]; }
+        uint8_t mspacman_disable_decode_r_0x1600(offs_t offset) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x1600]; }
+        uint8_t mspacman_disable_decode_r_0x2120(offs_t offset) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x2120]; }
+        uint8_t mspacman_disable_decode_r_0x3ff0(offs_t offset) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x3ff0]; }
+        uint8_t mspacman_disable_decode_r_0x8000(offs_t offset) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x8000]; }
+        uint8_t mspacman_disable_decode_r_0x97f0(offs_t offset) { mspacman_disable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x97f0]; }
+        void mspacman_disable_decode_w(uint8_t data) { mspacman_disable_decode_latch(machine()); }
 
         // any access to these ROM addresses enables the decoder, and you'll see the Ms. Pac-Man code
-        //READ8_MEMBER(pacman_state::mspacman_enable_decode_r_0x3ff8){ mspacman_enable_decode_latch(machine()); return memregion("maincpu")->base()[offset+0x3ff8+0x10000]; }
-        u8 mspacman_enable_decode_r_0x3ff8(address_space space, offs_t offset, u8 mem_mask = 0xff) { mspacman_enable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x3ff8+0x10000]; }
-        //WRITE8_MEMBER(pacman_state::mspacman_enable_decode_w){ mspacman_enable_decode_latch(machine()); }
-        void mspacman_enable_decode_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { mspacman_enable_decode_latch(machine()); }
+        uint8_t mspacman_enable_decode_r_0x3ff8(offs_t offset) { mspacman_enable_decode_latch(machine()); return memregion("maincpu").base_()[offset+0x3ff8+0x10000]; }
+        void mspacman_enable_decode_w(uint8_t data) { mspacman_enable_decode_latch(machine()); }
 
 
-        //READ8_MEMBER(pacman_state::pacman_read_nop)
-        u8 pacman_read_nop(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t pacman_read_nop()
         {
             // Return value of reading the bus with no devices enabled.
             // This seems to be common but more tests are needed. Ms Pacman reads bytes in sequence

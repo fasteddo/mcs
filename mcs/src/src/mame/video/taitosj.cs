@@ -155,8 +155,7 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(taitosj_state::taitosj_gfxrom_r)
-        u8 taitosj_gfxrom_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t taitosj_gfxrom_r()
         {
             uint8_t ret;
 
@@ -176,8 +175,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(taitosj_state::taitosj_characterram_w)
-        void taitosj_characterram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void taitosj_characterram_w(offs_t offset, uint8_t data)
         {
             if (m_characterram[offset] != data)
             {
@@ -197,8 +195,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(taitosj_state::taitosj_collision_reg_clear_w)
-        void taitosj_collision_reg_clear_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void taitosj_collision_reg_clear_w(uint8_t data)
         {
             m_collision_reg[0] = 0;
             m_collision_reg[1] = 0;

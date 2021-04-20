@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
 using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
 using netlist_time_ext = mame.plib.ptime_i64;  //netlist_time
 using nl_fptype = System.Double;
@@ -27,7 +28,8 @@ namespace mame.netlist
             logic_input_t m_fb_step;
             logic_output_t m_Q_step;
 
-            std.vector<solver.matrix_solver_t> m_mat_solvers = new std.vector<solver.matrix_solver_t>();  //std::vector<plib::unique_ptr<solver::matrix_solver_t>> m_mat_solvers;
+            // FIXME: these should be created in device space
+            std.vector<solver.matrix_solver_t> m_mat_solvers = new std.vector<solver.matrix_solver_t>();  //std::vector<host_arena::unique_ptr<solver::matrix_solver_t>> m_mat_solvers;
             std.vector<solver.matrix_solver_t> m_mat_solvers_all = new std.vector<solver.matrix_solver_t>();  //std::vector<solver::matrix_solver_t *> m_mat_solvers_all;
             std.vector<solver.matrix_solver_t> m_mat_solvers_timestepping = new std.vector<solver.matrix_solver_t>();  //std::vector<solver::matrix_solver_t *> m_mat_solvers_timestepping;
 
@@ -70,30 +72,26 @@ namespace mame.netlist
                     switch (m_params.m_fp_type.op())
                     {
                         case solver.matrix_fp_type_e.FLOAT:
-#if (NL_USE_FLOAT_MATRIX)
-                            ms = create_solvers<float>(sname, grp);
-#else
-                            log().info.op("FPTYPE {0} not supported. Using DOUBLE", m_params.m_fp_type.op().ToString());
-                            ms = create_solvers/*<double>*/(sname, grp);
-#endif
+                            if (!config.use_float_matrix)
+                                log().info.op("FPTYPE {0} not supported. Using DOUBLE", m_params.m_fp_type.op().ToString());
+
+                            ms = create_solvers(sname, grp);  //ms = create_solvers<std::conditional_t<config::use_float_matrix::value, float, double>>(sname, grp);
                             break;
                         case solver.matrix_fp_type_e.DOUBLE:
-                            ms = create_solvers/*<double>*/(sname, grp);
+                            ms = create_solvers(sname, grp);  //ms = create_solvers<double>(sname, grp);
                             break;
                         case solver.matrix_fp_type_e.LONGDOUBLE:
-#if (NL_USE_LONG_DOUBLE_MATRIX)
-                            ms = create_solvers<long double>(sname, grp);
-#else
-                            log().info.op("FPTYPE {0} not supported. Using DOUBLE", m_params.m_fp_type.op().ToString());
-                            ms = create_solvers/*<double>*/(sname, grp);
-#endif
+                            if (!config.use_long_double_matrix)
+                                log().info.op("FPTYPE {0} not supported. Using DOUBLE", m_params.m_fp_type.op().ToString());
+
+                            ms = create_solvers(sname, grp);  //ms = create_solvers<std::conditional_t<config::use_long_double_matrix::value, long double, double>>(sname, grp);
                             break;
                         case solver.matrix_fp_type_e.FLOATQ128:
 #if (NL_USE_FLOAT128)
                             ms = create_solvers<FLOAT128>(sname, grp);
 #else
                             log().info.op("FPTYPE {0} not supported. Using DOUBLE", m_params.m_fp_type.op().ToString());
-                            ms = create_solvers/*<double>*/(sname, grp);
+                            ms = create_solvers(sname, grp);  //ms = create_solvers<double>(sname, grp);
 #endif
                             break;
                     }
@@ -121,13 +119,16 @@ namespace mame.netlist
 
 
             //template <typename FT>
-            solver.matrix_solver_t create_solvers(string sname, analog_net_t.list_t nets)  //plib::unique_ptr<solver::matrix_solver_t> NETLIB_NAME(solver)::create_solvers(const pstring &sname, analog_net_t::list_t &nets)
+            solver.matrix_solver_t create_solvers(string sname, analog_net_t_list_t nets)  //host_arena::unique_ptr<solver::matrix_solver_t> NETLIB_NAME(solver)::create_solvers(const pstring &sname, analog_net_t::list_t &nets)
             {
                 size_t net_count = (size_t)nets.size();
                 switch (net_count)
                 {
                     case 1:
+                        throw new emu_unimplemented();
+#if false
                         return new solver.matrix_solver_direct1_t(state(), sname, nets, m_params);  //return plib::make_unique<solver::matrix_solver_direct1_t<FT>>(state(), sname, nets, &m_params);
+#endif
                         break;
                     case 2:
                         throw new emu_unimplemented();
@@ -191,7 +192,7 @@ namespace mame.netlist
             }
 
 
-            public nl_fptype gmin() { return m_params.m_gmin.op(); }
+            public nl_fptype gmin() { return m_params.m_gmin.op(); }  //auto gmin() const -> decltype(solver::solver_parameters_t::m_gmin()) { return m_params.m_gmin(); }
 
 
             //solver::static_compile_container create_solver_code(solver::static_compile_target target);
@@ -256,22 +257,26 @@ namespace mame.netlist
             // NETLIB_UPDATE_PARAMI();
 
 
+            // FIXME: should be created in device space
             //template <class C>
-            //plib::unique_ptr<solver::matrix_solver_t> create_it(netlist_state_t &nl, pstring name,
+            //host_arena::unique_ptr<solver::matrix_solver_t> create_it(netlist_state_t &nl, pstring name,
             //    analog_net_t::list_t &nets,
             //    solver::solver_parameters_t &params, std::size_t size)
             //{
-            //    return plib::make_unique<C>(nl, name, nets, &params, size);
+            //    return plib::make_unique<C, host_arena>(nl, name, nets, &params, size);
             //}
 
 
             //template <typename FT, int SIZE>
-            solver.matrix_solver_t create_solver(int SIZE, size_t size, string solvername, analog_net_t.list_t nets)  //plib::unique_ptr<solver::matrix_solver_t> create_solver(std::size_t size, const pstring &solvername, analog_net_t::list_t &nets);
+            solver.matrix_solver_t create_solver(int SIZE, size_t size, string solvername, analog_net_t_list_t nets)  //host_arena::unique_ptr<solver::matrix_solver_t> create_solver(std::size_t size, const pstring &solvername, analog_net_t::list_t &nets);
             {
                 switch (m_params.m_method.op())
                 {
                     case solver.matrix_type_e.MAT_CR:
+                        throw new emu_unimplemented();
+#if false
                         return new solver.matrix_solver_GCR_t(SIZE, state(), solvername, nets, m_params, size);  //return create_it<solver::matrix_solver_GCR_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+#endif
                     case solver.matrix_type_e.MAT:
                         throw new emu_unimplemented();  //return create_it<solver::matrix_solver_direct_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
 #if NL_USE_ACADEMIC_SOLVERS
@@ -288,26 +293,30 @@ namespace mame.netlist
                         // Woodbury Formula
                         throw new emu_unimplemented();  //return create_it<solver::matrix_solver_w_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
 #else
-                    default:
+                    case solver.matrix_type_e.GMRES:
+                    case solver.matrix_type_e.SOR:
+                    case solver.matrix_type_e.SOR_MAT:
+                    case solver.matrix_type_e.SM:
+                    case solver.matrix_type_e.W:
                         state().log().warning.op(nl_errstr_global.MW_SOLVER_METHOD_NOT_SUPPORTED(m_params.m_method.op().ToString(), "MAT_CR"));
                         throw new emu_unimplemented();  //return create_it<solver::matrix_solver_GCR_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
 #endif
                 }
 
-                throw new emu_unimplemented();  //return plib::unique_ptr<solver::matrix_solver_t>();
+                throw new emu_unimplemented();  //return host_arena::unique_ptr<solver::matrix_solver_t>();
             }
 
 
             //template <typename FT>
-            //plib::unique_ptr<solver::matrix_solver_t> create_solvers(const pstring &sname, analog_net_t::list_t &nets);
+            //host_arena::unique_ptr<solver::matrix_solver_t> create_solvers(const pstring &sname, analog_net_t::list_t &nets);
         }
 
 
         class net_splitter
         {
-            public std.vector<analog_net_t.list_t> groups = new std.vector<analog_net_t.list_t>();
+            public std.vector<analog_net_t_list_t> groups = new std.vector<analog_net_t_list_t>();
 
-            std.vector<analog_net_t.list_t> groupspre = new std.vector<analog_net_t.list_t>();
+            std.vector<analog_net_t_list_t> groupspre = new std.vector<analog_net_t_list_t>();
 
 
             public void run(netlist_state_t netlist)
@@ -319,10 +328,10 @@ namespace mame.netlist
                     {
                         netlist.log().verbose.op("   ==> not a rail net");
                         // Must be an analog net
-                        var n = (analog_net_t)net;
+                        var n = (analog_net_t)net;  //auto &n = dynamic_cast<analog_net_t &>(*net);
                         if (!already_processed(n))
                         {
-                            groupspre.emplace_back(new analog_net_t.list_t());
+                            groupspre.emplace_back(new analog_net_t_list_t());
                             process_net(netlist, n);
                         }
                     }
@@ -396,7 +405,7 @@ namespace mame.netlist
                         // only process analog terminals
                         if (term.is_type(detail.terminal_type.TERMINAL))
                         {
-                            var pt = (terminal_t)term;
+                            var pt = (terminal_t)term;  //auto &pt = dynamic_cast<terminal_t &>(*term);
                             // check the connected terminal
                             analog_net_t connected_net = netlist.setup().get_connected_terminal(pt).net();
                             netlist.log().verbose.op("  Connected net {0}", connected_net.name());

@@ -52,41 +52,6 @@ namespace mame.netlist
 
 
         // -----------------------------------------------------------------------------
-        // power pins - not a device, but a helper
-        // -----------------------------------------------------------------------------
-        /// \brief Power pins class.
-        ///
-        /// Power Pins are passive inputs. Delegate noop will silently ignore any
-        /// updates.
-        class nld_power_pins
-        {
-            analog_input_t m_VCC;
-            analog_input_t m_GND;
-
-
-            public nld_power_pins(device_t owner, string sVCC = nl_errstr_global.sPowerVCC, string sGND = nl_errstr_global.sPowerGND)
-            {
-                m_VCC = new analog_input_t(owner, sVCC, noop);
-                m_GND = new analog_input_t(owner, sGND, noop);
-            }
-
-
-            public analog_input_t VCC()
-            {
-                return m_VCC;
-            }
-
-            public analog_input_t GND()
-            {
-                return m_GND;
-            }
-
-
-            void noop() { }
-        }
-
-
-        // -----------------------------------------------------------------------------
         // clock
         // -----------------------------------------------------------------------------
         //NETLIB_OBJECT(clock)
@@ -120,7 +85,6 @@ namespace mame.netlist
             logic_output_t m_Q;
 
             param_logic_t m_IN;
-            param_model_t m_FAMILY;
             nld_power_pins m_supply;  //NETLIB_NAME(power_pins) m_supply;
 
 
@@ -132,13 +96,7 @@ namespace mame.netlist
             {
                 m_Q = new logic_output_t(this, "Q");
                 m_IN = new param_logic_t(this, "IN", false);
-                // make sure we get the family first
-                m_FAMILY = new param_model_t(this, "FAMILY", "FAMILY(TYPE=TTL)");
                 m_supply = new nld_power_pins(this);
-
-
-                set_logic_family(state().setup().family_from_model(m_FAMILY.op()));
-                m_Q.set_logic_family(this.logic_family());
             }
 
 
@@ -243,7 +201,7 @@ namespace mame.netlist
             //NETLIB_CONSTRUCTOR(nc_pin)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            nld_nc_pin(netlist_t owner, string name)
+            nld_nc_pin(object owner, string name)
                 : base(owner, name)
             {
                 throw new emu_unimplemented();
@@ -275,9 +233,30 @@ namespace mame.netlist
 
 
         // -----------------------------------------------------------------------------
-        // nld_res_sw
+        // nld_sys_dsw1
         // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(res_sw)
+        //NETLIB_OBJECT(sys_dsw1)
+
+
+        // -----------------------------------------------------------------------------
+        // nld_sys_dsw2
+        // -----------------------------------------------------------------------------
+        //NETLIB_OBJECT(sys_dsw2)
+
+
+        // -----------------------------------------------------------------------------
+        // nld_sys_comp
+        // -----------------------------------------------------------------------------
+        //NETLIB_OBJECT(sys_compd)
+
+
+        // -----------------------------------------------------------------------------
+        // nld_sys_noise - noise source
+        //
+        // An externally clocked noise source.
+        // -----------------------------------------------------------------------------
+        //template <typename E, template<class> class D>
+        //NETLIB_OBJECT(sys_noise)
 
     } //namespace devices
 } // namespace netlist

@@ -5,6 +5,7 @@ mcsForm/.vs
 mcsForm/bin
 mcsForm/obj
 mcsForm/roms
+mcsForm/mcsForm.csproj.user
 mcsUnity/.vs
 mcsUnity/build
 mcsUnity/Library

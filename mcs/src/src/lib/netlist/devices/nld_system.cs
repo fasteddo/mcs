@@ -27,12 +27,12 @@ namespace mame.netlist
             //#define LOGIC_INPUT(name, v, family)                                            \
             //        NET_REGISTER_DEV(LOGIC_INPUT, name)                                     \
             //        PARAM(name.IN, v)                                                       \
-            //        PARAM(name.FAMILY, family)
+            //        PARAM(name.MODEL, family)
 
             //#define LOGIC_INPUT8(name, v, family)                                           \
             //        NET_REGISTER_DEV(LOGIC_INPUT8, name)                                    \
             //        PARAM(name.IN, v)                                                       \
-            //        PARAM(name.FAMILY, family)
+            //        PARAM(name.MODEL, family)
 
             //#define ANALOG_INPUT(name, v)                                                   \
             //        NET_REGISTER_DEV(ANALOG_INPUT, name)                                    \
@@ -73,11 +73,23 @@ namespace mame.netlist
             //        NET_C(cG,  name.G)                                                      \
             //        NET_C(cOUT, name.Q)
 
-            //#define RES_SWITCH(name, cIN, cP1, cP2)                                         \
-            //        NET_REGISTER_DEV(RES_SWITCH, name)                                      \
-            //        NET_C(cIN, name.I)                                                      \
-            //        NET_C(cP1, name.1)                                                      \
-            //        NET_C(cP2, name.2)
+            // FIXME ... remove parameters
+            //#define SYS_DSW(name, pI, p1, p2)                                              \
+            //        NET_REGISTER_DEVEXT(SYS_DSW, name, pI, p1, p2)
+
+            //#define SYS_DSW2(name)                                                         \
+            //        NET_REGISTER_DEV(SYS_DSW2, name)
+            public static void SYS_DSW2(nlparse_t setup, string name) { nl_setup_global.NET_REGISTER_DEV(setup, "SYS_DSW2", name); }
+
+            //#define SYS_COMPD(name)                                                        \
+            //        NET_REGISTER_DEV(SYS_COMPD, name)
+            public static void SYS_COMPD(nlparse_t setup, string name) { nl_setup_global.NET_REGISTER_DEV(setup, "SYS_COMPD", name); }
+
+            //#define SYS_NOISE_MT_U(name, pSIGMA)                                           \
+            //        NET_REGISTER_DEVEXT(SYS_NOISE_MT_U, name, pSIGMA)
+
+            //#define SYS_NOISE_MT_N(name, pSIGMA)                                           \
+            //        NET_REGISTER_DEVEXT(SYS_NOISE_MT_N, name, pSIGMA)
 
             /* Default device to hold netlist parameters */
             //#define PARAMETERS(name)                                                        \
@@ -87,6 +99,12 @@ namespace mame.netlist
             //        NET_REGISTER_DEV(AFUNC, name)                                           \
             //        PARAM(name.N, p_N)                                                      \
             //        PARAM(name.FUNC, p_F)
+            public static void AFUNC(nlparse_t setup, string name, double p_N, string p_F)
+            {
+                nl_setup_global.NET_REGISTER_DEV(setup, "AFUNC", name);
+                nl_setup_global.PARAM(setup, name + ".N", p_N);
+                nl_setup_global.PARAM(setup, name + ".FUNC", p_F);
+            }
 
 
             //NETLIB_DEVICE_IMPL(dummy_input, "DUMMY_INPUT",            "")

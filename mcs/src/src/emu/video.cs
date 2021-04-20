@@ -82,6 +82,7 @@ namespace mame
 
         // frameskipping
         u8 m_empty_skip_count;         // number of empty frames we have skipped
+        u8 m_frameskip_max;            // maximum frameskip level
         u8 m_frameskip_level;          // current frameskip level
         u8 m_frameskip_counter;        // counter that counts through the frameskip steps
         s8 m_frameskip_adjust;
@@ -134,7 +135,8 @@ namespace mame
             m_speed = (UInt32)original_speed_setting();
             m_low_latency = machine.options().low_latency();
             m_empty_skip_count = 0;
-            m_frameskip_level = (byte)machine.options().frameskip();
+            m_frameskip_max = m_auto_frameskip ? (u8)machine.options().frameskip() : (u8)0;
+            m_frameskip_level = m_auto_frameskip ? (u8)0 : (u8)machine.options().frameskip();
             m_frameskip_counter = 0;
             m_frameskip_adjust = 0;
             m_skipping_this_frame = false;
@@ -214,7 +216,7 @@ namespace mame
         //  is_recording - returns whether or not any
         //  screen is currently recording
         //-------------------------------------------------
-        bool is_recording()
+        public bool is_recording()
         {
             return !m_movie_recordings.empty();
         }
@@ -302,7 +304,7 @@ namespace mame
 
             // if we're throttling, synchronize before rendering
             attotime current_time = machine().time();
-            if (!from_debugger && !skipped_it && !m_low_latency && effective_throttle())
+            if (!from_debugger && !skipped_it && phase > machine_phase.INIT && !m_low_latency && effective_throttle())
                 update_throttle(current_time);
 
             // ask the OSD to update
@@ -314,7 +316,7 @@ namespace mame
             profiler_global.g_profiler.stop();
 
             // we synchronize after rendering instead of before, if low latency mode is enabled
-            if (!from_debugger && !skipped_it && m_low_latency && effective_throttle())
+            if (!from_debugger && !skipped_it && phase > machine_phase.INIT && m_low_latency && effective_throttle())
                 update_throttle(current_time);
 
             // get most recent input now
@@ -327,11 +329,11 @@ namespace mame
                 machine().call_notifiers(machine_notification.MACHINE_NOTIFY_FRAME);
 
             // update frameskipping
-            if (!from_debugger)
+            if (!from_debugger && phase > machine_phase.INIT)
                 update_frameskip();
 
             // update speed computations
-            if (!from_debugger && !skipped_it)
+            if (!from_debugger && !skipped_it && phase > machine_phase.INIT)
                 recompute_speed(current_time);
 
             // call the end-of-frame callback
@@ -368,7 +370,7 @@ namespace mame
 
             // if we're auto frameskipping, display that plus the level
             else if (effective_autoframeskip())
-                str += string.Format("auto{0}/{1}", effective_frameskip(), MAX_FRAMESKIP);  //auto%2d/%d
+                str += string.Format("auto{0}/{1}", effective_frameskip(), m_frameskip_max != 0 ? m_frameskip_max : MAX_FRAMESKIP);
 
             // otherwise, just display the frameskip plus the level
             else
@@ -860,7 +862,7 @@ namespace mame
                 // calibrate the "adjusted speed" based on the target
                 double adjusted_speed_percent = m_speed_percent / (double)m_throttle_rate;
 
-                // if we're too fast, attempt to increase the frameskip
+                // if we're too fast, attempt to decrease the frameskip
                 double speed = m_speed * 0.001;
                 if (adjusted_speed_percent >= 0.995 * speed)
                 {
@@ -888,7 +890,7 @@ namespace mame
                     while (m_frameskip_adjust <= -2)
                     {
                         m_frameskip_adjust += 2;
-                        if (m_frameskip_level < MAX_FRAMESKIP)
+                        if (m_frameskip_level < (m_frameskip_max != 0 ? m_frameskip_max : MAX_FRAMESKIP))
                             m_frameskip_level++;
                     }
                 }

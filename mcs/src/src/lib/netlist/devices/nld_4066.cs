@@ -26,8 +26,6 @@ namespace mame
             public static readonly netlist.factory.constructor_ptr_t decl_CD4066_GATE = NETLIB_DEVICE_IMPL<nld_CD4066_GATE>("CD4066_GATE", "");
 
 
-            detail.family_setter_t m_famsetter;
-
             nld_power_pins m_supply;
             analog.nld_R_base m_R;
             analog_input_t m_control;
@@ -35,11 +33,10 @@ namespace mame
             state_var<bool> m_last;
 
 
-            //NETLIB_CONSTRUCTOR(CD4066_GATE)
+            //NETLIB_CONSTRUCTOR_MODEL(CD4066_GATE, "CD4XXX")
             public nld_CD4066_GATE(object owner, string name)
-                : base(owner, name)
+                : base(owner, name, "CD4XXX")
             {
-                m_famsetter = new detail.family_setter_t(this, "CD4XXX");  //NETLIB_FAMILY("CD4XXX")
                 m_supply = new nld_power_pins(this, "VDD", "VSS");
                 m_R = new analog.nld_R_base(this, "R");
                 m_control = new analog_input_t(this, "CTL");

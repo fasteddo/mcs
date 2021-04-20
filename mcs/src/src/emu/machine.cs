@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using offs_t = System.UInt32;
 using s64 = System.Int64;
 using time_t = System.Int64;
+using u8 = System.Byte;
 using u32 = System.UInt32;
 
 
@@ -165,15 +166,13 @@ namespace mame
         public device_memory_interface_dummy memory() { return m_memory; }
 
 
-        //READ8_MEMBER(dummy_space_device::read)
-        public byte read(address_space space, offs_t offset, byte mem_mask = 0xff)
+        public u8 read(offs_t offset)
         {
             throw new emu_fatalerror("Attempted to read from generic address space (offs {0})\n", offset);  // %X
         }
 
 
-        //WRITE8_MEMBER(dummy_space_device::write)
-        public void write(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        public void write(offs_t offset, u8 data)
         {
             throw new emu_fatalerror("Attempted to write to generic address space (offs {0} = {1})\n", offset, data);  // %X = %02X
         }
@@ -280,7 +279,8 @@ namespace mame
         time_t m_base_time;            // real time at initial emulation time
         string m_basename;             // basename used for game-related paths
         int m_sample_rate;          // the digital audio sample rate
-        emu_file m_logfile;              // pointer to the active log file
+        emu_file m_logfile;              // pointer to the active error.log file
+        emu_file m_debuglogfile;      // pointer to the active debug.log file
 
         // load/save management
         enum saveload_schedule
@@ -493,10 +493,18 @@ namespace mame
                     m_logfile = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                     osd_file.error filerr = m_logfile.open("error.log");
                     if (filerr != osd_file.error.NONE)
-                        throw new emu_fatalerror("running_machine::run: unable to open log file");
+                        throw new emu_fatalerror("running_machine::run: unable to open error.log file");
 
                     //using namespace std::placeholders;
                     add_logerror_callback(logfile_callback);
+                }
+
+                if (options().debug() && options().debuglog())
+                {
+                    m_debuglogfile = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                    osd_file.error filerr = m_debuglogfile.open("debug.log");
+                    if (filerr != osd_file.error.NONE)
+                        throw new emu_fatalerror("running_machine::run: unable to open debug.log file");
                 }
 
                 // then finish setting up our local machine
@@ -1013,6 +1021,12 @@ namespace mame
         //std::string get_statename(const char *statename_opt) const;
 
 
+        //bool debug_enabled() { return (debug_flags & DEBUG_FLAG_ENABLED) != 0; }
+
+        // used by debug_console to take ownership of the debug.log file
+        //std::unique_ptr<emu_file> steal_debuglogfile() { return std::move(m_debuglogfile); }
+
+
         //void disable_side_effects_count() { m_side_effects_disabled++; }
         //void enable_side_effects_count()  { m_side_effects_disabled--; }
 
@@ -1119,7 +1133,7 @@ namespace mame
                 m_video.begin_recording(filename, movie_recording.format.MNG);
 
             filename = options().avi_write();
-            if (!string.IsNullOrEmpty(filename))
+            if (!string.IsNullOrEmpty(filename) && !m_video.is_recording())
                 m_video.begin_recording(filename, movie_recording.format.AVI);
 
             // if we're coming in with a savegame request, process it now
@@ -1230,11 +1244,14 @@ namespace mame
         {
             foreach (device_nvram_interface nvram in new nvram_interface_iterator(root_device()))
             {
-                emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-                if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
+                if (nvram.nvram_can_save())
                 {
-                    nvram.nvram_save(file);
-                    file.close();
+                    emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                    if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
+                    {
+                        nvram.nvram_save(file);
+                        file.close();
+                    }
                 }
             }
         }

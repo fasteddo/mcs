@@ -15,7 +15,7 @@ namespace mame
 
     // Accesses fixed memory (non-banked rom or ram)
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_read_memory : handler_entry_read_address
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -25,11 +25,11 @@ namespace mame
         PointerRef<u8> m_base;  //uX *m_base;
 
 
-        public handler_entry_read_memory(int Width, int AddrShift, int Endian, address_space space) : base(Width, AddrShift, Endian, space, 0) { }
+        public handler_entry_read_memory(int Width, int AddrShift, endianness_t Endian, address_space space) : base(Width, AddrShift, Endian, space, 0) { }
         //~handler_entry_read_memory() = default;
 
 
-        public override uX read(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX mem_mask)
+        public override uX read(int WidthOverride, int AddrShiftOverride, endianness_t EndianOverride, offs_t offset, uX mem_mask)
         {
             //return m_base[((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift)];
             switch (WidthOverride)
@@ -56,7 +56,7 @@ namespace mame
     }
 
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_write_memory : handler_entry_write_address
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -66,19 +66,19 @@ namespace mame
         PointerRef<u8> m_base;  //uX *m_base;
 
 
-        public handler_entry_write_memory(int Width, int AddrShift, int Endian, address_space space) : base(Width, AddrShift, Endian, space, 0) { }
+        public handler_entry_write_memory(int Width, int AddrShift, endianness_t Endian, address_space space) : base(Width, AddrShift, Endian, space, 0) { }
         //~handler_entry_write_memory() = default;
 
 
-        public override void write(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX data, uX mem_mask)
+        public override void write(int WidthOverride, int AddrShiftOverride, endianness_t EndianOverride, offs_t offset, uX data, uX mem_mask)
         {
-            if (data.width == 0 && mem_mask.width == 0 && EndianOverride == (int)endianness_t.ENDIANNESS_LITTLE)
+            if (data.width == 0 && mem_mask.width == 0 && EndianOverride == endianness_t.ENDIANNESS_LITTLE)
             {
                 //template<> void handler_entry_write_memory<0, 0, ENDIANNESS_LITTLE>::write(offs_t offset, u8 data, u8 mem_mask)
                 //m_base[(offset - inh::m_address_base) & inh::m_address_mask] = data;
                 m_base.m_pointer[(offset - m_address_base) & m_address_mask] = data.x8;
             }
-            else if (data.width == 0 && mem_mask.width == 0 && EndianOverride == (int)endianness_t.ENDIANNESS_BIG)
+            else if (data.width == 0 && mem_mask.width == 0 && EndianOverride == endianness_t.ENDIANNESS_BIG)
             {
                 //template<> void handler_entry_write_memory<0, 0, ENDIANNESS_BIG>::write(offs_t offset, u8 data, u8 mem_mask)
                 //m_base[(offset - inh::m_address_base) & inh::m_address_mask] = data;
@@ -86,7 +86,7 @@ namespace mame
             }
             else
             {
-                //template<int Width, int AddrShift, int Endian> void handler_entry_write_memory<Width, AddrShift, Endian>::write(offs_t offset, uX data, uX mem_mask)
+                //template<int Width, int AddrShift, endianness_t Endian> void handler_entry_write_memory<Width, AddrShift, Endian>::write(offs_t offset, uX data, uX mem_mask)
 
                 offs_t off = ((offset - m_address_base) & m_address_mask) >> (WidthOverride + AddrShiftOverride);
 
@@ -120,7 +120,7 @@ namespace mame
 
     // Accesses banked memory, associated to a memory_bank
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_read_memory_bank : handler_entry_read_address
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -130,11 +130,11 @@ namespace mame
         memory_bank m_bank;
 
 
-        public handler_entry_read_memory_bank(int Width, int AddrShift, int Endian, address_space space, memory_bank bank) : base(Width, AddrShift, Endian, space, 0) { m_bank = bank; }
+        public handler_entry_read_memory_bank(int Width, int AddrShift, endianness_t Endian, address_space space, memory_bank bank) : base(Width, AddrShift, Endian, space, 0) { m_bank = bank; }
         //~handler_entry_read_memory_bank() = default;
 
 
-        public override uX read(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX mem_mask)
+        public override uX read(int WidthOverride, int AddrShiftOverride, endianness_t EndianOverride, offs_t offset, uX mem_mask)
         {
             //return static_cast<uX *>(m_bank.base())[((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift)];
             switch (Width)
@@ -158,7 +158,7 @@ namespace mame
     }
 
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_write_memory_bank : handler_entry_write_address
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -168,11 +168,11 @@ namespace mame
         memory_bank m_bank;
 
 
-        public handler_entry_write_memory_bank(int Width, int AddrShift, int Endian, address_space space, memory_bank bank) : base(Width, AddrShift, Endian, space, 0) { m_bank = bank; }
+        public handler_entry_write_memory_bank(int Width, int AddrShift, endianness_t Endian, address_space space, memory_bank bank) : base(Width, AddrShift, Endian, space, 0) { m_bank = bank; }
         //~handler_entry_write_memory_bank() = default;
 
 
-        public override void write(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX data, uX mem_mask)
+        public override void write(int WidthOverride, int AddrShiftOverride, endianness_t EndianOverride, offs_t offset, uX data, uX mem_mask)
         {
             throw new emu_unimplemented();
 #if false

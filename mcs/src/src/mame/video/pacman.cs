@@ -191,16 +191,14 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(pacman_state::pacman_videoram_w)
-        void pacman_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void pacman_videoram_w(offs_t offset, uint8_t data)
         {
             m_videoram[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
 
-        //WRITE8_MEMBER(pacman_state::pacman_colorram_w)
-        void pacman_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void pacman_colorram_w(offs_t offset, uint8_t data)
         {
             m_colorram[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);

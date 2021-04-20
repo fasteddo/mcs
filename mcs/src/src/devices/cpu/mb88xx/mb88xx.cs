@@ -196,9 +196,9 @@ namespace mame
         /* IRQ handling */
         uint8_t m_pending_interrupt;
 
-        address_space m_program;
-        memory_access_cache/*<0, 0, ENDIANNESS_BIG>*/ m_cache;
-        address_space m_data;
+        memory_access.cache m_cache = new memory_access(11, 0, 0, endianness_t.ENDIANNESS_BIG).m_cache;  //memory_access<11, 0, 0, ENDIANNESS_BIG>::cache m_cache;
+        memory_access.specific m_program = new memory_access(11, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access<11, 0, 0, ENDIANNESS_BIG>::specific m_program;
+        memory_access.specific m_data = new memory_access(7, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access< 7, 0, 0, ENDIANNESS_BIG>::specific m_data;
 
         //int m_icount;
         intref m_icount = new intref();
@@ -291,9 +291,9 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_mb88>();
 
 
-            m_program = m_dimemory.space(AS_PROGRAM);
-            m_cache = m_program.cache(0, 0, (int)endianness_t.ENDIANNESS_BIG);
-            m_data = m_dimemory.space(AS_DATA);
+            m_dimemory.space(AS_PROGRAM).cache(m_cache.Width, m_cache.AddrShift, m_cache.Endian, m_cache);
+            m_dimemory.space(AS_PROGRAM).specific(m_program.Level, m_program.Width, m_program.AddrShift, m_program.Endian, m_program);
+            m_dimemory.space(AS_DATA).specific(m_data.Level, m_data.Width, m_data.AddrShift, m_data.Endian, m_data);
 
             m_read_k.resolve_safe(0);
             m_write_o.resolve_safe();
@@ -353,9 +353,6 @@ namespace mame
 
         protected override void device_stop()
         {
-            if (m_data != null) m_data.Dispose();
-            if (m_cache != null) m_cache.Dispose();
-            if (m_program != null) m_program.Dispose();
         }
 
 
@@ -915,12 +912,12 @@ namespace mame
         void device_execute_interface_execute_set_input(int state)
         {
             /* on rising edge trigger interrupt */
-            if ( (m_pio & 0x04) != 0 && m_nf == 0 && state == ASSERT_LINE )
+            if ( (m_pio & 0x04) != 0 && m_nf == 0 && state != CLEAR_LINE )
             {
                 m_pending_interrupt |= INT_CAUSE_EXTERNAL;
             }
 
-            m_nf = (state == ASSERT_LINE) ? (byte)1 : (byte)0;
+            m_nf = state != CLEAR_LINE ? (uint8_t)1 : (uint8_t)0;
         }
 
         //virtual uint64_t execute_clocks_to_cycles(uint64_t clocks) const noexcept override { return (clocks + 6 - 1) / 6; }

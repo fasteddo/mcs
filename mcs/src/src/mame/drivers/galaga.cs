@@ -25,8 +25,7 @@ namespace mame
         //#define STARFIELD_X_LIMIT_BOSCO     224
 
 
-        //READ8_MEMBER(galaga_state::bosco_dsw_r)
-        protected u8 bosco_dsw_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        protected uint8_t bosco_dsw_r(offs_t offset)
         {
             int bit0;
             int bit1;
@@ -66,8 +65,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(galaga_state::out)
-        protected void out_(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected void out_(uint8_t data)
         {
             m_leds[1] = BIT(data, 0);
             m_leds[0] = BIT(data, 1);
@@ -102,15 +100,13 @@ namespace mame
 
     partial class digdug_state : galaga_state
     {
-        //READ8_MEMBER(digdug_state::earom_read)
-        u8 earom_read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t earom_read()
         {
             return m_earom.target.data();
         }
 
 
-        //WRITE8_MEMBER(digdug_state::earom_write)
-        void earom_write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void earom_write(offs_t offset, uint8_t data)
         {
             m_earom.target.set_address((uint8_t)(offset & 0x3f));
             m_earom.target.set_data(data);
@@ -626,6 +622,7 @@ namespace mame
             n06xx.read_callback(0).set("51xx", () => { return ((namco_51xx_device)subdevice("51xx")).read(); }).reg();  //FUNC(namco_51xx_device::read));
             n06xx.write_callback(0).set("51xx", (data) => { ((namco_51xx_device)subdevice("51xx")).write(data); }).reg();  //FUNC(namco_51xx_device::write));
             n06xx.write_callback(3).set("54xx", (data) => { ((namco_54xx_device)subdevice("54xx")).write(data); }).reg();  //FUNC(namco_54xx_device::write));
+            n06xx.chip_select_callback(3).set("54xx", (int state) => { ((namco_54xx_device)subdevice("54xx")).chip_select(state); }).reg();
 
             LS259(config, m_videolatch); // 5K on video board
             // Q0-Q5 to 05XX for starfield control
@@ -637,6 +634,7 @@ namespace mame
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
             m_screen.target.set_raw(MASTER_CLOCK/3, 384, 0, 288, 264, 0, 224);
             m_screen.target.set_screen_update(screen_update_galaga);
+            m_screen.target.set_video_attributes(screen_device.VIDEO_ALWAYS_UPDATE); // starfield lfsr
             m_screen.target.screen_vblank().set((write_line_delegate)screen_vblank_galaga).reg();
             m_screen.target.screen_vblank().append(vblank_irq).reg();
             m_screen.target.screen_vblank().append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).vblank(state); }).reg();
@@ -712,6 +710,7 @@ namespace mame
             n06xx.read_callback(2).set("50xx", () => { return ((namco_50xx_device)subdevice("50xx")).read(); }).reg();  //FUNC(namco_50xx_device::read));
             n06xx.write_callback(2).set("50xx", (data) => { ((namco_50xx_device)subdevice("50xx")).write(data); }).reg();  //FUNC(namco_50xx_device::write));
             n06xx.write_callback(3).set("54xx", (data) => { ((namco_54xx_device)subdevice("54xx")).write(data); }).reg();  //FUNC(namco_54xx_device::write));
+            n06xx.chip_select_callback(3).set("54xx", (int state) => { ((namco_54xx_device)subdevice("54xx")).chip_select(state); }).reg();
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count(m_screen, 8);
 

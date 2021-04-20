@@ -17,7 +17,7 @@ namespace mame.plib
     ///  In addition, this is a typesafe approach.
     ///
     //template <typename T>
-    public class constants
+    public class constants_nl_fptype
     {
         public static nl_fptype zero() { return 0; }  //static inline constexpr T zero()   noexcept { return static_cast<T>(0); }
         public static nl_fptype half() { return 0.5; }  //static inline constexpr T half()   noexcept { return static_cast<T>(0.5); }
@@ -25,7 +25,15 @@ namespace mame.plib
         public static nl_fptype two() { return 2; }  //static inline constexpr T two()    noexcept { return static_cast<T>(2); }
         //static inline constexpr T three()  noexcept { return static_cast<T>(3); }
         public static nl_fptype four() { return 4; }  //static inline constexpr T four()   noexcept { return static_cast<T>(4); }
+        //static inline constexpr T hundred()noexcept { return static_cast<T>(100); } // NOLINT
+
+        //static inline constexpr T one_thirds()    noexcept { return fraction(one(), three()); }
+        //static inline constexpr T two_thirds()    noexcept { return fraction(two(), three()); }
+
+        //static inline constexpr T ln2()  noexcept { return static_cast<T>(0.6931471805599453094172321214581766L); } // NOLINT
         //static inline constexpr T sqrt2()  noexcept { return static_cast<T>(1.414213562373095048801688724209L); }
+        //static inline constexpr T sqrt3()  noexcept { return static_cast<T>(1.7320508075688772935274463415058723L); } // NOLINT
+        //static inline constexpr T sqrt3_2()  noexcept { return static_cast<T>(0.8660254037844386467637231707529362L); } // NOLINT
         public static nl_fptype pi() { return 3.14159265358979323846264338327950; }  //static inline constexpr T pi()     noexcept { return static_cast<T>(3.14159265358979323846264338327950L); }
 
         /// \brief Electric constant of vacuum
@@ -64,6 +72,9 @@ namespace mame.plib
         ///
         //template <typename V>
         public static nl_fptype magic(nl_fptype v) { return v; }  //static inline constexpr const T magic(V &&v) noexcept { return static_cast<T>(v); }
+
+        //template <typename V>
+        //static inline constexpr T fraction(V &&v1, V &&v2) noexcept { return static_cast<T>(v1 / v2); }
     }
 
 
@@ -79,7 +90,7 @@ namespace mame.plib
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
         public static nl_fptype reciprocal(nl_fptype v)
         {
-            return constants.one() / v;  //return constants<T>::one() / v;
+            return constants_nl_fptype.one() / v;  //return constants<T>::one() / v;
         }
 
         /// \brief abs function
@@ -225,6 +236,21 @@ namespace mame.plib
         {
             return std.trunc(v);
         }
+
+        /// \brief signum function
+        ///
+        /// \tparam T type of the argument
+        /// \param  v argument
+        /// \param  r optional argument, if given will return r and -r instead of 1 and -1
+        /// \return signum(v)
+        ///
+        //template <typename T>
+        //static inline constexpr std::enable_if_t<std::is_floating_point<T>::value, T>
+        //signum(T v, T r = static_cast<T>(1))
+        //{
+        //    constexpr const auto z(static_cast<T>(0));
+        //    return (v > z) ? r : ((v < z) ? -r : v);
+        //}
 
         /// \brief pow function
         ///

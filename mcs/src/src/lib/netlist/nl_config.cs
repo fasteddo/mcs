@@ -6,11 +6,12 @@ using System.Collections.Generic;
 
 using int64_t = System.Int64;
 using nl_fptype = System.Double;
+using size_t = System.UInt32;
 
 
 namespace mame.netlist
 {
-    public static class nl_config_global
+    public static partial class nl_config_global
     {
         ///
         /// \brief Version - Major.
@@ -19,7 +20,7 @@ namespace mame.netlist
         ///
         /// \brief Version - Minor.
         ///
-        public const int NL_VERSION_MINOR           = 12;
+        public const int NL_VERSION_MINOR           = 13;
         /// \brief Version - Patch level.
         ///
         const int NL_VERSION_PATCHLEVEL      = 0;
@@ -68,7 +69,7 @@ namespace mame.netlist
         /// time significantly.
         ///
         //#ifndef NL_USE_ACADEMIC_SOLVERS
-        //#define NL_USE_ACADEMIC_SOLVERS (1)
+        public const bool NL_USE_ACADEMIC_SOLVERS = false;  //#define NL_USE_ACADEMIC_SOLVERS (1)
         //#endif
 
         /// \brief  Store input values in logic_terminal_t.
@@ -113,13 +114,22 @@ namespace mame.netlist
         //#define NL_USE_FLOAT128 PUSE_FLOAT128
         //#endif
 
+        /// \brief Prefer 128bit int type for ptime if supported
+        ///
+        /// Set this to one if you want to use 128 bit int for ptime.
+        /// This is about 10% slower on a skylake processor for pongf.
+        ///
+        //#ifndef NL_PREFER_INT128
+        //#define NL_PREFER_INT128 (0)
+        //#endif
+
         /// \brief Support float type for matrix calculations.
         ///
         /// Defaults to NL_USE_ACADEMIC_SOLVERS to provide faster build times
 
         //#ifndef NL_USE_FLOAT_MATRIX
-        ////#define NL_USE_FLOAT_MATRIX (NL_USE_ACADEMIC_SOLVERS)
-        //#define NL_USE_FLOAT_MATRIX 1
+        public const bool NL_USE_FLOAT_MATRIX = NL_USE_ACADEMIC_SOLVERS;  //#define NL_USE_FLOAT_MATRIX (NL_USE_ACADEMIC_SOLVERS)
+        ////#define NL_USE_FLOAT_MATRIX 1
         //#endif
 
         /// \brief Support long double type for matrix calculations.
@@ -127,8 +137,8 @@ namespace mame.netlist
         /// Defaults to NL_USE_ACADEMIC_SOLVERS to provide faster build times
 
         //#ifndef NL_USE_LONG_DOUBLE_MATRIX
-        ////#define NL_USE_LONG_DOUBLE_MATRIX (NL_USE_ACADEMIC_SOLVERS)
-        //#define NL_USE_LONG_DOUBLE_MATRIX 1
+        public const bool NL_USE_LONG_DOUBLE_MATRIX = NL_USE_ACADEMIC_SOLVERS;  //#define NL_USE_LONG_DOUBLE_MATRIX (NL_USE_ACADEMIC_SOLVERS)
+        ////#define NL_USE_LONG_DOUBLE_MATRIX 1
         //#endif
 
 
@@ -143,8 +153,12 @@ namespace mame.netlist
         public const bool NL_DEBUG = false;
         //#define NL_DEBUG                    (true)
         //#endif
+    }
 
 
+    // FIXME: need a better solution for global constants.
+    static class config
+    {
         //============================================================
         // Time resolution
         //============================================================
@@ -164,7 +178,7 @@ namespace mame.netlist
         ///  |  63  |   100,000,000,000 |    92,233,720 |   1,068|   2.9 |
         ///  |  63  | 1,000,000,000,000 |     9,223,372 |     107|   0.3 |
         ///
-        public const int64_t NETLIST_INTERNAL_RES = 10000000000L;
+        public const int64_t NETLIST_INTERNAL_RES = 10000000000L;  //using INTERNAL_RES = std::integral_constant<long long int, 10'000'000'000LL>; // NOLINT
 
         /// \brief Recommended clock to be used
         ///
@@ -172,16 +186,24 @@ namespace mame.netlist
         /// to 32 bit clock resolution. The MAME code (netlist.cpp) contains code
         /// illustrating how to deal with remainders if \ref NETLIST_INTERNAL_RES is
         /// bigger than NETLIST_CLOCK.
-        //static constexpr const int NETLIST_CLOCK = 1'000'000'000;
+        //using DEFAULT_CLOCK = std::integral_constant<int, 1'000'000'000>; // NOLINT
 
-        //#define NETLIST_INTERNAL_RES        (UINT64_C(1000000000))
-        //static constexpr const auto NETLIST_INTERNAL_RES = 1000000000000;
 
-        // FIXME: Belongs into MAME netlist.h
-        //#define NETLIST_CLOCK               (NETLIST_INTERNAL_RES)
-        //#define NETLIST_INTERNAL_RES      (UINT64_C(1000000000000))
-        //#define NETLIST_CLOCK               (UINT64_C(1000000000))
+        /// \brief Default logic family
+        ///
+        public static string DEFAULT_LOGIC_FAMILY() { return "74XX"; }
 
+
+        /// \brief Maximum queue size
+        ///
+        public const size_t MAX_QUEUE_SIZE = 512;  //using MAX_QUEUE_SIZE = std::integral_constant<std::size_t, 512>; // NOLINT
+
+
+        public const bool use_float_matrix = nl_config_global.NL_USE_FLOAT_MATRIX;  //using use_float_matrix = std::integral_constant<bool, NL_USE_FLOAT_MATRIX>;
+        public const bool use_long_double_matrix = nl_config_global.NL_USE_LONG_DOUBLE_MATRIX;  //using use_long_double_matrix = std::integral_constant<bool, NL_USE_LONG_DOUBLE_MATRIX>;
+        //using use_float128_matrix = std::integral_constant<bool, NL_USE_FLOAT128>;
+
+        //using use_mempool = std::integral_constant<bool, NL_USE_MEMPOOL>;
 
         /// \brief  Floating point types used
         ///
@@ -193,13 +215,36 @@ namespace mame.netlist
         ///
         ///  FIXME: More work needed. Review magic numbers.
         ///
-        ///
+        //using fptype = double;
+    }
 
+
+    public static partial class nl_config_global
+    {
         //using nl_fptype = double;
         ////using nl_fptype = long double;
         ////using nl_fptype = float;
+    }
 
 
+    /// \brief  Specific constants for double floating point type
+    ///
+    //template <>
+    static class fp_constants_double
+    {
+        public static double DIODE_MAXDIFF() { return  1e100; }
+        public static double DIODE_MAXVOLT() { return  300.0; }
+
+        public static double TIMESTEP_MAXDIFF() { return  1e100; }
+        public static double TIMESTEP_MINDIV() { return  1e-60; }
+
+        public static string name() { return "double"; }
+        public static string suffix() { return ""; }
+    }
+
+
+    public static partial class nl_config_global
+    {
         //============================================================
         //  Asserts
         //============================================================
@@ -210,21 +255,5 @@ namespace mame.netlist
         //#define nl_assert(x)    do { } while (0)
         //#endif
         public static void nl_assert_always(bool x, string msg) { global_object.assert(x, msg); }  //#define nl_assert_always(x, msg) passert_always_msg(x, msg)
-    }
-
-
-    /// \brief  Specific constants for double floating point type
-    ///
-    //template <>
-    static class fp_constants//<double>
-    {
-        public static double DIODE_MAXDIFF() { return  1e100; }
-        public static double DIODE_MAXVOLT() { return  300.0; }
-
-        public static double TIMESTEP_MAXDIFF() { return  1e100; }
-        public static double TIMESTEP_MINDIV() { return  1e-60; }
-
-        public static string name() { return "double"; }
-        public static string suffix() { return ""; }
     }
 }

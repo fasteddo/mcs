@@ -15,31 +15,27 @@ namespace mame
 {
     partial class taitosj_state : driver_device
     {
-        //WRITE8_MEMBER(taitosj_state::taitosj_sndnmi_msk_w)
-        void taitosj_sndnmi_msk_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void taitosj_sndnmi_msk_w(uint8_t data)
         {
             /* B0 is the sound nmi enable, active low */
             m_soundnmi.target.in_w(0, (~data) & 1);
         }
 
 
-        //WRITE8_MEMBER(taitosj_state::soundlatch_w)
-        void soundlatch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void soundlatch_w(uint8_t data)
         {
             machine().scheduler().synchronize(soundlatch_w_cb, data);
         }
 
 
-        //WRITE8_MEMBER(taitosj_state::input_port_4_f0_w)
-        void input_port_4_f0_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void input_port_4_f0_w(uint8_t data)
         {
             m_input_port_4_f0 = (uint8_t)(data >> 4);
         }
 
 
         // EPORT2
-        //WRITE8_MEMBER(taitosj_state::sound_semaphore2_w)
-        void sound_semaphore2_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void sound_semaphore2_w(uint8_t data)
         {
             machine().scheduler().synchronize(sound_semaphore2_w_cb, data);
         }
@@ -140,8 +136,7 @@ namespace mame
 
 
         // RD5000
-        //READ8_MEMBER(taitosj_state::soundlatch_r)
-        u8 soundlatch_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t soundlatch_r()
         {
             if (!machine().side_effects_disabled())
             {
@@ -154,24 +149,21 @@ namespace mame
 
 
         // RD5001
-        //READ8_MEMBER(taitosj_state::soundlatch_flags_r)
-        u8 soundlatch_flags_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t soundlatch_flags_r()
         {
-            return (u8)((m_soundlatch_flag ? 8 : 0) | (m_sound_semaphore2 ? 4 : 0) | 3);
+            return (uint8_t)((m_soundlatch_flag ? 8 : 0) | (m_sound_semaphore2 ? 4 : 0) | 3);
         }
 
 
         // WR5000
-        //WRITE8_MEMBER(taitosj_state::soundlatch_clear7_w)
-        void soundlatch_clear7_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void soundlatch_clear7_w(uint8_t data)
         {
             machine().scheduler().synchronize(soundlatch_clear7_w_cb, data);
         }
 
 
         // WR5001
-        //WRITE8_MEMBER(taitosj_state::sound_semaphore2_clear_w)
-        void sound_semaphore2_clear_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void sound_semaphore2_clear_w(uint8_t data)
         {
             machine().scheduler().synchronize(sound_semaphore2_clear_w_cb, data);
         }
@@ -516,8 +508,7 @@ namespace mame
         };
 
 
-        //WRITE8_MEMBER(taitosj_state::taitosj_dacvol_w)
-        void taitosj_dacvol_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void taitosj_dacvol_w(uint8_t data)
         {
             m_dacvol.target.write(NODE_01, (uint8_t)(data ^ 0xff)); // 7416 hex inverter
         }
@@ -564,7 +555,7 @@ namespace mame
 
             AY8910(config, m_ay2, new XTAL(6000000)/4); // 6mhz/4 on GAME board, AY-3-8910 @ IC51
             m_ay2.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
-            m_ay2.target.port_a_write_callback().set(m_dac, (space, offset, data, mem_mask) => { m_dac.target.data_w(space, offset, data, mem_mask); }).reg();  //FUNC(dac_byte_interface::data_w));
+            m_ay2.target.port_a_write_callback().set(m_dac, (space, offset, data, mem_mask) => { m_dac.target.data_w(data); }).reg();  //FUNC(dac_byte_interface::data_w));
             m_ay2.target.port_b_write_callback().set(taitosj_dacvol_w).reg();
             m_ay2.target.disound.add_route(ALL_OUTPUTS, "speaker", 0.5);
 

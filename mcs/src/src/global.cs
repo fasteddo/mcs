@@ -127,6 +127,7 @@ namespace mame
         protected static int BIT(int x, int n) { return coretmpl_global.BIT(x, n); }
         protected static UInt32 BIT(UInt32 x, int n)  { return coretmpl_global.BIT(x, n); }
         protected static int bitswap(int val, int B1, int B0) { return coretmpl_global.bitswap(val, B1, B0); }
+        protected static int bitswap(int val, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B3, B2, B1, B0); }
         protected static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B5, B4, B3, B2, B1, B0); }
         protected static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B7, B6, B5, B4, B3, B2, B1, B0); }
         protected static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B15, B14, B13, B12, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
@@ -510,8 +511,8 @@ namespace mame
         protected const int AS_OPCODES = emumem_global.AS_OPCODES;
         public static void COMBINE_DATA(ref u16 varptr, u16 data, u16 mem_mask) { emumem_global.COMBINE_DATA(ref varptr, data, mem_mask); }
         protected static bool ACCESSING_BITS_0_7(u16 mem_mask) { return emumem_global.ACCESSING_BITS_0_7(mem_mask); }
-        protected static uX memory_read_generic(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, Func<offs_t, uX, uX> rop, offs_t address, uX mask) { return emumem_global.memory_read_generic(Width, AddrShift, Endian, TargetWidth, Aligned, rop, address, mask); }
-        protected static void memory_write_generic(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, Action<offs_t, uX, uX> wop, offs_t address, uX data, uX mask) { emumem_global.memory_write_generic(Width, AddrShift, Endian, TargetWidth, Aligned, wop, address, data, mask); }
+        protected static uX memory_read_generic(int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, Func<offs_t, uX, uX> rop, offs_t address, uX mask) { return emumem_global.memory_read_generic(Width, AddrShift, Endian, TargetWidth, Aligned, rop, address, mask); }
+        protected static void memory_write_generic(int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, Action<offs_t, uX, uX> wop, offs_t address, uX data, uX mask) { emumem_global.memory_write_generic(Width, AddrShift, Endian, TargetWidth, Aligned, wop, address, data, mask); }
         protected static string core_i64_hex_format(u64 value, u8 mindigits) { return emumem_global.core_i64_hex_format(value, mindigits); }
         protected static int handler_entry_dispatch_lowbits(int highbits, int width, int ashift) { return emumem_global.handler_entry_dispatch_lowbits(highbits, width, ashift); }
 
@@ -1257,6 +1258,27 @@ namespace mame
         public static string to_string(double val) { return val.ToString(); }
 
 
+        // c++ exception
+        public static void terminate() { throw new emu_fatalerror("std.terminate() called"); }
+
+
+        // c++ iostream
+        public static void cerr(string s) { osdcore_interface.osd_printf_debug(s); }
+
+
+        // c++ utility
+        public static void swap<T>(ref T val1, ref T val2)
+        {
+            global_object.assert(typeof(T).GetTypeInfo().IsValueType);
+
+            T temp = val1;
+            val1 = val2;
+            val2 = temp;
+        }
+
+        public static std.pair<T, V> make_pair<T, V>(T t, V v) { return new std.pair<T, V>(t, v); }
+
+
         // c++ array
         public class array<T> : IList<T>
         {
@@ -1537,11 +1559,12 @@ namespace mame
 
 
             // std::unordered_map functions
+            public V at(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default; }
             public void clear() { m_dictionary.Clear(); }
             public bool emplace(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
             public bool empty() { return m_dictionary.Count == 0; }
             public bool erase(K key) { return m_dictionary.Remove(key); }
-            public V find(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default; }
+            public V find(K key) { return at(key); }
             public bool insert(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
             public bool insert(std.pair<K, V> keyvalue) { return insert(keyvalue.first, keyvalue.second); }
             public int size() { return m_dictionary.Count; }
@@ -1568,19 +1591,6 @@ namespace mame
             public bool find(T item) { return m_set.Contains(item); }
             public bool insert(T item) { return m_set.Add(item); }
         }
-
-
-        // c++ utility
-        public static void swap<T>(ref T val1, ref T val2)
-        {
-            global_object.assert(typeof(T).GetTypeInfo().IsValueType);
-
-            T temp = val1;
-            val1 = val2;
-            val2 = temp;
-        }
-
-        public static std.pair<T, V> make_pair<T, V>(T t, V v) { return new std.pair<T, V>(t, v); }
 
 
         // c++ vector

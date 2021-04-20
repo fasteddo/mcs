@@ -93,20 +93,9 @@ namespace mame.plib
 
         //constexpr internal_type as_raw() const noexcept { return m_time; }
 
-        //template <typename FT, typename = std::enable_if<std::is_floating_point<FT>::value, FT>>
+        //template <typename FT, typename = std::enable_if<plib::is_floating_point<FT>::value, FT>>
         //constexpr FT
         //as_fp() const noexcept
-        //{
-        //    return static_cast<FT>(m_time) * inv_res<FT>();
-        //}
-
-#if PUSE_FLOAT128
-        //constexpr __float128
-        //as_fp() const noexcept
-        //{
-        //    return static_cast<__float128>(m_time) * inv_res<__float128>();
-        //}
-#endif
 
         //constexpr double as_double() const noexcept { return as_fp<double>(); }
         //constexpr double as_float() const noexcept { return as_fp<float>(); }
@@ -118,19 +107,19 @@ namespace mame.plib
         // for save states ....
         //C14CONSTEXPR internal_type *get_internaltype_ptr() noexcept { return &m_time; }
 
-        //static constexpr ptime from_nsec(const internal_type &ns) noexcept { return ptime(ns, UINT64_C(1000000000)); }
-        //static constexpr ptime from_usec(const internal_type &us) noexcept { return ptime(us, UINT64_C(1000000)); }
-        //static constexpr ptime from_msec(const internal_type &ms) noexcept { return ptime(ms, UINT64_C(1000)); }
-        //static constexpr ptime from_hz(const internal_type &hz) noexcept { return ptime(1 , hz); }
-        //static constexpr ptime from_raw(const internal_type &raw) noexcept { return ptime(raw); }
+        //template <typename ST>
+        //void save_state(ST &&st)
+
+        //static constexpr ptime from_nsec(internal_type ns) noexcept { return ptime(ns, UINT64_C(1000000000)); }
+        //static constexpr ptime from_usec(internal_type us) noexcept { return ptime(us, UINT64_C(   1000000)); }
+        //static constexpr ptime from_msec(internal_type ms) noexcept { return ptime(ms, UINT64_C(      1000)); }
+        //static constexpr ptime from_sec(internal_type s) noexcept   { return ptime(s,  UINT64_C(         1)); }
+        //static constexpr ptime from_hz(internal_type hz) noexcept { return ptime(1 , hz); }
+        //static constexpr ptime from_raw(internal_type raw) noexcept { return ptime(raw); }
 
         //template <typename FT>
-        //static constexpr const typename std::enable_if<std::is_floating_point<FT>::value
-#if PUSE_FLOAT128
-        //    || std::is_same<FT, __float128>::value
-#endif
-        //, ptime>::type
-        //from_fp(const FT t) noexcept { return ptime(static_cast<internal_type>(plib::floor(t * static_cast<FT>(RES) + static_cast<FT>(0.5))), RES); }
+        //static constexpr std::enable_if_t<plib::is_floating_point<FT>::value, ptime>
+        //from_fp(FT t) noexcept { return ptime(static_cast<internal_type>(plib::floor(t * static_cast<FT>(RES) + static_cast<FT>(0.5))), RES); }
 
         //static constexpr const ptime from_double(const double t) noexcept
         //{ return from_fp<double>(t); }
@@ -156,9 +145,11 @@ namespace mame.plib
     }
 
 
-    public class ptime_i64 : ptime
+    public class ptime_i64 : ptime,
+                             IComparable,
+                             IComparable<ptime_i64>
     {
-        const int64_t RES = netlist.nl_config_global.NETLIST_INTERNAL_RES;
+        const int64_t RES = netlist.config.NETLIST_INTERNAL_RES;
 
         int64_t m_time;  //internal_type m_time;
 
@@ -166,6 +157,13 @@ namespace mame.plib
         public ptime_i64() : this(0) { }  //constexpr ptime() noexcept : m_time(0) {}
         protected ptime_i64(int64_t nom, int64_t den) : this(nom * (RES / den)) { }
         public ptime_i64(int64_t time) : base() { m_time = time; }  //constexpr explicit ptime(const internal_type &time) : m_time(time) {}
+
+
+        // IComparable
+        public int CompareTo(object rhs) { return (rhs is ptime_i64) ? CompareTo((ptime_i64)rhs) : -1; }
+        public int CompareTo(ptime_i64 rhs) { return m_time.CompareTo(rhs.m_time); }
+        public override bool Equals(object rhs) { return (rhs is ptime_i64) ? m_time == ((ptime_i64)rhs).m_time : false; }
+        public override int GetHashCode() { return m_time.GetHashCode(); }
 
 
         public static ptime_i64 operator+(ptime_i64 lhs, ptime_i64 rhs) { return new ptime_i64(lhs.m_time + rhs.m_time); }
@@ -195,13 +193,6 @@ namespace mame.plib
             return m_time * inv_res();  //return static_cast<FT>(m_time) * inv_res<FT>();
         }
 
-#if PUSE_FLOAT128
-        //constexpr __float128
-        //as_fp() const noexcept
-        //{
-        //    return static_cast<__float128>(m_time) * inv_res<__float128>();
-        //}
-#endif
 
         public double as_double() { return as_fp(); }
         //constexpr double as_float() const noexcept { return as_fp<float>(); }
@@ -212,19 +203,28 @@ namespace mame.plib
         public ptime_i64 shr(int shift) { return new ptime_i64(m_time >> shift); }
 
 
+        // for save states ....
+        //C14CONSTEXPR internal_type *get_internaltype_ptr() noexcept { return &m_time; }
+
+
+        //template <typename ST>
+        //void save_state(ST &&st)
+        public void save_state(save_helper st)
+        {
+            st.save_item(m_time, "m_time");
+        }
+
+
         public static ptime_i64 from_nsec(int64_t ns) { return new ptime_i64(ns, 1000000000); }
         public static ptime_i64 from_usec(int64_t us) { return new ptime_i64(us, 1000000); }
         public static ptime_i64 from_msec(int64_t ms) { return new ptime_i64(ms, 1000); }
-        public static ptime_i64 from_hz(int64_t hz) { return new ptime_i64(1 , hz); }
+        public static ptime_i64 from_sec(int64_t s)   { return new ptime_i64(s,  1); }
+        public static ptime_i64 from_hz(int64_t hz) { return new ptime_i64(1, hz); }
         public static ptime_i64 from_raw(int64_t raw) { return new ptime_i64(raw); }
 
         //template <typename FT>
-        //static constexpr const typename std::enable_if<std::is_floating_point<FT>::value
-#if PUSE_FLOAT128
-        //    || std::is_same<FT, __float128>::value
-#endif
-        //, ptime>::type
-        //from_fp(const FT t) noexcept { return ptime(static_cast<internal_type>(plib::floor(t * static_cast<FT>(RES) + static_cast<FT>(0.5))), RES); }
+        //static constexpr std::enable_if_t<plib::is_floating_point<FT>::value, ptime>
+        //from_fp(FT t) noexcept { return ptime(static_cast<internal_type>(plib::floor(t * static_cast<FT>(RES) + static_cast<FT>(0.5))), RES); }
         public static ptime_i64 from_fp(double t) { return new ptime_i64((int64_t)(t * (double)RES + 0.5), RES); }
 
         //static constexpr const ptime from_double(const double t) noexcept

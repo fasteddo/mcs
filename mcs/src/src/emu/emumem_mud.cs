@@ -16,7 +16,7 @@ namespace mame
 {
     // Descriptors for subunit support
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     public class memory_units_descriptor : global_object
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -37,7 +37,7 @@ namespace mame
         // template parameters
         int Width;
         int AddrShift;
-        int Endian;
+        endianness_t Endian;
 
 
         std.map<u8, std.vector<entry>> m_entries_for_key = new std.map<u8, std.vector<entry>>();
@@ -52,7 +52,7 @@ namespace mame
 
 
         //template<int Width, int AddrShift, int Endian>
-        public memory_units_descriptor(int Width, int AddrShift, int Endian, u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth)  //memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth);
+        public memory_units_descriptor(int Width, int AddrShift, endianness_t Endian, u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth)  //memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth);
         {
             this.Width = Width;
             this.AddrShift = AddrShift;
@@ -77,7 +77,7 @@ namespace mame
 
             uX smask;
             uX emask;
-            if (Endian == (int)endianness_t.ENDIANNESS_BIG)
+            if (Endian == endianness_t.ENDIANNESS_BIG)
             {
                 //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
                 switch (Width)
@@ -224,7 +224,7 @@ namespace mame
                 if ((umask & numask) != 0)
                 {
                     uX amask = csmask << (int)(i & ~(cswidth - 1));
-                    entries.emplace_back(new entry(amask, numask, shift, (u8)i, (u8)(Endian == (int)endianness_t.ENDIANNESS_BIG ? active_count - 1 - offset : offset)));
+                    entries.emplace_back(new entry(amask, numask, shift, (u8)i, (u8)(Endian == endianness_t.ENDIANNESS_BIG ? active_count - 1 - offset : offset)));
                 }
 
                 if ((gumask & numask) != 0)

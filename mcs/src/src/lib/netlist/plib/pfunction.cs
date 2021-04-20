@@ -45,7 +45,7 @@ namespace mame.plib
             public rpn_cmd m_cmd;
             public nl_fptype m_param;
 
-            public rpn_inst() { m_cmd = rpn_cmd.ADD;  m_param = plib.constants.zero(); }
+            public rpn_inst() { m_cmd = rpn_cmd.ADD;  m_param = plib.constants_nl_fptype.zero(); }
         }
 
 
@@ -300,7 +300,7 @@ namespace mame.plib
 
             std.array<nl_fptype> stack = new std.array<nl_fptype>(20);  //std::array<NT, 20> stack = { plib::constants<NT>::zero() };
             UInt32 ptr = 0;
-            stack[0] = plib.constants.zero();
+            stack[0] = plib.constants_nl_fptype.zero();
             foreach (var rc in m_precompiled)
             {
                 switch (rc.m_cmd)
@@ -329,6 +329,13 @@ namespace mame.plib
 
             return stack[ptr - 1];
         }
+
+
+        //template <typename ST>
+        //void save_state(ST &st)
+        //{
+        //    st.save_item(m_lfsr, "m_lfsr");
+        //}
 
 
         //void compile_postfix(const std::vector<pstring> &inputs,
@@ -425,7 +432,7 @@ namespace mame.plib
             public rpn_cmd m_cmd;
             public int m_param;
 
-            public rpn_inst() { m_cmd = rpn_cmd.ADD;  m_param = (int)plib.constants.zero(); }
+            public rpn_inst() { m_cmd = rpn_cmd.ADD;  m_param = (int)plib.constants_nl_fptype.zero(); }
         }
 
 
@@ -681,7 +688,7 @@ namespace mame.plib
 
             std.array<int> stack = new std.array<int>(20);  //std::array<NT, 20> stack = { plib::constants<NT>::zero() };
             UInt32 ptr = 0;
-            stack[0] = (int)plib.constants.zero();
+            stack[0] = (int)plib.constants_nl_fptype.zero();
             foreach (var rc in m_precompiled)
             {
                 switch (rc.m_cmd)

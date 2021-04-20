@@ -20,16 +20,14 @@ namespace mame
          *
          *************************************/
 
-        //READ8_MEMBER(dkong_state::memory_read_byte)
-        u8 memory_read_byte(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t memory_read_byte(offs_t offset)
         {
             address_space prog_space = m_maincpu.target.memory().space(AS_PROGRAM);
             return prog_space.read_byte(offset);
         }
 
 
-        //WRITE8_MEMBER(dkong_state::memory_write_byte)
-        void memory_write_byte(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void memory_write_byte(offs_t offset, uint8_t data)
         {
             address_space prog_space = m_maincpu.target.memory().space(AS_PROGRAM);
             prog_space.write_byte(offset, data);
@@ -65,41 +63,17 @@ namespace mame
          *
          *************************************/
 
-        //READ8_MEMBER(dkong_state::hb_dma_read_byte)
-        //{
-        //    int   bucket = m_rev_map[(offset>>10) & 0x1ff];
-        //    int   addr;
-        //
-        //    if (bucket < 0)
-        //        fatalerror("hb_dma_read_byte - unmapped access for 0x%02x - bucket 0x%02x\n", offset, bucket);
-        //
-        //    addr = ((bucket << 7) & 0x7c00) | (offset & 0x3ff);
-        //    address_space &prog_space = m_maincpu->space(AS_PROGRAM);
-        //    return prog_space.read_byte(addr);
-        //}
+        //uint8_t dkong_state::hb_dma_read_byte(offs_t offset)
+        //void dkong_state::hb_dma_write_byte(offs_t offset, uint8_t data)
 
-        //WRITE8_MEMBER(dkong_state::hb_dma_write_byte)
-        //{
-        //    int   bucket = m_rev_map[(offset>>10) & 0x1ff];
-        //    int   addr;
-        //
-        //    if (bucket < 0)
-        //        fatalerror("hb_dma_read_byte - unmapped access for 0x%02x - bucket 0x%02x\n", offset, bucket);
-        //
-        //    addr = ((bucket << 7) & 0x7c00) | (offset & 0x3ff);
-        //    address_space &prog_space = m_maincpu->space(AS_PROGRAM);
-        //    prog_space.write_byte(addr, data);
-        //}
 
-        //READ8_MEMBER(dkong_state::p8257_ctl_r)
-        u8 p8257_ctl_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t p8257_ctl_r()
         {
             return m_dma_latch;
         }
 
 
-        //WRITE8_MEMBER(dkong_state::p8257_ctl_w)
-        void p8257_ctl_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void p8257_ctl_w(uint8_t data)
         {
             m_dma_latch = data;
         }
@@ -111,14 +85,10 @@ namespace mame
          *
          *************************************/
 
-        //WRITE8_MEMBER(dkong_state::dkong3_coin_counter_w)
-        //{
-        //    machine().bookkeeping().coin_counter_w(offset, data & 0x01);
-        //}
+        //void dkong_state::dkong3_coin_counter_w(offs_t offset, uint8_t data)
 
 
-        //WRITE8_MEMBER(dkong_state::p8257_drq_w)
-        void p8257_drq_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void p8257_drq_w(uint8_t data)
         {
             m_dma8257.target.dreq0_w(data & 0x01);
             m_dma8257.target.dreq1_w(data & 0x01);
@@ -127,8 +97,7 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(dkong_state::dkong_in2_r)
-        u8 dkong_in2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t dkong_in2_r(offs_t offset)
         {
             // 2 board DK and all DKjr has a watchdog
             if (m_watchdog.target != null)
@@ -143,176 +112,17 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(dkong_state::dkong_in2_r)
-        //{
-        //    // 2 board DK and all DKjr has a watchdog
-        //    if (m_watchdog)
-        //        m_watchdog->reset_w(space, 0, 0);
-        //
-        //    uint8_t r = ioport("IN2")->read();
-        //    machine().bookkeeping().coin_counter_w(offset, r >> 7);
-        //    if (ioport("SERVICE1")->read() & 1)
-        //        r |= 0x80; /* service ==> coin */
-        //    return r;
-        //}
-
-        //READ8_MEMBER(dkong_state::s2650_mirror_r)
-        //{
-        //    return space.read_byte(0x1000 + offset);
-        //}
+        //uint8_t dkong_state::epos_decrypt_rom(offs_t offset)
+        //void dkong_state::s2650_data_w(uint8_t data)
+        //uint8_t dkong_state::s2650_port0_r()
+        //uint8_t dkong_state::s2650_port1_r()
+        //void dkong_state::dkong3_2a03_reset_w(uint8_t data)
+        //uint8_t dkong_state::strtheat_inputport_0_r()
+        //uint8_t dkong_state::strtheat_inputport_1_r()
+        //void dkong_state::dkong_z80dma_rdy_w(uint8_t data)
 
 
-        //WRITE8_MEMBER(dkong_state::s2650_mirror_w)
-        //{
-        //    space.write_byte(0x1000 + offset, data);
-        //}
-
-
-        //READ8_MEMBER(dkong_state::epos_decrypt_rom)
-        //{
-        //    if (offset & 0x01)
-        //    {
-        //        m_decrypt_counter = m_decrypt_counter - 1;
-        //        if (m_decrypt_counter < 0)
-        //            m_decrypt_counter = 0x0F;
-        //    }
-        //    else
-        //    {
-        //        m_decrypt_counter = (m_decrypt_counter + 1) & 0x0F;
-        //    }
-        //
-        //    switch(m_decrypt_counter)
-        //    {
-        //        case 0x08:  membank("bank1")->set_entry(0);      break;
-        //        case 0x09:  membank("bank1")->set_entry(1);      break;
-        //        case 0x0A:  membank("bank1")->set_entry(2);      break;
-        //        case 0x0B:  membank("bank1")->set_entry(3);      break;
-        //        default:
-        //            logerror("Invalid counter = %02X\n",m_decrypt_counter);
-        //            break;
-        //    }
-        //
-        //    return 0;
-        //}
-
-
-        //WRITE8_MEMBER(dkong_state::s2650_data_w)
-        //{
-        //#if DEBUG_PROTECTION
-        //    logerror("write : pc = %04x, loopback = %02x\n",m_maincpu->pc(), data);
-        //#endif
-        //
-        //    m_hunchloopback = data;
-        //}
-
-        //WRITE_LINE_MEMBER(dkong_state::s2650_fo_w)
-        //{
-        //#if DEBUG_PROTECTION
-        //    logerror("%s write : FO = %02x\n", machine().describe_context(), data);
-        //#endif
-        //
-        //    m_main_fo = state;
-        //
-        //    if (m_main_fo)
-        //        m_hunchloopback = 0xfb;
-        //}
-
-        //READ8_MEMBER(dkong_state::s2650_port0_r)
-        //{
-        //#if DEBUG_PROTECTION
-        //    logerror("port 0 : pc = %04x, loopback = %02x fo=%d\n",m_maincpu->pc(), m_hunchloopback, m_main_fo);
-        //#endif
-        //
-        //    switch (m_protect_type)
-        //    {
-        //        case DK2650_SHOOTGAL:
-        //        case DK2650_HUNCHBKD:
-        //            if (m_main_fo)
-        //                return m_hunchloopback;
-        //            else
-        //                return m_hunchloopback--;
-        //        case DK2650_SPCLFORC:
-        //            if (!m_main_fo)
-        //                return m_hunchloopback;
-        //            else
-        //                return m_hunchloopback--;
-        //    }
-        //    fatalerror("Unhandled read from port 0 : pc = %4x\n",m_maincpu->pc());
-        //}
-
-
-        //READ8_MEMBER(dkong_state::s2650_port1_r)
-        //{
-        //#if DEBUG_PROTECTION
-        //    logerror("port 1 : pc = %04x, loopback = %02x fo=%d\n",m_maincpu->pc(), m_hunchloopback, m_main_fo);
-        //#endif
-        //
-        //    switch (m_protect_type)
-        //    {
-        //        case DK2650_HUNCHBKD:
-        //            return m_hunchloopback--;
-        //        case DK2650_EIGHTACT:
-        //        case DK2650_HERBIEDK:
-        //            if (m_hunchloopback & 0x80)
-        //                return m_prot_cnt;
-        //            else
-        //                return ++m_prot_cnt;
-        //    }
-        //    fatalerror("Unhandled read from port 1 : pc = %4x\n",m_maincpu->pc());
-        //}
-
-
-        //WRITE8_MEMBER(dkong_state::dkong3_2a03_reset_w)
-        //{
-        //    if (data & 1)
-        //    {
-        //        m_dev_n2a03a->set_input_line(INPUT_LINE_RESET, CLEAR_LINE);
-        //        m_dev_n2a03b->set_input_line(INPUT_LINE_RESET, CLEAR_LINE);
-        //    }
-        //    else
-        //    {
-        //        m_dev_n2a03a->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
-        //        m_dev_n2a03b->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
-        //    }
-        //}
-
-        //READ8_MEMBER(dkong_state::strtheat_inputport_0_r)
-        //{
-        //    if(ioport("DSW0")->read() & 0x40)
-        //    {
-        //        /* Joystick inputs */
-        //        return ioport("IN0")->read();
-        //    }
-        //    else
-        //    {
-        //        /* Steering Wheel inputs */
-        //        return (ioport("IN0")->read() & ~3) | (ioport("IN4")->read() & 3);
-        //    }
-        //}
-
-
-        //READ8_MEMBER(dkong_state::strtheat_inputport_1_r)
-        //{
-        //    if(ioport("DSW0")->read() & 0x40)
-        //    {
-        //        /* Joystick inputs */
-        //        return ioport("IN1")->read();
-        //    }
-        //    else
-        //    {
-        //        /* Steering Wheel inputs */
-        //        return (ioport("IN1")->read() & ~3) | (ioport("IN5")->read() & 3);
-        //    }
-        //}
-
-        //WRITE8_MEMBER(dkong_state::dkong_z80dma_rdy_w)
-        //{
-        //    m_z80dma->rdy_w(data & 0x01);
-        //}
-
-
-        //WRITE8_MEMBER(dkong_state::nmi_mask_w)
-        void nmi_mask_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void nmi_mask_w(uint8_t data)
         {
             m_nmi_mask = (uint8_t)(data & 1);
             if (m_nmi_mask == 0)

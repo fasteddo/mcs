@@ -158,8 +158,7 @@ namespace mame
         /***************************************************************************
           Memory handlers
         ***************************************************************************/
-        //WRITE8_MEMBER(galaga_state::galaga_videoram_w)
-        void galaga_videoram_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void galaga_videoram_w(offs_t offset, uint8_t data)
         {
             m_videoram[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);

@@ -9,6 +9,8 @@ namespace mame
 {
     public static class nlm_cd4xxx_global
     {
+#if !NL_AUTO_DEVICES
+
         /* ----------------------------------------------------------------------------
          *  Netlist Macros
          * ---------------------------------------------------------------------------*/
@@ -18,6 +20,13 @@ namespace mame
 
         //#define CD4001_DIP(name)                                                      \
         //        NET_REGISTER_DEV(CD4001_DIP, name)
+
+        //#define CD4069_GATE(name)                                                      \
+        //        NET_REGISTER_DEV(CD4069_GATE, name)
+        public static void CD4069_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4069_GATE", name); }
+
+        //#define CD4069_DIP(name)                                                      \
+        //        NET_REGISTER_DEV(CD4069_DIP, name)
 
         //#define CD4070_GATE(name)                                                      \
         //        NET_REGISTER_DEV(CD4070_GATE, name)
@@ -40,18 +49,20 @@ namespace mame
         //#define CD4316_DIP(name)                                                      \
         //        NET_REGISTER_DEV(CD4016_DIP, name)
 
+#endif
+
 
         /*
          *   CD4001BC: Quad 2-Input NOR Buffered B Series Gate
          *
          *       +--------------+
-         *    A1 |1     ++    14| VCC
+         *    A1 |1     ++    14| VDD
          *    B1 |2           13| A6
          *    A2 |3           12| Y6
          *    Y2 |4    4001   11| A5
          *    A3 |5           10| Y5
          *    Y3 |6            9| A4
-         *   GND |7            8| Y4
+         *   VSS |7            8| Y4
          *       +--------------+
          *
          */
@@ -66,17 +77,17 @@ namespace mame
             CD4001_GATE(setup, "s3");
             CD4001_GATE(setup, "s4");
 
-            netlist.nl_setup_global.NET_C(setup, "s1.VCC", "s2.VCC", "s3.VCC", "s4.VCC");
-            netlist.nl_setup_global.NET_C(setup, "s1.GND", "s2.GND", "s3.GND", "s4.GND");
+            netlist.nl_setup_global.NET_C(setup, "s1.VDD", "s2.VDD", "s3.VDD", "s4.VDD");
+            netlist.nl_setup_global.NET_C(setup, "s1.VSS", "s2.VSS", "s3.VSS", "s4.VSS");
 
             netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+      */
-                "s1.A",   /*    A1 |1     ++    14| VDD  */ "s1.VCC",
+                "s1.A",   /*    A1 |1     ++    14| VDD  */ "s1.VDD",
                 "s1.B",   /*    B1 |2           13| A6   */ "s4.B",
                 "s1.Q",   /*    A2 |3           12| Y6   */ "s4.A",
                 "s2.Q",   /*    Y2 |4    4001   11| A5   */ "s4.Q",
                 "s2.A",   /*    A3 |5           10| Y5   */ "s3.Q",
                 "s2.B",   /*    Y3 |6            9| A4   */ "s3.B",
-                "s1.GND", /*   VSS |7            8| Y4   */ "s3.A"
+                "s1.VSS", /*   VSS |7            8| Y4   */ "s3.A"
                           /*       +--------------+      */
             );
 
@@ -212,7 +223,51 @@ namespace mame
 
 
         /*
-         *  DM7486: Quad 2-Input Exclusive-OR Gates
+         *  CD4069: Hex Inverter
+         *                 _
+         *             Y = A
+         *          +---++---+
+         *          | A || Y |
+         *          +===++===+
+         *          | 0 || 1 |
+         *          | 1 || 0 |
+         *          +---++---+
+         *
+         *  Naming conventions follow National Semiconductor datasheet
+         *
+         */
+        //static NETLIST_START(CD4069_DIP)
+        public static void netlist_CD4069_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            CD4069_GATE(setup, "A");
+            CD4069_GATE(setup, "B");
+            CD4069_GATE(setup, "C");
+            CD4069_GATE(setup, "D");
+            CD4069_GATE(setup, "E");
+            CD4069_GATE(setup, "F");
+
+            netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD", "E.VDD", "E.VDD");
+            netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS", "E.VSS", "F.VSS");
+
+            netlist.nl_setup_global.DIPPINS(setup,  /*       +--------------+      */
+                "A.A",  /*    A1 |1     ++    14| VDD  */ "A.VDD",
+                "A.Q",  /*    Y1 |2           13| A6   */ "F.A",
+                "B.A",  /*    A2 |3           12| Y6   */ "F.Q",
+                "B.Q",  /*    Y2 |4    4069   11| A5   */ "E.A",
+                "C.A",  /*    A3 |5           10| Y5   */ "E.Q",
+                "C.Q",  /*    Y3 |6            9| A4   */ "D.A",
+                "A.VSS",/*   VSS |7            8| Y4   */ "D.Q"
+                      /*       +--------------+      */
+            );
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
+        /*
+         *  CD4070: Quad 2-Input Exclusive-OR Gates
          *
          *             Y = A+B
          *          +---+---++---+
@@ -223,8 +278,6 @@ namespace mame
          *          | 1 | 0 || 1 |
          *          | 1 | 1 || 0 |
          *          +---+---++---+
-         *
-         *  Naming conventions follow National Semiconductor datasheet
          *
          */
         //static NETLIST_START(CD4070_DIP)
@@ -240,17 +293,17 @@ namespace mame
             CD4070_GATE(D);
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD");
+            netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS");
 
             netlist.nl_setup_global.DIPPINS(setup,  /*       +--------------+      */
-                "A.A",  /*    A1 |1     ++    14| VCC  */ "A.VCC",
+                "A.A",  /*    A1 |1     ++    14| VDD  */ "A.VDD",
                 "A.B",  /*    B1 |2           13| B4   */ "D.B",
                 "A.Q",  /*    Y1 |3           12| A4   */ "D.A",
-                "B.Q",  /*    Y2 |4    7486   11| Y4   */ "D.Q",
+                "B.Q",  /*    Y2 |4    4070   11| Y4   */ "D.Q",
                 "B.A",  /*    A2 |5           10| Y3   */ "C.Q",
                 "B.B",  /*    B2 |6            9| B3   */ "C.B",
-                "A.GND",/*   GND |7            8| A3   */ "C.A"
+                "A.VSS",/*   VSS |7            8| A3   */ "C.A"
                       /*       +--------------+      */
             );
 
@@ -300,9 +353,16 @@ namespace mame
 
             netlist.nl_setup_global.TRUTHTABLE_START("CD4001_GATE", 2, 1, "");
                 netlist.nl_setup_global.TT_HEAD("A , B | Q ");
-                netlist.nl_setup_global.TT_LINE("0,0|1|85");
+                netlist.nl_setup_global.TT_LINE("0,0|1|110");
                 netlist.nl_setup_global.TT_LINE("X,1|0|120");
                 netlist.nl_setup_global.TT_LINE("1,X|0|120");
+                netlist.nl_setup_global.TT_FAMILY("CD4XXX");
+            netlist.nl_setup_global.TRUTHTABLE_END(setup);
+
+            netlist.nl_setup_global.TRUTHTABLE_START("CD4069_GATE", 1, 1, "");
+                netlist.nl_setup_global.TT_HEAD("A|Q ");
+                netlist.nl_setup_global.TT_LINE("0|1|55");
+                netlist.nl_setup_global.TT_LINE("1|0|55");
                 netlist.nl_setup_global.TT_FAMILY("CD4XXX");
             netlist.nl_setup_global.TRUTHTABLE_END(setup);
 
@@ -316,6 +376,7 @@ namespace mame
             netlist.nl_setup_global.TRUTHTABLE_END(setup);
 
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4001_DIP", netlist_CD4001_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4069_DIP", netlist_CD4069_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4070_DIP", netlist_CD4070_DIP);
 
             /* DIP ONLY */

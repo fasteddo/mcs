@@ -156,6 +156,10 @@ namespace mame
         }
 
 
+        /** Convert to string for human readability in logs */
+        //std::string to_string() const;
+
+
         public attoseconds_t attoseconds() { return m_attoseconds; }
         public seconds_t seconds() { return m_seconds; }
 

@@ -381,6 +381,7 @@ namespace mame
         const string OPTION_OSLOG               = "oslog";
         const string OPTION_UPDATEINPAUSE       = "update_in_pause";
         const string OPTION_DEBUGSCRIPT         = "debugscript";
+        const string OPTION_DEBUGLOG            = "debuglog";
 
         // core misc options
         const string OPTION_DRC                 = "drc";
@@ -483,7 +484,7 @@ namespace mame
             // performance options
             new options_entry(null,                                              null,        OPTION_HEADER,     "CORE PERFORMANCE OPTIONS"),
             new options_entry(OPTION_AUTOFRAMESKIP + ";afs",                     "0",         OPTION_BOOLEAN,    "enable automatic frameskip adjustment to maintain emulation speed"),
-            new options_entry(OPTION_FRAMESKIP + ";fs(0-10)",                    "0",         OPTION_INTEGER,    "set frameskip to fixed value, 0-10 (autoframeskip must be disabled)"),
+            new options_entry(OPTION_FRAMESKIP + ";fs(0-10)",                    "0",         OPTION_INTEGER,    "set frameskip to fixed value, 0-10 (upper limit with autoframeskip)"),
             new options_entry(OPTION_SECONDS_TO_RUN + ";str",                    "0",         OPTION_INTEGER,    "number of emulated seconds to run before automatically exiting"),
             new options_entry(OPTION_THROTTLE,                                   "1",         OPTION_BOOLEAN,    "throttle emulation to keep system running in sync with real time"),
             new options_entry(OPTION_SLEEP,                                      "1",         OPTION_BOOLEAN,    "enable sleeping, which gives time back to other applications when idle"),
@@ -577,6 +578,7 @@ namespace mame
             new options_entry(OPTION_DEBUG + ";d",                               "0",         OPTION_BOOLEAN,    "enable/disable debugger"),
             new options_entry(OPTION_UPDATEINPAUSE,                              "0",         OPTION_BOOLEAN,    "keep calling video updates while in pause"),
             new options_entry(OPTION_DEBUGSCRIPT,                                null,        OPTION_STRING,     "script for debugger"),
+            new options_entry(OPTION_DEBUGLOG,                                   "0",         OPTION_BOOLEAN,    "write debug console output to debug.log"),
 
             // comm options
             new options_entry(null,                                              null,        OPTION_HEADER,     "CORE COMM OPTIONS"),
@@ -881,6 +883,7 @@ namespace mame
         public bool oslog() { return bool_value(OPTION_OSLOG); }
         //const char *debug_script() const { return value(OPTION_DEBUGSCRIPT); }
         public bool update_in_pause() { return bool_value(OPTION_UPDATEINPAUSE); }
+        public bool debuglog() { return bool_value(OPTION_DEBUGLOG); }
 
         // core misc options
         //bool drc() const { return bool_value(OPTION_DRC); }

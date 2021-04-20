@@ -440,11 +440,21 @@ namespace mame
             // add CPU overclocking (cheat only)
             if (machine.options().cheat())
             {
-                foreach (device_execute_interface exec in new execute_interface_iterator(machine.root_device()))
+                for (device_execute_interface &exec : execute_interface_iterator(machine.root_device()))
                 {
                     void *param = (void *)&exec.device();
-                    string str = string.Format("Overclock CPU {0}", exec.device().tag());  // %1$s
-                    sliders.Add(slider_alloc(machine, str, 10, 1000, 2000, 1, slider_overclock, param));
+                    std::string str = string_format(_("Overclock CPU %1$s"), exec.device().tag());
+                    m_sliders.push_back(slider_alloc(SLIDER_ID_OVERCLOCK + slider_index++, str.c_str(), 100, 1000, 4000, 10, param));
+                }
+                for (device_sound_interface &snd : sound_interface_iterator(machine.root_device()))
+                {
+                    device_execute_interface *exec;
+                    if (!snd.device().interface(exec) && snd.device().unscaled_clock() != 0)
+                    {
+                        void *param = (void *)&snd.device();
+                        std::string str = string_format(_("Overclock %1$s sound"), snd.device().tag());
+                        m_sliders.push_back(slider_alloc(SLIDER_ID_OVERCLOCK + slider_index++, str.c_str(), 100, 1000, 4000, 10, param));
+                    }
                 }
             }
 
@@ -1550,7 +1560,7 @@ namespace mame
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_RECORD_MNG))
                 machine().video().toggle_record_movie(movie_recording.format.MNG);
 
-            // toggle MNG recording
+            // toggle AVI recording
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_RECORD_AVI))
                 machine().video().toggle_record_movie(movie_recording.format.AVI);
 

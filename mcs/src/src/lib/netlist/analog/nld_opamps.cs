@@ -27,37 +27,36 @@ namespace mame
 
     namespace netlist.analog
     {
-        class opamp_model_t : param_model_t
+        class opamp_model_t
         {
-            public value_t m_TYPE;   //!< Model Type, 1 and 3 are supported
-            public value_t m_FPF;    //!< frequency of first pole
-            public value_t m_SLEW;   //!< unity gain slew rate
-            public value_t m_RI;     //!< input resistance
-            public value_t m_RO;     //!< output resistance
-            public value_t m_UGF;    //!< unity gain frequency (transition frequency)
-            public value_t m_VLL;    //!< low output swing minus low supply rail
-            public value_t m_VLH;    //!< high supply rail minus high output swing
-            public value_t m_DAB;    //!< Differential Amp Bias - total quiescent current
+            public param_model_t.value_t m_TYPE;   //!< Model Type, 1 and 3 are supported
+            public param_model_t.value_t m_FPF;    //!< frequency of first pole
+            public param_model_t.value_t m_SLEW;   //!< unity gain slew rate
+            public param_model_t.value_t m_RI;     //!< input resistance
+            public param_model_t.value_t m_RO;     //!< output resistance
+            public param_model_t.value_t m_UGF;    //!< unity gain frequency (transition frequency)
+            public param_model_t.value_t m_VLL;    //!< low output swing minus low supply rail
+            public param_model_t.value_t m_VLH;    //!< high supply rail minus high output swing
+            public param_model_t.value_t m_DAB;    //!< Differential Amp Bias - total quiescent current
 
 
-            public opamp_model_t(device_t device, string name, string val)
-                : base(device, name, val)
+            public opamp_model_t(param_model_t model)
             {
-                m_TYPE = new value_t(this, "TYPE");
-                m_FPF = new value_t(this, "FPF");
-                m_SLEW = new value_t(this, "SLEW");
-                m_RI = new value_t(this, "RI");
-                m_RO = new value_t(this, "RO");
-                m_UGF = new value_t(this, "UGF");
-                m_VLL = new value_t(this, "VLL");
-                m_VLH = new value_t(this, "VLH");
-                m_DAB = new value_t(this, "DAB");
+                m_TYPE = new param_model_t.value_t(model, "TYPE");
+                m_FPF = new param_model_t.value_t(model, "FPF");
+                m_SLEW = new param_model_t.value_t(model, "SLEW");
+                m_RI = new param_model_t.value_t(model, "RI");
+                m_RO = new param_model_t.value_t(model, "RO");
+                m_UGF = new param_model_t.value_t(model, "UGF");
+                m_VLL = new param_model_t.value_t(model, "VLL");
+                m_VLH = new param_model_t.value_t(model, "VLH");
+                m_DAB = new param_model_t.value_t(model, "DAB");
             }
         }
 
 
-        //NETLIB_OBJECT(opamp)
-        class nld_opamp : device_t
+        //NETLIB_BASE_OBJECT(opamp)
+        class nld_opamp : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, opamp, "OPAMP", "MODEL")
             public static readonly factory.constructor_ptr_t decl_opamp = NETLIB_DEVICE_IMPL_NS<nld_opamp>("analog", "OPAMP", "MODEL");
@@ -76,7 +75,8 @@ namespace mame
             analog_input_t m_VCC;
             analog_input_t m_GND;
 
-            opamp_model_t m_model;
+            param_model_t m_model;
+            opamp_model_t m_modacc;
             analog_output_t m_VH;
             analog_output_t m_VL;
             analog_output_t m_VREF;
@@ -93,13 +93,14 @@ namespace mame
                 m_G1 = new nld_VCCS(this, "G1");
                 m_VCC = new analog_input_t(this, "VCC");
                 m_GND = new analog_input_t(this, "GND");
-                m_model = new opamp_model_t(this, "MODEL", "LM324");
+                m_model = new param_model_t(this, "MODEL", "LM324");
+                m_modacc = new opamp_model_t(m_model);
                 m_VH = new analog_output_t(this, "VH");
                 m_VL = new analog_output_t(this, "VL");
                 m_VREF = new analog_output_t(this, "VREF");
 
 
-                m_type = (int)m_model.m_TYPE.op();
+                m_type = (int)m_modacc.m_TYPE.op();  //m_type = plib::narrow_cast<int>(m_modacc.m_TYPE);
                 if (m_type < 1 || m_type > 3)
                 {
                     log().fatal.op(nl_errstr_global.MF_OPAMP_UNKNOWN_TYPE(m_type));
@@ -119,8 +120,9 @@ namespace mame
                 }
                 if (m_type == 2 || m_type == 3)
                 {
-                    m_CP = (analog.nld_C)create_and_register_subdevice<analog.nld_C>("CP1");
-                    m_EBUF = (analog.nld_VCVS)create_and_register_subdevice<analog.nld_VCVS>("EBUF");
+                    create_and_register_subdevice(this, "CP1", out m_CP);
+                    create_and_register_subdevice(this, "EBUF", out m_EBUF);
+
 #if TEST_ALT_OUTPUT
                     create_and_register_subdevice("RO", m_RO);
 #endif
@@ -149,8 +151,8 @@ namespace mame
                 }
                 if (m_type == 3)
                 {
-                    m_DN = (analog.nld_D)create_and_register_subdevice<analog.nld_D>("DN", "D(IS=1e-15 N=1)");
-                    m_DP = (analog.nld_D)create_and_register_subdevice<analog.nld_D>("DP", "D(IS=1e-15 N=1)");
+                    create_and_register_subdevice(this, "DN", out m_DN, "D(IS=1e-15 N=1)");
+                    create_and_register_subdevice(this, "DP", out m_DP, "D(IS=1e-15 N=1)");
 
                     connect("DP.K", "VH");
                     connect("VL", "DN.A");
@@ -171,12 +173,12 @@ namespace mame
             //NETLIB_UPDATE(opamp)
             public override void update()
             {
-                nl_fptype cVt = nlconst.magic(0.0258 * 1.0); // * m_n;
-                nl_fptype cId = m_model.m_DAB.op(); // 3 mA
-                nl_fptype cVd = cVt * plib.pglobal.log(cId / nlconst.magic(1e-15) + nlconst.one());
+                nl_fptype cVt = nlconst.np_VT(nlconst.one()); // * m_n;
+                nl_fptype cId = m_modacc.m_DAB.op(); // 3 mA
+                nl_fptype cVd = cVt * plib.pglobal.log(cId / nlconst.np_Is() + nlconst.one());
 
-                m_VH.push(m_VCC.op() - m_model.m_VLH.op() - cVd);
-                m_VL.push(m_GND.op() + m_model.m_VLL.op() + cVd);
+                m_VH.push(m_VCC.op() - m_modacc.m_VLH.op() - cVd);
+                m_VL.push(m_GND.op() + m_modacc.m_VLL.op() + cVd);
                 m_VREF.push((m_VCC.op() + m_GND.op()) / nlconst.two());
             }
 
@@ -191,26 +193,26 @@ namespace mame
             //NETLIB_UPDATE_PARAM(opamp)
             public override void update_param()
             {
-                m_G1.m_RI.set(m_model.m_RI.op());
+                m_G1.m_RI.set(m_modacc.m_RI.op());
 
                 if (m_type == 1)
                 {
-                    nl_fptype RO = m_model.m_RO.op();
-                    nl_fptype G = m_model.m_UGF.op() / m_model.m_FPF.op() / RO;
+                    nl_fptype RO = m_modacc.m_RO.op();
+                    nl_fptype G = m_modacc.m_UGF.op() / m_modacc.m_FPF.op() / RO;
                     m_RP.set_R(RO);
                     m_G1.m_G.set(G);
                 }
                 if (m_type == 3 || m_type == 2)
                 {
-                    nl_fptype CP = m_model.m_DAB.op() / m_model.m_SLEW.op();
-                    nl_fptype RP = nlconst.half() / nlconst.pi() / CP / m_model.m_FPF.op();
-                    nl_fptype G = m_model.m_UGF.op() / m_model.m_FPF.op() / RP;
+                    nl_fptype CP = m_modacc.m_DAB.op() / m_modacc.m_SLEW.op();
+                    nl_fptype RP = nlconst.half() / nlconst.pi() / CP / m_modacc.m_FPF.op();
+                    nl_fptype G = m_modacc.m_UGF.op() / m_modacc.m_FPF.op() / RP;
 
                     //printf("OPAMP %s: %g %g %g\n", name().c_str(), CP, RP, G);
-                    if (m_model.m_SLEW.op() / (nlconst.four() * nlconst.pi() * nlconst.magic(0.0258)) < m_model.m_UGF.op())
+                    if (m_modacc.m_SLEW.op() / (nlconst.four() * nlconst.pi() * nlconst.np_VT()) < m_modacc.m_UGF.op())
                         log().warning.op(nl_errstr_global.MW_OPAMP_FAIL_CONVERGENCE(this.name()));
 
-                    m_CP.m_C.set(CP);
+                    m_CP.set_cap_embedded(CP);
                     m_RP.set_R(RP);
                     m_G1.m_G.set(G);
 
@@ -220,9 +222,9 @@ namespace mame
                     m_EBUF.m_G.set(nlconst.one());
 #if TEST_ALT_OUTPUT
                     m_EBUF->m_RO.set(0.001);
-                    m_RO->set_R(m_model.m_RO);
+                    m_RO->set_R(m_modacc.m_RO);
 #else
-                    m_EBUF.m_RO.set(m_model.m_RO.op());
+                    m_EBUF.m_RO.set(m_modacc.m_RO.op());
 #endif
                 }
                 if (m_type == 3)
@@ -230,9 +232,9 @@ namespace mame
                     m_EBUF.m_G.set(nlconst.one());
 #if TEST_ALT_OUTPUT
                     m_EBUF->m_RO.set(0.001);
-                    m_RO->set_R(m_model.m_RO);
+                    m_RO->set_R(m_modacc.m_RO);
 #else
-                    m_EBUF.m_RO.set(m_model.m_RO.op());
+                    m_EBUF.m_RO.set(m_modacc.m_RO.op());
 #endif
                 }
             }

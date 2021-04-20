@@ -25,7 +25,6 @@ namespace mame
         //INT8                m_lastline;                         // last line used for output
         bool m_disabled;                         // true if the cheat engine is disabled
         //symbol_table        m_symtable;                         // global symbol table
-        //std::unique_ptr<debugger_cpu> m_cpu;                    // debugger interface for cpus/memory
 
 
         // construction/destruction

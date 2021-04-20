@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using size_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame.plib
@@ -78,7 +79,7 @@ namespace mame.plib
         {
             UInt64 result = 5381;
             for (int pIdx = 0; pIdx != size; pIdx++)  //for (const T* p = buf; p != buf + size; p++)
-                result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ (size_t)buf[pIdx];  //result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ static_cast<std::size_t>(*p);
+                result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ (size_t)buf[pIdx];  //result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ narrow_cast<std::size_t>(*p); // NOLINT
             return result;
         }
 
@@ -88,7 +89,112 @@ namespace mame.plib
             return (std.getenv(var.c_str()) == null) ? default_val
                 : std.getenv(var.c_str());
         }
+
+
+        // FIXME:: __FUNCTION__ may be not be supported by all compilers.
+
+        public static source_location PSOURCELOC() { return new source_location("__FILE__", 0); }  //#define PSOURCELOC() plib::source_location(__FILE__, __LINE__)
     }
+
+
+    /// \brief Source code locations.
+    ///
+    /// The c++20 draft for source locations is based on const char * strings.
+    /// It is thus only suitable for c++ source code and not for programmatic
+    /// parsing of files. This class is a replacement for dynamic use cases.
+    ///
+    public class source_location
+    {
+        string m_file;
+        string m_func;
+        unsigned m_line;
+        unsigned m_col;
+
+
+        public source_location()
+        {
+            m_file = "unknown";
+            m_func = m_file;
+            m_line = 0;
+            m_col = 0;
+        }
+
+        public source_location(string file, unsigned line)
+        {
+            m_file = file;
+            m_func = "unknown";
+            m_line = line;
+            m_col = 0;
+        }
+
+        public source_location(string file, string func, unsigned line)
+        {
+            m_file = file;
+            m_func = func;
+            m_line = line;
+            m_col = 0;
+        }
+
+
+        //PCOPYASSIGNMOVE(source_location, default)
+
+        //~source_location() = default;
+
+        //unsigned line() const noexcept { return m_line; }
+        //unsigned column() const noexcept { return m_col; }
+        //pstring file_name() const noexcept { return m_file; }
+        //pstring function_name() const noexcept { return m_func; }
+
+        //source_location &operator ++() noexcept
+    }
+
+
+    /// \brief Base source class.
+    ///
+    /// Pure virtual class all other source implementations are based on.
+    /// Sources provide an abstraction to read input from a variety of
+    /// sources, e.g. files, memory, remote locations.
+    ///
+    //class psource_t
+
+
+    /// \brief Generic string source.
+    ///
+    /// Will return the given string when name matches.
+    /// Is used in preprocessor code to eliminate inclusion of certain files.
+    ///
+    //class psource_str_t : public psource_t
+
+
+    /// \brief Generic sources collection.
+    ///
+    /// \tparam ARENA memory arena, defaults to aligned_arena
+    ///
+    //template <typename ARENA = aligned_arena>
+    //class psource_collection_t
+
+
+    /// \brief copy type S to type D byte by byte
+    ///
+    /// The purpose of this copy function is to suppress compiler warnings.
+    /// Use at your own risk. This is dangerous.
+    ///
+    /// \param s Source object
+    /// \param d Destination object
+    /// \tparam S Type of source object
+    /// \tparam D Type of destination object
+    //template <typename S, typename D>
+    //void reinterpret_copy(S &s, D &d)
+
+
+    //namespace util
+    //{
+    //    pstring basename(const pstring &filename, const pstring &suffix = "");
+    //    pstring path(const pstring &filename);
+    //    bool    exists(const pstring &filename);
+    //    pstring buildpath(std::initializer_list<pstring> list );
+    //    pstring environment(const pstring &var, const pstring &default_val);
+    //} // namespace util
 
 
     public static class container
@@ -98,6 +204,16 @@ namespace mame.plib
         {
             return con.Contains(elem);  //return std::find(con.begin(), con.end(), elem) != con.end();
         }
+
+
+        //static constexpr const std::size_t npos = static_cast<std::size_t>(-1);
+
+        //template <class C>
+        //std::size_t indexof(C &con, const typename C::value_type &elem)
+
+        //template <class C>
+        //void insert_at(C &con, const std::size_t index, const typename C::value_type &elem)
+
 
         //template <class C>
         public static void remove<C, T>(C con, T elem) where C : ICollection<T>  //void remove(C &con, const typename C::value_type &elem)
@@ -159,6 +275,21 @@ namespace mame.plib
             m_v = default;
             return false;
         }
+
+        public static bool set_from_string(string s, out netlist.family_type m_v)
+        {
+            //int f = from_string_int(strings(), s); \
+            //if (f>=0) { m_v = static_cast<E>(f); return true; } \
+            //return false;\
+            if (Enum.IsDefined(typeof(netlist.family_type), s))
+            {
+                m_v = (netlist.family_type)Enum.Parse(typeof(netlist.family_type), s);
+                return true;
+            }
+
+            m_v = default;
+            return false;
+        }
     }
 
 
@@ -184,12 +315,12 @@ namespace mame.plib
 
     /// \brief Generic sources collection.
     ///
-    /// \tparam TS base stream class. Default is psource_t
+    /// \tparam ARENA memory arena, defaults to aligned_arena
     ///
-    //template <typename TS = psource_t>
+    //template <typename ARENA = aligned_arena>
     class psource_collection_t
     {
-        //using source_type = plib::unique_ptr<TS>;
+        //using source_type = std::unique_ptr<psource_t>;
         //using list_t = std::vector<source_type>;
 
         std.vector<psource_t> m_collection = new std.vector<psource_t>();  //list_t m_collection;
@@ -208,8 +339,8 @@ namespace mame.plib
         }
 
 
-        //template <typename S = TS>
-        std.istream get_stream(string name)  //typename S::stream_ptr get_stream(pstring name)
+        //template <typename S = psource_t>
+        std.istream get_stream(string name)  //typename psource_t::stream_ptr get_stream(pstring name)
         {
             foreach (var s in m_collection)
             {

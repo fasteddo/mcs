@@ -445,8 +445,8 @@ namespace mame
             map.op(0012740, 0012740).mirror(00036).w(video_int_ack_w);
             map.op(0013000, 0013000).mirror(00176).w(int_enable_w);
             map.op(0013200, 0013200).mirror(00176).w(m_soundlatch, (data) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); });
-            map.op(0013400, 0013401).mirror(00176).w((write16_delegate)xscroll_w).share("xscroll");
-            map.op(0013600, 0013601).mirror(00176).w((write16_delegate)yscroll_w).share("yscroll");
+            map.op(0013400, 0013401).mirror(00176).w((write16s_delegate)xscroll_w).share("xscroll");
+            map.op(0013600, 0013601).mirror(00176).w((write16s_delegate)yscroll_w).share("yscroll");
             map.op(0014000, 0014001).mirror(01776).r(switch_r);
             map.op(0014000, 0014000).mirror(01776).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });
             map.op(0016000, 0016001).mirror(01776).r(sound_r);
@@ -468,7 +468,7 @@ namespace mame
         {
             map.unmap_value_high();
             map.op(000000, 013777).ram().w(m_alpha_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_alpha_tilemap.target.write16(offset, data, mem_mask); }).share("alpha");
-            map.op(014000, 017777).ram().w((write16_delegate)spriteram_w).share("mob");
+            map.op(014000, 017777).ram().w((write16s_delegate)spriteram_w).share("mob");
             map.op(020000, 037777).ram();
             map.op(040000, 077777).ram().w(m_playfield_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_playfield_tilemap.target.write16(offset, data, mem_mask); }).share("playfield");
         }
@@ -483,7 +483,7 @@ namespace mame
         void sound_map(address_map map, device_t owner)
         {
             map.op(0x0000, 0x0fff).mirror(0x2000).ram();
-            map.op(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", (address_space space, offs_t offset, u8 mem_mask) => { return ((eeprom_parallel_28xx_device)subdevice("eeprom")).read(space, offset, mem_mask); }, (address_space space, offs_t offset, u8 data, u8 mem_mask) => { ((eeprom_parallel_28xx_device)subdevice("eeprom")).write(space, offset, data, mem_mask); });  //map(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", FUNC(eeprom_parallel_28xx_device::read), FUNC(eeprom_parallel_28xx_device::write));
+            map.op(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", (address_space space, offs_t offset) => { return ((eeprom_parallel_28xx_device)subdevice("eeprom")).read(space, offset); }, (offs_t offset, u8 data) => { ((eeprom_parallel_28xx_device)subdevice("eeprom")).write(offset, data); });  //map(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", FUNC(eeprom_parallel_28xx_device::read), FUNC(eeprom_parallel_28xx_device::write));
             map.op(0x1800, 0x180f).mirror(0x2780).rw(m_pokey.op(0), (offset) => { return m_pokey.op(0).target.read(offset); }, (offs_t offset, u8 data) => { m_pokey.op(0).target.write(offset, data); });  //map(0x1800, 0x180f).mirror(0x2780).rw(m_pokey[0], FUNC(pokey_device::read), FUNC(pokey_device::write));
             map.op(0x1810, 0x1813).mirror(0x278c).r(leta_r);
             map.op(0x1830, 0x183f).mirror(0x2780).rw(m_pokey.op(1), (offset) => { return m_pokey.op(1).target.read(offset); }, (offs_t offset, u8 data) => { m_pokey.op(1).target.write(offset, data); });  //map(0x1830, 0x183f).mirror(0x2780).rw(m_pokey[1], FUNC(pokey_device::read), FUNC(pokey_device::write));

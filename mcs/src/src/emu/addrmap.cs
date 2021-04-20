@@ -110,11 +110,11 @@ namespace mame
         public write64_delegate        m_wproto64;             // 64-bit write proto-delegate
 
         read8m_delegate         m_rproto8m;             // 8-bit read proto-delegate
-        //read16m_delegate        m_rproto16m;            // 16-bit read proto-delegate
+        read16m_delegate        m_rproto16m;            // 16-bit read proto-delegate
         //read32m_delegate        m_rproto32m;            // 32-bit read proto-delegate
         //read64m_delegate        m_rproto64m;            // 64-bit read proto-delegate
         write8m_delegate        m_wproto8m;             // 8-bit write proto-delegate
-        //write16m_delegate       m_wproto16m;            // 16-bit write proto-delegate
+        write16m_delegate       m_wproto16m;            // 16-bit write proto-delegate
         //write32m_delegate       m_wproto32m;            // 32-bit write proto-delegate
         //write64m_delegate       m_wproto64m;            // 64-bit write proto-delegate
 
@@ -366,8 +366,12 @@ namespace mame
         //address_map_entry &rw(RetR (T::*read)(ParamsR...), const char *read_name, RetW (U::*write)(ParamsW...), const char *write_name)
         //{ return r(emu::detail::make_delegate(*make_pointer<T>(m_devbase), read, read_name)).w(emu::detail::make_delegate(*make_pointer<U>(m_devbase), write, write_name)); }
         public address_map_entry rw(read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(read8sm_delegate rfunc, write8sm_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(read8sm_delegate rfunc, write8smo_delegate wfunc) { return r(rfunc).w(wfunc); }
         public address_map_entry rw(read8smo_delegate rfunc, write8smo_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(read8smo_delegate rfunc, write8sm_delegate wfunc) { return r(rfunc).w(wfunc); }
         public address_map_entry rw(read16_delegate rfunc, write16_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(read16m_delegate rfunc, write16m_delegate wfunc) { return r(rfunc).w(wfunc); }
         public address_map_entry rw(read16s_delegate rfunc, write16s_delegate wfunc) { return r(rfunc).w(wfunc); }
 
         //template <typename T, typename Ret, typename... Params>
@@ -401,6 +405,7 @@ namespace mame
         //address_map_entry &rw(const char *tag, RetR (T::*read)(ParamsR...), const char *read_name, RetW (U::*write)(ParamsW...), const char *write_name)
         //{ return r(emu::detail::make_delegate(m_devbase, tag, read, read_name)).w(emu::detail::make_delegate(m_devbase, tag, write, write_name)); }
         public address_map_entry rw(string tag, read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(string tag, read8m_delegate rfunc, write8sm_delegate wfunc) { return r(rfunc).w(wfunc); }
         public address_map_entry rw(string tag, read8sm_delegate rfunc, write8sm_delegate wfunc) { return r(rfunc).w(wfunc); }
         public address_map_entry rw(string tag, read8smo_delegate rfunc, write8smo_delegate wfunc) { return r(rfunc).w(wfunc); }
 
@@ -700,8 +705,26 @@ namespace mame
         }
 
 
-        //address_map_entry &r(read16m_delegate func);
-        //address_map_entry &w(write16m_delegate func);
+        public address_map_entry r(read16m_delegate func)
+        {
+            assert(func != null);
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_M;
+            m_read.m_bits = 16;
+            m_read.m_name = func.GetMethodInfo().Name;
+            m_rproto16m = func;
+            return this;
+        }
+
+
+        public address_map_entry w(write16m_delegate func)
+        {
+            assert(func != null);
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_M;
+            m_write.m_bits = 16;
+            m_write.m_name = func.GetMethodInfo().Name;
+            m_wproto16m = func;
+            return this;
+        }
 
 
         public address_map_entry r(read16s_delegate func)

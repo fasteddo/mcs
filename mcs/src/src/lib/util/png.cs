@@ -30,7 +30,7 @@ namespace mame
 
         //png_error png_write_bitmap(util::core_file &fp, png_info *info, bitmap_t &bitmap, int palette_length, const rgb_t *palette);
 
-        //png_error mng_capture_start(util::core_file &fp, bitmap_t &bitmap, double rate);
+        //png_error mng_capture_start(util::core_file &fp, bitmap_t &bitmap, unsigned rate);
         public static png_error mng_capture_frame(util.core_file fp, png_info info, bitmap_t bitmap, int palette_length, List<rgb_t> palette) { throw new emu_unimplemented(); }
         public static png_error mng_capture_stop(util.core_file fp) { throw new emu_unimplemented(); }
     }

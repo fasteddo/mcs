@@ -110,6 +110,9 @@ namespace mame.plib
         }
 
 
+        //struct saver_t
+
+
         //entry_t::list_t m_save;
         std.vector<entry_t> m_custom;  //entry_t::list_t m_custom;  //entry_t::list_t m_custom;
 
@@ -122,7 +125,7 @@ namespace mame.plib
         {
             //throw new emu_unimplemented();
 #if false
-            save_state_ptr(owner, stname, datatype_f<C>::f(), v.size(), v.data());
+            save_item_dispatch(owner, state, stname);
 #endif
         }
 
@@ -156,8 +159,17 @@ namespace mame.plib
 #if false
 #endif
         }
+
+
+        //template<typename C>
+        //std::enable_if_t<plib::is_integral<C>::value || std::is_enum<C>::value
+        //        || plib::is_floating_point<C>::value>
+        //save_item_dispatch(const void *owner, C &state, const pstring &stname)
+
+
+        //template<typename C>
+        //std::enable_if_t<!(plib::is_integral<C>::value || std::is_enum<C>::value
+        //        || plib::is_floating_point<C>::value)>
+        //save_item_dispatch(const void *owner, C &state, const pstring &stname)
     }
-
-
-    //template<> void state_manager_t::save_item(const void *owner, callback_t &state, const pstring &stname);
 }

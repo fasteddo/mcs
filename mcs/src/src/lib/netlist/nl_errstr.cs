@@ -22,11 +22,12 @@ namespace mame.netlist
         public static string MF_DUPLICATE_NAME_DEVICE_LIST(params object [] args)   { return PERRMSGV(1, "Error adding {0} to device list. Duplicate name.", args); }
         public static string MF_UNKNOWN_TYPE_FOR_OBJECT(params object [] args)      { return PERRMSGV(1, "Unknown type for object {0},", args); }
         public static string MF_NET_1_DUPLICATE_TERMINAL_2(params object [] args)   { return PERRMSGV(2, "net {0}: duplicate terminal {1}", args); }
+        public static string MF_NULLPTR_FAMILY(params object [] args)               { return PERRMSGV(2, "Unable to determine family for device {0} from model {1}", args); }
         public static string MF_REMOVE_TERMINAL_1_FROM_NET_2(params object [] args) { return PERRMSGV(2, "Can not remove terminal {0} from net {1}.", args); }
         public static string MF_UNKNOWN_PARAM_TYPE(params object [] args)           { return PERRMSGV(1, "Can not determine param_type for {0}", args); }
         public static string MF_ERROR_CONNECTING_1_TO_2(params object [] args)      { return PERRMSGV(2, "Error connecting {0} to {1}", args); }
         public static string MF_NO_SOLVER(params object [] args)                    { return PERRMSGV(0, "No solver found for this netlist although analog elements are present", args); }
-        public static string MF_HND_VAL_NOT_SUPPORTED(params object [] args)        { return PERRMSGV(1, "HINT_NO_DEACTIVATE value not supported: <{0}>", args); }
+        public static string ME_HND_VAL_NOT_SUPPORTED(params object [] args)        { return PERRMSGV(1, "HINT_NO_DEACTIVATE value not supported: <{0}>", args); }
         //PERRMSGV(MW_ROM_NOT_FOUND,                      1, "Rom {1} not found")
 
         // nl_factory.cpp
@@ -60,6 +61,7 @@ namespace mame.netlist
         public static string MF_PARAM_COUNT_MISMATCH_2(params object [] args)       { return PERRMSGV(2, "Parameter count mismatch for {0} - only found {1}", args); }
         public static string MF_PARAM_COUNT_EXCEEDED_2(params object [] args)       { return PERRMSGV(2, "Parameter count exceed for {0} - found {1}", args); }
         public static string MF_UNKNOWN_OBJECT_TYPE_1(params object [] args)        { return PERRMSGV(1, "Unknown object type {0}", args); }
+        public static string MF_UNKNOWN_FAMILY_TYPE_1(params object [] args)        { return PERRMSGV(2, "Unknown family type {0} in model {1}", args); }
         public static string MF_INVALID_NUMBER_CONVERSION_1_2(params object [] args) { return PERRMSGV(2, "Invalid number conversion {0} : {1}", args); }
         public static string MF_INVALID_ENUM_CONVERSION_1_2(params object [] args)  { return PERRMSGV(2, "Invalid element found {0} : {1}", args); }
         public static string MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(params object [] args) { return PERRMSGV(1, "Error adding parameter {0} to parameter list", args); }
@@ -81,12 +83,13 @@ namespace mame.netlist
         public static string MF_MODEL_ERROR_ON_PAIR_1(params object [] args)        { return PERRMSGV(1, "Model error on pair {0}", args); }
         public static string MF_MODEL_PARAMETERS_NOT_UPPERCASE_1_2(params object [] args) { return PERRMSGV(2, "Model parameters should be uppercase:{0} {1}", args); }
         public static string MF_ENTITY_1_NOT_FOUND_IN_MODEL_2(params object [] args) { return PERRMSGV(2, "Entity {0} not found in model {1}", args); }
-        public static string MF_UNKNOWN_NUMBER_FACTOR_IN_1(params object [] args)   { return PERRMSGV(1, "Unknown number factor in: {0}", args); }
+        public static string MF_UNKNOWN_NUMBER_FACTOR_IN_2(params object [] args)   { return PERRMSGV(2, "Unknown number factor in: {0}:{1}", args); }
         public static string MF_MODEL_NUMBER_CONVERSION_ERROR(params object [] args) { return PERRMSGV(4, "Can't convert {0}={1} to {2} for model {3}", args); }
         public static string MF_NOT_FOUND_IN_SOURCE_COLLECTION(params object [] args) { return PERRMSGV(1, "unable to find {0} in sources collection", args); }
 
-        public static string MW_OVERWRITING_PARAM_1_OLD_2_NEW_3(params object [] args) { return PERRMSGV(3, "Overwriting {0} old <{1}> new <{2}>", args); }
-        public static string MW_CONNECTING_1_TO_ITSELF(params object [] args)       { return PERRMSGV(1, "Connecting {0} to itself. This may be right, though", args); }
+        public static string MI_OVERWRITING_PARAM_1_OLD_2_NEW_3(params object [] args) { return PERRMSGV(3, "Overwriting {0} old <{1}> new <{2}>", args); }
+        public static string MW_CONNECTING_1_TO_ITSELF(params object [] args)       { return PERRMSGV(1, "Connecting net {0} to itself.", args); }
+        public static string MW_CONNECTING_1_TO_2_SAME_NET(params object [] args)       { return PERRMSGV(3, "Connecting terminals {0} and {1} which are already both on net {2}", args); }
         public static string ME_NC_PIN_1_WITH_CONNECTIONS(params object [] args)    { return PERRMSGV(1, "Found NC (not connected) terminal {0} with connections", args); }
         public static string MI_ANALOG_OUTPUT_1_WITHOUT_CONNECTIONS(params object [] args) { return PERRMSGV(1, "Found analog output {0} without connections", args); }
         public static string MI_LOGIC_OUTPUT_1_WITHOUT_CONNECTIONS(params object [] args) { return PERRMSGV(1, "Found logic output {0} without connections", args); }
@@ -95,18 +98,29 @@ namespace mame.netlist
 
         public static string ME_TERMINAL_1_WITHOUT_NET(params object [] args) { return PERRMSGV(1, "Found terminal {0} without a net", args); }
         public static string MF_TERMINALS_WITHOUT_NET(params object [] args) { return PERRMSGV(0, "Found terminals without a net", args); }
+        public static string ME_TRISTATE_NO_PROXY_FOUND_2(params object [] args) { return PERRMSGV(2,
+        "Tristate output {0} on device {1} is not connected to a proxy. You " + 
+        "need to set parameter FORCE_TRISTATE_LOGIC for device {1} if " +
+        "tristate enable inputs are all connected to fixed inputs. If this " +
+        "is not the case: Review your netlist. Something is wrong.", args); }
+        public static string ME_TRISTATE_PROXY_FOUND_2(params object [] args) { return PERRMSGV(2,
+        "The tristate output {0} on device {1} is connected to an analog net " +
+        "but has been forced to act as a logic output. Parameter " +
+        " FORCE_TRISTATE_LOGIC for device {1} needs to be disabled!.", args); }
 
         public static string MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(params object [] args) { return PERRMSGV(3, "Found device {0} connected only to railterminals {1}/{2}. Will be removed", args); }
 
         public static string MW_DATA_1_NOT_FOUND(params object [] args) { return PERRMSGV(1, "unable to find data {0} in sources collection", args); }
 
-        public static string MW_DEVICE_NOT_FOUND_FOR_HINT(params object [] args) { return PERRMSGV(1, "Device not found for hint {0}", args); }
-        public static string MW_UNKNOWN_PARAMETER(params object [] args) { return PERRMSGV(1, "Unknown parameter {0}", args); }
+        public static string ME_DEVICE_NOT_FOUND_FOR_HINT(params object [] args) { return PERRMSGV(1, "Device not found for hint {0}", args); }
+        public static string ME_UNKNOWN_PARAMETER(params object [] args) { return PERRMSGV(1, "Unknown parameter {0}", args); }
+        public static string MF_ERRORS_FOUND(params object [] args) { return PERRMSGV(1, "Counted {0} errors which need to be fixed", args); }
 
         // nlid_proxy.cpp
 
-        public static string MI_NO_POWER_TERMINALS_ON_DEVICE_2(params object [] args) { return PERRMSGV(2, "D/A Proxy {0}: Found no valid combination of power terminals on device {1}"); }
-        public static string MI_MULTIPLE_POWER_TERMINALS_ON_DEVICE(params object [] args) { return PERRMSGV(5, "D/A Proxy: Found multiple power terminals on device {0}: {1} {2} {3} {4}"); }
+        public static string MF_NO_POWER_TERMINALS_ON_DEVICE_2(params object [] args) { return PERRMSGV(2, "D/A Proxy {0}: Found no valid combination of power terminals on device {1}", args); }
+        public static string MI_MULTIPLE_POWER_TERMINALS_ON_DEVICE(params object [] args) { return PERRMSGV(5, "D/A Proxy: Found multiple power terminals on device {0}: {1} {2} {3} {4}", args); }
+        public static string MF_NULLPTR_FAMILY_NP(params object [] args) { return PERRMSGV(1, "Encountered nullptr to family in {0}", args); }
 
         // nld_matrix_solver.cpp
 
@@ -132,6 +146,14 @@ namespace mame.netlist
         // nld_mosfet.cpp
 
         //PERRMSGV(MW_MOSFET_THRESHOLD_VOLTAGE,           1, "Mosfet: Threshold voltage not specified for {1}")
+
+        // nld_bjt.cpp
+
+        public static string MF_DEVICE_FRY_1(params object [] args) { return PERRMSGV(1,
+        "Please don't fry device {0}. Most likely this error is caused by the" +
+        " fact that you want to exclude the analog device from the netlist." +
+        " This is not the right approach. If you want to exclude the device," +
+        " exclude the device altogether, i.e. by using #ifdef/#if statements.", args); }
 
         // nl_tool.cpp
 

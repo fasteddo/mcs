@@ -55,8 +55,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(centiped_state::irq_ack_w)
-        void irq_ack_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void irq_ack_w(uint8_t data)
         {
             m_maincpu.target.set_input_line(0, CLEAR_LINE);
         }
@@ -116,100 +115,25 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(centiped_state::centiped_IN0_r)
-        u8 centiped_IN0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t centiped_IN0_r()
         {
-            return (u8)read_trackball(0, 0);
+            return (uint8_t)read_trackball(0, 0);
         }
 
 
-        //READ8_MEMBER(centiped_state::centiped_IN2_r)
-        u8 centiped_IN2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t centiped_IN2_r()
         {
-            return (u8)read_trackball(1, 2);
+            return (uint8_t)read_trackball(1, 2);
         }
 
 
-#if false
-        READ8_MEMBER(centiped_state::milliped_IN1_r)
-        {
-            return read_trackball(1, 1);
-        }
-#endif
-
-#if false
-        READ8_MEMBER(centiped_state::milliped_IN2_r)
-        {
-            uint8_t data = ioport("IN2")->read();
-
-            /* MSH - 15 Feb, 2007
-             * The P2 X Joystick inputs are not properly handled in
-             * the Milliped code, so we are forcing the P2 inputs
-             * into the P1 Joystick handler, this require remapping
-             * the inputs, and has the good side effect of disabling
-             * the actual Joy1 inputs while control_select is no zero.
-             */
-            if (m_control_select != 0)
-            {
-                /* Bottom 4 bits is our joystick inputs */
-                uint8_t joy2data = ioport("IN3")->read() & 0x0f;
-                data = data & 0xf0; /* Keep the top 4 bits */
-                data |= (joy2data & 0x0a) >> 1; /* flip left and up */
-                data |= (joy2data & 0x05) << 1; /* flip right and down */
-            }
-            return data;
-        }
-#endif
-
-#if false
-        WRITE_LINE_MEMBER(centiped_state::input_select_w)
-        {
-            m_dsw_select = !state;
-        }
-#endif
-
-#if false
-        /* used P2 controls if 1, P1 controls if 0 */
-        WRITE_LINE_MEMBER(centiped_state::control_select_w)
-        {
-            m_control_select = state;
-        }
-#endif
-
-
-#if false
-        READ8_MEMBER(centiped_state::mazeinv_input_r)
-        {
-            static const char *const sticknames[] = { "STICK0", "STICK1", "STICK2", "STICK3" };
-
-            return ioport(sticknames[m_control_select])->read();
-        }
-#endif
-
-
-#if false
-        WRITE8_MEMBER(centiped_state::mazeinv_input_select_w)
-        {
-            m_control_select = offset & 3;
-        }
-#endif
-
-#if false
-        READ8_MEMBER(centiped_state::bullsdrt_data_port_r)
-        {
-            switch (space.device().safe_pc())
-            {
-                case 0x0033:
-                case 0x6b19:
-                    return 0x01;
-
-                default:
-                    break;
-            }
-
-            return 0;
-        }
-#endif
+        //uint8_t centiped_state::milliped_IN1_r()
+        //uint8_t centiped_state::milliped_IN2_r()
+        //WRITE_LINE_MEMBER(centiped_state::input_select_w)
+        //WRITE_LINE_MEMBER(centiped_state::control_select_w)
+        //uint8_t centiped_state::mazeinv_input_r()
+        //void centiped_state::mazeinv_input_select_w(offs_t offset, uint8_t data)
+        //uint8_t centiped_state::bullsdrt_data_port_r()
 
 
         /*************************************
@@ -218,8 +142,7 @@ namespace mame
          *
          *************************************/
 
-        //READ8_MEMBER(centiped_state::caterplr_unknown_r)
-        u8 caterplr_unknown_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t caterplr_unknown_r()
         {
             throw new emu_unimplemented();
 #if false
@@ -265,14 +188,13 @@ namespace mame
          *
          *************************************/
 
-        //READ8_MEMBER(centiped_state::earom_read)
-        u8 earom_read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t earom_read()
         {
             return m_earom.target.data();
         }
 
-        //WRITE8_MEMBER(centiped_state::earom_write)
-        void earom_write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+
+        void earom_write(offs_t offset, uint8_t data)
         {
             m_earom.target.set_address((uint8_t)(offset & 0x3f));
             m_earom.target.set_data(data);

@@ -244,8 +244,7 @@ namespace mame
 
         ***************************************************************************/
 
-        //WRITE8_MEMBER(dkong_state::dkong_videoram_w)
-        void dkong_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_videoram_w(offs_t offset, uint8_t data)
         {
             if (m_video_ram[offset] != data)
             {
@@ -255,27 +254,11 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(dkong_state::dkongjr_gfxbank_w)
-        //{
-        //    if (m_gfx_bank != (data & 0x01))
-        //    {
-        //        m_gfx_bank = data & 0x01;
-        //        m_bg_tilemap->mark_all_dirty();
-        //    }
-        //}
-
-        //WRITE8_MEMBER(dkong_state::dkong3_gfxbank_w)
-        //{
-        //    if (m_gfx_bank != (~data & 0x01))
-        //    {
-        //        m_gfx_bank = ~data & 0x01;
-        //        m_bg_tilemap->mark_all_dirty();
-        //    }
-        //}
+        //void dkong_state::dkongjr_gfxbank_w(uint8_t data)
+        //void dkong_state::dkong3_gfxbank_w(uint8_t data)
 
 
-        //WRITE8_MEMBER(dkong_state::dkong_palettebank_w)
-        void dkong_palettebank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_palettebank_w(offs_t offset, uint8_t data)
         {
             int newbank;
 
@@ -294,29 +277,25 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(dkong_state::radarscp_grid_enable_w)
-        void radarscp_grid_enable_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void radarscp_grid_enable_w(uint8_t data)
         {
             throw new emu_unimplemented();
         }
 
 
-        //WRITE8_MEMBER(dkong_state::radarscp_grid_color_w)
-        void radarscp_grid_color_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void radarscp_grid_color_w(uint8_t data)
         {
             throw new emu_unimplemented();
         }
 
 
-        //WRITE8_MEMBER(dkong_state::dkong_flipscreen_w)
-        void dkong_flipscreen_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_flipscreen_w(uint8_t data)
         {
             m_flip = (uint8_t)(data & 0x01);
         }
 
 
-        //WRITE8_MEMBER(dkong_state::dkong_spritebank_w)
-        void dkong_spritebank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_spritebank_w(uint8_t data)
         {
             m_sprite_bank = (uint8_t)(data & 0x01);
         }

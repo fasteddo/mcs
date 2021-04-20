@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using nlmempool = mame.plib.mempool;
+using unsigned = System.UInt32;
 
 
 namespace mame.netlist
@@ -13,15 +13,14 @@ namespace mame.netlist
     {
         public abstract class truthtable_base_element_t : factory.element_t
         {
-            public std.vector<string> m_desc;
-            public string m_family_name;
-            public logic_family_desc_t m_family_desc;
+            std.vector<string> m_desc;
+            string m_family_name;
 
 
-            public truthtable_base_element_t(string name, string classname, string def_param, string sourcefile)
-                : base(name, classname, def_param, sourcefile)
+            public truthtable_base_element_t(string name, properties props)
+                : base(name, props)
             {
-                m_family_desc = nl_base_global.family_TTL();
+                m_family_name = config.DEFAULT_LOGIC_FAMILY();
             }
         }
 
@@ -30,53 +29,46 @@ namespace mame.netlist
         {
             //#define ENTRYY(n, m, s)    case (n * 100 + m): \
             //    { using xtype = devices::netlist_factory_truthtable_t<n, m>; \
-            //        ret = plib::make_unique<xtype>(desc.name, desc.classname, desc.def_param, s); } break
+            //        auto cs=s; \
+            //        ret = plib::make_unique<xtype, host_arena>(desc.name, std::move(cs)); } \
+            //        break
 
             //#define ENTRY(n, s) ENTRYY(n, 1, s); ENTRYY(n, 2, s); ENTRYY(n, 3, s); \
             //                    ENTRYY(n, 4, s); ENTRYY(n, 5, s); ENTRYY(n, 6, s); \
             //                    ENTRYY(n, 7, s); ENTRYY(n, 8, s)
 
-            // FIXME: the returned element is missing a pointer to the family ...
-            public static truthtable_base_element_t truthtable_create(tt_desc desc, string sourcefile)  //plib::unique_ptr<truthtable_base_element_t> truthtable_create(tt_desc &desc, const pstring &sourcefile)
-            {
-                truthtable_base_element_t ret;  //plib::unique_ptr<truthtable_base_element_t> ret;
 
+            public static truthtable_base_element_t truthtable_create(tt_desc desc, properties props)
+            {
+                truthtable_base_element_t ret;
+
+                // re-write the case statement
+                throw new emu_unimplemented();
+#if false
                 //switch (desc.ni * 100 + desc.no)
                 //{
-                //    ENTRY(1, sourcefile);
-                //    ENTRY(2, sourcefile);
-                //    ENTRY(3, sourcefile);
-                //    ENTRY(4, sourcefile);
-                //    ENTRY(5, sourcefile);
-                //    ENTRY(6, sourcefile);
-                //    ENTRY(7, sourcefile);
-                //    ENTRY(8, sourcefile);
-                //    ENTRY(9, sourcefile);
-                //    ENTRY(10, sourcefile);
-                //    ENTRY(11, sourcefile);
-                //    ENTRY(12, sourcefile);
+                //    ENTRY(1, props);
+                //    ENTRY(2, props);
+                //    ENTRY(3, props);
+                //    ENTRY(4, props);
+                //    ENTRY(5, props);
+                //    ENTRY(6, props);
+                //    ENTRY(7, props);
+                //    ENTRY(8, props);
+                //    ENTRY(9, props);
+                //    ENTRY(10, props);
+                //    ENTRY(11, props);
+                //    ENTRY(12, props);
                 //    default:
                 //        pstring msg = plib::pfmt("unable to create truthtable<{1},{2}>")(desc.ni)(desc.no);
                 //        nl_assert_always(false, msg.c_str());
                 //}
 
-                // re-write of the above case statement
-                if (desc.ni >= 1 && desc.ni <= 12 &&
-                    desc.no >= 1 && desc.no <= 8)
-                {
-                    ret = new devices.netlist_factory_truthtable_t(desc.ni, desc.no, desc.name, desc.classname, desc.def_param, sourcefile);
-                }
-                else
-                {
-                    string msg = new plib.pfmt("unable to create truthtable<{0},{1}>").op(desc.ni, desc.no);
-                    nl_config_global.nl_assert_always(false, msg);
-                    ret = new devices.netlist_factory_truthtable_t(0, 0, null, null, null, null);
-                }
-
-                ret.m_desc = desc.desc;
-                ret.m_family_name = desc.family;
+                ret->m_desc = desc.desc;
+                ret->m_family_name = (!desc.family.empty() ? desc.family : pstring(config::DEFAULT_LOGIC_FAMILY()));
 
                 return ret;
+#endif
             }
         }
     }
@@ -84,6 +76,10 @@ namespace mame.netlist
 
     namespace devices
     {
+        //template<std::size_t m_NI, std::size_t m_NO>
+        //class NETLIB_NAME(truthtable_t) : public device_t
+
+
         // ----------------------------------------------------------------------------------------
         // Truthtable factory ....
         // ----------------------------------------------------------------------------------------
@@ -94,19 +90,22 @@ namespace mame.netlist
 
 
             // template parameters
-            UInt32 m_NI;
-            UInt32 m_NO;
+            unsigned m_NI;
+            unsigned m_NO;
 
 
-            public netlist_factory_truthtable_t(UInt32 m_NI, UInt32 m_NO, string name, string classname, string def_param, string sourcefile)
-                : base(name, classname, def_param, sourcefile)
+            //device_arena::unique_ptr<typename nld_truthtable_t<m_NI, m_NO>::truthtable_t> m_ttbl;
+
+
+            netlist_factory_truthtable_t(unsigned m_NI, unsigned m_NO, string name, factory.properties props)
+                : base(name, props)
             {
                 this.m_NI = m_NI;
                 this.m_NO = m_NO;
             }
 
 
-            public override device_t make_device(nlmempool pool, netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> make_device(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override
+            public override core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name)  //device_arena::unique_ptr<core_device_t> make_device(device_arena &pool, netlist_state_t &anetlist, const pstring &name) override
             {
                 throw new emu_unimplemented();
             }

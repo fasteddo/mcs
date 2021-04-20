@@ -204,10 +204,9 @@ namespace mame
         intref m_icount = new intref();  //int         m_icount;
 
         /* Memory spaces */
-        address_space m_program;
-        memory_access_cache m_cache;  //memory_access_cache<0, 0, ENDIANNESS_LITTLE> *m_cache;
-        address_space m_data;
-        address_space m_io;
+        memory_access.cache m_program = new memory_access(12, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_cache;  //memory_access<12, 0, 0, ENDIANNESS_LITTLE>::cache m_program;
+        memory_access.specific m_data = new memory_access(8, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<8, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
+        memory_access.specific m_io = new memory_access(8, 0, 0, endianness_t.ENDIANNESS_LITTLE).m_specific;  //memory_access<8, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
 
         required_shared_ptr_uint8_t m_dataptr;
 
@@ -764,10 +763,10 @@ namespace mame
             /* FIXME: Current implementation suboptimal */
             m_ea = m_int_rom_size != 0 ? (uint8_t)0 : (uint8_t)1;
 
-            m_program = m_dimemory.space(AS_PROGRAM);
-            m_cache = m_program.cache(0, 0, (int)endianness_t.ENDIANNESS_LITTLE);
-            m_data = m_dimemory.space(AS_DATA);
-            m_io = (m_feature_mask & EXT_BUS_FEATURE) != 0 ? m_dimemory.space(AS_IO) : null;
+            m_dimemory.space(AS_PROGRAM).cache(m_program.Width, m_program.AddrShift, m_program.Endian, m_program);
+            m_dimemory.space(AS_DATA).specific(m_data.Level, m_data.Width, m_data.AddrShift, m_data.Endian, m_data);
+            if ((m_feature_mask & EXT_BUS_FEATURE) != 0)
+                m_dimemory.space(AS_IO).specific(m_io.Level, m_io.Width, m_io.AddrShift, m_io.Endian, m_io);
 
             // resolve callbacks
             m_port_in_cb.resolve_all_safe(0xff);
@@ -846,10 +845,6 @@ namespace mame
 
         protected override void device_stop()
         {
-            if (m_io != null) m_io.Dispose();
-            if (m_data != null) m_data.Dispose();
-            if (m_cache != null) m_cache.Dispose();
-            if (m_program != null) m_program.Dispose();
         }
 
 
@@ -998,7 +993,7 @@ namespace mame
         {
             uint16_t address = m_pc;
             m_pc = (uint16_t)(((m_pc + 1) & 0x7ff) | (m_pc & 0x800));
-            return m_cache.read_byte(address);
+            return m_program.read_byte(address);
         }
 
 
@@ -1010,7 +1005,7 @@ namespace mame
         {
             uint16_t address = m_pc;
             m_pc = (uint16_t)(((m_pc + 1) & 0x7ff) | (m_pc & 0x800));
-            return m_cache.read_byte(address);
+            return m_program.read_byte(address);
         }
 
 
@@ -1197,7 +1192,7 @@ namespace mame
 
                 // force JNI to be taken (hack)
                 if (m_irq_polled)
-                    m_pc = (uint16_t)(((m_pc - 1) & 0xf00) | m_cache.read_byte(m_pc - 1U));
+                    m_pc = (uint16_t)(((m_pc - 1) & 0xf00) | m_program.read_byte(m_pc - 1U));
 
                 /* transfer to location 0x03 */
                 push_pc_psw();

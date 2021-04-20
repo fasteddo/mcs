@@ -22,9 +22,6 @@ namespace mame.netlist.analog
 
     //template <capacitor_e TYPE>
     //class generic_capacitor
-    //{
-    //};
-
 
     //template <>
     class generic_capacitor_variable  //<capacitor_e::VARIABLE_CAPACITY>
@@ -35,7 +32,7 @@ namespace mame.netlist.analog
         nl_fptype m_gmin;
 
 
-        generic_capacitor_variable(device_t dev, string name)
+        generic_capacitor_variable(core_device_t dev, string name)
         {
             m_h = new state_var<nl_fptype>(dev, name + ".m_h", nlconst.zero());
             m_c = new state_var<nl_fptype>(dev, name + ".m_c", nlconst.zero());
@@ -87,7 +84,7 @@ namespace mame.netlist.analog
         nl_fptype m_gmin;
 
 
-        public generic_capacitor_constant(device_t dev, string name)
+        public generic_capacitor_constant(core_device_t dev, string name)
         {
             m_h = new state_var<nl_fptype>(dev, name + ".m_h", nlconst.zero());
             m_v = new state_var<nl_fptype>(dev, name + ".m_v", nlconst.zero());
@@ -124,7 +121,7 @@ namespace mame.netlist.analog
         nl_fptype m_gmin;
 
 
-        public generic_capacitor_const(device_t dev, string name)
+        public generic_capacitor_const(core_device_t dev, string name)
         {
             m_gmin = nlconst.zero();
 
@@ -178,27 +175,27 @@ namespace mame.netlist.analog
 #endif
 
 
-        public generic_diode(diode_e TYPE_, device_t dev, string name)
+        public generic_diode(diode_e TYPE_, core_device_t dev, string name)
         {
             TYPE = TYPE_;
 
-            m_Vd = new state_var<nl_fptype>(dev, name + ".m_Vd", nlconst.magic(0.7));
+            m_Vd = new state_var<nl_fptype>(dev, name + ".m_Vd", nlconst.diode_start_voltage());
             m_Id = new state_var<nl_fptype>(dev, name + ".m_Id", nlconst.zero());
-            m_G = new state_var<nl_fptype>(dev,  name + ".m_G", nlconst.magic(1e-15));
+            m_G = new state_var<nl_fptype>(dev,  name + ".m_G", nlconst.cgminalt());
             m_Vt = nlconst.zero();
             m_Vmin = nlconst.zero(); // not used in MOS model
             m_Is = nlconst.zero();
             m_logIs = nlconst.zero();
-            m_gmin = nlconst.magic(1e-15);
+            m_gmin = nlconst.cgminalt();
             m_VtInv = nlconst.zero();
             m_Vcrit = nlconst.zero();
 
 
             set_param(
-                nlconst.magic(1e-15)
-              , nlconst.magic(1)
-              , nlconst.magic(1e-15)
-              , nlconst.magic(300.0));
+                nlconst.np_Is()
+              , nlconst.one()
+              , nlconst.cgminalt()
+              , nlconst.T0());
             //m_name = name;
         }
 
@@ -225,7 +222,7 @@ namespace mame.netlist.analog
                     const nl_fptype old = std::max(nlconst::zero(), m_Vd());
                     const nl_fptype d = std::min(+fp_constants<nl_fptype>::DIODE_MAXDIFF(), nVd - old);
                     const nl_fptype a = plib::abs(d) * m_VtInv;
-                    m_Vd = old + nlconst::magic(d < 0 ? -1.0 : 1.0) * plib::log1p(a) * m_Vt;
+                    m_Vd = old + plib::signum(d) * plib::log1p(a) * m_Vt;
                 }
                 else
                     m_Vd = std::max(-fp_constants<nl_fptype>::DIODE_MAXDIFF(), nVd);
@@ -274,7 +271,7 @@ namespace mame.netlist.analog
                 }
                 else // log stepping should already be done in mosfet
                 {
-                    var IseVDVt = plib.pglobal.exp(std.min(+fp_constants.DIODE_MAXVOLT(), m_logIs + m_Vd.op * m_VtInv));
+                    var IseVDVt = plib.pglobal.exp(std.min(+fp_constants_double.DIODE_MAXVOLT(), m_logIs + m_Vd.op * m_VtInv));
                     m_Id.op = IseVDVt - m_Is;
                     m_G.op = IseVDVt * m_VtInv + m_gmin;
                 }
@@ -288,11 +285,11 @@ namespace mame.netlist.analog
             m_logIs = plib.pglobal.log(Is);
             m_gmin = gmin;
 
-            m_Vt = n * temp * nlconst.k_b() / nlconst.Q_e();
+            m_Vt = nlconst.np_VT(n, temp);
             m_VtInv = plib.pglobal.reciprocal(m_Vt);
 
 #if USE_TEXTBOOK_DIODE
-            m_Vmin = nlconst::magic(-5.0) * m_Vt;
+            m_Vmin = nlconst::diode_min_cutoff_mult() * m_Vt;
             // Vcrit : f(V) has smallest radius of curvature rho(V) == min(rho(v))
             m_Vcrit = m_Vt * plib::log(m_Vt / m_Is / nlconst::sqrt2());
 #else
@@ -305,7 +302,7 @@ namespace mame.netlist.analog
             // ln(P/Is) = ln(V)+V/Vt ~= V - 1 + V/vt
             // V = (1+ln(P/Is))/(1 + 1/Vt)
 
-            m_Vcrit = (1.0 + plib.pglobal.log(0.5 / m_Is)) / (1.0 + m_VtInv);
+            m_Vcrit = (nlconst.one() + plib.pglobal.log(nlconst.half() / m_Is)) / (nlconst.one() + m_VtInv);
             //printf("Vcrit: %f\n", m_Vcrit);
             m_Icrit_p_Is = plib.pglobal.exp(m_logIs + m_Vcrit * m_VtInv);
             //m_Icrit = plib::exp(m_logIs + m_Vcrit * m_VtInv) - m_Is;

@@ -132,24 +132,21 @@ namespace mame
 
         ***************************************************************************/
 
-        //WRITE8_MEMBER(_1942_state::_1942_fgvideoram_w)
-        void _1942_fgvideoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_fgvideoram_w(offs_t offset, uint8_t data)
         {
             m_fg_videoram[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);
         }
 
 
-        //WRITE8_MEMBER(_1942_state::_1942_bgvideoram_w)
-        void _1942_bgvideoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_bgvideoram_w(offs_t offset, uint8_t data)
         {
             m_bg_videoram[offset] = data;
             m_bg_tilemap.mark_tile_dirty((offset & 0x0f) | ((offset >> 1) & 0x01f0));
         }
 
 
-        //WRITE8_MEMBER(_1942_state::_1942_palette_bank_w)
-        void _1942_palette_bank_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_palette_bank_w(uint8_t data)
         {
             if (m_palette_bank != data)
             {
@@ -159,16 +156,14 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(_1942_state::_1942_scroll_w)
-        void _1942_scroll_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_scroll_w(offs_t offset, uint8_t data)
         {
             m_scroll[offset] = data;
             m_bg_tilemap.set_scrollx(0, m_scroll[0] | (m_scroll[1] << 8));
         }
 
 
-        //WRITE8_MEMBER(_1942_state::_1942_c804_w)
-        void _1942_c804_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void _1942_c804_w(uint8_t data)
         {
             /* bit 7: flip screen
                bit 4: cpu B reset

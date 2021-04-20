@@ -12,6 +12,7 @@ using u32 = System.UInt32;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -93,27 +94,34 @@ namespace mame
         //};
 
 
-        static string OP(string name) { return name; }  //#define OP(name)        (&m6805_base_device::name)
-        static string OP_T(string name) { return name + "_true"; }  //#define OP_T(name)      (&m6805_base_device::name<true>)
-        static string OP_F(string name) { return name + "_false"; }  //#define OP_F(name)      (&m6805_base_device::name<false>)
-        static string OP_IM(string name) { return name + "_IM"; }  //#define OP_IM(name)     (&m6805_base_device::name<addr_mode::IM>)
-        static string OP_DI(string name) { return name + "_DI"; }  //#define OP_DI(name)     (&m6805_base_device::name<addr_mode::DI>)
-        static string OP_EX(string name) { return name + "_EX"; }  //#define OP_EX(name)     (&m6805_base_device::name<addr_mode::EX>)
-        static string OP_IX(string name) { return name + "_IX"; }  //#define OP_IX(name)     (&m6805_base_device::name<addr_mode::IX>)
-        static string OP_IX1(string name) { return name + "_IX1"; }  //#define OP_IX1(name)    (&m6805_base_device::name<addr_mode::IX1>)
-        static string OP_IX2(string name) { return name + "_IX2"; }  //#define OP_IX2(name)    (&m6805_base_device::name<addr_mode::IX2>)
+        static string OP(string name) { return string.Format("{0}_{1}", name, s_big ? "true" : "false"); }  //#define OP(name)        (&m6805_base_device::name)
+        static string OPN(string name, int n) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", n); }  //#define OPN(name,n)     (&m6805_base_device::name<big, n>)
+        static string OP_T(string name) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", "true"); }  //#define OP_T(name)      (&m6805_base_device::name<true>)
+        static string OP_F(string name) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", "false"); }  //#define OP_F(name)      (&m6805_base_device::name<false>)
+        static string OP_IM(string name) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", "IM"); }  //#define OP_IM(name)     (&m6805_base_device::name<addr_mode::IM>)
+        static string OP_DI(string name) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", "DI"); }  //#define OP_DI(name)     (&m6805_base_device::name<addr_mode::DI>)
+        static string OP_EX(string name) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", "EX"); }  //#define OP_EX(name)     (&m6805_base_device::name<addr_mode::EX>)
+        static string OP_IX(string name) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", "IX"); }  //#define OP_IX(name)     (&m6805_base_device::name<addr_mode::IX>)
+        static string OP_IX1(string name) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", "IX1"); }  //#define OP_IX1(name)    (&m6805_base_device::name<addr_mode::IX1>)
+        static string OP_IX2(string name) { return string.Format("{0}_{1}_{2}", name, s_big ? "true" : "false", "IX2"); }  //#define OP_IX2(name)    (&m6805_base_device::name<addr_mode::IX2>)
 
-        protected static op_handler_func [] s_hmos_ops;
 
-        void init_s_hmos_ops()
+        // opcode tables
+
+        static bool s_big;  //#define big false
+
+        protected static op_handler_func [] s_hmos_s_ops;  //static op_handler_table s_hmos_s_ops;
+
+        void init_s_hmos_s_ops()
         {
-            string [] hmos_ops = new string []
+            s_big = false;
+            string [] hmos_s_ops = new string []
             {
                 /*      0/8          1/9          2/A          3/B          4/C          5/D          6/E          7/F */
-                /* 0 */ OP("brset_0"), OP("brclr_0"), OP("brset_1"), OP("brclr_1"), OP("brset_2"), OP("brclr_2"), OP("brset_3"), OP("brclr_3"),
-                        OP("brset_4"), OP("brclr_4"), OP("brset_5"), OP("brclr_5"), OP("brset_6"), OP("brclr_6"), OP("brset_7"), OP("brclr_7"),
-                /* 1 */ OP("bset_0"),  OP("bclr_0"),  OP("bset_1"),  OP("bclr_1"),  OP("bset_2"),  OP("bclr_2"),  OP("bset_3"),  OP("bclr_3"),
-                        OP("bset_4"),  OP("bclr_4"),  OP("bset_5"),  OP("bclr_5"),  OP("bset_6"),  OP("bclr_6"),  OP("bset_7"),  OP("bclr_7"),
+                /* 0 */ OPN("brset",0),OPN("brclr",0),OPN("brset",1),OPN("brclr",1),OPN("brset",2),OPN("brclr",2),OPN("brset",3),OPN("brclr",3),
+                        OPN("brset",4),OPN("brclr",4),OPN("brset",5),OPN("brclr",5),OPN("brset",6),OPN("brclr",6),OPN("brset",7),OPN("brclr",7),
+                /* 1 */ OPN("bset",0), OPN("bclr",0), OPN("bset",1), OPN("bclr",1), OPN("bset",2), OPN("bclr",2), OPN("bset",3), OPN("bclr",3),
+                        OPN("bset",4), OPN("bclr",4), OPN("bset",5), OPN("bclr",5), OPN("bset",6), OPN("bclr",6), OPN("bset",7), OPN("bclr",7),
                 /* 2 */ OP_T("bra"),   OP_F("bra"),   OP_T("bhi"),   OP_F("bhi"),   OP_T("bcc"),   OP_F("bcc"),   OP_T("bne"),   OP_F("bne"),
                         OP_T("bhcc"),  OP_F("bhcc"),  OP_T("bpl"),   OP_F("bpl"),   OP_T("bmc"),   OP_F("bmc"),   OP_T("bil"),   OP_F("bil"),
                 /* 3 */ OP_DI("neg"),  OP("illegal"), OP("illegal"), OP_DI("com"),  OP_DI("lsr"),  OP("illegal"), OP_DI("ror"),  OP_DI("asr"),
@@ -145,14 +153,42 @@ namespace mame
             };
 
             // https://www.red-gate.com/simple-talk/blogs/introduction-to-open-instance-delegates/
-            s_hmos_ops = new op_handler_func[hmos_ops.Length];
-            for (int i = 0; i < hmos_ops.Length; i++)
+            s_hmos_s_ops = new op_handler_func[hmos_s_ops.Length];
+            for (int i = 0; i < hmos_s_ops.Length; i++)
             {
-                string methodName = hmos_ops[i];
+                string methodName = hmos_s_ops[i];
                 MethodInfo methodInfo = typeof(m6805_base_device).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-                s_hmos_ops[i] = (op_handler_func)methodInfo.CreateDelegate(typeof(op_handler_func), null);
+                s_hmos_s_ops[i] = (op_handler_func)methodInfo.CreateDelegate(typeof(op_handler_func), null);
             }
         }
+
+
+        protected static op_handler_func [] s_hmos_b_ops;  //static op_handler_table s_hmos_b_ops;
+
+        void init_s_hmos_b_ops()
+        {
+            throw new emu_unimplemented();
+
+
+            s_big = true;
+            string [] hmos_b_ops = new string []
+            {
+            };
+
+            // https://www.red-gate.com/simple-talk/blogs/introduction-to-open-instance-delegates/
+            s_hmos_b_ops = new op_handler_func[hmos_b_ops.Length];
+            for (int i = 0; i < hmos_b_ops.Length; i++)
+            {
+                string methodName = hmos_b_ops[i];
+                MethodInfo methodInfo = typeof(m6805_base_device).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+                s_hmos_b_ops[i] = (op_handler_func)methodInfo.CreateDelegate(typeof(op_handler_func), null);
+            }
+        }
+
+
+        //static op_handler_table s_cmos_b_ops;
+        //static op_handler_table s_hc_s_ops;
+        //static op_handler_table s_hc_b_ops;
 
 
         protected static readonly u8 [] s_hmos_cycles = new u8 []
@@ -175,6 +211,10 @@ namespace mame
             /*E*/  5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 4, 8, 5, 6,
             /*F*/  4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4, 4, 3, 7, 4, 5
         };
+
+
+        //static cycle_count_table s_cmos_cycles;
+        //static cycle_count_table s_hc_cycles;
 
 
         //typedef void (m6805_base_device::*op_handler_func)();
@@ -233,11 +273,21 @@ namespace mame
         }
 
 
+        //static op_handler_table s_hmos_s_ops;
+        //static op_handler_table s_hmos_b_ops;
+        //static op_handler_table s_cmos_b_ops;
+        //static op_handler_table s_hc_s_ops;
+        //static op_handler_table s_hc_b_ops;
+        //static cycle_count_table s_hmos_cycles;
+        //static cycle_count_table s_cmos_cycles;
+        //static cycle_count_table s_hc_cycles;
+
+
         device_memory_interface_m6805_base m_dimemory;
         public device_state_interface_m6805_base m_distate;
 
 
-        configuration_params m_params;
+        protected configuration_params m_params;
         u32 m_min_cycles;
         u32 m_max_cycles;
 
@@ -262,8 +312,10 @@ namespace mame
         protected intref m_icount = new intref();  //int     m_icount;
 
         // address spaces
-        address_space m_program;
-        memory_access_cache m_cache;  //memory_access_cache<0, 0, ENDIANNESS_BIG> *m_cache;
+        memory_access.cache m_cprogram16 = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_BIG).m_cache;  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_cprogram16;
+        memory_access.cache m_cprogram13 = new memory_access(13, 0, 0, endianness_t.ENDIANNESS_BIG).m_cache;  //memory_access<13, 0, 0, ENDIANNESS_BIG>::cache m_cprogram13;
+        memory_access.specific m_program16 = new memory_access(16, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access<16, 0, 0, ENDIANNESS_BIG>::specific m_program16;
+        memory_access.specific m_program13 = new memory_access(13, 0, 0, endianness_t.ENDIANNESS_BIG).m_specific;  //memory_access<13, 0, 0, ENDIANNESS_BIG>::specific m_program13;
 
 
         protected m6805_base_device(
@@ -284,7 +336,7 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_m6805_base>();
 
 
-            init_s_hmos_ops();
+            init_s_hmos_s_ops();
 
 
             m_params = params_;
@@ -311,7 +363,7 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_m6805_base>();
 
 
-            init_s_hmos_ops();
+            init_s_hmos_s_ops();
 
 
             m_params = params_;
@@ -333,8 +385,16 @@ namespace mame
         // device-level overrides
         protected override void device_start()
         {
-            m_program = m_dimemory.space(AS_PROGRAM);
-            m_cache = m_program.cache(0, 0, (int)endianness_t.ENDIANNESS_BIG);
+            if (m_params.m_addr_width > 13)
+            {
+                m_dimemory.space(AS_PROGRAM).cache(m_cprogram16.Width, m_cprogram16.AddrShift, m_cprogram16.Endian, m_cprogram16);
+                m_dimemory.space(AS_PROGRAM).specific(m_program16.Level, m_program16.Width, m_program16.AddrShift, m_program16.Endian, m_program16);
+            }
+            else
+            {
+                m_dimemory.space(AS_PROGRAM).cache(m_cprogram13.Width, m_cprogram13.AddrShift, m_cprogram13.Endian, m_cprogram13);
+                m_dimemory.space(AS_PROGRAM).specific(m_program13.Level, m_program13.Width, m_program13.AddrShift, m_program13.Endian, m_program13);
+            }
 
             // get the minimum not including the zero placeholders for illegal instructions
             //m_min_cycles = *std::min_element(
@@ -394,7 +454,10 @@ namespace mame
             /* IRQ disabled */
             SEI();
 
-            rm16((u32)(0xfffe & m_params.m_vector_mask), ref m_pc);
+            if (m_params.m_addr_width > 13)
+                rm16(true, (u32)(0xfffe & m_params.m_vector_mask), ref m_pc);
+            else
+                rm16(false, (u32)(0xfffe & m_params.m_vector_mask), ref m_pc);
         }
 
 
@@ -421,7 +484,7 @@ namespace mame
 
                 debugger_instruction_hook(PC);
 
-                u8 ireg = (u8)rdop(PC++);
+                u8 ireg = m_params.m_addr_width > 13 ? (u8)rdop(true, PC++) : (u8)rdop(false, PC++);
 
                 m_params.m_ops[ireg](this);
                 m_icount.i -= m_params.m_cycles[ireg];
@@ -473,15 +536,15 @@ namespace mame
         void set_hnzc8(u8 a, u8 b, u16 r)       { set_h(a, b, (u8)r); set_nzc8(r); }
 
 
-        UInt32 rdmem(u32 addr)         { return (UInt32)m_program.read_byte(addr); }
-        void wrmem(u32 addr, u8 value) { m_program.write_byte(addr, value); }
-        UInt32 rdop(u32 addr)          { return (UInt32)m_cache.read_byte(addr); }
-        UInt32 rdop_arg(u32 addr)      { return (UInt32)m_cache.read_byte(addr); }
+        unsigned rdmem(bool big, u32 addr)       { return big ? m_program16.read_byte(addr) : m_program13.read_byte(addr); }  //template <bool big> unsigned    rdmem(u32 addr)             { return big ? m_program16.read_byte(addr) : m_program13.read_byte(addr); }
+        void wrmem(bool big, u32 addr, u8 value) { if (big) m_program16.write_byte(addr, value); else m_program13.write_byte(addr, value); }  //template <bool big> void        wrmem(u32 addr, u8 value)   { if(big) m_program16.write_byte(addr, value); else m_program13.write_byte(addr, value); }
+        unsigned rdop(bool big, u32 addr)        { return big ? m_cprogram16.read_byte(addr) : m_cprogram13.read_byte(addr); }  //template <bool big> unsigned    rdop(u32 addr)              { return big ? m_cprogram16.read_byte(addr) : m_cprogram13.read_byte(addr); }
+        unsigned rdop_arg(bool big, u32 addr)    { return big ? m_cprogram16.read_byte(addr) : m_cprogram13.read_byte(addr); }  //template <bool big> unsigned    rdop_arg(u32 addr)          { return big ? m_cprogram16.read_byte(addr) : m_cprogram13.read_byte(addr); }
 
 
-        UInt32 rm(u32 addr) { return rdmem(addr); }
+        unsigned rm(bool big, u32 addr) { return rdmem(big, addr); }  //template <bool big> unsigned    rm(u32 addr)                { return rdmem<big>(addr); }
         //void rm16(u32 addr, PAIR &p);
-        void wm(u32 addr, u8 value) { wrmem(addr, value); }
+        void wm(bool big, u32 addr, u8 value) { wrmem(big, addr, value); }  //template <bool big> void        wm(u32 addr, u8 value)      { wrmem<big>(addr, value); }
 
 
         protected virtual void interrupt() { throw new emu_unimplemented(); }

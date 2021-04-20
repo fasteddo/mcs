@@ -43,6 +43,7 @@ namespace mame
         required_device<mb88_cpu_device> m_cpu;
         required_device<discrete_device> m_discrete;
 
+        attotime m_irq_duration;
         int m_basenode;
         byte m_latched_cmd;
 
@@ -52,6 +53,7 @@ namespace mame
         {
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_discrete = new required_device<discrete_device>(this, finder_base.DUMMY_TAG);
+            m_irq_duration = attotime.from_usec(100);
             m_basenode = 0;
             m_latched_cmd = 0;
         }
@@ -61,12 +63,22 @@ namespace mame
         public void set_discrete(string tag) { m_discrete.set_tag(tag); }
         public void set_basenote(int node) { m_basenode = node; }
 
+        //namco_54xx_device &set_irq_duration(attotime t) { m_irq_duration = t; return *this; }
+
 
         //WRITE_LINE_MEMBER( namco_54xx_device::reset )
         public void reset(int state)
         {
             // The incoming signal is active low
             m_cpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+        }
+
+
+        //WRITE_LINE_MEMBER( chip_select );
+        public void chip_select(int state)
+        {
+            // TODO: broken sound when using this
+            //m_cpu->set_input_line(0, state);
         }
 
 
@@ -100,14 +112,8 @@ namespace mame
         {
             machine().scheduler().synchronize(latch_callback, data);  //timer_expired_delegate(FUNC(namco_54xx_device::latch_callback),this), data);
 
-            m_cpu.target.set_input_line(0, ASSERT_LINE);
-
-            // The execution time of one instruction is ~4us, so we must make sure to
-            // give the cpu time to poll the /IRQ input before we clear it.
-            // The input clock to the 06XX interface chip is 64H, that is
-            // 18432000/6/64 = 48kHz, so it makes sense for the irq line to be
-            // asserted for one clock cycle ~= 21us.
-            machine().scheduler().timer_set(attotime.from_usec(21), irq_clear);  //timer_expired_delegate(FUNC(namco_54xx_device::irq_clear),this), 0);
+            // TODO: should use chip_select line for this
+            m_cpu.target.pulse_input_line(0, m_irq_duration);
         }
 
 
@@ -148,12 +154,6 @@ namespace mame
         void latch_callback(object ptr, int param)
         {
             m_latched_cmd = (byte)param;
-        }
-
-        //TIMER_CALLBACK_MEMBER( namco_54xx_device::irq_clear )
-        void irq_clear(object ptr, int param)
-        {
-            m_cpu.target.set_input_line(0, CLEAR_LINE);
         }
     }
 }

@@ -269,36 +269,31 @@ namespace mame
           Memory handlers
         ***************************************************************************/
 
-        //WRITE8_MEMBER( xevious_state::xevious_fg_videoram_w )
-        void xevious_fg_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_fg_videoram_w(offs_t offset, uint8_t data)
         {
             m_xevious_fg_videoram.target[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset);
         }
 
-        //WRITE8_MEMBER( xevious_state::xevious_fg_colorram_w )
-        void xevious_fg_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_fg_colorram_w(offs_t offset, uint8_t data)
         {
             m_xevious_fg_colorram.target[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset);
         }
 
-        //WRITE8_MEMBER( xevious_state::xevious_bg_videoram_w )
-        void xevious_bg_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_bg_videoram_w(offs_t offset, uint8_t data)
         {
             m_xevious_bg_videoram.target[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
-        //WRITE8_MEMBER( xevious_state::xevious_bg_colorram_w )
-        void xevious_bg_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_bg_colorram_w(offs_t offset, uint8_t data)
         {
             m_xevious_bg_colorram.target[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
-        //WRITE8_MEMBER( xevious_state::xevious_vh_latch_w )
-        void xevious_vh_latch_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_vh_latch_w(offs_t offset, uint8_t data)
         {
             int reg;
             int scroll = (int)(data + ((offset&0x01)<<8));   /* A0 -> D8 */
@@ -330,14 +325,12 @@ namespace mame
 
 
         /* emulation for schematic 9B */
-        //WRITE8_MEMBER( xevious_state::xevious_bs_w )
-        void xevious_bs_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void xevious_bs_w(offs_t offset, uint8_t data)
         {
             m_xevious_bs[offset & 1] = data;
         }
 
-        //READ8_MEMBER( xevious_state::xevious_bb_r )
-        u8 xevious_bb_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t xevious_bb_r(offs_t offset)
         {
             Pointer<uint8_t> rom2a = new Pointer<uint8_t>(memregion("gfx4").base_());  //uint8_t *rom2a = memregion("gfx4")->base();
             Pointer<uint8_t> rom2b = new Pointer<uint8_t>(rom2a, 0x1000);  //uint8_t *rom2b = rom2a+0x1000;

@@ -11,7 +11,7 @@ namespace mame
 
     // parent class for handlers which want to tap the access and usually pass it on to another handler
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     public abstract class handler_entry_read_passthrough : handler_entry_read, IDisposable  //class handler_entry_read_passthrough : public handler_entry_read<Width, AddrShift, Endian>
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -21,8 +21,8 @@ namespace mame
         handler_entry_read m_next;  //handler_entry_read<Width, AddrShift, Endian> *m_next;
 
 
-        handler_entry_read_passthrough(int Width, int AddrShift, int Endian, address_space space, memory_passthrough_handler mph) : base(Width, AddrShift, Endian, space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = null; }
-        handler_entry_read_passthrough(int Width, int AddrShift, int Endian, address_space space, memory_passthrough_handler mph, handler_entry_read next) : base(Width, AddrShift, Endian, space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = next;  next.ref_(); mph.add_handler(this); }
+        handler_entry_read_passthrough(int Width, int AddrShift, endianness_t Endian, address_space space, memory_passthrough_handler mph) : base(Width, AddrShift, Endian, space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = null; }
+        handler_entry_read_passthrough(int Width, int AddrShift, endianness_t Endian, address_space space, memory_passthrough_handler mph, handler_entry_read next) : base(Width, AddrShift, Endian, space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = next;  next.ref_(); mph.add_handler(this); }
 
 
         ~handler_entry_read_passthrough()
@@ -69,8 +69,8 @@ namespace mame
         handler_entry_write m_next;  //handler_entry_write<Width, AddrShift, Endian> *m_next;
 
 
-        handler_entry_write_passthrough(int Width, int AddrShift, int Endian, address_space space, memory_passthrough_handler mph) : base(Width, AddrShift, Endian, space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = null; }
-        handler_entry_write_passthrough(int Width, int AddrShift, int Endian, address_space space, memory_passthrough_handler mph, handler_entry_write next) : base(Width, AddrShift, Endian, space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = next;  next.ref_(); mph.add_handler(this); }
+        handler_entry_write_passthrough(int Width, int AddrShift, endianness_t Endian, address_space space, memory_passthrough_handler mph) : base(Width, AddrShift, Endian, space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = null; }
+        handler_entry_write_passthrough(int Width, int AddrShift, endianness_t Endian, address_space space, memory_passthrough_handler mph, handler_entry_write next) : base(Width, AddrShift, Endian, space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = next;  next.ref_(); mph.add_handler(this); }
 
 
         ~handler_entry_write_passthrough()

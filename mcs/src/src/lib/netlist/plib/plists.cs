@@ -6,11 +6,94 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
-using timed_queue = mame.plib.timed_queue_linear;
+using size_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame.plib
 {
+    /// \brief fixed size array allowing to override constructor and initialize members by placement new.
+    ///
+    /// Use with care. This template is provided to improve locality of storage
+    /// in high frequency applications. It should not be used for anything else.
+    ///
+    ///
+    //template <class C, std::size_t N>
+    class uninitialised_array_t<C>
+    {
+        //using value_type = C;
+        //using pointer = value_type *;
+        //using const_pointer = const value_type *;
+        //using reference = value_type &;
+        //using const_reference = const value_type &;
+        //using iterator = value_type *;
+        //using const_iterator = const value_type *;
+        //using size_type = std::size_t;
+        //using difference_type = std::ptrdiff_t;
+        //using reverse_iterator = std::reverse_iterator<iterator>;
+        //using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+
+        // ensure proper alignment
+        //PALIGNAS_VECTOROPT()
+        std.array<C> m_buf;  //std::array<typename std::aligned_storage<sizeof(C), alignof(C)>::type, N> m_buf;
+        unsigned m_initialized;
+
+
+        //uninitialised_array_t() noexcept = default;
+        protected uninitialised_array_t()
+        {
+            m_initialized = 0;
+        }
+
+
+        //PCOPYASSIGNMOVE(uninitialised_array_t, delete)
+        //~uninitialised_array_t() noexcept
+        //{
+        //    if (m_initialized>=N)
+        //        for (size_type i=0; i<N; ++i)
+        //            (*this)[i].~C();
+        //}
+
+
+        //constexpr size_t size() const noexcept { return N; }
+
+        //constexpr bool empty() const noexcept { return size() == 0; }
+
+        //reference operator[](size_type index) noexcept
+
+        //constexpr const_reference operator[](size_type index) const noexcept
+
+        //template<typename... Args>
+        protected void emplace(size_t index)  //void emplace(size_type index, Args&&... args)
+        {
+            m_initialized++;
+            // allocate on buffer
+            throw new emu_unimplemented();
+#if false
+            m_buf[index] = new C();  //new (&m_buf[index]) C(std::forward<Args>(args)...);
+#endif
+        }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator begin() const noexcept { return reinterpret_cast<iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator end() const noexcept { return reinterpret_cast<iterator>(&m_buf[N]); }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator begin() noexcept { return reinterpret_cast<iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator end() noexcept { return reinterpret_cast<iterator>(&m_buf[N]); }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //const_iterator cbegin() const noexcept { return reinterpret_cast<const_iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //const_iterator cend() const noexcept { return reinterpret_cast<const_iterator>(&m_buf[N]); }
+    }
+
+
+    //OLD
+#if false
     //template <class Element, class Time>
     public class pqentry_t<Element, Time>
     {
@@ -194,4 +277,5 @@ namespace mame.plib
         //std::size_t size() const noexcept { return static_cast<std::size_t>(m_end - &m_list[1]); }
         //const T & operator[](const std::size_t index) const noexcept { return m_list[ 1 + index]; }
     }
+#endif
 }

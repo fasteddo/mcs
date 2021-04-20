@@ -57,7 +57,7 @@ namespace mame
         public devcb_write.binder lockout_callback() { return m_lockout.bind(); }  //auto lockout_callback() { return m_lockout.bind(); }
 
 
-        //WRITE_LINE_MEMBER( namco_51xx_device::reset ) // make active low in the name
+        //WRITE_LINE_MEMBER( namco_51xx_device::reset )
         public void reset(int state)
         {
             // Reset line is active low.
@@ -83,7 +83,7 @@ namespace mame
         //WRITE_LINE_MEMBER( namco_51xx_device::chip_select )
         public void chip_select(int state)
         {
-            machine().scheduler().synchronize(chip_select_sync, state);
+            m_cpu.target.set_input_line(0, state);
         }
 
 
@@ -174,13 +174,6 @@ namespace mame
                 m_portO = (uint8_t)((m_portO & 0x0f) | (out_ << 4));
             else
                 m_portO = (uint8_t)((m_portO & 0xf0) | (out_));
-        }
-
-
-        //TIMER_CALLBACK_MEMBER( namco_51xx_device::chip_select_sync )
-        void chip_select_sync(object ptr, int param)
-        {
-            m_cpu.target.set_input_line(0, param);
         }
 
 

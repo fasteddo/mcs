@@ -257,28 +257,26 @@ namespace mame
           Memory handlers
         ***************************************************************************/
 
-        //WRITE8_MEMBER( digdug_state::digdug_videoram_w )
-        void digdug_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void digdug_videoram_w(offs_t offset, uint8_t data)
         {
             m_videoram[offset] = data;
             m_fg_tilemap.mark_tile_dirty(offset & 0x3ff);
         }
 
 
-        //WRITE8_MEMBER(digdug_state::bg_select_w)
-        void bg_select_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void bg_select_w(uint8_t data)
         {
             // select background picture
             if (m_bg_select != (data & 0x03))
             {
-                m_bg_select = (byte)(data & 0x03);
+                m_bg_select = (uint8_t)(data & 0x03);
                 m_bg_tilemap.mark_all_dirty();
             }
 
             // background color bank
             if (m_bg_color_bank != (data & 0x30))
             {
-                m_bg_color_bank = (byte)(data & 0x30);
+                m_bg_color_bank = (uint8_t)(data & 0x30);
                 m_bg_tilemap.mark_all_dirty();
             }
         }

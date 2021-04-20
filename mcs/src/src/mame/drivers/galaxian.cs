@@ -35,11 +35,10 @@ namespace mame
         //WRITE_LINE_MEMBER(galaxian_state::tenspot_interrupt_w)
 
 
-        //WRITE8_MEMBER(galaxian_state::irq_enable_w)
-        void irq_enable_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void irq_enable_w(uint8_t data)
         {
             /* the latched D0 bit here goes to the CLEAR line on the interrupt flip-flop */
-            m_irq_enabled = (byte)(data & 1);
+            m_irq_enabled = (uint8_t)(data & 1);
 
             /* if CLEAR is held low, we must make sure the interrupt signal is clear */
             if (m_irq_enabled == 0)
@@ -53,8 +52,7 @@ namespace mame
          *
          *************************************/
 
-        //WRITE8_MEMBER(galaxian_state::start_lamp_w)
-        void start_lamp_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void start_lamp_w(offs_t offset, uint8_t data)
         {
             /* offset 0 = 1P START LAMP */
             /* offset 1 = 2P START LAMP */
@@ -62,23 +60,20 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(galaxian_state::coin_lock_w)
-        void coin_lock_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void coin_lock_w(uint8_t data)
         {
             /* many variants and bootlegs don't have this */
             machine().bookkeeping().coin_lockout_global_w(~data & 1);
         }
 
 
-        //WRITE8_MEMBER(galaxian_state::coin_count_0_w)
-        void coin_count_0_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void coin_count_0_w(uint8_t data)
         {
             machine().bookkeeping().coin_counter_w(0, data & 1);
         }
 
 
-        //WRITE8_MEMBER(galaxian_state::coin_count_1_w)
-        void coin_count_1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void coin_count_1_w(uint8_t data)
         {
             machine().bookkeeping().coin_counter_w(1, data & 1);
         }
@@ -90,16 +85,13 @@ namespace mame
          *
          *************************************/
 
-#if false
-        READ8_MEMBER(galaxian_state::konami_ay8910_r)
-        WRITE8_MEMBER(galaxian_state::konami_ay8910_w)
-#endif
+        //uint8_t galaxian_state::konami_ay8910_r(offs_t offset)
+        //void galaxian_state::konami_ay8910_w(offs_t offset, uint8_t data)
 
 
-        //WRITE8_MEMBER(galaxian_state::konami_sound_control_w)
-        void konami_sound_control_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void konami_sound_control_w(uint8_t data)
         {
-            byte old = m_konami_sound_control;
+            uint8_t old = m_konami_sound_control;
             m_konami_sound_control = data;
 
             /* the inverse of bit 3 clocks the flip flop to signal an INT */
@@ -112,8 +104,7 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(galaxian_state::konami_sound_timer_r)
-        uint8_t konami_sound_timer_r(address_space space, offs_t offset, uint8_t mem_mask = 0xff)
+        uint8_t konami_sound_timer_r()
         {
             /*
                 The timer is clocked at KONAMI_SOUND_CLOCK and cascades through a
@@ -151,8 +142,7 @@ namespace mame
 
         static readonly string [] konami_sound_filter_w_ayname = new string[2] { "8910.0", "8910.1" };
 
-        //WRITE8_MEMBER(galaxian_state::konami_sound_filter_w)
-        void konami_sound_filter_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void konami_sound_filter_w(offs_t offset, uint8_t data)
         {
             if (m_netlist != null)
             {
@@ -178,15 +168,13 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(galaxian_state::konami_portc_0_w)
-        void konami_portc_0_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void konami_portc_0_w(uint8_t data)
         {
             logerror("{0}:ppi0_portc_w = {1}\n", machine().describe_context(), data);  // %02X
         }
 
 
-        //WRITE8_MEMBER(galaxian_state::konami_portc_1_w)
-        void konami_portc_1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void konami_portc_1_w(uint8_t data)
         {
             logerror("{0}:ppi1_portc_w = {1}\n", machine().describe_context(), data);  // %02X
         }
@@ -198,19 +186,17 @@ namespace mame
          *
          *************************************/
 
-        //READ8_MEMBER(galaxian_state::frogger_ppi8255_r)
-        u8 frogger_ppi8255_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t frogger_ppi8255_r(offs_t offset)
         {
             /* the decoding here is very simplistic, and you can address both simultaneously */
-            byte result = 0xff;
+            uint8_t result = 0xff;
             if ((offset & 0x1000) != 0) result &= m_ppi8255.op(1).target.read((offset >> 1) & 3);
             if ((offset & 0x2000) != 0) result &= m_ppi8255.op(0).target.read((offset >> 1) & 3);
             return result;
         }
 
 
-        //WRITE8_MEMBER(galaxian_state::frogger_ppi8255_w)
-        void frogger_ppi8255_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void frogger_ppi8255_w(offs_t offset, uint8_t data)
         {
             /* the decoding here is very simplistic, and you can address both simultaneously */
             if ((offset & 0x1000) != 0) m_ppi8255.op(1).target.write((offset >> 1) & 3, data);
@@ -218,18 +204,16 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(galaxian_state::frogger_ay8910_r)
-        u8 frogger_ay8910_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t frogger_ay8910_r(offs_t offset)
         {
             /* the decoding here is very simplistic */
-            byte result = 0xff;
+            uint8_t result = 0xff;
             if ((offset & 0x40) != 0) result &= m_ay8910.op(0).target.data_r();
             return result;
         }
 
 
-        //WRITE8_MEMBER(galaxian_state::frogger_ay8910_w)
-        void frogger_ay8910_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void frogger_ay8910_w(offs_t offset, uint8_t data)
         {
             /* the decoding here is very simplistic */
             /* AV6,7 ==> AY8910 #1 */
@@ -240,12 +224,11 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(galaxian_state::frogger_sound_timer_r)
-        u8 frogger_sound_timer_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t frogger_sound_timer_r()
         {
             /* same as regular Konami sound but with bits 3,5 swapped */
-            byte konami_value = konami_sound_timer_r(space, 0);
-            return (byte)bitswap(konami_value, 7,6,3,4,5,2,1,0);
+            uint8_t konami_value = konami_sound_timer_r();
+            return (uint8_t)bitswap(konami_value, 7,6,3,4,5,2,1,0);
         }
 
 

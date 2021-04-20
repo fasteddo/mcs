@@ -437,13 +437,13 @@ namespace mame
         INPUT_STRING_3C_1C,     //  0.333333
         INPUT_STRING_8C_3C,     //  0.375000
     //  INPUT_STRING_10C_4C,    //  0.400000
-    //  INPUT_STRING_5C_2C,     //  0.400000
     //  INPUT_STRING_7C_3C,     //  0.428571
     //  INPUT_STRING_9C_4C,     //  0.444444
     //  INPUT_STRING_10C_5C,    //  0.500000
     //  INPUT_STRING_8C_4C,     //  0.500000
     //  INPUT_STRING_6C_3C,     //  0.500000
         INPUT_STRING_4C_2C,     //  0.500000
+        INPUT_STRING_5C_2C,     //  0.500000
         INPUT_STRING_2C_1C,     //  0.500000
     //  INPUT_STRING_9C_5C,     //  0.555556
     //  INPUT_STRING_7C_4C,     //  0.571429
@@ -481,6 +481,7 @@ namespace mame
     //  INPUT_STRING_6C_7C,     //  1.166667
     //  INPUT_STRING_5C_6C,     //  1.200000
     //  INPUT_STRING_8C_10C,    //  1.250000
+        INPUT_STRING_3C_5C,     //  1.250000
         INPUT_STRING_4C_5C,     //  1.250000
     //  INPUT_STRING_7C_9C,     //  1.285714
     //  INPUT_STRING_6C_8C,     //  1.333333
@@ -672,6 +673,7 @@ namespace mame
             { INPUT_STRING.INPUT_STRING_3C_1C, "3 Coins/1 Credit" },
             { INPUT_STRING.INPUT_STRING_8C_3C, "8 Coins/3 Credits" },
             { INPUT_STRING.INPUT_STRING_4C_2C, "4 Coins/2 Credits" },
+            { INPUT_STRING.INPUT_STRING_5C_2C, "5 Coins/2 Credits" },
             { INPUT_STRING.INPUT_STRING_2C_1C, "2 Coins/1 Credit" },
             { INPUT_STRING.INPUT_STRING_5C_3C, "5 Coins/3 Credits" },
             { INPUT_STRING.INPUT_STRING_3C_2C, "3 Coins/2 Credits" },
@@ -680,6 +682,7 @@ namespace mame
             { INPUT_STRING.INPUT_STRING_3C_3C, "3 Coins/3 Credits" },
             { INPUT_STRING.INPUT_STRING_2C_2C, "2 Coins/2 Credits" },
             { INPUT_STRING.INPUT_STRING_1C_1C, "1 Coin/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_3C_5C, "3 Coins/5 Credits" },
             { INPUT_STRING.INPUT_STRING_4C_5C, "4 Coins/5 Credits" },
             { INPUT_STRING.INPUT_STRING_3C_4C, "3 Coins/4 Credits" },
             { INPUT_STRING.INPUT_STRING_2C_3C, "2 Coins/3 Credits" },
@@ -1649,7 +1652,13 @@ namespace mame
         public ioport_type type() { return m_type; }
         public u8 player() { return m_player; }
         public bool digital_value() { return m_digital_value; }
-        public void set_value(ioport_value value) { m_digital_value = value != 0; }
+        public void set_value(ioport_value value)
+        {
+            if (is_analog())
+                live().analog.set_value((s32)value);
+            else
+                m_digital_value = value != 0;
+        }
 
         bool optional() { return ((m_flags & FIELD_FLAG_OPTIONAL) != 0); }
         //bool cocktail() const { return ((m_flags & FIELD_FLAG_COCKTAIL) != 0); }
@@ -2607,6 +2616,7 @@ namespace mame
         s32 m_accum;                // accumulated value (including relative adjustments)
         s32 m_previous;             // previous adjusted value
         s32 m_previousanalog;       // previous analog value
+        s32 m_prog_analog_value;    // programmatically set analog value
 
         // parameters for modifying live values
         s32 m_minimum;              // minimum adjusted value
@@ -2628,6 +2638,7 @@ namespace mame
         bool m_single_scale;         // scale joystick differently if default is between min/max
         bool m_interpolate;          // should we do linear interpolation for mid-frame reads?
         bool m_lastdigital;          // was the last modification caused by a digital form?
+        bool m_was_written;          // was the last modification caused programmatically?
 
 
         // construction/destruction
@@ -2649,6 +2660,7 @@ namespace mame
             m_accum = 0;
             m_previous = 0;
             m_previousanalog = 0;
+            m_prog_analog_value = 0;
             m_minimum = input_global.INPUT_ABSOLUTE_MIN;
             m_maximum = input_global.INPUT_ABSOLUTE_MAX;
             m_center = 0;
@@ -2664,6 +2676,7 @@ namespace mame
             m_single_scale = false;
             m_interpolate = false;
             m_lastdigital = false;
+            m_was_written = false;
 
 
             // compute the shift amount and number of bits
@@ -2890,7 +2903,14 @@ namespace mame
 
             // get the new raw analog value and its type
             input_item_class itemclass;
-            int rawvalue = machine.input().seq_axis_value(m_field.seq(input_seq_type.SEQ_TYPE_STANDARD), out itemclass);
+            s32 rawvalue = machine.input().seq_axis_value(m_field.seq(input_seq_type.SEQ_TYPE_STANDARD), out itemclass);
+
+            // use programmatically set value if avaiable
+            if (m_was_written)
+            {
+                m_was_written = false;
+                rawvalue = m_prog_analog_value;
+            }
 
             // if we got an absolute input, it overrides everything else
             if (itemclass == input_item_class.ITEM_CLASS_ABSOLUTE)
@@ -2940,14 +2960,14 @@ namespace mame
 
             // if we got it from a relative device, use that as the starting delta
             // also note that the last input was not a digital one
-            int delta = 0;
+            s32 delta = 0;
             if (itemclass == input_item_class.ITEM_CLASS_RELATIVE && rawvalue != 0)
             {
                 delta = rawvalue;
                 m_lastdigital = false;
             }
 
-            Int64 keyscale = (m_accum >= 0) ? m_keyscalepos : m_keyscaleneg;
+            s64 keyscale = (m_accum >= 0) ? m_keyscalepos : m_keyscaleneg;
 
             // if the decrement code sequence is pressed, add the key delta to
             // the accumulated delta; also note that the last input was a digital one
@@ -3000,7 +3020,7 @@ namespace mame
             // was pressed, apply autocentering
             if (m_autocenter)
             {
-                int center = apply_inverse_sensitivity(m_center);
+                s32 center = apply_inverse_sensitivity(m_center);
                 if (m_lastdigital && !keypressed)
                 {
                     // autocenter from positive values
@@ -3030,6 +3050,18 @@ namespace mame
             {
                 m_lastdigital = false;
             }
+        }
+
+
+        // setters
+        //-------------------------------------------------
+        //  set_value - take a new value to be used
+        //  at next frame update
+        //-------------------------------------------------
+        public void set_value(s32 value)
+        {
+            m_was_written = true;
+            m_prog_analog_value = value;
         }
 
 

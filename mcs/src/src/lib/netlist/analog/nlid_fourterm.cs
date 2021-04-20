@@ -30,8 +30,8 @@ namespace mame.netlist
         //
         //   RI = 1 / NETLIST_GMIN
         //
-        //NETLIB_OBJECT(VCCS)
-        class nld_VCCS : device_t
+        //NETLIB_BASE_OBJECT(VCCS)
+        public class nld_VCCS : base_device_t
         {
             public param_fp_t m_G;
             public param_fp_t m_RI;
@@ -45,16 +45,16 @@ namespace mame.netlist
             protected terminal_t m_OP1;
             protected terminal_t m_ON1;
 
-            protected nl_fptype m_gfac;
+            nl_fptype m_gfac;
 
 
-            //NETLIB_CONSTRUCTOR_EX(VCCS, nl_fptype ari = nlconst::magic(1e9))
-            public nld_VCCS(object owner, string name) : this(owner, name, nlconst.magic(1e9)) { }
-            public nld_VCCS(object owner, string name, nl_fptype ari)
+            //NETLIB_CONSTRUCTOR_EX(VCCS, nl_fptype ri = nlconst::magic(1e9))
+            public nld_VCCS(base_device_t owner, string name) : this(owner, name, nlconst.magic(1e9)) { }
+            public nld_VCCS(base_device_t owner, string name, nl_fptype ri)
                 : base(owner, name)
             {
                 m_G = new param_fp_t(this, "G", nlconst.one());
-                m_RI = new param_fp_t(this, "RI", ari);
+                m_RI = new param_fp_t(this, "RI", ri);
 
                 m_OP = new terminal_t(this, "OP");//, &m_IP);
                 m_ON = new terminal_t(this, "ON");//, &m_IP);
@@ -74,7 +74,6 @@ namespace mame.netlist
 
                 connect(m_OP, m_OP1);
                 connect(m_ON, m_ON1);
-                m_gfac = nlconst.one();
             }
 
 
@@ -117,6 +116,18 @@ namespace mame.netlist
             {
                 this.reset();
             }
+
+
+            protected void set_gfac(nl_fptype g)
+            {
+                m_gfac = g;
+            }
+
+
+            nl_fptype get_gfac()
+            {
+                return m_gfac;
+            }
         }
 
 
@@ -126,7 +137,7 @@ namespace mame.netlist
 
 
         //NETLIB_OBJECT_DERIVED(VCVS, VCCS)
-        class nld_VCVS : nld_VCCS
+        public class nld_VCVS : nld_VCCS
         {
             public param_fp_t m_RO;
 
@@ -135,7 +146,7 @@ namespace mame.netlist
 
 
             //NETLIB_CONSTRUCTOR_DERIVED(VCVS, VCCS)
-            public nld_VCVS(object owner, string name)
+            public nld_VCVS(base_device_t owner, string name)
                 : base(owner, name)
             { 
                 m_RO = new param_fp_t(this, "RO", nlconst.one());
@@ -155,11 +166,13 @@ namespace mame.netlist
             //NETLIB_RESET(VCVS)
             public override void reset()
             {
-                m_gfac = plib.pglobal.reciprocal(m_RO.op());
+                var gfac = plib.pglobal.reciprocal(m_RO.op());
+                set_gfac(gfac);
+
                 base.reset();
 
-                m_OP2.set_conductivity(m_gfac);
-                m_ON2.set_conductivity(m_gfac);
+                m_OP2.set_conductivity(gfac);
+                m_ON2.set_conductivity(gfac);
             }
 
 

@@ -109,6 +109,19 @@ namespace mame.ui
                     local_ports.append(device, out sink);
             }
 
+            // suppress "requires external artwork" warning when external artwork was loaded
+            if (config.root_device().has_running_machine())
+            {
+                for (render_target target = config.root_device().machine().render().first_target(); target != null; target = target.next())
+                {
+                    if (!target.hidden() && target.external_artwork())
+                    {
+                        m_flags &= ~machine_flags.type.REQUIRES_ARTWORK;
+                        break;
+                    }
+                }
+            }
+
             // unemulated trumps imperfect when aggregating (always be pessimistic)
             m_imperfect_features &= ~m_unemulated_features;
 
@@ -159,7 +172,7 @@ namespace mame.ui
         {
             if ((machine_flags_get() & MACHINE_ERRORS) != 0 || ((unemulated_features() | imperfect_features()) & emu.detail.device_feature.type.PROTECTION) != 0)
                 return UI_RED_COLOR;
-            else if ((machine_flags_get() & MACHINE_WARNINGS) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
+            else if ((machine_flags_get() & MACHINE_WARNINGS & ~machine_flags.type.REQUIRES_ARTWORK) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
                 return UI_YELLOW_COLOR;
             else
                 return UI_GREEN_COLOR;
@@ -261,11 +274,11 @@ namespace mame.ui
             // add one line per machine warning flag
             if ((machine_flags_get() & machine_flags.type.NO_COCKTAIL) != 0)
                 buf += "Screen flipping in cocktail mode is not supported.\n";
-            if ((machine_flags_get() & machine_flags.type.REQUIRES_ARTWORK) != 0) // check if external artwork is present before displaying this warning?
+            if ((machine_flags_get() & machine_flags.type.REQUIRES_ARTWORK) != 0)
                 buf += "This machine requires external artwork files.\n";
-            if ((machine_flags_get() & machine_flags.type.IS_INCOMPLETE ) != 0)
+            if ((machine_flags_get() & machine_flags.type.IS_INCOMPLETE) != 0)
                 buf += "This machine was never completed. It may exhibit strange behavior or missing elements that are not bugs in the emulation.\n";
-            if ((machine_flags_get() & machine_flags.type.NO_SOUND_HW ) != 0)
+            if ((machine_flags_get() & machine_flags.type.NO_SOUND_HW) != 0)
                 buf += "This machine has no sound hardware, MAME will produce no sounds, this is expected behaviour.\n";
 
             // these are more severe warnings

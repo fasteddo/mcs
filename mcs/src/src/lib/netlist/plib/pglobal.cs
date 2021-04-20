@@ -12,6 +12,10 @@ namespace mame.plib
 {
     static class pglobal
     {
+        // pexception
+        public static void terminate(string msg) { pexception_global.terminate(msg); }
+
+
         // pmath
         public static nl_fptype reciprocal(nl_fptype v) { return pmath_global.reciprocal(v); }
         public static nl_fptype abs(nl_fptype v) { return pmath_global.abs(v); }
@@ -45,5 +49,10 @@ namespace mame.plib
         public static std.vector<string> psplit(string str, std.vector<string> onstrl) { return putil_global.psplit(str, onstrl); }
         public static UInt64 hash(string buf, size_t size) { return putil_global.hash(buf, size); }
         public static string environment(string var, string default_val) { return putil_global.environment(var, default_val); }
+        public static source_location PSOURCELOC() { return putil_global.PSOURCELOC(); }
+
+
+        // vector_ops
+        public static void vec_add_mult_scalar_p(int n, Pointer<double> result, Pointer<double> v, double scalar) { vector_ops_global.vec_add_mult_scalar_p(n, result, v, scalar); }
     }
 }

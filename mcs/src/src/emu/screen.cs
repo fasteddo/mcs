@@ -217,7 +217,7 @@ namespace mame
         const u32 VIDEO_UPDATE_AFTER_VBLANK       = 0x0004;
 
         const u32 VIDEO_SELF_RENDER               = 0x0008;
-        const u32 VIDEO_ALWAYS_UPDATE             = 0x0080;
+        public const u32 VIDEO_ALWAYS_UPDATE             = 0x0080;
         const u32 VIDEO_UPDATE_SCANLINE           = 0x0100;
         const u32 VIDEO_VARIABLE_WIDTH            = 0x0200;
 
@@ -1156,7 +1156,7 @@ namespace mame
             m_scanline0_timer = timer_alloc(TID_SCANLINE0);
 
             // allocate a timer to generate per-scanline updates
-            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb.op())
+            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb != null)
                 m_scanline_timer = timer_alloc(TID_SCANLINE);
 
             // configure the screen with the default parameters
@@ -1167,7 +1167,7 @@ namespace mame
             m_vblank_end_time = new attotime(0, m_vblank_period);
 
             // start the timer to generate per-scanline updates
-            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb.op())
+            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb != null)
                 m_scanline_timer.adjust(time_until_pos(0));
 
             // create burn-in bitmap
@@ -1283,7 +1283,7 @@ namespace mame
                         update_partial(param);
                     }
 
-                    if (m_scanline_cb.op())
+                    if (m_scanline_cb != null)
                         m_scanline_cb.op((UInt32)param);
 
                     // compute the next visible scanline

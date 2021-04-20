@@ -5,11 +5,13 @@ using System;
 using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;
+using int64_t = System.Int64;
 using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
 using netlist_time_ext = mame.plib.ptime_i64;  //netlist_time
 using nl_fptype = System.Double;
-using stream_sample_t = System.Int32;
 using offs_t = System.UInt32;
+using size_t = System.UInt32;
+using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
 
@@ -35,12 +37,25 @@ namespace mame
 
         const int LOG_GENERAL     = 1 << 0;
         const int LOG_DEV_CALLS   = 1 << 1;
+        const int LOG_DEBUG       = 1 << 2;
 
-        //#define VERBOSE (LOG_GENERAL | LOG_DEV_CALLS)
+        //#define LOG_MASK (LOG_GENERAL | LOG_DEV_CALLS | LOG_DEBUG)
+        //#define LOG_MASK        (0)
+
+        public static void LOGDEVCALLS(device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(LOG_DEV_CALLS, device, format, args); }  //#define LOGDEVCALLS(...) LOGMASKED(LOG_DEV_CALLS, __VA_ARGS__)
+        public static void LOGDEBUG(device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(LOG_DEBUG, device, format, args); }  //#define LOGDEBUG(...) LOGMASKED(LOG_DEBUG, __VA_ARGS__)
+
         //#define LOG_OUTPUT_FUNC printf
-        //#include "logmacro.h"
 
-        public static void LOGDEVCALLS(device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(LOG_DEV_CALLS, device, format, args); }
+        //#define LOGMASKED(mask, ...) do { if (LOG_MASK & (mask)) (LOG_OUTPUT_FUNC)(__VA_ARGS__); } while (false)
+
+
+        public static netlist_time_ext nltime_from_attotime(attotime t)
+        {
+            netlist_time_ext nlmtime = netlist_time_ext.from_sec(t.seconds());
+            nlmtime += netlist_time_ext.from_raw(t.attoseconds() / (attotime.ATTOSECONDS_PER_SECOND / netlist_time_ext.resolution()));
+            return nlmtime;
+        }
     }
 
 
@@ -141,14 +156,14 @@ namespace mame
             netlist_mame_device m_parent;
 
 
-            public netlist_mame_t(netlist_mame_device parent, string aname)
-                : base(aname, new netlist_mame_device.netlist_mame_callbacks_t(parent))
+            public netlist_mame_t(netlist_mame_device parent, string name)
+                : base(name, new netlist_mame_device.netlist_mame_callbacks_t(parent))
             {
                 m_parent = parent;
             }
 
-            netlist_mame_t(netlist_mame_device parent, string aname, netlist.callbacks_t cbs)
-                : base(aname, cbs)
+            netlist_mame_t(netlist_mame_device parent, string name, netlist.callbacks_t cbs)
+                : base(name, cbs)
             {
                 m_parent = parent;
             }
@@ -164,6 +179,9 @@ namespace mame
 
 
         int m_icount;
+
+        protected attotime m_cur_time;
+        protected attotime m_attotime_per_clock;
 
         netlist_time_ext m_div = new netlist_time();
         netlist_time_ext m_rem;
@@ -184,6 +202,8 @@ namespace mame
             : base(mconfig, type, tag, owner, clock)
         {
             m_icount = 0;
+            m_cur_time = attotime.zero;
+            m_attotime_per_clock = attotime.zero;
             m_old = netlist_time_ext.zero();
             m_setup_func = null;
         }
@@ -213,7 +233,7 @@ namespace mame
         //void check_mame_abort_slice() noexcept;
 
 
-        //static void register_memregion_source(netlist::nlparse_t &setup, device_t &dev, const char *name);
+        //static void register_memregion_source(netlist::nlparse_t &parser, device_t &dev, const char *name);
 
 
         protected netlist_time_ext nltime_ext_from_clocks(UInt32 c)
@@ -229,7 +249,7 @@ namespace mame
 
 
         // Custom to netlist ...
-        protected virtual void nl_register_devices(netlist.setup_t lsetup) { }
+        protected virtual void nl_register_devices(netlist.nlparse_t parser) { }
 
 
         // device_t overrides
@@ -252,6 +272,12 @@ namespace mame
         {
             netlist_global.LOGDEVCALLS(this, "device_start entry\n");
 
+            m_attotime_per_clock = new attotime(0, m_attoseconds_per_clock);
+
+            //netlist().save(*this, m_cur_time, pstring(this->name()), "m_cur_time");
+            save_item(NAME(new { m_cur_time }));
+            save_item(NAME(new { m_attotime_per_clock }));
+
             m_netlist = new netlist_mame_t(this, "netlist");  //m_netlist = std::make_unique<netlist_mame_t>(*this, "netlist");
 
             if (!machine().options().verbose())
@@ -261,7 +287,9 @@ namespace mame
             }
 
             common_dev_start(m_netlist);
+            m_netlist.setup().prepare_to_run();
 
+            // FIXME: use save_helper
             m_netlist.save(this, m_rem, this.name(), "m_rem");
             m_netlist.save(this, m_div, this.name(), "m_div");
             m_netlist.save(this, m_old, this.name(), "m_old");
@@ -287,6 +315,7 @@ namespace mame
         {
             netlist_global.LOGDEVCALLS(this, "device_reset\n");
 
+            m_cur_time = attotime.zero;
             m_old = netlist_time_ext.zero();
             m_rem = netlist_time_ext.zero();
             netlist().exec().reset();
@@ -316,6 +345,7 @@ namespace mame
                 (netlist_time_ext.resolution() << MDIV_SHIFT) / clock());
             //printf("m_div %d\n", (int) m_div.as_raw());
             netlist().log().debug.op("Setting clock {0} and divisor {1}\n", clock(), m_div.as_double());
+            m_attotime_per_clock = new attotime(0, m_attoseconds_per_clock);
         }
 
 
@@ -323,11 +353,11 @@ namespace mame
         {
             try
             {
-                //netlist_mame_t lnetlist(*this, "netlist", plib::make_unique<netlist_validate_callbacks_t>());
-                var lnetlist = new netlist.netlist_state_t("netlist", new netlist_validate_callbacks_t());  //auto lnetlist = plib::make_unique<netlist::netlist_state_t>("netlist", plib::make_unique<netlist_validate_callbacks_t>());
+                var lnetlist = new netlist.netlist_state_t("netlist", new netlist_validate_callbacks_t());  //auto lnetlist = plib::make_unique<netlist::netlist_state_t, netlist::host_arena>("netlist", plib::make_unique<netlist_validate_callbacks_t, netlist::host_arena>());
                 // enable validation mode
                 lnetlist.set_extended_validation(true);
                 common_dev_start(lnetlist);
+                lnetlist.setup().prepare_to_run();
 
                 foreach (device_t d in subdevices())
                 {
@@ -355,7 +385,7 @@ namespace mame
                 osd_printf_error("{0}\n", err);
             }
 
-            return null;  //return plib::unique_ptr<netlist::netlist_state_t>(nullptr);
+            return null;  //return netlist::host_arena::unique_ptr<netlist::netlist_state_t>(nullptr);
         }
 
 
@@ -385,10 +415,8 @@ namespace mame
                         save_pointer((int16_t *) s->ptr(), s->name().c_str(), s->count());
                     else if (s->dt().size() == sizeof(int8_t))
                         save_pointer((int8_t *) s->ptr(), s->name().c_str(), s->count());
-#if (PHAS_INT128)
-                    else if (s->dt().size() == sizeof(INT128))
+                    else if (plib::compile_info::has_int128::value && s->dt().size() == sizeof(INT128))
                         save_pointer((int64_t *) s->ptr(), s->name().c_str(), s->count() * 2);
-#endif
                     else
                         netlist().log().fatal("Unknown integral type size {1} for {2}\n", s->dt().size(), s->name().c_str());
                 }
@@ -424,7 +452,7 @@ namespace mame
 
             // register additional devices
 
-            nl_register_devices(lsetup);
+            nl_register_devices(lsetup.parser());
 
             /* let sub-devices add sources and do stuff prior to parsing */
             foreach (device_t d in subdevices())
@@ -433,30 +461,26 @@ namespace mame
                 if (sdev != null)
                 {
                     netlist_global.LOGDEVCALLS(this, "Preparse subdevice {0}/{1}\n", d.name(), d.shortname());
-                    sdev.pre_parse_action(lnetlist);
+                    sdev.pre_parse_action(lsetup.parser());
                 }
             }
 
-            /* add default data provider for roms - if not in validity check*/
-            //if (has_running_machine())
-                lsetup.register_source(new netlist_data_memregions_t(this));  //lsetup.register_source<netlist_data_memregions_t>(*this);
+            // add default data provider for roms - if not in validity check
+            lsetup.parser().register_source(new netlist_data_memregions_t(this));  //lsetup.parser().register_source<netlist_data_memregions_t>(*this);
 
-            m_setup_func(lsetup);
+            // Read the netlist
+            m_setup_func(lsetup.parser());
 
-#if true
-            /* let sub-devices tweak the netlist */
+            // let sub-devices tweak the netlist
             foreach (device_t d in subdevices())
             {
                 device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;  //netlist_mame_sub_interface *sdev = dynamic_cast<netlist_mame_sub_interface *>(&d);
                 if (sdev != null)
                 {
                     netlist_global.LOGDEVCALLS(this, "Found subdevice {0}/{1}\n", d.name(), d.shortname());
-                    sdev.custom_netlist_additions(lnetlist);
+                    sdev.custom_netlist_additions(lsetup.parser());
                 }
             }
-
-            lsetup.prepare_to_run();
-#endif
         }
     }
 
@@ -500,10 +524,14 @@ namespace mame
 
 
         // netlist_mame_device
-        //virtual void nl_register_devices(netlist::setup_t &lsetup) override;
+        //virtual void nl_register_devices(netlist::nlparse_t &parser) const override;
 
 
         // device_t overrides
+
+        // Fixes overflow error in device_pseudo_state_register
+        //template<>
+        //class device_pseudo_state_register<double> : public device_state_entry
 
         //virtual void device_start();
 
@@ -557,11 +585,13 @@ namespace mame
 
 
         device_sound_interface_netlist_mame_sound m_disound;
+        static attotime last;
 
 
-        std.map<int, nld_sound_out> m_out = new std.map<int, nld_sound_out>();
+        std.map<int, netlist_mame_stream_output_device> m_out = new std.map<int, netlist_mame_stream_output_device>();
         nld_sound_in m_in;
         sound_stream m_stream;
+        bool m_is_device_call;
 
 
         // construction/destruction
@@ -576,6 +606,7 @@ namespace mame
 
             m_in = null;
             m_stream = null;
+            m_is_device_call = false;
         }
 
 
@@ -590,31 +621,67 @@ namespace mame
         public sound_stream get_stream() { return m_stream; }
 
 
+        public void update_to_current_time()
+        {
+            netlist_global.LOGDEBUG(this, "before update\n");
+            m_is_device_call = true;
+            get_stream().update();
+            m_is_device_call = false;
+
+            if (machine().time() < last)
+                netlist_global.LOGDEBUG(this, "machine.time() decreased 2\n");
+
+            last = machine().time();
+
+            var mtime = netlist_global.nltime_from_attotime(machine().time());
+            var cur = netlist().exec().time();
+
+            if (mtime > cur)
+            {
+                if ((mtime - cur) >= nltime_from_clocks(1))
+                    netlist_global.LOGDEBUG(this, "{0} us\n", (mtime - cur).as_double() * 1000000.0);
+
+                netlist().exec().process_queue(mtime - cur);
+            }
+            else if (mtime < cur)
+            {
+                netlist_global.LOGDEBUG(this, "{0} : {1} ns before machine time\n", this.name(), (cur - mtime).as_double() * 1000000000.0);
+            }
+        }
+
+
         // device_sound_interface overrides
         void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
-            foreach (var e in m_out)
-            {
-                e.second().m_buffer = outputs[e.first()];
-                e.second().m_bufsize = samples;
-                e.second().m_sample_time = nltime_from_clocks(1);
-            }
+            if (machine().time() < last)
+                netlist_global.LOGDEBUG(this, "machine.time() decreased 1\n");
+
+            last = machine().time();
+            netlist_global.LOGDEBUG(this, "samples {0} {1}\n", m_is_device_call, samples);
 
             if (m_in != null)
             {
-                m_in.buffer_reset(nltime_from_clocks(1), samples, inputs);
+                var sample_time = netlist_time.from_raw((int64_t)netlist_global.nltime_from_attotime(m_attotime_per_clock).as_raw());  //auto sample_time = netlist::netlist_time::from_raw(static_cast<netlist::netlist_time::internal_type>(nltime_from_attotime(m_attotime_per_clock).as_raw()));
+                m_in.buffer_reset(sample_time, (size_t)samples, inputs);
             }
 
-            var cur = netlist().exec().time();
-            var delta = nltime_ext_from_clocks((UInt32)samples);
-            netlist().exec().process_queue(delta);
+            m_cur_time += ((UInt32)samples * m_attotime_per_clock);
+            var nl_target_time = netlist_global.nltime_from_attotime(m_cur_time);
 
-            cur += delta;
+            if (!m_is_device_call)
+                nl_target_time -= netlist_time_ext.from_usec(2); // FIXME make adjustment a parameter
+
+            var nltime = (netlist().exec().time());
+
+            if (nltime < nl_target_time)
+            {
+                netlist().exec().process_queue(nl_target_time - nltime);
+            }
 
             foreach (var e in m_out)
             {
-                e.second().sound_update_fill(samples);
-                e.second().buffer_reset(cur);
+                e.second().sound_update_fill((size_t)samples, outputs[e.first()]);
+                e.second().buffer_reset(nl_target_time);
             }
         }
 
@@ -625,11 +692,18 @@ namespace mame
         }
 
 
-        // netlist_mame_device
-        protected override void nl_register_devices(netlist.setup_t lsetup)
+        public void register_stream_output(int channel, netlist_mame_stream_output_device so)
         {
-            lsetup.factory().register_device<nld_sound_out>("NETDEV_SOUND_OUT", "nld_sound_out", "+CHAN", "__FILE__");
-            lsetup.factory().register_device<nld_sound_in>("NETDEV_SOUND_IN", "nld_sound_in", "-", "__FILE__");
+            m_out[channel] = so;
+        }
+
+
+        // netlist_mame_device
+        protected override void nl_register_devices(netlist.nlparse_t parser)
+        {
+            ////parser.factory().add<nld_sound_out>("NETDEV_SOUND_OUT",
+            ////  netlist::factory::properties("+CHAN", PSOURCELOC()));
+            parser.factory_().add_nld_sound_in("NETDEV_SOUND_IN", new netlist.factory.properties("-", plib.pglobal.PSOURCELOC()));  //parser.factory_().add<nld_sound_in>("NETDEV_SOUND_IN", netlist.factory.properties("-", PSOURCELOC()));
         }
 
 
@@ -643,25 +717,18 @@ namespace mame
 
             // Configure outputs
 
-            std.vector<nld_sound_out> outdevs = netlist().get_device_list<nld_sound_out>();
-            if (outdevs.size() == 0)
+            if (m_out.size() == 0)
                 fatalerror("No output devices");
 
             //m_num_outputs = outdevs.size();
 
             /* resort channels */
-            foreach (var outdev in outdevs)
+            foreach (var outdev in m_out)
             {
-                int chan = outdev.m_channel.op();
-
-                netlist().log().verbose.op("Output {0} on channel {1}", outdev.name(), chan);
-
-                if (chan < 0 || chan >= outdevs.size())
-                    fatalerror("illegal channel number");
-                m_out[chan] = outdev;
-                m_out[chan].m_sample_time = netlist_time.from_hz(clock());
-                m_out[chan].m_buffer = null;
-                m_out[chan].m_bufsize = 0;
+                if (outdev.first() < 0 || outdev.first() >= m_out.size())
+                    fatalerror("illegal channel number {0}", outdev.first());
+                outdev.second().set_sample_time(netlist_time.from_hz(clock()));
+                outdev.second().buffer_reset(netlist_time_ext.zero());
             }
 
             // Configure inputs
@@ -677,11 +744,30 @@ namespace mame
             if (indevs.size() == 1)
             {
                 m_in = indevs[0];
-                m_in.resolve(nltime_from_clocks(1));
+                var sample_time = netlist_time.from_raw((int64_t)netlist_global.nltime_from_attotime(clocks_to_attotime(1)).as_raw());  //auto sample_time = netlist.netlist_time.from_raw(static_cast<netlist.netlist_time.internal_type>(nltime_from_attotime(clocks_to_attotime(1)).as_raw()));
+                m_in.resolve_params(sample_time);
             }
 
             /* initialize the stream(s) */
+            m_is_device_call = false;
             m_stream = machine().sound().stream_alloc(this, m_in != null ? m_in.num_channels() : 0, m_out.size(), (int)clock());
+        }
+
+
+        protected override void device_reset()
+        {
+            base.device_reset();
+        }
+
+
+        protected override void device_clock_changed()
+        {
+            base.device_clock_changed();
+
+            foreach (var e in m_out)
+            {
+                e.second().set_sample_time(nltime_from_clocks(1));
+            }
         }
     }
 
@@ -696,23 +782,25 @@ namespace mame
 
         netlist_mame_device m_owner;
         netlist_mame_sound_device m_sound;
+        netlist_mame_cpu_device m_cpu;
 
 
         // construction/destruction
-        public netlist_mame_sub_interface(device_t aowner)
+        public netlist_mame_sub_interface(device_t owner)
         {
             m_offset = 0.0;
             m_mult = 1.0;
 
-            m_owner = (netlist_mame_device)aowner;
-            m_sound = (netlist_mame_sound_device)aowner;
+            m_owner = owner is netlist_mame_device ? (netlist_mame_device)owner : null;
+            m_sound = owner is netlist_mame_sound_device ? (netlist_mame_sound_device)owner : null;
+            m_cpu = owner is netlist_mame_cpu_device ? (netlist_mame_cpu_device)owner : null;
         }
 
         //virtual ~netlist_mame_sub_interface() { }
 
 
-        public virtual void custom_netlist_additions(netlist.netlist_state_t nlstate) { }
-        public virtual void pre_parse_action(netlist.netlist_state_t nlstate) { }
+        public virtual void custom_netlist_additions(netlist.nlparse_t parser) { }
+        public virtual void pre_parse_action(netlist.nlparse_t parser) { }
 
 
         public virtual void validity_helper(validity_checker valid, netlist.netlist_state_t nlstate) { throw new emu_unimplemented(); }  // need to re-do device_t_with_mame_sub_interface.  Doesn't do inheritance right
@@ -721,7 +809,7 @@ namespace mame
         //inline netlist_mame_device &nl_owner() const { return *m_owner; }
 
 
-        public void update_to_current_time() { if (m_sound != null) m_sound.get_stream().update(); }
+        public void update_to_current_time() { if (m_sound != null) m_sound.update_to_current_time(); }
 
 
         public void set_mult_offset(double mult, double offset)
@@ -729,6 +817,10 @@ namespace mame
             m_mult = mult;
             m_offset = offset;
         }
+
+
+        public netlist_mame_sound_device sound() { return m_sound;}
+        //netlist_mame_cpu_device   *cpu()   { return m_cpu;}
     }
 
 
@@ -742,12 +834,15 @@ namespace mame
             m_netlist_mame_sub_interface = new netlist_mame_sub_interface(owner);
         }
 
-        public virtual void custom_netlist_additions(netlist.netlist_state_t nlstate) { m_netlist_mame_sub_interface.custom_netlist_additions(nlstate); }
-        public virtual void pre_parse_action(netlist.netlist_state_t nlstate) { }
+
+        public virtual void custom_netlist_additions(netlist.nlparse_t parser) { m_netlist_mame_sub_interface.custom_netlist_additions(parser); }
+        public virtual void pre_parse_action(netlist.nlparse_t parser) { m_netlist_mame_sub_interface.pre_parse_action(parser); }
 
         public virtual void validity_helper(validity_checker valid, netlist.netlist_state_t nlstate) { m_netlist_mame_sub_interface.validity_helper(valid, nlstate); }
 
         public void set_mult_offset(double mult, double offset) { m_netlist_mame_sub_interface.set_mult_offset(mult, offset); }
+
+        protected netlist_mame_sound_device sound() { return m_netlist_mame_sub_interface.sound();}
     }
 
 
@@ -767,7 +862,7 @@ namespace mame
         public static void static_set_mult_offset(device_t device, double mult, double offset) { }
 
 
-        //netlist::param_num_t<nl_fptype> *m_param;
+        //netlist::param_num_t<netlist::nl_fptype> *m_param;
         //bool   m_auto_port;
         //const char *m_param_name;
         //double m_value_for_device_timer;
@@ -802,10 +897,10 @@ namespace mame
 #endif
 
         //inline DECLARE_WRITE_LINE_MEMBER(write_line)       { write(state);  }
-        //inline DECLARE_WRITE8_MEMBER(write8)               { write(data);   }
-        //inline DECLARE_WRITE16_MEMBER(write16)             { write(data);   }
-        //inline DECLARE_WRITE32_MEMBER(write32)             { write(data);   }
-        //inline DECLARE_WRITE64_MEMBER(write64)             { write(data);   }
+        //inline void write8(uint8_t data)               { write(data);   }
+        //inline void write16(uint16_t data)             { write(data);   }
+        //inline void write32(uint32_t data)             { write(data);   }
+        //inline void write64(uint64_t data)             { write(data);   }
 
 
         public override void validity_helper(validity_checker valid, netlist.netlist_state_t nlstate)
@@ -826,6 +921,24 @@ namespace mame
             throw new emu_unimplemented();
         }
     }
+
+
+    // ----------------------------------------------------------------------------------------
+    // netlist_mame_analog_output_device
+    // ----------------------------------------------------------------------------------------
+    //class netlist_mame_analog_output_device : public device_t, public netlist_mame_sub_interface
+
+
+    // ----------------------------------------------------------------------------------------
+    // netlist_mame_logic_output_device
+    // ----------------------------------------------------------------------------------------
+    //class netlist_mame_logic_output_device : public device_t, public netlist_mame_sub_interface
+
+
+    // ----------------------------------------------------------------------------------------
+    // netlist_mame_int_input_device
+    // ----------------------------------------------------------------------------------------
+    //class netlist_mame_int_input_device : public device_t, public netlist_mame_sub_interface
 
 
     // ----------------------------------------------------------------------------------------
@@ -877,7 +990,10 @@ namespace mame
         {
             uint32_t v = (val >> (int)m_shift) & 1;
             if ((v != 0) != m_param.op())
+            {
+                netlist_global.LOGDEBUG(this, "write {0}\n", this.tag());
                 synchronize(0, (int)v);
+            }
         }
 
 
@@ -885,10 +1001,10 @@ namespace mame
 
         //DECLARE_WRITE_LINE_MEMBER(write_line)       { write(state);  }
         public void write_line(int state) { write((uint32_t)state);  }
-        //DECLARE_WRITE8_MEMBER(write8)               { write(data);   }
-        //DECLARE_WRITE16_MEMBER(write16)             { write(data);   }
-        //DECLARE_WRITE32_MEMBER(write32)             { write(data);   }
-        //DECLARE_WRITE64_MEMBER(write64)             { write(data);   }
+        //void write8(uint8_t data)               { write(data);   }
+        //void write16(uint16_t data)             { write(data);   }
+        //void write32(uint32_t data)             { write(data);   }
+        //void write64(uint64_t data)             { write(data);   }
 
 
         public override void validity_helper(validity_checker valid, netlist.netlist_state_t nlstate)
@@ -902,8 +1018,8 @@ namespace mame
         {
             netlist_global.LOGDEVCALLS(this, "start\n");
 
-            netlist.param_t p = ((netlist_mame_device)this.owner()).setup().find_param(m_param_name);  //pstring(m_param_name, pstring.UTF8));
-            m_param = (netlist.param_logic_t)p;
+            netlist.param_ref_t p = ((netlist_mame_device)this.owner()).setup().find_param(m_param_name);  //netlist::param_ref_t p = downcast<netlist_mame_device *>(this->owner())->setup().find_param(pstring(m_param_name));
+            m_param = (netlist.param_logic_t)p.param();  //m_param = dynamic_cast<netlist::param_logic_t *>(&p.param());
             if (m_param == null)
             {
                 fatalerror("device {0} wrong parameter type for {1}\n", basetag(), m_param_name);
@@ -916,6 +1032,12 @@ namespace mame
             m_param.set(param != 0);
         }
     }
+
+
+    // ----------------------------------------------------------------------------------------
+    // netlist_mame_ram_pointer_device
+    // ----------------------------------------------------------------------------------------
+    //class netlist_mame_ram_pointer_device : public device_t, public netlist_mame_sub_interface
 
 
     // ----------------------------------------------------------------------------------------
@@ -967,25 +1089,57 @@ namespace mame
         }
 
 
-        public override void custom_netlist_additions(netlist.netlist_state_t nlstate)
+        public override void custom_netlist_additions(netlist.nlparse_t parser)
         {
-            if (!nlstate.setup().device_exists("STREAM_INPUT"))
-                nlstate.setup().register_dev("NETDEV_SOUND_IN", "STREAM_INPUT");
+            if (!parser.device_exists("STREAM_INPUT"))
+                parser.register_dev("NETDEV_SOUND_IN", "STREAM_INPUT");
 
             string sparam = new plib.pfmt("STREAM_INPUT.CHAN{0}").op(m_channel);
-            nlstate.setup().register_param(sparam, m_param_name);
+            parser.register_param(sparam, m_param_name);
             sparam = new plib.pfmt("STREAM_INPUT.MULT{0}").op(m_channel);
-            nlstate.setup().register_param_val(sparam, m_netlist_mame_sub_interface.m_mult);
+            parser.register_param_val(sparam, m_netlist_mame_sub_interface.m_mult);
             sparam = new plib.pfmt("STREAM_INPUT.OFFSET{0}").op(m_channel);
-            nlstate.setup().register_param_val(sparam, m_netlist_mame_sub_interface.m_offset);
+            parser.register_param_val(sparam, m_netlist_mame_sub_interface.m_offset);
         }
+    }
+
+
+    /// \brief save state helper for plib classes supporting the save_state interface
+    ///
+    public struct save_helper
+    {
+        device_t m_device;
+        string m_prefix;
+
+
+        public save_helper(device_t dev, string prefix)
+        {
+            m_device = dev;
+            m_prefix = prefix;
+        }
+
+
+        //template<typename T, typename X = void *>
+        public void save_item<T>(T item, string name)  //void save_item(T &&item, const pstring &name, X = nullptr)
+        {
+            m_device.save_item(new Tuple<T, string>(item, (m_prefix + "_" + name).c_str()));  //m_device->save_item(item, (m_prefix + "_" + name).c_str());
+        }
+
+
+        //template <typename X = void *>
+        //std::enable_if_t<plib::compile_info::has_int128::value && std::is_pointer<X>::value, void>
+        //save_item(INT128 &item, const pstring &name, X = nullptr)
+        //{
+        //    auto *p = reinterpret_cast<std::uint64_t *>(&item);
+        //    m_device->save_item(p[0], (m_prefix + "_" + name + "_1").c_str());
+        //    m_device->save_item(p[1], (m_prefix + "_" + name + "_2").c_str());
+        //}
     }
 
 
     // ----------------------------------------------------------------------------------------
     // netlist_mame_stream_output_device
     // ----------------------------------------------------------------------------------------
-
     public class netlist_mame_stream_output_device : device_t_with_netlist_mame_sub_interface
                                                      //device_t
                                                      //netlist_mame_sub_interface
@@ -997,6 +1151,11 @@ namespace mame
 
         uint32_t m_channel;
         string m_out_name;
+        std.vector<stream_sample_t> m_buffer;
+        double m_cur;
+
+        netlist_time m_sample_time;
+        netlist_time_ext m_last_buffer_time;
 
 
         // construction/destruction
@@ -1015,6 +1174,9 @@ namespace mame
         {
             m_channel = 0;
             m_out_name = "";
+            m_cur = 0.0;
+            m_sample_time = netlist_time.from_hz(1);
+            m_last_buffer_time = netlist_time_ext.zero();
         }
 
 
@@ -1022,28 +1184,80 @@ namespace mame
         {
             m_out_name = out_name;
             m_channel = (uint32_t)channel;
+            sound().register_stream_output(channel, this);
         }
+
+
+        //void process(netlist::netlist_time_ext tim, netlist::nl_fptype val);
+
+
+        public void buffer_reset(netlist_time_ext upto)
+        {
+            m_last_buffer_time = upto;
+            m_buffer.clear();
+        }
+
+
+        public void sound_update_fill(size_t samples, Pointer<stream_sample_t> target)  //void sound_update_fill(std::size_t samples, stream_sample_t *target);
+        {
+            if (samples < m_buffer.size())
+                throw new emu_fatalerror("sound {0}: samples {1} less bufsize {2}\n", name(), samples, m_buffer.size());
+
+            std.memcpy(target, new Pointer<stream_sample_t>(m_buffer), (UInt32)m_buffer.Count);  //std::copy(m_buffer.begin(), m_buffer.end(), target);
+            size_t pos = (size_t)m_buffer.size();
+            while (pos < samples)
+            {
+                target[pos++] = (stream_sample_t)m_cur;
+            }
+        }
+
+
+        public void set_sample_time(netlist_time t) { m_sample_time = t; }
 
 
         // device-level overrides
         protected override void device_start()
         {
-            netlist_global.LOGDEVCALLS(this, "start\n");
+            netlist_global.LOGDEVCALLS(this, "start {0}\n", name());
+            m_cur = 0.0;
+            m_last_buffer_time = netlist_time_ext.zero();
+
+            save_item(NAME(m_cur));
+            m_sample_time.save_state(new save_helper(this, "m_sample_time"));
+            m_last_buffer_time.save_state(new save_helper(this, "m_last_buffer_time"));
         }
 
 
-        public override void custom_netlist_additions(netlist.netlist_state_t nlstate)
+        protected override void device_reset()
         {
-            //NETLIB_NAME(sound_out) *snd_out;
-            string sname = new plib.pfmt("STREAM_OUT_{0}").op(m_channel);
+            netlist_global.LOGDEVCALLS(this, "reset {0}\n", name());
+            m_cur = 0.0;
+            m_last_buffer_time = netlist_time_ext.zero();
+        }
 
-            //snd_out = dynamic_cast<NETLIB_NAME(sound_out) *>(setup.register_dev("nld_sound_out", sname));
-            nlstate.setup().register_dev("NETDEV_SOUND_OUT", sname);
 
-            nlstate.setup().register_param_val(sname + ".CHAN", m_channel);
-            nlstate.setup().register_param_val(sname + ".MULT", m_netlist_mame_sub_interface.m_mult);
-            nlstate.setup().register_param_val(sname + ".OFFSET", m_netlist_mame_sub_interface.m_offset);
-            nlstate.setup().register_link(sname + ".IN", m_out_name);
+        public override void custom_netlist_additions(netlist.nlparse_t parser)
+        {
+            string dname = new plib.pfmt("STREAM_OUT_{0}").op(m_channel);
+
+            parser.register_dev(dname, dname);
+            parser.register_link(dname + ".IN", m_out_name);
+        }
+
+
+        public override void pre_parse_action(netlist.nlparse_t parser)
+        {
+            string dname = new plib.pfmt("STREAM_OUT_{0}").op(m_channel);
+
+            //const auto lambda = [this](auto &in_, netlist::nl_fptype val)
+            //{
+            //    this->process(in_.exec().time(), val);;
+            //};
+
+            //using lb_t = decltype(lambda);
+            //using cb_t = netlist::interface::NETLIB_NAME(analog_callback)<lb_t>;
+
+            parser.factory_().add_nld_analog_callback(dname, new netlist.factory.properties("-", plib.pglobal.PSOURCELOC()));  //parser.factory().add<cb_t, netlist::nl_fptype, lb_t>(dname, netlist::factory::properties("-", PSOURCELOC()), 1e-9, std::forward<lb_t>(lambda));
         }
     }
 
@@ -1065,17 +1279,6 @@ namespace mame
 
 
     //class netlist_source_memregion_t : public netlist::source_t
-    //{
-    //public:
-    //    netlist_source_memregion_t(netlist::setup_t &setup, pstring name)
-    //    : netlist::source_t(setup), m_name(name)
-    //    {
-    //    }
-    //
-    //    virtual std::unique_ptr<plib::pistream> stream(const pstring &name) override;
-    //private:
-    //    pstring m_name;
-    //};
 
 
     class netlist_data_memregions_t : netlist.source_data_t
@@ -1089,7 +1292,7 @@ namespace mame
         }
 
 
-        public override std.istream stream(string name)  //virtual plib::unique_ptr<std::istream> stream(const pstring &name) override;
+        public override std.istream stream(string name)
         {
             throw new emu_unimplemented();
         }
@@ -1097,217 +1300,26 @@ namespace mame
 
 
     // ----------------------------------------------------------------------------------------
-    // sound_out
-    // ----------------------------------------------------------------------------------------
-    //class NETLIB_NAME(sound_out) : public netlist::device_t
-    class nld_sound_out : netlist.device_t
-    {
-        public netlist.param_int_t m_channel;
-        netlist.param_fp_t m_mult;
-        netlist.param_fp_t m_offset;
-        public Pointer<stream_sample_t> m_buffer;  //stream_sample_t *m_buffer;
-        public int m_bufsize;
-
-        public netlist_time m_sample_time;
-
-        netlist.analog_input_t m_in;
-        double m_cur;
-        int m_last_pos;
-        netlist.state_var<netlist_time_ext> m_last_buffer_time;
-
-
-        //NETLIB_NAME(sound_out)(netlist::netlist_state_t &anetlist, const pstring &name)
-        public nld_sound_out(netlist.netlist_state_t anetlist, string name)
-            : base(anetlist, name)
-        {
-            m_channel = new netlist.param_int_t(this, "CHAN", 0);
-            m_mult = new netlist.param_fp_t(this, "MULT", 1000.0);
-            m_offset = new netlist.param_fp_t(this, "OFFSET", 0.0);
-            m_buffer = null;
-            m_bufsize = 0;
-            m_sample_time = netlist_time.from_hz(1);
-            m_in = new netlist.analog_input_t(this, "IN");
-            m_cur = 0.0;
-            m_last_pos = 0;
-            m_last_buffer_time = new netlist.state_var<netlist_time>(this, "m_last_buffer", netlist_time_ext.zero());
-        }
-
-
-        public override void reset()
-        {
-            m_cur = 0.0;
-            m_last_pos = 0;
-            m_last_buffer_time.op = netlist_time_ext.zero();
-        }
-
-
-        //NETLIB_UPDATEI()
-        public override void update()
-        {
-            nl_fptype val = m_in.op() * m_mult.op() + m_offset.op();
-            sound_update(exec().time());
-            /* ignore spikes */
-            if (plib.pglobal.abs(val) < 32767.0)
-                m_cur = val;
-            else if (val > 0.0)
-                m_cur = 32767.0;
-            else
-                m_cur = -32767.0;
-        }
-
-
-        public void buffer_reset(netlist_time_ext upto)
-        {
-            m_last_pos = 0;
-            m_last_buffer_time.op = upto;
-        }
-
-
-        public void sound_update(netlist_time_ext upto)
-        {
-            int pos = (int)(((upto - m_last_buffer_time.op) / m_sample_time).as_raw());
-            if (pos > m_bufsize)
-                throw new emu_fatalerror("sound {0}: pos {1} exceeded bufsize {2}\n", name().c_str(), pos, m_bufsize);
-
-            while (m_last_pos < pos )
-            {
-                m_buffer[m_last_pos++] = (stream_sample_t)m_cur;
-            }
-        }
-
-
-        public void sound_update_fill(int samples)
-        {
-            if (samples > m_bufsize)
-                throw new emu_fatalerror("sound {0}: pos {1} exceeded bufsize {2}\n", name().c_str(), samples, m_bufsize);
-
-            while (m_last_pos < samples )
-            {
-                m_buffer[m_last_pos++] = (stream_sample_t) m_cur;
-            }
-        }
-    }
-
-
-    // ----------------------------------------------------------------------------------------
     // sound_in
     // ----------------------------------------------------------------------------------------
-    //class NETLIB_NAME(sound_in) : public netlist::device_t
-    class nld_sound_in : netlist.device_t
+
+    //using sound_in_type = netlist::interface::NETLIB_NAME(buffered_param_setter)<stream_sample_t, 16>;
+    class sound_in_type : netlist.interface_.nld_buffered_param_setter_stream_sample_t//<stream_sample_t, 16>
     {
-        const int MAX_INPUT_CHANNELS = 16;
+        protected sound_in_type(netlist.netlist_state_t anetlist, string name)
+            : base(16, anetlist, name)
+        { }
+    }
+
+    //class NETLIB_NAME(sound_in) : public sound_in_type
+    class nld_sound_in : sound_in_type
+    {
+        //using base_type = sound_in_type;
+        //using base_type::base_type;
 
 
-        public class channel
-        {
-            public netlist.param_str_t m_param_name;  //netlist::unique_pool_ptr<netlist::param_str_t> m_param_name;
-            public netlist.param_fp_t m_param;  //netlist::param_fp_t *m_param;
-            public Pointer<stream_sample_t> m_buffer;  //stream_sample_t *m_buffer;
-            public netlist.param_fp_t m_param_mult;  //netlist::unique_pool_ptr<netlist::param_fp_t> m_param_mult;
-            public netlist.param_fp_t m_param_offset;  //netlist::unique_pool_ptr<netlist::param_fp_t> m_param_offset;
-        }
-        channel [] m_channels = new channel [MAX_INPUT_CHANNELS];
-        netlist_time m_sample_time;
-
-        netlist.logic_input_t m_feedback;
-        netlist.logic_output_t m_Q;
-
-        int m_pos;
-        int m_samples;
-        int m_num_channels;
-
-
-        //NETLIB_NAME(sound_in)(netlist::netlist_state_t &anetlist, const pstring &name)
         public nld_sound_in(netlist.netlist_state_t anetlist, string name)
             : base(anetlist, name)
-        {
-            m_sample_time = netlist_time.from_nsec(1);
-            m_feedback = new netlist.logic_input_t(this, "FB"); // clock part
-            m_Q = new netlist.logic_output_t(this, "Q");
-            m_pos = 0;
-            m_samples = 0;
-            m_num_channels = 0;
-
-
-            connect(m_feedback, m_Q);
-
-            for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-            {
-                m_channels[i] = new channel();
-                m_channels[i].m_param_name = new netlist.param_str_t(this, new plib.pfmt("CHAN{0}").op(i), "");  //m_channels[i].m_param_name = anetlist.make_object<netlist::param_str_t>(*this, plib::pfmt("CHAN{1}")(i), "");
-                m_channels[i].m_param_mult = new netlist.param_fp_t(this, new plib.pfmt("MULT{0}").op(i), 1.0);  //m_channels[i].m_param_mult = anetlist.make_object<netlist::param_fp_t>(*this, plib::pfmt("MULT{1}")(i), 1.0);
-                m_channels[i].m_param_offset = new netlist.param_fp_t(this, new plib.pfmt("OFFSET{0}").op(i), 0.0);  //m_channels[i].m_param_offset = anetlist.make_object<netlist::param_fp_t>(*this, plib::pfmt("OFFSET{1}")(i), 0.0);
-            }
-        }
-
-
-        public override void reset()
-        {
-            m_pos = 0;
-            foreach (var elem in m_channels)
-                elem.m_buffer = null;
-        }
-
-
-        //NETLIB_UPDATEI()
-        public override void update()
-        {
-            if (m_pos < m_samples)
-            {
-                for (int i = 0; i < m_num_channels; i++)
-                {
-                    if (m_channels[i].m_buffer == null)
-                        break; // stop, called outside of stream_update
-                    nl_fptype v = m_channels[i].m_buffer[m_pos];
-                    m_channels[i].m_param.set(v * m_channels[i].m_param_mult.op() + m_channels[i].m_param_offset.op());
-                }
-            }
-            else
-            {
-                // FIXME: The logic has a rounding issue because time resolution divided
-                //        by 48,000 is not a natural number. The fractional part
-                //        adds up to one samples every 13 seconds for 100 ps resolution.
-                //        Fixing this is possible but complicated and expensive.
-            }
-            m_pos++;
-
-            m_Q.net().toggle_and_push_to_queue(m_sample_time);
-        }
-
-
-        public void resolve(netlist_time sample_time)
-        {
-            m_pos = 0;
-            m_sample_time = sample_time;
-
-            for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-            {
-                if (!string.IsNullOrEmpty(m_channels[i].m_param_name.op()))  //if ((*m_channels[i].m_param_name)() != pstring(""))
-                {
-                    if (i != m_num_channels)
-                        state().log().fatal.op("sound input numbering has to be sequential!");
-
-                    m_num_channels++;
-                    m_channels[i].m_param = (netlist.param_fp_t)(state().setup().find_param(m_channels[i].m_param_name.op(), true));  //m_channels[i].m_param = dynamic_cast<netlist::param_fp_t *>(state().setup().find_param((*m_channels[i].m_param_name)(), true));
-                }
-            }
-        }
-
-
-        //template <typename S>
-        public void buffer_reset(netlist_time sample_time, int num_samples, Pointer<stream_sample_t> [] inputs)  //void buffer_reset(netlist::netlist_time sample_time, int num_samples, S **inputs)
-        {
-            m_samples = num_samples;
-            m_sample_time = sample_time;
-
-            m_pos = 0;
-            for (int i = 0; i < m_num_channels; i++)
-            {
-                m_channels[i].m_buffer = inputs[i];
-            }
-        }
-
-
-        public int num_channels() { return m_num_channels; }
+        { }
     }
 }

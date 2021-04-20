@@ -186,8 +186,7 @@ namespace mame
          *
          *************************************/
 
-        //WRITE8_MEMBER(m52_state::m52_scroll_w)
-        protected virtual void m52_scroll_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected virtual void m52_scroll_w(uint8_t data)
         {
         /*
             According to the schematics there is only one video register that holds the X scroll value
@@ -209,16 +208,14 @@ namespace mame
          *
          *************************************/
 
-        //WRITE8_MEMBER(m52_state::m52_videoram_w)
-        void m52_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_videoram_w(offs_t offset, uint8_t data)
         {
             m_videoram.target[offset] = data;
             m_tx_tilemap.mark_tile_dirty(offset);
         }
 
 
-        //WRITE8_MEMBER(m52_state::m52_colorram_w)
-        void m52_colorram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_colorram_w(offs_t offset, uint8_t data)
         {
             m_colorram.target[offset] = data;
             m_tx_tilemap.mark_tile_dirty(offset);
@@ -234,8 +231,7 @@ namespace mame
         /* This looks like some kind of protection implemented by a custom chip on the
            scroll board. It mangles the value written to the port m52_bg1xpos_w, as
            follows: result = popcount(value & 0x7f) ^ (value >> 7) */
-        //READ8_MEMBER(m52_state::m52_protection_r)
-        u8 m52_protection_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t m52_protection_r()
         {
             int popcount = 0;
             int temp;
@@ -253,32 +249,27 @@ namespace mame
          *
          *************************************/
 
-        //WRITE8_MEMBER(m52_state::m52_bg1ypos_w)
-        void m52_bg1ypos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bg1ypos_w(uint8_t data)
         {
             m_bg1ypos = data;
         }
 
-        //WRITE8_MEMBER(m52_state::m52_bg1xpos_w)
-        void m52_bg1xpos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bg1xpos_w(uint8_t data)
         {
             m_bg1xpos = data;
         }
 
-        //WRITE8_MEMBER(m52_state::m52_bg2xpos_w)
-        void m52_bg2xpos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bg2xpos_w(uint8_t data)
         {
             m_bg2xpos = data;
         }
 
-        //WRITE8_MEMBER(m52_state::m52_bg2ypos_w)
-        void m52_bg2ypos_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bg2ypos_w(uint8_t data)
         {
             m_bg2ypos = data;
         }
 
-        //WRITE8_MEMBER(m52_state::m52_bgcontrol_w)
-        void m52_bgcontrol_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_bgcontrol_w(uint8_t data)
         {
             m_bgcontrol = data;
         }
@@ -290,8 +281,7 @@ namespace mame
          *
          *************************************/
 
-        //WRITE8_MEMBER(m52_state::m52_flipscreen_w)
-        void m52_flipscreen_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void m52_flipscreen_w(uint8_t data)
         {
             /* screen flip is handled both by software and hardware */
             flip_screen_set((u32)((data & 0x01) ^ (~ioport("DSW2").read() & 0x01)));

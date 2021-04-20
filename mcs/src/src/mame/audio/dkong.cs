@@ -486,8 +486,7 @@ namespace mame
          *
          ****************************************************************/
 
-        //WRITE8_MEMBER(dkong_state::dkong_voice_w)
-        void dkong_voice_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_voice_w(uint8_t data)
         {
             /* only provided for documentation purposes
              * not actually used
@@ -496,8 +495,7 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(dkong_state::dkong_voice_status_r)
-        u8 dkong_voice_status_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t dkong_voice_status_r()
         {
             /* only provided for documentation purposes
              * not actually used
@@ -506,14 +504,13 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(dkong_state::dkong_tune_r)
-        u8 dkong_tune_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t dkong_tune_r(offs_t offset)
         {
             uint8_t page = (uint8_t)(m_dev_vp2.target.read(0) & 0x47);
 
             if ((page & 0x40) != 0)
             {
-                return (u8)((m_ls175_3d.target.read(0) & 0x0F) | (dkong_voice_status_r(space, 0) << 4));
+                return (uint8_t)((m_ls175_3d.target.read(0) & 0x0F) | (dkong_voice_status_r() << 4));
             }
             else
             {
@@ -523,8 +520,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(dkong_state::dkong_p1_w)
-        void dkong_p1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_p1_w(uint8_t data)
         {
             m_discrete.target.write(DS_DAC, data);
         }
@@ -536,8 +532,7 @@ namespace mame
          *
          ****************************************************************/
 
-        //WRITE8_MEMBER(dkong_state::dkong_audio_irq_w)
-        void dkong_audio_irq_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void dkong_audio_irq_w(uint8_t data)
         {
             if (data != 0)
                 m_soundcpu.target.set_input_line(0, ASSERT_LINE);

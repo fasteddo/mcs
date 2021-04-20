@@ -23,74 +23,30 @@ namespace mame
         //}
 
 
-        /* internal state */
-        u8 m_slapstic_num;
-        Pointer<u8> m_slapsticU8;  //u16 *            m_slapstic;
-        u8 m_slapstic_bank;
-        std.vector<u8> m_slapstic_bank0;
-        UInt32 m_slapstic_last_pc;
-        UInt32 m_slapstic_last_address;
-        UInt32 m_slapstic_base;
-        UInt32 m_slapstic_mirror;
-
         required_device<cpu_device> m_maincpu;
 
         protected optional_device<gfxdecode_device> m_gfxdecode;
         protected optional_device<screen_device> m_screen;
-        optional_device<atari_slapstic_device> m_slapstic_device;
 
 
         // construction/destruction
         protected atarigen_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_slapstic_num = 0;
-            m_slapsticU8 = null;
-            m_slapstic_bank = 0;
-            m_slapstic_last_pc = 0;
-            m_slapstic_last_address = 0;
-            m_slapstic_base = 0;
-            m_slapstic_mirror = 0;
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_gfxdecode = new optional_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new optional_device<screen_device>(this, "screen");
-            m_slapstic_device = new optional_device<atari_slapstic_device>(this, ":slapstic");
         }
 
 
         // users must call through to these
         protected override void machine_start()
         {
-            save_item(NAME(new { m_slapstic_num }));
-            save_item(NAME(new { m_slapstic_bank }));
-            save_item(NAME(new { m_slapstic_last_pc }));
-            save_item(NAME(new { m_slapstic_last_address }));
         }
 
 
         protected override void machine_reset()
         {
-            // reset the slapstic
-            if (m_slapstic_num != 0)
-            {
-                if (!m_slapstic_device.found())
-                    fatalerror("Slapstic device is missing?\n");
-
-                m_slapstic_device.target.slapstic_reset();
-                slapstic_update_bank(m_slapstic_device.target.slapstic_bank());
-            }
-        }
-
-
-        protected override void device_post_load()
-        {
-            if (m_slapstic_num != 0)
-            {
-                if (!m_slapstic_device.found())
-                    fatalerror("Slapstic device is missing?\n");
-
-                slapstic_update_bank(m_slapstic_device.target.slapstic_bank());
-            }
         }
 
 
@@ -103,44 +59,6 @@ namespace mame
                     ((device_t)ptr).execute().set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
                     break;
             }
-        }
-
-
-        // slapstic helpers
-        //void slapstic_configure(cpu_device &device, offs_t base, offs_t mirror, u8 *mem);
-
-
-        /***************************************************************************
-            SLAPSTIC HANDLING
-        ***************************************************************************/
-        void slapstic_update_bank(int bank)
-        {
-            // if the bank has changed, copy the memory; Pit Fighter needs this
-            if (bank != m_slapstic_bank)
-            {
-                // bank 0 comes from the copy we made earlier
-                if (bank == 0)
-                    memcpy(m_slapsticU8, new Pointer<u8>(m_slapstic_bank0, 0), 0x2000);  //memcpy(m_slapstic, &m_slapstic_bank0[0], 0x2000);
-                else
-                    memcpy(m_slapsticU8, new Pointer<u8>(m_slapsticU8, bank * 0x1000 * 2), 0x2000);  //memcpy(m_slapstic, &m_slapstic[bank * 0x1000], 0x2000);
-
-                // remember the current bank
-                m_slapstic_bank = (u8)bank;
-            }
-        }
-
-
-        //DECLARE_WRITE16_MEMBER(slapstic_w);
-        void slapstic_w(address_space space, offs_t offset, u16 data, u16 mem_mask)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        //DECLARE_READ16_MEMBER(slapstic_r);
-        u16 slapstic_r(address_space space, offs_t offset, u16 mem_mask)
-        {
-            throw new emu_unimplemented();
         }
 
 

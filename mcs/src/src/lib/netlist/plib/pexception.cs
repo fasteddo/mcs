@@ -7,11 +7,31 @@ using System.Collections.Generic;
 
 namespace mame.plib
 {
-    /// \brief Terminate the program.
-    ///
-    /// \note could be enhanced by setting a termination handler
-    ///
-    //[[noreturn]] void terminate(const char *msg) noexcept;
+    class pexception_global
+    {
+        /// \brief Terminate the program.
+        ///
+        /// \note could be enhanced by setting a termination handler
+        ///
+        //[[noreturn]] void terminate(const char *msg) noexcept;
+        //============================================================
+        // terminate
+        //============================================================
+        public static void terminate(string msg)
+        {
+            try
+            {
+                std.cerr(msg + "\n");
+            }
+            catch (Exception)
+            {
+                /* ignore */
+            }
+
+            std.terminate();
+        }
+    }
+
 
     //[[noreturn]] void passert_fail(const char *assertion,
     //    const char *file, int lineno, const char *msg) noexcept;

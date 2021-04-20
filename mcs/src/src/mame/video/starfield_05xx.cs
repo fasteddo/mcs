@@ -14,9 +14,9 @@ namespace mame
     // used by galaga, bosconian, and their various clones
     public class starfield_05xx_device : device_t
     {
-        //DEFINE_DEVICE_TYPE(STARFIELD_05XX, starfield_05xx_device, "starfield_05xx_stars", "Galaga/Bosconian starfield")
+        //DEFINE_DEVICE_TYPE(STARFIELD_05XX, starfield_05xx_device, "namco_05xx_starfield", "Namco 05xx Starfield")
         static device_t device_creator_starfield_05xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new starfield_05xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type STARFIELD_05XX = DEFINE_DEVICE_TYPE(device_creator_starfield_05xx_device, "starfield_05xx_stars", "Galaga/Bosconian starfield");
+        public static readonly device_type STARFIELD_05XX = DEFINE_DEVICE_TYPE(device_creator_starfield_05xx_device, "namco_05xx_starfield", "Namco 05xx Starfield");
 
 
         const uint16_t STARS_COLOR_BASE = 64*4+64*4;
@@ -129,59 +129,56 @@ namespace mame
 
         public void draw_starfield(bitmap_ind16 bitmap, rectangle cliprect, int flip)
         {
+            if (m_enable == 0)
+                return;
+
             uint16_t pre_vis_cycle_count = m_pre_vis_cycle_count;
             uint16_t post_vis_cycle_count = m_post_vis_cycle_count;
 
-            if (m_enable != 0)
+            // Advance the LFSR during the pre-visible portion of the frame
+            do { m_lfsr = get_next_lfsr_state(m_lfsr); } while ((--pre_vis_cycle_count) != 0);
+
+            // Now we are in visible portion of the frame - Output all LFSR hits here
+            for (int y = m_offset_y; y < VISIBLE_LINES + m_offset_y; y++)
             {
-                int x;
-                int y;
-
-                // Advance the LFSR during the pre-visible portion of the frame
-                do { m_lfsr = get_next_lfsr_state(m_lfsr); } while ((--pre_vis_cycle_count) != 0);
-
-                // Now we are in visible portion of the frame - Output all LFSR hits here
-                for (y = m_offset_y; y < VISIBLE_LINES + m_offset_y; y++)
+                for (int x = m_offset_x; x < STARFIELD_PIXEL_WIDTH + m_offset_x; x++)
                 {
-                    for (x = m_offset_x; x < STARFIELD_PIXEL_WIDTH + m_offset_x; x++)
+                    // Check lfsr for hit
+                    if ((m_lfsr&LFSR_HIT_MASK) == LFSR_HIT_VALUE)
                     {
-                        // Check lfsr for hit
-                        if ((m_lfsr&LFSR_HIT_MASK) == LFSR_HIT_VALUE)
+                        uint8_t star_set = (uint8_t)bitswap(m_lfsr, 10, 8);
+
+                        if ((m_set_a == star_set) || (m_set_b == star_set))
                         {
-                            uint8_t star_set = (uint8_t)bitswap(m_lfsr, 10, 8);
-
-                            if ((m_set_a == star_set) || (m_set_b == star_set))
+                            // don't draw the stars that are beyond the X limit
+                            if (x < m_limit_x)
                             {
-                                // don't draw the stars that are beyond the X limit
-                                if (x < m_limit_x)
+                                int dx = x;
+
+                                if (flip != 0) dx += 64;
+
+                                if (cliprect.contains(dx, y))
                                 {
-                                    int dx = x;
+                                    uint8_t color;
 
-                                    if (flip != 0) dx += 64;
+                                    color  = (uint8_t)((m_lfsr >> 5) & 0x7);
+                                    color |= (uint8_t)((m_lfsr << 3) & 0x18);
+                                    color |= (uint8_t)((m_lfsr << 2) & 0x20);
+                                    color = (uint8_t)((~color) & 0x3F);
 
-                                    if (cliprect.contains(dx, y))
-                                    {
-                                        uint8_t color;
-
-                                        color  = (uint8_t)((m_lfsr >> 5) & 0x7);
-                                        color |= (uint8_t)((m_lfsr << 3) & 0x18);
-                                        color |= (uint8_t)((m_lfsr << 2) & 0x20);
-                                        color = (uint8_t)((~color) & 0x3F);
-
-                                        bitmap.pix16(y, dx)[0] = (uint16_t)(STARS_COLOR_BASE + color);
-                                    }
+                                    bitmap.pix16(y, dx)[0] = (uint16_t)(STARS_COLOR_BASE + color);
                                 }
                             }
                         }
-
-                        // Advance LFSR
-                        m_lfsr = get_next_lfsr_state(m_lfsr);
                     }
-                }
 
-                // Advance the LFSR during the post-visible portion of the frame
-                do { m_lfsr = get_next_lfsr_state(m_lfsr); } while ((--post_vis_cycle_count) != 0);
+                    // Advance LFSR
+                    m_lfsr = get_next_lfsr_state(m_lfsr);
+                }
             }
+
+            // Advance the LFSR during the post-visible portion of the frame
+            do { m_lfsr = get_next_lfsr_state(m_lfsr); } while ((--post_vis_cycle_count) != 0);
         }
 
 

@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using u32 = System.UInt32;
+
 
 namespace mame.plib
 {
@@ -48,6 +50,13 @@ namespace mame.plib
         //using size_type = typename base::size_type;
 
         //using base::base;
+
+        public aligned_vector() : base() { }
+        // this is different behavior as List<T> so that it matches how std::vector works
+        public aligned_vector(int count, T data = default) : base(count, data) { }
+        public aligned_vector(u32 count, T data = default) : this((int)count, data) { }
+        public aligned_vector(IEnumerable<T> collection) : base(collection) { }
+
 
         //base & as_base() noexcept { return *this; }
         //const base & as_base() const noexcept { return *this; }

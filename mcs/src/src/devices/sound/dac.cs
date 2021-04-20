@@ -8,6 +8,7 @@ using offs_t = System.UInt32;
 using stream_sample_t = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 
@@ -33,16 +34,19 @@ namespace mame
 
     interface dac_bit_interface
     {
-        void flipscreen_w(int state);  //virtual DECLARE_WRITE_LINE_MEMBER(write) = 0;
-        void data_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff);  //virtual DECLARE_WRITE8_MEMBER(data_w) = 0;
+        //virtual DECLARE_WRITE_LINE_MEMBER(write) = 0;
+        void data_w(uint8_t data);
     }
 
 
     interface dac_byte_interface
     {
         void write(byte data);
-        void data_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff);  //virtual DECLARE_WRITE8_MEMBER(data_w) = 0;
+        void data_w(uint8_t data);
     }
+
+
+    //class dac_word_interface
 
 
     //template <unsigned bits>
@@ -212,7 +216,7 @@ namespace mame
 
         // dac_byte_interface
         public void write(u8 data) { throw new emu_unimplemented(); }
-        public virtual void data_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { m_dac_code.setCode(data); }  //virtual DECLARE_WRITE8_MEMBER(data_w) override { this->setCode(data); }
+        public virtual void data_w(uint8_t data) { m_dac_code.setCode(data); }
     }
 
 

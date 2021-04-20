@@ -42,8 +42,8 @@ namespace mame.netlist
 
             //#define NETLIB_DEVICE_DECL(chip) extern factory::constructor_ptr_t decl_ ## chip;
 
-            static void LIB_DECL(string nic, factory.constructor_ptr_t decl) { initialize_factory_factory.register_device(decl(nic)); }  //#define LIB_DECL(nic, decl) factory.register_device( decl ( xstr(nic)) );
-            static void LIB_ENTRY(string nic, factory.constructor_ptr_t decl) { LIB_DECL("nld_" + nic, decl); }  //#define LIB_ENTRY(nic) { NETLIB_DEVICE_DECL(nic); LIB_DECL(NETLIB_NAME(nic), decl_ ## nic) }
+            static void LIB_DECL(factory.constructor_ptr_t decl) { initialize_factory_factory.add(decl()); }  //#define LIB_DECL(decl) factory.add( decl () );
+            static void LIB_ENTRY(string nic, factory.constructor_ptr_t decl) { LIB_DECL(decl); }  //#define LIB_ENTRY(nic) { NETLIB_DEVICE_DECL(nic); LIB_DECL(decl_ ## nic) }
 
 
             public static void initialize_factory(factory.list_t factory)
@@ -56,6 +56,7 @@ namespace mame.netlist
                 LIB_ENTRY("C", analog.nld_C.decl_C);
                 //LIB_ENTRY(L)
                 //LIB_ENTRY(D)
+                //LIB_ENTRY(Z)
                 //LIB_ENTRY(VS)
                 //LIB_ENTRY(CS)
                 //LIB_ENTRY(VCVS)
@@ -83,7 +84,11 @@ namespace mame.netlist
                 LIB_ENTRY("gnd", nld_gnd.decl_gnd);
                 LIB_ENTRY("netlistparams", nld_netlistparams.decl_netlistparams);
                 LIB_ENTRY("solver", nld_solver.decl_solver);
-                //LIB_ENTRY(res_sw)
+                //LIB_ENTRY(sys_dsw1)
+                //LIB_ENTRY(sys_dsw2)
+                //LIB_ENTRY(sys_compd)
+                //LIB_ENTRY(sys_noise_mt_u)
+                //LIB_ENTRY(sys_noise_mt_n)
                 //LIB_ENTRY(switch1)
                 //LIB_ENTRY(switch2)
                 //LIB_ENTRY(nicRSFF)
@@ -91,7 +96,6 @@ namespace mame.netlist
                 //LIB_ENTRY(2102A)
                 //LIB_ENTRY(2102A_dip)
                 //LIB_ENTRY(2716)
-                //LIB_ENTRY(2716_dip)
 //#if !(NL_USE_TRUTHTABLE_7448)
                 //LIB_ENTRY(7448)
                 //LIB_ENTRY(7448_dip)
@@ -129,10 +133,15 @@ namespace mame.netlist
                 //LIB_ENTRY(74107A)    // FIXME: implement missing DIP
                 //LIB_ENTRY(74123)
                 //LIB_ENTRY(74123_dip)
+                //LIB_ENTRY(74125)
+                //LIB_ENTRY(74126)
                 //LIB_ENTRY(74153)
                 //LIB_ENTRY(74153_dip)
                 //LIB_ENTRY(74161)
+                //LIB_ENTRY(74161_fixme)
                 //LIB_ENTRY(74161_dip)
+                //LIB_ENTRY(74163)
+                //LIB_ENTRY(74163_dip)
                 //LIB_ENTRY(74164)
                 //LIB_ENTRY(74164_dip)
                 //LIB_ENTRY(74165)
@@ -145,12 +154,16 @@ namespace mame.netlist
                 //LIB_ENTRY(74193)
                 //LIB_ENTRY(74194)
                 //LIB_ENTRY(74365)
+                //LIB_ENTRY(74377_GATE)
+                //LIB_ENTRY(74393)
+                //LIB_ENTRY(74393_dip)
                 ////ENTRY(74279,              TTL_74279,              "") // only dip available
                 //LIB_ENTRY(SN74LS629)
                 //LIB_ENTRY(82S16)
                 //LIB_ENTRY(82S115)
                 //LIB_ENTRY(82S123)
                 //LIB_ENTRY(82S126)
+                //LIB_ENTRY(74S287)
                 //LIB_ENTRY(9310)
                 //LIB_ENTRY(9314)
                 //LIB_ENTRY(9316)
@@ -185,8 +198,6 @@ namespace mame.netlist
                 //LIB_ENTRY(74365_dip)
                 //LIB_ENTRY(82S16_dip)
                 //LIB_ENTRY(82S115_dip)
-                //LIB_ENTRY(82S123_dip)
-                //LIB_ENTRY(82S126_dip)
                 //LIB_ENTRY(9602_dip)
                 //LIB_ENTRY(9310_dip)
                 //LIB_ENTRY(9314_dip)

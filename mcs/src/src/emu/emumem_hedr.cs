@@ -16,7 +16,7 @@ namespace mame
 
     // dispatches an access among multiple handlers indexed on part of the address
 
-    //template<int HighBits, int Width, int AddrShift, int Endian>
+    //template<int HighBits, int Width, int AddrShift, endianness_t Endian>
     class handler_entry_read_dispatch : handler_entry_read, IDisposable
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -28,6 +28,7 @@ namespace mame
         int HighBits;
 
 
+        int Level;  // = emu::detail::handler_entry_dispatch_level(HighBits);
         u32 LowBits;  // = emu::detail::handler_entry_dispatch_lowbits(HighBits, Width, AddrShift);
         u32 BITCOUNT; // = HighBits > LowBits ? HighBits - LowBits : 0;
         u32 COUNT; // = 1 << BITCOUNT;
@@ -41,11 +42,12 @@ namespace mame
         handler_entry.range [] m_ranges;
 
 
-        public handler_entry_read_dispatch(int HighBits, int Width, int AddrShift, int Endian, address_space space, handler_entry.range init, handler_entry_read handler) : base(Width, AddrShift, Endian, space, handler_entry.F_DISPATCH)
+        public handler_entry_read_dispatch(int HighBits, int Width, int AddrShift, endianness_t Endian, address_space space, handler_entry.range init, handler_entry_read handler) : base(Width, AddrShift, Endian, space, handler_entry.F_DISPATCH)
         {
             this.HighBits = HighBits;
 
 
+            Level = emumem_global.handler_entry_dispatch_level(HighBits);
             LowBits  = (u32)handler_entry_dispatch_lowbits(HighBits, Width, AddrShift);
             BITCOUNT = (u32)HighBits > LowBits ? (u32)HighBits - LowBits : 0;
             COUNT    = 1U << (int)BITCOUNT;
@@ -87,9 +89,9 @@ namespace mame
         }
 
 
-        public override uX read(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX mem_mask)
+        public override uX read(int WidthOverride, int AddrShiftOverride, endianness_t EndianOverride, offs_t offset, uX mem_mask)
         {
-            return m_dispatch[(offset >> (int)LowBits) & BITMASK].read(WidthOverride, AddrShiftOverride, EndianOverride, offset, mem_mask);
+            return emumem_global.dispatch_read(Level, WidthOverride, AddrShiftOverride, EndianOverride, HIGHMASK, offset, mem_mask, m_dispatch);
         }
 
 
@@ -392,6 +394,13 @@ namespace mame
         protected override void enumerate_references(handler_entry.reflist refs)
         {
             throw new emu_unimplemented();
+        }
+
+
+        //template<int HighBits, int Width, int AddrShift, endianness_t Endian>
+        public override handler_entry_read [] get_dispatch()  //handler_entry_read<Width, AddrShift, Endian> *const *handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::get_dispatch() const
+        {
+            return m_dispatch;
         }
 
 

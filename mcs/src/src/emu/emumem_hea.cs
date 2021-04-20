@@ -14,7 +14,7 @@ namespace mame
 
     // parent class for final handlers which want an address base and a mask
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     abstract class handler_entry_read_address : handler_entry_read
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -24,7 +24,7 @@ namespace mame
         protected offs_t m_address_mask;
 
 
-        protected handler_entry_read_address(int Width, int AddrShift, int Endian, address_space space, u32 flags) : base(Width, AddrShift, Endian, space, flags) { }
+        protected handler_entry_read_address(int Width, int AddrShift, endianness_t Endian, address_space space, u32 flags) : base(Width, AddrShift, Endian, space, flags) { }
         //~handler_entry_read_address() = default;
 
         public void set_address_info(offs_t base_, offs_t mask)
@@ -35,7 +35,7 @@ namespace mame
     }
 
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     abstract class handler_entry_write_address : handler_entry_write
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -46,7 +46,7 @@ namespace mame
         protected offs_t m_address_mask;
 
 
-        protected handler_entry_write_address(int Width, int AddrShift, int Endian, address_space space, u32 flags) : base(Width, AddrShift, Endian, space, flags)
+        protected handler_entry_write_address(int Width, int AddrShift, endianness_t Endian, address_space space, u32 flags) : base(Width, AddrShift, Endian, space, flags)
         {
             this.NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1U : 0U;
         }

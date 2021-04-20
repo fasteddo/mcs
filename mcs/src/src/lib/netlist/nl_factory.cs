@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
-using nlmempool = mame.plib.mempool;
 
 
 namespace mame.netlist
@@ -31,22 +30,75 @@ namespace mame.netlist
             public static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_NS<chip>(string ns, string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_BASE<chip>("devices", "devices", p_name, p_def_param); }
 
             //#define NETLIB_DEVICE_IMPL_BASE(ns, p_alias, chip, p_name, p_def_param) \
-            //    static plib::unique_ptr<factory::element_t> NETLIB_NAME(p_alias ## _c) \
-            //            (const pstring &classname) \
+            //    static factory::element_t::uptr NETLIB_NAME(p_alias ## _c) () \
             //    { \
             //        using devtype = factory::device_element_t<ns :: NETLIB_NAME(chip)>; \
-            //        return devtype::create(p_name, classname, p_def_param, __FILE__); \
+            //        factory::properties sl(p_def_param, PSOURCELOC()); \
+            //        return devtype::create(p_name, std::move(sl)); \
             //    } \
             //    \
+            //    extern factory::constructor_ptr_t decl_ ## p_alias; \
             //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
             static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_BASE<chip>(string ns, string p_alias, string p_name, string p_def_param)
             {
+                throw new emu_unimplemented();
+#if false
                 return (classname) => { return new factory.device_element_t<chip>(p_name, classname, p_def_param, "__FILE__"); };
+#endif
             }
         }
 
 
-        class nld_wrapper : device_t  //class NETLIB_NAME(wrapper) : public device_t
+        public enum element_type
+        {
+            BUILTIN,
+            MACRO
+        }
+
+
+        public class properties
+        {
+            string m_defparam;
+            plib.source_location m_sourceloc;
+            element_type m_type;
+
+
+            public properties(string defparam, plib.source_location sourceloc)
+            {
+                m_defparam = defparam;
+                m_sourceloc = sourceloc;
+                m_type = element_type.BUILTIN;
+            }
+
+            //~properties() = default;
+            //PCOPYASSIGNMOVE(properties, default)
+
+
+            public string defparam()
+            {
+                return m_defparam;
+            }
+
+
+            //plib::source_location source() const noexcept
+            //{
+            //    return m_sourceloc;
+            //}
+
+
+            public element_type type() { return m_type; }
+
+
+            public properties set_type(element_type t)
+            {
+                m_type = t;
+                return this;
+            }
+        }
+
+
+        // FIXME: this doesn't do anything, check how to remove
+        class nld_wrapper : base_device_t  //class NETLIB_NAME(wrapper) : public base_device_t
         {
             public nld_wrapper(netlist_state_t anetlist, string name)  //NETLIB_NAME(wrapper)(netlist_state_t &anetlist, const pstring &name)
                 : base(anetlist, name)
@@ -64,84 +116,101 @@ namespace mame.netlist
         // -----------------------------------------------------------------------------
         public abstract class element_t
         {
-            string m_name;                             ///< device name
-            string m_classname;                        ///< device class name
-            string m_def_param;                        ///< default parameter
-            string m_sourcefile;                       ///< source file
+            //using dev_uptr = device_arena::unique_ptr<core_device_t>;
+            //using uptr = host_arena::unique_ptr<element_t>;
+            //using pointer = element_t *;
 
 
-            protected element_t(string name, string classname, string def_param)
+            string m_name;                              ///< device name
+            properties m_properties;                    ///< source file and other information and settings
+
+
+            public element_t(string name, properties props)
             {
                 m_name = name;
-                m_classname = classname;
-                m_def_param = def_param;
-                m_sourcefile = "<unknown>";
+                m_properties = props;
             }
 
-            protected element_t(string name, string classname, string def_param, string sourcefile)
-            {
-                m_name = name;
-                m_classname = classname;
-                m_def_param = def_param;
-                m_sourcefile = sourcefile;
-            }
 
             //~element_t() { }
 
             //PCOPYASSIGNMOVE(element_t, default)
 
 
-            public abstract device_t make_device(nlmempool pool, netlist_state_t anetlist, string name);  //virtual unique_pool_ptr<device_t> make_device(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) = 0;
+            public abstract core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name);  //virtual dev_uptr make_device(device_arena &pool, netlist_state_t &anetlist, const pstring &name) = 0;
 
-            public virtual void macro_actions(nlparse_t nparser, string name)
-            {
-                //plib::unused_var(nparser);
-                //plib::unused_var(name);
-            }
 
             public string name() { return m_name; }
-            //const pstring &classname() const { return m_classname; }
-            public string param_desc() { return m_def_param; }
-            //const pstring &sourcefile() const { return m_sourcefile; }
+            public string param_desc() { return m_properties.defparam(); }
+            //plib::source_location source() const noexcept { return m_properties.source(); }
+            public element_type type() { return m_properties.type(); }
         }
 
 
-        //template <class C>
-        class device_element_t<C> : element_t
+        //template <class C, typename... Args>
+        class device_element_t : element_t
         {
-            public device_element_t(string name, string classname, string def_param) : base(name, classname, def_param) { }
-            public device_element_t(string name, string classname, string def_param, string sourcefile) : base(name, classname, def_param, sourcefile) { }
+            //std::tuple<Args...> m_args;
 
 
-            //unique_pool_ptr<device_t> make_device(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override { return pool.make_unique<C>(anetlist, name); }
-            public override device_t make_device(nlmempool pool, netlist_state_t anetlist, string name)
+            device_element_t(string name, properties props)
+                : base(name, props)
             {
-                //return pool.make_unique<C>(anetlist, name);
-                Type type = typeof(C);
-                if      (type == typeof(nld_sound_in))              return new nld_sound_in(anetlist, name);
-                else if (type == typeof(nld_sound_out))             return new nld_sound_out(anetlist, name);
-                else if (type == typeof(analog.nld_C))              return new analog.nld_C(anetlist, name);
-                else if (type == typeof(analog.nld_opamp))          return new analog.nld_opamp(anetlist, name);
-                else if (type == typeof(analog.nld_POT))            return new analog.nld_POT(anetlist, name);
-                else if (type == typeof(analog.nld_R))              return new analog.nld_R(anetlist, name);
-                else if (type == typeof(devices.nld_analog_input))  return new devices.nld_analog_input(anetlist, name);
-                else if (type == typeof(devices.nld_CD4066_GATE))   return new devices.nld_CD4066_GATE(anetlist, name);
-                else if (type == typeof(devices.nld_gnd))           return new devices.nld_gnd(anetlist, name);
-                else if (type == typeof(devices.nld_logic_input))   return new devices.nld_logic_input(anetlist, name);
-                else if (type == typeof(devices.nld_netlistparams)) return new devices.nld_netlistparams(anetlist, name);
-                else if (type == typeof(devices.nld_solver))        return new devices.nld_solver(anetlist, name);
-                else throw new emu_fatalerror("type {0} not handled yet.  add it to switch statement here", type);
+                //m_args = std::forward<Args>(args)...)
             }
 
 
-            //static plib::unique_ptr<device_element_t<C>> create(const pstring &name, const pstring &classname, const pstring &def_param, const pstring &sourcefile)
+            //template <std::size_t... Is>
+            //dev_uptr make_device(device_arena &pool,
+            //                    netlist_state_t &anetlist,
+            //                    const pstring &name, std::tuple<Args...>& args, std::index_sequence<Is...>)
             //{
-            //    return plib::make_unique<device_element_t<C>>(name, classname, def_param, sourcefile);
+            //    return plib::make_unique<C>(pool, anetlist, name, std::forward<Args>(std::get<Is>(args))...);
             //}
+
+            //dev_uptr make_device(device_arena &pool,
+            //            netlist_state_t &anetlist,
+            //            const pstring &name, std::tuple<Args...>& args)
+            //{
+            //    return make_device(pool, anetlist, name, args, std::index_sequence_for<Args...>{});
+            //}
+
+            //dev_uptr make_device(device_arena &pool,
+            //    netlist_state_t &anetlist,
+            //    const pstring &name) override
+            //{
+            //    return make_device(pool, anetlist, name, m_args);
+            //    //return pool.make_unique<C>(anetlist, name);
+            //}
+
+            public override core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name)
+            {
+                throw new emu_unimplemented();
+#if false
+                return new C(pool, anetlist, name);
+#endif
+            }
+
+
+            //static uptr create(const pstring &name, properties &&props, Args&&... args)
+            //{
+            //    return plib::make_unique<device_element_t<C, Args...>, host_arena>(name,
+            //        std::move(props), std::forward<Args>(args)...);
+            //}
+
+            public static element_t create_nld_sound_in(string name, properties props)
+            {
+                return new device_element_t(name, props);
+            }
+
+            public static element_t create_nld_analog_callback(string name, properties props)
+            {
+                return new device_element_t(name, props);
+            }
         }
 
 
-        public class list_t : std.vector<element_t>  //class list_t : public std::vector<plib::unique_ptr<element_t>>
+        public class list_t : std.vector<element_t>  //class list_t : public std::vector<element_t::uptr>
         {
             log_type m_log;
 
@@ -151,13 +220,24 @@ namespace mame.netlist
             //PCOPYASSIGNMOVE(list_t, delete)
 
 
-            //template<class device_class>
-            public void register_device<device_class>(string name, string classname, string def_param, string sourcefile)
+            //template<class device_class, typename... Args>
+            //void add(const pstring &name, properties &&props, Args&&... args)
+            //{
+            //    add(device_element_t<device_class, Args...>::create(name, std::move(props),
+            //        std::forward<Args>(args)...));
+            //}
+            public void add_nld_sound_in(string name, properties props)
             {
-                register_device(new device_element_t<device_class>(name, classname, def_param, sourcefile));  //register_device(device_element_t<device_class>::create(name, classname, def_param, sourcefile));
+                add(device_element_t.create_nld_sound_in(name, props));
             }
 
-            public void register_device(element_t factory)  //void register_device(plib::unique_ptr<element_t> &&factory);
+            public void add_nld_analog_callback(string name, properties props)
+            {
+                add(device_element_t.create_nld_analog_callback(name, props));
+            }
+
+
+            public void add(element_t factory)  //void add(element_t::uptr &&factory) noexcept(false);
             {
                 foreach (var e in this)
                 {
@@ -171,7 +251,8 @@ namespace mame.netlist
                 push_back(factory);  //push_back(std::move(factory));
             }
 
-            public element_t factory_by_name(string devname)
+
+            public element_t factory_by_name(string devname)  //element_t::pointer factory_by_name(const pstring &devname) noexcept(false);
             {
                 foreach (var e in this)
                 {
@@ -184,8 +265,13 @@ namespace mame.netlist
             }
 
             //template <class C>
-            //bool is_class(element_t *f) { return dynamic_cast<device_element_t<C> *>(f) != nullptr; }
-            public bool is_class<C>(element_t f) { return f is device_element_t<C>; }
+            public bool is_class<C>(element_t f)  //bool is_class(element_t::pointer f) noexcept { return dynamic_cast<device_element_t<C> *>(f) != nullptr; }
+            {
+                throw new emu_unimplemented();
+#if false
+                return f is device_element_t<C>;
+#endif
+            }
         }
 
 
@@ -193,36 +279,28 @@ namespace mame.netlist
         // factory_creator_ptr_t
         // -----------------------------------------------------------------------------
 
-        //using constructor_ptr_t = plib::unique_ptr<element_t> (*)(const pstring &classname);
-        public delegate element_t constructor_ptr_t(string classname);
+        //using constructor_ptr_t = element_t::uptr (*const)();
+        public delegate element_t constructor_ptr_t();
 
         //template <typename T>
-        //plib::unique_ptr<element_t> constructor_t(const pstring &name, const pstring &classname,
-        //        const pstring &def_param)
+        //element_t::uptr constructor_t(const pstring &name, properties &&props)
         //{
-        //    return plib::make_unique<device_element_t<T>>(name, classname, def_param);
+        //    return plib::make_unique<device_element_t<T>, host_arena>(name, std::move(props));
         //}
 
 
         // -----------------------------------------------------------------------------
-        // factory_lib_entry_t: factory class to wrap macro based chips/elements
+        // library_element_t: factory class to wrap macro based chips/elements
         // -----------------------------------------------------------------------------
         class library_element_t : element_t
         {
-            public library_element_t(string name, string classname, string def_param, string source)
-                : base(name, classname, def_param, source) {  }
+            public library_element_t(string name, properties props)
+                : base(name, ((properties)props).set_type(element_type.MACRO)) { }  //: element_t(name, std::move(properties(props).set_type(element_type::MACRO)))
 
 
-            public override device_t make_device(nlmempool pool, netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> make_device(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override;
+            public override core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name)  //dev_uptr make_device(device_arena &pool, netlist_state_t &anetlist, const pstring &name) override;
             {
-                return new nld_wrapper(anetlist, name);  //return pool.make_unique<NETLIB_NAME(wrapper)>(anetlist, name);
-            }
-
-            public override void macro_actions(nlparse_t nparser, string name)
-            {
-                nparser.namespace_push(name);
-                nparser.include(this.name());
-                nparser.namespace_pop();
+                return new nld_wrapper(anetlist, name);  //return plib::make_unique<NETLIB_NAME(wrapper)>(pool, anetlist, name);
             }
         }
     }

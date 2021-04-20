@@ -5,8 +5,10 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using keycode_map = mame.std.unordered_map<System.UInt32, mame.natural_keyboard.keycode_map_entry>;  //typedef std::unordered_map<char32_t, keycode_map_entry> keycode_map;
+using keycode_map_list = mame.std.list<mame.natural_keyboard.keycode_map_entry>; //typedef std::list<keycode_map_entry> keycode_map_list;
+using keycode_map = mame.std.unordered_map<System.UInt32, mame.std.list<mame.natural_keyboard.keycode_map_entry>>;  //typedef std::unordered_map<char32_t, keycode_map_entry> keycode_map;
 using u32 = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -40,9 +42,11 @@ namespace mame
         public class keycode_map_entry
         {
             public std.array<ioport_field> field = new std.array<ioport_field>(SHIFT_COUNT + 1);
-            public UInt32 shift;
+            public unsigned shift;
+            public ioport_condition condition;
         }
-        //typedef std::unordered_map<char32_t, keycode_map_entry> keycode_map;
+        //typedef std::list<keycode_map_entry> keycode_map_list;
+        //typedef std::unordered_map<char32_t, keycode_map_list> keycode_map;
 
 
         const bool LOG_NATURAL_KEYBOARD = false;
@@ -178,7 +182,7 @@ namespace mame
         void build_codes(ioport_manager manager)
         {
             // find all shift keys
-            UInt32 mask = 0;
+            unsigned mask = 0;
             std.array<ioport_field> shift = new std.array<ioport_field>(SHIFT_COUNT);
             std.fill(shift, null);
             foreach (var port in manager.ports())
@@ -208,7 +212,7 @@ namespace mame
                     if (field.type() == ioport_type.IPT_KEYBOARD)
                     {
                         // iterate over all shift states
-                        for (UInt32 curshift = 0; curshift < SHIFT_STATES; ++curshift)
+                        for (unsigned curshift = 0; curshift < SHIFT_STATES; ++curshift)
                         {
                             if ((curshift & ~mask) == 0)
                             {
@@ -218,32 +222,35 @@ namespace mame
                                 {
                                     if (((code < ioport_global.UCHAR_SHIFT_BEGIN) || (code > ioport_global.UCHAR_SHIFT_END)) && (code != 0))
                                     {
-                                        // prefer lowest shift state
                                         var found = m_keycode_map.find(code);
-                                        if ((null == found) || (found.shift > curshift))
+                                        keycode_map_entry newcode = new keycode_map_entry();
+                                        std.fill(newcode.field, null);
+                                        newcode.shift = curshift;
+                                        newcode.condition = field.condition();
+
+                                        unsigned fieldnum = 0;
+                                        for (unsigned i = 0, bits = curshift; (i < SHIFT_COUNT) && bits != 0; ++i, bits >>= 1)
                                         {
-                                            keycode_map_entry newcode = new keycode_map_entry();
-                                            std.fill(newcode.field, null);
-                                            newcode.shift = curshift;
+                                            if (BIT(bits, 0) != 0)
+                                                newcode.field[fieldnum++] = shift[i];
+                                        }
 
-                                            UInt32 fieldnum = 0;
-                                            for (UInt32 i = 0, bits = curshift; (i < SHIFT_COUNT) && bits != 0; ++i, bits >>= 1)
-                                            {
-                                                if (BIT(bits, 0) != 0)
-                                                    newcode.field[fieldnum++] = shift[i];
-                                            }
+                                        newcode.field[fieldnum] = field;
+                                        if (null == found)
+                                        {
+                                            keycode_map_list map_list = new keycode_map_list();
+                                            map_list.emplace_back(newcode);
+                                            m_keycode_map.emplace(code, map_list);
+                                        }
+                                        else
+                                        {
+                                            found.emplace_back(newcode);
+                                        }
 
-                                            newcode.field[fieldnum] = field;
-                                            if (null == found)
-                                                m_keycode_map.emplace(code, newcode);
-                                            else
-                                                found = newcode;
-
-                                            if (LOG_NATURAL_KEYBOARD)
-                                            {
-                                                machine().logerror("natural_keyboard: code={0} ({1}) port={2} field.name='{3}'\n",  // code=%u (%s) port=%p field.name='%s'\n
-                                                        code, unicode_to_string(code), port, field.name());
-                                            }
+                                        if (LOG_NATURAL_KEYBOARD)
+                                        {
+                                            machine().logerror("natural_keyboard: code={0} ({1}) port={2} field.name='{3}'\n",  // code=%u (%s) port=%p field.name='%s'\n
+                                                    code, unicode_to_string(code), port, field.name());
                                         }
                                     }
                                 }
@@ -389,7 +396,13 @@ namespace mame
         keycode_map_entry find_code(char32_t ch)
         {
             var found = m_keycode_map.find(ch);
-            return (null != found) ? found : null;
+            if (null == found) return null;
+            foreach (keycode_map_entry entry in found)
+            {
+                if (entry.condition.eval())
+                    return entry;
+            }
+            return null;
         }
     }
 }

@@ -6,11 +6,14 @@
  * 1 = Model from LTSPICE mailing list - slow!
  * 2 = Simplified model using diode inputs and netlist TYPE=3
  * 3 = Model according to datasheet
+ * 4 = Faster model by Colin Howell
  *
  * For Money Money 1 and 3 delivery comparable results.
  * 3 is simpler (less BJTs) and converges a lot faster.
+ *
+ * Model 4 uses a lot less resources and pn-junctions. The preferred new normal.
  */
-#define USE_LM3900_MODEL_3  // (3)
+#define USE_LM3900_MODEL_4  // (4)
 
 
 using System;
@@ -21,12 +24,51 @@ namespace mame
 {
     public static class nlm_opamp_global
     {
+#if !NL_AUTO_DEVICES
+
+        //#define MB3614_DIP(name)                                                       \
+        //        NET_REGISTER_DEV(MB3614_DIP, name)
+
+        //#define LM324_DIP(name)                                                        \
+        //        NET_REGISTER_DEV(LM324_DIP, name)
+
+        //#define TL081_DIP(name)                                                        \
+        //        NET_REGISTER_DEV(TL081_DIP, name)
+
+        //#define TL084_DIP(name)                                                        \
+        //        NET_REGISTER_DEV(TL084_DIP, name)
+
+        //#define LM2902_DIP(name)                                                       \
+        //        NET_REGISTER_DEV(LM2902_DIP, name)
+
+        //#define LM358_DIP(name)                                                        \
+        //        NET_REGISTER_DEV(LM358_DIP, name)
+
+        //#define LM3900(name)                                                           \
+        //        NET_REGISTER_DEV(LM3900, name)
+
+
         //#define UA741_DIP8(name)                                                           \
         //        NET_REGISTER_DEV(UA741_DIP8, name)
         public static void UA741_DIP8(netlist.nlparse_t setup, string name)
         {
             netlist.nl_setup_global.NET_REGISTER_DEV(setup, "UA741_DIP8", name);
         }
+
+
+        //#define UA741_DIP10(name)                                                      \
+        //        NET_REGISTER_DEV(UA741_DIP10, name)
+
+        //#define UA741_DIP14(name)                                                      \
+        //        NET_REGISTER_DEV(UA741_DIP14, name)
+
+        //#define LM747_DIP(name)                                                        \
+        //        NET_REGISTER_DEV(LM747_DIP, name)
+
+        //#define LM747A_DIP(name)                                                       \
+        //        NET_REGISTER_DEV(LM747A_DIP, name)
+
+#endif
 
 
         /*
@@ -197,9 +239,24 @@ namespace mame
         }
 
 
+        //static NETLIST_START(TL081_DIP)
+        public static void netlist_TL081_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            nld_opamps_global.OPAMP(setup, "A", "TL084");
+
+            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_7_4");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
         //static NETLIST_START(TL084_DIP)
         public static void netlist_TL084_DIP(netlist.nlparse_t setup)
         {
+            netlist.nl_setup_global.NETLIST_START();
+
             nld_opamps_global.OPAMP(setup, "A", "TL084");
             nld_opamps_global.OPAMP(setup, "B", "TL084");
             nld_opamps_global.OPAMP(setup, "C", "TL084");
@@ -337,33 +394,40 @@ namespace mame
 #endif
 
 #if USE_LM3900_MODEL_3  // == 3
+#endif
+
+#if USE_LM3900_MODEL_4  // == 4
         //static NETLIST_START(LM3900)
         public static void netlist_LM3900(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.ALIAS(setup, "VCC", "Q5.C");
-            netlist.nl_setup_global.ALIAS(setup, "GND", "Q1.E");
-            netlist.nl_setup_global.ALIAS(setup, "PLUS", "Q1.B");
-            netlist.nl_setup_global.ALIAS(setup, "MINUS", "Q1.C");
-            netlist.nl_setup_global.ALIAS(setup, "OUT", "Q5.E");
+            nld_opamps_global.OPAMP(setup, "A", "OPAMP(TYPE=3 VLH=0.5 VLL=0.03 FPF=2k UGF=2.5M SLEW=1M RI=10M RO=100 DAB=0.0015)");
 
-            netlist.nld_twoterm_global.CAP(setup, "C1", netlist.devices.net_lib_global.CAP_P(6.000000));
-            netlist.nld_twoterm_global.CS(setup, "I1", 1.300000e-3);
-            netlist.nld_twoterm_global.CS(setup, "I2", 200e-6);
-            nld_bjt_global.QBJT_EB(setup, "Q1", "NPN");
-            nld_bjt_global.QBJT_EB(setup, "Q2", "NPN");
-            nld_bjt_global.QBJT_EB(setup, "Q3", "PNP");
-            nld_bjt_global.QBJT_EB(setup, "Q4", "PNP");
-            nld_bjt_global.QBJT_EB(setup, "Q5", "NPN");
-            nld_bjt_global.QBJT_EB(setup, "Q6", "NPN");
-            netlist.nl_setup_global.NET_C(setup, "Q3.E", "Q5.B", "I2.2");
-            netlist.nl_setup_global.NET_C(setup, "Q3.C", "Q4.E", "Q5.E", "I1.1");
-            netlist.nl_setup_global.NET_C(setup, "Q5.C", "I2.1");
-            netlist.nl_setup_global.NET_C(setup, "Q1.B", "Q6.C", "Q6.B");
-            netlist.nl_setup_global.NET_C(setup, "Q1.E", "Q2.E", "Q4.C", "C1.2", "I1.2", "Q6.E");
-            netlist.nl_setup_global.NET_C(setup, "Q1.C", "Q2.B");
-            netlist.nl_setup_global.NET_C(setup, "Q2.C", "Q3.B", "Q4.B", "C1.1");
+            netlist.nld_twoterm_global.DIODE(setup, "D1", "D(IS=6e-15 N=1)");
+            netlist.nld_twoterm_global.DIODE(setup, "D2", "D(IS=6e-15 N=1)");
+            netlist.nld_fourterm_global.CCCS(setup, "CS1", 1); // Current Mirror
+
+            netlist.nl_setup_global.ALIAS(setup, "VCC", "A.VCC");
+            netlist.nl_setup_global.ALIAS(setup, "GND", "A.GND");
+            netlist.nl_setup_global.ALIAS(setup, "OUT", "A.OUT");
+
+            netlist.nl_setup_global.ALIAS(setup, "PLUS", "CS1.IP");
+            netlist.nl_setup_global.NET_C(setup, "D1.A", "CS1.IN");
+            netlist.nl_setup_global.NET_C(setup, "A.GND", "D1.K");
+
+            netlist.nld_twoterm_global.CS(setup, "CS_BIAS", 10e-6);
+            netlist.nl_setup_global.NET_C(setup, "A.VCC", "CS_BIAS.P");
+
+            netlist.nl_setup_global.ALIAS(setup, "MINUS", "CS1.OP");
+            netlist.nl_setup_global.NET_C(setup, "CS1.ON", "A.GND");
+
+            netlist.nld_fourterm_global.CCVS(setup, "VS1", 200000); // current-to-voltage gain
+            netlist.nl_setup_global.NET_C(setup, "CS1.OP", "VS1.IP");
+            netlist.nl_setup_global.NET_C(setup, "VS1.IN", "CS_BIAS.N", "D2.A");
+            netlist.nl_setup_global.NET_C(setup, "D2.K", "A.GND");
+            netlist.nl_setup_global.NET_C(setup, "VS1.OP", "A.MINUS");
+            netlist.nl_setup_global.NET_C(setup, "VS1.ON", "A.PLUS", "A.GND");
 
             netlist.nl_setup_global.NETLIST_END();
         }
@@ -402,6 +466,7 @@ namespace mame
 #endif
 
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MB3614_DIP", netlist_MB3614_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL081_DIP", netlist_TL081_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL084_DIP", netlist_TL084_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM324_DIP", netlist_LM324_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM358_DIP", netlist_LM358_DIP);

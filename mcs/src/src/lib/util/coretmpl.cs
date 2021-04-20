@@ -135,6 +135,11 @@ namespace mame
             return ((BIT(val,B1) << 1) | (BIT(val,B0) << 0));
         }
 
+        public static int bitswap(int val, int B3, int B2, int B1, int B0)
+        {
+            return ((BIT(val,B3) << 3) | (BIT(val,B2) << 2) | (BIT(val,B1) << 1) | (BIT(val,B0) << 0));
+        }
+
         public static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0)
         {
             return ((BIT(val,B5) << 5) | (BIT(val,B4) << 4) | (BIT(val,B3) << 3) | (BIT(val,B2) << 2) |

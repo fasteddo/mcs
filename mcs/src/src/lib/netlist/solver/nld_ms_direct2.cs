@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
+
 
 namespace mame.netlist
 {
@@ -14,11 +16,11 @@ namespace mame.netlist
         // ----------------------------------------------------------------------------------------
 
         //template <typename FT>
-        class matrix_solver_direct2_t : matrix_solver_direct_t  //class matrix_solver_direct2_t: public matrix_solver_direct_t<FT, 2>
+        class matrix_solver_direct2_t : matrix_solver_direct_t_nl_fptype  //class matrix_solver_direct2_t: public matrix_solver_direct_t<FT, 2>
         {
             //typedef FT float_type;
 
-            public matrix_solver_direct2_t(netlist_state_t anetlist, string name, analog_net_t.list_t nets, solver_parameters_t params_)
+            public matrix_solver_direct2_t(netlist_state_t anetlist, string name, analog_net_t_list_t nets, solver_parameters_t params_)
                 : base(2, anetlist, name, nets, params_, 2)
             { }
 

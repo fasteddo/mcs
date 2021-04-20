@@ -103,8 +103,7 @@ namespace mame
          *  Scroll/playfield bank write
          *
          *************************************/
-        //WRITE16_MEMBER( atarisy2_state::xscroll_w )
-        void xscroll_w(address_space space, offs_t offset, uint16_t data, uint16_t mem_mask)
+        void xscroll_w(offs_t offset, uint16_t data, uint16_t mem_mask)
         {
             uint16_t oldscroll = m_xscroll[0];  //uint16_t oldscroll = *m_xscroll;
             uint16_t newscroll = oldscroll;
@@ -136,8 +135,7 @@ namespace mame
         }
 
 
-        //WRITE16_MEMBER( atarisy2_state::yscroll_w )
-        void yscroll_w(address_space space, offs_t offset, uint16_t data, uint16_t mem_mask)
+        void yscroll_w(offs_t offset, uint16_t data, uint16_t mem_mask)
         {
             uint16_t oldscroll = m_yscroll[0];  //uint16_t oldscroll = *m_yscroll;
             uint16_t newscroll = oldscroll;
@@ -205,8 +203,7 @@ namespace mame
          *
          *************************************/
 
-        //READ16_MEMBER( atarisy2_state::slapstic_r )
-        uint16_t slapstic_r(address_space space, offs_t offset, uint16_t mem_mask)
+        uint16_t slapstic_r(address_space space, offs_t offset)
         {
             uint16_t result = m_slapstic_base[offset];  //int result = m_slapstic_base[offset];
             m_slapstic.target.slapstic_tweak(space, offset);
@@ -217,8 +214,7 @@ namespace mame
         }
 
 
-        //WRITE16_MEMBER( atarisy2_state::slapstic_w )
-        void slapstic_w(address_space space, offs_t offset, uint16_t data, uint16_t mem_mask)
+        void slapstic_w(address_space space, offs_t offset, uint16_t data)
         {
             m_slapstic.target.slapstic_tweak(space, offset);
 
@@ -233,8 +229,7 @@ namespace mame
          *
          *************************************/
 
-        //WRITE16_MEMBER( atarisy2_state::spriteram_w )
-        void spriteram_w(address_space space, offs_t offset, uint16_t data, uint16_t mem_mask)
+        void spriteram_w(offs_t offset, uint16_t data, uint16_t mem_mask)
         {
             /* force an update if the link of object 0 is about to change */
             if (offset == 0x0003)

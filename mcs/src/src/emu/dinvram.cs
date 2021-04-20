@@ -27,12 +27,14 @@ namespace mame
         public void nvram_reset() { nvram_default(); }
         public void nvram_load(emu_file file) { nvram_read(file); }
         public void nvram_save(emu_file file) { nvram_write(file); }
+        public bool nvram_can_save() { return nvram_can_write(); }
 
 
         // derived class overrides
         protected abstract void nvram_default();
         protected abstract void nvram_read(emu_file file);
         protected abstract void nvram_write(emu_file file);
+        protected virtual bool nvram_can_write() { return true; }
     }
 
 

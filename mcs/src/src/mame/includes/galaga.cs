@@ -13,7 +13,7 @@ namespace mame
 {
     partial class galaga_state : driver_device
     {
-        /* memory pointers */
+        /* memory pointers, devices */
         protected optional_shared_ptr_uint8_t m_videoram;
         optional_shared_ptr_uint8_t m_galaga_ram1;
         optional_shared_ptr_uint8_t m_galaga_ram2;
@@ -30,11 +30,7 @@ namespace mame
         optional_device<starfield_05xx_device> m_starfield; // not present on battles, digdug, xevious
         emu_timer m_cpu3_interrupt_timer;
 
-        uint32_t m_galaga_gfxbank; // used by catsbee
-
-        /* devices */
-
-        /* bank support */
+        uint32_t m_galaga_gfxbank; // used by gatsbee
 
         /* shared */
         protected tilemap_t m_fg_tilemap;

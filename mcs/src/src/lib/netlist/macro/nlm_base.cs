@@ -17,7 +17,7 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.NET_MODEL(setup, "D _(IS=1e-15 N=1)");
+            netlist.nl_setup_global.NET_MODEL(setup, "D _(IS=1e-15 N=1 NBV=3 IBV=0.001 BV=1E9)");
 
             netlist.nl_setup_global.NET_MODEL(setup, "1N914 D(Is=2.52n Rs=.568 N=1.752 Cjo=4p M=.4 tt=20n Iave=200m Vpk=75 mfg=OnSemi type=silicon)");
             // FIXME: 1N916 currently only a copy of 1N914!
@@ -100,13 +100,21 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.NET_MODEL(setup, "FAMILY _(TYPE=CUSTOM IVL=0.16 IVH=0.4 OVL=0.1 OVH=1.0 ORL=1.0 ORH=130.0)");
+            // FAMILIES always need a type. UNKNOWN below will break
+            netlist.nl_setup_global.NET_MODEL(setup, "FAMILY _(TYPE=UNKNOWN IVL=0.16 IVH=0.4 OVL=0.1 OVH=1.0 ORL=1.0 ORH=130.0)");
             netlist.nl_setup_global.NET_MODEL(setup, "OPAMP _()");
             netlist.nl_setup_global.NET_MODEL(setup, "SCHMITT_TRIGGER _()");
 
-            netlist.nl_setup_global.NET_MODEL(setup, "74XXOC FAMILY(IVL=0.16 IVH=0.4 OVL=0.1 OVH=0.05 ORL=10.0 ORH=1.0e8)");
-            netlist.nl_setup_global.NET_MODEL(setup, "74XX FAMILY(TYPE=TTL)");
-            netlist.nl_setup_global.NET_MODEL(setup, "CD4XXX FAMILY(TYPE=CD4XXX)");
+            netlist.nl_setup_global.NET_MODEL(setup, "74XX FAMILY(TYPE=TTL IVL=0.16 IVH=0.4 OVL=0.1 OVH=1.0 ORL=1.0 ORH=130)");
+
+            // CMOS
+            // low input 1.5 , high input trigger 3.5 at 5V supply
+            // output offsets, low for CMOS, thus 0.05
+            // output currents: see https://www.classe.cornell.edu/~ib38/teaching/p360/lectures/wk09/l26/EE2301Exp3F10.pdf
+            // typical CMOS may sink 0.4mA while output stays <= 0.4V
+            netlist.nl_setup_global.NET_MODEL(setup, "CD4XXX FAMILY(TYPE=CMOS IVL=0.3 IVH=0.7 OVL=0.05 OVH=0.05 ORL=500 ORH=500)");
+
+            netlist.nl_setup_global.NET_MODEL(setup, "74XXOC FAMILY(TYPE=TTL IVL=0.16 IVH=0.4 OVL=0.1 OVH=0.05 ORL=10.0 ORH=1.0e8)");
 
             netlist.nl_setup_global.NETLIST_END();
         }
@@ -132,6 +140,7 @@ namespace mame
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "CD4XXX_lib", nlm_cd4xxx_global.netlist_CD4XXX_lib);
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "OPAMP_lib", nlm_opamp_global.netlist_OPAMP_lib);
             netlist.nl_setup_global.LOCAL_SOURCE(setup, "otheric_lib", nlm_other_global.netlist_otheric_lib);
+            netlist.nl_setup_global.LOCAL_SOURCE(setup, "ROMS_lib", nlm_roms_global.netlist_ROMS_lib);
 
             netlist.nl_setup_global.INCLUDE(setup, "diode_models");
             netlist.nl_setup_global.INCLUDE(setup, "bjt_models");
@@ -141,6 +150,7 @@ namespace mame
             netlist.nl_setup_global.INCLUDE(setup, "CD4XXX_lib");
             netlist.nl_setup_global.INCLUDE(setup, "OPAMP_lib");
             netlist.nl_setup_global.INCLUDE(setup, "otheric_lib");
+            netlist.nl_setup_global.INCLUDE(setup, "ROMS_lib");
 
             netlist.nl_setup_global.NETLIST_END();
         }

@@ -80,12 +80,9 @@ namespace mame
          *
          *************************************/
 
-        //WRITE8_MEMBER(centiped_state::centiped_videoram_w)
-        void centiped_videoram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void centiped_videoram_w(offs_t offset, uint8_t data)
         {
-            var videoram = m_videoram.target;  //uint8_t *videoram = m_videoram;
-
-            videoram[offset] = data;
+            m_videoram[offset] = data;
             m_bg_tilemap.mark_tile_dirty(offset);
         }
 
@@ -109,37 +106,9 @@ namespace mame
          *
          *************************************/
 
-#if false
-        WRITE8_MEMBER(centiped_state::multiped_gfxbank_w)
-        {
-            // d0-d6: N/C?
-            // d7: gfx rom bank
-            int bank = m_prg_bank | (data >> 6 & 2);
-            if (bank != m_gfx_bank)
-            {
-                m_gfx_bank = bank;
-                m_bg_tilemap->mark_all_dirty();
-            }
-        }
-#endif
-
-
-#if false
-        WRITE8_MEMBER(centiped_state::bullsdrt_tilesbank_w)
-        {
-            m_bullsdrt_tiles_bankram[offset] = data;
-            m_bg_tilemap->mark_all_dirty();
-        }
-#endif
-
-
-#if false
-        WRITE8_MEMBER(centiped_state::bullsdrt_sprites_bank_w)
-        {
-            m_bullsdrt_sprites_bank = data;
-        }
-#endif
-
+        //void centiped_state::multiped_gfxbank_w(uint8_t data)
+        //void centiped_state::bullsdrt_tilesbank_w(offs_t offset, uint8_t data)
+        //void centiped_state::bullsdrt_sprites_bank_w(uint8_t data)
 
 
         /***************************************************************************
@@ -169,8 +138,7 @@ namespace mame
 
         ***************************************************************************/
 
-        //WRITE8_MEMBER(centiped_state::centiped_paletteram_w)
-        void centiped_paletteram_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void centiped_paletteram_w(offs_t offset, uint8_t data)
         {
             m_paletteram[offset] = data;
 

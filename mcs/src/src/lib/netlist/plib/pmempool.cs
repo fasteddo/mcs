@@ -10,55 +10,43 @@ namespace mame.plib
     //============================================================
     //  Memory pool
     //============================================================
-    public class mempool
+    //template <typename BASEARENA>
+    class mempool_arena// : arena_base<mempool_arena<BASEARENA>, false, false>
     {
-        //using size_type = std::size_t;
+        //using size_type = typename BASEARENA::size_type;
+        //using base_type = arena_base<mempool_arena<BASEARENA>, false, false>;
+        //template <class T>
+        //using base_allocator_type = typename BASEARENA::template allocator_type<T>;
 
-        //static constexpr const bool is_stateless = false;
+        //mempool_arena(size_t min_alloc = (1<<21), size_t min_align = PALIGN_CACHELINE)
 
+        //PCOPYASSIGNMOVE(mempool_arena, delete)
 
-        //template <class T, size_type ALIGN = alignof(T)>
-        //using allocator_type = arena_allocator<mempool, T, ALIGN>;
-
-
-        //size_t m_min_alloc;
-        //size_t m_min_align;
-
-        //std::vector<block *> m_blocks;
-
-        //size_t m_stat_cur_alloc;
-        //size_t m_stat_max_alloc;
-
-
-        //mempool(size_t min_alloc = (1<<21), size_t min_align = PALIGN_CACHELINE)
-
-        //COPYASSIGNMOVE(mempool, delete)
-
-        //~mempool()
+        //~mempool_arena()
 
         //void *allocate(size_t align, size_t size)
 
-        //static void deallocate(void *ptr, size_t size)
+        //void deallocate(void *ptr, size_t size) noexcept
 
-        //template <typename T>
-        //using owned_pool_ptr = plib::owned_ptr<T, arena_deleter<mempool, T>>;
+        //bool operator ==(const mempool_arena &rhs) const noexcept { return this == &rhs; }
 
-        //template <typename T>
-        //using unique_pool_ptr = std::unique_ptr<T, arena_deleter<mempool, T>>;
+        //BASEARENA &base_arena() noexcept { return m_arena; }
 
-        //template<typename T, typename... Args>
-        //owned_pool_ptr<T> make_owned(Args&&... args)
+        //struct block
 
-        //template<typename T, typename... Args>
-        //unique_pool_ptr<T> make_unique(Args&&... args)
-
-        //size_type cur_alloc() const noexcept { return m_stat_cur_alloc; }
-        //size_type max_alloc() const noexcept { return m_stat_max_alloc; }
-
-        //bool operator ==(const mempool &rhs) const noexcept { return this == &rhs; }
+        //struct info
 
         //block * new_block(size_type min_bytes)
 
-        //static std::unordered_map<void *, info> &sinfo()
+        //size_t m_min_alloc;
+        //size_t m_min_align;
+        //size_t m_block_align;
+        //BASEARENA m_arena;
+
+        //using base_allocator_typex = typename BASEARENA::template allocator_type<std::pair<void * const, info>>;
+        //std::unordered_map<void *, info, std::hash<void *>, std::equal_to<void *>,
+        //    base_allocator_typex> m_info;
+        //      std::unordered_map<void *, info> m_info;
+        //std::vector<block *, typename BASEARENA::template allocator_type<block *>> m_blocks;
     }
 }

@@ -684,7 +684,7 @@ namespace mame
         u32 m_unscaled_clock;       // current unscaled device clock
         u32 m_clock;                // current device clock, after scaling
         double m_clock_scale;          // clock scale factor
-        attoseconds_t m_attoseconds_per_clock;// period in attoseconds
+        protected attoseconds_t m_attoseconds_per_clock;// period in attoseconds
 
         device_debug m_debug;  //std::unique_ptr<device_debug> m_debug;
         machine_config m_machine_config;       // reference to the machine's configuration
@@ -730,6 +730,8 @@ namespace mame
 
             m_machine_config = mconfig;
             m_input_defaults = null;
+            m_system_bios = 0;
+            m_default_bios = 0;
             m_default_bios_tag = "";
 
             m_machine = null;
@@ -785,7 +787,7 @@ namespace mame
         public device_t get() { return this; }  // for c++ pointer wrappers
         public device_t release() { return this; }  // for c++ pointer wrappers
 
-        //bool has_running_machine() const { return m_machine != nullptr; }
+        public bool has_running_machine() { return m_machine != null; }
         public running_machine machine() { /*assert(m_machine != NULL);*/ return m_machine; }
         public string tag() { return m_tag; }
         public string basetag() { return m_basetag; }
@@ -2030,7 +2032,7 @@ namespace mame
         //-------------------------------------------------
         //  interface_post_load - called after the loading a
         //  saved state, so that registered variables can
-        //  be expaneded as necessary
+        //  be expanded as necessary
         //-------------------------------------------------
         /// \brief Complete save state loading
         ///

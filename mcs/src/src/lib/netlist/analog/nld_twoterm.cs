@@ -31,13 +31,9 @@ namespace mame.netlist
         //#define POT2(name, p_R)                                                        \
         //        NET_REGISTER_DEVEXT(POT2, name, p_R)
 
-
         //#define CAP(name, p_C)                                                         \
         //        NET_REGISTER_DEVEXT(CAP, name, p_C)
-        public static void CAP(nlparse_t setup, string name, double p_C)
-        {
-            nl_setup_global.NET_REGISTER_DEVEXT(setup, "CAP", name, p_C.ToString());
-        }
+        public static void CAP(nlparse_t setup, string name, double p_C) { nl_setup_global.NET_REGISTER_DEVEXT(setup, "CAP", name, p_C.ToString()); }
 
         //#define IND(name, p_L)                                                         \
         //        NET_REGISTER_DEVEXT(IND, name, p_L)
@@ -45,15 +41,18 @@ namespace mame.netlist
         // Generic Diode
         //#define DIODE(name,  model)                                                    \
         //        NET_REGISTER_DEVEXT(DIODE, name, model)
+        public static void DIODE(nlparse_t setup, string name, string model) { nl_setup_global.NET_REGISTER_DEVEXT(setup, "DIODE", name, model); }
+
+        // Generic Zener Diode
+        //#define ZDIODE(name,  model)                                                   \
+        //        NET_REGISTER_DEVEXT(ZDIODE, name, model)
 
         //#define VS(name, pV)                                                           \
         //        NET_REGISTER_DEVEXT(VS, name, pV)
+        public static void VS(nlparse_t setup, string name, string pV) { nl_setup_global.NET_REGISTER_DEVEXT(setup, "VS", name, pV); }
 
         //#define CS(name, pI)                                                           \
         //        NET_REGISTER_DEVEXT(CS, name, pI)
-        public static void CS(nlparse_t setup, string name, double pI)
-        {
-            nl_setup_global.NET_REGISTER_DEVEXT(setup, "CS", name, pI.ToString());
-        }
+        public static void CS(nlparse_t setup, string name, double pI) { nl_setup_global.NET_REGISTER_DEVEXT(setup, "CS", name, pI.ToString()); }
     }
 }

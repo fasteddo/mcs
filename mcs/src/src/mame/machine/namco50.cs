@@ -58,7 +58,7 @@ namespace mame
         //WRITE_LINE_MEMBER( namco_50xx_device::chip_select )
         public void chip_select(int state)
         {
-            machine().scheduler().synchronize(chip_select_sync, state);
+            m_cpu.target.set_input_line(0, state);
         }
 
 
@@ -137,13 +137,6 @@ namespace mame
             m_cpu.target.read_r(0).set(R0_r).reg();
             m_cpu.target.read_r(2).set(R2_r).reg();
             m_cpu.target.write_o().set(O_w).reg();
-        }
-
-
-        //TIMER_CALLBACK_MEMBER( namco_50xx_device::chip_select_sync )
-        void chip_select_sync(object ptr, int param)
-        {
-            m_cpu.target.set_input_line(0, param);
         }
 
 

@@ -17,7 +17,7 @@ namespace mame
 
     // merges/splits an access among multiple handlers (unitmask support)
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_read_units : handler_entry_read, IDisposable  //class handler_entry_read_units : public handler_entry_read<Width, AddrShift, Endian>
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -49,7 +49,7 @@ namespace mame
         u8 m_subunits;                     // number of subunits
 
 
-        public handler_entry_read_units(int Width, int AddrShift, int Endian, memory_units_descriptor descriptor, u8 ukey, address_space space)
+        public handler_entry_read_units(int Width, int AddrShift, endianness_t Endian, memory_units_descriptor descriptor, u8 ukey, address_space space)
             : base(Width, AddrShift, Endian, space, F_UNITS)
         {
             SUBUNIT_COUNT = 1U << Width;
@@ -65,7 +65,7 @@ namespace mame
         }
 
 
-        public handler_entry_read_units(int Width, int AddrShift, int Endian, memory_units_descriptor descriptor, u8 ukey, handler_entry_read_units src)
+        public handler_entry_read_units(int Width, int AddrShift, endianness_t Endian, memory_units_descriptor descriptor, u8 ukey, handler_entry_read_units src)
             : base(Width, AddrShift, Endian, src.m_space, F_UNITS)
         {
             SUBUNIT_COUNT = 1U << Width;
@@ -117,7 +117,7 @@ namespace mame
         }
 
 
-        public override uX read(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX mem_mask)
+        public override uX read(int WidthOverride, int AddrShiftOverride, endianness_t EndianOverride, offs_t offset, uX mem_mask)
         {
             this.ref_();
 
@@ -132,21 +132,21 @@ namespace mame
                     {
                     case 0:
                         if (si.m_endian == (u8)endianness_t.ENDIANNESS_LITTLE)
-                            result |= ((handler_entry_read)si.m_handler).read(0, 0, (int)endianness_t.ENDIANNESS_LITTLE, aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<0,  0, ENDIANNESS_LITTLE> *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
+                            result |= ((handler_entry_read)si.m_handler).read(0, 0, endianness_t.ENDIANNESS_LITTLE, aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<0,  0, ENDIANNESS_LITTLE> *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
                         else
-                            result |= ((handler_entry_read)si.m_handler).read(0, 0, (int)endianness_t.ENDIANNESS_BIG,    aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<0,  0, ENDIANNESS_BIG   > *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
+                            result |= ((handler_entry_read)si.m_handler).read(0, 0, endianness_t.ENDIANNESS_BIG,    aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<0,  0, ENDIANNESS_BIG   > *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
                         break;
                     case 1:
                         if (si.m_endian == (u8)endianness_t.ENDIANNESS_LITTLE)
-                            result |= ((handler_entry_read)si.m_handler).read(1, -1, (int)endianness_t.ENDIANNESS_LITTLE, aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<1, -1, ENDIANNESS_LITTLE> *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
+                            result |= ((handler_entry_read)si.m_handler).read(1, -1, endianness_t.ENDIANNESS_LITTLE, aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<1, -1, ENDIANNESS_LITTLE> *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
                         else
-                            result |= ((handler_entry_read)si.m_handler).read(1, -1, (int)endianness_t.ENDIANNESS_BIG,    aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<1, -1, ENDIANNESS_BIG   > *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
+                            result |= ((handler_entry_read)si.m_handler).read(1, -1, endianness_t.ENDIANNESS_BIG,    aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<1, -1, ENDIANNESS_BIG   > *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
                         break;
                     case 2:
                         if (si.m_endian == (u8)endianness_t.ENDIANNESS_LITTLE)
-                            result |= ((handler_entry_read)si.m_handler).read(2, -2, (int)endianness_t.ENDIANNESS_LITTLE, aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<2, -2, ENDIANNESS_LITTLE> *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
+                            result |= ((handler_entry_read)si.m_handler).read(2, -2, endianness_t.ENDIANNESS_LITTLE, aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<2, -2, ENDIANNESS_LITTLE> *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
                         else
-                            result |= ((handler_entry_read)si.m_handler).read(2, -2, (int)endianness_t.ENDIANNESS_BIG,    aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<2, -2, ENDIANNESS_BIG   > *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
+                            result |= ((handler_entry_read)si.m_handler).read(2, -2, endianness_t.ENDIANNESS_BIG,    aoffset, mem_mask >> si.m_dshift) << si.m_dshift;  //result |= uX(static_cast<handler_entry_read<2, -2, ENDIANNESS_BIG   > *>(si.m_handler)->read(aoffset, mem_mask >> si.m_dshift)) << si.m_dshift;
                         break;
                     default:
                         throw new emu_fatalerror("handler_entry_read_units.read() - abort");  //abort();
@@ -185,7 +185,7 @@ namespace mame
     }
 
 
-    //template<int Width, int AddrShift, int Endian>
+    //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_write_units : handler_entry_write, IDisposable  //class handler_entry_write_units : public handler_entry_write<Width, AddrShift, Endian>
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
@@ -216,7 +216,7 @@ namespace mame
         u8 m_subunits;                     // number of subunits
 
 
-        public handler_entry_write_units(int Width, int AddrShift, int Endian, memory_units_descriptor descriptor, u8 ukey, address_space space)
+        public handler_entry_write_units(int Width, int AddrShift, endianness_t Endian, memory_units_descriptor descriptor, u8 ukey, address_space space)
             : base(Width, AddrShift, Endian, space, F_UNITS)
         {
             SUBUNIT_COUNT = 1U << Width;
@@ -232,7 +232,7 @@ namespace mame
         }
 
 
-        public handler_entry_write_units(int Width, int AddrShift, int Endian, memory_units_descriptor descriptor, u8 ukey, handler_entry_write_units src)
+        public handler_entry_write_units(int Width, int AddrShift, endianness_t Endian, memory_units_descriptor descriptor, u8 ukey, handler_entry_write_units src)
             : base(Width, AddrShift, Endian, src.m_space, F_UNITS)
         {
             SUBUNIT_COUNT = 1U << Width;
@@ -284,7 +284,7 @@ namespace mame
         }
 
 
-        public override void write(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX data, uX mem_mask)  //template<int Width, int AddrShift, int Endian> void handler_entry_write_units<Width, AddrShift, Endian>::write(offs_t offset, uX data, uX mem_mask)
+        public override void write(int WidthOverride, int AddrShiftOverride, endianness_t EndianOverride, offs_t offset, uX data, uX mem_mask)  //template<int Width, int AddrShift, int Endian> void handler_entry_write_units<Width, AddrShift, Endian>::write(offs_t offset, uX data, uX mem_mask)
         {
             this.ref_();
 
@@ -298,21 +298,21 @@ namespace mame
                     {
                     case 0:
                         if (si.m_endian == (u8)endianness_t.ENDIANNESS_LITTLE)
-                            ((handler_entry_write)si.m_handler).write(0, 0, (int)endianness_t.ENDIANNESS_LITTLE, aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<0,  0, ENDIANNESS_LITTLE> *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
+                            ((handler_entry_write)si.m_handler).write(0, 0, endianness_t.ENDIANNESS_LITTLE, aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<0,  0, ENDIANNESS_LITTLE> *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
                         else
-                            ((handler_entry_write)si.m_handler).write(0, 0, (int)endianness_t.ENDIANNESS_BIG,    aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<0,  0, ENDIANNESS_BIG   > *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
+                            ((handler_entry_write)si.m_handler).write(0, 0, endianness_t.ENDIANNESS_BIG,    aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<0,  0, ENDIANNESS_BIG   > *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
                         break;
                     case 1:
                         if (si.m_endian == (u8)endianness_t.ENDIANNESS_LITTLE)
-                            ((handler_entry_write)si.m_handler).write(1, -1, (int)endianness_t.ENDIANNESS_LITTLE, aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<1, -1, ENDIANNESS_LITTLE> *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
+                            ((handler_entry_write)si.m_handler).write(1, -1, endianness_t.ENDIANNESS_LITTLE, aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<1, -1, ENDIANNESS_LITTLE> *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
                         else
-                            ((handler_entry_write)si.m_handler).write(1, -1, (int)endianness_t.ENDIANNESS_BIG,    aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<1, -1, ENDIANNESS_BIG   > *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
+                            ((handler_entry_write)si.m_handler).write(1, -1, endianness_t.ENDIANNESS_BIG,    aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<1, -1, ENDIANNESS_BIG   > *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
                         break;
                     case 2:
                         if (si.m_endian == (u8)endianness_t.ENDIANNESS_LITTLE)
-                            ((handler_entry_write)si.m_handler).write(2, -2, (int)endianness_t.ENDIANNESS_LITTLE, aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<2, -2, ENDIANNESS_LITTLE> *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
+                            ((handler_entry_write)si.m_handler).write(2, -2, endianness_t.ENDIANNESS_LITTLE, aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<2, -2, ENDIANNESS_LITTLE> *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
                         else
-                            ((handler_entry_write)si.m_handler).write(2, -2, (int)endianness_t.ENDIANNESS_BIG,    aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<2, -2, ENDIANNESS_BIG   > *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
+                            ((handler_entry_write)si.m_handler).write(2, -2, endianness_t.ENDIANNESS_BIG,    aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);  //static_cast<handler_entry_write<2, -2, ENDIANNESS_BIG   > *>(si.m_handler)->write(aoffset, data >> si.m_dshift, mem_mask >> si.m_dshift);
                         break;
                     default:
                         throw new emu_fatalerror("handler_entry_write_units.write() - abort");  //abort();

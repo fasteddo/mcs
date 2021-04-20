@@ -292,7 +292,7 @@ namespace mame
 
 
         protected m6805_hmos_device(machine_config mconfig, string tag, device_t owner, u32 clock, device_type type, u32 addr_width, UInt32 ram_size)
-            : base(mconfig, tag, owner, clock, type, new configuration_params(s_hmos_ops, s_hmos_cycles, addr_width, 0x007f, 0x0060, m68705_global.M6805_VECTOR_SWI), null)  //map)
+            : base(mconfig, tag, owner, clock, type, new configuration_params(addr_width > 13 ? s_hmos_b_ops : s_hmos_s_ops, s_hmos_cycles, addr_width, 0x007f, 0x0060, m68705_global.M6805_VECTOR_SWI), null)  //map)
         {
             m6805_base_device_after_ctor(map);
 
@@ -372,12 +372,11 @@ namespace mame
         //template <std::size_t N> void port_input_w(uint8_t data) { m_port_input[N] = data & ~m_port_mask[N]; }
 
 
-        //template <std::size_t N> READ8_MEMBER(m68705_device::port_r)
-        u8 port_r(int N, address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 port_r(int N)  //template <std::size_t N> u8 port_r();
         {
             if (!m_port_cb_r[N].isnull())
             {
-                u8 newval = (u8)(m_port_cb_r[N].op(space, 0, (u8)(~m_port_ddr[N] & ~m_port_mask[N])) & ~m_port_mask[N]);
+                u8 newval = (u8)(m_port_cb_r[N].op(0, (u8)(~m_port_ddr[N] & ~m_port_mask[N])) & ~m_port_mask[N]);
                 if (newval != m_port_input[N])
                 {
                     LOGIOPORT("read PORT{0}: new input = {1} & {2} (was {3})\n",
@@ -390,14 +389,13 @@ namespace mame
             return (u8)(m_port_mask[N] | (m_port_latch[N] & m_port_ddr[N]) | (m_port_input[N] & ~m_port_ddr[N]));
         }
 
-        protected u8 port_r_0(address_space space, offs_t offset, u8 mem_mask = 0xff) { return port_r(0, space, offset, mem_mask); }
-        protected u8 port_r_1(address_space space, offs_t offset, u8 mem_mask = 0xff) { return port_r(1, space, offset, mem_mask); }
-        protected u8 port_r_2(address_space space, offs_t offset, u8 mem_mask = 0xff) { return port_r(2, space, offset, mem_mask); }
-        protected u8 port_r_3(address_space space, offs_t offset, u8 mem_mask = 0xff) { return port_r(3, space, offset, mem_mask); }
+        protected u8 port_r_0() { return port_r(0); }
+        protected u8 port_r_1() { return port_r(1); }
+        protected u8 port_r_2() { return port_r(2); }
+        protected u8 port_r_3() { return port_r(3); }
 
 
-        //template <std::size_t N> WRITE8_MEMBER(m68705_device::port_latch_w)
-        void port_latch_w(int N, address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void port_latch_w(int N, u8 data)  //template <std::size_t N> void port_latch_w(u8 data);
         {
             data = (u8)(data & ~m_port_mask[N]);
             u8 diff = (u8)(m_port_latch[N] ^ data);
@@ -408,14 +406,13 @@ namespace mame
                 port_cb_w(N);
         }
 
-        protected void port_latch_w_0(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { port_latch_w(0, space, offset, data, mem_mask); }
-        protected void port_latch_w_1(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { port_latch_w(1, space, offset, data, mem_mask); }
-        protected void port_latch_w_2(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { port_latch_w(2, space, offset, data, mem_mask); }
-        protected void port_latch_w_3(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { port_latch_w(3, space, offset, data, mem_mask); }
+        protected void port_latch_w_0(u8 data) { port_latch_w(0, data); }
+        protected void port_latch_w_1(u8 data) { port_latch_w(1, data); }
+        protected void port_latch_w_2(u8 data) { port_latch_w(2, data); }
+        protected void port_latch_w_3(u8 data) { port_latch_w(3, data); }
 
 
-        //template <std::size_t N> WRITE8_MEMBER(m68705_device::port_ddr_w)
-        void port_ddr_w(int N, address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void port_ddr_w(int N, u8 data)  //template <std::size_t N> void port_ddr_w(u8 data);
         {
             data = (u8)(data & ~m_port_mask[N]);
             if (data != m_port_ddr[N])
@@ -426,30 +423,29 @@ namespace mame
             }
         }
 
-        protected void port_ddr_w_0(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { port_ddr_w(0, space, offset, data, mem_mask); }
-        protected void port_ddr_w_1(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { port_ddr_w(1, space, offset, data, mem_mask); }
-        protected void port_ddr_w_2(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { port_ddr_w(2, space, offset, data, mem_mask); }
-        protected void port_ddr_w_3(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { port_ddr_w(3, space, offset, data, mem_mask); }
+        protected void port_ddr_w_0(u8 data) { port_ddr_w(0, data); }
+        protected void port_ddr_w_1(u8 data) { port_ddr_w(1, data); }
+        protected void port_ddr_w_2(u8 data) { port_ddr_w(2, data); }
+        protected void port_ddr_w_3(u8 data) { port_ddr_w(3, data); }
 
 
-        //template <std::size_t N> void port_cb_w();
-        void port_cb_w(int N)
+        void port_cb_w(int N)  //template <std::size_t N> void port_cb_w();
         {
             u8 data = m_port_open_drain[N] ? (u8)(m_port_latch[N] | ~m_port_ddr[N]) : m_port_latch[N];
             u8 mask = m_port_open_drain[N] ? (u8)(~m_port_latch[N] & m_port_ddr[N]) : m_port_ddr[N];
-            m_port_cb_w[N].op(memory().space(AS_PROGRAM), 0, data, mask);
+            m_port_cb_w[N].op(0, data, mask);
         }
 
 
-        u8 misc_r(address_space space, offs_t offset, u8 mem_mask = 0xff) { return m_mr; }  //DECLARE_READ8_MEMBER(misc_r) { return m_mr; }
-        void misc_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { m_mr = data; }  //DECLARE_WRITE8_MEMBER(misc_w) { m_mr = data; }
+        u8 misc_r() { return m_mr; }
+        void misc_w(u8 data) { m_mr = data; }
 
 
         // A/D converter
-        //DECLARE_READ8_MEMBER(acr_r);
-        //DECLARE_WRITE8_MEMBER(acr_w);
-        //DECLARE_READ8_MEMBER(arr_r);
-        //DECLARE_WRITE8_MEMBER(arr_w);
+        //u8 acr_r();
+        //void acr_w(u8 data);
+        //u8 arr_r();
+        //void arr_w(u8 data);
 
 
         protected override void device_start()
@@ -482,15 +478,18 @@ namespace mame
             base.device_reset();
 
             // reset digital I/O
-            port_ddr_w_0(memory().space(AS_PROGRAM), 0, 0x00, 0xff);
-            port_ddr_w_1(memory().space(AS_PROGRAM), 0, 0x00, 0xff);
-            port_ddr_w_2(memory().space(AS_PROGRAM), 0, 0x00, 0xff);
-            port_ddr_w_3(memory().space(AS_PROGRAM), 0, 0x00, 0xff);
+            port_ddr_w_0(0x00);
+            port_ddr_w_1(0x00);
+            port_ddr_w_2(0x00);
+            port_ddr_w_3(0x00);
 
             // reset timer/counter
             m_timer.reset();
 
-            rm16(m68705_global.M6805_VECTOR_RESET, ref m_pc);
+            if (m_params.m_addr_width > 13)
+                rm16(true, m68705_global.M6805_VECTOR_RESET, ref m_pc);
+            else
+                rm16(false, m68705_global.M6805_VECTOR_RESET, ref m_pc);
         }
 
 
@@ -515,10 +514,21 @@ namespace mame
             {
                 if ((CC & IFLAG) == 0)
                 {
-                    pushword(m_pc);
-                    pushbyte(m_x);
-                    pushbyte(m_a);
-                    pushbyte(m_cc);
+                    if (m_params.m_addr_width > 13)
+                    {
+                        pushword(true, m_pc);
+                        pushbyte(true, m_x);
+                        pushbyte(true, m_a);
+                        pushbyte(true, m_cc);
+                    }
+                    else
+                    {
+                        pushword(false, m_pc);
+                        pushbyte(false, m_x);
+                        pushbyte(false, m_a);
+                        pushbyte(false, m_cc);
+                    }
+
                     SEI();
                     standard_irq_callback(0);
 
@@ -526,12 +536,18 @@ namespace mame
                     {
                         LOGINT("servicing /INT interrupt\n");
                         pending_interrupts = (uint16_t)(pending_interrupts & ~(1 << m6805_global.M6805_IRQ_LINE));
-                        rm16(m68705_global.M6805_VECTOR_INT, ref m_pc);
+                        if (m_params.m_addr_width > 13)
+                            rm16(true, m68705_global.M6805_VECTOR_INT, ref m_pc);
+                        else
+                            rm16(false, m68705_global.M6805_VECTOR_INT, ref m_pc);
                     }
                     else if (BIT(pending_interrupts, m68705_global.M6805_INT_TIMER) != 0)
                     {
                         LOGINT("servicing timer/counter interrupt\n");
-                        rm16(m68705_global.M6805_VECTOR_TIMER, ref m_pc);
+                        if (m_params.m_addr_width > 13)
+                            rm16(true, m68705_global.M6805_VECTOR_TIMER, ref m_pc);
+                        else
+                            rm16(false, m68705_global.M6805_VECTOR_TIMER, ref m_pc);
                     }
                     else
                     {
@@ -695,12 +711,18 @@ namespace mame
             if (CLEAR_LINE != m_vihtp)
             {
                 LOG("loading bootstrap vector\n");
-                rm16(m68705_global.M68705_VECTOR_BOOTSTRAP, ref m_pc);
+                if (m_params.m_addr_width > 13)
+                    rm16(true, m68705_global.M68705_VECTOR_BOOTSTRAP, ref m_pc);
+                else
+                    rm16(false, m68705_global.M68705_VECTOR_BOOTSTRAP, ref m_pc);
             }
             else
             {
                 LOG("loading reset vector\n");
-                rm16(m68705_global.M6805_VECTOR_RESET, ref m_pc);
+                if (m_params.m_addr_width > 13)
+                    rm16(true, m68705_global.M6805_VECTOR_RESET, ref m_pc);
+                else
+                    rm16(false, m68705_global.M6805_VECTOR_RESET, ref m_pc);
             }
         }
 
@@ -730,8 +752,7 @@ namespace mame
         //virtual void nvram_write(emu_file &file) override;
 
 
-        //template <offs_t B> READ8_MEMBER(m68705_device::eprom_r)
-        u8 eprom_r(offs_t B, address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 eprom_r(offs_t B, offs_t offset)  //template <offs_t B> u8 eprom_r(offs_t offset);
         {
             if (pcr_vpon() && !pcr_ple())
                 LOGEPROM("read EPROM {0} prevented when Vpp high and /PLE = 0\n", B + offset);
@@ -740,29 +761,26 @@ namespace mame
             return (!pcr_vpon() || !pcr_ple()) ? m_user_rom.target[B + offset] : (u8)0xff;
         }
 
-        protected u8 eprom_r_0x0080(address_space space, offs_t offset, u8 mem_mask = 0xff) { return eprom_r(0x0080, space, offset, mem_mask); }
-        protected u8 eprom_r_0x07f8(address_space space, offs_t offset, u8 mem_mask = 0xff) { return eprom_r(0x07f8, space, offset, mem_mask); }
+        protected u8 eprom_r_0x0080(offs_t offset) { return eprom_r(0x0080, offset); }
+        protected u8 eprom_r_0x07f8(offs_t offset) { return eprom_r(0x07f8, offset); }
 
 
-        //template <offs_t B> WRITE8_MEMBER(m68705_device::eprom_w)
-        void eprom_w(offs_t B, address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void eprom_w(offs_t B, offs_t offset, u8 data)  //template <offs_t B> void eprom_w(offs_t offset, u8 data);
         {
             throw new emu_unimplemented();
         }
 
-        protected void eprom_w_0x0080(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { eprom_w(0x0080, space, offset, data, mem_mask); }
-        protected void eprom_w_0x07f8(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { eprom_w(0x07f8, space, offset, data, mem_mask); }
+        protected void eprom_w_0x0080(offs_t offset, u8 data) { eprom_w(0x0080, offset, data); }
+        protected void eprom_w_0x07f8(offs_t offset, u8 data) { eprom_w(0x07f8, offset, data); }
 
 
-        //READ8_MEMBER(m68705_device::pcr_r)
-        protected u8 pcr_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        protected u8 pcr_r()
         {
             throw new emu_unimplemented();
         }
 
 
-        //WRITE8_MEMBER(m68705_device::pcr_w)
-        protected void pcr_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected void pcr_w(u8 data)
         {
             throw new emu_unimplemented();
         }

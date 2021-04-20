@@ -230,6 +230,7 @@ namespace mame
             16128000, /* 16.128_MHz_XTAL        Fujitsu FM-7 */
             16200000, /* 16.2_MHz_XTAL          Debut */
             16257000, /* 16.257_MHz_XTAL        IBM PC MDA & EGA */
+            16313000, /* 16.313_MHz_XTAL        Micro-Term ERGO 201 */
             16364000, /* 16.364_MHz_XTAL        Corvus Concept */
             16384000, /* 16.384_MHz_XTAL        - */
             16400000, /* 16.4_MHz_XTAL          MS 6102 */
@@ -280,12 +281,14 @@ namespace mame
             21254400, /* 21.2544_MHz_XTAL       TeleVideo 970 132-column display clock */
             21281370, /* 21.28137_MHz_XTAL      Radica Tetris (PAL) */
             21300000, /* 21.3_MHz_XTAL          - */
+            21328100, /* 21.3281_MHz_XTAL       Philips NMS8245 */
             21477272, /* 21.477272_MHz_XTAL     BMC bowling, some Data East 90's games, Vtech Socrates; (6x NTSC subcarrier) */
             21667500, /* 21.6675_MHz_XTAL       AT&T 610 (80-column display clock) */
             22000000, /* 22_MHz_XTAL            - */
             22032000, /* 22.032_MHz_XTAL        Intellec Series II I/O controller */
             22096000, /* 22.096_MHz_XTAL        ADDS Viewpoint 122 */
             22118400, /* 22.1184_MHz_XTAL       Amusco Poker */
+            22168000, /* 22.168_MHz_XTAL        Sony HB-10P VDP (5x PAL subcarrier) */
             22248000, /* 22.248_MHz_XTAL        Quantel DPB-7000 */
             22321000, /* 22.321_MHz_XTAL        Apple LaserWriter II NT */
             22464000, /* 22.464_MHz_XTAL        CIT-101 132-column display clock */
@@ -329,8 +332,9 @@ namespace mame
             28375160, /* 28.37516_MHz_XTAL      Amiga PAL systems */
             28475000, /* 28.475_MHz_XTAL        CoCo 3 PAL */
             28480000, /* 28.48_MHz_XTAL         Chromatics CGC-7900 */
+            28636000, /* 28.636_MHz_XTAL        Super Kaneko Nova System */
             28636363, /* 28.636363_MHz_XTAL     Later Leland games and Atari GT, Amiga NTSC, Raiden2 h/w (8x NTSC subcarrier)*/
-            28640000, /* 28.64_MHz_XTAL         Fukki FG-1c AI AM-2 PCB */
+            28640000, /* 28.64_MHz_XTAL         Fuuki FG-1c AI AM-2 PCB */
             28700000, /* 28.7_MHz_XTAL          - */
             29376000, /* 29.376_MHz_XTAL        Qume QVT-103 */
             29491200, /* 29.4912_MHz_XTAL       Xerox Alto-II system clock (tagged 29.4MHz in the schematics) */
@@ -354,6 +358,7 @@ namespace mame
             33264000, /* 33.264_MHz_XTAL        Hazeltine 1500 terminal */
             33330000, /* 33.33_MHz_XTAL         Sharp X68000 XVI */
             33333000, /* 33.333_MHz_XTAL        Sega Model 3 CPU board, Vegas */
+            33333333, /* 33.333333_MHz_XTAL     Super Kaneko Nova System Sound clock with /2 divider */
             33833000, /* 33.833_MHz_XTAL        - */
             33868800, /* 33.8688_MHz_XTAL       Usually used to drive 90's Yamaha OPL/FM chips with /2 divider */
             34000000, /* 34_MHz_XTAL            Gaelco PCBs */
