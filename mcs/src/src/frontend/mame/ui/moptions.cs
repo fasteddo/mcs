@@ -34,6 +34,7 @@ namespace mame
         const string OPTION_UI_PATH               = "ui_path";
 
         // core misc options
+        const string OPTION_SKIP_WARNINGS         = "skip_warnings";
         const string OPTION_REMEMBER_LAST         = "remember_last";
         const string OPTION_ENLARGE_SNAPS         = "enlarge_snaps";
         const string OPTION_FORCED4X3             = "forced4x3";
@@ -99,8 +100,9 @@ namespace mame
 
             // misc options
             new options_entry(null,                                 null,       OPTION_HEADER,      "UI MISC OPTIONS"),
-            new options_entry(OPTION_REMEMBER_LAST,                 "1",        OPTION_BOOLEAN,     "reselect in main menu last played game"),
-            new options_entry(OPTION_ENLARGE_SNAPS,                 "1",        OPTION_BOOLEAN,     "enlarge arts (snapshot, title, etc...) in right panel (keeping aspect ratio)"),
+            new options_entry(OPTION_SKIP_WARNINGS,                 "0",        OPTION_BOOLEAN,     "display fewer repeated warnings about imperfect emulation" ),
+            new options_entry(OPTION_REMEMBER_LAST,                 "1",        OPTION_BOOLEAN,     "initially select last used system in main menu" ),
+            new options_entry(OPTION_ENLARGE_SNAPS,                 "1",        OPTION_BOOLEAN,     "enlarge artwork (snapshot, title, etc.) in right panel (keeping aspect ratio)" ),
             new options_entry(OPTION_FORCED4X3,                     "1",        OPTION_BOOLEAN,     "force the appearance of the snapshot in the list software to 4:3"),
             new options_entry(OPTION_USE_BACKGROUND,                "1",        OPTION_BOOLEAN,     "enable background image in main view"),
             new options_entry(OPTION_SKIP_BIOS_MENU,                "0",        OPTION_BOOLEAN,     "skip bios submenu, start with configured or default"),
@@ -167,6 +169,7 @@ namespace mame
 
 
         // Misc options
+        public bool skip_warnings() { return bool_value(OPTION_SKIP_WARNINGS); }
         public bool remember_last() { return bool_value(OPTION_REMEMBER_LAST); }
         public bool enlarge_snaps() { return bool_value(OPTION_ENLARGE_SNAPS); }
         public bool forced_4x3_snapshot() { return bool_value(OPTION_FORCED4X3); }

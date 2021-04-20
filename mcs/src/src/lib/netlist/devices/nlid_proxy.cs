@@ -171,7 +171,7 @@ namespace mame.netlist
                 m_last_state = new state_var<netlist_sig_t>(this, "m_last_var", terminal_t.OUT_TRISTATE());
 
 
-                register_subalias("Q", m_RN.P());
+                register_subalias("Q", "RN.1");
 
                 log().verbose.op("D/A Proxy: Found power terminals on device {0}", out_proxied.device().name());
                 if (anetlist.is_extended_validation())

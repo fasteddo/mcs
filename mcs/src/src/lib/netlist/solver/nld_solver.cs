@@ -65,7 +65,7 @@ namespace mame.netlist
                 // internal stuff
                 state().save(this, (plib.state_manager_t.callback_t)m_queue, this.name(), "m_queue");
 
-                connect(m_fb_step, m_Q_step);
+                connect("FB_step", "Q_step");
             }
 
 
@@ -294,7 +294,7 @@ namespace mame.netlist
                 plib.uninitialised_array<netlist_time, size_t_constant_MAX_SOLVER_QUEUE_SIZE> nt = new plib.uninitialised_array<netlist_time, size_t_constant_MAX_SOLVER_QUEUE_SIZE>();  //plib::uninitialised_array<netlist_time, config::MAX_SOLVER_QUEUE_SIZE::value> nt;
                 size_t p = 0;
 
-                while (m_queue.size() > 0)
+                while (!m_queue.empty())
                 {
                     var t = m_queue.top().exec_time();
                     var o = m_queue.top().object_();
@@ -356,8 +356,9 @@ namespace mame.netlist
                         tmp[i].update_inputs();
                     }
                 }
-                if (m_queue.size() > 0)
-                    m_Q_step.net().toggle_and_push_to_queue(m_queue.top().exec_time() - now);
+
+                if (!m_queue.empty())
+                    m_Q_step.net().toggle_and_push_to_queue((netlist_time)(m_queue.top().exec_time() - now));
             }
 
 

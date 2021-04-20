@@ -1131,8 +1131,7 @@ namespace mame
                     return;
                 }
 
-                validity_checker valid = new validity_checker(m_options);
-                valid.set_validate_all(true);
+                validity_checker valid = new validity_checker(m_options, false);
                 string sysname = m_options.command_arguments().empty() ? null : m_options.command_arguments()[0].c_str();
                 bool result = valid.check_all_matching(sysname);
                 if (!result)

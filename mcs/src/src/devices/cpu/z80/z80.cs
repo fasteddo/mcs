@@ -52,7 +52,7 @@ namespace mame
         {
             public device_state_interface_z80(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            protected override void state_import(device_state_entry entry) { ((z80_device)device()).device_state_interface_state_import(entry); }
+            public override void state_import(device_state_entry entry) { ((z80_device)device()).device_state_interface_state_import(entry); }
             protected override void state_export(device_state_entry entry) { ((z80_device)device()).device_state_interface_state_export(entry); }
             protected override void state_string_export(device_state_entry entry, out string str) { ((z80_device)device()).device_state_interface_state_string_export(entry, out str); }
         }

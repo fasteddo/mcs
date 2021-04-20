@@ -255,6 +255,9 @@ namespace mame
             /* reference the new bitmap */
             m_texture.set_bitmap(m_bitmap, m_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
         }
+
+
+        //void update_position();
     }
 
 

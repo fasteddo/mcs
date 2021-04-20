@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
+using size_t = System.UInt32;
 using u8 = System.Byte;
+using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 
@@ -237,7 +239,7 @@ namespace mame
         device_t m_base;
 
         /// \brief Object tag to search for
-        string m_tag;
+        protected string m_tag;
 
         /// \brief Set when object resolution completes
         protected bool m_resolved;
@@ -257,7 +259,20 @@ namespace mame
 
         // getters
         public finder_base next() { return m_next; }
-        public abstract bool findit(bool isvalidation = false);
+
+
+        /// \brief Attempt discovery
+        ///
+        /// Concrete derived classes must implement this member function.
+        /// Should return false if the object is required but not found, or
+        /// true otherwise (the report_missing member function can assist
+        /// in implementing this behaviour).
+        /// \param [in] valid Pass a pointer to the validity checker if this
+        ///   is a dry run (i.e. no intention to actually start the device),
+        ///   or nullptr otherwise.
+        /// \return False if the object is required but not found, or true
+        ///   otherwise.
+        public abstract bool findit(validity_checker valid);
 
         /// \brief Clear temporary binding from configuration
         ///
@@ -387,21 +402,6 @@ namespace mame
                 return !required;
             }
         }
-
-
-        public virtual void printf_warning(string format, params object [] args)
-        {
-            //va_list argptr;
-            //char buffer[1024];
-            //
-            //// do the output
-            //va_start(argptr, format);
-            //vsnprintf(buffer, 1024, format, argptr);
-            //osd_printf_warning("%s", buffer);
-            //va_end(argptr);
-
-            osd_printf_warning(format, args);
-        }
     }
 
 
@@ -523,9 +523,20 @@ namespace mame
         //}
 
         // finder
-        public override bool findit(bool isvalidation = false)
+        /// \brief Find device
+        ///
+        /// Find device of desired type with requested tag.  If a device
+        /// with the requested tag is found but the type is incorrect, a
+        /// warning message will be printed.  This method is called by the
+        /// base device at resolution time.
+        /// \param [in] valid Pass a pointer to the validity checker if this
+        ///   is a dry run (i.e. no intention to actually start the device),
+        ///   or nullptr otherwise.
+        /// \return True if the device is optional or if a matching device
+        ///   is found, false otherwise.
+        public override bool findit(validity_checker valid)
         {
-            if (!isvalidation)
+            if (valid == null)
             {
                 assert(!this.m_resolved);
                 this.m_resolved = true;
@@ -535,8 +546,9 @@ namespace mame
             m_targetObject = device;
             if (device != null && target == null)
             {
-                printf_warning("Device '{0}' found but is of incorrect type (actual type is {1})\n", tag(), device.name());
+                osd_printf_warning("Device '{0}' found but is of incorrect type (actual type is {1})\n", this.m_tag, device.name());
             }
+
             return report_missing("device");
         }
     }
@@ -656,13 +668,14 @@ namespace mame
         /// Find memory region with requested tag.  For a dry run, the
         /// target object pointer will not be set.  This method is called by
         /// the base device at resolution time.
-        /// \param [in] isvalidation True if this is a dry run (not
-        ///   intending to run the machine, just checking for errors).
+        /// \param [in] valid Pass a pointer to the validity checker if this
+        ///   is a dry run (i.e. no intention to actually start the device),
+        ///   or nullptr otherwise.
         /// \return True if the memory region is optional or if a matching
         ///   memory region is found, false otherwise.
-        public override bool findit(bool isvalidation)
+        public override bool findit(validity_checker valid)
         {
-            if (isvalidation)
+            if (valid != null)
                 return validate_memregion(0, Required);
 
             assert(!this.m_resolved);
@@ -730,13 +743,14 @@ namespace mame
         /// Find memory bank with requested tag.  Just returns true for a
         /// dry run.  This method is called by the base device at resolution
         /// time.
-        /// \param [in] isvalidation True if this is a dry run (not
-        ///   intending to run the machine, just checking for errors).
+        /// \param [in] valid Pass a pointer to the validity checker if this
+        ///   is a dry run (i.e. no intention to actually start the device),
+        ///   or nullptr otherwise.
         /// \return True if the memory bank is optional, a matching memory
         ///   bank is found or this is a dry run, false otherwise.
-        public override bool findit(bool isvalidation)
+        public override bool findit(validity_checker valid)
         {
-            if (isvalidation)
+            if (valid != null)
                 return true;
 
             assert(!this.m_resolved);
@@ -839,13 +853,14 @@ namespace mame
         /// Find I/O port with requested tag.  Just returns true for a dry
         /// run.  This method is called by the base device at resolution
         /// time.
-        /// \param [in] isvalidation True if this is a dry run (not
-        ///   intending to run the machine, just checking for errors).
+        /// \param [in] valid Pass a pointer to the validity checker if this
+        ///   is a dry run (i.e. no intention to actually start the device),
+        ///   or nullptr otherwise.
         /// \return True if the I/O port is optional, a matching I/O port is
         ///   is found or this is a dry run, false otherwise.
-        public override bool findit(bool isvalidation)
+        public override bool findit(validity_checker valid)
         {
-            if (isvalidation)
+            if (valid != null)
                 return true;
 
             assert(!this.m_resolved);
@@ -964,9 +979,9 @@ namespace mame
 
 
         // finder
-        public override bool findit(bool isvalidation = false)
+        public override bool findit(validity_checker valid)
         {
-            if (isvalidation)
+            if (valid != null)
                 return validate_memregion((UInt32)sizeof_(typeof(PointerType)) * m_length, Required);
 
             assert(!this.m_resolved);
@@ -1094,8 +1109,8 @@ namespace mame
 
         // internal state
         u8 m_width;
-        UInt32 m_bytes;
-        //std::vector<PointerType> m_allocated;
+        size_t m_bytes;
+        //std::unique_ptr<PointerType []> m_allocated;
 
         Pointer<PointerType> m_targetPtr;
 
@@ -1117,10 +1132,8 @@ namespace mame
         //PointerType &operator[](int index) { return this->m_target[index]; }
 
         // getter for explicit fetching
-        //UINT32 bytes() const { return m_bytes; }
-        //public UInt32 bytes() { return (UInt32)target().m_buffer.count(); }
-        public UInt32 bytes() { return m_bytes; }
-        //UINT32 mask() const { return m_bytes - 1; } // FIXME: wrong when sizeof(PointerType) != 1
+        public u32 bytes() { return m_bytes; }
+        //u32 mask() const { return m_bytes - 1; } // FIXME: wrong when sizeof(PointerType) != 1
 
         // setter for setting the object
         //void set_target(PointerType *target, size_t bytes) { this->m_target = target; m_bytes = bytes; }
@@ -1130,15 +1143,15 @@ namespace mame
 
 
         // dynamic allocation of a shared pointer
-        //void allocate(UINT32 entries)
+        //void allocate(u32 entries)
 
 
         public virtual Pointer<PointerType> find_memshare(byte width, out UInt32 bytes, bool required) { bytes = 0; return null; }
 
         // finder
-        public override bool findit(bool isvalidation = false)
+        public override bool findit(validity_checker valid)
         {
-            if (isvalidation)
+            if (valid != null)
                 return true;
 
             assert(!this.m_resolved);
@@ -1147,6 +1160,7 @@ namespace mame
             return report_missing(this.target != null, "shared pointer", Required);
         }
     }
+
 
     // optional shared pointer finder
     //template<class PointerType>

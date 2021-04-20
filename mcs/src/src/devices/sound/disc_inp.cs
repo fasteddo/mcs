@@ -6,7 +6,9 @@ using System.Collections.Generic;
 
 using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;
-using stream_sample_t = System.Int32;
+using s32 = System.Int32;
+using stream_buffer_sample_t = System.Single;  //using sample_t = float;
+using u32 = System.UInt32;
 
 
 namespace mame
@@ -208,7 +210,7 @@ namespace mame
         //DISCRETE_RESET(dss_input_stream)
         public override void reset()
         {
-            m_ptr = null;
+            m_inview = null;
             m_data = 0;
         }
 
@@ -222,7 +224,7 @@ namespace mame
             m_stream_in_number = (UInt32)DSS_INPUT_STREAM__STREAM;
             m_gain = DSS_INPUT_STREAM__GAIN;
             m_offset = DSS_INPUT_STREAM__OFFSET;
-            m_ptr = null;
+            m_inview = null;
 
             m_is_buffered = is_buffered() ? (byte)1 : (byte)0;
             m_buffer_stream = null;
@@ -267,28 +269,21 @@ namespace mame
         public void step()
         {
             /* the context pointer is set to point to the current input stream data in discrete_stream_update */
-            if (m_ptr != null)
+            if (m_inview != null)
             {
-                set_output(0, m_ptr[0] * m_gain + m_offset);
-                m_ptr++;
+                set_output(0, m_inview.get((s32)m_inview_sample) * 32768.0 * m_gain + m_offset);
+                m_inview_sample++;
             }
             else
             {
-                set_output(0,  0);
+                set_output(0, 0);
             }
         }
 
 
-        void stream_generate(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void stream_generate(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //void discrete_dss_input_stream_node::stream_generate(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs)
         {
-            Pointer<stream_sample_t> ptr = new Pointer<stream_sample_t>(outputs[0]);  //stream_sample_t *ptr = outputs[0];
-            int samplenum = samples;
-
-            while (samplenum-- > 0)
-            {
-                ptr[0] = m_data;
-                ptr++;
-            }
+            outputs[0].fill((stream_buffer_sample_t)(m_data * (1.0 / 32768.0)));
         }
 
 
@@ -301,7 +296,7 @@ namespace mame
                 discrete_sound_device snd_device = (discrete_sound_device)m_device;
                 //assert(DSS_INPUT_STREAM__STREAM < snd_device->m_input_stream_list.count());
 
-                m_buffer_stream = m_device.machine().sound().stream_alloc(snd_device, 0, 1, sample_rate(), stream_generate);  //stream_update_delegate(FUNC(discrete_dss_input_stream_node::stream_generate),this));
+                m_buffer_stream = m_device.machine().sound().stream_alloc(snd_device, 0, 1, (u32)this.sample_rate(), stream_generate, sound_stream_flags.STREAM_DEFAULT_FLAGS);  //m_buffer_stream = m_device->machine().sound().stream_alloc(*snd_device, 0, 1, this->sample_rate(), stream_update_delegate(&discrete_dss_input_stream_node::stream_generate,this), STREAM_DEFAULT_FLAGS);
 
                 snd_device.get_stream().set_input((int)m_stream_in_number, m_buffer_stream);
             }

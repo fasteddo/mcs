@@ -23,20 +23,20 @@ namespace mame.netlist
             where FT_OPS : plib.constants_operators<FT>, new()
             where int_SIZE : int_constant, new()
         {
-            //using mat_type = plib::pGEmatrix_cr_t<plib::pmatrix_cr_t<FT, SIZE>>;
+            //using mat_type = plib::pGEmatrix_cr<plib::pmatrix_cr_t<FT, SIZE>>;
             //using base_type = matrix_solver_ext_t<FT, SIZE>;
             //using fptype = typename base_type::fptype;
-            //using mat_index_type = typename plib::pmatrix_cr_t<FT, SIZE>::index_type;
+            //using mat_index_type = typename plib::pmatrix_cr<FT, SIZE>::index_type;
 
 
-            plib.pGEmatrix_cr_t<FT, int_SIZE> mat;  //mat_type mat;
+            plib.pGEmatrix_cr<FT, int_SIZE> mat;  //mat_type mat;
             plib.dynproc m_proc;  //plib::dynproc<void, FT *, nl_fptype *, nl_fptype *, nl_fptype *, nl_fptype ** > m_proc;
 
 
             matrix_solver_GCR_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_, size_t size)
                 : base(main_solver, name, nets, params_, size)
             {
-                mat = new plib.pGEmatrix_cr_t<FT, int_SIZE>((uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
+                mat = new plib.pGEmatrix_cr<FT, int_SIZE>((uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
                 m_proc = new plib.dynproc();
 
 
@@ -51,7 +51,7 @@ namespace mame.netlist
 
                 for (size_t k = 0; k < iN; k++)
                 {
-                    fill[k].resize((int)iN, (unsigned)plib.pGEmatrix_cr_t<FT, int_SIZE>.constants_e.FILL_INFINITY);
+                    fill[k].resize((int)iN, (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY);
                     foreach (var j in this.m_terms[k].m_nz)
                     {
                         fill[k][j] = 0;
@@ -105,10 +105,10 @@ namespace mame.netlist
                 // During extended validation there is no reason to check for
                 // differences in the generated code since during
                 // extended validation this will be different (and non-functional)
-                if (!this.state().is_extended_validation() && this.state().lib().isLoaded())
+                if (!this.state().is_extended_validation() && this.state().static_solver_lib().isLoaded())
                 {
                     string symname = static_compile_name();
-                    m_proc.load(this.state().lib(), symname);
+                    m_proc.load(this.state().static_solver_lib(), symname);
                     if (m_proc.resolved())
                     {
                         this.state().log().info.op("External static solver {0} found ...", symname);

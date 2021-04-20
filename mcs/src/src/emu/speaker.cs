@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using s32 = System.Int32;
-using stream_sample_t = System.Int32;
+using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;
 
 
@@ -38,8 +38,8 @@ namespace mame
 
         // internal state
         const int BUCKETS_PER_SECOND = 10;
-        std.vector<s32> m_max_sample;
-        s32 m_current_max;
+        std.vector<stream_buffer_sample_t> m_max_sample;
+        stream_buffer_sample_t m_current_max;
         u32 m_samples_this_bucket;
 
 
@@ -71,6 +71,10 @@ namespace mame
         //~speaker_device()
 
 
+        // device_sound_interface
+        public sound_stream device_sound_interface_output_to_stream_output(int outputnum, out int stream_outputnum) { return m_dimixer.output_to_stream_output(outputnum, out stream_outputnum); }
+
+
         // inline configuration helpers
 
         speaker_device set_position(double x, double y, double z) { m_x = x; m_y = y; m_z = z; return this; }
@@ -92,45 +96,38 @@ namespace mame
         //-------------------------------------------------
         //  mix - mix in samples from the speaker's stream
         //-------------------------------------------------
-        public void mix(MemoryContainer<s32> leftmix, MemoryContainer<s32> rightmix, ref int samples_this_update, bool suppress)  //s32 *leftmix, s32 *rightmix, int &samples_this_update, bool suppress)
+        void mix(Pointer<stream_buffer_sample_t> leftmix, Pointer<stream_buffer_sample_t> rightmix, attotime start, attotime end, int expected_samples, bool suppress)  //void mix(stream_buffer::sample_t *leftmix, stream_buffer::sample_t *rightmix, attotime start, attotime end, int expected_samples, bool suppress)
         {
             // skip if no stream
-            if (m_dimixer.mixer_stream() == null)
+            if (m_dimixer.m_mixer_stream == null)
                 return;
 
-            // update the stream, getting the start/end pointers around the operation
-            int numsamples;
-            Pointer<stream_sample_t> stream_buf = m_dimixer.mixer_stream().output_since_last_update(0, out numsamples);
+            // skip if invalid range
+            if (start > end)
+                return;
 
-            // set or assert that all streams have the same count
-            if (samples_this_update == 0)
-            {
-                samples_this_update = numsamples;
+            // get a view on the desired range
+            read_stream_view view = m_dimixer.m_mixer_stream.update_view(start, end);
 
-                // reset the mixing streams
-                std.fill_n(leftmix, samples_this_update, 0);
-                std.fill_n(rightmix, samples_this_update, 0);
-            }
-
-            assert(samples_this_update == numsamples);
+            throw new emu_unimplemented();
+#if false
+            sound_assert(view.samples() >= expected_samples);
+#endif
 
             // track maximum sample value for each 0.1s bucket
             if (machine().options().speaker_report() != 0)
             {
-                throw new emu_unimplemented();
-#if false
-                u32 samples_per_bucket = m_mixer_stream.sample_rate() / BUCKETS_PER_SECOND;
-                for (int sample = 0; sample < samples_this_update; sample++)
+                u32 samples_per_bucket = m_dimixer.m_mixer_stream.sample_rate() / BUCKETS_PER_SECOND;
+                for (int sample = 0; sample < expected_samples; sample++)
                 {
-                    m_current_max = std.max(m_current_max, std.abs(stream_buf[sample]));
+                    m_current_max = std.max(m_current_max, std.fabsf(view.get(sample)));
                     if (++m_samples_this_bucket >= samples_per_bucket)
                     {
                         m_max_sample.push_back(m_current_max);
-                        m_current_max = 0;
+                        m_current_max = 0.0f;
                         m_samples_this_bucket = 0;
                     }
                 }
-#endif
             }
 
             // mix if sound is enabled
@@ -138,25 +135,22 @@ namespace mame
             {
                 // if the speaker is centered, send to both left and right
                 if (m_x == 0)
-                {
-                    for (int sample = 0; sample < samples_this_update; sample++)
+                    for (int sample = 0; sample < expected_samples; sample++)
                     {
-                        leftmix[sample] += stream_buf[sample];
-                        rightmix[sample] += stream_buf[sample];
+                        stream_buffer_sample_t cursample = view.get(sample);
+                        leftmix[sample] += cursample;
+                        rightmix[sample] += cursample;
                     }
-                }
+
                 // if the speaker is to the left, send only to the left
                 else if (m_x < 0)
-                {
-                    for (int sample = 0; sample < samples_this_update; sample++)
-                        leftmix[sample] += stream_buf[sample];
-                }
+                    for (int sample = 0; sample < expected_samples; sample++)
+                        leftmix[sample] += view.get(sample);
+
                 // if the speaker is to the right, send only to the right
                 else
-                {
-                    for (int sample = 0; sample < samples_this_update; sample++)
-                        rightmix[sample] += stream_buf[sample];
-                }
+                    for (int sample = 0; sample < expected_samples; sample++)
+                        rightmix[sample] += view.get(sample);
             }
         }
 
@@ -186,27 +180,54 @@ namespace mame
                 m_max_sample.push_back(m_current_max);
 
                 // determine overall maximum and number of clipped buckets
-                s32 overallmax = 0;
+                stream_buffer_sample_t overallmax = 0;
                 u32 clipped = 0;
                 foreach (var curmax in m_max_sample)
                 {
                     overallmax = std.max(overallmax, curmax);
-                    if (curmax > 32767)
+                    if (curmax > (stream_buffer_sample_t)1.0)
                         clipped++;
                 }
 
                 // levels 1 and 2 just get a summary
                 if (clipped != 0 || report == 2 || report == 4)
-                    osd_printf_info("Speaker \"%s\" - max = %d (gain *= %.3f) - clipped in %d/%d (%d%%) buckets\n", tag(), overallmax, 32767.0 / (overallmax != 0 ? overallmax : 1), clipped, m_max_sample.size(), clipped * 100 / m_max_sample.size());
+                    osd_printf_info("Speaker \"{0}\" - max = {1} (gain *= {2}) - clipped in {3}/{4} ({5}%%) buckets\n", tag(), overallmax, 1 / (overallmax != 0 ? overallmax : 1), clipped, m_max_sample.size(), clipped * 100 / m_max_sample.size());
 
                 // levels 3 and 4 get a full dump
                 if (report >= 3)
                 {
+                    const string s_stars  = "************************************************************";
+                    const string s_spaces = "                                                            ";
+                    int totalstars = strlen(s_stars);
                     double t = 0;
+                    if (overallmax < 1.0)
+                        overallmax = (stream_buffer_sample_t)1.0;
+                    int leftstars = totalstars / (int)overallmax;
                     foreach (var curmax in m_max_sample)
                     {
-                        if (curmax > 32767 || report == 4)
-                            osd_printf_info("   t={0}  max={1}\n", t, curmax);
+                        if (curmax > (stream_buffer_sample_t)1.0 || report == 4)
+                        {
+                            osd_printf_info("{0}: {1} |", t, curmax);
+                            if (curmax == 0)
+                            {
+                                osd_printf_info("{0}{1}|\n", leftstars, s_spaces);
+                            }
+                            else if (curmax <= 1.0)
+                            {
+                                int stars = std.max(1, std.min(leftstars, (int)(curmax * totalstars / overallmax)));
+                                osd_printf_info("{0}{1}", stars, s_stars);
+                                int spaces = leftstars - stars;
+                                if (spaces != 0)
+                                    osd_printf_info("{0}{1}", spaces, s_spaces);
+                                osd_printf_info("|\n");
+                            }
+                            else
+                            {
+                                int rightstars = std.max(1, std.min(totalstars, (int)(curmax * totalstars / overallmax)) - leftstars);
+                                osd_printf_info("{0}|{1}\n", leftstars, s_stars, rightstars, s_stars);
+                            }
+                        }
+
                         t += 1.0 / (double)BUCKETS_PER_SECOND;
                     }
                 }
@@ -215,8 +236,7 @@ namespace mame
     }
 
 
-    // speaker device iterator
-    //typedef device_type_iterator<&device_creator<speaker_device>, speaker_device> speaker_device_iterator;
+    //using speaker_device_iterator = device_type_iterator<speaker_device>;
     public class speaker_device_iterator : device_type_iterator<speaker_device>
     {
         public speaker_device_iterator(device_t root, int maxdepth = 255) : base(speaker_device.SPEAKER, root, maxdepth) { }

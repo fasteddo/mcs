@@ -520,8 +520,7 @@ namespace mcsForm
             /////////////////////////////////////////////
             // custom code below
 
-            validity_checker valid = new validity_checker(machine.options());
-            valid.set_validate_all(true);
+            validity_checker valid = new validity_checker(machine.options(), false);
             string sysname = machine.options().system_name();
             bool result = valid.check_all_matching(string.IsNullOrEmpty(sysname) ? "*" : sysname);
             if (!result)

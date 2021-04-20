@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 
 
 namespace mame.netlist
@@ -234,13 +234,10 @@ namespace mame.netlist
 
             public void add(element_t factory)  //void add(element_t::uptr &&factory) noexcept(false);
             {
-                foreach (var e in this)
+                if (exists(factory.name()))
                 {
-                    if (e.name() == factory.name())
-                    {
-                        m_log.fatal.op(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
-                        throw new nl_exception(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
-                    }
+                    m_log.fatal.op(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
+                    throw new nl_exception(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
                 }
 
                 push_back(factory);  //push_back(std::move(factory));
@@ -266,6 +263,18 @@ namespace mame.netlist
 #if false
                 return f is device_element_t<C>;
 #endif
+            }
+
+
+            bool exists(string name)
+            {
+                foreach (var e in this)
+                {
+                    if (e.name() == name)
+                        return true;
+                }
+
+                return false;
             }
         }
 

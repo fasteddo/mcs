@@ -5,19 +5,16 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
+using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
+using mame_ui_manager_handler_callback_func = System.Func<mame.render_container, mame.mame_ui_manager, System.UInt32>;  //using handler_callback_func = std::function<uint32_t (render_container &)>;
+using mame_ui_manager_device_feature_set = mame.std.set<mame.std.pair<string, string>>;  //using device_feature_set = std::set<std::pair<std::string, std::string> >;
 using osd_ticks_t = System.UInt64;
+using std_time_t = System.Int64;
 using uint32_t = System.UInt32;
 
 
 namespace mame
 {
-    //typedef UINT32 (*ui_callback)(mame_ui_manager &, render_container &, UINT32);
-    public delegate UInt32 ui_callback(mame_ui_manager mui, render_container container, UInt32 param);
-
-    // std::function<uint32_t (render_container &)>
-    public delegate UInt32 handler_callback(render_container container, mame_ui_manager mui);
-
-
     enum ui_callback_type
     {
         GENERAL,
@@ -258,6 +255,10 @@ namespace mame
     public class mame_ui_manager : ui_manager
                                    //slider_changed_notifier
     {
+        //using handler_callback_func = std::function<uint32_t (render_container &)>;
+        //using device_feature_set = std::set<std::pair<std::string, std::string> >;
+
+
         public enum draw_mode
         {
             NONE,
@@ -268,7 +269,7 @@ namespace mame
 
         // instance variables
         render_font m_font;
-        handler_callback m_handler_callback;  // std::function<uint32_t (render_container &)> m_handler_callback;
+        mame_ui_manager_handler_callback_func m_handler_callback;
         ui_callback_type m_handler_callback_type;
         uint32_t m_handler_param;
         bool m_single_step;
@@ -286,6 +287,10 @@ namespace mame
         bool m_has_warnings;
 
         ui.machine_info m_machine_info;
+        mame_ui_manager_device_feature_set m_unemulated_features;
+        mame_ui_manager_device_feature_set m_imperfect_features;
+        std_time_t m_last_launch_time;
+        std_time_t m_last_warning_time;
 
         // static variables
         static string messagebox_text;
@@ -321,6 +326,11 @@ namespace mame
             m_mouse_show = false;
             m_target_font_height = 0;
             m_has_warnings = false;
+            m_machine_info = null;
+            m_unemulated_features = null;
+            m_imperfect_features = null;
+            m_last_launch_time = (std_time_t)(-1);
+            m_last_warning_time = (std_time_t)(-1);
         }
 
 
@@ -343,8 +353,12 @@ namespace mame
             m_non_char_keys_down = new byte [(ui_global.non_char_keys.Length + 7) / 8]; // auto_alloc_array(machine, UINT8, (ARRAY_LENGTH(non_char_keys) + 7) / 8);
             m_mouse_show = ((UInt64)machine().system().flags & MACHINE_CLICKABLE_ARTWORK) == MACHINE_CLICKABLE_ARTWORK ? true : false;
 
-            // request a callback upon exiting
+            // request notification callbacks
             machine().add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit);
+            machine().configuration().config_register(
+                    "ui_warnings",
+                    config_load,
+                    config_save);
 
             // create mouse bitmap
             PointerU32 dst = m_mouse_bitmap.pix32(0);  //uint32_t *dst = &m_mouse_bitmap.pix32(0);
@@ -413,134 +427,6 @@ namespace mame
         {
             //throw new emu_unimplemented();
 #if false
-            m_sliders.clear();
-
-            // add overall volume
-            sliders.Add(slider_alloc(machine, "Master Volume", -32, 0, 0, 1, slider_volume, null));
-
-            // add per-channel volume
-            mixer_input info;
-            for (int item = 0; machine.sound().indexed_mixer_input(item, info); item++)
-            {
-                int maxval = 2000;
-                int defval = 1000;
-
-                string str = string.Format("{0} Volume", info.stream.input_name(info.inputnum));  // %1$s
-                sliders.Add(slider_alloc(machine, str, 0, defval, maxval, 20, slider_mixervol, (void *)(FPTR)item));
-            }
-
-            // add analog adjusters
-            foreach (ioport_port port in machine.ioport().ports())
-            {
-                foreach (ioport_field field in port.fields())
-                {
-                    if (field.type() == ioport_type.IPT_ADJUSTER)
-                    {
-                        sliders.Add(slider_alloc(machine, field.name(), field.minval(), field.defvalue(), field.maxval(), 1, slider_adjuster, (void *)&field));
-                    }
-                }
-            }
-
-            // add CPU overclocking (cheat only)
-            if (machine.options().cheat())
-            {
-                for (device_execute_interface &exec : execute_interface_iterator(machine.root_device()))
-                {
-                    void *param = (void *)&exec.device();
-                    std::string str = string_format(_("Overclock CPU %1$s"), exec.device().tag());
-                    m_sliders.push_back(slider_alloc(SLIDER_ID_OVERCLOCK + slider_index++, str.c_str(), 100, 1000, 4000, 10, param));
-                }
-                for (device_sound_interface &snd : sound_interface_iterator(machine.root_device()))
-                {
-                    device_execute_interface *exec;
-                    if (!snd.device().interface(exec) && snd.device().unscaled_clock() != 0)
-                    {
-                        void *param = (void *)&snd.device();
-                        std::string str = string_format(_("Overclock %1$s sound"), snd.device().tag());
-                        m_sliders.push_back(slider_alloc(SLIDER_ID_OVERCLOCK + slider_index++, str.c_str(), 100, 1000, 4000, 10, param));
-                    }
-                }
-            }
-
-            // add screen parameters
-            screen_device_iterator scriter = new screen_device_iterator(machine.root_device());
-            foreach (screen_device screen in scriter)
-            {
-                int defxscale = floor(screen.xscale() * 1000.0f + 0.5f);
-                int defyscale = floor(screen.yscale() * 1000.0f + 0.5f);
-                int defxoffset = floor(screen.xoffset() * 1000.0f + 0.5f);
-                int defyoffset = floor(screen.yoffset() * 1000.0f + 0.5f);
-                void *param = (void *)&screen;
-                string screen_desc = slider_get_screen_desc(screen);
-
-                // add refresh rate tweaker
-                if (machine.options().cheat())
-                {
-                    string str = string.Format("{0} Refresh Rate", screen_desc);  //%1$s
-                    sliders.Add(slider_alloc(machine, str, -10000, 0, 10000, 1000, slider_refresh, param));
-                }
-
-                // add standard brightness/contrast/gamma controls per-screen
-                string str = string.Format("{0} Brightness", screen_desc);  //%1$s
-                sliders.Add(slider_alloc(machine, str, 100, 1000, 2000, 10, slider_brightness, param));
-                str = string.Format("{0} Contrast", screen_desc);  //%1$s
-                sliders.Add(slider_alloc(machine, str, 100, 1000, 2000, 50, slider_contrast, param));
-                str = string.Format("{0} Gamma", screen_desc);  //%1$s
-                sliders.Add(slider_alloc(machine, str, 100, 1000, 3000, 50, slider_gamma, param));
-
-                // add scale and offset controls per-screen
-                str = string.Format("{0} Horiz Stretch", screen_desc);  //%1$s
-                sliders.Add(slider_alloc(machine, str, 500, defxscale, 1500, 2, slider_xscale, param));
-                str = string.Format("{0} Horiz Position", screen_desc);  //%1$s
-                sliders.Add(slider_alloc(machine, str, -500, defxoffset, 500, 2, slider_xoffset, param));
-                str = string.Format("{0} Vert Stretch", screen_desc);  //%1$s
-                sliders.Add(slider_alloc(machine, str, 500, defyscale, 1500, 2, slider_yscale, param));
-                str = string.Format("{0} Vert Position", screen_desc);  //%1$s
-                sliders.Add(slider_alloc(machine, str, -500, defyoffset, 500, 2, slider_yoffset, param));
-            }
-#endif
-
-            //throw new emu_unimplemented();
-#if false
-            foreach (laserdisc_device laserdisc in new laserdisc_device_iterator(machine.root_device()))
-            {
-                if (laserdisc.overlay_configured())
-                {
-                    laserdisc_overlay_config config;
-                    laserdisc.get_overlay_config(config);
-                    int defxscale = floor(config.m_overscalex * 1000.0f + 0.5f);
-                    int defyscale = floor(config.m_overscaley * 1000.0f + 0.5f);
-                    int defxoffset = floor(config.m_overposx * 1000.0f + 0.5f);
-                    int defyoffset = floor(config.m_overposy * 1000.0f + 0.5f);
-                    void *param = (void *)&laserdisc;
-
-                    // add scale and offset controls per-overlay
-                    string str = string.Format(_("Laserdisc '{0}' Horiz Stretch"), laserdisc.tag());  // %1$s
-                    sliders.Add(slider_alloc(machine, str, 500, (defxscale == 0) ? 1000 : defxscale, 1500, 2, slider_overxscale, param));
-                    str = string.Format(_("Laserdisc '{0}' Horiz Position"), laserdisc.tag());  // %1$s
-                    sliders.Add(slider_alloc(machine, str, -500, defxoffset, 500, 2, slider_overxoffset, param));
-                    str = string.Format(_("Laserdisc '{0}' Vert Stretch"), laserdisc.tag());  // %1$s
-                    sliders.Add(slider_alloc(machine, str, 500, (defyscale == 0) ? 1000 : defyscale, 1500, 2, slider_overyscale, param));
-                    str = string.Format(_("Laserdisc '{0}' Vert Position"), laserdisc.tag());  // %1$s
-                    sliders.Add(slider_alloc(machine, str, -500, defyoffset, 500, 2, slider_overyoffset, param));
-                }
-            }
-#endif
-
-            //throw new emu_unimplemented();
-#if false
-            foreach (screen_device screen in scriter)
-            {
-                if (screen.screen_type() == screen_type_enum.SCREEN_TYPE_VECTOR)
-                {
-                    // add vector control
-                    sliders.Add(slider_alloc(machine, "Vector Flicker", 0, 0, 1000, 10, slider_flicker, null));
-                    sliders.Add(slider_alloc(machine, "Beam Width Minimum", 1, 100, 1000, 1, slider_beam_width_min, null));
-                    sliders.Add(slider_alloc(machine, "Beam Width Maximum", 1, 100, 1000, 1, slider_beam_width_max, null));
-                    sliders.Add(slider_alloc(machine, "Beam Intensity Weight", -1000, 0, 1000, 10, slider_beam_intensity_weight, null));
-                    break;
-                }
-            }
 #endif
 
 #if MAME_DEBUG
@@ -564,16 +450,6 @@ namespace mame
 
             //throw new emu_unimplemented();
 #if false
-            foreach (slider_state slider in sliders)
-            {
-                ui.menu_item item = new ui.menu_item();
-                item.text = slider.description;
-                item.subtext = "";
-                item.flags = 0;
-                item.refobj = slider;
-                item.type = ui.menu_item_type.SLIDER;
-                items.Add(item);
-            }
 #endif
 
             return items;
@@ -584,7 +460,7 @@ namespace mame
         //  set_handler - set a callback/parameter
         //  pair for the current UI handler
         //-------------------------------------------------
-        void set_handler(ui_callback_type callback_type, handler_callback callback)  // std::function<uint32_t (render_container &)> &&callback);
+        void set_handler(ui_callback_type callback_type, Func<render_container, mame_ui_manager, uint32_t> callback)  //void mame_ui_manager::set_handler(ui_callback_type callback_type, const std::function<uint32_t (render_container &)> &&callback)
         {
             m_handler_callback = callback;
             m_handler_callback_type = callback_type;
@@ -667,11 +543,88 @@ namespace mame
                     case 1:
                         messagebox_text = machine_info().warnings_string();
                         m_has_warnings = !messagebox_text.empty();
-                        if (m_has_warnings && show_warnings)
+                        if (show_warnings)
                         {
-                            messagebox_text += "\n\nPress any key to continue";
-                            set_handler(ui_callback_type.MODAL, handler_messagebox_anykey);
-                            messagebox_backcolor = machine_info().warnings_color();
+                            bool need_warning = m_has_warnings;
+                            if (machine_info().has_severe_warnings() || !m_has_warnings)
+                            {
+                                // critical warnings - no need to persist stuff
+                                m_unemulated_features.clear();
+                                m_imperfect_features.clear();
+
+                                throw new emu_unimplemented();
+#if false
+                                m_last_launch_time = std::time_t(-1);
+                                m_last_warning_time = std::time_t(-1);
+#endif
+                            }
+                            else
+                            {
+                                // non-critical warnings - map current unemulated/imperfect features
+                                mame_ui_manager_device_feature_set unemulated_features = new mame_ui_manager_device_feature_set();
+                                mame_ui_manager_device_feature_set imperfect_features = new mame_ui_manager_device_feature_set();
+                                foreach (device_t device in new device_iterator(machine().root_device()))
+                                {
+                                    device_t_feature_type unemulated = device.type().unemulated_features();
+                                    for (device_t_feature_type feature = (device_t_feature_type)1; unemulated != 0; feature = (device_t_feature_type)((uint32_t)feature << 1))  //for (std::underlying_type_t<device_t::feature_type> feature = 1U; unemulated; feature <<= 1)
+                                    {
+                                        if ((uint32_t)unemulated != 0 & (uint32_t)feature != 0)
+                                        {
+                                            throw new emu_unimplemented();
+#if false
+                                            string name = info_xml_creator.feature_name((device_t_feature_type)feature);
+                                            if (!string.IsNullOrEmpty(name))
+                                                unemulated_features.emplace(new std.pair<string, string>(device.type().shortname(), name));
+                                            unemulated &= (device_t_feature_type)(~feature);
+#endif
+                                        }
+                                    }
+
+                                    device_t_feature_type imperfect = device.type().imperfect_features();
+                                    for (device_t_feature_type feature = (device_t_feature_type)1; imperfect != 0; feature = (device_t_feature_type)((uint32_t)feature << 1))  //for (std::underlying_type_t<device_t::feature_type> feature = 1U; imperfect; feature <<= 1)
+                                    {
+                                        if ((uint32_t)imperfect != 0 & (uint32_t)feature != 0)
+                                        {
+                                            throw new emu_unimplemented();
+#if false
+                                            string name = info_xml_creator.feature_name((device_t_feature_type)feature);
+                                            if (!string.IsNullOrEmpty(name))
+                                                imperfect_features.emplace(new std.pair<string, string>(device.type().shortname(), name));
+                                            imperfect &= (device_t_feature_type)(~feature);
+#endif
+                                        }
+                                    }
+                                }
+
+                                // machine flags can cause warnings, too
+                                if ((machine_info().machine_flags_get() & machine_flags.type.NO_COCKTAIL) != 0)
+                                    unemulated_features.emplace(new std.pair<string, string>(machine().root_device().type().shortname(), "cocktail"));
+
+                                // if the warnings match what was shown sufficiently recently, it's skippable
+                                if ((unemulated_features != m_unemulated_features) || (imperfect_features != m_imperfect_features))
+                                {
+                                    m_last_launch_time = (std_time_t)(-1);
+                                }
+                                else if (machine().rom_load().warnings() == 0 && ((std_time_t)(-1) != m_last_launch_time) && ((std_time_t)(-1) != m_last_warning_time) && options().skip_warnings())
+                                {
+                                    var now = std.chrono.system_clock.now();  //auto const now = std::chrono::system_clock::now();
+                                    if (((std.chrono.system_clock.from_time_t(m_last_launch_time) + std.chrono.hours(7 * 24)) >= now) && ((std.chrono.system_clock.from_time_t(m_last_warning_time) + std.chrono.hours(14 * 24)) >= now))  //if (((std::chrono::system_clock::from_time_t(m_last_launch_time) + std::chrono::hours(7 * 24)) >= now) && ((std::chrono::system_clock::from_time_t(m_last_warning_time) + std::chrono::hours(14 * 24)) >= now))
+                                        need_warning = false;
+                                }
+
+                                // update the information to save out
+                                m_unemulated_features = unemulated_features;
+                                m_imperfect_features = imperfect_features;
+                                if (need_warning)
+                                    m_last_warning_time = std.chrono.system_clock.to_time_t(std.chrono.system_clock.now());  //m_last_warning_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                            }
+
+                            if (need_warning)
+                            {
+                                messagebox_text += "\n\nPress any key to continue";
+                                set_handler(ui_callback_type.MODAL, handler_messagebox_anykey);
+                                messagebox_backcolor = machine_info().warnings_color();
+                            }
                         }
                         break;
 
@@ -707,6 +660,10 @@ namespace mame
                 set_handler(ui_callback_type.GENERAL, handler_ingame);
                 machine().video().frame_update();
             }
+
+            // update last launch time if this was a run that was eligible for emulation warnings
+            if (m_has_warnings && show_warnings && !machine().scheduled_event_pending())
+                m_last_launch_time = std.chrono.system_clock.to_time_t(std.chrono.system_clock.now());  //m_last_launch_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
             // if we're the empty driver, force the menus on
             if (ui.menu.stack_has_special_main_menu(machine()))
@@ -1346,7 +1303,7 @@ namespace mame
         //  handler_messagebox - displays the current
         //  messagebox_text string but handles no input
         //-------------------------------------------------
-        UInt32 handler_messagebox(render_container container, mame_ui_manager mui)
+        uint32_t handler_messagebox(render_container container, mame_ui_manager mui)
         {
             draw_text_box(container, messagebox_text, ui.text_layout.text_justify.LEFT, 0.5f, 0.5f, messagebox_backcolor);
             return 0;
@@ -1358,9 +1315,9 @@ namespace mame
         //  current messagebox_text string and waits for
         //  any keypress
         //-------------------------------------------------
-        UInt32 handler_messagebox_anykey(render_container container, mame_ui_manager mui)
+        uint32_t handler_messagebox_anykey(render_container container, mame_ui_manager mui)
         {
-            UInt32 state = 0;
+            uint32_t state = 0;
 
             // draw a standard message window
             draw_text_box(container, messagebox_text, ui.text_layout.text_justify.LEFT, 0.5f, 0.5f, messagebox_backcolor);
@@ -1384,7 +1341,7 @@ namespace mame
         //  handler_ingame - in-game handler takes care
         //  of the standard keypresses
         //-------------------------------------------------
-        UInt32 handler_ingame(render_container container, mame_ui_manager mui)
+        uint32_t handler_ingame(render_container container, mame_ui_manager mui)
         {
             bool is_paused = machine().paused();
 
@@ -1660,17 +1617,87 @@ namespace mame
         //-------------------------------------------------
         //  exit - clean up ourselves on exit
         //-------------------------------------------------
-        void exit(running_machine machine)
+        void exit(running_machine machine_)
         {
             // free the mouse texture
-            machine.render().texture_free(m_mouse_arrow_texture);
+            machine().render().texture_free(m_mouse_arrow_texture);
             m_mouse_arrow_texture = null;
 
             // free the font
             if (m_font != null)
             {
-                machine.render().font_free(m_font);
+                machine().render().font_free(m_font);
                 m_font = null;
+            }
+        }
+
+
+        //-------------------------------------------------
+        //  config_load - load configuration data
+        //-------------------------------------------------
+        void config_load(config_type cfg_type, util.xml.data_node parentnode)
+        {
+            // make sure it's relevant and there's data available
+            if (config_type.GAME == cfg_type)
+            {
+                m_unemulated_features.clear();
+                m_imperfect_features.clear();
+                if (parentnode == null)
+                {
+                    m_last_launch_time = (std_time_t)(-1);
+                    m_last_warning_time = (std_time_t)(-1);
+                }
+                else
+                {
+                    m_last_launch_time = (std_time_t)parentnode.get_attribute_int("launched", -1);
+                    m_last_warning_time = (std_time_t)parentnode.get_attribute_int("warned", -1);
+                    for (util.xml.data_node node = parentnode.get_first_child(); node != null; node = node.get_next_sibling())
+                    {
+                        if (std.strcmp(node.get_name(), "feature") == 0)
+                        {
+                            string device = node.get_attribute_string("device", null);
+                            string feature = node.get_attribute_string("type", null);
+                            string status = node.get_attribute_string("status", null);
+                            if (!string.IsNullOrEmpty(device) && !string.IsNullOrEmpty(feature) && !string.IsNullOrEmpty(status))  //if (device && *device && feature && *feature && status && *status)
+                            {
+                                if (std.strcmp(status, "unemulated") == 0)
+                                    m_unemulated_features.emplace(new std.pair<string, string>(device, feature));
+                                else if (std.strcmp(status, "imperfect") == 0)
+                                    m_imperfect_features.emplace(new std.pair<string, string>(device, feature));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        //-------------------------------------------------
+        //  config_save - save configuration data
+        //-------------------------------------------------
+        void config_save(config_type cfg_type, util.xml.data_node parentnode)
+        {
+            // only save system-level configuration when times are valid
+            if ((config_type.GAME == cfg_type) && ((std_time_t)(-1) != m_last_launch_time) && ((std_time_t)(-1) != m_last_warning_time))
+            {
+                parentnode.set_attribute_int("launched", (Int64)m_last_launch_time);
+                parentnode.set_attribute_int("warned", (Int64)m_last_warning_time);
+
+                foreach (var feature in m_unemulated_features)
+                {
+                    util.xml.data_node feature_node = parentnode.add_child("feature", null);
+                    feature_node.set_attribute("device", feature.first.c_str());
+                    feature_node.set_attribute("type", feature.second.c_str());
+                    feature_node.set_attribute("status", "unemulated");
+                }
+
+                foreach (var feature in m_imperfect_features)
+                {
+                    util.xml.data_node feature_node = parentnode.add_child("feature", null);
+                    feature_node.set_attribute("device", feature.first.c_str());
+                    feature_node.set_attribute("type", feature.second.c_str());
+                    feature_node.set_attribute("status", "imperfect");
+                }
             }
         }
 
@@ -1759,7 +1786,7 @@ namespace mame
             {
                 try
                 {
-                    options().parse_ini_file(file.core_file_get(), mame_options.OPTION_PRIORITY_MAME_INI, mame_options.OPTION_PRIORITY_MAME_INI < mame_options.OPTION_PRIORITY_DRIVER_INI, true);
+                    options().parse_ini_file(file.core_file_get(), mame_options.OPTION_PRIORITY_MAME_INI, mame_options.OPTION_PRIORITY_MAME_INI < mame_options.OPTION_PRIORITY_DRIVER_INI, true);  //options().parse_ini_file((util::core_file &)file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);
                 }
                 catch (options_exception )
                 {

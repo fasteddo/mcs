@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
+using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
+using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
 using device_timer_id = System.UInt32;
 using offs_t = System.UInt32;
 using seconds_t = System.Int32;
@@ -114,7 +116,7 @@ namespace mame
     {
         public struct device_feature
         {
-            public enum type  // : u32
+            public enum type : u32
             {
                 // Functionality-related
                 PROTECTION  = 1 <<  0,
@@ -1290,12 +1292,12 @@ namespace mame
         //  findit - search for all objects in auto finder
         //  list and return status
         //-------------------------------------------------
-        bool findit(bool isvalidation)
+        bool findit(validity_checker valid)
         {
             bool allfound = true;
             for (finder_base autodev = m_auto_finder_list; autodev != null; autodev = autodev.next())
             {
-                if (isvalidation)
+                if (valid != null)
                 {
                     // sanity checking
                     string tag = autodev.finder_tag();
@@ -1313,7 +1315,7 @@ namespace mame
                     }
                 }
 
-                allfound &= autodev.findit(isvalidation);
+                allfound &= autodev.findit(valid);
             }
 
             return allfound;
@@ -1384,7 +1386,7 @@ namespace mame
         public void resolve_post_map()
         {
             // find all the registered post-map objects
-            if (!findit(false))
+            if (!findit(null))
                 throw new emu_fatalerror("Missing some required objects, unable to proceed");
 
             // allow implementation to do additional setup

@@ -5,7 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using offs_t = System.UInt32;
-using stream_sample_t = System.Int32;
+using s32 = System.Int32;
+using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -25,9 +26,10 @@ namespace mame
 
 
         //template <unsigned bits>
-        public static stream_sample_t dac_multiply(int bits, double vref, stream_sample_t code)
+        public static stream_buffer_sample_t dac_multiply(int bits, double vref, s32 code)
         {
-            return bits > 1 ? (stream_sample_t)((vref * code) / (1 << bits)) : (stream_sample_t)(vref * code);
+            stream_buffer_sample_t scale = 1.0f / (stream_buffer_sample_t)((bits > 1) ? (1 << (bits)) : 1);
+            return (stream_buffer_sample_t)vref * scale * (stream_buffer_sample_t)code;
         }
     }
 
@@ -57,7 +59,7 @@ namespace mame
 
 
         public sound_stream m_stream;
-        public stream_sample_t m_code;
+        public s32 m_code;
         protected double m_gain;
 
 
@@ -71,9 +73,9 @@ namespace mame
         }
 
 
-        public void setCode(stream_sample_t code)
+        public void setCode(s32 code)
         {
-            code &= ~(~(stream_sample_t)0 << bits);  //code &= ~(~std::make_unsigned_t<stream_sample_t>(0) << bits);
+            code &= ~(~0 << bits);  //code &= ~(~u32(0) << bits);
             if (m_code != code)
             {
                 m_stream.update();
@@ -82,7 +84,7 @@ namespace mame
         }
 
 
-        public abstract void sound_stream_update_tag(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples);
+        public abstract void sound_stream_update_tag(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs);  //virtual void sound_stream_update_tag(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) = 0;
     }
 
 
@@ -97,17 +99,29 @@ namespace mame
         { }
 
 
-        public override void sound_stream_update_tag(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        public override void sound_stream_update_tag(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)
         {
-            for (int samp = 0; samp < samples; samp++)
+            for (int samp = 0; samp < outputs[0].samples(); samp++)
             {
-                double vref_pos = inputs[dac_global.DAC_VREF_POS_INPUT][samp] * this.m_gain;
-                double vref_neg = inputs[dac_global.DAC_VREF_NEG_INPUT][samp] * this.m_gain;
-                stream_sample_t vout = (stream_sample_t)(vref_neg + dac_global.dac_multiply(bits, vref_pos - vref_neg, this.m_code));
-                outputs[0][samp] = vout;
+                double vref_pos = inputs[dac_global.DAC_VREF_POS_INPUT].get(samp) * this.m_gain;
+                double vref_neg = inputs[dac_global.DAC_VREF_NEG_INPUT].get(samp) * this.m_gain;
+                stream_buffer_sample_t vout = (stream_buffer_sample_t)vref_neg + dac_global.dac_multiply(bits, vref_pos - vref_neg, this.m_code);
+                outputs[0].put(samp, vout);
             }
         }
     }
+
+
+    //template <unsigned bits>
+    //class dac_code_ones_complement : protected dac_code<bits>
+
+
+    //template <unsigned bits>
+    //class dac_code_twos_complement : protected dac_code<bits>
+
+
+    //template <unsigned bits>
+    //class dac_code_sign_magntitude : protected dac_code<bits>
 
 
     //template <typename _dac_code>
@@ -119,7 +133,13 @@ namespace mame
         {
             public device_sound_interface_dac(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((dac_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)
+            {
+                throw new emu_unimplemented();
+#if false
+                _dac_code.sound_stream_update_tag(stream, inputs, outputs);
+#endif
+            }
         }
 
 
@@ -151,9 +171,9 @@ namespace mame
 
 
         // device_sound_interface overrides
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         {
-            m_dac_code.sound_stream_update_tag(stream, inputs, outputs, samples);
+            m_dac_code.sound_stream_update_tag(stream, inputs, outputs);
         }
     }
 

@@ -8,12 +8,12 @@ using device_timer_id = System.UInt32;
 using int8_t = System.SByte;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;
-using stream_sample_t = System.Int32;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -35,7 +35,7 @@ namespace mame
         {
             public device_sound_interface_ym2151(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((ym2151_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((ym2151_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -593,7 +593,7 @@ namespace mame
             m_irqhandler.resolve_safe();
             m_portwritehandler.resolve_safe();
 
-            m_stream = disound.stream_alloc(0, 2, (int)(clock() / 64));
+            m_stream = disound.stream_alloc(0, 2, clock() / 64);
 
             timer_A_irq_off = timer_alloc(TIMER_IRQ_A_OFF);
             timer_B_irq_off = timer_alloc(TIMER_IRQ_B_OFF);
@@ -765,7 +765,7 @@ namespace mame
 
         protected override void device_clock_changed()
         {
-            m_stream.set_sample_rate((int)(clock() / 64));
+            m_stream.set_sample_rate(clock() / 64);
             calculate_timers();
         }
 
@@ -774,24 +774,24 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
             if (m_reset_active)
             {
-                outputs[0].Fill(0, samples);  //std::fill(&outputs[0][0], &outputs[0][samples], 0);
-                outputs[1].Fill(0, samples);  //std::fill(&outputs[1][0], &outputs[1][samples], 0);
+                outputs[0].fill(0);
+                outputs[1].fill(0);
                 return;
             }
 
-            for (int i = 0; i < samples; i++)
+            for (int sampindex = 0; sampindex < outputs[0].samples(); sampindex++)
             {
                 advance_eg();
 
                 for (int ch = 0; ch < 8; ch++)
                     chanout[ch].i = 0;
 
-                for (UInt32 ch = 0; ch < 7; ch++)
-                    chan_calc(ch);
+                for (int ch = 0; ch < 7; ch++)
+                    chan_calc((unsigned)ch);
 
                 chan7_calc();
 
@@ -803,18 +803,8 @@ namespace mame
                     outr += chanout[ch].i & (int)pan[2 * ch + 1];
                 }
 
-                if (outl > 32767)
-                    outl = 32767;
-                else if (outl < -32768)
-                    outl = -32768;
-
-                if (outr > 32767)
-                    outr = 32767;
-                else if (outr < -32768)
-                    outr = -32768;
-
-                outputs[0][i] = outl;
-                outputs[1][i] = outr;
+                outputs[0].put_int_clamp(sampindex, outl, 32768);
+                outputs[1].put_int_clamp(sampindex, outr, 32768);
 
                 advance();
             }
@@ -1608,10 +1598,10 @@ namespace mame
 
         static UInt32 volume_calc(Pointer<YM2151Operator> OP, uint32_t AM) { return OP.op.tl + ((uint32_t)OP.op.volume) + (AM & OP.op.AMmask); }  //#define volume_calc(OP) ((OP)->tl + ((uint32_t)(OP)->volume) + (AM & (OP)->AMmask))
 
-        void chan_calc(UInt32 chan)
+        void chan_calc(unsigned chan)
         {
             Pointer<YM2151Operator> op;  //YM2151Operator *op;
-            UInt32 env;
+            unsigned env;
             uint32_t AM = 0;
 
             m2.i = c1.i = c2.i = mem.i = 0;

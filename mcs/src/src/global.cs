@@ -22,6 +22,7 @@ using pen_t = System.UInt32;
 using s32 = System.Int32;
 using size_t = System.UInt32;
 using size_t_constant = mame.uint32_constant;
+using std_time_t = System.Int64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -34,6 +35,10 @@ using uint64_t = System.UInt64;
 
 namespace mame
 {
+    public interface bool_constant { bool value { get; } }
+    public class bool_constant_true : bool_constant { public bool value { get { return true; } } }
+    public class bool_constant_false : bool_constant { public bool value { get { return false; } } }
+
     public interface int_constant { int value { get; } }
     public class int_constant_1 : int_constant { public int value { get { return 1; } } }
     public class int_constant_2 : int_constant { public int value { get { return 2; } } }
@@ -125,6 +130,7 @@ namespace mame
 
         // corestr
         public static int core_stricmp(string s1, string s2) { return corestr_global.core_stricmp(s1, s2); }
+        public static int core_strnicmp(string s1, string s2, size_t n) { return corestr_global.core_strnicmp(s1, s2, n); }
         protected static int core_strwildcmp(string sp1, string sp2) { return corestr_global.core_strwildcmp(sp1, sp2); }
         protected static bool core_iswildstr(string sp) { return corestr_global.core_iswildstr(sp); }
         protected static string strtrimspace(string str) { return corestr_global.strtrimspace(str); }
@@ -892,25 +898,6 @@ namespace mame
         protected void NETLIST_END() { m_globals.helper_setup_pop();  netlist.nl_setup_global.NETLIST_END(); }
 
 
-        // nld_4066
-        protected void CD4066_GATE(string name) { nld_4066_global.CD4066_GATE(m_globals.helper_setup, name); }
-
-
-        // nld_system
-        protected void TTL_INPUT(string name, int v) { netlist.devices.nld_system_global.TTL_INPUT(m_globals.helper_setup, name, v); }
-        protected void ANALOG_INPUT(string name, int v) { netlist.devices.nld_system_global.ANALOG_INPUT(m_globals.helper_setup, name, v); }
-
-
-        // nld_twoterm
-        protected void RES(string name, double p_R) { netlist.nld_twoterm_global.RES(m_globals.helper_setup, name, p_R); }
-        protected void POT(string name, int p_R) { netlist.nld_twoterm_global.POT(m_globals.helper_setup, name, p_R); }
-        protected void CAP(string name, double p_C) { netlist.nld_twoterm_global.CAP(m_globals.helper_setup, name, p_C); }
-
-
-        // nlm_opamp
-        protected void UA741_DIP8(string name) { nlm_opamp_global.UA741_DIP8(m_globals.helper_setup, name); }
-
-
         // options
         protected const int OPTION_PRIORITY_DEFAULT = options_global.OPTION_PRIORITY_DEFAULT;
         protected const int OPTION_PRIORITY_NORMAL = options_global.OPTION_PRIORITY_NORMAL;
@@ -1201,11 +1188,28 @@ namespace mame
 
     public static class std
     {
+        // c++ chrono
+        public static class chrono
+        {
+            public static class system_clock
+            {
+                public static DateTimeOffset now() { return DateTimeOffset.Now; }
+                public static DateTimeOffset from_time_t(std_time_t t) { return DateTimeOffset.FromUnixTimeSeconds(t); }
+                public static std_time_t to_time_t(DateTimeOffset t) { return t.ToUnixTimeSeconds(); }
+            }
+
+            public static TimeSpan hours(int hours) { return new TimeSpan(hours, 0, 0); }
+        }
+
+
         // c++ algorithm
         public static void fill<T>(MemoryContainer<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, T value) { std.memset(destination, value); }
         public static void fill_n<T>(MemoryContainer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
         public static void fill_n<T>(Pointer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
+        public static void fill_n(PointerU16 destination, int count, UInt16 value) { std.memset(destination, value, (UInt32)count); }
+        public static void fill_n(PointerU32 destination, int count, UInt32 value) { std.memset(destination, value, (UInt32)count); }
+        public static void fill_n(PointerU64 destination, int count, UInt64 value) { std.memset(destination, value, (UInt32)count); }
         public static void fill_n<T>(IList<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
         public static T find_if<T>(IEnumerable<T> list, Func<T, bool> pred) { foreach (var item in list) { if (pred(item)) return item; } return default;  }
         public static int max(int a, int b) { return Math.Max(a, b); }
@@ -1232,6 +1236,7 @@ namespace mame
         public static double exp(double x) { return Math.Exp(x); }
         public static float fabs(float arg) { return Math.Abs(arg); }
         public static double fabs(double arg) { return Math.Abs(arg); }
+        public static float fabsf(float arg) { return Math.Abs(arg); }
         public static float floor(float arg) { return (float)Math.Floor(arg); }
         public static double floor(double arg) { return Math.Floor(arg); }
         public static float log(float arg) { return (float)Math.Log(arg); }
@@ -1258,6 +1263,9 @@ namespace mame
         public static void memset<T>(MemoryContainer<T> destination, T value) { destination.Fill(value); }
         public static void memset<T>(MemoryContainer<T> destination, T value, UInt32 num) { destination.Fill(value, (int)num); }
         public static void memset<T>(Pointer<T> destination, T value, UInt32 num) { destination.Fill(value, (int)num); }
+        public static void memset(PointerU16 destination, UInt16 value, UInt32 num) { destination.Fill(value, (int)num); }
+        public static void memset(PointerU32 destination, UInt32 value, UInt32 num) { destination.Fill(value, (int)num); }
+        public static void memset(PointerU64 destination, UInt64 value, UInt32 num) { destination.Fill(value, (int)num); }
         public static void memset<T>(IList<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
         public static void memset<T>(IList<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
         public static void memset<T>(T [,] destination, T value) { for (int i = 0; i < destination.GetLength(0); i++) for (int j = 0; j < destination.GetLength(1); j++) destination[i, j] = value; }
@@ -1412,9 +1420,6 @@ namespace mame
             IEnumerator<T> IEnumerable<T>.GetEnumerator() { return m_list.GetEnumerator(); }
 
 
-            public LinkedListNode<T> AddLast(T value) { return m_list.AddLast(value); }
-
-
             // std::list functions
             public void clear() { m_list.Clear(); }
             public LinkedListNode<T> emplace_back(T item) { return m_list.AddLast(item); }
@@ -1493,7 +1498,7 @@ namespace mame
 
 
         // c++ set
-        public class set<T>
+        public class set<T> : IEnumerable<T>
         {
             HashSet<T> m_set = new HashSet<T>();
 
@@ -1503,6 +1508,11 @@ namespace mame
             //public HashSet(IEnumerable<T> collection);
             //public HashSet(IEnumerable<T> collection, IEqualityComparer<T> comparer);
             //protected HashSet(SerializationInfo info, StreamingContext context);
+
+
+            // IEnumerable
+            IEnumerator IEnumerable.GetEnumerator() { return m_set.GetEnumerator(); }
+            IEnumerator<T> IEnumerable<T>.GetEnumerator() { return m_set.GetEnumerator(); }
 
 
             public bool ContainsIf(Func<T, bool> predicate)
@@ -1517,6 +1527,7 @@ namespace mame
 
 
             // std::set functions
+            public void clear() { m_set.Clear(); }
             public bool emplace(T item) { return m_set.Add(item); }
             public bool erase(T item) { return m_set.Remove(item); }
             public bool find(T item) { return m_set.Contains(item); }
@@ -1974,6 +1985,9 @@ namespace mame
         public static PointerU16 operator -(PointerU16 left, int right) { return new PointerU16(left, -right); }
         public static PointerU16 operator -(PointerU16 left, UInt32 right) { return new PointerU16(left, -(int)right); }
         public static PointerU16 operator --(PointerU16 left) { left.m_offset -= 2; return left; }
+
+        public void Fill(UInt16 value, int count) { Fill(value, 0, count); }
+        public void Fill(UInt16 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }
     }
 
     public class PointerU32 : Pointer<byte>
@@ -1991,6 +2005,9 @@ namespace mame
         public static PointerU32 operator -(PointerU32 left, int right) { return new PointerU32(left, -right); }
         public static PointerU32 operator -(PointerU32 left, UInt32 right) { return new PointerU32(left, -(int)right); }
         public static PointerU32 operator --(PointerU32 left) { left.m_offset -= 4; return left; }
+
+        public void Fill(UInt32 value, int count) { Fill(value, 0, count); }
+        public void Fill(UInt32 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }
     }
 
     public class PointerU64 : Pointer<byte>
@@ -2008,6 +2025,9 @@ namespace mame
         public static PointerU64 operator -(PointerU64 left, int right) { return new PointerU64(left, -right); }
         public static PointerU64 operator -(PointerU64 left, UInt32 right) { return new PointerU64(left, -(int)right); }
         public static PointerU64 operator --(PointerU64 left) { left.m_offset -= 8; return left; }
+
+        public void Fill(UInt64 value, int count) { Fill(value, 0, count); }
+        public void Fill(UInt64 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }
     }
 
 

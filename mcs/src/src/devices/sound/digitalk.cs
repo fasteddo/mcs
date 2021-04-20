@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 
 
@@ -23,7 +22,7 @@ namespace mame
         {
             public device_sound_interface_digitalker(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { throw new emu_unimplemented(); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { throw new emu_unimplemented(); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -98,7 +97,7 @@ namespace mame
 
 
         // sound stream update overrides
-        //virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
+        //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
 
 
         //void digitalker_write(uint8_t *adr, uint8_t vol, int8_t dac);

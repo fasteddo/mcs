@@ -12,6 +12,8 @@ namespace mame
 
             /* Standard stuff */
 
+            throw new emu_unimplemented();
+#if false
             SOLVER("Solver", 48000);
             ANALOG_INPUT("V5", 5);
 
@@ -91,6 +93,7 @@ namespace mame
             CAP("CC3", 220e-6);
             NET_C("R1.2", "CC3.1");
             NET_C("CC3.2", "GND");
+#endif
 
             NETLIST_END();
         }

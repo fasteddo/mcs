@@ -8,6 +8,7 @@ using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using object_t_props = mame.netlist.detail.property_store_t<mame.netlist.detail.object_t, string>;  //using props = property_store_t<object_t, pstring>;
+using u32 = System.UInt32;
 
 
 namespace mame.netlist
@@ -30,10 +31,10 @@ namespace mame.netlist
             state_var<netlist_sig_t> m_new_Q;
             state_var<netlist_sig_t> m_cur_Q;
             state_var<queue_status> m_in_queue;
+            plib.linkedlist_t<core_terminal_t> m_list_active;
             state_var<netlist_time_ext> m_next_scheduled_time;
 
             core_terminal_t m_railterminal;
-            plib.linkedlist_t<core_terminal_t> m_list_active;  //plib::linkedlist_t<core_terminal_t> m_list_active;
             std.vector<core_terminal_t> m_core_terms; // save post-start m_list ...
 
 
@@ -105,19 +106,21 @@ namespace mame.netlist
                     if (!!is_queued())
                         exec().qremove(this);
 
-                    var nst = exec().time() + delay;
-                    m_next_scheduled_time.op = nst;
-
-                    if (!m_list_active.empty())
-                    {
-                        m_in_queue.op = queue_status.QUEUED;
-                        exec().qpush(new plib.pqentry_t<netlist_time, net_t>(nst, this));
-                    }
+                    m_next_scheduled_time.op = exec().time() + delay;
+#if (AVOID_NOOP_QUEUE_PUSHES)
+                    m_in_queue = (m_list_active.empty() ? queue_status::DELAYED_DUE_TO_INACTIVE
+                        : (m_new_Q != m_cur_Q ? queue_status::QUEUED : queue_status::DELIVERED));
+                    if (m_in_queue == queue_status::QUEUED)
+                        exec().qpush(m_next_scheduled_time, this);
                     else
-                    {
-                        m_in_queue.op = queue_status.DELAYED_DUE_TO_INACTIVE;
                         update_inputs();
-                    }
+#else
+                    m_in_queue.op = m_list_active.empty() ? queue_status.DELAYED_DUE_TO_INACTIVE : queue_status.QUEUED;
+                    if (m_in_queue.op == queue_status.QUEUED)
+                        exec().qpush(new plib.pqentry_t<netlist_time, net_t>(m_next_scheduled_time.op, this));
+                    else
+                        update_inputs();
+#endif
                 }
             }
 
@@ -125,19 +128,56 @@ namespace mame.netlist
             public bool is_queued() { return m_in_queue.op == queue_status.QUEUED; }
 
 
+            // -----------------------------------------------------------------------------
+            // Very hot
+            // -----------------------------------------------------------------------------
+
             //template <bool KEEP_STATS>
             public void update_devs(bool KEEP_STATS)
             {
                 //throw new emu_unimplemented();
 #if false
-                nl_assert(this.is_rail_net());
+                gsl_Expects(this->is_rail_net());
 #endif
 
                 m_in_queue.op = queue_status.DELIVERED; // mark as taken ...
-                if ((m_new_Q.op ^ m_cur_Q.op) != 0)
+
+                netlist_sig_t new_Q = m_new_Q.op;
+                netlist_sig_t cur_Q = m_cur_Q.op;
+#if !AVOID_NOOP_QUEUE_PUSHES
+                if ((new_Q ^ cur_Q) != 0)
+#endif
                 {
-                    process(KEEP_STATS, (m_new_Q.op << (int)core_terminal_t.INP_LH_SHIFT)
-                        | (m_cur_Q.op << (int)core_terminal_t.INP_HL_SHIFT), m_new_Q.op);
+                    var mask = (new_Q << (int)core_terminal_t.INP_LH_SHIFT) | (cur_Q << (int)core_terminal_t.INP_HL_SHIFT);
+                    m_cur_Q.op = new_Q;
+
+                    if (!KEEP_STATS)
+                    {
+                        foreach (var p in m_list_active)
+                        {
+                            p.set_copied_input(new_Q);
+                            if (((u32)p.terminal_state() & mask) != 0)
+                                p.run_delegate();
+                        }
+                    }
+                    else
+                    {
+                        foreach (var p in m_list_active)
+                        {
+                            p.set_copied_input(new_Q);
+                            var stats = p.device().stats();
+
+                            throw new emu_unimplemented();
+#if false
+                            stats->m_stat_call_count.inc();
+                            if (((u32)p.terminal_state() & mask) != 0)
+                            {
+                                var g = stats->m_stat_total_time.guard();
+                                p.run_delegate();
+                            }
+#endif
+                        }
+                    }
                 }
             }
 
@@ -221,44 +261,6 @@ namespace mame.netlist
 
             // only used for logic nets
             //inline void set_Q_time(const netlist_sig_t &newQ, const netlist_time_ext &at) noexcept
-
-
-            // -----------------------------------------------------------------------------
-            // Very hot
-            // -----------------------------------------------------------------------------
-
-            //template <bool KEEP_STATS, typename T, typename S>
-            void process(bool KEEP_STATS, UInt32 mask, netlist_sig_t sig)  //inline void detail::net_t::process(T mask, const S &sig) noexcept
-            {
-                m_cur_Q.op = sig;
-
-                if (KEEP_STATS)
-                {
-                    foreach (var p in m_list_active)
-                    {
-                        throw new emu_unimplemented();
-#if false
-                        p.set_copied_input(sig);
-                        auto *stats(p.device().stats());
-                        stats->m_stat_call_count.inc();
-                        if ((p.terminal_state() & mask))
-                        {
-                            auto g(stats->m_stat_total_time.guard());
-                            p.run_delegate();
-                        }
-#endif
-                    }
-                }
-                else
-                {
-                    foreach (var p in m_list_active)
-                    {
-                        p.set_copied_input(sig);
-                        if (((UInt32)p.terminal_state() & mask) != 0)
-                            p.run_delegate();
-                    }
-                }
-            }
         }
     } // namespace detail
 

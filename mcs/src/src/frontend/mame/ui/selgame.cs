@@ -1170,7 +1170,8 @@ namespace mame.ui
             str += ((flags.machine_flags() & machine_flags.type.MECHANICAL) != 0        ? "Mechanical Machine\tYes\n"         : "Mechanical Machine\tNo\n");
             str += ((flags.machine_flags() & machine_flags.type.REQUIRES_ARTWORK) != 0  ? "Requires Artwork\tYes\n"           : "Requires Artwork\tNo\n");
             str += ((flags.machine_flags() & machine_flags.type.CLICKABLE_ARTWORK) != 0 ? "Requires Clickable Artwork\tYes\n" : "Requires Clickable Artwork\tNo\n");
-            str += ((flags.machine_flags() & machine_flags.type.NO_COCKTAIL) != 0       ? "Support Cocktail\tYes\n"           : "Support Cocktail\tNo\n");
+            if ((flags.machine_flags() & machine_flags.type.NO_COCKTAIL) != 0)
+                str += "Support Cocktail\tNo\n";
             str += ((flags.machine_flags() & machine_flags.type.IS_BIOS_ROOT) != 0      ? "Driver is BIOS\tYes\n"             : "Driver is BIOS\tNo\n");
             str += ((flags.machine_flags() & machine_flags.type.SUPPORTS_SAVE) != 0     ? "Support Save\tYes\n"               : "Support Save\tNo\n");
             str += (((UInt32)flags.machine_flags() & ORIENTATION_SWAP_XY) != 0 ? "Screen Orientation\tVertical\n" : "Screen Orientation\tHorizontal\n");

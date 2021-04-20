@@ -307,7 +307,7 @@ namespace mame
                 bool is_empty = system == ___empty.driver____empty;
                 if (!is_empty)
                 {
-                    validity_checker valid = new validity_checker(m_options);
+                    validity_checker valid = new validity_checker(m_options, true);
                     valid.set_verbose(false);
                     valid.check_shared_source(system);
                     valid.Dispose();

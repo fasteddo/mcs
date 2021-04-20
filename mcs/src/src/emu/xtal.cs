@@ -140,6 +140,7 @@ namespace mame
              9000000, /* 9_MHz_XTAL             Homedata PCBs */
              9216000, /* 9.216_MHz_XTAL         Univac UTS 20 */
              9600000, /* 9.6_MHz_XTAL           WD37C65 second clock (for 300 KB/sec rate) */
+             9732000, /* 9.732_MHz_XTAL         CTA Invader */
              9828000, /* 9.828_MHz_XTAL         Universal PCBs */
              9830400, /* 9.8304_MHz_XTAL        Epson PX-8 */
              9832000, /* 9.832_MHz_XTAL         Robotron A7150 */
@@ -275,6 +276,7 @@ namespace mame
             19602000, /* 19.602_MHz_XTAL        Ampex 210+ 80-column display clock */
             19660800, /* 19.6608_MHz_XTAL       Euro League (bootleg), labeled as "UKI 19.6608 20PF" */
             19661400, /* 19.6614_MHz_XTAL       Wyse WY-30 */
+            19718400, /* 19.7184_MHz_XTAL       Informer 207/100 */
             19923000, /* 19.923_MHz_XTAL        Cinematronics vectors */
             19968000, /* 19.968_MHz_XTAL        Used mostly by some Taito games */
             20000000, /* 20_MHz_XTAL            - */
@@ -321,6 +323,7 @@ namespace mame
             25771500, /* 25.7715_MHz_XTAL       HP-2622A */
             25920000, /* 25.92_MHz_XTAL         ADDS Viewpoint 60 */
             26000000, /* 26_MHz_XTAL            Gaelco PCBs */
+            26195000, /* 26.195_MHz_XTAL        Roland JD-800 */
             26366000, /* 26.366_MHz_XTAL        DEC VT320 */
             26580000, /* 26.58_MHz_XTAL         Wyse WY-60 80-column display clock */
             26590906, /* 26.590906_MHz_XTAL     Atari Jaguar NTSC */
@@ -338,6 +341,7 @@ namespace mame
             27720000, /* 27.72_MHz_XTAL         AT&T 610 132-column display clock */
             27956000, /* 27.956_MHz_XTAL        CIT-101e 132-column display clock */
             28000000, /* 28_MHz_XTAL            - */
+            28224000, /* 28.224_MHz_XTAL        Roland JD-800 */
             28322000, /* 28.322_MHz_XTAL        Saitek RISC 2500, Mephisto Montreux */
             28375160, /* 28.37516_MHz_XTAL      Amiga PAL systems */
             28475000, /* 28.475_MHz_XTAL        CoCo 3 PAL */

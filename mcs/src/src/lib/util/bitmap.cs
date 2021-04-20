@@ -398,105 +398,34 @@ namespace mame
         {
             // if we have a cliprect, intersect with that
             rectangle fill = cliprect;
-            fill.intersection(m_cliprect);  // fill &= m_cliprect;
-            if (fill.empty())
-                return;
-
-            // based on the bpp go from there
-            switch (m_bpp)
+            fill.intersection(m_cliprect);  //fill &= m_cliprect;
+            if (!fill.empty())
             {
+                // based on the bpp go from there
+                switch (m_bpp)
+                {
                 case 8:
-                    // 8bpp always uses memset
                     for (int32_t y = fill.top(); y <= fill.bottom(); y++)
-                    {
-                        memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width());
+                    { 
+                        std.fill_n(pixt<uint8_t>(y, fill.left()), fill.width(), (uint8_t)color);  //std::fill_n(&pixt<uint8_t>(y, fill.left()), fill.width(), uint8_t(color));
                     }
                     break;
 
                 case 16:
-                    // 16bpp can use memset if the bytes are equal
-                    if ((uint8_t)(color >> 8) == (uint8_t)color)
-                    {
-                        for (int32_t y = fill.top(); y <= fill.bottom(); y++)
-                        {
-                            memset(raw_pixptr(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 2);
-                        }
-                    }
-                    else
-                    {
-                        // Fill the first line the hard way
-                        PointerU16 destrow = (PointerU16)pixt<uint16_t>(fill.top());  //uint16_t *destrow = &pixt<uint16_t>(fill.top());
-                        for (int32_t x = fill.left(); x <= fill.right(); x++)
-                            destrow[x] = (uint16_t)color;
-
-                        // For the other lines, just copy the first one
-                        PointerU16 destrow0 = (PointerU16)pixt<uint16_t>(fill.top(), fill.left());  //void *destrow0 = &pixt<uint16_t>(fill.top(), fill.left());
-                        for (int32_t y = fill.top() + 1; y <= fill.bottom(); y++)
-                        {
-                            destrow = (PointerU16)pixt<uint16_t>(y, fill.left());  //destrow = &pixt<uint16_t>(y, fill.left());
-                            //memcpy(destrow, destrow0, fill.width() * 2);
-                            for (int i = 0; i < fill.width(); i++)  // * 2
-                                destrow[i] = destrow0[i];
-                        }
-                    }
+                    for (int32_t y = fill.top(); y <= fill.bottom(); ++y)
+                        std.fill_n((PointerU16)pixt<uint16_t>(y, fill.left()), fill.width(), (uint16_t)color);  //std::fill_n(&pixt<uint16_t>(y, fill.left()), fill.width(), uint16_t(color));
                     break;
 
                 case 32:
-                    // 32bpp can use memset if the bytes are equal
-                    if ((uint8_t)(color >> 8) == (uint8_t)color && (uint16_t)(color >> 16) == (uint16_t)color)
-                    {
-                        for (int32_t y = fill.top(); y <= fill.bottom(); y++)
-                        {
-                            memset(pixt<uint32_t>(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 4);
-                        }
-                    }
-                    else
-                    {
-                        // Fill the first line the hard way
-                        PointerU32 destrow = (PointerU32)pixt<uint32_t>(fill.top());  //uint32_t *destrow  = &pixt<uint32_t>(fill.top());
-                        for (int32_t x = fill.left(); x <= fill.right(); x++)
-                            destrow[x] = (uint32_t)color;
-
-                        // For the other lines, just copy the first one
-                        PointerU32 destrow0 = (PointerU32)pixt<uint32_t>(fill.top(), fill.left());  //uint32_t *destrow0 = &pixt<uint32_t>(fill.top(), fill.left());
-                        for (int32_t y = fill.top() + 1; y <= fill.bottom(); y++)
-                        {
-                            destrow = (PointerU32)pixt<uint32_t>(y, fill.left());  //destrow = &pixt<uint32_t>(y, fill.left());
-                            memcpy(destrow, destrow0, (uint32_t)(fill.width() * 4));  //memcpy(destrow, destrow0, fill.width() * 4);
-                        }
-                    }
+                    for (int32_t y = fill.top(); y <= fill.bottom(); ++y)
+                        std.fill_n((PointerU32)pixt<uint32_t>(y, fill.left()), fill.width(), (uint32_t)color);  //std::fill_n(&pixt<uint32_t>(y, fill.left()), fill.width(), uint32_t(color));
                     break;
 
                 case 64:
-                    // 64bpp can use memset if the bytes are equal
-                    if ((uint8_t)(color >> 8) == (uint8_t)color && (uint16_t)(color >> 16) == (uint16_t)color) // FIXME: really?  wat about the upper bits that would be zeroed when done the "hard way"?
-                    {
-                        for (int32_t y = fill.top(); y <= fill.bottom(); y++)
-                        {
-                            memset(pixt<uint64_t>(y, fill.left()), (uint8_t)color, (UInt32)fill.width() * 8);
-                        }
-                    }
-                    else
-                    {
-                        // Fill the first line the hard way
-                        PointerU64 destrow = (PointerU64)pixt<uint64_t>(fill.top());  //uint64_t *destrow  = &pixt<uint64_t>(fill.top());
-                        for (int32_t x = fill.left(); x <= fill.right(); x++)
-                            destrow[x] = (uint64_t)color;
-
-                        // For the other lines, just copy the first one
-                        PointerU64 destrow0 = (PointerU64)pixt<uint64_t>(fill.top(), fill.left());  //uint64_t *destrow0 = &pixt<uint64_t>(fill.top(), fill.left());
-                        for (int32_t y = fill.top() + 1; y <= fill.bottom(); y++)
-                        {
-                            destrow = (PointerU64)pixt<uint64_t>(y, fill.left());  //destrow = &pixt<uint64_t>(y, fill.left());
-                            //memcpy(destrow, destrow0, (UInt32)fill.width() * 8);
-                            for (int i = 0; i < fill.width(); i++)  // * 8
-                                destrow[i] = destrow0[i];
-                        }
-                    }
+                    for (int32_t y = fill.top(); y <= fill.bottom(); ++y)
+                        std.fill_n((PointerU64)pixt<uint64_t>(y, fill.left()), fill.width(), (uint64_t)color);  //std::fill_n(&pixt<uint64_t>(y, fill.left()), fill.width(), uint64_t(color));
                     break;
-
-                default:
-                    break;
+                }
             }
         }
 

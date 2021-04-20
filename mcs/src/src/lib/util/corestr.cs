@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using size_t = System.UInt32;
+
 
 namespace mame
 {
@@ -28,7 +30,21 @@ namespace mame
 
 
         /* since strnicmp is not part of the standard, we use this instead */
-        //int core_strnicmp(const char *s1, const char *s2, size_t n);
+        public static int core_strnicmp(string s1, string s2, size_t n)
+        {
+            //size_t i;
+            //for (i = 0; i < n; i++)
+            //{
+            //    int c1 = tolower((uint8_t)*s1++);
+            //    int c2 = tolower((uint8_t)*s2++);
+            //    if (c1 == 0 || c1 != c2)
+            //        return c1 - c2;
+            //}
+            //
+            //return 0;
+
+            return string.Compare(s1, 0, s2, 0, (int)n, StringComparison.CurrentCultureIgnoreCase);
+        }
 
 
         /* additional string compare helper (up to 16 characters at the moment) */

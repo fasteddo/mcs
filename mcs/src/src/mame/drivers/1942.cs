@@ -297,7 +297,7 @@ namespace mame
             NETLIST_STREAM_INPUT(config, "snd_nl:cin4", 4, "R_AY2_2.R");
             NETLIST_STREAM_INPUT(config, "snd_nl:cin5", 5, "R_AY2_3.R");
 
-            NETLIST_STREAM_OUTPUT(config, "snd_nl:cout0", 0, "R1.1").set_mult_offset(70000.0, 0.0);
+            NETLIST_STREAM_OUTPUT(config, "snd_nl:cout0", 0, "R1.1").set_mult_offset(70000.0 / 32768.0, 0.0);
             //NETLIST_STREAM_OUTPUT(config, "snd_nl:cout0", 0, "VR.2");
         }
     }

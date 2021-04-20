@@ -8,10 +8,10 @@ using device_timer_id = System.UInt32;
 using int8_t = System.SByte;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
-using stream_sample_t = System.Int32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -28,7 +28,7 @@ namespace mame
         {
             public device_sound_interface_tms5220(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((tms5220_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((tms5220_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -586,7 +586,7 @@ namespace mame
             m_data_cb.resolve();
 
             /* initialize a stream */
-            m_stream = machine().sound().stream_alloc(this, 0, 1, (int)(clock() / 80));
+            m_stream = m_disound.stream_alloc(0, 1, clock() / 80);
 
             m_timer_io_ready = timer_alloc(0);
 
@@ -675,7 +675,7 @@ namespace mame
 
         protected override void device_clock_changed()
         {
-            m_stream.set_sample_rate((int)(clock() / 80));
+            m_stream.set_sample_rate(clock() / 80);
         }
 
 
@@ -740,26 +740,20 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
-            int16_t [] sample_data = new int16_t [MAX_SAMPLE_CHUNK];
-            Pointer<stream_sample_t> buffer = outputs[0];  //stream_sample_t *buffer = outputs[0];
+            int16_t [] sample_data = new int16_t[MAX_SAMPLE_CHUNK];
+            var output = outputs[0];
 
             /* loop while we still have samples to generate */
-            while (samples != 0)
+            for (int sampindex = 0; sampindex < output.samples(); )
             {
-                int length = (samples > MAX_SAMPLE_CHUNK) ? MAX_SAMPLE_CHUNK : samples;
-                int index;
+                int length = (output.samples() > MAX_SAMPLE_CHUNK) ? MAX_SAMPLE_CHUNK : (int)output.samples();
 
                 /* generate the samples and copy to the target buffer */
-                process(sample_data, (uint32_t)length);
-                for (index = 0; index < length; index++)
-                {
-                    buffer.op = sample_data[index];  buffer++;  //*buffer++ = sample_data[index];
-                }
-
-                /* account for the samples */
-                samples -= length;
+                process(sample_data, (unsigned)length);
+                for (int index = 0; index < length; index++)
+                    output.put_int(sampindex++, sample_data[index], 32768);
             }
         }
 
@@ -1081,7 +1075,7 @@ namespace mame
         /**********************************************************************************************
              tms5220_process -- fill the buffer with a specific number of samples
         ***********************************************************************************************/
-        void process(int16_t [] buffer, UInt32 size)  //void tms5220_device::process(int16_t *buffer, unsigned int size)
+        void process(int16_t [] buffer, unsigned size)  //void tms5220_device::process(int16_t *buffer, unsigned int size)
         {
             int buf_count = 0;
             int i;

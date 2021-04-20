@@ -18,14 +18,14 @@ namespace mame
     public class device_state_entry : global_object
     {
         // device state flags
-        const byte DSF_NOSHOW          = 0x01; // don't display this entry in the registers view
-        const byte DSF_IMPORT          = 0x02; // call the import function after writing new data
-        const byte DSF_IMPORT_SEXT     = 0x04; // sign-extend the data when writing new data
-        const byte DSF_EXPORT          = 0x08; // call the export function prior to fetching the data
-        const byte DSF_CUSTOM_STRING   = 0x10; // set if the format has a custom string
-        const byte DSF_DIVIDER         = 0x20; // set if this is a divider entry
-        const byte DSF_READONLY        = 0x40; // set if this entry does not permit writes
-        protected const byte DSF_FLOATING_POINT  = 0x80; // set if this entry represents a floating-point value
+        const u8 DSF_NOSHOW          = 0x01; // don't display this entry in the registers view
+        const u8 DSF_IMPORT          = 0x02; // call the import function after writing new data
+        const u8 DSF_IMPORT_SEXT     = 0x04; // sign-extend the data when writing new data
+        const u8 DSF_EXPORT          = 0x08; // call the export function prior to fetching the data
+        const u8 DSF_CUSTOM_STRING   = 0x10; // set if the format has a custom string
+        const u8 DSF_DIVIDER         = 0x20; // set if this is a divider entry
+        const u8 DSF_READONLY        = 0x40; // set if this entry does not permit writes
+        public const u8 DSF_FLOATING_POINT  = 0x80; // set if this entry represents a floating-point value
 
         // statics
         //static const UINT64 k_decimal_divisor[20];      // divisors for outputting decimal values
@@ -40,14 +40,13 @@ namespace mame
         string m_symbol;               // symbol for display; all lower-case version for expressions
         string m_format;               // supported formats
         bool m_default_format;       // true if we are still using default format
-        u64 m_sizemask;             // mask derived from the data size
 
 
         // construction/destruction
         //-------------------------------------------------
         //  device_state_entry - constructor
         //-------------------------------------------------
-        public device_state_entry(int index, string symbol, byte size, UInt64 sizemask, byte flags, device_state_interface dev)
+        public device_state_entry(int index, string symbol, u8 size, u64 sizemask, u8 flags, device_state_interface dev)
         {
             m_device_state = dev;
             m_index = index;
@@ -56,7 +55,6 @@ namespace mame
             m_flags = flags;
             m_symbol = symbol;
             m_default_format = true;
-            m_sizemask = sizemask;
 
 
             assert(size == 1 || size == 2 || size == 4 || size == 8 || (flags & DSF_FLOATING_POINT) != 0);
@@ -82,7 +80,6 @@ namespace mame
             m_flags = DSF_DIVIDER | DSF_READONLY;
             m_symbol = "";
             m_default_format = true;
-            m_sizemask = 0;
         }
 
         //~device_state_entry() { }
@@ -110,7 +107,7 @@ namespace mame
         public device_state_entry callimport() { m_flags |= DSF_IMPORT; return this; }
         public device_state_entry callexport() { m_flags |= DSF_EXPORT; return this; }
         public device_state_entry noshow() { m_flags |= DSF_NOSHOW; return this; }
-        //public device_state_entry readonly() { m_flags |= DSF_READONLY; return this; }
+        public device_state_entry readonly_() { m_flags |= DSF_READONLY; return this; }
 
 
         // query information
@@ -129,51 +126,14 @@ namespace mame
 
         // helpers
 
-        //bool needs_custom_string() const { return ((m_flags & DSF_CUSTOM_STRING) != 0); }
-
-        //-------------------------------------------------
-        //  format_from_mask - make a format based on
-        //  the data mask
-        //-------------------------------------------------
-        void format_from_mask()
-        {
-            // skip if we have a user-provided format
-            if (!m_default_format)
-                return;
-
-            if (is_float())
-            {
-                m_format = "%12s";
-                return;
-            }
-
-            // make up a format based on the mask
-            if (m_datamask == 0)
-                throw new emu_fatalerror("{0} state entry requires a nonzero mask\n", m_symbol.c_str());
-
-            int width = 0;
-            for (u64 tempmask = m_datamask; tempmask != 0; tempmask >>= 4)
-                width++;
-
-            m_format = string.Format("%%0{0}", width);  // %%0%dX
-        }
-
-
-        // return the current value -- only for our friends who handle export
-        public bool needs_export() { return (m_flags & DSF_EXPORT) != 0; }
-        public UInt64 value() { return entry_value() & m_datamask; }
+        public u64 value() { return entry_value() & m_datamask; }
         //double dvalue() const { return entry_dvalue(); }
 
 
-        string format(string str, bool maxout = false)
-        {
-            //throw new emu_unimplemented();
-            return "";
-        }
+        // return the current value as a string
+        //std::string to_string() const;
+        //int max_length() const;
 
-
-        // set the current value -- only for our friends who handle import
-        //bool needs_import() const { return ((m_flags & DSF_IMPORT) != 0); }
 
         //-------------------------------------------------
         //  set_value - set the value from a u64
@@ -191,10 +151,14 @@ namespace mame
 
             // store the value
             entry_set_value(value);
+
+            // call the importer to finish up
+            if ((m_flags & DSF_IMPORT) != 0)
+                m_device_state.state_import(this);
         }
 
+
         //void set_dvalue(double value) const;
-        //void set_value(const char *string) const;
 
 
         // overrides
@@ -243,26 +207,107 @@ namespace mame
         {
             set_value((u64)value);
         }
+
+
+        //-------------------------------------------------
+        //  format_from_mask - make a format based on
+        //  the data mask
+        //-------------------------------------------------
+        void format_from_mask()
+        {
+            // skip if we have a user-provided format
+            if (!m_default_format)
+                return;
+
+            if (is_float())
+            {
+                m_format = "%12s";
+                return;
+            }
+
+            // make up a format based on the mask
+            if (m_datamask == 0)
+                throw new emu_fatalerror("{0} state entry requires a nonzero mask\n", m_symbol.c_str());
+
+            int width = 0;
+            for (u64 tempmask = m_datamask; tempmask != 0; tempmask >>= 4)
+                width++;
+
+            m_format = string.Format("%%0{0}", width);  // %%0%dX
+        }
+
+
+        string format(string str, bool maxout = false)
+        {
+            //throw new emu_unimplemented();
+            return "";
+        }
+    }
+
+
+    public interface device_state_register_operators<T>
+    {
+        u8 sizeof_();
+        u64 max();
+        u8 flags();
+    }
+
+    class device_state_register_operators_u8 : device_state_register_operators<u8>
+    {
+        public u8 sizeof_() { return sizeof(u8); }
+        public u64 max() { return u8.MaxValue; }
+        public u8 flags() { return 0; }
+    }
+
+    class device_state_register_operators_u16 : device_state_register_operators<u16>
+    {
+        public u8 sizeof_() { return sizeof(u16); }
+        public u64 max() { return u16.MaxValue; }
+        public u8 flags() { return 0; }
+    }
+
+    class device_state_register_operators_u32 : device_state_register_operators<u32>
+    {
+        public u8 sizeof_() { return sizeof(u32); }
+        public u64 max() { return u32.MaxValue; }
+        public u8 flags() { return 0; }
+    }
+
+    class device_state_register_operators_bool : device_state_register_operators<bool>
+    {
+        public u8 sizeof_() { return 1; }
+        public u64 max() { return 1; }
+        public u8 flags() { return 0; }
+    }
+
+    class device_state_register_operators_double : device_state_register_operators<double>
+    {
+        public u8 sizeof_() { return sizeof(double); }
+        public u64 max() { return u64.MaxValue; }
+        public u8 flags() { return device_state_entry.DSF_FLOATING_POINT; }
     }
 
 
     // ======================> device_state_register
-
-#if false
     // class template representing a state register of a specific width
     //template<class ItemType>
-    class device_state_register<ItemType> : device_state_entry
+    class device_state_register<ItemType, ItemType_OPS> : device_state_entry
+        where ItemType_OPS : device_state_register_operators<ItemType>, new()
     {
-        ItemType m_data;                 // reference to where the data lives
+        static device_state_register_operators<ItemType> ops = new ItemType_OPS();
+
+
+        ItemType m_data;                 // reference to where the data lives  //ItemType &              m_data;                 // reference to where the data lives
 
 
         // construction/destruction
-        device_state_register(int index, string symbol, ItemType data, device_state_interface dev)
-            : base(index, symbol, sizeof(ItemType), std::numeric_limits<ItemType>::max(), 0, dev)
+        public device_state_register(int index, string symbol, ItemType data, device_state_interface dev)
+            : base(index, symbol, ops.sizeof_(), ops.max(), ops.flags(), dev)  //: device_state_entry(index, symbol, sizeof(ItemType), std::numeric_limits<typename std::make_unsigned<ItemType>::type>::max(), 0, dev),
         {
             m_data = data;
 
 
+            //throw new emu_unimplemented();
 #if false
             static_assert(std::is_integral<ItemType>().value, "Registration of non-integer types is not currently supported");
 #endif
@@ -270,158 +315,143 @@ namespace mame
 
 
         // device_state_entry overrides
-        protected override object entry_baseptr() { return &m_data; }
-        protected override UInt64 entry_value() { return m_data; }
-        protected override void entry_set_value(UInt64 value) { m_data = value; }
-    }
-#endif
-
-    // class template representing a state register of a specific width
-    //template<class ItemType>
-    class device_state_register_int : device_state_entry
-    {
-        object m_data;                 // reference to where the data lives
-
-
-        // construction/destruction
-        public device_state_register_int(int index, string symbol, object data, device_state_interface dev)
-            : base(index, symbol, sizeof(int), int.MaxValue, 0, dev)
-        {
-            m_data = data;
-
-
-#if false
-            static_assert(std::is_integral<ItemType>().value, "Registration of non-integer types is not currently supported");
-#endif
-        }
-
-
-        // device_state_entry overrides
-        protected override object entry_baseptr() { return m_data; }
-        protected override u64 entry_value() { return (u64)m_data; }
-        protected override void entry_set_value(u64 value) { m_data = (int)value; }
-    }
-
-
-    // class template representing a state register of a specific width
-    //template<class ItemType>
-    class device_state_register_uint : device_state_entry
-    {
-        object m_data;                 // reference to where the data lives
-
-
-        // construction/destruction
-        public device_state_register_uint(int index, string symbol, object data, device_state_interface dev)
-            : base(index, symbol, sizeof(int), int.MaxValue, 0, dev)
-        {
-            m_data = data;
-
-
-#if false
-            static_assert(std::is_integral<ItemType>().value, "Registration of non-integer types is not currently supported");
-#endif
-        }
-
-
-        // device_state_entry overrides
-        protected override object entry_baseptr() { return m_data; }
-        protected override u64 entry_value() { return Convert.ToUInt64(m_data); }
-        protected override void entry_set_value(u64 value) { m_data = (int)value; }
-    }
-
-
-    // class template representing a state register of a specific width
-    //template<class ItemType>
-    class device_state_register_byte : device_state_entry
-    {
-        object m_data;                 // reference to where the data lives
-
-
-        // construction/destruction
-        public device_state_register_byte(int index, string symbol, object data, device_state_interface dev)
-            : base(index, symbol, sizeof(int), int.MaxValue, 0, dev)
-        {
-            m_data = data;
-
-
-#if false
-            static_assert(std::is_integral<ItemType>().value, "Registration of non-integer types is not currently supported");
-#endif
-        }
-
-
-        // device_state_entry overrides
-        protected override object entry_baseptr() { return m_data; }
-        protected override u64 entry_value() { return (u64)m_data; }
-        protected override void entry_set_value(u64 value) { m_data = (byte)value; }
-    }
-
-
-    // class template representing a state register of a specific width
-    //template<class ItemType>
-    class device_state_register_ushort : device_state_entry
-    {
-        object m_data;                 // reference to where the data lives
-
-
-        // construction/destruction
-        public device_state_register_ushort(int index, string symbol, object data, device_state_interface dev)
-            : base(index, symbol, sizeof(int), int.MaxValue, 0, dev)
-        {
-            m_data = data;
-
-
-#if false
-            static_assert(std::is_integral<ItemType>().value, "Registration of non-integer types is not currently supported");
-#endif
-        }
-
-
-        // device_state_entry overrides
-        protected override object entry_baseptr() { return m_data; }
-        protected override u64 entry_value() { return (u64)(u16)m_data; }
-        protected override void entry_set_value(u64 value) { m_data = (u16)value; }
-    }
-
-
-    // class template representing a floating-point state register
-    //template<>
-    class device_state_register_double : device_state_entry
-    {
-        object m_data;  //double &                m_data;                 // reference to where the data lives
-
-
-        // construction/destruction
-        public device_state_register_double(int index, string symbol, object data, device_state_interface dev)  // double * data
-            : base(index, symbol, sizeof(double), UInt64.MaxValue, DSF_FLOATING_POINT, dev)
-        {
-            m_data = data;
-        }
-
-
-        // device_state_entry overrides
-        protected override object entry_baseptr() { return m_data; }
-        protected override u64 entry_value() { return (u64)m_data; }
-        protected override void entry_set_value(u64 value) { m_data = (double)value; }
-        protected override double entry_dvalue() { return (double)m_data; }
-        protected override void entry_set_dvalue(double value) { m_data = value; }
+        protected override object entry_baseptr() { throw new emu_unimplemented(); }  //virtual void *entry_baseptr() const override { return &m_data; }
+        protected override u64 entry_value() { throw new emu_unimplemented(); }  //virtual u64 entry_value() const override { return m_data; }
+        protected override void entry_set_value(u64 value) { throw new emu_unimplemented(); }  //virtual void entry_set_value(u64 value) const override { m_data = value; }
     }
 
 
 #if false
-    // ======================> device_pseudo_state_register
-
-    // class template representing a state register of a specific width
-    template<class ItemType>
-    class device_pseudo_state_register : public device_state_entry
+    // class template representing a boolean state register
+    template<>
+    class device_state_register<bool> : public device_state_entry
     {
     public:
-        typedef typename std::function<ItemType ()> getter_func;
-        typedef typename std::function<void (ItemType)> setter_func;
+        // construction/destruction
+        device_state_register(int index, const char *symbol, bool &data, device_state_interface *dev)
+            : device_state_entry(index, symbol, sizeof(bool), 1, 0, dev),
+                m_data(data)
+        {
+        }
+
+    protected:
+        // device_state_entry overrides
+        virtual void *entry_baseptr() const override { return &m_data; }
+        virtual u64 entry_value() const override { return m_data; }
+        virtual void entry_set_value(u64 value) const override { m_data = bool(value); }
+
+    private:
+        bool &                  m_data;                 // reference to where the data lives
+    };
+
+    // class template representing a floating-point state register
+    template<>
+    class device_state_register<double> : public device_state_entry
+    {
+    public:
+        // construction/destruction
+        device_state_register(int index, const char *symbol, double &data, device_state_interface *dev)
+            : device_state_entry(index, symbol, sizeof(double), ~u64(0), DSF_FLOATING_POINT, dev),
+                m_data(data)
+        {
+        }
+
+    protected:
+        // device_state_entry overrides
+        virtual void *entry_baseptr() const override { return &m_data; }
+        virtual u64 entry_value() const override { return u64(m_data); }
+        virtual void entry_set_value(u64 value) const override { m_data = double(value); }
+        virtual double entry_dvalue() const override { return m_data; }
+        virtual void entry_set_dvalue(double value) const override { m_data = value; }
+
+    private:
+        double &                m_data;                 // reference to where the data lives
+    };
+#endif
+
+
+    // ======================> device_latched_functional_state_register
+    // class template representing a state register of a specific width
+    //template<class ItemType>
+    public class device_latched_functional_state_register<ItemType, ItemType_OPS> : device_state_entry
+        where ItemType_OPS : device_state_register_operators<ItemType>, new()
+    {
+        static device_state_register_operators<ItemType> ops = new ItemType_OPS();
+
+
+        //typedef typename std::function<void (ItemType)> setter_func;
+        public delegate void setter_func(ItemType cpu);
+
+
+        ItemType m_data;                 // reference to where the data lives  //ItemType &              m_data;                 // reference to where the data lives
+        setter_func m_setter;               // function to store the data
+
 
         // construction/destruction
-        device_pseudo_state_register(int index, const char *symbol, getter_func &&getter, setter_func &&setter, device_state_interface *dev)
-            : device_state_entry(index, symbol, sizeof(ItemType), std::numeric_limits<ItemType>::max(), 0, dev),
+        public device_latched_functional_state_register(int index, string symbol, ItemType data, setter_func setter, device_state_interface dev)  //device_latched_functional_state_register(int index, const char *symbol, ItemType &data, setter_func &&setter, device_state_interface *dev)
+            : base(index, symbol, ops.sizeof_(), ops.max(), ops.flags(), dev)  //: device_state_entry(index, symbol, sizeof(ItemType), std::numeric_limits<ItemType>::max(), 0, dev),
+        {
+            m_data = data;
+            m_setter = setter;
+        }
+
+
+        // device_state_entry overrides
+        protected override object entry_baseptr() { throw new emu_unimplemented(); }  //virtual void *entry_baseptr() const override { return &m_data; }
+        protected override u64 entry_value() { throw new emu_unimplemented(); }  //virtual u64 entry_value() const override { return m_data; }
+        protected override void entry_set_value(u64 value) { throw new emu_unimplemented(); }  //virtual void entry_set_value(u64 value) const override { m_setter(value); }
+    }
+
+
+    // ======================> device_functional_state_register
+
+    // class template representing a state register of a specific width
+    //template<class ItemType>
+    public class device_functional_state_register<ItemType, ItemType_OPS> : device_state_entry
+        where ItemType_OPS : device_state_register_operators<ItemType>, new()
+    {
+        static device_state_register_operators<ItemType> ops = new ItemType_OPS();
+
+
+        //typedef typename std::function<ItemType ()> getter_func;
+        public delegate ItemType getter_func();
+
+        //typedef typename std::function<void (ItemType)> setter_func;
+        public delegate void setter_func(ItemType cpu);
+
+
+        getter_func m_getter;               // function to retrieve the data
+        setter_func m_setter;               // function to store the data
+
+
+        // construction/destruction
+        public device_functional_state_register(int index, string symbol, getter_func getter, setter_func setter, device_state_interface dev)  //device_functional_state_register(int index, const char *symbol, getter_func &&getter, setter_func &&setter, device_state_interface *dev)
+            : base(index, symbol, ops.sizeof_(), ops.max(), ops.flags(), dev)  //: device_state_entry(index, symbol, sizeof(ItemType), std::numeric_limits<ItemType>::max(), 0, dev),
+        {
+            m_getter = getter;
+            m_setter = setter;
+        }
+
+
+        // device_state_entry overrides
+        protected override u64 entry_value() { throw new emu_unimplemented(); }  //{ return ItemType is double ? u64(m_getter()) : m_getter(); }  //virtual u64 entry_value() const override { return u64(m_getter()); }
+        protected override void entry_set_value(u64 value) { throw new emu_unimplemented(); }  //{ ItemType is double ? m_setter(double(value)) : m_setter(value); }  //virtual void entry_set_value(u64 value) const override { m_setter(double(value)); }
+        protected override double entry_dvalue() { throw new emu_unimplemented(); }  //{ return ItemType is double ? m_getter() : base.entry_dvalue(); }  //virtual double entry_dvalue() const override { return m_getter(); }
+        protected override void entry_set_dvalue(double value) { throw new emu_unimplemented(); }  //{ ItemType is double ? m_setter(value) : base.entry_set_dvalue(value); }  //virtual void entry_set_dvalue(double value) const override { m_setter(value); }
+    }
+
+
+#if false
+    template<>
+    class device_functional_state_register<double> : public device_state_entry
+    {
+    public:
+        typedef typename std::function<double ()> getter_func;
+        typedef typename std::function<void (double)> setter_func;
+
+        // construction/destruction
+        device_functional_state_register(int index, const char *symbol, getter_func &&getter, setter_func &&setter, device_state_interface *dev)
+            : device_state_entry(index, symbol, sizeof(double), ~u64(0), DSF_FLOATING_POINT, dev),
                 m_getter(std::move(getter)),
                 m_setter(std::move(setter))
         {
@@ -429,8 +459,10 @@ namespace mame
 
     protected:
         // device_state_entry overrides
-        virtual u64 entry_value() const override { return m_getter(); }
-        virtual void entry_set_value(u64 value) const override { m_setter(value); }
+        virtual u64 entry_value() const override { return u64(m_getter()); }
+        virtual void entry_set_value(u64 value) const override { m_setter(double(value)); }
+        virtual double entry_dvalue() const override { return m_getter(); }
+        virtual void entry_set_dvalue(double value) const override { m_setter(value); }
 
     private:
         getter_func             m_getter;               // function to retrieve the data
@@ -483,27 +515,10 @@ namespace mame
 
         // state getters
 
-        //-------------------------------------------------
-        //  state_int - return the value of the given piece
-        //  of indexed state as a UINT64
-        //-------------------------------------------------
-        u64 state_int(int index)
-        {
-            // nullptr or out-of-range entry returns 0
-            device_state_entry entry = state_find_entry(index);
-            if (entry == null)
-                return 0;
+        u64 state_int(int index) { device_state_entry entry = state_find_entry(index); return (entry == null) ? 0 : entry.value(); }
 
-            // call the exporter before we do anything
-            if (entry.needs_export())
-                state_export(entry);
-
-            // pick up the value
-            return entry.value();
-        }
 
         //astring &state_string(int index, astring &dest);
-        //int state_string_max_length(int index);
         public offs_t pc() { return (offs_t)state_int(STATE_GENPC); }
         //offs_t pcbase() { return state_int(STATE_GENPCBASE); }
         //offs_t sp() { return state_int(STATE_GENSP); }
@@ -511,8 +526,7 @@ namespace mame
 
 
         // state setters
-        //void set_state_int(int index, UINT64 value);
-        //void set_state_string(int index, const char *string);
+        //void set_state_int(int index, u64 value) { const device_state_entry *entry = state_find_entry(index); if (entry != nullptr) entry->set_value(value); }
         //void set_pc(offs_t pc) { set_state_int(STATE_GENPC, pc); }
 
 
@@ -544,51 +558,54 @@ namespace mame
         //device_state_interface &state() { return *this; }
 
 
-        // add a new state item
-        //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, ItemType &data)
-        public device_state_entry state_add(int index, string symbol, object data)
+        // add a new state register item
+        //template<class ItemType>
+        public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, ItemType data)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, ItemType &data)
+            where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            //assert(symbol != nullptr);
-
-            // TODO - we need to pass in a intref, doubleref, ushortref, etc.  need to change all variables.  this is because C# numeric types are not references and these classes want references to these variables.
-            if (data is int)         return state_add(new device_state_register_int(index, symbol, data, this));
-            if (data is uint)        return state_add(new device_state_register_uint(index, symbol, data, this));
-            else if (data is byte)   return state_add(new device_state_register_byte(index, symbol, data, this));
-            else if (data is ushort) return state_add(new device_state_register_ushort(index, symbol, data, this));
-            else if (data is double) return state_add(new device_state_register_double(index, symbol, data, this));
-            else throw new emu_unimplemented();
+            assert(symbol != null);
+            return state_add(new device_state_register<ItemType, ItemType_OPS>(index, symbol, data, this));  //return state_add(std::make_unique<device_state_register<ItemType>>(index, symbol, data, this));
         }
 
-#if false
-        // add a new state pseudo-register item (template argument must be explicit)
-        //template<class ItemType> device_state_entry &state_add(int index, const char *symbol,
-        //                typename device_pseudo_state_register<ItemType>::getter_func &&getter,
-        //                typename device_pseudo_state_register<ItemType>::setter_func &&setter)
-        public device_state_entry state_add<ItemType>(int index, string symbol, 
-            typename device_pseudo_state_register<ItemType>::getter_func &&getter,
-            typename device_pseudo_state_register<ItemType>::setter_func &&setter)
+        public device_state_entry state_add(int index, string symbol, u8 data) { return state_add<u8, device_state_register_operators_u8>(index, symbol, data); }
+        public device_state_entry state_add(int index, string symbol, u16 data) { return state_add<u16, device_state_register_operators_u16>(index, symbol, data); }
+        public device_state_entry state_add(int index, string symbol, u32 data) { return state_add<u32, device_state_register_operators_u32>(index, symbol, data); }
+
+
+        // add a new state register item using functional setter
+        //template<class ItemType>
+        public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, ItemType data, device_latched_functional_state_register<ItemType, ItemType_OPS>.setter_func setter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, ItemType &data, typename device_latched_functional_state_register<ItemType>::setter_func &&setter)
+            where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            //assert(symbol != nullptr);
-            return state_add(new device_pseudo_state_register<ItemType>(index, symbol, std::move(getter), std::move(setter), this));
+            assert(symbol != null);
+            return state_add(new device_latched_functional_state_register<ItemType, ItemType_OPS>(index, symbol, data, setter, this));  //return state_add(std::make_unique<device_latched_functional_state_register<ItemType>>(index, symbol, data, std::move(setter), this));
         }
 
-        //template<class ItemType> device_state_entry &state_add(int index, const char *symbol,
-        //                typename device_pseudo_state_register<ItemType>::getter_func &&getter)
-        public device_state_entry state_add<ItemType>(int index, string symbol,
-            typename device_pseudo_state_register<ItemType>::getter_func &&getter)
-        {
-            //assert(symbol != nullptr);
-            return state_add(new device_pseudo_state_register<ItemType>(index, symbol, std::move(getter), [](ItemType){}, this)).readonly();
-        }
-#endif
 
-        //-------------------------------------------------
-        //  state_add - add a new piece of indexed state
-        //-------------------------------------------------
-        public device_state_entry state_add(device_state_entry entry)
+        // add a new state register item using functional getter and setter (template argument must be explicit)
+        //template<class ItemType>
+        public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, device_functional_state_register<ItemType, ItemType_OPS>.getter_func getter, device_functional_state_register<ItemType, ItemType_OPS>.setter_func setter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, typename device_functional_state_register<ItemType>::getter_func &&getter, typename device_functional_state_register<ItemType>::setter_func &&setter)
+            where ItemType_OPS : device_state_register_operators<ItemType>, new()
+        {
+            assert(symbol != null);
+            return state_add(new device_functional_state_register<ItemType, ItemType_OPS>(index, symbol, getter, setter, this));  //return state_add(std::make_unique<device_functional_state_register<ItemType>>(index, symbol, std::move(getter), std::move(setter), this));
+        }
+
+
+        // add a new read-only state register item using functional getter (template argument must be explicit)
+        //template<class ItemType>
+        public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, device_functional_state_register<ItemType, ItemType_OPS>.getter_func getter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, typename device_functional_state_register<ItemType>::getter_func &&getter)
+            where ItemType_OPS : device_state_register_operators<ItemType>, new()
+        {
+            assert(symbol != null);
+            return state_add(new device_functional_state_register<ItemType, ItemType_OPS>(index, symbol, getter, (i) => { }, this)).readonly_();  //return state_add(std::make_unique<device_functional_state_register<ItemType>>(index, symbol, std::move(getter), [](ItemType){}, this)).readonly();
+        }
+
+
+        public device_state_entry state_add(device_state_entry entry)  //device_state_entry &state_add(std::unique_ptr<device_state_entry> &&entry);
         {
             // append to the end of the list
-            m_state_list.push_back(entry);
+            m_state_list.push_back(entry);  //m_state_list.push_back(std::move(entry));
             device_state_entry new_entry = m_state_list.back();
 
             // set the fast entry if applicable
@@ -609,7 +626,7 @@ namespace mame
         //  state_import - called after new state is
         //  written to perform any post-processing
         //-------------------------------------------------
-        protected virtual void state_import(device_state_entry entry) { }
+        public virtual void state_import(device_state_entry entry) { }
 
         //-------------------------------------------------
         //  state_export - called prior to new state

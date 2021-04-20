@@ -6,7 +6,9 @@ using System.Collections.Generic;
 
 using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;
-using stream_sample_t = System.Int32;
+using s32 = System.Int32;
+using stream_buffer_sample_t = System.Single;  //using sample_t = float;
+using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -48,7 +50,8 @@ namespace mame
                                      discrete_sound_output_interface, 
                                      discrete_step_interface
     {
-        Pointer<stream_sample_t> m_ptr;  //stream_sample_t     *m_ptr;
+        write_stream_view m_outview;  //write_stream_view     *m_outview;
+        u32 m_outview_sample;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dso_output, base)
@@ -63,7 +66,7 @@ namespace mame
 
 
         // discrete_sound_output_interface
-        public void set_output_ptr(Pointer<stream_sample_t> ptr) { m_ptr = new Pointer<stream_sample_t>(ptr); }
+        public void set_output_ptr(write_stream_view view) { m_outview = view; m_outview_sample = 0; }
 
 
         // discrete_step_interface
@@ -76,8 +79,7 @@ namespace mame
             /* Add gain to the output and put into the buffers */
             /* Clipping will be handled by the main sound system */
             double val = DISCRETE_INPUT(0) * DISCRETE_INPUT(1);
-            m_ptr[0] = (int)val;  //*m_ptr++ = val;
-            m_ptr++;
+            m_outview.put((s32)m_outview_sample++, (stream_buffer_sample_t)(val * (1.0 / 32768.0)));
         }
     }
 
@@ -258,7 +260,8 @@ namespace mame
                                                           discrete_step_interface
     {
         public uint32_t m_stream_in_number;
-        public Pointer<stream_sample_t> m_ptr;  //stream_sample_t     *m_ptr;         /* current in ptr for stream */
+        public read_stream_view m_inview;         /* current in ptr for stream */  //read_stream_view const *m_inview;         /* current in ptr for stream */
+        public uint32_t m_inview_sample;
 
 
         double m_gain;             /* node gain */
@@ -300,7 +303,7 @@ namespace mame
         /* This is called by discrete_sound_device */
         //public void stream_start()
 
-        //void stream_generate(sound_stream stream, dynamic_array_pointer<stream_sample_t> [] inputs, dynamic_array_pointer<stream_sample_t> [] outputs, int samples)
+        //void stream_generate(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs);
     }
 
 

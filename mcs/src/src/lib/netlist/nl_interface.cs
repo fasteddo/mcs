@@ -9,7 +9,6 @@ using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using size_t = System.UInt32;
 using size_t_constant = mame.uint32_constant;
-using stream_sample_t = System.Int32;
 
 
 namespace mame.netlist.interface_
@@ -113,7 +112,7 @@ namespace mame.netlist.interface_
             , m_id(*this, "ID", 0)
 
 
-            connect(m_feedback, m_Q);
+            connect("FB", "Q");
             m_buffer = null;
 #endif
         }

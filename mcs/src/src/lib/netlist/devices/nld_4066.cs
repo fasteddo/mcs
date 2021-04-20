@@ -9,17 +9,9 @@ using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 
 
-namespace mame
+namespace mame.netlist
 {
-    public static class nld_4066_global
-    {
-        //#define CD4066_GATE(name)                                                       \
-        //        NET_REGISTER_DEV(CD4066_GATE, name)
-        public static void CD4066_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4066_GATE", name); }
-    }
-
-
-    namespace netlist.devices
+    namespace devices
     {
         //NETLIB_OBJECT(CD4066_GATE)
         class nld_CD4066_GATE : device_t

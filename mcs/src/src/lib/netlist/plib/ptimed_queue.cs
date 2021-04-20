@@ -106,7 +106,7 @@ namespace mame.plib
         //PCOPYASSIGNMOVE(timed_queue_linear, delete)
 
         //std::size_t capacity() const noexcept { return m_list.capacity() - 1; }
-        //bool empty() const noexcept { return (m_end == &m_list[1]); }
+        public bool empty() { throw new emu_unimplemented(); }  //bool empty() const noexcept { return (m_end == &m_list[1]); }
 
 
         //template<bool KEEPSTAT, typename... Args>

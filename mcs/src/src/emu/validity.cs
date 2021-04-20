@@ -5,7 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using game_driver_map = mame.std.unordered_map<string, mame.game_driver>;
-using int_map = mame.std.unordered_map<string, object>;
+using validity_checker_int_map = mame.std.unordered_map<string, object>;  //using int_map = std::unordered_map<std::string, uintptr_t>;
+using validity_checker_string_set = mame.std.unordered_set<string>;  //using string_set = std::unordered_set<std::string>;
 
 
 namespace mame
@@ -14,8 +15,9 @@ namespace mame
     public class validity_checker : osd_output, IDisposable
     {
         // internal map types
-        //typedef std::unordered_map<std::string,const game_driver *> game_driver_map;
-        //typedef std::unordered_map<std::string,uintptr_t> int_map;
+        //using game_driver_map = std::unordered_map<std::string, game_driver const *>;
+        //using int_map = std::unordered_map<std::string, uintptr_t>;
+        //using string_set = std::unordered_set<std::string>;
 
 
         // internal driver list
@@ -36,32 +38,33 @@ namespace mame
         game_driver_map m_names_map = new game_driver_map();
         game_driver_map m_descriptions_map = new game_driver_map();
         game_driver_map m_roms_map = new game_driver_map();
-        int_map m_defstr_map = new int_map();
+        validity_checker_int_map m_defstr_map = new validity_checker_int_map();
 
         // current state
         game_driver m_current_driver;
-        machine_config m_current_config;
         device_t m_current_device;
         string m_current_ioport;
-        int_map m_region_map = new int_map();
-        std.unordered_set<string> m_already_checked = new std.unordered_set<string>();
-        bool m_validate_all;
+        validity_checker_int_map m_region_map = new validity_checker_int_map();
+        validity_checker_string_set m_ioport_set = new validity_checker_string_set();
+        validity_checker_string_set m_already_checked = new validity_checker_string_set();
+        bool m_checking_card;
+        bool m_quick;
 
 
         //-------------------------------------------------
         //  validity_checker - constructor
         //-------------------------------------------------
-        public validity_checker(emu_options options)
+        public validity_checker(emu_options options, bool quick)
         {
             m_drivlist = new driver_enumerator(options);
             m_errors = 0;
             m_warnings = 0;
             m_print_verbose = options.verbose();
             m_current_driver = null;
-            m_current_config = null;
             m_current_device = null;
             m_current_ioport = null;
-            m_validate_all = false;
+            m_checking_card = false;
+            m_quick = quick;
 
 
             // pre-populate the defstr map with all the default strings
@@ -89,12 +92,11 @@ namespace mame
         // getters
         public int errors() { return m_errors; }
         public int warnings() { return m_warnings; }
-        bool validate_all() { return m_validate_all; }
+        bool quick() { return m_quick; }
 
 
         // setter
         public void set_verbose(bool verbose) { m_print_verbose = verbose; }
-        public void set_validate_all(bool all) { m_validate_all = all; }
 
 
         // operations
@@ -181,6 +183,9 @@ namespace mame
         //void validate_tag(const char *tag);
 
         public int region_length(string tag) { return (int)m_region_map.find(tag); }
+
+
+        //bool ioport_missing(const char *tag) { return !m_checking_card && (m_ioport_set.find(tag) == m_ioport_set.end()); }
 
 
         // generic registry of already-checked stuff
@@ -272,6 +277,7 @@ namespace mame
             m_roms_map.clear();
             m_defstr_map.clear();
             m_region_map.clear();
+            m_ioport_set.clear();
 
             // reset internal state
             m_errors = 0;
@@ -302,10 +308,11 @@ namespace mame
 
             // set the current driver
             m_current_driver = driver;
-            m_current_config = null;
             m_current_device = null;
             m_current_ioport = null;
             m_region_map.clear();
+            m_ioport_set.clear();
+            m_checking_card = false;
 
             // reset error/warning state
             int start_errors = m_errors;
@@ -314,16 +321,14 @@ namespace mame
             m_warning_text = "";
             m_verbose_text = "";
 
-            // wrap in try/except to catch fatalerrors
+            // wrap in try/catch to catch fatalerrors
             try
             {
                 machine_config config = new machine_config(driver, m_blank_options);
-                m_current_config = config;
-                validate_driver();
-                validate_roms(m_current_config.root_device());
-                validate_inputs();
-                validate_devices();
-                m_current_config = null;
+                validate_driver(config.root_device());
+                validate_roms(config.root_device());
+                validate_inputs(config.root_device());
+                validate_devices(config);
             }
             catch (emu_fatalerror err)
             {
@@ -351,9 +356,11 @@ namespace mame
 
             // reset the driver/device
             m_current_driver = null;
-            m_current_config = null;
             m_current_device = null;
             m_current_ioport = null;
+            m_region_map.clear();
+            m_ioport_set.clear();
+            m_checking_card = false;
         }
 
 
@@ -442,7 +449,7 @@ namespace mame
         //  validate_driver - validate basic driver
         //  information
         //-------------------------------------------------
-        void validate_driver()
+        void validate_driver(device_t root)
         {
             //throw new emu_unimplemented();
         }
@@ -459,13 +466,13 @@ namespace mame
 
         //void validate_analog_input_field(ioport_field &field);
         //void validate_dip_settings(ioport_field &field);
-        //void validate_condition(ioport_condition &condition, device_t &device, int_map &port_map);
+        //void validate_condition(ioport_condition &condition, device_t &device);
 
 
         //-------------------------------------------------
         //  validate_inputs - validate input configuration
         //-------------------------------------------------
-        void validate_inputs()
+        void validate_inputs(device_t root)
         {
             //throw new emu_unimplemented();
         }
@@ -475,7 +482,7 @@ namespace mame
         //  validate_devices - run per-device validity
         //  checks
         //-------------------------------------------------
-        void validate_devices()
+        void validate_devices(machine_config config)
         {
             //throw new emu_unimplemented();
         }

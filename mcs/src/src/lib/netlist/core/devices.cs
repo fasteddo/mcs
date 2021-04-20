@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
+using nldelegate = System.Action;  //using nldelegate = plib::pmfp<void>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
@@ -77,11 +78,26 @@ namespace mame.netlist
             }
 
 
+            nld_power_pins(device_t owner, nldelegate delegate_)
+            {
+                m_VCC = new analog_input_t(owner, owner.logic_family().vcc_pin(), delegate_);
+                m_GND = new analog_input_t(owner, owner.logic_family().gnd_pin(), delegate_);
+            }
+
+
             // Some devices like the 74LS629 have two pairs of supply pins.
             public nld_power_pins(device_t owner, string vcc, string gnd)
             {
                 m_VCC = new analog_input_t(owner, vcc, noop);  //: m_VCC(owner, vcc, NETLIB_DELEGATE(noop))
                 m_GND = new analog_input_t(owner, gnd, noop);  //, m_GND(owner, gnd, NETLIB_DELEGATE(noop))
+            }
+
+
+            // Some devices like the 74LS629 have two pairs of supply pins.
+            nld_power_pins(device_t owner, string vcc, string gnd, nldelegate delegate_)
+            {
+                m_VCC = new analog_input_t(owner, vcc, delegate_);
+                m_GND = new analog_input_t(owner, gnd, delegate_);
             }
 
 

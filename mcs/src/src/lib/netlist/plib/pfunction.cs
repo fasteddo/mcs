@@ -544,7 +544,7 @@ namespace mame.plib
                         }
                         else
                         {
-                            rc.m_param.val = ops.multiply(ops.pstonum_ne(false, plib.pglobal.left(cmd, cmd.size() - 1), out err), r);  //rc.m_param.val = plib::pstonum_ne<fl_t>(plib::left(cmd, cmd.size()-1), err) * r->second;
+                            rc.m_param.val = ops.multiply(ops.pstonum_ne(false, plib.pglobal.left(cmd, cmd.length() - 1), out err), r);  //rc.m_param.val = plib::pstonum_ne<fl_t>(plib::left(cmd, cmd.size()-1), err) * r->second;
                             rc.m_param.index = (size_t)ops.cast_int(rc.m_param.val);
                         }
 

@@ -4,19 +4,31 @@
 using System;
 using System.Collections.Generic;
 
-using element_map = mame.std.unordered_map<string, mame.layout_element>;
-using environment = mame.emu.render.detail.layout_environment;
 using ioport_value = System.UInt32;
-using item_list = mame.std.list<mame.layout_view.item>;
-using make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;
+using layout_element_component_bounds_vector = mame.std.vector<mame.layout_element.component.bounds_step>;  //using bounds_vector = std::vector<bounds_step>;
+using layout_element_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
+using layout_element_make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;  //typedef std::map<std::string, make_component_func> make_component_map;
+using layout_file_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
+using layout_file_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
+using layout_file_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
+using layout_file_view_list = mame.std.list<mame.layout_view>;  //using view_list = std::list<layout_view>;
+using layout_group_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
+using layout_view_edge_vector = mame.std.vector<mame.layout_view.edge>;  //using edge_vector = std::vector<edge>;
+using layout_view_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
+using layout_view_item_list = mame.std.list<mame.layout_view.item>;  //using item_list = std::list<item>;
+using layout_view_item_ref_vector = mame.std.vector<mame.layout_view.item>;  //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
+using layout_view_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
+using layout_view_screen_ref_vector = mame.std.vector<mame.screen_device>;  //using screen_ref_vector = std::vector<std::reference_wrapper<screen_device> >;
+using layout_view_view_environment = mame.emu.render.detail.view_environment;  //using view_environment = emu::render::detail::view_environment;
+using layout_view_visibility_toggle_vector = mame.std.vector<mame.layout_view.visibility_toggle>;  //using visibility_toggle_vector = std::vector<visibility_toggle>;
 using PointerU8 = mame.Pointer<System.Byte>;
-using render_screen_list = mame.std.list<mame.screen_device>;
+using render_target_view_mask_vector = mame.std.vector<mame.std.pair<mame.layout_view, System.UInt32>>;  //using view_mask_vector = std::vector<view_mask_pair>;
 using s32 = System.Int32;
+using size_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
-using view_list = mame.std.list<mame.layout_view>;
 
 
 namespace mame
@@ -201,13 +213,13 @@ namespace mame
     // an object_transform is used to track transformations when building an object list
     class object_transform
     {
-        public float               yoffs;       // offset transforms
-        public float               xscale;
-        public float               yscale;     // scale transforms
-        public float               xoffs;
-        public render_color        color;              // color transform
-        public int                 orientation;        // orientation transform
-        public bool                no_center;          // center the container?
+        public float yoffs;       // offset transforms
+        public float xscale;
+        public float yscale;     // scale transforms
+        public float xoffs;
+        public render_color color = new render_color();              // color transform
+        public int orientation;        // orientation transform
+        public bool no_center;          // center the container?
     }
 
 
@@ -225,6 +237,8 @@ namespace mame
 
         public float width() { return x1 - x0; }
         public float height() { return y1 - y0; }
+        public float aspect() { return width() / height(); }
+        public bool includes(float x, float y) { return (x >= x0) && (x <= x1) && (y >= y0) && (y <= y1); }
     }
 
 
@@ -235,6 +249,9 @@ namespace mame
         public float r;                  // red component (0.0 = none, 1.0 = max)
         public float g;                  // green component (0.0 = none, 1.0 = max)
         public float b;                  // blue component (0.0 = none, 1.0 = max)
+
+        public render_color() { }
+        public render_color(float a, float r, float g, float b) { this.a = a; this.r = r; this.g = g; this.b = b; }
     }
 
 
@@ -1370,13 +1387,35 @@ namespace mame
             }
 
 
+            public class bounds_step
+            {
+                int state;
+                public render_bounds bounds;
+                render_bounds delta;
+            }
+
+
+            //using bounds_vector = std::vector<bounds_step>;
+
+
+            //struct color_step
+            //{
+            //    int             state;
+            //    render_color    color;
+            //    render_color    delta;
+            //}
+
+            //using color_vector = std::vector<color_step>;
+
+
             //typedef std::unique_ptr<component> ptr;
 
 
             // internal state
-            public int m_state;                    // state where this component is visible (-1 means all states)
-            render_bounds m_bounds;                   // bounds of the element
-            render_color m_color;                    // color of the element
+            int m_statemask;                // bits of state used to control visibility
+            int m_stateval;                 // masked state value to make component visible
+            layout_element_component_bounds_vector m_bounds;                   // bounds of the element
+            //color_vector        m_color;                    // color of the element
 
 
             // rendlay.cs
@@ -1388,10 +1427,79 @@ namespace mame
 
 
             // getters
-            //int state() { return m_state; }
-            public virtual int maxstate() { return m_state; }
-            public render_bounds bounds() { return m_bounds; }
-            //const render_color &color() const { return m_color; }
+            public int statemask() { return m_statemask; }
+            public int stateval() { return m_stateval; }
+
+
+            //-------------------------------------------------
+            //  statewrap - get state wraparound requirements
+            //-------------------------------------------------
+            public std.pair<int, bool> statewrap()
+            {
+                throw new emu_unimplemented();
+#if false
+                int result(0);
+                bool fold;
+                auto const adjustmask =
+                        [&result, &fold] (int val, int mask)
+                        {
+                            assert(!(val & ~mask));
+                            auto const splatright =
+                                    [] (int x)
+                                    {
+                                        for (unsigned shift = 1; (sizeof(x) * 4) >= shift; shift <<= 1)
+                                            x |= (x >> shift);
+                                        return x;
+                                    };
+                            int const unfolded(splatright(mask));
+                            int const folded(splatright(~mask | splatright(val)));
+                            if (unsigned(folded) < unsigned(unfolded))
+                            {
+                                result |= folded;
+                                fold = true;
+                            }
+                            else
+                            {
+                                result |= unfolded;
+                            }
+                        };
+                adjustmask(stateval(), statemask());
+                int max(maxstate());
+                if (m_bounds.size() > 1U)
+                    max = (std::max)(max, m_bounds.back().state);
+                if (m_color.size() > 1U)
+                    max = (std::max)(max, m_color.back().state);
+                if (0 <= max)
+                    adjustmask(max, ~0);
+                return std::make_pair(result, fold);
+#endif
+            }
+
+
+            //-------------------------------------------------
+            //  overall_bounds - maximum bounds for all states
+            //-------------------------------------------------
+            public render_bounds overall_bounds()
+            {
+                //var i = m_bounds.begin();
+                //render_bounds result = i.bounds;
+                //while (m_bounds.end() != ++i)
+                //    rendutil_global.union_render_bounds(result, i.bounds);
+                render_bounds result = new render_bounds();
+                foreach (var i in m_bounds)
+                    rendutil_global.union_render_bounds(result, i.bounds);
+
+                return result;
+            }
+
+
+            public render_bounds bounds(int state)
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            //render_color color(int state) const;
 
 
             // operations
@@ -1402,7 +1510,10 @@ namespace mame
 
 
             // helpers
+            public virtual int maxstate() { return -1; }
 
+
+            // drawing helpers
             // rendlay.cs
             //void draw_text(render_font font, bitmap_argb32 dest, rectangle bounds, string str, int align)
             //void draw_segment_horizontal_caps(bitmap_argb32 dest, int minx, int maxx, int midy, int width, int caps, rgb_t color)
@@ -1439,7 +1550,7 @@ namespace mame
 
 
         //typedef component::ptr (*make_component_func)(environment &env, util::xml::data_node const &compnode, const char *dirname);
-        public delegate component make_component_func(environment env, util.xml.data_node compnode, string dirname);
+        public delegate component make_component_func(layout_element_environment env, util.xml.data_node compnode, string dirname);
         //typedef std::map<std::string, make_component_func> make_component_map;
 
 
@@ -1449,9 +1560,10 @@ namespace mame
         // internal state
         running_machine m_machine;          // reference to the owning machine
         std.vector<component> m_complist = new std.vector<component>();      // list of components
-        int m_defstate;         // default state of this element
-        int m_maxstate;         // maximum state value for all components
-        std.vector<texture> m_elemtex;       // array of element textures used for managing the scaled bitmaps
+        int m_defstate;     // default state of this element
+        int m_statemask;    // mask to apply to state values
+        bool m_foldhigh;     // whether we need to fold state values above the mask range
+        std.vector<texture> m_elemtex;      // array of element textures used for managing the scaled bitmaps
 
 
         // rendlay.cs
@@ -1461,7 +1573,6 @@ namespace mame
         // getters
         public running_machine machine() { return m_machine; }
         public int default_state() { return m_defstate; }
-        public int maxstate() { return m_maxstate; }
 
 
         // rendlay.cs
@@ -1517,7 +1628,8 @@ namespace mame
         //        util::xml::data_node const &parentnode,
         //        group_map &groupmap,
         //        std::vector<layout_group const *> &seen,
-        //        bool empty,
+        //        bool &empty,
+        //        bool vistoggle,
         //        bool repeat,
         //        bool init);
     }
@@ -1530,47 +1642,49 @@ namespace mame
     /// be square.
     public partial class layout_view : global_object
     {
-        //using environment = emu::render::detail::layout_environment;
+        //using layout_environment = emu::render::detail::layout_environment;
+        //using view_environment = emu::render::detail::view_environment;
         //using element_map = std::unordered_map<std::string, layout_element>;
         //using group_map = std::unordered_map<std::string, layout_group>;
-        //using render_screen_list = std::list<std::reference_wrapper<screen_device>>;
-        //using item_list = std::list<item>;
+        //using screen_ref_vector = std::vector<std::reference_wrapper<screen_device> >;
 
 
-        /// \brief A single backdrop/screen/overlay/bezel/cpanel/marquee item
+        /// \brief A single item in a view
         ///
-        /// Each view has four lists of view_items, one for each "layer."
-        /// Each view item is specified using floating point coordinates in
-        /// arbitrary units, and is assumed to have square pixels.  Each
-        /// view item can control its orientation independently. Each item
-        /// can also have an optional name, and can be set at runtime into
-        /// different "states", which control how the embedded elements are
-        /// displayed.
+        /// Each view has a list of item structures describing the visual
+        /// elements to draw, where they are located, additional blending
+        /// modes, and bindings for inputs and outputs.
         public partial class item : global_object
         {
             //friend class layout_view;
+
 
             // internal state
             layout_element m_element;          // pointer to the associated element (non-screens only)
             //output_finder<>     m_output;           // associated output
             bool m_have_output;      // whether we actually have an output
-            string m_input_tag;        // input tag of this item
             ioport_port m_input_port;       // input port of this item
             ioport_field m_input_field;      // input port field of this item
             ioport_value m_input_mask;       // input mask of this item
             u8 m_input_shift;      // input mask rightshift for raw (trailing 0s)
             bool m_input_raw;        // get raw data from input port
+            bool m_clickthrough;     // should click pass through to lower elements
             screen_device m_screen;           // pointer to screen
             int m_orientation;      // orientation of this item
-            render_bounds m_bounds = new render_bounds();           // bounds of the item
-            render_bounds m_rawbounds = new render_bounds();        // raw (original) bounds of the item
+            public render_bounds m_bounds = new render_bounds();           // bounds of the item
             render_color m_color = new render_color();            // color of the item
-            int m_blend_mode;       // blending mode to use when drawing
+            public int m_blend_mode;       // blending mode to use when drawing
+            public u32 m_visibility_mask;  // combined mask of parent visibility groups
+
+            // cold items
+            string m_input_tag;        // input tag of this item
+            public render_bounds m_rawbounds;        // raw (original) bounds of the item
+            bool m_has_clickthrough; // whether clickthrough was explicitly configured
 
 
             // rendlay.cs
             //item(
-            //        environment &env,
+            //        view_environment &env,
             //        util::xml::data_node const &itemnode,
             //        element_map &elemmap,
             //        int orientation,
@@ -1585,10 +1699,14 @@ namespace mame
             public render_bounds rawbounds() { return m_rawbounds; }
             public render_color color() { return m_color; }
             public int blend_mode() { return m_blend_mode; }
+            public u32 visibility_mask() { return m_visibility_mask; }
             public int orientation() { return m_orientation; }
             //render_container *screen_container(running_machine &machine) const;
+
+            // interactivity
             public bool has_input() { return m_input_port != null; }
             public ioport_port input_tag_and_mask(out ioport_value mask) { mask = m_input_mask; return m_input_port; }
+            public bool clickthrough() { return m_clickthrough; }
 
 
             // rendlay.cs
@@ -1596,27 +1714,105 @@ namespace mame
             //public void resolve_tags()
 
 
-            // setters
-            public void set_blend_mode(int mode) { m_blend_mode = mode; }
-
-
             // rendlay.cs
-            //static layout_element find_element(environment env, util.xml.data_node itemnode, element_map elemmap);
-            //static render_bounds make_bounds(environment env, util.xml.data_node itemnode, float [,] trans);  //layout_group.transform trans
-            //static string make_input_tag(environment env, util.xml.data_node itemnode);
-            //static int get_blend_mode(environment env, util.xml.data_node itemnode);
+            //static layout_element find_element(view_environment env, util.xml.data_node itemnode, element_map elemmap);
+            //static render_bounds make_bounds(view_environment env, util.xml.data_node itemnode, float [,] trans);  //layout_group.transform trans
+            //static string make_input_tag(view_environment env, util.xml.data_node itemnode);
+            //static int get_blend_mode(view_environment env, util.xml.data_node itemnode);
+            //static unsigned get_input_shift(ioport_value mask);
         }
+
+
+        //using item_list = std::list<item>;
+        //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
+
+
+        /// \brief A subset of items in a view that can be hidden or shown
+        ///
+        /// Visibility toggles allow the user to show or hide selected parts
+        /// of a view.
+        public class visibility_toggle
+        {
+            string m_name;             // display name for the toggle
+            u32 m_mask;             // toggle combination to show
+
+
+            // construction/destruction/assignment
+            public visibility_toggle(string name, u32 mask)
+            {
+                m_name = name;
+                m_mask = mask;
+
+
+                //throw new emu_unimplemented();
+#if false
+                assert(mask);
+#endif
+            }
+
+            //visibility_toggle(visibility_toggle const &) = default;
+            //visibility_toggle(visibility_toggle &&) = default;
+            //visibility_toggle &operator=(visibility_toggle const &) = default;
+            //visibility_toggle &operator=(visibility_toggle &&) = default;
+
+            // getters
+            public string name() { return m_name; }
+            //u32 mask() const { return m_mask; }
+        }
+
+
+        //using visibility_toggle_vector = std::vector<visibility_toggle>;
+
+
+        /// \brief An edge of an item in a view
+        public class edge
+        {
+            unsigned m_index;            // index of item in some collection
+            float m_position;         // position of edge on given axis
+            bool m_trailing;         // false for edge at lower position on axis
+
+
+            // construction/destruction
+            public edge(unsigned index, float position, bool trailing)
+            {
+                m_index = index;
+                m_position = position;
+                m_trailing = trailing;
+            }
+
+
+            // getters
+            public unsigned index() { return m_index; }
+            public float position() { return m_position; }
+            public bool trailing() { return m_trailing; }
+
+
+            // comparison
+            //constexpr bool operator<(edge const &that) const
+            //{
+            //    return std::make_tuple(m_position, m_trailing, m_index) < std::make_tuple(that.m_position, that.m_trailing, that.m_index);
+            //}
+        }
+
+
+        //using edge_vector = std::vector<edge>;
 
 
         // internal state
         string m_name;             // name of the layout
-        float m_aspect;           // X/Y of the layout
-        float m_scraspect;        // X/Y of the screen areas
-        render_screen_list m_screens = new render_screen_list();          // list of active screens
-        render_bounds m_bounds = new render_bounds();           // computed bounds of the view
-        render_bounds m_scrbounds = new render_bounds();        // computed bounds of the screens within the view
+        float m_effaspect;        // X/Y of the layout in current configuration
+        render_bounds m_bounds;           // computed bounds of the view in current configuration
+        layout_view_item_list m_items;            // list of layout items
+        layout_view_item_ref_vector m_screen_items = new layout_view_item_ref_vector();     // visible items that represent screens to draw
+        layout_view_item_ref_vector m_interactive_items = new layout_view_item_ref_vector();// visible items that can accept pointer input
+        layout_view_edge_vector m_interactive_edges_x = new layout_view_edge_vector();
+        layout_view_edge_vector m_interactive_edges_y = new layout_view_edge_vector();
+        layout_view_screen_ref_vector m_screens = new layout_view_screen_ref_vector();          // list screens visible in current configuration
+
+        // cold items
+        layout_view_visibility_toggle_vector m_vistoggles = new layout_view_visibility_toggle_vector();       // collections of items that can be shown/hidden
         render_bounds m_expbounds = new render_bounds();        // explicit bounds of the view
-        item_list m_items;            // list of layout items
+        u32 m_defvismask;       // default visibility mask
         bool m_has_art;          // true if the layout contains non-screen elements
 
 
@@ -1625,7 +1821,7 @@ namespace mame
 
         // rendlay.cs
         //public layout_view(
-        //        environment &env,
+        //        layout_environment &env,
         //        util::xml::data_node const &viewnode,
         //        element_map &elemmap,
         //        group_map &groupmap);
@@ -1633,26 +1829,31 @@ namespace mame
 
         // getters
 
-        public item_list items() { return m_items; }
+        public layout_view_item_list items() { return m_items; }
         public string name() { return m_name; }
-        //render_bounds bounds() { return m_bounds; }
-        //render_bounds screen_bounds() { return m_scrbounds; }
-        public render_screen_list screens() { return m_screens; }
-        public UInt32 screen_count() { return (UInt32)m_screens.size(); }
+        public size_t screen_count() { return (size_t)m_screens.size(); }
+        public float effective_aspect() { return m_effaspect; }
+        //const render_bounds &bounds() const { return m_bounds; }
+        //bool has_screen(screen_device &screen) const;
+        public layout_view_item_ref_vector screen_items() { return m_screen_items; }
+        public layout_view_item_ref_vector interactive_items() { return m_interactive_items; }
+        public layout_view_edge_vector interactive_edges_x() { return m_interactive_edges_x; }
+        public layout_view_edge_vector interactive_edges_y() { return m_interactive_edges_y; }
+        public layout_view_screen_ref_vector screens() { return m_screens; }
+        //const visibility_toggle_vector &visibility_toggles() const { return m_vistoggles; }
+        public u32 default_visibility_mask() { return m_defvismask; }
+
 
         // rendlay.cs
         //bool has_screen(screen_device screen) const;
 
-        //
         public bool has_art() { return m_has_art; }
-
-        public float effective_aspect(render_layer_config config) { return (config.zoom_to_screen() && !m_screens.empty()) ? m_scraspect : m_aspect; }
 
 
         // operations
 
         // rendlay.cs
-        //public void recompute(render_layer_config layerconfig)
+        //void recompute(u32 visibility_mask, bool zoom_to_screens);
 
         // rendlay.cs
         //public void resolve_tags()
@@ -1661,7 +1862,7 @@ namespace mame
         // add items, recursing for groups
         //void add_items(
         //        layer_lists &layers,
-        //        environment &env,
+        //        view_environment &env,
         //        util::xml::data_node const &parentnode,
         //        element_map &elemmap,
         //        group_map &groupmap,
@@ -1673,7 +1874,7 @@ namespace mame
         //        bool init);
 
         // rendlay.cs
-        //static std::string make_name(environment &env, util::xml::data_node const &viewnode);
+        //static std::string make_name(layout_environment &env, util::xml::data_node const &viewnode);
     }
 
 
@@ -1689,8 +1890,8 @@ namespace mame
 
 
         // internal state
-        element_map m_elemmap = new element_map();    // list of shared layout elements
-        view_list m_viewlist = new view_list();    // list of views
+        layout_file_element_map m_elemmap = new layout_file_element_map();    // list of shared layout elements
+        layout_file_view_list m_viewlist = new layout_file_view_list();    // list of views
 
 
         // rendlay.cs
@@ -1698,8 +1899,8 @@ namespace mame
 
 
         // getters
-        element_map elements() { return m_elemmap; }
-        public view_list views() { return m_viewlist; }
+        layout_file_element_map elements() { return m_elemmap; }
+        public layout_file_view_list views() { return m_viewlist; }
 
 
         //using environment = emu::render::detail::layout_environment;
@@ -1727,8 +1928,9 @@ namespace mame
         // internal state
         render_target m_next;                     // link to next target
         render_manager m_manager;                  // reference to our owning manager
-        layout_view m_curview;                  // current view
         std.list<layout_file> m_filelist = new std.list<layout_file>();                // list of layout files
+        render_target_view_mask_vector m_views = new render_target_view_mask_vector();                    // views we consider
+        unsigned m_curview;                  // current view index
         u32 m_flags;                    // creation flags
         render_primitive_list [] m_primlist = new render_primitive_list[NUM_PRIMLISTS];  // list of primitives
         int m_listindex;                // index of next primlist to use
@@ -1744,6 +1946,7 @@ namespace mame
         float m_max_refresh;              // maximum refresh rate, 0 or if none
         int m_orientation;              // orientation
         render_layer_config m_layerconfig;              // layer configuration
+        std.vector<bool> m_hit_test = new std.vector<bool>();                 // used when mapping points to inputs
         layout_view m_base_view;                // the view at the time of first frame
         int m_base_orientation;         // the orientation at the time of first frame
         render_layer_config m_base_layerconfig = new render_layer_config();         // the layer configuration at the time of first frame
@@ -1773,7 +1976,7 @@ namespace mame
 
             m_next = null;
             m_manager = manager;
-            m_curview = null;
+            m_curview = 0;
             m_flags = flags;
             m_listindex = 0;
             m_width = 640;
@@ -1829,12 +2032,22 @@ namespace mame
             m_layerconfig = m_base_layerconfig;
 
             // load the layout files
+            //load_layout_files(std::forward<T>(layout), flags & RENDER_CREATE_SINGLE_FILE);
             if (layout == null || layout is internal_layout)
                 load_layout_files((internal_layout)layout, (flags & render_global.RENDER_CREATE_SINGLE_FILE) != 0);
             else if (layout is util.xml.data_node)
                 load_layout_files((util.xml.data_node)layout, (flags & render_global.RENDER_CREATE_SINGLE_FILE) != 0);
             else
                 throw new emu_unimplemented();
+
+            foreach (layout_file file in m_filelist)
+            {
+                foreach (layout_view view in file.views())
+                {
+                    if ((m_flags & render_global.RENDER_CREATE_NO_ART) == 0 || !view.has_art())
+                        m_views.emplace_back(new std.pair<layout_view, ioport_value>(view, view.default_visibility_mask()));
+                }
+            }
 
 
             // set the current view to the first one
@@ -1859,8 +2072,8 @@ namespace mame
         public float max_update_rate() { return m_max_refresh; }
         public int orientation() { return m_orientation; }
         //render_layer_config layer_config() const { return m_layerconfig; }
-        public layout_view current_view() { return m_curview; }
-        public int view() { return view_index(m_curview); }
+        public layout_view current_view() { return m_views[m_curview].first; }
+        public unsigned view() { return m_curview; }
         public bool external_artwork() { return m_external_artwork; }
         public bool hidden() { return ((m_flags & render_global.RENDER_CREATE_HIDDEN) != 0); }
 
@@ -1900,13 +2113,12 @@ namespace mame
         //  set_view - dynamically change the view for
         //  a target
         //-------------------------------------------------
-        public void set_view(int viewindex)
+        public void set_view(unsigned viewindex)
         {
-            layout_view view = view_by_index(viewindex);
-            if (view != null)
+            if (m_views.size() > viewindex)
             {
-                m_curview = view;
-                view.recompute(m_layerconfig);
+                m_curview = viewindex;
+                current_view().recompute(visibility_mask(), m_layerconfig.zoom_to_screen());
             }
         }
 
@@ -1919,9 +2131,11 @@ namespace mame
         // layer config getters
         //bool screen_overlay_enabled() const { return m_layerconfig.screen_overlay_enabled(); }
         //bool zoom_to_screen() const { return m_layerconfig.zoom_to_screen(); }
+        u32 visibility_mask() { return m_views[m_curview].second; }
 
 
         // layer config setters
+        //void set_visibility_toggle(unsigned index, bool enable);
         public void set_screen_overlay_enabled(bool enable) { m_layerconfig.set_screen_overlay_enabled(enable); update_layer_config(); }
         public void set_zoom_to_screen(bool zoom) { m_layerconfig.set_zoom_to_screen(zoom); update_layer_config(); }
 
@@ -1931,45 +2145,46 @@ namespace mame
         //  configured_view - select a view for this
         //  target based on the configuration parameters
         //-------------------------------------------------
-        public int configured_view(string viewname, int targetindex, int numtargets)
+        public unsigned configured_view(string viewname, int targetindex, int numtargets)
         {
             layout_view view = null;
-            int viewindex;
 
             // auto view just selects the nth view
             if (viewname != "auto")
             {
                 // scan for a matching view name
-                int viewlen = viewname.Length;
-                for (view = view_by_index(viewindex = 0); view != null; view = view_by_index(++viewindex))
-                    if (string.Compare(view.name().Substring(0, viewname.Length), viewname.Substring(0, viewlen), true) == 0)
-                        break;
+                size_t viewlen = (size_t)strlen(viewname);
+                for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
+                {
+                    if (core_strnicmp(m_views[i].first.name().c_str(), viewname, viewlen) == 0)
+                        view = m_views[i].first;
+                }
             }
 
             // if we don't have a match, default to the nth view
-            screen_device_iterator iter = new screen_device_iterator(m_manager.machine().root_device());
-            int scrcount = iter.count();
-            if (view == null && scrcount > 0)
+            std.vector<screen_device> screens = new std.vector<screen_device>();  //std::vector<std::reference_wrapper<screen_device> > screens;
+            foreach (screen_device screen in new screen_device_iterator(m_manager.machine().root_device()))
+                screens.push_back(screen);
+
+            if ((view == null) && !screens.empty())
             {
                 // if we have enough targets to be one per screen, assign in order
-                if (numtargets >= scrcount)
+                if (numtargets >= screens.size())
                 {
-                    int ourindex = index() % scrcount;
-                    screen_device screen = iter.byindex(ourindex);
-                    assert(screen != null);
-
-                    // find the first view with this screen and this screen only
-                    for (view = view_by_index(viewindex = 0); view != null; view = view_by_index(++viewindex))
+                    screen_device screen = screens[index() % screens.size()];
+                    for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
                     {
-                        var viewscreens = view.screens();
-                        if (viewscreens.empty())
+                        foreach (screen_device viewscreen in m_views[i].first.screens())
                         {
-                            view = null;
-                            break;
-                        }
-                        else if (std.find_if(viewscreens, (scr) => { return scr.get() != screen; }) == null)  //else if (std::find_if(viewscreens.begin(), viewscreens.end(), [&screen](auto const &scr) { return &scr.get() != screen; }) == viewscreens.end())
-                        {
-                            break;
+                            if (viewscreen == screen)
+                            {
+                                view = m_views[i].first;
+                            }
+                            else
+                            {
+                                view = null;
+                                break;
+                            }
                         }
                     }
                 }
@@ -1977,35 +2192,27 @@ namespace mame
                 // otherwise, find the first view that has all the screens
                 if (view == null)
                 {
-                    for (view = view_by_index(viewindex = 0); view != null; view = view_by_index(++viewindex))
+                    for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
                     {
-                        if (view.screen_count() >= scrcount)
+                        layout_view curview = m_views[i].first;
+                        if (curview.screen_count() >= screens.size())
                         {
-                            bool screen_missing = false;
-                            foreach (screen_device screen in iter)
-                            {
-                                if (!view.has_screen(screen))
-                                {
-                                    screen_missing = true;
-                                    break;
-                                }
-                            }
-
-                            if (!screen_missing)
-                                break;
+                            if (std.find_if(screens, (screen_device screen) => { return !curview.has_screen(screen); }) == null)  //if (std::find_if(screens.begin(), screens.end(), [&curview] (screen_device &screen) { return !curview.has_screen(screen); }) == screens.end())
+                                view = curview;
                         }
                     }
                 }
             }
 
             // make sure it's a valid view
-            return (view != null) ? view_index(view) : 0;
+            return view != null ? (unsigned)view_index(view) : 0;
         }
 
 
         // view information
 
-        //const char *view_name(int viewindex);
+        //char const *view_name(unsigned index);
+        //layout_view::visibility_toggle_vector const &visibility_toggles();
 
 
         // bounds computations
@@ -2029,7 +2236,7 @@ namespace mame
                     if (m_keepaspect)
                     {
                         // start with the aspect ratio of the square pixel layout
-                        width = m_curview.effective_aspect(m_layerconfig);
+                        width = current_view().effective_aspect();
                         height = 1.0f;
 
                         // first apply target orientation
@@ -2066,7 +2273,7 @@ namespace mame
                     int src_width;
                     int src_height;
                     compute_minimum_size(out src_width, out src_height);
-                    float src_aspect = m_curview.effective_aspect(m_layerconfig);
+                    float src_aspect = current_view().effective_aspect();
 
                     // apply orientation if required
                     if ((target_orientation & emucore_global.ORIENTATION_SWAP_XY) != 0)
@@ -2135,11 +2342,11 @@ namespace mame
                 return;
             }
 
-            if (m_curview == null)
+            if (m_views.empty())
                 throw new emu_fatalerror("Mandatory artwork is missing");
 
             // scan the current view for all screens
-            foreach (layout_view.item curitem in m_curview.items())
+            foreach (layout_view.item curitem in current_view().items())
             {
                 // iterate over items in the layer
                 if (curitem.screen() != null)
@@ -2196,7 +2403,7 @@ namespace mame
         {
             // remember the base values if this is the first frame
             if (m_base_view == null)
-                m_base_view = m_curview;
+                m_base_view = current_view();
 
             // switch to the next primitive list
             render_primitive_list list = m_primlist[m_listindex];
@@ -2222,41 +2429,42 @@ namespace mame
             root_xform.orientation = m_orientation;
             root_xform.no_center = false;
 
-            // iterate over items in the view, but only if we're running
             if (m_manager.machine().phase() >= machine_phase.RESET)
             {
-                foreach (layout_view.item curitem in m_curview.items())
+                // we're running - iterate over items in the view
+                foreach (layout_view.item curitem in current_view().items())
                 {
-                    // first apply orientation to the bounds
-                    render_bounds bounds = curitem.bounds();
-                    render_global.apply_orientation(bounds, root_xform.orientation);
-                    render_global.normalize_bounds(bounds);
+                    if ((visibility_mask() & curitem.visibility_mask()) == curitem.visibility_mask())
+                    {
+                        // first apply orientation to the bounds
+                        render_bounds bounds = curitem.bounds();
+                        render_global.apply_orientation(bounds, root_xform.orientation);
+                        render_global.normalize_bounds(bounds);
 
-                    // apply the transform to the item
-                    object_transform item_xform = new object_transform();
-                    item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
-                    item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
-                    item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
-                    item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
-                    item_xform.color = new render_color();
-                    item_xform.color.r = curitem.color().r * root_xform.color.r;
-                    item_xform.color.g = curitem.color().g * root_xform.color.g;
-                    item_xform.color.b = curitem.color().b * root_xform.color.b;
-                    item_xform.color.a = curitem.color().a * root_xform.color.a;
-                    item_xform.orientation = rendutil_global.orientation_add(curitem.orientation(), root_xform.orientation);
-                    item_xform.no_center = false;
+                        // apply the transform to the item
+                        object_transform item_xform = new object_transform();
+                        item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
+                        item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
+                        item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
+                        item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
+                        item_xform.color.r = curitem.color().r * root_xform.color.r;
+                        item_xform.color.g = curitem.color().g * root_xform.color.g;
+                        item_xform.color.b = curitem.color().b * root_xform.color.b;
+                        item_xform.color.a = curitem.color().a * root_xform.color.a;
+                        item_xform.orientation = rendutil_global.orientation_add(curitem.orientation(), root_xform.orientation);
+                        item_xform.no_center = false;
 
-                    // if there is no associated element, it must be a screen element
-                    if (curitem.screen() != null)
-                        add_container_primitives(list, root_xform, item_xform, curitem.screen().container(), curitem.blend_mode());
-                    else
-                        add_element_primitives(list, item_xform, curitem.element(), curitem.state(), curitem.blend_mode());
+                        // if there is no associated element, it must be a screen element
+                        if (curitem.screen() != null)
+                            add_container_primitives(list, root_xform, item_xform, curitem.screen().container(), curitem.blend_mode());
+                        else
+                            add_element_primitives(list, item_xform, curitem.element(), curitem.state(), curitem.blend_mode());
+                    }
                 }
             }
-
-            // if we are not in the running stage, draw an outer box
             else
             {
+                // if we are not in the running stage, draw an outer box
                 render_primitive prim = list.alloc(render_primitive.primitive_type.QUAD);
                 rendutil_global.set_render_bounds_xy(prim.bounds, 0.0f, 0.0f, (float)m_width, (float)m_height);
                 prim.full_bounds = prim.bounds;
@@ -2328,19 +2536,115 @@ namespace mame
         //-------------------------------------------------
         public bool map_point_container(int target_x, int target_y, render_container container, out float container_x, out float container_y)
         {
-            ioport_port input_port;
-            ioport_value input_mask;
-            return map_point_internal(target_x, target_y, container, out container_x, out container_y, out input_port, out input_mask);
+            std.pair<float, float> target_f = map_point_internal(target_x, target_y);
+
+            // explicitly check for the UI container
+            if (container == m_manager.ui_container())
+            {
+                // this hit test went against the UI container
+                if ((target_f.first >= 0.0f) && (target_f.first < 1.0f) && (target_f.second >= 0.0f) && (target_f.second < 1.0f))
+                {
+                    // this point was successfully mapped
+                    container_x = (float)target_x / m_width;
+                    container_y = (float)target_y / m_height;
+                    return true;
+                }
+            }
+            else
+            {
+                if ((m_orientation & ORIENTATION_FLIP_X) != 0)
+                    target_f = new std.pair<float, float>(1.0f - target_f.first, target_f.second);  //target_f.first = 1.0f - target_f.first;
+                if ((m_orientation & ORIENTATION_FLIP_Y) != 0)
+                    target_f = new std.pair<float, float>(target_f.first, 1.0f - target_f.second);  //target_f.second = 1.0f - target_f.second;
+                if ((m_orientation & ORIENTATION_SWAP_XY) != 0)
+                    target_f = new std.pair<float, float>(target_f.second, target_f.first);  //std::swap(target_f.first, target_f.second);
+
+                // try to find the right container
+                var items = current_view().screen_items();
+                //auto const found(std::find_if(
+                //           items.begin(),
+                //           items.end(),
+                //           [&container] (layout_view::item &item) { return &item.screen()->container() == &container; }));
+                var found = std.find_if(items, (layout_view.item item) => { return item.screen().container() == container; });
+                if (default != found)
+                {
+                    layout_view.item item = found;
+                    if (item.bounds().includes(target_f.first, target_f.second))
+                    {
+                        // point successfully mapped
+                        container_x = (target_f.first - item.bounds().x0) / item.bounds().width();
+                        container_y = (target_f.second - item.bounds().y0) / item.bounds().height();
+                        return true;
+                    }
+                }
+            }
+
+            // default to point not mapped
+            container_x = container_y = -1.0f;
+            return false;
         }
+
 
         //-------------------------------------------------
         //  map_point_input - attempts to map a point on
-        //  the specified render_target to the specified
-        //  container, if possible
+        //  the specified render_target to an input port
+        //  field, if possible
         //-------------------------------------------------
         public bool map_point_input(int target_x, int target_y, out ioport_port input_port, out ioport_value input_mask, out float input_x, out float input_y)
         {
-            return map_point_internal(target_x, target_y, null, out input_x, out input_y, out input_port, out input_mask);
+            std.pair<float, float> target_f = map_point_internal(target_x, target_y);
+            if ((m_orientation & ORIENTATION_FLIP_X) != 0)
+                target_f = new std.pair<float, float>(1.0f - target_f.first, target_f.second);  //target_f.first = 1.0f - target_f.first;
+            if ((m_orientation & ORIENTATION_FLIP_Y) != 0)
+                target_f = new std.pair<float, float>(target_f.first, 1.0f - target_f.second);  //target_f.second = 1.0f - target_f.second;
+            if ((m_orientation & ORIENTATION_SWAP_XY) != 0)
+                target_f = new std.pair<float, float>(target_f.second, target_f.first);  //std::swap(target_f.first, target_f.second);
+
+            var items = current_view().interactive_items();
+            m_hit_test.resize(items.size() * 2);
+            std.fill(m_hit_test, false);
+
+            foreach (var edge in current_view().interactive_edges_x())
+            {
+                if ((edge.position() > target_f.first) || ((edge.position() == target_f.first) && edge.trailing()))
+                    break;
+                else
+                    m_hit_test[edge.index()] = !edge.trailing();
+            }
+
+            foreach (var edge in current_view().interactive_edges_y())
+            {
+                if ((edge.position() > target_f.second) || ((edge.position() == target_f.second) && edge.trailing()))
+                    break;
+                else
+                    m_hit_test[items.size() + (int)edge.index()] = !edge.trailing();
+            }
+
+            for (unsigned i = 0; items.size() > i; ++i)
+            {
+                if (m_hit_test[i] && m_hit_test[items.size() + (int)i])
+                {
+                    layout_view.item item = items[i];
+                    if (item.has_input())
+                    {
+                        // point successfully mapped
+                        input_port = item.input_tag_and_mask(out input_mask);
+                        input_x = (target_f.first - item.bounds().x0) / item.bounds().width();
+                        input_y = (target_f.second - item.bounds().y0) / item.bounds().height();
+                        return true;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // default to point not mapped
+            input_port = null;
+            input_mask = 0;
+            input_x = input_y = -1.0f;
+            return false;
         }
 
 
@@ -2377,9 +2681,15 @@ namespace mame
                 foreach (layout_view view in file.views())
                 {
                     view.resolve_tags();
+                    if (current_view() == view)
+                        view.recompute(visibility_mask(), m_layerconfig.zoom_to_screen());
                 }
             }
         }
+
+
+        //using view_mask_pair = std::pair<std::reference_wrapper<layout_view>, u32>;
+        //using view_mask_vector = std::vector<view_mask_pair>;
 
 
         // debug containers
@@ -2400,7 +2710,7 @@ namespace mame
         //-------------------------------------------------
         void update_layer_config()
         {
-            m_curview.recompute(m_layerconfig);
+            current_view().recompute(visibility_mask(), m_layerconfig.zoom_to_screen());
         }
 
 
@@ -2558,9 +2868,22 @@ namespace mame
             foreach (var screen in iter)
                 screens.push_back(new load_additional_layout_files_screen_info(screen));
 
+            // need this because views aren't fully set up yet
+            //auto const nth_view =
+            //    [this] (unsigned n) -> layout_view *
+            Func<unsigned, layout_view> nth_view = (n) =>
+                {
+                    foreach (layout_file file in m_filelist)
+                        foreach (layout_view view in file.views())
+                            if ((m_flags & render_global.RENDER_CREATE_NO_ART) == 0 || !view.has_art())
+                                if (n-- == 0)
+                                    return view;
+                    return null;
+                };
+
             if (screens.empty()) // ensure the fallback view for systems with no screens is loaded if necessary
             {
-                if (view_by_index(0) == null)
+                if (nth_view(0) == null)
                 {
                     load_layout_file(null, noscreens_global.layout_noscreens);
                     if (m_filelist.empty())
@@ -2588,10 +2911,9 @@ namespace mame
 
                     viewnode.set_attribute(
                             "name",
-                            util.xml.xmlfile_global.normalize_string(
-                                string.Format(
-                                    "Screen {0} Standard ({1}:{2})",  // %1$u  (%2$u:%3$u)
-                                    i, screens[(int)i].physical_x(), screens[(int)i].physical_y()).c_str()));
+                            string_format(
+                                "Screen {0} Standard ({1}:{2})",
+                                i, screens[i].physical_x(), screens[i].physical_y()).c_str());
                     util.xml.data_node screennode = viewnode.add_child("screen", null);
                     if (screennode == null)
                         throw new emu_fatalerror("Couldn't create XML node??");
@@ -2619,10 +2941,9 @@ namespace mame
 
                         viewnode.set_attribute(
                                 "name",
-                                util.xml.xmlfile_global.normalize_string(
-                                    string.Format(
-                                        "Screen {0} Pixel Aspect ({1}:{2})",  // %1$u  (%2$u:%3$u)
-                                        i, screens[(int)i].native_x(), screens[(int)i].native_y()).c_str()));
+                                string_format(
+                                    "Screen {0} Pixel Aspect ({1}:{2})",
+                                    i, screens[i].native_x(), screens[i].native_y()).c_str());
 
                         util.xml.data_node screennode = viewnode.add_child("screen", null);
                         if (screennode == null)
@@ -2692,7 +3013,7 @@ namespace mame
                 {
                     need_tiles = true;
                     int viewindex = 0;
-                    for (layout_view view = view_by_index(viewindex); need_tiles && view != null; view = view_by_index(++viewindex))
+                    for (layout_view view = nth_view((unsigned)viewindex); need_tiles && view != null; view = nth_view((unsigned)(++viewindex)))
                     {
                         if (view.screen_count() >= screens.size())
                         {
@@ -2705,6 +3026,7 @@ namespace mame
                                     break;
                                 }
                             }
+
                             if (!screen_missing)
                                 need_tiles = false;
                         }
@@ -3066,9 +3388,7 @@ namespace mame
         //-------------------------------------------------
         void add_element_primitives(render_primitive_list list, object_transform xform, layout_element element, int state, int blendmode)
         {
-            // if we're out of range, bail
-            if (state > element.maxstate())
-                return;
+            // limit state range to non-negative values
             if (state < 0)
                 state = 0;
 
@@ -3118,16 +3438,11 @@ namespace mame
         //  map_point_internal - internal logic for
         //  mapping points
         //-------------------------------------------------
-        bool map_point_internal(int target_x, int target_y, render_container container, out float mapped_x, out float mapped_y, out ioport_port mapped_input_port, out ioport_value mapped_input_mask)
+        std.pair<float, float> map_point_internal(s32 target_x, s32 target_y)
         {
-            mapped_x = 0;
-            mapped_y = 0;
-            mapped_input_port = null;
-            mapped_input_mask = 0;
-
             // compute the visible width/height
-            int viswidth;
-            int visheight;
+            s32 viswidth;
+            s32 visheight;
             compute_visible_area(m_width, m_height, m_pixel_aspect, m_orientation, out viswidth, out visheight);
 
             // create a root transform for the target
@@ -3135,59 +3450,11 @@ namespace mame
             root_xform.xoffs = (float)(m_width - viswidth) / 2;
             root_xform.yoffs = (float)(m_height - visheight) / 2;
 
-            // default to point not mapped
-            mapped_x = -1.0f;
-            mapped_y = -1.0f;
-            mapped_input_port = null;
-            mapped_input_mask = 0;
-
             // convert target coordinates to float
-            float target_fx = (float)(target_x - root_xform.xoffs) / viswidth;
-            float target_fy = (float)(target_y - root_xform.yoffs) / visheight;
-            if (m_manager.machine().ui().is_menu_active())
-            {
-                target_fx = (float)target_x / m_width;
-                target_fy = (float)target_y / m_height;
-            }
-            // explicitly check for the UI container
-            if (container != null && container == m_manager.ui_container())
-            {
-                // this hit test went against the UI container
-                if (target_fx >= 0.0f && target_fx < 1.0f && target_fy >= 0.0f && target_fy < 1.0f)
-                {
-                    // this point was successfully mapped
-                    mapped_x = (float)target_x / m_width;
-                    mapped_y = (float)target_y / m_height;
-                    return true;
-                }
-                return false;
-            }
-
-            // iterate over items in the view
-            foreach (layout_view.item item in m_curview.items())
-            {
-                bool checkit;
-
-                // if we're looking for a particular container, verify that we have the right one
-                if (container != null)
-                    checkit = (item.screen() != null && item.screen().container() == container);
-
-                // otherwise, assume we're looking for an input
-                else
-                    checkit = item.has_input();
-
-                // this target is worth looking at; now check the point
-                if (checkit && target_fx >= item.bounds().x0 && target_fx < item.bounds().x1 && target_fy >= item.bounds().y0 && target_fy < item.bounds().y1)
-                {
-                    // point successfully mapped
-                    mapped_x = (target_fx - item.bounds().x0) / (item.bounds().x1 - item.bounds().x0);
-                    mapped_y = (target_fy - item.bounds().y0) / (item.bounds().y1 - item.bounds().y0);
-                    mapped_input_port = item.input_tag_and_mask(out mapped_input_mask);
-                    return true;
-                }
-            }
-
-            return false;
+            if (!m_manager.machine().ui().is_menu_active())
+                return std.make_pair((float)(target_x - root_xform.xoffs) / viswidth, (float)(target_y - root_xform.yoffs) / visheight);
+            else
+                return std.make_pair((float)(target_x) / m_width, (float)(target_y) / m_height);
         }
 
 
@@ -3202,16 +3469,9 @@ namespace mame
         //  view_name - return the name of the indexed
         //  view, or NULL if it doesn't exist
         //-------------------------------------------------
-        layout_view view_by_index(int index)
+        layout_view view_by_index(unsigned index)
         {
-            // scan the list of views within each layout, skipping those that don't apply
-            foreach (layout_file file in m_filelist)
-                foreach (layout_view view in file.views())
-                    if ((m_flags & render_global.RENDER_CREATE_NO_ART) == 0 || !view.has_art())
-                        if (index-- == 0)
-                            return view;
-
-            return null;
+            return (m_views.size() > index) ? m_views[index].first : null;
         }
 
         //-------------------------------------------------
@@ -3220,21 +3480,11 @@ namespace mame
         //-------------------------------------------------
         int view_index(layout_view targetview)
         {
-            // find the first named match
-            int index = 0;
-
-            // scan the list of views within each layout, skipping those that don't apply
-            foreach (layout_file file in m_filelist)
+            // return index of view, or zero if not found
+            for (int index = 0; m_views.size() > index; ++index)
             {
-                foreach (layout_view view in file.views())
-                {
-                    if ((m_flags & render_global.RENDER_CREATE_NO_ART) == 0 || !view.has_art())
-                    {
-                        if (targetview == view)
-                            return index;
-                        index++;
-                    }
-                }
+                if (m_views[index].first == targetview)
+                    return index;
             }
 
             return 0;
@@ -3606,7 +3856,7 @@ namespace mame
                 if (!target.hidden())
                 {
                     layout_view view = target.current_view();
-                    if (view != null && view.has_screen(screen))
+                    if (view.has_screen(screen))
                         return true;
                 }
             }

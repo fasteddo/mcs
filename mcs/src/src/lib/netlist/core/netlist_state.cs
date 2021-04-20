@@ -4,11 +4,12 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using netlist_state_t_devices_collection_type = mame.std.vector<mame.std.pair<string, mame.netlist.core_device_t>>;  //using devices_collection_type = std::vector<std::pair<pstring, poolptr<core_device_t>>>;
 using netlist_state_t_family_collection_type = mame.std.unordered_map<string, mame.netlist.logic_family_desc_t>;  //using family_collection_type = std::unordered_map<pstring, host_arena::unique_ptr<logic_family_desc_t>>;
 using netlist_state_t_nets_collection_type = mame.std.vector<mame.netlist.detail.net_t>;  //using nets_collection_type = std::vector<poolptr<detail::net_t>>;
 using nldelegate = System.Action;  //using nldelegate = plib::pmfp<void>;
+using plog_delegate = System.Action<mame.plib.plog_level, string>;  //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
 using size_t = System.UInt32;
 
 
@@ -31,7 +32,6 @@ namespace mame.netlist
         netlist_t m_netlist;  //device_arena::unique_ptr<netlist_t>        m_netlist;
         plib.dynlib_base m_lib;  //std::unique_ptr<plib::dynlib_base>         m_lib;
         plib.state_manager_t m_state;
-        callbacks_t m_callbacks;  //host_arena::unique_ptr<callbacks_t>        m_callbacks;
         log_type m_log;
 
         // FIXME: should only be available during device construcion
@@ -48,15 +48,12 @@ namespace mame.netlist
         int m_dummy_version;
 
 
-        public netlist_state_t(string name, callbacks_t callbacks)  //netlist_state_t(const pstring &name, host_arena::unique_ptr<callbacks_t> &&callbacks);
+        public netlist_state_t(string name)  //netlist_state_t(const pstring &name, plib::plog_delegate logger);
         {
-            m_callbacks = callbacks; // Order is important here
-            m_log = new log_type(nl_config_global.NL_DEBUG, m_callbacks);
+            //see netlist_state_t_after_ctor()  //: m_log(logger)
             m_extended_validation = false;
             m_dummy_version = 1;
 
-
-            m_lib = m_callbacks.static_solver_lib();
 
             m_setup = new setup_t(this);  //m_setup = plib::make_unique<setup_t, host_arena>(*this);
             // create the run interface
@@ -84,10 +81,26 @@ namespace mame.netlist
             //throw new emu_unimplemented();
 #if false
             m_setup->parser().add_include<plib::psource_str_t>("netlist/devices/net_lib.h", content);
+
+            // This is for core macro libraries
+            m_setup->parser().add_include<plib::psource_str_t>("devices/net_lib.h", content);
 #endif
 
             nlm_base_global.netlist_base_lib(m_setup.parser());  //NETLIST_NAME(base_lib)(m_setup->parser());
-    }
+
+            //throw new emu_unimplemented();
+#if false
+            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/nlm_{1}.cpp");
+            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/generated/nlm_{1}.cpp");
+            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/modules/nlmod_{1}.cpp");
+            m_setup->parser().include("base_lib");
+#endif
+        }
+
+        public void netlist_state_t_after_ctor(plog_delegate logger)
+        {
+            m_log = new log_type(logger);
+        }
 
 
         //PCOPYASSIGNMOVE(netlist_state_t, delete)
@@ -168,7 +181,19 @@ namespace mame.netlist
         public log_type log() { return m_log; }
 
 
-        public plib.dynlib_base lib() { return m_lib; }
+        public plib.dynlib_base static_solver_lib() { return m_lib; }
+
+
+        /// \brief provide library with static solver implementations.
+        ///
+        /// By default no static solvers are provided since these are
+        /// determined by the specific use case. You can pass such a collection
+        /// of symbols with this method.
+        ///
+        public void set_static_solver_lib(plib.dynlib_base lib)  //void set_static_solver_lib(std::unique_ptr<plib::dynlib_base> &&lib);
+        {
+            m_lib = lib;
+        }
 
 
         public netlist_t exec() { return m_netlist; }

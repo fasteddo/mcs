@@ -24,65 +24,6 @@ namespace mame
 {
     public static class nlm_opamp_global
     {
-#if !NL_AUTO_DEVICES
-
-        //#define MB3614_DIP(name)                                                       \
-        //        NET_REGISTER_DEV(MB3614_DIP, name)
-
-        //#define LM324_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(LM324_DIP, name)
-
-        //#define TL081_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(TL081_DIP, name)
-
-        //#define TL082_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(TL082_DIP, name)
-
-        //#define TL084_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(TL084_DIP, name)
-
-        //#define LM2902_DIP(name)                                                       \
-        //        NET_REGISTER_DEV(LM2902_DIP, name)
-
-        //#define LM358_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(LM358_DIP, name)
-
-        //#define LM3900(name)                                                           \
-        //        NET_REGISTER_DEV(LM3900, name)
-
-
-        //#define UA741_DIP8(name)                                                           \
-        //        NET_REGISTER_DEV(UA741_DIP8, name)
-        public static void UA741_DIP8(netlist.nlparse_t setup, string name)
-        {
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "UA741_DIP8", name);
-        }
-
-
-        //#define UA741_DIP10(name)                                                      \
-        //        NET_REGISTER_DEV(UA741_DIP10, name)
-
-        //#define UA741_DIP14(name)                                                      \
-        //        NET_REGISTER_DEV(UA741_DIP14, name)
-
-        //#define MC1558_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(MC1558_DIP, name)
-
-        //#define LM747_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(LM747_DIP, name)
-
-        //#define LM747A_DIP(name)                                                       \
-        //        NET_REGISTER_DEV(LM747A_DIP, name)
-
-        //#define MC3340_DIP(name)                                                       \
-        //        NET_REGISTER_DEV(MC3340_DIP, name)
-
-        //#define AN6551_SIL(name)                                                       \
-        //        NET_REGISTER_DEV(AN6551_SIL, name)
-
-#endif
-
-
         /*
          *   Generic layout with 4 opamps, VCC on pin 4 and GND on pin 11
          */
@@ -240,10 +181,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "MB3614");
-            nld_opamps_global.OPAMP(setup, "B", "MB3614");
-            nld_opamps_global.OPAMP(setup, "C", "MB3614");
-            nld_opamps_global.OPAMP(setup, "D", "MB3614");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "MB3614");
+            OPAMP(setup, "B", "MB3614");
+            OPAMP(setup, "C", "MB3614");
+            OPAMP(setup, "D", "MB3614");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
 
@@ -301,64 +245,67 @@ namespace mame
             // games which use the MFC6040 may also benefit from this netlist
             // implementation.
 
-            netlist.nld_twoterm_global.RES(setup, "R1_5K1", rescap_global.RES_K(5.1));
+            throw new emu_unimplemented();
+#if false
+            RES(setup, "R1_5K1", rescap_global.RES_K(5.1));
 
-            netlist.nld_twoterm_global.DIODE(setup, "D1", "D(IS=1e-15 N=1)");
+            DIODE(setup, "D1", "D(IS=1e-15 N=1)");
 
-            netlist.nld_twoterm_global.RES(setup, "R2_4K7", rescap_global.RES_K(4.7));
+            RES(setup, "R2_4K7", rescap_global.RES_K(4.7));
 
-            nld_bjt_global.QBJT_EB(setup, "Q1", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q1", "NPN(IS=1E-13 BF=100)");
 
-            netlist.nld_twoterm_global.RES(setup, "R3_750", rescap_global.RES_R(750));
-            netlist.nld_twoterm_global.RES(setup, "R4_10K", rescap_global.RES_K(10));
+            RES(setup, "R3_750", rescap_global.RES_R(750));
+            RES(setup, "R4_10K", rescap_global.RES_K(10));
 
-            nld_bjt_global.QBJT_EB(setup, "Q2", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q2", "NPN(IS=1E-13 BF=100)");
 
-            netlist.nld_twoterm_global.RES(setup, "R5_750", rescap_global.RES_R(750));
-            netlist.nld_twoterm_global.RES(setup, "R6_3K9", rescap_global.RES_K(3.9));
+            RES(setup, "R5_750", rescap_global.RES_R(750));
+            RES(setup, "R6_3K9", rescap_global.RES_K(3.9));
 
-            netlist.nld_twoterm_global.RES(setup, "R7_5K1", rescap_global.RES_K(5.1));
-            netlist.nld_twoterm_global.RES(setup, "R8_20K", rescap_global.RES_K(20));
+            RES(setup, "R7_5K1", rescap_global.RES_K(5.1));
+            RES(setup, "R8_20K", rescap_global.RES_K(20));
 
-            netlist.nld_twoterm_global.DIODE(setup, "D2", "D(IS=1e-15 N=1)");
+            DIODE(setup, "D2", "D(IS=1e-15 N=1)");
 
-            netlist.nld_twoterm_global.RES(setup, "R9_510", rescap_global.RES_R(510));
+            RES(setup, "R9_510", rescap_global.RES_R(510));
 
-            nld_bjt_global.QBJT_EB(setup, "Q3", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q3", "NPN(IS=1E-13 BF=100)");
 
-            nld_bjt_global.QBJT_EB(setup, "Q4", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q4", "NPN(IS=1E-13 BF=100)");
 
-            nld_bjt_global.QBJT_EB(setup, "Q5", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q5", "NPN(IS=1E-13 BF=100)");
 
-            netlist.nld_twoterm_global.RES(setup, "R10_1K3", rescap_global.RES_K(1.3));
+            RES(setup, "R10_1K3", rescap_global.RES_K(1.3));
 
-            nld_bjt_global.QBJT_EB(setup, "Q6", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q6", "NPN(IS=1E-13 BF=100)");
 
-            netlist.nld_twoterm_global.RES(setup, "R11_5K1", rescap_global.RES_K(5.1));
+            RES(setup, "R11_5K1", rescap_global.RES_K(5.1));
 
-            nld_bjt_global.QBJT_EB(setup, "Q7", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q7", "NPN(IS=1E-13 BF=100)");
 
-            nld_bjt_global.QBJT_EB(setup, "Q8", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q8", "NPN(IS=1E-13 BF=100)");
 
-            netlist.nld_twoterm_global.RES(setup, "R12_1K5", rescap_global.RES_K(1.5));
+            RES(setup, "R12_1K5", rescap_global.RES_K(1.5));
 
-            netlist.nld_twoterm_global.RES(setup, "R13_6K2", rescap_global.RES_K(6.2));
+            RES(setup, "R13_6K2", rescap_global.RES_K(6.2));
 
-            nld_bjt_global.QBJT_EB(setup, "Q9", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q9", "NPN(IS=1E-13 BF=100)");
 
-            netlist.nld_twoterm_global.RES(setup, "R14_5K1", rescap_global.RES_K(5.1));
+            RES(setup, "R14_5K1", rescap_global.RES_K(5.1));
 
-            nld_bjt_global.QBJT_EB(setup, "Q10", "NPN(IS=1E-13 BF=100)");
+            QBJT_EB(setup, "Q10", "NPN(IS=1E-13 BF=100)");
 
-            netlist.nld_twoterm_global.RES(setup, "R15_5K1", rescap_global.RES_K(5.1));
+            RES(setup, "R15_5K1", rescap_global.RES_K(5.1));
 
-            netlist.nld_twoterm_global.RES(setup, "R16_200", rescap_global.RES_R(200));
+            RES(setup, "R16_200", rescap_global.RES_R(200));
 
-            netlist.nld_twoterm_global.RES(setup, "R17_5K1", rescap_global.RES_K(5.1));
+            RES(setup, "R17_5K1", rescap_global.RES_K(5.1));
 
-            netlist.nld_twoterm_global.DIODE(setup, "D3", "D(IS=1e-15 N=1)");
+            DIODE(setup, "D3", "D(IS=1e-15 N=1)");
 
-            netlist.nld_twoterm_global.RES(setup, "R18_510", rescap_global.RES_R(510));
+            RES(setup, "R18_510", rescap_global.RES_R(510));
+#endif
 
             netlist.nl_setup_global.ALIAS(setup, "VCC", "R1_5K1.1");
             netlist.nl_setup_global.NET_C(setup, "R1_5K1.1", "Q1.C", "Q2.C", "R7_5K1.1", "Q3.C", "Q4.C", "Q7.C",
@@ -433,7 +380,10 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "TL084");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "TL084");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_7_4");
 
@@ -446,8 +396,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "TL084");
-            nld_opamps_global.OPAMP(setup, "B", "TL084");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "TL084");
+            OPAMP(setup, "B", "TL084");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_8_4");
 
@@ -460,10 +413,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "TL084");
-            nld_opamps_global.OPAMP(setup, "B", "TL084");
-            nld_opamps_global.OPAMP(setup, "C", "TL084");
-            nld_opamps_global.OPAMP(setup, "D", "TL084");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "TL084");
+            OPAMP(setup, "B", "TL084");
+            OPAMP(setup, "C", "TL084");
+            OPAMP(setup, "D", "TL084");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
 
@@ -476,10 +432,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "LM324");
-            nld_opamps_global.OPAMP(setup, "B", "LM324");
-            nld_opamps_global.OPAMP(setup, "C", "LM324");
-            nld_opamps_global.OPAMP(setup, "D", "LM324");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "LM324");
+            OPAMP(setup, "B", "LM324");
+            OPAMP(setup, "C", "LM324");
+            OPAMP(setup, "D", "LM324");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
 
@@ -493,10 +452,13 @@ namespace mame
             netlist.nl_setup_global.NETLIST_START();
 
             // Same datasheet and mostly same characteristics as LM324
-            nld_opamps_global.OPAMP(setup, "A", "LM324");
-            nld_opamps_global.OPAMP(setup, "B", "LM324");
-            nld_opamps_global.OPAMP(setup, "C", "LM324");
-            nld_opamps_global.OPAMP(setup, "D", "LM324");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "LM324");
+            OPAMP(setup, "B", "LM324");
+            OPAMP(setup, "C", "LM324");
+            OPAMP(setup, "D", "LM324");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
 
@@ -509,8 +471,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "LM358");
-            nld_opamps_global.OPAMP(setup, "B", "LM358");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "LM358");
+            OPAMP(setup, "B", "LM358");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_8_4");
 
@@ -523,7 +488,10 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "UA741");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "UA741");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_7_4");
 
@@ -536,7 +504,10 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "UA741");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "UA741");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_8_5");
 
@@ -549,7 +520,10 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "UA741");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "UA741");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_11_6");
 
@@ -562,8 +536,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "UA741");
-            nld_opamps_global.OPAMP(setup, "B", "UA741");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "UA741");
+            OPAMP(setup, "B", "UA741");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_8_4");
 
@@ -576,8 +553,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "LM747");
-            nld_opamps_global.OPAMP(setup, "B", "LM747");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "LM747");
+            OPAMP(setup, "B", "LM747");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_13_9_4");
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
@@ -591,8 +571,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "LM747A");
-            nld_opamps_global.OPAMP(setup, "B", "LM747A");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "LM747A");
+            OPAMP(setup, "B", "LM747A");
+#endif
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_13_9_4");
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
@@ -603,13 +586,6 @@ namespace mame
 
         //- Identifier: AN6551_SIL
         //- Title: AN6551 Dual Operational Amplifier
-        //- Description: The AN6551 is a dual operational Amplifier with a
-        //-   phase compensation circuit built-in. It is suitable for application to
-        //-   various electronic circuits such as active filters and
-        //-   audio pre-amplifiers
-        //-
-        //-   Features: Phase compensation circuit, High gain, low noise,
-        //-   Output short-circuit protection, Two circuits symmetrically arranged in 9-pin SIL plastic package
         //- Pinalias: VCC,A.OUT,A-,A+,GND,B+,B-,B.OUT,VCC
         //- Package: SIL
         //- NamingConvention: Naming conventions follow Panasonic datasheet
@@ -621,8 +597,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "AN6551");
-            nld_opamps_global.OPAMP(setup, "B", "AN6551");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "AN6551");
+            OPAMP(setup, "B", "AN6551");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
 
@@ -658,11 +637,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_opamps_global.OPAMP(setup, "A", "OPAMP(TYPE=3 VLH=0.5 VLL=0.03 FPF=2k UGF=2.5M SLEW=1M RI=10M RO=100 DAB=0.0015)");
+            throw new emu_unimplemented();
+#if false
+            OPAMP(setup, "A", "OPAMP(TYPE=3 VLH=0.5 VLL=0.03 FPF=2k UGF=2.5M SLEW=1M RI=10M RO=100 DAB=0.0015)");
 
-            netlist.nld_twoterm_global.DIODE(setup, "D1", "D(IS=6e-15 N=1)");
-            netlist.nld_twoterm_global.DIODE(setup, "D2", "D(IS=6e-15 N=1)");
-            netlist.nld_fourterm_global.CCCS(setup, "CS1", 1); // Current Mirror
+            DIODE(setup, "D1", "D(IS=6e-15 N=1)");
+            DIODE(setup, "D2", "D(IS=6e-15 N=1)");
+            CCCS(setup, "CS1", 1); // Current Mirror
 
             netlist.nl_setup_global.ALIAS(setup, "VCC", "A.VCC");
             netlist.nl_setup_global.ALIAS(setup, "GND", "A.GND");
@@ -672,18 +653,19 @@ namespace mame
             netlist.nl_setup_global.NET_C(setup, "D1.A", "CS1.IN");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "D1.K");
 
-            netlist.nld_twoterm_global.CS(setup, "CS_BIAS", 10e-6);
+            CS(setup, "CS_BIAS", 10e-6);
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "CS_BIAS.P");
 
             netlist.nl_setup_global.ALIAS(setup, "MINUS", "CS1.OP");
             netlist.nl_setup_global.NET_C(setup, "CS1.ON", "A.GND");
 
-            netlist.nld_fourterm_global.CCVS(setup, "VS1", 200000); // current-to-voltage gain
+            CCVS(setup, "VS1", 200000); // current-to-voltage gain
             netlist.nl_setup_global.NET_C(setup, "CS1.OP", "VS1.IP");
             netlist.nl_setup_global.NET_C(setup, "VS1.IN", "CS_BIAS.N", "D2.A");
             netlist.nl_setup_global.NET_C(setup, "D2.K", "A.GND");
             netlist.nl_setup_global.NET_C(setup, "VS1.OP", "A.MINUS");
             netlist.nl_setup_global.NET_C(setup, "VS1.ON", "A.PLUS", "A.GND");
+#endif
 
             netlist.nl_setup_global.NETLIST_END();
         }
@@ -695,6 +677,8 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_4_4_11", netlist_opamp_layout_4_4_11);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_2_8_4", netlist_opamp_layout_2_8_4);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_2_13_9_4", netlist_opamp_layout_2_13_9_4);
@@ -713,7 +697,7 @@ namespace mame
             netlist.nl_setup_global.NET_MODEL(setup, "UA741       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=75 DAB=0.0017)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM747       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=50 DAB=0.0017)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM747A      OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=1000k SLEW=0.7M RI=6000k RO=50 DAB=0.0015)");
-            // FIXME: LM748 values are calculated based on a documented schematic of the part and may be wrong.
+            NET_MODEL("LM748       OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=800k SLEW=0.7M RI=800k RO=60 DAB=0.001)");
             // TI and Motorola Datasheets differ - below are Motorola values, SLEW is average of LH and HL
             netlist.nl_setup_global.NET_MODEL(setup, "LM3900      OPAMP(TYPE=3 VLH=1.0 VLL=0.03 FPF=2k UGF=4M SLEW=10M RI=10M RO=2k DAB=0.0015)");
 
@@ -740,6 +724,7 @@ namespace mame
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747A_DIP", netlist_LM747A_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM3900", netlist_LM3900);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "AN6551_SIL", netlist_AN6551_SIL);
+#endif
 
             netlist.nl_setup_global.NETLIST_END();
         }

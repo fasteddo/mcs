@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;
-using stream_sample_t = System.Int32;
 using s32 = System.Int32;
+using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -27,7 +27,7 @@ namespace mame
         {
             public device_sound_interface_msm5205(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((msm5205_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((msm5205_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -177,7 +177,7 @@ namespace mame
             compute_tables();
 
             /* stream system initialize */
-            m_stream = machine().sound().stream_alloc(this, 0, 1, (int)clock());
+            m_stream = m_disound.stream_alloc(0, 1, clock());
             m_vck_timer = timer_alloc(TIMER_VCK);
             m_capture_timer = timer_alloc(TIMER_ADPCM_CAPTURE);
 
@@ -206,7 +206,7 @@ namespace mame
 
         protected override void device_clock_changed()
         {
-            m_stream.set_sample_rate((int)clock());
+            m_stream.set_sample_rate(clock());
             int prescaler = get_prescaler();
             if (prescaler != 0)
             {
@@ -286,25 +286,21 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
-            Pointer<stream_sample_t> buffer = new Pointer<stream_sample_t>(outputs[0]);
+            var output = outputs[0];
 
             /* if this voice is active */
             if (m_signal != 0)
             {
+                stream_buffer_sample_t sample_scale = (stream_buffer_sample_t)(1.0 / (double)(1 << 12));
                 int dac_mask = (m_dac_bits >= 12) ? 0 : (1 << (12 - m_dac_bits)) - 1;
-                short val = (short)((m_signal & ~dac_mask) * 16); // 10 bit DAC
-                while (samples != 0)
-                {
-                    buffer[0] = val;  //*buffer++ = val;
-                    buffer++;
-                    samples--;
-                }
+                stream_buffer_sample_t val = (stream_buffer_sample_t)(m_signal & ~dac_mask) * sample_scale;
+                output.fill(val);
             }
             else
             {
-                memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
+                output.fill(0);
             }
         }
 
@@ -350,4 +346,7 @@ namespace mame
                 return m_s2 ? 48 : 96;
         }
     }
+
+
+    //class msm6585_device : public msm5205_device
 }

@@ -5,23 +5,25 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 using s8 = System.SByte;
 using s16 = System.Int16;
 using s32 = System.Int32;
+using stream_sample_t = System.Int32;  //typedef s32 stream_sample_t;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
-using System.Reflection;
+
 
 namespace mame
 {
     // pen_t is used to represent pixel values in bitmaps
-    //typedef UInt32 pen_t;
+    //typedef u32 pen_t;
 
     // stream_sample_t is used to represent a single sample in a sound stream
-    //typedef INT32 stream_sample_t;
+    //typedef s32 stream_sample_t;
 
 
     // constants for expression endianness

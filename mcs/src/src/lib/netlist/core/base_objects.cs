@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nldelegate = System.Action;  //using nldelegate = plib::pmfp<void>;

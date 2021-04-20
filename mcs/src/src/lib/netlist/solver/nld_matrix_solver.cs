@@ -109,7 +109,7 @@ namespace mame.netlist
             public nl_fptype m_vntol_() { return nlconst.magic(1e-7); }
             public nl_fptype m_accuracy_() { return nlconst.magic(1e-7); }
             public size_t m_nr_loops_() { return 250; }
-            public size_t m_gs_loops_() { return 9; }
+            public size_t m_gs_loops_() { return 50; }
 
             // general parameters
             public nl_fptype m_gmin_() { return nlconst.magic(1e-9); }
@@ -387,7 +387,7 @@ namespace mame.netlist
 
             public netlist_time solve(netlist_time_ext now, string source)
             {
-                netlist_time_ext delta = now - m_last_step.op;
+                netlist_time delta = now - m_last_step.op;
 
                 //throw new emu_unimplemented();
 #if false
@@ -398,7 +398,7 @@ namespace mame.netlist
 
                 // We are already up to date. Avoid oscillations.
                 // FIXME: Make this a parameter!
-                if (delta < netlist_time_ext.quantum())
+                if (delta < netlist_time.quantum())
                 {
                     //printf("solve return %s at %f\n", source, now.as_double());
                     return timestep_device_count() > 0 ? netlist_time.from_fp(m_params.m_min_timestep) : netlist_time.zero();
@@ -701,7 +701,7 @@ namespace mame.netlist
                     resched = solve_nr_base();
                     // update timestep calculation
                     next_time_step = compute_next_timestep(m_params.m_min_ts_ts.op(), m_params.m_min_ts_ts.op(), m_params.m_max_timestep);
-                    delta -= netlist_time_ext.from_fp(m_params.m_min_ts_ts.op());
+                    delta -= netlist_time.from_fp(m_params.m_min_ts_ts.op());
                 }
 
                 // try remaining time using compute_next_timestep

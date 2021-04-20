@@ -5,22 +5,40 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using element_map = mame.std.unordered_map<string, mame.layout_element>;
-using entry_vector = mame.std.vector<mame.emu.render.detail.layout_environment.entry>;
-using environment = mame.emu.render.detail.layout_environment;
-using group_map = mame.std.unordered_map<string, mame.layout_group>;
 using ioport_value = System.UInt32;
-using item_list = mame.std.list<mame.layout_view.item>;
-using make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;
+using layout_element_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
+using layout_element_make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;  //typedef std::map<std::string, make_component_func> make_component_map;
+using layout_environment_entry_vector = mame.std.vector<mame.emu.render.detail.layout_environment.entry>;  //using entry_vector = std::vector<entry>;
+using layout_file_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
+using layout_file_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
+using layout_file_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
+using layout_file_view_list = mame.std.list<mame.layout_view>;  //using view_list = std::list<layout_view>;
+using layout_group_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
+using layout_group_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
+using layout_view_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
+using layout_view_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
+using layout_view_item_list = mame.std.list<mame.layout_view.item>;  //using item_list = std::list<item>;
+using layout_view_view_environment = mame.emu.render.detail.view_environment;  //using view_environment = emu::render::detail::view_environment;
 using s64 = System.Int64;
+using u8 = System.Byte;
 using u32 = System.UInt32;
-using view_list = mame.std.list<mame.layout_view>;
+using unsigned = System.UInt32;
 
 
 namespace mame
 {
     public static class rendlay_global
     {
+        public const int LOG_GROUP_BOUNDS_RESOLUTION = 1 << 1;
+        public const int LOG_INTERACTIVE_ITEMS       = 1 << 2;
+
+        ////#define VERBOSE (LOG_GROUP_BOUNDS_RESOLUTION | LOG_INTERACTIVE_ITEMS)
+        public const int VERBOSE = 0;
+        //#define LOG_OUTPUT_FUNC osd_printf_verbose
+        //#include "logmacro.h"
+        public static void LOGMASKED(int mask, string format, params object [] args) { if ((VERBOSE & mask) != 0) global_object.osd_printf_verbose(format, args); }
+
+
         public const int LAYOUT_VERSION = 2;
 
 
@@ -51,11 +69,12 @@ namespace mame
         {
             return new render_color() { a = x.a * y.a, r = x.r * y.r, g = x.g * y.g, b = x.b * y.b };
         }
-
-
-        public class layout_syntax_error : ArgumentException { public layout_syntax_error(string format, params object [] args) : base(string.Format(format, args)) { } }
-        public class layout_reference_error : ArgumentOutOfRangeException { public layout_reference_error(string format, params object [] args) : base(string.Format(format, args)) { } }
     }
+
+
+    class layout_syntax_error : ArgumentException { public layout_syntax_error(string format, params object [] args) : base(string.Format(format, args)) { } }
+    class layout_reference_error : ArgumentOutOfRangeException { public layout_reference_error(string format, params object [] args) : base(string.Format(format, args)) { } }
+
 
 
     namespace emu.render.detail
@@ -337,11 +356,49 @@ namespace mame
             }
 
 
+            int parse_int(string str, int defvalue)  //int parse_int(string begin, string end, int defvalue);
+            {
+                //std::istringstream stream;
+                //stream.imbue(f_portable_locale);
+                int result;
+                if (str.Length >= 1 && str[0] == '$')  //if (begin[0] == '$')
+                {
+                    //stream.str(std::string(begin + 1, end));
+                    //unsigned uvalue;
+                    //stream >> std::hex >> uvalue;
+                    //result = int(uvalue);
+                    result = Convert.ToInt32(str);
+                }
+                else if (str.Length >= 2 && ((str[0] == '0') && ((str[1] == 'x') || (str[1] == 'X'))))  //else if ((begin[0] == '0') && ((begin[1] == 'x') || (begin[1] == 'X')))
+                {
+                    //stream.str(std::string(begin + 2, end));
+                    //unsigned uvalue;
+                    //stream >> std::hex >> uvalue;
+                    //result = int(uvalue);
+                    result = Convert.ToInt32(str);
+                }
+                else if (str.Length >= 1 && str[0] == '#')  //else if (begin[0] == '#')
+                {
+                    //stream.str(std::string(begin + 1, end));
+                    //stream >> result;
+                    result = Convert.ToInt32(str);
+                }
+                else
+                {
+                    //stream.str(std::string(begin, end));
+                    //stream >> result;
+                    result = Convert.ToInt32(str);
+                }
+
+                return !string.IsNullOrEmpty(str) ? result : defvalue;  //return stream ? result : defvalue;
+            }
+
+
             string parameter_name(util.xml.data_node node)
             {
                 string attrib = node.get_attribute_string("name", null);
                 if (attrib == null)
-                    throw new rendlay_global.layout_syntax_error("parameter lacks name attribute");
+                    throw new layout_syntax_error("parameter lacks name attribute");
                 var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
                 return expanded;  //return std::string(expanded.first, expanded.second);
             }
@@ -351,7 +408,7 @@ namespace mame
             static bool is_variable_char(char ch) { return (('0' <= ch) && ('9' >= ch)) || (('A' <= ch) && ('Z' >= ch)) || (('a' <= ch) && ('z' >= ch)) || ('_' == ch); }
 
 
-            entry_vector m_entries = new entry_vector();
+            layout_environment_entry_vector m_entries = new layout_environment_entry_vector();
             string m_buffer;  //util::ovectorstream m_buffer;
             device_t m_device;
             layout_environment m_next = null;
@@ -377,10 +434,10 @@ namespace mame
                 // do basic validation
                 string name = parameter_name(node);
                 if (node.has_attribute("start") || node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
-                    throw new rendlay_global.layout_syntax_error("start/increment/lshift/rshift attributes are only allowed for repeat parameters");
+                    throw new layout_syntax_error("start/increment/lshift/rshift attributes are only allowed for repeat parameters");
                 string value = node.get_attribute_string("value", null);
                 if (value == null)
-                    throw new rendlay_global.layout_syntax_error("parameter lacks value attribute");
+                    throw new layout_syntax_error("parameter lacks value attribute");
 
                 // expand value and stash
                 var expanded = expand(value);  //std::pair<char const *, char const *> const expanded(expand(value));
@@ -397,12 +454,12 @@ namespace mame
                 {
                     // simple validity checks
                     if (node.has_attribute("value"))
-                        throw new rendlay_global.layout_syntax_error("start attribute may not be used in combination with value attribute");
+                        throw new layout_syntax_error("start attribute may not be used in combination with value attribute");
 
                     int lshift = node.has_attribute("lshift") ? get_attribute_int(node, "lshift", -1) : 0;
                     int rshift = node.has_attribute("rshift") ? get_attribute_int(node, "rshift", -1) : 0;
                     if ((0 > lshift) || (0 > rshift))
-                        throw new rendlay_global.layout_syntax_error("lshift/rshift attributes must be non-negative integers");
+                        throw new layout_syntax_error("lshift/rshift attributes must be non-negative integers");
 
                     // increment is more complex - it may be an integer or a floating-point number
                     s64 intincrement = 0;
@@ -440,7 +497,7 @@ namespace mame
 
                         // reject obviously bad stuff
                         if (!success)
-                            throw new rendlay_global.layout_syntax_error("increment attribute must be a number");
+                            throw new layout_syntax_error("increment attribute must be a number");
                     }
 
                     // don't allow generator parameters to be redefined
@@ -462,7 +519,7 @@ namespace mame
                         }
 
                         if (pos != m_entries.Count && m_entries[pos].name() == name)
-                            throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+                            throw new layout_syntax_error("generator parameters must be defined exactly once per scope");
 
                         var expanded = expand(start);  //std::pair<char const *, char const *> const expanded(expand(start));
                         if (floatincrement != 0)
@@ -473,13 +530,13 @@ namespace mame
                 }
                 else if (node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
                 {
-                    throw new rendlay_global.layout_syntax_error("increment/lshift/rshift attributes require start attribute");
+                    throw new layout_syntax_error("increment/lshift/rshift attributes require start attribute");
                 }
                 else
                 {
                     string value = node.get_attribute_string("value", null);
                     if (value == null)
-                        throw new rendlay_global.layout_syntax_error("parameter lacks value attribute");
+                        throw new layout_syntax_error("parameter lacks value attribute");
                     var expanded = expand(value);  //std::pair<char const *, char const *> const expanded(expand(value));
                     //entry_vector::iterator const pos(
                     //        std::lower_bound(
@@ -503,7 +560,7 @@ namespace mame
                     if (pos == m_entries.Count && m_entries[pos].name() != name)
                         m_entries.emplace(pos, new entry(name, expanded));
                     else if (m_entries[pos].is_generator())
-                        throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+                        throw new layout_syntax_error("generator parameters must be defined exactly once per scope");
                     else
                         m_entries[pos].set(expanded);
                 }
@@ -531,46 +588,7 @@ namespace mame
 
                 // similar to what XML nodes do
                 var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
-                //std::istringstream stream;
-                //stream.imbue(f_portable_locale);
-                int result = 0;
-                bool success = true;
-                if (expanded[0] == '$')
-                {
-                    //stream.str(new string(expanded.first + 1, expanded.second));
-                    //unsigned uvalue;
-                    //stream >> std.hex >> uvalue;
-                    //result = (int)(uvalue);
-                    string stream = expanded.Substring(1);
-                    try { result = Convert.ToInt32(stream, 16); }
-                    catch (Exception) { success = false; }
-                }
-                else if ((expanded[0] == '0') && (expanded.Length > 1 && ((expanded[1] == 'x') || (expanded[1] == 'X'))))
-                {
-                    //stream.str(new string(expanded.first + 2, expanded.second));
-                    //unsigned uvalue;
-                    //stream >> std.hex >> uvalue;
-                    //result = (int)(uvalue);
-                    string stream = expanded.Substring(2);
-                    try { result = Convert.ToInt32(stream, 16); }
-                    catch (Exception) { success = false; }
-                }
-                else if (expanded[0] == '#')
-                {
-                    //stream.str(new string(expanded.first + 1, expanded.second));
-                    //stream >> result;
-                    string stream = expanded.Substring(1);
-                    success = int.TryParse(stream, out result);
-                }
-                else
-                {
-                    //stream.str(new string(expanded.first, expanded.second));
-                    //stream >> result;
-                    string stream = expanded;
-                    success = int.TryParse(stream, out result);
-                }
-
-                return success ? result : defvalue;
+                return parse_int(expanded, defvalue);
             }
 
 
@@ -589,6 +607,24 @@ namespace mame
                 string stream = expanded;
                 float result;
                 return float.TryParse(stream, out result) ? result : defvalue;
+            }
+
+
+            public bool get_attribute_bool(util.xml.data_node node, string name, bool defvalue)
+            {
+                string attrib = node.get_attribute_string(name, null);
+                if (string.IsNullOrEmpty(attrib))
+                    return defvalue;
+
+                // first try yes/no strings
+                var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
+                if (std.strcmp("yes", expanded) == 0 || std.strcmp("true", expanded) == 0)
+                    return true;
+                if (std.strcmp("no", expanded) == 0 || std.strcmp("false", expanded) == 0)
+                    return false;
+
+                // fall back to integer parsing
+                return parse_int(expanded, defvalue ? 1 : 0) != 0;  //return parse_int(expanded.first, expanded.second, defvalue ? 1 : 0) != 0;
             }
 
 
@@ -625,12 +661,12 @@ namespace mame
                     }
                     else
                     {
-                        throw new rendlay_global.layout_syntax_error("bounds element requires either left or x attribute");
+                        throw new layout_syntax_error("bounds element requires either left or x attribute");
                     }
 
                     // check for errors
                     if ((result.x0 > result.x1) || (result.y0 > result.y1))
-                        throw new rendlay_global.layout_syntax_error(string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
+                        throw new layout_syntax_error(string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
                 }
             }
 
@@ -652,7 +688,7 @@ namespace mame
 
                 // check for errors
                 if ((0.0F > new [] { result.r, result.g, result.b, result.a }.Min()) || (1.0F < new [] { result.r, result.g, result.b, result.a }.Max()))
-                    throw new rendlay_global.layout_syntax_error(string_format("illegal RGBA color {0},{1},{2},{3}", result.r, result.g, result.b, result.a));
+                    throw new layout_syntax_error(string_format("illegal RGBA color {0},{1},{2},{3}", result.r, result.g, result.b, result.a));
 
                 return result;
             }
@@ -673,17 +709,56 @@ namespace mame
                     case 90:    result = (int)ROT90;     break;
                     case 180:   result = (int)ROT180;    break;
                     case 270:   result = (int)ROT270;    break;
-                    default:    throw new rendlay_global.layout_syntax_error(string_format("invalid rotate attribute {0}", rotate));
+                    default:    throw new layout_syntax_error(string_format("invalid rotate attribute {0}", rotate));
                 }
-                if (std.strcmp("yes", get_attribute_string(node, "swapxy", "no")) == 0)
+
+                if (get_attribute_bool(node, "swapxy", false))
                     result ^= (int)ORIENTATION_SWAP_XY;
-                if (std.strcmp("yes", get_attribute_string(node, "flipx", "no")) == 0)
+                if (get_attribute_bool(node, "flipx", false))
                     result ^= (int)ORIENTATION_FLIP_X;
-                if (std.strcmp("yes", get_attribute_string(node, "flipy", "no")) == 0)
+                if (get_attribute_bool(node, "flipy", false))
                     result ^= (int)ORIENTATION_FLIP_Y;
 
                 return result;
             }
+        }
+
+
+        public class view_environment : layout_environment
+        {
+            view_environment m_next_view = null;
+            string m_name;
+            u32 m_visibility_mask = 0U;
+            unsigned m_next_visibility_bit = 0U;
+
+
+            public view_environment(layout_environment next, string name)
+                : base(next)
+            {
+                m_name = name;
+            }
+
+            public view_environment(view_environment next, bool visibility)
+                : base(next)
+            {
+                m_next_view = next;
+                m_name = next.m_name;
+                m_visibility_mask = next.m_visibility_mask | ((u32)(visibility ? 1 : 0) << (int)next.m_next_visibility_bit);
+                m_next_visibility_bit = next.m_next_visibility_bit + (visibility ? 1U : 0);
+
+
+                if (32U < m_next_visibility_bit)
+                    throw new layout_syntax_error(string_format("view '{0}' contains too many visibility toggles", m_name));
+            }
+
+            //~view_environment()
+            //{
+            //    if (m_next_view)
+            //        m_next_view->m_next_visibility_bit = m_next_visibility_bit;
+            //}
+
+
+            public u32 visibility_mask() { return m_visibility_mask; }
         }
     } // namespace emu::render::detail
 
@@ -696,150 +771,10 @@ namespace mame
             //-------------------------------------------------
             //  component - constructor
             //-------------------------------------------------
-            public component(environment env, util.xml.data_node compnode, string dirname)
+            public component(layout_element_environment env, util.xml.data_node compnode, string dirname)
             {
-                m_state = 0;
-
-
                 throw new emu_unimplemented();
 #if false
-                for (int i = 0; i < MAX_BITMAPS; i++)
-                    m_hasalpha[i] = false;
-
-
-                // fetch common data
-                m_state = xml_get_attribute_int_with_subst(machine, compnode, "state", -1);
-                parse_bounds(machine, xml_get_sibling(compnode.child, "bounds"), m_bounds);
-                parse_color(machine, xml_get_sibling(compnode.child, "color"), m_color);
-
-                // image nodes
-                if (strcmp(compnode.name, "image") == 0)
-                {
-                    m_type = CTYPE_IMAGE;
-                    if (dirname != NULL)
-                        m_dirname = dirname;
-                    m_imagefile[0] = xml_get_attribute_string_with_subst(machine, compnode, "file", "");
-                    m_alphafile[0] = xml_get_attribute_string_with_subst(machine, compnode, "alphafile", "");
-                    m_file[0].reset(global_alloc(emu_file(machine.options().art_path(), OPEN_FLAG_READ)));
-                }
-
-                // text nodes
-                else if (strcmp(compnode.name, "text") == 0)
-                {
-                    m_type = CTYPE_TEXT;
-                    m_string = xml_get_attribute_string_with_subst(machine, compnode, "string", "");
-                    m_textalign = xml_get_attribute_int_with_subst(machine, compnode, "align", 0);
-                }
-
-                // dotmatrix nodes
-                else if (strcmp(compnode.name, "dotmatrix") == 0)
-                {
-                    m_type = CTYPE_DOTMATRIX;
-                }
-                else if (strcmp(compnode.name, "dotmatrix5dot") == 0)
-                {
-                    m_type = CTYPE_DOTMATRIX5DOT;
-                }
-                else if (strcmp(compnode.name, "dotmatrixdot") == 0)
-                {
-                    m_type = CTYPE_DOTMATRIXDOT;
-                }
-
-                // simplecounter nodes
-                else if (strcmp(compnode.name, "simplecounter") == 0)
-                {
-                    m_type = CTYPE_SIMPLECOUNTER;
-                    m_digits = xml_get_attribute_int_with_subst(machine, compnode, "digits", 2);
-                    m_textalign = xml_get_attribute_int_with_subst(machine, compnode, "align", 0);
-                }
-
-                // fruit machine reels
-                else if (strcmp(compnode.name, "reel") == 0)
-                {
-                    m_type = CTYPE_REEL;
-
-                    astring symbollist = xml_get_attribute_string_with_subst(machine, compnode, "symbollist", "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15");
-
-                    // split out position names from string and figure out our number of symbols
-                    int location;
-                    m_numstops = 0;
-                    location=symbollist.find(0,",");
-                    while (location!=-1)
-                    {
-                        m_stopnames[m_numstops] = symbollist;
-                        m_stopnames[m_numstops].substr(0, location);
-                        symbollist.substr(location+1, symbollist.len()-(location-1));
-                        m_numstops++;
-                        location=symbollist.find(0,",");
-                    }
-                    m_stopnames[m_numstops++] = symbollist;
-
-                    // careful, dirname is NULL if we're coming from internal layout, and our string assignment doesn't like that
-                    if (dirname != NULL)
-                        m_dirname = dirname;
-
-                    for (int i=0;i<m_numstops;i++)
-                    {
-                        location=m_stopnames[i].find(0,":");
-                        if (location!=-1)
-                        {
-                            m_imagefile[i] = m_stopnames[i];
-                            m_stopnames[i].substr(0, location);
-                            m_imagefile[i].substr(location+1, m_imagefile[i].len()-(location-1));
-
-                            //m_alphafile[i] =
-                            m_file[i].reset(global_alloc(emu_file(machine.options().art_path(), OPEN_FLAG_READ)));
-                        }
-                        else
-                        {
-                            //m_imagefile[i] = 0;
-                            //m_alphafile[i] = 0;
-                            m_file[i].reset();
-                        }
-                    }
-
-                    m_stateoffset = xml_get_attribute_int_with_subst(machine, compnode, "stateoffset", 0);
-                    m_numsymbolsvisible = xml_get_attribute_int_with_subst(machine, compnode, "numsymbolsvisible", 3);
-                    m_reelreversed = xml_get_attribute_int_with_subst(machine, compnode, "reelreversed", 0);
-                    m_beltreel = xml_get_attribute_int_with_subst(machine, compnode, "beltreel", 0);
-
-                }
-
-                // led7seg nodes
-                else if (strcmp(compnode.name, "led7seg") == 0)
-                    m_type = CTYPE_LED7SEG;
-
-                // led8seg_gts1 nodes
-                else if (strcmp(compnode.name, "led8seg_gts1") == 0)
-                    m_type = CTYPE_LED8SEG_GTS1;
-
-                // led14seg nodes
-                else if (strcmp(compnode.name, "led14seg") == 0)
-                    m_type = CTYPE_LED14SEG;
-
-                // led14segsc nodes
-                else if (strcmp(compnode.name, "led14segsc") == 0)
-                    m_type = CTYPE_LED14SEGSC;
-
-                // led16seg nodes
-                else if (strcmp(compnode.name, "led16seg") == 0)
-                    m_type = CTYPE_LED16SEG;
-
-                // led16segsc nodes
-                else if (strcmp(compnode.name, "led16segsc") == 0)
-                    m_type = CTYPE_LED16SEGSC;
-
-                // rect nodes
-                else if (strcmp(compnode.name, "rect") == 0)
-                    m_type = CTYPE_RECT;
-
-                // disk nodes
-                else if (strcmp(compnode.name, "disk") == 0)
-                    m_type = CTYPE_DISK;
-
-                // error otherwise
-                else
-                    throw emu_fatalerror("Unknown element component: %s", compnode.name);
 #endif
             }
 
@@ -847,27 +782,54 @@ namespace mame
             // helpers
 
             //-------------------------------------------------
+            //  statewrap - get state wraparound requirements
+            //-------------------------------------------------
+            //std::pair<int, bool> layout_element::component::statewrap() const
+
+
+            //-------------------------------------------------
+            //  overall_bounds - maximum bounds for all states
+            //-------------------------------------------------
+            //render_bounds layout_element::component::overall_bounds() const
+
+
+            //-------------------------------------------------
+            //  bounds - bounds for a given state
+            //-------------------------------------------------
+            //render_bounds layout_element::component::bounds(int state) const
+
+
+            //-------------------------------------------------
+            //  color - color for a given state
+            //-------------------------------------------------
+            //render_color layout_element::component::color(int state) const
+
+
+            //-------------------------------------------------
             //  normalize_bounds - normalize component bounds
             //-------------------------------------------------
             public void normalize_bounds(float xoffs, float yoffs, float xscale, float yscale)
             {
-                m_bounds.x0 = (m_bounds.x0 - xoffs) * xscale;
-                m_bounds.x1 = (m_bounds.x1 - xoffs) * xscale;
-                m_bounds.y0 = (m_bounds.y0 - yoffs) * yscale;
-                m_bounds.y1 = (m_bounds.y1 - yoffs) * yscale;
+                throw new emu_unimplemented();
             }
 
 
             //-------------------------------------------------
             //  draw_text - draw text in the specified color
             //-------------------------------------------------
-            void draw_text(render_font font, bitmap_argb32 dest, rectangle bounds, string str, int align)
+            void draw_text(
+                    render_font font,
+                    bitmap_argb32 dest,
+                    rectangle bounds,
+                    string str,
+                    int align,
+                    render_color color)
             {
                 // compute premultiplied colors
-                UInt32 r = (UInt32)(m_color.r * 255.0f);
-                UInt32 g = (UInt32)(m_color.g * 255.0f);
-                UInt32 b = (UInt32)(m_color.b * 255.0f);
-                UInt32 a = (UInt32)(m_color.a * 255.0f);
+                u32 r = (u32)(color.r * 255.0f);
+                u32 g = (u32)(color.g * 255.0f);
+                u32 b = (u32)(color.b * 255.0f);
+                u32 a = (u32)(color.a * 255.0f);
 
                 // get the width of the string
                 float aspect = 1.0f;
@@ -1172,25 +1134,18 @@ namespace mame
             // internal state
             //bitmap_argb32       m_bitmap;                   // source bitmap for images
             string m_dirname;                  // directory name of image file (for lazy loading)
-            emu_file m_file;               // file object for reading image/alpha files
             string m_imagefile;                // name of the image file (for lazy loading)
             string m_alphafile;                // name of the alpha file (for lazy loading)
-            bool m_hasalpha;                 // is there any alpha component present?
+            bool m_hasalpha = false;         // is there any alpha component present?
 
 
             // construction/destruction
-            public image_component(environment env, util.xml.data_node compnode, string dirname)
+            public image_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
-                m_hasalpha = false;
-
-
-                if (dirname != null)
-                    m_dirname = dirname;
-
+                m_dirname = !string.IsNullOrEmpty(dirname) ? dirname : "";
                 m_imagefile = env.get_attribute_string(compnode, "file", "");
                 m_alphafile = env.get_attribute_string(compnode, "alphafile", "");
-                m_file = new emu_file(env.machine().options().art_path(), OPEN_FLAG_READ);
             }
 
 
@@ -1202,7 +1157,7 @@ namespace mame
 
 
             // internal helpers
-            //void load_bitmap();
+            //void load_bitmap(running_machine &machine)
         }
 
 
@@ -1210,7 +1165,7 @@ namespace mame
         class rect_component : component
         {
             // construction/destruction
-            rect_component(environment env, util.xml.data_node compnode, string dirname)
+            rect_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
             }
@@ -1228,7 +1183,7 @@ namespace mame
         class disk_component : component
         {
             // construction/destruction
-            disk_component(environment env, util.xml.data_node compnode, string dirname)
+            disk_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
             }
@@ -1251,7 +1206,7 @@ namespace mame
 
 
             // construction/destruction
-            text_component(environment env, util.xml.data_node compnode, string dirname)
+            text_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
                 m_string = env.get_attribute_string(compnode, "string", "");
@@ -1271,7 +1226,7 @@ namespace mame
         class led7seg_component : component
         {
             // construction/destruction
-            led7seg_component(environment env, util.xml.data_node compnode, string dirname)
+            led7seg_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
             }
@@ -1292,7 +1247,7 @@ namespace mame
         class led8seg_gts1_component : component
         {
             // construction/destruction
-            led8seg_gts1_component(environment env, util.xml.data_node compnode, string dirname)
+            led8seg_gts1_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
             }
@@ -1313,7 +1268,7 @@ namespace mame
         class led14seg_component : component
         {
             // construction/destruction
-            led14seg_component(environment env, util.xml.data_node compnode, string dirname)
+            led14seg_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
             }
@@ -1334,7 +1289,7 @@ namespace mame
         class led16seg_component : component
         {
             // construction/destruction
-            led16seg_component(environment env, util.xml.data_node compnode, string dirname)
+            led16seg_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
             }
@@ -1355,7 +1310,7 @@ namespace mame
         class led14segsc_component : component
         {
             // construction/destruction
-            led14segsc_component(environment env, util.xml.data_node compnode, string dirname)
+            led14segsc_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
             }
@@ -1376,7 +1331,7 @@ namespace mame
         class led16segsc_component : component
         {
             // construction/destruction
-            led16segsc_component(environment env, util.xml.data_node compnode, string dirname)
+            led16segsc_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
             }
@@ -1401,7 +1356,7 @@ namespace mame
 
 
             // construction/destruction
-            public dotmatrix_component(int dots, environment env, util.xml.data_node compnode, string dirname)
+            public dotmatrix_component(int dots, layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
                 m_dots = dots;
@@ -1429,7 +1384,7 @@ namespace mame
 
 
             // construction/destruction
-            simplecounter_component(environment env, util.xml.data_node compnode, string dirname)
+            simplecounter_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
                 m_digits = env.get_attribute_int(compnode, "digits", 2);
@@ -1472,7 +1427,7 @@ namespace mame
 
 
             // construction/destruction
-            reel_component(environment env, util.xml.data_node compnode, string dirname)
+            reel_component(layout_element_environment env, util.xml.data_node compnode, string dirname)
                 : base(env, compnode, dirname)
             {
                 for (int i = 0; i < m_hasalpha.Length; i++)
@@ -1541,7 +1496,7 @@ namespace mame
         }
 
 
-        make_component_map s_make_component = new make_component_map()
+        layout_element_make_component_map s_make_component = new layout_element_make_component_map()
         {
             { "image",         make_component<image_component>         },
             { "text",          make_component<text_component>          },
@@ -1565,15 +1520,13 @@ namespace mame
         //-------------------------------------------------
         //  layout_element - constructor
         //-------------------------------------------------
-        public layout_element(environment env, util.xml.data_node elemnode, string dirname)
+        public layout_element(layout_element_environment env, util.xml.data_node elemnode, string dirname)
         {
             m_machine = env.machine();
-            m_defstate = 0;
-            m_maxstate = 0;
-
-
-            // get the default state
             m_defstate = env.get_attribute_int(elemnode, "defstate", -1);
+            m_statemask = 0;
+            m_foldhigh = false;
+
 
             // parse components in order
             bool first = true;
@@ -1582,7 +1535,7 @@ namespace mame
             {
                 var make_func = s_make_component.find(compnode.get_name());
                 if (make_func == null)
-                    throw new rendlay_global.layout_syntax_error(string_format("unknown element component {0}", compnode.get_name()));
+                    throw new layout_syntax_error(string_format("unknown element component {0}", compnode.get_name()));
 
                 // insert the new component into the list
                 //m_complist.emplace(m_complist.end(), make_func->second(env, compnode, dirname));
@@ -1591,13 +1544,16 @@ namespace mame
 
                 // accumulate bounds
                 if (first)
-                    bounds = newcomp.bounds();
+                    bounds = newcomp.overall_bounds();
                 else
-                    rendutil_global.union_render_bounds(bounds, newcomp.bounds());
+                    rendutil_global.union_render_bounds(bounds, newcomp.overall_bounds());
+
                 first = false;
 
                 // determine the maximum state
-                m_maxstate = std.max(m_maxstate, newcomp.maxstate());
+                std.pair<int, bool> wrap = newcomp.statewrap();
+                m_statemask |= wrap.first;
+                m_foldhigh = m_foldhigh || wrap.second;
             }
 
             if (!m_complist.empty())
@@ -1614,7 +1570,7 @@ namespace mame
             }
 
             // allocate an array of element textures for the states
-            m_elemtex.resize(m_maxstate + 1);
+            m_elemtex.resize((m_statemask + 1) << (m_foldhigh ? 1 : 0));
         }
 
 
@@ -1625,7 +1581,13 @@ namespace mame
         //-------------------------------------------------
         public render_texture state_texture(int state)
         {
-            //assert(state <= m_maxstate);
+            if (m_foldhigh && (state & ~m_statemask) != 0)
+                state = (state & m_statemask) | (((m_statemask << 1) | 1) & ~m_statemask);
+            else
+                state &= m_statemask;
+
+            assert(m_elemtex.size() > state);
+
             if (m_elemtex[state].m_texture == null)
             {
                 m_elemtex[state].m_element = this;
@@ -1648,17 +1610,18 @@ namespace mame
             texture elemtex = (texture)param;
 
             // iterate over components that are part of the current state
-            foreach (component curcomp in elemtex.m_element.m_complist)
+            foreach (var curcomp in elemtex.m_element.m_complist)
             {
-                if (curcomp.m_state == -1 || curcomp.m_state == elemtex.m_state)
+                if ((elemtex.m_state & curcomp.statemask()) == curcomp.stateval())
                 {
                     // get the local scaled bounds
-                    rectangle bounds;
-                    bounds.min_x = (int)rendutil_global.render_round_nearest(curcomp.bounds().x0 * dest.width());
-                    bounds.min_y = (int)rendutil_global.render_round_nearest(curcomp.bounds().y0 * dest.height());
-                    bounds.max_x = (int)rendutil_global.render_round_nearest(curcomp.bounds().x1 * dest.width());
-                    bounds.max_y = (int)rendutil_global.render_round_nearest(curcomp.bounds().y1 * dest.height());
-                    bounds.intersection(dest.cliprect());
+                    render_bounds compbounds = curcomp.bounds(elemtex.m_state);
+                    rectangle bounds = new rectangle(
+                            (int)rendutil_global.render_round_nearest(compbounds.x0 * dest.width()),
+                            (int)rendutil_global.render_round_nearest(compbounds.x1 * dest.width()),
+                            (int)rendutil_global.render_round_nearest(compbounds.y0 * dest.height()),
+                            (int)rendutil_global.render_round_nearest(compbounds.y1 * dest.height()));
+                    bounds.intersection(dest.cliprect());  //bounds &= dest.cliprect();
 
                     // based on the component type, add to the texture
                     curcomp.draw(elemtex.m_element.machine(), dest, bounds, elemtex.m_state);
@@ -1671,7 +1634,7 @@ namespace mame
         //  make_component - create component of given type
         //-------------------------------------------------
         //template <typename T>
-        static component make_component<T>(environment env, util.xml.data_node compnode, string dirname) where T : component
+        static component make_component<T>(layout_element_environment env, util.xml.data_node compnode, string dirname) where T : component
         {
             // return std::make_unique<T>(env, compnode, dirname);
             if (typeof(T) is image_component)
@@ -1682,14 +1645,14 @@ namespace mame
 
 
         //template <int D>
-        static component make_dotmatrix_component(int D, environment env, util.xml.data_node compnode, string dirname)
+        static component make_dotmatrix_component(int D, layout_element_environment env, util.xml.data_node compnode, string dirname)
         {
             return new dotmatrix_component(D, env, compnode, dirname);  //return std::make_unique<dotmatrix_component>(D, env, compnode, dirname);
         }
 
-        static component make_dotmatrix_component_1(environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(1, env, compnode, dirname); }
-        static component make_dotmatrix_component_5(environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(5, env, compnode, dirname); }
-        static component make_dotmatrix_component_8(environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(8, env, compnode, dirname); }
+        static component make_dotmatrix_component_1(layout_element_environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(1, env, compnode, dirname); }
+        static component make_dotmatrix_component_5(layout_element_environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(5, env, compnode, dirname); }
+        static component make_dotmatrix_component_8(layout_element_environment env, util.xml.data_node compnode, string dirname) { return make_dotmatrix_component(8, env, compnode, dirname); }
     }
 
 
@@ -1783,7 +1746,7 @@ namespace mame
         }
 
 
-        public void resolve_bounds(environment env, group_map groupmap)
+        public void resolve_bounds(layout_group_environment env, layout_group_group_map groupmap)
         {
             if (!m_bounds_resolved)
             {
@@ -1793,7 +1756,7 @@ namespace mame
         }
 
 
-        void resolve_bounds(environment env, group_map groupmap, std.vector<layout_group> seen)
+        void resolve_bounds(layout_group_environment env, layout_group_group_map groupmap, std.vector<layout_group> seen)
         {
             if (seen.Contains(this))  //if (seen.end() != std::find(seen.begin(), seen.end(), this))
             {
@@ -1802,29 +1765,34 @@ namespace mame
                 foreach (layout_group group in seen)
                     path += string.Format(" {0}", group.m_groupnode.get_attribute_string("name", null));  //path << ' ' << group->m_groupnode.get_attribute_string("name", nullptr);
                 path += string.Format(" {0}", m_groupnode.get_attribute_string("name", null));  //path << ' ' << m_groupnode.get_attribute_string("name", nullptr);
-                throw new rendlay_global.layout_syntax_error(string_format("recursively nested groups {0}", path.str()));
+                throw new layout_syntax_error(string_format("recursively nested groups {0}", path.str()));
             }
 
             seen.push_back(this);
             if (!m_bounds_resolved)
             {
                 rendutil_global.set_render_bounds_xy(m_bounds, 0.0F, 0.0F, 1.0F, 1.0F);
-                environment local = new environment(env);
-                resolve_bounds(local, m_groupnode, groupmap, seen, true, false, true);
+                layout_group_environment local = new layout_group_environment(env);
+                bool empty = true;
+                resolve_bounds(local, m_groupnode, groupmap, seen, ref empty, false, false, true);
             }
             seen.pop_back();
         }
 
 
         void resolve_bounds(
-                environment env,
+                layout_group_environment env,
                 util.xml.data_node parentnode,
-                group_map groupmap,
+                layout_group_group_map groupmap,
                 std.vector<layout_group> seen,
-                bool empty,
+                ref bool empty,
+                bool vistoggle,
                 bool repeat,
                 bool init)
         {
+            rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Group '{0}' resolve bounds empty={1} vistoggle={2} repeat={3} init={4}\n",
+                parentnode.get_attribute_string("name", ""), empty, vistoggle, repeat, init);
+
             bool envaltered = false;
             bool unresolved = true;
             for (util.xml.data_node itemnode = parentnode.get_first_child(); !m_bounds_resolved && itemnode != null; itemnode = itemnode.get_next_sibling())
@@ -1840,10 +1808,12 @@ namespace mame
                     envaltered = true;
                     if (!unresolved)
                     {
+                        rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Environment altered{0}, unresolving groups\n", envaltered ? " again" : "");
                         unresolved = true;
                         foreach (var group in groupmap)
                             group.second().set_bounds_unresolved();
                     }
+
                     if (!repeat)
                         env.set_parameter(itemnode);
                     else
@@ -1865,6 +1835,10 @@ namespace mame
                         rendutil_global.union_render_bounds(m_bounds, itembounds);
 
                     empty = false;
+
+                    rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate item bounds ({0} {1} {2} {3}) -> ({4} {5} {6} {7})\n",
+                        itembounds.x0, itembounds.y0, itembounds.x1, itembounds.y1,
+                        m_bounds.x0, m_bounds.y0, m_bounds.x1, m_bounds.y1);
                 }
                 else if (strcmp(itemnode.get_name(), "group") == 0)
                 {
@@ -1879,19 +1853,24 @@ namespace mame
                             rendutil_global.union_render_bounds(m_bounds, itembounds);
 
                         empty = false;
+
+                        rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate group '{0}' reference explicit bounds ({1} {2} {3} {4}) -> ({5} {6} {7} {8})\n",
+                            itemnode.get_attribute_string("ref", ""),
+                            itembounds.x0, itembounds.y0, itembounds.x1, itembounds.y1,
+                            m_bounds.x0, m_bounds.y0, m_bounds.x1, m_bounds.y1);
                     }
                     else
                     {
                         string ref_ = env.get_attribute_string(itemnode, "ref", null);
                         if (ref_ == null)
-                            throw new rendlay_global.layout_syntax_error("nested group must have ref attribute");
+                            throw new layout_syntax_error("nested group must have ref attribute");
 
                         var found = groupmap.find(ref_);
                         if (found == null)
-                            throw new rendlay_global.layout_syntax_error(string_format("unable to find group {0}", ref_));
+                            throw new layout_syntax_error(string_format("unable to find group {0}", ref_));
 
                         int orientation = env.parse_orientation(itemnode.get_child("orientation"));
-                        environment local = new environment(env);
+                        layout_group_environment local = new layout_group_environment(env);
                         found.resolve_bounds(local, groupmap, seen);
                         render_bounds itembounds = new render_bounds()
                         {
@@ -1907,37 +1886,54 @@ namespace mame
                             rendutil_global.union_render_bounds(m_bounds, itembounds);
 
                         empty = false;
+
+                        unresolved = false;
+                        rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate group '{0}' reference computed bounds ({1} {2} {3} {4}) -> ({5} {6} {7} {8})\n",
+                            itemnode.get_attribute_string("ref", ""),
+                            itembounds.x0, itembounds.y0, itembounds.x1, itembounds.y1,
+                            m_bounds.x0, m_bounds.y0, m_bounds.x1, m_bounds.y1);
                     }
                 }
                 else if (strcmp(itemnode.get_name(), "repeat") == 0)
                 {
                     int count = env.get_attribute_int(itemnode, "count", -1);
                     if (0 >= count)
-                        throw new rendlay_global.layout_syntax_error("repeat must have positive integer count attribute");
+                        throw new layout_syntax_error("repeat must have positive integer count attribute");
 
-                    environment local = new environment(env);
+                    layout_group_environment local = new layout_group_environment(env);
                     for (int i = 0; !m_bounds_resolved && (count > i); ++i)
                     {
-                        resolve_bounds(local, itemnode, groupmap, seen, empty, true, i == 0);
+                        resolve_bounds(local, itemnode, groupmap, seen, ref empty, false, true, i == 0);
                         local.increment_parameters();
                     }
                 }
+                else if (strcmp(itemnode.get_name(), "collection") == 0)
+                {
+                    if (string.IsNullOrEmpty(env.get_attribute_string(itemnode, "name", null)))
+                        throw new layout_syntax_error("collection must have name attribute");
+                    layout_group_environment local = env;
+                    resolve_bounds(local, itemnode, groupmap, seen, ref empty, true, false, true);
+                }
                 else
                 {
-                    throw new rendlay_global.layout_syntax_error(string_format("unknown group element {0}", itemnode.get_name()));
+                    throw new layout_syntax_error(string_format("unknown group element {0}", itemnode.get_name()));
                 }
             }
 
             if (envaltered && !unresolved)
             {
+                rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Environment was altered, marking groups unresolved\n");
                 bool resolved = m_bounds_resolved;
                 foreach (var group in groupmap)
                     group.second().set_bounds_unresolved();
                 m_bounds_resolved = resolved;
             }
 
-            if (!repeat)
+            if (!vistoggle && !repeat)
+            {
+                rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Marking group '{0}' bounds resolved\n", parentnode.get_attribute_string("name", ""));
                 m_bounds_resolved = true;
+            }
         }
     }
 
@@ -1951,9 +1947,9 @@ namespace mame
             //  item - constructor
             //-------------------------------------------------
             public item(
-                    environment env,
+                    layout_view_view_environment env,
                     util.xml.data_node itemnode,
-                    element_map elemmap,
+                    layout_view_element_map elemmap,
                     int orientation,
                     float [,] trans,  //layout_group::transform const &trans,
                     render_color color)
@@ -1966,26 +1962,26 @@ namespace mame
 #endif
 
                 m_have_output = env.get_attribute_string(itemnode, "name", "").Length != 0;
-                m_input_tag = make_input_tag(env, itemnode);
                 m_input_port = null;
                 m_input_field = null;
                 m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
-                m_input_shift = 0;
-                m_input_raw = 0 != env.get_attribute_int(itemnode, "inputraw", 0);
+                m_input_shift = (u8)get_input_shift(m_input_mask);
+                m_input_raw = env.get_attribute_bool(itemnode, "inputraw", false);  //, m_input_raw(env.get_attribute_bool(itemnode, "inputraw", 0))
+                m_clickthrough = env.get_attribute_bool(itemnode, "clickthrough", true);  //, m_clickthrough(env.get_attribute_bool(itemnode, "clickthrough", "yes"))
                 m_screen = null;
                 m_orientation = rendutil_global.orientation_add(env.parse_orientation(itemnode.get_child("orientation")), orientation);
-                m_rawbounds = make_bounds(env, itemnode, trans);
                 m_color = rendlay_global.render_color_multiply(env.parse_color(itemnode.get_child("color")), color);
                 m_blend_mode = get_blend_mode(env, itemnode);
+                m_visibility_mask = env.visibility_mask();
+                m_input_tag = make_input_tag(env, itemnode);
+                m_rawbounds = make_bounds(env, itemnode, trans);
+                m_has_clickthrough = !string.IsNullOrEmpty(env.get_attribute_string(itemnode, "clickthrough", ""));  //, m_has_clickthrough(env.get_attribute_string(itemnode, "clickthrough", "")[0])
 
 
                 // fetch common data
                 int index = env.get_attribute_int(itemnode, "index", -1);
                 if (index != -1)
                     m_screen = new screen_device_iterator(env.machine().root_device()).byindex(index);
-
-                for (u32 mask = m_input_mask; (mask != 0) && ((~mask & 1) != 0); mask >>= 1)
-                    m_input_shift++;
 
                 // sanity checks
                 if (strcmp(itemnode.get_name(), "screen") == 0)
@@ -1995,16 +1991,16 @@ namespace mame
                         string tag = env.get_attribute_string(itemnode, "tag", "");
                         m_screen = (screen_device)env.device().subdevice(tag);
                         if (m_screen == null)
-                            throw new rendlay_global.layout_reference_error(string_format("invalid screen tag '{0}'", tag));
+                            throw new layout_reference_error(string_format("invalid screen tag '{0}'", tag));
                     }
                     else if (m_screen == null)
                     {
-                        throw new rendlay_global.layout_reference_error(string_format("invalid screen index {0}", index));
+                        throw new layout_reference_error(string_format("invalid screen index {0}", index));
                     }
                 }
                 else if (m_element == null)
                 {
-                    throw new rendlay_global.layout_syntax_error(string_format("item of type {0} require an element tag", itemnode.get_name()));
+                    throw new layout_syntax_error(string_format("item of type {0} require an element tag", itemnode.get_name()));
                 }
             }
 
@@ -2025,24 +2021,22 @@ namespace mame
                     return m_output;
 #endif
                 }
-                else if (!m_input_tag.empty())
+                else if (m_input_port != null)
                 {
                     // if configured to an input, fetch the input value
-                    if (m_input_port != null)
+                    if (m_input_raw)
                     {
-                        if (m_input_raw)
-                        {
-                            return ((int)(m_input_port.read() & m_input_mask)) >> m_input_shift;
-                        }
-                        else
-                        {
-                            ioport_field field = m_input_field != null ? m_input_field : m_input_port.field(m_input_mask);
-                            if (field != null)
-                                return ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
-                        }
+                        return ((int)(m_input_port.read() & m_input_mask)) >> m_input_shift;
+                    }
+                    else
+                    {
+                        ioport_field field = m_input_field != null ? m_input_field : m_input_port.field(m_input_mask);
+                        if (field != null)
+                            return ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
                     }
                 }
 
+                // default to zero
                 return 0;
             }
 
@@ -2068,6 +2062,7 @@ namespace mame
                     m_input_port = m_element.machine().root_device().ioport(m_input_tag);
                     if (m_input_port != null)
                     {
+                        // if there's a matching unconditional field, cache it
                         foreach (ioport_field field in m_input_port.fields())
                         {
                             if ((field.mask() & m_input_mask) != 0)
@@ -2078,6 +2073,10 @@ namespace mame
                                 break;
                             }
                         }
+
+                        // if clickthrough isn't explicitly configured, having an I/O port implies false
+                        if (!m_has_clickthrough)
+                            m_clickthrough = false;
                     }
                 }
             }
@@ -2086,7 +2085,7 @@ namespace mame
             //---------------------------------------------
             //  find_element - find element definition
             //---------------------------------------------
-            layout_element find_element(environment env, util.xml.data_node itemnode, element_map elemmap)
+            layout_element find_element(layout_view_view_environment env, util.xml.data_node itemnode, layout_view_element_map elemmap)
             {
                 string name = env.get_attribute_string(itemnode, strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element", null);
                 if (string.IsNullOrEmpty(name))
@@ -2097,7 +2096,7 @@ namespace mame
                 if (null != found)
                     return found;
                 else
-                    throw new rendlay_global.layout_syntax_error("unable to find element {0}", name);
+                    throw new layout_syntax_error("unable to find element {0}", name);
             }
 
 
@@ -2105,7 +2104,7 @@ namespace mame
             //  make_bounds - get transformed bounds
             //---------------------------------------------
             render_bounds make_bounds(
-                    environment env,
+                    layout_view_view_environment env,
                     util.xml.data_node itemnode,
                     float [,] trans)  //layout_group.transform trans)
             {
@@ -2123,7 +2122,7 @@ namespace mame
             //---------------------------------------------
             //  make_input_tag - get absolute input tag
             //---------------------------------------------
-            string make_input_tag(environment env, util.xml.data_node itemnode)
+            string make_input_tag(layout_view_view_environment env, util.xml.data_node itemnode)
             {
                 string tag = env.get_attribute_string(itemnode, "inputtag", null);
                 return !string.IsNullOrEmpty(tag) ? env.device().subtag(tag) : "";
@@ -2133,7 +2132,7 @@ namespace mame
             //---------------------------------------------
             //  get_blend_mode - explicit or implicit blend
             //---------------------------------------------
-            int get_blend_mode(environment env, util.xml.data_node itemnode)
+            int get_blend_mode(layout_view_view_environment env, util.xml.data_node itemnode)
             {
                 // see if there's a blend mode attribute
                 string mode = env.get_attribute_string(itemnode, "blend", null);
@@ -2148,7 +2147,7 @@ namespace mame
                     else if (strcmp(mode, "add") == 0)
                         return BLENDMODE_ADD;
                     else
-                        throw new rendlay_global.layout_syntax_error("unknown blend mode {0}", mode);
+                        throw new layout_syntax_error("unknown blend mode {0}", mode);
                 }
 
                 // fall back to implicit blend mode based on element type
@@ -2159,17 +2158,33 @@ namespace mame
                 else
                     return BLENDMODE_ALPHA;
             }
+
+
+            //---------------------------------------------
+            //  get_input_shift - shift to right-align LSB
+            //---------------------------------------------
+            unsigned get_input_shift(ioport_value mask)
+            {
+                unsigned result = 0;
+                while (mask != 0 && BIT(mask, 0) == 0)
+                {
+                    ++result;
+                    mask >>= 1;
+                }
+
+                return result;
+            }
         }
 
 
         class layer_lists
         {
-            public item_list backdrops = new item_list();
-            public item_list screens = new item_list();
-            public item_list overlays = new item_list();
-            public item_list bezels = new item_list();
-            public item_list cpanels = new item_list();
-            public item_list marquees = new item_list();
+            public layout_view_item_list backdrops = new layout_view_item_list();
+            public layout_view_item_list screens = new layout_view_item_list();
+            public layout_view_item_list overlays = new layout_view_item_list();
+            public layout_view_item_list bezels = new layout_view_item_list();
+            public layout_view_item_list cpanels = new layout_view_item_list();
+            public layout_view_item_list marquees = new layout_view_item_list();
         }
 
 
@@ -2178,41 +2193,89 @@ namespace mame
         //  layout_view - constructor
         //-------------------------------------------------
         public layout_view(
-                environment env,
+                emu.render.detail.layout_environment env,
                 util.xml.data_node viewnode,
-                element_map elemmap,
-                group_map groupmap)
+                layout_view_element_map elemmap,
+                layout_view_group_map groupmap)
         {
             m_name = make_name(env, viewnode);
-            m_aspect = 1.0f;
-            m_scraspect = 1.0f;
-            m_items = new item_list();
+            m_effaspect = 1.0f;
+            m_items = new layout_view_item_list();
+            m_defvismask = 0;
             m_has_art = false;
 
 
             // parse the layout
-            m_expbounds.x0 = 0;
-            m_expbounds.y0 = 0;
-            m_expbounds.x1 = 0;
-            m_expbounds.y1 = 0;
-            environment local = new environment(env);
+            m_expbounds.x0 = m_expbounds.y0 = m_expbounds.x1 = m_expbounds.y1 = 0;
+            layout_view_view_environment local = new layout_view_view_environment(env, m_name.c_str());
             layer_lists layers = new layer_lists();
             local.set_parameter("viewname", m_name);
-            add_items(layers, local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
+            add_items(layers, local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color(1.0F, 1.0F, 1.0F, 1.0F), true, false, true);
+
+            // can't support legacy layers and modern visibility toggles at the same time
+            if (!m_vistoggles.empty() && (!layers.backdrops.empty() || !layers.overlays.empty() || !layers.bezels.empty() || !layers.cpanels.empty() || !layers.marquees.empty()))
+                throw new layout_syntax_error("view contains visibility toggles as well as legacy backdrop, overlay, bezel, cpanel and/or marquee elements");
+
+            // create visibility toggles for legacy layers
+            u32 mask = 1;
+            if (!layers.backdrops.empty())
+            {
+                m_vistoggles.emplace_back(new visibility_toggle("Backdrops", mask));
+                foreach (item backdrop in layers.backdrops)
+                    backdrop.m_visibility_mask = mask;
+                m_defvismask |= mask;
+                mask <<= 1;
+            }
+
+            if (!layers.overlays.empty())
+            {
+                m_vistoggles.emplace_back(new visibility_toggle("Overlays", mask));
+                foreach (item overlay in layers.overlays)
+                    overlay.m_visibility_mask = mask;
+                m_defvismask |= mask;
+                mask <<= 1;
+            }
+
+            if (!layers.bezels.empty())
+            {
+                m_vistoggles.emplace_back(new visibility_toggle("Bezels", mask));
+                foreach (item bezel in layers.bezels)
+                    bezel.m_visibility_mask = mask;
+                m_defvismask |= mask;
+                mask <<= 1;
+            }
+
+            if (!layers.cpanels.empty())
+            {
+                m_vistoggles.emplace_back(new visibility_toggle("Control Panels", mask));
+                foreach (item cpanel in layers.cpanels)
+                    cpanel.m_visibility_mask = mask;
+                m_defvismask |= mask;
+                mask <<= 1;
+            }
+
+            if (!layers.marquees.empty())
+            {
+                m_vistoggles.emplace_back(new visibility_toggle("Backdrops", mask));
+                foreach (item marquee in layers.marquees)
+                    marquee.m_visibility_mask = mask;
+                m_defvismask |= mask;
+                mask <<= 1;
+            }
 
             // deal with legacy element groupings
             if (!layers.overlays.empty() || (layers.backdrops.size() <= 1))
             {
                 // screens (-1) + overlays (RGB multiply) + backdrop (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
                 foreach (item backdrop in layers.backdrops)
-                    backdrop.set_blend_mode(render_global.BLENDMODE_ADD);
+                    backdrop.m_blend_mode = BLENDMODE_ADD;
 
-                foreach (var i in layers.screens) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.screens);
-                foreach (var i in layers.overlays) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.overlays);
-                foreach (var i in layers.backdrops) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.backdrops);
-                foreach (var i in layers.bezels) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.bezels);
-                foreach (var i in layers.cpanels) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.cpanels);
-                foreach (var i in layers.marquees) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.marquees);
+                foreach (var item in layers.screens) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.screens);
+                foreach (var item in layers.overlays) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.overlays);
+                foreach (var item in layers.backdrops) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.backdrops);
+                foreach (var item in layers.bezels) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.bezels);
+                foreach (var item in layers.cpanels) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.cpanels);
+                foreach (var item in layers.marquees) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.marquees);
             }
             else
             {
@@ -2221,19 +2284,19 @@ namespace mame
                 foreach (item screen in layers.screens)
                 {
                     if (screen.blend_mode() == -1)
-                        screen.set_blend_mode(render_global.BLENDMODE_ADD);
+                        screen.m_blend_mode = BLENDMODE_ADD;
                 }
 
-                foreach (var i in layers.backdrops) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.backdrops);
-                foreach (var i in layers.screens) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.screens);
-                foreach (var i in layers.bezels) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.bezels);
-                foreach (var i in layers.cpanels) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.cpanels);
-                foreach (var i in layers.marquees) m_items.AddLast(i);  //m_items.splice(m_items.end(), layers.marquees);
+                foreach (var item in layers.backdrops) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.backdrops);
+                foreach (var item in layers.screens) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.screens);
+                foreach (var item in layers.bezels) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.bezels);
+                foreach (var item in layers.cpanels) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.cpanels);
+                foreach (var item in layers.marquees) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.marquees);
             }
 
             // calculate metrics
-            recompute(new render_layer_config());
-            foreach (var group in groupmap)
+            recompute(default_visibility_mask(), false);
+            foreach (var group in groupmap)  //for (group_map::value_type &group : groupmap)
                 group.second().set_bounds_unresolved();
         }
 
@@ -2253,42 +2316,49 @@ namespace mame
         //  recompute - recompute the bounds and aspect
         //  ratio of a view and all of its contained items
         //-------------------------------------------------
-        public void recompute(render_layer_config layerconfig)
+        public void recompute(u32 visibility_mask, bool zoom_to_screen)
         {
-            // reset the bounds
-            m_bounds.x0 = 0.0f;
-            m_bounds.y0 = 0.0f;
-            m_bounds.x1 = 0.0f;
-            m_bounds.y1 = 0.0f;
-            m_scrbounds.x0 = 0.0f;
-            m_scrbounds.y0 = 0.0f;
-            m_scrbounds.x1 = 0.0f;
-            m_scrbounds.y1 = 0.0f;
+            // reset the bounds and collected active items
+            render_bounds scrbounds = new render_bounds(0.0f, 0.0f, 0.0f, 0.0f);
+            m_bounds = scrbounds;
+            m_screen_items.clear();
+            m_interactive_items.clear();
+            m_interactive_edges_x.clear();
+            m_interactive_edges_y.clear();
             m_screens.clear();
 
-            // loop over all layers
+            // loop over items and filter by visibility mask
             bool first = true;
             bool scrfirst = true;
             foreach (item curitem in m_items)
             {
-                // accumulate bounds
-                if (first)
-                    m_bounds = new render_bounds(curitem.rawbounds());
-                else
-                    rendutil_global.union_render_bounds(m_bounds, curitem.rawbounds());
-                first = false;
-
-                // accumulate screen bounds
-                if (curitem.screen() != null)
+                if ((visibility_mask & curitem.visibility_mask()) == curitem.visibility_mask())
                 {
-                    if (scrfirst)
-                        m_scrbounds = new render_bounds(curitem.rawbounds());
+                    // accumulate bounds
+                    if (first)
+                        m_bounds = curitem.m_rawbounds;
                     else
-                        rendutil_global.union_render_bounds(m_scrbounds, curitem.rawbounds());
-                    scrfirst = false;
+                        rendutil_global.union_render_bounds(m_bounds, curitem.m_rawbounds);
 
-                    // accumulate the screens in use while we're scanning
-                    m_screens.emplace_back(curitem.screen());
+                    first = false;
+
+                    // accumulate visible screens and their bounds bounds
+                    if (curitem.screen() != null)
+                    {
+                        if (scrfirst)
+                            scrbounds = curitem.m_rawbounds;
+                        else
+                            rendutil_global.union_render_bounds(scrbounds, curitem.m_rawbounds);
+                        scrfirst = false;
+
+                        // accumulate active screens
+                        m_screen_items.emplace_back(curitem);
+                        m_screens.emplace_back(curitem.screen());
+                    }
+
+                    // accumulate interactive elements
+                    if (!curitem.clickthrough() || curitem.has_input())
+                        m_interactive_items.emplace_back(curitem);
                 }
             }
 
@@ -2296,43 +2366,62 @@ namespace mame
             if (m_expbounds.x1 > m_expbounds.x0)
                 m_bounds = m_expbounds;
 
-            // if we're handling things normally, the target bounds are (0,0)-(1,1)
             render_bounds target_bounds = new render_bounds();
-            if (!layerconfig.zoom_to_screen() || m_screens.empty())
+            if (!zoom_to_screen || scrfirst)
             {
-                // compute the aspect ratio of the view
-                m_aspect = (m_bounds.x1 - m_bounds.x0) / (m_bounds.y1 - m_bounds.y0);
-
+                // if we're handling things normally, the target bounds are (0,0)-(1,1)
+                m_effaspect = ((m_bounds.x1 > m_bounds.x0) && (m_bounds.y1 > m_bounds.y0)) ? m_bounds.aspect() : 1.0f;
                 target_bounds.x0 = target_bounds.y0 = 0.0f;
                 target_bounds.x1 = target_bounds.y1 = 1.0f;
             }
-
-            // if we're cropping, we want the screen area to fill (0,0)-(1,1)
             else
             {
-                // compute the aspect ratio of the screen
-                m_scraspect = (m_scrbounds.x1 - m_scrbounds.x0) / (m_scrbounds.y1 - m_scrbounds.y0);
-
-                float targwidth = (m_bounds.x1 - m_bounds.x0) / (m_scrbounds.x1 - m_scrbounds.x0);
-                float targheight = (m_bounds.y1 - m_bounds.y0) / (m_scrbounds.y1 - m_scrbounds.y0);
-                target_bounds.x0 = (m_bounds.x0 - m_scrbounds.x0) / (m_bounds.x1 - m_bounds.x0) * targwidth;
-                target_bounds.y0 = (m_bounds.y0 - m_scrbounds.y0) / (m_bounds.y1 - m_bounds.y0) * targheight;
-                target_bounds.x1 = target_bounds.x0 + targwidth;
-                target_bounds.y1 = target_bounds.y0 + targheight;
+                // if we're cropping, we want the screen area to fill (0,0)-(1,1)
+                m_effaspect = ((scrbounds.x1 > scrbounds.x0) && (scrbounds.y1 > scrbounds.y0)) ? scrbounds.aspect() : 1.0f;
+                target_bounds.x0 = (m_bounds.x0 - scrbounds.x0) / scrbounds.width();
+                target_bounds.y0 = (m_bounds.y0 - scrbounds.y0) / scrbounds.height();
+                target_bounds.x1 = target_bounds.x0 + (m_bounds.width() / scrbounds.width());
+                target_bounds.y1 = target_bounds.y0 + (m_bounds.height() / scrbounds.height());
             }
 
             // determine the scale/offset for normalization
             float xoffs = m_bounds.x0;
             float yoffs = m_bounds.y0;
-            float xscale = (target_bounds.x1 - target_bounds.x0) / (m_bounds.x1 - m_bounds.x0);
-            float yscale = (target_bounds.y1 - target_bounds.y0) / (m_bounds.y1 - m_bounds.y0);
+            float xscale = target_bounds.width() / m_bounds.width();
+            float yscale = target_bounds.height() / m_bounds.height();
 
+            // normalize all the item bounds
             foreach (item curitem in items())
             {
-                curitem.bounds().x0 = target_bounds.x0 + (curitem.rawbounds().x0 - xoffs) * xscale;
-                curitem.bounds().x1 = target_bounds.x0 + (curitem.rawbounds().x1 - xoffs) * xscale;
-                curitem.bounds().y0 = target_bounds.y0 + (curitem.rawbounds().y0 - yoffs) * yscale;
-                curitem.bounds().y1 = target_bounds.y0 + (curitem.rawbounds().y1 - yoffs) * yscale;
+                curitem.m_bounds.x0 = target_bounds.x0 + (curitem.m_rawbounds.x0 - xoffs) * xscale;
+                curitem.m_bounds.x1 = target_bounds.x0 + (curitem.m_rawbounds.x1 - xoffs) * xscale;
+                curitem.m_bounds.y0 = target_bounds.y0 + (curitem.m_rawbounds.y0 - yoffs) * yscale;
+                curitem.m_bounds.y1 = target_bounds.y0 + (curitem.m_rawbounds.y1 - yoffs) * yscale;
+            }
+
+            // sort edges of interactive items
+            rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "Recalculated view '{0}' with {1} interactive items\n", name(), m_interactive_items.size());
+            m_interactive_edges_x.reserve(m_interactive_items.size() * 2);
+            m_interactive_edges_y.reserve(m_interactive_items.size() * 2);
+            for (unsigned i = 0; m_interactive_items.size() > i; ++i)
+            {
+                item curitem = m_interactive_items[i];
+                rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "{0}: ({1} {2} {3} {4}) hasinput={5} clickthrough={6}\n", i, curitem.bounds().x0, curitem.bounds().y0, curitem.bounds().x1, curitem.bounds().y1, curitem.has_input(), curitem.clickthrough());
+                m_interactive_edges_x.emplace_back(new edge(i, curitem.bounds().x0, false));
+                m_interactive_edges_x.emplace_back(new edge(i, curitem.bounds().x1, true));
+                m_interactive_edges_y.emplace_back(new edge(i, curitem.bounds().y0, false));
+                m_interactive_edges_y.emplace_back(new edge(i, curitem.bounds().y1, true));
+            }
+
+            m_interactive_edges_x.Sort();  //std::sort(m_interactive_edges_x.begin(), m_interactive_edges_x.end());
+            m_interactive_edges_y.Sort();  //std::sort(m_interactive_edges_y.begin(), m_interactive_edges_y.end());
+
+            if ((rendlay_global.VERBOSE & rendlay_global.LOG_INTERACTIVE_ITEMS) != 0)
+            {
+                foreach (edge e in m_interactive_edges_x)
+                    rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "x={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
+                foreach (edge e in m_interactive_edges_y)
+                    rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "y={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
             }
         }
 
@@ -2353,10 +2442,10 @@ namespace mame
         //-------------------------------------------------
         void add_items(
                 layer_lists layers,
-                environment env,
+                layout_view_view_environment env,
                 util.xml.data_node parentnode,
-                element_map elemmap,
-                group_map groupmap,
+                layout_view_element_map elemmap,
+                layout_view_group_map groupmap,
                 int orientation,
                 float [,] trans,  //transform trans,
                 render_color color,
@@ -2389,11 +2478,6 @@ namespace mame
                     else
                         env.set_repeat_parameter(itemnode, init);
                 }
-                else if (strcmp(itemnode.get_name(), "backdrop") == 0)
-                {
-                    layers.backdrops.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
-                    m_has_art = true;
-                }
                 else if (strcmp(itemnode.get_name(), "screen") == 0)
                 {
                     layers.screens.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
@@ -2403,23 +2487,41 @@ namespace mame
                     layers.screens.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
+                else if (strcmp(itemnode.get_name(), "backdrop") == 0)
+                {
+                    if (layers.backdrops.empty())
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated backdrop element\n", name());
+                    layers.backdrops.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    m_has_art = true;
+                }
                 else if (strcmp(itemnode.get_name(), "overlay") == 0)
                 {
+                    if (layers.overlays.empty())
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated overlay element\n", name());
                     layers.overlays.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "bezel") == 0)
                 {
+                    if (layers.bezels.empty())
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated bezel element\n", name());
+
                     layers.bezels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "cpanel") == 0)
                 {
+                    if (layers.cpanels.empty())
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated cpanel element\n", name());
+
                     layers.cpanels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (strcmp(itemnode.get_name(), "marquee") == 0)
                 {
+                    if (layers.marquees.empty())
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated marquee element\n", name());
+
                     layers.marquees.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
@@ -2427,11 +2529,11 @@ namespace mame
                 {
                     string ref_ = env.get_attribute_string(itemnode, "ref", null);
                     if (ref_ == null)
-                        throw new rendlay_global.layout_syntax_error("nested group must have ref attribute");
+                        throw new layout_syntax_error("group instantiation must have ref attribute");
 
                     var found = groupmap.find(ref_);
                     if (found == null)
-                        throw new rendlay_global.layout_syntax_error(string_format("unable to find group {0}", ref_));
+                        throw new layout_syntax_error(string_format("unable to find group {0}", ref_));
 
                     unresolved = false;
                     found.resolve_bounds(env, groupmap);
@@ -2451,7 +2553,7 @@ namespace mame
                         grouptrans = found.make_transform(grouporient, trans);
                     }
 
-                    environment local = new environment(env);
+                    layout_view_view_environment local = new layout_view_view_environment(env, false);
                     add_items(
                             layers,
                             local,
@@ -2469,18 +2571,33 @@ namespace mame
                 {
                     int count = env.get_attribute_int(itemnode, "count", -1);
                     if (0 >= count)
-                        throw new rendlay_global.layout_syntax_error("repeat must have positive integer count attribute");
+                        throw new layout_syntax_error("repeat must have positive integer count attribute");
 
-                    environment local = new environment(env);
+                    layout_view_view_environment local = new layout_view_view_environment(env, false);
                     for (int i = 0; count > i; ++i)
                     {
                         add_items(layers, local, itemnode, elemmap, groupmap, orientation, trans, color, false, true, i == 0);
                         local.increment_parameters();
                     }
                 }
+                else if (strcmp(itemnode.get_name(), "collection") == 0)
+                {
+                    string name = env.get_attribute_string(itemnode, "name", null);
+                    if (string.IsNullOrEmpty(name))
+                        throw new layout_syntax_error("collection must have name attribute");
+
+                    var found = std.find_if(m_vistoggles, (x) => { return x.name() == name; });  //var found = std::find_if(m_vistoggles.begin(), m_vistoggles.end(), [name] (auto const &x) { return x.name() == name; });
+                    if (default != found)
+                        throw new layout_syntax_error(string_format("duplicate collection name '{0}'", name));
+
+                    m_defvismask |= (u32)(env.get_attribute_bool(itemnode, "visible", true) ? 1 : 0) << m_vistoggles.size(); // TODO: make this less hacky
+                    layout_view_view_environment local = new layout_view_view_environment(env, true);
+                    m_vistoggles.emplace_back(new visibility_toggle(name, local.visibility_mask()));
+                    add_items(layers, local, itemnode, elemmap, groupmap, orientation, trans, color, false, false, true);
+                }
                 else
                 {
-                    throw new rendlay_global.layout_syntax_error(string_format("unknown view item {0}", itemnode.get_name()));
+                    throw new layout_syntax_error(string_format("unknown view item {0}", itemnode.get_name()));
                 }
             }
 
@@ -2492,11 +2609,11 @@ namespace mame
         }
 
 
-        string make_name(environment env, util.xml.data_node viewnode)
+        string make_name(emu.render.detail.layout_environment env, util.xml.data_node viewnode)
         {
             string name = env.get_attribute_string(viewnode, "name", null);
             if (name == null)
-                throw new rendlay_global.layout_syntax_error("view must have name attribute");
+                throw new layout_syntax_error("view must have name attribute");
 
             if (env.is_root_device())
             {
@@ -2522,46 +2639,46 @@ namespace mame
         //-------------------------------------------------
         public layout_file(device_t device, util.xml.data_node rootnode, string dirname)
         {
-            m_elemmap = new element_map();
-            m_viewlist = new view_list();
+            m_elemmap = new layout_file_element_map();
+            m_viewlist = new layout_file_view_list();
 
 
             try
             {
-                environment env = new environment(device);
+                layout_file_environment env = new layout_file_environment(device);
 
                 // find the layout node
                 util.xml.data_node mamelayoutnode = rootnode.get_child("mamelayout");
                 if (mamelayoutnode == null)
-                    throw new rendlay_global.layout_syntax_error("missing mamelayout node");
+                    throw new layout_syntax_error("missing mamelayout node");
 
                 // validate the config data version
-                int version = mamelayoutnode.get_attribute_int("version", 0);
+                int version = (int)mamelayoutnode.get_attribute_int("version", 0);
                 if (version != rendlay_global.LAYOUT_VERSION)
-                    throw new rendlay_global.layout_syntax_error(string_format("unsupported version {0}", version));
+                    throw new layout_syntax_error(string_format("unsupported version {0}", version));
 
                 // parse all the parameters, elements and groups
-                group_map groupmap = new group_map();
+                layout_file_group_map groupmap = new layout_file_group_map();
                 add_elements(dirname, env, mamelayoutnode, groupmap, false, true);
 
                 // parse all the views
                 for (util.xml.data_node viewnode = mamelayoutnode.get_child("view"); viewnode != null; viewnode = viewnode.get_next_sibling("view"))
                 {
                     // the trouble with allowing errors to propagate here is that it wreaks havoc with screenless systems that use a terminal by default
-                    // e.g. intlc44 and intlc440 have a terminal on the tty port by default and have a view with the front panel with the terminal screen
+                    // e.g. intlc44 and intlc440 have a terminal on the TTY port by default and have a view with the front panel with the terminal screen
                     // however, they have a second view with just the front panel which is very useful if you're using e.g. -tty null_modem with a socket
                     // if the error is allowed to propagate, the entire layout is dropped so you can't select the useful view
                     try
                     {
                         m_viewlist.emplace_back(new layout_view(env, viewnode, m_elemmap, groupmap));
                     }
-                    catch (rendlay_global.layout_reference_error err)
+                    catch (layout_reference_error err)
                     {
                         osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name", ""), err);
                     }
                 }
             }
-            catch (rendlay_global.layout_syntax_error err)
+            catch (layout_syntax_error err)
             {
                 // syntax errors are always fatal
                 throw new emu_fatalerror("Error parsing XML layout: {0}", err);
@@ -2571,9 +2688,9 @@ namespace mame
 
         void add_elements(
                 string dirname,
-                environment env,
+                layout_file_environment env,
                 util.xml.data_node parentnode,
-                group_map groupmap,
+                layout_file_group_map groupmap,
                 bool repeat,
                 bool init)
         {
@@ -2590,26 +2707,26 @@ namespace mame
                 {
                     string name = env.get_attribute_string(childnode, "name", null);
                     if (name == null)
-                        throw new rendlay_global.layout_syntax_error("element lacks name attribute");
+                        throw new layout_syntax_error("element lacks name attribute");
                     if (!m_elemmap.emplace(name, new layout_element(env, childnode, dirname)))  //if (!m_elemmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(env, childnode, dirname)).second)
-                        throw new rendlay_global.layout_syntax_error(string_format("duplicate element name {0}", name));
+                        throw new layout_syntax_error(string_format("duplicate element name {0}", name));
                     m_elemmap.emplace(name, new layout_element(env, childnode, dirname));
                 }
                 else if (strcmp(childnode.get_name(), "group") == 0)
                 {
                     string name = env.get_attribute_string(childnode, "name", null);
                     if (name == null)
-                        throw new rendlay_global.layout_syntax_error("group lacks name attribute");
+                        throw new layout_syntax_error("group lacks name attribute");
                     if (!groupmap.emplace(name, new layout_group(childnode)))  //if (!groupmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(childnode)).second)
-                        throw new rendlay_global.layout_syntax_error(string_format("duplicate group name {0}", name));
+                        throw new layout_syntax_error(string_format("duplicate group name {0}", name));
                     groupmap.emplace(name, new layout_group(childnode));
                 }
                 else if (strcmp(childnode.get_name(), "repeat") == 0)
                 {
                     int count = env.get_attribute_int(childnode, "count", -1);
                     if (0 >= count)
-                        throw new rendlay_global.layout_syntax_error("repeat must have positive integer count attribute");
-                    environment local = new environment(env);
+                        throw new layout_syntax_error("repeat must have positive integer count attribute");
+                    layout_file_environment local = new layout_file_environment(env);
                     for (int i = 0; count > i; ++i)
                     {
                         add_elements(dirname, local, childnode, groupmap, true, i == 0);
@@ -2618,7 +2735,7 @@ namespace mame
                 }
                 else if (repeat || (strcmp(childnode.get_name(), "view") != 0 && strcmp(childnode.get_name(), "script") != 0))
                 {
-                    throw new rendlay_global.layout_syntax_error(string_format("unknown layout item {0}", childnode.get_name()));
+                    throw new layout_syntax_error(string_format("unknown layout item {0}", childnode.get_name()));
                 }
             }
         }

@@ -9,25 +9,9 @@ using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
 
 
-namespace mame
+namespace mame.netlist
 {
-    public static class nld_opamps_global
-    {
-        // ----------------------------------------------------------------------------------------
-        // Macros
-        // ----------------------------------------------------------------------------------------
-
-        //#define OPAMP(name, model)                                                     \
-        //        NET_REGISTER_DEV(OPAMP, name)                                          \
-        //        NETDEV_PARAMI(name, MODEL, model)
-        public static void OPAMP(netlist.nlparse_t setup, string name, string model)
-        {
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "OPAMP", name);
-            netlist.nl_setup_global.NETDEV_PARAMI(setup, name, "MODEL", model);
-        }
-    }
-
-    namespace netlist.analog
+    namespace analog
     {
         class opamp_model_t
         {

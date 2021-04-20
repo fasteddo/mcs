@@ -9,32 +9,20 @@ namespace mame
 {
     public static class nlm_other_global
     {
-#if !NL_AUTO_DEVICES
-
-        //#define MC14584B_GATE(name)                                                   \
-        //        NET_REGISTER_DEV(MC14584B_GATE, name)
-        public static void MC14584B_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "MC14584B_GATE", name); }
-
-        //#define MC14584B_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(MC14584B_DIP, name)
-
-        //#define NE566_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(NE566_DIP, name)
-
-#endif
-
-
         //static NETLIST_START(MC14584B_DIP)
         public static void netlist_MC14584B_DIP(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             MC14584B_GATE(setup, "A");
             MC14584B_GATE(setup, "B");
             MC14584B_GATE(setup, "C");
             MC14584B_GATE(setup, "D");
             MC14584B_GATE(setup, "E");
             MC14584B_GATE(setup, "F");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD", "E.VDD", "F.VDD");
             netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS", "E.VSS", "F.VSS");
@@ -55,31 +43,6 @@ namespace mame
 
         //- Identifier:  NE566_DIP
         //- Title: NE566 Voltage Controlled Oscillator
-        //- Description: The LM566CN is a general purpose voltage controlled oscillator
-        //-    which may be used to generate square and triangula waves, the frequency
-        //-    of which is a very linear function of a control voltage. The frequency
-        //-    is also a function of an external resistor and capacitor.
-        //-
-        //-    The LM566CN is specified for operation over the 0°C to a 70°C
-        //-    temperature range.
-        //-
-        //-    Applications
-        //-
-        //-    - FM modulation
-        //-    - Signal generation
-        //-    - Function generation
-        //-    - Frequency shift keying
-        //-    - Tone generation
-        //-
-        //-    Features
-        //-    - Wide supply voltage range: 10V to 24V
-        //-    - Very linear modulation characteristics
-        //-    - High temperature stability
-        //-    - Excellent supply voltage rejection
-        //-    - 10 to 1 frequency range with fixed capacitor
-        //-    - Frequency programmable by means of current, voltage, resistor or capacitor
-        //-
-        //.
         //- Pinalias: GND,NC,SQUARE,TRIANGLE,MODULATION,R1,C1,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -97,16 +60,18 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_fourterm_global.VCVS(setup, "VI", 1);
-            netlist.nld_fourterm_global.CCCS(setup, "CI1", -1);
-            netlist.nld_fourterm_global.CCCS(setup, "CI2", 1);
-            netlist.devices.nld_system_global.SYS_COMPD(setup, "COMP");
-            netlist.devices.nld_system_global.SYS_DSW2(setup, "SW");
-            netlist.nld_fourterm_global.VCVS(setup, "VO", 1);
-            netlist.nld_twoterm_global.DIODE(setup, "DC", "D");
-            netlist.nld_twoterm_global.DIODE(setup, "DM", "D");
-            netlist.nld_twoterm_global.RES(setup, "ROD", 5200);
-            netlist.nld_twoterm_global.RES(setup, "ROU", 200);
+            throw new emu_unimplemented();
+#if false
+            VCVS(setup, "VI", 1);
+            CCCS(setup, "CI1", -1);
+            CCCS(setup, "CI2", 1);
+            SYS_COMPD(setup, "COMP");
+            SYS_DSW2(setup, "SW");
+            VCVS(setup, "VO", 1);
+            DIODE(setup, "DC", "D");
+            DIODE(setup, "DM", "D");
+            RES(setup, "ROD", 5200);
+            RES(setup, "ROU", 200);
 
             netlist.nl_setup_global.PARAM(setup, "VO.RO", "50");
             netlist.nl_setup_global.PARAM(setup, "COMP.MODEL", "FAMILY(TYPE=CUSTOM IVL=0.16 IVH=0.4 OVL=0.1 OVH=0.1 ORL=50 ORH=50)");
@@ -121,15 +86,15 @@ namespace mame
             netlist.nl_setup_global.NET_C(setup, "VO.OP", "COMP.IN");
 
             // Avoid singular Matrix due to G=0 switch
-            netlist.nld_twoterm_global.RES(setup, "RX1", 1e10);
-            netlist.nld_twoterm_global.RES(setup, "RX2", 1e10);
+            RES(setup, "RX1", 1e10);
+            RES(setup, "RX2", 1e10);
             netlist.nl_setup_global.NET_C(setup, "RX1.1", "SW.1");
             netlist.nl_setup_global.NET_C(setup, "RX2.1", "SW.3");
 
             netlist.nl_setup_global.NET_C(setup, "COMP.GND", "RX1.2", "RX2.2");
 
             // Block if VC < V+ - ~4
-            netlist.nld_twoterm_global.VS(setup, "VM", "3");
+            VS(setup, "VM", "3");
             netlist.nl_setup_global.PARAM(setup, "VM.RI", "10");
             netlist.nl_setup_global.NET_C(setup, "VM.1", "COMP.VCC");
             netlist.nl_setup_global.NET_C(setup, "VM.2", "DM.A");
@@ -139,12 +104,12 @@ namespace mame
             netlist.nl_setup_global.NET_C(setup, "COMP.GND", "DC.A");
             netlist.nl_setup_global.NET_C(setup, "SW.2", "DC.K");
 
-            netlist.nld_twoterm_global.RES(setup, "R1", 5000);
-            netlist.nld_twoterm_global.RES(setup, "R2", 1800);
-            netlist.nld_twoterm_global.RES(setup, "R3", 6000);
+            RES(setup, "R1", 5000);
+            RES(setup, "R2", 1800);
+            RES(setup, "R3", 6000);
 
             // Square output wave
-            netlist.devices.nld_system_global.AFUNC(setup, "FO", 2, "min(A1-1,A0 + 5)");
+            AFUNC(setup, "FO", 2, "min(A1-1,A0 + 5)");
             netlist.nl_setup_global.NET_C(setup, "COMP.QQ", "FO.A0");
             netlist.nl_setup_global.NET_C(setup, "FO.Q", "ROU.1");
             netlist.nl_setup_global.NET_C(setup, "ROU.2", "ROD.1");
@@ -163,6 +128,7 @@ namespace mame
             netlist.nl_setup_global.ALIAS(setup, "8", "COMP.VCC"); // V+
 
             netlist.nl_setup_global.NET_C(setup, "COMP.VCC", "FO.A1");
+#endif
 
             netlist.nl_setup_global.NETLIST_END();
         }
@@ -171,18 +137,15 @@ namespace mame
         //NETLIST_START(otheric_lib)
         public static void netlist_otheric_lib(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            throw new emu_unimplemented();
+#if false
+            TRUTHTABLE_ENTRY(MC14584B_GATE);
 
-            netlist.nl_setup_global.TRUTHTABLE_START("MC14584B_GATE", 1, 1, "");
-                netlist.nl_setup_global.TT_HEAD(" A | Q ");
-                netlist.nl_setup_global.TT_LINE(" 0 | 1 |100");
-                netlist.nl_setup_global.TT_LINE(" 1 | 0 |100");
-                // 2.1V negative going and 2.7V positive going at 5V
-                netlist.nl_setup_global.TT_FAMILY("FAMILY(TYPE=CMOS IVL=0.42 IVH=0.54 OVL=0.05 OVH=0.05 ORL=10.0 ORH=10.0)");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MC14584B_DIP", netlist_MC14584B_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "NE566_DIP", netlist_NE566_DIP);
+            LOCAL_LIB_ENTRY(MC14584B_DIP);
+            LOCAL_LIB_ENTRY(NE566_DIP);
+            LOCAL_LIB_ENTRY(NE555_DIP);
+            LOCAL_LIB_ENTRY(MC1455P_DIP);
+#endif
 
             netlist.nl_setup_global.NETLIST_END();
         }

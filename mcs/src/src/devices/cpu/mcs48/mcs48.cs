@@ -45,7 +45,7 @@ namespace mame
         {
             public device_state_interface_mcs48(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            protected override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
+            public override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
             protected override void state_export(device_state_entry entry) { throw new emu_unimplemented(); }
             protected override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
         }
@@ -527,8 +527,15 @@ namespace mame
 
         void stop_tcnt()      { burn_cycles(1); m_timecount_enabled = 0; }
 
-        void strt_cnt()       { burn_cycles(1); m_timecount_enabled = COUNTER_ENABLED; m_t1_history = (uint8_t)test_r(1); }
         void strt_t()         { burn_cycles(1); m_timecount_enabled = TIMER_ENABLED; m_prescaler = 0; }
+        void strt_cnt()
+        {
+            burn_cycles(1);
+            if ((m_timecount_enabled & COUNTER_ENABLED) == 0)
+                m_t1_history = (uint8_t)test_r(1);
+
+            m_timecount_enabled = COUNTER_ENABLED;
+        }
 
         void swap_a()         { burn_cycles(1); m_a = (uint8_t)((m_a << 4) | (m_a >> 4)); }
 

@@ -138,6 +138,7 @@ namespace mame
             m_cpu.target.read_r(2).set(R2_r).reg();
             m_cpu.target.read_r(3).set(R3_r).reg();
             m_cpu.target.write_o().set(O_w).reg();
+            m_cpu.target.write_p().set(P_w).reg();
         }
 
 
@@ -174,6 +175,12 @@ namespace mame
                 m_portO = (uint8_t)((m_portO & 0x0f) | (out_ << 4));
             else
                 m_portO = (uint8_t)((m_portO & 0xf0) | (out_));
+        }
+
+
+        void P_w(uint8_t data)
+        {
+            m_out.op(data);
         }
 
 

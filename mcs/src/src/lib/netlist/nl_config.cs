@@ -20,7 +20,7 @@ namespace mame.netlist
         ///
         /// \brief Version - Minor.
         ///
-        public const int NL_VERSION_MINOR           = 13;
+        public const int NL_VERSION_MINOR           = 14;
         /// \brief Version - Patch level.
         ///
         const int NL_VERSION_PATCHLEVEL      = 0;
@@ -156,6 +156,8 @@ namespace mame.netlist
         public const bool NL_DEBUG = false;
         //#define NL_DEBUG                    (true)
         //#endif
+
+        public class bool_constant_NL_DEBUG : bool_constant { public bool value { get { return NL_DEBUG; } } }
     }
 
 

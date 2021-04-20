@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using int64_t = System.Int64;
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
@@ -84,35 +83,7 @@ namespace mame.netlist
 
     //using host_arena   = plib::aligned_arena;
 
-
-    /// \brief Interface definition for netlist callbacks into calling code
-    ///
-    /// A class inheriting from netlist_callbacks_t has to be passed to the netlist_t
-    /// constructor. Netlist does processing during construction and thus needs
-    /// the object passed completely constructed.
-    ///
-    public abstract class callbacks_t
-    {
-        /// \brief logging callback.
-        ///
-        public abstract void vlog(plib.plog_level l, string ls);
-
-        /// \brief provide library with static solver implementations.
-        ///
-        /// By default no static solvers are provided since these are
-        /// determined by the specific use case. It is up to the implementor
-        /// of a callbacks_t implementation to optionally provide such a collection
-        /// of symbols.
-        ///
-        // nl_base.cpp
-        public virtual plib.dynlib_base static_solver_lib()  //virtual host_arena::unique_ptr<plib::dynlib_base> static_solver_lib() const;
-        {
-            return new plib.dynlib_static(null);  //return plib::make_unique<plib::dynlib_static, host_arena>(nullptr);
-        }
-    }
-
-
-    //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
+    //using log_type =  plib::plog_base<NL_DEBUG>;
 
 
     //============================================================

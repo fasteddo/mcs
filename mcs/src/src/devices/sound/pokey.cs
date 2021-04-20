@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using device_timer_id = System.UInt32;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;
-using stream_sample_t = System.Int32;
+using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -31,7 +31,7 @@ namespace mame
         {
             public device_sound_interface_pokey(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((pokey_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((pokey_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -311,7 +311,7 @@ namespace mame
         uint32_t [] m_poly5 = new uint32_t[0x1f];
         uint32_t [] m_poly9 = new uint32_t[0x1ff];
         uint32_t [] m_poly17 = new uint32_t[0x1ffff];
-        uint32_t [] m_voltab = new uint32_t[0x10000];
+        stream_buffer_sample_t [] m_voltab = new stream_buffer_sample_t[0x10000];
 
         output_type m_output_type;
         double m_r_pullup;
@@ -594,7 +594,7 @@ namespace mame
             m_serin_r_cb.resolve();
             m_serout_w_cb.resolve_safe();
 
-            m_stream = m_disound.stream_alloc(0, 1, (int)clock());
+            m_stream = m_disound.stream_alloc(0, 1, clock());
 
             timer_alloc(SYNC_WRITE);    /* timer for sync operation */
             timer_alloc(SYNC_NOOP);
@@ -681,9 +681,9 @@ namespace mame
             if (clock() != 0)
             {
                 if (m_stream != null)
-                    m_stream.set_sample_rate((int)clock());
+                    m_stream.set_sample_rate(clock());
                 else
-                    m_stream = m_disound.stream_alloc(0, 1, (int)clock());
+                    m_stream = m_disound.stream_alloc(0, 1, clock());
             }
         }
 
@@ -746,9 +746,9 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
-            var buffer = new Pointer<stream_sample_t>(outputs[0]);  //stream_sample_t *buffer = outputs[0];
+            var buffer = outputs[0];
 
             if (m_output_type == output_type.LEGACY_LINEAR)
             {
@@ -757,28 +757,21 @@ namespace mame
                     out_ += (int)((m_out_raw >> (4*i)) & 0x0f);
                 out_ *= POKEY_DEFAULT_GAIN;
                 out_ = (out_ > 0x7fff) ? 0x7fff : out_;
-                while( samples > 0 )
-                {
-                    buffer[0] = out_;  //*buffer++ = out_;
-                    buffer++;
-                    samples--;
-                }
+                stream_buffer_sample_t outsamp = out_ * (stream_buffer_sample_t)(1.0 / 32768.0);  //stream_buffer::sample_t outsamp = out * stream_buffer::sample_t(1.0 / 32768.0);
+                buffer.fill(outsamp);
             }
             else if (m_output_type == output_type.RC_LOWPASS)
             {
                 double rTot = m_voltab[m_out_raw];
 
-                double V0 = rTot / (rTot + m_r_pullup) * m_v_ref / 5.0 * 32767.0;
+                double V0 = rTot / (rTot + m_r_pullup) * m_v_ref / 5.0;
                 double mult = (m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-(rTot + m_r_pullup) / (m_cap * m_r_pullup * rTot) * m_clock_period.as_double());
 
-                while( samples > 0 )
+                for (int sampindex = 0; sampindex < buffer.samples(); sampindex++)
                 {
                     /* store sum of output signals into the buffer */
                     m_out_filter += (V0 - m_out_filter) * mult;
-                    buffer[0] = (int)m_out_filter;  //*buffer++ = pokey.m_out_filter;
-                    buffer++;
-                    samples--;
-
+                    buffer.put(sampindex, (stream_buffer_sample_t)m_out_filter);
                 }
             }
             else if (m_output_type == output_type.OPAMP_C_TO_GROUND)
@@ -793,16 +786,8 @@ namespace mame
                     * It is approximated by eliminating m_v_ref ( -1.0 term)
                     */
 
-                double V0 = ((rTot + m_r_pullup) / rTot - 1.0) * m_v_ref  / 5.0 * 32767.0;
-
-                while (samples > 0)
-                {
-                    /* store sum of output signals into the buffer */
-                    buffer[0] = (int)V0;  //*buffer++ = V0;
-                    buffer++;
-                    samples--;
-
-                }
+                double V0 = ((rTot+m_r_pullup) / rTot - 1.0) * m_v_ref  / 5.0;
+                buffer.fill((stream_buffer_sample_t)V0);
             }
             else if (m_output_type == output_type.OPAMP_LOW_PASS)
             {
@@ -811,27 +796,19 @@ namespace mame
                     * It is approximated by not adding in VRef below.
                     */
 
-                double V0 = (m_r_pullup / rTot) * m_v_ref  / 5.0 * 32767.0;
+                double V0 = (m_r_pullup / rTot) * m_v_ref  / 5.0;
                 double mult = (m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-1.0 / (m_cap * m_r_pullup) * m_clock_period.as_double());
 
-                while (samples > 0)
+                for (int sampindex = 0; sampindex < buffer.samples(); sampindex++)
                 {
                     /* store sum of output signals into the buffer */
                     m_out_filter += (V0 - m_out_filter) * mult;
-                    buffer[0] = (int)m_out_filter;  //*buffer++ = pokey.m_out_filter /* + m_v_ref */;       // see above
-                    buffer++;
-                    samples--;
+                    buffer.put(sampindex, (stream_buffer_sample_t)m_out_filter);
                 }
             }
             else if (m_output_type == output_type.DISCRETE_VAR_R)
             {
-                int out_ = (int)m_voltab[m_out_raw];
-                while (samples > 0)
-                {
-                    buffer[0] = out_;  // *buffer++ = out_;
-                    buffer++;
-                    samples--;
-                }
+                buffer.fill(m_voltab[m_out_raw]);
             }
         }
 

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
-using stream_sample_t = System.Int32;
+using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -29,7 +29,7 @@ namespace mame
         {
             public device_sound_interface_samples(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((samples_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((samples_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -50,13 +50,12 @@ namespace mame
         class channel_t
         {
             public sound_stream stream;
-            public MemoryContainer<int16_t> source = new MemoryContainer<int16_t>();  //const int16_t *   source;
-            public int32_t source_length;
+            public Pointer<int16_t> source;  //const int16_t * source;
             public int32_t source_num;
-            public uint32_t pos;
-            public uint32_t frac;
-            public uint32_t step;
-            //uint32_t          basefreq;
+            public uint32_t source_len;
+            public double pos;
+            uint32_t basefreq;
+            public uint32_t curfreq;
             public bool loop;
             public bool paused;
         }
@@ -195,19 +194,17 @@ namespace mame
             {
                 // initialize channel
                 channel_t chan = m_channel[channel];
-                chan.stream = m_disound.stream_alloc(0, 1, machine().sample_rate());
+                chan.stream = m_disound.stream_alloc(0, 1, sound_global.SAMPLE_RATE_OUTPUT_ADAPTIVE);
                 chan.source = null;
                 chan.source_num = -1;
-                chan.step = 0;
+                chan.pos = 0;
                 chan.loop = false;
                 chan.paused = false;
 
                 // register with the save state system
-                save_item(NAME(new { chan.source_length }), channel);
                 save_item(NAME(new { chan.source_num }), channel);
+                save_item(NAME(new { chan.source_len }), channel);
                 save_item(NAME(new { chan.pos }), channel);
-                save_item(NAME(new { chan.frac }), channel);
-                save_item(NAME(new { chan.step }), channel);
                 save_item(NAME(new { chan.loop }), channel);
                 save_item(NAME(new { chan.paused }), channel);
             }
@@ -243,17 +240,22 @@ namespace mame
                 if (chan.source_num >= 0 && chan.source_num < m_sample.Count)
                 {
                     sample_t sample = m_sample[chan.source_num];
-                    chan.source = sample.data;  //chan.source = &sample.data[0];
-                    chan.source_length = sample.data.Count;
+                    chan.source = new Pointer<int16_t>(sample.data);  //chan.source = &sample.data[0];
+                    chan.source_len = (u32)sample.data.size();
                     if (sample.data.Count == 0)
                         chan.source_num = -1;
                 }
 
                 // validate the position against the length in case the sample is smaller
-                if (chan.source != null && chan.pos >= chan.source_length)
+                double endpos = chan.source_len;
+                if (chan.source != null && chan.pos >= endpos)
                 {
                     if (chan.loop)
-                        chan.pos %= (UInt32)chan.source_length;
+                    {
+                        double posfloor = floor(chan.pos);
+                        chan.pos -= posfloor;
+                        chan.pos += (double)((int32_t)posfloor % chan.source_len);
+                    }
                     else
                     {
                         chan.source = null;
@@ -268,68 +270,60 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - update a sound stream
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
             // find the channel with this stream
+            stream_buffer_sample_t sample_scale = (stream_buffer_sample_t)(1.0 / 32768.0);
             for (int channel = 0; channel < m_channels; channel++)
             {
                 if (stream == m_channel[channel].stream)
                 {
                     channel_t chan = m_channel[channel];
-                    Pointer<stream_sample_t> buffer = new Pointer<stream_sample_t>(outputs[0]);  //stream_sample_t * buffer = outputs[0];
+                    var buffer = outputs[0];
 
                     // process if we still have a source and we're not paused
                     if (chan.source != null && !chan.paused)
                     {
                         // load some info locally
-                        uint32_t pos = chan.pos;
-                        uint32_t frac = chan.frac;
-                        uint32_t step = chan.step;
-                        MemoryContainer<int16_t> sample = chan.source;  //const int16_t *sample = chan.source;
-                        uint32_t sample_length = (UInt32)chan.source_length;
+                        double step = (double)chan.curfreq / (double)buffer.sample_rate();
+                        double endpos = chan.source_len;
+                        Pointer<int16_t> sample = new Pointer<int16_t>(chan.source);  //const int16_t *sample = chan.source;
 
-                        while (samples-- != 0)
+                        for (int sampindex = 0; sampindex < buffer.samples(); sampindex++)
                         {
                             // do a linear interp on the sample
-                            int sample1 = sample[(int)pos];
-                            int sample2 = sample[(int)((pos + 1) % sample_length)];
-                            int fracmult = (int)(frac >> (FRAC_BITS - 14));
-                            buffer[0] = ((0x4000 - fracmult) * sample1 + fracmult * sample2) >> 14;  //*buffer++ = ((0x4000 - fracmult) * sample1 + fracmult * sample2) >> 14;
-                            buffer++;
+                            double pos_floor = floor(chan.pos);
+                            double frac = chan.pos - pos_floor;
+                            int32_t ipos = (int32_t)pos_floor;
+
+                            stream_buffer_sample_t sample1 = (stream_buffer_sample_t)sample[ipos++];
+                            stream_buffer_sample_t sample2 = (stream_buffer_sample_t)sample[(ipos + 1) % (int)chan.source_len];
+                            buffer.put(sampindex, (stream_buffer_sample_t)(sample_scale * ((1.0 - frac) * sample1 + frac * sample2)));
 
                             // advance
-                            frac += step;
-                            pos += frac >> FRAC_BITS;
-                            frac = frac & ((1 << FRAC_BITS) - 1);
+                            chan.pos += step;
 
                             // handle looping/ending
-                            if (pos >= sample_length)
+                            if (chan.pos >= endpos)
                             {
                                 if (chan.loop)
                                 {
-                                    pos %= sample_length;
+                                    chan.pos -= endpos;
                                 }
                                 else
                                 {
                                     chan.source = null;
                                     chan.source_num = -1;
-                                    if (samples > 0)
-                                        memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
-
+                                    buffer.fill(0, sampindex);
                                     break;
                                 }
                             }
                         }
-
-                        // push position back out
-                        chan.pos = pos;
-                        chan.frac = frac;
                     }
                     else
                     {
-                        memset(buffer, 0, (UInt32)samples);  //memset(buffer, 0, samples * sizeof(*buffer));
+                        buffer.fill(0);
                     }
-
                     break;
                 }
             }

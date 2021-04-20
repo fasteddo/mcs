@@ -131,8 +131,9 @@ namespace mame.util.xml
         //data_node *get_parent() { return m_parent; }
         //data_node const *get_parent() const { return m_parent; }
 
-        // count the number of child nodes
-        //int count_children() const;
+        // count the number of children
+        //std::size_t count_children() const;
+        //std::size_t count_attributes() const;
 
         // get the first child
         public data_node get_first_child() { return m_first_child; }
@@ -215,7 +216,7 @@ namespace mame.util.xml
 
 
         // return the integer value of an attribute, or the specified default if not present
-        public int get_attribute_int(string attribute, int defvalue)
+        public Int64 get_attribute_int(string attribute, Int64 defvalue)  //long long get_attribute_int(const char *attribute, long long defvalue) const;
         {
             string string_ = get_attribute_string(attribute, null);
             if (string_ == null)
@@ -223,26 +224,26 @@ namespace mame.util.xml
 
             //std::istringstream stream;
             //stream.imbue(f_portable_locale);
-            int result = 0;
+            Int64 result = 0;  //long long result;
             bool success = true;
             if (string_[0] == '$')
             {
                 //stream.str(&string[1]);
-                //unsigned uvalue;
+                //unsigned long long uvalue;
                 //stream >> std::hex >> uvalue;
-                //result = int(uvalue);
+                //result = static_cast<long long>(uvalue);
                 string stream = string_.Substring(1);
-                try { result = Convert.ToInt32(stream, 16); }
+                try { result = Convert.ToInt64(stream, 16); }
                 catch (Exception) { success = false; }
             }
             else if ((string_[0] == '0') && ((string_[1] == 'x') || (string_[1] == 'X')))
             {
                 //stream.str(&string[2]);
-                //unsigned uvalue;
+                //unsigned long long uvalue;
                 //stream >> std::hex >> uvalue;
-                //result = int(uvalue);
+                //result = static_cast<long long>(uvalue);
                 string stream = string_.Substring(2);
-                try { result = Convert.ToInt32(stream, 16); }
+                try { result = Convert.ToInt64(stream, 16); }
                 catch (Exception) { success = false; }
             }
             else if (string_[0] == '#')
@@ -250,14 +251,14 @@ namespace mame.util.xml
                 //stream.str(&string[1]);
                 //stream >> result;
                 string stream = string_.Substring(1);
-                success = int.TryParse(stream, out result);
+                success = Int64.TryParse(stream, out result);
             }
             else
             {
                 //stream.str(&string[0]);
                 //stream >> result;
                 string stream = string_;
-                success = int.TryParse(stream, out result);
+                success = Int64.TryParse(stream, out result);
             }
 
             return success ? result : defvalue;  //return stream ? result : defvalue;
@@ -267,8 +268,26 @@ namespace mame.util.xml
         // return the format of the given integer attribute
         //int_format get_attribute_int_format(const char *attribute) const;
 
+
         // return the float value of an attribute, or the specified default if not present
-        //float get_attribute_float(const char *attribute, float defvalue) const;
+        /*-------------------------------------------------
+            get_attribute_float - get the float
+            value of the specified attribute; if not
+            found, return = the provided default
+        -------------------------------------------------*/
+        public float get_attribute_float(string attribute, float defvalue)
+        {
+            string string_ = get_attribute_string(attribute, null);
+            if (string.IsNullOrEmpty(string_))
+                return defvalue;
+
+            //std::istringstream stream(string);
+            //stream.imbue(f_portable_locale);
+            //float result;
+            //return (stream >> result) ? result : defvalue;
+            return Convert.ToSingle(string_);
+        }
+
 
         // set the string value of an attribute
         public void set_attribute(string name, string value)
@@ -291,7 +310,7 @@ namespace mame.util.xml
         }
 
         // set the integer value of an attribute
-        public void set_attribute_int(string name, int value) { set_attribute(name, string_format("{0}", value).c_str()); }
+        public void set_attribute_int(string name, Int64 value) { set_attribute(name, string_format("{0}", value).c_str()); }  //void set_attribute_int(const char *name, long long value);
 
         // set the float value of an attribute
         public void set_attribute_float(string name, float value) { set_attribute(name, string_format("{0}", value).c_str()); }

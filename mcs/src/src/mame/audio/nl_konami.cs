@@ -10,6 +10,8 @@ namespace mame
         {
             NETLIST_START(setup);
 
+            throw new emu_unimplemented();
+#if false
             CD4066_GATE("G1");
             PARAM("G1.BASER", 270.0);
             CD4066_GATE("G2");
@@ -21,6 +23,7 @@ namespace mame
             NET_C("RI.2", "RO.1", "G1.R.1", "G2.R.1");
             NET_C("G1.R.2", "C1.1");
             NET_C("G2.R.2", "C2.1");
+#endif
 
             NET_C("C1.2", "C2.2", "G1.VSS", "G2.VSS");
             NET_C("G1.VDD", "G2.VDD");
@@ -43,12 +46,15 @@ namespace mame
         {
             NETLIST_START(setup);
 
+            throw new emu_unimplemented();
+#if false
             UA741_DIP8("X3A");
             RES("R1", RES_K(2.2));
             RES("R2", RES_K(4.7));
             RES("VR", 200);         // Actually a potentiometer
             CAP("C1", CAP_U(0.15));
             RES("RI", RES_K(100));
+#endif
 
             NET_C("X3A.2", "R1.1");
             NET_C("X3A.6", "R1.2", "R2.1");
@@ -75,6 +81,8 @@ namespace mame
         {
             NETLIST_START(setup);
 
+            throw new emu_unimplemented();
+#if false
             TTL_INPUT("CTL0", 0);
             TTL_INPUT("CTL1", 0);
             TTL_INPUT("CTL2", 0);
@@ -86,6 +94,7 @@ namespace mame
             RES("R_AY3D_B", 1000);
             RES("R_AY3D_C", 1000);
             NET_C("VP5", "R_AY3D_A.1", "R_AY3D_B.1", "R_AY3D_C.1");
+#endif
 
             SUBMODEL("filter", "FCHA1");
             NET_C("FCHA1.I", "R_AY3D_A.2");
@@ -116,6 +125,8 @@ namespace mame
         {
             NETLIST_START(setup);
 
+            throw new emu_unimplemented();
+#if false
             TTL_INPUT("CTL6", 0);
             TTL_INPUT("CTL7", 0);
             TTL_INPUT("CTL8", 0);
@@ -127,6 +138,7 @@ namespace mame
             RES("R_AY3C_B", 1000);
             RES("R_AY3C_C", 1000);
             NET_C("VP5", "R_AY3C_A.1", "R_AY3C_B.1", "R_AY3C_C.1");
+#endif
 
             SUBMODEL("filter", "FCHA2");
             NET_C("FCHA2.I", "R_AY3C_A.2");
@@ -159,8 +171,11 @@ namespace mame
 
             SOLVER("Solver", 48000);
 
+            throw new emu_unimplemented();
+#if false
             ANALOG_INPUT("VP5", 5);
             ANALOG_INPUT("VM5", -5);
+#endif
 
             LOCAL_SOURCE("filter", netlist_filter);
             LOCAL_SOURCE("amp", netlist_amp);
@@ -192,8 +207,11 @@ namespace mame
 
             SOLVER("Solver", 48000);
 
+            throw new emu_unimplemented();
+#if false
             ANALOG_INPUT("VP5", 5);
             ANALOG_INPUT("VM5", -5);
+#endif
 
             LOCAL_SOURCE("filter", netlist_filter);
             LOCAL_SOURCE("amp", netlist_amp);

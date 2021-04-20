@@ -26,7 +26,7 @@ namespace mame.netlist
         public static string MF_REMOVE_TERMINAL_1_FROM_NET_2(params object [] args) { return PERRMSGV(2, "Can not remove terminal {0} from net {1}.", args); }
         public static string MF_UNKNOWN_PARAM_TYPE(params object [] args)           { return PERRMSGV(1, "Can not determine param_type for {0}", args); }
         //public static string MF_ERROR_CONNECTING_1_TO_2(params object [] args)      { return PERRMSGV(2, "Error connecting {0} to {1}", args); }
-        public static string ME_HND_VAL_NOT_SUPPORTED(params object [] args)        { return PERRMSGV(1, "HINT_NO_DEACTIVATE value not supported: <{0}>", args); }
+        //public static string ME_HND_VAL_NOT_SUPPORTED(params object [] args)        { return PERRMSGV(1, "HINT_NO_DEACTIVATE value not supported: <{0}>", args); }
         //PERRMSGV(MW_ROM_NOT_FOUND,                      1, "Rom {1} not found")
 
         // nl_factory.cpp
@@ -41,9 +41,10 @@ namespace mame.netlist
 
         // nl_parser.cpp
 
+        //PERRMSGV(MF_PARSER_UNEXPECTED_1,                1, "Unexpected {}")
         public static string MF_UNEXPECTED_NETLIST_END(params object [] args)       { return PERRMSGV(0, "Unexpected NETLIST_END", args); }
         //PERRMSGV(MF_UNEXPECTED_END_OF_FILE,             0, "Unexpected end of file, missing NETLIST_END")
-        public static string MF_UNEXPECTED_NETLIST_START(params object [] args)     { return PERRMSGV(0, "Unexpected NETLIST_START", args); }
+        //public static string MF_UNEXPECTED_NETLIST_START(params object [] args)     { return PERRMSGV(0, "Unexpected NETLIST_START", args); }
         //PERRMSGV(MF_UNEXPECTED_NETLIST_EXTERNAL,        0, "Unexpected NETLIST_EXTERNAL within a netlist")
         //PERRMSGV(MF_EXPECTED_NETLIST_START_1,           1, "Expected NETLIST_START but got {1}")
         //PERRMSGV(MF_EXPECTED_IDENTIFIER_GOT_1,          1, "Expected an identifier, but got {1}")
@@ -52,6 +53,8 @@ namespace mame.netlist
         //PERRMSGV(MF_PARAM_NOT_FP_1,                     1, "Parameter value <{1}> not floating point")
         //PERRMSGV(MF_TT_LINE_WITHOUT_HEAD,               0, "TT_LINE found without TT_HEAD")
         //PERRMSGV(MF_LOCAL_SOURCE_NOT_FOUND_1,           1, "Local source not found: <{1}>")
+        //PERRMSGV(MF_EXTERNAL_SOURCE_IS_LOCAL_1,         1, "External lib entry appears as a local one: <{1}>")
+        //PERRMSGV(MF_TRUTHTABLE_NOT_FOUND_1,             1, "Truthtable not found: <{1}>")
 
         // nl_setup.cpp
 
@@ -66,7 +69,7 @@ namespace mame.netlist
         public static string MF_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1(params object [] args) { return PERRMSGV(1, "You must pass an equal number of pins to DIPPINS {0}", args); }
         public static string MF_PARAM_COUNT_MISMATCH_2(params object [] args)       { return PERRMSGV(2, "Parameter count mismatch for {0} - only found {1}", args); }
         public static string MF_PARAM_COUNT_EXCEEDED_2(params object [] args)       { return PERRMSGV(2, "Parameter count exceed for {0} - found {1}", args); }
-        public static string MF_UNKNOWN_OBJECT_TYPE_1(params object [] args)        { return PERRMSGV(1, "Unknown object type {0}", args); }
+        //public static string MF_UNKNOWN_OBJECT_TYPE_1(params object [] args)        { return PERRMSGV(1, "Unknown object type {0}", args); }
         public static string MF_UNKNOWN_FAMILY_TYPE_1(params object [] args)        { return PERRMSGV(2, "Unknown family type {0} in model {1}", args); }
         public static string MF_INVALID_NUMBER_CONVERSION_1_2(params object [] args) { return PERRMSGV(2, "Invalid number conversion {0} : {1}", args); }
         public static string MF_INVALID_ENUM_CONVERSION_1_2(params object [] args)  { return PERRMSGV(2, "Invalid element found {0} : {1}", args); }
@@ -117,11 +120,11 @@ namespace mame.netlist
         "but has been forced to act as a logic output. Parameter " +
         " FORCE_TRISTATE_LOGIC for device {1} needs to be disabled!.", args); }
 
-        //PERRMSGV(MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3, 3, "Found device {1} connected only to railterminals {2}/{3}. Please consider commenting those out.")
+        public static string MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(params object [] args) { return PERRMSGV(3, "Found device {0} connected only to railterminals {1}/{2}.  This may reflect the schematic - but as well be an error. Please review.", args); }
 
         public static string MW_DATA_1_NOT_FOUND(params object [] args) { return PERRMSGV(1, "unable to find data {0} in sources collection", args); }
 
-        public static string ME_DEVICE_NOT_FOUND_FOR_HINT(params object [] args) { return PERRMSGV(1, "Device not found for hint {0}", args); }
+        //public static string ME_DEVICE_NOT_FOUND_FOR_HINT(params object [] args) { return PERRMSGV(1, "Device not found for hint {0}", args); }
         public static string ME_UNKNOWN_PARAMETER(params object [] args) { return PERRMSGV(1, "Unknown parameter {0}", args); }
         public static string MF_ERRORS_FOUND(params object [] args) { return PERRMSGV(1, "Counted {0} errors which need to be fixed", args); }
 

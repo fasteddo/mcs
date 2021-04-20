@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using stream_sample_t = System.Int32;
+using stream_sample_t = System.Int32;  //typedef s32 stream_sample_t;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
@@ -105,7 +105,25 @@ namespace mame
 
 
         // sound stream update overrides
-        public abstract void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples);
+
+        //-------------------------------------------------
+        //  sound_stream_update_legacy - implementation
+        //  that should be overridden by legacy devices
+        //-------------------------------------------------
+        public virtual void sound_stream_update_legacy(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)  //void device_sound_interface::sound_stream_update_legacy(sound_stream &stream, stream_sample_t const * const *inputs, stream_sample_t * const *outputs, int samples)
+        {
+            throw new emu_fatalerror("sound_stream_update_legacy called but not overridden by owning class");
+        }
+
+
+        //-------------------------------------------------
+        //  sound_stream_update - default implementation
+        //  that should be overridden
+        //-------------------------------------------------
+        public virtual void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //void device_sound_interface::sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs)
+        {
+            throw new emu_fatalerror("sound_stream_update called but not overridden by owning class");
+        }
 
 
         // stream creation
@@ -113,9 +131,21 @@ namespace mame
         //  stream_alloc - allocate a stream implicitly
         //  associated with this device
         //-------------------------------------------------
-        public sound_stream stream_alloc(int inputs, int outputs, int sample_rate)
+        sound_stream stream_alloc_legacy(int inputs, int outputs, u32 sample_rate)
         {
-            return device().machine().sound().stream_alloc(device(), inputs, outputs, sample_rate);
+            return device().machine().sound().stream_alloc_legacy(this.device(), (u32)inputs, (u32)outputs, sample_rate, sound_stream_update_legacy);
+        }
+
+
+        public sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate)
+        {
+            return device().machine().sound().stream_alloc(this.device(), (u32)inputs, (u32)outputs, sample_rate, sound_stream_update, sound_stream_flags.STREAM_DEFAULT_FLAGS);
+        }
+
+
+        public sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate, sound_stream_flags flags)
+        {
+            return device().machine().sound().stream_alloc(this.device(), (u32)inputs, (u32)outputs, sample_rate, sound_stream_update, flags);
         }
 
 
@@ -125,18 +155,19 @@ namespace mame
         //  inputs - return the total number of inputs
         //  for the given device
         //-------------------------------------------------
-        int inputs()
+        public int inputs()
         {
             // scan the list counting streams we own and summing their inputs
             int inputs = 0;
             foreach (var stream in device().machine().sound().streams())
             {
                 if (stream.device() == device())
-                    inputs += stream.input_count();
+                    inputs += (int)stream.input_count();
             }
 
             return inputs;
         }
+
 
         //-------------------------------------------------
         //  outputs - return the total number of outputs
@@ -149,18 +180,19 @@ namespace mame
             foreach (var stream in device().machine().sound().streams())
             {
                 if (stream.device() == device())
-                    outputs += stream.output_count();
+                    outputs += (int)stream.output_count();
             }
 
             return outputs;
         }
+
 
         //-------------------------------------------------
         //  input_to_stream_input - convert a device's
         //  input index to a stream and the input index
         //  on that stream
         //-------------------------------------------------
-        sound_stream input_to_stream_input(int inputnum, out int stream_inputnum)
+        public sound_stream input_to_stream_input(int inputnum, out int stream_inputnum)
         {
             assert(inputnum >= 0);
 
@@ -177,7 +209,7 @@ namespace mame
                         return stream;
                     }
 
-                    inputnum -= stream.input_count();
+                    inputnum -= (int)stream.input_count();
                 }
             }
 
@@ -185,12 +217,13 @@ namespace mame
             return null;
         }
 
+
         //-------------------------------------------------
         //  output_to_stream_output - convert a device's
         //  output index to a stream and the output index
         //  on that stream
         //-------------------------------------------------
-        sound_stream output_to_stream_output(int outputnum, out int stream_outputnum)
+        public sound_stream output_to_stream_output(int outputnum, out int stream_outputnum)
         {
             assert(outputnum >= 0);
 
@@ -207,7 +240,7 @@ namespace mame
                         return stream;
                     }
 
-                    outputnum -= stream.output_count();
+                    outputnum -= (int)stream.output_count();
                 }
             }
 
@@ -235,7 +268,7 @@ namespace mame
                     if (stream.device() == device())
                     {
                         for (int num = 0; num < stream.output_count(); num++)
-                            stream.set_output_gain(num, gain);
+                            stream.output(num).set_gain(gain);
                     }
                 }
             }
@@ -246,7 +279,7 @@ namespace mame
                 int stream_outputnum;
                 sound_stream stream = output_to_stream_output(outputnum, out stream_outputnum);
                 if (stream != null)
-                    stream.set_output_gain(stream_outputnum, gain);
+                    stream.output(stream_outputnum).set_gain(gain);
             }
         }
 
@@ -394,7 +427,8 @@ namespace mame
         // internal state
         u8 m_outputs;              // number of outputs
         std.vector<u8> m_outputmap = new std.vector<u8>();   // map of inputs to outputs
-        sound_stream m_mixer_stream;         // mixing stream
+        std.vector<bool> m_output_clear = new std.vector<bool>();       // flag for tracking cleared buffers
+        public sound_stream m_mixer_stream;         // mixing stream
 
 
         // construction/destruction
@@ -450,8 +484,11 @@ namespace mame
                 }
             }
 
+            // keep a small buffer handy for tracking cleared buffers
+            m_output_clear.resize(m_outputs);
+
             // allocate the mixer stream
-            m_mixer_stream = stream_alloc(m_auto_allocated_inputs, m_outputs, device().machine().sample_rate());
+            m_mixer_stream = stream_alloc(m_auto_allocated_inputs, m_outputs, (u32)device().machine().sample_rate(), sound_stream_flags.STREAM_DEFAULT_FLAGS);
         }
 
         //-------------------------------------------------
@@ -461,10 +498,9 @@ namespace mame
         //-------------------------------------------------
         public override void interface_post_load()
         {
-            // Beware that there's not going to be a mixer stream if there was
-            // no inputs
+            // mixer stream could be null if no inputs were specified
             if (m_mixer_stream != null)
-                m_mixer_stream.set_sample_rate(device().machine().sample_rate());
+                m_mixer_stream.set_sample_rate((u32)device().machine().sample_rate());
 
             // call our parent
             base.interface_post_load();
@@ -475,22 +511,41 @@ namespace mame
         //-------------------------------------------------
         //  mixer_update - mix all inputs to one output
         //-------------------------------------------------
-        public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
-            // clear output buffers
-            for (int output = 0; output < m_outputs; output++)
+            // special case: single input, single output, same rate
+            if (inputs.size() == 1 && outputs.size() == 1 && inputs[0].sample_rate() == outputs[0].sample_rate())
             {
-                std.fill_n(outputs[output], samples, 0);
+                outputs[0].assign_from(inputs[0]);  //outputs[0] = inputs[0];
+                return;
             }
 
-            // loop over samples
-            Pointer<u8> outmap = new Pointer<u8>(m_outputmap);  //const u8 *outmap = &m_outputmap[0];
-            for (int pos = 0; pos < samples; pos++)
+            // reset the clear flags
+            std.fill(m_output_clear, false);  //std::fill(std::begin(m_output_clear), std::end(m_output_clear), false);
+
+            // loop over inputs
+            for (int inputnum = 0; inputnum < m_auto_allocated_inputs; inputnum++)
             {
-                // for each input, add it to the appropriate output
-                for (int inp = 0; inp < m_auto_allocated_inputs; inp++)
-                    outputs[outmap[inp]][pos] += inputs[inp][pos];
+                // skip if the gain is 0
+                var input = inputs[inputnum];
+                if (input.gain() == 0)
+                    continue;
+
+                // either store or accumulate
+                int outputnum = m_outputmap[inputnum];
+                var output = outputs[outputnum];
+                if (!m_output_clear[outputnum])
+                    output.copy(input);
+                else
+                    output.add(input);
+
+                m_output_clear[outputnum] = true;
             }
+
+            // clear anything unused
+            for (int outputnum = 0; outputnum < m_outputs; outputnum++)
+                if (!m_output_clear[outputnum])
+                    outputs[outputnum].fill(0);
         }
     }
 

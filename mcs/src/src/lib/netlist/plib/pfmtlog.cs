@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using plog_delegate = System.Action<mame.plib.plog_level, string>;  //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
+
 
 namespace mame.plib
 {
@@ -29,6 +31,15 @@ namespace mame.plib
         ERROR,
         FATAL
     }
+
+    public interface plog_level_constant { plog_level value { get; } }
+    public class plog_level_constant_DEBUG : plog_level_constant { public plog_level value { get { return plog_level.DEBUG; } } }
+    public class plog_level_constant_VERBOSE : plog_level_constant { public plog_level value { get { return plog_level.VERBOSE; } } }
+    public class plog_level_constant_INFO : plog_level_constant { public plog_level value { get { return plog_level.INFO; } } }
+    public class plog_level_constant_WARNING : plog_level_constant { public plog_level value { get { return plog_level.WARNING; } } }
+    public class plog_level_constant_ERROR : plog_level_constant { public plog_level value { get { return plog_level.ERROR; } } }
+    public class plog_level_constant_FATAL : plog_level_constant { public plog_level value { get { return plog_level.FATAL; } } }
+
 
 
     class pfmt
@@ -74,16 +85,16 @@ namespace mame.plib
 
 
     //template <class T, bool build_enabled = true>
-    public abstract class pfmt_writer_t<T>
+    public abstract class pfmt_writer_t<T, bool_build_enabled>
+        where bool_build_enabled : bool_constant, new()
     {
-        // template parameters
-        bool build_enabled;
+        static bool_build_enabled build_enabled = new bool_build_enabled();
 
 
         bool m_enabled;
 
 
-        public pfmt_writer_t(bool build_enabled = true) { this.build_enabled = build_enabled;  m_enabled = true; }
+        public pfmt_writer_t() { m_enabled = true; }
 
         //COPYASSIGNMOVE(pfmt_writer_t, delete)
 
@@ -115,7 +126,7 @@ namespace mame.plib
         //}
         public void op(string format, params object [] args)
         {
-            if (build_enabled && m_enabled)
+            if (build_enabled.value && m_enabled)
             {
                 string s = string.Format(format, args);
                 vdowrite(s);  //static_cast<const T *>(this)->vdowrite(xlog(pf, std::forward<Args>(args)...));
@@ -139,56 +150,76 @@ namespace mame.plib
     }
 
 
-    //template <class T, plog_level::E L, bool build_enabled = true>
-    public class plog_channel<T> : pfmt_writer_t<plog_channel<T>> where T : netlist.callbacks_t  //pfmt_writer_t<plog_channel<T, L, build_enabled>, build_enabled>
+    public abstract class pfmt_writer_t<T> : pfmt_writer_t<T, bool_constant_true>
     {
+    }
+
+
+    //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
+
+
+    public class plog_channel<plog_level_L> : plog_channel<plog_level_L, bool_constant_true>
+        where plog_level_L : plog_level_constant, new()
+    {
+        public plog_channel(plog_delegate logger) : base(logger) { }
+    }
+
+    //template <plog_level::E L, bool build_enabled = true>
+    public class plog_channel<plog_level_L, bool_build_enabled> : pfmt_writer_t<plog_channel<plog_level_L, bool_build_enabled>, bool_build_enabled>  //class plog_channel : public pfmt_writer_t<plog_channel<L, build_enabled>, build_enabled>
+        where plog_level_L : plog_level_constant, new()
+        where bool_build_enabled : bool_constant, new()
+    {
+        static plog_level_L L = new plog_level_L();
+        static bool_build_enabled build_enabled = new bool_build_enabled();
+
+
         //friend class pfmt_writer_t<plog_channel<T, L, build_enabled>, build_enabled>;
 
 
-        // template parameters
-        plog_level L;
-        bool build_enabled = true;
-
-        T m_base;
+        plog_delegate m_logger;
 
 
-        public plog_channel(T b, plog_level L, bool build_enabled = true) : base(build_enabled) {this.L = L;  this.build_enabled = build_enabled;  m_base = b; }
+        public plog_channel(plog_delegate logger)
+            : base()  //: pfmt_writer_t<plog_channel, build_enabled>()
+        {
+            m_logger = logger;
+        }
 
-        //COPYASSIGNMOVE(plog_channel, delete)
+        //PCOPYASSIGNMOVE(plog_channel, delete)
 
         //~plog_channel() noexcept = default;
 
 
         protected override void vdowrite(string ls)
         {
-            m_base.vlog(L, ls);
+            m_logger(L.value, ls);
         }
     }
 
 
-    //template<class T, bool debug_enabled>
-    public class plog_base<T> where T : netlist.callbacks_t
+    //template<bool debug_enabled>
+    public class plog_base<bool_debug_enabled>
+        where bool_debug_enabled : bool_constant, new()
     {
-        // template parameter
-        bool debug_enabled;
+        static bool_debug_enabled debug_enabled = new bool_debug_enabled();
 
 
-        public plog_channel<T> debug;  //plog_channel<T, plog_level::DEBUG, debug_enabled> debug;
-        public plog_channel<T> info;  //plog_channel<T, plog_level::INFO> info;
-        public plog_channel<T> verbose;  //plog_channel<T, plog_level::VERBOSE> verbose;
-        public plog_channel<T> warning;  //plog_channel<T, plog_level::WARNING> warning;
-        public plog_channel<T> error;  //plog_channel<T, plog_level::ERROR> error;
-        public plog_channel<T> fatal;  //plog_channel<T, plog_level::FATAL> fatal;
+        public plog_channel<plog_level_constant_DEBUG, bool_debug_enabled> debug;
+        public plog_channel<plog_level_constant_INFO> info;
+        public plog_channel<plog_level_constant_VERBOSE> verbose;
+        public plog_channel<plog_level_constant_WARNING> warning;
+        public plog_channel<plog_level_constant_ERROR> error;
+        public plog_channel<plog_level_constant_FATAL> fatal;
 
 
-        public plog_base(bool debug_enabled, T proxy)
+        public plog_base(plog_delegate logger)
         {
-            debug = new plog_channel<T>(proxy, plog_level.DEBUG, debug_enabled);
-            info = new plog_channel<T>(proxy, plog_level.INFO);
-            verbose = new plog_channel<T>(proxy, plog_level.VERBOSE);
-            warning = new plog_channel<T>(proxy, plog_level.WARNING);
-            error = new plog_channel<T>(proxy, plog_level.ERROR);
-            fatal = new plog_channel<T>(proxy, plog_level.FATAL);
+            debug = new plog_channel<plog_level_constant_DEBUG, bool_debug_enabled>(logger);
+            info = new plog_channel<plog_level_constant_INFO>(logger);
+            verbose = new plog_channel<plog_level_constant_VERBOSE>(logger);
+            warning = new plog_channel<plog_level_constant_WARNING>(logger);
+            error = new plog_channel<plog_level_constant_ERROR>(logger);
+            fatal = new plog_channel<plog_level_constant_FATAL>(logger);
         }
 
         //PCOPYASSIGNMOVE(plog_base, default)

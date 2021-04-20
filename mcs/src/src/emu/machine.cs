@@ -278,7 +278,7 @@ namespace mame
         bool m_ui_active;            // ui active or not (useful for games / systems with keyboard inputs)
         time_t m_base_time;            // real time at initial emulation time
         string m_basename;             // basename used for game-related paths
-        int m_sample_rate;          // the digital audio sample rate
+        public int m_sample_rate;          // the digital audio sample rate
         emu_file m_logfile;              // pointer to the active error.log file
         emu_file m_debuglogfile;      // pointer to the active debug.log file
 

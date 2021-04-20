@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
 
@@ -17,6 +17,11 @@ namespace mame.netlist
     // FIXME: belongs into detail namespace
     public class core_device_t : detail.netlist_object_t
     {
+        //using activate_delegate = plib::pmfp<void, bool>;
+
+
+        //activate_delegate m_activate;
+
         bool m_hint_deactivate;
         state_var_s32 m_active_outputs;
         stats_t m_stats;  //device_arena::unique_ptr<stats_t> m_stats;
@@ -60,27 +65,10 @@ namespace mame.netlist
 
         //virtual ~core_device_t() noexcept = default;
 
+
         //void do_inc_active() noexcept
-        //{
-        //    if (m_hint_deactivate)
-        //    {
-        //        if (++m_active_outputs == 1)
-        //        {
-        //            if (m_stats)
-        //                m_stats->m_stat_inc_active.inc();
-        //            inc_active();
-        //        }
-        //    }
-        //}
 
         //void do_dec_active() noexcept
-        //{
-        //    if (m_hint_deactivate)
-        //        if (--m_active_outputs == 0)
-        //        {
-        //            dec_active();
-        //        }
-        //}
 
 
         public void set_hint_deactivate(bool v) { m_hint_deactivate = v; }
@@ -102,7 +90,7 @@ namespace mame.netlist
             //plib::pperfcount_t<true> m_stat_inc_active;
         }
 
-        //stats_t * stats() const noexcept { return m_stats.get(); }
+        public stats_t stats() { return m_stats; }
 
 
         public virtual void reset() { }
@@ -111,10 +99,6 @@ namespace mame.netlist
         protected void handler_noop()
         {
         }
-
-
-        protected virtual void inc_active() {  }
-        protected virtual void dec_active() {  }
 
 
         protected log_type log()

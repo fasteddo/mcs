@@ -205,13 +205,13 @@ namespace mame
             IPT_MAHJONG_CHI,
             IPT_MAHJONG_REACH,
             IPT_MAHJONG_RON,
+            IPT_MAHJONG_FLIP_FLOP,
             IPT_MAHJONG_BET,
-            IPT_MAHJONG_LAST_CHANCE,
             IPT_MAHJONG_SCORE,
             IPT_MAHJONG_DOUBLE_UP,
-            IPT_MAHJONG_FLIP_FLOP,
             IPT_MAHJONG_BIG,
             IPT_MAHJONG_SMALL,
+            IPT_MAHJONG_LAST_CHANCE,
 
         IPT_MAHJONG_LAST,
 
@@ -244,15 +244,15 @@ namespace mame
         //  IPT_GAMBLE_DOOR4,
         //  IPT_GAMBLE_DOOR5,
 
+            IPT_GAMBLE_PAYOUT,  // player
+            IPT_GAMBLE_BET,     // player
+            IPT_GAMBLE_DEAL,    // player
+            IPT_GAMBLE_STAND,   // player
+            IPT_GAMBLE_TAKE,    // player
+            IPT_GAMBLE_D_UP,    // player
+            IPT_GAMBLE_HALF,    // player
             IPT_GAMBLE_HIGH,    // player
             IPT_GAMBLE_LOW,     // player
-            IPT_GAMBLE_HALF,    // player
-            IPT_GAMBLE_DEAL,    // player
-            IPT_GAMBLE_D_UP,    // player
-            IPT_GAMBLE_TAKE,    // player
-            IPT_GAMBLE_STAND,   // player
-            IPT_GAMBLE_BET,     // player
-            IPT_GAMBLE_PAYOUT,  // player
 
             // poker-specific inputs
             IPT_POKER_HOLD1,
@@ -261,7 +261,6 @@ namespace mame
             IPT_POKER_HOLD4,
             IPT_POKER_HOLD5,
             IPT_POKER_CANCEL,
-            IPT_POKER_BET,
 
             // slot-specific inputs
             IPT_SLOT_STOP1,
@@ -1557,9 +1556,9 @@ namespace mame
         public s32 m_delta;            // delta to apply each frame a digital inc/dec key is pressed
         public s32 m_centerdelta;      // delta to apply each frame no digital inputs are pressed
         crosshair_axis_t m_crosshair_axis;   // crosshair axis
-        double m_crosshair_scale;  // crosshair scale
-        double m_crosshair_offset; // crosshair offset
-        double m_crosshair_altaxis;// crosshair alternate axis value
+        float m_crosshair_scale;  // crosshair scale
+        float m_crosshair_offset; // crosshair offset
+        float m_crosshair_altaxis;// crosshair alternate axis value
         ioport_field_crossmap_delegate m_crosshair_mapper; // crosshair mapping function
         public u16 m_full_turn_count;  // number of optical counts for 1 full turn of the original control
         ioport_value [] m_remap_table;  //const ioport_value *        m_remap_table;      // pointer to an array that remaps the port value
@@ -1595,7 +1594,7 @@ namespace mame
             m_delta = 0;
             m_centerdelta = 0;
             m_crosshair_axis = crosshair_axis_t.CROSSHAIR_AXIS_NONE;
-            m_crosshair_scale = 1.0;
+            m_crosshair_scale = 1.0f;
             m_crosshair_offset = 0;
             m_crosshair_altaxis = 0;
             m_crosshair_mapper = null;
@@ -1755,8 +1754,9 @@ namespace mame
         public s32 delta() { return m_delta; }
         public s32 centerdelta() { return m_centerdelta; }
         public crosshair_axis_t crosshair_axis() { return m_crosshair_axis; }
-        //double crosshair_scale() const { return m_crosshair_scale; }
-        //double crosshair_offset() const { return m_crosshair_offset; }
+        //float crosshair_scale() const noexcept { return m_crosshair_scale; }
+        //float crosshair_offset() const noexcept { return m_crosshair_offset; }
+        //float crosshair_altaxis() const noexcept { return m_crosshair_altaxis; }
         //u16 full_turn_count() const noexcept { return m_full_turn_count; }
         public ioport_value [] remap_table() { return m_remap_table; }
 
@@ -1859,8 +1859,8 @@ namespace mame
 
 
         // setters
-        //void set_crosshair_scale(double scale) { m_crosshair_scale = scale; }
-        //void set_crosshair_offset(double offset) { m_crosshair_offset = offset; }
+        //void set_crosshair_scale(float scale) { m_crosshair_scale = scale; }
+        //void set_crosshair_offset(float offset) { m_crosshair_offset = offset; }
         public void set_player(u8 player) { m_player = player; }
 
 
@@ -1957,52 +1957,26 @@ namespace mame
 
 
         //-------------------------------------------------
-        //  crosshair_position - compute the crosshair
+        //  crosshair_read - compute the crosshair
         //  position
         //-------------------------------------------------
-        public void crosshair_position(out float x, out float y, out bool gotx, out bool goty)
+        float crosshair_read()
         {
-            x = 0;
-            y = 0;
-            gotx = false;
-            goty = false;
-
-            double value = m_live.analog.crosshair_read();
+            float value = m_live.analog.crosshair_read();
 
             // apply the scale and offset
             if (m_crosshair_scale < 0)
-                value = -(1.0 - value) * m_crosshair_scale;
+                value = -(1.0f - value) * m_crosshair_scale;
             else
                 value *= m_crosshair_scale;
+
             value += m_crosshair_offset;
 
             // apply custom mapping if necessary
             if (m_crosshair_mapper != null)
-                value = m_crosshair_mapper((float)value);
+                value = m_crosshair_mapper(value);
 
-            // handle X axis
-            if (m_crosshair_axis == crosshair_axis_t.CROSSHAIR_AXIS_X)
-            {
-                x = (float)value;
-                gotx = true;
-                if (m_crosshair_altaxis != 0)
-                {
-                    y = (float)m_crosshair_altaxis;
-                    goty = true;
-                }
-            }
-
-            // handle Y axis
-            else
-            {
-                y = (float)value;
-                goty = true;
-                if (m_crosshair_altaxis != 0)
-                {
-                    x = (float)m_crosshair_altaxis;
-                    gotx = true;
-                }
-            }
+            return value;
         }
 
 
@@ -2664,8 +2638,8 @@ namespace mame
             m_previous = 0;
             m_previousanalog = 0;
             m_prog_analog_value = 0;
-            m_minimum = input_global.INPUT_ABSOLUTE_MIN;
-            m_maximum = input_global.INPUT_ABSOLUTE_MAX;
+            m_minimum = inputdev_global.INPUT_ABSOLUTE_MIN;
+            m_maximum = inputdev_global.INPUT_ABSOLUTE_MAX;
             m_center = 0;
             m_reverse_val = 0;
             m_scalepos = 0;
@@ -2709,7 +2683,7 @@ namespace mame
                 case ioport_type.IPT_PEDAL:
                 case ioport_type.IPT_PEDAL2:
                 case ioport_type.IPT_PEDAL3:
-                    m_center = input_global.INPUT_ABSOLUTE_MIN;
+                    m_center = inputdev_global.INPUT_ABSOLUTE_MIN;
                     m_accum = apply_inverse_sensitivity(m_center);
                     m_absolute = true;
                     m_autocenter = true;
@@ -2728,7 +2702,7 @@ namespace mame
                 // set each position to be 512 units
                 case ioport_type.IPT_POSITIONAL:
                 case ioport_type.IPT_POSITIONAL_V:
-                    m_positionalscale = ioport_global.compute_scale((int)field.maxval(), input_global.INPUT_ABSOLUTE_MAX - input_global.INPUT_ABSOLUTE_MIN);
+                    m_positionalscale = ioport_global.compute_scale((int)field.maxval(), inputdev_global.INPUT_ABSOLUTE_MAX - inputdev_global.INPUT_ABSOLUTE_MIN);
                     m_adjmin = 0;
                     m_adjmax = (int)field.maxval() - 1;
                     m_wraps = field.analog_wraps();
@@ -2764,8 +2738,8 @@ namespace mame
                 if (!m_single_scale)
                 {
                     // unsigned
-                    m_scalepos = ioport_global.compute_scale(m_adjmax - m_adjdefvalue, input_global.INPUT_ABSOLUTE_MAX - 0);
-                    m_scaleneg = ioport_global.compute_scale(m_adjdefvalue - m_adjmin, 0 - input_global.INPUT_ABSOLUTE_MIN);
+                    m_scalepos = ioport_global.compute_scale(m_adjmax - m_adjdefvalue, inputdev_global.INPUT_ABSOLUTE_MAX - 0);
+                    m_scaleneg = ioport_global.compute_scale(m_adjdefvalue - m_adjmin, 0 - inputdev_global.INPUT_ABSOLUTE_MIN);
 
                     if (m_adjmin > m_adjmax)
                         m_scaleneg = -m_scaleneg;
@@ -2776,7 +2750,7 @@ namespace mame
                 else
                 {
                     // single axis that increases from default
-                    m_scalepos = ioport_global.compute_scale(m_adjmax - m_adjmin, input_global.INPUT_ABSOLUTE_MAX - input_global.INPUT_ABSOLUTE_MIN);
+                    m_scalepos = ioport_global.compute_scale(m_adjmax - m_adjmin, inputdev_global.INPUT_ABSOLUTE_MAX - inputdev_global.INPUT_ABSOLUTE_MIN);
 
                     // make the scaling the same for easier coding when we need to scale
                     m_scaleneg = m_scalepos;
@@ -2800,11 +2774,11 @@ namespace mame
                 if (m_wraps)
                     m_adjmax++;
 
-                m_minimum = (m_adjmin - m_adjdefvalue) * input_global.INPUT_RELATIVE_PER_PIXEL;
-                m_maximum = (m_adjmax - m_adjdefvalue) * input_global.INPUT_RELATIVE_PER_PIXEL;
+                m_minimum = (m_adjmin - m_adjdefvalue) * inputdev_global.INPUT_RELATIVE_PER_PIXEL;
+                m_maximum = (m_adjmax - m_adjdefvalue) * inputdev_global.INPUT_RELATIVE_PER_PIXEL;
 
                 // make the scaling the same for easier coding when we need to scale
-                m_scaleneg = m_scalepos = ioport_global.compute_scale(1, input_global.INPUT_RELATIVE_PER_PIXEL);
+                m_scaleneg = m_scalepos = ioport_global.compute_scale(1, inputdev_global.INPUT_RELATIVE_PER_PIXEL);
 
                 if (m_field.analog_reset())
                     // delta values reverse from center
@@ -2821,7 +2795,7 @@ namespace mame
                         if(field.type() == ioport_type.IPT_POSITIONAL || field.type() == ioport_type.IPT_POSITIONAL_V)
                             m_reverse_val --;
                         else
-                            m_reverse_val -= input_global.INPUT_RELATIVE_PER_PIXEL;
+                            m_reverse_val -= inputdev_global.INPUT_RELATIVE_PER_PIXEL;
                     }
                 }
             }
@@ -2936,7 +2910,7 @@ namespace mame
                         // if port is positional, we will take the full analog control and divide it
                         // into positions, that way as the control is moved full scale,
                         // it moves through all the positions
-                        rawvalue = ioport_global.apply_scale(rawvalue - input_global.INPUT_ABSOLUTE_MIN, m_positionalscale) * input_global.INPUT_RELATIVE_PER_PIXEL + m_minimum;
+                        rawvalue = ioport_global.apply_scale(rawvalue - inputdev_global.INPUT_ABSOLUTE_MIN, m_positionalscale) * inputdev_global.INPUT_RELATIVE_PER_PIXEL + m_minimum;
 
                         // clamp the high value so it does not roll over
                         rawvalue = Math.Min(rawvalue, m_maximum);
@@ -3107,7 +3081,7 @@ namespace mame
             else if (m_single_scale)
                 // it's a pedal or the default value is equal to min/max
                 // so we need to adjust the center to the minimum
-                value -= input_global.INPUT_ABSOLUTE_MIN;
+                value -= inputdev_global.INPUT_ABSOLUTE_MIN;
 
             // map differently for positive and negative values
             if (value >= 0)
@@ -3741,36 +3715,6 @@ namespace mame
 
 
         //-------------------------------------------------
-        //  crosshair_position - return the extracted
-        //  crosshair values for the given player
-        //-------------------------------------------------
-        public bool crosshair_position(int player, out float x, out float y)
-        {
-            // read all the lightgun values
-            x = 0;
-            y = 0;
-            bool gotx = false;
-            bool goty = false;
-            foreach (var port in m_portlist)
-            {
-                foreach (ioport_field field in port.Value.fields())
-                {
-                    if (field.player() == player && field.crosshair_axis() != crosshair_axis_t.CROSSHAIR_AXIS_NONE && field.enabled())
-                    {
-                        field.crosshair_position(out x, out y, out gotx, out goty);
-
-                        // if we got both, stop
-                        if (gotx && goty)
-                            break;
-                    }
-                }
-            }
-
-            return gotx && goty;
-        }
-
-
-        //-------------------------------------------------
         //  frame_interpolate - interpolate between two
         //  values based on the time between frames
         //-------------------------------------------------
@@ -3784,6 +3728,7 @@ namespace mame
             attoseconds_t nsec_since_last = (machine().time() - m_last_frame_time).as_attoseconds() / attotime.ATTOSECONDS_PER_NANOSECOND;
             return (int)(oldval + ((Int64)(newval - oldval) * nsec_since_last / m_last_delta_nsec));
         }
+
 
         //ioport_type token_to_input_type(const char *string, int &player) const;
         //string input_type_to_token(ioport_type type, int player);
@@ -3865,10 +3810,10 @@ namespace mame
         //-------------------------------------------------
         //  frame_update - callback for once/frame updating
         //-------------------------------------------------
-        void frame_update_callback(running_machine machine)
+        void frame_update_callback(running_machine machine_)
         {
             // if we're paused, don't do anything
-            if (!machine.paused())
+            if (!machine().paused())
                 frame_update();
         }
 

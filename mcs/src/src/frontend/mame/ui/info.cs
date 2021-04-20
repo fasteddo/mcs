@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
 using size_t = System.UInt32;
 using u32 = System.UInt32;
 
@@ -163,14 +164,30 @@ namespace mame.ui
         public bool has_analog() { return m_has_analog; }
 
 
-        // message colour
+        // warning severity indications
+        //bool has_warnings() const;
+
+
+        //-------------------------------------------------
+        //  has_severe_warnings - returns true if the
+        //  system has issues that warrant a red message
+        //-------------------------------------------------
+        public bool has_severe_warnings()
+        {
+            return
+                    (machine_flags_get() & MACHINE_ERRORS) != 0 ||
+                    (unemulated_features() & (device_t_feature.type.PROTECTION | device_t_feature.type.GRAPHICS | device_t_feature.type.SOUND)) != 0 ||
+                    (imperfect_features() & device_t_feature.type.PROTECTION) != 0;
+        }
+
+
         //-------------------------------------------------
         //  status_color - returns suitable colour for
         //  driver status box
         //-------------------------------------------------
         public rgb_t status_color()
         {
-            if ((machine_flags_get() & MACHINE_ERRORS) != 0 || ((unemulated_features() | imperfect_features()) & emu.detail.device_feature.type.PROTECTION) != 0)
+            if (has_severe_warnings())
                 return UI_RED_COLOR;
             else if ((machine_flags_get() & MACHINE_WARNINGS & ~machine_flags.type.REQUIRES_ARTWORK) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
                 return UI_YELLOW_COLOR;
@@ -185,7 +202,7 @@ namespace mame.ui
         //-------------------------------------------------
         public rgb_t warnings_color()
         {
-            if ((machine_flags_get() & MACHINE_ERRORS) != 0 || ((unemulated_features() | imperfect_features()) & emu.detail.device_feature.type.PROTECTION) != 0)
+            if (has_severe_warnings())
                 return UI_RED_COLOR;
             else if ((machine_flags_get() & MACHINE_WARNINGS) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
                 return UI_YELLOW_COLOR;

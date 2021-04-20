@@ -170,7 +170,7 @@ namespace mame.plib
 
     /// \brief a simple linked list.
     ///
-    /// The list allows insertions deletions whilst being processed.
+    /// The list allows insertions and deletions whilst being processed.
     ///
     //template <class LC>
     class linkedlist_t<LC>

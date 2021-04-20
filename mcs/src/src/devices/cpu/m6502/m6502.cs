@@ -48,7 +48,7 @@ namespace mame
         {
             public device_state_interface_m6502(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            protected override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
+            public override void state_import(device_state_entry entry) { throw new emu_unimplemented(); }
             protected override void state_export(device_state_entry entry) { ((m6502_device)device()).device_state_interface_state_export(entry); }
             protected override void state_string_export(device_state_entry entry, out string str) { throw new emu_unimplemented(); }
         }

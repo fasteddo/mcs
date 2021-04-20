@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;
-using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -34,7 +33,7 @@ namespace mame
         {
             public device_sound_interface_namco_audio(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((namco_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((namco_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -147,9 +146,9 @@ namespace mame
 
             /* get stream channels */
             if (m_stereo)
-                m_stream = machine().sound().stream_alloc(this, 0, 2, 192000);
+                m_stream = m_disound.stream_alloc(0, 2, 192000);
             else
-                m_stream = machine().sound().stream_alloc(this, 0, 1, 192000);
+                m_stream = m_disound.stream_alloc(0, 1, 192000);
 
             /* start with sound enabled, many games don't have a sound enable register */
             m_sound_enable = true;
@@ -214,7 +213,7 @@ namespace mame
 
             logerror("Namco: freq fractional bits = {0}: internal freq = {1}, output freq = {2}\n", m_f_fracbits, m_namco_clock, m_sample_rate);
 
-            m_stream.set_sample_rate(m_sample_rate);
+            m_stream.set_sample_rate((u32)m_sample_rate);
         }
 
 
@@ -285,12 +284,11 @@ namespace mame
         }
 
         /* generate sound by oversampling */
-        protected uint32_t namco_update_one(Pointer<stream_sample_t> buffer, int length, Pointer<int16_t> wave, uint32_t counter, uint32_t freq)  //uint32_t namco_audio_device::namco_update_one(stream_sample_t *buffer, int length, const int16_t *wave, uint32_t counter, uint32_t freq)
+        uint32_t namco_update_one(write_stream_view buffer, Pointer<int16_t> wave, uint32_t counter, uint32_t freq)  //uint32_t namco_update_one(write_stream_view &buffer, const int16_t *wave, uint32_t counter, uint32_t freq);
         {
-            while (length-- > 0)
+            for (int sampindex = 0; sampindex < buffer.samples(); sampindex++)
             {
-                buffer[0] = wave[WAVEFORM_POSITION((int)counter)];  // *buffer++ += wave[WAVEFORM_POSITION(counter)];
-                buffer++;
+                buffer.add_int(sampindex, wave[WAVEFORM_POSITION((int)counter)], 32768);
                 counter += freq;
             }
 
@@ -302,32 +300,25 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
             if (m_stereo)
             {
-                int voiceIdx;  // sound_channel *voice;
-
                 /* zap the contents of the buffers */
-                // memset(outputs[0], 0, samples * sizeof(*outputs[0]));
-                for (int i = 0; i < samples; i++)
-                    outputs[0][i] = 0;
-
-                // memset(outputs[1], 0, samples * sizeof(*outputs[1]));
-                for (int i = 0; i < samples; i++)
-                    outputs[1][i] = 0;
+                outputs[0].fill(0);
+                outputs[1].fill(0);
 
                 /* if no sound, we're done */
                 if (!m_sound_enable)
                     return;
 
                 /* loop over each voice and add its contribution */
-                for (voiceIdx = 0; m_channel_list[voiceIdx] != m_last_channel; voiceIdx++)  //for (voice = m_channel_list; voice < m_last_channel; voice++)
+                for (int voiceIdx = 0; m_channel_list[voiceIdx] != m_last_channel; voiceIdx++)  //for (sound_channel *voice = m_channel_list; voice < m_last_channel; voice++)
                 {
                     sound_channel voice = m_channel_list[voiceIdx];
 
-                    Pointer<stream_sample_t> lmix = new Pointer<stream_sample_t>(outputs[0]);  // stream_sample_t *lmix = outputs[0];
-                    Pointer<stream_sample_t> rmix = new Pointer<stream_sample_t>(outputs[1]);  // stream_sample_t *rmix = outputs[1];
+                    var lmix = outputs[0];
+                    var rmix = outputs[1];
                     int lv = voice.volume[0];
                     int rv = voice.volume[1];
 
@@ -347,23 +338,19 @@ namespace mame
                             int i;
 
                             /* add our contribution */
-                            for (i = 0; i < samples; i++)
+                            for (i = 0; i < lmix.samples(); i++)
                             {
                                 int cnt;
 
                                 if (voice.noise_state != 0)
                                 {
-                                    lmix[0] += l_noise_data;  //*lmix++ += l_noise_data;
-                                    lmix++;
-                                    rmix[0] += r_noise_data;  //*rmix++ += r_noise_data;
-                                    rmix++;
+                                    lmix.add_int(i, l_noise_data, 32768);
+                                    rmix.add_int(i, r_noise_data, 32768);
                                 }
                                 else
                                 {
-                                    lmix[0] -= l_noise_data;  //*lmix++ -= l_noise_data;
-                                    lmix++;
-                                    rmix[0] -= r_noise_data;  //*rmix++ -= r_noise_data;
-                                    rmix++;
+                                    lmix.add_int(i, -l_noise_data, 32768);
+                                    rmix.add_int(i, -r_noise_data, 32768);
                                 }
 
                                 if (hold != 0)
@@ -404,7 +391,7 @@ namespace mame
                                 Pointer<int16_t> lw = new Pointer<int16_t>(m_waveform[lv], voice.waveform_select * 32);  //const int16_t *lw = &m_waveform[lv][voice->waveform_select * 32];
 
                                 /* generate sound into the buffer */
-                                c = namco_update_one(lmix, samples, lw, voice.counter, voice.frequency);
+                                c = namco_update_one(lmix, lw, voice.counter, voice.frequency);
                             }
 
                             /* only update if we have non-zero right volume */
@@ -413,7 +400,7 @@ namespace mame
                                 Pointer<int16_t> rw = new Pointer<int16_t>(m_waveform[rv], voice.waveform_select * 32);  //const int16_t *rw = &m_waveform[rv][voice->waveform_select * 32];
 
                                 /* generate sound into the buffer */
-                                c = namco_update_one(rmix, samples, rw, voice.counter, voice.frequency);
+                                c = namco_update_one(rmix, rw, voice.counter, voice.frequency);
                             }
 
                             /* update the counter for this voice */
@@ -426,12 +413,10 @@ namespace mame
             {
                 int voiceIdx;  // sound_channel *voice;
 
-                Pointer<stream_sample_t> buffer = new Pointer<stream_sample_t>(outputs[0]);  // stream_sample_t *buffer = outputs[0];
+                var buffer = outputs[0];
 
                 /* zap the contents of the buffer */
-                //memset(buffer, 0, samples * sizeof(*buffer));
-                for (int i = 0; i < samples; i++)
-                    buffer[i] = 0;
+                buffer.fill(0);
 
                 /* if no sound, we're done */
                 if (!m_sound_enable)
@@ -442,7 +427,6 @@ namespace mame
                 {
                     sound_channel voice = m_channel_list[voiceIdx];
 
-                    Pointer<stream_sample_t> mix = new Pointer<stream_sample_t>(buffer);  // stream_sample_t *mix = buffer;
                     int v = voice.volume[0];
                     if (voice.noise_sw != 0)
                     {
@@ -459,19 +443,17 @@ namespace mame
                             int i;
 
                             /* add our contribution */
-                            for (i = 0; i < samples; i++)
+                            for (i = 0; i < buffer.samples(); i++)
                             {
                                 int cnt;
 
                                 if (voice.noise_state != 0)
                                 {
-                                    mix[0] += noise_data;  // *mix++ += noise_data;
-                                    mix++;
+                                    buffer.add_int(i, noise_data, 32768);
                                 }
                                 else
                                 {
-                                    mix[0] -= noise_data;  // *mix++ -= noise_data;
-                                    mix++;
+                                    buffer.add_int(i, -noise_data, 32768);
                                 }
 
                                 if (hold != 0)
@@ -492,10 +474,6 @@ namespace mame
                                     voice.noise_seed >>= 1;
                                 }
                             }
-
-                            /* update the counter and hold time for this voice */
-                            voice.noise_counter = c;
-                            voice.noise_hold = hold;
                         }
                     }
                     else
@@ -506,7 +484,7 @@ namespace mame
                             Pointer<int16_t> w = new Pointer<int16_t>(m_waveform[v], voice.waveform_select * 32);  //const int16_t *w = &m_waveform[v][voice->waveform_select * 32];
 
                             /* generate sound into buffer and update the counter for this voice */
-                            voice.counter = namco_update_one(new Pointer<stream_sample_t>(mix), samples, w, voice.counter, voice.frequency);
+                            voice.counter = namco_update_one(buffer, w, voice.counter, voice.frequency);
                         }
                     }
                 }
@@ -585,5 +563,16 @@ namespace mame
 
         //uint8_t polepos_sound_r(offs_t offset);
         //void polepos_sound_w(offs_t offset, uint8_t data);
+
+
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
+        {
+            throw new emu_unimplemented();
+        }
     }
+
+
+    //class namco_15xx_device : public namco_audio_device
+
+    //class namco_cus30_device : public namco_audio_device
 }

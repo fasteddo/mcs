@@ -162,6 +162,9 @@ namespace mame
 #endif
         }
 
+        public void save_item<ItemType>(device_t device, string module, string tag, int index, Tuple<ItemType, string> value)
+        { save_item(device, module, tag, index, value.Item1, value.Item2); }
+
 
         // templatized wrapper for structure members
         //template <typename ItemType, typename StructType, typename ElementType>
@@ -215,6 +218,11 @@ namespace mame
         //template<typename ItemType>
         public void save_item<ItemType>(ItemType value, string valname, int index = 0)
         { save_item(null, "global", null, index, value, valname); }
+
+        // state saving interfaces
+        //template<typename _ItemType>
+        public void save_item<ItemType>(Tuple<ItemType, string> value, int index = 0)
+        { save_item(null, "global", null, index, value.Item1, value.Item2); }
 
         //template <typename ItemType, typename StructType, typename ElementType>
         //void save_item(ItemType &value, ElementType StructType::*element, const char *valname, int index = 0)

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using abstract_t_link_t = mame.std.pair<string, string>;  //using link_t = std::pair<pstring, pstring>;
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
 using models_t_raw_map_t = mame.std.unordered_map<string, string>;  //using raw_map_t = std::unordered_map<pstring, pstring>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -22,7 +22,7 @@ namespace mame.netlist
     public static class nl_setup_global
     {
         //============================================================
-        //  MACROS / inline netlist definitions
+        //  MACROS - netlist definitions
         //============================================================
 
         //#define NET_STR(x) # x
@@ -69,8 +69,8 @@ namespace mame.netlist
         public static void PARAM(nlparse_t setup, string name, string val) { setup.register_param(name, val); }
 
         //#define DEFPARAM(name, val)                                                       \
-        //        setup.defparam(NET_STR(name), NET_STR(val));
-        public static void DEFPARAM(nlparse_t setup, string name, string val) { setup.defparam(name, val); }
+        //        setup.register_defparam(NET_STR(name), NET_STR(val));
+        public static void DEFPARAM(nlparse_t setup, string name, string val) { setup.register_defparam(name, val); }
 
         //#define HINT(name, val)                                                        \
         //        setup.register_hint(# name , ".HINT_" # val);
@@ -99,25 +99,21 @@ namespace mame.netlist
         public static void LOCAL_SOURCE(nlparse_t setup, string name, nlsetup_func netlist_name) { setup.register_source_proc(name, netlist_name); }
 
         //#define EXTERNAL_SOURCE(name)                                                  \
+        //        NETLIST_EXTERNAL(name)                                                 \
         //        setup.register_source_proc(# name, &NETLIST_NAME(name));
         public static void EXTERNAL_SOURCE(nlparse_t setup, string name, nlsetup_func netlist_name) { setup.register_source_proc(name, netlist_name); }
 
-        // FIXME: Need to pass in parameter definition
-        //#define LOCAL_LIB_ENTRY_1(name)                                                  \
-        //        LOCAL_SOURCE(name)                                                     \
+        //#define LOCAL_LIB_ENTRY_2(type, name)                                          \
+        //        type ## _SOURCE(name)                                                  \
         //        setup.register_lib_entry(# name, "", PSOURCELOC());
-        public static void LOCAL_LIB_ENTRY_1(nlparse_t setup, string name, nlsetup_func nld_name)
-        {
-            LOCAL_SOURCE(setup, name, nld_name);
-            setup.register_lib_entry(name, "", plib.pglobal.PSOURCELOC());
-        }
 
-        //#define LOCAL_LIB_ENTRY_2(name, param_spec)                                    \
-        //        LOCAL_SOURCE(name)                                                     \
+        //#define LOCAL_LIB_ENTRY_3(type, name, param_spec)                              \
+        //        type ## _SOURCE(name)                                                  \
         //        setup.register_lib_entry(# name, param_spec, PSOURCELOC());
 
-        //#define LOCAL_LIB_ENTRY(...) PCALLVARARG(LOCAL_LIB_ENTRY_, __VA_ARGS__)
-        public static void LOCAL_LIB_ENTRY(nlparse_t setup, string name, nlsetup_func nld_name) { LOCAL_LIB_ENTRY_1(setup, name, nld_name); }
+        //#define LOCAL_LIB_ENTRY(...) PCALLVARARG(LOCAL_LIB_ENTRY_, LOCAL, __VA_ARGS__)
+
+        //#define EXTERNAL_LIB_ENTRY(...) PCALLVARARG(LOCAL_LIB_ENTRY_, EXTERNAL, __VA_ARGS__)
 
         //#define INCLUDE(name)                                                          \
         //        setup.include(# name);
@@ -145,7 +141,7 @@ namespace mame.netlist
         static netlist.tt_desc TRUTHTABLE_desc;
 
         //#define TRUTHTABLE_START(cname, in, out, pdef_params)                           \
-        //    { \
+        //        NETLIST_START(cname) \
         //        netlist::tt_desc desc;                                                 \
         //        desc.name = #cname ;                                                   \
         //        desc.ni = in;                                                          \
@@ -183,7 +179,7 @@ namespace mame.netlist
 
         //#define TRUTHTABLE_END() \
         //        setup.truthtable_create(desc, def_params, std::move(sloc)); \
-        //    }
+        //        NETLIST_END()
         public static void TRUTHTABLE_END(nlparse_t setup)
         {
             // ref original above
@@ -192,6 +188,10 @@ namespace mame.netlist
             TRUTHTABLE_desc = null;
 #endif
         }
+
+        //#define TRUTHTABLE_ENTRY(name)                                                 \
+        //    LOCAL_SOURCE(name)                                                         \
+        //    INCLUDE(name)
     }
 
 
@@ -223,9 +223,9 @@ namespace mame.netlist
     public class nlparse_t
     {
         //plib::ppreprocessor.defines_map_type       m_defines;
-        //plib::psource_collection_t<>                m_includes;
+        //plib::psource_collection_t                  m_includes;
         std.stack<string> m_namespace_stack;
-        plib.psource_collection_t m_sources;  //plib::psource_collection_t<>                m_sources;
+        plib.psource_collection_t m_sources;
         detail.abstract_t m_abstract;
 
         //std::unordered_map<pstring, parser_t::token_store>    m_source_cache;
@@ -279,7 +279,7 @@ namespace mame.netlist
 
         public void register_dip_alias_arr(string terms)
         {
-            std.vector<string> list = plib.pglobal.psplit(terms, ", ");
+            var list = plib.pglobal.psplit(terms, ", ");
             if (list.empty() || (list.size() % 2) == 1)
             {
                 log().fatal.op(nl_errstr_global.MF_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1(build_fqn("")));
@@ -416,7 +416,7 @@ namespace mame.netlist
 
         public void register_link_arr(string terms)
         {
-            std.vector<string> list = new std.vector<string>(terms.Split(new string[] { ", " }, StringSplitOptions.None));  //plib::psplit(terms, ", ");
+            var list = plib.pglobal.psplit(terms, ", ");
             if (list.size() < 2)
             {
                 log().fatal.op(nl_errstr_global.MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL());
@@ -472,21 +472,24 @@ namespace mame.netlist
         }
 
 
-        void register_param(string param, nl_fptype value)
+        // DEFPARAM support
+        public void register_defparam(string name, string def)
         {
-            if (plib.pglobal.abs<nl_fptype, nl_fptype_ops>(value - plib.pglobal.floor<nl_fptype, nl_fptype_ops>(value)) > nlconst.magic(1e-30)
-                || plib.pglobal.abs<nl_fptype, nl_fptype_ops>(value) > nlconst.magic(1e9))
-                register_param(param, new plib.pfmt("{0}").op(value));  //register_param(param, plib::pfmt("{1:.9}").e(value));
-            else
-                register_param(param, new plib.pfmt("{0}").op(value));
+            // strip " from stringified strings
+            string val = def;
+            if (plib.pglobal.startsWith(def, "\"") && plib.pglobal.endsWith(def, "\""))
+                val = def.substr(1, def.length() - 2);
+            // Replace "@." with the current namespace
+            val = plib.pglobal.replace_all(val, "@.", namespace_prefix());
+            m_abstract.m_defparams.emplace_back(new std.pair<string, string>(namespace_prefix() + name, val));
         }
 
 
         //template <typename T>
         //std::enable_if_t<plib::is_arithmetic<T>::value>
-        public void register_param_val(string param, nl_fptype value)  //register_param(const pstring &param, T value)
+        public void register_param(string param, nl_fptype value)  //register_param(const pstring &param, T value)
         {
-            register_param(param, value);  //register_param(param, plib::narrow_cast<nl_fptype>(value));
+            register_param_fp(param, value);  //register_param_fp(param, plib::narrow_cast<nl_fptype>(value));
         }
 
 
@@ -503,13 +506,7 @@ namespace mame.netlist
         //template <typename S, typename... Args>
         public void register_source(plib.psource_t args)  //void register_source(Args&&... args)
         {
-            //throw new emu_unimplemented();
-#if false
-            static_assert(std::is_base_of<plib::psource_t, S>::value, "S must inherit from plib::psource_t");
-#endif
-
-            var src = args;  //auto src(std::make_unique<S>(std::forward<Args>(args)...));
-            m_sources.add_source(src);  //m_sources.add_source(std::move(src));
+            m_sources.add_source(args);  //m_sources.add_source<S>(std::forward<Args>(args)...);
         }
 
 
@@ -523,6 +520,23 @@ namespace mame.netlist
         {
             var fac = factory.nlid_truthtable_global.truthtable_create(desc, new netlist.factory.properties(def_params, loc));  //auto fac = factory::truthtable_create(desc, netlist::factory.properties(def_params, std::move(loc)));
             factory_().add(fac);
+        }
+
+
+        // handle namespace
+
+        // include other files
+
+        public void include(string netlist_name)
+        {
+            if (m_sources.for_all<source_netlist_t>((source_netlist_t src) =>  //if (m_sources.for_all<source_netlist_t>([this, &netlist_name] (source_netlist_t *src)
+            {
+                return src.parse(this, netlist_name);
+            }))
+                return;
+
+            log().fatal.op(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
+            throw new nl_exception(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
         }
 
 
@@ -544,33 +558,6 @@ namespace mame.netlist
         }
 
 
-        string namespace_prefix()
-        {
-            return m_namespace_stack.empty() ? "" : m_namespace_stack.top() + ".";
-        }
-
-
-        string build_fqn(string obj_name)
-        {
-            return namespace_prefix() + obj_name;
-        }
-
-
-        // include other files
-
-        public void include(string netlist_name)
-        {
-            if (m_sources.for_all((src) =>  //if (m_sources.for_all<source_netlist_t>([this, &netlist_name] (source_netlist_t *src)
-            {
-                return src.parse(this, netlist_name);
-            }))
-                return;
-
-            log().fatal.op(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
-            throw new nl_exception(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
-        }
-
-
         // used from netlist.cpp (mame)
         public bool device_exists(string name)
         {
@@ -585,13 +572,13 @@ namespace mame.netlist
 
 
         // FIXME: used by source_t - need a different approach at some time
-        public bool parse_stream(std.istream istrm, string name)  //bool nlparse_t::parse_stream(plib::psource_t::stream_ptr &&istrm, const pstring &name)
+        public bool parse_stream(plib.istream_uptr istrm, string name)  //bool parse_stream(plib::istream_uptr &&istrm, const pstring &name);
         {
             throw new emu_unimplemented();
         }
 
 
-        //bool parse_tokens(const parser_t::token_store &tokens, const pstring &name);
+        //bool parse_tokens(const plib::detail::token_store &tokens, const pstring &name);
 
 
         //template <typename S, typename... Args>
@@ -634,7 +621,28 @@ namespace mame.netlist
         public log_type log() { return m_log; }
 
 
-        //plib::psource_t.stream_ptr get_data_stream(string name);
+        //plib::istream_uptr get_data_stream(const pstring &name);
+
+
+        string namespace_prefix()
+        {
+            return (m_namespace_stack.empty() ? "" : m_namespace_stack.top() + ".");
+        }
+
+
+        string build_fqn(string obj_name)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        void register_param_fp(string param, nl_fptype value)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        //bool device_exists(const pstring &name) const;
 
 
         // FIXME: stale? - remove later

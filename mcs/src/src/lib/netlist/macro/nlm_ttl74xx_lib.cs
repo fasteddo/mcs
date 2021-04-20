@@ -9,304 +9,8 @@ namespace mame
 {
     public static class nlm_ttl74xx_global
     {
-#if !NL_AUTO_DEVICES
-
-        //#define TTL_7400_NAND(...)                                                     \
-        //    NET_REGISTER_DEVEXT(TTL_7400_NAND, __VA_ARGS__)
-        public static void TTL_7400_NAND(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7400_NAND", name); }
-
-        //#define TTL_7400_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7400_DIP, name)
-
-        //#define TTL_7402_NOR(...)                                                     \
-        //    NET_REGISTER_DEVEXT(TTL_7402_NOR, __VA_ARGS__)
-        public static void TTL_7402_NOR(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7402_NOR", name); }
-
-        //#define TTL_7402_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7402_DIP, name)
-
-        //#define TTL_7404_INVERT(...)                                                     \
-        //    NET_REGISTER_DEVEXT(TTL_7404_INVERT, __VA_ARGS__)
-        public static void TTL_7404_INVERT(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7404_INVERT", name); }
-
-        //#define TTL_7404_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7404_DIP, name)
-
-        //#define TTL_7406_GATE(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7406_GATE, name)
-        public static void TTL_7406_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7406_GATE", name); }
-
-        //#define TTL_7406_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7406_DIP, name)
-
-        //#define TTL_7407_GATE(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7407_GATE, name)
-        public static void TTL_7407_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7407_GATE", name); }
-
-        //#define TTL_7407_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7407_DIP, name)
-
-        //#define TTL_7408_AND(...)                                                      \
-        //    NET_REGISTER_DEVEXT(TTL_7408_AND, __VA_ARGS__)
-        public static void TTL_7408_AND(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7408_AND", name); }
-
-        //#define TTL_7408_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7408_DIP, name)
-
-        //#define TTL_7410_NAND(...)                                                     \
-        //    NET_REGISTER_DEVEXT(TTL_7410_NAND, __VA_ARGS__)
-        public static void TTL_7410_NAND(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7410_NAND", name); }
-
-        //#define TTL_7410_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7410_DIP, name)
-
-        //#define TTL_7411_AND(...)                                                      \
-        //    NET_REGISTER_DEVEXT(TTL_7411_AND, __VA_ARGS__)
-        public static void TTL_7411_AND(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7411_AND", name); }
-
-        //#define TTL_7411_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7411_DIP, name)
-
-
-        //#define TTL_7414_GATE(name)                                                   \
-        //        NET_REGISTER_DEV(TTL_7414_GATE, name)
-
-        //#define TTL_7414_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7414_DIP, name)
-
-
-        //#define TTL_74LS14_GATE(name)                                                 \
-        //        NET_REGISTER_DEV(TTL_74LS14_GATE, name)
-
-        //#define TTL_74LS14_DIP(name)                                                  \
-        //        NET_REGISTER_DEV(TTL_74LS14_DIP, name)
-
-        //#define TTL_7416_GATE(name)                                                   \
-        //        NET_REGISTER_DEV(TTL_7416_GATE, name)
-        public static void TTL_7416_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7416_GATE", name); }
-
-        //#define TTL_7416_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7416_DIP, name)
-
-        //#define TTL_7420_NAND(...)                                                     \
-        //    NET_REGISTER_DEVEXT(TTL_7420_NAND, __VA_ARGS__)
-        public static void TTL_7420_NAND(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7420_NAND", name); }
-
-        //#define TTL_7420_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7420_DIP, name)
-
-        //#define TTL_7421_AND(...)                                                      \
-        //    NET_REGISTER_DEVEXT(TTL_7421_AND, __VA_ARGS__)
-        public static void TTL_7421_AND(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7421_AND", name); }
-
-        //#define TTL_7421_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7421_DIP, name)
-
-        //#define TTL_7425_NOR(...)                                                      \
-        //    NET_REGISTER_DEVEXT(TTL_7425_NOR, __VA_ARGS__)
-        public static void TTL_7425_NOR(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7425_NOR", name); }
-
-        //#define TTL_7425_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7425_DIP, name)
-
-
-        //#define TTL_7427_NOR(...)                                                      \
-        //    NET_REGISTER_DEVEXT(TTL_7427_NOR, __VA_ARGS__)
-        public static void TTL_7427_NOR(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7427_NOR", name); }
-
-        //#define TTL_7427_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7427_DIP, name)
-
-        //#define TTL_7430_NAND(...)                                                      \
-        //    NET_REGISTER_DEVEXT(TTL_7430_NAND, __VA_ARGS__)
-        public static void TTL_7430_NAND(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7430_NAND", name); }
-
-        //#define TTL_7430_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7430_DIP, name)
-
-        //#define TTL_7432_OR(...)                                                       \
-        //    NET_REGISTER_DEVEXT(TTL_7432_OR, __VA_ARGS__)
-        public static void TTL_7432_OR(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7432_OR", name); }
-
-        //#define TTL_7432_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7432_DIP, name)
-
-        //#define TTL_7437_NAND(...)                                                     \
-        //    NET_REGISTER_DEVEXT(TTL_7437_NAND, __VA_ARGS__)
-        public static void TTL_7437_NAND(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7437_NAND", name); }
-
-        //#define TTL_7437_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7437_DIP, name)
-
-        //#define TTL_7442_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7442_DIP, name)
-
-        //#define TTL_7448_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7448_DIP, name)
-
-        //#define TTL_7450_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7450_DIP, name)
-
-        //#define TTL_7473_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7473_DIP, name)
-
-        //#define TTL_7473A_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_7473A_DIP, name)
-
-        //#define TTL_7474_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7474_DIP, name)
-
-        //#define TTL_7475_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7475_DIP, name)
-
-        //#define TTL_7477_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7477_DIP, name)
-
-        //#define TTL_7483_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7483_DIP, name)
-
-        //#define TTL_7485_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7485_DIP, name)
-
-        //#define TTL_7486_XOR(...)                                                      \
-        //    NET_REGISTER_DEVEXT(TTL_7486_XOR, __VA_ARGS__)
-        public static void TTL_7486_XOR(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_7486_XOR", name); }
-
-        //#define TTL_7486_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7486_DIP, name)
-
-        //#define TTL_7490_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7490_DIP, name)
-
-        //#define TTL_7492_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7492_DIP, name)
-
-        //#define TTL_7493_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7493_DIP, name)
-
-        //#define TTL_7497_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_7497_DIP, name)
-
-        //#define TTL_74107_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74107_DIP, name)
-
-        //#define TTL_74107A_DIP(name)                                                   \
-        //        NET_REGISTER_DEV(TTL_74107A_DIP, name)
-
-        //#define TTL_74113_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74113_DIP, name)
-
-        //#define TTL_74113A_DIP(name)                                                   \
-        //        NET_REGISTER_DEV(TTL_74113A_DIP, name)
-
-        //#define TTL_74121_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74121_DIP, name)
-
-        //#define TTL_74123_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74123_DIP, name)
-
-        //#define TTL_9602_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_9602_DIP, name)
-
-        //#define TTL_74125_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74125_DIP, name)
-        public static void TTL_74125_DIP(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74125_DIP", name); }
-
-        //#define TTL_74139_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74139_DIP, name)
-
-        //#define TTL_74153_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74153_DIP, name)
-
-        //#define TTL_74155_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74155_DIP, name)
-
-        //#define TTL_74156_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74156_DIP, name)
-
-        //#define TTL_74157_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74157_DIP, name)
-
-        //#define TTL_74161_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74161_DIP, name)
-
-        //#define TTL_74163_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74163_DIP, name)
-
-        //#define TTL_74164_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74164_DIP, name)
-
-        //#define TTL_74165_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74165_DIP, name)
-
-        //#define TTL_74166_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74166_DIP, name)
-
-        //#define TTL_74174_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74174_DIP, name)
-
-        //#define TTL_74175_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74175_DIP, name)
-
-        //#define TTL_74192_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74192_DIP, name)
-
-        //#define TTL_74193_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74193_DIP, name)
-
-        //#define TTL_74194_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74194_DIP, name)
-
-        //#define TTL_74260_NOR(...)                                                     \
-        //    NET_REGISTER_DEVEXT(TTL_74260_NOR, __VA_ARGS__)
-
-        //#define TTL_74260_DIP(name) \
-        //        NET_REGISTER_DEV(TTL_74260_DIP, name)
-
-        //#define TTL_74279_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74279_DIP, name)
-
-        //#define TTL_74365_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_74365_DIP, name)
-
-        //#define TTL_74377_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74377_DIP, name)
-
-        //#define TTL_74378_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74378_DIP, name)
-
-        //#define TTL_74379_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74379_DIP, name)
-
-        //#define TTL_74393_DIP(name)                                                    \
-        //        NET_REGISTER_DEV(TTL_74393_DIP, name)
-
-        //#define TTL_9312(...)                                                          \
-        //        NET_REGISTER_DEVEXT(TTL_9312, __VA_ARGS__)
-        public static void TTL_9312(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_9312", name); }
-
-        //#define TTL_9312_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_9312_DIP, name)
-
-        //#define TTL_9310_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_9310_DIP, name)
-
-        //#define TTL_9316_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_9316_DIP, name)
-
-        //#define TTL_9321_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_9321_DIP, name)
-
-        //#define TTL_9322_DIP(name)                                                     \
-        //        NET_REGISTER_DEV(TTL_9322_DIP, name)
-
-#endif
-
-
-
         //- Identifier: TTL_7400_DIP
         //- Title: 5400/DM5400/DM7400 Quad 2-Input NAND Gates
-        //- Description: This device contains four independent gates each of which performs the logic NAND function.
         //- Pinalias: A1,B1,Y1,A2,B2,Y2,GND,Y3,A3,B3,Y4,A4,B4,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -327,14 +31,17 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7400_NAND(setup, "A");
             TTL_7400_NAND(setup, "B");
             TTL_7400_NAND(setup, "C");
             TTL_7400_NAND(setup, "D");
-        
+#endif
+
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
-        
+
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| B4   */ "D.B",
@@ -352,7 +59,6 @@ namespace mame
 
         //- Identifier: TTL_7402_DIP
         //- Title: 5402/DM5402/DM7402 Quad 2-Input NOR Gates
-        //- Description: This device contains four independent gates each of which performs the logic NOR function.
         //- Pinalias: Y1,A1,B1,Y2,A2,B2,GND,A3,B3,Y3,A4,B4,Y4,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -373,10 +79,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7402_NOR(setup, "A");
             TTL_7402_NOR(setup, "B");
             TTL_7402_NOR(setup, "C");
             TTL_7402_NOR(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -398,7 +107,6 @@ namespace mame
 
         //- Identifier: TTL_7404_DIP
         //- Title: 5404/DM5404/DM7404 Hex Inverting Gates
-        //- Description: This device contains six independent gates each of which performs the logic INVERT function.
         //- Pinalias: A1,Y1,A2,Y2,A3,Y3,GND,Y4,A4,Y5,A5,Y6,A6,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -417,12 +125,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7404_INVERT(setup, "A");
             TTL_7404_INVERT(setup, "B");
             TTL_7404_INVERT(setup, "C");
             TTL_7404_INVERT(setup, "D");
             TTL_7404_INVERT(setup, "E");
             TTL_7404_INVERT(setup, "F");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
@@ -444,8 +155,6 @@ namespace mame
 
         //- Identifier: TTL_7406_DIP
         //- Title: DM5406/DM7406 Hex Inverting Buffers with High Voltage Open-Collector Outputs
-        //- Description: This device contains six independent buffers each of which performs the logic INVERT function.
-        //-   The open-collector outputs require external pull-up resistors for proper logical operation.
         //- Pinalias: A1,Y1,A2,Y2,A3,Y3,GND,Y4,A4,Y5,A5,Y6,A6,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -465,12 +174,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7406_GATE(setup, "A");
             TTL_7406_GATE(setup, "B");
             TTL_7406_GATE(setup, "C");
             TTL_7406_GATE(setup, "D");
             TTL_7406_GATE(setup, "E");
             TTL_7406_GATE(setup, "F");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
@@ -492,8 +204,6 @@ namespace mame
 
         //- Identifier: TTL_7407_DIP
         //- Title: DM5407/DM7407 Hex Buffers with High Voltage Open-Collector Outputs
-        //- Description: This device contains six independent gates each of which performs a buffer function.
-        //-   The open-collector outputs re-quire external pull-up resistors for proper logical operation.
         //- Pinalias: A1,Y1,A2,Y2,A3,Y3,GND,Y4,A4,Y5,A5,Y6,A6,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -513,12 +223,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7407_GATE(setup, "A");
             TTL_7407_GATE(setup, "B");
             TTL_7407_GATE(setup, "C");
             TTL_7407_GATE(setup, "D");
             TTL_7407_GATE(setup, "E");
             TTL_7407_GATE(setup, "F");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
@@ -540,7 +253,6 @@ namespace mame
 
         //- Identifier: TTL_7408_DIP
         //- Title: 5408/DM5408/DM7408 Quad 2-Input AND Gates
-        //- Description: This device contains four independent gates each of which performs the logic AND function.
         //- Pinalias: A1,B1,Y1,A2,B2,Y2,GND,Y3,A3,B3,Y4,A4,B4,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -561,10 +273,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7408_AND(setup, "A");
             TTL_7408_AND(setup, "B");
             TTL_7408_AND(setup, "C");
             TTL_7408_AND(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -586,7 +301,6 @@ namespace mame
 
         //- Identifier: TTL_7410_DIP
         //- Title: 5410/DM5410/DM7410 Triple 3-Input NAND Gates
-        //- Description: This device contains three independent gates each of which performs the logic NAND function.
         //- Pinalias: A1,B1,A2,B2,C2,Y2,GND,Y3,A3,B3,C3,Y1,C1,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -607,9 +321,12 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7410_NAND(setup, "A");
             TTL_7410_NAND(setup, "B");
             TTL_7410_NAND(setup, "C");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND");
@@ -631,7 +348,6 @@ namespace mame
 
         //- Identifier: TTL_7411_DIP
         //- Title: DM7411 Triple 3-Input AND Gate
-        //- Description: This device contains three independent gates with three data inputs each which perform the logic AND function.
         //- Pinalias: A1,B1,A2,B2,C2,Y2,GND,Y3,A3,B3,C3,Y1,C1,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -652,9 +368,12 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7411_AND(setup, "A");
             TTL_7411_AND(setup, "B");
             TTL_7411_AND(setup, "C");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND");
@@ -676,9 +395,6 @@ namespace mame
 
         //- Identifier: TTL_7414_DIP
         //- Title: DM5414/DM7414 Hex Inverter withSchmitt Trigger Inputs
-        //- Description: This device contains six independent gates each of whichperforms the logic INVERT function.
-        //-   Each input has hysteresis which increases the noise immunity and transforms a slowly changing input
-        //-   signal to a fast changing, jitter free output.
         //- Pinalias: A1,Y1,A2,Y2,A3,Y3,GND,Y4,A4,Y5,A5,Y6,A6,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -697,7 +413,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "X", "DM7414");
+            throw new emu_unimplemented();
+#if false
+            SCHMITT_TRIGGER(setup, "X", "DM7414");
+#endif
+
             netlist.nl_setup_global.ALIAS(setup, "A", "X.A");
             netlist.nl_setup_global.ALIAS(setup, "Q", "X.Q");
             netlist.nl_setup_global.ALIAS(setup, "GND", "X.GND");
@@ -712,7 +432,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "X", "DM74LS14");
+            throw new emu_unimplemented();
+#if false
+            SCHMITT_TRIGGER(setup, "X", "DM74LS14");
+#endif
+
             netlist.nl_setup_global.ALIAS(setup, "A", "X.A");
             netlist.nl_setup_global.ALIAS(setup, "Q", "X.Q");
             netlist.nl_setup_global.ALIAS(setup, "GND", "X.GND");
@@ -727,12 +451,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "A", "DM7414");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "B", "DM7414");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "C", "DM7414");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "D", "DM7414");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "E", "DM7414");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "F", "DM7414");
+            throw new emu_unimplemented();
+#if false
+            SCHMITT_TRIGGER(setup, "A", "DM7414");
+            SCHMITT_TRIGGER(setup, "B", "DM7414");
+            SCHMITT_TRIGGER(setup, "C", "DM7414");
+            SCHMITT_TRIGGER(setup, "D", "DM7414");
+            SCHMITT_TRIGGER(setup, "E", "DM7414");
+            SCHMITT_TRIGGER(setup, "F", "DM7414");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
@@ -757,12 +484,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "A", "DM74LS14");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "B", "DM74LS14");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "C", "DM74LS14");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "D", "DM74LS14");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "E", "DM74LS14");
-            nld_schmitt_global.SCHMITT_TRIGGER(setup, "F", "DM74LS14");
+            throw new emu_unimplemented();
+#if false
+            SCHMITT_TRIGGER(setup, "A", "DM74LS14");
+            SCHMITT_TRIGGER(setup, "B", "DM74LS14");
+            SCHMITT_TRIGGER(setup, "C", "DM74LS14");
+            SCHMITT_TRIGGER(setup, "D", "DM74LS14");
+            SCHMITT_TRIGGER(setup, "E", "DM74LS14");
+            SCHMITT_TRIGGER(setup, "F", "DM74LS14");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
@@ -784,8 +514,6 @@ namespace mame
 
         //- Identifier: TTL_7416_DIP
         //- Title: DM5416/DM7416 Hex Inverting Buffers with High Voltage Open-Collector Outputs
-        //- Description: This device contains six independent gates each of which performs the logic INVERT function.
-        //-   The open-collector outputs require external pull-up resistors for proper logical operation.
         //- Pinalias: A1,Y1,A2,Y2,A3,Y3,GND,Y4,A4,Y5,A5,Y6,A6,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -804,12 +532,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7416_GATE(setup, "A");
             TTL_7416_GATE(setup, "B");
             TTL_7416_GATE(setup, "C");
             TTL_7416_GATE(setup, "D");
             TTL_7416_GATE(setup, "E");
             TTL_7416_GATE(setup, "F");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
@@ -831,7 +562,6 @@ namespace mame
 
         //- Identifier: TTL_7420_DIP
         //- Title: 5420/DM5420/DM7420 Dual 4-Input NAND Gates
-        //- Description: This device contains two independent gates each of which performs the logic NAND function.
         //- Pinalias: A1,B1,NC,C1,D1,Y1,GND,Y2,A2,B2,NC,C2,D2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -853,12 +583,19 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7420_NAND(setup, "A");
             TTL_7420_NAND(setup, "B");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
+
+            throw new emu_unimplemented();
+#if false
+            NC_PIN(setup, "NC");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
@@ -877,7 +614,6 @@ namespace mame
 
         //- Identifier: TTL_7421_DIP
         //- Title: 54LS21/DM54LS21/DM74LS21 Dual 4-Input AND Gates
-        //- Description: This device contains two independent 4-input gates each of which performs the logic AND function.
         //- Pinalias: A1,B1,NC,C1,D1,Y1,GND,Y2,A2,B2,NC,C2,D2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -899,12 +635,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7421_AND(setup, "A");
             TTL_7421_AND(setup, "B");
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
+            NC_PIN(setup, "NC");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
@@ -923,8 +662,6 @@ namespace mame
 
         //- Identifier: TTL_7425_DIP
         //- Title: 5425/DM7425 Dual 4-Input NOR Gate (with Strobe)
-        //- Description: This device contains 2, 4-input gates that perform the logical NOR function.
-        //-   The output of each NOR gate is gated (strobed) by pin 3 and 11 by positive true logic, i.e., logic "1" equals output on.
         //- Pinalias: A1,B1,X1,C1,D1,Y1,GND,Y2,A2,B2,X2,C2,D2
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -948,13 +685,16 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7425_NOR(setup, "A");
             TTL_7425_NOR(setup, "B");
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
-            netlist.devices.nld_system_global.NC_PIN(setup, "XA"); // FIXME: Functionality needs to be implemented
-            netlist.devices.nld_system_global.NC_PIN(setup, "XB"); // FIXME: Functionality needs to be implemented
+            NC_PIN(setup, "XA"); // FIXME: Functionality needs to be implemented
+            NC_PIN(setup, "XB"); // FIXME: Functionality needs to be implemented
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
@@ -973,7 +713,6 @@ namespace mame
 
         //- Identifier: TTL_7427_DIP
         //- Title: DM7427 Triple 3-Input NOR Gates
-        //- Description: This device contains three independent gates each of which performs the logic NOR function.
         //- Pinalias: A1,B1,A2,B2,C2,Y2,GND,Y3,A3,B3,C3,Y1,C1,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -994,9 +733,12 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7427_NOR(setup, "A");
             TTL_7427_NOR(setup, "B");
             TTL_7427_NOR(setup, "C");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND");
@@ -1018,7 +760,6 @@ namespace mame
 
         //- Identifier: TTL_7430_DIP
         //- Title: 5430/DM5430/DM7430 8-Input NAND Gate
-        //- Description: This device contains a single gate which performs the logic NAND function.
         //- Pinalias: A,B,C,D,E,F,GND,Y,NC,NC,G,H,NC,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1043,8 +784,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7430_NAND(setup, "A");
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
+            NC_PIN(setup, "NC");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
                   "A.A", /*     A |1     ++    14| VCC  */ "A.VCC",
@@ -1063,7 +807,6 @@ namespace mame
 
         //- Identifier: TTL_7432_DIP
         //- Title: 5432/DM5432/DM7432 Quad 2-Input OR Gates
-        //- Description: This device contains four independent gates each of whichperforms the logic OR function.
         //- Pinalias: A1,B1,Y1,A2,B2,Y2,GND,Y3,A3,B3,Y4,A4,B4,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1084,10 +827,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7432_OR(setup, "A");
             TTL_7432_OR(setup, "B");
             TTL_7432_OR(setup, "C");
             TTL_7432_OR(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -1109,7 +855,6 @@ namespace mame
 
         //- Identifier: TTL_7437_DIP
         //- Title: 5437/DM5437/DM7437 Quad 2-Input NAND Buffers
-        //- Description: This device contains four independent gates each of whichperforms the logic OR function.
         //- Pinalias: A1,B1,Y1,A2,B2,Y2,GND,Y3,A3,B3,Y4,A4,B4,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1131,10 +876,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7437_NAND(setup, "A");
             TTL_7437_NAND(setup, "B");
             TTL_7437_NAND(setup, "C");
             TTL_7437_NAND(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -1156,12 +904,6 @@ namespace mame
 
         //- Identifier: TTL_7442_DIP
         //- Title: 5442A/DM5442A/DM7442A BCD to Decimal Decoders
-        //- Description: These BCD-to-decimal decoders consist of eight inverters
-        //-   and ten, four-input NAND gates. The inverters are
-        //-   connected in pairs to make BCD input data available for
-        //-   decoding by the NAND gates. Full decoding of input
-        //-   logic ensures that all outputs remain off for all invalid
-        //-   (10-15) input conditions.
         //- Pinalias: 0,1,2,3,4,5,6,GND,7,8,9,D,C,B,A,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1214,20 +956,6 @@ namespace mame
 
         //- Identifier: TTL_7448_DIP
         //- Title: DM5448/DM48LS48/DM7448/DM74LS48 BCD to 7-Segment Decoder
-        //- Description: The 48 and LS48 feature active-high outputs for
-        //-   driving lamp buffers or common-cathode LED's.
-        //-   These circuits have full ripple-blanking input/output controls
-        //-   and a lamp test input. Display patterns
-        //-   for BCD input counts above nine are unique symbols
-        //-   to authenticate input conditions.
-        //-   These circuits incorporate automatic
-        //-   leading and/or trailing-edge, zero-blanking control
-        //-   (RBI and RBO). Lamp test (LT) of these devices may
-        //-   be performed at any time when the BI/RBO node is at
-        //-   a high logic level. They contain
-        //-   an overriding blanking input (BI) which can be used
-        //-   to control the lamp intensity (by pulsing), or to inhibit
-        //-   the outputs.
         //- Pinalias: A1,A2,LTQ,BIQ,RBIQ,A3,A0,GND,e,d,c,b,a,g,f,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1263,7 +991,10 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_7448_global.TTL_7448(setup, "A");
+            throw new emu_unimplemented();
+#if false
+            TTL_7448(setup, "A");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+     */
                 "A.B",    /* B    |1     ++    16| VCC */ "A.VCC",
@@ -1283,8 +1014,6 @@ namespace mame
 
         //- Identifier: TTL_7450_DIP
         //- Title: DM7450 Expandable Dual 2-Wide 2-Input AND-OR-INVERT Gate
-        //- Description: This device contains two independent combinations of gates, each of which perform the logic AND-OR-INVERT function.
-        //-   One set of gates has an expander node.
         //- Pinalias: A1,B1,Y1,A2,B2,Y2,GND,Y3,A3,B3,Y4,A4,B4,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1306,12 +1035,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_7450_global.TTL_7450_ANDORINVERT(setup, "A");
-            netlist.nld_7450_global.TTL_7450_ANDORINVERT(setup, "B");
+            throw new emu_unimplemented();
+#if false
+            TTL_7450_ANDORINVERT(setup, "A");
+            TTL_7450_ANDORINVERT(setup, "B");
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
+            NC_PIN(setup, "NC");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
                   "A.A", /*    1A |1     ++    14| VCC  */ "A.VCC",
@@ -1330,15 +1062,6 @@ namespace mame
 
         //- Identifier: TTL_7473_DIP
         //- Title: 5473/DM5473/DM7473 Dual Master-Slave J-K Flip-Flops with Clear and Complementary Outputs
-        //- Description: This device contains two independent positive pulse triggered J-K flip-flops with complementary outputs.
-        //-   The J and K data is processed by the flip-flops after a complete clock pulse.
-        //-   While the clock is low the slave is isolated from the master.
-        //-   On the positive transition of the clock, the data from the J and K inputs is transferred to teh master.
-        //-   While the clock is high the J and K inputs are disabled.
-        //-   On the negative transition of the clock, the data from the master is transferred to the slave.
-        //-   The logic states of the J and K inputs must not be allowed to change while the clock is high.
-        //-   Data transfers to the outputs on the falling edge of the clock pulse.
-        //-   A low logic level on the clear input will reset the outputs regardless of the logic states of the other inputs.
         //- Pinalias: CLK1,CLR1,K1,VCC,CLK2,CLR2,J2,QQ2,Q2,K2,GND,Q1,QQ1,J1
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1360,8 +1083,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_7473_global.TTL_7473(setup, "A");
-            netlist.nld_7473_global.TTL_7473(setup, "B");
+            throw new emu_unimplemented();
+#if false
+            TTL_7473(setup, "A");
+            TTL_7473(setup, "B");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
@@ -1383,11 +1109,6 @@ namespace mame
 
         //- Identifier: TTL_7473A_DIP
         //- Title: DM54LS73A/DM74LS73A Dual Negative-Edge-Triggered Master-Slave J-K Flip-Flops with Clear and Complementary Outputs
-        //- Description: This device contains two independent negative-edge-triggered J-K flip-flops with complementary outputs.
-        //-   The J and K data is processed by the flip-flops on the falling edge of the clock pulse.
-        //-   The clock triggering occurs at a voltage level and is not directly related to the transition time of the negative going edge of the clock pulse.
-        //-   The data on the J and K inputs is allowed to change while the clock is high or low without affecting the outputs as long as setup and hold times are not violated.
-        //-   A low logic level on the clear input will reset the outputs regardless of the levels of the other inputs.
         //- Pinalias: CLK1,CLR1,K1,VCC,CLK2,CLR2,J2,QQ2,Q2,K2,GND,Q1,QQ1,J1
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semicouductor datasheet
@@ -1410,8 +1131,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_7473_global.TTL_7473A(setup, "A");
-            netlist.nld_7473_global.TTL_7473A(setup, "B");
+            throw new emu_unimplemented();
+#if false
+            TTL_7473A(setup, "A");
+            TTL_7473A(setup, "B");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
@@ -1433,11 +1157,6 @@ namespace mame
 
         //- Identifier: TTL_7474_DIP
         //- Title: 5474/DM5474/DM7474 Dual Positive-Edge-Triggered D Flip-Flops with Preset, Clear and Complementary Outputs
-        //- Description: This device contains two independent positive-edge-triggered D flip-flops with complementary outputs.
-        //-   The information on the D input is accepted by the flip-flops on the positive going edge of the clock pulse.
-        //-   The triggering occurs at a voltage level and is not directly related to the transition time of the rising edge of the clock.
-        //-   The data on the D input may be changed while the clock is low or high without affecting the outputs as long as the data setup and hold times are not violated.
-        //-   A low logic level on the preset or clear inputs will set or reset the outputs regardless of the logic levels of the other inputs.
         //- Pinalias: CLR1,D1,CLK1,PR1,Q1,QQ1,GND,QQ2,Q2,PR2,CLK2,D2,CLR2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1460,8 +1179,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_7474_global.TTL_7474(setup, "A");
-            netlist.nld_7474_global.TTL_7474(setup, "B");
+            throw new emu_unimplemented();
+#if false
+            TTL_7474(setup, "A");
+            TTL_7474(setup, "B");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
@@ -1483,21 +1205,6 @@ namespace mame
 
         //- Identifier: TTL_7475_DIP
         //- Title: DM5475/DM7475/DM7475A/DM74LS75 4-bit D Latch
-        //- Description: These latches are ideally suited for use as temporary
-        //-    storage for binary information between processing units
-        //-    and input/output or indicator units. Information present
-        //-    at a data (D) input is transferred to the Q output when
-        //-    the enable (G) is high, and the Q output will follow
-        //-    the data input as long as the enable remains high. When
-        //-    the enable goes low, the information (that was present
-        //-    at the data input at the time the transition occurred) is
-        //-    retained at the Q output until the enable is permitted
-        //-    to go high.
-        //-
-        //-    The DM5475/DM7475, DM54L75A/DM74L75A, and
-        //-    DM54LS75/DM74LS75 feature complementary Q and
-        //-    QQ outputs from a 4-bit latch, and are available in 16-pin
-        //-    packages.
         //- Pinalias: QQ1,D1,D2,E34,VCC,D3,D4,QQ4,Q4,Q3,QQ3,GND,E12,QQ2,Q2,Q1
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1517,10 +1224,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_7475_global.TTL_7475_GATE(setup, "A");
-            netlist.nld_7475_global.TTL_7475_GATE(setup, "B");
-            netlist.nld_7475_global.TTL_7475_GATE(setup, "C");
-            netlist.nld_7475_global.TTL_7475_GATE(setup, "D");
+            throw new emu_unimplemented();
+#if false
+            TTL_7475_GATE(setup, "A");
+            TTL_7475_GATE(setup, "B");
+            TTL_7475_GATE(setup, "C");
+            TTL_7475_GATE(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -1546,16 +1256,6 @@ namespace mame
 
         //- Identifier: TTL_7477_DIP
         //- Title: DM74LS77 4-bit D Latch
-        //- Description: These latches are ideally suited for use as temporary
-        //-    storage for binary information between processing units
-        //-    and input/output or indicator units. Information present
-        //-    at a data (D) input is transferred to the Q output when
-        //-    the enable (G) is high, and the Q output will follow
-        //-    the data input as long as the enable remains high. When
-        //-    the enable goes low, the information (that was present
-        //-    at the data input at the time the transition occurred) is
-        //-    retained at the Q output until the enable is permitted
-        //-    to go high.
         //- Pinalias: D1,D2,E34,VCC,D3,D4,NC,Q4,Q3,NC,GND,E12,Q2,Q1
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1581,7 +1281,6 @@ namespace mame
             TTL_7477_GATE(setup, "B");
             TTL_7477_GATE(setup, "C");
             TTL_7477_GATE(setup, "D");
-#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -1589,7 +1288,8 @@ namespace mame
             netlist.nl_setup_global.NET_C(setup, "A.CLK", "B.CLK");
             netlist.nl_setup_global.NET_C(setup, "C.CLK", "D.CLK");
 
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
+            NC_PIN(setup, "NC");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+       */
                   "A.D", /*    D1 |1     ++    14| Q1    */ "A.Q",
@@ -1608,18 +1308,6 @@ namespace mame
 
         //- Identifier: TTL_7483_DIP
         //- Title: DM5483/DM7483/DM74LS83A 4-bit Binary Adders With Fast Carry
-        //- Description: These full adders perform the addition of two 4-bit
-        //-   binary numbers. The sum (S) outputs are provided for
-        //-   each bit and the resultant carry (C4) is obtained from
-        //-   the fourth bit. These adders feature full internal look
-        //-   ahead across all four bits. This provides the system
-        //-   designer with partial look-ahead performance at the
-        //-   economy and reduced package count of a ripple-carry
-        //-   implementation.
-        //-
-        //-   The adder logic, including the carry, is implemented in
-        //-   its true form meaning that the end-around carry can be
-        //-   accomplished without the need for logic or level inversion.
         //- Pinalias: A4,S3,A3,B3,VCC,S2,B2,A2,S1,A1,B1,GND,C0,C4,S4,B4
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1654,22 +1342,6 @@ namespace mame
 
         //- Identifier: TTL_7485_DIP
         //- Title: DM5485/DM7485/DM74L85/DM74LS85 4-Bit Magnitude Comparators
-        //- Description: These four-bit magnitude comparators perform comparison
-        //-   of straight binary or BCD codes. Three
-        //-   fully-decoded decisions about two, 4-bit words (A, B)
-        //-   are made and are externally available at three outputs.
-        //-   These devices are fully expandable to any number of
-        //-   bits without external gates. Words of greater length may
-        //-   be compared by connecting comparators in cascade. The
-        //-   A > B, A < B, and A = B outputs of a stage handling
-        //-   less-significant bits are connected to the corresponding
-        //-   inputs of the next stage handling more-significant bits.
-        //-   The stage handling the least-significant bits must have a
-        //-   high-level voltage applied to the A = B input and in
-        //-   addition for the L85, low-level voltages applied to the
-        //-   A> B and A < B inputs. The cascading paths of the 85,
-        //-   and LS85 are implemented with only a two-gate-Ievel
-        //-   delay to reduce overall comparison times for long words.
         //- Pinalias: B3,LTIN,EQIN,GTIN,GTOUT,EQOUT,LTOUT,GND,B0,A0,B1,A1,A2,B2,A3,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1704,7 +1376,6 @@ namespace mame
 
         //- Identifier: TTL_7486_DIP
         //- Title: 5486/DM5486/DM7486 Quad 2-Input Exclusive-OR Gates
-        //- Description: This device contains four independent gates each of which performs the logic exclusive-OR function.
         //- Pinalias: A1,B1,Y1,A2,B2,Y2,GND,Y3,A3,B3,Y4,A4,B4,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1725,10 +1396,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_7486_XOR(setup, "A");
             TTL_7486_XOR(setup, "B");
             TTL_7486_XOR(setup, "C");
             TTL_7486_XOR(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -1750,22 +1424,6 @@ namespace mame
 
         //- Identifier: TTL_7490_DIP
         //- Title: DM5490/DM7490A Decade Counter
-        //- Description: These monolithic counters contain four
-        //-   master-slave flip-flops and additional gating to provide
-        //-   a divide-by-two counter and a three-stage binary counter
-        //-   for which the count cycle length is divide-by-five.
-        //-
-        //-   These counters have a gated zero reset and
-        //-   also have gated set-to-nine inputs
-        //-   for use in BCD nine's complement applications.
-        //-
-        //-   To use their maximum count length (decade), the B input is connected
-        //-   to the QA output. The input count pulses are applied to
-        //-   input A and the outputs are as described in the appropriate
-        //-   truth table. A symmetrical divide-by-ten count can be
-        //-   obtained from the by connecting the QD output to
-        //-   the A input and applying the input count to the B input
-        //-   which gives a divide-by-ten square wave at output QA.
         //- Pinalias: B,R01,R02,NC,VCC,R91,R92,QC,QB,GND,QD,QA,NC,A
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1809,8 +1467,8 @@ namespace mame
             throw new emu_unimplemented();
 #if false
             TTL_7490(setup, "A");
+            NC_PIN(setup, "NC");
 #endif
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
 
             netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+     */
                   "A.B", /*   B |1     ++    14| A   */ "A.A",
@@ -1829,18 +1487,6 @@ namespace mame
 
         //- Identifier: TTL_7492_DIP
         //- Title: SN5492A, SN54LS92, SN7492A, SN74LS92 Divide-By-Twelve Counter
-        //- Description: These monolithic counters contains four
-        //-   master-slave flip-flops and additional gating to provide
-        //-   a divide-by-two counter and a three-stage binary counter
-        //-   for which the count cycle length is divide-by-six.
-        //-
-        //-   These counters have a gated zero reset.
-        //-
-        //-   To use their maximum count length (divide-by-
-        //-   twelve), the B input is connected
-        //-   to the QA output. The input count pulses are applied to
-        //-   input A and the outputs are as described in the appropriate
-        //-   truth table.
         //- Pinalias: CKB,NC,NC,NC,VCC,R01,R02,QD,QC,GND,QB,QA,NC,CLKA
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Texas Instruments datasheet
@@ -1882,8 +1528,8 @@ namespace mame
             throw new emu_unimplemented();
 #if false
             TTL_7492(setup, "A");
+            NC_PIN(setup, "NC");
 #endif
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
 
             netlist.nl_setup_global.DIPPINS(setup,   /*      +--------------+      */
                   "A.B", /* CLKB |1     ++    14| CLKA */ "A.A",
@@ -1902,17 +1548,6 @@ namespace mame
 
         //- Identifier: TTL_7493_DIP
         //- Title: DM7493A Binary Counter
-        //- Description: These monolithic counters contains four
-        //-   master-slave flip-flops and additional gating to provide
-        //-   a divide-by-two counter and a three-stage binary counter
-        //-   for which the count cycle length is divide-by-eight.
-        //-
-        //-   These counters have a gated zero reset.
-        //-
-        //-   To use their maximum count length (four-bit binary), the B input is connected
-        //-   to the QA output. The input count pulses are applied to
-        //-   input A and the outputs are as described in the appropriate
-        //-   truth table.
         //- Pinalias: B,R01,R02,NC,VCC,NC,NC,QC,QB,GND,QD,QA,NC,A
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -1958,8 +1593,8 @@ namespace mame
             throw new emu_unimplemented();
 #if false
             TTL_7493(setup, "A");
+            NC_PIN(setup, "NC");
 #endif
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
 
             netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+      */
                 "A.CLKB", /* CLKB |1     ++    14| CLKA */ "A.CLKA",
@@ -1978,11 +1613,6 @@ namespace mame
 
         //- Identifier: TTL_7497_DIP
         //- Title: 5497/DM7497 Synchronous Modulo-64 Bit Rate Multiplier
-        //- Description: The ’97 contains a synchronous 6-stage binary counter and six decoding gates that serve to gate the clock through to the output at a sub-multiple of the input frequency.
-        //-   The output pulse rate, relative to the clock frequency, is determined by signals applied to the Select (S0–S5) inputs.
-        //-   Both true and complement outputs are available, along with an enable input for each.
-        //-   A Count Enable input and a Terminal Count output are provided for cascading two or more packages.
-        //-   An asynchronous Master Reset input prevents counting and resets the counter.
         //- Pinalias: S1,S4,S5,S0,ZQ,Y,TCQ,GND,CP,EZQ,CEQ,EY,MR,S2,S3,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2017,10 +1647,6 @@ namespace mame
 
         //- Identifier: TTL_74107_DIP
         //- Title: SN54107, SN74107 Dual J-K Flip-Flops With Clear
-        //- Description: The '107 contains two independent J-K flip-flops with individual J-K, clock, and direct clear inputs.
-        //-   The '107 is a positive pulse-triggered flip-flop.
-        //-   The J-K input data is loaded into the master while the clock is high and transferred to teh slave and the outputs on the high-to-low clock transition.
-        //-   For these devices the J and K inputs must be stable while the clock is high.
         //- Pinalias: 1J,1QQ,1Q,1K,2Q,2QQ,GND,2J,2CLK,2CLRQ,2K,1CLK,1CLRQ,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Texas Instruments datasheet
@@ -2068,11 +1694,6 @@ namespace mame
 
         //- Identifier: TTL_74107A_DIP
         //- Title: DM54LS107A/DM74LS107A Dual Negative-Edge-Triggered Master-Slave J-K Flip-Flops withClear and Complementary Outputs
-        //- Description: This device contains two independent negative-edge-triggered J-K flip-flops with complementary outputs.
-        //-   The J and K data is processed by the flip-flops on the falling edge of the clock pulse.
-        //-   The clock triggering occurs at a voltage level and is not directly related to the transition time of the negative going edge of the clock pulse.
-        //-   The data on the J and K inputs may change while the clock is high or low without affecting the outputs as long as setup and hold times are not violated.
-        //-   A low logic level on the clear input will reset the outputs regardless of the logic levels of the other inputs.
         //- Pinalias: J1,QQ1,Q1,K1,Q2,QQ2,GND,J2,CLK2,CLRQ2,K2,CLK1,CLRQ1,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2121,11 +1742,6 @@ namespace mame
 
         //- Identifier: TTL_74113_DIP
         //- Title: DM54S113/DM74S113 Dual Negative-Edge-Triggered Master-Slave J-K Flip-Flops with Preset and Complementary Outputs
-        //- Description: This device contains two independent negative-edge-triggered J-K flip-flops with complementary outputs.
-        //-   The J and K data is processed by the flip-flops on the falling edge of the clock pulse.
-        //-   The clock triggering occurs at a voltage level and is not directly related to the transition time of the negative going edge of the clock pulse.
-        //-   Data on the J and K inputs may be changed while the clock is high or low without affecting the outputs as long as setup and hold times are not violated.
-        //-   A low logic level on the preset input will set the outputs regardless of the logic levels of the other inputs.
         //- Pinalias: CLK1,K1,J1,PRQ1,Q1,QQ1,GND,QQ2,Q2,PRQ2,J2,K2,CLK2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Texas Instruments datasheet
@@ -2174,11 +1790,6 @@ namespace mame
 
         //- Identifier: TTL_74113A_DIP
         //- Title: DM54S113/DM74S113 Dual Negative-Edge-Triggered Master-Slave J-K Flip-Flops with Preset and Complementary Outputs
-        //- Description: This device contains two independent negative-edge-triggered J-K flip-flops with complementary outputs.
-        //-   The J and K data is processed by the flip-flops on the falling edge of the clock pulse.
-        //-   The clock triggering occurs at a voltage level and is not directly related to the transition time of the negative going edge of the clock pulse.
-        //-   Data on the J and K inputs may be changed while the clock is high or low without affecting the outputs as long as setup and hold times are not violated.
-        //-   A low logic level on the preset input will set the outputs regardless of the logic levels of the other inputs.
         //- Pinalias: CLK1,K1,J1,PRQ1,Q1,QQ1,GND,QQ2,Q2,PRQ2,J2,K2,CLK2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Texas Instruments datasheet
@@ -2227,18 +1838,6 @@ namespace mame
 
         //- Identifier:  TTL_74121_DIP
         //- Title: DM74121 One-Shot with Clear and Complementary Outputs
-        //- Description: The DM74121 is a monostable multivibrator featuring both
-        //-   positive and negative edge triggering with complementary
-        //-   outputs. An internal 2kΩ timing resistor is provided for
-        //-   design convenience minimizing component count and layout problems. this device can be used with a single external capacitor. Inputs (A) are active-LOW trigger transition
-        //-   inputs and input (B) is and active-HIGH transition Schmitttrigger input that allows jitter-free triggering from inputs with
-        //-   transition rates as slow as 1 volt/second. A high immunity
-        //-   to VCC noise of typically 1.5V is also provided by internal
-        //-   circuitry at the input stage.
-        //-   To obtain optimum and trouble free operation please read
-        //-   operating rules and one-shot application notes carefully
-        //-   and observe recommendations.
-        //-
         //- Pinalias: QQ,NC,A1,A2,B,Q,GND,NC,RINT,C,RC,NC,NC,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Fairchild Semiconductor datasheet
@@ -2285,20 +1884,6 @@ namespace mame
 
         //- Identifier:  TTL_74123_DIP
         //- Title: DM74123 Dual Retriggerable One-Shot with Clear and Complementary Outputs
-        //- Description: The DM74123 is a dual retriggerable monostable multivibrator
-        //-   capable of generating output pulses from a few
-        //-   nano-seconds to extremely long duration up to 100% duty
-        //-   cycle. Each device has three inputs permitting the choice of
-        //-   either leading-edge or trailing edge triggering. Pin (A) is an
-        //-   active-LOW transition trigger input and pin (B) is an activeHIGH transition trigger input. A LOW at the clear (CLR)
-        //-   input terminates the output pulse: which also inhibits triggering. An internal connection from CLR to the input gate
-        //-   makes it possible to trigger the circuit by a positive-going
-        //-   signal on CLR as shown in the Truth Table.
-        //-
-        //-   To obtain the best and trouble free operation from this
-        //-   device please read the Operating Rules as well as the
-        //-   One–Shot Application Notes carefully and observe recommendations.
-        //-
         //- Pinalias: A1,B1,CLRQ1,QQ1,Q2,C2,RC2,GND,A2,B2,CLRQ2,QQ2,Q1,C1,RC1,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Fairchild Semiconductor datasheet
@@ -2342,16 +1927,6 @@ namespace mame
 
         //- Identifier:  TTL_74125_DIP
         //- Title: SN74125 QUADRUPLE BUS BUFFERS WITH 3-STATE OUTPUTS
-        //- Description: These bus buffers feature three-state outputs
-        //-    that, when enabled, have the low impedance characteristics of a
-        //-    TTL output with additional drive capability at high logic levels
-        //-    to permit driving heavily loaded bus lines without external
-        //-    pullup resistors. When disabled, both output transistors are turned
-        //-    off, presenting a high-impedance state to the bus so the output will
-        //-    act neither as a significant load nor as a driver. The ’125 and
-        //-    ’LS125A devices’ outputs are disabled when G is high.
-        //-    The ’126 and ’LS126A devices’ outputs are disabled when G is low
-        //-
         //- Pinalias: 1GQ,1A,1Y,2GQ,2A,2Y,GND,3Y,3A,3GQ,4Y,4A,4GQ,VCC
         //- Package: DIP
         //- Param: FORCE_TRISTATE_LOGIC
@@ -2411,12 +1986,6 @@ namespace mame
 
         //- Identifier: TTL_74126_DIP
         //- Title: DM74LS126A Quad 3-STATE Buffer
-        //- Description: This device contains four independent gates each of which performs a non-inverting buffer function.
-        //-   The outputs have the 3-STATE feature.
-        //-   When enabled, the outputs exhibit the low impedance characteristics of a standard LS output with additional drive capability to permit the driving of buslines without external resistors.
-        //-   When disabled, both the output transistors are turned OFF presenting a high-impedance state to the bus line.
-        //-   Thus the output will act neither as a significant load nor as a driver.
-        //-   To minimize the possibility that two outputs will attempt to take a common bus to opposite logic levels, the disable time is shorter than the enable time of the outputs.
         //- Pinalias: C1,A1,Y1,C2,A2,Y2,GND,Y3,A3,C3,Y4,A4,C4,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2436,10 +2005,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_74125_global.TTL_74126_GATE(setup, "A");
-            netlist.nld_74125_global.TTL_74126_GATE(setup, "B");
-            netlist.nld_74125_global.TTL_74126_GATE(setup, "C");
-            netlist.nld_74125_global.TTL_74126_GATE(setup, "D");
+            throw new emu_unimplemented();
+#if false
+            TTL_74126_GATE(setup, "A");
+            TTL_74126_GATE(setup, "B");
+            TTL_74126_GATE(setup, "C");
+            TTL_74126_GATE(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -2467,14 +2039,6 @@ namespace mame
 
         //- Identifier: TTL_74139_DIP
         //- Title: 54LS139/DM54LS139/DM74LS139 Decoders/Demultiplexers
-        //- Description: These Schottky-clamped circuits are designed to be used in high-performance memory-decoding or data-routing applications, requiring very short propagation delay times.
-        //-   In high-performance memory systems these decoders can be used to minimize the effects of system decoding.
-        //-   When used with high-speed memories, the delay times of these decoders are usually less than the typical access time of the memory.
-        //-   This means that the effective system delay introduced by the decoder is negligible.
-        //-   The LS139 comprises two separate two-line-to-four-line decoders in a single package.
-        //-   The active-low enable input can be used as a data line in demultiplexing applications.
-        //-   All of these decoders/demultiplexers feature fully buffered inputs, presenting only one normalized load to its driving circuit.
-        //    All inputs are clamped with high-performance Schottky diodes to suppress line-ringing and simplify system design.
         //- Pinalias: G1,A1,B1,1Y0,1Y1,1Y2,1Y3,GND,2Y3,2Y2,2Y1,2Y0,B2,A2,G2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2520,8 +2084,6 @@ namespace mame
 
         //- Identifier: TTL_74153_DIP
         //- Title: 54153/DM54153/DM74153 Dual 4-Line to 1-LineData Selectors/Multiplexers
-        //- Description: Each of these data selectors/multiplexers contains inverters and drivers to supply fully complementary, on-chip, binary decoding data selection to the AND-OR-invert gates.
-        //-   Separate strobe inputs are provided for each of the two four-line sections.
         //- Pinalias: G1,B,1C3,1C2,1C1,1C0,Y1,GND,Y2,2C0,2C1,2C2,2C3,A,G2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2574,12 +2136,6 @@ namespace mame
 
         //- Identifier: TTL_74155_DIP
         //- Title: 54LS155/DM54LS155/DM74LS155 Dual 2-Line to 4-Line Decoders/Demultiplexers
-        //- Description: These TTL circuits feature dual 1-line-to-4-line demultiplexers with individual strobes and common binary-address inputs in a single 16-pin package.
-        //-   When both sections are enabled by the strobes, the common address inputs sequentially select and route associated input data to the appropriate output of each section.
-        //-   The individual strobes permit activating or inhibiting each of the 4-bit sections as desired.
-        //-   Data applied to input C1 is inverted at its outputs anddata applied at C2 is true through its outputs.
-        //-   The inverter following the C1 data input permits use as a 3-to-8-line decoder, or 1-to-8-line demultiplexer, without external gating.
-        //-   Input clamping diodes are provided on these circuits to minimize transmission-line effects and simplify system design.
         //- Pinalias: C1,G1,B,1Y3,1Y2,1Y1,1Y0,GND,2Y0,2Y1,2Y2,2Y3,A,G2,C2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2645,12 +2201,6 @@ namespace mame
 
         //- Identifier: TTL_74156_DIP
         //- Title: 54LS156/DM54LS156/DM74LS156 Dual 2-Line to 4-Line Decoders/Demultiplexers with Open-Collector Outputs
-        //- Description: These TTL circuits feature dual 1-line-to-4-line demultiplexers with individual strobes and common binary-address inputs in a single 16-pin package.
-        //-   When both sections are enabled by the strobes, the common address inputs sequentially select and route associated input data to the appropriate output of each section.
-        //-   The individual strobes permit activating or inhibiting each of the 4-bit sections as desired.
-        //-   Data applied to input C1 is inverted at its outputs anddata applied at C2 is true through its outputs.
-        //-   The inverter following the C1 data input permits use as a 3-to-8-line decoder, or 1-to-8-line demultiplexer, without external gating.
-        //-   Input clamping diodes are provided on these circuits to minimize transmission-line effects and simplify system design.
         //- Pinalias: C1,G1,B,1Y3,1Y2,1Y1,1Y0,GND,2Y0,2Y1,2Y2,2Y3,A,G2,C2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2716,9 +2266,6 @@ namespace mame
 
         //- Identifier: TTL_74157_DIP
         //- Title: 54157/DM54157/DM74157 Quad 2-Line to 1-Line Data Selectors/Multiplexers
-        //- Description: These data selectors/multiplexers contain inverters and drivers to supply full on-chip data selection to the four output gates.
-        //-   A separate strobe input is provided.
-        //-   A 4-bit word is selected from one of two sources and is routed to the four outputs.
         //- Pinalias: S,A1,B1,Y1,A2,B2,Y2,GND,Y3,B3,A3,Y4,B4,A4,G,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2769,21 +2316,6 @@ namespace mame
 
         //- Identifier: TTL_74161_DIP
         //- Title: DM54161/DM74161 Synchronous 4-Bit Counter
-        //- Description: These synchronous, presettable counters feature an internal carry look-ahead for application in high-speed counting designs.
-        //-   The 161 is a 4-bit binary counter.
-        //-   The carry output is decoded by means of a NOR gate, thus preventing spikes during the normal counting mode of operation.
-        //-   Synchronous operation is provided by having all flip-flops clocked simultaneously so that the outputs change co-incident with each other when so instructed by the count-enable inputs and internal gating.
-        //-   This mode of operation eliminates the output counting spikes which are normally associated with asynchronous (ripple clock) counters.
-        //-   A buffered clock input triggers the four flip-flops on the rising (positive-going) edge of the clock input waveform.
-        //-   These counters are fully programmable; that is, the outputs may be preset to either level.
-        //-   As presetting is synchronous, setting up a low level at the load input disables the counter and causes the outputs to agree with the setup data after the next clock pulse, regardless of the levels of the enable input.
-        //-   The clear function for the 161 is asynchronous; and a low level at the clear input sets all four of the flip-flop outputs low, regardless of the levels of clock, load, or enable inputs.
-        //-   The carry look-ahead circuitry provides for cascading counters for n-bit synchronous applications without additional gating.
-        //-   Instrumental in accomplishing this function are two count-enable inputs and a ripple carry output.
-        //-   Both count-enable inputs (P and T) must be high to count, and input T is fed forward to enable the ripple carry output.
-        //-   The ripple carry output thus enabled will produce a high-level output pulse with a duration approximately equal to the high-level portion of the QA output.
-        //-   This high-level overflow ripple carry pulse can be used to enable successive cascaded stages.
-        //-   High-to-low-level transitions at the enable P or T inputs of the 161 may occur, regardless of the logic level on the clock.
         //- Pinalias: CLRQ,CLK,A,B,C,D,ENP,GND,LOADQ,ENT,QD,QC,QB,QA,RC,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2818,24 +2350,6 @@ namespace mame
 
         //- Identifier: TTL_74163_DIP
         //- Title: DM74163 Synchronous 4-Bit Counter
-        //- Description: These synchronous, presettable counters feature an internal carry look-ahead for application in high-speed counting designs.
-        //-   The 163 is a 4-bit binary counter.
-        //-   The carry output is decoded by means of a NOR gate, thus preventing spikes during the normal counting mode of operation.
-        //-   Synchronous operation is provided by having all flip-flops clocked simultaneously so that the outputs change co-incident with each other when so instructed by the count-enable inputs and internal gating.
-        //-   This mode of operation eliminates the output counting spikes which are normally associated with asynchronous (ripple clock) counters.
-        //-   A buffered clock input triggers the four flip-flops on the rising (positive-going) edge of the clock input waveform.
-        //-   These counters are fully programmable; that is, the outputs may be preset to either level.
-        //-   As presetting is synchronous, setting up a low level at the load input disables the counter and causes the outputs to agree with the setup data after the next clock pulse, regardless of the levels of the enable input.
-        //-   The clear function for the 163 is synchronous; and a low level at the clear input sets all four of the flip-flop outputs low after the next clock pulse, regardless of the levels of the enable inputs.
-        //-   This synchronous clear allows the count length to be modified easily, as decoding the maximum count desired can be  accomplished with one external NAND gate.
-        //-   The gate output is connected to the clear input to synchronously clear the counter to all low outputs.
-        //-   Low-to-high transitions at the clear input of the 163 are also permissible, regardless of the logic levels on the clock,enable, or load inputs.
-        //-   The carry look-ahead circuitry provides for cascading counters for n-bit synchronous applications without additional gating.
-        //-   Instrumental in accomplishing this function are two count-enable inputs and a ripple carry output.
-        //-   Both count-enable inputs (P and T) must be high to count, and input T is fed forward to enable the ripple carry output.
-        //-   The ripple carry output thus enabled will produce a high-level output pulse with a duration approximately equal to the high-level portion of the QA output.
-        //-   This high-level overflow ripple carry pulse can be used to enable successive cascaded stages.
-        //-   High-to-low-level transitions at the enable P or T inputs of the 163 may occur, regardless of the logic level on the clock.
         //- Pinalias: CLRQ,CLK,A,B,C,D,ENP,GND,LOADQ,ENT,QD,QC,QB,QA,RC,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2870,12 +2384,6 @@ namespace mame
 
         //- Identifier: TTL_74164_DIP
         //- Title: DM74164 8-Bit Serial In/Parallel Out Shift Registers
-        //- Description: These 8-bit shift registers feature gated serial inputs and an asynchronous clear.
-        //-   A LOW logic level at either serial input inhibits entry of the new data, and resets the first flip-flop to the LOW level at the next clock pulse, thus providing complete control over incoming data.
-        //-   A HIGH logic level on either input enables the other input, which will then determine the state of the first flip-flop.
-        //-   Data at the serial inputs may be changed while the clock is HIGH or LOW, but only information meeting the setup and hold time requirements will be entered.
-        //-   Clocking occurs on the LOW-to-HIGH level transition of the clock input.
-        //-   All inputs are diode-clamped to minimize transmission-line effects
         //- Pinalias: A,B,QA,QB,QC,QD,GND,CLOCK,CLEAR,QE,QF,QG,QH,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Fairchild Semiconductor datasheet
@@ -2919,10 +2427,6 @@ namespace mame
 
         //- Identifier: TTL_74165_DIP
         //- Title: 54165/DM74165 8-Bit Parallel-to-Serial Converter
-        //- Description: The ’165 is an 8-bit parallel load or serial-in register with complementary outputs available from the last stage.
-        //-   Parallel inputting occurs asynchronously when the Parallel Load (PL) input is LOW.
-        //-   With PL HIGH, serial shifting occurs on the rising edge of the clock; new data enters via the Serial Data (DS) input.
-        //-   The 2-input OR clock can be used to combine two independent clock sources, or one input can act as an active LOW clock enable.
         //- Pinalias: PLQ,CP1,P4,P5,P6,P7,QQ7,GND,Q7,DS,P0,P1,P2,P3,CP2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -2967,17 +2471,6 @@ namespace mame
 
         //- Identifier: TTL_74166_DIP
         //- Title: DM74LS166 8-Bit Parallel-In/Serial-Out Shift Registers
-        //- Description: These parallel-in or serial-in, serial-out shift registers feature gated clock inputs and an overriding clear input.
-        //-   All inputs are buffered to lower the drive requirements to one normalized load, and input clamping diodes minimize switching transients to simplify system design.
-        //-   The load mode is established by the shift/load input.
-        //-   When high, this input enables the serial data input and couples the eight flip-flops for serial shifting with each clock pulse.
-        //-   When low, the parallel (broadside) data inputs are enabled and synchronous loading occurs on the next clock pulse.
-        //-   During parallel loading, serial data flow is inhibited.
-        //-   Clocking is accomplished on the low-to-high-level edge of the clock pulse through a two-input NOR gate, permitting one input to be used as a clock-enable or clock-inhibit function.
-        //-   Holding either of the clock inputs high inhibits clocking; holding either low enables the other clock input.
-        //-   This allows the system clock to be free running, and the register can be stopped on command with the other clock input.
-        //-   The clock-inhibit input should be changed to the high level only while the clock input is high.
-        //-   A buffered, direct clear input overrides all other inputs, including the clock, and sets all flip-flops to zero.
         //- Pinalias: SER,A,B,C,D,CLKINH,CLK,GND,CLRQ,E,F,G,QH,H,SH/LDQ,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3023,11 +2516,6 @@ namespace mame
 
         //- Identifier: TTL_74174_DIP
         //- Title: DM74174 Hex/Quad D-Type Flip-Flop with Clear
-        //- Description: These positive-edge triggered flip-flops utilize TTL circuitry to implement D-type flip-flop logic.
-        //-   All have a direct clear input.
-        //-   Information at the D inputs meeting the setup and hold time requirements is transferred to the Q outputs on the positive-going edge of the clock pulse.
-        //-   Clock triggering occurs at a particular voltage level and is not directly related to the transition time of the positive-going pulse.
-        //-   When the clock input is at either the HIGH or LOW level, the D input signal has no effect at the output.
         //- Pinalias: CLRQ,Q1,D1,D2,Q2,D3,Q3,GND,CLK,Q4,D4,Q5,D5,Q6,D6,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Fairchild Semiconductor datasheet
@@ -3184,7 +2672,6 @@ namespace mame
 
         //- Identifier: TTL_74260_DIP
         //- Title: DM54LS260/DM74LS260 Dual 5-Input NOR Gate
-        //- Description: This device contains two individual five input gates, each of which perform the logic NOR function.
         //- Pinalias: A1,B1,C1,A2,Q1,Q2,GND,B2,C2,D2,E2,D1,E1,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3233,15 +2720,6 @@ namespace mame
 
         //- Identifier: TTL_74279_DIP
         //- Title: 54279/DM74279 Quad Set-Reset Latch
-        //- Description: These latches are ideaily suited ·for use as temporary
-        //-   storage of bfnary information between processing units
-        //-   and I/O units. When either one of the data inputs is at
-        //-   a low logic level, the output will follow the level of the
-        //-   R input. When both data inputs are high, the output will
-        //-   remain latched in its previous state. When both inputs
-        //-   are low, the output will .go high. However, this high
-        //-   level may not persist when either one of the data inputs
-        //-   returns to the high state.
         //- Pinalias: 1RQ,1S1Q,1S2Q,1Q,2RQ,2SQ,2Q,GND,3Q,3RQ,3S1Q,3S2Q,4Q,4RQ,4SQ,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3258,15 +2736,6 @@ namespace mame
         //-     |  1  |  1  |  1 || Q |
         //-     +-----+-----+----++---+
         //-
-        //#ifndef __PLIB_PREPROCESSOR__
-        //#if !NL_AUTO_DEVICES
-        //#define TTL_74279A(name)                                                         \
-        //        NET_REGISTER_DEV(TTL_74279A, name)
-        //#define TTL_74279B(name)                                                         \
-        //        NET_REGISTER_DEV(TTL_74279B, name)
-        //#endif
-        //#endif
-
         //static NETLIST_START(TTL_74279_DIP)
         public static void netlist_TTL_74279_DIP(netlist.nlparse_t setup)
         {
@@ -3328,9 +2797,6 @@ namespace mame
 
         //- Identifier: TTL_74377_DIP
         //- Title: DM54LS377/DM74LS377 Octal D Flip-Flop with Common Enable and Clock
-        //- Description: The ’LS377 is an 8-bit register built using advanced low power Schottky technology.
-        //-   This register consists of eight D-type flip-flops with a buffered common clock and a buffered common input enable.
-        //-   The device is packaged in the space-saving (0.3 inch row spacing) 20-pin package.
         //- Pinalias: EQ,Q0,D0,D1,Q1,Q2,D2,D3,Q3,GND,CP,Q4,D4,D5,Q5,Q6,D6,D7,Q7,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3350,14 +2816,17 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "A");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "B");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "C");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "D");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "E");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "F");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "G");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "H");
+            throw new emu_unimplemented();
+#if false
+            TTL_74377_GATE(setup, "A");
+            TTL_74377_GATE(setup, "B");
+            TTL_74377_GATE(setup, "C");
+            TTL_74377_GATE(setup, "D");
+            TTL_74377_GATE(setup, "E");
+            TTL_74377_GATE(setup, "F");
+            TTL_74377_GATE(setup, "G");
+            TTL_74377_GATE(setup, "H");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC", "G.VCC", "H.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND", "G.GND", "H.GND");
@@ -3393,8 +2862,6 @@ namespace mame
 
         //- Identifier: TTL_74378_DIP
         //- Title: DM54LS378/DM74LS378 Parallel D Register with Enable
-        //- Description: The ’LS378 is a 6-bit register with a buffered common enable.
-        //-   This device is similar to the ’LS174, but with common Enable rather than common Master Reset.
         //- Pinalias: EQ,Q0,D0,D1,Q1,D2,Q2,GND,CP,Q3,D3,Q4,D4,D5,Q6,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3414,12 +2881,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "A");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "B");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "C");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "D");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "E");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "F");
+            throw new emu_unimplemented();
+#if false
+            TTL_74377_GATE(setup, "A");
+            TTL_74377_GATE(setup, "B");
+            TTL_74377_GATE(setup, "C");
+            TTL_74377_GATE(setup, "D");
+            TTL_74377_GATE(setup, "E");
+            TTL_74377_GATE(setup, "F");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
@@ -3444,8 +2914,6 @@ namespace mame
 
         //- Identifier: TTL_74379_DIP
         //- Title: 54LS379/DM74LS379 Quad Parallel Register with Enable
-        //- Description: The LS379 is a 4-bit register with buffered common Enable.
-        //-   This device is similar to the LS175 but features the common Enable rather than common Master Reset.
         //- Pinalias: EEQ,Q0,QQ0,D0,QQ1,Q1,GND,CP,Q2,QQ2,D2,D3,QQ3,Q3,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3465,10 +2933,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "A");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "B");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "C");
-            netlist.nld_74377_global.TTL_74377_GATE(setup, "D");
+            throw new emu_unimplemented();
+#if false
+            TTL_74377_GATE(setup, "A");
+            TTL_74377_GATE(setup, "B");
+            TTL_74377_GATE(setup, "C");
+            TTL_74377_GATE(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
@@ -3493,10 +2964,6 @@ namespace mame
 
         //- Identifier: TTL_74393_DIP
         //- Title: Dual 4-Bit Binary Counter
-        //- Description: DM74LS393 Each of these monolithic circuits contains eight master-slave flip-flops and additional gating to implement two individual four-bit counters in a single package.
-        //-   The ’LS393 comprises two independent four-bit binary counters each having a clear and a clock input.
-        //-   N-bit binary counters can be implemented with each package providing the capability of divide-by-256.
-        //-   The LS393 has parallel outputs from each counter stage so that any submultiple of the input count freqency is available for system-timing signals.
         //- Pinalias: 1A,1CLR,1QA,1QB,1QC,1QD,GND,2QD,2QC,2QB,2QA,2CLR,2A,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3534,9 +3001,6 @@ namespace mame
 
         //- Identifier: SN74LS629_DIP
         //- Title: SN74LS629 VOLTAGE-CONTROLLED OSCILLATORS
-        //- Description: Please add a detailed description
-        //-    FIXME: Missing description
-        //-
         //- Pinalias: 2FC,1FC,1RNG,1CX1,1CX2,1ENQ,1Y,OSC_GND,GND,2Y,2ENQ,2CX2,2CX1,2RNG,OSC_VCC,VCC
         //- Package: DIP
         //- Param: A.CAP
@@ -3565,13 +3029,13 @@ namespace mame
 #if false
             SN74LS629("A", CAP_U(1));
             SN74LS629("B", CAP_U(1));
-#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.OSCGND", "B.OSCGND");
             netlist.nl_setup_global.NET_C(setup, "A.OSCVCC", "B.OSCVCC");
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
+            NC_PIN(setup, "NC");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*          +--------------+         */
                  "B.FC", /*      2FC |1     ++    16| VCC     */ "A.VCC",
@@ -3591,47 +3055,6 @@ namespace mame
 
         //- Identifier: TTL_9310_DIP
         //- Title: DM9310/DM8310 Synchronous 4-Bit Decade Counter
-        //- Description: These synchronous, presettable counters feature an
-        //-   internal carry look-ahead for application in high-speed
-        //-   counting designs. The DM9310/DM8310 are decade
-        //-   counters. The carry output is decoded by means of a
-        //-   NOR gate, thus preventing spikes during the normal
-        //-   counting mode of operation. Synchronous operation
-        //-   is provided by having all flip-flops clocked simultaneously
-        //-   so that the outputs change coincident with each
-        //-   other when so instructed by the count-enable inputs
-        //-   and internal gating. This mode of operation eliminates
-        //-   the output counting spikes which are normally
-        //-   associated with asynchronous (ripple clock) counters.
-        //-   A buffered clock input triggers the four flip-flops on
-        //-   the rising (positive-going) edge of the clock input
-        //-   waveform.
-        //-
-        //-   These counters are fully programmable; that is, the
-        //-   outputs may be preset to either level. As presetting is
-        //-   synchronous, setting up a low level at the load input
-        //-   disables the counter and causes the outputs to agree
-        //-   with the setup data after the next clock pulse regardless
-        //-   of the levels of the enable input. Low-to-high transitions
-        //-   at the· load input are perfectly acceptable regardless of
-        //-   the logic levels on the clock or enable inputs. The clear
-        //-   function is asynchronous and a low level at the clear
-        //-   input sets all four of the flip-flop outputs low regardless
-        //-   of the levels of clock, load, or enable inputs.
-        //-
-        //-   The carry look-ahead circuitry provides for cascading
-        //-   counters for n-bit synchronous applications without
-        //-   additional gating. Instrumental in accomplishing this
-        //-   function are two count-enable inputs and a ripple carry
-        //-   output. Both count-enable inputs (P and T) must be
-        //-   high to count, and input T is fed-forward to enable the
-        //-   ripple carry output. The ripple carry output thus
-        //-   enabled will produce a high-level output pulse with a
-        //-   duration approximately equal to the high-level portion
-        //-   of the QA output. This high-level overflow ripply carry
-        //-   pulse can be used to enable successive cascaded stages.
-        //-   High-to-Low level transitions at the enable P or T inputs
-        //-   may occur regardless of the logic level in the clock.
         //- Pinalias: CLEARQ,CLOCK,A,B,C,D,ENABLEP,GND,LOADQ,ENABLET,QD,QC,QB,QA,RC,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3666,14 +3089,6 @@ namespace mame
 
         //- Identifier: TTL_9312_DIP
         //- Title: DM9312/DM8312 One of Eight Line Data Selectors/Multiplexers
-        //- Description: These data selectors/multiplexers contain inverter/
-        //-   drivers to supply full complementary, on-chip, binary
-        //-   decoded data selection to the AND-OR-INVERT gates.
-        //-
-        //-   The DM9312/8312 is a single 8-bit multiplexer with
-        //-   complementary outputs and a strobe control. When the
-        //-   strobe is low, the function is enabled. When a high logic
-        //-   level is applied to the strobe, the outputs are latched.
         //- Pinalias: D0,D1,D2,D3,D4,D5,D6,GND,D7,G,A,B,C,YQ,Y,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3699,7 +3114,10 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             TTL_9312(setup, "A");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+     */
                  "A.D0", /*  D0 |1     ++    16| VCC */ "A.VCC",
@@ -3719,47 +3137,6 @@ namespace mame
 
         //- Identifier: TTL_9316_DIP
         //- Title: DM9316/DM8316 Synchronous 4-Bit Counters
-        //- Description: These synchronous, presettable counters feature an
-        //-   internal carry look-ahead for application in high-speed
-        //-   counting designs. The DM9316/DM8316 are 4-bit binary
-        //-   counters. The carry output is decoded by means of a
-        //-   NOR gate, thus preventing spikes during the normal
-        //-   counting mode of operation. Synchronous operation
-        //-   is provided by having all flip-flops clocked simultaneously
-        //-   so that the outputs change coincident with each
-        //-   other when so instructed by the count-enable inputs
-        //-   and internal gating. This mode of operation eliminates
-        //-   the output counting spikes which are normally
-        //-   associated with asynchronous (ripple clock) counters.
-        //-   A buffered clock input triggers the four flip-flops on
-        //-   the rising (positive-going) edge of the clock input
-        //-   waveform.
-        //-
-        //-   These counters are fully programmable; that is, the
-        //-   outputs may be preset to either level. As presetting is
-        //-   synchronous, setting up a low level at the load input
-        //-   disables the counter and causes the outputs to agree
-        //-   with the setup data after the next clock pulse regardless
-        //-   of the levels of the enable input. Low-to-high transitions
-        //-   at the· load input are perfectly acceptable regardless of
-        //-   the logic levels on the clock or enable inputs. The clear
-        //-   function is asynchronous and a low level at the clear
-        //-   input sets all four of the flip-flop outputs low regardless
-        //-   of the levels of clock, load, or enable inputs.
-        //-
-        //-   The carry look-ahead circuitry provides for cascading
-        //-   counters for n-bit synchronous applications without
-        //-   additional gating. Instrumental in accomplishing this
-        //-   function are two count-enable inputs and a ripple carry
-        //-   output. Both count-enable inputs (P and T) must be
-        //-   high to count, and input T is fed-forward to enable the
-        //-   ripple carry output. The ripple carry output thus
-        //-   enabled will produce a high-level output pulse with a
-        //-   duration approximately equal to the high-level portion
-        //-   of the QA output. This high-level overflow ripply carry
-        //-   pulse can be used to enable successive cascaded stages.
-        //-   High-to-Low level transitions at the enable P or T inputs
-        //-   may occur regardless of the logic level in the clock.
         //- Pinalias: CLEARQ,CLOCK,A,B,C,D,ENABLEP,GND,LOADQ,ENABLET,QD,QC,QB,QA,RC,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3794,12 +3171,6 @@ namespace mame
 
         //- Identifier: TTL_9322_DIP
         //- Title: DM9322/DM8322 Quad 2-Line to 1-Line Data Selectors/Multiplexers
-        //- Description: These data selectors/multiplexers contain inverters and
-        //-   drivers to supply full on-chip data selection to the four
-        //-   output gates. A separate strobe input is provided. A
-        //-   4-bit word is selected from one of two sources and is
-        //-   routed to the four outputs. True data is presented
-        //-   at the outputs.
         //- Pinalias: SELECT,A1,B1,Y1,A2,B2,Y2,GND,Y3,B3,A3,Y4,B4,A4,STROBE,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -3843,8 +3214,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_9321_global.TTL_9321(setup, "A");
-            netlist.nld_9321_global.TTL_9321(setup, "B");
+            throw new emu_unimplemented();
+#if false
+            TTL_9321(setup, "A");
+            TTL_9321(setup, "B");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
@@ -3867,22 +3241,6 @@ namespace mame
 
         //- Identifier: TTL_9602_DIP
         //- Title: DM9602/DM6802 Dual Retriggerable, Resettable One Shots
-        //- Description: These dual resettable, retriggerable one shots have two
-        //-   inputs per function; one which is active high, and one
-        //-   which is active low. This allows the designer to employ
-        //-   either leading-edge or trailing-edge triggering, which is
-        //-   independent of input transition times. When input con·
-        //-   ditions for triggering are met, a new cycle starts and the
-        //-   external capacitor is allowed to rapidly discharge and
-        //-   then charge again. The retriggerable feature permits
-        //-   output pulse widths to be extended. In fact a continuous
-        //-   true output can be maintained by having an input cycle
-        //-   time which is shorter than the output cycle time. The
-        //-   output pulse may then be terminated at any time by
-        //-   applying a low logic level to the RESET pin. Retriggering
-        //-   may be inhibited by either connecting the Q output to
-        //-   an active high input, or the Q output to an active
-        //-   low input.
         //- Pinalias: C1,RC1,CLRQ1,B1,A1,Q1,QQ1,GND,QQ2,Q2,A2,B2,CLRQ2,RC2,C2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Fairchild Semiconductor datasheet
@@ -3899,8 +3257,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_74123_global.TTL_9602(setup, "A");
-            netlist.nld_74123_global.TTL_9602(setup, "B");
+            throw new emu_unimplemented();
+#if false
+            TTL_9602(setup, "A");
+            TTL_9602(setup, "B");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
             netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
@@ -3921,7 +3282,6 @@ namespace mame
         }
 
 
-
         //NETLIST_START(ttl74xx_lib)
         public static void netlist_ttl74xx_lib(netlist.nlparse_t setup)
         {
@@ -3932,394 +3292,123 @@ namespace mame
             netlist.nl_setup_global.NET_MODEL(setup, "DM74LS14       SCHMITT_TRIGGER(VTP=1.6 VTM=0.8 VI=4.4 RI=19.3k VOH=3.45 ROH=130 VOL=0.1 ROL=31.2 TPLH=15 TPHL=15)");
             //NET_MODEL("DM7414 FAMILY(IVL=0.16 IVH=0.4 OVL=0.1 OVH=0.05 ORL=10.0 ORH=1.0e8)")
 
+            throw new emu_unimplemented();
+#if false
+            TRUTHTABLE_ENTRY(TTL_7400_NAND);
+            TRUTHTABLE_ENTRY(TTL_7402_NOR);
+            TRUTHTABLE_ENTRY(TTL_7404_INVERT);
+            TRUTHTABLE_ENTRY(TTL_7406_GATE);
+            TRUTHTABLE_ENTRY(TTL_7407_GATE);
+            TRUTHTABLE_ENTRY(TTL_7408_GATE);
+            TRUTHTABLE_ENTRY(TTL_7408_AND);
+            TRUTHTABLE_ENTRY(TTL_7410_NAND);
+            TRUTHTABLE_ENTRY(TTL_7410_GATE);
+            TRUTHTABLE_ENTRY(TTL_7411_AND);
+            TRUTHTABLE_ENTRY(TTL_7411_GATE);
+            TRUTHTABLE_ENTRY(TTL_7416_GATE);
+            TRUTHTABLE_ENTRY(TTL_7417_GATE);
+            TRUTHTABLE_ENTRY(TTL_7420_NAND);
+            TRUTHTABLE_ENTRY(TTL_7421_AND);
+            TRUTHTABLE_ENTRY(TTL_7425_NOR);
+            TRUTHTABLE_ENTRY(TTL_7427_NOR);
+            TRUTHTABLE_ENTRY(TTL_7430_NAND);
+            TRUTHTABLE_ENTRY(TTL_7432_OR);
+            TRUTHTABLE_ENTRY(TTL_7437_NAND);
+            TRUTHTABLE_ENTRY(TTL_7438_NAND);
+            TRUTHTABLE_ENTRY(TTL_7442);
+            TRUTHTABLE_ENTRY(TTL_7486_XOR);
+            TRUTHTABLE_ENTRY(TTL_74139_GATE);
+            TRUTHTABLE_ENTRY(TTL_74155A_GATE);
+            TRUTHTABLE_ENTRY(TTL_74155B_GATE);
+            TRUTHTABLE_ENTRY(TTL_74156A_GATE);
+            TRUTHTABLE_ENTRY(TTL_74156B_GATE);
+            TRUTHTABLE_ENTRY(TTL_74157_GATE);
+            TRUTHTABLE_ENTRY(TTL_74260_NOR);
+            TRUTHTABLE_ENTRY(TTL_74279A);
+            TRUTHTABLE_ENTRY(TTL_74279B);
+            TRUTHTABLE_ENTRY(TTL_9312);
 
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7400_NAND", 2, 1, "+A,+B,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,0|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7402_NOR", 2, 1, "+A,+B,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("0,0|1|22");
-                netlist.nl_setup_global.TT_LINE("X,1|0|15");
-                netlist.nl_setup_global.TT_LINE("1,X|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7404_INVERT", 1, 1, "+A,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD(" A | Q ");
-                netlist.nl_setup_global.TT_LINE(" 0 | 1 |22");
-                netlist.nl_setup_global.TT_LINE(" 1 | 0 |15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7406_GATE", 1, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A|Y ");
-                netlist.nl_setup_global.TT_LINE("0|1|15");
-                netlist.nl_setup_global.TT_LINE("1|0|23");
-                /* Open Collector */
-                netlist.nl_setup_global.TT_FAMILY("74XXOC");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7407_GATE", 1, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A|Y ");
-                netlist.nl_setup_global.TT_LINE("0|0|15");
-                netlist.nl_setup_global.TT_LINE("1|1|23");
-                /* Open Collector */
-                netlist.nl_setup_global.TT_FAMILY("74XXOC");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7408_GATE", 2, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,0|0|15");
-                netlist.nl_setup_global.TT_LINE("1,1|1|22");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7408_AND", 2, 1, "+A,+B,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,0|0|15");
-                netlist.nl_setup_global.TT_LINE("1,1|1|22");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7410_NAND", 3, 1, "+A,+B,+C,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B,C|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,0,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,0|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1,1|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7410_GATE", 3, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A,B,C|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,0,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,0|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1,1|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7411_AND", 3, 1, "+A,+B,+C,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B,C|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,0,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,X,0|0|15");
-                netlist.nl_setup_global.TT_LINE("1,1,1|1|22");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7411_GATE", 3, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A,B,C|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,0,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,X,0|0|15");
-                netlist.nl_setup_global.TT_LINE("1,1,1|1|22");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7416_GATE", 1, 1, "");
-                netlist.nl_setup_global.TT_HEAD(" A | Q ");
-                netlist.nl_setup_global.TT_LINE(" 0 | 1 |15");
-                netlist.nl_setup_global.TT_LINE(" 1 | 0 |23");
-                /* Open Collector */
-                netlist.nl_setup_global.TT_FAMILY("74XXOC");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7420_NAND", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B,C,D|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,0,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,0,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,X,0|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1,1,1|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7421_AND", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B,C,D|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X,X,X|0|22");
-                netlist.nl_setup_global.TT_LINE("X,0,X,X|0|22");
-                netlist.nl_setup_global.TT_LINE("X,X,0,X|0|22");
-                netlist.nl_setup_global.TT_LINE("X,X,X,0|0|22");
-                netlist.nl_setup_global.TT_LINE("1,1,1,1|1|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7425_NOR", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B,C,D|Q ");
-                netlist.nl_setup_global.TT_LINE("1,X,X,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,1,X,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,X,1,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,X,X,1|0|15");
-                netlist.nl_setup_global.TT_LINE("0,0,0,0|1|22");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7427_NOR", 3, 1, "+A,+B,+C,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B,C|Q ");
-                netlist.nl_setup_global.TT_LINE("1,X,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,1,X|0|15");
-                netlist.nl_setup_global.TT_LINE("X,X,1|0|15");
-                netlist.nl_setup_global.TT_LINE("0,0,0|1|22");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7430_NAND", 8, 1, "+A,+B,+C,+D,+E,+F,+G,+H,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B,C,D,E,F,G,H|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X,X,X,X,X,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,0,X,X,X,X,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,0,X,X,X,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,X,0,X,X,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,X,X,0,X,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,X,X,X,0,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,X,X,X,X,0,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,X,X,X,X,X,X,0|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1,1,1,1,1,1,1|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7432_OR", 2, 1, "+A,+B,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("1,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,1|1|22");
-                netlist.nl_setup_global.TT_LINE("0,0|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7442", 4, 10, "");
-                netlist.nl_setup_global.TT_HEAD("D,C,B,A|0,1,2,3,4,5,6,7,8,9");
-                netlist.nl_setup_global.TT_LINE("0,0,0,0|0,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("0,0,0,1|1,0,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("0,0,1,0|1,1,0,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("0,0,1,1|1,1,1,0,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("0,1,0,0|1,1,1,1,0,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("0,1,0,1|1,1,1,1,1,0,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("0,1,1,0|1,1,1,1,1,1,0,1,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("0,1,1,1|1,1,1,1,1,1,1,0,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("1,0,0,0|1,1,1,1,1,1,1,1,0,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("1,0,0,1|1,1,1,1,1,1,1,1,1,0|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("1,0,1,X|1,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-                netlist.nl_setup_global.TT_LINE("1,1,X,X|1,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            /*  FIXME: Same as 7400, but drains higher output currents.
-             *         Netlist currently does not model over currents (should it ever?)
-             */
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7437_NAND", 2, 1, "+A,+B");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,0|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_7486_XOR", 2, 1, "+A,+B,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("0,0|0|15");
-                netlist.nl_setup_global.TT_LINE("0,1|1|22");
-                netlist.nl_setup_global.TT_LINE("1,0|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1|0|15");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74139_GATE", 3, 4, "");
-                netlist.nl_setup_global.TT_HEAD("E,A,B|0,1,2,3");
-                netlist.nl_setup_global.TT_LINE("1,X,X|1,1,1,1|14");
-                netlist.nl_setup_global.TT_LINE("0,0,0|0,1,1,1|14");
-                netlist.nl_setup_global.TT_LINE("0,0,1|1,0,1,1|14");
-                netlist.nl_setup_global.TT_LINE("0,1,0|1,1,0,1|14");
-                netlist.nl_setup_global.TT_LINE("0,1,1|1,1,1,0|14");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74155A_GATE", 4, 4, "");
-                netlist.nl_setup_global.TT_HEAD("B,A,G,C|0,1,2,3");
-                netlist.nl_setup_global.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("X,X,0,0|1,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("0,0,0,1|0,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("0,1,0,1|1,0,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("1,0,0,1|1,1,0,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("1,1,0,1|1,1,1,0|13,13,13,13");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74155B_GATE", 4, 4, "");
-                netlist.nl_setup_global.TT_HEAD("B,A,G,C|0,1,2,3");
-                netlist.nl_setup_global.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("X,X,0,1|1,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("0,0,0,0|0,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("0,1,0,0|1,0,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("1,0,0,0|1,1,0,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("1,1,0,0|1,1,1,0|13,13,13,13");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74156A_GATE", 4, 4, "");
-                netlist.nl_setup_global.TT_HEAD("B,A,G,C|0,1,2,3");
-                netlist.nl_setup_global.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("X,X,0,0|1,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("0,0,0,1|0,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("0,1,0,1|1,0,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("1,0,0,1|1,1,0,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("1,1,0,1|1,1,1,0|13,13,13,13");
-                netlist.nl_setup_global.TT_FAMILY("74XXOC");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74156B_GATE", 4, 4, "");
-                netlist.nl_setup_global.TT_HEAD("B,A,G,C|0,1,2,3");
-                netlist.nl_setup_global.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("X,X,0,1|1,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("0,0,0,0|0,1,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("0,1,0,0|1,0,1,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("1,0,0,0|1,1,0,1|13,13,13,13");
-                netlist.nl_setup_global.TT_LINE("1,1,0,0|1,1,1,0|13,13,13,13");
-                netlist.nl_setup_global.TT_FAMILY("74XXOC");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74157_GATE", 4, 4, "");
-                netlist.nl_setup_global.TT_HEAD("E,S,I,J|O");
-                netlist.nl_setup_global.TT_LINE("1,X,X,X|0|14");
-                netlist.nl_setup_global.TT_LINE("0,1,X,0|0|14");
-                netlist.nl_setup_global.TT_LINE("0,1,X,1|1|14");
-                netlist.nl_setup_global.TT_LINE("0,0,0,X|0|14");
-                netlist.nl_setup_global.TT_LINE("0,0,1,X|1|14");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74260_NOR", 5, 1, "+A,+B,+C,+D,+E,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD("A,B,C,D,E|Q");
-                netlist.nl_setup_global.TT_LINE("0,0,0,0,0|1|10");
-                netlist.nl_setup_global.TT_LINE("X,X,X,X,1|0|12");
-                netlist.nl_setup_global.TT_LINE("X,X,X,1,X|0|12");
-                netlist.nl_setup_global.TT_LINE("X,X,1,X,X|0|12");
-                netlist.nl_setup_global.TT_LINE("X,1,X,X,X|0|12");
-                netlist.nl_setup_global.TT_LINE("1,X,X,X,X|0|12");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            // FIXME: We need "private" devices
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74279A", 3, 1, "");
-                netlist.nl_setup_global.TT_HEAD("S,R,_Q|Q");
-                netlist.nl_setup_global.TT_LINE("0,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("1,0,X|0|27");
-                netlist.nl_setup_global.TT_LINE("1,1,0|0|27");
-                netlist.nl_setup_global.TT_LINE("1,1,1|1|22");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74279B", 4, 1, "");
-                netlist.nl_setup_global.TT_HEAD("S1,S2,R,_Q|Q");
-                netlist.nl_setup_global.TT_LINE("0,X,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("X,0,X,X|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1,0,X|0|27");
-                netlist.nl_setup_global.TT_LINE("1,1,1,0|0|27");
-                netlist.nl_setup_global.TT_LINE("1,1,1,1|1|22");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("TTL_9312", 12, 2, "+A,+B,+C,+G,+D0,+D1,+D2,+D3,+D4,+D5,+D6,+D7,@VCC,@GND");
-                netlist.nl_setup_global.TT_HEAD(" C, B, A, G,D0,D1,D2,D3,D4,D5,D6,D7| Y,YQ");
-                netlist.nl_setup_global.TT_LINE(" X, X, X, 1, X, X, X, X, X, X, X, X| 0, 1|33,19");
-                netlist.nl_setup_global.TT_LINE(" 0, 0, 0, 0, 0, X, X, X, X, X, X, X| 0, 1|33,28");
-                netlist.nl_setup_global.TT_LINE(" 0, 0, 0, 0, 1, X, X, X, X, X, X, X| 1, 0|33,28");
-                netlist.nl_setup_global.TT_LINE(" 0, 0, 1, 0, X, 0, X, X, X, X, X, X| 0, 1|33,28");
-                netlist.nl_setup_global.TT_LINE(" 0, 0, 1, 0, X, 1, X, X, X, X, X, X| 1, 0|33,28");
-                netlist.nl_setup_global.TT_LINE(" 0, 1, 0, 0, X, X, 0, X, X, X, X, X| 0, 1|33,28");
-                netlist.nl_setup_global.TT_LINE(" 0, 1, 0, 0, X, X, 1, X, X, X, X, X| 1, 0|33,28");
-                netlist.nl_setup_global.TT_LINE(" 0, 1, 1, 0, X, X, X, 0, X, X, X, X| 0, 1|33,28");
-                netlist.nl_setup_global.TT_LINE(" 0, 1, 1, 0, X, X, X, 1, X, X, X, X| 1, 0|33,28");
-                netlist.nl_setup_global.TT_LINE(" 1, 0, 0, 0, X, X, X, X, 0, X, X, X| 0, 1|33,28");
-                netlist.nl_setup_global.TT_LINE(" 1, 0, 0, 0, X, X, X, X, 1, X, X, X| 1, 0|33,28");
-                netlist.nl_setup_global.TT_LINE(" 1, 0, 1, 0, X, X, X, X, X, 0, X, X| 0, 1|33,28");
-                netlist.nl_setup_global.TT_LINE(" 1, 0, 1, 0, X, X, X, X, X, 1, X, X| 1, 0|33,28");
-                netlist.nl_setup_global.TT_LINE(" 1, 1, 0, 0, X, X, X, X, X, X, 0, X| 0, 1|33,28");
-                netlist.nl_setup_global.TT_LINE(" 1, 1, 0, 0, X, X, X, X, X, X, 1, X| 1, 0|33,28");
-                netlist.nl_setup_global.TT_LINE(" 1, 1, 1, 0, X, X, X, X, X, X, X, 0| 0, 1|33,28");
-                netlist.nl_setup_global.TT_LINE(" 1, 1, 1, 0, X, X, X, X, X, X, X, 1| 1, 0|33,28");
-                netlist.nl_setup_global.TT_FAMILY("74XX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7400_DIP", netlist_TTL_7400_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7402_DIP", netlist_TTL_7402_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7404_DIP", netlist_TTL_7404_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7406_DIP", netlist_TTL_7406_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7407_DIP", netlist_TTL_7407_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7408_DIP", netlist_TTL_7408_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7410_DIP", netlist_TTL_7410_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7411_DIP", netlist_TTL_7411_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7414_GATE", netlist_TTL_7414_GATE);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74LS14_GATE", netlist_TTL_74LS14_GATE);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7414_DIP", netlist_TTL_7414_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74LS14_DIP", netlist_TTL_74LS14_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7416_DIP", netlist_TTL_7416_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7420_DIP", netlist_TTL_7420_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7421_DIP", netlist_TTL_7421_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7425_DIP", netlist_TTL_7425_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7427_DIP", netlist_TTL_7427_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7430_DIP", netlist_TTL_7430_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7432_DIP", netlist_TTL_7432_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7437_DIP", netlist_TTL_7437_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7442_DIP", netlist_TTL_7442_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7448_DIP", netlist_TTL_7448_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7450_DIP", netlist_TTL_7450_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7473_DIP", netlist_TTL_7473_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7473A_DIP", netlist_TTL_7473A_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7474_DIP", netlist_TTL_7474_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7475_DIP", netlist_TTL_7475_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7477_DIP", netlist_TTL_7477_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7483_DIP", netlist_TTL_7483_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7485_DIP", netlist_TTL_7485_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7486_DIP", netlist_TTL_7486_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7490_DIP", netlist_TTL_7490_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7492_DIP", netlist_TTL_7492_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7493_DIP", netlist_TTL_7493_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7497_DIP", netlist_TTL_7497_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74107_DIP", netlist_TTL_74107_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74107A_DIP", netlist_TTL_74107A_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74113_DIP", netlist_TTL_74113_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74113A_DIP", netlist_TTL_74113A_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74121_DIP", netlist_TTL_74121_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74123_DIP", netlist_TTL_74123_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_9602_DIP", netlist_TTL_9602_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74125_DIP", netlist_TTL_74125_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74126_DIP", netlist_TTL_74126_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74139_DIP", netlist_TTL_74139_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74153_DIP", netlist_TTL_74153_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74155_DIP", netlist_TTL_74155_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74156_DIP", netlist_TTL_74156_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74157_DIP", netlist_TTL_74157_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74161_DIP", netlist_TTL_74161_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74163_DIP", netlist_TTL_74163_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74164_DIP", netlist_TTL_74164_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74165_DIP", netlist_TTL_74165_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74166_DIP", netlist_TTL_74166_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74174_DIP", netlist_TTL_74174_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74175_DIP", netlist_TTL_74175_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74192_DIP", netlist_TTL_74192_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74193_DIP", netlist_TTL_74193_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74194_DIP", netlist_TTL_74194_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74260_DIP", netlist_TTL_74260_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74279_DIP", netlist_TTL_74279_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74365_DIP", netlist_TTL_74365_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74377_DIP", netlist_TTL_74377_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74378_DIP", netlist_TTL_74378_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74379_DIP", netlist_TTL_74379_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74393_DIP", netlist_TTL_74393_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "SN74LS629_DIP", netlist_SN74LS629_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_9312_DIP", netlist_TTL_9312_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_9310_DIP", netlist_TTL_9310_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_9316_DIP", netlist_TTL_9316_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_9321_DIP", netlist_TTL_9321_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_9322_DIP", netlist_TTL_9322_DIP);
+            LOCAL_LIB_ENTRY(TTL_7400_DIP);
+            LOCAL_LIB_ENTRY(TTL_7402_DIP);
+            LOCAL_LIB_ENTRY(TTL_7404_DIP);
+            LOCAL_LIB_ENTRY(TTL_7406_DIP);
+            LOCAL_LIB_ENTRY(TTL_7407_DIP);
+            LOCAL_LIB_ENTRY(TTL_7408_DIP);
+            LOCAL_LIB_ENTRY(TTL_7410_DIP);
+            LOCAL_LIB_ENTRY(TTL_7411_DIP);
+            LOCAL_LIB_ENTRY(TTL_7414_GATE);
+            LOCAL_LIB_ENTRY(TTL_74LS14_GATE);
+            LOCAL_LIB_ENTRY(TTL_7414_DIP);
+            LOCAL_LIB_ENTRY(TTL_74LS14_DIP);
+            LOCAL_LIB_ENTRY(TTL_7416_DIP);
+            LOCAL_LIB_ENTRY(TTL_7417_DIP);
+            LOCAL_LIB_ENTRY(TTL_7420_DIP);
+            LOCAL_LIB_ENTRY(TTL_7421_DIP);
+            LOCAL_LIB_ENTRY(TTL_7425_DIP);
+            LOCAL_LIB_ENTRY(TTL_7427_DIP);
+            LOCAL_LIB_ENTRY(TTL_7430_DIP);
+            LOCAL_LIB_ENTRY(TTL_7432_DIP);
+            LOCAL_LIB_ENTRY(TTL_7437_DIP);
+            LOCAL_LIB_ENTRY(TTL_7438_DIP);
+            LOCAL_LIB_ENTRY(TTL_7442_DIP);
+            LOCAL_LIB_ENTRY(TTL_7448_DIP);
+            LOCAL_LIB_ENTRY(TTL_7450_DIP);
+            LOCAL_LIB_ENTRY(TTL_7473_DIP);
+            LOCAL_LIB_ENTRY(TTL_7473A_DIP);
+            LOCAL_LIB_ENTRY(TTL_7474_DIP);
+            LOCAL_LIB_ENTRY(TTL_7475_DIP);
+            LOCAL_LIB_ENTRY(TTL_7477_DIP);
+            LOCAL_LIB_ENTRY(TTL_7483_DIP);
+            LOCAL_LIB_ENTRY(TTL_7485_DIP);
+            LOCAL_LIB_ENTRY(TTL_7486_DIP);
+            LOCAL_LIB_ENTRY(TTL_7490_DIP);
+            LOCAL_LIB_ENTRY(TTL_7492_DIP);
+            LOCAL_LIB_ENTRY(TTL_7493_DIP);
+            LOCAL_LIB_ENTRY(TTL_7497_DIP);
+            LOCAL_LIB_ENTRY(TTL_74107_DIP);
+            LOCAL_LIB_ENTRY(TTL_74107A_DIP);
+            LOCAL_LIB_ENTRY(TTL_74113_DIP);
+            LOCAL_LIB_ENTRY(TTL_74113A_DIP);
+            LOCAL_LIB_ENTRY(TTL_74121_DIP);
+            LOCAL_LIB_ENTRY(TTL_74123_DIP);
+            LOCAL_LIB_ENTRY(TTL_9602_DIP);
+            LOCAL_LIB_ENTRY(TTL_74125_DIP);
+            LOCAL_LIB_ENTRY(TTL_74126_DIP);
+            LOCAL_LIB_ENTRY(TTL_74139_DIP);
+            LOCAL_LIB_ENTRY(TTL_74153_DIP);
+            LOCAL_LIB_ENTRY(TTL_74155_DIP);
+            LOCAL_LIB_ENTRY(TTL_74156_DIP);
+            LOCAL_LIB_ENTRY(TTL_74157_DIP);
+            LOCAL_LIB_ENTRY(TTL_74161_DIP);
+            LOCAL_LIB_ENTRY(TTL_74163_DIP);
+            LOCAL_LIB_ENTRY(TTL_74164_DIP);
+            LOCAL_LIB_ENTRY(TTL_74165_DIP);
+            LOCAL_LIB_ENTRY(TTL_74166_DIP);
+            LOCAL_LIB_ENTRY(TTL_74174_DIP);
+            LOCAL_LIB_ENTRY(TTL_74175_DIP);
+            LOCAL_LIB_ENTRY(TTL_74192_DIP);
+            LOCAL_LIB_ENTRY(TTL_74193_DIP);
+            LOCAL_LIB_ENTRY(TTL_74194_DIP);
+            LOCAL_LIB_ENTRY(TTL_74260_DIP);
+            LOCAL_LIB_ENTRY(TTL_74279_DIP);
+            LOCAL_LIB_ENTRY(TTL_74290_DIP);
+            LOCAL_LIB_ENTRY(TTL_74293_DIP);
+            LOCAL_LIB_ENTRY(TTL_74365_DIP);
+            LOCAL_LIB_ENTRY(TTL_74377_DIP);
+            LOCAL_LIB_ENTRY(TTL_74378_DIP);
+            LOCAL_LIB_ENTRY(TTL_74379_DIP);
+            LOCAL_LIB_ENTRY(TTL_74393_DIP);
+            LOCAL_LIB_ENTRY(SN74LS629_DIP);
+            LOCAL_LIB_ENTRY(TTL_9310_DIP);
+            LOCAL_LIB_ENTRY(TTL_9312_DIP);
+            LOCAL_LIB_ENTRY(TTL_9314_DIP);
+            LOCAL_LIB_ENTRY(TTL_9316_DIP);
+            LOCAL_LIB_ENTRY(TTL_9321_DIP);
+            LOCAL_LIB_ENTRY(TTL_9322_DIP);
+            LOCAL_LIB_ENTRY(TTL_9334_DIP);
+            LOCAL_LIB_ENTRY(TTL_8277_DIP);
+            LOCAL_LIB_ENTRY(TTL_AM2847_DIP);
+#endif
 
             netlist.nl_setup_global.NETLIST_END();
         }

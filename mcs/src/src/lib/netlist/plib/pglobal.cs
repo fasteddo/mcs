@@ -37,6 +37,9 @@ namespace mame.plib
         // pstrutil
         public static bool startsWith(string str, string arg) { return pstrutil_global.startsWith(str, arg); }
         public static bool endsWith(string str, string value) { return pstrutil_global.endsWith(str, value); }
+        public static std.vector<string> psplit(string str, string onstr, bool ignore_empty = false) { return pstrutil_global.psplit(str, onstr, ignore_empty); }
+        public static std.vector<string> psplit(string str, char onstr, bool ignore_empty = false) { return pstrutil_global.psplit(str, onstr, ignore_empty); }
+        public static std.vector<string> psplit(string str, std.vector<string> onstrl) { return pstrutil_global.psplit(str, onstrl); }
         public static string ucase(string str) { return pstrutil_global.ucase(str); }
         public static string trim(string str) { return pstrutil_global.trim(str); }
         public static string left(string str, int len) { return pstrutil_global.left(str, len); }
@@ -45,8 +48,6 @@ namespace mame.plib
 
 
         // putil
-        public static std.vector<string> psplit(string str, string onstr, bool ignore_empty = false) { return putil_global.psplit(str, onstr, ignore_empty); }
-        public static std.vector<string> psplit(string str, std.vector<string> onstrl) { return putil_global.psplit(str, onstrl); }
         public static UInt64 hash(string buf, size_t size) { return putil_global.hash(buf, size); }
         public static string environment(string var, string default_val) { return putil_global.environment(var, default_val); }
         public static source_location PSOURCELOC() { return putil_global.PSOURCELOC(); }

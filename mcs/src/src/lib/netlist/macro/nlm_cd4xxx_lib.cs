@@ -9,78 +9,6 @@ namespace mame
 {
     public static class nlm_cd4xxx_global
     {
-#if !NL_AUTO_DEVICES
-
-        /* ----------------------------------------------------------------------------
-         *  Netlist Macros
-         * ---------------------------------------------------------------------------*/
-        //#define CD4001_GATE(name)                                                      \
-        //        NET_REGISTER_DEV(CD4001_GATE, name)
-        public static void CD4001_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4001_GATE", name); }
-
-        //#define CD4001_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4001_DIP, name)
-
-        //#define CD4011_GATE(name)                                                      \
-        //        NET_REGISTER_DEV(CD4011_GATE, name)
-
-        //#define CD4011_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4011_DIP, name)
-
-
-        //#define CD4069_GATE(name)                                                      \
-        //        NET_REGISTER_DEV(CD4069_GATE, name)
-        public static void CD4069_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4069_GATE", name); }
-
-        //#define CD4069_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4069_DIP, name)
-
-        //#define CD4070_GATE(name)                                                      \
-        //        NET_REGISTER_DEV(CD4070_GATE, name)
-        public static void CD4070_GATE(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "CD4070_GATE", name); }
-
-        //#define CD4070_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4070_DIP, name)
-
-        /* ----------------------------------------------------------------------------
-         *  DIP only macros
-         * ---------------------------------------------------------------------------*/
-
-        //#define CD4006_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4006_DIP, name)
-
-        //#define CD4013_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4013_DIP, name)
-
-        //#define CD4017_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4017_DIP, name)
-
-        //#define CD4022_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4022_DIP, name)
-
-        //#define CD4020_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4020_DIP, name)
-
-        //#define CD4024_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4024_DIP, name)
-
-        //#define CD4053_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4053_DIP, name)
-
-        //#define CD4066_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4066_DIP, name)
-
-        //#define CD4016_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4016_DIP, name)
-
-        //#define CD4316_DIP(name)                                                      \
-        //        NET_REGISTER_DEV(CD4016_DIP, name)
-
-        //#define CD4538_DIP(name)                                                        \
-        //        NET_REGISTER_DEV(CD4538_DIP, name)
-#endif
-
-
         /*
          *   CD4001BC: Quad 2-Input NOR Buffered B Series Gate
          *
@@ -101,10 +29,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             CD4001_GATE(setup, "A");
             CD4001_GATE(setup, "B");
             CD4001_GATE(setup, "C");
             CD4001_GATE(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD");
             netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS");
@@ -126,12 +57,6 @@ namespace mame
 
         //- Identifier: CD4006_DIP
         //- Title: CD4006BM/CD4006BC 18-Stage Static Shift Register
-        //- Description: The CD4006BM/CD4006BC 18-stage static shift register is comprised of four separate shift register sections, two sections of four stages and two sections of five stages.
-        //-   Each section has an independent data input.
-        //-   Outputs are available at the fourth stage and the fifth stage of each section.
-        //-   A common clock signal is used for all stages.
-        //-   Data is shifted to the next stage on the negative-going transition of the clock.
-        //-   Through appropriate connections of inputs and outputs, multiple register sections of 4, 5, 8, and 9 stages, or single register sections of 10, 12, 13, 14, 16, 17, and 18 stages can be implemented using one package.
         //- Pinalias: D1,NC,CLOCK,D2,D3,D4,VSS,D4P4,D4P5,D3P4,D2P4,D2P5,D1P4,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -146,8 +71,8 @@ namespace mame
             throw new emu_unimplemented();
 #if false
             CD4006(setup, "A");
+            NC_PIN(setup, "NC");
 #endif
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
 
             netlist.nl_setup_global.DIPPINS(setup,      /*       +--------------+      */
                    "A.D1", /*    D1 |1     ++    14| VDD  */ "A.VDD",
@@ -166,10 +91,6 @@ namespace mame
 
         //- Identifier: CD4011_DIP
         //- Title: CD4011BM/CD4011BC Quad 2-Input NAND Buffered B Series Gate
-        //- Description: These quad gates are monolithic complementary MOS (CMOS) integrated circuits constructed with N- and P-channel enhancement mode transistors.
-        //-   They have equal source and sink current capabilities and conform to standard B series output drive.
-        //-   The devices also have buffered outputs which improve transfer characteristics by providing very high gain.
-        //-   All inputs are protected against static discharge with diodes to VDD and VSS.
         //- Pinalias: A1,B1,Y1,Y2,A2,B2,VSS,A3,B3,Y3,Y4,A4,B4,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -217,11 +138,6 @@ namespace mame
 
         //- Identifier: CD4013_DIP
         //- Title: CD4013BM/CD4013BC Dual D Flip-Flop
-        //- Description: The CD4013B dual D flip-flop is a monolithic complementary MOS (CMOS) integrated circuit constructed with N- and P-channel enhancement mode transistors.
-        //-   Each flip-flop has independent data, set, reset, and clock inputs and Q and QQ outputs.
-        //-   These devices can be used for shift register applications, and by connecting Q output to the data input, for counter and toggle applications.
-        //-   The logic levelpresent at the D input is transferred to the Q output during the positive-going transition of the clock pulse.
-        //-   Setting or resetting is independent of the clock and is accomplished by a high level on the set or reset line respectively.
         //- Pinalias: Q1,QQ1,CLOCK1,RESET1,DATA1,SET1,VSS,SET2,DATA2,RESET2,CLOCK2,QQ2,Q2,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -270,8 +186,6 @@ namespace mame
 
         //- Identifier: CD4016_DIP
         //- Title: CD4016BM/CD4016BC Quad Bilateral Switch
-        //- Description: The CD4016BM/CD4016BC is a quad bilateral switch intended for the transmission or multiplexing of analog or digital signals.
-        //-   It is pin-for-pin compatible with CD4066BM/CD4066BC.
         //- Pinalias: INOUTA,OUTINA,OUTINB,INOUTB,CONTROLB,CONTROLC,VSS,INOUTC,OUTINC,OUTIND,INOUTD,CONTROLD,CONTROLA,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -283,10 +197,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_4066_global.CD4066_GATE(setup, "A");
-            nld_4066_global.CD4066_GATE(setup, "B");
-            nld_4066_global.CD4066_GATE(setup, "C");
-            nld_4066_global.CD4066_GATE(setup, "D");
+            throw new emu_unimplemented();
+#if false
+            CD4066_GATE(setup, "A");
+            CD4066_GATE(setup, "B");
+            CD4066_GATE(setup, "C");
+            CD4066_GATE(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD");
             netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS");
@@ -313,13 +230,6 @@ namespace mame
 
         //- Identifier: CD4017_DIP
         //- Title: CD4017BM/CD4017BC Decade Counter/Divider with 10 Decoded Outputs
-        //- Description: The CD4017BM/CD4017BC is a 5-stage divide-by-10 Johnson counter with 10 decoded outputs and a carry out bit.
-        //-   These counters are cleared to their zero count by a logical 1 on their reset line.
-        //-   These counters are advanced on the positive edge of the clock signal when the clock enable signal is in the logical 0 state.
-        //-   The configuration of the CD4017BM/CD4017BC permits medium speed operation and assures a hazard free counting sequence.
-        //-   The 10 decoded outputs are normally in the logical 0 state and go to the logical 1 state only at their respective time slot.
-        //-   Each decoded output remains high for 1 full clock cycle.
-        //-   The carry-out signal completes a full cycle for every 10 clock input cycles and is used as a ripple carry signal to any succeeding stages.
         //- Pinalias: Q5,Q1,Q0,Q2,Q6,Q7,Q3,VSS,Q8,Q4,Q9,CARRY_OUT,CLOCK_ENABLE,CLOCK,RESET,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -354,9 +264,6 @@ namespace mame
 
         //- Identifier: CD4020_DIP
         //- Title: CD4020BC 14-Stage Ripple Carry Binary Counters
-        //- Description: The CD4020BC is a 14-stage ripple carry binary counter.
-        //-   The counters are advanced one count on the negative transition of each clock pulse.
-        //-   The counters are reset to the zero state by a logical 1 at the reset input independent of clock.
         //- Pinalias: Q12,Q13,Q14,Q6,Q5,Q7,Q4,VSS,Q1,PHI1,RESET,Q9,Q8,Q10,Q11,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Fairchild Semiconductor datasheet
@@ -368,7 +275,10 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_4020_global.CD4020(setup, "A");
+            throw new emu_unimplemented();
+#if false
+            CD4020(setup, "A");
+#endif
 
             netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+       */
                 "A.Q12", /* Q12 |1     ++    16| VDD   */ "A.VDD",
@@ -387,13 +297,6 @@ namespace mame
 
         //- Identifier: CD4022_DIP
         //- Title: CD4022BM/CD4022BC Divide-by-8 Counter/Divider with 8 Decoded Outputs
-        //- Description: The CD4022BM/CD4022BC is a 4-stage divide-by-8 Johnson counter with 8 decoded outputs and a carry-out bit.
-        //-   These counters are cleared to their zero count by a logical 1 on their reset line.
-        //-   These counters are advanced on the positive edge of the clock signal when the clock enable signal is in the logical 0 state.
-        //-   The configuration of the CD4022BM/CD4022BC permits medium speed operation and assures a hazard free counting sequence.
-        //-   The 8 decoded outputs are normally in the logical 0 state and go to the logical 1 state only at their respective time slot.
-        //-   Each decoded output remains high for 1 full clock cycle.
-        //-   The carry-out signal completes a full cycle for every 8 clock input cycles and is used as a ripple carry signal to any succeeding stages
         //- Pinalias: Q1,Q0,Q2,Q5,Q6,NC,Q3,VSS,NC,Q7,Q4,CARRY_OUT,CLOCK_ENABLE,CLOCK,RESET,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -408,8 +311,8 @@ namespace mame
             throw new emu_unimplemented();
 #if false
             CD4022(A);
+            NC_PIN(setup, "NC");
 #endif
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
 
             netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+              */
                  "A.Q1", /*  Q1 |1     ++    16| VDD          */ "A.VDD",
@@ -429,10 +332,6 @@ namespace mame
 
         //- Identifier: CD4024_DIP
         //- Title: CD4024BM/CD4024BC 7-Stage Ripple Carry Binary Counter
-        //- Description: The CD4024BM/CD4024BC is a 7-stage ripple-carry binary counter.
-        //-   Buffered outputs are externally available from stages 1 through 7.
-        //-   The counter is reset to its logical 0 stage by a logical 1 on the reset input.
-        //-   The counter is advanced one count on the negative transition of each clock pulse.
         //- Pinalias: IP,RESET,Q7,Q6,Q5,Q4,VSS,NC,Q3,NC,Q2,Q1,NC,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -447,8 +346,8 @@ namespace mame
             throw new emu_unimplemented();
 #if false
             CD4024(A);
+            NC_PIN(setup, "NC");
 #endif
-            netlist.devices.nld_system_global.NC_PIN(setup, "NC");
 
             netlist.nl_setup_global.DIPPINS(setup,     /*       +--------------+     */
                    "A.IP", /*    IP |1     ++    14| VDD */ "A.VDD",
@@ -466,8 +365,6 @@ namespace mame
 
         //- Identifier: CD4066_DIP
         //- Title: CD4066BM/CD4066BC Quad Bilateral Switch
-        //- Description: The CD4066BM/CD4066BC is a quad bilateral switch intended for the transmission or multiplexing of analog or digital signals.
-        //-   It is pin-for-pin compatible with CD4016BM/CD4016BC, but has a much lower ON resistance, and ON resistance is relatively constant over the input-signal range.
         //- Pinalias: INOUTA,OUTINA,OUTINB,INOUTB,CONTROLB,CONTROLC,VSS,INOUTC,OUTINC,OUTIND,INOUTD,CONTROLD,CONTROLA,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -479,10 +376,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_4066_global.CD4066_GATE(setup, "A");
-            nld_4066_global.CD4066_GATE(setup, "B");
-            nld_4066_global.CD4066_GATE(setup, "C");
-            nld_4066_global.CD4066_GATE(setup, "D");
+            throw new emu_unimplemented();
+#if false
+            CD4066_GATE(setup, "A");
+            CD4066_GATE(setup, "B");
+            CD4066_GATE(setup, "C");
+            CD4066_GATE(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD");
             netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS");
@@ -509,13 +409,6 @@ namespace mame
 
         //- Identifier: CD4053_DIP
         //- Title: CD4053BM/CD4053BC Triple 2-Channel AnalogMultiplexer/Demultiplexer
-        //- Description: These analog multiplexers/demultiplexers are digitally controlled analog switches having low ON impedance andvery low OFF leakage currents.
-        //-   Control of analog signalsup to 15V(p-p) can be achieved by digital signal amplitudes of 3–15V.
-        //-   For example, if VDD=5V, VSS=0V and VEE=-5V, analog signals from -5V to +5V can be controlled by digital inputs of 0–5V.
-        //-   The multiplexer circuits dissipate extremely low quiescent power over the full VDD-VSS and VDD-VEE supply voltage ranges, independent of the logic state of the control signals.
-        //-   When a logical 1 is present atthe inhibit input terminal all channels are OFF.
-        //-   CD4053BM/CD4053BC is a triple 2-channel multiplexer having three separate digital control inputs, A, B, and C, and an inhibit input.
-        //-   Each control input selects one of a pair of channels which are connected in a single-pole double-throw configuration.
         //- Pinalias: INOUTBY,INOUTBX,INOUTCY,OUTINC,INOUTCX,INH,VEE,VSS,C,B,A,INOUTAX,INOUTAY,OUTINA,OUTINB,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -561,10 +454,6 @@ namespace mame
 
         //- Identifier: CD4069_DIP
         //- Title: CD4069UBM/CD4069UBC Inverter Circuits
-        //- Description: The CD4069UB consists of six inverter circuits and is manufactured using complementary MOS (CMOS) to achieve wide power supply operating range, low power consumption, high noise immunity, and symmetric controlled rise and fall times.
-        //-   This device is intended for all general purpose inverter applications where the special characteristics of the MM74C901, MM74C903, MM74C907, and CD4049A Hex Inverter/Buffers are not required.
-        //-   In those applications requiring larger noise immunity the MM74C14 or MM74C914 Hex Schmitt Trigger is suggested.
-        //-   All inputs are protected from damage due to static discharge by diode clamps to VDD and VSS.
         //- Pinalias: A1,Y1,A2,Y2,A3,Y3,VSS,Y4,A4,Y5,A5,Y6,A6,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -576,12 +465,15 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             CD4069_GATE(setup, "A");
             CD4069_GATE(setup, "B");
             CD4069_GATE(setup, "C");
             CD4069_GATE(setup, "D");
             CD4069_GATE(setup, "E");
             CD4069_GATE(setup, "F");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD", "E.VDD", "F.VDD");
             netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS", "E.VSS", "F.VSS");
@@ -603,10 +495,6 @@ namespace mame
 
         //- Identifier: CD4070_DIP
         //- Title: CD4070BM/CD4070BC Quad 2-Input EXCLUSIVE-OR Gate
-        //- Description: Employing complementary MOS (CMOS) transistors to achieve wide power supply operating range, low power consumption, and high noise margin, the CD4070BM/BC provides basic functions used in the implementation of digital integrated circuit systems.
-        //-   The N- and P-channel enhancement mode transistors provide a symmetrical circuit with output swing essentially equal to the supply voltage.
-        //-   No DC power other than that caused by leakage current is consumed during static condition.
-        //-   All inputs are protected from damage due to static discharge by diode clamps to VDD and VSS.
         //- Pinalias: A,B,J,K,C,D,VSS,E,F,L,M,G,H,VDD
         //- Package: DIP
         //- NamingConvention: Naming conventions follow National Semiconductor datasheet
@@ -618,10 +506,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
+            throw new emu_unimplemented();
+#if false
             CD4070_GATE(setup, "A");
             CD4070_GATE(setup, "B");
             CD4070_GATE(setup, "C");
             CD4070_GATE(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD");
             netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS");
@@ -643,17 +534,6 @@ namespace mame
 
         //- Identifier: CD4316_DIP
         //- Title: 74HC/HCT4316 Quad bilateral switches
-        //- Description: The 74HC/HCT4316 are high-speed Si-gate CMOS devices.
-        //-   They are specified in compliance with JEDEC standard no. 7A.
-        //-   The 74HC/HCT4316 have four independent analog switches.
-        //-   Each switch has two input/output terminals (nY, nZ) and an active HIGH select input (nS).
-        //-   When the enable input (E) is HIGH, all four analog switches are turned off.
-        //-   Current through a switch will not cause additional VCC current provided the voltage at the terminals of the switch is maintained within the supply voltage range; VCC >> (VY, VZ) >> VEE.
-        //-   Inputs nY and nZ are electrically equivalent terminals.
-        //-   VCC and GND are the supply voltage pins for the digital control inputs (EQ and nS).
-        //-   The VCC to GND ranges are 2.0 to 10.0V for HC and 4.5 to 5.5V for HCT.
-        //-   The analog inputs/outputs (nY and nZ) can swing between VCC as a positive limit and VEE as a negative limit.
-        //-   VCC?VEE may not exceed 10.0 V
         //- Pinalias: 1Z,1Y,2Y,2Z,2S,3S,EQ,GND,VEE,3Z,3Y,4Y,4Z,4S,1S,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Philips datasheet
@@ -665,10 +545,13 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            nld_4316_global.CD4316_GATE(setup, "A");
-            nld_4316_global.CD4316_GATE(setup, "B");
-            nld_4316_global.CD4316_GATE(setup, "C");
-            nld_4316_global.CD4316_GATE(setup, "D");
+            throw new emu_unimplemented();
+#if false
+            CD4316_GATE(setup, "A");
+            CD4316_GATE(setup, "B");
+            CD4316_GATE(setup, "C");
+            CD4316_GATE(setup, "D");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.E", "B.E", "C.E", "D.E");
             netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD");
@@ -697,21 +580,6 @@ namespace mame
 
         //- Identifier:  CD4538_DIP
         //- Title: CD4538BC Dual Precision Monostable
-        //- Description: The CD4538BC is a dual, precision monostable multivibrator with
-        //-   independent trigger and reset controls. The device
-        //-   is retriggerable and resettable, and the control inputs are
-        //-   internally latched. Two trigger inputs are provided to allow
-        //-   either rising or falling edge triggering. The reset inputs are
-        //-   active LOW and prevent triggering while active. Precise
-        //-   control of output pulse-width has been achieved using linear
-        //-   CMOS techniques. The pulse duration and accuracy
-        //-   are determined by external components RX and CX. The
-        //-   device does not allow the timing capacitor to discharge
-        //-   through the timing pin on power-down condition. For this
-        //-   reason, no external protection resistor is required in series
-        //-   with the timing pin. Input protection from static discharge is
-        //-   provided on all pins.
-        //-
         //- Pinalias: C1,RC1,CLRQ1,B1,A1,Q1,QQ1,GND,QQ2,Q2,A2,B2,CLRQ2,RC2,C2,VCC
         //- Package: DIP
         //- NamingConvention: Naming conventions follow Fairchild Semiconductor datasheet
@@ -728,8 +596,11 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nld_74123_global.CD4538(setup, "A");
-            netlist.nld_74123_global.CD4538(setup, "B");
+            throw new emu_unimplemented();
+#if false
+            CD4538(setup, "A");
+            CD4538(setup, "B");
+#endif
 
             netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD");
             netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS");
@@ -755,55 +626,40 @@ namespace mame
         {
             netlist.nl_setup_global.NETLIST_START();
 
-            netlist.nl_setup_global.TRUTHTABLE_START("CD4001_GATE", 2, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A , B | Q ");
-                netlist.nl_setup_global.TT_LINE("0,0|1|110");
-                netlist.nl_setup_global.TT_LINE("X,1|0|120");
-                netlist.nl_setup_global.TT_LINE("1,X|0|120");
-                netlist.nl_setup_global.TT_FAMILY("CD4XXX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
+            throw new emu_unimplemented();
+#if false
+            TRUTHTABLE_ENTRY(CD4001_GATE);
+            TRUTHTABLE_ENTRY(CD4011_GATE);
+            TRUTHTABLE_ENTRY(CD4030_GATE);
+            TRUTHTABLE_ENTRY(CD4049_GATE);
+            TRUTHTABLE_ENTRY(CD4069_GATE);
+            TRUTHTABLE_ENTRY(CD4070_GATE);
 
-            netlist.nl_setup_global.TRUTHTABLE_START("CD4011_GATE", 2, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("0,X|1|100");
-                netlist.nl_setup_global.TT_LINE("X,0|1|100");
-                netlist.nl_setup_global.TT_LINE("1,1|0|100");
-                netlist.nl_setup_global.TT_FAMILY("CD4XXX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("CD4069_GATE", 1, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A|Q ");
-                netlist.nl_setup_global.TT_LINE("0|1|55");
-                netlist.nl_setup_global.TT_LINE("1|0|55");
-                netlist.nl_setup_global.TT_FAMILY("CD4XXX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.TRUTHTABLE_START("CD4070_GATE", 2, 1, "");
-                netlist.nl_setup_global.TT_HEAD("A,B|Q ");
-                netlist.nl_setup_global.TT_LINE("0,0|0|15");
-                netlist.nl_setup_global.TT_LINE("0,1|1|22");
-                netlist.nl_setup_global.TT_LINE("1,0|1|22");
-                netlist.nl_setup_global.TT_LINE("1,1|0|15");
-                netlist.nl_setup_global.TT_FAMILY("CD4XXX");
-            netlist.nl_setup_global.TRUTHTABLE_END(setup);
-
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4001_DIP", netlist_CD4001_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4011_DIP", netlist_CD4011_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4069_DIP", netlist_CD4069_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4070_DIP", netlist_CD4070_DIP);
+            LOCAL_LIB_ENTRY(CD4001_DIP);
+            LOCAL_LIB_ENTRY(CD4011_DIP);
+            LOCAL_LIB_ENTRY(CD4030_DIP);
+            LOCAL_LIB_ENTRY(CD4049_DIP);
+            LOCAL_LIB_ENTRY(CD4069_DIP);
+            LOCAL_LIB_ENTRY(CD4070_DIP);
 
             /* DIP ONLY */
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4006_DIP", netlist_CD4006_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4013_DIP", netlist_CD4013_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4017_DIP", netlist_CD4017_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4022_DIP", netlist_CD4022_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4020_DIP", netlist_CD4020_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4024_DIP", netlist_CD4024_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4053_DIP", netlist_CD4053_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4066_DIP", netlist_CD4066_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4016_DIP", netlist_CD4016_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4316_DIP", netlist_CD4316_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4538_DIP", netlist_CD4538_DIP);
+            LOCAL_LIB_ENTRY(CD4006_DIP);
+            LOCAL_LIB_ENTRY(CD4013_DIP);
+            LOCAL_LIB_ENTRY(CD4017_DIP);
+            LOCAL_LIB_ENTRY(CD4022_DIP);
+            LOCAL_LIB_ENTRY(CD4020_DIP);
+            LOCAL_LIB_ENTRY(CD4024_DIP);
+            LOCAL_LIB_ENTRY(CD4029_DIP);
+            LOCAL_LIB_ENTRY(CD4042_DIP);
+            LOCAL_LIB_ENTRY(CD4053_DIP);
+            LOCAL_LIB_ENTRY(CD4066_DIP);
+            LOCAL_LIB_ENTRY(CD4016_DIP);
+            LOCAL_LIB_ENTRY(CD4076_DIP);
+            LOCAL_LIB_ENTRY(CD4316_DIP);
+            LOCAL_LIB_ENTRY(CD4538_DIP);
+
+            LOCAL_LIB_ENTRY(MM5837_DIP);
+#endif
 
             netlist.nl_setup_global.NETLIST_END();
         }

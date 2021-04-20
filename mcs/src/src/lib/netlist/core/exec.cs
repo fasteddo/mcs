@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -92,20 +92,28 @@ namespace mame.netlist
         //template<typename... Args>
         public void qpush(plib.pqentry_t<netlist_time_ext, detail.net_t> e)  //void qpush(Args&&...args) noexcept
         {
-            if (!nl_config_global.NL_USE_QUEUE_STATS || !m_use_stats)
-                m_queue.emplace(false, e);  //m_queue.emplace<false>(std::forward<Args>(args)...); // NOLINT(performance-move-const-arg)
+#if !NL_USE_QUEUE_STATS
+            m_queue.emplace(false, e); // NOLINT(performance-move-const-arg)  //m_queue.emplace<false>(std::forward<Args>(args)...); // NOLINT(performance-move-const-arg)
+#else
+            if (!m_use_stats)
+                m_queue.emplace<false>(std::forward<Args>(args)...); // NOLINT(performance-move-const-arg)
             else
-                m_queue.emplace(true, e);  //m_queue.emplace<true>(std::forward<Args>(args)...); // NOLINT(performance-move-const-arg)
+                m_queue.emplace<true>(std::forward<Args>(args)...); // NOLINT(performance-move-const-arg)
+#endif
         }
 
 
         //template <class R>
         public void qremove(detail.net_t elem)  //void qremove(const R &elem) noexcept
         {
-            if (!nl_config_global.NL_USE_QUEUE_STATS || !m_use_stats)
-                m_queue.remove(false, elem);
+#if !NL_USE_QUEUE_STATS
+            m_queue.remove(false, elem);
+#else
+            if (!m_use_stats)
+                m_queue.remove<false>(elem);
             else
-                m_queue.remove(true, elem);
+                m_queue.remove<true>(elem);
+#endif
         }
 
         // Control functions
@@ -221,12 +229,12 @@ namespace mame.netlist
                     }
 
                     m_time = top.exec_time();
-                    var obj = top.object_();
+                    detail.net_t obj = top.object_();
                     m_queue.pop();
-                    if (obj != null)
-                        obj.update_devs(KEEP_STATS);
-                    else
+                    if (!!(obj == null))
                         break;
+
+                    obj.update_devs(KEEP_STATS);
 
                     throw new emu_unimplemented();
 #if false

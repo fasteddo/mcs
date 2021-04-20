@@ -11,6 +11,7 @@ using s16 = System.Int16;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -497,13 +498,13 @@ namespace mame
         //-------------------------------------------------
         //  video_exit - close down the video system
         //-------------------------------------------------
-        void exit(running_machine machine)
+        void exit(running_machine machine_)
         {
             // stop recording any movie
             m_movie_recordings.clear();
 
             // free the snapshot target
-            machine.render().target_free(m_snap_target);
+            machine().render().target_free(m_snap_target);
             m_snap_bitmap.reset();
 
             // print a final result if we have at least 2 seconds' worth of data
@@ -1028,7 +1029,7 @@ namespace mame
                 screen_device_iterator iter = new screen_device_iterator(machine().root_device());
                 int view_index = iter.indexof(screen);
                 assert(view_index != -1);
-                m_snap_target.set_view(view_index);
+                m_snap_target.set_view((unsigned)view_index);
             }
 
             // get the minimum width/height and set it on the target

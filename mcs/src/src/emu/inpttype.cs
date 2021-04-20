@@ -165,7 +165,6 @@ namespace mame
         const ioport_type POKER_HOLD4 = ioport_type.IPT_POKER_HOLD4;
         const ioport_type POKER_HOLD5 = ioport_type.IPT_POKER_HOLD5;
         const ioport_type POKER_CANCEL = ioport_type.IPT_POKER_CANCEL;
-        const ioport_type POKER_BET = ioport_type.IPT_POKER_BET;
         const ioport_type SLOT_STOP1 = ioport_type.IPT_SLOT_STOP1;
         const ioport_type SLOT_STOP2 = ioport_type.IPT_SLOT_STOP2;
         const ioport_type SLOT_STOP3 = ioport_type.IPT_SLOT_STOP3;
@@ -532,13 +531,13 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_CHI,         "P1 Mahjong Chi",         new input_seq(KEYCODE_SPACE) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_REACH,       "P1 Mahjong Reach",       new input_seq(KEYCODE_LSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_RON,         "P1 Mahjong Ron",         new input_seq(KEYCODE_Z) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_BET,         "P1 Mahjong Bet",         new input_seq(KEYCODE_3) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_LAST_CHANCE, "P1 Mahjong Last Chance", new input_seq(KEYCODE_RALT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_SCORE,       "P1 Mahjong Score",       new input_seq(KEYCODE_RCONTROL) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_DOUBLE_UP,   "P1 Mahjong Double Up",   new input_seq(KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_FLIP_FLOP,   "P1 Mahjong Flip Flop",   new input_seq(KEYCODE_Y) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_BET,         "P1 Mahjong Bet",         new input_seq(KEYCODE_3) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_SCORE,       "P1 Mahjong Take Score",       new input_seq(KEYCODE_RCONTROL) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_DOUBLE_UP,   "P1 Mahjong Double Up",   new input_seq(KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_BIG,         "P1 Mahjong Big",         new input_seq(KEYCODE_ENTER) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_SMALL,       "P1 Mahjong Small",       new input_seq(KEYCODE_BACKSPACE) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_LAST_CHANCE, "P1 Mahjong Last Chance", new input_seq(KEYCODE_RALT) );
         }  //CORE_INPUT_TYPES_END()
 
 
@@ -559,20 +558,20 @@ namespace mame
 
         static void emplace_core_types_gamble(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(gamble)
         {
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_HIGH,         "High",                   new input_seq(KEYCODE_A) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_LOW,          "Low",                    new input_seq(KEYCODE_S) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_HALF,         "Half Gamble",            new input_seq(KEYCODE_D) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_DEAL,         "Deal",                   new input_seq(KEYCODE_2) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_D_UP,         "Double Up",              new input_seq(KEYCODE_3) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_TAKE,         "Take",                   new input_seq(KEYCODE_4) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_STAND,        "Stand",                  new input_seq(KEYCODE_L) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_BET,          "Bet",                    new input_seq(KEYCODE_M) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_KEYIN,        "Key In",                 new input_seq(KEYCODE_Q) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_KEYOUT,       "Key Out",                new input_seq(KEYCODE_W) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_PAYOUT,       "Payout",                 new input_seq(KEYCODE_I) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_DOOR,         "Door",                   new input_seq(KEYCODE_O) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_SERVICE,      "Service",                new input_seq(KEYCODE_9) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_BOOK,         "Book-Keeping",           new input_seq(KEYCODE_0) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_DOOR,         "Door",                   new input_seq(KEYCODE_O) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_PAYOUT,       "Payout",                 new input_seq(KEYCODE_I) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_BET,          "Bet",                    new input_seq(KEYCODE_M) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_DEAL,         "Deal",                   new input_seq(KEYCODE_2) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_STAND,        "Stand",                  new input_seq(KEYCODE_L) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_TAKE,         "Take Score",             new input_seq(KEYCODE_4) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_D_UP,         "Double Up",              new input_seq(KEYCODE_3) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_HALF,         "Half Gamble",            new input_seq(KEYCODE_D) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_HIGH,         "High",                   new input_seq(KEYCODE_A) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, GAMBLE_LOW,          "Low",                    new input_seq(KEYCODE_S) );
         }  //CORE_INPUT_TYPES_END()
 
 
@@ -584,7 +583,6 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, POKER_HOLD4,         "Hold 4",                 new input_seq(KEYCODE_V) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, POKER_HOLD5,         "Hold 5",                 new input_seq(KEYCODE_B) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, POKER_CANCEL,        "Cancel",                 new input_seq(KEYCODE_N) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, POKER_BET,           "Bet",                    new input_seq(KEYCODE_1) );
         }  //CORE_INPUT_TYPES_END()
 
 
@@ -659,7 +657,7 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_RON,         "P2 Mahjong Ron",         new input_seq() );
             INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_BET,         "P2 Mahjong Bet",         new input_seq() );
             INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_LAST_CHANCE, "P2 Mahjong Last Chance", new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_SCORE,       "P2 Mahjong Score",       new input_seq() );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_SCORE,       "P2 Mahjong Take Score",  new input_seq() );
             INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_DOUBLE_UP,   "P2 Mahjong Double Up",   new input_seq() );
             INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_FLIP_FLOP,   "P2 Mahjong Flip Flop",   new input_seq() );
             INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_BIG,         "P2 Mahjong Big",         new input_seq() );

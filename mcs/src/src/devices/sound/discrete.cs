@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;
 using osd_ticks_t = System.UInt64;
-using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -1307,7 +1306,7 @@ namespace mame
     {
         //~discrete_sound_output_interface() { }
 
-        void set_output_ptr(Pointer<stream_sample_t> ptr);
+        void set_output_ptr(write_stream_view view);
     }
 
 
@@ -1554,7 +1553,7 @@ namespace mame
         protected override void device_start()
         {
             // create the stream
-            //m_stream = machine().sound().stream_alloc(*this, 0, 2, 22257);
+            //m_stream = stream_alloc(0, 2, 22257);
 
             discrete_block [] intf_start = m_intf;
             string name;
@@ -2008,7 +2007,7 @@ namespace mame
         {
             public device_sound_interface_discrete(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((discrete_sound_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((discrete_sound_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -2098,7 +2097,7 @@ namespace mame
                 throw new emu_fatalerror("init_nodes() - Couldn't find an output node\n");
 
             /* initialize the stream(s) */
-            m_stream = machine().sound().stream_alloc(this, m_input_stream_list.count(), m_output_list.count(), m_sample_rate);
+            m_stream = m_disound.stream_alloc(m_input_stream_list.count(), m_output_list.count(), (u32)m_sample_rate);
 
             /* Finalize stream_input_nodes */
             for (int i = 0; i < m_input_stream_list.count(); i++)  //for_each(discrete_dss_input_stream_node **, node, &m_input_stream_list)
@@ -2116,19 +2115,16 @@ namespace mame
 
 
         // device_sound_interface overrides
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
             int outputnum = 0;
-
-            if (samples == 0)
-                return;
 
             /* Setup any output streams */
             for (int i = 0; i < m_output_list.count(); i++)  //for_each(discrete_sound_output_interface **, node, &m_output_list)
             {
                 discrete_sound_output_interface node = m_output_list[i];
 
-                node.set_output_ptr(new Pointer<stream_sample_t>(outputs[outputnum]));
+                node.set_output_ptr(outputs[outputnum]);
                 outputnum++;
             }
 
@@ -2137,11 +2133,12 @@ namespace mame
             {
                 discrete_dss_input_stream_node node = m_input_stream_list[i];
 
-                node.m_ptr = new Pointer<stream_sample_t>(inputs[node.m_stream_in_number]);
+                node.m_inview = inputs[node.m_stream_in_number];  //(*node)->m_inview = &inputs[(*node)->m_stream_in_number];
+                node.m_inview_sample = 0;
             }
 
             /* just process it */
-            process(samples);
+            process((int)outputs[0].samples());
         }
     }
 

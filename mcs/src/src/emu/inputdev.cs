@@ -10,6 +10,24 @@ using u8 = System.Byte;
 
 namespace mame
 {
+    static class inputdev_global
+    {
+        //**************************************************************************
+        //  CONSTANTS
+        //**************************************************************************
+
+        // relative devices return ~512 units per onscreen pixel
+        public const s32 INPUT_RELATIVE_PER_PIXEL = 512;
+
+        // absolute devices return values between -65536 and +65536
+        public const s32 INPUT_ABSOLUTE_MIN = -65536;
+        public const s32 INPUT_ABSOLUTE_MAX = 65536;
+
+        // invalid memory value for axis polling
+        public const s32 INVALID_AXIS_VALUE = 0x7fffffff;
+    }
+
+
     // ======================> joystick_map
     // a 9x9 joystick map
     class joystick_map
@@ -264,10 +282,31 @@ namespace mame
         public void set_memory(s32 value) { m_memory = value; }
 
 
+        //-------------------------------------------------
+        //  check_axis - see if axis has moved far enough
+        //  to trigger a read when polling
+        //-------------------------------------------------
+        public bool check_axis(input_item_modifier modifier)
+        {
+            // if we've already reported this one, don't bother
+            if (m_memory == inputdev_global.INVALID_AXIS_VALUE)
+                return false;
+
+            if (item_check_axis(modifier))
+            {
+                m_memory = inputdev_global.INVALID_AXIS_VALUE;
+                return true;
+            }
+
+            return false;
+        }
+
+
         // readers
         public abstract s32 read_as_switch(input_item_modifier modifier);
         public abstract s32 read_as_relative(input_item_modifier modifier);
         public abstract s32 read_as_absolute(input_item_modifier modifier);
+        public abstract bool item_check_axis(input_item_modifier modifier);
     }
 
 
@@ -855,6 +894,16 @@ namespace mame
         }
 
 
+        //-------------------------------------------------
+        //  item_check_axis - see if axis has moved far
+        //  enough to trigger a read when polling
+        //-------------------------------------------------
+        public override bool item_check_axis(input_item_modifier modifier)
+        {
+            return false;
+        }
+
+
         // steadykey helper
 
         //-------------------------------------------------
@@ -898,6 +947,7 @@ namespace mame
         public override int read_as_switch(input_item_modifier modifier) { throw new emu_unimplemented(); }
         public override int read_as_relative(input_item_modifier modifier) { throw new emu_unimplemented(); }
         public override int read_as_absolute(input_item_modifier modifier) { throw new emu_unimplemented(); }
+        public override bool item_check_axis(input_item_modifier modifier) { throw new emu_unimplemented(); }
     }
 
 
@@ -919,5 +969,6 @@ namespace mame
         public override s32 read_as_switch(input_item_modifier modifier) { throw new emu_unimplemented(); }
         public override s32 read_as_relative(input_item_modifier modifier) { throw new emu_unimplemented(); }
         public override s32 read_as_absolute(input_item_modifier modifier) { throw new emu_unimplemented(); }
+        public override bool item_check_axis(input_item_modifier modifier) { throw new emu_unimplemented(); }
     }
 }

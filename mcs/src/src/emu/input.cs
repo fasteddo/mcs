@@ -740,7 +740,9 @@ namespace mame
             }
         }
 
+
         //input_code poll_axes();
+
 
         //-------------------------------------------------
         //  poll_switches - poll for any input
@@ -750,6 +752,10 @@ namespace mame
             // iterate over device classes and devices
             for (input_device_class devclass = input_device_class.DEVICE_CLASS_FIRST_VALID; devclass <= input_device_class.DEVICE_CLASS_LAST_VALID; devclass++)
             {
+                // skip device class if disabled
+                if (!m_class[(int)devclass].enabled())
+                    continue;
+
                 for (int devnum = 0; devnum <= m_class[(int)devclass].maxindex(); devnum++)
                 {
                     // fetch the device; ignore if NULL
@@ -775,7 +781,7 @@ namespace mame
                             }
 
                             // skip if there is not enough axis movement
-                            if (!code_check_axis(item, code))
+                            if (!item.check_axis(code.item_modifier()))
                                 continue;
 
                             // otherwise, poll axes digitally
@@ -1162,46 +1168,6 @@ namespace mame
             for (int memnum = 0; memnum < m_switch_memory.Length; memnum++)
                 m_switch_memory[memnum] = input_code.INPUT_CODE_INVALID;
         }
-
-        //-------------------------------------------------
-        //  code_check_axis - see if axis has moved far
-        //  enough to trigger a read when polling
-        //-------------------------------------------------
-        bool code_check_axis(input_device_item item, input_code code)
-        {
-            // if we've already reported this one, don't bother
-            if (item.memory() == input_global.INVALID_AXIS_VALUE)
-                return false;
-
-            // ignore min/max for lightguns
-            // so the selection will not be affected by a gun going out of range
-            int curval = code_value(code);
-            if (code.device_class() == input_device_class.DEVICE_CLASS_LIGHTGUN &&
-                (code.item_id() == input_item_id.ITEM_ID_XAXIS || code.item_id() == input_item_id.ITEM_ID_YAXIS) &&
-                (curval == input_global.INPUT_ABSOLUTE_MAX || curval == input_global.INPUT_ABSOLUTE_MIN))
-                return false;
-
-            // compute the diff against memory
-            int diff = curval - item.memory();
-            if (diff < 0)
-                diff = -diff;
-
-            // for absolute axes, look for 25% of maximum
-            if (item.itemclass() == input_item_class.ITEM_CLASS_ABSOLUTE && diff > (input_global.INPUT_ABSOLUTE_MAX - input_global.INPUT_ABSOLUTE_MIN) / 4)
-            {
-                item.set_memory(input_global.INVALID_AXIS_VALUE);
-                return true;
-            }
-
-            // for relative axes, look for ~20 pixels movement
-            if (item.itemclass() == input_item_class.ITEM_CLASS_RELATIVE && diff > 20 * input_global.INPUT_RELATIVE_PER_PIXEL)
-            {
-                item.set_memory(input_global.INVALID_AXIS_VALUE);
-                return true;
-            }
-
-            return false;
-        }
     }
 
 
@@ -1237,16 +1203,6 @@ namespace mame
 
     public static class input_global
     {
-        // invalid memory value for axis polling
-        public const int INVALID_AXIS_VALUE      = 0x7fffffff;
-
-        // relative devices return ~512 units per onscreen pixel
-        public const int INPUT_RELATIVE_PER_PIXEL = 512;
-
-        // absolute devices return values between -65536 and +65536
-        public const int INPUT_ABSOLUTE_MIN = -65536;
-        public const int INPUT_ABSOLUTE_MAX = 65536;
-
         // maximum number of axis/buttons/hats with ITEM_IDs for use by osd layer
         const int INPUT_MAX_AXIS = 8;
         const int INPUT_MAX_BUTTONS = 32;

@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using offs_t = System.UInt32;
 using s8 = System.SByte;
 using s32 = System.Int32;
-using stream_sample_t = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -52,7 +51,7 @@ namespace mame
         {
             public device_sound_interface_ay8910(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((ay8910_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((ay8910_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override
         }
 
 
@@ -479,9 +478,9 @@ namespace mame
         {
             // FIXME: this doesn't belong here, it should be an input pin exposed via devcb
             if (((m_feature & (int)config_t.PSG_PIN26_IS_CLKSEL) != 0 && (m_flags & YM2149_PIN26_LOW) != 0) || (m_feature & (int)config_t.PSG_HAS_INTERNAL_DIVIDER) != 0)
-                m_channel.set_sample_rate((m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? clock : clock / 16);
+                m_channel.set_sample_rate((m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? (u32)clock : (u32)(clock / 16));
             else
-                m_channel.set_sample_rate((m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? clock * 2 : clock / 8);
+                m_channel.set_sample_rate((m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? (u32)clock * 2 : (u32)(clock / 8));
         }
 
 
@@ -658,7 +657,7 @@ namespace mame
 
             /* The envelope is pacing twice as fast for the YM2149 as for the AY-3-8910,    */
             /* This handled by the step parameter. Consequently we use a multipler of 2 here. */
-            m_channel = machine().sound().stream_alloc(this, 0, m_streams, (m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? master_clock * 2 : master_clock / 8);
+            m_channel = m_disound.stream_alloc(0, m_streams, (u32)(master_clock / 8));
 
             ay_set_clock(master_clock);
             ay8910_statesave();
@@ -684,28 +683,19 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
-            Pointer<stream_sample_t> [] buf = new Pointer<stream_sample_t> [NUM_CHANNELS];  //stream_sample_t *buf[NUM_CHANNELS];
             //tone_t *tone;
             //envelope_t *envelope;
 
-            buf[0] = new Pointer<stream_sample_t>(outputs[0]);
-            buf[1] = null;
-            buf[2] = null;
-            if (m_streams == NUM_CHANNELS)
-            {
-                buf[1] = new Pointer<stream_sample_t>(outputs[1]);
-                buf[2] = new Pointer<stream_sample_t>(outputs[2]);
-            }
+            int samples = (int)outputs[0].samples();
 
             /* hack to prevent us from hanging when starting filtered outputs */
             if (m_ready == 0)
             {
-                for (int chan = 0; chan < NUM_CHANNELS; chan++)
+                for (int chan = 0; chan < m_streams; chan++)
                 {
-                    if (buf[chan] != null)
-                        memset(buf[chan], 0, (UInt32)samples);  //memset(buf[chan], 0, samples * sizeof_(*buf[chan]));
+                    outputs[chan].fill(0);
                 }
             }
 
@@ -717,17 +707,18 @@ namespace mame
             /* is 1, not 0, and can be modulated changing the volume. */
 
             /* buffering loop */
-            while (samples != 0)
+            for (int sampindex = 0; sampindex < samples; sampindex++)
             {
                 for (int chan = 0; chan < NUM_CHANNELS; chan++)
                 {
                     ref tone_t tone = ref m_tone[chan];  //tone = &m_tone[chan];
-                    tone.count++;
-                    if (tone.count >= tone.period)
+                    int period = std.max(1, (int)tone.period);
+                    tone.count += is_expanded_mode() ? 16 : 1;
+                    while (tone.count >= period)
                     {
                         tone.duty_cycle = (u8)((tone.duty_cycle - 1) & 0x1f);
-                        tone.output = (m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? (u8)BIT(duty_cycle[tone_duty(ref tone)], tone.duty_cycle) : (u8)BIT(tone.duty_cycle, 0);
-                        tone.count = 0;
+                        tone.output = is_expanded_mode() ? (u8)BIT(duty_cycle[tone_duty(ref tone)], tone.duty_cycle) : (u8)BIT(tone.duty_cycle, 0);
+                        tone.count -= period;
                     }
                 }
 
@@ -735,11 +726,12 @@ namespace mame
                 if (m_count_noise >= noise_period())
                 {
                     /* toggle the prescaler output. Noise is no different to
-                        * channels.
-                        */
+                    * channels.
+                    */
                     m_count_noise = 0;
+                    m_prescale_noise ^= 1;
 
-                    if (m_prescale_noise == 0)
+                    if (m_prescale_noise == 0 || is_expanded_mode()) // AY8930 noise generator rate is twice compares as compatibility mode
                     {
                         /* The Random Number Generator of the 8910 is a 17-bit shift */
                         /* register. The input to the shift register is bit0 XOR bit3 */
@@ -748,9 +740,7 @@ namespace mame
                         // TODO : get actually algorithm for AY8930
                         m_rng ^= (((m_rng & 1) ^ ((m_rng >> 3) & 1)) << 17);
                         m_rng >>= 1;
-                        m_prescale_noise = (m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 ? (u8)16 : (u8)1;
                     }
-                    m_prescale_noise--;
                 }
 
                 for (int chan = 0; chan < NUM_CHANNELS; chan++)
@@ -815,41 +805,39 @@ namespace mame
                                 {
                                     env_volume >>= 1;
                                     if ((m_feature & (int)config_t.PSG_EXTENDED_ENVELOPE) != 0) // AY8914 Has a two bit tone_envelope field
-                                        (buf[chan]++)[0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3 - tone_envelope(ref tone)) : 0];  //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
+                                        outputs[chan].put(sampindex, m_vol_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3 - tone_envelope(ref tone)) : 0]);
                                     else
-                                        (buf[chan]++)[0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];  //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
+                                        outputs[chan].put(sampindex, m_vol_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0]);
                                 }
                                 else
                                 {
                                     if ((m_feature & (int)config_t.PSG_EXTENDED_ENVELOPE) != 0) // AY8914 Has a two bit tone_envelope field
-                                        (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3 - tone_envelope(ref tone)) : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
+                                        outputs[chan].put(sampindex, m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3 - tone_envelope(ref tone)) : 0]);
                                     else
-                                        (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
+                                        outputs[chan].put(sampindex, m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0]);
                                 }
                             }
                             else
                             {
                                 if ((m_feature & (int)config_t.PSG_EXTENDED_ENVELOPE) != 0) // AY8914 Has a two bit tone_envelope field
-                                    (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
+                                    outputs[chan].put(sampindex, m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3 - tone_envelope(ref tone)) : 0]);
                                 else
-                                    (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
+                                    outputs[chan].put(sampindex, m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0]);
                             }
                         }
                         else
                         {
                             if (is_expanded_mode())
-                                (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];
+                                outputs[chan].put(sampindex, m_env_table[chan, m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0]);
                             else
-                                (buf[chan]++)[0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];  //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];
+                                outputs[chan].put(sampindex, m_vol_table[chan, m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0]);
                         }
                     }
                 }
                 else
                 {
-                    (buf[0]++)[0] = mix_3D();  //*(buf[0]++) = mix_3D();
+                    outputs[0].put(sampindex, mix_3D());
                 }
-
-                samples--;
             }
         }
 

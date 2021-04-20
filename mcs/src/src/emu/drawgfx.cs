@@ -721,8 +721,8 @@ namespace mame
             except those that match transpen, and applying
             scrolling to one or more rows/columns
         -------------------------------------------------*/
-        //template<class _BitmapClass>
-        static void copyscrollbitmap_trans_common(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen)  //static inline void copyscrollbitmap_trans_common(_BitmapClass &dest, const _BitmapClass &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen)
+        //template<class BitmapClass>
+        static void copyscrollbitmap_trans_common(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen)  //static inline void copyscrollbitmap_trans_common(BitmapClass &dest, const BitmapClass &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen)
         {
             // no rowscroll and no colscroll means no scroll
             if (numrows == 0 && numcols == 0)

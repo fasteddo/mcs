@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using abstract_t_link_t = mame.std.pair<string, string>;  //using link_t = std::pair<pstring, pstring>;
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
 using models_t_raw_map_t = mame.std.unordered_map<string, string>;  //using raw_map_t = std::unordered_map<pstring, pstring>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -56,7 +56,7 @@ namespace mame.netlist
                 string tmp = value_str(entity);
 
                 nl_fptype factor = nlconst.one();
-                var p = tmp[tmp.Length - 1];  //auto p = std::next(tmp.begin(), plib::narrow_cast<pstring::difference_type>(tmp.size() - 1));
+                var p = tmp[tmp.length() - 1];  //auto p = std::next(tmp.begin(), plib::narrow_cast<pstring::difference_type>(tmp.length() - 1));
                 switch (p)
                 {
                     case 'M': factor = nlconst.magic(1e6); break; // NOLINT
@@ -75,7 +75,7 @@ namespace mame.netlist
                 }
 
                 if (factor != nlconst.one())
-                    tmp = plib.pglobal.left(tmp, tmp.size() - 1);
+                    tmp = plib.pglobal.left(tmp, tmp.length() - 1);
                 // FIXME: check for errors
                 bool err = false;
                 var val = plib.pglobal.pstonum_ne_nl_fptype(false, tmp, out err);
@@ -122,6 +122,9 @@ namespace mame.netlist
         }
 
 
+        //std::vector<pstring> known_models() const
+
+
         void model_parse(string model_in, models_t_map_t map)
         {
             string model = model_in;
@@ -159,9 +162,9 @@ namespace mame.netlist
             if (!plib.pglobal.endsWith(remainder, ")"))
                 throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_1(model));
             // FIMXE: Not optimal
-            remainder = plib.pglobal.left(remainder, remainder.size() - 1);
+            remainder = plib.pglobal.left(remainder, remainder.length() - 1);
 
-            std.vector<string> pairs = plib.pglobal.psplit(remainder," ", true);
+            var pairs = plib.pglobal.psplit(remainder, ' ', true);
             foreach (string pe in pairs)
             {
                 var pose = pe.find('=');
@@ -409,7 +412,6 @@ namespace mame.netlist
         }
 
 
-        // FIXME: return param_ref_t
         public param_ref_t find_param(string param_in)
         {
             string outname = resolve_alias(param_in);
@@ -589,7 +591,7 @@ namespace mame.netlist
 
             if (!envlog.empty())
             {
-                std.vector<string> loglist = plib.pglobal.psplit(envlog, ":");
+                var loglist = plib.pglobal.psplit(envlog, ':');
                 m_parser.register_dynamic_log_devices(loglist);
             }
 
@@ -650,14 +652,11 @@ namespace mame.netlist
                     throw new emu_unimplemented();
 
                     p = true; // mark as used
-                    if (use_deactivate)
-                        d.second.set_hint_deactivate(false);
-                    else
-                        d.second.set_hint_deactivate(true);
+                    d.second.set_hint_deactivate(false);
                 }
                 else
                 {
-                    d.second.set_hint_deactivate(true);
+                    d.second.set_hint_deactivate(use_deactivate);
                 }
             }
 
@@ -670,7 +669,6 @@ namespace mame.netlist
             // resolve inputs
             resolve_inputs();
 
-#if false
             log().verbose.op("looking for two terms connected to rail nets ...");
             foreach (var t in m_nlstate.get_device_list<analog.nld_twoterm>())
             {
@@ -678,12 +676,15 @@ namespace mame.netlist
                 {
                     log().info.op(nl_errstr_global.MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(
                         t.name(), t.N().net().name(), t.P().net().name()));
+
+                    // The following would remove internal devices in e.g. MOSFETs as well.
+#if false
                     remove_terminal(t.setup_N().net(), t.setup_N());
                     remove_terminal(t.setup_P().net(), t.setup_P());
                     m_nlstate.remove_device(t);
+#endif
                 }
             }
-#endif
 
             log().verbose.op("looking for unused hints ...");
             foreach (var h in m_abstract.m_hints)
@@ -1361,11 +1362,10 @@ namespace mame.netlist
         }
 
 
-        public override psource_t_stream_ptr stream(string name)
+        public override plib.istream_uptr stream(string name)  //plib::istream_uptr stream(const pstring &name) override;
         {
             //plib::unused_var(name);
-            psource_t_stream_ptr p = null;  //stream_ptr p(nullptr);
-            return p;
+            return new plib.istream_uptr();
         }
     }
 
