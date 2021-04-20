@@ -97,7 +97,7 @@ namespace mame
         void taitosj_main_mcu_map(address_map map, device_t device)
         {
             taitosj_main_nomcu_map(map, m_globals.helper_device);
-            map.op(0x8800, 0x8801).mirror(0x07fe).rw(m_mcu, (space, offset, mem_mask) => { return m_mcu.target.data_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { m_mcu.target.data_w(space, offset, data, mem_mask); });  //FUNC(taito_sj_security_mcu_device::data_r), FUNC(taito_sj_security_mcu_device::data_w));
+            map.op(0x8800, 0x8801).mirror(0x07fe).rw(m_mcu, (space, offset) => { return m_mcu.target.data_r(space, offset); }, (offset, data) => { m_mcu.target.data_w(offset, data); });  //map(0x8800, 0x8801).mirror(0x07fe).rw(m_mcu, FUNC(taito_sj_security_mcu_device::data_r), FUNC(taito_sj_security_mcu_device::data_w));
         }
 
 
@@ -198,7 +198,7 @@ namespace mame
     {
         void DSW2_PORT()
         {
-            PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_A ) );
+            PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_A ) );         PORT_DIPLOCATION("SWB:1,2,3,4");
             PORT_DIPSETTING(    0x0f, DEF_STR( _9C_1C ) );
             PORT_DIPSETTING(    0x0e, DEF_STR( _8C_1C ) );
             PORT_DIPSETTING(    0x0d, DEF_STR( _7C_1C ) );
@@ -215,7 +215,7 @@ namespace mame
             PORT_DIPSETTING(    0x05, DEF_STR( _1C_6C ) );
             PORT_DIPSETTING(    0x06, DEF_STR( _1C_7C ) );
             PORT_DIPSETTING(    0x07, DEF_STR( _1C_8C ) );
-            PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coin_B ) );
+            PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coin_B ) );         PORT_DIPLOCATION("SWB:5,6,7,8");
             PORT_DIPSETTING(    0xf0, DEF_STR( _9C_1C ) );
             PORT_DIPSETTING(    0xe0, DEF_STR( _8C_1C ) );
             PORT_DIPSETTING(    0xd0, DEF_STR( _7C_1C ) );
@@ -327,24 +327,24 @@ namespace mame
             PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, taitosj_state.input_port_4_f0_r);    // from sound CPU
 
             PORT_START("DSW1");
-            PORT_DIPNAME( 0x03, 0x03, "Finish Bonus" );
+            PORT_DIPNAME( 0x03, 0x03, "Finish Bonus" );             PORT_DIPLOCATION("SWA:1,2");
             PORT_DIPSETTING(    0x03, DEF_STR( None ) );
             PORT_DIPSETTING(    0x02, "Timer x1" );
             PORT_DIPSETTING(    0x01, "Timer x2" );
             PORT_DIPSETTING(    0x00, "Timer x3" );
-            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) );
+            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) );          PORT_DIPLOCATION("SWA:3");
             PORT_DIPSETTING(    0x04, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) );
+            PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) );           PORT_DIPLOCATION("SWA:4,5");
             PORT_DIPSETTING(    0x18, "3" );
             PORT_DIPSETTING(    0x10, "4" );
             PORT_DIPSETTING(    0x08, "5" );
             PORT_DIPSETTING(    0x00, "6" );
-            PORT_SERVICE( 0x20, IP_ACTIVE_LOW );
-            PORT_DIPNAME( 0x40, 0x00, DEF_STR( Flip_Screen ) );
+            PORT_SERVICE( 0x20, IP_ACTIVE_LOW );                    PORT_DIPLOCATION("SWA:6");
+            PORT_DIPNAME( 0x40, 0x00, DEF_STR( Flip_Screen ) );     PORT_DIPLOCATION("SWA:7");
             PORT_DIPSETTING(    0x00, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x40, DEF_STR( On ) );
-            PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) );
+            PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) );         PORT_DIPLOCATION("SWA:8");
             PORT_DIPSETTING(    0x00, DEF_STR( Upright ) );
             PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) );
 
@@ -352,27 +352,27 @@ namespace mame
             DSW2_PORT();
 
             PORT_START("DSW3");
-            PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) );
+            PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) );      PORT_DIPLOCATION("SWC:1,2");
             PORT_DIPSETTING(    0x02, "10000" );
             PORT_DIPSETTING(    0x01, "20000" );
             PORT_DIPSETTING(    0x00, "30000" );
             PORT_DIPSETTING(    0x03, DEF_STR( None ) );
-            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) );
+            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) );          PORT_DIPLOCATION("SWC:3");
             PORT_DIPSETTING(    0x04, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) );
+            PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) );          PORT_DIPLOCATION("SWC:4");
             PORT_DIPSETTING(    0x08, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) );
+            PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) );          PORT_DIPLOCATION("SWC:5");
             PORT_DIPSETTING(    0x10, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x20, 0x20, "Year Display" );
+            PORT_DIPNAME( 0x20, 0x20, "Year Display" );             PORT_DIPLOCATION("SWC:6");
             PORT_DIPSETTING(    0x00, DEF_STR( No ) );
             PORT_DIPSETTING(    0x20, DEF_STR( Yes ) );
-            PORT_DIPNAME( 0x40, 0x40, "Infinite Lives (Cheat)");
+            PORT_DIPNAME( 0x40, 0x40, "Infinite Lives");            PORT_DIPLOCATION("SWC:7"); // Displays 'free game' on screen. Timer disabled with infinite lives
             PORT_DIPSETTING(    0x40, DEF_STR( No ) );
             PORT_DIPSETTING(    0x00, DEF_STR( Yes ) );
-            PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) );
+            PORT_DIPNAME( 0x80, 0x80, "Coin Slots" );               PORT_DIPLOCATION("SWC:8");
             PORT_DIPSETTING(    0x80, "A and B" );
             PORT_DIPSETTING(    0x00, "A only" );
 
@@ -400,26 +400,26 @@ namespace mame
             PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, taitosj_state.input_port_4_f0_r);    // from sound CPU
 
             PORT_START("DSW1");
-            PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) );    PORT_DIPLOCATION("SW1:1,2");
+            PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) );      PORT_DIPLOCATION("SWA:1,2");
             PORT_DIPSETTING(    0x03, "10000" );
             PORT_DIPSETTING(    0x02, "15000" );
             PORT_DIPSETTING(    0x01, "20000" );
             PORT_DIPSETTING(    0x00, "25000" );
-            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) );     PORT_DIPLOCATION("SW1:3");
+            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) );       PORT_DIPLOCATION("SWA:3");
             PORT_DIPSETTING(    0x04, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) );         PORT_DIPLOCATION("SW1:4,5");
+            PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) );           PORT_DIPLOCATION("SWA:4,5");
             PORT_DIPSETTING(    0x18, "3" );
             PORT_DIPSETTING(    0x10, "4" );
             PORT_DIPSETTING(    0x08, "5" );
             PORT_DIPSETTING(    0x00, "6" );
-            PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) );
+            PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) );         PORT_DIPLOCATION("SWA:6");
             PORT_DIPSETTING(    0x20, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) );   PORT_DIPLOCATION("SW1:7");
+            PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) );     PORT_DIPLOCATION("SWA:7");
             PORT_DIPSETTING(    0x40, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) );       PORT_DIPLOCATION("SW1:8");
+            PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) );         PORT_DIPLOCATION("SWA:8");
             PORT_DIPSETTING(    0x00, DEF_STR( Upright ) );
             PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) );
 
@@ -427,27 +427,27 @@ namespace mame
             DSW2_PORT();
 
             PORT_START("DSW3");
-            PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) );    PORT_DIPLOCATION("SW3:1,2");
+            PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) );      PORT_DIPLOCATION("SWC:1,2");
             PORT_DIPSETTING(    0x03, DEF_STR( Easiest ) );
             PORT_DIPSETTING(    0x02, DEF_STR( Easy ) );
             PORT_DIPSETTING(    0x01, DEF_STR( Normal ) );
             PORT_DIPSETTING(    0x00, DEF_STR( Hard ) );
-            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) );
+            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) );         PORT_DIPLOCATION("SWC:3");
             PORT_DIPSETTING(    0x04, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) );
+            PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) );         PORT_DIPLOCATION("SWC:4");
             PORT_DIPSETTING(    0x08, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x10, 0x10, "Coinage Display" );        PORT_DIPLOCATION("SW3:5");
+            PORT_DIPNAME( 0x10, 0x10, "Coinage Display" );          PORT_DIPLOCATION("SWC:5");
             PORT_DIPSETTING(    0x10, "Coins/Credits" );
             PORT_DIPSETTING(    0x00, "Insert Coin" );
-            PORT_DIPNAME( 0x20, 0x20, "Year Display" );           PORT_DIPLOCATION("SW1:6");
+            PORT_DIPNAME( 0x20, 0x20, "Year Display" );             PORT_DIPLOCATION("SWC:6");
             PORT_DIPSETTING(    0x00, DEF_STR( No ) );
             PORT_DIPSETTING(    0x20, DEF_STR( Yes ) );
-            PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)"); PORT_DIPLOCATION("SW3:7");
-            PORT_DIPSETTING(    0x40, DEF_STR( Off ) );
-            PORT_DIPSETTING(    0x00, DEF_STR( On ) );
-            PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) );       PORT_DIPLOCATION("SW3:8");
+            PORT_DIPNAME( 0x40, 0x40, "Hit Detection");             PORT_DIPLOCATION("SWC:7");
+            PORT_DIPSETTING(    0x40, "Normal Game" );
+            PORT_DIPSETTING(    0x00, "No Hit" );
+            PORT_DIPNAME( 0x80, 0x80, "Coin Slots" );               PORT_DIPLOCATION("SWC:8");
             PORT_DIPSETTING(    0x80, "A and B" );
             PORT_DIPSETTING(    0x00, "A only" );
 
@@ -605,8 +605,8 @@ namespace mame
             m_mcu.target.set_int_mode(taito_sj_security_mcu_device.int_mode.LATCH);
             m_mcu.target.m68read_cb().set(mcu_mem_r).reg();
             m_mcu.target.m68write_cb().set(mcu_mem_w).reg();
-            m_mcu.target.m68intrq_cb().set(mcu_intrq_w).reg();
-            m_mcu.target.busrq_cb().set(mcu_busrq_w).reg();
+            m_mcu.target.m68intrq_cb().set((write_line_delegate)mcu_intrq_w).reg();
+            m_mcu.target.busrq_cb().set((write_line_delegate)mcu_busrq_w).reg();
 
             config.set_maximum_quantum(attotime.from_hz(6000));
         }
@@ -693,8 +693,41 @@ namespace mame
         };
 
 
-        //ROM_START( elevator ) // 5 board set, using 2732s on both mainboard and square rom board, and 68705 on daughterboard at bottom of stack, upside down
+        //ROM_START( elevator ) // later 4 board set, with rom data on 2764s, split between gfx and cpu data.
         static readonly List<tiny_rom_entry> rom_elevator = new List<tiny_rom_entry>()
+        {
+            ROM_REGION( 0x12000, "maincpu", 0 ), // on L-shaped rom board
+            ROM_LOAD( "ba3__01.2764.ic1",  0x0000, 0x2000, CRC("da775a24") + SHA1("b4341d2c87285d7a3d1773e2d94b3f621ebb4489") ), // == ea_12.2732.ic69 + ea_13.2732.ic68
+            ROM_LOAD( "ba3__02.2764.ic2",  0x2000, 0x2000, CRC("fbfd8b3a") + SHA1("9dff36dcaf43a2403b9a3497512dfec228144a7c") ), // == ea_14.2732.ic67 + ea_15.2732.ic66
+            ROM_LOAD( "ba3__03-1.2764.ic3",0x4000, 0x2000, CRC("a2e69833") + SHA1("0f324c3adec27fcfebd779328db6f1da6cc8d227") ), // == ea_16.2732.ic65 + ea_17.2732.ic64
+            ROM_LOAD( "ba3__04-1.2764.ic6",0x6000, 0x2000, CRC("2b78c462") + SHA1("ae41e0089c7f445fa271f6af7e141b112f0009e6") ), // == ea_18.2732.ic55 + ea_19.2732.ic54
+            /* 10000-11fff space for banked ROMs (not used) */
+
+            ROM_REGION( 0x10000, "audiocpu", 0 ), // on GAME BOARD
+            ROM_LOAD( "ba3__09.2732.ic70",  0x0000, 0x1000, CRC("6d5f57cb") + SHA1("abb916d675ee85032697d656121d4f525202cab3") ), // == ea_9.2732.ic70
+            ROM_LOAD( "ba3__10.2732.ic71",  0x1000, 0x1000, CRC("f0a769a1") + SHA1("9970fba3afeaaaa7fd217f0704fb9df9cf13cf65") ), // == ea_10.2732.ic71
+
+            ROM_REGION( 0x0800, "pal", 0 ), // on GAME BOARD
+            ROM_LOAD( "ww15.pal16l8.ic24.jed.bin",  0x0000, 0x0117, CRC("c3ec20d6") + SHA1("4bcdd92ca6b75ba825a7f90b1f35d8dcaeaf8a96") ), // what format is this? jed2bin?
+
+            ROM_REGION( 0x0800, "bmcu:mcu", 0 ),       /* 2k for the microcontroller */
+            ROM_LOAD( "ba3__11.mc68705p3.ic24",       0x0000, 0x0800, CRC("9ce75afc") + SHA1("4c8f5d926ae2bec8fcb70692125b9e1c863166c6") ), // IC24 on the later CPU BOARD; The MCU itself has a strange custom from-factory silkscreen, rather than "MC68705P3S" it is labeled "15-00011-001 // DA68237"
+
+            ROM_REGION( 0x8000, "gfx1", 0 ),       /* graphic ROMs used at runtime, on L-shaped rom board */
+            ROM_LOAD( "ba3__05.2764.ic4",   0x0000, 0x2000, CRC("6c4ee58f") + SHA1("122369a0fc901b0a60a3fb3b3646427beb1cd0c6") ), // == ea_20.2732.ic1 + ea_21.2732.ic2
+            ROM_LOAD( "ba3__06.2764.ic5",   0x2000, 0x2000, CRC("41ab0afc") + SHA1("d18df5a5d054a35d20da04a3f35cf005387a1de4") ), // == ea_22.2732.ic3 + ea_23.2732.ic4
+            ROM_LOAD( "ba3__07.2764.ic9",   0x4000, 0x2000, CRC("efe43731") + SHA1("7815df72f0d7a5752628986ec97de96fa764699e") ), // == ea_24.2732.ic5 + ea_25.2732.ic6
+            ROM_LOAD( "ba3__08.2764.ic10",  0x6000, 0x2000, CRC("3ca20696") + SHA1("2c2d4f82a4e6aa72510337ee330d8c22098a0944") ), // == ea_26.2732.ic7 + ea_27.2732.ic8
+
+            ROM_REGION( 0x0100, "proms", 0 ),      /* layer PROM */
+            ROM_LOAD( "eb16.ic22",      0x0000, 0x0100, CRC("b833b5ea") + SHA1("d233f1bf8a3e6cd876853ffd721b9b64c61c9047") ),
+
+            ROM_END
+        };
+
+
+        //ROM_START( elevatora ) // 5 board set, using 2732s on both mainboard and square rom board, and 68705 on daughterboard at bottom of stack, upside down
+        static readonly List<tiny_rom_entry> rom_elevatora = new List<tiny_rom_entry>()
         {
             ROM_REGION( 0x12000, "maincpu", 0 ), // on CPU BOARD
             ROM_LOAD( "ea_12.2732.ic69",  0x0000, 0x1000, CRC("24e277ef") + SHA1("764e3b3a34bf0ec849d58023f710e5b0a0d0ccb5") ), // needs label verified
@@ -797,6 +830,6 @@ namespace mame
         //                                                                                                           rom          parent      machine               inp                                  init
         public static readonly game_driver driver_junglek  = GAME( device_creator_junglek,   rom_junglek,   "1982",  "junglek",   "0",        taitosj_state_nomcu,  m_taitosj.construct_ioport_junglek,  taitosj_state_init_taitosj, ROT180, "Taito Corporation", "Jungle King (Japan)", MACHINE_SUPPORTS_SAVE );
         public static readonly game_driver driver_jungleh  = GAME( device_creator_jungleh,   rom_jungleh,   "1982",  "jungleh",   "junglek",  taitosj_state_nomcu,  m_taitosj.construct_ioport_junglek,  taitosj_state_init_taitosj, ROT180, "Taito America Corporation", "Jungle Hunt (US)", MACHINE_SUPPORTS_SAVE );
-        public static readonly game_driver driver_elevator = GAME( device_creator_elevator,  rom_elevator,  "1983",  "elevator",  "0",        taitosj_state_mcu,    m_taitosj.construct_ioport_elevator, taitosj_state_init_taitosj, ROT0,   "Taito Corporation", "Elevator Action (5 pcb version, 1.1)", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_elevator = GAME( device_creator_elevator,  rom_elevator,  "1983",  "elevator",  "0",        taitosj_state_mcu,    m_taitosj.construct_ioport_elevator, taitosj_state_init_taitosj, ROT0,   "Taito Corporation", "Elevator Action (BA3, 4 PCB version, 1.1)", MACHINE_SUPPORTS_SAVE );
     }
 }

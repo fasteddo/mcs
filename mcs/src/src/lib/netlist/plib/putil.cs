@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using size_t = System.UInt32;
+
 
 namespace mame.plib
 {
@@ -67,6 +69,20 @@ namespace mame.plib
         //        const std::string &token,
         //        const std::size_t maxsplit);
 
+
+        // ----------------------------------------------------------------------------------------
+        // simple hash
+        // ----------------------------------------------------------------------------------------
+        //template <typename T>
+        public static UInt64 hash(string buf, size_t size)  //std::size_t hash(const T *buf, std::size_t size)
+        {
+            UInt64 result = 5381;
+            for (int pIdx = 0; pIdx != size; pIdx++)  //for (const T* p = buf; p != buf + size; p++)
+                result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ (size_t)buf[pIdx];  //result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ static_cast<std::size_t>(*p);
+            return result;
+        }
+
+
         public static string environment(string var, string default_val)
         {
             return (std.getenv(var.c_str()) == null) ? default_val
@@ -81,6 +97,12 @@ namespace mame.plib
         public static bool contains<C, T>(C con, T elem) where C : ICollection<T>  //bool contains(C &con, const T &elem)
         {
             return con.Contains(elem);  //return std::find(con.begin(), con.end(), elem) != con.end();
+        }
+
+        //template <class C>
+        public static void remove<C, T>(C con, T elem) where C : ICollection<T>  //void remove(C &con, const typename C::value_type &elem)
+        {
+            con.Remove(elem);  //con.erase(std::remove(con.begin(), con.end(), elem), con.end());
         }
     }
 

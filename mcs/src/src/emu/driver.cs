@@ -82,7 +82,7 @@ namespace mame
 
 
         // getters
-        //const game_driver &system() const { return m_system; }
+        public game_driver system() { return m_system; }
 
 
         // inline configuration helpers
@@ -106,10 +106,6 @@ namespace mame
         {
             ((driver_device)owner).driver_init();
         }
-
-
-        // memory helpers
-        public address_space generic_space() { return machine().dummy_space(); }
 
 
         // output heler

@@ -1,0 +1,11 @@
+﻿# mcsForm
+
+[*.cs]
+dotnet_diagnostic.CS0162.severity = none  # Unreachable code detected
+dotnet_diagnostic.IDE0017.severity = none  # Object initialization can be simplified
+dotnet_diagnostic.IDE0018.severity = none  # Variable declaration can be inlined
+dotnet_diagnostic.IDE0020.severity = none  # Use pattern matching
+dotnet_diagnostic.IDE0044.severity = none  # Make field readonly
+dotnet_diagnostic.IDE0052.severity = none  # Private member '' can be removed as the value assigned to it is never used.
+dotnet_diagnostic.IDE0060.severity = none  # Remove unused parameter '' if it is not part of a shipped public API
+dotnet_diagnostic.IDE1006.severity = none  # Naming rule violation: These words must begin with upper case characters: 

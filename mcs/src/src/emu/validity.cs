@@ -205,7 +205,7 @@ namespace mame
 
                     // generate the string
                     output += string.Format(format, args);
-                    m_error_text.append(output.str());
+                    m_error_text = m_error_text.append_(output.str());
                     break;
 
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING:
@@ -217,7 +217,7 @@ namespace mame
 
                     // generate the string and output to the original target
                     output += string.Format(format, args);
-                    m_warning_text.append(output.str());
+                    m_warning_text = m_warning_text.append_(output.str());
                     break;
 
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE:
@@ -229,7 +229,7 @@ namespace mame
 
                     // generate the string and output to the original target
                     output += string.Format(format, args);
-                    m_verbose_text.append(output.str());
+                    m_verbose_text = m_verbose_text.append_(output.str());
                     break;
 
                 default:

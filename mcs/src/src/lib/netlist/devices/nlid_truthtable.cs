@@ -106,7 +106,7 @@ namespace mame.netlist
             }
 
 
-            public override device_t Create(nlmempool pool, netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override
+            public override device_t make_device(nlmempool pool, netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> make_device(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override
             {
                 throw new emu_unimplemented();
             }

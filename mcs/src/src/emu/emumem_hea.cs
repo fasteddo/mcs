@@ -29,7 +29,7 @@ namespace mame
 
         public void set_address_info(offs_t base_, offs_t mask)
         {
-            m_address_base = base_;
+            m_address_base = base_ & ~base.NATIVE_MASK;  //m_address_base = base & ~handler_entry_read<Width, AddrShift, Endian>::NATIVE_MASK;
             m_address_mask = mask;
         }
     }
@@ -40,17 +40,22 @@ namespace mame
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
+        new u32 NATIVE_MASK;  //static constexpr u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1 << (Width + AddrShift)) - 1 : 0;
 
         protected offs_t m_address_base;
         protected offs_t m_address_mask;
 
 
-        protected handler_entry_write_address(int Width, int AddrShift, int Endian, address_space space, u32 flags) : base(Width, AddrShift, Endian, space, flags) { }
+        protected handler_entry_write_address(int Width, int AddrShift, int Endian, address_space space, u32 flags) : base(Width, AddrShift, Endian, space, flags)
+        {
+            this.NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1U : 0U;
+        }
+
         //~handler_entry_write_address() = default;
 
         public void set_address_info(offs_t base_, offs_t mask)
         {
-            m_address_base = base_;
+            m_address_base = base_ & ~base.NATIVE_MASK;  //m_address_base = base & ~handler_entry_write<Width, AddrShift, Endian>::NATIVE_MASK;
             m_address_mask = mask;
         }
     }

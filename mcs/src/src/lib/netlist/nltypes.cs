@@ -38,6 +38,15 @@ namespace mame.netlist
         /// \brief logging callback.
         ///
         public abstract void vlog(plib.plog_level l, string ls);
+
+        /// \brief provide library with static solver implementations.
+        ///
+        /// By default no static solvers are provided since these are
+        /// determined by the specific use case. It is up to the implementor
+        /// of a callbacks_t implementation to optionally provide such a collection
+        /// of symbols.
+        ///
+        public abstract plib.dynlib_base static_solver_lib();
     }
 
     //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;

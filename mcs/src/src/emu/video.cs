@@ -18,14 +18,6 @@ namespace mame
     // ======================> video_manager
     public class video_manager : global_object
     {
-        // movie format options
-        public enum movie_format
-        {
-            MF_MNG,
-            MF_AVI
-        }
-
-
         const bool LOG_THROTTLE = false;
 
         // number of levels of frameskipping supported
@@ -103,42 +95,8 @@ namespace mame
         s32 m_snap_width;               // width of snapshots (0 == auto)
         s32 m_snap_height;              // height of snapshots (0 == auto)
 
-        // movie recording - MNG
-        class mng_info_t
-        {
-            public emu_file m_mng_file;              // handle to the open movie file
-            attotime m_mng_frame_period;         // period of a single movie frame
-            public attotime m_mng_next_frame_time;      // time of next frame
-            u32 m_mng_frame;                // current movie frame number
-
-            public mng_info_t()
-            {
-                m_mng_frame_period = attotime.zero;
-                m_mng_next_frame_time = attotime.zero;
-                m_mng_frame = 0;
-            }
-        }
-        std.vector<mng_info_t> m_mngs = new std.vector<mng_info_t>();
-
-
-        // movie recording - AVI
-        class avi_info_t
-        {
-            public avi_file m_avi_file;                 // handle to the open movie file
-            attotime m_avi_frame_period;         // period of a single movie frame
-            public attotime m_avi_next_frame_time;      // time of next frame
-            u32 m_avi_frame;                // current movie frame number
-
-            public avi_info_t()
-            {
-                m_avi_file = null;
-                m_avi_frame_period = attotime.zero;
-                m_avi_next_frame_time = attotime.zero;
-                m_avi_frame = 0;
-            }
-        }
-        std.vector<avi_info_t> m_avis = new std.vector<avi_info_t>();
-
+        // movie recordings
+        std.vector<movie_recording> m_movie_recordings = new std.vector<movie_recording>();
 
         bool m_timecode_enabled;     // inp.timecode record enabled
         bool m_timecode_write;       // Show/hide timer at right (partial time)
@@ -258,23 +216,7 @@ namespace mame
         //-------------------------------------------------
         bool is_recording()
         {
-            foreach (mng_info_t mng in m_mngs)
-            {
-                if (mng.m_mng_file != null)
-                    return true;
-                else if (!m_snap_native)
-                    break;
-            }
-
-            foreach (avi_info_t avi in m_avis)
-            {
-                if (avi.m_avi_file != null)
-                    return true;
-                else if (!m_snap_native)
-                    break;
-            }
-
-            return false;
+            return !m_movie_recordings.empty();
         }
 
 
@@ -317,13 +259,11 @@ namespace mame
         //-------------------------------------------------
         //  toggle_record_movie
         //-------------------------------------------------
-        void toggle_record_movie(movie_format format)
+        public void toggle_record_movie(movie_recording.format format)
         {
             throw new emu_unimplemented();
         }
 
-        public void toggle_record_mng() { toggle_record_movie(movie_format.MF_MNG); }
-        public void toggle_record_avi() { toggle_record_movie(movie_format.MF_AVI); }
 
         //osd_file::error open_next(emu_file &file, const char *extension, uint32_t index = 0);
         //void compute_snapshot_size(s32 &width, s32 &height);
@@ -493,27 +433,13 @@ namespace mame
         //-------------------------------------------------
         //  begin_recording - begin recording of a movie
         //-------------------------------------------------
-        public void begin_recording(string name, movie_format format)
+        public void begin_recording(string name, movie_recording.format format)
         {
             throw new emu_unimplemented();
         }
 
 
-        //void begin_recording_mng(const char *name, uint32_t index, screen_device *screen);
-        //void begin_recording_avi(const char *name, uint32_t index, screen_device *screen);
-
-
-        void end_recording(movie_format format)
-        {
-            throw new emu_unimplemented();
-        }
-
-        void end_recording_mng(UInt32 index)
-        {
-            throw new emu_unimplemented();
-        }
-
-        void end_recording_avi(UInt32 index)
+        void end_recording()
         {
             throw new emu_unimplemented();
         }
@@ -525,17 +451,8 @@ namespace mame
         //-------------------------------------------------
         public void add_sound_to_recording(Pointer<s16> sound, int numsamples)  // const s16 *sound, int numsamples)
         {
-            for (UInt32 index = 0; index < m_avis.size(); index++)
-            {
-                add_sound_to_avi_recording(sound, numsamples, index);
-                if (!m_snap_native)
-                    break;
-            }
-        }
-
-        void add_sound_to_avi_recording(Pointer<s16> sound, int numsamples, UInt32 index)  //const s16 *sound, int numsamples, uint32_t index);
-        {
-            throw new emu_unimplemented();
+            foreach (var recording in m_movie_recordings)
+                recording.add_sound_to_recording(sound, numsamples);
         }
 
 
@@ -581,17 +498,7 @@ namespace mame
         void exit(running_machine machine)
         {
             // stop recording any movie
-            for (UInt32 index = 0; index < Math.Max(m_mngs.size(), m_avis.size()); index++)
-            {
-                if (index < m_avis.size())
-                    end_recording_avi(index);
-
-                if (index < m_mngs.size())
-                    end_recording_mng(index);
-
-                if (!m_snap_native)
-                    break;
-            }
+            m_movie_recordings.clear();
 
             // free the snapshot target
             machine.render().target_free(m_snap_target);
@@ -624,17 +531,8 @@ namespace mame
         //-------------------------------------------------
         void postload()
         {
-            for (UInt32 index = 0; index < Math.Max(m_mngs.size(), m_avis.size()); index++)
-            {
-                if (index < m_avis.size())
-                    m_avis[(int)index].m_avi_next_frame_time = machine().time();
-
-                if (index < m_mngs.size())
-                    m_mngs[(int)index].m_mng_next_frame_time = machine().time();
-
-                if (!m_snap_native)
-                    break;
-            }
+            foreach (var x in m_movie_recordings)
+                x.set_next_frame_time(machine().time());
         }
 
 
@@ -1183,10 +1081,12 @@ namespace mame
             profiler_global.g_profiler.start(profile_type.PROFILER_MOVIE_REC);
             attotime curtime = machine().time();
 
-            screen_device_iterator device_iterator = new screen_device_iterator(machine().root_device());
-
             throw new emu_unimplemented();
         }
+
+
+        // movies
+        //void begin_recording_screen(const std::string &filename, uint32_t index, screen_device *screen, movie_recording::format format);
 
 
         static void video_notifier_callback(string outname, int value, object param)

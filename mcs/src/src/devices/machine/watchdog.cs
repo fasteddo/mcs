@@ -52,7 +52,9 @@ namespace mame
         //template <typename T>
         public void set_vblank_count(string screen_tag, int count) { m_screen.set_tag(screen_tag); m_vblank_count = count; }  //void set_vblank_count(T &&screen_tag, int32_t count) { m_screen.set_tag(std::forward<T>(screen_tag)); m_vblank_count = count; }
         public void set_vblank_count(finder_base screen, int count) { m_screen.set_tag(screen); m_vblank_count = count; }  //void set_vblank_count(T &&screen_tag, int32_t count) { m_screen.set_tag(std::forward<T>(screen_tag)); m_vblank_count = count; }
-        //void set_time(attotime time) { m_time = time; }
+
+
+        public void set_time(attotime time) { m_time = time; }
 
 
         // watchdog control

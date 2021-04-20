@@ -1,0 +1,13 @@
+﻿# SharpCompress-mcs
+
+[*.cs]
+dotnet_diagnostic.IDE0016.severity = none  # Null check can be simplified
+dotnet_diagnostic.IDE0019.severity = none  # Use pattern matching
+dotnet_diagnostic.IDE0020.severity = none  # Use pattern matching
+dotnet_diagnostic.IDE0044.severity = none  # Make field readonly
+dotnet_diagnostic.IDE0052.severity = none  # Private property '' can be converted to a method as its get accessor is never invoked.
+dotnet_diagnostic.IDE0054.severity = none  # Use compound assignment
+dotnet_diagnostic.IDE0059.severity = none  # Unnecessary assignment of a value to ''
+dotnet_diagnostic.IDE0060.severity = none  # Remove unused parameter ''
+dotnet_diagnostic.IDE0063.severity = none  # 'using' statement can be simplified
+dotnet_diagnostic.IDE0066.severity = none  # Use 'switch' expression

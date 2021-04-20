@@ -141,15 +141,13 @@ namespace mame
         }
 
 
-        //READ8_MEMBER( i8257_device::read )
-        public u8 read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        public uint8_t read(offs_t offset)
         {
             throw new emu_unimplemented();
         }
 
 
-        //WRITE8_MEMBER( i8257_device::write )
-        public void write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void write(offs_t offset, uint8_t data)
         {
             LOG("{0} \n", "write");
             if (BIT(offset, 3) == 0)
@@ -216,7 +214,6 @@ namespace mame
         }
 
 
-        //WRITE_LINE_MEMBER( i8257_device::hlda_w )
         public void hlda_w(int state)
         {
             LOG("I8257 Hold Acknowledge: {0}\n", state);
@@ -226,25 +223,23 @@ namespace mame
         }
 
 
-        //DECLARE_WRITE_LINE_MEMBER( ready_w );
+        //void ready_w(int state);
 
 
-        //WRITE_LINE_MEMBER( i8257_device::dreq0_w )
         public void dreq0_w(int state)
         {
             LOG("{0}\n", "dreq0_w");
             dma_request(0, state);
         }
 
-        //WRITE_LINE_MEMBER( i8257_device::dreq1_w )
         public void dreq1_w(int state)
         {
             LOG("{0}\n", "dreq1_w");
             dma_request(1, state);
         }
 
-        //DECLARE_WRITE_LINE_MEMBER( dreq2_w );
-        //DECLARE_WRITE_LINE_MEMBER( dreq3_w );
+        //void dreq2_w(int state);
+        //void dreq3_w(int state);
 
 
         public devcb_write.binder out_hrq_cb() { return m_out_hrq_cb.bind(); }

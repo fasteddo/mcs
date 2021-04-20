@@ -46,22 +46,16 @@ namespace mame.netlist
             public override void reset() { base.reset(); }
 
 
-            protected override UInt32 vsolve_non_dynamic(bool newton_raphson)
+            protected override void vsolve_non_dynamic()
             {
                 throw new emu_unimplemented();
             }
 
 
-            protected UInt32 solve_non_dynamic(bool newton_raphson)
+            protected void solve_non_dynamic()
             {
                 this.LE_solve();
-                this.LE_back_subst(this.m_new_V);
-
-                bool err = false;
-                if (newton_raphson)
-                    err = this.check_err();
-                this.store();
-                return err ? 2u : 1u;
+                this.LE_back_subst(new Pointer<double>(this.m_new_V));
             }
 
 
@@ -73,15 +67,17 @@ namespace mame.netlist
                     for (int i = 0; i < kN; i++)
                     {
                         // FIXME: Singular matrix?
-                        double f = plib.pglobal.reciprocal(m_A[i][i]);
+                        var Ai = m_A[i];
+                        double f = plib.pglobal.reciprocal(Ai[i]);
                         var nzrd = this.m_terms[i].m_nzrd;
                         var nzbd = this.m_terms[i].m_nzbd;
 
                         foreach (var j in nzbd)
                         {
-                            double f1 = -f * m_A[j][i];
+                            var Aj = m_A[j];
+                            double f1 = -f * Aj[i];
                             foreach (var k in nzrd)
-                                m_A[j][k] += m_A[i][k] * f1;
+                                Aj[k] += Ai[k] * f1;
 
                             this.m_RHS[j] += this.m_RHS[i] * f1;
                         }
@@ -102,6 +98,7 @@ namespace mame.netlist
 
                         if (maxrow != i)
                         {
+#if false
                             // Swap the maxrow and ith row
                             for (int k = 0; k < kN; k++)
                             {
@@ -110,6 +107,14 @@ namespace mame.netlist
                                 m_A[i][k] = m_A[maxrow][k];
                                 m_A[maxrow][k] = temp;
                             }
+#else
+                            {
+                                //std::swap(m_A[i], m_A[maxrow]);
+                                var temp = m_A[i];
+                                m_A[i] = m_A[maxrow];
+                                m_A[maxrow] = temp;
+                            }
+#endif
 
                             {
                                 //std::swap(this->m_RHS[i], this->m_RHS[maxrow]);
@@ -120,17 +125,19 @@ namespace mame.netlist
                         }
 
                         // FIXME: Singular matrix?
-                        double f = plib.pglobal.reciprocal(m_A[i][i]);  //const FT f = plib::reciprocal(m_A[i][i]);
+                        var Ai = m_A[i];
+                        double f = plib.pglobal.reciprocal(Ai[i]);  //const FT f = plib::reciprocal(Ai[i]);
 
                         // Eliminate column i from row j
 
                         for (int j = i + 1; j < kN; j++)
                         {
+                            var Aj = m_A[j];
                             double f1 = - m_A[j][i] * f;  //const FT f1 = - m_A[j][i] * f;
                             if (f1 != plib.constants.zero())
                             {
-                                Pointer<double> pi = new Pointer<double>(m_A[i], i + 1);  //const FT * pi = &(m_A[i][i+1]);
-                                Pointer<double> pj = new Pointer<double>(m_A[j], i + 1);  //FT * pj = &(m_A[j][i+1]);
+                                Pointer<double> pi = new Pointer<double>(Ai, i + 1);  //const FT * pi = &(Ai[i+1]);
+                                Pointer<double> pj = new Pointer<double>(Aj, i + 1);  //FT * pj = &(Aj[i+1]);
                                 plib.vector_ops_global.vec_add_mult_scalar_p(kN - i - 1, pj, pi, f1);
                                 //for (unsigned k = i+1; k < kN; k++)
                                 //  pj[k] = pj[k] + pi[k] * f1;
@@ -145,7 +152,7 @@ namespace mame.netlist
 
 
             //template <typename T>
-            void LE_back_subst(double [] x)  //void LE_back_subst(T * RESTRICT x);
+            void LE_back_subst(Pointer<double> x)  //void LE_back_subst(T * RESTRICT x);
             {
                 int kN = this.size();
 
@@ -154,23 +161,27 @@ namespace mame.netlist
                 {
                     for (int j = kN; j-- > 0; )
                     {
-                        double tmp = 0;  //FT tmp = 0;
+                        double tmp = 0;  //FT tmp(0);
+                        var Aj = m_A[j];
+
                         for (int k = j + 1; k < kN; k++)
-                            tmp += m_A[j][k] * x[k];
-                        x[j] = (this.m_RHS[j] - tmp) / m_A[j][j];
+                            tmp += Aj[k] * x[k];
+                        x[j] = (this.m_RHS[j] - tmp) / Aj[j];
                     }
                 }
                 else
                 {
                     for (int j = kN; j-- > 0; )
                     {
-                        double tmp = 0;  //FT tmp = 0;
-                        var nzrd = this.m_terms[j].m_nzrd;  //const auto &nzrd = this->m_terms[j].m_nzrd;
-                        var e = nzrd.size(); // - 1; // exclude RHS element
-                        for (int k = 0; k < e; k++)
-                            tmp += m_A[j][nzrd[k]] * x[nzrd[k]];
+                        double tmp = 0;  //FT tmp(0);
+                        var nzrd = this.m_terms[j].m_nzrd;
+                        var Aj = m_A[j];
+                        var e = nzrd.size();
 
-                        x[j] = (this.m_RHS[j] - tmp) / m_A[j][j];
+                        for (int k = 0; k < e; k++)
+                            tmp += Aj[nzrd[k]] * x[nzrd[k]];
+
+                        x[j] = (this.m_RHS[j] - tmp) / Aj[j];
                     }
                 }
             }

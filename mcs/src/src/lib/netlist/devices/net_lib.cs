@@ -11,6 +11,22 @@ namespace mame.netlist
     {
         public static class net_lib_global
         {
+            //#ifdef RES_R
+            //#warning "Do not include rescap.h in a netlist environment"
+            //#endif
+            //#ifndef RES_R
+            //#define RES_R(res) (res)
+            //#define RES_K(res) ((res) * 1e3)
+            //#define RES_M(res) ((res) * 1e6)
+            //#define CAP_U(cap) ((cap) * 1e-6)
+            //#define CAP_N(cap) ((cap) * 1e-9)
+            public static double CAP_P(double cap) { return cap * 1e-12; }
+            //#define IND_U(ind) ((ind) * 1e-6)
+            //#define IND_N(ind) ((ind) * 1e-9)
+            //#define IND_P(ind) ((ind) * 1e-12)
+            //#endif
+
+
             //#define SOLVER(name, freq)                                                  \
             //        NET_REGISTER_DEVEXT(SOLVER, name, freq)
             public static void SOLVER(nlparse_t setup, string name, int freq)

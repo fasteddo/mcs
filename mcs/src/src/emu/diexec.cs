@@ -133,7 +133,6 @@ namespace mame
             {
                 m_stored_vector = (int)m_execute.default_irq_vector(m_linenum);
                 m_curvector = m_stored_vector;
-                m_qindex = 0;
             }
 
 
@@ -514,8 +513,6 @@ namespace mame
                 m_scheduler.timer_set(target_time - m_scheduler.time(), irq_pulse_clear, irqline);
             }
         }
-
-        //void pulse_input_line_and_vector(int irqline, int vector, const attotime &duration);
 
 
         // suspend/resume

@@ -951,64 +951,6 @@ namespace mame
 
             throw new emu_unimplemented();
 #if false
-            while (drivlist.next())
-            {
-                foreach (software_list_device swlistdev in new software_list_device_iterator(drivlist.config().root_device()))
-                {
-                    if (corestr_global.core_strwildcmp(gamename, swlistdev.list_name()) == 0 && list_map.add(swlistdev.list_name(), 0, false))  // != TMERR_DUPLICATE)
-                    {
-                        if (!swlistdev.get_info().empty())
-                        {
-                            matched++;
-
-                            // Get the actual software list contents
-                            foreach (software_info swinfo in swlistdev.get_info())
-                            {
-                                media_auditor.summary summary = auditor.audit_software(swlistdev.list_name(), swinfo, media_auditor.AUDIT_VALIDATE_FAST);
-
-                                // if not found, count that and leave it at that
-                                if (summary == media_auditor.summary.NOTFOUND)
-                                {
-                                    notfound++;
-                                }
-                                // else display information about what we discovered
-                                else if (summary != media_auditor.summary.NONE_NEEDED)
-                                {
-                                    // output the summary of the audit
-                                    string summary_string;
-                                    auditor.summarize(swinfo.shortname(), out summary_string);
-                                    global.osd_printf_info("{0}", summary_string);
-
-                                    // display information about what we discovered
-                                    global.osd_printf_info("romset {0}:{1} ", swlistdev.list_name(), swinfo.shortname());
-
-                                    // switch off of the result
-                                    switch (summary)
-                                    {
-                                        case media_auditor.summary.INCORRECT:
-                                            global.osd_printf_info("is bad\n");
-                                            incorrect++;
-                                            break;
-
-                                        case media_auditor.summary.CORRECT:
-                                            global.osd_printf_info("is good\n");
-                                            correct++;
-                                            break;
-
-                                        case media_auditor.summary.BEST_AVAILABLE:
-                                            global.osd_printf_info("is best available\n");
-                                            correct++;
-                                            break;
-
-                                        default:
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 #endif
 
             throw new emu_unimplemented();

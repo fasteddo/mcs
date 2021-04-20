@@ -78,30 +78,42 @@ namespace mame
         /* ----- Helpers ----- */
 
         /***************************************************************************
-            HELPERS (also used by diimage.c)
+            HELPERS
          ***************************************************************************/
 
-        public static osd_file.error common_process_file(emu_options options, string location, string ext, rom_entry romp, ref emu_file image_file)
+        public static Func<rom_entry> next_parent_system(game_driver system)  //auto next_parent_system(game_driver const &system)
         {
-            return (location != null && !string.IsNullOrEmpty(location))
-                    ? image_file.open(global_object.string_format("{0}" + global_object.PATH_SEPARATOR + "{1}{2}", location, ROM_GETNAME(romp), ext))
-                    : image_file.open(ROM_GETNAME(romp) + ext);
+            return
+                    () =>  //[sys = &system, roms = std::vector<rom_entry>()] () mutable -> rom_entry const *
+                    {
+                        var sys = system;
+                        var roms = new std.vector<rom_entry>();
+
+                        if (sys == null)
+                            return null;
+                        int parent = driver_list.find(sys.parent);
+                        if (0 > parent)
+                        {
+                            sys = null;
+                            return null;
+                        }
+                        else
+                        {
+                            sys = driver_list.driver(parent);
+                            roms = rom_build_entries(sys.rom);
+                            return roms[0];
+                        }
+                    };
         }
 
 
-        public static emu_file common_process_file(emu_options options, string location, bool has_crc, UInt32 crc, rom_entry romp, out osd_file.error filerr)
+        //auto next_parent_software(std::vector<software_info const *> const &parents)
+        //std::vector<std::string> make_software_searchpath(software_list_device &swlist, software_info const &swinfo, std::vector<software_info const *> &parents)
+
+
+        public static chd_error do_open_disk(emu_options options, std.vector<string> [] searchpath, Pointer<rom_entry> romp, chd_file chd, Func<rom_entry> next_parent)  //chd_error do_open_disk(const emu_options &options, std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const rom_entry *romp, chd_file &chd, std::function<const rom_entry * ()> next_parent)
         {
-            var image_file = new emu_file(options.media_path(), global_object.OPEN_FLAG_READ);
-
-            if (has_crc)
-                filerr = image_file.open(location, global_object.PATH_SEPARATOR, ROM_GETNAME(romp), crc);
-            else
-                filerr = image_file.open(global_object.string_format("{0}" + global_object.PATH_SEPARATOR + "{1}", location, ROM_GETNAME(romp)));
-
-            if (filerr != osd_file.error.NONE)
-                image_file = null;
-
-            return image_file;
+            throw new emu_unimplemented();
         }
 
 
@@ -262,20 +274,6 @@ namespace mame
             }
 
             return result;
-        }
-
-
-        /* ----- disk handling ----- */
-
-        /* open a disk image, searching up the parent and loading by checksum */
-        /*-------------------------------------------------
-            open_disk_image - open a disk image,
-            searching up the parent and loading by
-            checksum
-        -------------------------------------------------*/
-        public static int open_disk_image(emu_options options, game_driver gamedrv, rom_entry romp, chd_file image_chd, string locationtag)
-        {
-            throw new emu_unimplemented();
         }
     }
 
@@ -721,6 +719,14 @@ namespace mame
         //void load_software_part_region(device_t &device, software_list_device &swlist, const char *swname, const rom_entry *start_region);
 
 
+        /* get search path for a software item */
+        //static std::vector<std::string> get_software_searchpath(software_list_device &swlist, const software_info &swinfo);
+
+        /* open a disk image, searching up the parent and loading by checksum */
+        //static chd_error open_disk_image(const emu_options &options, const device_t &device, const rom_entry *romp, chd_file &image_chd);
+        //static chd_error open_disk_image(const emu_options &options, software_list_device &swlist, const software_info &swinfo, const rom_entry *romp, chd_file &image_chd);
+
+
         /*-------------------------------------------------
             determine_bios_rom - determine system_bios
             from SystemBios structure and OPTION_BIOS
@@ -1012,10 +1018,9 @@ namespace mame
             open_rom_file - open a ROM file, searching
             up the parent and loading by checksum
         -------------------------------------------------*/
-        emu_file open_rom_file(string regiontag, Pointer<rom_entry> romp, std.vector<string> tried_file_names, bool from_list)  //std::unique_ptr<emu_file> open_rom_file(const char *regiontag, const rom_entry *romp, std::vector<std::string> &tried_file_names, bool from_list);
+        emu_file open_rom_file(std.vector<string> [] searchpath, Pointer<rom_entry> romp, std.vector<string> tried_file_names, bool from_list)  //std::unique_ptr<emu_file> rom_load_manager::open_rom_file(std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const rom_entry *romp, std::vector<std::string> &tried_file_names, bool from_list)
         {
             osd_file.error filerr = osd_file.error.NOT_FOUND;
-            int curIndex = 0;
             u32 romsize = romload_global.rom_file_size(romp);
             tried_file_names.clear();
 
@@ -1027,97 +1032,13 @@ namespace mame
             bool has_crc = new util.hash_collection(romload_global.ROM_GETHASHDATA(romp[0])).crc(out crc);
 
             // attempt reading up the chain through the parents
-            // It also automatically attempts any kind of load by checksum supported by the archives.
+            // it also automatically attempts any kind of load by checksum supported by the archives.
             emu_file result = null;
-            for (int drv = driver_list.find(machine().system()); (result == null) && (0 <= drv); drv = driver_list.clone(drv))
+            foreach (std.vector<string> paths in searchpath)
             {
-                tried_file_names.emplace_back(driver_list.driver(drv).name);
-                result = romload_global.common_process_file(machine().options(), driver_list.driver(drv).name, has_crc, crc, romp[0], out filerr);
-            }
-
-            // if the region is load by name, load the ROM from there
-            if (result == null && regiontag != null)
-            {
-                // check if we are dealing with softwarelists. if so, locationtag
-                // is actually a concatenation of: listname + setname + parentname
-                // separated by '%' (parentname being present only for clones)
-                string tag1 = regiontag;
-                string tag2 = "";
-                string tag3 = "";
-                string tag4 = "";
-                string tag5 = "";
-                bool is_list = false;
-                bool has_parent = false;
-
-                int separator1 = tag1.IndexOf('%', 0);
-                if (separator1 != -1)
-                {
-                    is_list = true;
-
-                    // we are loading through softlists, split the listname from the regiontag
-                    tag4 = tag1.Substring(separator1 + 1, tag1.Length - separator1 + 1);
-                    tag1 = tag1.Remove(separator1, tag1.Length - separator1);
-                    tag1 += PATH_SEPARATOR;
-
-                    // check if we are loading a clone (if this is the case also tag1 have a separator '%')
-                    int separator2 = tag4.IndexOf('%', 0);
-                    if (separator2 != -1)
-                    {
-                        has_parent = true;
-
-                        // we are loading a clone through softlists, split the setname from the parentname
-                        tag5 = tag4.Substring(separator2 + 1, tag4.Length - separator2 + 1);
-                        tag4 = tag4.Remove(separator2, tag4.Length - separator2);
-                    }
-
-                    // prepare locations where we have to load from: list/parentname & list/clonename
-                    string swlist = tag1;
-                    tag2 = swlist + tag4;
-                    if (has_parent)
-                    {
-                        swlist = tag1;
-                        tag3 = swlist + tag5;
-                    }
-                }
-
-                if (tag5.IndexOf('%', 0) != -1)
-                    throw new emu_fatalerror("We do not support clones of clones!\n");
-
-                // try to load from the available location(s):
-                // - if we are not using lists, we have regiontag only;
-                // - if we are using lists, we have: list/clonename, list/parentname, clonename, parentname
-                if (!is_list)
-                {
-                    tried_file_names.emplace_back(tag1);
-                    result = romload_global.common_process_file(machine().options(), tag1, has_crc, crc, romp[0], out filerr);
-                }
-                else
-                {
-                    // try to load from list/setname
-                    if ((result == null) && (tag2.c_str() != null)) // FIXME: std::string::c_str will never return nullptr
-                    {
-                        tried_file_names.emplace_back(tag2);
-                        result = romload_global.common_process_file(machine().options(), tag2, has_crc, crc, romp[0], out filerr);
-                    }
-                    // try to load from list/parentname
-                    if ((result == null) && has_parent && (tag3.c_str() != null)) // FIXME: std::string::c_str will never return nullptr
-                    {
-                        tried_file_names.emplace_back(tag3);
-                        result = romload_global.common_process_file(machine().options(), tag3, has_crc, crc, romp[0], out filerr);
-                    }
-                    // try to load from setname
-                    if ((result == null) && (tag4.c_str() != null)) // FIXME: std::string::c_str will never return nullptr
-                    {
-                        tried_file_names.emplace_back(tag4);
-                        result = romload_global.common_process_file(machine().options(), tag4, has_crc, crc, romp[0], out filerr);
-                    }
-                    // try to load from parentname
-                    if ((result == null) && has_parent && (tag5.c_str() != null)) // FIXME: std::string::c_str will never return nullptr
-                    {
-                        tried_file_names.emplace_back(tag5);
-                        result = romload_global.common_process_file(machine().options(), tag5, has_crc, crc, romp[0], out filerr);
-                    }
-                }
+                result = open_rom_file(paths, tried_file_names, has_crc, crc, ROM_GETNAME(romp[0]), out filerr);
+                if (result != null)
+                    break;
             }
 
             // update counters
@@ -1125,6 +1046,27 @@ namespace mame
             m_romsloadedsize += romsize;
 
             // return the result
+            if (osd_file.error.NONE != filerr)
+                return null;
+            else
+                return result;
+        }
+
+
+        emu_file open_rom_file(std.vector<string> paths, std.vector<string> tried, bool has_crc, u32 crc, string name, out osd_file.error filerr)
+        {
+            // record the set names we search
+            tried.AddRange(paths);  //tried.insert(tried.end(), paths.begin(), paths.end());
+
+            // attempt to open the file
+            emu_file result = new emu_file(machine().options().media_path(), paths, OPEN_FLAG_READ);
+            result.set_restrict_to_mediapath(1);
+            if (has_crc)
+                filerr = result.open(name, crc);
+            else
+                filerr = result.open(name);
+
+            // don't return anything if unsuccessful
             if (osd_file.error.NONE != filerr)
                 return null;
             else
@@ -1355,7 +1297,7 @@ namespace mame
             process_rom_entries - process all ROM entries
             for a region
         -------------------------------------------------*/
-        void process_rom_entries(device_t device, string regiontag, rom_entry parent_region, Pointer<rom_entry> romp, bool from_list)  //void process_rom_entries(const device_t &device, const char *regiontag, const rom_entry *parent_region, const rom_entry *romp, bool from_list);
+        void process_rom_entries(std.vector<string> [] searchpath, u8 bios, rom_entry parent_region, Pointer<rom_entry> romp, bool from_list)  //void process_rom_entries(std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, u8 bios, const rom_entry *parent_region, const rom_entry *romp, bool from_list);
         {
             u32 lastflags = 0;
             std.vector<string> tried_file_names = new std.vector<string>();
@@ -1376,7 +1318,7 @@ namespace mame
 
                 if (romload_global.ROMENTRY_ISFILL(romp[0]))
                 {
-                    if (ROM_GETBIOSFLAGS(romp[0]) == 0 || ROM_GETBIOSFLAGS(romp[0]) == device.system_bios())
+                    if (ROM_GETBIOSFLAGS(romp[0]) == 0 || ROM_GETBIOSFLAGS(romp[0]) == bios)
                         fill_rom_data(romp[0]);
 
                     romp++;
@@ -1389,7 +1331,7 @@ namespace mame
                 else if (romload_global.ROMENTRY_ISFILE(romp[0]))
                 {
                     // handle files
-                    bool irrelevantbios = (romload_global.ROM_GETBIOSFLAGS(romp[0]) != 0) && (romload_global.ROM_GETBIOSFLAGS(romp[0]) != device.system_bios());
+                    bool irrelevantbios = (romload_global.ROM_GETBIOSFLAGS(romp[0]) != 0) && (romload_global.ROM_GETBIOSFLAGS(romp[0]) != bios);
                     rom_entry baserom = romp[0];
                     int explength = 0;
 
@@ -1398,7 +1340,7 @@ namespace mame
                     emu_file file = null;
                     if (!irrelevantbios)
                     {
-                        file = open_rom_file(regiontag, romp, tried_file_names, from_list);
+                        file = open_rom_file(searchpath, romp, tried_file_names, from_list);
                         if (file == null)
                             handle_missing_file(romp[0], tried_file_names, chd_error.CHDERR_NONE);
                     }
@@ -1473,12 +1415,12 @@ namespace mame
             process_disk_entries - process all disk entries
             for a region
         -------------------------------------------------*/
-        void process_disk_entries(string regiontag, rom_entry parent_region, Pointer<rom_entry> romp, string locationtag)  //void process_disk_entries(const char *regiontag, const rom_entry *parent_region, const rom_entry *romp, const char *locationtag);
+        void process_disk_entries(std.vector<string> [] searchpath, string regiontag, Pointer<rom_entry> romp, Func<rom_entry> next_parent)  //void process_disk_entries(std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const char *regiontag, const rom_entry *romp, std::function<const rom_entry * ()> next_parent);
         {
             //throw new emu_unimplemented();
 #if false
             /* remove existing disk entries for this region */
-            m_chd_list.erase(std::remove_if(m_chd_list.begin(), m_chd_list.end(), [regiontag](std::unique_ptr<open_chd> &chd){ return !strcmp(chd->region(), regiontag); }), m_chd_list.end());
+            m_chd_list.erase(std::remove_if(m_chd_list.begin(), m_chd_list.end(), [regiontag] (std::unique_ptr<open_chd> &chd) { return !strcmp(chd->region(), regiontag); }), m_chd_list.end());
 #endif
 
             /* loop until we hit the end of this region */
@@ -1488,16 +1430,15 @@ namespace mame
                 if (romload_global.ROMENTRY_ISFILE(romp[0]))
                 {
                     var chd = new open_chd(regiontag);
-
-                    util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(romp[0]));
                     chd_error err;
 
                     /* make the filename of the source */
                     string filename = romload_global.ROM_GETNAME(romp[0]) + ".chd";
 
                     /* first open the source drive */
+                    // FIXME: we've lost the ability to search parents here
                     LOG("Opening disk image: {0}\n", filename);
-                    err = (chd_error)romload_global.open_disk_image(machine().options(), machine().system(), romp[0], chd.orig_chd(), locationtag);
+                    err = romload_global.do_open_disk(machine().options(), searchpath, romp, chd.orig_chd(), next_parent);
                     if (err != chd_error.CHDERR_NONE)
                     {
                         handle_missing_file(romp[0], new std.vector<string>(), err);
@@ -1510,6 +1451,7 @@ namespace mame
                     acthashes.add_sha1(chd.orig_chd().sha1());
 
                     /* verify the hash */
+                    util.hash_collection hashes = new util.hash_collection(ROM_GETHASHDATA(romp[0]));
                     if (hashes != acthashes)
                     {
                         m_errorstring += string.Format("{0} WRONG CHECKSUMS:\n", filename);
@@ -1585,10 +1527,14 @@ namespace mame
         -------------------------------------------------*/
         void process_region_list()
         {
-            /* loop until we hit the end */
+            // loop until we hit the end
             device_iterator deviter = new device_iterator(machine().root_device());
+            std.vector<string> searchpath = new std.vector<string>();
             foreach (device_t device in deviter)
             {
+                searchpath.clear();
+                Func<rom_entry> next_parent = null;  //std::function<const rom_entry * ()> next_parent;
+
                 for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
                     u32 regionlength = romload_global.ROMREGION_GETLENGTH(region[0]);
@@ -1596,17 +1542,17 @@ namespace mame
                     string regiontag = device.subtag(ROM_GETNAME(region[0]));
                     LOG("Processing region \"{0}\" (length={1})\n", regiontag, regionlength);
 
-                    /* the first entry must be a region */
+                    // the first entry must be a region
                     assert(romload_global.ROMENTRY_ISREGION(region[0]));
 
                     if (romload_global.ROMREGION_ISROMDATA(region[0]))
                     {
-                        /* if this is a device region, override with the device width and endianness */
+                        // if this is a device region, override with the device width and endianness
                         u8 width = (byte)(romload_global.ROMREGION_GETWIDTH(region[0]) / 8);
                         endianness_t endianness = romload_global.ROMREGION_ISBIGENDIAN(region[0]) ? endianness_t.ENDIANNESS_BIG : endianness_t.ENDIANNESS_LITTLE;
                         normalize_flags_for_device(regiontag, ref width, ref endianness);
 
-                        /* remember the base and length */
+                        // remember the base and length
                         m_region = machine().memory().region_alloc(regiontag, regionlength, width, endianness);
                         LOG("Allocated {0} bytes @ {1}\n", m_region.bytes(), m_region.name());  // %X bytes @ %p\n
 
@@ -1621,11 +1567,25 @@ namespace mame
 #endif
 
                         // now process the entries in the region
-                        process_rom_entries(device, device.shortname(), region[0], new Pointer<rom_entry>(region) + 1, false);  //process_rom_entries(device, device.shortname(), region, region + 1, false);
+                        if (searchpath.empty())
+                            searchpath = device.searchpath();
+                        assert(!searchpath.empty());
+                        process_rom_entries(new std.vector<string> [] { searchpath }, device.system_bios(), region[0], region + 1, false);  //process_rom_entries({ searchpath }, device.system_bios(), region, region + 1, false);
                     }
                     else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
                     {
-                        process_disk_entries(regiontag.c_str(), region[0], new Pointer<rom_entry>(region) + 1, null);  //process_disk_entries(regiontag.c_str(), region, region + 1, nullptr);
+                        if (searchpath.empty())
+                            searchpath = device.searchpath();
+                        assert(!searchpath.empty());
+                        if (next_parent == null)
+                        {
+                            driver_device driver = (driver_device)device;  //driver_device const *const driver(dynamic_cast<driver_device const *>(&device));
+                            if (driver != null)
+                                next_parent = romload_global.next_parent_system(driver.system());
+                            else
+                                next_parent = () => { return null; };
+                        }
+                        process_disk_entries(new std.vector<string> [] { searchpath }, regiontag.c_str(), region + 1, next_parent);  //process_disk_entries({ searchpath }, regiontag.c_str(), region + 1, next_parent);
                     }
                 }
             }

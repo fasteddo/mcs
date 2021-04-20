@@ -438,7 +438,6 @@ namespace mame
         public tilemap_manager tilemap() { assert(m_tilemap != null); return m_tilemap; }
         //debug_view_manager &debug_view() const { assert(m_debug_view != NULL); return *m_debug_view; }
         public debugger_manager debugger() { assert(m_debugger != null); return m_debugger; }
-        //driver_device driver_data() { return (driver_device)root_device(); }
         public DriverClass driver_data<DriverClass>() where DriverClass : driver_device { return (DriverClass)root_device(); }
         public machine_phase phase() { return m_current_phase; }
         public bool paused() { return m_paused || (m_current_phase != machine_phase.RUNNING); }
@@ -1117,11 +1116,11 @@ namespace mame
             // start recording movie if specified
             string filename = options().mng_write();
             if (!string.IsNullOrEmpty(filename))
-                m_video.begin_recording(filename, video_manager.movie_format.MF_MNG);
+                m_video.begin_recording(filename, movie_recording.format.MNG);
 
             filename = options().avi_write();
             if (!string.IsNullOrEmpty(filename))
-                m_video.begin_recording(filename, video_manager.movie_format.MF_AVI);
+                m_video.begin_recording(filename, movie_recording.format.AVI);
 
             // if we're coming in with a savegame request, process it now
             string savegame = options().state();

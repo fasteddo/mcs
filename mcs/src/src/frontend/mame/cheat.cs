@@ -83,8 +83,8 @@ namespace mame
 
         // global helpers
         //static const char *quote_expression(astring &string, const parsed_expression &expression);
-        //static uint64_t execute_frombcd(symbol_table &table, int params, uint64_t const *param);
-        //static uint64_t execute_tobcd(symbol_table &table, int params, uint64_t const *param);
+        //static uint64_t execute_frombcd(int params, uint64_t const *param);
+        //static uint64_t execute_tobcd(int params, uint64_t const *param);
 
 
         // internal helpers

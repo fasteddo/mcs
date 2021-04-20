@@ -71,17 +71,6 @@ namespace mame
         protected static adc0809_device ADC0809(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<adc0809_device>(mconfig, tag, adc0809_device.ADC0809, clock); }
 
 
-        // atarigen
-        protected void PORT_ATARI_COMM_SOUND_TO_MAIN_READY(driver_device device, string _tag) { atarigen_global.PORT_ATARI_COMM_SOUND_TO_MAIN_READY(m_globals.helper_configurer, device, _tag); }
-        protected void PORT_ATARI_COMM_MAIN_TO_SOUND_READY(driver_device device, string _tag) { atarigen_global.PORT_ATARI_COMM_MAIN_TO_SOUND_READY(m_globals.helper_configurer, device, _tag); }
-        protected static atari_sound_comm_device ATARI_SOUND_COMM(machine_config mconfig, device_finder<atari_sound_comm_device> finder, device_finder<m6502_device> audiocpu)
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, atari_sound_comm_device.ATARI_SOUND_COMM, 0);
-            device.atari_sound_comm_device_after_ctor(audiocpu);
-            return device;
-        }
-
-
         // atarimo
         protected static atari_motion_objects_device ATARI_MOTION_OBJECTS(machine_config mconfig, device_finder<atari_motion_objects_device> finder, uint32_t clock, device_finder<screen_device> screen_tag, atari_motion_objects_config config)
         {
@@ -131,13 +120,14 @@ namespace mame
         protected static u8 make_bitmask8(s32 n) { return coretmpl_global.make_bitmask8(n); }
         protected static u16 make_bitmask16(s32 n) { return coretmpl_global.make_bitmask16(n); }
         protected static u16 make_bitmask16(u32 n) { return coretmpl_global.make_bitmask16(n); }
-        protected static u32 make_bitmask32(s32 n) { return coretmpl_global.make_bitmask32(n); }
+        public static u32 make_bitmask32(s32 n) { return coretmpl_global.make_bitmask32(n); }
         protected static u32 make_bitmask32(u32 n) { return coretmpl_global.make_bitmask32(n); }
         protected static u64 make_bitmask64(s32 n) { return coretmpl_global.make_bitmask64(n); }
         protected static u64 make_bitmask64(u32 n) { return coretmpl_global.make_bitmask64(n); }
         protected static int BIT(int x, int n) { return coretmpl_global.BIT(x, n); }
         protected static UInt32 BIT(UInt32 x, int n)  { return coretmpl_global.BIT(x, n); }
         protected static int bitswap(int val, int B1, int B0) { return coretmpl_global.bitswap(val, B1, B0); }
+        protected static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B5, B4, B3, B2, B1, B0); }
         protected static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B7, B6, B5, B4, B3, B2, B1, B0); }
         protected static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B15, B14, B13, B12, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
         public static sbyte iabs(sbyte v) { return coretmpl_global.iabs(v); }
@@ -1010,6 +1000,7 @@ namespace mame
         protected static bool ROMENTRY_ISSYSTEM_BIOS(rom_entry_interface r) { return romload_global.ROMENTRY_ISSYSTEM_BIOS(r); }
         protected static bool ROMENTRY_ISDEFAULT_BIOS(rom_entry_interface r) { return romload_global.ROMENTRY_ISDEFAULT_BIOS(r); }
         protected static bool ROMREGION_ISROMDATA(rom_entry_interface r) { return romload_global.ROMREGION_ISROMDATA(r); }
+        protected static bool ROMREGION_ISDISKDATA(rom_entry_interface r) { return romload_global.ROMREGION_ISDISKDATA(r); }
         protected static string ROM_GETNAME(rom_entry_interface r) { return romload_global.ROM_GETNAME(r); }
         protected static string ROM_GETHASHDATA(rom_entry_interface r) { return romload_global.ROM_GETHASHDATA(r); }
         protected static UInt32 ROM_GETBIOSFLAGS(rom_entry_interface r) { return romload_global.ROM_GETBIOSFLAGS(r); }
@@ -1258,6 +1249,12 @@ namespace mame
         public static int strlen(string str) { return str.Length; }
         public static int strncmp(string str1, string str2, int num) { return string.Compare(str1, 0, str2, 0, num); }
         public static int strstr(string str1, string str2) { return str1.IndexOf(str2); }
+        public static string to_string(int val) { return val.ToString(); }
+        public static string to_string(UInt32 val) { return val.ToString(); }
+        public static string to_string(Int64 val) { return val.ToString(); }
+        public static string to_string(UInt64 val) { return val.ToString(); }
+        public static string to_string(float val) { return val.ToString(); }
+        public static string to_string(double val) { return val.ToString(); }
 
 
         // c++ array
@@ -1286,7 +1283,7 @@ namespace mame
 
             public static bool operator ==(array<T> lhs, array<T> rhs)
             {
-                // available in .NET 3.5 and higher
+                // TODO available in .NET 3.5 and higher
                 //return Enumerable.SequenceEquals(lhs, rhs);
 
                 if (ReferenceEquals(lhs, rhs))
@@ -1599,6 +1596,7 @@ namespace mame
             // std::vector functions
             public T back() { return empty() ? default : this[Count - 1]; }
             public void clear() { Clear(); }
+            public Pointer<T> data() { return new Pointer<T>(this); }
             public void emplace(int index, T item) { Insert(index, item); }
             public void emplace_back(T item) { Add(item); }
             public bool empty() { return Count == 0; }
@@ -1755,6 +1753,16 @@ namespace mame
         public virtual T this[u32 index] { get { return this[(int)index]; } set { this[(int)index] = value; } }
 
 
+        public bool MemoryEquals(MemoryContainer<T> other) { return m_data == other.m_data; }
+
+
+        public virtual void AddRange(IEnumerable<T> collection)
+        {
+            foreach (var item in collection)
+                Add(item);
+        }
+
+
         public virtual bool CompareTo(MemoryContainer<T> right, int count)
         {
             for (int i = 0; i < count; i++)
@@ -1850,9 +1858,11 @@ namespace mame
 
         public static Pointer<T> operator +(Pointer<T> left, int right) { return new Pointer<T>(left, right); }
         public static Pointer<T> operator +(Pointer<T> left, UInt32 right) { return new Pointer<T>(left, (int)right); }
+        public static Pointer<T> operator +(Pointer<T> left, Pointer<T> right) { if (!left.Buffer.MemoryEquals(right.Buffer)) return null; return new Pointer<T>(left.Buffer, left.Offset + right.Offset); }
         public static Pointer<T> operator ++(Pointer<T> left) { left.m_offset++; return left; }
         public static Pointer<T> operator -(Pointer<T> left, int right) { return new Pointer<T>(left, -right); }
         public static Pointer<T> operator -(Pointer<T> left, UInt32 right) { return new Pointer<T>(left, -(int)right); }
+        public static Pointer<T> operator -(Pointer<T> left, Pointer<T> right) { if (!left.Buffer.MemoryEquals(right.Buffer)) return null; return new Pointer<T>(left.Buffer, left.Offset - right.Offset); }
         public static Pointer<T> operator --(Pointer<T> left) { left.m_offset--; return left; }
 
 

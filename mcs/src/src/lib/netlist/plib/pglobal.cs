@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using nl_fptype = System.Double;
+using size_t = System.UInt32;
 
 
 namespace mame.plib
@@ -42,6 +43,7 @@ namespace mame.plib
         // putil
         public static std.vector<string> psplit(string str, string onstr, bool ignore_empty = false) { return putil_global.psplit(str, onstr, ignore_empty); }
         public static std.vector<string> psplit(string str, std.vector<string> onstrl) { return putil_global.psplit(str, onstrl); }
+        public static UInt64 hash(string buf, size_t size) { return putil_global.hash(buf, size); }
         public static string environment(string var, string default_val) { return putil_global.environment(var, default_val); }
     }
 }

@@ -14,7 +14,7 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    partial class atarisy2_state : atarigen_state
+    partial class atarisy2_state : driver_device
     {
         /***************************************************************************
             Atari System 2 hardware
@@ -87,14 +87,13 @@ namespace mame
         );
 
 
-        //VIDEO_START_MEMBER(atarisy2_state,atarisy2)
-        void video_start_atarisy2()
+        protected override void video_start()
         {
-            /* reset the statics */
+            // reset the statics
             m_yscroll_reset_timer = machine().scheduler().timer_alloc(reset_yscroll_callback, this);
             m_vrambank.target.set_bank(0);
 
-            /* save states */
+            // save states
             save_item(NAME(new { m_playfield_tile_bank }));
         }
 
@@ -262,13 +261,13 @@ namespace mame
             bitmap_ind8 priority_bitmap = screen.priority();
             priority_bitmap.fill(0, cliprect);
 
-            /* draw the playfield */
+            // draw the playfield
             m_playfield_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 0, 0);
             m_playfield_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 1, 1);
             m_playfield_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 2, 2);
             m_playfield_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 3, 3);
 
-            /* draw and merge the MO */
+            // draw and merge the MO
             bitmap_ind16 mobitmap = m_mob.target.bitmap();
             for (sparse_dirty_rect rect = m_mob.target.first_dirty_rect(cliprect); rect != null; rect = rect.next())
             {
@@ -283,15 +282,15 @@ namespace mame
                         {
                             int mopriority = mo[x] >> atari_motion_objects_device.PRIORITY_SHIFT;
 
-                            /* high priority PF? */
+                            // high priority PF?
                             if (((mopriority + pri[x]) & 2) != 0)
                             {
-                                /* only gets priority if PF pen is less than 8 */
+                                // only gets priority if PF pen is less than 8
                                 if ((pf[x] & 0x08) == 0)
                                     pf[x] = (uint16_t)(mo[x] & atari_motion_objects_device.DATA_MASK);
                             }
 
-                            /* low priority */
+                            // low priority
                             else
                             {
                                 pf[x] = (uint16_t)(mo[x] & atari_motion_objects_device.DATA_MASK);
@@ -301,7 +300,7 @@ namespace mame
                 }
             }
 
-            /* add the alpha on top */
+            // add the alpha on top
             m_alpha_tilemap.target.tilemap.draw(screen, bitmap, cliprect, 0, 0);
             return 0;
         }

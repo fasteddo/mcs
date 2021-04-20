@@ -50,8 +50,7 @@ namespace mame
 
         /* write & read full byte */
 
-        //READ8_MEMBER( latch8_device::read )
-        public u8 read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        public uint8_t read(offs_t offset)
         {
             uint8_t res;
 
@@ -71,8 +70,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER( latch8_device::write )
-        public void write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void write(offs_t offset, uint8_t data)
         {
             assert(offset == 0);
 
@@ -84,8 +82,7 @@ namespace mame
 
 
         /* reset the latch */
-
-        //DECLARE_WRITE8_MEMBER( reset_w );
+        //void reset_w(offs_t offset, uint8_t data);
 
         /* read bit x                 */
         /* return (latch >> x) & 0x01 */
@@ -114,14 +111,14 @@ namespace mame
         /* write bit x from data into bit determined by offset */
         /* latch = (latch & ~(1<<offset)) | (((data >> x) & 0x01) << offset) */
 
-        public void bit0_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff) { bitx_w(0, offset, data); }  //WRITE8_MEMBER( latch8_device::bit0_w ) { bitx_w(0, offset, data); }
-        //WRITE8_MEMBER( latch8_device::bit1_w ) { bitx_w(1, offset, data); }
-        //WRITE8_MEMBER( latch8_device::bit2_w ) { bitx_w(2, offset, data); }
-        //WRITE8_MEMBER( latch8_device::bit3_w ) { bitx_w(3, offset, data); }
-        //WRITE8_MEMBER( latch8_device::bit4_w ) { bitx_w(4, offset, data); }
-        //WRITE8_MEMBER( latch8_device::bit5_w ) { bitx_w(5, offset, data); }
-        //WRITE8_MEMBER( latch8_device::bit6_w ) { bitx_w(6, offset, data); }
-        //WRITE8_MEMBER( latch8_device::bit7_w ) { bitx_w(7, offset, data); }
+        public void bit0_w(offs_t offset, uint8_t data) { bitx_w(0, offset, data); }
+        //void bit1_w(offs_t offset, uint8_t data);
+        //void bit2_w(offs_t offset, uint8_t data);
+        //void bit3_w(offs_t offset, uint8_t data);
+        //void bit4_w(offs_t offset, uint8_t data);
+        //void bit5_w(offs_t offset, uint8_t data);
+        //void bit6_w(offs_t offset, uint8_t data);
+        //void bit7_w(offs_t offset, uint8_t data);
 
         /* Bit mask specifying bits to be masked *out* */
         public void set_maskout(uint32_t maskout) { m_maskout = maskout; }

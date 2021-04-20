@@ -601,18 +601,15 @@ namespace mame
             timer_alloc(SYNC_POT);
             timer_alloc(SYNC_SET_IRQST);
 
-            for (int i=0; i<POKEY_CHANNELS; i++)
-            {
-                //throw new emu_unimplemented();
+            //throw new emu_unimplemented();
 #if false
-                save_item(NAME(m_channel[i].m_borrow_cnt), i);
-                save_item(NAME(m_channel[i].m_counter), i);
-                save_item(NAME(m_channel[i].m_filter_sample), i);
-                save_item(NAME(m_channel[i].m_output), i);
-                save_item(NAME(m_channel[i].m_AUDF), i);
-                save_item(NAME(m_channel[i].m_AUDC), i);
+            save_item(STRUCT_MEMBER(m_channel, m_borrow_cnt));
+            save_item(STRUCT_MEMBER(m_channel, m_counter));
+            save_item(STRUCT_MEMBER(m_channel, m_filter_sample));
+            save_item(STRUCT_MEMBER(m_channel, m_output));
+            save_item(STRUCT_MEMBER(m_channel, m_AUDF));
+            save_item(STRUCT_MEMBER(m_channel, m_AUDC));
 #endif
-            }
 
             save_item(NAME(new { m_clock_cnt }));
             save_item(NAME(new { m_p4 }));

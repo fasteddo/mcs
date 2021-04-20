@@ -571,7 +571,20 @@ namespace mame
         //void register_w(u8 data);
         //void data_w(u8 data);
 
-        //DECLARE_WRITE_LINE_MEMBER(reset_w);
+
+        //-------------------------------------------------
+        //  reset_w - handle writes to the reset lines of
+        //  the YM2151 and its associated DAC
+        //-------------------------------------------------
+        //WRITE_LINE_MEMBER(ym2151_device::reset_w)
+        public void reset_w(int state)
+        {
+            // active low reset
+            if (!m_reset_active && state == 0)
+                reset();
+
+            m_reset_active = state == 0;
+        }
 
 
         // device-level overrides
@@ -596,52 +609,50 @@ namespace mame
 
             irqlinestate = 0;
 
+            //throw new emu_unimplemented();
+#if false
             /* save all 32 operators */
-            for (int j = 0; j < 32; j++)
-            {
-                YM2151Operator op = oper[(j & 7) * 4 + (j >> 3)];
+            save_item(STRUCT_MEMBER(oper, phase));
+            save_item(STRUCT_MEMBER(oper, freq));
+            save_item(STRUCT_MEMBER(oper, dt1));
+            save_item(STRUCT_MEMBER(oper, mul));
+            save_item(STRUCT_MEMBER(oper, dt1_i));
+            save_item(STRUCT_MEMBER(oper, dt2));
+            /* operators connection is saved in chip data block */
+            save_item(STRUCT_MEMBER(oper, mem_value));
 
-                save_item(NAME(new { op.phase }), j);
-                save_item(NAME(new { op.freq }), j);
-                save_item(NAME(new { op.dt1 }), j);
-                save_item(NAME(new { op.mul }), j);
-                save_item(NAME(new { op.dt1_i }), j);
-                save_item(NAME(new { op.dt2 }), j);
-                /* operators connection is saved in chip data block */
-                save_item(NAME(new { op.mem_value }), j);
+            save_item(STRUCT_MEMBER(oper, fb_shift));
+            save_item(STRUCT_MEMBER(oper, fb_out_curr));
+            save_item(STRUCT_MEMBER(oper, fb_out_prev));
+            save_item(STRUCT_MEMBER(oper, kc));
+            save_item(STRUCT_MEMBER(oper, kc_i));
+            save_item(STRUCT_MEMBER(oper, pms));
+            save_item(STRUCT_MEMBER(oper, ams));
+            save_item(STRUCT_MEMBER(oper, AMmask));
 
-                save_item(NAME(new { op.fb_shift }), j);
-                save_item(NAME(new { op.fb_out_curr }), j);
-                save_item(NAME(new { op.fb_out_prev }), j);
-                save_item(NAME(new { op.kc }), j);
-                save_item(NAME(new { op.kc_i }), j);
-                save_item(NAME(new { op.pms }), j);
-                save_item(NAME(new { op.ams }), j);
-                save_item(NAME(new { op.AMmask }), j);
+            save_item(STRUCT_MEMBER(oper, state));
+            save_item(STRUCT_MEMBER(oper, eg_sh_ar));
+            save_item(STRUCT_MEMBER(oper, eg_sel_ar));
+            save_item(STRUCT_MEMBER(oper, tl));
+            save_item(STRUCT_MEMBER(oper, volume));
+            save_item(STRUCT_MEMBER(oper, eg_sh_d1r));
+            save_item(STRUCT_MEMBER(oper, eg_sel_d1r));
+            save_item(STRUCT_MEMBER(oper, d1l));
+            save_item(STRUCT_MEMBER(oper, eg_sh_d2r));
+            save_item(STRUCT_MEMBER(oper, eg_sel_d2r));
+            save_item(STRUCT_MEMBER(oper, eg_sh_rr));
+            save_item(STRUCT_MEMBER(oper, eg_sel_rr));
 
-                save_item(NAME(new { op.state }), j);
-                save_item(NAME(new { op.eg_sh_ar }), j);
-                save_item(NAME(new { op.eg_sel_ar }), j);
-                save_item(NAME(new { op.tl }), j);
-                save_item(NAME(new { op.volume }), j);
-                save_item(NAME(new { op.eg_sh_d1r }), j);
-                save_item(NAME(new { op.eg_sel_d1r }), j);
-                save_item(NAME(new { op.d1l }), j);
-                save_item(NAME(new { op.eg_sh_d2r }), j);
-                save_item(NAME(new { op.eg_sel_d2r }), j);
-                save_item(NAME(new { op.eg_sh_rr }), j);
-                save_item(NAME(new { op.eg_sel_rr }), j);
+            save_item(STRUCT_MEMBER(oper, key));
+            save_item(STRUCT_MEMBER(oper, ks));
+            save_item(STRUCT_MEMBER(oper, ar));
+            save_item(STRUCT_MEMBER(oper, d1r));
+            save_item(STRUCT_MEMBER(oper, d2r));
+            save_item(STRUCT_MEMBER(oper, rr));
 
-                save_item(NAME(new { op.key }), j);
-                save_item(NAME(new { op.ks }), j);
-                save_item(NAME(new { op.ar }), j);
-                save_item(NAME(new { op.d1r }), j);
-                save_item(NAME(new { op.d2r }), j);
-                save_item(NAME(new { op.rr }), j);
-
-                save_item(NAME(new { op.reserved0 }), j);
-                save_item(NAME(new { op.reserved1 }), j);
-            }
+            save_item(STRUCT_MEMBER(oper, reserved0));
+            save_item(STRUCT_MEMBER(oper, reserved1));
+#endif
 
             save_item(NAME(new { pan }));
 

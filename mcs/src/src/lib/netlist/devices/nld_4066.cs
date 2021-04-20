@@ -28,12 +28,11 @@ namespace mame
 
             detail.family_setter_t m_famsetter;
 
-            nld_power_pins             m_supply;
+            nld_power_pins m_supply;
             analog.nld_R_base m_R;
-
-            analog_input_t             m_control;
-            param_fp_t                 m_base_r;
-            state_var<bool>            m_last;
+            analog_input_t m_control;
+            param_fp_t m_base_r;
+            state_var<bool> m_last;
 
 
             //NETLIB_CONSTRUCTOR(CD4066_GATE)
@@ -50,7 +49,6 @@ namespace mame
 
 
             //NETLIB_RESETI();
-            //NETLIB_RESET(CD4066_GATE)
             public override void reset()
             {
                 // Start in off condition
@@ -60,15 +58,14 @@ namespace mame
 
 
             //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(CD4066_GATE)
             public override void update()
             {
                 nl_fptype sup = (m_supply.VCC().Q_Analog() - m_supply.GND().Q_Analog());
-                nl_fptype low = nlconst.magic(0.45) * sup;
-                nl_fptype high = nlconst.magic(0.55) * sup;
                 nl_fptype in_ = m_control.op() - m_supply.GND().Q_Analog();
                 nl_fptype rON = m_base_r.op() * nlconst.magic(5.0) / sup;
                 nl_fptype R = -nlconst.one();
+                nl_fptype low = nlconst.magic(0.45) * sup;
+                nl_fptype high = nlconst.magic(0.55) * sup;
                 bool new_state = false;
 
                 if (in_ < low)
@@ -80,13 +77,11 @@ namespace mame
                     R = rON;
                     new_state = true;
                 }
-                //printf("%s %f %f %g\n", name().c_str(), sup, in, R);
+
                 if (R > nlconst.zero() && (m_last.op != new_state))
                 {
                     m_last.op = new_state;
-                    m_R.update();
-                    m_R.set_R(R);
-                    m_R.solve_later();
+                    m_R.change_state(() => { this.m_R.set_R(R);});  //m_R.change_state([this, &R]() -> void { this->m_R.set_R(R);});
                 }
             }
         }

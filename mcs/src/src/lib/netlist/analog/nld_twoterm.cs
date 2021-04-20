@@ -55,25 +55,5 @@ namespace mame.netlist
         {
             nl_setup_global.NET_REGISTER_DEVEXT(setup, "CS", name, pI.ToString());
         }
-
-
-        // -----------------------------------------------------------------------------
-        // Generic macros
-        // -----------------------------------------------------------------------------
-
-        //#ifdef RES_R
-        //#warning "Do not include rescap.h in a netlist environment"
-        //#endif
-        //#ifndef RES_R
-        //#define RES_R(res) (res)
-        //#define RES_K(res) ((res) * 1e3)
-        //#define RES_M(res) ((res) * 1e6)
-        //#define CAP_U(cap) ((cap) * 1e-6)
-        //#define CAP_N(cap) ((cap) * 1e-9)
-        public static double CAP_P(double cap) { return cap * 1e-12; }
-        //#define IND_U(ind) ((ind) * 1e-6)
-        //#define IND_N(ind) ((ind) * 1e-9)
-        //#define IND_P(ind) ((ind) * 1e-12)
-        //#endif
     }
 }

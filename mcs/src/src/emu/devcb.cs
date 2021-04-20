@@ -281,6 +281,8 @@ namespace mame
         //template <typename Result, typename T> static std::enable_if_t<is_read_form5<Result, T>::value, mask_t<read_result_t<Result, T>, Result> > invoke_read(T const &cb, address_space &space, offs_t offset, std::make_unsigned_t<Result> mem_mask) { return std::make_unsigned_t<read_result_t<Result, T> >(cb(space)); }
         //template <typename Result, typename T> static std::enable_if_t<is_read_form6<Result, T>::value, mask_t<read_result_t<Result, T>, Result> > invoke_read(T const &cb, address_space &space, offs_t offset, std::make_unsigned_t<Result> mem_mask) { return std::make_unsigned_t<read_result_t<Result, T> >(cb()); }
         protected static u8 invoke_read(read8_delegate cb, address_space space, offs_t offset, u8 mem_mask) { return cb(space, offset, mem_mask); }
+        protected static u8 invoke_read(read8sm_delegate cb, offs_t offset) { return cb(offset); }
+        protected static u8 invoke_read(read8smo_delegate cb) { return cb(); }
         protected static int invoke_read(read_line_delegate cb) { return cb(); }
 
         // Delegate characteristics
@@ -357,6 +359,8 @@ namespace mame
         //template <typename Input, typename T> static std::enable_if_t<is_write_form5<Input, T>::value> invoke_write(T const &cb, address_space &space, offs_t &offset, Input data, std::make_unsigned_t<Input> mem_mask) { return cb(space, data); }
         //template <typename Input, typename T> static std::enable_if_t<is_write_form6<Input, T>::value> invoke_write(T const &cb, address_space &space, offs_t &offset, Input data, std::make_unsigned_t<Input> mem_mask) { return cb(data); }
         protected static void invoke_write(write8_delegate cb, address_space space, offs_t offset, u8 data, u8 mem_mask) { cb(space, offset, data, mem_mask); }
+        protected static void invoke_write(write8sm_delegate cb, offs_t offset, u8 data) { cb(offset, data); }
+        protected static void invoke_write(write8smo_delegate cb, u8 data) { cb(data); }
         protected static void invoke_write(write_line_delegate cb, int param) { cb(param); }
 
         // Delegate characteristics
@@ -409,6 +413,8 @@ namespace mame
 
             //protected abstract void validity_check(validity_checker valid);
             public abstract read8_delegate create_r8();  // virtual func_t create() = 0;
+            public abstract read8sm_delegate create_r8sm();  // virtual func_t create() = 0;
+            public abstract read8smo_delegate create_r8smo();  // virtual func_t create() = 0;
             public abstract read_line_delegate create_rl();  // virtual func_t create() = 0;
 
             u32 mask() { return m_mask; }
@@ -429,6 +435,20 @@ namespace mame
             {
                 read8_delegate result = null;  // func_t result;
                 m_builder.build_r8((read8_delegate f) => { var cb = f;  result = (address_space space, offs_t offset, u8 mem_mask) => { return cb(space, offset, mem_mask); }; });  // m_builder.build([&result] (auto &&f) { result = [cb = std::move(f)] (address_space &space, offs_t offset, typename T::input_mask_t mem_mask) { return cb(space, offset, mem_mask); }; });
+                return result;
+            }
+
+            public override read8sm_delegate create_r8sm()
+            {
+                read8sm_delegate result = null;  // func_t result;
+                m_builder.build_r8sm((read8sm_delegate f) => { var cb = f;  result = (offs_t offset) => { return cb(offset); }; });  // m_builder.build([&result] (auto &&f) { result = [cb = std::move(f)] (address_space &space, offs_t offset, typename T::input_mask_t mem_mask) { return cb(space, offset, mem_mask); }; });
+                return result;
+            }
+
+            public override read8smo_delegate create_r8smo()
+            {
+                read8smo_delegate result = null;  // func_t result;
+                m_builder.build_r8smo((read8smo_delegate f) => { var cb = f;  result = () => { return cb(); }; });  // m_builder.build([&result] (auto &&f) { result = [cb = std::move(f)] (address_space &space, offs_t offset, typename T::input_mask_t mem_mask) { return cb(space, offset, mem_mask); }; });
                 return result;
             }
 
@@ -485,7 +505,7 @@ namespace mame
             //builder_base(builder_base &&) = default;
             ~builder_base()
             {
-                //global.osd_printf_debug("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name());
+                //global_object.osd_printf_debug("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name());
                 assert(m_consumed);
             }
             //builder_base &operator=(builder_base const &) = delete;
@@ -513,9 +533,13 @@ namespace mame
 
 
             public delegate void build_chain_func_r8(read8_delegate chain);
+            public delegate void build_chain_func_r8sm(read8sm_delegate chain);
+            public delegate void build_chain_func_r8smo(read8smo_delegate chain);
             public delegate void build_chain_func_rl(read_line_delegate chain);
 
             public virtual void build_r8(build_chain_func_r8 chain) { }
+            public virtual void build_r8sm(build_chain_func_r8sm chain) { }
+            public virtual void build_r8smo(build_chain_func_r8smo chain) { }
             public virtual void build_rl(build_chain_func_rl chain) { }
 
 
@@ -769,6 +793,8 @@ namespace mame
 
 
             read8_delegate m_delegate_r8;
+            read8sm_delegate m_delegate_r8sm;
+            read8smo_delegate m_delegate_r8smo;
             read_line_delegate m_delegate_rl;
 
 
@@ -778,6 +804,20 @@ namespace mame
             {
                 //transform_base<output_t, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
                 m_delegate_r8 = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
+            }
+
+            public delegate_builder(devcb_read target, bool append, device_t devbase, string tag, read8sm_delegate func)//, string name)
+                : base(target, append, u32.MaxValue)
+            {
+                //transform_base<output_t, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
+                m_delegate_r8sm = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
+            }
+
+            public delegate_builder(devcb_read target, bool append, device_t devbase, string tag, read8smo_delegate func)//, string name)
+                : base(target, append, u32.MaxValue)
+            {
+                //transform_base<output_t, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
+                m_delegate_r8smo = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
             }
 
             //template <typename T>
@@ -844,6 +884,38 @@ namespace mame
                 chain(
                         (address_space space, offs_t offset, u8 mem_mask) => // [cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (address_space &space, offs_t offset, input_mask_t mem_mask)
                         { return (u8)((invoke_read(cb, space, offset, (u8)(mem_mask & mask_)) ^ exor_) & mask_); });  // { return (devcb_read::invoke_read<Result>(cb, space, offset, mem_mask & mask) ^ exor) & mask; });
+            }
+
+            public override void build_r8sm(build_chain_func_r8sm chain)
+            {
+                if (m_delegate_r8sm == null)
+                    return;  // return without calling the chain callback, which keeps 'result' == null
+
+                assert(m_consumed);
+                built();
+                //m_delegate.resolve();
+                var cb = m_delegate_r8sm;
+                var exor_ = exor();
+                var mask_ = mask();
+                chain(
+                        (offs_t offset) =>
+                        { return (u8)((invoke_read(cb, offset) ^ exor_) & mask_); });  // { return (devcb_read::invoke_read<Result>(cb, space, offset, mem_mask & mask) ^ exor) & mask; });
+            }
+
+            public override void build_r8smo(build_chain_func_r8smo chain)
+            {
+                if (m_delegate_r8smo == null)
+                    return;  // return without calling the chain callback, which keeps 'result' == null
+
+                assert(m_consumed);
+                built();
+                //m_delegate.resolve();
+                var cb = m_delegate_r8smo;
+                var exor_ = exor();
+                var mask_ = mask();
+                chain(
+                        () => // [cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (address_space &space, offs_t offset, input_mask_t mem_mask)
+                        { return (u8)((invoke_read(cb) ^ exor_) & mask_); });  // { return (devcb_read::invoke_read<Result>(cb, space, offset, mem_mask & mask) ^ exor) & mask; });
             }
 
             public override void build_rl(build_chain_func_rl chain)
@@ -977,6 +1049,12 @@ namespace mame
                 return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
             }
 
+            public delegate_builder set(read8smo_delegate func)
+            {
+                set_used();
+                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
+            }
+
             public delegate_builder set(read_line_delegate func)
             {
                 set_used();
@@ -995,6 +1073,12 @@ namespace mame
             //template <typename T>
             //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(char const *tag, T &&func, char const *name)
             public delegate_builder set(string tag, read8_delegate func)//, char const *name)
+            {
+                set_used();
+                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);//, name);
+            }
+
+            public delegate_builder set(string tag, read8sm_delegate func)
             {
                 set_used();
                 return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);//, name);
@@ -1140,6 +1224,8 @@ namespace mame
 
 
         protected std.vector<read8_delegate> m_functions_r8 = new std.vector<read8_delegate>();  //std::vector<func_t> m_functions;
+        protected std.vector<read8sm_delegate> m_functions_r8sm = new std.vector<read8sm_delegate>();  //std::vector<func_t> m_functions;
+        protected std.vector<read8smo_delegate> m_functions_r8smo = new std.vector<read8smo_delegate>();  //std::vector<func_t> m_functions;
         protected std.vector<read_line_delegate> m_functions_rl = new std.vector<read_line_delegate>();  //std::vector<func_t> m_functions;
         protected std.vector<creator_impl> m_creators = new std.vector<creator_impl>();  //std::vector<typename creator::ptr> m_creators;
 
@@ -1179,6 +1265,10 @@ namespace mame
             {
                 var create_r8 = c.create_r8();
                 if (create_r8 != null) m_functions_r8.emplace_back(create_r8);
+                var create_r8sm = c.create_r8sm();
+                if (create_r8sm != null) m_functions_r8sm.emplace_back(create_r8sm);
+                var create_r8smo = c.create_r8smo();
+                if (create_r8smo != null) m_functions_r8smo.emplace_back(create_r8smo);
                 var create_rl = c.create_rl();
                 if (create_rl != null) m_functions_rl.emplace_back(create_rl);
             }
@@ -1254,6 +1344,8 @@ namespace mame
 
             //protected abstract void validity_check(validity_checker valid);
             public abstract write8_delegate create_w8();
+            public abstract write8sm_delegate create_w8sm();
+            public abstract write8smo_delegate create_w8smo();
             public abstract write32_delegate create_w32();
             public abstract write_line_delegate create_wl();
         }
@@ -1273,6 +1365,18 @@ namespace mame
             {
                 var cb = m_builder.build_w8();
                 return (address_space space, offs_t offset, u8 data, u8 mem_mask) => { cb(space, offset, data, mem_mask); };  //return [cb = m_builder.build()] (address_space space, offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(space, offset, data, mem_mask); };
+            }
+
+            public override write8sm_delegate create_w8sm()
+            {
+                var cb = m_builder.build_w8sm();
+                return (offs_t offset, u8 data) => { cb(offset, data); };  //return [cb = m_builder.build()] (address_space space, offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(space, offset, data, mem_mask); };
+            }
+
+            public override write8smo_delegate create_w8smo()
+            {
+                var cb = m_builder.build_w8smo();
+                return (u8 data) => { cb(data); };  //return [cb = m_builder.build()] (address_space space, offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(space, offset, data, mem_mask); };
             }
 
             public override write32_delegate create_w32()
@@ -1297,6 +1401,16 @@ namespace mame
             public override write8_delegate create_w8()
             {
                 return (address_space space, offs_t offset, u8 data, u8 mem_mask) => { };
+            }
+
+            public override write8sm_delegate create_w8sm()
+            {
+                return (offs_t offset, u8 data) => { };
+            }
+
+            public override write8smo_delegate create_w8smo()
+            {
+                return (u8 data) => { };
             }
 
             public override write32_delegate create_w32()
@@ -1366,6 +1480,8 @@ namespace mame
             //builder_base &operator=(builder_base &&) = default;
 
             public virtual write8_delegate build_w8() { return null; }
+            public virtual write8sm_delegate build_w8sm() { return null; }
+            public virtual write8smo_delegate build_w8smo() { return null; }
             public virtual write32_delegate build_w32() { return null; }
             public virtual write_line_delegate build_wl() { return null; }
 
@@ -1745,6 +1861,8 @@ namespace mame
 
 
             write8_delegate m_delegate_w8;  //Delegate_ m_delegate;
+            write8sm_delegate m_delegate_w8sm;  //Delegate_ m_delegate;
+            write8smo_delegate m_delegate_w8smo;  //Delegate_ m_delegate;
             write_line_delegate m_delegate_wl;  //Delegate_ m_delegate;
 
 
@@ -1763,6 +1881,18 @@ namespace mame
             {
                 //transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
                 m_delegate_w8 = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
+            }
+            public delegate_builder(devcb_write target, bool append, device_t devbase, string tag, write8sm_delegate func)
+                : base(target, append, u32.MaxValue)
+            {
+                //transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
+                m_delegate_w8sm = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
+            }
+            public delegate_builder(devcb_write target, bool append, device_t devbase, string tag, write8smo_delegate func)
+                : base(target, append, u32.MaxValue)
+            {
+                //transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
+                m_delegate_w8smo = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
             }
 
             //template <typename T>
@@ -1816,6 +1946,34 @@ namespace mame
                 return
                         (address_space space, offs_t offset, u8 data, u8 mem_mask) => //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (address_space &space, offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
                         { invoke_write(cb, space, offset, (u8)((data ^ exor_) & mask_), (u8)(mem_mask & mask_)); };  //{ devcb_write::invoke_write<Input>(cb, space, offset, (data ^ exor) & mask, mem_mask & mask); };
+            }
+
+            public override write8sm_delegate build_w8sm()
+            {
+                assert(m_consumed);
+                built();
+                //m_delegate.resolve();
+
+                var cb = m_delegate_w8sm;
+                var exor_ = exor();
+                var mask_ = mask();
+                return
+                        (offs_t offset, u8 data) =>
+                        { invoke_write(cb, offset, (u8)((data ^ exor_) & mask_)); };  //{ devcb_write::invoke_write<Input>(cb, space, offset, (data ^ exor) & mask, mem_mask & mask); };
+            }
+
+            public override write8smo_delegate build_w8smo()
+            {
+                assert(m_consumed);
+                built();
+                //m_delegate.resolve();
+
+                var cb = m_delegate_w8smo;
+                var exor_ = exor();
+                var mask_ = mask();
+                return
+                        (u8 data) =>
+                        { invoke_write(cb, (u8)((data ^ exor_) & mask_)); };  //{ devcb_write::invoke_write<Input>(cb, space, offset, (data ^ exor) & mask, mem_mask & mask); };
             }
 
             public override write_line_delegate build_wl()
@@ -2620,13 +2778,25 @@ namespace mame
 
             //template <typename T>
             //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(T &&func, char const *name)
-            public delegate_builder set(write_line_delegate func)//, string name)
+            public delegate_builder set(write8_delegate func)//, string name)
             {
                 set_used();
                 return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  // delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
             }
 
-            public delegate_builder set(write8_delegate func)//, string name)
+            public delegate_builder set(write8sm_delegate func)//, string name)
+            {
+                set_used();
+                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  // delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
+            }
+
+            public delegate_builder set(write8smo_delegate func)//, string name)
+            {
+                set_used();
+                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  // delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
+            }
+
+            public delegate_builder set(write_line_delegate func)//, string name)
             {
                 set_used();
                 return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  // delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
@@ -2634,12 +2804,22 @@ namespace mame
 
             //template <typename T>
             //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(char const *tag, T &&func, char const *name)
-            public delegate_builder set(string tag, write_line_delegate func)//, string name)
+            public delegate_builder set(string tag, write8_delegate func)//, string name)
             {
                 return set(func);
             }
 
-            public delegate_builder set(string tag, write8_delegate func)//, string name)
+            public delegate_builder set(string tag, write8sm_delegate func)//, string name)
+            {
+                return set(func);
+            }
+
+            public delegate_builder set(string tag, write8smo_delegate func)//, string name)
+            {
+                return set(func);
+            }
+
+            public delegate_builder set(string tag, write_line_delegate func)//, string name)
             {
                 return set(func);
             }
@@ -2673,6 +2853,7 @@ namespace mame
 
             //template <typename... Params>
             //auto append(Params &&... args)
+            public delegate_builder append(string tag, write_line_delegate func) { return append(func); }
             public delegate_builder append(write_line_delegate func)
             {
                 m_append = true;
@@ -2882,6 +3063,8 @@ namespace mame
 
 
         protected std.vector<write8_delegate> m_functions_w8 = new std.vector<write8_delegate>();  //std::vector<func_t> m_functions;
+        protected std.vector<write8sm_delegate> m_functions_w8sm = new std.vector<write8sm_delegate>();  //std::vector<func_t> m_functions;
+        protected std.vector<write8smo_delegate> m_functions_w8smo = new std.vector<write8smo_delegate>();  //std::vector<func_t> m_functions;
         protected std.vector<write32_delegate> m_functions_w32 = new std.vector<write32_delegate>();  //std::vector<func_t> m_functions;
         protected std.vector<write_line_delegate> m_functions_wl = new std.vector<write_line_delegate>();  //std::vector<func_t> m_functions;
         protected std.vector<creator> m_creators = new std.vector<creator>();  //std::vector<typename creator::ptr> m_creators;
@@ -2924,6 +3107,10 @@ namespace mame
             {
                 var create_w8 = c.create_w8();
                 if (create_w8 != null) m_functions_w8.emplace_back(create_w8);
+                var create_w8sm = c.create_w8sm();
+                if (create_w8sm != null) m_functions_w8sm.emplace_back(create_w8sm);
+                var create_w8smo = c.create_w8smo();
+                if (create_w8smo != null) m_functions_w8smo.emplace_back(create_w8smo);
                 var create_w32 = c.create_w32();
                 if (create_w32 != null) m_functions_w32.emplace_back(create_w32);
                 var create_wl = c.create_wl();
@@ -3000,7 +3187,10 @@ namespace mame
         //Result operator()();
         public u8 op(address_space space, offs_t offset = 0, u8 mem_mask = DefaultMask)
         {
+            //throw new emu_unimplemented();
+#if false
             assert(m_creators.empty() && !m_functions_r8.empty());  //assert(m_creators.empty() && !m_functions.empty());
+#endif
 
             //typename std::vector<func_t>::const_iterator it(m_functions.begin());
             //std::make_unsigned_t<Result> result((*it)(space, offset, mem_mask));
@@ -3009,6 +3199,10 @@ namespace mame
             u8 result = 0;
             foreach (var func in m_functions_r8)
                 result |= func(space, offset, mem_mask);
+            foreach (var func in m_functions_r8sm)
+                result |= func(offset);
+            foreach (var func in m_functions_r8smo)
+                result |= func();
 
             return result;
         }
@@ -3057,7 +3251,10 @@ namespace mame
         //void operator()(Input data);
         public void op(address_space space, offs_t offset, u8 data, u8 mem_mask = DefaultMask)
         {
-            assert(m_creators.empty() && !m_functions_w8.empty());  //assert(m_creators.empty() && !m_functions.empty());
+            //throw new emu_unimplemented();
+#if false
+            assert(m_creators.empty() && !m_functions.empty());
+#endif
 
             //typename std::vector<func_t>::const_iterator it(m_functions.begin());
             //(*it)(space, offset, data, mem_mask);
@@ -3065,6 +3262,10 @@ namespace mame
             //    (*it)(space, offset, data, mem_mask);
             foreach (var func in m_functions_w8)
                 func(space, offset, data, mem_mask);
+            foreach (var func in m_functions_w8sm)
+                func(offset, data);
+            foreach (var func in m_functions_w8smo)
+                func(data);
         }
         public void op(address_space space, u8 data) { op(space, 0U, data, DefaultMask); }
         public void op(offs_t offset, u8 data, u8 mem_mask = DefaultMask) { op(default_space(), offset, data, mem_mask); }

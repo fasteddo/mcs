@@ -32,11 +32,22 @@ namespace mame
 
 
         // configuration
-        //auto data_pending_callback() { return m_data_pending_cb.bind(); }
+        public devcb_write_line.binder data_pending_callback() { return m_data_pending_cb.bind(); }  //auto data_pending_callback() { return m_data_pending_cb.bind(); }
+
+
         //void set_separate_acknowledge(bool ack) { m_separate_acknowledge = ack; }
 
 
-        //DECLARE_READ_LINE_MEMBER(pending_r);
+        //-------------------------------------------------
+        //  pending_r - tell whether the latch is waiting
+        //  to be read
+        //-------------------------------------------------
+        //READ_LINE_MEMBER(generic_latch_base_device::pending_r)
+        public int pending_r()
+        {
+            return m_latch_written ? 1 : 0;
+        }
+
 
         //u8 acknowledge_r(address_space &space);
         //void acknowledge_w(u8 data = 0);

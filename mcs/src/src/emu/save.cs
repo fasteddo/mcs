@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
@@ -55,12 +56,12 @@ namespace mame
         running_machine m_machine;              // reference to our machine
         //rewinder m_rewind;               // rewinder
         bool m_reg_allowed;          // are registrations allowed?
-        int m_illegal_regs;         // number of illegal registrations
+        s32 m_illegal_regs;         // number of illegal registrations
 
-        List<state_entry> m_entry_list = new List<state_entry>();          // list of reigstered entries
+        List<state_entry> m_entry_list = new List<state_entry>();  //std::vector<std::unique_ptr<state_entry>>    m_entry_list;       // list of registered entries
         //std::vector<std::unique_ptr<ram_state>>      m_ramstate_list;    // list of ram states
-        //simple_list<state_callback> m_presave_list;     // list of pre-save functions
-        //simple_list<state_callback> m_postload_list;    // list of post-load functions
+        //std::vector<std::unique_ptr<state_callback>> m_presave_list;     // list of pre-save functions
+        //std::vector<std::unique_ptr<state_callback>> m_postload_list;    // list of post-load functions
 
 
         // construction/destruction
@@ -232,11 +233,18 @@ namespace mame
         //save_error write_file(emu_file &file);
         //save_error read_file(emu_file &file);
 
-        //save_error write_buffer(u8 *data, size_t size);
-        //save_error read_buffer(u8 *data, size_t size);
+        //save_error write_stream(std::ostream &str);
+        //save_error read_stream(std::istream &str);
+
+        //save_error write_buffer(void *buf, size_t size);
+        //save_error read_buffer(const void *buf, size_t size);
 
 
         // internal helpers
+        //template <typename T, typename U, typename V, typename W>
+        //save_error do_write(T check_space, U write_block, V start_header, W start_data);
+        //template <typename T, typename U, typename V, typename W>
+        //save_error do_read(T check_length, U read_block, V start_header, W start_data);
         //u32 signature() const;
         //void dump_registry() const;
         //static save_error validate_header(const u8 *header, const char *gamename, u32 signature, void (CLIB_DECL *errormsg)(const char *fmt, ...), const char *error_prefix);

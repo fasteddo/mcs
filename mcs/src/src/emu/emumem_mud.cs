@@ -64,13 +64,12 @@ namespace mame
             m_access_endian = access_endian;
 
 
+            u32 bits_per_access = 8U << access_width;
             u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask32((u32)(Width + AddrShift)) : 0;
-            u32 bits_per_access = 8u << access_width;
 
             // Compute the real base addresses
             m_addrstart = addrstart & ~NATIVE_MASK;
             m_addrend = addrend & ~NATIVE_MASK;
-
 
             // Compute the masks and the keys
             uX [] umasks = new uX[4];  //std.array<uX, 4> umasks;

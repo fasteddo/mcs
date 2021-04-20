@@ -266,15 +266,6 @@ namespace mame
         //void reinstall_all(read_or_write mode);
         //void reinstall(address_space &space, read_or_write mode);
         //void write_tracking(address_space &space, offs_t address, u64 data);
-
-
-        // symbol get/set callbacks
-        //static u64 get_current_pc(symbol_table &table);
-        //static u64 get_cycles(symbol_table &table);
-        //static u64 get_totalcycles(symbol_table &table);
-        //static u64 get_lastinstructioncycles(symbol_table &table);
-        //static u64 get_state(symbol_table &table, int index);
-        //static void set_state(symbol_table &table, int index, u64 value);
     }
 
 

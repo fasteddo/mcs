@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -61,38 +62,41 @@ namespace mame
         public void set_basenote(int node) { m_basenode = node; }
 
 
-        //READ8_MEMBER( namco_54xx_device::K_r )
-        u8 K_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        //WRITE_LINE_MEMBER( namco_54xx_device::reset )
+        public void reset(int state)
         {
-            return (u8)(m_latched_cmd >> 4);
+            // The incoming signal is active low
+            m_cpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
-        //READ8_MEMBER( namco_54xx_device::R0_r )
-        u8 R0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+
+        uint8_t K_r()
         {
-            return (u8)(m_latched_cmd & 0x0f);
+            return (uint8_t)(m_latched_cmd >> 4);
         }
 
-        //WRITE8_MEMBER( namco_54xx_device::O_w )
-        void O_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        uint8_t R0_r()
         {
-            byte out_ = (byte)(data & 0x0f);
+            return (uint8_t)(m_latched_cmd & 0x0f);
+        }
+
+        void O_w(uint8_t data)
+        {
+            uint8_t out_ = (uint8_t)(data & 0x0f);
             if ((data & 0x10) != 0)
                 m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_1_DATA(m_basenode), out_);
             else
                 m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_0_DATA(m_basenode), out_);
         }
 
-        //WRITE8_MEMBER( namco_54xx_device::R1_w )
-        void R1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void R1_w(uint8_t data)
         {
-            byte out_ = (byte)(data & 0x0f);
+            uint8_t out_ = (uint8_t)(data & 0x0f);
 
             m_discrete.target.write((offs_t)namco54_global.NAMCO_54XX_2_DATA(m_basenode), out_);
         }
 
-        //WRITE8_MEMBER( namco_54xx_device::write )
-        public void write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void write(uint8_t data)
         {
             machine().scheduler().synchronize(latch_callback, data);  //timer_expired_delegate(FUNC(namco_54xx_device::latch_callback),this), data);
 

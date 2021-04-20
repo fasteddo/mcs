@@ -1119,18 +1119,18 @@ namespace mame
             {
                 // append a space if not the first code
                 if (codenum != 0)
-                    str.append(" ");
+                    str = str.append_(" ");
 
                 // handle OR/NOT codes here
                 input_code code = cleaned_seq[codenum];
                 if (code == input_seq.or_code)
-                    str.append("or");
+                    str = str.append_("or");
                 else if (code == input_seq.not_code)
-                    str.append("not");
+                    str = str.append_("not");
 
                 // otherwise, assume it is an input code and ask the input system to generate it
                 else
-                    str.append(code_name(code));
+                    str = str.append_(code_name(code));
             }
 
             return str;

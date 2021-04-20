@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using record_list = mame.std.list<mame.audit_record>;
+using size_t = System.UInt32;
+using uint32_t = System.UInt32;
 
 
 namespace mame
@@ -160,7 +162,6 @@ namespace mame
         record_list m_record_list = new record_list();
         driver_enumerator m_enumerator;
         string m_validation;
-        string m_searchpath;
 
 
         // construction/destruction
@@ -171,7 +172,6 @@ namespace mame
         {
             m_enumerator = enumerator;
             m_validation = AUDIT_VALIDATE_FULL;
-            m_searchpath = "";
         }
 
 
@@ -199,22 +199,19 @@ namespace mame
             int shared_required = 0;
 
             // iterate over devices and regions
+            std.vector<string> searchpath = new std.vector<string>();
             foreach (device_t device in new device_iterator(m_enumerator.config().root_device()))
             {
-                // determine the search path for this source and iterate through the regions
-                m_searchpath = "";
-                foreach (string path in device.searchpath())
-                {
-                    if (!m_searchpath.empty())
-                        m_searchpath += ';';
-                    m_searchpath += path;
-                }
+                searchpath.clear();
 
                 // now iterate over regions and ROMs within
                 for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
                     for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
+                        if (searchpath.empty())
+                            searchpath = device.searchpath();
+
                         string name = romload_global.ROM_GETNAME(rom[0]);
                         util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
                         device_t shared_device = find_shared_device(device, name, hashes, romload_global.ROM_GETLENGTH(rom[0]));
@@ -230,11 +227,11 @@ namespace mame
                         // audit a file
                         audit_record record = null;
                         if (romload_global.ROMREGION_ISROMDATA(region[0]))
-                            record = audit_one_rom(rom);
+                            record = audit_one_rom(searchpath, rom);
 
                         // audit a disk
                         else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
-                            record = audit_one_disk(rom);
+                            record = audit_one_disk(rom, device);
 
                         if (record != null)
                         {
@@ -275,39 +272,33 @@ namespace mame
 
             // store validation for later
             m_validation = validation;
-            m_searchpath = device.shortname();
 
-            int found = 0;
-            int required = 0;
+            size_t found = 0;
+            size_t required = 0;
 
-            // now iterate over regions and ROMs within
-            for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
-            {
-                for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
-                {
-                    util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
-
-                    // count the number of files with hashes
-                    if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP) && !romload_global.ROM_ISOPTIONAL(rom[0]))
+            std.vector<string> searchpath = new std.vector<string>();
+            audit_regions(
+                    (rom_entry region, Pointer<rom_entry> rom) =>  //[this, &device, &searchpath] (rom_entry const *region, rom_entry const *rom) -> audit_record const *
                     {
-                        required++;
-                    }
+                        if (ROMREGION_ISROMDATA(region))
+                        {
+                            if (searchpath.empty())
+                                searchpath = device.searchpath();
 
-                    // audit a file
-                    audit_record record = null;
-                    if (romload_global.ROMREGION_ISROMDATA(region[0]))
-                        record = audit_one_rom(rom);
-                    // audit a disk
-                    else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
-                        record = audit_one_disk(rom);
-
-                    // count the number of files that are found.
-                    if (record != null && (record.status() == audit_record.audit_status.STATUS_GOOD || record.status() == audit_record.audit_status.STATUS_FOUND_INVALID))
-                    {
-                        found++;
-                    }
-                }
-            }
+                            return audit_one_rom(searchpath, rom);
+                        }
+                        else if (ROMREGION_ISDISKDATA(region))
+                        {
+                            return audit_one_disk(rom, device);
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    },
+                    romload_global.rom_first_region(device)[0],
+                    out found,
+                    out required);
 
             if (found == 0 && required > 0)
             {
@@ -324,7 +315,7 @@ namespace mame
         //-------------------------------------------------
         //  audit_software
         //-------------------------------------------------
-        public summary audit_software(string list_name, software_info swinfo, string validation = AUDIT_VALIDATE_FULL)
+        public summary audit_software(software_list_device swlist, software_info swinfo, string validation = AUDIT_VALIDATE_FULL)
         {
             // start fresh
             m_record_list.clear();
@@ -332,25 +323,33 @@ namespace mame
             // store validation for later
             m_validation = validation;
 
-            string combinedpath = swinfo.shortname() + ";" + list_name + osdcore_global.PATH_SEPARATOR + swinfo.shortname();
-            string locationtag = list_name + "%" + swinfo.shortname() + "%";
-            if (swinfo.parentname() != null)
-            {
-                locationtag += swinfo.parentname();
-                combinedpath += ";" + swinfo.parentname() + ";" + list_name + osdcore_global.PATH_SEPARATOR + swinfo.parentname();
-            }
-            m_searchpath = combinedpath;
-
             int found = 0;
             int required = 0;
 
             throw new emu_unimplemented();
 #if false
             // now iterate over software parts
-            foreach (software_part part in swinfo.parts())
-                audit_regions(part.romdata().data(), locationtag.c_str(), found, required);
-#endif
-
+            std::vector<std::string> searchpath;
+            auto const do_audit =
+                    [this, &swlist, &swinfo, &searchpath] (rom_entry const *region, rom_entry const *rom) -> audit_record const *
+                    {
+                        if (ROMREGION_ISROMDATA(region))
+                        {
+                            if (searchpath.empty())
+                                searchpath = rom_load_manager::get_software_searchpath(swlist, swinfo);
+                            return &audit_one_rom(searchpath, rom);
+                        }
+                        else if (ROMREGION_ISDISKDATA(region))
+                        {
+                            return &audit_one_disk(rom, swlist, swinfo);
+                        }
+                        else
+                        {
+                            return nullptr;
+                        }
+                    };
+            for (const software_part &part : swinfo.parts())
+                audit_regions(do_audit, part.romdata().data(), found, required);
 
             if (found == 0 && required > 0)
             {
@@ -359,8 +358,8 @@ namespace mame
             }
 
             // return a summary
-            string unused = "";
-            return summarize(list_name, ref unused);
+            return summarize(swlist.list_name().c_str());
+#endif
         }
 
 
@@ -528,40 +527,38 @@ namespace mame
 
         // internal helpers
 
+        void audit_regions(Func<rom_entry, Pointer<rom_entry>, audit_record> do_audit, rom_entry region, out size_t found, out size_t required)  //template <typename T> void audit_regions(T do_audit, const rom_entry *region, std::size_t &found, std::size_t &required);
+        {
+            throw new emu_unimplemented();
+        }
+
+
         //-------------------------------------------------
         //  audit_one_rom - validate a single ROM entry
         //-------------------------------------------------
-        audit_record audit_one_rom(Pointer<rom_entry> rom)  //audit_record &audit_one_rom(const rom_entry *rom);
+        audit_record audit_one_rom(std.vector<string> searchpath, Pointer<rom_entry> rom)  //audit_record &audit_one_rom(const std::vector<std::string> &searchpath, const rom_entry *rom);
         {
             // allocate and append a new record
             audit_record record = m_record_list.emplace_back(new audit_record(rom, audit_record.media_type.MEDIA_ROM)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), *rom, media_type::ROM);
 
             // see if we have a CRC and extract it if so
-            UInt32 crc;
+            uint32_t crc;
             bool has_crc = record.expected_hashes().crc(out crc);
 
             // find the file and checksum it, getting the file length along the way
-            emu_file file = new emu_file(m_enumerator.options().media_path(), osdcore_global.OPEN_FLAG_READ | osdcore_global.OPEN_FLAG_NO_PRELOAD);
-            file.set_restrict_to_mediapath(true);
-            path_iterator path = new path_iterator(m_searchpath);
-            string curpath;
-            // FIXME: needs to be adjusted to match ROM loading behaviour
-            while (path.next(out curpath, record.name()))
-            {
-                // open the file if we can
-                osd_file.error filerr;
-                if (has_crc)
-                    filerr = file.open(curpath, crc);
-                else
-                    filerr = file.open(curpath);
+            emu_file file = new emu_file(m_enumerator.options().media_path(), searchpath, OPEN_FLAG_READ | OPEN_FLAG_NO_PRELOAD);
+            file.set_restrict_to_mediapath(1);
 
-                // if it worked, get the actual length and hashes, then stop
-                if (filerr == osd_file.error.NONE)
-                {
-                    record.set_actual(file.hashes(m_validation), file.size());
-                    break;
-                }
-            }
+            // open the file if we can
+            osd_file.error filerr;
+            if (has_crc)
+                filerr = file.open(record.name(), crc);
+            else
+                filerr = file.open(record.name());
+
+            // if it worked, get the actual length and hashes, then stop
+            if (filerr == osd_file.error.NONE)
+                record.set_actual(file.hashes(m_validation), file.size());
 
             file.close();
 
@@ -574,14 +571,17 @@ namespace mame
         //-------------------------------------------------
         //  audit_one_disk - validate a single disk entry
         //-------------------------------------------------
-        audit_record audit_one_disk(Pointer<rom_entry> rom, string locationtag = null)  //audit_record &audit_one_disk(const rom_entry *rom, const char *locationtag);
+        audit_record audit_one_disk(Pointer<rom_entry> rom, object args)  //template <typename... T> audit_record &audit_one_disk(const rom_entry *rom, T &&... args);
         {
             // allocate and append a new record
             audit_record record = m_record_list.emplace_back(new audit_record(rom, audit_record.media_type.MEDIA_DISK)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), *rom, media_type::DISK);
 
             // open the disk
             chd_file source = new chd_file();
-            chd_error err = (chd_error)romload_global.open_disk_image(m_enumerator.options(), m_enumerator.driver(), rom[0], source, locationtag);
+
+            throw new emu_unimplemented();
+#if false
+            chd_error err = rom_load_manager.open_disk_image(m_enumerator.options(), args, rom[0], source);
 
             // if we succeeded, get the hashes
             if (err == chd_error.CHDERR_NONE)
@@ -599,6 +599,7 @@ namespace mame
             // compute the final status
             compute_status(record, rom[0], err == chd_error.CHDERR_NONE);
             return record;
+#endif
         }
 
 

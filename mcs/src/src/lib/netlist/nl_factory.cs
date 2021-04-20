@@ -34,7 +34,8 @@ namespace mame.netlist
             //    static plib::unique_ptr<factory::element_t> NETLIB_NAME(p_alias ## _c) \
             //            (const pstring &classname) \
             //    { \
-            //        return plib::make_unique<factory::device_element_t<ns :: NETLIB_NAME(chip)>>(p_name, classname, p_def_param, __FILE__); \
+            //        using devtype = factory::device_element_t<ns :: NETLIB_NAME(chip)>; \
+            //        return devtype::create(p_name, classname, p_def_param, __FILE__); \
             //    } \
             //    \
             //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
@@ -87,10 +88,10 @@ namespace mame.netlist
 
             //~element_t() { }
 
-            //COPYASSIGNMOVE(element_t, default)
+            //PCOPYASSIGNMOVE(element_t, default)
 
 
-            public abstract device_t Create(nlmempool pool, netlist_state_t anetlist, string name);  //virtual unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) = 0;
+            public abstract device_t make_device(nlmempool pool, netlist_state_t anetlist, string name);  //virtual unique_pool_ptr<device_t> make_device(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) = 0;
 
             public virtual void macro_actions(nlparse_t nparser, string name)
             {
@@ -112,9 +113,10 @@ namespace mame.netlist
             public device_element_t(string name, string classname, string def_param, string sourcefile) : base(name, classname, def_param, sourcefile) { }
 
 
-            //unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override { return pool.make_unique<C>(anetlist, name); }
-            public override device_t Create(nlmempool pool, netlist_state_t anetlist, string name)
+            //unique_pool_ptr<device_t> make_device(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override { return pool.make_unique<C>(anetlist, name); }
+            public override device_t make_device(nlmempool pool, netlist_state_t anetlist, string name)
             {
+                //return pool.make_unique<C>(anetlist, name);
                 Type type = typeof(C);
                 if      (type == typeof(nld_sound_in))              return new nld_sound_in(anetlist, name);
                 else if (type == typeof(nld_sound_out))             return new nld_sound_out(anetlist, name);
@@ -130,6 +132,12 @@ namespace mame.netlist
                 else if (type == typeof(devices.nld_solver))        return new devices.nld_solver(anetlist, name);
                 else throw new emu_fatalerror("type {0} not handled yet.  add it to switch statement here", type);
             }
+
+
+            //static plib::unique_ptr<device_element_t<C>> create(const pstring &name, const pstring &classname, const pstring &def_param, const pstring &sourcefile)
+            //{
+            //    return plib::make_unique<device_element_t<C>>(name, classname, def_param, sourcefile);
+            //}
         }
 
 
@@ -140,13 +148,13 @@ namespace mame.netlist
 
             public list_t(log_type alog) { m_log = alog; }
             //~list_t() { }
-            //COPYASSIGNMOVE(list_t, delete)
+            //PCOPYASSIGNMOVE(list_t, delete)
 
 
             //template<class device_class>
-            public void register_device<device_class>(string name, string classname, string def_param)
+            public void register_device<device_class>(string name, string classname, string def_param, string sourcefile)
             {
-                register_device(new device_element_t<device_class>(name, classname, def_param));  //register_device(plib::make_unique<device_element_t<device_class>>(name, classname, def_param));
+                register_device(new device_element_t<device_class>(name, classname, def_param, sourcefile));  //register_device(device_element_t<device_class>::create(name, classname, def_param, sourcefile));
             }
 
             public void register_device(element_t factory)  //void register_device(plib::unique_ptr<element_t> &&factory);
@@ -205,7 +213,7 @@ namespace mame.netlist
                 : base(name, classname, def_param, source) {  }
 
 
-            public override device_t Create(nlmempool pool, netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override;
+            public override device_t make_device(nlmempool pool, netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> make_device(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override;
             {
                 return new nld_wrapper(anetlist, name);  //return pool.make_unique<NETLIB_NAME(wrapper)>(anetlist, name);
             }

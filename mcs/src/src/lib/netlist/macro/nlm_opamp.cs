@@ -328,109 +328,12 @@ namespace mame
 
 
 #if USE_LM3900_MODEL_0  // == 0
-        static NETLIST_START(LM3900)
-
-            /*
-             *  Fast norton opamp model without bandwidth
-             */
-
-            /* Terminal definitions for calling netlists */
-
-            ALIAS(PLUS, R1.1) // Positive input
-            ALIAS(MINUS, R2.1) // Negative input
-            ALIAS(OUT, G1.OP) // Opamp output ...
-            ALIAS(GND, G1.ON)  // V- terminal
-            ALIAS(VCC, DUMMY.1)  // V+ terminal
-
-            RES(DUMMY, RES_K(1))
-            NET_C(DUMMY.2, GND)
-
-            /* The opamp model */
-
-            RES(R1, 1)
-            RES(R2, 1)
-            NET_C(R1.1, G1.IP)
-            NET_C(R2.1, G1.IN)
-            NET_C(R1.2, R2.2, G1.ON)
-            VCVS(G1)
-            PARAM(G1.G, 10000000)
-            //PARAM(G1.RI, 1)
-            PARAM(G1.RO, RES_K(8))
-
-        NETLIST_END()
 #endif
 
 #if USE_LM3900_MODEL_1  // == 1
-        //  LTSPICE MODEL OF LM3900 FROM NATIONAL SEMICONDUCTOR
-        //  MADE BY HELMUT SENNEWALD, 8/6/2004
-        //  THE LM3900 IS A SO CALLED NORTON AMPLIFIER.
-        //
-        //  PIN ORDER:    IN+ IN- VCC VSS OUT
-        static NETLIST_START(LM3900)
-            PARAM(E1.G, 0.5)
-            //ALIAS(IN+, Q2.B)
-            //ALIAS(IN-, Q2.C)
-            //ALIAS(VCC, Q10.C)
-            //ALIAS(VSS, Q2.E)
-
-            ALIAS(PLUS, Q2.B)
-            ALIAS(MINUS, Q2.C)
-            ALIAS(VCC, Q10.C)
-            ALIAS(GND, Q2.E)
-            ALIAS(OUT, Q6.C)
-
-            //CS(B1/*I=LIMIT(0, V(VCC,VSS)/10K, 0.2m)*/)
-            CS(B1, 2e-4)
-            CAP(C1, CAP_P(6.000000))
-            VCVS(E1)
-            QBJT_EB(Q1, "LM3900_NPN1")
-            QBJT_EB(Q10, "LM3900_NPN1")
-            QBJT_EB(Q11, "LM3900_NPN1")
-            QBJT_EB(Q12, "LM3900_NPN1")
-            QBJT_EB(Q2, "LM3900_NPN1")
-            QBJT_EB(Q3, "LM3900_NPN1")
-            QBJT_EB(Q4, "LM3900_PNP1")
-            QBJT_EB(Q5, "LM3900_PNP1")
-            QBJT_EB(Q6, "LM3900_PNP1")
-            QBJT_EB(Q7, "LM3900_PNP1")
-            QBJT_EB(Q8, "LM3900_NPN1")
-            QBJT_EB(Q9, "LM3900_NPN1")
-            RES(R1, RES_K(2.000000))
-            RES(R6, RES_K(1.600000))
-            NET_C(Q11.B, Q12.B, R6.2)
-            NET_C(Q5.C, Q5.B, B1.P, Q4.B)
-            NET_C(Q8.C, Q8.B, B1.N, R1.1, E1.IP)
-            NET_C(Q9.B, R1.2)
-            NET_C(R6.1, E1.OP)
-            NET_C(Q10.C, Q5.E, Q4.E, Q11.C, Q12.C)
-            NET_C(Q2.C, Q3.B, Q12.E)
-            NET_C(Q2.E, Q3.E, Q9.E, C1.2, Q1.E, Q8.E, E1.ON, E1.IN, Q7.C)
-            NET_C(Q3.C, Q6.B, C1.1, Q7.B)
-            NET_C(Q6.E, Q10.B, Q4.C)
-            NET_C(Q6.C, Q10.E, Q9.C, Q7.E)
-            NET_C(Q2.B, Q1.C, Q1.B, Q11.E)
-        NETLIST_END()
 #endif
 
 #if USE_LM3900_MODEL_2  // == 2
-        static NETLIST_START(LM3900)
-            OPAMP(A, "LM3900")
-
-            DIODE(D1, "D(IS=1e-15 N=1)")
-            CCCS(CS1) // Current Mirror
-
-            ALIAS(VCC, A.VCC)
-            ALIAS(GND, A.GND)
-            ALIAS(PLUS, A.PLUS)
-            ALIAS(MINUS, A.MINUS)
-            ALIAS(OUT, A.OUT)
-
-            NET_C(A.PLUS, CS1.IP)
-            NET_C(D1.A, CS1.IN)
-            NET_C(CS1.OP, A.MINUS)
-            NET_C(CS1.ON, A.GND, D1.K)
-
-        NETLIST_END()
 #endif
 
 #if USE_LM3900_MODEL_3  // == 3
@@ -445,7 +348,7 @@ namespace mame
             netlist.nl_setup_global.ALIAS(setup, "MINUS", "Q1.C");
             netlist.nl_setup_global.ALIAS(setup, "OUT", "Q5.E");
 
-            netlist.nld_twoterm_global.CAP(setup, "C1", netlist.nld_twoterm_global.CAP_P(6.000000));
+            netlist.nld_twoterm_global.CAP(setup, "C1", netlist.devices.net_lib_global.CAP_P(6.000000));
             netlist.nld_twoterm_global.CS(setup, "I1", 1.300000e-3);
             netlist.nld_twoterm_global.CS(setup, "I2", 200e-6);
             nld_bjt_global.QBJT_EB(setup, "Q1", "NPN");

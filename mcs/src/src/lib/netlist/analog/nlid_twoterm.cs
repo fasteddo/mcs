@@ -75,25 +75,30 @@ namespace mame.netlist
             }
 
 
-            public void solve_now()
+            public solver.matrix_solver_t solver()
             {
-                /* we only need to call the non-rail terminal */
-                if (m_P.has_net() && !m_P.net().isRailNet())
-                    m_P.solve_now();
-                else if (m_N.has_net() && !m_N.net().isRailNet())
-                    m_N.solve_now();
+                var solv = m_P.solver();
+                if (solv != null)
+                    return solv;
+                return m_N.solver();
             }
 
 
-            //void solve_later(netlist_time delay = netlist_time::quantum()) noexcept;
-            public void solve_later() { solve_later(netlist_time.quantum()); }
-            public void solve_later(netlist_time delay)
+            public void solve_now()
             {
-                // we only need to call the non-rail terminal
-                if (m_P.has_net() && !m_P.net().isRailNet())
-                    m_P.schedule_solve_after(delay);
-                else if (m_N.has_net() && !m_N.net().isRailNet())
-                    m_N.schedule_solve_after(delay);
+                var solv = solver();
+                if (solv != null)
+                    solv.solve_now();
+            }
+
+
+            //template <typename F>
+            public void change_state(Action f) { change_state(f, netlist_time.quantum()); }
+            public void change_state(Action f, netlist_time delay)  //void change_state(F f, netlist_time delay = netlist_time::quantum())
+            {
+                var solv = solver();
+                if (solv != null)
+                    solv.change_state(f, delay);
             }
 
 
@@ -195,7 +200,6 @@ namespace mame.netlist
 
 
             //NETLIB_RESETI();
-            //NETLIB_RESET(R)
             public override void reset()
             {
                 base.reset();  //NETLIB_NAME(twoterm)::reset();
@@ -203,13 +207,13 @@ namespace mame.netlist
             }
 
             //NETLIB_UPDATE_PARAMI();
-            //NETLIB_UPDATE_PARAM(R)
             public override void update_param()
             {
                 // FIXME: We only need to update the net first if this is a time stepping net
-                solve_now();
-                set_R(std.max(m_R.op(), exec().gmin()));
-                solve_later();
+                change_state(() =>
+                {
+                    set_R(std.max(m_R.op(), exec().gmin()));
+                });
             }
 
             /* protect set_R ... it's a recipe to desaster when used to bypass the parameter */
@@ -275,20 +279,24 @@ namespace mame.netlist
             //NETLIB_UPDATE_PARAM(POT)
             public override void update_param()
             {
-                // FIXME: We only need to update the net first if this is a time stepping net
-                m_R1.solve_now();
-                m_R2.solve_now();
-
                 nl_fptype v = m_Dial.op();
                 if (m_DialIsLog.op())
                     v = (plib.pglobal.exp(v) - nlconst.one()) / (plib.pglobal.exp(nlconst.one()) - nlconst.one());
                 if (m_Reverse.op())
                     v = nlconst.one() - v;
 
-                m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
-                m_R2.set_R(std.max(m_R.op() * (nlconst.one() - v), exec().gmin()));
-                m_R1.solve_later();
-                m_R2.solve_later();
+                nl_fptype r1 = std.max(m_R.op() * v, exec().gmin());
+                nl_fptype r2 = std.max(m_R.op() * (nlconst.one() - v), exec().gmin());
+
+                if (m_R1.solver() == m_R2.solver())
+                { 
+                    m_R1.change_state(() => { m_R1.set_R(r1); m_R2.set_R(r2); });  //m_R1.change_state([this, &r1, &r2]() { m_R1.set_R(r1); m_R2.set_R(r2); });
+                }
+                else
+                {
+                    m_R1.change_state(() => { m_R1.set_R(r1); });  //m_R1.change_state([this, &r1]() { m_R1.set_R(r1); });
+                    m_R2.change_state(() => { m_R2.set_R(r2); });  //m_R2.change_state([this, &r2]() { m_R2.set_R(r2); });
+                }
             }
         }
 
@@ -305,8 +313,7 @@ namespace mame.netlist
 
             public param_fp_t m_C;
 
-            //generic_capacitor<capacitor_e::VARIABLE_CAPACITY> m_cap;
-            generic_capacitor_constant m_cap;  //generic_capacitor<capacitor_e.CONSTANT_CAPACITY> m_cap;
+            generic_capacitor_const m_cap;
 
 
             //NETLIB_CONSTRUCTOR_DERIVED(C, twoterm)
@@ -316,7 +323,7 @@ namespace mame.netlist
                 : base(owner, name)
             {
                 m_C = new param_fp_t(this, "C", nlconst.magic(1e-6));
-                m_cap = new generic_capacitor_constant(this, "m_cap");  //, m_cap(*this, "m_cap")
+                m_cap = new generic_capacitor_const(this, "m_cap");  //, m_cap(*this, "m_cap")
             }
 
 
@@ -324,35 +331,19 @@ namespace mame.netlist
             public override bool is_timestep() { return true; }
 
 
-            //NETLIB_TIMESTEPI();
+            //NETLIB_TIMESTEPI()
             public override void timestep(nl_fptype step)
             {
-                m_cap.timestep(m_C.op(), deltaV(), step);
-                if (m_cap.type() == capacitor_e.CONSTANT_CAPACITY)
-                {
-                    nl_fptype I = m_cap.Ieq(m_C.op(), deltaV());
-                    nl_fptype G = m_cap.G(m_C.op());
-                    set_mat( G, -G, -I,
-                            -G,  G,  I);
-                }
-            }
-
-
-            //NETLIB_IS_DYNAMIC(m_cap.type() == capacitor_e::VARIABLE_CAPACITY)
-            public override bool is_dynamic() { return m_cap.type() == capacitor_e.VARIABLE_CAPACITY; }
-
-
-            //NETLIB_UPDATE_TERMINALSI()
-            public override void update_terminals()
-            {
-                nl_fptype I = m_cap.Ieq(m_C.op(), deltaV());
-                nl_fptype G = m_cap.G(m_C.op());
+                // G, Ieq
+                var res = m_cap.timestep(m_C.op(), deltaV(), step);
+                nl_fptype G = res.first;
+                nl_fptype I = res.second;
                 set_mat( G, -G, -I,
                         -G,  G,  I);
             }
 
 
-            //NETLIB_RESETI();
+            //NETLIB_RESETI()
             public override void reset()
             {
                 m_cap.setparams(exec().gmin());
@@ -361,10 +352,8 @@ namespace mame.netlist
 
             //NETLIB_UPDATEI();
 
-
-            //NETLIB_UPDATE_PARAMI();
-            //NETLIB_UPDATE_PARAM(C)
             //FIXME: should be able to change
+            //NETLIB_UPDATE_PARAMI() { }
             public override void update_param() { }
         }
 

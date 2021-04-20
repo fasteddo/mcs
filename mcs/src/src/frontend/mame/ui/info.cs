@@ -4,6 +4,9 @@
 using System;
 using System.Collections.Generic;
 
+using size_t = System.UInt32;
+using u32 = System.UInt32;
+
 
 namespace mame.ui
 {
@@ -333,7 +336,7 @@ namespace mame.ui
                     continue;
 
                 // get cpu specific clock that takes internal multiplier/dividers into account
-                int clock = (int)exec.device().clock();
+                u32 clock = exec.device().clock();
 
                 // count how many identical CPUs we have
                 int count = 1;
@@ -345,16 +348,23 @@ namespace mame.ui
                             count++;
                 }
 
-                // if more than one, prepend a #x in front of the CPU name
-                // display clock in kHz or MHz
+                string hz = std.to_string(clock);
+                int d = (clock >= 1000000000) ? 9 : (clock >= 1000000) ? 6 : (clock >= 1000) ? 3 : 0;
+                if (d > 0)
+                {
+                    int dpos = hz.length() - d;
+                    hz = hz.insert_(dpos, ".");
+                    int last = hz.find_last_not_of('0');
+                    hz = hz.substr(0, last + (last != dpos ? 1 : 0));
+                }
+
+                // if more than one, prepend a #x in front of the CPU name and display clock
                 buf += string.Format(
-                        (count > 1) ? "{0}X{1} {2}.{3}{4}{5}\n" : "{1} {2}.{3}{4}{5}\n",  // (count > 1) ? "%1$d" UTF8_MULTIPLY "%2$s %3$d.%4$0*5$d%6$s\n" : "%2$s %3$d.%4$0*5$d%6$s\n",
-                        count,
-                        name,
-                        (clock >= 1000000) ? (clock / 1000000) : (clock / 1000),
-                        (clock >= 1000000) ? (clock % 1000000) : (clock % 1000),
-                        (clock >= 1000000) ? 6 : 3,
-                        (clock >= 1000000) ? "MHz" : "kHz");
+                        (count > 1)
+                            ? ((clock != 0) ? "{0}X{1} {2} {3}\n" : "{1}x{2}\n")  //? ((clock != 0) ? "%1$d" UTF8_MULTIPLY "%2$s %3$s" UTF8_NBSP "%4$s\n" : "%1$d" UTF8_MULTIPLY "%2$s\n")
+                            : ((clock != 0) ? "{1} {2} {3}\n" : "{1}\n"),  //: ((clock != 0) ? "%2$s %3$s" UTF8_NBSP "%4$s\n" : "%2$s\n"),
+                        count, name, hz,
+                        (d == 9) ? "GHz" : (d == 6) ? "MHz" : (d == 3) ? "kHz" : "Hz");
             }
 
             // loop over all sound chips
@@ -381,19 +391,24 @@ namespace mame.ui
                             count++;
                 }
 
-                // if more than one, prepend a #x in front of the CPU name
-                // display clock in kHz or MHz
-                int clock = (int)sound.device().clock();
+                u32 clock = sound.device().clock();
+                string hz = std.to_string(clock);
+                int d = (clock >= 1000000000) ? 9 : (clock >= 1000000) ? 6 : (clock >= 1000) ? 3 : 0;
+                if (d > 0)
+                {
+                    int dpos = hz.length() - d;
+                    hz = hz.insert_(dpos, ".");
+                    int last = hz.find_last_not_of('0');
+                    hz = hz.substr(0, last + (last != dpos ? 1 : 0));
+                }
+
+                // if more than one, prepend a #x in front of the soundchip name and display clock
                 buf += string.Format(
                         (count > 1)
-                            ? ((clock != 0) ? "{0}X{1} {2}.{3}{4}{5}\n" : "{0}X{1}\n")  // "%1$d" UTF8_MULTIPLY "%2$s %3$d.%4$0*5$d%6$s\n" : "%1$d" UTF8_MULTIPLY "%2$s\n")
-                            : ((clock != 0) ? "{1} {2}.{3}{4}{5}\n" : "{1}\n"),
-                        count,
-                        sound.device().name(),
-                        (clock >= 1000000) ? (clock / 1000000) : (clock / 1000),
-                        (clock >= 1000000) ? (clock % 1000000) : (clock % 1000),
-                        (clock >= 1000000) ? 6 : 3,
-                        (clock >= 1000000) ? "MHz" : "kHz");
+                            ? ((clock != 0) ? "{0}X{1} {2} {3}\n" : "{0}X{1}\n")  //? ((clock != 0) ? "%1$d" UTF8_MULTIPLY "%2$s %3$s" UTF8_NBSP "%4$s\n" : "%1$d" UTF8_MULTIPLY "%2$s\n")
+                            : ((clock != 0) ? "{1} {2} {3}\n" : "{1}\n"),  //: ((clock != 0) ? "%2$s %3$s" UTF8_NBSP "%4$s\n" : "%2$s\n"),
+                        count, sound.device().name(), hz,
+                        (d == 9) ? "GHz" : (d == 6) ? "MHz" : (d == 3) ? "kHz" : "Hz");
             }
 
             // display screen information
@@ -415,15 +430,20 @@ namespace mame.ui
                     }
                     else
                     {
+                        string hz = std.to_string((float)screen.frame_period().as_hz());
+                        int last = hz.find_last_not_of('0');
+                        int dpos = hz.find_last_of('.');
+                        hz = hz.substr(0, last + (last != dpos ? 1 : 0));
+
                         rectangle visarea = screen.visible_area();
-                        detail = string.Format("{0} X {1} ({2}) {3} Hz",  //"%d " UTF8_MULTIPLY " %d (%s) %f" UTF8_NBSP "Hz",
+                        detail = string_format("{0} X {1} ({2}) {3} Hz",  //detail = string_format("%d " UTF8_MULTIPLY " %d (%s) %s" UTF8_NBSP "Hz",
                                 visarea.width(), visarea.height(),
                                 (screen.orientation() & ORIENTATION_SWAP_XY) != 0 ? "V" : "H",
-                                screen.frame_period().as_hz());
+                                hz);
                     }
 
                     buf += string.Format(
-                            (scrcount > 1) ? "{0}: {1}\n" : "{1}\n",  // "%1$s: %2$s\n") : _("%2$s\n"),
+                            (scrcount > 1) ? "{0}: {1}\n" : "{1}\n",  //(scrcount > 1) ? _("%1$s: %2$s\n") : _("%2$s\n"),
                             get_screen_desc(screen), detail);
                 }
             }

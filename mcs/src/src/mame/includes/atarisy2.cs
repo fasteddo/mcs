@@ -12,10 +12,12 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    partial class atarisy2_state : atarigen_state
+    partial class atarisy2_state : driver_device
     {
         required_device<t11_device> m_maincpu;
         required_device<m6502_device> m_audiocpu;
+        required_device<gfxdecode_device> m_gfxdecode;
+        required_device<screen_device> m_screen;
         required_device<atari_motion_objects_device> m_mob;
         required_shared_ptr_uint16_t m_slapstic_base;
         required_device<address_map_bank_device> m_vrambank;
@@ -24,16 +26,21 @@ namespace mame
 
         required_device<tilemap_device> m_playfield_tilemap;
         required_device<tilemap_device> m_alpha_tilemap;
+        required_shared_ptr_uint16_t m_xscroll;
+        required_shared_ptr_uint16_t m_yscroll;
 
         int8_t m_pedal_count;
 
-        required_device<atari_sound_comm_device> m_soundcomm;
+        required_device<generic_latch_8_device> m_soundlatch;
+        required_device<generic_latch_8_device> m_mainlatch;
         required_device<ym2151_device> m_ym2151;
         required_device_array_pokey_device m_pokey;  //required_device_array<pokey_device, 2> m_pokey;
         optional_device<tms5220c_device> m_tms5220;  //optional_device<tms5220_device> m_tms5220;
 
-        uint8_t m_p2portwr_state;
-        uint8_t m_p2portrd_state;
+        bool m_scanline_int_state;
+        bool m_video_int_state;
+        bool m_p2portwr_state;
+        bool m_p2portrd_state;
 
         required_memory_bank_array/*<2>*/ m_rombank;
         required_device<atari_slapstic_device> m_slapstic;
@@ -63,12 +70,17 @@ namespace mame
         {
             m_maincpu = new required_device<t11_device>(this, "maincpu");
             m_audiocpu = new required_device<m6502_device>(this, "audiocpu");
+            m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
+            m_screen = new required_device<screen_device>(this, "screen");
             m_mob = new required_device<atari_motion_objects_device>(this, "mob");
             m_slapstic_base = new required_shared_ptr_uint16_t(this, "slapstic_base");
             m_vrambank = new required_device<address_map_bank_device>(this, "vrambank");
             m_playfield_tilemap = new required_device<tilemap_device>(this, "playfield");
             m_alpha_tilemap = new required_device<tilemap_device>(this, "alpha");
-            m_soundcomm = new required_device<atari_sound_comm_device>(this, "soundcomm");
+            m_xscroll = new required_shared_ptr_uint16_t(this, "xscroll");
+            m_yscroll = new required_shared_ptr_uint16_t(this, "yscroll");
+            m_soundlatch = new required_device<generic_latch_8_device>(this, "soundlatch");
+            m_mainlatch = new required_device<generic_latch_8_device>(this, "mainlatch");
             m_ym2151 = new required_device<ym2151_device>(this, "ymsnd");
             m_pokey = new required_device_array_pokey_device(2, this, "pokey{0}", 1);
             m_tms5220 = new optional_device<tms5220c_device>(this, "tms");

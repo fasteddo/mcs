@@ -256,7 +256,18 @@ namespace mame
         //static void set_pla(device_t &device, UINT8 *pla) { downcast<mb88_cpu_device &>(device).m_PLA = pla; }
 
 
-        //DECLARE_WRITE_LINE_MEMBER( clock_w );
+        //WRITE_LINE_MEMBER( mb88_cpu_device::clock_w )
+        public void clock_w(int state)
+        {
+            if (state != m_ctr)
+            {
+                m_ctr = (uint8_t)state;
+
+                /* on a falling clock, increment the timer, but only if enabled */
+                if (m_ctr == 0 && (m_pio & 0x40) != 0)
+                    increment_timer();
+            }
+        }
 
 
         //void data_4bit(address_map &map);
@@ -903,13 +914,13 @@ namespace mame
 
         void device_execute_interface_execute_set_input(int state)
         {
-            /* on falling edge trigger interrupt */
-            if ( (m_pio & 0x04) != 0 && m_nf != 0 && state == CLEAR_LINE )
+            /* on rising edge trigger interrupt */
+            if ( (m_pio & 0x04) != 0 && m_nf == 0 && state == ASSERT_LINE )
             {
                 m_pending_interrupt |= INT_CAUSE_EXTERNAL;
             }
 
-            m_nf = (state != CLEAR_LINE) ? (byte)1 : (byte)0;
+            m_nf = (state == ASSERT_LINE) ? (byte)1 : (byte)0;
         }
 
         //virtual uint64_t execute_clocks_to_cycles(uint64_t clocks) const noexcept override { return (clocks + 6 - 1) / 6; }

@@ -470,7 +470,7 @@ namespace mame
         // make reference use transparent as well
         //operator _DeviceClass &() { assert(object_finder_base<_DeviceClass>::m_target != NULL); return *object_finder_base<_DeviceClass>::m_target; }
 
-        public override DeviceClass target { get { return (m_targetObject is DeviceClass) ? (DeviceClass)m_targetObject : default(DeviceClass); } set { m_targetObject = value; } }
+        public override DeviceClass target { get { return (m_targetObject is DeviceClass) ? (DeviceClass)m_targetObject : default; } set { m_targetObject = value; } }
 
 
         /// \brief Set search tag

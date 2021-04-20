@@ -386,10 +386,10 @@ namespace mame
             if (latch)
             {
                 LS259(config, m_mainlatch); // 74LS259 at 8K or 4099 at 7K
-                m_mainlatch.target.q_out_cb(0).set(irq_mask_w).reg();
-                m_mainlatch.target.q_out_cb(1).set("namco", (state) => { ((namco_device)subdevice("namco")).sound_enable_w(state); }).reg();  //FUNC(namco_device::sound_enable_w));
-                m_mainlatch.target.q_out_cb(3).set(flipscreen_w).reg();
-                m_mainlatch.target.q_out_cb(7).set(coin_counter_w).reg();
+                m_mainlatch.target.q_out_cb(0).set((write_line_delegate)irq_mask_w).reg();
+                m_mainlatch.target.q_out_cb(1).set("namco", (write_line_delegate)((state) => { ((namco_device)subdevice("namco")).sound_enable_w(state); })).reg();  //FUNC(namco_device::sound_enable_w));
+                m_mainlatch.target.q_out_cb(3).set((write_line_delegate)flipscreen_w).reg();
+                m_mainlatch.target.q_out_cb(7).set((write_line_delegate)coin_counter_w).reg();
 
                 // NOTE(dwidel): The Pacman code uses $5004 and $5005 for LEDs and $5007 for coin lockout.  This hardware does not
                 // exist on any Pacman or Puckman board I have seen.
@@ -410,7 +410,7 @@ namespace mame
             screen.set_raw(PIXEL_CLOCK, (u16)HTOTAL, (u16)HBEND, (u16)HBSTART, (u16)VTOTAL, (u16)VBEND, (u16)VBSTART);
             screen.set_screen_update(screen_update_pacman);
             screen.set_palette("palette");
-            screen.screen_vblank().set(vblank_irq).reg();
+            screen.screen_vblank().set((write_line_delegate)vblank_irq).reg();
 
             MCFG_VIDEO_START_OVERRIDE(config, video_start_pacman);
 
@@ -430,7 +430,7 @@ namespace mame
             /* basic machine hardware */
             m_maincpu.target.memory().set_addrmap(AS_PROGRAM, mspacman_map);
 
-            m_mainlatch.target.q_out_cb(6).set(coin_lockout_global_w).reg();
+            m_mainlatch.target.q_out_cb(6).set((write_line_delegate)coin_lockout_global_w).reg();
         }
     }
 

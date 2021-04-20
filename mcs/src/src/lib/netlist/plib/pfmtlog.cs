@@ -191,7 +191,7 @@ namespace mame.plib
             fatal = new plog_channel<T>(proxy, plog_level.FATAL);
         }
 
-        //COPYASSIGNMOVE(plog_base, default)
+        //PCOPYASSIGNMOVE(plog_base, default)
         //virtual ~plog_base() noexcept = default;
     }
 }

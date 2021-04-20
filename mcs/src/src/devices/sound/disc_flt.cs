@@ -14,30 +14,30 @@ namespace mame
     {
         public static void calculate_filter2_coefficients(discrete_base_node node, double fc, double d, double type, ref discrete_filter_coeff coeff)
         {
-            double w;   /* cutoff freq, in radians/sec */
-            double w_squared;
+            double wc;   /* cutoff freq, in radians/sec */
+            double wc_squared;
             double den; /* temp variable */
             double two_over_T = 2 * node.sample_rate();
             double two_over_T_squared = two_over_T * two_over_T;
 
             /* calculate digital filter coefficents */
-            /*w = 2.0*M_PI*fc; no pre-warping */
-            w = node.sample_rate() * 2.0 * Math.Tan(Math.PI * fc / node.sample_rate()); /* pre-warping */
-            w_squared = w * w;
+            /*wc = 2.0*M_PI*fc; no pre-warping */
+            wc = node.sample_rate() * 2.0 * Math.Tan(Math.PI * fc / node.sample_rate()); /* pre-warping */
+            wc_squared = wc * wc;
 
-            den = two_over_T_squared + d*w*two_over_T + w_squared;
+            den = two_over_T_squared + d*wc*two_over_T + wc_squared;
 
-            coeff.a1 = 2.0 * (-two_over_T_squared + w_squared) / den;
-            coeff.a2 = (two_over_T_squared - d * w * two_over_T + w_squared) / den;
+            coeff.a1 = 2.0 * (-two_over_T_squared + wc_squared) / den;
+            coeff.a2 = (two_over_T_squared - d * wc * two_over_T + wc_squared) / den;
 
             if (type == global_object.DISC_FILTER_LOWPASS)
             {
-                coeff.b0 = coeff.b2 = w_squared/den;
+                coeff.b0 = coeff.b2 = wc_squared/den;
                 coeff.b1 = 2.0 * (coeff.b0);
             }
             else if (type == global_object.DISC_FILTER_BANDPASS)
             {
-                coeff.b0 = d * w * two_over_T / den;
+                coeff.b0 = d * wc * two_over_T / den;
                 coeff.b1 = 0.0;
                 coeff.b2 = -(coeff.b0);
             }

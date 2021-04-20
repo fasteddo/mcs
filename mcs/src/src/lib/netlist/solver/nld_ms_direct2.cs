@@ -26,7 +26,7 @@ namespace mame.netlist
             // ----------------------------------------------------------------------------------------
             // matrix_solver - Direct2
             // ----------------------------------------------------------------------------------------
-            protected override UInt32 vsolve_non_dynamic(bool newton_raphson)
+            protected override void vsolve_non_dynamic()
             {
                 throw new emu_unimplemented();
             }

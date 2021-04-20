@@ -31,8 +31,8 @@ namespace mame
 
         // internal state
         required_device<mb88_cpu_device> m_cpu;
-        uint8_t m_latched_cmd;
-        uint8_t m_latched_rw;
+        uint8_t m_rw;
+        uint8_t m_cmd;
         uint8_t m_portO;
         emu_timer m_irq_cleared_timer;
 
@@ -41,67 +41,68 @@ namespace mame
             : base(mconfig, NAMCO_50XX, tag, owner, clock)
         {
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
-            m_latched_cmd = 0;
-            m_latched_rw = 0;
+            m_rw = 0;
+            m_cmd = 0;
             m_portO = 0;
         }
 
 
-        //WRITE8_MEMBER( namco_50xx_device::write )
-        public void write(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        //WRITE_LINE_MEMBER( namco_50xx_device::reset )
+        public void reset(int state)
         {
-            machine().scheduler().synchronize(latch_callback);  //timer_expired_delegate(FUNC(namco_50xx_device::latch_callback),this), data);
-
-            irq_set();
+            // The incoming signal is active low
+            m_cpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
 
-        //WRITE_LINE_MEMBER(namco_50xx_device::read_request)
-        public void read_request(int state)
+        //WRITE_LINE_MEMBER( namco_50xx_device::chip_select )
+        public void chip_select(int state)
         {
-            machine().scheduler().synchronize(readrequest_callback);  //timer_expired_delegate(FUNC(namco_50xx_device::readrequest_callback),this), 0);
-
-            irq_set();
+            machine().scheduler().synchronize(chip_select_sync, state);
         }
 
 
-        //READ8_MEMBER( namco_50xx_device::read )
-        public u8 read(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        //WRITE_LINE_MEMBER( namco_50xx_device::rw )
+        public void rw(int state)
         {
-            byte res = m_portO;
-
-            read_request(0);
-
-            return res;
+            machine().scheduler().synchronize(rw_sync, state);
         }
 
 
-        //READ8_MEMBER( namco_50xx_device::K_r )
-        u8 K_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        public void write(uint8_t data)
         {
-            return (byte)(m_latched_cmd >> 4);
+            machine().scheduler().synchronize(write_sync, data);
         }
 
-        //READ8_MEMBER( namco_50xx_device::R0_r )
-        u8 R0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+
+        public uint8_t read()
         {
-            return (byte)(m_latched_cmd & 0x0f);
+            return m_portO;
         }
 
-        //READ8_MEMBER( namco_50xx_device::R2_r )
-        u8 R2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+
+        uint8_t K_r()
         {
-            return (byte)(m_latched_rw & 1);
+            return (uint8_t)(m_cmd >> 4);
         }
 
-        //WRITE8_MEMBER( namco_50xx_device::O_w )
-        void O_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        uint8_t R0_r()
         {
-            byte out_value = (byte)(data & 0x0f);
+            return (uint8_t)(m_cmd & 0x0f);
+        }
+
+        uint8_t R2_r()
+        {
+            return (uint8_t)(m_rw & 1);
+        }
+
+        void O_w(uint8_t data)
+        {
+            uint8_t out_ = (uint8_t)(data & 0x0f);
             if ((data & 0x10) != 0)
-                m_portO = (byte)((m_portO & 0x0f) | (out_value << 4));
+                m_portO = (uint8_t)((m_portO & 0x0f) | (out_ << 4));
             else
-                m_portO = (byte)((m_portO & 0xf0) | (out_value));
+                m_portO = (uint8_t)((m_portO & 0xf0) | (out_));
         }
 
 
@@ -112,10 +113,8 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            m_irq_cleared_timer = machine().scheduler().timer_alloc(irq_clear);  //timer_expired_delegate(FUNC(namco_50xx_device::irq_clear), this));
-
-            save_item(NAME(new { m_latched_cmd }));
-            save_item(NAME(new { m_latched_rw }));
+            save_item(NAME(new { m_rw }));
+            save_item(NAME(new { m_cmd }));
             save_item(NAME(new { m_portO }));
         }
 
@@ -135,40 +134,30 @@ namespace mame
         {
             MB8842(config, m_cpu, DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
             m_cpu.target.read_k().set(K_r).reg();
-            m_cpu.target.write_o().set(O_w).reg();
             m_cpu.target.read_r(0).set(R0_r).reg();
             m_cpu.target.read_r(2).set(R2_r).reg();
+            m_cpu.target.write_o().set(O_w).reg();
         }
 
-        //TIMER_CALLBACK_MEMBER( namco_50xx_device::latch_callback )
-        void latch_callback(object ptr, int param)
+
+        //TIMER_CALLBACK_MEMBER( namco_50xx_device::chip_select_sync )
+        void chip_select_sync(object ptr, int param)
         {
-            m_latched_cmd = (byte)param;
-            m_latched_rw = 0;
+            m_cpu.target.set_input_line(0, param);
         }
 
-        //TIMER_CALLBACK_MEMBER( namco_50xx_device::readrequest_callback )
-        void readrequest_callback(object ptr, int param)
+
+        //TIMER_CALLBACK_MEMBER( namco_50xx_device::rw_sync )
+        void rw_sync(object ptr, int param)
         {
-            m_latched_rw = 1;
+            m_rw = (uint8_t)param;
         }
 
-        //TIMER_CALLBACK_MEMBER( namco_50xx_device::irq_clear )
-        void irq_clear(object ptr, int param)
-        {
-            m_cpu.target.set_input_line(0, CLEAR_LINE);
-        }
 
-        void irq_set()
+        //TIMER_CALLBACK_MEMBER( namco_50xx_device::write_sync )
+        void write_sync(object ptr, int param)
         {
-            m_cpu.target.set_input_line(0, ASSERT_LINE);
-
-            // The execution time of one instruction is ~4us, so we must make sure to
-            // give the cpu time to poll the /IRQ input before we clear it.
-            // The input clock to the 06XX interface chip is 64H, that is
-            // 18432000/6/64 = 48kHz, so it makes sense for the irq line to be
-            // asserted for one clock cycle ~= 21us.
-            m_irq_cleared_timer.adjust(attotime.from_usec(21), 0);
+            m_cmd = (uint8_t)param;
         }
     }
 }

@@ -51,7 +51,6 @@ namespace mame
         //ROM_START( ___empty )
         static readonly List<tiny_rom_entry> rom____empty = new List<tiny_rom_entry>()
         {
-            ROM_REGION( 0x10, "user1", ROMREGION_ERASEFF ),
             ROM_END,
         };
 

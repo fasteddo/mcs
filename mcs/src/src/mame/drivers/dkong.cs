@@ -332,12 +332,12 @@ namespace mame
             map.op(0x6000, 0x6bff).ram();
             map.op(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
             map.op(0x7400, 0x77ff).ram().w(dkong_videoram_w).share("video_ram");
-            map.op(0x7800, 0x780f).rw(m_dma8257, (space, offset, mem_mask) => { return m_dma8257.target.read(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { m_dma8257.target.write(space, offset, data, mem_mask); });  //FUNC(i8257_device::read), FUNC(i8257_device::write));   /* P8257 control registers */
-            map.op(0x7c00, 0x7c00).portr("IN0").w("ls175.3d", (space, offset, data, mem_mask) => { ((latch8_device)subdevice("ls175.3d")).write(space, offset, data, mem_mask); });  //FUNC(latch8_device::write));    /* IN0, sound CPU intf */
+            map.op(0x7800, 0x780f).rw(m_dma8257, (offset) => { return m_dma8257.target.read(offset); }, (offset, data) => { m_dma8257.target.write(offset, data); });  //FUNC(i8257_device::read), FUNC(i8257_device::write));   /* P8257 control registers */
+            map.op(0x7c00, 0x7c00).portr("IN0").w("ls175.3d", (offset, data) => { ((latch8_device)subdevice("ls175.3d")).write(offset, data); });  //FUNC(latch8_device::write));    /* IN0, sound CPU intf */
             map.op(0x7c80, 0x7c80).portr("IN1").w(radarscp_grid_color_w);/* IN1 */
 
             map.op(0x7d00, 0x7d00).r(dkong_in2_r);                               /* IN2 */
-            map.op(0x7d00, 0x7d07).w(m_dev_6h.target, (space, offset, data, mem_mask) => { m_dev_6h.target.bit0_w(space, offset, data, mem_mask); });  //FUNC(latch8_device::bit0_w));          /* Sound signals */
+            map.op(0x7d00, 0x7d07).w(m_dev_6h.target, (offset, data) => { m_dev_6h.target.bit0_w(offset, data); });  //FUNC(latch8_device::bit0_w));          /* Sound signals */
 
             map.op(0x7d80, 0x7d80).portr("DSW0").w(dkong_audio_irq_w);   /* DSW0 */
             map.op(0x7d81, 0x7d81).w(radarscp_grid_enable_w);
@@ -558,7 +558,7 @@ namespace mame
             MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_dkong);
 
             I8257(config, m_dma8257, CLOCK_1H);
-            m_dma8257.target.out_hrq_cb().set(busreq_w).reg();
+            m_dma8257.target.out_hrq_cb().set((write_line_delegate)busreq_w).reg();
             m_dma8257.target.in_memr_cb().set(memory_read_byte).reg();
             m_dma8257.target.out_memw_cb().set(memory_write_byte).reg();
             m_dma8257.target.in_ior_cb(1).set(p8257_ctl_r).reg();
@@ -570,7 +570,7 @@ namespace mame
             m_screen.target.set_raw(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART);
             m_screen.target.set_screen_update(screen_update_dkong);
             m_screen.target.set_palette(m_palette);
-            m_screen.target.screen_vblank().set(vblank_irq).reg();
+            m_screen.target.screen_vblank().set((write_line_delegate)vblank_irq).reg();
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_dkong);
             PALETTE(config, m_palette, dkong2b_palette, DK2B_PALETTE_LENGTH);

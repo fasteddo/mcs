@@ -5,8 +5,11 @@ using System;
 using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+using uint64_t = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame.util
@@ -27,6 +30,71 @@ namespace mame.util
                 return 10 + c - 'A';
             return -1;
         }
+
+
+        static uint32_t sha1_rol(uint32_t x, unsigned n)
+        {
+            return (x << (int)n) | (x >> (32 - (int)n));
+        }
+
+        static uint32_t sha1_b(PointerU32 data, unsigned i)
+        {
+            uint32_t r = data[(i + 13) & 15U];
+            r ^= data[(i + 8) & 15U];
+            r ^= data[(i + 2) & 15U];
+            r ^= data[i & 15U];
+            r = sha1_rol(r, 1);
+            data[i & 15U] = r;
+            return r;
+        }
+
+        static void sha1_r0(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r0(const uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        {
+            d[i % 5] = d[i % 5] + ((d[(i + 3) % 5] & (d[(i + 2) % 5] ^ d[(i + 1) % 5])) ^ d[(i + 1) % 5]) + data[i] + 0x5a827999U + sha1_rol(d[(i + 4) % 5], 5);
+            d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
+        }
+
+        static void sha1_r1(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r1(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        {
+            d[i % 5] = d[i % 5] + ((d[(i + 3) % 5] & (d[(i + 2) % 5] ^ d[(i + 1) % 5])) ^ d[(i + 1) % 5])+ sha1_b(data, i) + 0x5a827999U + sha1_rol(d[(i + 4) % 5], 5);
+            d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
+        }
+
+        static void sha1_r2(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r2(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        {
+            d[i % 5] = d[i % 5] + (d[(i + 3) % 5] ^ d[(i + 2) % 5] ^ d[(i + 1) % 5]) + sha1_b(data, i) + 0x6ed9eba1U + sha1_rol(d[(i + 4) % 5], 5);
+            d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
+        }
+
+        static void sha1_r3(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r3(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        {
+            d[i % 5] = d[i % 5] + (((d[(i + 3) % 5] | d[(i + 2) % 5]) & d[(i + 1) % 5]) | (d[(i + 3) % 5] & d[(i + 2) % 5])) + sha1_b(data, i) + 0x8f1bbcdcU + sha1_rol(d[(i + 4) % 5], 5);
+            d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
+        }
+
+        static void sha1_r4(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r4(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        {
+            d[i % 5] = d[i % 5] + (d[(i + 3) % 5] ^ d[(i + 2) % 5] ^ d[(i + 1) % 5]) + sha1_b(data, i) + 0xca62c1d6U + sha1_rol(d[(i + 4) % 5], 5);
+            d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
+        }
+
+        public static void sha1_process(std.array<uint32_t> st, PointerU32 data)  //inline void sha1_process(std::array<uint32_t, 5> &st, uint32_t *data)
+        {
+            std.array<uint32_t> d = st;
+            unsigned i = 0U;
+            while (i < 16U)
+                sha1_r0(data, d, i++);
+            while (i < 20U)
+                sha1_r1(data, d, i++);
+            while (i < 40U)
+                sha1_r2(data, d, i++);
+            while (i < 60U)
+                sha1_r3(data, d, i++);
+            while (i < 80U)
+                sha1_r4(data, d, i++);
+            for (i = 0U; i < 5U; i++)
+                st[i] += d[i];
+        }
     }
 
 
@@ -37,10 +105,7 @@ namespace mame.util
         //static const sha1_t null;
 
 
-        MemoryU8 m_raw = new MemoryU8();  //uint8_t m_raw[20];
-
-
-        public sha1_t() { m_raw.Resize(20); }
+        public MemoryU8 m_raw = new MemoryU8(20, true);  //uint8_t m_raw[20];
 
 
         //bool operator==(const sha1_t &rhs) const { return memcmp(m_raw, rhs.m_raw, sizeof(m_raw)) == 0; }
@@ -48,7 +113,7 @@ namespace mame.util
         public static bool operator==(sha1_t left, sha1_t right) { return memcmp(left.m_raw, right.m_raw, (UInt32)left.m_raw.Count) == 0; }
         public static bool operator!=(sha1_t left, sha1_t right) { return memcmp(left.m_raw, right.m_raw, (UInt32)left.m_raw.Count) != 0; }
 
-        public MemoryU8 op() { return m_raw; }  //operator UINT8 *() { return m_raw; }
+        public MemoryU8 op() { return m_raw; }  //operator uint8_t *() { return m_raw; }
 
 
         //-------------------------------------------------
@@ -98,29 +163,90 @@ namespace mame.util
     class sha1_creator
     {
         // internal state
-        sha1_ctx m_context;      // internal context
+        uint64_t m_cnt;
+        std.array<uint32_t> m_st = new std.array<uint32_t>(5);  //std::array<uint32_t, 5> m_st;
+        MemoryU8 m_buf = new MemoryU8(16 * 4, true);  //uint32_t m_buf[16];
 
 
         // construction/destruction
         public sha1_creator() { reset(); }
 
+
         // reset
-        void reset() { sha1_global.sha1_init(out m_context); }
+        //-------------------------------------------------
+        //  reset - prepare to digest a block of data
+        //-------------------------------------------------
+        void reset()
+        {
+            m_cnt = 0U;
+            m_st[0] = 0xc3d2e1f0U;
+            m_st[1] = 0x10325476U;
+            m_st[2] = 0x98badcfeU;
+            m_st[3] = 0xefcdab89U;
+            m_st[4] = 0x67452301U;
+        }
+
 
         // append data
-        public void append(Pointer<uint8_t> data, uint32_t length) { sha1_global.sha1_update(m_context, length, data); }
-    
+        //-------------------------------------------------
+        //  append - digest a block of data
+        //-------------------------------------------------
+        public void append(PointerU8 data, uint32_t length)  //void sha1_creator::append(const void *data, uint32_t length)
+        {
+//#if LSB_FIRST
+            unsigned swizzle = 3U;
+//#else
+//            constexpr unsigned swizzle = 0U;
+//#endif
+            uint32_t residual = ((uint32_t)m_cnt >> 3) & 63U;
+            m_cnt += (uint64_t)length << 3;
+            uint32_t offset = 0U;
+            if (length >= (64U - residual))
+            {
+                if (residual != 0)
+                {
+                    for (offset = 0U; (offset + residual) < 64U; offset++)
+                        m_buf[(offset + residual) ^ swizzle] = data[offset];  //reinterpret_cast<uint8_t *>(m_buf)[(offset + residual) ^ swizzle] = reinterpret_cast<const uint8_t *>(data)[offset];
+                    hashing_global.sha1_process(m_st, new PointerU32(m_buf));
+                }
+                while ((length - offset) >= 64U)
+                {
+                    for (residual = 0U; residual < 64U; residual++, offset++)
+                        m_buf[residual ^ swizzle] = data[offset];  //reinterpret_cast<uint8_t *>(m_buf)[residual ^ swizzle] = reinterpret_cast<const uint8_t *>(data)[offset];
+                    hashing_global.sha1_process(m_st, new PointerU32(m_buf));
+                }
+                residual = 0U;
+            }
+            for ( ; offset < length; residual++, offset++)
+                m_buf[residual ^ swizzle] = data[offset];  //reinterpret_cast<uint8_t *>(m_buf)[residual ^ swizzle] = reinterpret_cast<const uint8_t *>(data)[offset];
+        }
+
+
         // finalize and compute the final digest
+        //-------------------------------------------------
+        //  finish - compute final hash
+        //-------------------------------------------------
         public sha1_t finish()
         {
+            unsigned padlen = 64U - (63U & (((unsigned)m_cnt >> 3) + 8U));
+            MemoryU8 padbuf = new MemoryU8(64, true);  //uint8_t padbuf[64];
+            padbuf[0] = 0x80;
+            for (unsigned i = 1U; i < padlen; i++)
+                padbuf[i] = 0x00;
+            MemoryU8 lenbuf = new MemoryU8(8, true);  //uint8_t lenbuf[8];
+            for (unsigned i = 0U; i < 8U; i++)
+                lenbuf[i] = (uint8_t)(m_cnt >> (int)((7U - i) << 3));
+            append(new PointerU8(padbuf), padlen);
+            append(new PointerU8(lenbuf), (uint32_t)lenbuf.Count);
             sha1_t result = new sha1_t();
-            sha1_global.sha1_final(m_context);
-            sha1_global.sha1_digest(m_context, (UInt32)result.op().Count, new Pointer<uint8_t>(result.op()));
+            for (unsigned i = 0U; i < 20U; i++)
+                result.m_raw[i] = (uint8_t)(m_st[4U - (i >> 2)] >> (int)((3U - (i & 3)) << 3));
             return result;
         }
 
+
         // static wrapper to just get the digest from a block
-        static sha1_t simple(Pointer<uint8_t> data, uint32_t length)
+        static sha1_t simple(PointerU8 data, uint32_t length)
         {
             sha1_creator creator = new sha1_creator();
             creator.append(data, length);
@@ -212,7 +338,7 @@ namespace mame.util
         //  append - hash a block of data, appending to
         //  the currently-accumulated value
         //-------------------------------------------------
-        public void append(Pointer<uint8_t> data, uint32_t length)  //void append(const void *data, uint32_t length);
+        public void append(PointerU8 data, uint32_t length)  //void append(const void *data, uint32_t length);
         {
             m_accum.op = crc32_global.crc32(m_accum.op, data, length);
         }
@@ -221,7 +347,7 @@ namespace mame.util
         public crc32_t finish() { return m_accum; }
 
         // static wrapper to just get the digest from a block
-        static crc32_t simple(Pointer<uint8_t> data, uint32_t length)  //static crc32_t simple(const void *data, uint32_t length)
+        static crc32_t simple(PointerU8 data, uint32_t length)  //static crc32_t simple(const void *data, uint32_t length)
         {
             crc32_creator creator = new crc32_creator();
             creator.append(data, length);

@@ -118,6 +118,7 @@ namespace mame.netlist
         // nld_solver.cpp
 
         public static string MI_NO_SPECIFIC_SOLVER(params object [] args) { return PERRMSGV(1, "No specific solver found for netlist of size {0}", args); }
+        public static string MW_SOLVER_METHOD_NOT_SUPPORTED(params object [] args) { return PERRMSGV(2, "Solver method {0} not supported. Falling back to {1}", args); }
 
         // nld_mm5837.cpp
 

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -33,7 +34,6 @@ namespace mame
         devcb_read8 m_k;
         devcb_read8.array<devcb_read8> m_in;
         devcb_write8 m_p;
-        emu_timer m_irq_cleared_timer;
 
 
         namco_53xx_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -53,75 +53,74 @@ namespace mame
         //auto p_port_callback() { return m_p.bind(); }
 
 
-        //READ8_MEMBER( namco_53xx_device::K_r )
-        u8 K_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t K_r()
         {
             return m_k.op(0);
         }
 
-        //READ8_MEMBER( namco_53xx_device::R0_r )
-        u8 R0_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t R0_r()
         {
             return m_in[0].op(0);
         }
 
-        //READ8_MEMBER( namco_53xx_device::R1_r )
-        u8 R1_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t R1_r()
         {
             return m_in[1].op(0);
         }
 
-        //READ8_MEMBER( namco_53xx_device::R2_r )
-        u8 R2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t R2_r()
         {
             return m_in[2].op(0);
         }
 
-        //READ8_MEMBER( namco_53xx_device::R3_r )
-        u8 R3_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t R3_r()
         {
             return m_in[3].op(0);
         }
 
-        //WRITE8_MEMBER( namco_53xx_device::O_w )
-        void O_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void O_w(uint8_t data)
         {
-            byte out_value = (byte)(data & 0x0f);
+            uint8_t out_value = (uint8_t)(data & 0x0f);
             if ((data & 0x10) != 0)
-                m_portO = (byte)((m_portO & 0x0f) | (out_value << 4));
+                m_portO = (uint8_t)((m_portO & 0x0f) | (out_value << 4));
             else
-                m_portO = (byte)((m_portO & 0xf0) | (out_value));
+                m_portO = (uint8_t)((m_portO & 0xf0) | (out_value));
         }
 
-        //WRITE8_MEMBER( namco_53xx_device::P_w )
-        void P_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void P_w(uint8_t data)
         {
-            m_p.op(space, 0, data);
+            m_p.op(0, data);
+        }
+
+
+        //TIMER_CALLBACK_MEMBER( namco_53xx_device::chip_select_sync )
+        void chip_select_sync(object ptr, int param)
+        {
+            m_cpu.target.set_input_line(0, param);
+        }
+
+
+        //WRITE_LINE_MEMBER( namco_53xx_device::reset )
+        public void reset(int state)
+        {
+            // The incoming signal is active low
+            m_cpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+        }
+
+
+        //WRITE_LINE_MEMBER(namco_53xx_device::chip_select)
+        public void chip_select(int state)
+        {
+            machine().scheduler().synchronize(chip_select_sync, state);
         }
 
 
         //WRITE_LINE_MEMBER(namco_53xx_device::read_request)
-        public void read_request(int state)
+
+
+        public uint8_t read()
         {
-            m_cpu.target.set_input_line(0, ASSERT_LINE);
-
-            // The execution time of one instruction is ~4us, so we must make sure to
-            // give the cpu time to poll the /IRQ input before we clear it.
-            // The input clock to the 06XX interface chip is 64H, that is
-            // 18432000/6/64 = 48kHz, so it makes sense for the irq line to be
-            // asserted for one clock cycle ~= 21us.
-            m_irq_cleared_timer.adjust(attotime.from_usec(21), 0);
-        }
-
-
-        //READ8_MEMBER( namco_53xx_device::read )
-        public u8 read(address_space space, offs_t offset, u8 mem_mask = 0xff)
-        {
-            byte res = m_portO;
-
-            read_request(0);
-
-            return res;
+            return m_portO;
         }
 
 
@@ -136,8 +135,6 @@ namespace mame
             m_k.resolve_safe(0);
             m_in.resolve_all_safe(0);
             m_p.resolve_safe();
-
-            m_irq_cleared_timer = machine().scheduler().timer_alloc(irq_clear);  //timer_expired_delegate(FUNC(namco_53xx_device::irq_clear), this));
 
             save_item(NAME(new { m_portO }));
         }
@@ -165,13 +162,6 @@ namespace mame
             m_cpu.target.read_r(1).set(R1_r).reg();
             m_cpu.target.read_r(2).set(R2_r).reg();
             m_cpu.target.read_r(3).set(R3_r).reg();
-        }
-
-
-        //TIMER_CALLBACK_MEMBER( namco_53xx_device::irq_clear )
-        void irq_clear(object ptr, int param)
-        {
-            m_cpu.target.set_input_line(0, CLEAR_LINE);
         }
     }
 }

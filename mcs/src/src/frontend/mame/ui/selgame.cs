@@ -216,7 +216,7 @@ namespace mame.ui
                 {
                     buf = info.driver.manufacturer;
                     buf += ' ';
-                    buf = buf.append(info.driver.type.fullname());
+                    buf = buf.append_(info.driver.type.fullname());
                     info.ucs_manufacturer_description = unicode_global.ustr_from_utf8(unicode_global.normalize_unicode(buf, unicode_global.unicode_normalization_form.D, true));
                 }
                 notify_available(available.AVAIL_UCS_MANUF_DESC);
@@ -1339,7 +1339,7 @@ namespace mame.ui
                 software_list_device swlist = software_list_device.find_by_name(drv.config(), ui_swinfo.listname);
                 software_info swinfo = swlist.find(ui_swinfo.shortname);
 
-                media_auditor.summary summary = auditor.audit_software(swlist.list_name(), swinfo, media_auditor.AUDIT_VALIDATE_FAST);
+                media_auditor.summary summary = auditor.audit_software(swlist, swinfo, media_auditor.AUDIT_VALIDATE_FAST);
 
                 if (summary == media_auditor.summary.CORRECT || summary == media_auditor.summary.BEST_AVAILABLE || summary == media_auditor.summary.NONE_NEEDED)
                 {

@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using nl_fptype = System.Double;
+
 
 namespace mame.netlist
 {
@@ -27,7 +29,7 @@ namespace mame.netlist
             }
 
 
-            protected override UInt32 vsolve_non_dynamic(bool newton_raphson)
+            protected override void vsolve_non_dynamic()
             {
                 // The matrix based code looks a lot nicer but actually is 30% slower than
                 // the optimized code which works directly on the data structures.
@@ -79,7 +81,7 @@ namespace mame.netlist
 
 
                 for (int k = 0; k < iN; k++)
-                    this.m_new_V[k] = this.m_terms[k].getV();
+                    this.m_new_V[k] = (nl_fptype)this.m_terms[k].getV();
 
                 do
                 {
@@ -132,16 +134,8 @@ namespace mame.netlist
                 if (resched)
                 {
                     this.m_iterative_fail.op++;
-                    return base.solve_non_dynamic(newton_raphson);
+                    base.solve_non_dynamic();
                 }
-
-                bool err = false;
-                if (newton_raphson)
-                    err = this.check_err();
-
-                this.store();
-
-                return err ? 2u : 1u;
             }
         }
     }

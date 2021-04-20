@@ -1,0 +1,32 @@
+﻿# mcs
+
+[*.cs]
+#dotnet_diagnostic.CS0108.severity = none  # '' hides inherited member ''. Use the new keyword if hiding was intended.
+#dotnet_diagnostic.CS0114.severity = none  # '' hides inherited member ''. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword.
+dotnet_diagnostic.CS0162.severity = none  # Unreachable code detected
+dotnet_diagnostic.CS0168.severity = none  # The variable '' is declared but never used
+dotnet_diagnostic.CS0169.severity = none  # The field '' is never used
+dotnet_diagnostic.CS0219.severity = none  # The variable '' is assigned but its value is never used	mcs
+dotnet_diagnostic.CS0414.severity = none  # The field '' is assigned but its value is never used
+#dotnet_diagnostic.CS0642.severity = none  # Possible mistaken empty statement
+dotnet_diagnostic.CS0649.severity = none  # Field '' is never assigned to, and will always have its default value 
+#dotnet_diagnostic.CS0660.severity = none  # '' defines operator == or operator != but does not override Object.Equals(object o)
+#dotnet_diagnostic.CS0661.severity = none  # '' defines operator == or operator != but does not override Object.GetHashCode()
+#dotnet_diagnostic.CS0675.severity = none  # Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first
+#dotnet_diagnostic.CS0693.severity = none  # Type parameter '' has the same name as the type parameter from outer type ''
+dotnet_diagnostic.IDE0016.severity = none  # Null check can be simplified
+dotnet_diagnostic.IDE0017.severity = none  # Object initialization can be simplified
+dotnet_diagnostic.IDE0018.severity = none  # Variable declaration can be inlined
+dotnet_diagnostic.IDE0028.severity = none  # Collection initialization can be simplified
+dotnet_diagnostic.IDE0029.severity = none  # Null check can be simplified
+dotnet_diagnostic.IDE0031.severity = none  # Null check can be simplified
+dotnet_diagnostic.IDE0039.severity = none  # Use local function
+dotnet_diagnostic.IDE0041.severity = none  # Null check can be simplified
+dotnet_diagnostic.IDE0044.severity = none  # Make field readonly
+dotnet_diagnostic.IDE0051.severity = none  # Private member '' is unused.
+dotnet_diagnostic.IDE0052.severity = none  # Private member '' can be removed as the value assigned to it is never used.
+dotnet_diagnostic.IDE0054.severity = none  # Use compound assignment
+dotnet_diagnostic.IDE0059.severity = none  # Unnecessary assignment of a value to ''
+dotnet_diagnostic.IDE0060.severity = none  # Remove unused parameter '' if it is not part of a shipped public API
+dotnet_diagnostic.IDE1005.severity = none  # Delegate invocation can be simplified.
+dotnet_diagnostic.IDE1006.severity = none  # Naming rule violation: These words must begin with upper case characters: 

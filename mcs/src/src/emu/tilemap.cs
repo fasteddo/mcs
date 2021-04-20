@@ -1944,7 +1944,7 @@ namespace mame
                 m_basemem.set(share, m_bytes_per_entry);
 
                 // look for an extension entry
-                string tag_ext = tag().append("_ext");
+                string tag_ext = tag().append_("_ext");
                 share = memshare(tag_ext);
                 if (share != null)
                     m_extmem.set(share, m_bytes_per_entry);

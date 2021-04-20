@@ -86,11 +86,10 @@ namespace mame
                     -ATTOSECONDS_PER_SECOND;                                        // out-of-range negative values
         }
 
-        public double as_hz() { return m_seconds == 0 ? ATTOSECONDS_TO_HZ(m_attoseconds) : is_never() ? 0.0 : 1.0 / as_double(); }
+        public double as_hz() { global_object.assert(!is_zero()); return m_seconds == 0 ? ATTOSECONDS_TO_HZ(m_attoseconds) : is_never() ? 0.0 : 1.0 / as_double(); }
 
-
-        //constexpr double as_khz() const { return m_seconds == 0 ? double(ATTOSECONDS_PER_MILLISECOND) / double(m_attoseconds) : is_never() ? 0.0 : 1e-3 / as_double(); }
-        //constexpr double as_mhz() const { return m_seconds == 0 ? double(ATTOSECONDS_PER_MICROSECOND) / double(m_attoseconds) : is_never() ? 0.0 : 1e-6 / as_double(); }
+        //double as_khz() const noexcept { assert(!is_zero()); return m_seconds == 0 ? double(ATTOSECONDS_PER_MILLISECOND) / double(m_attoseconds) : is_never() ? 0.0 : 1e-3 / as_double(); }
+        //double as_mhz() const noexcept { assert(!is_zero()); return m_seconds == 0 ? double(ATTOSECONDS_PER_MICROSECOND) / double(m_attoseconds) : is_never() ? 0.0 : 1e-6 / as_double(); }
 
 
         //-------------------------------------------------

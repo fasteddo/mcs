@@ -66,8 +66,8 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(galaga_state::out_0)
-        protected void out_0(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        //WRITE8_MEMBER(galaga_state::out)
+        protected void out_(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
         {
             m_leds[1] = BIT(data, 0);
             m_leds[0] = BIT(data, 1);
@@ -75,10 +75,10 @@ namespace mame
             machine().bookkeeping().coin_counter_w(0,~data & 8);
         }
 
-        //WRITE8_MEMBER(galaga_state::out_1)
-        protected void out_1(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        //WRITE_LINE_MEMBER(galaga_state::lockout)
+        protected void lockout(int state)
         {
-            machine().bookkeeping().coin_lockout_global_w(data & 1);
+            machine().bookkeeping().coin_lockout_global_w(state);
         }
 
 
@@ -117,8 +117,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(digdug_state::earom_control_w)
-        void earom_control_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void earom_control_w(uint8_t data)
         {
             // CK = DB0, C1 = /DB1, C2 = DB2, CS1 = DB3, /CS2 = GND
             m_earom.target.set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
@@ -146,7 +145,7 @@ namespace mame
         protected override void machine_start()
         {
             base.machine_start();
-            earom_control_w(machine().dummy_space(), 0, 0);
+            earom_control_w(0);
         }
     }
 
@@ -166,8 +165,8 @@ namespace mame
             map.op(0x6800, 0x681f).w(m_namco_sound.target, (offset, data) => { m_namco_sound.target.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
             map.op(0x6830, 0x6830).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
-            map.op(0x7000, 0x70ff).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).data_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).data_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
-            map.op(0x7100, 0x7100).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
+            map.op(0x7000, 0x70ff).rw("06xx", (offset) => { return ((namco_06xx_device)subdevice("06xx")).data_r(offset); }, (offset, data) => { ((namco_06xx_device)subdevice("06xx")).data_w(offset, data); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
+            map.op(0x7100, 0x7100).rw("06xx", () => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(); }, (data) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(data); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
             map.op(0x8000, 0x87ff).ram().w(galaga_videoram_w).share("videoram");
             map.op(0x8800, 0x8bff).ram().share("galaga_ram1");
             map.op(0x9000, 0x93ff).ram().share("galaga_ram2");
@@ -186,8 +185,8 @@ namespace mame
             map.op(0x6800, 0x681f).w(m_namco_sound.target, (offset, data) => { m_namco_sound.target.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
             map.op(0x6830, 0x6830).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
-            map.op(0x7000, 0x70ff).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).data_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).data_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
-            map.op(0x7100, 0x7100).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
+            map.op(0x7000, 0x70ff).rw("06xx", (offset) => { return ((namco_06xx_device)subdevice("06xx")).data_r(offset); }, (offset, data) => { ((namco_06xx_device)subdevice("06xx")).data_w(offset, data); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
+            map.op(0x7100, 0x7100).rw("06xx", () => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(); }, (data) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(data); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
             map.op(0x7800, 0x7fff).ram().share("share1");                          /* work RAM */
             map.op(0x8000, 0x87ff).ram().share("xevious_sr1"); /* work RAM + sprite registers */
             map.op(0x9000, 0x97ff).ram().share("xevious_sr2"); /* work RAM + sprite registers */
@@ -210,8 +209,8 @@ namespace mame
             map.op(0x6800, 0x681f).w(m_namco_sound.target, (offset, data) => { m_namco_sound.target.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
             map.op(0x6830, 0x6830).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
-            map.op(0x7000, 0x70ff).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).data_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).data_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
-            map.op(0x7100, 0x7100).rw("06xx", (space, offset, mem_mask) => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(space, offset, mem_mask); }, (space, offset, data, mem_mask) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(space, offset, data, mem_mask); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
+            map.op(0x7000, 0x70ff).rw("06xx", (offset) => { return ((namco_06xx_device)subdevice("06xx")).data_r(offset); }, (offset, data) => { ((namco_06xx_device)subdevice("06xx")).data_w(offset, data); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
+            map.op(0x7100, 0x7100).rw("06xx", () => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(); }, (data) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(data); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
             map.op(0x8000, 0x83ff).ram().w(digdug_videoram_w).share("videoram"); /* tilemap RAM (bottom half of RAM 0 */
             map.op(0x8400, 0x87ff).ram().share("share1");                          /* work RAM (top half for RAM 0 */
             map.op(0x8800, 0x8bff).ram().share("digdug_objram");   /* work RAM + sprite registers */
@@ -231,29 +230,25 @@ namespace mame
         {
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
-            PORT_START("IN0L");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 );
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ); PORT_COCKTAIL();
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 );
-            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 );
-
-            PORT_START("IN0H");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 );
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 );
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 );
-            PORT_SERVICE( 0x08, IP_ACTIVE_LOW );
-
-            PORT_START("IN1L");
+            PORT_START("IN0");
             PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED );
             PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_2WAY();
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED );
             PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_2WAY();
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED );
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_2WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED );
+            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_2WAY(); PORT_COCKTAIL();
 
-            PORT_START("IN1H");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED );
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_2WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED );
-            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_2WAY(); PORT_COCKTAIL();
+            PORT_START("IN1");
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 );
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ); PORT_COCKTAIL();
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 );
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 );
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 );
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 );
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 );
+            PORT_SERVICE( 0x80, IP_ACTIVE_LOW );
 
             PORT_START("DSWA");
             PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) );   PORT_DIPLOCATION("SWB:1,2");
@@ -318,29 +313,25 @@ namespace mame
         {
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
-            PORT_START("IN0L");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 );
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ); PORT_COCKTAIL();
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 );
-            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 );
-
-            PORT_START("IN0H");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 );
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 );
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 );
-            PORT_SERVICE( 0x08, IP_ACTIVE_LOW );
-
-            PORT_START("IN1L");
+            PORT_START("IN0");
             PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_8WAY();
             PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_8WAY();
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_8WAY();
             PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_8WAY();
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_8WAY(); PORT_COCKTAIL();
 
-            PORT_START("IN1H");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_START("IN1");
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 );
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ); PORT_COCKTAIL();
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 );
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 );
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 );
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 );
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 );
+            PORT_SERVICE( 0x80, IP_ACTIVE_LOW );
 
             PORT_START("DSWA");
             PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) );       PORT_DIPLOCATION("SWA:1,2");
@@ -405,29 +396,25 @@ namespace mame
 
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
-            PORT_START("IN0L");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 );
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ); PORT_COCKTAIL();
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 );
-            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 );
-
-            PORT_START("IN0H");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 );
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 );
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 );
-            PORT_SERVICE( 0x08, IP_ACTIVE_LOW );
-
-            PORT_START("IN1L");
+            PORT_START("IN0");
             PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_4WAY();
             PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_4WAY();
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_4WAY();
             PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_4WAY();
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_4WAY(); PORT_COCKTAIL();
 
-            PORT_START("IN1H");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_4WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_4WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_4WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_START("IN1");
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 );
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ); PORT_COCKTAIL();
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 );
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 );
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 );
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 );
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 );
+            PORT_SERVICE( 0x80, IP_ACTIVE_LOW );
 
             PORT_START("DSWA");
             PORT_DIPNAME( 0x07, 0x01, DEF_STR( Coin_B ) );       PORT_DIPLOCATION("SWA:1,2,3");
@@ -612,20 +599,21 @@ namespace mame
             m_subcpu2.target.memory().set_addrmap(AS_PROGRAM, galaga_map);
 
             ls259_device misclatch = LS259(config, "misclatch"); // 3C on CPU board
-            misclatch.q_out_cb(0).set(irq1_clear_w).reg();
-            misclatch.q_out_cb(1).set(irq2_clear_w).reg();
-            misclatch.q_out_cb(2).set(nmion_w).reg();
+            misclatch.q_out_cb(0).set((write_line_delegate)irq1_clear_w).reg();
+            misclatch.q_out_cb(1).set((write_line_delegate)irq2_clear_w).reg();
+            misclatch.q_out_cb(2).set((write_line_delegate)nmion_w).reg();
             misclatch.q_out_cb(3).set_inputline("sub", device_execute_interface.INPUT_LINE_RESET).invert().reg();
             misclatch.q_out_cb(3).append_inputline("sub2", device_execute_interface.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).reset(state); }).reg();
+            misclatch.q_out_cb(3).append("54xx", (state) => { ((namco_54xx_device)subdevice("54xx")).reset(state); }).reg();
 
             namco_51xx_device n51xx = NAMCO_51XX(config, "51xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
-            n51xx.set_screen_tag(m_screen);
-            n51xx.input_callback(0).set_ioport("IN0L").reg();
-            n51xx.input_callback(1).set_ioport("IN0H").reg();
-            n51xx.input_callback(2).set_ioport("IN1L").reg();
-            n51xx.input_callback(3).set_ioport("IN1H").reg();
-            n51xx.output_callback(0).set(out_0).reg();
-            n51xx.output_callback(1).set(out_1).reg();
+            n51xx.input_callback(0).set_ioport("IN0").mask(0x0f).reg();
+            n51xx.input_callback(1).set_ioport("IN0").rshift(4).reg();
+            n51xx.input_callback(2).set_ioport("IN1").mask(0x0f).reg();
+            n51xx.input_callback(3).set_ioport("IN1").rshift(4).reg();
+            n51xx.output_callback().set(out_).reg();
+            n51xx.lockout_callback().set((write_line_delegate)lockout).reg();
 
             namco_54xx_device n54xx = NAMCO_54XX(config, "54xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
             n54xx.set_discrete("discrete");
@@ -633,24 +621,25 @@ namespace mame
 
             namco_06xx_device n06xx = NAMCO_06XX(config, "06xx", MASTER_CLOCK/6/64);
             n06xx.set_maincpu(m_maincpu);
-            n06xx.read_callback(0).set("51xx", (space, offset, mem_mask) => { return ((namco_51xx_device)subdevice("51xx")).read(space, offset, mem_mask); }).reg();  //FUNC(namco_51xx_device::read));
-            n06xx.write_callback(0).set("51xx", (space, offset, data, mem_mask) => { ((namco_51xx_device)subdevice("51xx")).write(space, offset, data, mem_mask); }).reg();  //FUNC(namco_51xx_device::write));
-            n06xx.write_callback(3).set("54xx", (space, offset, data, mem_mask) => { ((namco_54xx_device)subdevice("54xx")).write(space, offset, data, mem_mask); }).reg();  //FUNC(namco_54xx_device::write));
+            n06xx.chip_select_callback(0).set("51xx", (int state) => { ((namco_51xx_device)subdevice("51xx")).chip_select(state); }).reg();
+            n06xx.rw_callback(0).set("51xx", (int state) => { ((namco_51xx_device)subdevice("51xx")).rw(state); }).reg();
+            n06xx.read_callback(0).set("51xx", () => { return ((namco_51xx_device)subdevice("51xx")).read(); }).reg();  //FUNC(namco_51xx_device::read));
+            n06xx.write_callback(0).set("51xx", (data) => { ((namco_51xx_device)subdevice("51xx")).write(data); }).reg();  //FUNC(namco_51xx_device::write));
+            n06xx.write_callback(3).set("54xx", (data) => { ((namco_54xx_device)subdevice("54xx")).write(data); }).reg();  //FUNC(namco_54xx_device::write));
 
             LS259(config, m_videolatch); // 5K on video board
             // Q0-Q5 to 05XX for starfield control
-            m_videolatch.target.q_out_cb(7).set(flip_screen_w).reg();
+            m_videolatch.target.q_out_cb(7).set((write_line_delegate)flip_screen_w).reg();
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count(m_screen, 8);
-
-            config.set_maximum_quantum(attotime.from_hz(6000));  /* 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs */
 
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
             m_screen.target.set_raw(MASTER_CLOCK/3, 384, 0, 288, 264, 0, 224);
             m_screen.target.set_screen_update(screen_update_galaga);
-            m_screen.target.screen_vblank().set(screen_vblank_galaga).reg();
+            m_screen.target.screen_vblank().set((write_line_delegate)screen_vblank_galaga).reg();
             m_screen.target.screen_vblank().append(vblank_irq).reg();
+            m_screen.target.screen_vblank().append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).vblank(state); }).reg();
             m_screen.target.set_palette("palette");
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_galaga);
@@ -689,22 +678,24 @@ namespace mame
             m_subcpu2.target.memory().set_addrmap(AS_PROGRAM, xevious_map);
 
             ls259_device misclatch = LS259(config, "misclatch"); // 5K
-            misclatch.q_out_cb(0).set(irq1_clear_w).reg();
-            misclatch.q_out_cb(1).set(irq2_clear_w).reg();
-            misclatch.q_out_cb(2).set(nmion_w).reg();
+            misclatch.q_out_cb(0).set((write_line_delegate)irq1_clear_w).reg();
+            misclatch.q_out_cb(1).set((write_line_delegate)irq2_clear_w).reg();
+            misclatch.q_out_cb(2).set((write_line_delegate)nmion_w).reg();
             misclatch.q_out_cb(3).set_inputline("sub", device_execute_interface.INPUT_LINE_RESET).invert().reg();
             misclatch.q_out_cb(3).append_inputline("sub2", device_execute_interface.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).append("50xx", (state) => { ((namco_50xx_device)subdevice("50xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("50xx", FUNC(namco_50xx_device::reset));
+            misclatch.q_out_cb(3).append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("51xx", FUNC(namco_51xx_device::reset));
+            misclatch.q_out_cb(3).append("54xx", (state) => { ((namco_54xx_device)subdevice("54xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("54xx", FUNC(namco_54xx_device::reset));
 
             NAMCO_50XX(config, "50xx", MASTER_CLOCK/6/2);   /* 1.536 MHz */
 
             namco_51xx_device n51xx = NAMCO_51XX(config, "51xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
-            n51xx.set_screen_tag(m_screen);
-            n51xx.input_callback(0).set_ioport("IN0L").reg();
-            n51xx.input_callback(1).set_ioport("IN0H").reg();
-            n51xx.input_callback(2).set_ioport("IN1L").reg();
-            n51xx.input_callback(3).set_ioport("IN1H").reg();
-            n51xx.output_callback(0).set(out_0).reg();
-            n51xx.output_callback(1).set(out_1).reg();
+            n51xx.input_callback(0).set_ioport("IN0").mask(0x0f).reg();
+            n51xx.input_callback(1).set_ioport("IN0").rshift(4).reg();
+            n51xx.input_callback(2).set_ioport("IN1").mask(0x0f).reg();
+            n51xx.input_callback(3).set_ioport("IN1").rshift(4).reg();
+            n51xx.output_callback().set(out_).reg();
+            n51xx.lockout_callback().set((write_line_delegate)lockout).reg();
 
             namco_54xx_device n54xx = NAMCO_54XX(config, "54xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
             n54xx.set_discrete("discrete");
@@ -712,23 +703,25 @@ namespace mame
 
             namco_06xx_device n06xx = NAMCO_06XX(config, "06xx", MASTER_CLOCK/6/64);
             n06xx.set_maincpu(m_maincpu);
-            n06xx.read_callback(0).set("51xx", (space, offset, mem_mask) => { return ((namco_51xx_device)subdevice("51xx")).read(space, offset, mem_mask); }).reg();  //FUNC(namco_51xx_device::read));
-            n06xx.write_callback(0).set("51xx", (space, offset, data, mem_mask) => { ((namco_51xx_device)subdevice("51xx")).write(space, offset, data, mem_mask); }).reg();  //FUNC(namco_51xx_device::write));
-            n06xx.read_callback(2).set("50xx", (space, offset, mem_mask) => { return ((namco_50xx_device)subdevice("50xx")).read(space, offset, mem_mask); }).reg();  //FUNC(namco_50xx_device::read));
-            n06xx.read_request_callback(2).set("50xx", (state) => { ((namco_50xx_device)subdevice("50xx")).read_request(state); }).reg();  //FUNC(namco_50xx_device::read_request));
-            n06xx.write_callback(2).set("50xx", (space, offset, data, mem_mask) => { ((namco_50xx_device)subdevice("50xx")).write(space, offset, data, mem_mask); }).reg();  //FUNC(namco_50xx_device::write));
-            n06xx.write_callback(3).set("54xx", (space, offset, data, mem_mask) => { ((namco_54xx_device)subdevice("54xx")).write(space, offset, data, mem_mask); }).reg();  //FUNC(namco_54xx_device::write));
+            n06xx.chip_select_callback(0).set("51xx", (int state) => { ((namco_51xx_device)subdevice("51xx")).chip_select(state); }).reg();
+            n06xx.rw_callback(0).set("51xx", (int state) => { ((namco_51xx_device)subdevice("51xx")).rw(state); }).reg();
+            n06xx.read_callback(0).set("51xx", () => { return ((namco_51xx_device)subdevice("51xx")).read(); }).reg();  //FUNC(namco_51xx_device::read));
+            n06xx.write_callback(0).set("51xx", (data) => { ((namco_51xx_device)subdevice("51xx")).write(data); }).reg();  //FUNC(namco_51xx_device::write));
+            n06xx.chip_select_callback(2).set("50xx", (int state) => { ((namco_50xx_device)subdevice("50xx")).chip_select(state); }).reg();
+            n06xx.rw_callback(2).set("50xx", (int state) => { ((namco_50xx_device)subdevice("50xx")).rw(state); }).reg();
+            n06xx.read_callback(2).set("50xx", () => { return ((namco_50xx_device)subdevice("50xx")).read(); }).reg();  //FUNC(namco_50xx_device::read));
+            n06xx.write_callback(2).set("50xx", (data) => { ((namco_50xx_device)subdevice("50xx")).write(data); }).reg();  //FUNC(namco_50xx_device::write));
+            n06xx.write_callback(3).set("54xx", (data) => { ((namco_54xx_device)subdevice("54xx")).write(data); }).reg();  //FUNC(namco_54xx_device::write));
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count(m_screen, 8);
-
-            config.set_maximum_quantum(attotime.from_hz(60000)); /* 1000 CPU slices per frame - a high value to ensure proper synchronization of the CPUs */
 
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
             m_screen.target.set_raw(MASTER_CLOCK/3, 384, 0, 288, 264, 0, 224);
             m_screen.target.set_screen_update(screen_update_xevious);
             m_screen.target.set_palette(m_palette);
-            m_screen.target.screen_vblank().set(vblank_irq).reg();
+            m_screen.target.screen_vblank().set((write_line_delegate)vblank_irq).reg();
+            m_screen.target.screen_vblank().append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).vblank(state); }).reg();
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_xevious);
             PALETTE(config, m_palette, xevious_palette, 128*4 + 64*8 + 64*2, 128+1);
@@ -763,21 +756,22 @@ namespace mame
             m_subcpu2.target.memory().set_addrmap(AS_PROGRAM, digdug_state_digdug_map);
 
             ls259_device misclatch = LS259(config, "misclatch"); // 8R
-            misclatch.q_out_cb(0).set(irq1_clear_w).reg();
-            misclatch.q_out_cb(1).set(irq2_clear_w).reg();
-            misclatch.q_out_cb(2).set(nmion_w).reg();
+            misclatch.q_out_cb(0).set((write_line_delegate)irq1_clear_w).reg();
+            misclatch.q_out_cb(1).set((write_line_delegate)irq2_clear_w).reg();
+            misclatch.q_out_cb(2).set((write_line_delegate)nmion_w).reg();
             misclatch.q_out_cb(3).set_inputline("sub", device_execute_interface.INPUT_LINE_RESET).invert().reg();
             misclatch.q_out_cb(3).append_inputline("sub2", device_execute_interface.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("51xx", FUNC(namco_51xx_device::reset));
+            misclatch.q_out_cb(3).append("53xx", (state) => { ((namco_53xx_device)subdevice("53xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("53xx", FUNC(namco_53xx_device::reset));
             // Q5-Q7 also used (see below)
 
             namco_51xx_device n51xx = NAMCO_51XX(config, "51xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
-            n51xx.set_screen_tag(m_screen);
-            n51xx.input_callback(0).set_ioport("IN0L").reg();
-            n51xx.input_callback(1).set_ioport("IN0H").reg();
-            n51xx.input_callback(2).set_ioport("IN1L").reg();
-            n51xx.input_callback(3).set_ioport("IN1H").reg();
-            n51xx.output_callback(0).set(out_0).reg();
-            n51xx.output_callback(1).set(out_1).reg();
+            n51xx.input_callback(0).set_ioport("IN0").mask(0x0f).reg();
+            n51xx.input_callback(1).set_ioport("IN0").rshift(4).reg();
+            n51xx.input_callback(2).set_ioport("IN1").mask(0x0f).reg();
+            n51xx.input_callback(3).set_ioport("IN1").rshift(4).reg();
+            n51xx.output_callback().set(out_).reg();
+            n51xx.lockout_callback().set((write_line_delegate)lockout).reg();
 
             namco_53xx_device n53xx = NAMCO_53XX(config, "53xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
             n53xx.k_port_callback().set("misclatch", () => { return ((addressable_latch_device)subdevice("misclatch")).q7_r(); }).lshift(3).reg();  // FUNC(ls259_device::q7_r) // MOD 2 = K3
@@ -791,18 +785,18 @@ namespace mame
 
             namco_06xx_device n06xx = NAMCO_06XX(config, "06xx", MASTER_CLOCK/6/64);
             n06xx.set_maincpu(m_maincpu);
-            n06xx.read_callback(0).set("51xx", (space, offset, mem_mask) => { return ((namco_51xx_device)subdevice("51xx")).read(space, offset, mem_mask); }).reg();  //FUNC(namco_51xx_device::read));
-            n06xx.write_callback(0).set("51xx", (space, offset, data, mem_mask) => { ((namco_51xx_device)subdevice("51xx")).write(space, offset, data, mem_mask); }).reg();  //FUNC(namco_51xx_device::write));
-            n06xx.read_callback(1).set("53xx", (space, offset, mem_mask) => { return ((namco_53xx_device)subdevice("53xx")).read(space, offset, mem_mask); }).reg();  //FUNC(namco_53xx_device::read));
-            n06xx.read_request_callback(1).set("53xx", (state) => { ((namco_53xx_device)subdevice("53xx")).read_request(state); }).reg();  //FUNC(namco_53xx_device::read_request));
+            n06xx.chip_select_callback(0).set("51xx", (int state) => { ((namco_51xx_device)subdevice("51xx")).chip_select(state); }).reg();  //n06xx.chip_select_callback<0>().set("51xx", FUNC(namco_51xx_device::chip_select));
+            n06xx.rw_callback(0).set("51xx", (int state) => { ((namco_51xx_device)subdevice("51xx")).rw(state); }).reg();  //n06xx.rw_callback<0>().set("51xx", FUNC(namco_51xx_device::rw));
+            n06xx.read_callback(0).set("51xx", () => { return ((namco_51xx_device)subdevice("51xx")).read(); }).reg();  //n06xx.read_callback<0>().set("51xx", FUNC(namco_51xx_device::read));
+            n06xx.write_callback(0).set("51xx", (data) => { ((namco_51xx_device)subdevice("51xx")).write(data); }).reg();  //n06xx.write_callback<0>().set("51xx", FUNC(namco_51xx_device::write));
+            n06xx.chip_select_callback(1).set("53xx", (int state) => { ((namco_53xx_device)subdevice("53xx")).chip_select(state); }).reg();  //n06xx.chip_select_callback<1>().set("53xx", FUNC(namco_53xx_device::chip_select));
+            n06xx.read_callback(1).set("53xx", () => { return ((namco_53xx_device)subdevice("53xx")).read(); }).reg();  //n06xx.read_callback<1>().set("53xx", FUNC(namco_53xx_device::read));
 
             LS259(config, m_videolatch); // 5R
             m_videolatch.target.parallel_out_cb().set(bg_select_w).mask(0x33).reg();
-            m_videolatch.target.q_out_cb(2).set(tx_color_mode_w).reg();
-            m_videolatch.target.q_out_cb(3).set(bg_disable_w).reg();
-            m_videolatch.target.q_out_cb(7).set(flip_screen_w).reg();
-
-            config.set_maximum_quantum(attotime.from_hz(6000));  /* 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs */
+            m_videolatch.target.q_out_cb(2).set((write_line_delegate)tx_color_mode_w).reg();
+            m_videolatch.target.q_out_cb(3).set((write_line_delegate)bg_disable_w).reg();
+            m_videolatch.target.q_out_cb(7).set((write_line_delegate)flip_screen_w).reg();
 
             ER2055(config, m_earom);
 
@@ -813,7 +807,8 @@ namespace mame
             m_screen.target.set_raw(MASTER_CLOCK/3, 384, 0, 288, 264, 0, 224);
             m_screen.target.set_screen_update(screen_update_digdug);
             m_screen.target.set_palette(m_palette);
-            m_screen.target.screen_vblank().set(vblank_irq).reg();
+            m_screen.target.screen_vblank().set((write_line_delegate)vblank_irq).reg();
+            m_screen.target.screen_vblank().append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).vblank(state); }).reg();
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_digdug);
             PALETTE(config, m_palette, digdug_palette, 16*2 + 64*4 + 64*4, 32);

@@ -998,8 +998,8 @@ namespace mame.ui
                 if (listname != null)
                 {
                     if (!current.empty() && !is_directory_separator(current.back()))
-                        current.append(PATH_SEPARATOR);
-                    current.append(listname);
+                        current = current.append_(PATH_SEPARATOR);
+                    current = current.append_(listname);
                 }
                 osd_printf_verbose("Checking for icons in directory {0}\n", current);
 
@@ -2535,8 +2535,7 @@ namespace mame.ui
                 // loads the image if necessary
                 if (!m_cache.snapx_driver_is(driver) || !snapx_valid() || m_switch_image)
                 {
-                    emu_file snapfile = new emu_file(searchstr.c_str(), OPEN_FLAG_READ);
-                    snapfile.set_restrict_to_mediapath(true);
+                    emu_file snapfile = new emu_file(searchstr, OPEN_FLAG_READ);
                     bitmap_argb32 tmp_bitmap;
 
                     // try to load snapshot first from saved "0000.png" file

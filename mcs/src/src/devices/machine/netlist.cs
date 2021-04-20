@@ -89,10 +89,16 @@ namespace mame
                     m_parent.logerror("netlist ERROR: {0}\n", ls.c_str());
                     break;
                 case plib.plog_level.FATAL:
-                    //throw new emu_fatalerror(1, "netlist FATAL: {0}\n", ls.c_str());
                     m_parent.logerror("netlist FATAL: {0}\n", ls.c_str());
                     break;
                 }
+            }
+
+
+            public override plib.dynlib_base static_solver_lib()
+            {
+                //return plib::make_unique<plib::dynlib_static>(nullptr);
+                return new plib.dynlib_static(static_solvers_global.nl_static_solver_syms);  //return plib::make_unique<plib::dynlib_static>(nl_static_solver_syms);
             }
         }
 
@@ -122,9 +128,11 @@ namespace mame
                 case plib.plog_level.FATAL:
                     osd_printf_error("netlist FATAL: {0}\n", ls);
                     break;
-                    //throw new emu_fatalerror(1, "netlist FATAL: {0}\n", ls.c_str());
                 }
             }
+
+
+            public override plib.dynlib_base static_solver_lib() { throw new emu_unimplemented(); }
         }
 
 
@@ -431,7 +439,7 @@ namespace mame
 
             /* add default data provider for roms - if not in validity check*/
             //if (has_running_machine())
-                lsetup.register_source(new netlist_data_memregions_t(this));
+                lsetup.register_source(new netlist_data_memregions_t(this));  //lsetup.register_source<netlist_data_memregions_t>(*this);
 
             m_setup_func(lsetup);
 
@@ -620,8 +628,8 @@ namespace mame
         // netlist_mame_device
         protected override void nl_register_devices(netlist.setup_t lsetup)
         {
-            lsetup.factory().register_device<nld_sound_out>("NETDEV_SOUND_OUT", "nld_sound_out", "+CHAN");
-            lsetup.factory().register_device<nld_sound_in>("NETDEV_SOUND_IN", "nld_sound_in", "-");
+            lsetup.factory().register_device<nld_sound_out>("NETDEV_SOUND_OUT", "nld_sound_out", "+CHAN", "__FILE__");
+            lsetup.factory().register_device<nld_sound_in>("NETDEV_SOUND_IN", "nld_sound_in", "-", "__FILE__");
         }
 
 
@@ -905,7 +913,7 @@ namespace mame
         protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
         {
             m_netlist_mame_sub_interface.update_to_current_time();
-            m_param.setTo(param != 0);
+            m_param.set(param != 0);
         }
     }
 
@@ -1251,7 +1259,7 @@ namespace mame
                     if (m_channels[i].m_buffer == null)
                         break; // stop, called outside of stream_update
                     nl_fptype v = m_channels[i].m_buffer[m_pos];
-                    m_channels[i].m_param.setTo(v * m_channels[i].m_param_mult.op() + m_channels[i].m_param_offset.op());
+                    m_channels[i].m_param.set(v * m_channels[i].m_param_mult.op() + m_channels[i].m_param_offset.op());
                 }
             }
             else

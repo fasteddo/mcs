@@ -456,9 +456,9 @@ namespace mame
 
         void galaxian_map_discrete(address_map map, device_t device)
         {
-            map.op(0x6004, 0x6007).mirror(0x07f8).w("cust", (space, offset, data, mem_mask) => { ((galaxian_sound_device)subdevice("cust")).lfo_freq_w(space, offset, data, mem_mask); });  //FUNC(galaxian_sound_device::lfo_freq_w));
-            map.op(0x6800, 0x6807).mirror(0x07f8).w("cust", (space, offset, data, mem_mask) => { ((galaxian_sound_device)subdevice("cust")).sound_w(space, offset, data, mem_mask); });  //FUNC(galaxian_sound_device::sound_w));
-            map.op(0x7800, 0x7800).mirror(0x07ff).w("cust", (space, offset, data, mem_mask) => { ((galaxian_sound_device)subdevice("cust")).pitch_w(space, offset, data, mem_mask); });  //FUNC(galaxian_sound_device::pitch_w));
+            map.op(0x6004, 0x6007).mirror(0x07f8).w("cust", (offset, data) => { ((galaxian_sound_device)subdevice("cust")).lfo_freq_w(offset, data); });  //map(0x6004, 0x6007).mirror(0x07f8).w("cust", FUNC(galaxian_sound_device::lfo_freq_w));
+            map.op(0x6800, 0x6807).mirror(0x07f8).w("cust", (offset, data) => { ((galaxian_sound_device)subdevice("cust")).sound_w(offset, data); });  //map(0x6800, 0x6807).mirror(0x07f8).w("cust", FUNC(galaxian_sound_device::sound_w));
+            map.op(0x7800, 0x7800).mirror(0x07ff).w("cust", (data) => { ((galaxian_sound_device)subdevice("cust")).pitch_w(data); });  //map(0x7800, 0x7800).mirror(0x07ff).w("cust", FUNC(galaxian_sound_device::pitch_w));
         }
 
 
@@ -737,7 +737,7 @@ namespace mame
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
             m_screen.target.set_raw(GALAXIAN_PIXEL_CLOCK, GALAXIAN_HTOTAL, GALAXIAN_HBEND, GALAXIAN_HBSTART, GALAXIAN_VTOTAL, GALAXIAN_VBEND, GALAXIAN_VBSTART);
             m_screen.target.set_screen_update(screen_update_galaxian);
-            m_screen.target.screen_vblank().set(vblank_interrupt_w).reg();
+            m_screen.target.screen_vblank().set((write_line_delegate)vblank_interrupt_w).reg();
 
             // sound hardware
             SPEAKER(config, "speaker").front_center();

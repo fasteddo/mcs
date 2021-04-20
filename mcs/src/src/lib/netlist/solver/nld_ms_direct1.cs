@@ -24,18 +24,12 @@ namespace mame.netlist
             // ----------------------------------------------------------------------------------------
             // matrix_solver - Direct1
             // ----------------------------------------------------------------------------------------
-            protected override UInt32 vsolve_non_dynamic(bool newton_raphson)
+            protected override void vsolve_non_dynamic()
             {
                 this.clear_square_mat(this.m_A);
                 this.fill_matrix_and_rhs();
 
                 this.m_new_V[0] = this.m_RHS[0] / this.m_A[0][0];
-
-                bool err = false;
-                if (newton_raphson)
-                    err = this.check_err();
-                this.store();
-                return err ? 2u : 1u;
             }
         }
     }

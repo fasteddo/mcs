@@ -61,8 +61,7 @@ namespace mame
          *  command register
          *
          *************************************/
-        //WRITE8_MEMBER( irem_audio_device::cmd_w )
-        public void cmd_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void cmd_w(uint8_t data)
         {
             m_soundlatch = data;
             if ((data & 0x80) == 0)
@@ -75,15 +74,13 @@ namespace mame
         *  6803 output ports
         *
         *************************************/
-        //WRITE8_MEMBER( irem_audio_device::m6803_port1_w )
-        protected void m6803_port1_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected void m6803_port1_w(uint8_t data)
         {
             m_port1 = data;
         }
 
 
-        //WRITE8_MEMBER( irem_audio_device::m6803_port2_w )
-        protected void m6803_port2_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected void m6803_port2_w(uint8_t data)
         {
             /* write latch */
             if (((m_port2 & 0x01) != 0) && !((data & 0x01) != 0))
@@ -116,8 +113,7 @@ namespace mame
          *  6803 input ports
          *
          *************************************/
-        //READ8_MEMBER( irem_audio_device::m6803_port1_r )
-        protected u8 m6803_port1_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        protected uint8_t m6803_port1_r()
         {
             /* PSG 0 or 1? */
             if ((m_port2 & 0x08) != 0)
@@ -129,8 +125,7 @@ namespace mame
         }
 
 
-        //READ8_MEMBER( irem_audio_device::m6803_port2_r )
-        protected u8 m6803_port2_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        protected uint8_t m6803_port2_r()
         {
             /*
              * Pin21, 6803 (Port 21) tied with 4.7k to +5V
@@ -146,16 +141,14 @@ namespace mame
          *  Memory-mapped accesses
          *
          *************************************/
-        //WRITE8_MEMBER( irem_audio_device::sound_irq_ack_w )
-        protected void sound_irq_ack_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected void sound_irq_ack_w(uint8_t data)
         {
             if ((m_soundlatch & 0x80) != 0)
                 m_cpu.target.set_input_line(0, CLEAR_LINE);
         }
 
 
-        //WRITE8_MEMBER( irem_audio_device::m52_adpcm_w )
-        protected void m52_adpcm_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected void m52_adpcm_w(offs_t offset, uint8_t data)
         {
             if ((offset & 1) != 0)
             {
@@ -170,7 +163,7 @@ namespace mame
         }
 
 
-        //DECLARE_WRITE8_MEMBER( m62_adpcm_w );
+        //void m62_adpcm_w(offs_t offset, uint8_t data);
 
 
         /*************************************
@@ -178,8 +171,7 @@ namespace mame
         *  Sound latch read
         *
         *************************************/
-        //READ8_MEMBER( irem_audio_device::soundlatch_r )
-        protected u8 soundlatch_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        protected uint8_t soundlatch_r()
         {
             return m_soundlatch;
         }
@@ -190,8 +182,7 @@ namespace mame
          *  AY-8910 output ports
          *
          *************************************/
-        //WRITE8_MEMBER( irem_audio_device::ay8910_45M_portb_w )
-        protected void ay8910_45M_portb_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected void ay8910_45M_portb_w(uint8_t data)
         {
             /* bits 2-4 select MSM5205 clock & 3b/4b playback mode */
             m_adpcm1.target.playmode_w((data >> 2) & 7);
@@ -205,8 +196,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER( irem_audio_device::ay8910_45L_porta_w )
-        protected void ay8910_45L_porta_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        protected void ay8910_45L_porta_w(uint8_t data)
         {
             /*
              *  45L 21 IOA0  ==> BD

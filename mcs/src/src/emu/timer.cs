@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;
+using s32 = System.Int32;
 using u32 = System.UInt32;
 
 
@@ -40,11 +41,10 @@ namespace mame
         // periodic timers only
         attotime m_start_delay;      // delay before the timer fires for the first time
         attotime m_period;           // period of repeated timer firings
-        int m_param;            // the integer parameter passed to the timer callback
+        s32 m_param;            // the integer parameter passed to the timer callback
 
         // scanline timers only
-        string m_screen_tag;       // the tag of the screen this timer tracks
-        screen_device m_screen;           // pointer to the screen device
+        optional_device<screen_device> m_screen;    // pointer to the screen device
         u32 m_first_vpos;       // the first vertical scanline position the timer fires on
         u32 m_increment;        // the number of scanlines between firings
 
@@ -66,8 +66,7 @@ namespace mame
             m_start_delay = attotime.zero;
             m_period = attotime.zero;
             m_param = 0;
-            m_screen_tag = null;
-            m_screen = null;
+            m_screen = new optional_device<screen_device>(this, finder_base.DUMMY_TAG);
             m_first_vpos = 0;
             m_increment = 0;
             m_timer = null;
@@ -99,20 +98,32 @@ namespace mame
         //    configure_periodic(expired_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), period);
         //}
 
-        //template <typename Object>
-        public void configure_scanline(expired_delegate cb, string screen, int first_vpos, int increment)
+
+        public void configure_scanline(expired_delegate callback, device_finder<screen_device> screen, int first_vpos, int increment)  //template <typename F, typename U> void configure_scanline(F &&callback, const char *name, U &&screen, int first_vpos, int increment)
         {
             m_type = timer_type.TIMER_TYPE_SCANLINE;
-            m_callback = cb;  //std::forward<Object>(cb);
-            m_screen_tag = screen;
+            m_callback = callback;  //m_callback.set(std::forward<F>(callback), name);
+            m_screen.set_tag(screen);  //m_screen.set_tag(std::forward<U>(screen));
             m_first_vpos = (u32)first_vpos;
             m_increment = (u32)increment;
         }
 
-        //template <class FunctionClass> void configure_scanline(void (FunctionClass::*callback)(timer_device &, void *, s32),
-        //    const char *name, const char *screen, int first_vpos, int increment)
+        public void configure_scanline(expired_delegate callback, string screen, int first_vpos, int increment)  //template <typename F, typename U> void configure_scanline(F &&callback, const char *name, U &&screen, int first_vpos, int increment)
+        {
+            m_type = timer_type.TIMER_TYPE_SCANLINE;
+            m_callback = callback;  //m_callback.set(std::forward<F>(callback), name);
+            m_screen.set_tag(screen);  //m_screen.set_tag(std::forward<U>(screen));
+            m_first_vpos = (u32)first_vpos;
+            m_increment = (u32)increment;
+        }
+
+        //template <typename T, typename F, typename U> void configure_scanline(T &&target, F &&callback, const char *name, U &&screen, int first_vpos, int increment)
         //{
-        //    configure_scanline(expired_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)), screen, first_vpos, increment);
+        //    m_type = TIMER_TYPE_SCANLINE;
+        //    m_callback.set(std::forward<T>(target), std::forward<F>(callback), name);
+        //    m_screen.set_tag(std::forward<U>(screen));
+        //    m_first_vpos = first_vpos;
+        //    m_increment = increment;
         //}
 
         //template <typename Object> void set_callback(Object &&cb) { m_callback = std::forward<Object>(cb); }
@@ -161,14 +172,14 @@ namespace mame
             switch (m_type)
             {
                 case timer_type.TIMER_TYPE_GENERIC:
-                    if (m_screen_tag != null || m_first_vpos != 0 || m_start_delay != attotime.zero)
+                    if (m_screen.finder_tag() != finder_base.DUMMY_TAG || m_first_vpos != 0 || m_start_delay != attotime.zero)
                         osd_printf_warning("Generic timer specified parameters for a scanline timer\n");
                     if (m_period != attotime.zero || m_start_delay != attotime.zero)
                         osd_printf_warning("Generic timer specified parameters for a periodic timer\n");
                     break;
 
                 case timer_type.TIMER_TYPE_PERIODIC:
-                    if (m_screen_tag != null || m_first_vpos != 0)
+                    if (m_screen.finder_tag() != finder_base.DUMMY_TAG || m_first_vpos != 0)
                         osd_printf_warning("Periodic timer specified parameters for a scanline timer\n");
                     if (m_period <= attotime.zero)
                         osd_printf_error("Periodic timer specified invalid period\n");
@@ -198,16 +209,12 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            // fetch the screen
-            if (m_screen_tag != null)
-                m_screen = (screen_device)machine().device(m_screen_tag);  //machine().device<screen_device>(m_screen_tag);
-
             // allocate the timer
             m_timer = timer_alloc();
 
             //throw new emu_unimplemented();
 #if false
-            m_callback.bind_relative_to(*owner());
+            m_callback.resolve();
 #endif
 
             // register for save states
@@ -245,7 +252,7 @@ namespace mame
 
                 case timer_type.TIMER_TYPE_SCANLINE:
                     if (m_screen == null)
-                        fatalerror("timer '{0}': unable to find screen '{1}'\n", tag(), m_screen_tag);
+                        fatalerror("timer '{0}': unable to find screen '{1}'\n", tag(), m_screen.finder_tag());
 
                     // set the timer to fire immediately
                     m_first_time = true;
@@ -280,18 +287,18 @@ namespace mame
                     if (!m_first_time)
                     {
                         // call the real callback
-                        int vpos = m_screen.vpos();
+                        int vpos = m_screen.target.vpos();
                         if (m_callback != null)
                             m_callback(this, m_ptr, vpos);
 
                         // advance by the increment only if we will still be within the screen bounds
-                        if (m_increment != 0 && (vpos + m_increment) < m_screen.height())
+                        if (m_increment != 0 && (vpos + m_increment) < m_screen.target.height())
                             next_vpos = vpos + (int)m_increment;
                     }
                     m_first_time = false;
 
                     // adjust the timer
-                    m_timer.adjust(m_screen.time_until_pos(next_vpos));
+                    m_timer.adjust(m_screen.target.time_until_pos(next_vpos));
                     break;
                 }
             }

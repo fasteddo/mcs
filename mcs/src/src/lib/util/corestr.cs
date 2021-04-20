@@ -143,7 +143,7 @@ namespace mame
             for (int curindex = str.find(search, 0); curindex != -1; curindex = str.find(search, curindex + replacelen))
             {
                 matches++;
-                str = str.Remove(curindex, searchlen).insert(curindex, replace);  //str.erase(curindex, searchlen).insert(curindex, replace);
+                str = str.Remove(curindex, searchlen).insert_(curindex, replace);  //str.erase(curindex, searchlen).insert(curindex, replace);
             }
 
             return matches;

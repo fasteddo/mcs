@@ -191,14 +191,14 @@ namespace mame
             //NETLIB_UPDATE_PARAM(opamp)
             public override void update_param()
             {
-                m_G1.m_RI.setTo(m_model.m_RI.op());
+                m_G1.m_RI.set(m_model.m_RI.op());
 
                 if (m_type == 1)
                 {
                     nl_fptype RO = m_model.m_RO.op();
                     nl_fptype G = m_model.m_UGF.op() / m_model.m_FPF.op() / RO;
                     m_RP.set_R(RO);
-                    m_G1.m_G.setTo(G);
+                    m_G1.m_G.set(G);
                 }
                 if (m_type == 3 || m_type == 2)
                 {
@@ -210,29 +210,29 @@ namespace mame
                     if (m_model.m_SLEW.op() / (nlconst.four() * nlconst.pi() * nlconst.magic(0.0258)) < m_model.m_UGF.op())
                         log().warning.op(nl_errstr_global.MW_OPAMP_FAIL_CONVERGENCE(this.name()));
 
-                    m_CP.m_C.setTo(CP);
+                    m_CP.m_C.set(CP);
                     m_RP.set_R(RP);
-                    m_G1.m_G.setTo(G);
+                    m_G1.m_G.set(G);
 
                 }
                 if (m_type == 2)
                 {
-                    m_EBUF.m_G.setTo(nlconst.one());
+                    m_EBUF.m_G.set(nlconst.one());
 #if TEST_ALT_OUTPUT
-                    m_EBUF->m_RO.setTo(0.001);
+                    m_EBUF->m_RO.set(0.001);
                     m_RO->set_R(m_model.m_RO);
 #else
-                    m_EBUF.m_RO.setTo(m_model.m_RO.op());
+                    m_EBUF.m_RO.set(m_model.m_RO.op());
 #endif
                 }
                 if (m_type == 3)
                 {
-                    m_EBUF.m_G.setTo(nlconst.one());
+                    m_EBUF.m_G.set(nlconst.one());
 #if TEST_ALT_OUTPUT
-                    m_EBUF->m_RO.setTo(0.001);
+                    m_EBUF->m_RO.set(0.001);
                     m_RO->set_R(m_model.m_RO);
 #else
-                    m_EBUF.m_RO.setTo(m_model.m_RO.op());
+                    m_EBUF.m_RO.set(m_model.m_RO.op());
 #endif
                 }
             }

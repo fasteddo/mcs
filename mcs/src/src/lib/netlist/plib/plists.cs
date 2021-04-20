@@ -18,7 +18,7 @@ namespace mame.plib
         Element m_object;
 
 
-        public pqentry_t() { m_exec_time = new netlist_time();  m_object = default(Element); }  //constexpr pqentry_t() noexcept : m_exec_time(), m_object(nullptr) { }
+        public pqentry_t() { m_exec_time = new netlist_time();  m_object = default; }  //constexpr pqentry_t() noexcept : m_exec_time(), m_object(nullptr) { }
         public pqentry_t(netlist_time t, Element o) { m_exec_time = t;  m_object = o; }  //constexpr pqentry_t(const Time &t, const Element &o) noexcept : m_exec_time(t), m_object(o) { }
         //~pqentry_t() = default;
         //constexpr pqentry_t(const pqentry_t &e) noexcept = default;

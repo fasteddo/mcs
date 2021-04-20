@@ -19,7 +19,7 @@ namespace mame.netlist
         ///
         /// \brief Version - Minor.
         ///
-        public const int NL_VERSION_MINOR           = 11;
+        public const int NL_VERSION_MINOR           = 12;
         /// \brief Version - Patch level.
         ///
         const int NL_VERSION_PATCHLEVEL      = 0;
@@ -53,6 +53,22 @@ namespace mame.netlist
         ///
         //#ifndef NL_USE_QUEUE_STATS
         public const bool NL_USE_QUEUE_STATS = false;
+        //#endif
+
+        /// \brief  Compile in academic solvers
+        ///
+        /// Set to 0 to disable compiling the following solvers:
+        ///
+        /// Sherman-Morrison, Woodbury, SOR and GMRES
+        ///
+        /// In addition, compilation of FLOAT, LONGDOUBLE and FLOATQ128 matrix
+        /// solvers will be disabled.
+        /// GMRES may be added to productive solvers in the future
+        /// again. Compiling in all solvers may increase compile
+        /// time significantly.
+        ///
+        //#ifndef NL_USE_ACADEMIC_SOLVERS
+        //#define NL_USE_ACADEMIC_SOLVERS (1)
         //#endif
 
         /// \brief  Store input values in logic_terminal_t.
@@ -99,18 +115,20 @@ namespace mame.netlist
 
         /// \brief Support float type for matrix calculations.
         ///
-        /// Defaults to off to provide faster build times
+        /// Defaults to NL_USE_ACADEMIC_SOLVERS to provide faster build times
 
         //#ifndef NL_USE_FLOAT_MATRIX
-        //#define NL_USE_FLOAT_MATRIX (0)
+        ////#define NL_USE_FLOAT_MATRIX (NL_USE_ACADEMIC_SOLVERS)
+        //#define NL_USE_FLOAT_MATRIX 1
         //#endif
 
         /// \brief Support long double type for matrix calculations.
         ///
-        /// Defaults to off to provide faster build times
+        /// Defaults to NL_USE_ACADEMIC_SOLVERS to provide faster build times
 
         //#ifndef NL_USE_LONG_DOUBLE_MATRIX
-        //#define NL_USE_LONG_DOUBLE_MATRIX (0)
+        ////#define NL_USE_LONG_DOUBLE_MATRIX (NL_USE_ACADEMIC_SOLVERS)
+        //#define NL_USE_LONG_DOUBLE_MATRIX 1
         //#endif
 
 
@@ -178,6 +196,8 @@ namespace mame.netlist
         ///
 
         //using nl_fptype = double;
+        ////using nl_fptype = long double;
+        ////using nl_fptype = float;
 
 
         //============================================================

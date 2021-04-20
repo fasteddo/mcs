@@ -356,9 +356,6 @@ namespace mame
         }
 
 
-        //template <std::size_t N> DECLARE_WRITE8_MEMBER(port_input_w) { m_port_input[N] = data & ~m_port_mask[N]; }
-
-
         protected void set_port_open_drain(int N, bool value) { m_port_open_drain[N] = value; }  //template <std::size_t N> void set_port_open_drain(bool value);
 
 
@@ -370,6 +367,9 @@ namespace mame
 
             m_port_mask[N] = mask;
         }
+
+
+        //template <std::size_t N> void port_input_w(uint8_t data) { m_port_input[N] = data & ~m_port_mask[N]; }
 
 
         //template <std::size_t N> READ8_MEMBER(m68705_device::port_r)
@@ -800,9 +800,9 @@ namespace mame
         }
 
 
-        //DECLARE_WRITE8_MEMBER(pa_w) { port_input_w<0>(space, offset, data, mem_mask); }
-        //DECLARE_WRITE8_MEMBER(pb_w) { port_input_w<1>(space, offset, data, mem_mask); }
-        //DECLARE_WRITE8_MEMBER(pc_w) { port_input_w<2>(space, offset, data, mem_mask); }
+        //void pa_w(u8 data) { port_input_w<0>(data); }
+        //void pb_w(u8 data) { port_input_w<1>(data); }
+        //void pc_w(u8 data) { port_input_w<2>(data); }
 
 
         protected override void internal_map(address_map map)

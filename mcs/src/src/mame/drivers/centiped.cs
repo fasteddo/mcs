@@ -51,7 +51,7 @@ namespace mame
             m_prg_bank = 0;
 
             if (m_earom.found())
-                earom_control_w(machine().dummy_space(), 0, 0);
+                earom_control_w(0);
         }
 
 
@@ -279,8 +279,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(centiped_state::earom_control_w)
-        void earom_control_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void earom_control_w(uint8_t data)
         {
             // CK = DB0, C1 = /DB1, C2 = DB2, CS1 = DB3, /CS2 = GND
             m_earom.target.set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
@@ -500,9 +499,9 @@ namespace mame
             ER2055(config, m_earom);
 
             LS259(config, m_outlatch);
-            m_outlatch.target.q_out_cb(0).set(coin_counter_left_w).reg();
-            m_outlatch.target.q_out_cb(1).set(coin_counter_center_w).reg();
-            m_outlatch.target.q_out_cb(2).set(coin_counter_right_w).reg();
+            m_outlatch.target.q_out_cb(0).set((write_line_delegate)coin_counter_left_w).reg();
+            m_outlatch.target.q_out_cb(1).set((write_line_delegate)coin_counter_center_w).reg();
+            m_outlatch.target.q_out_cb(2).set((write_line_delegate)coin_counter_right_w).reg();
             m_outlatch.target.q_out_cb(3).set_output("led0").invert().reg(); // LED 1
             m_outlatch.target.q_out_cb(4).set_output("led1").invert().reg(); // LED 2
 
@@ -533,7 +532,7 @@ namespace mame
             m_maincpu.target.memory().set_addrmap(AS_PROGRAM, centiped_map);
 
             // M10
-            m_outlatch.target.q_out_cb(7).set(flip_screen_w).reg();
+            m_outlatch.target.q_out_cb(7).set((write_line_delegate)flip_screen_w).reg();
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();

@@ -38,8 +38,7 @@ namespace mame
 
 
         /* FIXME: May be replaced by one call! */
-        //WRITE8_MEMBER( galaxian_sound_device::sound_w )
-        public void sound_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        public void sound_w(offs_t offset, uint8_t data)
         {
             data &= 0x01;
             switch (offset & 7)
@@ -47,68 +46,62 @@ namespace mame
                 case 0:     /* FS1 (controls 555 timer at 8R) */
                 case 1:     /* FS2 (controls 555 timer at 8S) */
                 case 2:     /* FS3 (controls 555 timer at 8T) */
-                    background_enable_w(space, offset, data);
+                    background_enable_w(offset, data);
                     break;
 
                 case 3:     /* HIT */
-                    noise_enable_w(space, 0, data);
+                    noise_enable_w(data);
                     break;
 
                 case 4:     /* n/c */
                     break;
 
                 case 5:     /* FIRE */
-                    fire_enable_w(space, 0, data);
+                    fire_enable_w(data);
                     break;
 
                 case 6:     /* VOL1 */
                 case 7:     /* VOL2 */
-                    vol_w(space, offset & 1, data);
+                    vol_w(offset & 1, data);
                     break;
             }
         }
 
 
         /* IC 9J */
-        //WRITE8_MEMBER( galaxian_sound_device::pitch_w )
-        public void pitch_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        public void pitch_w(uint8_t data)
         {
-            m_discrete.target.write(galaxian_state.GAL_INP_PITCH, data );
+            m_discrete.target.write(galaxian_state.GAL_INP_PITCH, data);
         }
 
 
-        //WRITE8_MEMBER( galaxian_sound_device::vol_w )
-        void vol_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void vol_w(offs_t offset, uint8_t data)
         {
             m_discrete.target.write((offs_t)NODE_RELATIVE(galaxian_state.GAL_INP_VOL1, (int)offset), (uint8_t)(data & 0x01));
         }
 
 
-        //WRITE8_MEMBER( galaxian_sound_device::noise_enable_w )
-        void noise_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void noise_enable_w(uint8_t data)
         {
-            m_discrete.target.write(galaxian_state.GAL_INP_HIT, (byte)(data & 0x01));
+            m_discrete.target.write(galaxian_state.GAL_INP_HIT, (uint8_t)(data & 0x01));
         }
 
 
-        //WRITE8_MEMBER( galaxian_sound_device::background_enable_w )
-        void background_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void background_enable_w(offs_t offset, uint8_t data)
         {
             m_discrete.target.write((offs_t)NODE_RELATIVE(galaxian_state.GAL_INP_FS1, (int)offset), (uint8_t)(data & 0x01));
         }
 
 
-        //WRITE8_MEMBER( galaxian_sound_device::fire_enable_w )
-        void fire_enable_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        void fire_enable_w(uint8_t data)
         {
-            m_discrete.target.write(galaxian_state.GAL_INP_FIRE, (byte)(data & 0x01));
+            m_discrete.target.write(galaxian_state.GAL_INP_FIRE, (uint8_t)(data & 0x01));
         }
 
 
-        //WRITE8_MEMBER( galaxian_sound_device::lfo_freq_w )
-        public void lfo_freq_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        public void lfo_freq_w(offs_t offset, uint8_t data)
         {
-            byte lfo_val_new = (byte)((m_lfo_val & ~(1<<(int)offset)) | ((data & 0x01) << (int)offset));
+            uint8_t lfo_val_new = (uint8_t)((m_lfo_val & ~(1U << (int)offset)) | ((uint32_t)(data & 0x01) << (int)offset));
 
             if (m_lfo_val != lfo_val_new)
             {

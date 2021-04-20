@@ -116,6 +116,33 @@ namespace mame.netlist.analog
     }
 
 
+    // Constant model for constant capacitor model
+    // Backward Euler
+    // "Circuit simulation", page 274
+    struct generic_capacitor_const
+    {
+        nl_fptype m_gmin;
+
+
+        public generic_capacitor_const(device_t dev, string name)
+        {
+            m_gmin = nlconst.zero();
+
+            //plib::unused_var(dev, name);
+        }
+
+        // Returns { G, Ieq }
+        public std.pair<nl_fptype, nl_fptype> timestep(nl_fptype cap, nl_fptype v, nl_fptype step)
+        {
+            nl_fptype h = plib.pglobal.reciprocal(step);
+            nl_fptype G = cap * h + m_gmin;
+            return new std.pair<nl_fptype, nl_fptype>(G, - G * v);
+        }
+
+        public void setparams(nl_fptype gmin) { m_gmin = gmin; }
+    }
+
+
     // -----------------------------------------------------------------------------
     // A generic diode model to be used in other devices (Diode, BJT ...)
     // -----------------------------------------------------------------------------
@@ -130,7 +157,7 @@ namespace mame.netlist.analog
     {
         diode_e TYPE;
 
-        string m_name;
+        //string m_name;
 
         // owning object must save those ...
         state_var<nl_fptype> m_Vd;
@@ -172,7 +199,7 @@ namespace mame.netlist.analog
               , nlconst.magic(1)
               , nlconst.magic(1e-15)
               , nlconst.magic(300.0));
-            m_name = name;
+            //m_name = name;
         }
 
 

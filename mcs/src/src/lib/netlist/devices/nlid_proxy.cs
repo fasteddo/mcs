@@ -158,7 +158,6 @@ namespace mame.netlist
             analog.nld_twoterm m_RP;  //analog::NETLIB_NAME(twoterm) m_RP;
             analog.nld_twoterm m_RN;  //analog::NETLIB_NAME(twoterm) m_RN;
             state_var<int> m_last_state;
-            bool m_is_timestep;
 
 
             public nld_d_to_a_proxy(netlist_state_t anetlist, string name, logic_output_t out_proxied)
@@ -168,7 +167,6 @@ namespace mame.netlist
                 m_RP = new analog.nld_twoterm(this, "RP");
                 m_RN = new analog.nld_twoterm(this, "RN");
                 m_last_state = new state_var<int>(this, "m_last_var", -1);
-                m_is_timestep = false;
 
 
                 register_subalias("Q", m_RN.m_P);
@@ -207,7 +205,6 @@ namespace mame.netlist
                 m_last_state.op = -1;
                 m_RN.reset();
                 m_RP.reset();
-                m_is_timestep = m_RN.m_P.net().solver().has_timestep_devices();
                 m_RN.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_low()),
                         logic_family().low_offset_V(), nlconst.zero());
                 m_RP.set_G_V_I(G_OFF,
@@ -222,29 +219,28 @@ namespace mame.netlist
                 var state = (int)m_I.op();
                 if (state != m_last_state.op)
                 {
-                    // We only need to update the net first if this is a time stepping net
-                    if (m_is_timestep)
+                    // RN, RP are connected ...
+                    m_RN.change_state(() =>  //m_RN.change_state([this, &state]()
                     {
-                        m_RN.update(); // RN, RP are connected ...
-                    }
+                        if (state != 0)
+                        {
 
-                    if (state != 0)
-                    {
-                        m_RN.set_G_V_I(G_OFF,
-                            nlconst.zero(),
-                            nlconst.zero());
-                        m_RP.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_high()),
-                                logic_family().high_offset_V(), nlconst.zero());
-                    }
-                    else
-                    {
-                        m_RN.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_low()),
-                                logic_family().low_offset_V(), nlconst.zero());
-                        m_RP.set_G_V_I(G_OFF,
-                            nlconst.zero(),
-                            nlconst.zero());
-                    }
-                    m_RN.solve_later(); // RN, RP are connected ...
+                            m_RN.set_G_V_I(G_OFF,
+                                nlconst.zero(),
+                                nlconst.zero());
+                            m_RP.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_high()),
+                                    logic_family().high_offset_V(), nlconst.zero());
+                        }
+                        else
+                        {
+                            m_RN.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_low()),
+                                    logic_family().low_offset_V(), nlconst.zero());
+                            m_RP.set_G_V_I(G_OFF,
+                                nlconst.zero(),
+                                nlconst.zero());
+                        }
+                    });
+
                     m_last_state.op = state;
                 }
             }

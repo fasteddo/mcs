@@ -17,7 +17,7 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    partial class atarisy2_state : atarigen_state
+    partial class atarisy2_state : driver_device
     {
         static readonly XTAL MASTER_CLOCK = new XTAL(20000000);
         static readonly XTAL SOUND_CLOCK  = new XTAL(14318181);
@@ -29,29 +29,42 @@ namespace mame
          *  Interrupt updating
          *
          *************************************/
-        protected override void update_interrupts()
+        protected void update_interrupts()
         {
-            if (m_video_int_state != 0)
+            if (m_video_int_state)
                 m_maincpu.target.set_input_line(3, ASSERT_LINE);
             else
                 m_maincpu.target.set_input_line(3, CLEAR_LINE);
 
-            if (m_scanline_int_state != 0)
+            if (m_scanline_int_state)
                 m_maincpu.target.set_input_line(2, ASSERT_LINE);
             else
                 m_maincpu.target.set_input_line(2, CLEAR_LINE);
 
-            if (m_p2portwr_state != 0)
+            if (m_p2portwr_state)
                 m_maincpu.target.set_input_line(1, ASSERT_LINE);
             else
                 m_maincpu.target.set_input_line(1, CLEAR_LINE);
 
-            if (m_p2portrd_state != 0)
+            if (m_p2portrd_state)
                 m_maincpu.target.set_input_line(0, ASSERT_LINE);
             else
                 m_maincpu.target.set_input_line(0, CLEAR_LINE);
         }
 
+
+        void scanline_int_ack_w(uint8_t data)
+        {
+            m_scanline_int_state = false;
+            update_interrupts();
+        }
+
+
+        void video_int_ack_w(uint8_t data)
+        {
+            m_video_int_state = false;
+            update_interrupts();
+        }
 
 
         /*************************************
@@ -60,14 +73,19 @@ namespace mame
          *
          *************************************/
 
-        protected override void scanline_update(screen_device screen, int scanline)
+        //TIMER_DEVICE_CALLBACK_MEMBER(atarisy2_state::scanline_update)
+        protected void scanline_update(timer_device timer, object ptr, int param)
         {
-            if (scanline <= screen.height())
+            int scanline = param;
+            if (scanline <= m_screen.target.height())
             {
-                /* generate the 32V interrupt (IRQ 2) */
+                // generate the 32V interrupt (IRQ 2)
                 if ((scanline % 64) == 0)
-                    if ((m_interrupt_enable & 4) != 0)
-                        scanline_int_write_line(1);
+                {
+                    // clock the state through
+                    m_scanline_int_state = BIT(m_interrupt_enable, 2) != 0;
+                    update_interrupts();
+                }
             }
         }
 
@@ -77,14 +95,18 @@ namespace mame
          *  Initialization
          *
          *************************************/
-        //MACHINE_START_MEMBER(atarisy2_state,atarisy2)
-        void machine_start_atarisy2()
+        protected override void machine_start()
         {
-            base.machine_start();
-
             m_leds.resolve();
 
+            m_scanline_int_state = false;
+            m_video_int_state = false;
+            m_p2portwr_state = false;
+            m_p2portrd_state = false;
+
             save_item(NAME(new { m_interrupt_enable }));
+            save_item(NAME(new { m_scanline_int_state }));
+            save_item(NAME(new { m_video_int_state }));
             save_item(NAME(new { m_p2portwr_state }));
             save_item(NAME(new { m_p2portrd_state }));
             save_item(NAME(new { m_sound_reset_state }));
@@ -94,16 +116,13 @@ namespace mame
         }
 
 
-        //MACHINE_RESET_MEMBER(atarisy2_state,atarisy2)
-        void machine_reset_atarisy2()
+        protected override void machine_reset()
         {
-            base.machine_reset();
-
             m_slapstic.target.slapstic_reset();
-            scanline_timer_reset(m_screen.target, 64);
 
-            m_p2portwr_state = 0;
-            m_p2portrd_state = 0;
+            m_interrupt_enable = 0;
+
+            sound_reset_w(1);
         }
 
 
@@ -115,27 +134,31 @@ namespace mame
         //WRITE_LINE_MEMBER(atarisy2_state::vblank_int)
         void vblank_int(int state)
         {
-            /* clock the VBLANK through */
-            if (state != 0 && BIT(m_interrupt_enable, 3) != 0)
-                video_int_write_line(1);
+            if (state != 0)
+            {
+                // clock the VBLANK through
+                m_video_int_state = BIT(m_interrupt_enable, 3) != 0;
+                update_interrupts();
+            }
         }
 
 
-        //WRITE16_MEMBER(atarisy2_state::int0_ack_w)
-        void int0_ack_w(address_space space, offs_t offset, uint16_t data, uint16_t mem_mask)
+        void int0_ack_w(uint8_t data)
         {
-            /* reset sound IRQ */
-            m_p2portrd_state = 0;
+            // reset sound IRQ
+            m_p2portrd_state = false;
             update_interrupts();
         }
 
 
-        //WRITE16_MEMBER(atarisy2_state::int1_ack_w)
-        void int1_ack_w(address_space space, offs_t offset, uint16_t data, uint16_t mem_mask)
+        void sound_reset_w(uint8_t data)
         {
-            /* reset sound CPU */
-            if (ACCESSING_BITS_0_7(mem_mask))
-                m_audiocpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, (data & 1) != 0 ? ASSERT_LINE : CLEAR_LINE);
+            // reset sound CPU
+            m_audiocpu.target.set_input_line(device_execute_interface.INPUT_LINE_RESET, BIT(data, 0) != 0 ? ASSERT_LINE : CLEAR_LINE);
+
+            sndrst_6502_w(0);
+            coincount_w(0);
+            switch_6502_w(0);
         }
 
 
@@ -146,11 +169,31 @@ namespace mame
         }
 
 
-        //WRITE16_MEMBER(atarisy2_state::int_enable_w)
-        void int_enable_w(address_space space, offs_t offset, uint16_t data, uint16_t mem_mask)
+        void int_enable_w(uint8_t data)
         {
-            if (offset == 0 && ACCESSING_BITS_0_7(mem_mask))
-                machine().scheduler().synchronize(delayed_int_enable_w, data);
+            machine().scheduler().synchronize(delayed_int_enable_w, data);
+        }
+
+
+        //INTERRUPT_GEN_MEMBER(atarisy2_state::sound_irq_gen)
+        void sound_irq_gen(device_t device)
+        {
+            m_audiocpu.target.set_input_line(m6502_device.IRQ_LINE, ASSERT_LINE);
+        }
+
+
+        void sound_irq_ack_w(uint8_t data)
+        {
+            m_audiocpu.target.set_input_line(m6502_device.IRQ_LINE, CLEAR_LINE);
+        }
+
+
+        //WRITE_LINE_MEMBER(atarisy2_state::boost_interleave_hack)
+        public void boost_interleave_hack(int state)
+        {
+            // apb3 fails the self-test with a 100 µs delay or less
+            if (state != 0)
+                machine().scheduler().boost_interleave(attotime.zero, attotime.from_usec(200));
         }
 
 
@@ -160,8 +203,7 @@ namespace mame
          *
          *************************************/
 
-        //WRITE16_MEMBER(atarisy2_state::bankselect_w)
-        void bankselect_w(address_space space, offs_t offset, uint16_t data, uint16_t mem_mask)
+        void bankselect_w(offs_t offset, uint16_t data)
         {
             /*static const int bankoffset[64] =
             {
@@ -183,16 +225,15 @@ namespace mame
                 63, 59, 55, 51
             };*/
 
-            int banknumber = ((data >> 10) & 0x3f) ^ 0x03;
-            banknumber = bitswap(banknumber, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 1, 0, 3, 2);  //banknumber = bitswap<16>(banknumber, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 1, 0, 3, 2);
+            uint8_t banknumber = (uint8_t)((((uint32_t)data >> 10) & 077) ^ 0x03);
+            banknumber = (uint8_t)bitswap(banknumber, 5, 4, 1, 0, 3, 2);  //banknumber = bitswap<6>(banknumber, 5, 4, 1, 0, 3, 2);
 
             m_rombank.op((int)offset).target.set_entry(banknumber);
         }
 
 
-        protected override void device_post_load()
+        protected void device_post_load()
         {
-            base.device_post_load();
         }
 
 
@@ -201,15 +242,13 @@ namespace mame
          *  I/O read dispatch.
          *
          *************************************/
-        //READ16_MEMBER(atarisy2_state::switch_r)
-        uint16_t switch_r(address_space space, offs_t offset, uint16_t mem_mask)
+        uint16_t switch_r()
         {
             return (uint16_t)(ioport("1800").read() | (ioport("1801").read() << 8));
         }
 
 
-        //READ8_MEMBER(atarisy2_state::switch_6502_r)
-        uint8_t switch_6502_r(address_space space, offs_t offset, uint8_t mem_mask)
+        uint8_t switch_6502_r()
         {
             int result = (int)ioport("1840").read();
 
@@ -222,8 +261,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(atarisy2_state::switch_6502_w)
-        void switch_6502_w(address_space space, offs_t offset, uint8_t data, uint8_t mem_mask)
+        void switch_6502_w(uint8_t data)
         {
             m_leds[0] = BIT(data, 2);
             m_leds[1] = BIT(data, 3);
@@ -235,21 +273,19 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(atarisy2_state::leta_r)
-        uint8_t leta_r(address_space space, offs_t offset, uint8_t mem_mask)
+        uint8_t leta_r(offs_t offset)
         {
             throw new emu_unimplemented();
         }
 
 
-        //WRITE8_MEMBER(atarisy2_state::mixer_w)
-        void mixer_w(address_space space, offs_t offset, uint8_t data, uint8_t mem_mask = 0xff)
+        void mixer_w(uint8_t data)
         {
             double rbott;
             double rtop;
             double gain;
 
-            /* these gains are cheesed up, but give an approximate effect */
+            // these gains are cheesed up, but give an approximate effect
 
             /*
              * Before the volume adjustment, all channels pass through
@@ -266,7 +302,7 @@ namespace mame
              *
              */
 
-            /* bits 0-2 control the volume of the YM2151, using 22k, 47k, and 100k resistors */
+            // bits 0-2 control the volume of the YM2151, using 22k, 47k, and 100k resistors
             rtop = 1.0 / (1.0 / 100 + 1.0 / 100);
             rbott = 0;
             if ((data & 0x01) == 0) rbott += 1.0 / 100;
@@ -275,7 +311,7 @@ namespace mame
             gain = (rbott == 0) ? 1.0 : ((1.0 / rbott) / (rtop + (1.0 / rbott)));
             m_ym2151.target.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
 
-            /* bits 3-4 control the volume of the POKEYs, using 47k and 100k resistors */
+            // bits 3-4 control the volume of the POKEYs, using 47k and 100k resistors
             rtop = 1.0 / (1.0 / 100 + 1.0 / 100);
             rbott = 0;
             if ((data & 0x08) == 0) rbott += 1.0 / 47;
@@ -284,7 +320,7 @@ namespace mame
             m_pokey.op(0).target.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
             m_pokey.op(1).target.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
 
-            /* bits 5-7 control the volume of the TMS5220, using 22k, 47k, and 100k resistors */
+            // bits 5-7 control the volume of the TMS5220, using 22k, 47k, and 100k resistors
             if (m_tms5220.found())
             {
                 rtop = 1.0 / (1.0 / 100 + 1.0 / 100);
@@ -298,64 +334,64 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(atarisy2_state::sound_reset_w)
-        void sound_reset_w(address_space space, offs_t offset, uint8_t data, uint8_t mem_mask)
+        void sndrst_6502_w(uint8_t data)
         {
-            /* if no change, do nothing */
+            // if no change, do nothing
             if ((data & 1) == m_sound_reset_state)
                 return;
 
             m_sound_reset_state = (uint8_t)(data & 1);
+            m_ym2151.target.reset_w(m_sound_reset_state);
 
-            /* only track the 0 -> 1 transition */
+            // only track the 0 -> 1 transition
             if (m_sound_reset_state == 0)
                 return;
 
-            /* a large number of signals are reset when this happens */
-            m_soundcomm.target.reset();
-            m_ym2151.target.reset();
             if (m_tms5220.found())
             {
                 m_tms5220.target.reset(); // technically what happens is the tms5220 gets a long stream of 0xFF written to it when sound_reset_state is 0 which halts the chip after a few frames, but this works just as well, even if it isn't exactly true to hardware... The hardware may not have worked either, the resistors to pull input to 0xFF are fighting against the ls263 gate holding the latched value to be sent to the chip.
             }
 
-            mixer_w(space, 0, 0);
+            mixer_w(0);
         }
 
 
-        //READ16_MEMBER(atarisy2_state::sound_r)
-        uint16_t sound_r(address_space space, offs_t offset, uint16_t mem_mask)
+        uint16_t sound_r()
         {
-            /* clear the p2portwr state on a p1portrd */
-            m_p2portwr_state = 0;
-            update_interrupts();
+            if (!machine().side_effects_disabled())
+            {
+                // clear the p2portwr state on a p1portrd
+                m_p2portwr_state = false;
+                update_interrupts();
+            }
 
-            /* handle it normally otherwise */
-            return (uint16_t)(m_soundcomm.target.main_response_r() | 0xff00);
+            // handle it normally otherwise
+            return (uint16_t)(m_mainlatch.target.read() | 0xff00);
         }
 
 
-        //WRITE8_MEMBER(atarisy2_state::sound_6502_w)
-        void sound_6502_w(address_space space, offs_t offset, uint8_t data, uint8_t mem_mask)
+        void sound_6502_w(uint8_t data)
         {
-            /* clock the state through */
-            m_p2portwr_state = ((m_interrupt_enable & 2) != 0) ? (uint8_t)1 : (uint8_t)0;
+            // clock the state through
+            m_p2portwr_state = BIT(m_interrupt_enable, 1) != 0;
             update_interrupts();
 
-            /* handle it normally otherwise */
-            m_soundcomm.target.sound_response_w(data);
+            // handle it normally otherwise
+            m_mainlatch.target.write(data);
         }
 
 
-        //READ8_MEMBER(atarisy2_state::sound_6502_r)
-        uint8_t sound_6502_r(address_space space, offs_t offset, uint8_t mem_mask)
+        uint8_t sound_6502_r()
         {
-            /* clock the state through */
-            m_p2portrd_state = ((m_interrupt_enable & 1) != 0) ? (uint8_t)1 : (uint8_t)0;
-            update_interrupts();
+            if (!machine().side_effects_disabled())
+            {
+                // clock the state through
+                m_p2portrd_state = BIT(m_interrupt_enable, 0) != 0;
+                update_interrupts();
+            }
 
-            /* handle it normally otherwise */
-            return m_soundcomm.target.sound_command_r();
+            // handle it normally otherwise
+            return m_soundlatch.target.read();
         }
 
 
@@ -364,8 +400,7 @@ namespace mame
          *  Speech chip
          *
          *************************************/
-        //WRITE8_MEMBER(atarisy2_state::tms5220_w)
-        void tms5220_w(address_space space, offs_t offset, uint8_t data, uint8_t mem_mask)
+        void tms5220_w(uint8_t data)
         {
             if (m_tms5220.found())
             {
@@ -374,8 +409,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(atarisy2_state::tms5220_strobe_w)
-        void tms5220_strobe_w(address_space space, offs_t offset, uint8_t data, uint8_t mem_mask)
+        void tms5220_strobe_w(offs_t offset, uint8_t data)
         {
             if (m_tms5220.found())
             {
@@ -389,38 +423,38 @@ namespace mame
          *  Misc. sound
          *
          *************************************/
-        //WRITE8_MEMBER(atarisy2_state::coincount_w)
-        void coincount_w(address_space space, offs_t offset, uint8_t data, uint8_t mem_mask)
+        void coincount_w(uint8_t data)
         {
             machine().bookkeeping().coin_counter_w(0, (data >> 0) & 1);
             machine().bookkeeping().coin_counter_w(1, (data >> 1) & 1);
         }
 
 
-        /* full memory map derived from schematics */
+        // full memory map derived from schematics
         void main_map(address_map map, device_t owner)
         {
             map.unmap_value_high();
-            map.op(0x0000, 0x0fff).ram();
-            map.op(0x1000, 0x11ff).mirror(0x0200).ram().w("palette", (offs_t offset, u16 data, u16 mem_mask) => { ((palette_device)subdevice("palette")).write16(offset, data, mem_mask); }).share("palette");  //map(0x1000, 0x11ff).mirror(0x0200).ram().w("palette", FUNC(palette_device::write16)).share("palette");
-            map.op(0x1400, 0x1400).mirror(0x007e).r("adc", () => { return ((adc0808_device)subdevice("adc")).data_r(); });  //map(0x1400, 0x1400).mirror(0x007e).r("adc", FUNC(adc0808_device::data_r));
-            map.op(0x1400, 0x1403).mirror(0x007c).w((write16_delegate)bankselect_w);
-            map.op(0x1480, 0x148f).mirror(0x0070).w("adc", (offset, data) => { ((adc0808_device)subdevice("adc")).address_offset_start_w(offset, data); }).umask16(0x00ff);  //map(0x1480, 0x148f).mirror(0x0070).w("adc", FUNC(adc0808_device::address_offset_start_w)).umask16(0x00ff);
-            map.op(0x1580, 0x1581).mirror(0x001e).w((write16_delegate)int0_ack_w);
-            map.op(0x15a0, 0x15a1).mirror(0x001e).w((write16_delegate)int1_ack_w);
-            map.op(0x15c0, 0x15c1).mirror(0x001e).w((u16 data) => { scanline_int_ack_w(data); });
-            map.op(0x15e0, 0x15e1).mirror(0x001e).w((u16 data) => { video_int_ack_w(data); });
-            map.op(0x1600, 0x1601).mirror(0x007e).w((write16_delegate)int_enable_w);
-            map.op(0x1680, 0x1680).mirror(0x007e).w(m_soundcomm, m_soundcomm.target.main_command_w);  //map(0x1680, 0x1680).mirror(0x007e).w(m_soundcomm, FUNC(atari_sound_comm_device::main_command_w));
-            map.op(0x1700, 0x1701).mirror(0x007e).w((write16_delegate)xscroll_w).share("xscroll");
-            map.op(0x1780, 0x1781).mirror(0x007e).w((write16_delegate)yscroll_w).share("yscroll");
-            map.op(0x1800, 0x1801).mirror(0x03fe).r(switch_r).w("watchdog", (u16 data) => { ((watchdog_timer_device)subdevice("watchdog")).reset16_w(data); });  //map(0x1800, 0x1801).mirror(0x03fe).r(FUNC(atarisy2_state::switch_r)).w("watchdog", FUNC(watchdog_timer_device::reset16_w));
-            map.op(0x1c00, 0x1c01).mirror(0x03fe).r(sound_r);
-            map.op(0x2000, 0x3fff).m(m_vrambank.target, (map_, owner_) => { ((address_map_bank_device)subdevice("vrambank")).amap16(map_); });  //map(0x2000, 0x3fff).m(m_vrambank, FUNC(address_map_bank_device::amap16));
-            map.op(0x4000, 0x5fff).bankr("rombank1");
-            map.op(0x6000, 0x7fff).bankr("rombank2");
-            map.op(0x8000, 0xffff).rom();
-            map.op(0x8000, 0x81ff).rw(slapstic_r, slapstic_w).share("slapstic_base");
+            map.op(0000000, 0007777).ram();
+            map.op(0010000, 0010777).mirror(01000).ram().w("palette", (offs_t offset, u16 data, u16 mem_mask) => { ((palette_device)subdevice("palette")).write16(offset, data, mem_mask); }).share("palette");
+            map.op(0012000, 0012000).mirror(00176).r("adc", () => { return ((adc0808_device)subdevice("adc")).data_r(); });
+            map.op(0012000, 0012003).mirror(00174).w((write16sm_delegate)bankselect_w);
+            map.op(0012200, 0012217).mirror(00160).w("adc", (offset, data) => { ((adc0808_device)subdevice("adc")).address_offset_start_w(offset, data); }).umask16(0x00ff);
+            map.op(0012600, 0012600).mirror(00036).w(int0_ack_w);
+            map.op(0012640, 0012640).mirror(00036).w(sound_reset_w);
+            map.op(0012700, 0012700).mirror(00036).w(scanline_int_ack_w);
+            map.op(0012740, 0012740).mirror(00036).w(video_int_ack_w);
+            map.op(0013000, 0013000).mirror(00176).w(int_enable_w);
+            map.op(0013200, 0013200).mirror(00176).w(m_soundlatch, (data) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); });
+            map.op(0013400, 0013401).mirror(00176).w((write16_delegate)xscroll_w).share("xscroll");
+            map.op(0013600, 0013601).mirror(00176).w((write16_delegate)yscroll_w).share("yscroll");
+            map.op(0014000, 0014001).mirror(01776).r(switch_r);
+            map.op(0014000, 0014000).mirror(01776).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });
+            map.op(0016000, 0016001).mirror(01776).r(sound_r);
+            map.op(0020000, 0037777).m(m_vrambank.target, (map_, owner_) => { ((address_map_bank_device)subdevice("vrambank")).amap16(map_); });
+            map.op(0040000, 0057777).bankr("rombank1");
+            map.op(0060000, 0077777).bankr("rombank2");
+            map.op(0100000, 0177777).rom();
+            map.op(0100000, 0100777).rw(slapstic_r, slapstic_w).share("slapstic_base");
         }
 
 
@@ -429,14 +463,14 @@ namespace mame
          *  Bankswitched VRAM handlers
          *
          *************************************/
-        /* full memory map derived from schematics */
+        // full memory map derived from schematics
         void vrambank_map(address_map map, device_t owner)
         {
             map.unmap_value_high();
-            map.op(0x0000, 0x17ff).ram().w(m_alpha_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_alpha_tilemap.target.write16(offset, data, mem_mask); }).share("alpha");  //map(0x0000, 0x17ff).ram().w(m_alpha_tilemap, FUNC(tilemap_device::write16)).share("alpha");
-            map.op(0x1800, 0x1fff).ram().w((write16_delegate)spriteram_w).share("mob");
-            map.op(0x2000, 0x3fff).ram();
-            map.op(0x4000, 0x7fff).ram().w(m_playfield_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_playfield_tilemap.target.write16(offset, data, mem_mask); }).share("playfield");  //map(0x4000, 0x7fff).ram().w(m_playfield_tilemap, FUNC(tilemap_device::write16)).share("playfield");
+            map.op(000000, 013777).ram().w(m_alpha_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_alpha_tilemap.target.write16(offset, data, mem_mask); }).share("alpha");
+            map.op(014000, 017777).ram().w((write16_delegate)spriteram_w).share("mob");
+            map.op(020000, 037777).ram();
+            map.op(040000, 077777).ram().w(m_playfield_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_playfield_tilemap.target.write16(offset, data, mem_mask); }).share("playfield");
         }
 
 
@@ -445,7 +479,7 @@ namespace mame
          *  Sound CPU memory handlers
          *
          *************************************/
-        /* full memory map derived from schematics */
+        // full memory map derived from schematics
         void sound_map(address_map map, device_t owner)
         {
             map.op(0x0000, 0x0fff).mirror(0x2000).ram();
@@ -460,10 +494,10 @@ namespace mame
             map.op(0x1872, 0x1873).mirror(0x2780).w(tms5220_strobe_w);
             map.op(0x1874, 0x1874).mirror(0x2781).w(sound_6502_w);
             map.op(0x1876, 0x1876).mirror(0x2781).w(coincount_w);
-            map.op(0x1878, 0x1878).mirror(0x2781).w(m_soundcomm, m_soundcomm.target.sound_irq_ack_w);  //map(0x1878, 0x1878).mirror(0x2781).w(m_soundcomm, FUNC(atari_sound_comm_device::sound_irq_ack_w));
+            map.op(0x1878, 0x1878).mirror(0x2781).w(sound_irq_ack_w);
             map.op(0x187a, 0x187a).mirror(0x2781).w(mixer_w);
             map.op(0x187c, 0x187c).mirror(0x2781).w(switch_6502_w);
-            map.op(0x187e, 0x187e).mirror(0x2781).w(sound_reset_w);
+            map.op(0x187e, 0x187e).mirror(0x2781).w(sndrst_6502_w);
             map.op(0x4000, 0xffff).rom();
         }
     }
@@ -479,8 +513,8 @@ namespace mame
             atarisy2_state atarisy2_state = (atarisy2_state)owner;
 
             PORT_START("1840");  /*(sound) */
-            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_ATARI_COMM_MAIN_TO_SOUND_READY(atarisy2_state, "soundcomm");
-            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_ATARI_COMM_SOUND_TO_MAIN_READY(atarisy2_state, "soundcomm");
+            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_DEVICE_MEMBER("soundlatch", () => { return ((generic_latch_8_device)atarisy2_state.subdevice("soundlatch")).pending_r(); }); // P1TALK
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_DEVICE_MEMBER("mainlatch", () => { return ((generic_latch_8_device)atarisy2_state.subdevice("mainlatch")).pending_r(); }); // P2TALK
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_CUSTOM );
             PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED );
             PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE );
@@ -493,8 +527,8 @@ namespace mame
             PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED );
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN );
             PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN );
-            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_ATARI_COMM_SOUND_TO_MAIN_READY(atarisy2_state, "soundcomm");
-            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_ATARI_COMM_MAIN_TO_SOUND_READY(atarisy2_state, "soundcomm");
+            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_DEVICE_MEMBER("mainlatch", () => { return ((generic_latch_8_device)atarisy2_state.subdevice("mainlatch")).pending_r(); }); // P2TALK
+            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_DEVICE_MEMBER("soundlatch", () => { return ((generic_latch_8_device)atarisy2_state.subdevice("soundlatch")).pending_r(); }); // P1TALK
             PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 );
             PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 );
 
@@ -547,7 +581,7 @@ namespace mame
             PORT_DIPSETTING(    0xa0, "1 Each 3" );
             PORT_DIPSETTING(    0x60, "2 Each 4" );
             PORT_DIPSETTING(    0x20, "1 Each 2" );
-            PORT_DIPSETTING(    0xc0, "1 Each ?" );              /* Not Documented */
+            PORT_DIPSETTING(    0xc0, "1 Each ?" );              // Not Documented
             PORT_DIPSETTING(    0xe0, DEF_STR( Free_Play ) );
 
             PORT_START("DSW1");
@@ -566,8 +600,8 @@ namespace mame
             PORT_DIPSETTING(    0x00, "4" );
             PORT_DIPSETTING(    0x30, "5" );
             PORT_DIPSETTING(    0x10, "Infinite (Cheat)");
-            PORT_DIPUNUSED_DIPLOC( 0x40, 0x40, "5/6A:!2" );      /* Listed as "Unused" */
-            PORT_DIPUNUSED_DIPLOC( 0x80, 0x80, "5/6A:!1" );      /* Listed as "Unused" */
+            PORT_DIPUNUSED_DIPLOC( 0x40, 0x40, "5/6A:!2" );      // Listed as "Unused"
+            PORT_DIPUNUSED_DIPLOC( 0x80, 0x80, "5/6A:!1" );      // Listed as "Unused"
 
             INPUT_PORTS_END();
         }
@@ -601,25 +635,25 @@ namespace mame
 
             /* Center disc */
             /* X1, X2 LETA inputs */
-            PORT_MODIFY("LETA0");    /* not direct mapped */
+            PORT_MODIFY("LETA0");    // not direct mapped
             PORT_BIT( 0xff, 0x00, IPT_DIAL_V ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10); PORT_NAME("Center"); PORT_CONDITION("SELECT",0x03,ioport_condition.condition_t.EQUALS,0x00);
 
             /* Rotate disc */
             /* Y1, Y2 LETA inputs */
             /* The disc has 72 teeth which are read by the hardware at 2x */
             /* Computer hardware reads at 4x, so we set the sensitivity to 50% */
-            PORT_MODIFY("LETA1");    /* not direct mapped */
+            PORT_MODIFY("LETA1");    // not direct mapped
             PORT_BIT( 0xff, 0x00, IPT_DIAL ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10); PORT_FULL_TURN_COUNT(144); PORT_NAME("Rotate"); PORT_CONDITION("SELECT",0x03,ioport_condition.condition_t.EQUALS,0x00);
 
-            PORT_START("FAKE_JOY_X");    /* not direct mapped */
+            PORT_START("FAKE_JOY_X");    // not direct mapped
             PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ); PORT_SENSITIVITY(100); PORT_KEYDELTA(10); PORT_CONDITION("SELECT",0x03,ioport_condition.condition_t.EQUALS,0x01);
 
-            PORT_START("FAKE_JOY_Y");    /* not direct mapped */
+            PORT_START("FAKE_JOY_Y");    // not direct mapped
             PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ); PORT_SENSITIVITY(100); PORT_KEYDELTA(10); PORT_REVERSE(); PORT_CONDITION("SELECT",0x03,ioport_condition.condition_t.EQUALS,0x01);
 
             /* Let's assume we are using a 1200 count spinner.  We scale to get a 144 count.
              * 144/1200 = 0.12 = 12% */
-            PORT_START("FAKE_SPINNER");  /* not direct mapped */
+            PORT_START("FAKE_SPINNER");  // not direct mapped
             PORT_BIT( 0xffff, 0x00, IPT_DIAL ); PORT_SENSITIVITY(12); PORT_KEYDELTA(10); PORT_CONDITION("SELECT",0x03,ioport_condition.condition_t.EQUALS,0x02);
 
             PORT_START("SELECT");
@@ -660,7 +694,7 @@ namespace mame
     }
 
 
-    partial class atarisy2_state : atarigen_state
+    partial class atarisy2_state : driver_device
     {
         /*************************************
          *
@@ -719,17 +753,14 @@ namespace mame
          *************************************/
         void atarisy2(machine_config config)
         {
-            /* basic machine hardware */
+            // basic machine hardware
             T11(config, m_maincpu, MASTER_CLOCK / 2);
-            m_maincpu.target.set_initial_mode(0x36ff); /* initial mode word has DAL15,14,11,8 pulled low */
+            m_maincpu.target.set_initial_mode(0x36ff); // initial mode word has DAL15,14,11,8 pulled low
             m_maincpu.target.memory().set_addrmap(AS_PROGRAM, main_map);
 
             M6502(config, m_audiocpu, SOUND_CLOCK / 8);
             m_audiocpu.target.memory().set_addrmap(AS_PROGRAM, sound_map);
-            m_audiocpu.target.execute().set_periodic_int((device) => { ((atari_sound_comm_device)subdevice("soundcomm")).sound_irq_gen(device); }, attotime.from_hz(MASTER_CLOCK / 2 / 16 / 16 / 16 / 10));  //m_audiocpu->set_periodic_int("soundcomm", FUNC(atari_sound_comm_device::sound_irq_gen), attotime::from_hz(MASTER_CLOCK/2/16/16/16/10));
-
-            MCFG_MACHINE_START_OVERRIDE(config, machine_start_atarisy2);
-            MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_atarisy2);
+            m_audiocpu.target.execute().set_periodic_int(sound_irq_gen, attotime.from_hz(MASTER_CLOCK/2/16/16/16/10));
 
             adc0809_device adc = ADC0809(config, "adc", MASTER_CLOCK / 32); // 625 kHz
             adc.in_callback(0).set_ioport("ADC0").reg(); // J102 pin 5 (POT1)
@@ -743,9 +774,11 @@ namespace mame
 
             EEPROM_2804(config, "eeprom");
 
-            WATCHDOG_TIMER(config, "watchdog");
+            TIMER(config, "scantimer").configure_scanline(scanline_update, m_screen, 0, 64);
 
-            /* video hardware */
+            WATCHDOG_TIMER(config, "watchdog").set_time(attotime.from_hz(MASTER_CLOCK/2/16/16/16/256));
+
+            // video hardware
             GFXDECODE(config, "gfxdecode", "palette", gfx_atarisy2);
             PALETTE(config, "palette").set_format(2, RRRRGGGGBBBBIIII, 256);
 
@@ -760,16 +793,20 @@ namespace mame
             screen.set_raw(VIDEO_CLOCK / 2, 640, 0, 512, 416, 0, 384);
             screen.set_screen_update(screen_update_atarisy2);
             screen.set_palette("palette");
-            screen.screen_vblank().set(vblank_int).reg();
+            screen.screen_vblank().set((write_line_delegate)vblank_int).reg();
 
-            ADDRESS_MAP_BANK(config, "vrambank").set_map(vrambank_map).set_options(endianness_t.ENDIANNESS_LITTLE, 16, 15, 0x2000);
+            ADDRESS_MAP_BANK(config, "vrambank").set_map(vrambank_map).set_options(endianness_t.ENDIANNESS_LITTLE, 16, 15, 020000);
 
-            MCFG_VIDEO_START_OVERRIDE(config, video_start_atarisy2);
-
-            /* sound hardware */
-            ATARI_SOUND_COMM(config, m_soundcomm, m_audiocpu).int_callback().set_nop();
+            // sound hardware
             SPEAKER(config, "lspeaker").front_left();
             SPEAKER(config, "rspeaker").front_right();
+
+            GENERIC_LATCH_8(config, m_soundlatch);
+            m_soundlatch.target.data_pending_callback().set_inputline(m_audiocpu, m6502_device.NMI_LINE).reg();
+            m_soundlatch.target.data_pending_callback().append(boost_interleave_hack).reg();
+
+            GENERIC_LATCH_8(config, m_mainlatch);
+
             YM2151(config, m_ym2151, SOUND_CLOCK / 4);
             m_ym2151.target.disound.add_route(0, "lspeaker", 0.60);
             m_ym2151.target.disound.add_route(1, "rspeaker", 0.60);
@@ -823,7 +860,7 @@ namespace mame
         //ROM_START( paperboy ) // ALL of these roms should be 136034-xxx but the correct labels aren't known per game rev!
         static readonly List<tiny_rom_entry> rom_paperboy = new List<tiny_rom_entry>()
         {
-            ROM_REGION( 0x90000, "maincpu", 0 ), /* 9*64k for T11 code */
+            ROM_REGION( 0x90000, "maincpu", 0 ), // 9*64k for T11 code
             ROM_LOAD16_BYTE( "cpu_l07.rv3", 0x008000, 0x004000, CRC("4024bb9b") + SHA1("9030ce5a6a1a3d769c699a92b32a55013f9766aa") ),
             ROM_LOAD16_BYTE( "cpu_n07.rv3", 0x008001, 0x004000, CRC("0260901a") + SHA1("39d786f5c440ca1fd529ee73e2a4d2406cd1db8f") ),
             ROM_LOAD16_BYTE( "cpu_f06.rv2", 0x010000, 0x004000, CRC("3fea86ac") + SHA1("90722bfd0426efbfb69714151f8644b56075b4c1") ),
@@ -835,7 +872,7 @@ namespace mame
             ROM_LOAD16_BYTE( "cpu_l06.rv2", 0x070000, 0x004000, CRC("8a754466") + SHA1("2c4c6ca797c7f4349c2893d8c0ba7e2658fdca99") ),
             ROM_LOAD16_BYTE( "cpu_s06.rv2", 0x070001, 0x004000, CRC("224209f9") + SHA1("c41269bfadb8fff1c8ff0f6ea0b8e8b34feb49d6") ),
 
-            ROM_REGION( 0x10000, "audiocpu", 0 ),    /* 64k for 6502 code */
+            ROM_REGION( 0x10000, "audiocpu", 0 ),    // 64k for 6502 code
             ROM_LOAD( "cpu_a02.rv3", 0x004000, 0x004000, CRC("ba251bc4") + SHA1("768e42608263205e412e651082ffa2a083b04644") ),
             ROM_LOAD( "cpu_b02.rv2", 0x008000, 0x004000, CRC("e4e7a8b9") + SHA1("f11a0cf40d5c51ff180f0fa1cf676f95090a1010") ),
             ROM_LOAD( "cpu_c02.rv2", 0x00c000, 0x004000, CRC("d44c2aa2") + SHA1("f1b00e36d87f6d77746cf003198c7f19aa2f4fab") ),
@@ -874,7 +911,7 @@ namespace mame
         //ROM_START( 720 )
         static readonly List<tiny_rom_entry> rom_720 = new List<tiny_rom_entry>()
         {
-            ROM_REGION( 0x90000, "maincpu", 0 ),     /* 9 * 64k T11 code */
+            ROM_REGION( 0x90000, "maincpu", 0 ),     // 9 * 64k T11 code
             ROM_LOAD16_BYTE( "136047-3126.7lm", 0x008000, 0x004000, CRC("43abd367") + SHA1("bb58c42f25ef0ee5357782652e9e2b28df0ba82e") ),
             ROM_LOAD16_BYTE( "136047-3127.7mn", 0x008001, 0x004000, CRC("772e1e5b") + SHA1("1ee9b6bd7b2a5e4866b7157db95ee38b53f5c4ce") ),
             ROM_LOAD16_BYTE( "136047-3128.6fh", 0x010000, 0x010000, CRC("bf6f425b") + SHA1("22732465959c2d30383523e0354b8d3759963765") ),
@@ -884,7 +921,7 @@ namespace mame
             ROM_LOAD16_BYTE( "136047-1130.6k",  0x050000, 0x010000, CRC("93fba845") + SHA1("4de5867272af63be696855f2a4dff99476b213ad") ),
             ROM_LOAD16_BYTE( "136047-1133.6r",  0x050001, 0x010000, CRC("53c177be") + SHA1("a60c81899944e0dda9886e6697edc4d9309ca8f4") ),
 
-            ROM_REGION( 0x10000, "audiocpu", 0 ),     /* 64k for 6502 code */
+            ROM_REGION( 0x10000, "audiocpu", 0 ),     // 64k for 6502 code
             ROM_LOAD( "136047-2134.2a",  0x004000, 0x004000, CRC("0db4ca28") + SHA1("71c2e0eee0eee418bdd2f806bd6ce5ae1c72bf69") ),
             ROM_LOAD( "136047-1135.2b",  0x008000, 0x004000, CRC("b1f157d0") + SHA1("26355324d49baa02acb777940d7f49d074a75fe5") ),
             ROM_LOAD( "136047-2136.2cd", 0x00c000, 0x004000, CRC("00b06bec") + SHA1("cd771eea329e0f6ab5bff1035f931800cc5da545") ),
@@ -974,7 +1011,7 @@ namespace mame
     }
 
 
-    partial class atarisy2_state : atarigen_state
+    partial class atarisy2_state : driver_device
     {
         /*************************************
          *
@@ -988,7 +1025,7 @@ namespace mame
 
             m_slapstic.target.slapstic_init();
 
-            /* expand the 16k program ROMs into full 64k chunks */
+            // expand the 16k program ROMs into full 64k chunks
             for (int i = 0x10000; i < 0x90000; i += 0x20000)
             {
                 memcpy(new PointerU8(cpu1, i + 0x08000), new PointerU8(cpu1, i), 0x8000);  //memcpy(&cpu1[i + 0x08000], &cpu1[i], 0x8000);

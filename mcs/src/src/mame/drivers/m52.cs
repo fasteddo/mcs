@@ -28,7 +28,7 @@ namespace mame
             map.op(0x8400, 0x87ff).ram().w(m52_colorram_w).share("colorram");
             map.op(0x8800, 0x8800).mirror(0x07ff).r(m52_protection_r);
             map.op(0xc800, 0xcbff).mirror(0x0400).writeonly().share("spriteram"); // only 0x100 of this used by video code?
-            map.op(0xd000, 0xd000).mirror(0x07fc).w("irem_audio", (space, offset, data, mem_mask) => { ((irem_audio_device)subdevice("irem_audio")).cmd_w(space, offset, data, mem_mask); });  //FUNC(irem_audio_device::cmd_w));
+            map.op(0xd000, 0xd000).mirror(0x07fc).w("irem_audio", (data) => { ((irem_audio_device)subdevice("irem_audio")).cmd_w(data); });  //FUNC(irem_audio_device::cmd_w));
             map.op(0xd001, 0xd001).mirror(0x07fc).w(m52_flipscreen_w);   /* + coin counters */
             map.op(0xd000, 0xd000).mirror(0x07f8).portr("IN0");
             map.op(0xd001, 0xd001).mirror(0x07f8).portr("IN1");
@@ -355,6 +355,9 @@ namespace mame
 
             ROM_REGION(0x0100, "spr_clut", 0),
             ROM_LOAD("mpc-2.2h", 0x0000, 0x0100, CRC("7ae4cd97") + SHA1("bc0662fac82ffe65f02092d912b2c2b0c7a8ac2b")),
+
+            ROM_REGION(0x0200, "unkprom", 0), // PROM is on bottom board of 4-board stack
+            ROM_LOAD("mp_7621-5.7h", 0x0000, 0x0200, CRC("cf1fd9d0") + SHA1("f9575bc59bf21dfecd10133264835e02890562f8")),
 
             ROM_END,
         };

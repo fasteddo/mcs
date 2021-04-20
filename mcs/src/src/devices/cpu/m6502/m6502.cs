@@ -84,9 +84,9 @@ namespace mame
 
         //enum
         //{
-        const int IRQ_LINE = device_execute_interface.INPUT_LINE_IRQ0;
+        public const int IRQ_LINE = device_execute_interface.INPUT_LINE_IRQ0;
         const int APU_IRQ_LINE = device_execute_interface.INPUT_LINE_IRQ1;
-        const int NMI_LINE = device_execute_interface.INPUT_LINE_NMI;
+        public const int NMI_LINE = device_execute_interface.INPUT_LINE_NMI;
         const int V_LINE   = device_execute_interface.INPUT_LINE_IRQ0 + 16;
         //}
 

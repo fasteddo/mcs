@@ -531,7 +531,7 @@ namespace mame
             u32 NATIVE_BYTES = 1U << Width;
             u32 NATIVE_BITS = 8 * NATIVE_BYTES;
             u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << global_object.iabs(AddrShift) : NATIVE_BYTES >> global_object.iabs(AddrShift);
-            u32 NATIVE_MASK = Width + AddrShift >= 0 ? (1U << (Width + AddrShift)) - 1 : 0;
+            u32 NATIVE_MASK = Width + AddrShift >= 0 ? global_object.make_bitmask32(Width + AddrShift) : 0;
 
             // equal to native size and aligned; simple pass-through to the native reader
             if (NATIVE_BYTES == TARGET_BYTES && (Aligned || (address & NATIVE_MASK) == 0))
@@ -1067,8 +1067,19 @@ namespace mame
         protected int AddrShift;
         protected int Endian;
 
+        protected u32 NATIVE_MASK;  //static constexpr u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask<u32>(Width + AddrShift) : 0;
 
-        public handler_entry_read(int Width, int AddrShift, int Endian, address_space space, u32 flags) : base(space, flags) { this.Width = Width; this.AddrShift = AddrShift; this.Endian = Endian; }
+
+        public handler_entry_read(int Width, int AddrShift, int Endian, address_space space, u32 flags)
+            : base(space, flags)
+        {
+            this.Width = Width;
+            this.AddrShift = AddrShift;
+            this.Endian = Endian;
+
+            NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask32(Width + AddrShift) : 0;
+        }
+
         //~handler_entry_read() {}
 
 
@@ -1086,6 +1097,9 @@ namespace mame
 
         public void populate(offs_t start, offs_t end, offs_t mirror, handler_entry_read handler)
         {
+            start &= ~NATIVE_MASK;
+            end |= NATIVE_MASK;
+
             if (mirror != 0)
                 populate_mirror(start, end, start, end, mirror, handler);
             else
@@ -1106,6 +1120,9 @@ namespace mame
 
         public void populate_mismatched(offs_t start, offs_t end, offs_t mirror, memory_units_descriptor descriptor)
         {
+            start &= ~NATIVE_MASK;
+            end |= NATIVE_MASK;
+
             std.vector<mapping> mappings = new std.vector<mapping>();
             if (mirror != 0)
                 populate_mismatched_mirror(start, end, start, end, mirror, descriptor, mappings);
@@ -1125,6 +1142,8 @@ namespace mame
 
 
         //inline void populate_passthrough(offs_t start, offs_t end, offs_t mirror, handler_entry_read_passthrough<Width, AddrShift, Endian> *handler) {
+        //    start &= ~NATIVE_MASK;
+        //    end |= NATIVE_MASK;
         //    std::vector<mapping> mappings;
         //    if(mirror)
         //        populate_passthrough_mirror(start, end, start, end, mirror, handler, mappings);
@@ -1179,8 +1198,19 @@ namespace mame
         protected int AddrShift;
         protected int Endian;
 
+        protected u32 NATIVE_MASK;  //static constexpr u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask<u32>(Width + AddrShift) : 0;
 
-        public handler_entry_write(int Width, int AddrShift, int Endian, address_space space, u32 flags) : base(space, flags) { this.Width = Width; this.AddrShift = AddrShift; this.Endian = Endian; }
+
+        public handler_entry_write(int Width, int AddrShift, int Endian, address_space space, u32 flags)
+            : base(space, flags)
+        {
+            this.Width = Width;
+            this.AddrShift = AddrShift;
+            this.Endian = Endian;
+
+            NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask32(Width + AddrShift) : 0;
+        }
+
         //~handler_entry_write() {}
 
 
@@ -1198,6 +1228,9 @@ namespace mame
 
         public void populate(offs_t start, offs_t end, offs_t mirror, handler_entry_write handler)
         {
+            start &= ~NATIVE_MASK;
+            end |= NATIVE_MASK;
+
             if (mirror != 0)
                 populate_mirror(start, end, start, end, mirror, handler);
             else
@@ -1218,6 +1251,9 @@ namespace mame
 
         public void populate_mismatched(offs_t start, offs_t end, offs_t mirror, memory_units_descriptor descriptor)
         {
+            start &= ~NATIVE_MASK;
+            end |= NATIVE_MASK;
+
             std.vector<mapping> mappings = new std.vector<mapping>();
             if (mirror != 0)
                 populate_mismatched_mirror(start, end, start, end, mirror, descriptor, mappings);
@@ -1239,6 +1275,8 @@ namespace mame
 
 
         //inline void populate_passthrough(offs_t start, offs_t end, offs_t mirror, handler_entry_write_passthrough<Width, AddrShift, Endian> *handler) {
+        //    start &= ~NATIVE_MASK;
+        //    end |= NATIVE_MASK;
         //    std::vector<mapping> mappings;
         //    if(mirror)
         //        populate_passthrough_mirror(start, end, start, end, mirror, handler, mappings);

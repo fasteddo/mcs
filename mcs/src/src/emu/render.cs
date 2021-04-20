@@ -2257,7 +2257,7 @@ namespace mame
                 render_primitive prim = list.alloc(render_primitive.primitive_type.QUAD);
                 rendutil_global.set_render_bounds_xy(prim.bounds, 0.0f, 0.0f, (float)m_width, (float)m_height);
                 prim.full_bounds = prim.bounds;
-                rendutil_global.set_render_color(prim.color, 1.0f, 1.0f, 1.0f, 1.0f);
+                rendutil_global.set_render_color(prim.color, 1.0f, 0.1f, 0.1f, 0.1f);
                 prim.texture.base_ = null;
                 prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
                 list.append(prim);
@@ -2489,11 +2489,12 @@ namespace mame
             bool have_override = false;
 
             // if override_artwork defined, load that and skip artwork other than default
-            if (m_manager.machine().options().override_artwork() != null)
+            string override_art = m_manager.machine().options().override_artwork();
+            if (override_art != null)
             {
-                if (load_layout_file(m_manager.machine().options().override_artwork(), m_manager.machine().options().override_artwork()))
+                if (load_layout_file(override_art, override_art))
                     have_override = true;
-                else if (load_layout_file(m_manager.machine().options().override_artwork(), "default"))
+                else if (load_layout_file(override_art, "default"))
                     have_override = true;
             }
 
@@ -2502,7 +2503,6 @@ namespace mame
             // Skip if override_artwork has found artwork
             if (!have_override)
             {
-
                 // try to load a file based on the driver name
                 if (!load_layout_file(basename, system.name))
                     have_artwork |= load_layout_file(basename, "default");
@@ -2519,37 +2519,30 @@ namespace mame
 
                 // try to load another file based on the parent driver name
                 int cloneof = driver_list.clone(system);
-                if (cloneof != -1)
+                while (0 <= cloneof)
                 {
                     if (!load_layout_file(driver_list.driver(cloneof).name, driver_list.driver(cloneof).name))
                         have_artwork |= load_layout_file(driver_list.driver(cloneof).name, "default");
                     else
                         have_artwork = true;
+
+                    // Check the parent of the parent to cover bios based artwork
+                    game_driver parent = driver_list.driver(cloneof);
+                    cloneof = driver_list.clone(parent);
                 }
 
-                // Check the parent of the parent to cover bios based artwork
-                if (cloneof != -1)
+                // Use fallback artwork if defined and no artwork has been found yet
+                if (!have_artwork)
                 {
-                    game_driver clone = driver_list.driver(cloneof);
-                    int cloneofclone = driver_list.clone(clone);
-                    if (cloneofclone != -1 && cloneofclone != cloneof)
+                    string fallback_art = m_manager.machine().options().fallback_artwork();
+                    if (!string.IsNullOrEmpty(fallback_art))  //if (fallback_art && *fallback_art)
                     {
-                        if (!load_layout_file(driver_list.driver(cloneofclone).name, driver_list.driver(cloneofclone).name))
-                            have_artwork |= load_layout_file(driver_list.driver(cloneofclone).name, "default");
+                        if (!load_layout_file(fallback_art, fallback_art))
+                            have_artwork |= load_layout_file(fallback_art, "default");
                         else
                             have_artwork = true;
                     }
                 }
-
-                // Use fallback artwork if defined and no artwork has been found yet
-                if (!have_artwork && !string.IsNullOrEmpty(m_manager.machine().options().fallback_artwork()))
-                {
-                    if (!load_layout_file(m_manager.machine().options().fallback_artwork(), m_manager.machine().options().fallback_artwork()))
-                        have_artwork |= load_layout_file(m_manager.machine().options().fallback_artwork(), "default");
-                    else
-                        have_artwork = true;
-                }
-
             }
 
             screen_device_iterator iter = new screen_device_iterator(m_manager.machine().root_device());
@@ -2735,12 +2728,13 @@ namespace mame
         bool load_layout_file(string dirname, string filename)
         {
             // build the path and optionally prepend the directory
-            string fname = filename.append(".lay");
+            string fname = filename.append_(".lay");
             if (dirname != null)
-                fname.insert(0, PATH_SEPARATOR).insert(0, dirname);
+                fname = fname.insert_(0, PATH_SEPARATOR).insert_(0, dirname);
 
             // attempt to open the file; bail if we can't
             emu_file layoutfile = new emu_file(m_manager.machine().options().art_path(), OPEN_FLAG_READ);
+            layoutfile.set_restrict_to_mediapath(1);
             osd_file.error filerr = layoutfile.open(fname);
             if (filerr != osd_file.error.NONE)
                 return false;

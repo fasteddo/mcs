@@ -269,16 +269,15 @@ namespace mame
         protected void bra()
         {
             uint8_t t;
-            IMMBYTE(out t);
-            PC = (uint16_t)(PC + SIGNED(t));  //PC += SIGNED(t);
+            BRANCH(out t, true);
         }
 
         /* $21 BRN relative ----- */
-        static uint8_t m6800_brn_t; // hack around GCC 4.6 error because we need the side effects of IMMBYTE
         //OP_HANDLER( brn )
         protected void brn()
         {
-            IMMBYTE(out m6800_brn_t);
+            uint8_t t;
+            BRANCH(out t, false);
         }
 
         /* $22 BHI relative ----- */

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -24,13 +25,18 @@ namespace mame
 
 
         // internal state
-        byte m_control;
         emu_timer m_nmi_timer;
+        uint8_t m_control;
+        bool m_next_timer_state;
+        bool m_nmi_stretch;
+        bool m_rw_stretch;
+        bool m_rw_change;
 
         required_device<cpu_device> m_nmicpu;
 
+        devcb_write_line.array<devcb_write_line> m_chipsel;  //devcb_write_line::array<4> m_chipsel;
+        devcb_write_line.array<devcb_write_line> m_rw;  //devcb_write_line::array<4> m_rw;
         devcb_read8.array<devcb_read8> m_read;
-        devcb_write_line.array<devcb_write_line> m_readreq;
         devcb_write8.array<devcb_write8> m_write;
 
 
@@ -38,10 +44,14 @@ namespace mame
             : base(mconfig, NAMCO_06XX, tag, owner, clock)
         {
             m_control = 0;
+            m_next_timer_state = false;
+            m_nmi_stretch = false;
+            m_rw_stretch = false;
+            m_rw_change = false;
             m_nmicpu = new required_device<cpu_device>(this, finder_base.DUMMY_TAG);
-
+            m_chipsel = new devcb_write.array<devcb_write_line>(4, this, () => { return new devcb_write_line(this); });
+            m_rw = new devcb_write.array<devcb_write_line>(4, this, () => { return new devcb_write_line(this); });
             m_read = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
-            m_readreq = new devcb_write_line.array<devcb_write_line>(4, this, () => { return new devcb_write_line(this); });
             m_write = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
         }
 
@@ -49,85 +59,82 @@ namespace mame
         public void set_maincpu(string tag) { m_nmicpu.set_tag(tag); }  //template <typename T> void set_maincpu(T &&tag) { m_nmicpu.set_tag(std::forward<T>(tag)); }
         public void set_maincpu(finder_base tag) { m_nmicpu.set_tag(tag); }  //template <typename T> void set_maincpu(T &&tag) { m_nmicpu.set_tag(std::forward<T>(tag)); }
 
+        public devcb_write.binder chip_select_callback(int N) { return m_chipsel[N].bind(); }  //template <unsigned N> auto chip_select_callback() { return m_chipsel[N].bind(); }
+        public devcb_write.binder rw_callback(int N) { return m_rw[N].bind(); }  //template <unsigned N> auto rw_callback() { return m_rw[N].bind(); }
         public devcb_read.binder read_callback(int N) { return m_read[N].bind(); }  //template <unsigned N> auto read_callback() { return m_read[N].bind(); }
-        public devcb_write.binder read_request_callback(int N) { return m_readreq[N].bind(); }  //template <unsigned N> auto read_request_callback() { return m_readreq[N].bind(); }
         public devcb_write.binder write_callback(int N) { return m_write[N].bind(); }  //template <unsigned N> auto write_callback() { return m_write[N].bind(); }
 
 
-        //READ8_MEMBER( namco_06xx_device::data_r )
-        public u8 data_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        public uint8_t data_r(offs_t offset)
         {
-            byte result = 0xff;
+            uint8_t result = 0xff;
 
-            LOG("{0}: 06XX '{1}' read offset {2}\n", machine().describe_context(), tag(), offset);
-
-            if ((m_control & 0x10) == 0)
+            if (BIT(m_control, 4) == 0)
             {
                 logerror("{0}: 06XX '{1}' read in write mode {2}\n", machine().describe_context(), tag(), m_control);
                 return 0;
             }
 
-            if (BIT(m_control, 0) != 0) result &= m_read[0].op(space, 0);
-            if (BIT(m_control, 1) != 0) result &= m_read[1].op(space, 0);
-            if (BIT(m_control, 2) != 0) result &= m_read[2].op(space, 0);
-            if (BIT(m_control, 3) != 0) result &= m_read[3].op(space, 0);
+            if (BIT(m_control, 0) != 0) result &= m_read[0].op(0);
+            if (BIT(m_control, 1) != 0) result &= m_read[1].op(0);
+            if (BIT(m_control, 2) != 0) result &= m_read[2].op(0);
+            if (BIT(m_control, 3) != 0) result &= m_read[3].op(0);
 
             return result;
         }
 
-        //WRITE8_MEMBER( namco_06xx_device::data_w )
-        public void data_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
-        {
-            LOG("{0}: 06XX '{1}' write offset {2} = {3}\n", machine().describe_context(), tag(), offset, data);
 
-            if ((m_control & 0x10) != 0)
+        public void data_w(offs_t offset, uint8_t data)
+        {
+            if (BIT(m_control, 4) != 0)
             {
                 logerror("{0}: 06XX '{1}' write in read mode {2}\n", machine().describe_context(), tag(), m_control);
                 return;
             }
 
-            if (BIT(m_control, 0) != 0) m_write[0].op(space, 0, data);
-            if (BIT(m_control, 1) != 0) m_write[1].op(space, 0, data);
-            if (BIT(m_control, 2) != 0) m_write[2].op(space, 0, data);
-            if (BIT(m_control, 3) != 0) m_write[3].op(space, 0, data);
+            if (BIT(m_control, 0) != 0) m_write[0].op(0, data);
+            if (BIT(m_control, 1) != 0) m_write[1].op(0, data);
+            if (BIT(m_control, 2) != 0) m_write[2].op(0, data);
+            if (BIT(m_control, 3) != 0) m_write[3].op(0, data);
         }
 
-        //READ8_MEMBER( namco_06xx_device::ctrl_r )
-        public u8 ctrl_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+
+        public uint8_t ctrl_r()
         {
-            LOG("{0}: 06XX '{1}' ctrl_r\n", machine().describe_context(), tag());
             return m_control;
         }
 
-        //WRITE8_MEMBER( namco_06xx_device::ctrl_w )
-        public void ctrl_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
-        {
-            LOG("{0}: 06XX '{1}' control {2}\n", machine().describe_context(), tag(), data);
 
+        public void ctrl_w(uint8_t data)
+        {
             m_control = data;
 
-            if ((m_control & 0x0f) == 0)
+            // The upper 3 control bits are the clock divider.
+            if ((m_control & 0xE0) == 0)
             {
-                LOG("disabling nmi generate timer\n");
                 m_nmi_timer.adjust(attotime.never);
+                set_nmi(CLEAR_LINE);
+                m_chipsel[0].op(0, CLEAR_LINE);
+                m_chipsel[1].op(0, CLEAR_LINE);
+                m_chipsel[2].op(0, CLEAR_LINE);
+                m_chipsel[3].op(0, CLEAR_LINE);
+                // Setting this to true makes the next RW change not stretch.
+                m_next_timer_state = true;
             }
             else
             {
-                LOG("setting nmi generate timer to 200us\n");
+                m_rw_stretch = !m_next_timer_state;
+                m_rw_change = true;
+                m_next_timer_state = true;
+                m_nmi_stretch = BIT(m_control, 4) != 0;
+                // NMI is cleared immediately if its to be stretched.
+                if (m_nmi_stretch) set_nmi(CLEAR_LINE);
 
-                // this timing is critical. Due to a bug, Bosconian will stop responding to
-                // inputs if a transfer terminates at the wrong time.
-                // On the other hand, the time cannot be too short otherwise the 54XX will
-                // not have enough time to process the incoming controls.
-                m_nmi_timer.adjust(attotime.from_usec(200), 0, attotime.from_usec(200));
-
-                if ((m_control & 0x10) != 0)
-                {
-                    if (BIT(m_control, 0) != 0) m_readreq[0].op(space, 0);
-                    if (BIT(m_control, 1) != 0) m_readreq[1].op(space, 0);
-                    if (BIT(m_control, 2) != 0) m_readreq[2].op(space, 0);
-                    if (BIT(m_control, 3) != 0) m_readreq[3].op(space, 0);
-                }
+                uint8_t num_shifts = (uint8_t)((m_control & 0xe0) >> 5);
+                uint8_t divisor = (uint8_t)(1U << num_shifts);
+                // The next change should happen on the next clock falling edge.
+                // Xevious' race causes this to bootloopsif it isn't 0.
+                m_nmi_timer.adjust(attotime.zero, 0, attotime.from_hz(clock() / divisor) / 2);
             }
         }
 
@@ -139,14 +146,19 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
+            m_chipsel.resolve_all_safe();
+            m_rw.resolve_all_safe();
             m_read.resolve_all_safe(0xff);
-            m_readreq.resolve_all_safe();
             m_write.resolve_all_safe();
 
             /* allocate a timer */
             m_nmi_timer = machine().scheduler().timer_alloc(nmi_generate); //timer_expired_delegate(FUNC(namco_06xx_device::nmi_generate),this));
 
             save_item(NAME(new { m_control }));
+            save_item(NAME(new { m_next_timer_state }));
+            save_item(NAME(new { m_nmi_stretch }));
+            save_item(NAME(new { m_rw_stretch }));
+            save_item(NAME(new { m_rw_change }));
         }
 
         //-------------------------------------------------
@@ -158,17 +170,55 @@ namespace mame
         }
 
 
-        void nmi_generate(object o, int param)
+        void set_nmi(int state)
         {
             if (!m_nmicpu.target.suspended(device_execute_interface.SUSPEND_REASON_HALT | device_execute_interface.SUSPEND_REASON_RESET | device_execute_interface.SUSPEND_REASON_DISABLE))
             {
-                LOG("NMI cpu '{0}'\n", m_nmicpu.tag());
-                m_nmicpu.target.pulse_input_line(device_execute_interface.INPUT_LINE_NMI, attotime.zero);
+                m_nmicpu.target.set_input_line(device_execute_interface.INPUT_LINE_NMI, state);
+            }
+        }
+
+
+        void nmi_generate(object o, int param)
+        {
+            // This timer runs at twice the clock, since we do work on both the
+            // rising and falling edge.
+            //
+            // During reads, the first NMI pulse is supressed to give the chip a
+            // cycle to write.
+            //
+            // If the control register is written while CS is asserted, RW won't be
+            // changed until the next rising edge.
+
+            if (m_rw_change && m_next_timer_state)
+            {
+                if (!m_rw_stretch)
+                {
+                    m_rw[0].op(0, BIT(m_control, 4));
+                    m_rw[1].op(0, BIT(m_control, 4));
+                    m_rw[2].op(0, BIT(m_control, 4));
+                    m_rw[3].op(0, BIT(m_control, 4));
+                    m_rw_change = false;
+                }
+            }
+
+            if (m_next_timer_state && !m_nmi_stretch )
+            {
+                set_nmi(ASSERT_LINE);
             }
             else
             {
-                LOG("NMI not generated because cpu '{0}' is suspended\n", m_nmicpu.tag());
+                set_nmi(CLEAR_LINE);
             }
+
+            m_chipsel[0].op(0, (BIT(m_control, 0) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[1].op(0, (BIT(m_control, 1) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[2].op(0, (BIT(m_control, 2) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[3].op(0, (BIT(m_control, 3) != 0 && m_next_timer_state) ? 1 : 0);
+
+            m_next_timer_state = !m_next_timer_state;
+            m_nmi_stretch = false;
+            m_rw_stretch = false;
         }
     }
 }

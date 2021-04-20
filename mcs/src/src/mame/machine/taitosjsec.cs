@@ -81,6 +81,7 @@ namespace mame
             m_read_data = 0;
             m_zaccept = false;
             m_zready = false;
+            m_pa_val = 0;
             m_pb_val = 0;
             m_busak = false;
             m_reset = false;
@@ -134,8 +135,7 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(taito_sj_security_mcu_device::data_r)
-        public u8 data_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        public u8 data_r(address_space space, offs_t offset)
         {
             if (BIT(offset, 0) != 0)
             {
@@ -157,8 +157,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(taito_sj_security_mcu_device::data_w)
-        public void data_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        public void data_w(offs_t offset, u8 data)
         {
             if (BIT(offset, 0) != 0)
             {
@@ -192,12 +191,9 @@ namespace mame
         }
 
 
-        //READ8_MEMBER(taito_sj_security_mcu_device::mcu_pa_r)
-        u8 mcu_pa_r(address_space space, offs_t offset, u8 mem_mask = 0xff) { return get_bus_val(); }
+        u8 mcu_pa_r() { return get_bus_val(); }
 
-
-        //READ8_MEMBER(taito_sj_security_mcu_device::mcu_pc_r)
-        u8 mcu_pc_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        u8 mcu_pc_r()
         {
             // FIXME 68INTAK is on PC3 but we're ignoring it
             return
@@ -207,8 +203,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(taito_sj_security_mcu_device::mcu_pa_w)
-        void mcu_pa_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void mcu_pa_w(u8 data)
         {
             m_pa_val = data;
             if (BIT(~m_pb_val, 6) != 0)
@@ -216,8 +211,7 @@ namespace mame
         }
 
 
-        //WRITE8_MEMBER(taito_sj_security_mcu_device::mcu_pb_w)
-        void mcu_pb_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
+        void mcu_pb_w(u8 data)
         {
             bool inc_addr = false;
             u8 diff = (u8)(m_pb_val ^ data);
@@ -247,7 +241,7 @@ namespace mame
             if (BIT(diff, 4) != 0)
             {
                 if (BIT(~data, 4) != 0)
-                    m_68write_cb.op(space, m_addr, bus_val);
+                    m_68write_cb.op(m_addr, bus_val);
                 else if (BIT(data, 5) != 0)
                     inc_addr = true;
             }
@@ -256,7 +250,7 @@ namespace mame
             if (BIT(diff, 5) != 0)
             {
                 if (BIT(~data, 5) != 0)
-                    m_read_data = m_68read_cb.op(space, m_addr);
+                    m_read_data = m_68read_cb.op(m_addr);
                 else if (BIT(data, 4) != 0)
                     inc_addr = true;
             }
