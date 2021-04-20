@@ -444,7 +444,7 @@ namespace mame
             assert(m_format != bitmap_format.BITMAP_FORMAT_IND16);
 
             // verify the shadow table
-            assert(mode >= 0 && mode < m_shadow_tables.Length);
+            assert(mode >= 0 && mode < std.size(m_shadow_tables));
             shadow_table_data stable = m_shadow_tables[mode];
             assert(stable.base_ != null);
 

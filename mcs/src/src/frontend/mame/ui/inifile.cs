@@ -133,7 +133,7 @@ namespace mame
                 if (rhs.startempty == 0)
                     return true;
                 else
-                    return 0 > std.strncmp(lhs.name, rhs.driver.name, lhs.name.Length);
+                    return 0 > std.strncmp(lhs.name, rhs.driver.name, std.size(lhs.name));
             }
 
             //bool operator()(ui_software_info const &lhs, running_software_key const &rhs) const;

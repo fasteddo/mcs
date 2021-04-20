@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using offs_t = System.UInt32;
+using optional_address_space = mame.address_space_finder<mame.bool_constant_false>;  //using optional_address_space = address_space_finder<false>;
 using optional_memory_bank = mame.memory_bank_finder<mame.bool_constant_false>;  //using optional_memory_bank = memory_bank_finder<false>;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -279,6 +280,11 @@ namespace mame
         slapstic_data slapstic = new slapstic_data();
 
         optional_memory_bank m_bank;
+        memory_view m_view;
+        optional_address_space m_space;
+        offs_t m_start;
+        offs_t m_end;
+        offs_t m_mirror;
 
 
         // construction/destruction
@@ -300,6 +306,7 @@ namespace mame
             add_bank = 0;
             bit_xor = 0;
             m_bank = new optional_memory_bank(this, finder_base.DUMMY_TAG);
+            m_space = new optional_address_space(this, finder_base.DUMMY_TAG, -1);
 
 
             slapstic.bankstart = 0;
@@ -345,6 +352,19 @@ namespace mame
 
 
         //template <typename T> void set_bank(T &&tag) { m_bank.set_tag(std::forward<T>(tag)); }
+
+
+        public void set_view(memory_view view) { m_view = view; }
+
+
+        //template <typename T>
+        public void set_range(finder_base tag, int index, offs_t start, offs_t end, offs_t mirror)  //template <typename T> void set_range(T &&tag, int index, offs_t start, offs_t end, offs_t mirror) {
+        {
+            m_space.set_tag(tag, index);  //m_space.set_tag(std::forward<T>(tag), index);
+            m_start = start;
+            m_end = end;
+            m_mirror = mirror;
+        }
 
 
         /*************************************

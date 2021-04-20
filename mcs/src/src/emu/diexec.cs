@@ -152,7 +152,7 @@ namespace mame
 
                 // if we're full of events, flush the queue and log a message
                 int event_index = m_qindex++;
-                if (event_index >= m_queue.Length)
+                if (event_index >= std.size(m_queue))
                 {
                     m_qindex--;
                     empty_event_queue();
@@ -161,7 +161,7 @@ namespace mame
                 }
 
                 // enqueue the event
-                if (event_index < m_queue.Length)
+                if (event_index < std.size(m_queue))
                 {
                     if (vector == USE_STORED_VECTOR)
                         vector = (UInt32)m_stored_vector;
@@ -780,7 +780,7 @@ namespace mame
 #endif
 
             // fill in the input states and IRQ callback information
-            for (int line = 0; line < m_input.Length; line++)
+            for (int line = 0; line < std.size(m_input); line++)
                 m_input[line].start(this, line);
         }
 

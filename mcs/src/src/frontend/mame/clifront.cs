@@ -651,7 +651,7 @@ namespace mame
                     string paren_shortname = string.Format("({0})", imagedev.brief_instance_name());
 
                     // output the line, up to the list of extensions
-                    osd_printf_info("{0}{1}{2}   ", first ? drivlist.driver().name : "", imagedev.instance_name(), paren_shortname);  // %-16s%-16s%-10s   
+                    osd_printf_info("{0}{1}{2}   ", drivlist.driver().name, imagedev.instance_name(), paren_shortname);  // %-16s%-16s%-10s   
 
                     // get the extensions and print them
                     string extensions = imagedev.file_extensions();

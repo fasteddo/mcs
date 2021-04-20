@@ -8,6 +8,7 @@ using cassette_device_enumerator = mame.device_type_enumerator<mame.cassette_ima
 using char32_t = System.UInt32;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
+using int32_t = System.Int32;
 using mame_ui_manager_device_feature_set = mame.std.set<mame.std.pair<string, string>>;  //using device_feature_set = std::set<std::pair<std::string, std::string> >;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
@@ -24,59 +25,6 @@ namespace mame
         MODAL,
         MENU,
         VIEWER
-    }
-
-
-    enum slider_id
-    {
-        SLIDER_ID_VOLUME                = 0,
-        SLIDER_ID_MIXERVOL,
-        SLIDER_ID_MIXERVOL_LAST         = SLIDER_ID_MIXERVOL + ui_global.SLIDER_DEVICE_SPACING,
-        SLIDER_ID_ADJUSTER,
-        SLIDER_ID_ADJUSTER_LAST         = SLIDER_ID_ADJUSTER + ui_global.SLIDER_DEVICE_SPACING,
-        //SLIDER_ID_OVERCLOCK,
-        //SLIDER_ID_OVERCLOCK_LAST        = SLIDER_ID_OVERCLOCK + ui_global.SLIDER_DEVICE_SPACING,
-        //SLIDER_ID_REFRESH,
-        //SLIDER_ID_REFRESH_LAST          = SLIDER_ID_REFRESH + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_BRIGHTNESS,
-        //SLIDER_ID_BRIGHTNESS_LAST       = SLIDER_ID_BRIGHTNESS + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_CONTRAST,
-        //SLIDER_ID_CONTRAST_LAST         = SLIDER_ID_CONTRAST + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_GAMMA,
-        //SLIDER_ID_GAMMA_LAST            = SLIDER_ID_GAMMA + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_XSCALE,
-        //SLIDER_ID_XSCALE_LAST           = SLIDER_ID_XSCALE + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_YSCALE,
-        //SLIDER_ID_YSCALE_LAST           = SLIDER_ID_YSCALE + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_XOFFSET,
-        //SLIDER_ID_XOFFSET_LAST          = SLIDER_ID_XOFFSET + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_YOFFSET,
-        //SLIDER_ID_YOFFSET_LAST          = SLIDER_ID_YOFFSET + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_OVERLAY_XSCALE,
-        //SLIDER_ID_OVERLAY_XSCALE_LAST   = SLIDER_ID_OVERLAY_XSCALE + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_OVERLAY_YSCALE,
-        //SLIDER_ID_OVERLAY_YSCALE_LAST   = SLIDER_ID_OVERLAY_YSCALE + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_OVERLAY_XOFFSET,
-        //SLIDER_ID_OVERLAY_XOFFSET_LAST  = SLIDER_ID_OVERLAY_XOFFSET + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_OVERLAY_YOFFSET,
-        //SLIDER_ID_OVERLAY_YOFFSET_LAST  = SLIDER_ID_OVERLAY_YOFFSET + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_FLICKER,
-        //SLIDER_ID_FLICKER_LAST          = SLIDER_ID_FLICKER + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_BEAM_WIDTH_MIN,
-        //SLIDER_ID_BEAM_WIDTH_MIN_LAST   = SLIDER_ID_BEAM_WIDTH_MIN + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_BEAM_WIDTH_MAX,
-        //SLIDER_ID_BEAM_WIDTH_MAX_LAST   = SLIDER_ID_BEAM_WIDTH_MAX + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_BEAM_INTENSITY,
-        //SLIDER_ID_BEAM_INTENSITY_LAST   = SLIDER_ID_BEAM_INTENSITY + ui_global.SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_BEAM_DOT_SIZE,
-        //SLIDER_ID_BEAM_DOT_SIZE_LAST    = SLIDER_ID_BEAM_DOT_SIZE + SLIDER_SCREEN_SPACING,
-        //SLIDER_ID_CROSSHAIR_SCALE,
-        //SLIDER_ID_CROSSHAIR_SCALE_LAST  = SLIDER_ID_CROSSHAIR_SCALE + ui_global.SLIDER_INPUT_SPACING,
-        //SLIDER_ID_CROSSHAIR_OFFSET,
-        //SLIDER_ID_CROSSHAIR_OFFSET_LAST = SLIDER_ID_CROSSHAIR_OFFSET + ui_global.SLIDER_INPUT_SPACING,
-
-        //SLIDER_ID_CORE_LAST         = SLIDER_ID_CROSSHAIR_OFFSET,
-        //SLIDER_ID_CORE_COUNT
     }
 
 
@@ -103,11 +51,6 @@ namespace mame
 
         /* cancel return value for a UI handler */
         public const uint32_t UI_HANDLER_CANCEL       = uint32_t.MaxValue;
-
-        public const int SLIDER_DEVICE_SPACING  = 0x0ff;
-        public const int SLIDER_SCREEN_SPACING  = 0x0f;
-        public const int SLIDER_INPUT_SPACING   = 0x0f;
-
 
         // list of natural keyboard keys that are not associated with UI_EVENT_CHARs
         public static readonly input_item_id [] non_char_keys = 
@@ -256,7 +199,6 @@ namespace mame
 
     // ======================> mame_ui_manager
     public class mame_ui_manager : ui_manager
-                                   //slider_changed_notifier
     {
         delegate uint32_t handler_callback_func(render_container container, mame_ui_manager mui);  //using handler_callback_func = std::function<uint32_t (render_container &)>;
         //using device_feature_set = std::set<std::pair<std::string, std::string> >;
@@ -303,7 +245,7 @@ namespace mame
         static slider_state slider_current;  //static slider_state     *slider_current;
 
 
-        //std::vector<std::unique_ptr<slider_state>> m_sliders;
+        std.vector<slider_state> m_sliders;  //std::vector<std::unique_ptr<slider_state>> m_sliders;
 
 
         // construction/destruction
@@ -357,7 +299,7 @@ namespace mame
                         draw_text_box(container, messagebox_text, ui.text_layout.text_justify.LEFT, 0.5f, 0.5f, colors().background_color());
                         return 0;
                     });
-            m_non_char_keys_down = new byte [(ui_global.non_char_keys.Length + 7) / 8]; // auto_alloc_array(machine, UINT8, (ARRAY_LENGTH(non_char_keys) + 7) / 8);
+            m_non_char_keys_down = new byte [(std.size(ui_global.non_char_keys) + 7) / 8]; // auto_alloc_array(machine, UINT8, (ARRAY_LENGTH(non_char_keys) + 7) / 8);
             m_mouse_show = ((UInt64)machine().system().flags & MACHINE_CLICKABLE_ARTWORK) == MACHINE_CLICKABLE_ARTWORK ? true : false;
 
             // request notification callbacks
@@ -436,30 +378,7 @@ namespace mame
 #if false
 #endif
 
-#if MAME_DEBUG
-            // add crosshair adjusters
-            for (ioport_port &port : machine.ioport().ports())
-            {
-                for (ioport_field &field : port.fields())
-                {
-                    if (field.crosshair_axis() != CROSSHAIR_AXIS_NONE && field.player() == 0)
-                    {
-                        std::string str = string_format(_("Crosshair Scale %1$s"), (field.crosshair_axis() == CROSSHAIR_AXIS_X) ? _("X") : _("Y"));
-                        sliders.push_back(slider_alloc(machine, str.c_str(), -3000, 1000, 3000, 100, slider_crossscale, (void *)&field));
-                        str = string_format(_("Crosshair Offset %1$s"), (field.crosshair_axis() == CROSSHAIR_AXIS_X) ? _("X") : _("Y"));
-                        sliders.push_back(slider_alloc(machine, str.c_str(), -3000, 0, 3000, 100, slider_crossoffset, (void *)&field));
-                    }
-                }
-            }
-#endif
-
-            std.vector<ui.menu_item> items = new std.vector<ui.menu_item>();
-
-            //throw new emu_unimplemented();
-#if false
-#endif
-
-            return items;
+            return new std.vector<ui.menu_item>();
         }
 
 
@@ -1690,53 +1609,32 @@ namespace mame
         //-------------------------------------------------
         //  slider_alloc - allocate a new slider entry
         //-------------------------------------------------
-        static slider_state slider_alloc(running_machine machine, int id, string title, int minval, int defval, int maxval, int incval, object arg)  //void *arg)
-        {
-            var state = new slider_state();  //auto state = make_unique_clear<slider_state>();
-
-            state.minval = minval;
-            state.defval = defval;
-            state.maxval = maxval;
-            state.incval = incval;
-
-            throw new emu_unimplemented();
-#if false
-            using namespace std::placeholders;
-            state->update = std::bind(&mame_ui_manager::slider_changed, this, _1, _2, _3, _4, _5);
-#endif
-
-            state.arg = arg;
-            state.id = id;
-            state.description = title;
-
-            return state;
-        }
+        //template <typename... Params>
+        void slider_alloc(string title, int32_t min, int32_t def, int32_t max, int32_t inc, slider_update func) { m_sliders.push_back(new slider_state(title, min, def, max, inc, func)); }  //template <typename... Params> void slider_alloc(Params &&...args) { m_sliders.push_back(std::make_unique<slider_state>(std::forward<Params>(args)...)); }
 
 
         // slider controls
-        //virtual int32_t slider_changed(running_machine &machine, void *arg, int id, std::string *str, int32_t newval) override;
-
-        //int32_t slider_volume(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_mixervol(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_adjuster(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_overclock(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_refresh(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_brightness(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_contrast(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_gamma(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_xscale(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_yscale(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_xoffset(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_yoffset(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_overxscale(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_overyscale(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_overxoffset(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_overyoffset(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_flicker(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_beam_width_min(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_beam_width_max(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_beam_dot_size(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
-        //int32_t slider_beam_intensity_weight(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_volume(std::string *str, int32_t newval);
+        //int32_t slider_mixervol(int item, std::string *str, int32_t newval);
+        //int32_t slider_adjuster(ioport_field &field, std::string *str, int32_t newval);
+        //int32_t slider_overclock(device_t &device, std::string *str, int32_t newval);
+        //int32_t slider_refresh(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_brightness(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_contrast(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_gamma(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_xscale(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_yscale(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_xoffset(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_yoffset(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_overxscale(laserdisc_device &laserdisc, std::string *str, int32_t newval);
+        //int32_t slider_overyscale(laserdisc_device &laserdisc, std::string *str, int32_t newval);
+        //int32_t slider_overxoffset(laserdisc_device &laserdisc, std::string *str, int32_t newval);
+        //int32_t slider_overyoffset(laserdisc_device &laserdisc, std::string *str, int32_t newval);
+        //int32_t slider_flicker(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_beam_width_min(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_beam_width_max(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_beam_dot_size(screen_device &screen, std::string *str, int32_t newval);
+        //int32_t slider_beam_intensity_weight(screen_device &screen, std::string *str, int32_t newval);
 
 
         //-------------------------------------------------
@@ -1753,8 +1651,8 @@ namespace mame
 
 
 #if MAME_DEBUG
-        //static INT32 slider_crossscale(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_crossoffset(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
+        int32_t slider_crossscale(ioport_field &field, std::string *str, int32_t newval);
+        int32_t slider_crossoffset(ioport_field &field, std::string *str, int32_t newval);
 #endif
 
 

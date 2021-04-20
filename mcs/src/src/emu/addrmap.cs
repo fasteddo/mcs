@@ -254,6 +254,7 @@ namespace mame
         public address_map_entry region(string tag, offs_t offset) { m_region = tag; m_rgnoffs = offset; return this; }
         public address_map_entry share(string tag) { m_share = tag; return this; }
 
+
         // slightly less simple inline setters
         //template<bool _reqd> address_map_entry &region(const memory_region_finder<_reqd> &finder, offs_t offset) {
         //    const std::pair<device_t &, const char *> target(finder.finder_target());
@@ -265,11 +266,16 @@ namespace mame
         //    assert(&target.first == &m_devbase);
         //    return region(target.second, offset);
         //}
-        //template<typename _ptrt, bool _reqd> address_map_entry &share(const shared_ptr_finder<_ptrt, _reqd> &finder) {
-        //    const std::pair<device_t &, const char *> target(finder.finder_target());
-        //    assert(&target.first == &m_devbase);
-        //    return share(target.second);
-        //}
+
+
+        //template<typename _ptrt, bool _reqd>
+        public address_map_entry share(finder_base finder)  //template<typename _ptrt, bool _reqd> address_map_entry &share(const shared_ptr_finder<_ptrt, _reqd> &finder) {
+        {
+            std.pair<device_t, string> target = finder.finder_target();
+            assert(target.first == m_devbase);
+            return share(target.second);
+        }
+
 
         public address_map_entry rom() { m_read.m_type = map_handler_type.AMH_ROM; return this; }
         public address_map_entry ram() { m_read.m_type = map_handler_type.AMH_RAM; m_write.m_type = map_handler_type.AMH_RAM; return this; }
@@ -362,7 +368,15 @@ namespace mame
 
 
         // view initialization
-        //void view(memory_view &mv);
+        public void view(memory_view mv)
+        {
+            m_read.m_type = map_handler_type.AMH_VIEW;
+            m_read.m_tag = null;
+            m_write.m_type = map_handler_type.AMH_VIEW;
+            m_write.m_tag = null;
+            m_view = mv;
+            mv.initialize_from_address_map(m_addrstart, m_addrend, m_map.get_config());
+        }
 
 
         // implicit base -> delegate converter
@@ -1025,7 +1039,7 @@ namespace mame
         int m_spacenum;         // space number of the map
         device_t m_device;       // associated device
         //memory_view *                   m_view;         // view, when in one
-        //const address_space_config *    m_config;       // space configuration
+        address_space_config m_config;       // space configuration
         public u8 m_unmapval;         // unmapped memory value
         public offs_t m_globalmask;       // global mask
         public simple_list<address_map_entry> m_entrylist = new simple_list<address_map_entry>(); // list of entries
@@ -1304,6 +1318,11 @@ namespace mame
 
 
         //void map_validity_check(validity_checker &valid, int spacenum) const;
-        //const address_space_config &get_config() const;
+
+
+        public address_space_config get_config()
+        {
+            return m_config;
+        }
     }
 }

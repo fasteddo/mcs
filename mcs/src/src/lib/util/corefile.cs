@@ -462,7 +462,7 @@ namespace mame.util
             else
             {
                 result = m_back_chars[m_back_char_head++];
-                m_back_char_head %= m_back_chars.Length;
+                m_back_char_head %= std.size(m_back_chars);
             }
 
             return result;
@@ -476,7 +476,7 @@ namespace mame.util
         public override int ungetc(int c)
         {
             m_back_chars[m_back_char_tail++] = (char)c;
-            m_back_char_tail %= m_back_chars.Length;
+            m_back_char_tail %= std.size(m_back_chars);
             return c;
         }
 

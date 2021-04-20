@@ -127,7 +127,7 @@ namespace mame
         //  next - return information about the next file
         //  in the search path
         //-------------------------------------------------
-        public osd.directory.entry next()
+        public osd.directory.entry next(string subdir = null)
         {
             // loop over potentially empty directories
             while (true)
@@ -136,7 +136,7 @@ namespace mame
                 while (m_curdir == null)
                 {
                     // if we fail to get anything more, we're done
-                    if (!m_iterator.next(out m_pathbuffer))
+                    if (!m_iterator.next(out m_pathbuffer, subdir))
                         return null;
 
                     // open the path
@@ -775,8 +775,7 @@ namespace mame
         //-------------------------------------------------
         //  attempt_zipped - attempt to open a ZIPped file
         //-------------------------------------------------
-        //typedef util::archive_file::error (*open_func)(const std::string &filename, util::archive_file::ptr &result);
-        delegate util.archive_file.error open_func(string filename, out util.archive_file result);
+        delegate util.archive_file.error open_func(string filename, out util.archive_file result);  //typedef util::archive_file::error (*open_func)(const std::string &filename, util::archive_file::ptr &result);
         static readonly string [] suffixes = new string[] { ".zip", ".7z" };
         static readonly open_func [] open_funcs = new open_func[] { util.archive_file.open_zip, util.archive_file.open_7z };
 
@@ -789,7 +788,7 @@ namespace mame
             // loop over archive types
             string savepath = m_fullpath;
             string filename = "";
-            for (int i = 0; i < suffixes.Length; i++, m_fullpath = savepath, filename = "")
+            for (int i = 0; i < std.size(suffixes); i++, m_fullpath = savepath, filename = "")
             {
                 // loop over directory parts up to the start of filename
                 while (true)

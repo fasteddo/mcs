@@ -18,6 +18,7 @@ using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
+
 namespace mame
 {
     // offsets and addresses are 32-bit (for now...)
@@ -2442,17 +2443,14 @@ namespace mame
         //-------------------------------------------------
         public void prepare_map()
         {
-            memory_region devregion = (m_spacenum == 0) ? m_device.memregion(global_object.DEVICE_SELF) : null;
-            u32 devregionsize = (devregion != null) ? devregion.bytes() : 0;
-
             // allocate the address map
-            m_map = new address_map(m_device, m_spacenum);  //m_map = std::make_unique<address_map>(m_device, m_spacenum);
+            m_map = new address_map(m_device, m_spacenum);
 
             // merge in the submaps
             m_map.import_submaps(m_manager.machine(), m_device.owner() != null ? m_device.owner() : m_device, data_width(), endianness(), addr_shift());
 
             // extract global parameters specified by the map
-            m_unmap = (m_map.m_unmapval == 0) ? 0 : ~(u64)0;  //m_unmap = (m_map->m_unmapval == 0) ? 0 : ~0;
+            m_unmap = (m_map.m_unmapval == 0) ? 0U : u64.MaxValue;  //m_unmap = (m_map->m_unmapval == 0) ? 0 : ~0;
             if (m_map.m_globalmask != 0)
             {
                 if ((m_map.m_globalmask & ~m_addrmask) != 0)
@@ -2461,8 +2459,22 @@ namespace mame
                 m_addrmask = m_map.m_globalmask;
             }
 
+            prepare_map_generic(m_map, true);
+        }
+
+
+        //-------------------------------------------------
+        //  prepare_map_generic - walk through an address
+        //  map to find implicit memory regions and
+        //  identify shared regions
+        //-------------------------------------------------
+        public void prepare_map_generic(address_map map, bool allow_alloc)
+        {
+            memory_region devregion = (m_spacenum == 0) ? m_device.memregion(global_object.DEVICE_SELF) : null;
+            u32 devregionsize = (devregion != null) ? devregion.bytes() : 0;
+
             // make a pass over the address map, adjusting for the device and getting memory pointers
-            foreach (address_map_entry entry in m_map.m_entrylist)
+            foreach (address_map_entry entry in map.m_entrylist)
             {
                 // computed adjusted addresses first
                 adjust_addresses(ref entry.m_addrstart, ref entry.m_addrend, ref entry.m_addrmask, ref entry.m_addrmirror);
@@ -2470,11 +2482,14 @@ namespace mame
                 // if we have a share entry, add it to our map
                 if (entry.m_share != null)
                 {
-                    // if we can't find it, add it to our map
+                    // if we can't find it, add it to our map if we're allowed to
                     std_string fulltag = entry.m_devbase.subtag(entry.m_share);
                     memory_share share = m_manager.share_find(fulltag);
                     if (share == null)
                     {
+                        if (!allow_alloc)
+                            global_object.fatalerror("Trying to create share '{0}' too late\n", fulltag);
+
                         emumem_global.VPRINTF("Creating share '{0}' of length {1}\n", fulltag, entry.m_addrend + 1 - entry.m_addrstart);
                         share = m_manager.share_alloc(m_device, fulltag, (u8)m_config.data_width(), address_to_byte(entry.m_addrend + 1 - entry.m_addrstart), endianness());
                     }
@@ -2530,9 +2545,17 @@ namespace mame
 
                 // allocate anonymous ram when needed
                 if (entry.m_memory == null && (entry.m_read.m_type == map_handler_type.AMH_RAM || entry.m_write.m_type == map_handler_type.AMH_RAM))
+                {
+                    if (!allow_alloc)
+                        global_object.fatalerror("Trying to create memory in range {0}-{1} too late\n", entry.m_addrstart, entry.m_addrend);
+
                     entry.m_memory = m_manager.anonymous_alloc(this, address_to_byte(entry.m_addrend + 1 - entry.m_addrstart), (u8)m_config.data_width(), entry.m_addrstart, entry.m_addrend);
+                }
             }
         }
+
+
+        //void prepare_device_map(address_map &map);
 
 
         //-------------------------------------------------
@@ -2830,14 +2853,14 @@ namespace mame
         //DISABLE_COPYING(memory_view);
 
 
-        abstract class memory_view_entry : address_space_installer
+        public abstract class memory_view_entry : address_space_installer
         {
             //memory_view &m_view;
-            //std::unique_ptr<address_map> m_map;
+            protected address_map m_map;  //std::unique_ptr<address_map> m_map;
             //int m_id;
 
 
-            memory_view_entry(address_space_config config, memory_manager manager, memory_view view, int id)
+            protected memory_view_entry(address_space_config config, memory_manager manager, memory_view view, int id)
                  : base(config, manager)
             {
                 throw new emu_unimplemented();
@@ -2847,6 +2870,10 @@ namespace mame
             //virtual ~memory_view_entry() = default;
 
             //address_map_entry &operator()(offs_t start, offs_t end);
+            public address_map_entry op(offs_t start, offs_t end)
+            {
+                return m_map.op(start, end);
+            }
 
 
             protected abstract void populate_from_map(address_map map = null);
@@ -2855,34 +2882,73 @@ namespace mame
             //std::string key() const;
 
 
+            //void prepare_map_generic(address_map &map, bool allow_alloc);
+            //void prepare_device_map(address_map &map);
+
+
             //void check_range_optimize_all(const char *function, int width, offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, offs_t &nstart, offs_t &nend, offs_t &nmask, offs_t &nmirror, u64 &nunitmask, int &ncswidth);
             //void check_range_optimize_mirror(const char *function, offs_t addrstart, offs_t addrend, offs_t addrmirror, offs_t &nstart, offs_t &nend, offs_t &nmask, offs_t &nmirror);
             //void check_range_address(const char *function, offs_t addrstart, offs_t addrend);
         }
 
 
-        //device_t &                                      m_device;
-        //std::string                                     m_name;
-        //std::map<int, int>                              m_entry_mapping;
-        //std::vector<std::unique_ptr<memory_view_entry>> m_entries;
-        //const address_space_config *                    m_config;
+        device_t m_device;
+        string m_name;
+        std.map<int, int> m_entry_mapping;
+        std.vector<memory_view_entry> m_entries;  //std::vector<std::unique_ptr<memory_view_entry>> m_entries;
+        address_space_config m_config;
         public offs_t m_addrstart;
         public offs_t m_addrend;
-        //address_space *                                 m_space;
-        //handler_entry *                                 m_handler_read;
-        //handler_entry *                                 m_handler_write;
-        //int                                             m_cur_id;
-        //int                                             m_cur_slot;
+        address_space m_space;
+        handler_entry m_handler_read;
+        handler_entry m_handler_write;
+        int m_cur_id;
+        int m_cur_slot;
         //std::string                                     m_context;
 
 
-        memory_view(device_t device, string name)
+        public memory_view(device_t device, string name)
         {
-            throw new emu_unimplemented();
+            m_device = device;
+            m_name = name;
+            m_config = null;
+            m_addrstart = 0;
+            m_addrend = 0;
+            m_space = null;
+            m_handler_read = null;
+            m_handler_write = null;
+            m_cur_id = -1;
+            m_cur_slot = -1;
+
+
+            device.view_register(this);
         }
 
 
         //memory_view_entry &operator[](int slot);
+        public memory_view_entry op(int slot)
+        {
+            if (m_config == null)
+                global_object.fatalerror("A view must be in a map or a space before it can be setup.");
+
+            var i = m_entry_mapping.find(slot);
+            if (i == default)
+            {
+                memory_view_entry e;
+                int id = m_entries.size();
+                e = emumem_mview_global.mve_make(emumem_global.handler_entry_dispatch_level(m_config.addr_width()), m_config.data_width(), m_config.addr_shift(), m_config.endianness(),
+                             m_config, m_device.machine().memory(), this, id);
+                m_entries.resize(id + 1);
+                m_entries[id] = e;  //m_entries[id].reset(e);
+                m_entry_mapping[slot] = id;
+                return e;
+            }
+            else
+            {
+                return m_entries[i];
+            }
+        }
+
 
         //void select(int entry);
         //void disable();
@@ -2890,7 +2956,17 @@ namespace mame
         //const std::string &name() const { return m_name; }
 
 
-        //void initialize_from_address_map(offs_t addrstart, offs_t addrend, const address_space_config &config);
+        public void initialize_from_address_map(offs_t addrstart, offs_t addrend, address_space_config config)
+        {
+            if (m_config != null)
+                global_object.fatalerror("A memory_view can be present in only one address map.");
+
+            m_config = config;
+            m_addrstart = addrstart;
+            m_addrend = addrend;
+        }
+
+
         //std::pair<handler_entry *, handler_entry *> make_handlers(address_space &space, offs_t addrstart, offs_t addrend);
         //void make_subdispatch(std::string context);
         //int id_to_slot(int id) const;

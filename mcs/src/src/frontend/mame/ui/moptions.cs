@@ -78,6 +78,7 @@ namespace mame
             // search path options
             new options_entry(null,                                 null,                          OPTION_HEADER,  "UI SEARCH PATH OPTIONS"),
             new options_entry(OPTION_HISTORY_PATH,                  "history;dats;.",              OPTION_STRING,  "path to history files"),
+            new options_entry(OPTION_CATEGORYINI_PATH,              "folders",                     OPTION_STRING,  "path to category ini files"),
             new options_entry(OPTION_CATEGORYINI_PATH,              "folders",                     OPTION_STRING,  "path to catagory ini files"),
             new options_entry(OPTION_CABINETS_PATH,                 "cabinets;cabdevs",            OPTION_STRING,  "path to cabinets / devices image"),
             new options_entry(OPTION_CPANELS_PATH,                  "cpanel",                      OPTION_STRING,  "path to control panel image"),

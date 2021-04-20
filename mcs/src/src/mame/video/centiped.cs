@@ -24,9 +24,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(centiped_state::centiped_get_tile_info)
         void centiped_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            var videoram = m_videoram.op;  //uint8_t *videoram = m_videoram;
-
-            int data = videoram[tile_index];
+            int data = m_videoram[tile_index].op;
             tileinfo.set(0, ((u32)data & 0x3f) + 0x40, 0, TILE_FLIPYX(data >> 6));
         }
 
@@ -39,11 +37,9 @@ namespace mame
 
         void init_penmask()
         {
-            int i;
-
-            for (i = 0; i < 64; i++)
+            for (int i = 0; i < 64; i++)
             {
-                byte mask = 1;
+                uint8_t mask = 1;
                 if (((i >> 0) & 3) == 0) mask |= 2;
                 if (((i >> 2) & 3) == 0) mask |= 4;
                 if (((i >> 4) & 3) == 0) mask |= 8;
@@ -198,9 +194,7 @@ namespace mame
 
         u32 screen_update_centiped(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            Pointer<uint8_t> spriteram = m_spriteram.op;  //uint8_t *spriteram = m_spriteram;
             rectangle spriteclip = cliprect;
-            int offs;
 
             /* draw the background */
             m_bg_tilemap.draw(screen, bitmap, cliprect, 0, 0);
@@ -212,14 +206,14 @@ namespace mame
                 spriteclip.max_x -= 8;
 
             /* draw the sprites */
-            for (offs = 0; offs < 0x10; offs++)
+            for (int offs = 0; offs < 0x10; offs++)
             {
-                int code = ((spriteram[offs] & 0x3e) >> 1) | ((spriteram[offs] & 0x01) << 6);
-                int color = spriteram[offs + 0x30];
-                int flipx = (spriteram[offs] >> 6) & 1;
-                int flipy = (spriteram[offs] >> 7) & 1;
-                int x = spriteram[offs + 0x20];
-                int y = 240 - spriteram[offs + 0x10];
+                int code = ((m_spriteram[offs].op & 0x3e) >> 1) | ((m_spriteram[offs].op & 0x01) << 6);
+                int color = m_spriteram[offs + 0x30].op;
+                int flipx = (m_spriteram[offs].op >> 6) & 1;
+                int flipy = (m_spriteram[offs].op >> 7) & 1;
+                int x = m_spriteram[offs + 0x20].op;
+                int y = 240 - m_spriteram[offs + 0x10].op;
 
                 m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip, (UInt32)code, (UInt32)color, flipx, flipy, x, y, m_penmask[color & 0x3f]);
             }

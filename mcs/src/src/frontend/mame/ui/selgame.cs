@@ -843,9 +843,8 @@ namespace mame.ui
                 int srcIdx = 0;  //const char *src;
 
                 // build a name for it
-                //for (src = dir->name; *src != 0 && *src != '.' && dst < &drivername[ARRAY_LENGTH(drivername) - 1]; ++src)
+                //for (src = dir->name; *src != 0 && *src != '.' && dst < &drivername[std::size(drivername) - 1]; ++src)
                 //    *dst++ = tolower(uint8_t(*src));
-                //*dst = 0;
                 drivername = dir.name.ToLower();
 
                 int drivnum = driver_list.find(drivername);
@@ -1184,14 +1183,14 @@ namespace mame.ui
                 media_auditor.summary summary_samples = auditor.audit_samples();
 
                 // if everything looks good, schedule the new driver
-                if (summary == media_auditor.summary.CORRECT || summary == media_auditor.summary.BEST_AVAILABLE || summary == media_auditor.summary.NONE_NEEDED)
+                if (audit_passed(summary))
                     str += "ROM Audit Result\tOK\n";
                 else
                     str += "ROM Audit Result\tBAD\n";
 
                 if (summary_samples == media_auditor.summary.NONE_NEEDED)
                     str += "Samples Audit Result\tNone Needed\n";
-                else if (summary_samples == media_auditor.summary.CORRECT || summary_samples == media_auditor.summary.BEST_AVAILABLE)
+                else if (audit_passed(summary_samples))
                     str += "Samples Audit Result\tOK\n";
                 else
                     str += "Samples Audit Result\tBAD\n";
@@ -1254,13 +1253,13 @@ namespace mame.ui
                 media_auditor.summary summary = auditor.audit_media(media_auditor.AUDIT_VALIDATE_FAST);
 
 
-                // always pass audit
+                // EDF - always pass audit
                 //throw new emu_unimplemented();
                 summary = media_auditor.summary.CORRECT;
 
 
                 // if everything looks good, schedule the new driver
-                if (summary == media_auditor.summary.CORRECT || summary == media_auditor.summary.BEST_AVAILABLE || summary == media_auditor.summary.NONE_NEEDED)
+                if (audit_passed(summary))
                 {
                     if (!select_bios(driver, false))
                         launch_system(driver);
@@ -1268,7 +1267,7 @@ namespace mame.ui
                 else
                 {
                     // otherwise, display an error
-                    set_error(reset_options.REMEMBER_REF, make_audit_fail_text(media_auditor.summary.NOTFOUND != summary, auditor));
+                    set_error(reset_options.REMEMBER_REF, make_system_audit_fail_text(auditor, summary));
                 }
             }
         }
@@ -1319,7 +1318,7 @@ namespace mame.ui
                 media_auditor auditor = new media_auditor(enumerator);
                 media_auditor.summary summary = auditor.audit_media(media_auditor.AUDIT_VALIDATE_FAST);
 
-                if (summary == media_auditor.summary.CORRECT || summary == media_auditor.summary.BEST_AVAILABLE || summary == media_auditor.summary.NONE_NEEDED)
+                if (audit_passed(summary))
                 {
                     // if everything looks good, schedule the new driver
                     if (!select_bios(ui_swinfo.driver, false))
@@ -1331,28 +1330,38 @@ namespace mame.ui
                 else
                 {
                     // otherwise, display an error
-                    set_error(reset_options.REMEMBER_REF, make_audit_fail_text(media_auditor.summary.NOTFOUND != summary, auditor));
+                    set_error(reset_options.REMEMBER_REF, make_system_audit_fail_text(auditor, summary));
                 }
             }
             else
             {
-                // first validate
+                // first audit the system ROMs
                 driver_enumerator drv = new driver_enumerator(machine().options(), ui_swinfo.driver);
                 media_auditor auditor = new media_auditor(drv);
                 drv.next();
-                software_list_device swlist = software_list_device.find_by_name(drv.config(), ui_swinfo.listname);
-                software_info swinfo = swlist.find(ui_swinfo.shortname);
 
-                media_auditor.summary summary = auditor.audit_software(swlist, swinfo, media_auditor.AUDIT_VALIDATE_FAST);
-
-                if (summary == media_auditor.summary.CORRECT || summary == media_auditor.summary.BEST_AVAILABLE || summary == media_auditor.summary.NONE_NEEDED)
+                media_auditor.summary sysaudit = auditor.audit_media(media_auditor.AUDIT_VALIDATE_FAST);
+                if (!audit_passed(sysaudit))
                 {
-                    throw new emu_unimplemented();
+                    set_error(reset_options.REMEMBER_REF, make_system_audit_fail_text(auditor, sysaudit));
                 }
                 else
                 {
-                    // otherwise, display an error
-                    set_error(reset_options.REMEMBER_POSITION, make_audit_fail_text(media_auditor.summary.NOTFOUND != summary, auditor));
+                    // now audit the software
+                    software_list_device swlist = software_list_device.find_by_name(drv.config(), ui_swinfo.listname);
+                    software_info swinfo = swlist.find(ui_swinfo.shortname);
+
+                    media_auditor.summary swaudit = auditor.audit_software(swlist, swinfo, media_auditor.AUDIT_VALIDATE_FAST);
+
+                    if (audit_passed(swaudit))
+                    {
+                        throw new emu_unimplemented();
+                    }
+                    else
+                    {
+                        // otherwise, display an error
+                        set_error(reset_options.REMEMBER_REF, make_software_audit_fail_text(auditor, swaudit));
+                    }
                 }
             }
         }

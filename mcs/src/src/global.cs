@@ -1194,9 +1194,6 @@ namespace mame
 
 
         // ui
-        protected const int SLIDER_ID_MIXERVOL = (int)slider_id.SLIDER_ID_MIXERVOL;
-        protected const int SLIDER_ID_ADJUSTER = (int)slider_id.SLIDER_ID_ADJUSTER;
-        protected const int SLIDER_ID_ADJUSTER_LAST = (int)slider_id.SLIDER_ID_ADJUSTER_LAST;
         protected const float UI_MAX_FONT_HEIGHT = ui_global.UI_MAX_FONT_HEIGHT;
         public const float UI_LINE_WIDTH = ui_global.UI_LINE_WIDTH;
         protected static readonly rgb_t UI_GREEN_COLOR = ui_global.UI_GREEN_COLOR;
@@ -1300,6 +1297,11 @@ namespace mame
 
     public static class std
     {
+        public static int size(string x) { return x.Length; }
+        public static int size<T>(T [] x) { return x.Length; }
+        public static int size<T>(std.vector<T> x) { return x.Count; }
+
+
         // c++ chrono
         public static class chrono
         {
@@ -1315,6 +1317,9 @@ namespace mame
 
 
         // c++ algorithm
+        public static int clamp(int v, int lo, int hi) { return ExtensionIComparable.Clamp(v, lo, hi); }
+        public static float clamp(float v, float lo, float hi) { return ExtensionIComparable.Clamp(v, lo, hi); }
+        public static double clamp(double v, double lo, double hi) { return ExtensionIComparable.Clamp(v, lo, hi); }
         public static void fill<T>(MemoryContainer<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, Func<T> value) { std.memset(destination, value); }
@@ -1394,6 +1399,7 @@ namespace mame
 
 
         // c++ cstdlib
+        public static void abort() { terminate(); }
         public static string getenv(string env_var) { return System.Environment.GetEnvironmentVariable(env_var); }
         public static UInt64 strtoul(string str, string endptr, int base_) { return Convert.ToUInt64(str, 16); }
 

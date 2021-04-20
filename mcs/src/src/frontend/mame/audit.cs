@@ -188,7 +188,7 @@ namespace mame
 
 
         // getters
-        //const simple_list<audit_record> &records() const { return m_record_list; }
+        public media_auditor_record_list records() { return m_record_list; }
 
 
         // audit operations

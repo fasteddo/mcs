@@ -39,7 +39,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(atarisy2_state::get_playfield_tile_info)
         void get_playfield_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            uint16_t data = (uint16_t)m_playfield_tilemap.op[0].basemem_read(tile_index);
+            uint16_t data = tile_index < 020000 / 2 ? m_playfieldt[tile_index].op : m_playfieldb[tile_index & (020000 / 2 - 1)].op;
             int code = (int)(m_playfield_tile_bank[(data >> 10) & 1] << 10) | (data & 0x3ff);
             int color = (data >> 11) & 7;
             tileinfo.set(0, (uint32_t)code, (uint32_t)color, 0);
@@ -91,7 +91,6 @@ namespace mame
         {
             // reset the statics
             m_yscroll_reset_timer = machine().scheduler().timer_alloc(reset_yscroll_callback, this);
-            m_vrambank.op[0].set_bank(0);
 
             // save states
             save_item(NAME(new { m_playfield_tile_bank }));
@@ -199,32 +198,6 @@ namespace mame
 
         /*************************************
          *
-         *  Video RAM bank read/write handlers
-         *
-         *************************************/
-
-        uint16_t slapstic_r(offs_t offset)
-        {
-            int result = m_slapstic_region[offset + 0100000 / 2].op;
-            m_slapstic.op[0].tweak(offset);
-
-            /* an extra tweak for the next opcode fetch */
-            m_vrambank.op[0].set_bank((offs_t)m_slapstic.op[0].tweak(0x1234));
-            return (uint16_t)result;
-        }
-
-
-        void slapstic_w(offs_t offset, uint16_t data)
-        {
-            m_slapstic.op[0].tweak(offset);
-
-            /* an extra tweak for the next opcode fetch */
-            m_vrambank.op[0].set_bank((offs_t)m_slapstic.op[0].tweak(0x1234));
-        }
-
-
-        /*************************************
-         *
          *  Video RAM read/write handlers
          *
          *************************************/
@@ -239,6 +212,28 @@ namespace mame
             var temp = m_mob.op[0].spriteram().GetUInt16((int)offset);
             COMBINE_DATA(ref temp, data, mem_mask);
             m_mob.op[0].spriteram().SetUInt16((int)offset, temp);
+        }
+
+
+        void playfieldt_w(offs_t offset, uint16_t data, uint16_t mem_mask)
+        {
+            //COMBINE_DATA(m_playfieldt + offset);
+            var temp = (m_playfieldt.op + offset).op;
+            COMBINE_DATA(ref temp, data, mem_mask);
+            (m_playfieldt.op + offset).op = temp;
+
+            m_playfield_tilemap.op[0].tilemap.mark_tile_dirty(offset);
+        }
+
+
+        void playfieldb_w(offs_t offset, uint16_t data, uint16_t mem_mask)
+        {
+            //COMBINE_DATA(m_playfieldb + offset);
+            var temp = (m_playfieldb.op + offset).op;
+            COMBINE_DATA(ref temp, data, mem_mask);
+            (m_playfieldb.op + offset).op = temp;
+
+            m_playfield_tilemap.op[0].tilemap.mark_tile_dirty(offset + 020000/2);
         }
 
 

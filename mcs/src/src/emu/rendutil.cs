@@ -335,12 +335,7 @@ namespace mame
             srcval = (srcval * contrast) + brightness - 1.0f;
 
             /* clamp and return */
-            if (srcval < 0.0f)
-                srcval = 0.0f;
-            if (srcval > 1.0f)
-                srcval = 1.0f;
-
-            return srcval;
+            return std.clamp(srcval, 0.0f, 1.0f);
         }
 
 

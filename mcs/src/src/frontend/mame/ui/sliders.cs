@@ -47,11 +47,14 @@ namespace mame.ui
                 {
                     slider_state slider = (slider_state)item.ref_;
                     bool display = true;
+#if false
+                    // FIXME: this test should be reimplemented in a dedicated menu
                     if (slider.id >= SLIDER_ID_ADJUSTER && slider.id <= SLIDER_ID_ADJUSTER_LAST)
                         display = ((ioport_field)slider.arg).enabled();  //display = reinterpret_cast<ioport_field *>(slider->arg)->enabled();
+#endif
                     if (display)
                     {
-                        int32_t curval = slider.update(machine(), slider.arg, slider.id, out tempstring, slider_state.SLIDER_NOCHANGE);
+                        int32_t curval = slider.update(out tempstring, slider_state.SLIDER_NOCHANGE);
                         uint32_t flags = 0;
                         if (curval > slider.minval)
                             flags |= FLAG_LEFT_ARROW;
@@ -75,7 +78,7 @@ namespace mame.ui
                 if (item.type == menu_item_type.SLIDER)
                 {
                     slider_state slider = (slider_state)item.ref_;
-                    int32_t curval = slider.update(machine(), slider.arg, slider.id, out tempstring, slider_state.SLIDER_NOCHANGE);
+                    int32_t curval = slider.update(out tempstring, slider_state.SLIDER_NOCHANGE);
                     uint32_t flags = 0;
                     if (curval > slider.minval)
                         flags |= FLAG_LEFT_ARROW;
@@ -109,7 +112,7 @@ namespace mame.ui
                 {
                     slider_state slider = (slider_state)menu_event.itemref;
                     string unused;
-                    int curvalue = slider.update(machine(), slider.arg, slider.id, out unused, slider_state.SLIDER_NOCHANGE);
+                    int curvalue = slider.update(out unused, slider_state.SLIDER_NOCHANGE);
                     int increment = 0;
                     bool alt_pressed = machine().input().code_pressed(input_global.KEYCODE_LALT) || machine().input().code_pressed(input_global.KEYCODE_RALT);
                     bool ctrl_pressed = machine().input().code_pressed(input_global.KEYCODE_LCONTROL) || machine().input().code_pressed(input_global.KEYCODE_RCONTROL);
@@ -171,7 +174,7 @@ namespace mame.ui
                             newvalue = slider.maxval;
 
                         /* update the slider and recompute the menu */
-                        slider.update(machine(), slider.arg, slider.id, out unused, newvalue);
+                        slider.update(out unused, newvalue);
                         reset(reset_options.REMEMBER_REF);
                     }
                 }
@@ -236,7 +239,7 @@ namespace mame.ui
                 int curval;
 
                 // determine the current value and text
-                curval = curslider.update(machine(), curslider.arg, curslider.id, out tempstring, slider_state.SLIDER_NOCHANGE);
+                curval = curslider.update(out tempstring, slider_state.SLIDER_NOCHANGE);
 
                 // compute the current and default percentages
                 percentage = (float)(curval - curslider.minval) / (float)(curslider.maxval - curslider.minval);

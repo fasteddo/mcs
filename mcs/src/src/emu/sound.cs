@@ -201,7 +201,7 @@ namespace mame
             // voice when jumping off the edge in Q*Bert; without this extra effort
             // it is crackly and/or glitchy at times
             stream_buffer_sample_t [] buffer = new stream_buffer_sample_t [64];
-            int buffered_samples = (int)std.min(m_sample_rate, std.min(rate, (u32)buffer.Length));
+            int buffered_samples = (int)std.min(m_sample_rate, std.min(rate, (u32)std.size(buffer)));
 
             // if the new rate is lower, downsample into our holding buffer;
             // otherwise just copy into our holding buffer for later upsampling
@@ -687,11 +687,8 @@ namespace mame
         // write a sample to the buffer, clamping to +/- the clamp value
         //void put_clamp(s32 index, sample_t sample, sample_t clamp = 1.0)
         //{
-        //    if (sample > clamp)
-        //        sample = clamp;
-        //    if (sample < -clamp)
-        //        sample = -clamp;
-        //    put(index, sample);
+        //    assert(clamp >= sample_t(0));
+        //    put(index, std::clamp(sample, -clamp, clamp));
         //}
 
 
@@ -705,12 +702,8 @@ namespace mame
         // write a sample to the buffer, converting from an integer with the given maximum
         public void put_int_clamp(s32 index, s32 sample, s32 maxclamp)
         {
-            if (sample > maxclamp)
-                sample = maxclamp;
-            else if (sample < -maxclamp)
-                sample = -maxclamp;
-
-            put_int(index, sample, maxclamp);
+            global_object.assert(maxclamp >= 0);
+            put_int(index, std.clamp(sample, -maxclamp, maxclamp), maxclamp);
         }
 
         // safely add a sample to the buffer

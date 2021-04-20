@@ -70,7 +70,7 @@ namespace mame
         -------------------------------------------------*/
         public void coin_counter_w(int num, int on)
         {
-            if (num >= m_coin_count.Length)
+            if (num >= std.size(m_coin_count))
                 return;
 
             /* Count it only if the data has changed from 0 to non-zero */
@@ -90,7 +90,7 @@ namespace mame
         -------------------------------------------------*/
         void coin_lockout_w(int num, int on)
         {
-            if (num >= m_coinlockedout.Length)
+            if (num >= std.size(m_coinlockedout))
                 return;
             m_coinlockedout[num] = (UInt32)on;
         }
@@ -102,7 +102,7 @@ namespace mame
         -------------------------------------------------*/
         public int coin_lockout_get_state(int num)
         {
-            if (num >= m_coinlockedout.Length)
+            if (num >= std.size(m_coinlockedout))
                 return 0;
             return (int)m_coinlockedout[num];
         }
@@ -115,7 +115,7 @@ namespace mame
         -------------------------------------------------*/
         public void coin_lockout_global_w(int on)
         {
-            for (int i = 0; i < m_coinlockedout.Length; i++)
+            for (int i = 0; i < std.size(m_coinlockedout); i++)
                 coin_lockout_w(i, on);
         }
 

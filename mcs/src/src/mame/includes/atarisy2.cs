@@ -20,7 +20,6 @@ namespace mame
         required_device<screen_device> m_screen;
         required_device<atari_motion_objects_device> m_mob;
         required_region_ptr<uint16_t> m_slapstic_region;
-        required_device<address_map_bank_device> m_vrambank;
 
         uint8_t m_interrupt_enable;
 
@@ -44,6 +43,9 @@ namespace mame
 
         required_memory_bank_array<uint32_constant_2> m_rombank;
         required_device<atari_slapstic_device> m_slapstic;
+        memory_view m_vmmu;
+        required_shared_ptr<uint16_t> m_playfieldt;
+        required_shared_ptr<uint16_t> m_playfieldb;
 
         uint8_t m_sound_reset_state;
 
@@ -74,7 +76,6 @@ namespace mame
             m_screen = new required_device<screen_device>(this, "screen");
             m_mob = new required_device<atari_motion_objects_device>(this, "mob");
             m_slapstic_region = new required_region_ptr<uint16_t>(this, "maincpu");
-            m_vrambank = new required_device<address_map_bank_device>(this, "vrambank");
             m_playfield_tilemap = new required_device<tilemap_device>(this, "playfield");
             m_alpha_tilemap = new required_device<tilemap_device>(this, "alpha");
             m_xscroll = new required_shared_ptr<uint16_t>(this, "xscroll");
@@ -86,6 +87,9 @@ namespace mame
             m_tms5220 = new optional_device<tms5220c_device>(this, "tms");
             m_rombank = new required_memory_bank_array<uint32_constant_2>(this, "rombank{0}", 1);
             m_slapstic = new required_device<atari_slapstic_device>(this, "slapstic");
+            m_vmmu = new memory_view(this, "vmmu");
+            m_playfieldt = new required_shared_ptr<uint16_t>(this, "playfieldt");
+            m_playfieldb = new required_shared_ptr<uint16_t>(this, "playfieldb");
             m_leds = new output_finder<uint32_constant_2>(this, "led{0}", 0);
         }
     }

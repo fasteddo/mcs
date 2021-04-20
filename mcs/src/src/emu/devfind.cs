@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using optional_address_space = mame.address_space_finder<mame.bool_constant_false>;  //using optional_address_space = address_space_finder<false>;
 using optional_memory_bank = mame.memory_bank_finder<mame.bool_constant_false>;  //using optional_memory_bank = memory_bank_finder<false>;
 using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
 using PointerU8 = mame.Pointer<System.Byte>;
@@ -435,8 +436,103 @@ namespace mame
         }
 
 
-        //address_space *find_addrspace(int spacenum, u8 width, bool required) const;
-        //bool validate_addrspace(int spacenum, u8 width, bool required) const;
+        /// \brief Find an address space
+        ///
+        /// Look up address space and check that its width matches desired
+        /// value.  Returns pointer to address space if a matching space
+        /// is found, or nullptr otherwise.  Prints a message at warning
+        /// level if the address space is required, a device with the
+        /// requested tag is found, but it doesn't have a memory interface
+        /// or a space with the designated number.
+        /// \param [in] spacenum Address space number.
+        /// \param [in] width Specific data width, or 0.
+        /// \param [in] required Whether warning message should be printed
+        ///   if a device with no memory interface or space of that number
+        ///   is found.
+        /// \return Pointer to address space if a matching address space
+        ///   is found, or nullptr otherwise.
+        //-------------------------------------------------
+        //  find_addrspace - find address space
+        //-------------------------------------------------
+        protected address_space find_addrspace(int spacenum, u8 width, bool required)
+        {
+            // look up the device and return nullptr if not found
+            device_t device = m_base.get().subdevice(m_tag);
+            if (device == null)
+                return null;
+
+            // check for memory interface and the specified space number
+            device_memory_interface memory;
+            if (!device.interface_(out memory))
+            {
+                if (required)
+                    osd_printf_warning("Device '{0}' found but lacks memory interface\n", m_tag);
+                return null;
+            }
+
+            if (!memory.has_space(spacenum))
+            {
+                if (required)
+                    osd_printf_warning("Device '{0}' found but lacks address space #{1}\n", m_tag, spacenum);
+                return null;
+            }
+
+            // check data width
+            address_space space = memory.space(spacenum);
+            if (width != 0 && width != space.data_width())
+            {
+                osd_printf_warning("Device '{0}' found but address space #{1} has the wrong data width (expected {2}, found {3})\n", m_tag, spacenum, width, space.data_width());
+                return null;
+            }
+
+            // return result
+            return space;
+        }
+
+
+        /// \brief Check that address space exists
+        ///
+        /// Returns true if the space is required but no matching space is
+        /// found, or false otherwise.
+        /// \param [in] spacenum Address space number.
+        /// \param [in] width Specific data width, or 0.
+        /// \param [in] required Whether warning message should be printed
+        ///   if a device with no memory interface or space of that number
+        ///   is found.
+        /// \return True if the space is optional, or if the space is
+        ///   space and a matching space is found, or false otherwise.
+        //-------------------------------------------------
+        //  validate_addrspace - find address space
+        //-------------------------------------------------
+        protected bool validate_addrspace(int spacenum, u8 width, bool required)
+        {
+            // look up the device and return false if not found
+            device_t device = m_base.get().subdevice(m_tag);
+            if (device == null)
+                return report_missing(false, "address space", required);
+
+            // check for memory interface and a configuration for the designated space
+            device_memory_interface memory = null;
+            address_space_config config = null;
+            if (device.interface_(out memory))
+            {
+                config = memory.space_config(spacenum);
+                if (required)
+                {
+                    if (config == null)
+                        osd_printf_warning("Device '{0}' found but lacks address space #{1}\n", m_tag, spacenum);
+                    else if (width != 0 && width != config.data_width())
+                        osd_printf_warning("Device '{0}' found but space #{1} has the wrong data width (expected {2}, found {3})\n", m_tag, spacenum, width, config.data_width());
+                }
+            }
+            else if (required)
+            {
+                osd_printf_warning("Device '{0}' found but lacks memory interface\n", m_tag);
+            }
+
+            // report result
+            return report_missing(config != null && (width == 0 || width == config.data_width()), "address space", required);
+        }
 
 
         //-------------------------------------------------
@@ -1132,7 +1228,109 @@ namespace mame
     /// optional_address_space and required_address_space helpers are used.
     /// \sa optional_address_space required_address_space
     //template <bool Required>
-    //class address_space_finder : public object_finder_base<address_space, Required>
+    class address_space_finder<bool_Required> : object_finder_base<address_space, bool_Required>
+        where bool_Required : bool_constant, new()
+    {
+        int m_spacenum;
+        u8 m_data_width;
+
+
+        /// \brief Address space finder constructor
+        /// \param [in] base Base device to search from.
+        /// \param [in] tag Address space device tag to search for.
+        ///   This is not copied, it is the caller's responsibility to
+        ///   ensure this pointer remains valid until resolution time.
+        /// \param [in] spacenum Address space number.
+        /// \param [in] width Required data width in bits, or zero if
+        ///   any data width is acceptable.
+        public address_space_finder(device_t base_, string tag, int spacenum, u8 width = 0)
+            : base(base_, tag)
+        {
+            m_spacenum = spacenum;
+            m_data_width = width;
+        }
+
+
+        /// \brief Set search tag and space number
+        ///
+        /// Allows search tag to be changed after construction.  Note that
+        /// this must be done before resolution time to take effect.  Also
+        /// note that the tag is not copied.
+        /// \param [in] base Updated search base.  The tag must be specified
+        ///   relative to this device.
+        /// \param [in] tag Updated search tag.  This is not copied, it is
+        ///   the caller's responsibility to ensure this pointer remains
+        ///   valid until resolution time.
+        /// \param [in] spacenum Address space number.
+        //void set_tag(device_t &base, char const *tag, int spacenum) { finder_base::set_tag(base, tag); m_spacenum = spacenum; }
+
+        /// \brief Set search tag and space number
+        ///
+        /// Allows search tag and address space number to be changed after
+        /// construction.  Note that this must be done before resolution
+        /// time to take effect.  Also note that the tag is not copied.
+        /// \param [in] tag Updated search tag relative to the current
+        ///   device being configured.  This is not copied, it is the
+        ///   caller's responsibility to ensure this pointer remains valid
+        ///   until resolution time.
+        /// \param [in] spacenum Address space number.
+        //void set_tag(char const *tag, int spacenum) { finder_base::set_tag(tag); m_spacenum = spacenum; }
+
+        /// \brief Set search tag and space number
+        ///
+        /// Allows search tag and address space number to be changed after
+        /// construction.  Note that this must be done before resolution
+        /// time to take effect.  Also note that the tag is not copied.
+        /// \param [in] finder Object finder to take the search base and tag
+        ///   from.
+        /// \param [in] spacenum Address space number.
+        public void set_tag(finder_base finder, int spacenum) { base.set_tag(finder); this.m_spacenum = spacenum; }
+
+        /// \brief Set search tag and space number
+        ///
+        /// Allows search tag and address space number to be changed after
+        /// construction.  Note that this must be done before resolution
+        /// time to take effect.  Also note that the tag is not copied.
+        /// \param [in] finder Address space finder to take the search base,
+        ///   tag and address space number from.
+        //template <bool R> void set_tag(address_space_finder<R> const &finder) { set_tag(finder, finder.spacenum()); }
+
+        /// \brief Set data width of space
+        ///
+        /// Allows data width to be specified after construction.  Note
+        /// that this must be done before resolution time to take effect.
+        /// \param [in] width Required data width in bits, or zero if any
+        ///   data width is acceptable.
+        //void set_data_width(u8 width) { assert(!this->m_resolved); this->m_data_width = width; }
+
+        /// \brief Get space number
+        ///
+        /// Returns the configured address space number.
+        /// \return The space number to be found.
+        //int spacenum() const { return m_spacenum; }
+
+        /// \brief Find address space
+        ///
+        /// Find address space with requested tag.  For a dry run, the
+        /// target object pointer will not be set.  This method is called by
+        /// the base device at resolution time.
+        /// \param [in] valid Pass a pointer to the validity checker if this
+        ///   is a dry run (i.e. no intention to actually start the device),
+        ///   or nullptr otherwise.
+        /// \return True if the address space is optional, a matching
+        ///   address space is found or this is a dry run, false otherwise.
+        public override bool findit(validity_checker valid)
+        {
+            if (valid != null)
+                return this.validate_addrspace(this.m_spacenum, this.m_data_width, Required);
+
+            assert(!this.m_resolved);
+            this.m_resolved = true;
+            this.m_target = new Pointer<address_space>(new MemoryContainer<address_space>() { this.find_addrspace(this.m_spacenum, this.m_data_width, Required) });
+            return this.report_missing("address space");
+        }
+    }
+
 
     /// \brief Optional address space finder
     ///

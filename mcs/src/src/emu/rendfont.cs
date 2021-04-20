@@ -11,6 +11,7 @@ using size_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -284,7 +285,7 @@ namespace mame
         //-------------------------------------------------
         glyph get_char(char32_t chnum)
         {
-            UInt32 page = chnum / 256;
+            unsigned page = chnum / 256;
             if (page >= m_glyphs.Length)
             {
                 if ((0 <= m_defchar) && (chnum != m_defchar))

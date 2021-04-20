@@ -315,8 +315,8 @@ namespace mame
                     {
                         int f = (int)(voice.frequency & 0xff);
 
-                        /* only update if we have non-zero volume and frequency */
-                        if ((lv != 0 || rv != 0) && f != 0)
+                        /* only update if we have non-zero volume */
+                        if (lv != 0 || rv != 0)
                         {
                             int hold_time = 1 << (m_f_fracbits - 16);
                             int hold = voice.noise_hold;
@@ -368,33 +368,29 @@ namespace mame
                     }
                     else
                     {
-                        /* only update if we have non-zero frequency */
-                        if (voice.frequency != 0)
+                        /* save the counter for this voice */
+                        uint32_t c = voice.counter;
+
+                        /* only update if we have non-zero left volume */
+                        if (lv != 0)
                         {
-                            /* save the counter for this voice */
-                            uint32_t c = voice.counter;
+                            Pointer<int16_t> lw = new Pointer<int16_t>(m_waveform[lv], voice.waveform_select * 32);  //const int16_t *lw = &m_waveform[lv][voice->waveform_select * 32];
 
-                            /* only update if we have non-zero left volume */
-                            if (lv != 0)
-                            {
-                                Pointer<int16_t> lw = new Pointer<int16_t>(m_waveform[lv], voice.waveform_select * 32);  //const int16_t *lw = &m_waveform[lv][voice->waveform_select * 32];
-
-                                /* generate sound into the buffer */
-                                c = namco_update_one(lmix, lw, voice.counter, voice.frequency);
-                            }
-
-                            /* only update if we have non-zero right volume */
-                            if (rv != 0)
-                            {
-                                Pointer<int16_t> rw = new Pointer<int16_t>(m_waveform[rv], voice.waveform_select * 32);  //const int16_t *rw = &m_waveform[rv][voice->waveform_select * 32];
-
-                                /* generate sound into the buffer */
-                                c = namco_update_one(rmix, rw, voice.counter, voice.frequency);
-                            }
-
-                            /* update the counter for this voice */
-                            voice.counter = c;
+                            /* generate sound into the buffer */
+                            c = namco_update_one(lmix, lw, voice.counter, voice.frequency);
                         }
+
+                        /* only update if we have non-zero right volume */
+                        if (rv != 0)
+                        {
+                            Pointer<int16_t> rw = new Pointer<int16_t>(m_waveform[rv], voice.waveform_select * 32);  //const int16_t *rw = &m_waveform[rv][voice->waveform_select * 32];
+
+                            /* generate sound into the buffer */
+                            c = namco_update_one(rmix, rw, voice.counter, voice.frequency);
+                        }
+
+                        /* update the counter for this voice */
+                        voice.counter = c;
                     }
                 }
             }
@@ -421,8 +417,8 @@ namespace mame
                     {
                         int f = (int)(voice.frequency & 0xff);
 
-                        /* only update if we have non-zero volume and frequency */
-                        if (v != 0 && f != 0)
+                        /* only update if we have non-zero volume */
+                        if (v != 0)
                         {
                             int hold_time = 1 << (m_f_fracbits - 16);
                             int hold = voice.noise_hold;
@@ -467,8 +463,8 @@ namespace mame
                     }
                     else
                     {
-                        /* only update if we have non-zero volume and frequency */
-                        if (v != 0 && voice.frequency != 0)
+                        /* only update if we have non-zero volume */
+                        if (v != 0)
                         {
                             Pointer<int16_t> w = new Pointer<int16_t>(m_waveform[v], voice.waveform_select * 32);  //const int16_t *w = &m_waveform[v][voice->waveform_select * 32];
 

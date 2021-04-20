@@ -183,11 +183,11 @@ namespace mame
             }
 
             // is the queue filled up?
-            if ((m_events_end + 1) % m_events.Length == m_events_start)
+            if ((m_events_end + 1) % std.size(m_events) == m_events_start)
                 return false;
 
             m_events[m_events_end++] = evt;
-            m_events_end %= m_events.Length;
+            m_events_end %= std.size(m_events);
             return true;
         }
 
@@ -201,7 +201,7 @@ namespace mame
             if (m_events_start != m_events_end)
             {
                 evt = m_events[m_events_start++];
-                m_events_start %= m_events.Length;
+                m_events_start %= std.size(m_events);
                 return true;
             }
             else

@@ -197,7 +197,7 @@ namespace mame
         //-------------------------------------------------
         void create_bitmap()
         {
-            rgb_t color = m_player < crosshair_colors.Length ? crosshair_colors[m_player] : rgb_t.white();
+            rgb_t color = m_player < std.size(crosshair_colors) ? crosshair_colors[m_player] : rgb_t.white();
 
             // if we have a bitmap and texture for this player, kill it
             if (m_bitmap == null)

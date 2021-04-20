@@ -22,18 +22,13 @@ using u64 = System.UInt64;
 namespace mame
 {
     // input ports support up to 32 bits each
-    //typedef UInt32 ioport_value;
+    //typedef u32 ioport_value;
 
 
     // I/O port callback function delegates
-    //typedef device_delegate<ioport_value ()> ioport_field_read_delegate;
-    public delegate ioport_value ioport_field_read_delegate();
-
-    //typedef device_delegate<void (ioport_field &, u32, ioport_value, ioport_value)> ioport_field_write_delegate;
-    public delegate void ioport_field_write_delegate(ioport_field field, u32 param, ioport_value param1, ioport_value param2);
-
-    //typedef device_delegate<float (float)> ioport_field_crossmap_delegate;
-    public delegate float ioport_field_crossmap_delegate(float param);
+    public delegate ioport_value ioport_field_read_delegate();  //typedef device_delegate<ioport_value ()> ioport_field_read_delegate;
+    public delegate void ioport_field_write_delegate(ioport_field field, u32 param, ioport_value param1, ioport_value param2);  //typedef device_delegate<void (ioport_field &, u32, ioport_value, ioport_value)> ioport_field_write_delegate;
+    public delegate float ioport_field_crossmap_delegate(float param);  //typedef device_delegate<float (float)> ioport_field_crossmap_delegate;
 
 
     // sequence types for input_port_seq() call

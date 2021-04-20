@@ -1159,18 +1159,42 @@ namespace mame.ui
         }
 
 
-        protected static string make_audit_fail_text(bool found, media_auditor auditor)
+        protected static string make_system_audit_fail_text(media_auditor auditor, media_auditor.summary summary)
         {
             string str = "";  //std::ostringstream str;
-            str += "The selected machine is missing one or more required ROM or CHD images. Please select a different machine.\n\n";
-            if (found)
+            if (!auditor.records().empty())
             {
+                str += "System media audit failed:\n";
                 auditor.summarize(null, ref str);
-                str += "\n";
+                osd_printf_info(str.str());
+                str = "";
             }
 
-            str += "Press any key to continue.";
-            return str.str();
+            str += __("Required ROM/disk images for the selected system are missing or incorrect. Please select a different system.\n\n");
+            make_audit_fail_text(ref str, auditor, summary);
+            return str;
+        }
+
+
+        protected static string make_software_audit_fail_text(media_auditor auditor, media_auditor.summary summary)
+        {
+            string str = "";  //std::ostringstream str;
+            if (!auditor.records().empty())
+            {
+                str += "System media audit failed:\n";
+                auditor.summarize(null, ref str);
+                osd_printf_info(str.str());
+                str = "";
+            }
+            str += __("Required ROM/disk images for the selected software are missing or incorrect. Please select a different software item.\n\n");
+            make_audit_fail_text(ref str, auditor, summary);
+            return str;
+        }
+
+
+        protected static bool audit_passed(media_auditor.summary summary)
+        {
+            return (media_auditor.summary.CORRECT == summary) || (media_auditor.summary.BEST_AVAILABLE == summary) || (media_auditor.summary.NONE_NEEDED == summary);
         }
 
 
@@ -2786,6 +2810,46 @@ namespace mame.ui
 
         // filter navigation
         protected abstract void filter_selected();
+
+
+        static void make_audit_fail_text(ref string str, media_auditor auditor, media_auditor.summary summary)  //void menu_select_launch::make_audit_fail_text(std::ostream &str, media_auditor const &auditor, media_auditor::summary summary)
+        {
+            if ((media_auditor.summary.NOTFOUND != summary) && !auditor.records().empty())
+            {
+                string message = "";  //char const *message = nullptr;
+                foreach (media_auditor.audit_record record in auditor.records())
+                {
+                    switch (record.substatus())
+                    {
+                    case media_auditor.audit_substatus.FOUND_BAD_CHECKSUM:
+                        message = __("incorrect checksum");
+                        break;
+                    case media_auditor.audit_substatus.FOUND_WRONG_LENGTH:
+                        message = __("incorrect length");
+                        break;
+                    case media_auditor.audit_substatus.NOT_FOUND:
+                        message = __("not found");
+                        break;
+                    case media_auditor.audit_substatus.GOOD:
+                    case media_auditor.audit_substatus.GOOD_NEEDS_REDUMP:
+                    case media_auditor.audit_substatus.FOUND_NODUMP:
+                    case media_auditor.audit_substatus.NOT_FOUND_NODUMP:
+                    case media_auditor.audit_substatus.NOT_FOUND_OPTIONAL:
+                    case media_auditor.audit_substatus.UNVERIFIED:
+                        continue;
+                    }
+
+                    if (record.shared_device() != null)
+                        str += string.Format(__("{0} ({1}) - {2}\n"), record.name(), record.shared_device().shortname(), message);
+                    else
+                        str += string.Format(__("{0} - {1}\n"), record.name(), message);
+                }
+
+                str += '\n';
+            }
+
+            str += __("Press any key to continue.");
+        }
 
 
         //-------------------------------------------------

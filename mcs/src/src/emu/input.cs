@@ -677,7 +677,7 @@ namespace mame
             // look for the code in the memory
             bool curvalue = code_pressed(code);
             int empty = -1;
-            for (int memnum = 0; memnum < m_switch_memory.Length; memnum++)
+            for (int memnum = 0; memnum < std.size(m_switch_memory); memnum++)
             {
                 // were we previous pressed on the last time through here?
                 if (m_switch_memory[memnum] == code)

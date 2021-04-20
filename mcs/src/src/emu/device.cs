@@ -1370,7 +1370,13 @@ namespace mame
         }
 
 
-        //void view_register(memory_view *view);
+        //-------------------------------------------------
+        //  view_register - register a view for future state saving
+        //-------------------------------------------------
+        public void view_register(memory_view view)
+        {
+            m_viewlist.push_back(view);
+        }
 
 
         // miscellaneous helpers

@@ -688,7 +688,7 @@ namespace mame
                 scaled.bitmap = new bitmap_argb32();
                 scaled.seqid = 0;
                 int scalenum;
-                for (scalenum = 0; scalenum < m_scaled.Length; scalenum++)
+                for (scalenum = 0; scalenum < std.size(m_scaled); scalenum++)
                 {
                     scaled = m_scaled[scalenum];
 
@@ -698,12 +698,12 @@ namespace mame
                 }
 
                 // did we get one?
-                if (scalenum == m_scaled.Length)
+                if (scalenum == std.size(m_scaled))
                 {
                     int lowest = -1;
 
                     // didn't find one -- take the entry with the lowest seqnum
-                    for (scalenum = 0; scalenum < m_scaled.Length; scalenum++)
+                    for (scalenum = 0; scalenum < std.size(m_scaled); scalenum++)
                         if ((lowest == -1 || m_scaled[scalenum].seqid < m_scaled[lowest].seqid) && !primlist.has_reference(m_scaled[scalenum].bitmap))
                             lowest = scalenum;
 
@@ -1055,7 +1055,7 @@ namespace mame
                 case texture_format.TEXFORMAT_RGB32:
                 case texture_format.TEXFORMAT_ARGB32:
                 case texture_format.TEXFORMAT_YUY16:
-                    out_length = (UInt32)m_bcglookup256.Count;  //ARRAY_LENGTH(m_bcglookup256);
+                    out_length = (u32)std.size(m_bcglookup256);
                     return m_bcglookup256;
 
                 default:
@@ -1618,8 +1618,8 @@ namespace mame
                     // now apply desired scale mode and aspect correction
                     if (m_keepaspect && target_aspect > src_aspect) xscale *= src_aspect / target_aspect * (maxyscale / yscale);
                     if (m_keepaspect && target_aspect < src_aspect) yscale *= target_aspect / src_aspect * (maxxscale / xscale);
-                    if (x_is_integer) xscale = Math.Min(maxxscale, Math.Max(1, rendutil_global.render_round_nearest(xscale)));
-                    if (y_is_integer) yscale = Math.Min(maxyscale, Math.Max(1, rendutil_global.render_round_nearest(yscale)));
+                    if (x_is_integer) xscale = std.clamp(rendutil_global.render_round_nearest(xscale), 1.0f, maxxscale);
+                    if (y_is_integer) yscale = std.clamp(rendutil_global.render_round_nearest(yscale), 1.0f, maxyscale);
 
                     // check if we have user defined scale factors, if so use them instead
                     int user_scale_x = target_is_portrait? m_int_scale_y : m_int_scale_x;
@@ -1721,7 +1721,7 @@ namespace mame
 
             // switch to the next primitive list
             render_primitive_list list = m_primlist[m_listindex];
-            m_listindex = (m_listindex + 1) % m_primlist.Length;
+            m_listindex = (m_listindex + 1) % std.size(m_primlist);
             list.acquire_lock();
 
             // free any previous primitives

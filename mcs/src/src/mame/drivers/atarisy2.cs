@@ -448,27 +448,14 @@ namespace mame
             map.op(0014000, 0014001).mirror(01776).r(switch_r);
             map.op(0014000, 0014000).mirror(01776).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });
             map.op(0016000, 0016001).mirror(01776).r(sound_r);
-            map.op(0020000, 0037777).m(m_vrambank, (map_, owner_) => { ((address_map_bank_device)subdevice("vrambank")).amap16(map_); });
+            map.op(0020000, 0037777).view(m_vmmu);
+            m_vmmu.op(0).op(020000, 033777).ram().w(m_alpha_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_alpha_tilemap.op[0].write16(offset, data, mem_mask); }).share("alpha");
+            m_vmmu.op(0).op(034000, 037777).ram().w((write16s_delegate)spriteram_w).share("mob");
+            m_vmmu.op(2).op(020000, 037777).ram().w((write16s_delegate)playfieldt_w).share(m_playfieldt);
+            m_vmmu.op(3).op(020000, 037777).ram().w((write16s_delegate)playfieldb_w).share(m_playfieldb);
             map.op(0040000, 0057777).bankr("rombank1");
             map.op(0060000, 0077777).bankr("rombank2");
             map.op(0100000, 0177777).rom();
-            map.op(0100000, 0100777).rw(slapstic_r, slapstic_w);
-        }
-
-
-        /*************************************
-         *
-         *  Bankswitched VRAM handlers
-         *
-         *************************************/
-        // full memory map derived from schematics
-        void vrambank_map(address_map map, device_t owner)
-        {
-            map.unmap_value_high();
-            map.op(000000, 013777).ram().w(m_alpha_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_alpha_tilemap.op[0].write16(offset, data, mem_mask); }).share("alpha");
-            map.op(014000, 017777).ram().w((write16s_delegate)spriteram_w).share("mob");
-            map.op(020000, 037777).ram();
-            map.op(040000, 077777).ram().w(m_playfield_tilemap, (offs_t offset, u16 data, u16 mem_mask) => { m_playfield_tilemap.op[0].write16(offset, data, mem_mask); }).share("playfield");
         }
 
 
@@ -793,8 +780,6 @@ namespace mame
             screen.set_palette("palette");
             screen.screen_vblank().set((write_line_delegate)vblank_int).reg();
 
-            ADDRESS_MAP_BANK(config, "vrambank").set_map(vrambank_map).set_options(endianness_t.ENDIANNESS_LITTLE, 16, 15, 020000);
-
             // sound hardware
             SPEAKER(config, "lspeaker").front_left();
             SPEAKER(config, "rspeaker").front_right();
@@ -827,6 +812,8 @@ namespace mame
         {
             atarisy2(config);
             SLAPSTIC<bool_constant_true>(config, m_slapstic, 105);
+            m_slapstic.op[0].set_range(m_maincpu, AS_PROGRAM, 0100000, 0100777, 0);
+            m_slapstic.op[0].set_view(m_vmmu);
         }
 
 
@@ -838,6 +825,8 @@ namespace mame
                to ~2.2MHz "fixes" the problem */
 
             SLAPSTIC<bool_constant_true>(config, m_slapstic, 107);
+            m_slapstic.op[0].set_range(m_maincpu, AS_PROGRAM, 0100000, 0100777, 0);
+            m_slapstic.op[0].set_view(m_vmmu);
         }
 
 

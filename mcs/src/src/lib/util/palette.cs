@@ -181,7 +181,7 @@ namespace mame
                 //throw new emu_unimplemented();
 #if false
                 if (m_mindirty <= m_maxdirty)
-                    std::fill(&m_dirty[m_mindirty / 32], &m_dirty[(m_maxdirty / 32) + 1], 0);
+                    std::fill(&m_dirty[m_mindirty / 32], &m_dirty[m_maxdirty / 32] + 1, 0);
 #endif
                 m_mindirty = (UInt32)(m_dirty.size() * 32 - 1);
                 m_maxdirty = 0;

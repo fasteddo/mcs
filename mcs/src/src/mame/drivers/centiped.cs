@@ -39,6 +39,10 @@ namespace mame
             save_item(NAME(new { m_oldpos }));
             save_item(NAME(new { m_sign }));
             save_item(NAME(new { m_dsw_select }));
+
+            std.fill(m_oldpos, (uint8_t)0);
+            std.fill(m_sign, (uint8_t)0);
+            m_dsw_select = 0;
         }
 
 
