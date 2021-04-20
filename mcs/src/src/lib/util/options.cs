@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using std_string = System.String;
+
 
 namespace mame
 {
@@ -64,9 +66,6 @@ namespace mame
     public class core_options : global_object,
                                 IEnumerable<core_options.entry>
     {
-        public delegate void value_changed_handler(string param);
-
-
         public enum option_type
         {
             INVALID,         // invalid
@@ -107,7 +106,7 @@ namespace mame
             int m_priority;
             core_options.option_type m_type;
             string m_description;
-            value_changed_handler m_value_changed_handler;  //std::function<void(const char *)>           m_value_changed_handler;
+            Action<string> m_value_changed_handler;  //std::function<void(const char *)>           m_value_changed_handler;
 
 
             // construction/destruction
@@ -205,7 +204,7 @@ namespace mame
             }
 
 
-            public void set_value_changed_handler(value_changed_handler handler) { m_value_changed_handler = handler; }  //std::function<void(const char *)> &&handler) { m_value_changed_handler = std::move(handler); }
+            public void set_value_changed_handler(Action<string> handler) { m_value_changed_handler = handler; }  //std::function<void(const char *)> &&handler) { m_value_changed_handler = std::move(handler); }
 
 
             public virtual void revert(int priority_hi, int priority_lo) { }
@@ -395,10 +394,6 @@ namespace mame
             {
                 // append the entry
                 add_to_entry_map(name, entry);
-
-                // for booleans, add the "-noXYZ" option as well
-                if (entry.type() == option_type.BOOLEAN)
-                    add_to_entry_map("no" + name, entry);
             }
 
             // and add the entry to the vector
@@ -420,15 +415,21 @@ namespace mame
             if (opt.name != null)
             {
                 // first extract any range
-                string namestr = opt.name;
+                std_string namestr = opt.name;
                 int lparen = namestr.find_first_of('(', 0);
-                int dash = namestr.find_first_of('-', lparen + 1);
-                int rparen = namestr.find_first_of(')', dash + 1);
-                if (lparen != -1 && dash != -1 && rparen != -1)
+                if (lparen != -1)
                 {
-                    minimum = namestr.substr(lparen + 1, dash - (lparen + 1)).Trim();  //strtrimspace(minimum.assign(namestr.substr(lparen + 1, dash - (lparen + 1))));
-                    maximum = namestr.substr(dash + 1, rparen - (dash + 1)).Trim();  //strtrimspace(maximum.assign(namestr.substr(dash + 1, rparen - (dash + 1))));
-                    namestr = namestr.Remove(lparen, rparen + 1 - lparen);  // .erase(lparen, rparen + 1 - lparen);
+                    int dash = namestr.find_first_of('-', lparen + 1);
+                    if (dash != -1)
+                    {
+                        int rparen = namestr.find_first_of(')', dash + 1);
+                        if (rparen != -1)
+                        {
+                            minimum = namestr.Substring(lparen + 1, dash - (lparen + 1)).Trim();  //minimum.assign(strtrimspace(std::string_view(&namestr[lparen + 1], dash - (lparen + 1))));
+                            maximum = namestr.Substring(dash + 1, rparen - (dash + 1)).Trim();  //maximum.assign(strtrimspace(std::string_view(&namestr[dash + 1], rparen - (dash + 1))));
+                            namestr = namestr.Remove(lparen, rparen + 1 - lparen);  //namestr.erase(lparen, rparen + 1 - lparen);
+                        }
+                    }
                 }
 
                 // then chop up any semicolon-separated names
@@ -436,11 +437,18 @@ namespace mame
                 while ((semi = namestr.find_first_of(';')) != -1)
                 {
                     names.push_back(namestr.substr(0, semi));
+
+                    // for booleans, add the "-noXYZ" option as well
+                    if (opt.type == option_type.BOOLEAN)
+                        names.push_back("no" + names.back());
+
                     namestr = namestr.Remove(0, semi + 1);  //namestr.erase(0, semi + 1);
                 }
 
                 // finally add the last item
                 names.push_back(namestr);
+                if (opt.type == option_type.BOOLEAN)
+                    names.push_back("no" + names.back());
             }
 
             // we might be called with an existing entry
@@ -528,7 +536,9 @@ namespace mame
         public void set_default_value(string name, string defvalue)
         {
             // update the data and default data
-            get_entry(name).set_default_value(defvalue);
+            var entry = get_entry(name);
+            assert(entry != null);
+            entry.set_default_value(defvalue);
         }
 
 
@@ -539,7 +549,9 @@ namespace mame
         public void set_description(string name, string description)
         {
             // update the data and default data
-            get_entry(name).set_description(description);
+            var entry = get_entry(name);
+            assert(entry != null);
+            entry.set_description(description);
         }
 
 
@@ -553,9 +565,11 @@ namespace mame
         }
 
 
-        protected void set_value_changed_handler(string name, value_changed_handler handler)  // std::function<void(const char *)> &&handler);
+        protected void set_value_changed_handler(string name, Action<string> handler)  //void core_options::set_value_changed_handler(std::string_view name, std::function<void(const char *)> &&handler)
         {
-            get_entry(name).set_value_changed_handler(handler);
+            var entry = get_entry(name);
+            assert(entry != null);
+            entry.set_value_changed_handler(handler);
         }
 
 
@@ -830,7 +844,9 @@ namespace mame
         //-------------------------------------------------
         public void set_value(string name, string value, int priority)
         {
-            get_entry(name).set_value(value, priority);
+            var entry = get_entry(name);
+            assert(entry != null);
+            entry.set_value(value, priority);
         }
 
         //void set_value(const std::string &name, std::string &&value, int priority);

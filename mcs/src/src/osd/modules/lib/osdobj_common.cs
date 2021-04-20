@@ -842,7 +842,7 @@ namespace mame
 
             m_output = select_module_options<output_module>(options(), output_module.OSD_OUTPUT_PROVIDER);
             m_output.set_machine(machine());
-            machine().output().set_notifier(null, output_notifier_callback, this);
+            machine().output().set_global_notifier(output_notifier_callback, this);
 
             m_mod_man.init(options());
 

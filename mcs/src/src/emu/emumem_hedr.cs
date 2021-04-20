@@ -25,8 +25,7 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_read<Width, AddrShift, Endian>;
-        //using mapping = typename inh::mapping;
+        //using mapping = typename handler_entry_read<Width, AddrShift, Endian>::mapping;
 
 
         static readonly int HighBits = new int_HighBits().value;
@@ -425,7 +424,7 @@ namespace mame
         void range_cut_before(offs_t address) { range_cut_before(address, (int)COUNT); }
         void range_cut_before(offs_t address, int start)  // = COUNT)
         {
-            while (--start >= 0)
+            while (--start >= 0 && m_u_dispatch[start] != null)
             {
                 if ((int)LowBits > -AddrShift && m_u_dispatch[start].is_dispatch())
                 {
@@ -442,7 +441,7 @@ namespace mame
 
         void range_cut_after(offs_t address, int start = -1)
         {
-            while (++start < COUNT)
+            while (++start < COUNT && m_u_dispatch[start] != null)
             {
                 if ((int)LowBits > -AddrShift && m_u_dispatch[start].is_dispatch())
                 {
@@ -502,8 +501,11 @@ namespace mame
 
                 for (u32 entry = 0; entry != COUNT; entry++)
                 {
-                    m_u_dispatch[entry] = m_dispatch_array[0][entry].dup();
-                    m_u_ranges[entry] = m_ranges_array[0][entry];
+                    if (m_dispatch_array[0][entry] != null)
+                    {
+                        m_u_dispatch[entry] = m_dispatch_array[0][entry].dup();
+                        m_u_ranges[entry] = m_ranges_array[0][entry];
+                    }
                 }
             }
             else

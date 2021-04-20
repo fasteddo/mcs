@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using std_string = System.String;
 using uint32_t = System.UInt32;
 
 
@@ -11,14 +12,14 @@ namespace mame.util.xml
 {
     public static class xmlfile_global
     {
-        /***************************************************************************
-            MISCELLANEOUS INTERFACES
-        ***************************************************************************/
+        //***************************************************************************
+        //    MISCELLANEOUS INTERFACES
+        //***************************************************************************
 
-        /*-------------------------------------------------
-            normalize_string - normalize a string
-            to ensure it doesn't contain embedded tags
-        -------------------------------------------------*/
+        //-------------------------------------------------
+        //    normalize_string - normalize a string
+        //    to ensure it doesn't contain embedded tags
+        //-------------------------------------------------
         public static string normalize_string(string string_)
         {
             //throw new emu_unimplemented();
@@ -28,7 +29,7 @@ namespace mame.util.xml
     }
 
 
-    /* extended error information from parsing */
+    // extended error information from parsing
     class parse_error
     {
         public string error_message;
@@ -46,7 +47,7 @@ namespace mame.util.xml
     }
 
 
-    /* a node representing a data item and its relationships */
+    // a node representing a data item and its relationships
     public class data_node : global_object
     {
         // a node representing an attribute
@@ -81,7 +82,7 @@ namespace mame.util.xml
         std.list<attribute_node> m_attributes;
 
 
-        int                     line;           /* line number for this node's start */
+        int line;           // line number for this node's start
 
 
         protected data_node()
@@ -120,7 +121,7 @@ namespace mame.util.xml
         //}
 
 
-        /* ----- XML node management ----- */
+        // ----- XML node management -----
 
         public string get_name() { return m_name.empty() ? null : m_name.c_str(); }
         public string get_value() { return m_value.empty() ? null : m_value.c_str(); }
@@ -162,7 +163,7 @@ namespace mame.util.xml
             if (string.IsNullOrEmpty(name))  //if (!name || !*name)
                 return null;
 
-            /* new element: create a new node */
+            // new element: create a new node
             data_node node;
             node = new data_node(this, name, value);
 
@@ -172,7 +173,7 @@ namespace mame.util.xml
                 return null;
             }
 
-            /* add us to the end of the list of siblings */
+            // add us to the end of the list of siblings
             data_node pnode;
             if (m_first_child == null)
             {
@@ -198,12 +199,25 @@ namespace mame.util.xml
         //void delete_node();
 
 
-        /* ----- XML attribute management ----- */
+        // ----- XML attribute management -----
 
         // return whether a node has the specified attribute
         public bool has_attribute(string attribute)
         {
             return get_attribute(attribute) != null;
+        }
+
+
+        // return a pointer to the string value of an attribute, or nullptr if not present
+        //-------------------------------------------------
+        //  get_attribute_string_ptr - get a pointer to
+        //  the string value of the specified attribute;
+        //  if not found, return = nullptr
+        //-------------------------------------------------
+        public std_string get_attribute_string_ptr(string attribute)
+        {
+            attribute_node attr = get_attribute(attribute);
+            return attr != null ? attr.value : null;
         }
 
 
@@ -218,9 +232,10 @@ namespace mame.util.xml
         // return the integer value of an attribute, or the specified default if not present
         public Int64 get_attribute_int(string attribute, Int64 defvalue)  //long long get_attribute_int(const char *attribute, long long defvalue) const;
         {
-            string string_ = get_attribute_string(attribute, null);
-            if (string_ == null)
+            attribute_node attr = get_attribute(attribute);
+            if (attr == null)
                 return defvalue;
+            std_string string_ = attr.value;
 
             //std::istringstream stream;
             //stream.imbue(f_portable_locale);
@@ -270,22 +285,22 @@ namespace mame.util.xml
 
 
         // return the float value of an attribute, or the specified default if not present
-        /*-------------------------------------------------
-            get_attribute_float - get the float
-            value of the specified attribute; if not
-            found, return = the provided default
-        -------------------------------------------------*/
+        //-------------------------------------------------
+        //    get_attribute_float - get the float
+        //    value of the specified attribute; if not
+        //    found, return = the provided default
+        //-------------------------------------------------
         public float get_attribute_float(string attribute, float defvalue)
         {
-            string string_ = get_attribute_string(attribute, null);
-            if (string.IsNullOrEmpty(string_))
+            attribute_node attr = get_attribute(attribute);
+            if (attr == null)
                 return defvalue;
 
-            //std::istringstream stream(string);
+            string stream = attr.value;  //std::istringstream stream(attr->value);
             //stream.imbue(f_portable_locale);
             //float result;
             //return (stream >> result) ? result : defvalue;
-            return Convert.ToSingle(string_);
+            return Convert.ToSingle(stream);
         }
 
 
@@ -294,17 +309,17 @@ namespace mame.util.xml
         {
             attribute_node anode;
 
-            /* first find an existing one to replace */
+            // first find an existing one to replace
             anode = get_attribute(name);
 
             if (anode != null)
             {
-                /* if we found it, free the old value and replace it */
+                // if we found it, free the old value and replace it
                 anode.value = value;
             }
             else
             {
-                /* otherwise, create a new node */
+                // otherwise, create a new node
                 add_attribute(name, value);
             }
         }
@@ -331,7 +346,7 @@ namespace mame.util.xml
 
         data_node get_sibling(string name)
         {
-            /* loop over siblings and find a matching name */
+            // loop over siblings and find a matching name
             for (data_node node = this; node != null; node = node.get_next_sibling())
             {
                 if (strcmp(node.get_name(), name) == 0)
@@ -348,7 +363,7 @@ namespace mame.util.xml
 
         attribute_node get_attribute(string attribute)
         {
-            /* loop over attributes and find a match */
+            // loop over attributes and find a match
             foreach (attribute_node anode in m_attributes)
             {
                 if (strcmp(anode.name.c_str(), attribute) == 0)

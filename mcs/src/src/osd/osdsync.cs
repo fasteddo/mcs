@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 
 using int32_t = System.Int32;
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using uint32_t = System.UInt32;
 
 

@@ -265,8 +265,7 @@ namespace mame
             // use heuristics to extract meaningful parts from software list fields
             public static string extract_region(string longname)
             {
-                string fullname = longname;
-                fullname = fullname.ToLower();
+                std_string fullname = longname.ToLower();  //std::string fullname(strmakelower(longname));
                 int found = fullname.IndexOf("(");  //std::string::size_type const found(fullname.find('('));
                 if (found != -1)
                 {

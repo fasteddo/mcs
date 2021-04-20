@@ -251,8 +251,7 @@ namespace mame
             else
             {
                 // otherwise, create a tokenized name
-                m_token = name;
-                m_token = m_token.ToUpper();
+                m_token = name.ToUpper();  //m_token.assign(strmakeupper(name));
                 m_token = m_token.Replace(" ", "");  //strdelchr(m_token, ' ');
                 m_token = m_token.Replace("_", "");  //strdelchr(m_token, '_');
             }

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using std_string = System.String;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -38,7 +39,6 @@ namespace mame
         public static bool ROMENTRY_ISREGIONEND(rom_entry_interface r) { return ROMENTRY_ISREGION(r) || ROMENTRY_ISPARAMETER(r) || ROMENTRY_ISEND(r); }
 
         /* ----- per-region macros ----- */
-        //#define ROMREGION_GETTAG(r)         ((r)->_name)
         public static UInt32 ROMREGION_GETLENGTH(rom_entry_interface r) { return r.get_length(); }
         public static UInt32 ROMREGION_GETFLAGS(rom_entry_interface r) { return r.get_flags(); }
         public static UInt32 ROMREGION_GETWIDTH(rom_entry_interface r) { return 8u << (int)((ROMREGION_GETFLAGS(r) & romentry_global.ROMREGION_WIDTHMASK) >> 8); }
@@ -57,7 +57,6 @@ namespace mame
         public static UInt32 ROM_GETOFFSET(rom_entry_interface r) { return r.get_offset(); }
         public static UInt32 ROM_GETLENGTH(rom_entry_interface r) { return r.get_length(); }
         public static UInt32 ROM_GETFLAGS(rom_entry_interface r) { return r.get_flags(); }
-        public static string ROM_GETHASHDATA(rom_entry_interface r) { return r.hashdata(); }
         public static bool ROM_ISOPTIONAL(rom_entry_interface r) { return (ROM_GETFLAGS(r) & romentry_global.ROM_OPTIONALMASK) == romentry_global.ROM_OPTIONAL; }
         public static UInt32 ROM_GETGROUPSIZE(rom_entry_interface r) { return ((ROM_GETFLAGS(r) & romentry_global.ROM_GROUPMASK) >> 8) + 1; }
         public static UInt32 ROM_GETSKIPCOUNT(rom_entry_interface r) {return (ROM_GETFLAGS(r) & romentry_global.ROM_SKIPMASK) >> 12; }
@@ -850,11 +849,8 @@ namespace mame
                 tried += ')';
             }
 
-            string name = romload_global.ROM_GETNAME(romp);
-
             bool is_chd = chderr != chd_error.CHDERR_NONE;
-            if (is_chd)
-                name += ".chd";
+            std_string name = is_chd ? romp.name() + ".chd" : romp.name();
 
             bool is_chd_error = is_chd && chderr != chd_error.CHDERR_FILE_NOT_FOUND;
             if (is_chd_error)
@@ -867,7 +863,7 @@ namespace mame
                     m_errorstring += string.Format("OPTIONAL {0} NOT FOUND{1}\n", name, tried);
                 m_warnings++;
             }
-            else if (new util.hash_collection(romload_global.ROM_GETHASHDATA(romp)).flag(util.hash_collection.FLAG_NO_DUMP))
+            else if (new util.hash_collection(romp.hashdata()).flag(util.hash_collection.FLAG_NO_DUMP))
             {
                 // no good dumps are okay
                 if (!is_chd_error)
@@ -1046,7 +1042,7 @@ namespace mame
 
             // extract CRC to use for searching
             u32 crc = 0;
-            bool has_crc = new util.hash_collection(romload_global.ROM_GETHASHDATA(romp[0])).crc(out crc);
+            bool has_crc = new util.hash_collection(romp[0].hashdata()).crc(out crc);
 
             // attempt reading up the chain through the parents
             // it also automatically attempts any kind of load by checksum supported by the archives.
@@ -1129,15 +1125,15 @@ namespace mame
 
             /* make sure the length was an even multiple of the group size */
             if (numbytes % groupsize != 0)
-                osd_printf_warning("Warning in RomModule definition: {0} length not an even multiple of group size\n", romload_global.ROM_GETNAME(romp));
+                osd_printf_warning("Warning in RomModule definition: {0} length not an even multiple of group size\n", romp.name());
 
             /* make sure we only fill within the region space */
             if (romload_global.ROM_GETOFFSET(romp) + numgroups * groupsize + (numgroups - 1) * skip > m_region.bytes())
-                throw new emu_fatalerror("Error in RomModule definition: {0} out of memory region space\n", romload_global.ROM_GETNAME(romp));
+                throw new emu_fatalerror("Error in RomModule definition: {0} out of memory region space\n", romp.name());
 
             /* make sure the length was valid */
             if (numbytes == 0)
-                throw new emu_fatalerror("Error in RomModule definition: {0} has an invalid length\n", romload_global.ROM_GETNAME(romp));
+                throw new emu_fatalerror("Error in RomModule definition: {0} has an invalid length\n", romp.name());
 
             /* special case for simple loads */
             if (datamask == 0xff && (groupsize == 1 || reversed == 0) && skip == 0)
@@ -1263,18 +1259,30 @@ namespace mame
         void fill_rom_data(rom_entry romp)
         {
             u32 numbytes = romload_global.ROM_GETLENGTH(romp);
+            int skip = (int)romload_global.ROM_GETSKIPCOUNT(romp);
             Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
 
-            /* make sure we fill within the region space */
+            // make sure we fill within the region space
             if (romload_global.ROM_GETOFFSET(romp) + numbytes > m_region.bytes())
                 throw new emu_fatalerror("Error in RomModule definition: FILL out of memory region space\n");
 
-            /* make sure the length was valid */
+            // make sure the length was valid
             if (numbytes == 0)
                 throw new emu_fatalerror("Error in RomModule definition: FILL has an invalid length\n");
 
-            /* fill the data (filling value is stored in place of the hashdata) */
-            memset(base_, (byte)(romload_global.ROM_GETHASHDATA(romp)[0] & 0xff), numbytes);  // memset(base_, (FPTR)ROM_GETHASHDATA(romp) & 0xff, numbytes);
+            // for fill bytes, the byte that gets filled is the first byte of the hashdata string
+            u8 fill_byte = (u8)Convert.ToInt64(romp.hashdata().c_str());  //u8 fill_byte = u8(strtol(romp->hashdata().c_str(), nullptr, 0));
+
+            // fill the data (filling value is stored in place of the hashdata)
+            if (skip != 0)
+            {
+                for (int i = 0; i < numbytes; i+= skip + 1)
+                    base_[i] = fill_byte;
+            }
+            else
+            {
+                memset(base_, fill_byte, numbytes);
+            }
         }
 
 
@@ -1284,28 +1292,28 @@ namespace mame
         void copy_rom_data(rom_entry romp)
         {
             Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
-            string srcrgntag = romload_global.ROM_GETNAME(romp);
+            std_string srcrgntag = romp.name();
             u32 numbytes = romload_global.ROM_GETLENGTH(romp);
-            u32 srcoffs = romload_global.ROM_GETHASHDATA(romp)[0];  /* srcoffset in place of hashdata */
+            u32 srcoffs = (u32)Convert.ToInt64(romp.hashdata().c_str());  /* srcoffset in place of hashdata */  //u32 srcoffs = u32(strtol(romp->hashdata().c_str(), nullptr, 0));  /* srcoffset in place of hashdata */
 
-            /* make sure we copy within the region space */
+            // make sure we copy within the region space
             if (romload_global.ROM_GETOFFSET(romp) + numbytes > m_region.bytes())
                 throw new emu_fatalerror("Error in RomModule definition: COPY out of target memory region space\n");
 
-            /* make sure the length was valid */
+            // make sure the length was valid
             if (numbytes == 0)
                 throw new emu_fatalerror("Error in RomModule definition: COPY has an invalid length\n");
 
-            /* make sure the source was valid */
+            // make sure the source was valid
             memory_region region = machine().root_device().memregion(srcrgntag);
             if (region == null)
                 throw new emu_fatalerror("Error in RomModule definition: COPY from an invalid region\n");
 
-            /* make sure we find within the region space */
+            // make sure we find within the region space
             if (srcoffs + numbytes > region.bytes())
                 throw new emu_fatalerror("Error in RomModule definition: COPY out of source memory region space\n");
 
-            /* fill the data */
+            // fill the data
             memcpy(base_, new Pointer<u8>(region.base_(), (int)srcoffs), numbytes);  // memcpy(base_, region->base_() + srcoffs, numbytes);
         }
 
@@ -1390,7 +1398,7 @@ namespace mame
                         if (baserom != null)
                         {
                             LOG("Verifying length ({0}) and checksums\n", explength);  // %X
-                            verify_length_and_hash(file, romload_global.ROM_GETNAME(baserom), (UInt32)explength, new util.hash_collection(romload_global.ROM_GETHASHDATA(baserom)));
+                            verify_length_and_hash(file, baserom.name(), (u32)explength, new util.hash_collection(baserom.hashdata()));
                             LOG("Verify finished\n");
                         }
 
@@ -1437,7 +1445,7 @@ namespace mame
             //throw new emu_unimplemented();
 #if false
             /* remove existing disk entries for this region */
-            m_chd_list.erase(std::remove_if(m_chd_list.begin(), m_chd_list.end(), [regiontag] (std::unique_ptr<open_chd> &chd) { return !strcmp(chd->region(), regiontag); }), m_chd_list.end());
+            m_chd_list.erase(std::remove_if(m_chd_list.begin(), m_chd_list.end(), [regiontag] (std::unique_ptr<open_chd> &chd) { return chd->region() == regiontag; }), m_chd_list.end());
 #endif
 
             /* loop until we hit the end of this region */
@@ -1450,7 +1458,7 @@ namespace mame
                     chd_error err;
 
                     /* make the filename of the source */
-                    string filename = romload_global.ROM_GETNAME(romp[0]) + ".chd";
+                    std_string filename = romp[0].name() + ".chd";
 
                     /* first open the source drive */
                     // FIXME: we've lost the ability to search parents here
@@ -1468,7 +1476,7 @@ namespace mame
                     acthashes.add_sha1(chd.orig_chd().sha1());
 
                     /* verify the hash */
-                    util.hash_collection hashes = new util.hash_collection(ROM_GETHASHDATA(romp[0]));
+                    util.hash_collection hashes = new util.hash_collection(romp[0].hashdata());
                     if (hashes != acthashes)
                     {
                         m_errorstring += string.Format("{0} WRONG CHECKSUMS:\n", filename);
@@ -1556,7 +1564,7 @@ namespace mame
                 {
                     u32 regionlength = romload_global.ROMREGION_GETLENGTH(region[0]);
 
-                    string regiontag = device.subtag(ROM_GETNAME(region[0]));
+                    std_string regiontag = device.subtag(region[0].name());
                     LOG("Processing region \"{0}\" (length={1})\n", regiontag, regionlength);
 
                     // the first entry must be a region
@@ -1612,7 +1620,7 @@ namespace mame
             {
                 for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
-                    region_post_process(device.memregion(ROM_GETNAME(region[0])), romload_global.ROMREGION_ISINVERTED(region[0]));
+                    region_post_process(device.memregion(region[0].name()), romload_global.ROMREGION_ISINVERTED(region[0]));
                 }
             }
 

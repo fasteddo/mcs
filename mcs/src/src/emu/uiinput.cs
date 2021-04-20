@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using ioport_value = System.UInt32;
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s32 = System.Int32;
 using u8 = System.Byte;
 

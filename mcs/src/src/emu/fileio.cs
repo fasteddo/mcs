@@ -87,7 +87,7 @@ namespace mame
 
         // reset
         //-------------------------------------------------
-        //  path_iteratr::reset - let's go again
+        //  path_iterator::reset - let's go again
         //-------------------------------------------------
         public void reset()
         {
@@ -140,7 +140,7 @@ namespace mame
                         return null;
 
                     // open the path
-                    m_curdir = osdcore_global.m_osddirectory.open(m_pathbuffer);
+                    m_curdir = osdfile_global.m_osddirectory.open(m_pathbuffer);  //m_curdir = osd::directory::open(m_pathbuffer);
                 }
 
                 // get the next entry from the current directory
@@ -294,9 +294,9 @@ namespace mame
 
             // determine which hashes we need
             string needed = "";
-            for (int scanIdx = 0; scanIdx < types.Length; scanIdx++)
-                if (already_have.IndexOf(types[scanIdx], 0) == -1)
-                    needed += types[scanIdx];
+            foreach (char scan in types)
+                if (already_have.find_first_of(scan) == -1)
+                    needed += scan;
 
             // if we need nothing, skip it
             if (string.IsNullOrEmpty(needed))
@@ -486,7 +486,7 @@ namespace mame
             m_zipdata.clear();
 
             if (m_remove_on_close)
-                osdcore_global.m_osdfile.remove(m_fullpath);
+                osdfile_global.m_osdfile.remove(m_fullpath);
 
             m_remove_on_close = false;
 

@@ -308,13 +308,14 @@ namespace mame
         {
             var videoram = m_videoram.op;  //uint8_t *videoram = m_videoram;
             uint8_t x = (uint8_t)(tile_index & 0x1f);
+            uint8_t y = (uint8_t)(tile_index >> 5);
 
             uint16_t code = videoram[tile_index];
             uint8_t attrib = m_spriteram.op[x * 2 + 1];
             uint8_t color = (uint8_t)(attrib & 7);
 
             if (m_extend_tile_info_ptr != null)
-                m_extend_tile_info_ptr(ref code, ref color, attrib, x);
+                m_extend_tile_info_ptr(ref code, ref color, attrib, x, y);
 
             tileinfo.set(0, code, color, 0);
         }
@@ -336,7 +337,7 @@ namespace mame
 
             /* 16 of the 256 pixels of the sprites are hard-clipped at the line buffer */
             /* according to the schematics, it should be the first 16 pixels */
-            clip.min_x = std.max(clip.min_x, ((m_flipscreen_x == 0) ? 1 : 0) * (16 + hoffset) * m_x_scale);
+            clip.min_x = std.max(clip.min_x, ((m_flipscreen_x == 0) ? 1 : 0) * (m_leftspriteclip + hoffset) * m_x_scale);
             clip.max_x = std.min(clip.max_x, (256 - m_flipscreen_x * (16 + hoffset)) * m_x_scale - 1);
 
             /* The line buffer is only written if it contains a '0' currently; */
@@ -751,7 +752,7 @@ namespace mame
 
 #if false
         /*** generic ***/
-        void galaxian_state::upper_extend_tile_info(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x)
+        void galaxian_state::upper_extend_tile_info(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x, uint8_t y)
         {
             /* tiles are in the upper half of a larger ROM */
             *code += 0x100;
@@ -766,7 +767,7 @@ namespace mame
 
 
         /*** Frogger ***/
-        void frogger_extend_tile_info(ref uint16_t code, ref uint8_t color, uint8_t attrib, uint8_t x)
+        void frogger_extend_tile_info(ref uint16_t code, ref uint8_t color, uint8_t attrib, uint8_t x, uint8_t y)
         {
             color = (uint8_t)(((color >> 1) & 0x03) | ((color << 2) & 0x04));
         }

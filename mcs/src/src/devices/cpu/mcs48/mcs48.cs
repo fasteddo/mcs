@@ -66,7 +66,7 @@ namespace mame
             CONSTANTS
         ***************************************************************************/
 
-        /* register access indexes */
+        // register access indexes
         //enum
         //{
         const int MCS48_PC   = 0;
@@ -92,7 +92,7 @@ namespace mame
         //};
 
 
-        /* I/O port access indexes */
+        // I/O port access indexes
         //enum
         //{
         const int MCS48_INPUT_IRQ = 0;
@@ -111,33 +111,31 @@ namespace mame
         }
 
 
-        /* timer/counter enable bits */
+        // timer/counter enable bits
         const uint8_t TIMER_ENABLED   = 0x01;
         const uint8_t COUNTER_ENABLED = 0x02;
 
-        /* flag bits */
+        // flag bits
         const uint8_t C_FLAG          = 0x80;
         const uint8_t A_FLAG          = 0x40;
         const uint8_t F_FLAG          = 0x20;
         const uint8_t B_FLAG          = 0x10;
 
-        /* status bits (UPI-41) */
-        const uint8_t STS_F1          = 0x08;
-        const uint8_t STS_F0          = 0x04;
+        // status bits (UPI-41)
         const uint8_t STS_IBF         = 0x02;
         const uint8_t STS_OBF         = 0x01;
 
-        /* port 2 bits (UPI-41) */
+        // port 2 bits (UPI-41)
         const uint8_t P2_OBF          = 0x10;
         const uint8_t P2_NIBF         = 0x20;
         const uint8_t P2_DRQ          = 0x40;
         const uint8_t P2_NDACK        = 0x80;
 
-        /* enable bits (UPI-41) */
+        // enable bits (UPI-41)
         //#define ENABLE_FLAGS    0x01
         //#define ENABLE_DMA      0x02
 
-        /* feature masks */
+        // feature masks
         const uint8_t MB_FEATURE      = 0x01;
         const uint8_t EXT_BUS_FEATURE = 0x02;
         const uint8_t UPI41_FEATURE   = 0x04;
@@ -149,7 +147,7 @@ namespace mame
             MACROS
         ***************************************************************************/
 
-        /* r0-r7 map to memory via the regptr */
+        // r0-r7 map to memory via the regptr
         uint8_t R0 { get { return m_regptr[0]; } set { m_regptr[0] = value; } }
         uint8_t R1 { get { return m_regptr[1]; } set { m_regptr[1] = value; } }
         uint8_t R2 { get { return m_regptr[2]; } set { m_regptr[2] = value; } }
@@ -178,14 +176,15 @@ namespace mame
 
         uint8_t       m_a;                  /* 8-bit accumulator */
         Pointer<uint8_t> m_regptr;  //uint8_t *     m_regptr;             /* pointer to r0-r7 */
-        uint8_t       m_psw;                /* 8-bit psw */
+        uint8_t       m_psw;                /* 8-bit PSW */
+        bool          m_f1;                 /* F1 flag (F0 is in PSW) */
         uint8_t       m_p1;                 /* 8-bit latched port 1 */
         uint8_t       m_p2;                 /* 8-bit latched port 2 */
         uint8_t       m_ea;                 /* 1-bit latched ea input */
         uint8_t       m_timer;              /* 8-bit timer */
         uint8_t       m_prescaler;          /* 5-bit timer prescaler */
         uint8_t       m_t1_history;         /* 8-bit history of the T1 input */
-        uint8_t       m_sts;                /* 8-bit status register (UPI-41 only, except for F1) */
+        uint8_t       m_sts;                /* 4-bit status register + OBF/IBF flags (UPI-41 only) */
         uint8_t       m_dbbi;               /* 8-bit input data buffer (UPI-41 only) */
         uint8_t       m_dbbo;               /* 8-bit output data buffer (UPI-41 only) */
 
@@ -204,7 +203,7 @@ namespace mame
 
         intref m_icount = new intref();  //int         m_icount;
 
-        /* Memory spaces */
+        // Memory spaces
         memory_access<int_constant_12, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache m_program = new memory_access<int_constant_12, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<12, 0, 0, ENDIANNESS_LITTLE>::cache m_program;
         memory_access<int_constant_8, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_data = new memory_access<int_constant_8, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<8, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
         memory_access<int_constant_8, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_io = new memory_access<int_constant_8, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<8, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
@@ -284,13 +283,13 @@ namespace mame
 
         void clr_a()          { burn_cycles(1); m_a = 0; }
         void clr_c()          { burn_cycles(1); m_psw = (uint8_t)(m_psw & ~C_FLAG); }
-        void clr_f0()         { burn_cycles(1); m_psw = (uint8_t)(m_psw & ~F_FLAG); m_sts = (uint8_t)(m_sts & ~STS_F0); }
-        void clr_f1()         { burn_cycles(1); m_sts = (uint8_t)(m_sts & ~STS_F1); }
+        void clr_f0()         { burn_cycles(1); m_psw &= unchecked((uint8_t)~F_FLAG); }
+        void clr_f1()         { burn_cycles(1); m_f1 = false; }
 
         void cpl_a()          { burn_cycles(1); m_a ^= 0xff; }
         void cpl_c()          { burn_cycles(1); m_psw ^= C_FLAG; }
-        void cpl_f0()         { burn_cycles(1); m_psw ^= F_FLAG; m_sts ^= STS_F0; }
-        void cpl_f1()         { burn_cycles(1); m_sts ^= STS_F1; }
+        void cpl_f0()         { burn_cycles(1); m_psw ^= F_FLAG; }
+        void cpl_f1()         { burn_cycles(1); m_f1 = !m_f1; }
 
         void da_a()
         {
@@ -298,10 +297,11 @@ namespace mame
 
             if ((m_a & 0x0f) > 0x09 || (m_psw & A_FLAG) != 0)
             {
-                m_a += 0x06;
-                if ((m_a & 0xf0) == 0x00)
+                if (m_a > 0xf9)
                     m_psw |= C_FLAG;
+                m_a += 0x06;
             }
+
             if ((m_a & 0xf0) > 0x90 || (m_psw & C_FLAG) != 0)
             {
                 m_a += 0x60;
@@ -353,12 +353,12 @@ namespace mame
         {
             burn_cycles(2);
 
-            /* acknowledge the IBF IRQ and clear the bit in STS */
+            // acknowledge the IBF IRQ and clear the bit in STS
             if ((m_sts & STS_IBF) != 0)
                 standard_irq_callback(UPI41_INPUT_IBF);
             m_sts = (uint8_t)(m_sts & ~STS_IBF);
 
-            /* if P2 flags are enabled, update the state of P2 */
+            // if P2 flags are enabled, update the state of P2
             if (m_flags_enabled && (m_p2 & P2_NIBF) == 0)
                 port_w(2, m_p2 |= P2_NIBF);
             m_a = m_dbbi;
@@ -386,7 +386,7 @@ namespace mame
         void jb_7()           { burn_cycles(2); execute_jcc((m_a & 0x80) != 0); }
         void jc()             { burn_cycles(2); execute_jcc((m_psw & C_FLAG) != 0); }
         void jf0()            { burn_cycles(2); execute_jcc((m_psw & F_FLAG) != 0); }
-        void jf1()            { burn_cycles(2); execute_jcc((m_sts & STS_F1) != 0); }
+        void jf1()            { burn_cycles(2); execute_jcc(m_f1); }
         void jnc()            { burn_cycles(2); execute_jcc((m_psw & C_FLAG) == 0); }
         void jni()            { burn_cycles(2); m_irq_polled = (m_irq_state == false); execute_jcc(m_irq_state); }
         void jnibf()          { burn_cycles(2); m_irq_polled = (m_sts & STS_IBF) != 0; execute_jcc((m_sts & STS_IBF) == 0); }
@@ -494,11 +494,11 @@ namespace mame
         {
             burn_cycles(2);
 
-            /* copy to the DBBO and update the bit in STS */
+            // copy to the DBBO and update the bit in STS
             m_dbbo = m_a;
             m_sts |= STS_OBF;
 
-            /* if P2 flags are enabled, update the state of P2 */
+            // if P2 flags are enabled, update the state of P2
             if (m_flags_enabled && (m_p2 & P2_OBF) == 0)
                 port_w(2, m_p2 |= P2_OBF);
         }
@@ -508,10 +508,9 @@ namespace mame
         {
             burn_cycles(2);
 
-            pull_pc_psw();
-
-            /* implicitly clear the IRQ in progress flip flop */
+            // implicitly clear the IRQ in progress flip flop
             m_irq_in_progress = false;
+            pull_pc_psw();
         }
 
         void rl_a()           { burn_cycles(1); m_a = (uint8_t)((m_a << 1) | (m_a >> 7)); }
@@ -579,37 +578,37 @@ namespace mame
         {
             string [] mcs48_opcodes = new string [256]
             {
-                OP("nop"),        OP("illegal"),    OP("outl_bus_a"),OP("add_a_n"),   OP("jmp_0"),     OP("en_i"),       OP("illegal"),   OP("dec_a"),         /* 00 */
+                OP("nop"),        OP("illegal"),    OP("outl_bus_a"),OP("add_a_n"),   OP("jmp_0"),     OP("en_i"),       OP("illegal"),   OP("dec_a"),         // 00
                 OP("ins_a_bus"),  OP("in_a_p1"),    OP("in_a_p2"),   OP("illegal"),   OP("movd_a_p4"), OP("movd_a_p5"),  OP("movd_a_p6"), OP("movd_a_p7"),
-                OP("inc_xr0"),    OP("inc_xr1"),    OP("jb_0"),      OP("adc_a_n"),   OP("call_0"),    OP("dis_i"),      OP("jtf"),       OP("inc_a"),         /* 10 */
+                OP("inc_xr0"),    OP("inc_xr1"),    OP("jb_0"),      OP("adc_a_n"),   OP("call_0"),    OP("dis_i"),      OP("jtf"),       OP("inc_a"),         // 10
                 OP("inc_r0"),     OP("inc_r1"),     OP("inc_r2"),    OP("inc_r3"),    OP("inc_r4"),    OP("inc_r5"),     OP("inc_r6"),    OP("inc_r7"),
-                OP("xch_a_xr0"),  OP("xch_a_xr1"),  OP("illegal"),   OP("mov_a_n"),   OP("jmp_1"),     OP("en_tcnti"),   OP("jnt_0"),     OP("clr_a"),         /* 20 */
+                OP("xch_a_xr0"),  OP("xch_a_xr1"),  OP("illegal"),   OP("mov_a_n"),   OP("jmp_1"),     OP("en_tcnti"),   OP("jnt_0"),     OP("clr_a"),         // 20
                 OP("xch_a_r0"),   OP("xch_a_r1"),   OP("xch_a_r2"),  OP("xch_a_r3"),  OP("xch_a_r4"),  OP("xch_a_r5"),   OP("xch_a_r6"),  OP("xch_a_r7"),
-                OP("xchd_a_xr0"), OP("xchd_a_xr1"), OP("jb_1"),      OP("illegal"),   OP("call_1"),    OP("dis_tcnti"),  OP("jt_0"),      OP("cpl_a"),         /* 30 */
+                OP("xchd_a_xr0"), OP("xchd_a_xr1"), OP("jb_1"),      OP("illegal"),   OP("call_1"),    OP("dis_tcnti"),  OP("jt_0"),      OP("cpl_a"),         // 30
                 OP("illegal"),    OP("outl_p1_a"),  OP("outl_p2_a"), OP("illegal"),   OP("movd_p4_a"), OP("movd_p5_a"),  OP("movd_p6_a"), OP("movd_p7_a"),
-                OP("orl_a_xr0"),  OP("orl_a_xr1"),  OP("mov_a_t"),   OP("orl_a_n"),   OP("jmp_2"),     OP("strt_cnt"),   OP("jnt_1"),     OP("swap_a"),        /* 40 */
+                OP("orl_a_xr0"),  OP("orl_a_xr1"),  OP("mov_a_t"),   OP("orl_a_n"),   OP("jmp_2"),     OP("strt_cnt"),   OP("jnt_1"),     OP("swap_a"),        // 40
                 OP("orl_a_r0"),   OP("orl_a_r1"),   OP("orl_a_r2"),  OP("orl_a_r3"),  OP("orl_a_r4"),  OP("orl_a_r5"),   OP("orl_a_r6"),  OP("orl_a_r7"),
-                OP("anl_a_xr0"),  OP("anl_a_xr1"),  OP("jb_2"),      OP("anl_a_n"),   OP("call_2"),    OP("strt_t"),     OP("jt_1"),      OP("da_a"),          /* 50 */
+                OP("anl_a_xr0"),  OP("anl_a_xr1"),  OP("jb_2"),      OP("anl_a_n"),   OP("call_2"),    OP("strt_t"),     OP("jt_1"),      OP("da_a"),          // 50
                 OP("anl_a_r0"),   OP("anl_a_r1"),   OP("anl_a_r2"),  OP("anl_a_r3"),  OP("anl_a_r4"),  OP("anl_a_r5"),   OP("anl_a_r6"),  OP("anl_a_r7"),
-                OP("add_a_xr0"),  OP("add_a_xr1"),  OP("mov_t_a"),   OP("illegal"),   OP("jmp_3"),     OP("stop_tcnt"),  OP("illegal"),   OP("rrc_a"),         /* 60 */
+                OP("add_a_xr0"),  OP("add_a_xr1"),  OP("mov_t_a"),   OP("illegal"),   OP("jmp_3"),     OP("stop_tcnt"),  OP("illegal"),   OP("rrc_a"),         // 60
                 OP("add_a_r0"),   OP("add_a_r1"),   OP("add_a_r2"),  OP("add_a_r3"),  OP("add_a_r4"),  OP("add_a_r5"),   OP("add_a_r6"),  OP("add_a_r7"),
-                OP("adc_a_xr0"),  OP("adc_a_xr1"),  OP("jb_3"),      OP("illegal"),   OP("call_3"),    OP("ent0_clk"),   OP("jf1"),       OP("rr_a"),          /* 70 */
+                OP("adc_a_xr0"),  OP("adc_a_xr1"),  OP("jb_3"),      OP("illegal"),   OP("call_3"),    OP("ent0_clk"),   OP("jf1"),       OP("rr_a"),          // 70
                 OP("adc_a_r0"),   OP("adc_a_r1"),   OP("adc_a_r2"),  OP("adc_a_r3"),  OP("adc_a_r4"),  OP("adc_a_r5"),   OP("adc_a_r6"),  OP("adc_a_r7"),
-                OP("movx_a_xr0"), OP("movx_a_xr1"), OP("illegal"),   OP("ret"),       OP("jmp_4"),     OP("clr_f0"),     OP("jni"),       OP("illegal"),       /* 80 */
+                OP("movx_a_xr0"), OP("movx_a_xr1"), OP("illegal"),   OP("ret"),       OP("jmp_4"),     OP("clr_f0"),     OP("jni"),       OP("illegal"),       // 80
                 OP("orl_bus_n"),  OP("orl_p1_n"),   OP("orl_p2_n"),  OP("illegal"),   OP("orld_p4_a"), OP("orld_p5_a"),  OP("orld_p6_a"), OP("orld_p7_a"),
-                OP("movx_xr0_a"), OP("movx_xr1_a"), OP("jb_4"),      OP("retr"),      OP("call_4"),    OP("cpl_f0"),     OP("jnz"),       OP("clr_c"),         /* 90 */
+                OP("movx_xr0_a"), OP("movx_xr1_a"), OP("jb_4"),      OP("retr"),      OP("call_4"),    OP("cpl_f0"),     OP("jnz"),       OP("clr_c"),         // 90
                 OP("anl_bus_n"),  OP("anl_p1_n"),   OP("anl_p2_n"),  OP("illegal"),   OP("anld_p4_a"), OP("anld_p5_a"),  OP("anld_p6_a"), OP("anld_p7_a"),
-                OP("mov_xr0_a"),  OP("mov_xr1_a"),  OP("illegal"),   OP("movp_a_xa"), OP("jmp_5"),     OP("clr_f1"),     OP("illegal"),   OP("cpl_c"),         /* A0 */
+                OP("mov_xr0_a"),  OP("mov_xr1_a"),  OP("illegal"),   OP("movp_a_xa"), OP("jmp_5"),     OP("clr_f1"),     OP("illegal"),   OP("cpl_c"),         // A0
                 OP("mov_r0_a"),   OP("mov_r1_a"),   OP("mov_r2_a"),  OP("mov_r3_a"),  OP("mov_r4_a"),  OP("mov_r5_a"),   OP("mov_r6_a"),  OP("mov_r7_a"),
-                OP("mov_xr0_n"),  OP("mov_xr1_n"),  OP("jb_5"),      OP("jmpp_xa"),   OP("call_5"),    OP("cpl_f1"),     OP("jf0"),       OP("illegal"),       /* B0 */
+                OP("mov_xr0_n"),  OP("mov_xr1_n"),  OP("jb_5"),      OP("jmpp_xa"),   OP("call_5"),    OP("cpl_f1"),     OP("jf0"),       OP("illegal"),       // B0
                 OP("mov_r0_n"),   OP("mov_r1_n"),   OP("mov_r2_n"),  OP("mov_r3_n"),  OP("mov_r4_n"),  OP("mov_r5_n"),   OP("mov_r6_n"),  OP("mov_r7_n"),
-                OP("illegal"),    OP("illegal"),    OP("illegal"),   OP("illegal"),   OP("jmp_6"),     OP("sel_rb0"),    OP("jz"),        OP("mov_a_psw"),     /* C0 */
+                OP("illegal"),    OP("illegal"),    OP("illegal"),   OP("illegal"),   OP("jmp_6"),     OP("sel_rb0"),    OP("jz"),        OP("mov_a_psw"),     // C0
                 OP("dec_r0"),     OP("dec_r1"),     OP("dec_r2"),    OP("dec_r3"),    OP("dec_r4"),    OP("dec_r5"),     OP("dec_r6"),    OP("dec_r7"),
-                OP("xrl_a_xr0"),  OP("xrl_a_xr1"),  OP("jb_6"),      OP("xrl_a_n"),   OP("call_6"),    OP("sel_rb1"),    OP("illegal"),   OP("mov_psw_a"),     /* D0 */
+                OP("xrl_a_xr0"),  OP("xrl_a_xr1"),  OP("jb_6"),      OP("xrl_a_n"),   OP("call_6"),    OP("sel_rb1"),    OP("illegal"),   OP("mov_psw_a"),     // D0
                 OP("xrl_a_r0"),   OP("xrl_a_r1"),   OP("xrl_a_r2"),  OP("xrl_a_r3"),  OP("xrl_a_r4"),  OP("xrl_a_r5"),   OP("xrl_a_r6"),  OP("xrl_a_r7"),
-                OP("illegal"),    OP("illegal"),    OP("illegal"),   OP("movp3_a_xa"),OP("jmp_7"),     OP("sel_mb0"),    OP("jnc"),       OP("rl_a"),          /* E0 */
+                OP("illegal"),    OP("illegal"),    OP("illegal"),   OP("movp3_a_xa"),OP("jmp_7"),     OP("sel_mb0"),    OP("jnc"),       OP("rl_a"),          // E0
                 OP("djnz_r0"),    OP("djnz_r1"),    OP("djnz_r2"),   OP("djnz_r3"),   OP("djnz_r4"),   OP("djnz_r5"),    OP("djnz_r6"),   OP("djnz_r7"),
-                OP("mov_a_xr0"),  OP("mov_a_xr1"),  OP("jb_7"),      OP("illegal"),   OP("call_7"),    OP("sel_mb1"),    OP("jc"),        OP("rlc_a"),         /* F0 */
+                OP("mov_a_xr0"),  OP("mov_a_xr1"),  OP("jb_7"),      OP("illegal"),   OP("call_7"),    OP("sel_mb1"),    OP("jc"),        OP("rlc_a"),         // F0
                 OP("mov_a_r0"),   OP("mov_a_r1"),   OP("mov_a_r2"),  OP("mov_a_r3"),  OP("mov_a_r4"),  OP("mov_a_r5"),   OP("mov_a_r6"),  OP("mov_a_r7")
             };
 
@@ -708,7 +707,7 @@ namespace mame
             ADDRESS MAPS
         ***************************************************************************/
 
-        /* FIXME: the memory maps should probably support rom banking for EA */
+        // FIXME: the memory maps should probably support rom banking for EA
         void program_10bit(address_map map, device_t owner)
         {
             map.op(0x000, 0x3ff).rom();
@@ -752,20 +751,35 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface>();
 
 
-            /* External access line
-             * EA=1 : read from external rom
-             * EA=0 : read from internal rom
-             */
+            // zerofill
+            m_prevpc = 0;
+            m_pc = 0;
 
             m_a = 0;
+            m_psw = 0;
+            m_f1 = false;
+            m_p1 = 0;
+            m_p2 = 0;
             m_timer = 0;
             m_prescaler = 0;
             m_t1_history = 0;
             m_dbbi = 0;
             m_dbbo = 0;
-            m_irq_state = false;
 
-            /* FIXME: Current implementation suboptimal */
+            m_irq_state = false;
+            m_irq_polled = false;
+            m_irq_in_progress = false;
+            m_timer_overflow = false;
+            m_timer_flag = false;
+            m_tirq_enabled = false;
+            m_xirq_enabled = false;
+            m_timecount_enabled = 0;
+            m_flags_enabled = false;
+            m_dma_enabled = false;
+            m_a11 = 0;
+
+            // External access line, EA=1: read from external rom, EA=0: read from internal rom
+            // FIXME: Current implementation suboptimal
             m_ea = m_int_rom_size != 0 ? (uint8_t)0 : (uint8_t)1;
 
             m_dimemory.space(AS_PROGRAM).cache(m_program);
@@ -781,7 +795,10 @@ namespace mame
             m_test_in_cb.resolve_all_safe(0);
             m_prog_out_cb.resolve_safe();
 
-            /* set up the state table */
+            // ensure that regptr is valid before get_info gets called
+            update_regptr();
+
+            // set up the state table
             {
                 m_distate.state_add(MCS48_PC,        "PC",        m_pc).mask(0xfff);
                 m_distate.state_add(STATE_GENPC,     "GENPC",     m_pc).mask(0xfff).noshow();
@@ -807,20 +824,19 @@ namespace mame
 
                 if ((m_feature_mask & UPI41_FEATURE) != 0)
                 {
-                    m_distate.state_add(MCS48_STS,   "STS",       m_sts);
+                    m_distate.state_add(MCS48_STS,   "STS",       m_sts).mask(0xf3);
                     m_distate.state_add(MCS48_DBBI,  "DBBI",      m_dbbi);
                     m_distate.state_add(MCS48_DBBO,  "DBBO",      m_dbbo);
                 }
             }
 
-            /* ensure that regptr is valid before get_info gets called */
-            update_regptr();
-
+            // register for savestates
             save_item(NAME(new { m_prevpc }));
             save_item(NAME(new { m_pc }));
 
             save_item(NAME(new { m_a }));
             save_item(NAME(new { m_psw }));
+            save_item(NAME(new { m_f1 }));
             save_item(NAME(new { m_p1 }));
             save_item(NAME(new { m_p2 }));
             save_item(NAME(new { m_ea }));
@@ -863,11 +879,12 @@ namespace mame
 
         protected override void device_reset()
         {
-            /* confirmed from reset description */
+            // confirmed from reset description
             m_pc = 0;
             m_psw = (uint8_t)(m_psw & (C_FLAG | A_FLAG));
             update_regptr();
-            m_a11 = 0x000;
+            m_f1 = false;
+            m_a11 = 0;
             m_dbbo = 0xff;
             bus_w(0xff);
             m_p1 = 0xff;
@@ -884,12 +901,15 @@ namespace mame
             if (m_t0_clk_func != null)
                 m_t0_clk_func(0);
 
-            /* confirmed from interrupt logic description */
+            // confirmed from interrupt logic description
             m_irq_in_progress = false;
             m_timer_overflow = false;
 
             m_irq_polled = false;
         }
+
+
+        protected override void device_post_load() { update_regptr(); }
 
 
         // device_execute_interface overrides
@@ -963,14 +983,14 @@ namespace mame
         //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
 
-        /* ROM is mapped to AS_PROGRAM */
+        // ROM is mapped to AS_PROGRAM
         uint8_t program_r(offs_t a)         { return m_program.read_byte(a); }
 
-        /* RAM is mapped to AS_DATA */
+        // RAM is mapped to AS_DATA
         uint8_t ram_r(offs_t a)             { return m_data.read_byte(a); }
         void    ram_w(offs_t a, uint8_t v)  { m_data.write_byte(a, v); }
 
-        /* ports are mapped to AS_IO and callbacks */
+        // ports are mapped to AS_IO and callbacks
         uint8_t ext_r(offs_t a)             { return m_io.read_byte(a); }
         void    ext_w(offs_t a, uint8_t v)  { m_io.write_byte(a, v); }
         uint8_t port_r(offs_t a)            { return m_port_in_cb[a - 1].op(); }
@@ -1037,7 +1057,7 @@ namespace mame
             m_pc = ram_r((offs_t)(8 + 2 * sp));
             m_pc |= (uint16_t)(ram_r((offs_t)(9 + 2 * sp)) << 8);
             m_psw = (uint8_t)(((m_pc >> 8) & 0xf0) | sp);
-            m_pc &= 0xfff;
+            m_pc &= (m_irq_in_progress) ? (uint16_t)0x7ff : (uint16_t)0xfff;
             update_regptr();
         }
 
@@ -1051,7 +1071,7 @@ namespace mame
             uint8_t sp = (uint8_t)((m_psw - 1) & 0x07);
             m_pc = ram_r((offs_t)(8 + 2 * sp));
             m_pc |= (uint16_t)(ram_r((offs_t)(9 + 2 * sp)) << 8);
-            m_pc &= 0xfff;
+            m_pc &= (m_irq_in_progress) ? (uint16_t)0x7ff : (uint16_t)0xfff;
             m_psw = (uint8_t)((m_psw & 0xf0) | sp);
         }
 
@@ -1177,11 +1197,11 @@ namespace mame
         -------------------------------------------------*/
         void check_irqs()
         {
-            /* if something is in progress, we do nothing */
+            // if something is in progress, we do nothing
             if (m_irq_in_progress)
                 return;
 
-            /* external interrupts take priority */
+            // external interrupts take priority
             else if ((m_irq_state || (m_sts & STS_IBF) != 0) && m_xirq_enabled)
             {
                 burn_cycles(2);
@@ -1195,26 +1215,24 @@ namespace mame
                     execute_jcc(true);
                 }
 
-                /* transfer to location 0x03 */
-                push_pc_psw();
-                m_pc = 0x03;
+                // transfer to location 0x03
+                execute_call(0x03);
 
-                /* indicate we took the external IRQ */
+                // indicate we took the external IRQ
                 standard_irq_callback(0);
             }
 
-            /* timer overflow interrupts follow */
+            // timer overflow interrupts follow
             else if (m_timer_overflow && m_tirq_enabled)
             {
                 burn_cycles(2);
 
                 m_irq_in_progress = true;
 
-                /* transfer to location 0x07 */
-                push_pc_psw();
-                m_pc = 0x07;
+                // transfer to location 0x07
+                execute_call(0x07);
 
-                /* timer overflow flip-flop is reset once taken */
+                // timer overflow flip-flop is reset once taken
                 m_timer_overflow = false;
             }
         }
@@ -1226,47 +1244,47 @@ namespace mame
         -------------------------------------------------*/
         void burn_cycles(int count)
         {
-            if (count == 0)
-                return;
-
-            bool timerover = false;
-
-            /* if the timer is enabled, accumulate prescaler cycles */
-            if ((m_timecount_enabled & TIMER_ENABLED) != 0)
+            if (m_timecount_enabled != 0)
             {
-                uint8_t oldtimer = m_timer;
-                m_prescaler += (uint8_t)count;
-                m_timer += (uint8_t)(m_prescaler >> 5);
-                m_prescaler &= 0x1f;
-                timerover = (oldtimer != 0 && m_timer == 0);
-            }
+                bool timerover = false;
 
-            /* if the counter is enabled, poll the T1 test input once for each cycle */
-            else if ((m_timecount_enabled & COUNTER_ENABLED) != 0)
-            {
-                for ( ; count > 0; count--, m_icount.i--)
+                // if the timer is enabled, accumulate prescaler cycles
+                if ((m_timecount_enabled & TIMER_ENABLED) != 0)
                 {
-                    m_t1_history = (uint8_t)((m_t1_history << 1) | (test_r(1) & 1));
-                    if ((m_t1_history & 3) == 2)
+                    uint8_t oldtimer = m_timer;
+                    m_prescaler += (uint8_t)count;
+                    m_timer += (uint8_t)(m_prescaler >> 5);
+                    m_prescaler &= 0x1f;
+                    timerover = (oldtimer != 0 && m_timer == 0);
+                }
+
+                // if the counter is enabled, poll the T1 test input once for each cycle
+                else if ((m_timecount_enabled & COUNTER_ENABLED) != 0)
+                {
+                    for ( ; count > 0; count--, m_icount.i--)
                     {
-                        if (++m_timer == 0)
-                            timerover = true;
+                        m_t1_history = (uint8_t)((m_t1_history << 1) | (test_r(1) & 1));
+                        if ((m_t1_history & 3) == 2)
+                        {
+                            if (++m_timer == 0)
+                                timerover = true;
+                        }
                     }
+                }
+
+                // if either source caused a timer overflow, set the flags
+                if (timerover)
+                {
+                    m_timer_flag = true;
+
+                    // according to the docs, if an overflow occurs with interrupts disabled, the overflow is not stored
+                    if (m_tirq_enabled)
+                        m_timer_overflow = true;
                 }
             }
 
-            /* if timer counter was disabled, adjust icount here (otherwise count is 0) */
+            // (note: if timer counter is enabled, count was already reduced to 0)
             m_icount.i -= count;
-
-            /* if either source caused a timer overflow, set the flags and check IRQs */
-            if (timerover)
-            {
-                m_timer_flag = true;
-
-                /* according to the docs, if an overflow occurs with interrupts disabled, the overflow is not stored */
-                if (m_tirq_enabled)
-                    m_timer_overflow = true;
-            }
         }
     }
 

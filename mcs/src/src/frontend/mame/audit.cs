@@ -9,6 +9,7 @@ using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detai
 using media_auditor_record_list = mame.std.list<mame.media_auditor.audit_record>;  //using record_list = std::list<audit_record>;
 using samples_device_enumerator = mame.device_type_enumerator<mame.samples_device>;  //typedef device_type_enumerator<samples_device> samples_device_enumerator;
 using size_t = System.UInt32;
+using std_string = System.String;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
@@ -88,13 +89,12 @@ namespace mame
                 m_type = type;
                 m_status = audit_status.UNVERIFIED;
                 m_substatus = audit_substatus.UNVERIFIED;
-                m_name = romload_global.ROM_GETNAME(media[0]);
+                m_name = media[0].name();
                 m_explength = romload_global.rom_file_size(media);
                 m_length = 0;
+                m_exphashes = new util.hash_collection(media[0].hashdata());
+                m_hashes = new util.hash_collection();
                 m_shared_device = null;
-
-
-                m_exphashes.from_internal_string(romload_global.ROM_GETHASHDATA(media[0]));
             }
 
             public audit_record(string name, media_type type)
@@ -106,6 +106,8 @@ namespace mame
                 m_name = name;
                 m_explength = 0;
                 m_length = 0;
+                m_exphashes = new util.hash_collection();
+                m_hashes = new util.hash_collection();
                 m_shared_device = null;
             }
 
@@ -247,8 +249,8 @@ namespace mame
                         }
 
                         // look for a matching parent or device ROM
-                        string name = romload_global.ROM_GETNAME(rom[0]);
-                        util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
+                        std_string name = rom[0].name();
+                        util.hash_collection hashes = new util.hash_collection(rom[0].hashdata());
                         bool dumped = !hashes.flag(util.hash_collection.FLAG_NO_DUMP);
                         device_type shared_device = parentroms.find_shared_device(device, name, hashes, romload_global.rom_file_size(rom));
                         if (shared_device != null)
@@ -445,7 +447,7 @@ namespace mame
                     audit_record record = m_record_list.emplace_back(new audit_record(samplename, media_type.SAMPLE)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), samplename, media_type::SAMPLE);
 
                     // look for the files
-                    emu_file file = new emu_file(m_enumerator.options().sample_path(), osdcore_global.OPEN_FLAG_READ | osdcore_global.OPEN_FLAG_NO_PRELOAD);
+                    emu_file file = new emu_file(m_enumerator.options().sample_path(), osdfile_global.OPEN_FLAG_READ | osdfile_global.OPEN_FLAG_NO_PRELOAD);
                     path_iterator path = new path_iterator(searchpath);
                     string curpath;
                     while (path.next(out curpath, samplename))
@@ -714,10 +716,7 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            type = t;
-            name = ROM_GETNAME(r);
-            hashes = ROM_GETHASHDATA(r);
-            length = rom_file_size(r);
+            type(t), name(r->name()), hashes(r->hashdata()), length(rom_file_size(r)) { }
 #endif
         }
     }
@@ -811,7 +810,7 @@ namespace mame
                     {
                         if (romload_global.rom_file_size(rom) == record.actual_length())
                         {
-                            util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
+                            util.hash_collection hashes = new util.hash_collection(rom[0].hashdata());
                             if (hashes == record.actual_hashes())
                                 return std.make_pair(current.type(), empty());
                             else if (hashes.flag(util.hash_collection.FLAG_NO_DUMP) && (rom[0].name() == record.name()))

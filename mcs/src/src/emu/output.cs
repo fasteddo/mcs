@@ -300,24 +300,26 @@ namespace mame
         }
 
 
-        // set a notifier on a particular output, or globally if nullptr
-        /*-------------------------------------------------
-            output_set_notifier - sets a notifier callback
-            for a particular output, or for all outputs
-            if nullptr is specified
-        -------------------------------------------------*/
-        public void set_notifier(string outname, notifier_func callback, object param)  //void *param)
+        // set a notifier on a particular output
+        //-------------------------------------------------
+        //  set_notifier - sets a notifier callback for a
+        //  particular output
+        //-------------------------------------------------
+        public void set_notifier(string outname, notifier_func callback, object param)  //void set_notifier(std::string_view outname, notifier_func callback, void *param);
         {
-            // if an item is specified, find/create it
-            if (outname != null)
-            {
-                output_item item = find_item(outname);
-                if (item != null) item.set_notifier(callback, param); else create_new_item(outname, 0).set_notifier(callback, param);  // (item ? *item : create_new_item(outname, 0)).set_notifier(callback, param);
-            }
-            else
-            {
-                m_global_notifylist.emplace_back(new output_notify(callback, param));
-            }
+            output_item item = find_item(outname);
+            (item != null ? item : create_new_item(outname, 0)).set_notifier(callback, param);
+        }
+
+
+        // set a notifier globally
+        //-------------------------------------------------
+        //  set_global_notifier - sets a notifier callback
+        //  for all outputs
+        //-------------------------------------------------
+        public void set_global_notifier(notifier_func callback, object param)  //void set_global_notifier(notifier_func callback, void *param);
+        {
+            m_global_notifylist.emplace_back(new output_notify(callback, param));
         }
 
 

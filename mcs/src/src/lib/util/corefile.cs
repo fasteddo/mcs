@@ -98,7 +98,7 @@ namespace mame.util
                 // attempt to open the file
                 osd_file f;
                 UInt64 length = 0;
-                var filerr = osdcore_global.m_osdfile.open(filename, openflags, out f, out length);
+                var filerr = osdfile_global.m_osdfile.open(filename, openflags, out f, out length);
                 if (filerr != osd_file.error.NONE)
                     return filerr;
 

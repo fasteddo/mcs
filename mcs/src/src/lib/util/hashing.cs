@@ -119,27 +119,25 @@ namespace mame.util
         //-------------------------------------------------
         //  from_string - convert from a string
         //-------------------------------------------------
-        public bool from_string(string string_, int length = -1)
+        public bool from_string(string string_)
         {
             // must be at least long enough to hold everything
             memset(m_raw, (uint8_t)0);
 
-            if (length == -1)
-                length = strlen(string_);
-
-            if (length < 2 * m_raw.Count)  //if (length < 2 * sizeof(m_raw))
+            if (string_.length() < 2 * m_raw.Count)  //if (string.length() < 2 * sizeof(m_raw))
                 return false;
 
             // iterate through our raw buffer
             int stringIdx = 0;
             for (int i = 0; i < m_raw.Count; i++)  //for (auto & elem : m_raw)
             {
-                int upper = hashing_global.char_to_hex(string_[stringIdx++]);
-                int lower = hashing_global.char_to_hex(string_[stringIdx++]);
+                int upper = hashing_global.char_to_hex(string_[0]);
+                int lower = hashing_global.char_to_hex(string_[1]);
                 if (upper == -1 || lower == -1)
                     return false;
 
-                m_raw[i] = (byte)((upper << 4) | lower);
+                m_raw[i] = (uint8_t)((upper << 4) | lower);  //elem = (upper << 4) | lower;
+                string_ = string_.Substring(2);  //string.remove_prefix(2);
             }
 
             return true;
@@ -284,27 +282,24 @@ namespace mame.util
         //-------------------------------------------------
         //  from_string - convert from a string
         //-------------------------------------------------
-        public bool from_string(string str, int length = -1)
+        public bool from_string(string string_)
         {
-            int strIndex = 0;
-
             // must be at least long enough to hold everything
             m_raw = 0;
-            if (length == -1)
-                length = str.Length;
 
-            if (length < 2 * 4/*sizeof(m_raw)*/)
+            if (string_.length() < 2 * 4/*sizeof(m_raw)*/)
                 return false;
 
             // iterate through our raw buffer
             m_raw = 0;
             for (int bytenum = 0; bytenum < 4/*sizeof(m_raw)*/ * 2; bytenum++)
             {
-                int nibble = hashing_global.char_to_hex(str[strIndex++]);
+                int nibble = hashing_global.char_to_hex(string_[0]);
                 if (nibble == -1)
                     return false;
 
-                m_raw = (m_raw << 4) | (UInt32)nibble;
+                m_raw = (m_raw << 4) | (uint32_t)nibble;
+                string_ = string_.Substring(1);  //string.remove_prefix(1);
             }
 
             return true;

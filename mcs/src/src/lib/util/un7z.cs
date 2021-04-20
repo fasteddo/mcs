@@ -239,7 +239,7 @@ namespace mame.util
 
         public archive_file.error initialize()
         {
-            osd_file.error err = osdcore_global.m_osdfile.open(m_filename, OPEN_FLAG_READ, out m_archive_stream.osdfile, out m_archive_stream.length);
+            osd_file.error err = osdfile_global.m_osdfile.open(m_filename, OPEN_FLAG_READ, out m_archive_stream.osdfile, out m_archive_stream.length);
             if (err != osd_file.error.NONE)
                 return archive_file.error.FILE_ERROR;
 

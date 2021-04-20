@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using uint8_t = System.Byte;
 
 

@@ -10,6 +10,7 @@ using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feat
 using device_timer_id = System.UInt32;
 using offs_t = System.UInt32;
 using seconds_t = System.Int32;
+using std_string_view = System.String;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -580,17 +581,37 @@ namespace mame
             //auto_iterator end() const { return m_list.end(); }
 
 
-            // private helpers
+            //-------------------------------------------------
+            //  append - add a new subdevice to the list
+            //-------------------------------------------------
+            public device_t append(device_t device)
+            {
+                device_t result = m_list.append(device.release());
+                m_tagmap.emplace(result.m_basetag, result);
+                return result;
+            }
+
+
+            //device_t &replace_and_remove(std::unique_ptr<device_t> &&device, device_t &existing);
+
+
+            //-------------------------------------------------
+            //  remove - remove a subdevice from the list
+            //-------------------------------------------------
+            public void remove(device_t device)
+            {
+                m_tagmap.erase(device.m_basetag);
+                m_list.remove(device);
+            }
+
+
             public device_t find(string name)
             {
-                device_t curdevice;
-                for (curdevice = m_list.first(); curdevice != null; curdevice = curdevice.next())
-                {
-                    if (name == curdevice.m_basetag)
-                        return curdevice;
-                }
-
-                return null;
+                var result = m_tagmap.find(name);
+                if (result != default)
+                    return result;
+                else
+                    return null;
             }
         }
 
@@ -870,15 +891,14 @@ namespace mame
         //  subtag - create a fully resolved path relative
         //  to our device based on the provided tag
         //-------------------------------------------------
-        public string subtag(string _tag)
+        public string subtag(string tag)
         {
-            string tag = _tag.c_str();
             string result;
 
-            if (tag.StartsWith(":"))
+            if (!tag.empty() && tag[0] == ':')
             {
                 // if the tag begins with a colon, ignore our path and start from the root
-                tag = tag.Substring(1);
+                tag = tag.Substring(1);  //tag.remove_prefix(1);
                 result = ":";
             }
             else
@@ -891,11 +911,11 @@ namespace mame
 
             // iterate over the tag, look for special path characters to resolve
             int caret;
-            while ((caret = tag.IndexOf('^')) != -1)
+            while ((caret = tag.find('^')) != -1)
             {
                 // copy everything up to there
-                result += tag.Substring(0, caret);
-                tag = tag.Substring(caret + 1);
+                result += tag.Substring(0, caret);  //result.append(tag, 0, caret);
+                tag = tag.Substring(caret + 1);  //tag.remove_prefix(caret + 1);
 
                 // strip trailing colons
                 int len = result.Length;
@@ -983,13 +1003,13 @@ namespace mame
         //-------------------------------------------------
         public device_t subdevice(string tag)
         {
-            // empty string or NULL means this device
-            if (string.IsNullOrEmpty(tag))
+            // empty string means this device (DEVICE_SELF)
+            if (tag.empty())
                 return this;
 
             // do a quick lookup and return that if possible
             var quick = m_subdevices.m_tagmap.find(tag);
-            return quick != null ? quick : subdevice_slow(tag);
+            return quick != default ? quick : subdevice_slow(tag);
         }
 
         //-------------------------------------------------
@@ -998,24 +1018,19 @@ namespace mame
         //-------------------------------------------------
         public device_t siblingdevice(string tag)
         {
-            // safety first
-            if (this == null)
-                return null;
-
-            // empty string or NULL means this device
-            if (string.IsNullOrEmpty(tag))
+            // empty string means this device (DEVICE_SELF)
+            if (tag.empty())
                 return this;
 
             // leading caret implies the owner, just skip it
-            if (tag[0] == '^')
-                tag = tag.Remove(0);
+            if (tag[0] == '^') tag = tag.Remove(0);  //if (tag[0] == '^') tag.remove_prefix(1);
 
             // query relative to the parent, if we have one
             if (m_owner != null)
                 return m_owner.subdevice(tag);
 
             // otherwise, it's NULL unless the tag is absolute
-            return (tag[0] == ':') ? subdevice(tag) : null;
+            return (!tag.empty() && tag[0] == ':') ? subdevice(tag) : null;
         }
 
 
@@ -1785,18 +1800,21 @@ namespace mame
 
             // walk the device list to the final path
             device_t curdevice = mconfig().root_device();
-            if (fulltag.Length > 1)
+            std_string_view part = fulltag.substr(1);
+            while (!part.empty() && curdevice != null)
             {
-                for (int start = 1, end = fulltag.IndexOf(':', start); start != 0 && curdevice != null; start = end + 1, end = fulltag.IndexOf(':', start))
+                int end = part.find_first_of(':');
+                if (end == -1)
                 {
-                    string part = (end == -1) ? fulltag.Substring(start) : fulltag.Substring(start, end - start);
                     curdevice = curdevice.subdevices().find(part);
+                    part = "";
+                }
+                else
+                {
+                    curdevice = curdevice.subdevices().find(part.substr(0, end));
+                    part = part.Substring(end + 1);  //part.remove_prefix(end + 1);
                 }
             }
-
-            // if we got a match, add to the fast map
-            if (curdevice != null)
-                m_subdevices.m_tagmap.insert(tag, curdevice);
 
             return curdevice;
         }

@@ -17,15 +17,23 @@ using layout_file_group_map = mame.std.unordered_map<string, mame.layout_group>;
 using layout_file_view_list = mame.std.list<mame.layout_view>;  //using view_list = std::list<layout_view>;
 using layout_group_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
 using layout_group_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
+using layout_group_transform = mame.std.array<mame.std.array<float, mame.uint32_constant_3>, mame.uint32_constant_3>;  //using transform = std::array<std::array<float, 3>, 3>;
+using layout_view_edge_vector = mame.std.vector<mame.layout_view.edge>;  //using edge_vector = std::vector<edge>;
 using layout_view_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
 using layout_view_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
 using layout_view_item_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = emu::render::detail::bounds_vector;
 using layout_view_item_color_vector = mame.std.vector<mame.emu.render.detail.color_step>;  //using color_vector = emu::render::detail::color_vector;
+using layout_view_item_id_map = mame.std.unordered_map<string, mame.layout_view.item>;  //using item_id_map = std::unordered_map<std::reference_wrapper<std::string const>, item &, std::hash<std::string>, std::equal_to<std::string> >;
 using layout_view_item_list = mame.std.list<mame.layout_view.item>;  //using item_list = std::list<item>;
+using layout_view_item_ref_vector = mame.std.vector<mame.layout_view.item>;  //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
+using layout_view_screen_ref_vector = mame.std.vector<mame.screen_device>;  //using screen_ref_vector = std::vector<std::reference_wrapper<screen_device> >;
 using layout_view_view_environment = mame.emu.render.detail.view_environment;  //using view_environment = emu::render::detail::view_environment;
+using layout_view_visibility_toggle_vector = mame.std.vector<mame.layout_view.visibility_toggle>;  //using visibility_toggle_vector = std::vector<visibility_toggle>;
 using s32 = System.Int32;
 using s64 = System.Int64;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
+using std_string = System.String;
+using std_string_view = System.String;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
@@ -58,17 +66,17 @@ namespace mame
         //}
 
 
-        public static readonly float [,] identity_transform = new float[,] { { 1.0F, 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F }, { 0.0F, 0.0F, 1.0F } };  //layout_group.transform identity_transform {{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
+        public static readonly layout_group_transform identity_transform = new layout_group_transform(new std.array<float, uint32_constant_3>(1.0F, 0.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 1.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 0.0F, 1.0F));  //layout_group.transform identity_transform {{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
 
 
-        public static void render_bounds_transform(ref render_bounds bounds, float [,] trans)  //inline void render_bounds_transform(render_bounds &bounds, layout_group::transform const &trans)
+        public static void render_bounds_transform(ref render_bounds bounds, layout_group_transform trans)  //inline void render_bounds_transform(render_bounds &bounds, layout_group::transform const &trans)
         {
             bounds = new render_bounds()
             {
-                x0 = (bounds.x0 * trans[0, 0]) + (bounds.y0 * trans[0, 1]) + trans[0, 2],
-                y0 = (bounds.x0 * trans[1, 0]) + (bounds.y0 * trans[1, 1]) + trans[1, 2],
-                x1 = (bounds.x1 * trans[0, 0]) + (bounds.y1 * trans[0, 1]) + trans[0, 2],
-                y1 = (bounds.x1 * trans[1, 0]) + (bounds.y1 * trans[1, 1]) + trans[1, 2]
+                x0 = (bounds.x0 * trans[0][0]) + (bounds.y0 * trans[0][1]) + trans[0][2],
+                y0 = (bounds.x0 * trans[1][0]) + (bounds.y0 * trans[1][1]) + trans[1][2],
+                x1 = (bounds.x1 * trans[0][0]) + (bounds.y1 * trans[0][1]) + trans[0][2],
+                y1 = (bounds.x1 * trans[1][0]) + (bounds.y1 * trans[1][1]) + trans[1][2]
             };
         }
 
@@ -297,747 +305,85 @@ namespace mame
     class layout_reference_error : ArgumentOutOfRangeException { public layout_reference_error(string format, params object [] args) : base(string.Format(format, args)) { } }
 
 
-
     namespace emu.render.detail
     {
-        public class layout_environment : global_object
+        public class bounds_step
         {
-            public class entry
-            {
-                string m_name;
-                string m_text;
-                s64 m_int = 0;
-                s64 m_int_increment = 0;
-                double m_float = 0.0;
-                double m_float_increment = 0.0;
-                int m_shift = 0;
-                bool m_text_valid = false;
-                bool m_int_valid = false;
-                bool m_float_valid = false;
-                bool m_generator = false;
+            public int state;
+            public render_bounds bounds;
+            public render_bounds delta;
 
 
-                public entry(string name, string t)
-                {
-                    m_name = name;
-                    m_text = t;
-                    m_text_valid = true;
-                }
-
-                public entry(string name, s64 i)
-                {
-                    m_name = name;
-                    m_int = i;
-                    m_int_valid = true;
-                }
-
-                public entry(string name, double f)
-                {
-                    m_name = name;
-                    m_float = f;
-                    m_float_valid = true;
-                }
-
-                public entry(string name, string t, s64 i, int s)
-                {
-                    m_name = name;
-                    m_text = t;
-                    m_int_increment = i;
-                    m_shift = s;
-                    m_text_valid = true;
-                    m_generator = true;
-                }
-
-                public entry(string name, string t, double i, int s)
-                {
-                    m_name = name;
-                    m_text = t;
-                    m_float_increment = i;
-                    m_shift = s;
-                    m_text_valid = true;
-                    m_generator = true;
-                }
-
-                //entry(entry &&) = default;
-                //entry &operator=(entry &&) = default;
-
-
-                public void set(string t)
-                {
-                    m_text = t;
-                    m_text_valid = true;
-                    m_int_valid = false;
-                    m_float_valid = false;
-                }
-
-                public void set(s64 i)
-                {
-                    m_int = i;
-                    m_text_valid = false;
-                    m_int_valid = true;
-                    m_float_valid = false;
-                }
-
-                public void set(double f)
-                {
-                    m_float = f;
-                    m_text_valid = false;
-                    m_int_valid = false;
-                    m_float_valid = true;
-                }
-
-
-                public string name() { return m_name; }
-                public bool is_generator() { return m_generator; }
-
-
-                public string get_text()
-                {
-                    if (!m_text_valid)
-                    {
-                        if (m_float_valid)
-                        {
-                            m_text = m_float.ToString();  //m_text = std::to_string(m_float);
-                            m_text_valid = true;
-                        }
-                        else if (m_int_valid)
-                        {
-                            m_text = m_int.ToString();  //m_text = std::to_string(m_int);
-                            m_text_valid = true;
-                        }
-                    }
-
-                    return m_text;
-                }
-
-
-                //void increment()
-                //static bool name_less(entry const &lhs, entry const &rhs) { return lhs.name() < rhs.name(); }
-            }
-
-            //using entry_vector = std::vector<entry>;
-
-#if false
-            template <typename T, typename U>
-            void try_insert(T &&name, U &&value)
-            {
-                entry_vector::iterator const pos(
-                        std::lower_bound(
-                            m_entries.begin(),
-                            m_entries.end(),
-                            name,
-                            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
-                if ((m_entries.end() == pos) || (pos->name() != name))
-                    m_entries.emplace(pos, std::forward<T>(name), std::forward<U>(value));
-            }
-#endif
-
-
-            //template <typename T, typename U>
-            void set(string name, object value)  //void set(T &&name, U &&value)
-            {
-                //entry_vector::iterator const pos(
-                //        std::lower_bound(
-                //            m_entries.begin(),
-                //            m_entries.end(),
-                //            name,
-                //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
-                //if ((m_entries.end() == pos) || (pos->name() != name))
-                //    m_entries.emplace(pos, std::forward<T>(name), std::forward<U>(value));
-                //else
-                //    pos->set(std::forward<U>(value));
-                int pos = 0;
-                for (; pos < m_entries.Count; pos++)
-                {
-                    if (m_entries[pos].name().CompareTo(name) >= 0)
-                        break;
-                }
-
-                if ((m_entries.Count == pos) || (m_entries[pos].name() != name))
-                {
-                    if (value is string)      m_entries.emplace(pos, new entry(name, (string)value));
-                    else if (value is s64)    m_entries.emplace(pos, new entry(name, (s64)value));
-                    else if (value is double) m_entries.emplace(pos, new entry(name, (double)value));
-                    else throw new emu_unimplemented();
-                }
-                else
-                {
-                    if (value is string)      m_entries[pos].set((string)value);
-                    else if (value is s64)    m_entries[pos].set((s64)value);
-                    else if (value is double) m_entries[pos].set((double)value);
-                    else throw new emu_unimplemented();
-                }
-            }
-
-
-            void cache_device_entries()
-            {
-                throw new emu_unimplemented();
-            }
-
-
-            entry find_entry(string name)  //entry *find_entry(char const *begin, char const *end)
-            {
-                cache_device_entries();
-                //entry_vector::iterator const pos(
-                //        std::lower_bound(
-                //            m_entries.begin(),
-                //            m_entries.end(),
-                //            std::make_pair(begin, end - begin),
-                //            [] (entry const &lhs, std::pair<char const *, std::ptrdiff_t> const &rhs)
-                //            { return 0 > std::strncmp(lhs.name().c_str(), rhs.first, rhs.second); }));
-                //if ((m_entries.end() != pos) && (pos->name().length() == (end - begin)) && !std::strncmp(pos->name().c_str(), begin, end - begin))
-                //    return &*pos;
-                //else
-                //    return m_next ? m_next->find_entry(begin, end) : nullptr;
-                int pos = 0;
-                for (; pos < m_entries.Count; pos++)
-                {
-                    if (0 <= strcmp(m_entries[pos].name(), name))
-                        break;
-                }
-
-                if ((m_entries.Count != pos) && (m_entries[pos].name() == name))
-                    return m_entries[pos];
-                else
-                    return m_next != null ? m_next.find_entry(name) : null;
-            }
-
-
-            //template <typename... T>
-            KeyValuePair<string, bool> get_variable_text(string name)  //std::tuple<char const *, char const *, bool> get_variable_text(T &&... args)
-            {
-                entry found = find_entry(name);
-                if (found != null)
-                {
-                    string text = found.get_text();
-                    string begin = text.c_str();
-                    return new KeyValuePair<string, bool>(begin, true);  //return std::make_tuple(begin, begin + text.length(), true);
-                }
-                else
-                {
-                    return new KeyValuePair<string, bool>(null, false);  //return std::make_tuple(nullptr, nullptr, false);
-                }
-            }
-
-
-            string expand(string begin)  //std::pair<char const *, char const *> expand(char const *str)
-            {
-                m_buffer = "";
-
-                // search for candidate variable references
-                int startIdx = 0;  //char const *start(begin);
-                int i = begin.IndexOf(c => !char.IsWhiteSpace(c));
-                int posIdx = begin.IndexOf(is_variable_start);  //char const *pos(std::find_if(start, end, is_variable_start));
-                while (posIdx != -1)
-                {
-                    int termIdx = begin.Substring(1).IndexOf(c => !is_variable_char(c));  //char const *const term(std::find_if(pos + 1, end, [] (char ch) { return !is_variable_char(ch); }));
-                    if ((termIdx == -1) || !is_variable_end(begin[termIdx]))
-                    {
-                        // not a valid variable name - keep searching
-                        posIdx = begin.Substring(termIdx).IndexOf(c => is_variable_start(c));  //pos = std::find_if(term, end, is_variable_start);
-                    }
-                    else
-                    {
-                        // looks like a variable reference - try to look it up
-                        var text = get_variable_text(begin.Substring(posIdx + 1, termIdx - (posIdx + 1)));  //std::tuple<char const *, char const *, bool> const text(get_variable_text(pos + 1, term));
-                        if (text.Key != null)  //if (std::get<2>(text))
-                        {
-                            // variable found
-                            if (0 == startIdx)  //if (begin == start)
-                                m_buffer = "";  //m_buffer.seekp(0);
-                            m_buffer += begin.Substring(startIdx, posIdx - startIdx);  //m_buffer.write(start, pos - start);
-                            m_buffer += text.Key;  //m_buffer.write(std::get<0>(text), std::get<1>(text) - std::get<0>(text));
-                            startIdx = termIdx + 1;  //start = term + 1;
-                            posIdx = begin.Substring(startIdx).IndexOf(c => is_variable_start(c));  //pos = std::find_if(start, end, is_variable_start);
-                        }
-                        else
-                        {
-                            // variable not found - move on
-                            posIdx = begin.Substring(1).IndexOf(c => is_variable_start(c));  //pos = std::find_if(pos + 1, end, is_variable_start);
-                        }
-                    }
-                }
-
-                // short-circuit the case where no substitutions were made
-                if (startIdx == 0)  //if (start == begin)
-                {
-                    return begin;  //return std::make_pair(begin, end);
-                }
-                else
-                {
-                    m_buffer += begin.Substring(startIdx, posIdx - startIdx);  //m_buffer.write(start, pos - start);
-                    m_buffer += '\0';  //m_buffer.put('\0');
-                    //std.vector<char> vec = m_buffer.vec();
-                    if (m_buffer.empty())  //if (vec.empty())
-                        return null;  //return std::make_pair(nullptr, nullptr);
-                    else
-                        return m_buffer;  //return std::make_pair(&vec[0], &vec[0] + vec.size() - 1);
-                }
-            }
-
-
-            int parse_int(string str, int defvalue)  //int parse_int(string begin, string end, int defvalue);
-            {
-                //std::istringstream stream;
-                //stream.imbue(f_portable_locale);
-                int result;
-                if (str.Length >= 1 && str[0] == '$')  //if (begin[0] == '$')
-                {
-                    //stream.str(std::string(begin + 1, end));
-                    //unsigned uvalue;
-                    //stream >> std::hex >> uvalue;
-                    //result = int(uvalue);
-                    result = Convert.ToInt32(str);
-                }
-                else if (str.Length >= 2 && ((str[0] == '0') && ((str[1] == 'x') || (str[1] == 'X'))))  //else if ((begin[0] == '0') && ((begin[1] == 'x') || (begin[1] == 'X')))
-                {
-                    //stream.str(std::string(begin + 2, end));
-                    //unsigned uvalue;
-                    //stream >> std::hex >> uvalue;
-                    //result = int(uvalue);
-                    result = Convert.ToInt32(str);
-                }
-                else if (str.Length >= 1 && str[0] == '#')  //else if (begin[0] == '#')
-                {
-                    //stream.str(std::string(begin + 1, end));
-                    //stream >> result;
-                    result = Convert.ToInt32(str);
-                }
-                else
-                {
-                    //stream.str(std::string(begin, end));
-                    //stream >> result;
-                    result = Convert.ToInt32(str);
-                }
-
-                return !string.IsNullOrEmpty(str) ? result : defvalue;  //return stream ? result : defvalue;
-            }
-
-
-            string parameter_name(util.xml.data_node node)
-            {
-                string attrib = node.get_attribute_string("name", null);
-                if (attrib == null)
-                    throw new layout_syntax_error("parameter lacks name attribute");
-                var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
-                return expanded;  //return std::string(expanded.first, expanded.second);
-            }
-
-            static bool is_variable_start(char ch) { return '~' == ch; }
-            static bool is_variable_end(char ch) { return '~' == ch; }
-            static bool is_variable_char(char ch) { return (('0' <= ch) && ('9' >= ch)) || (('A' <= ch) && ('Z' >= ch)) || (('a' <= ch) && ('z' >= ch)) || ('_' == ch); }
-
-
-            layout_environment_entry_vector m_entries = new layout_environment_entry_vector();
-            string m_buffer;  //util::ovectorstream m_buffer;
-            //std::shared_ptr<NSVGrasterizer> const m_svg_rasterizer;
-            device_t m_device;
-            string m_search_path;
-            string m_directory_name;
-            layout_environment m_next = null;
-            //bool m_cached = false;
-
-
-            public layout_environment(device_t device, string searchpath, string dirname)
-            {
-                //throw new emu_unimplemented();
-#if false
-                : m_svg_rasterizer(nsvgCreateRasterizer(), util::nsvg_deleter())
-#endif
-
-                m_device = device;
-                m_search_path = searchpath;
-                m_directory_name = dirname;
-            }
-
-
-            public layout_environment(layout_environment next)
-            {
-                //throw new emu_unimplemented();
-#if false
-                : m_svg_rasterizer(next.m_svg_rasterizer)
-#endif
-
-                m_device = next.m_device;
-                m_search_path = next.m_search_path;
-                m_directory_name = next.m_directory_name;
-                m_next = next;
-            }
-
-
-            public device_t device() { return m_device; }
-            public running_machine machine() { return device().machine(); }
-
-            public bool is_root_device() { return device() == machine().root_device(); }
-            public string search_path() { return m_search_path; }
-            public string directory_name() { return m_directory_name; }
-            //std::shared_ptr<NSVGrasterizer> const &svg_rasterizer() const { return m_svg_rasterizer; }
-
-            public void set_parameter(string name, string value) { set(name, value); }
-            public void set_parameter(string name, s64 value) { set(name, value); }
-            public void set_parameter(string name, double value) { set(name, value); }
-
-            public void set_parameter(util.xml.data_node node)
-            {
-                // do basic validation
-                string name = parameter_name(node);
-                if (node.has_attribute("start") || node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
-                    throw new layout_syntax_error("start/increment/lshift/rshift attributes are only allowed for repeat parameters");
-                string value = node.get_attribute_string("value", null);
-                if (value == null)
-                    throw new layout_syntax_error("parameter lacks value attribute");
-
-                // expand value and stash
-                var expanded = expand(value);  //std::pair<char const *, char const *> const expanded(expand(value));
-                set(name, expanded);  //set(std::move(name), std::string(expanded.first, expanded.second));
-            }
-
-
-            public void set_repeat_parameter(util.xml.data_node node, bool init)
-            {
-                // two types are allowed here - static value, and start/increment/lshift/rshift
-                string name = parameter_name(node);
-                string start = node.get_attribute_string("start", null);
-                if (start != null)
-                {
-                    // simple validity checks
-                    if (node.has_attribute("value"))
-                        throw new layout_syntax_error("start attribute may not be used in combination with value attribute");
-
-                    int lshift = node.has_attribute("lshift") ? get_attribute_int(node, "lshift", -1) : 0;
-                    int rshift = node.has_attribute("rshift") ? get_attribute_int(node, "rshift", -1) : 0;
-                    if ((0 > lshift) || (0 > rshift))
-                        throw new layout_syntax_error("lshift/rshift attributes must be non-negative integers");
-
-                    // increment is more complex - it may be an integer or a floating-point number
-                    s64 intincrement = 0;
-                    double floatincrement = 0;
-                    string increment = node.get_attribute_string("increment", null);
-                    if (increment != null)
-                    {
-                        var expanded = expand(increment);  //std::pair<char const *, char const *> const expanded(expand(increment));
-                        int hexprefix = (expanded[0] == '$') ? 1 : ((expanded[0] == '0') && ((expanded[1] == 'x') || (expanded[1] == 'X'))) ? 2 : 0;
-                        int decprefix = (expanded[0] == '#') ? 1 : 0;
-                        bool floatchars = expanded.Contains('.') || expanded.Contains('e') || expanded.Contains('E');  //bool floatchars = std.find_if(expanded.first, expanded.second, [] (char ch) { return ('.' == ch) || ('e' == ch) || ('E' == ch); }) != expanded.second;
-
-                        //std::istringstream stream(std::string(expanded.first + hexprefix + decprefix, expanded.second));
-                        //stream.imbue(f_portable_locale);
-                        string stream = expanded.Substring(hexprefix + decprefix);
-                        bool success = true;
-                        if (hexprefix == 0 && decprefix == 0 && floatchars)
-                        {
-                            //stream >> floatincrement;
-                            success = double.TryParse(stream, out floatincrement);
-                        }
-                        else if (hexprefix != 0)
-                        {
-                            //u64 uvalue;
-                            //stream >> std::hex >> uvalue;
-                            //intincrement = s64(uvalue);
-                            try { intincrement = Convert.ToInt64(stream, 16); }
-                            catch (Exception) { success = false; }
-                        }
-                        else
-                        {
-                            //stream >> intincrement;
-                            success = s64.TryParse(stream, out intincrement);
-                        }
-
-                        // reject obviously bad stuff
-                        if (!success)
-                            throw new layout_syntax_error("increment attribute must be a number");
-                    }
-
-                    // don't allow generator parameters to be redefined
-                    if (init)
-                    {
-                        //entry_vector::iterator const pos(
-                        //        std::lower_bound(
-                        //            m_entries.begin(),
-                        //            m_entries.end(),
-                        //            name,
-                        //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
-                        //if ((m_entries.end() != pos) && (pos->name() == name))
-                        //    throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
-                        int pos = 0;
-                        for (; pos < m_entries.Count; pos++)
-                        {
-                            if (m_entries[pos].name().CompareTo(name) >= 0)
-                                break;
-                        }
-
-                        if (pos != m_entries.Count && m_entries[pos].name() == name)
-                            throw new layout_syntax_error("generator parameters must be defined exactly once per scope");
-
-                        var expanded = expand(start);  //std::pair<char const *, char const *> const expanded(expand(start));
-                        if (floatincrement != 0)
-                            m_entries.emplace(pos, new entry(name, expanded, floatincrement, lshift - rshift));
-                        else
-                            m_entries.emplace(pos, new entry(name, expanded, intincrement, lshift - rshift));
-                    }
-                }
-                else if (node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
-                {
-                    throw new layout_syntax_error("increment/lshift/rshift attributes require start attribute");
-                }
-                else
-                {
-                    string value = node.get_attribute_string("value", null);
-                    if (value == null)
-                        throw new layout_syntax_error("parameter lacks value attribute");
-                    var expanded = expand(value);  //std::pair<char const *, char const *> const expanded(expand(value));
-                    //entry_vector::iterator const pos(
-                    //        std::lower_bound(
-                    //            m_entries.begin(),
-                    //            m_entries.end(),
-                    //            name,
-                    //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
-                    //if ((m_entries.end() == pos) || (pos->name() != name))
-                    //    m_entries.emplace(pos, std::move(name), std::string(expanded.first, expanded.second));
-                    //else if (pos->is_generator())
-                    //    throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
-                    //else
-                    //    pos->set(std::string(expanded.first, expanded.second));
-                    int pos = 0;
-                    for (; pos < m_entries.Count; pos++)
-                    {
-                        if (m_entries[pos].name().CompareTo(name) >= 0)
-                            break;
-                    }
-
-                    if (pos == m_entries.Count && m_entries[pos].name() != name)
-                        m_entries.emplace(pos, new entry(name, expanded));
-                    else if (m_entries[pos].is_generator())
-                        throw new layout_syntax_error("generator parameters must be defined exactly once per scope");
-                    else
-                        m_entries[pos].set(expanded);
-                }
-            }
-
-
-            public void increment_parameters()
-            {
-                throw new emu_unimplemented();
-            }
-
-
-            public string get_attribute_string(util.xml.data_node node, string name, string defvalue)
-            {
-                string attrib = node.get_attribute_string(name, null);
-                return attrib != null ? expand(attrib) : defvalue;
-            }
-
-
-            public int get_attribute_int(util.xml.data_node node, string name, int defvalue)
-            {
-                string attrib = node.get_attribute_string(name, null);
-                if (attrib == null)
-                    return defvalue;
-
-                // similar to what XML nodes do
-                var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
-                return parse_int(expanded, defvalue);
-            }
-
-
-            float get_attribute_float(util.xml.data_node node, string name, float defvalue)
-            {
-                string attrib = node.get_attribute_string(name, null);
-                if (attrib == null)
-                    return defvalue;
-
-                // similar to what XML nodes do
-                var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
-                //std::istringstream stream(std::string(expanded.first, expanded.second));
-                //stream.imbue(f_portable_locale);
-                //float result;
-                //return (stream >> result) ? result : defvalue;
-                string stream = expanded;
-                float result;
-                return float.TryParse(stream, out result) ? result : defvalue;
-            }
-
-
-            public bool get_attribute_bool(util.xml.data_node node, string name, bool defvalue)
-            {
-                string attrib = node.get_attribute_string(name, null);
-                if (string.IsNullOrEmpty(attrib))
-                    return defvalue;
-
-                // first try yes/no strings
-                var expanded = expand(attrib);  //std::pair<char const *, char const *> const expanded(expand(attrib));
-                if (std.strcmp("yes", expanded) == 0 || std.strcmp("true", expanded) == 0)
-                    return true;
-                if (std.strcmp("no", expanded) == 0 || std.strcmp("false", expanded) == 0)
-                    return false;
-
-                // fall back to integer parsing
-                return parse_int(expanded, defvalue ? 1 : 0) != 0;  //return parse_int(expanded.first, expanded.second, defvalue ? 1 : 0) != 0;
-            }
-
-
-            public void parse_bounds(util.xml.data_node node, out render_bounds result)
-            {
-                result = new render_bounds();
-
-                if (node == null)
-                {
-                    // default to unit rectangle
-                    result.x0 = result.y0 = 0.0F;
-                    result.x1 = result.y1 = 1.0F;
-                }
-                else
-                {
-                    // horizontal position/size
-                    if (node.has_attribute("left"))
-                    {
-                        result.x0 = get_attribute_float(node, "left", 0.0F);
-                        result.x1 = get_attribute_float(node, "right", 1.0F);
-                    }
-                    else
-                    {
-                        float width = get_attribute_float(node, "width", 1.0F);
-                        if (node.has_attribute("xc"))
-                            result.x0 = get_attribute_float(node, "xc", 0.0F) - (width / 2.0F);
-                        else
-                            result.x0 = get_attribute_float(node, "x", 0.0F);
-                        result.x1 = result.x0 + width;
-                    }
-
-                    // vertical position/size
-                    if (node.has_attribute("top"))
-                    {
-                        result.y0 = get_attribute_float(node, "top", 0.0F);
-                        result.y1 = get_attribute_float(node, "bottom", 1.0F);
-                    }
-                    else
-                    {
-                        float height = get_attribute_float(node, "height", 1.0F);
-                        if (node.has_attribute("yc"))
-                            result.y0 = get_attribute_float(node, "yc", 0.0F) - (height / 2.0F);
-                        else
-                            result.y0 = get_attribute_float(node, "y", 0.0F);
-
-                        result.y1 = result.y0 + height;
-                    }
-
-                    // check for errors
-                    if ((result.x0 > result.x1) || (result.y0 > result.y1))
-                        throw new layout_syntax_error(util_.string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
-                }
-            }
-
-
-            public render_color parse_color(util.xml.data_node node)
-            {
-                // default to opaque white
-                if (node == null)
-                    return new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F };
-
-                // parse attributes
-                render_color result = new render_color()
-                {
-                    a = get_attribute_float(node, "alpha", 1.0F),
-                    r = get_attribute_float(node, "red", 1.0F),
-                    g = get_attribute_float(node, "green", 1.0F),
-                    b = get_attribute_float(node, "blue", 1.0F)
-                };
-
-                // check for errors
-                if ((0.0F > new [] { result.r, result.g, result.b, result.a }.Min()) || (1.0F < new [] { result.r, result.g, result.b, result.a }.Max()))
-                    throw new layout_syntax_error(string_format("illegal RGBA color {0},{1},{2},{3}", result.r, result.g, result.b, result.a));
-
-                return result;
-            }
-
-
-            public int parse_orientation(util.xml.data_node node)
-            {
-                // default to no transform
-                if (node == null)
-                    return (int)ROT0;
-
-                // parse attributes
-                int result;
-                int rotate = get_attribute_int(node, "rotate", 0);
-                switch (rotate)
-                {
-                    case 0:     result = (int)ROT0;      break;
-                    case 90:    result = (int)ROT90;     break;
-                    case 180:   result = (int)ROT180;    break;
-                    case 270:   result = (int)ROT270;    break;
-                    default:    throw new layout_syntax_error(string_format("invalid rotate attribute {0}", rotate));
-                }
-
-                if (get_attribute_bool(node, "swapxy", false))
-                    result ^= (int)ORIENTATION_SWAP_XY;
-                if (get_attribute_bool(node, "flipx", false))
-                    result ^= (int)ORIENTATION_FLIP_X;
-                if (get_attribute_bool(node, "flipy", false))
-                    result ^= (int)ORIENTATION_FLIP_Y;
-
-                return result;
-            }
+            public void get(out render_bounds result) { result = bounds; }
         }
 
+        //using bounds_vector = std::vector<bounds_step>;
 
-        public class view_environment : layout_environment
+
+        public class color_step
         {
-            view_environment m_next_view = null;
-            string m_name;
-            u32 m_visibility_mask = 0U;
-            unsigned m_next_visibility_bit = 0U;
+            public int state;
+            public render_color color;
+            public render_color delta;
 
 
-            public view_environment(layout_environment next, string name)
-                : base(next)
-            {
-                m_name = name;
-            }
-
-            public view_environment(view_environment next, bool visibility)
-                : base(next)
-            {
-                m_next_view = next;
-                m_name = next.m_name;
-                m_visibility_mask = next.m_visibility_mask | ((u32)(visibility ? 1 : 0) << (int)next.m_next_visibility_bit);
-                m_next_visibility_bit = next.m_next_visibility_bit + (visibility ? 1U : 0);
-
-
-                if (32U < m_next_visibility_bit)
-                    throw new layout_syntax_error(string_format("view '{0}' contains too many visibility toggles", m_name));
-            }
-
-            //~view_environment()
-            //{
-            //    if (m_next_view)
-            //        m_next_view->m_next_visibility_bit = m_next_visibility_bit;
-            //}
-
-
-            public u32 visibility_mask() { return m_visibility_mask; }
+            public void get(out render_color result) { result = color; }
         }
-    } // namespace emu::render::detail
+
+        //using color_vector = std::vector<color_step>;
+    }
 
 
-    public partial class layout_element : global_object
+    /// \brief A description of a piece of visible artwork
+    ///
+    /// Most view_items (except for those in the screen layer) have exactly
+    /// one layout_element which describes the contents of the item.
+    /// Elements are separate from items because they can be re-used
+    /// multiple times within a layout.  Even though an element can contain
+    /// a number of components, they are treated as if they were a single
+    /// bitmap.
+    public class layout_element : global_object
     {
-        public abstract partial class component
+        //using environment = emu::render::detail::layout_environment;
+        public delegate component make_component_func(layout_element_environment env, util.xml.data_node compnode);  //typedef component::ptr (*make_component_func)(environment &env, util::xml::data_node const &compnode);
+        //typedef std::map<std::string, make_component_func> make_component_map;
+
+
+        /// \brief An image, rectangle, or disk in an element
+        ///
+        /// Each layout_element contains one or more components. Each
+        /// component can describe either an image or a rectangle/disk
+        /// primitive. Each component also has a "state" associated with it,
+        /// which controls whether or not the component is visible (if the
+        /// owning item has the same state, it is visible).
+        public abstract class component
         {
+            //typedef std::unique_ptr<component> ptr;
+
+            //using bounds_vector = emu::render::detail::bounds_vector;
+            //using color_vector = emu::render::detail::color_vector;
+
+
+            // internal state
+            int m_statemask;                // bits of state used to control visibility
+            int m_stateval;                 // masked state value to make component visible
+            emu_render_detail_bounds_vector m_bounds;                   // bounds of the element
+            emu_render_detail_color_vector m_color;                    // color of the element
+
+
             // construction/destruction
             //-------------------------------------------------
             //  component - constructor
             //-------------------------------------------------
-            public component(layout_element_environment env, util.xml.data_node compnode)
+            protected component(layout_element_environment env, util.xml.data_node compnode)
             {
                 throw new emu_unimplemented();
-#if false
-#endif
             }
 
+            //virtual ~component() = default;
 
-            // helpers
+
+            // setup
 
             //-------------------------------------------------
             //  normalize_bounds - normalize component bounds
@@ -1046,6 +392,11 @@ namespace mame
             {
                 rendlay_global.normalize_bounds(m_bounds, 0.0F, 0.0F, xoffs, yoffs, xscale, yscale);
             }
+
+
+            // getters
+            public int statemask() { return m_statemask; }
+            public int stateval() { return m_stateval; }
 
 
             //-------------------------------------------------
@@ -1121,6 +472,7 @@ namespace mame
             //render_color layout_element::component::color(int state) const
 
 
+            // operations
             public virtual void preload(running_machine machine)
             {
             }
@@ -1146,12 +498,7 @@ namespace mame
             }
 
 
-            protected virtual void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
-            {
-                // derived classes must override one form or other
-                throw new Exception();
-            }
-
+            // helpers
 
             //-------------------------------------------------
             //  maxstate - maximum state drawn differently
@@ -1161,6 +508,15 @@ namespace mame
                 return -1;
             }
 
+
+            protected virtual void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
+            {
+                // derived classes must override one form or other
+                throw new Exception();
+            }
+
+
+            // drawing helpers
 
             //-------------------------------------------------
             //  draw_text - draw text in the specified color
@@ -1446,8 +802,14 @@ namespace mame
         }
 
 
-        public partial class texture : global_object, IDisposable
+        // a texture encapsulates a texture for a given element in a given state
+        public class texture : global_object, IDisposable
         {
+            public layout_element m_element;      // pointer back to the element
+            public render_texture m_texture;      // texture for this state
+            public int m_state;        // associated state number
+
+
             //-------------------------------------------------
             //  texture - constructor
             //-------------------------------------------------
@@ -1458,8 +820,10 @@ namespace mame
                 m_state = 0;
             }
 
+
             //texture(texture const &that) = delete;
-            //texture(texture &&that);
+            //texture(texture that);
+
 
             ~texture()
             {
@@ -1474,6 +838,10 @@ namespace mame
 
                 m_isDisposed = true;
             }
+
+
+            //texture &operator=(texture const &that) = delete;
+            //texture &operator=(texture &&that);
         }
 
 
@@ -1505,8 +873,8 @@ namespace mame
 
                 m_searchpath = env.search_path() != null ? env.search_path() : "";
                 m_dirname = env.directory_name() != null ? env.directory_name() : "";
-                m_imagefile = env.get_attribute_string(compnode, "file", "");
-                m_alphafile = env.get_attribute_string(compnode, "alphafile", "");
+                m_imagefile = env.get_attribute_string(compnode, "file");
+                m_alphafile = env.get_attribute_string(compnode, "alphafile");
                 m_data = get_data(compnode);
             }
 
@@ -1609,7 +977,7 @@ namespace mame
             text_component(layout_element_environment env, util.xml.data_node compnode)
                 : base(env, compnode)
             {
-                m_string = env.get_attribute_string(compnode, "string", "");
+                m_string = env.get_attribute_string(compnode, "string");
                 m_textalign = env.get_attribute_int(compnode, "align", 0);
             }
 
@@ -1839,7 +1207,7 @@ namespace mame
                 for (var location = symbollist.find(','); -1 != location; location = symbollist.find(','))  //for (std::string::size_type location = symbollist.find(','); std::string::npos != location; location = symbollist.find(','))
                 {
                     m_stopnames[m_numstops] = symbollist.substr(0, location);
-                    symbollist = symbollist.Substring(location + 1);  //symbollist.erase(0, location + 1);
+                    symbollist = symbollist.Substring(location + 1);  //symbollist.remove_prefix(location + 1);
                     m_numstops++;
                 }
 
@@ -1885,13 +1253,13 @@ namespace mame
         }
 
 
-        layout_element_make_component_map s_make_component = new layout_element_make_component_map()
+        static readonly layout_element_make_component_map s_make_component = new layout_element_make_component_map()
         {
             { "image",         make_component<image_component>         },
             { "text",          make_component<text_component>          },
-            { "dotmatrix",     make_dotmatrix_component_8              },
-            { "dotmatrix5dot", make_dotmatrix_component_5              },
-            { "dotmatrixdot",  make_dotmatrix_component_1              },
+            { "dotmatrix",     make_dotmatrix_component<int_constant_8>},
+            { "dotmatrix5dot", make_dotmatrix_component<int_constant_5>},
+            { "dotmatrixdot",  make_dotmatrix_component<int_constant_1>},
             { "simplecounter", make_component<simplecounter_component> },
             { "reel",          make_component<reel_component>          },
             { "led7seg",       make_component<led7seg_component>       },
@@ -1903,6 +1271,15 @@ namespace mame
             { "rect",          make_component<rect_component>          },
             { "disk",          make_component<disk_component>          }
         };
+
+
+        // internal state
+        running_machine m_machine;      // reference to the owning machine
+        std.vector<component> m_complist = new std.vector<component>();     // list of components  //std::vector<component::ptr> m_complist;     // list of components
+        int m_defstate;     // default state of this element
+        int m_statemask;    // mask to apply to state values
+        bool m_foldhigh;     // whether we need to fold state values above the mask range
+        std.vector<texture> m_elemtex = new std.vector<texture>();      // array of element textures used for managing the scaled bitmaps
 
 
         // construction/destruction
@@ -1962,6 +1339,14 @@ namespace mame
             m_elemtex.resize((m_statemask + 1) << (m_foldhigh ? 1 : 0));
         }
 
+        //virtual ~layout_element();
+
+
+        // getters
+
+        public running_machine machine() { return m_machine; }
+        public int default_state() { return m_defstate; }
+
 
         //-------------------------------------------------
         //  state_texture - return a pointer to a
@@ -1988,6 +1373,8 @@ namespace mame
         }
 
 
+        // operations
+
         //-------------------------------------------------
         //  preload - perform expensive loading upfront
         //  for all components
@@ -2000,12 +1387,13 @@ namespace mame
 
 
         // internal helpers
+
         //-------------------------------------------------
         //  element_scale - scale an element by rendering
         //  all the components at the appropriate
         //  resolution
         //-------------------------------------------------
-        void element_scale(bitmap_argb32 dest, bitmap_argb32 source, rectangle sbounds, layout_element.texture param) //, void *param)
+        static void element_scale(bitmap_argb32 dest, bitmap_argb32 source, rectangle sbounds, layout_element.texture param)  //static void element_scale(bitmap_argb32 &dest, bitmap_argb32 &source, const rectangle &sbounds, void *param);
         {
             texture elemtex = (texture)param;
 
@@ -2022,7 +1410,7 @@ namespace mame
         //  make_component - create component of given type
         //-------------------------------------------------
         //template <typename T>
-        static component make_component<T>(layout_element_environment env, util.xml.data_node compnode) where T : component
+        static component make_component<T>(layout_element_environment env, util.xml.data_node compnode) where T : component  //template <typename T> static component::ptr make_component(environment &env, util::xml::data_node const &compnode);
         {
             // return std::make_unique<T>(env, compnode);
             if (typeof(T) is image_component)
@@ -2033,19 +1421,35 @@ namespace mame
 
 
         //template <int D>
-        static component make_dotmatrix_component(int D, layout_element_environment env, util.xml.data_node compnode)
+        static component make_dotmatrix_component<int_D>(layout_element_environment env, util.xml.data_node compnode)  //static component::ptr make_dotmatrix_component(environment &env, util::xml::data_node const &compnode);
+            where int_D : int_constant, new()
         {
+            int D = new int_D().value;
             return new dotmatrix_component(D, env, compnode);  //return std::make_unique<dotmatrix_component>(D, env, compnode);
         }
-
-        static component make_dotmatrix_component_1(layout_element_environment env, util.xml.data_node compnode) { return make_dotmatrix_component(1, env, compnode); }
-        static component make_dotmatrix_component_5(layout_element_environment env, util.xml.data_node compnode) { return make_dotmatrix_component(5, env, compnode); }
-        static component make_dotmatrix_component_8(layout_element_environment env, util.xml.data_node compnode) { return make_dotmatrix_component(8, env, compnode); }
     }
 
 
-    public partial class layout_group : global_object
+    /// \brief A reusable group of elements
+    ///
+    /// Views expand/flatten groups into their component elements applying
+    /// an optional coordinate transform.  This is mainly useful duplicating
+    /// the same sublayout in multiple views.  It would be more useful
+    /// within a view if it could be parameterised.  Groups only exist while
+    /// parsing a layout file - no information about element grouping is
+    /// preserved.
+    public class layout_group : global_object
     {
+        //using environment = emu::render::detail::layout_environment;
+        //using group_map = std::unordered_map<std::string, layout_group>;
+        //using transform = std::array<std::array<float, 3>, 3>;
+
+
+        util.xml.data_node m_groupnode;
+        render_bounds m_bounds;
+        bool m_bounds_resolved;
+
+
         //-------------------------------------------------
         //  layout_group - constructor
         //-------------------------------------------------
@@ -2056,47 +1460,57 @@ namespace mame
             m_bounds_resolved = false;
         }
 
+        //~layout_group();
 
+
+        public util.xml.data_node get_groupnode() { return m_groupnode; }
+
+
+        //transform make_transform(int orientation, render_bounds const &dest) const;
+        //transform make_transform(int orientation, transform const &trans) const;
+        //transform make_transform(int orientation, render_bounds const &dest, transform const &trans) const;
         //-------------------------------------------------
         //  make_transform - create abbreviated transform
         //  matrix for given destination bounds
         //-------------------------------------------------
-        public float [,] make_transform(int orientation, render_bounds dest)
+        public layout_group_transform make_transform(int orientation, render_bounds dest)
         {
             assert(m_bounds_resolved);
 
             // make orientation matrix
-            float [,] result = new float [,] { { 1.0F, 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F }, { 0.0F, 0.0F, 1.0F } };  //transform result{{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
+            layout_group_transform result = new layout_group_transform(new std.array<float, uint32_constant_3>(1.0F, 0.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 1.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 0.0F, 1.0F));  //transform result{{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
             if ((orientation & ORIENTATION_SWAP_XY) != 0)
             {
-                std.swap(ref result[0, 0], ref result[0, 1]);
-                std.swap(ref result[1, 0], ref result[1, 1]);
+                var temp1 = result[0][0]; result[0][0] = result[0][1];  result[0][1] = temp1;  //std::swap(result[0][0], result[0][1]);
+                var temp2 = result[1][0]; result[1][0] = result[1][1];  result[1][1] = temp2;  //std::swap(result[1][0], result[1][1]);
             }
+
             if ((orientation & ORIENTATION_FLIP_X) != 0)
             {
-                result[0, 0] = -result[0, 0];
-                result[0, 1] = -result[0, 1];
+                result[0][0] = -result[0][0];
+                result[0][1] = -result[0][1];
             }
+
             if ((orientation & ORIENTATION_FLIP_Y) != 0)
             {
-                result[1, 0] = -result[1, 0];
-                result[1, 1] = -result[1, 1];
+                result[1][0] = -result[1][0];
+                result[1][1] = -result[1][1];
             }
 
             // apply to bounds and force into destination rectangle
             render_bounds bounds = m_bounds;
             rendlay_global.render_bounds_transform(ref bounds, result);
-            result[0, 0] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
-            result[0, 1] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
-            result[0, 2] = dest.x0 - (std.min(bounds.x0, bounds.x1) * (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0));
-            result[1, 0] *= (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0);
-            result[1, 1] *= (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0);
-            result[1, 2] = dest.y0 - (std.min(bounds.y0, bounds.y1) * (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0));
+            result[0][0] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
+            result[0][1] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
+            result[0][2] = dest.x0 - (std.min(bounds.x0, bounds.x1) * (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0));
+            result[1][0] *= (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0);
+            result[1][1] *= (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0);
+            result[1][2] = dest.y0 - (std.min(bounds.y0, bounds.y1) * (dest.y1 - dest.y0) / std.fabs(bounds.y1 - bounds.y0));
             return result;
         }
 
 
-        public float [,] make_transform(int orientation, float [,] trans)  //layout_group::transform layout_group::make_transform(int orientation, transform const &trans) const
+        public layout_group_transform make_transform(int orientation, layout_group_transform trans)  //layout_group::transform layout_group::make_transform(int orientation, transform const &trans) const
         {
             assert(m_bounds_resolved);
 
@@ -2111,16 +1525,16 @@ namespace mame
         }
 
 
-        public float [,] make_transform(int orientation, render_bounds dest, float [,] trans)  //layout_group::transform layout_group::make_transform(int orientation, render_bounds const &dest, transform const &trans) const
+        public layout_group_transform make_transform(int orientation, render_bounds dest, layout_group_transform trans)  //layout_group::transform layout_group::make_transform(int orientation, render_bounds const &dest, transform const &trans) const
         {
-            float [,] next = make_transform(orientation, dest);
-            float [,] result = new float [,] { { 0.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F } };  //transform result{{ {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }} }};
-            for (UInt32 y = 0; 3U > y; ++y)
+            layout_group_transform next = make_transform(orientation, dest);
+            layout_group_transform result = new layout_group_transform(new std.array<float, uint32_constant_3>(0.0F, 0.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 0.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 0.0F, 0.0F));  //transform result{{ {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }} }};
+            for (unsigned y = 0; 3U > y; ++y)
             {
-                for (UInt32 x = 0; 3U > x; ++x)
+                for (unsigned x = 0; 3U > x; ++x)
                 {
-                    for (UInt32 i = 0; 3U > i; ++i)
-                        result[y, x] += trans[y, i] * next[i, x];
+                    for (unsigned i = 0; 3U > i; ++i)
+                        result[y][x] += trans[y][i] * next[i][x];
                 }
             }
 
@@ -2151,8 +1565,8 @@ namespace mame
                 // a wild loop appears!
                 string path = "";  //std::ostringstream path;
                 foreach (layout_group group in seen)
-                    path += string.Format(" {0}", group.m_groupnode.get_attribute_string("name", null));  //path << ' ' << group->m_groupnode.get_attribute_string("name", nullptr);
-                path += string.Format(" {0}", m_groupnode.get_attribute_string("name", null));  //path << ' ' << m_groupnode.get_attribute_string("name", nullptr);
+                    path += ' ' + group.m_groupnode.get_attribute_string("name", "");  //path << ' ' << group->m_groupnode.get_attribute_string("name", "");
+                path += ' ' + m_groupnode.get_attribute_string("name", "");  //path << ' ' << m_groupnode.get_attribute_string("name", "");
                 throw new layout_syntax_error(string_format("recursively nested groups {0}", path.str()));
             }
 
@@ -2261,9 +1675,9 @@ namespace mame
                     }
                     else
                     {
-                        string ref_ = env.get_attribute_string(itemnode, "ref", null);
-                        if (ref_ == null)
-                            throw new layout_syntax_error("nested group must have ref attribute");
+                        std_string ref_ = env.get_attribute_string(itemnode, "ref");
+                        if (ref_.empty())
+                            throw new layout_syntax_error("nested group must have non-empty ref attribute");
 
                         var found = groupmap.find(ref_);
                         if (found == null)
@@ -2309,7 +1723,7 @@ namespace mame
                 }
                 else if (strcmp(itemnode.get_name(), "collection") == 0)
                 {
-                    if (string.IsNullOrEmpty(env.get_attribute_string(itemnode, "name", null)))
+                    if (!itemnode.has_attribute("name"))
                         throw new layout_syntax_error("collection must have name attribute");
                     layout_group_environment local = env;
                     resolve_bounds(local, itemnode, groupmap, seen, ref empty, true, false, true);
@@ -2338,10 +1752,81 @@ namespace mame
     }
 
 
-    public partial class layout_view : global_object
+    /// \brief A single view within a layout_file
+    ///
+    /// The view is described using arbitrary coordinates that are scaled to
+    /// fit within the render target.  Pixels within a view are assumed to
+    /// be square.
+    public class layout_view : global_object
     {
-        public partial class item : global_object
+        //using layout_environment = emu::render::detail::layout_environment;
+        //using view_environment = emu::render::detail::view_environment;
+        //using element_map = std::unordered_map<std::string, layout_element>;
+        //using group_map = std::unordered_map<std::string, layout_group>;
+        //using screen_ref_vector = std::vector<std::reference_wrapper<screen_device const>>;
+        delegate void prepare_items_delegate();  //using prepare_items_delegate = delegate<void ()>;
+        delegate void preload_delegate();  //using preload_delegate = delegate<void ()>;
+        delegate void recomputed_delegate();  //using recomputed_delegate = delegate<void ()>;
+        //using item_id_map = std::unordered_map<
+        //        std::reference_wrapper<std::string const>,
+        //        item &,
+        //        std::hash<std::string>,
+        //        std::equal_to<std::string> >;
+        //using item_list = std::list<item>;
+        //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
+
+
+        /// \brief A single item in a view
+        ///
+        /// Each view has a list of item structures describing the visual
+        /// elements to draw, where they are located, additional blending
+        /// modes, and bindings for inputs and outputs.
+        public class item : global_object
         {
+            //friend class layout_view;
+
+            delegate int state_delegate();  //using state_delegate = delegate<int ()>;
+            delegate void bounds_delegate(out render_bounds bounds);  //using bounds_delegate = delegate<void (render_bounds &)>;
+            delegate void color_delegate(out render_color color);  //using color_delegate = delegate<void (render_color &)>;
+            //using bounds_vector = emu::render::detail::bounds_vector;
+            //using color_vector = emu::render::detail::color_vector;
+
+
+            // internal state
+            layout_element m_element;          // pointer to the associated element (non-screens only)
+            state_delegate m_get_elem_state;   // resolved element state function
+            state_delegate m_get_anim_state;   // resolved animation state function
+            bounds_delegate m_get_bounds;       // resolved bounds function
+            color_delegate m_get_color;        // resolved color function
+            output_finder<uint32_constant_1> m_output;           // associated output  //output_finder<>         m_output;           // associated output
+            output_finder<uint32_constant_1> m_animoutput;       // associated output for animation if different  //output_finder<>         m_animoutput;       // associated output for animation if different
+            ioport_port m_animinput_port;   // input port used for animation
+            int m_elem_state;       // element state used in absence of bindings
+            ioport_value m_animmask;         // mask for animation state
+            u8 m_animshift;        // shift for animation state
+            ioport_port m_input_port;       // input port of this item
+            ioport_field m_input_field;      // input port field of this item
+            ioport_value m_input_mask;       // input mask of this item
+            u8 m_input_shift;      // input mask rightshift for raw (trailing 0s)
+            bool m_clickthrough;     // should click pass through to lower elements
+            screen_device m_screen;           // pointer to screen
+            int m_orientation;      // orientation of this item
+            public emu_render_detail_bounds_vector m_bounds;           // bounds of the item
+            emu_render_detail_color_vector m_color;            // color of the item
+            public int m_blend_mode;       // blending mode to use when drawing
+            public u32 m_visibility_mask;  // combined mask of parent visibility groups
+
+            // cold items
+            std_string m_id;               // optional unique item identifier
+            std_string m_input_tag;        // input tag of this item
+            std_string m_animinput_tag;    // tag of input port for animation state
+            public emu_render_detail_bounds_vector m_rawbounds;        // raw (original) bounds of the item
+            bool m_have_output;      // whether we actually have an output
+            bool m_input_raw;        // get raw data from input port
+            bool m_have_animoutput;  // whether we actually have an output for animation
+            bool m_has_clickthrough; // whether clickthrough was explicitly configured
+
+
             // construction/destruction
             //-------------------------------------------------
             //  item - constructor
@@ -2351,14 +1836,14 @@ namespace mame
                     util.xml.data_node itemnode,
                     layout_view_element_map elemmap,
                     int orientation,
-                    float [,] trans,  //layout_group::transform const &trans,
+                    layout_group_transform trans,
                     render_color color)
             {
                 m_element = find_element(env, itemnode, elemmap);
 
                 //throw new emu_unimplemented();
 #if false
-                m_output(env.device(), env.get_attribute_string(itemnode, "name", ""))
+                m_output(env.device(), std::string(env.get_attribute_string(itemnode, "name")))
                 m_animoutput(env.device(), make_animoutput_tag(env, itemnode));
 #endif
 
@@ -2375,14 +1860,14 @@ namespace mame
                 m_color = make_color(env, itemnode, color);
                 m_blend_mode = get_blend_mode(env, itemnode);
                 m_visibility_mask = env.visibility_mask();
-                m_id = env.get_attribute_string(itemnode, "id", "");
+                m_id = env.get_attribute_string(itemnode, "id");
                 m_input_tag = make_input_tag(env, itemnode);
                 m_animinput_tag = make_animinput_tag(env, itemnode);
                 m_rawbounds = make_bounds(env, itemnode, trans);
-                m_have_output = !string.IsNullOrEmpty(env.get_attribute_string(itemnode, "name", ""));  //m_have_output(env.get_attribute_string(itemnode, "name", "")[0])
+                m_have_output = !env.get_attribute_string(itemnode, "name").empty();  //m_have_output(env.get_attribute_string(itemnode, "name", "")[0])
                 m_input_raw = env.get_attribute_bool(itemnode, "inputraw", false);
                 m_have_animoutput = !make_animoutput_tag(env, itemnode).empty();
-                m_has_clickthrough = !string.IsNullOrEmpty(env.get_attribute_string(itemnode, "clickthrough", ""));  //m_has_clickthrough(env.get_attribute_string(itemnode, "clickthrough", "")[0])
+                m_has_clickthrough = !env.get_attribute_string(itemnode, "clickthrough").empty();  //m_has_clickthrough(env.get_attribute_string(itemnode, "clickthrough", "")[0])
 
 
                 // fetch common data
@@ -2395,7 +1880,7 @@ namespace mame
                 {
                     if (itemnode.has_attribute("tag"))
                     {
-                        string tag = env.get_attribute_string(itemnode, "tag", "");
+                        string tag = env.get_attribute_string(itemnode, "tag");
                         m_screen = (screen_device)env.device().subdevice(tag);
                         if (m_screen == null)
                             throw new layout_reference_error(string_format("invalid screen tag '{0}'", tag));
@@ -2407,7 +1892,7 @@ namespace mame
                 }
                 else if (m_element == null)
                 {
-                    throw new layout_syntax_error(string_format("item of type {0} require an element tag", itemnode.get_name()));
+                    throw new layout_syntax_error(string_format("item of type {0} requires an element tag", itemnode.get_name()));
                 }
 
                 // this can be called before resolving tags, make it return something valid
@@ -2415,41 +1900,43 @@ namespace mame
                 m_get_bounds = (out render_bounds bounds) => { m_bounds.front().get(out bounds); };  //m_get_bounds = bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front());
             }
 
+            //~item();
+
+
+            // getters
+            public std_string id() { return m_id; }
+            public layout_element element() { return m_element; }
+            public screen_device screen() { return m_screen; }
+            //bool bounds_animated() const { return m_bounds.size() > 1U; }
+            //bool color_animated() const { return m_color.size() > 1U; }
+            public render_bounds bounds() { render_bounds result; m_get_bounds(out result); return result; }
+            public render_color color() { render_color result; m_get_color(out result); return result; }
+            public int blend_mode() { return m_blend_mode; }
+            public u32 visibility_mask() { return m_visibility_mask; }
+            public int orientation() { return m_orientation; }
+            //render_container *screen_container() const { return m_screen ? &m_screen->container() : nullptr; }
+
+
+            // interactivity
+            public bool has_input() { return m_input_port != null; }  //bool has_input() const { return bool(m_input_port); }
+            public std.pair<ioport_port, ioport_value> input_tag_and_mask() { return std.make_pair(m_input_port, m_input_mask); }
+            public bool clickthrough() { return m_clickthrough; }
+
 
             // fetch state based on configured source
-            //-------------------------------------------------
-            //  state - fetch state based on configured source
-            //-------------------------------------------------
-            public int state()
-            {
-                assert(m_element != null);
+            public int element_state() { return m_get_elem_state(); }
+            //int animation_state() const { return m_get_anim_state(); }
 
-                if (m_have_output)
-                {
-                    throw new emu_unimplemented();
-#if false
-                    // if configured to track an output, fetch its value
-                    return m_output;
-#endif
-                }
-                else if (m_input_port != null)
-                {
-                    // if configured to an input, fetch the input value
-                    if (m_input_raw)
-                    {
-                        return ((int)(m_input_port.read() & m_input_mask)) >> m_input_shift;
-                    }
-                    else
-                    {
-                        ioport_field field = m_input_field != null ? m_input_field : m_input_port.field(m_input_mask);
-                        if (field != null)
-                            return ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
-                    }
-                }
 
-                // default to zero
-                return 0;
-            }
+            // set state
+            //void set_state(int state) { m_elem_state = state; }
+
+
+            // set handlers
+            //void set_element_state_callback(state_delegate &&handler);
+            //void set_animation_state_callback(state_delegate &&handler);
+            //void set_bounds_callback(bounds_delegate &&handler);
+            //void set_color_callback(color_delegate &&handler);
 
 
             // resolve tags, if any
@@ -2565,7 +2052,7 @@ namespace mame
             color_delegate default_get_color()
             {
                 return (m_color.size() == 1U)
-                        ? (out render_color result) => { m_color.front().get(out result); }  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
+                        ? (color_delegate)((out render_color result) => { m_color.front().get(out result); })  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
                         : (color_delegate)get_interpolated_color;  //: color_delegate(&item::get_interpolated_color, this);
             }
 
@@ -2667,8 +2154,8 @@ namespace mame
             //---------------------------------------------
             static layout_element find_element(layout_view_view_environment env, util.xml.data_node itemnode, layout_view_element_map elemmap)
             {
-                string name = env.get_attribute_string(itemnode, strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element", null);
-                if (string.IsNullOrEmpty(name))
+                string name = env.get_attribute_string(itemnode, strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element");
+                if (name.empty())
                     return null;
 
                 // search the list of elements for a match, error if not found
@@ -2686,7 +2173,7 @@ namespace mame
             static layout_view_item_bounds_vector make_bounds(
                     layout_view_view_environment env,
                     util.xml.data_node itemnode,
-                    float [,] trans)  //layout_group.transform trans)
+                    layout_group_transform trans)
             {
                 layout_view_item_bounds_vector result = new emu_render_detail_bounds_vector();
                 for (util.xml.data_node bounds = itemnode.get_child("bounds"); bounds != null; bounds = bounds.get_next_sibling("bounds"))
@@ -2758,9 +2245,20 @@ namespace mame
             {
                 util.xml.data_node animate = itemnode.get_child("animate");
                 if (animate != null)
-                    return env.get_attribute_string(animate, "name", "");
+                    return env.get_attribute_string(animate, "name");
                 else
                     return null;
+            }
+
+
+            //---------------------------------------------
+            //  make_animinput_tag - get absolute tag for
+            //  animation input
+            //---------------------------------------------
+            static string make_animinput_tag(layout_view_view_environment env, util.xml.data_node itemnode)
+            {
+                util.xml.data_node animate = itemnode.get_child("animate");
+                return animate != null ? env.get_attribute_subtag(animate, "inputtag") : "";
             }
 
 
@@ -2785,24 +2283,11 @@ namespace mame
 
 
             //---------------------------------------------
-            //  make_animinput_tag - get absolute tag for
-            //  animation input
-            //---------------------------------------------
-            static string make_animinput_tag(layout_view_view_environment env, util.xml.data_node itemnode)
-            {
-                util.xml.data_node animate = itemnode.get_child("animate");
-                string tag = animate != null ? env.get_attribute_string(animate, "inputtag", null) : null;
-                return tag != null ? env.device().subtag(tag) : null;
-            }
-
-
-            //---------------------------------------------
             //  make_input_tag - get absolute input tag
             //---------------------------------------------
-            static string make_input_tag(layout_view_view_environment env, util.xml.data_node itemnode)
+            static std_string make_input_tag(layout_view_view_environment env, util.xml.data_node itemnode)
             {
-                string tag = env.get_attribute_string(itemnode, "inputtag", null);
-                return tag != null ? env.device().subtag(tag) : null;
+                return env.get_attribute_subtag(itemnode, "inputtag");
             }
 
 
@@ -2812,16 +2297,16 @@ namespace mame
             static int get_blend_mode(layout_view_view_environment env, util.xml.data_node itemnode)
             {
                 // see if there's a blend mode attribute
-                string mode = env.get_attribute_string(itemnode, "blend", null);
+                std_string mode = itemnode.get_attribute_string_ptr("blend");
                 if (mode != null)
                 {
-                    if (strcmp(mode, "none") == 0)
+                    if (mode == "none")
                         return rendertypes_global.BLENDMODE_NONE;
-                    else if (strcmp(mode, "alpha") == 0)
+                    else if (mode == "alpha")
                         return rendertypes_global.BLENDMODE_ALPHA;
-                    else if (strcmp(mode, "multiply") == 0)
+                    else if (mode == "multiply")
                         return rendertypes_global.BLENDMODE_RGB_MULTIPLY;
-                    else if (strcmp(mode, "add") == 0)
+                    else if (mode == "add")
                         return rendertypes_global.BLENDMODE_ADD;
                     else
                         throw new layout_syntax_error(util_.string_format("unknown blend mode {0}", mode));
@@ -2854,6 +2339,9 @@ namespace mame
         }
 
 
+        //**************************************************************************
+        //  LAYOUT VIEW
+        //**************************************************************************
         class layer_lists
         {
             public layout_view_item_list backdrops = new layout_view_item_list();
@@ -2863,6 +2351,102 @@ namespace mame
             public layout_view_item_list cpanels = new layout_view_item_list();
             public layout_view_item_list marquees = new layout_view_item_list();
         }
+
+
+        /// \brief A subset of items in a view that can be hidden or shown
+        ///
+        /// Visibility toggles allow the user to show or hide selected parts
+        /// of a view.
+        public class visibility_toggle : global_object
+        {
+            std_string m_name;             // display name for the toggle
+            u32 m_mask;             // toggle combination to show
+
+
+            // construction/destruction/assignment
+            public visibility_toggle(std_string name, u32 mask)
+            {
+                m_name = name;
+                m_mask = mask;
+
+
+                assert(mask != 0);
+            }
+
+            //visibility_toggle(visibility_toggle const &) = default;
+            //visibility_toggle(visibility_toggle &&) = default;
+
+
+            //visibility_toggle &operator=(visibility_toggle const &) = default;
+            //visibility_toggle &operator=(visibility_toggle &&) = default;
+
+
+            // getters
+            public std_string name() { return m_name; }
+            //u32 mask() const { return m_mask; }
+        }
+
+
+        //using visibility_toggle_vector = std::vector<visibility_toggle>;
+
+
+        /// \brief An edge of an item in a view
+        public class edge
+        {
+            unsigned m_index;            // index of item in some collection
+            float m_position;         // position of edge on given axis
+            bool m_trailing;         // false for edge at lower position on axis
+
+
+            // construction/destruction
+            public edge(unsigned index, float position, bool trailing)
+            {
+                m_index = index;
+                m_position = position;
+                m_trailing = trailing;
+            }
+
+
+            // getters
+            public unsigned index() { return m_index; }
+            public float position() { return m_position; }
+            public bool trailing() { return m_trailing; }
+
+
+            // comparison
+            //constexpr bool operator<(edge const &that) const
+            //{
+            //    return std::make_tuple(m_position, m_trailing, m_index) < std::make_tuple(that.m_position, that.m_trailing, that.m_index);
+            //}
+        }
+
+        //using edge_vector = std::vector<edge>;
+
+
+        // internal state
+        float m_effaspect;        // X/Y of the layout in current configuration
+        render_bounds m_bounds;           // computed bounds of the view in current configuration
+        layout_view_item_list m_items = new layout_view_item_list();            // list of layout items
+        layout_view_item_ref_vector m_visible_items = new layout_view_item_ref_vector();    // all visible items
+        layout_view_item_ref_vector m_screen_items = new layout_view_item_ref_vector();     // visible items that represent screens to draw
+        layout_view_item_ref_vector m_interactive_items = new layout_view_item_ref_vector();// visible items that can accept pointer input
+        layout_view_edge_vector m_interactive_edges_x = new layout_view_edge_vector();
+        layout_view_edge_vector m_interactive_edges_y = new layout_view_edge_vector();
+        layout_view_screen_ref_vector m_screens = new layout_view_screen_ref_vector();          // list screens visible in current configuration
+
+        // handlers
+        prepare_items_delegate m_prepare_items;    // prepare items for adding to render container
+        preload_delegate m_preload;          // additional actions when visible items change
+        recomputed_delegate m_recomputed;       // additional actions on resizing/visibility change
+
+        // cold items
+        std_string m_name;             // display name for the view
+        std_string m_unqualified_name; // the name exactly as specified in the layout file
+        layout_view_item_id_map m_items_by_id;      // items with non-empty ID indexed by ID
+        layout_view_visibility_toggle_vector m_vistoggles = new layout_view_visibility_toggle_vector();       // collections of items that can be shown/hidden
+        render_bounds m_expbounds = new render_bounds();        // explicit bounds of the view
+        u32 m_defvismask;       // default visibility mask
+        bool m_has_art;          // true if the layout contains non-screen elements
 
 
         // construction/destruction
@@ -2877,7 +2461,7 @@ namespace mame
         {
             m_effaspect = 1.0f;
             m_name = make_name(env, viewnode);
-            m_unqualified_name = env.get_attribute_string(viewnode, "name", "");
+            m_unqualified_name = env.get_attribute_string(viewnode, "name");
             m_defvismask = 0;
             m_has_art = false;
 
@@ -2987,6 +2571,13 @@ namespace mame
                 group.second().set_bounds_unresolved();
         }
 
+        //~layout_view();
+
+
+        // getters
+        //item *get_item(std::string const &id);
+        public layout_view_item_list items() { return m_items; }
+
 
         //-------------------------------------------------
         //  has_screen - return true if this view contains
@@ -2996,6 +2587,13 @@ namespace mame
         {
             return std.find_if(m_items, (itm) => { return itm.screen() == screen; }) != default;  //return std::find_if(m_items.begin(), m_items.end(), [&screen] (auto &itm) { return itm.screen() == &screen; }) != m_items.end();
         }
+
+
+        public std_string name() { return m_name; }
+        //const std::string &unqualified_name() const { return m_unqualified_name; }
+        //size_t visible_screen_count() const { return m_screens.size(); }
+        public float effective_aspect() { return m_effaspect; }
+        //const render_bounds &bounds() const { return m_bounds; }
 
 
         //-------------------------------------------------
@@ -3009,7 +2607,27 @@ namespace mame
         }
 
 
+        public layout_view_item_ref_vector visible_items() { return m_visible_items; }
+        public layout_view_item_ref_vector visible_screen_items() { return m_screen_items; }
+        public layout_view_item_ref_vector interactive_items() { return m_interactive_items; }
+        public layout_view_edge_vector interactive_edges_x() { return m_interactive_edges_x; }
+        public layout_view_edge_vector interactive_edges_y() { return m_interactive_edges_y; }
+        //const screen_ref_vector &visible_screens() const { return m_screens; }
+        //const visibility_toggle_vector &visibility_toggles() const { return m_vistoggles; }
+        public u32 default_visibility_mask() { return m_defvismask; }
+        public bool has_art() { return m_has_art; }
+
+
+        // set handlers
+        //void set_prepare_items_callback(prepare_items_delegate &&handler);
+        //void set_preload_callback(preload_delegate &&handler);
+        //void set_recomputed_callback(recomputed_delegate &&handler);
+
+
         // operations
+        public void prepare_items() { if (m_prepare_items != null) m_prepare_items(); }
+
+
         //-------------------------------------------------
         //  recompute - recompute the bounds and aspect
         //  ratio of a view and all of its contained items
@@ -3166,6 +2784,7 @@ namespace mame
         }
 
 
+        // add items, recursing for groups
         //-------------------------------------------------
         //  add_items - add items, recursing for groups
         //-------------------------------------------------
@@ -3176,7 +2795,7 @@ namespace mame
                 layout_view_element_map elemmap,
                 layout_view_group_map groupmap,
                 int orientation,
-                float [,] trans,  //transform trans,
+                layout_group_transform trans,
                 render_color color,
                 bool root,
                 bool repeat,
@@ -3256,9 +2875,9 @@ namespace mame
                 }
                 else if (strcmp(itemnode.get_name(), "group") == 0)
                 {
-                    string ref_ = env.get_attribute_string(itemnode, "ref", null);
-                    if (ref_ == null)
-                        throw new layout_syntax_error("group instantiation must have ref attribute");
+                    std_string ref_ = env.get_attribute_string(itemnode, "ref");
+                    if (ref_.empty())
+                        throw new layout_syntax_error("group instantiation must have non-empty ref attribute");
 
                     var found = groupmap.find(ref_);
                     if (found == null)
@@ -3267,7 +2886,12 @@ namespace mame
                     unresolved = false;
                     found.resolve_bounds(env, groupmap);
 
-                    float [,] grouptrans = trans;
+                    layout_group_transform grouptrans = new layout_group_transform
+                    (
+                        new std.array<float, uint32_constant_3>(trans[0][0], trans[0][1], trans[0][2]),
+                        new std.array<float, uint32_constant_3>(trans[1][0], trans[1][1], trans[1][2]),
+                        new std.array<float, uint32_constant_3>(trans[2][0], trans[2][1], trans[2][2])
+                    );
                     util.xml.data_node itemboundsnode = itemnode.get_child("bounds");
                     util.xml.data_node itemorientnode = itemnode.get_child("orientation");
                     int grouporient = env.parse_orientation(itemorientnode);
@@ -3311,9 +2935,9 @@ namespace mame
                 }
                 else if (strcmp(itemnode.get_name(), "collection") == 0)
                 {
-                    string name = env.get_attribute_string(itemnode, "name", null);
-                    if (string.IsNullOrEmpty(name))
-                        throw new layout_syntax_error("collection must have name attribute");
+                    std_string_view name = env.get_attribute_string(itemnode, "name");
+                    if (name.empty())
+                        throw new layout_syntax_error("collection must have non-empty name attribute");
 
                     var found = std.find_if(m_vistoggles, (x) => { return x.name() == name; });  //var found = std::find_if(m_vistoggles.begin(), m_vistoggles.end(), [name] (auto const &x) { return x.name() == name; });
                     if (default != found)
@@ -3338,10 +2962,10 @@ namespace mame
         }
 
 
-        string make_name(emu.render.detail.layout_environment env, util.xml.data_node viewnode)
+        static std_string make_name(emu.render.detail.layout_environment env, util.xml.data_node viewnode)
         {
-            string name = env.get_attribute_string(viewnode, "name", null);
-            if (string.IsNullOrEmpty(name))  //if (!name || !*name)
+            std_string_view name = env.get_attribute_string(viewnode, "name");
+            if (name.empty())
                 throw new layout_syntax_error("view must have non-empty name attribute");
 
             if (env.is_root_device())
@@ -3360,8 +2984,26 @@ namespace mame
     }
 
 
-    public partial class layout_file : global_object
+    /// \brief Layout description file
+    ///
+    /// Comprises a list of elements and a list of views.  The elements are
+    /// reusable items that the views reference.
+    public class layout_file : global_object
     {
+        //using element_map = std::unordered_map<std::string, layout_element>;
+        //using group_map = std::unordered_map<std::string, layout_group>;
+        //using view_list = std::list<layout_view>;
+        delegate void resolve_tags_delegate();  //using resolve_tags_delegate = delegate<void ()>;
+        //using environment = emu::render::detail::layout_environment;
+
+
+        // internal state
+        device_t m_device;       // device that caused file to be loaded
+        layout_file_element_map m_elemmap;      // list of shared layout elements
+        layout_file_view_list m_viewlist;     // list of views
+        resolve_tags_delegate m_resolve_tags; // additional actions after resolving tags
+
+
         // construction/destruction
         //-------------------------------------------------
         //  layout_file - constructor
@@ -3408,7 +3050,7 @@ namespace mame
                     }
                     catch (layout_reference_error err)
                     {
-                        osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name", ""), err);
+                        osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name"), err);
                     }
                 }
 
@@ -3427,7 +3069,34 @@ namespace mame
             }
         }
 
+        //~layout_file();
 
+
+        // getters
+        //device_t &device() const { return m_device; }
+        //element_map const &elements() const { return m_elemmap; }
+        public layout_file_view_list views() { return m_viewlist; }
+
+
+        // resolve tags, if any
+        //-------------------------------------------------
+        //  resolve_tags - resolve tags
+        //-------------------------------------------------
+        public void resolve_tags()
+        {
+            foreach (layout_view view in views())
+                view.resolve_tags();
+
+            if (m_resolve_tags != null)
+                m_resolve_tags();
+        }
+
+
+        // set handlers
+        //void set_resolve_tags_callback(resolve_tags_delegate &&handler);
+
+
+        // add elements and parameters
         void add_elements(
                 layout_file_environment env,
                 util.xml.data_node parentnode,
@@ -3446,18 +3115,18 @@ namespace mame
                 }
                 else if (strcmp(childnode.get_name(), "element") == 0)
                 {
-                    string name = env.get_attribute_string(childnode, "name", null);
-                    if (name == null)
-                        throw new layout_syntax_error("element lacks name attribute");
+                    string name = env.get_attribute_string(childnode, "name");
+                    if (name.empty())
+                        throw new layout_syntax_error("element must have non-empty name attribute");
                     if (!m_elemmap.emplace(name, new layout_element(env, childnode)))  //if (!m_elemmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(env, *childnode)).second)
                         throw new layout_syntax_error(string_format("duplicate element name {0}", name));
                     m_elemmap.emplace(name, new layout_element(env, childnode));
                 }
                 else if (strcmp(childnode.get_name(), "group") == 0)
                 {
-                    string name = env.get_attribute_string(childnode, "name", null);
-                    if (name == null)
-                        throw new layout_syntax_error("group lacks name attribute");
+                    string name = env.get_attribute_string(childnode, "name");
+                    if (name.empty())
+                        throw new layout_syntax_error("group must have non-empty name attribute");
                     if (!groupmap.emplace(name, new layout_group(childnode)))  //if (!groupmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(childnode)).second)
                         throw new layout_syntax_error(string_format("duplicate group name {0}", name));
                     groupmap.emplace(name, new layout_group(childnode));
@@ -3481,4 +3150,728 @@ namespace mame
             }
         }
     }
+
+
+    namespace emu.render.detail
+    {
+        public class layout_environment : global_object
+        {
+            public class entry
+            {
+                string m_name;
+                string m_text;
+                s64 m_int = 0;
+                s64 m_int_increment = 0;
+                double m_float = 0.0;
+                double m_float_increment = 0.0;
+                int m_shift = 0;
+                bool m_text_valid = false;
+                bool m_int_valid = false;
+                bool m_float_valid = false;
+                bool m_generator = false;
+
+
+                public entry(string name, string t)
+                {
+                    m_name = name;
+                    m_text = t;
+                    m_text_valid = true;
+                }
+
+                public entry(string name, s64 i)
+                {
+                    m_name = name;
+                    m_int = i;
+                    m_int_valid = true;
+                }
+
+                public entry(string name, double f)
+                {
+                    m_name = name;
+                    m_float = f;
+                    m_float_valid = true;
+                }
+
+                public entry(string name, string t, s64 i, int s)
+                {
+                    m_name = name;
+                    m_text = t;
+                    m_int_increment = i;
+                    m_shift = s;
+                    m_text_valid = true;
+                    m_generator = true;
+                }
+
+                public entry(string name, string t, double i, int s)
+                {
+                    m_name = name;
+                    m_text = t;
+                    m_float_increment = i;
+                    m_shift = s;
+                    m_text_valid = true;
+                    m_generator = true;
+                }
+
+                //entry(entry &&) = default;
+                //entry &operator=(entry &&) = default;
+
+
+                public void set(string t)
+                {
+                    m_text = t;
+                    m_text_valid = true;
+                    m_int_valid = false;
+                    m_float_valid = false;
+                }
+
+                public void set(s64 i)
+                {
+                    m_int = i;
+                    m_text_valid = false;
+                    m_int_valid = true;
+                    m_float_valid = false;
+                }
+
+                public void set(double f)
+                {
+                    m_float = f;
+                    m_text_valid = false;
+                    m_int_valid = false;
+                    m_float_valid = true;
+                }
+
+
+                public string name() { return m_name; }
+                public bool is_generator() { return m_generator; }
+
+
+                public string get_text()
+                {
+                    if (!m_text_valid)
+                    {
+                        if (m_float_valid)
+                        {
+                            m_text = m_float.ToString();  //m_text = std::to_string(m_float);
+                            m_text_valid = true;
+                        }
+                        else if (m_int_valid)
+                        {
+                            m_text = m_int.ToString();  //m_text = std::to_string(m_int);
+                            m_text_valid = true;
+                        }
+                    }
+
+                    return m_text;
+                }
+
+
+                //void increment()
+                //static bool name_less(entry const &lhs, entry const &rhs) { return lhs.name() < rhs.name(); }
+            }
+
+            //using entry_vector = std::vector<entry>;
+
+#if false
+            template <typename T, typename U>
+            void try_insert(T &&name, U &&value)
+            {
+                entry_vector::iterator const pos(
+                        std::lower_bound(
+                            m_entries.begin(),
+                            m_entries.end(),
+                            name,
+                            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
+                if ((m_entries.end() == pos) || (pos->name() != name))
+                    m_entries.emplace(pos, std::forward<T>(name), std::forward<U>(value));
+            }
+#endif
+
+
+            //template <typename T, typename U>
+            void set(string name, object value)  //void set(T &&name, U &&value)
+            {
+                //entry_vector::iterator const pos(
+                //        std::lower_bound(
+                //            m_entries.begin(),
+                //            m_entries.end(),
+                //            name,
+                //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
+                //if ((m_entries.end() == pos) || (pos->name() != name))
+                //    m_entries.emplace(pos, std::forward<T>(name), std::forward<U>(value));
+                //else
+                //    pos->set(std::forward<U>(value));
+                int pos = 0;
+                for (; pos < m_entries.Count; pos++)
+                {
+                    if (m_entries[pos].name().CompareTo(name) >= 0)
+                        break;
+                }
+
+                if ((m_entries.Count == pos) || (m_entries[pos].name() != name))
+                {
+                    if (value is string)      m_entries.emplace(pos, new entry(name, (string)value));
+                    else if (value is s64)    m_entries.emplace(pos, new entry(name, (s64)value));
+                    else if (value is double) m_entries.emplace(pos, new entry(name, (double)value));
+                    else throw new emu_unimplemented();
+                }
+                else
+                {
+                    if (value is string)      m_entries[pos].set((string)value);
+                    else if (value is s64)    m_entries[pos].set((s64)value);
+                    else if (value is double) m_entries[pos].set((double)value);
+                    else throw new emu_unimplemented();
+                }
+            }
+
+
+            void cache_device_entries()
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            entry find_entry(string name)  //entry *find_entry(char const *begin, char const *end)
+            {
+                cache_device_entries();
+                //entry_vector::iterator const pos(
+                //        std::lower_bound(
+                //            m_entries.begin(),
+                //            m_entries.end(),
+                //            str,
+                //            [] (entry const &lhs, std::string_view const &rhs) { return lhs.name() < rhs; }));
+                //if ((m_entries.end() != pos) && pos->name() == str)
+                //    return &*pos;
+                //else
+                //    return m_next ? m_next->find_entry(str) : nullptr;
+                int pos = 0;
+                for (; pos < m_entries.Count; pos++)
+                {
+                    if (m_entries[pos].name().CompareTo(name) < 0)
+                        break;
+                }
+                
+                if ((m_entries.Count != pos) && (m_entries[pos].name() == name))
+                    return m_entries[pos];
+                else
+                    return m_next != null ? m_next.find_entry(name) : null;
+            }
+
+
+            //template <typename... T>
+            std.pair<string, bool> get_variable_text(string str)
+            {
+                entry found = find_entry(str);
+                if (found != null)
+                {
+                    return std.make_pair(found.get_text(), true);
+                }
+                else
+                {
+                    return std.make_pair("", false);
+                }
+            }
+
+
+            string expand(string str)  //std::pair<char const *, char const *> expand(char const *str)
+            {
+                char variable_start_char = '~';
+                char variable_end_char = '~';
+
+                // search for candidate variable references
+                int start = 0;
+                for (int pos = str.find_first_of(variable_start_char); pos != -1; )
+                {
+                    string new_str = str.Substring(pos + 1);
+                    int termIdx = new_str.IndexOf(c => !is_variable_char(c));  //auto term = std::find_if_not(str.begin() + pos + 1, str.end(), is_variable_char);
+                    if ((termIdx == -1) || (new_str[termIdx] != variable_end_char))  //if ((term == str.end()) || (*term != variable_end_char))
+                    {
+                        // not a valid variable name - keep searching
+                        pos = str.find_first_of(variable_start_char, termIdx + pos + 1);  //pos = str.find_first_of(variable_start_char, term - str.begin());
+                    }
+                    else
+                    {
+                        // looks like a variable reference - try to look it up
+                        std.pair<std_string_view, bool> text = get_variable_text(str.substr(pos + 1, termIdx - (pos + 1)));  //std::pair<std::string_view, bool> text = get_variable_text(str.substr(pos + 1, term - (str.begin() + pos + 1)));
+                        if (text.second)
+                        {
+                            // variable found
+                            if (start == 0)
+                                m_buffer = "";  //m_buffer.seekp(0);
+                            m_buffer += str.Substring(start, pos - start);  //m_buffer.write(&str[start], pos - start);
+                            m_buffer += text.first;  //m_buffer.write(text.first.data(), text.first.length());
+                            start = termIdx + 1;  //start = term - str.begin() + 1;
+                            pos = str.find_first_of(variable_start_char, start);
+                        }
+                        else
+                        {
+                            // variable not found - move on
+                            pos = str.find_first_of(variable_start_char, pos + 1);
+                        }
+                    }
+                }
+
+                // short-circuit the case where no substitutions were made
+                if (start == 0)
+                {
+                    return str;
+                }
+                else
+                {
+                    m_buffer += str.Substring(start, str.length() - start);  //m_buffer.write(&str[start], str.length() - start);
+                    return m_buffer;
+                }
+            }
+
+
+            static unsigned hex_prefix(std_string_view s)
+            {
+                return ((0 != s.length()) && (s[0] == '$')) ? 1U : ((2 <= s.length()) && (s[0] == '0') && ((s[1] == 'x') || (s[1] == 'X'))) ? 2U : 0U;
+            }
+
+            static unsigned dec_prefix(std_string_view s)
+            {
+                return ((0 != s.length()) && (s[0] == '#')) ? 1U : 0U;
+            }
+
+
+            int parse_int(string str, int defvalue)  //int parse_int(string begin, string end, int defvalue);
+            {
+                //std::istringstream stream;
+                //stream.imbue(f_portable_locale);
+                int result;
+                if (str.Length >= 1 && str[0] == '$')  //if (begin[0] == '$')
+                {
+                    //stream.str(std::string(begin + 1, end));
+                    //unsigned uvalue;
+                    //stream >> std::hex >> uvalue;
+                    //result = int(uvalue);
+                    result = Convert.ToInt32(str);
+                }
+                else if (str.Length >= 2 && ((str[0] == '0') && ((str[1] == 'x') || (str[1] == 'X'))))  //else if ((begin[0] == '0') && ((begin[1] == 'x') || (begin[1] == 'X')))
+                {
+                    //stream.str(std::string(begin + 2, end));
+                    //unsigned uvalue;
+                    //stream >> std::hex >> uvalue;
+                    //result = int(uvalue);
+                    result = Convert.ToInt32(str);
+                }
+                else if (str.Length >= 1 && str[0] == '#')  //else if (begin[0] == '#')
+                {
+                    //stream.str(std::string(begin + 1, end));
+                    //stream >> result;
+                    result = Convert.ToInt32(str);
+                }
+                else
+                {
+                    //stream.str(std::string(begin, end));
+                    //stream >> result;
+                    result = Convert.ToInt32(str);
+                }
+
+                return !string.IsNullOrEmpty(str) ? result : defvalue;  //return stream ? result : defvalue;
+            }
+
+
+            string parameter_name(util.xml.data_node node)
+            {
+                std_string attrib = node.get_attribute_string_ptr("name");
+                if (attrib == null)
+                    throw new layout_syntax_error("parameter lacks name attribute");
+                return expand(attrib);
+            }
+
+
+            static bool is_variable_char(char ch) { return (('0' <= ch) && ('9' >= ch)) || (('A' <= ch) && ('Z' >= ch)) || (('a' <= ch) && ('z' >= ch)) || ('_' == ch); }
+
+
+            layout_environment_entry_vector m_entries = new layout_environment_entry_vector();
+            string m_buffer;  //util::ovectorstream m_buffer;
+            //std::shared_ptr<NSVGrasterizer> const m_svg_rasterizer;
+            device_t m_device;
+            string m_search_path;
+            string m_directory_name;
+            layout_environment m_next = null;
+            //bool m_cached = false;
+
+
+            public layout_environment(device_t device, string searchpath, string dirname)
+            {
+                //throw new emu_unimplemented();
+#if false
+                : m_svg_rasterizer(nsvgCreateRasterizer(), util::nsvg_deleter())
+#endif
+
+                m_device = device;
+                m_search_path = searchpath;
+                m_directory_name = dirname;
+            }
+
+
+            public layout_environment(layout_environment next)
+            {
+                //throw new emu_unimplemented();
+#if false
+                : m_svg_rasterizer(next.m_svg_rasterizer)
+#endif
+
+                m_device = next.m_device;
+                m_search_path = next.m_search_path;
+                m_directory_name = next.m_directory_name;
+                m_next = next;
+            }
+
+
+            public device_t device() { return m_device; }
+            public running_machine machine() { return device().machine(); }
+
+            public bool is_root_device() { return device() == machine().root_device(); }
+            public string search_path() { return m_search_path; }
+            public string directory_name() { return m_directory_name; }
+            //std::shared_ptr<NSVGrasterizer> const &svg_rasterizer() const { return m_svg_rasterizer; }
+
+            public void set_parameter(string name, string value) { set(name, value); }
+            public void set_parameter(string name, s64 value) { set(name, value); }
+            public void set_parameter(string name, double value) { set(name, value); }
+
+            public void set_parameter(util.xml.data_node node)
+            {
+                // do basic validation
+                string name = parameter_name(node);
+                if (node.has_attribute("start") || node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
+                    throw new layout_syntax_error("start/increment/lshift/rshift attributes are only allowed for repeat parameters");
+                std_string value = node.get_attribute_string_ptr("value");
+                if (value == null)
+                    throw new layout_syntax_error("parameter lacks value attribute");
+
+                // expand value and stash
+                set(name, expand(value));
+            }
+
+
+            public void set_repeat_parameter(util.xml.data_node node, bool init)
+            {
+                // two types are allowed here - static value, and start/increment/lshift/rshift
+                string name = parameter_name(node);
+                std_string start = node.get_attribute_string_ptr("start");
+                if (start != null)
+                {
+                    // simple validity checks
+                    if (node.has_attribute("value"))
+                        throw new layout_syntax_error("start attribute may not be used in combination with value attribute");
+
+                    int lshift = node.has_attribute("lshift") ? get_attribute_int(node, "lshift", -1) : 0;
+                    int rshift = node.has_attribute("rshift") ? get_attribute_int(node, "rshift", -1) : 0;
+                    if ((0 > lshift) || (0 > rshift))
+                        throw new layout_syntax_error("lshift/rshift attributes must be non-negative integers");
+
+                    // increment is more complex - it may be an integer or a floating-point number
+                    s64 intincrement = 0;
+                    double floatincrement = 0;
+                    std_string increment = node.get_attribute_string_ptr("increment");
+                    if (increment != null)
+                    {
+                        std_string_view expanded = expand(increment);
+                        unsigned hexprefix = hex_prefix(expanded);
+                        unsigned decprefix = dec_prefix(expanded);
+                        bool floatchars = expanded.find_first_of(".eE") != -1;
+                        string stream = expanded.Substring((int)(hexprefix + decprefix));  //std::istringstream stream(std::string(expanded.substr(hexprefix + decprefix)));
+                        //stream.imbue(std::locale::classic());
+                        bool success = true;
+                        if (hexprefix == 0 && decprefix == 0 && floatchars)
+                        {
+                            //stream >> floatincrement;
+                            success = double.TryParse(stream, out floatincrement);
+                        }
+                        else if (hexprefix != 0)
+                        {
+                            //u64 uvalue;
+                            //stream >> std::hex >> uvalue;
+                            //intincrement = s64(uvalue);
+                            try { intincrement = Convert.ToInt64(stream, 16); }
+                            catch (Exception) { success = false; }
+                        }
+                        else
+                        {
+                            //stream >> intincrement;
+                            success = s64.TryParse(stream, out intincrement);
+                        }
+
+                        // reject obviously bad stuff
+                        if (!success)
+                            throw new layout_syntax_error("increment attribute must be a number");
+                    }
+
+                    // don't allow generator parameters to be redefined
+                    if (init)
+                    {
+                        //entry_vector::iterator const pos(
+                        //        std::lower_bound(
+                        //            m_entries.begin(),
+                        //            m_entries.end(),
+                        //            name,
+                        //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
+                        //if ((m_entries.end() != pos) && (pos->name() == name))
+                        //    throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+                        int pos = 0;
+                        for (; pos < m_entries.Count; pos++)
+                        {
+                            if (m_entries[pos].name().CompareTo(name) >= 0)
+                                break;
+                        }
+
+                        if (pos != m_entries.Count && m_entries[pos].name() == name)
+                            throw new layout_syntax_error("generator parameters must be defined exactly once per scope");
+
+                        if (floatincrement != 0)
+                            m_entries.emplace(pos, new entry(name, expand(start), floatincrement, lshift - rshift));
+                        else
+                            m_entries.emplace(pos, new entry(name, expand(start), intincrement, lshift - rshift));
+                    }
+                }
+                else if (node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
+                {
+                    throw new layout_syntax_error("increment/lshift/rshift attributes require start attribute");
+                }
+                else
+                {
+                    std_string value = node.get_attribute_string_ptr("value");
+                    if (value == null)
+                        throw new layout_syntax_error("parameter lacks value attribute");
+                    //entry_vector::iterator const pos(
+                    //        std::lower_bound(
+                    //            m_entries.begin(),
+                    //            m_entries.end(),
+                    //            name,
+                    //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
+                    //if ((m_entries.end() == pos) || (pos->name() != name))
+                    //    m_entries.emplace(pos, std::move(name), std::string(expanded.first, expanded.second));
+                    //else if (pos->is_generator())
+                    //    throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+                    //else
+                    //    pos->set(std::string(expanded.first, expanded.second));
+                    int pos = 0;
+                    for (; pos < m_entries.Count; pos++)
+                    {
+                        if (m_entries[pos].name().CompareTo(name) >= 0)
+                            break;
+                    }
+
+                    if (pos == m_entries.Count && m_entries[pos].name() != name)
+                        m_entries.emplace(pos, new entry(name, expand(value)));
+                    else if (m_entries[pos].is_generator())
+                        throw new layout_syntax_error("generator parameters must be defined exactly once per scope");
+                    else
+                        m_entries[pos].set(expand(value));
+                }
+            }
+
+
+            public void increment_parameters()
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            public std_string_view get_attribute_string(util.xml.data_node node, string name, std_string_view defvalue = "")
+            {
+                std_string attrib = node.get_attribute_string_ptr(name);
+                return attrib != null ? expand(attrib) : defvalue;
+            }
+
+
+            public std_string get_attribute_subtag(util.xml.data_node node, string name)
+            {
+                std_string attrib = node.get_attribute_string_ptr(name);
+                return attrib != null ? device().subtag(expand(attrib)) : "";
+            }
+
+
+            public int get_attribute_int(util.xml.data_node node, string name, int defvalue)
+            {
+                std_string attrib = node.get_attribute_string_ptr(name);
+                if (attrib == null)
+                    return defvalue;
+
+                // similar to what XML nodes do
+                return parse_int(expand(attrib), defvalue);
+            }
+
+
+            float get_attribute_float(util.xml.data_node node, string name, float defvalue)
+            {
+                std_string attrib = node.get_attribute_string_ptr(name);
+                if (attrib == null)
+                    return defvalue;
+
+                // similar to what XML nodes do
+                //std::istringstream stream(std::string(expand(*attrib)));
+                //stream.imbue(f_portable_locale);
+                //float result;
+                //return (stream >> result) ? result : defvalue;
+                string stream = expand(attrib);
+                float result;
+                return float.TryParse(stream, out result) ? result : defvalue;
+            }
+
+
+            public bool get_attribute_bool(util.xml.data_node node, string name, bool defvalue)
+            {
+                std_string attrib = node.get_attribute_string_ptr(name);
+                if (string.IsNullOrEmpty(attrib))
+                    return defvalue;
+
+                // first try yes/no strings
+                std_string_view expanded = expand(attrib);
+                if ("yes" == expanded || "true" == expanded)
+                    return true;
+                if ("no" == expanded || "false" == expanded)
+                    return false;
+
+                // fall back to integer parsing
+                return parse_int(expanded, defvalue ? 1 : 0) != 0;
+            }
+
+
+            public void parse_bounds(util.xml.data_node node, out render_bounds result)
+            {
+                result = new render_bounds();
+
+                if (node == null)
+                {
+                    // default to unit rectangle
+                    result.x0 = result.y0 = 0.0F;
+                    result.x1 = result.y1 = 1.0F;
+                }
+                else
+                {
+                    // horizontal position/size
+                    if (node.has_attribute("left"))
+                    {
+                        result.x0 = get_attribute_float(node, "left", 0.0F);
+                        result.x1 = get_attribute_float(node, "right", 1.0F);
+                    }
+                    else
+                    {
+                        float width = get_attribute_float(node, "width", 1.0F);
+                        if (node.has_attribute("xc"))
+                            result.x0 = get_attribute_float(node, "xc", 0.0F) - (width / 2.0F);
+                        else
+                            result.x0 = get_attribute_float(node, "x", 0.0F);
+                        result.x1 = result.x0 + width;
+                    }
+
+                    // vertical position/size
+                    if (node.has_attribute("top"))
+                    {
+                        result.y0 = get_attribute_float(node, "top", 0.0F);
+                        result.y1 = get_attribute_float(node, "bottom", 1.0F);
+                    }
+                    else
+                    {
+                        float height = get_attribute_float(node, "height", 1.0F);
+                        if (node.has_attribute("yc"))
+                            result.y0 = get_attribute_float(node, "yc", 0.0F) - (height / 2.0F);
+                        else
+                            result.y0 = get_attribute_float(node, "y", 0.0F);
+
+                        result.y1 = result.y0 + height;
+                    }
+
+                    // check for errors
+                    if ((result.x0 > result.x1) || (result.y0 > result.y1))
+                        throw new layout_syntax_error(util_.string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
+                }
+            }
+
+
+            public render_color parse_color(util.xml.data_node node)
+            {
+                // default to opaque white
+                if (node == null)
+                    return new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F };
+
+                // parse attributes
+                render_color result = new render_color()
+                {
+                    a = get_attribute_float(node, "alpha", 1.0F),
+                    r = get_attribute_float(node, "red", 1.0F),
+                    g = get_attribute_float(node, "green", 1.0F),
+                    b = get_attribute_float(node, "blue", 1.0F)
+                };
+
+                // check for errors
+                if ((0.0F > new [] { result.r, result.g, result.b, result.a }.Min()) || (1.0F < new [] { result.r, result.g, result.b, result.a }.Max()))
+                    throw new layout_syntax_error(string_format("illegal RGBA color {0},{1},{2},{3}", result.r, result.g, result.b, result.a));
+
+                return result;
+            }
+
+
+            public int parse_orientation(util.xml.data_node node)
+            {
+                // default to no transform
+                if (node == null)
+                    return (int)ROT0;
+
+                // parse attributes
+                int result;
+                int rotate = get_attribute_int(node, "rotate", 0);
+                switch (rotate)
+                {
+                    case 0:     result = (int)ROT0;      break;
+                    case 90:    result = (int)ROT90;     break;
+                    case 180:   result = (int)ROT180;    break;
+                    case 270:   result = (int)ROT270;    break;
+                    default:    throw new layout_syntax_error(string_format("invalid rotate attribute {0}", rotate));
+                }
+
+                if (get_attribute_bool(node, "swapxy", false))
+                    result ^= (int)ORIENTATION_SWAP_XY;
+                if (get_attribute_bool(node, "flipx", false))
+                    result ^= (int)ORIENTATION_FLIP_X;
+                if (get_attribute_bool(node, "flipy", false))
+                    result ^= (int)ORIENTATION_FLIP_Y;
+
+                return result;
+            }
+        }
+
+
+        public class view_environment : layout_environment
+        {
+            view_environment m_next_view = null;
+            string m_name;
+            u32 m_visibility_mask = 0U;
+            unsigned m_next_visibility_bit = 0U;
+
+
+            public view_environment(layout_environment next, string name)
+                : base(next)
+            {
+                m_name = name;
+            }
+
+            public view_environment(view_environment next, bool visibility)
+                : base(next)
+            {
+                m_next_view = next;
+                m_name = next.m_name;
+                m_visibility_mask = next.m_visibility_mask | ((u32)(visibility ? 1 : 0) << (int)next.m_next_visibility_bit);
+                m_next_visibility_bit = next.m_next_visibility_bit + (visibility ? 1U : 0);
+
+
+                if (32U < m_next_visibility_bit)
+                    throw new layout_syntax_error(string_format("view '{0}' contains too many visibility toggles", m_name));
+            }
+
+            //~view_environment()
+            //{
+            //    if (m_next_view)
+            //        m_next_view->m_next_visibility_bit = m_next_visibility_bit;
+            //}
+
+
+            public u32 visibility_mask() { return m_visibility_mask; }
+        }
+    } // namespace emu::render::detail
 }

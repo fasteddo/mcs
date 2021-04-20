@@ -137,7 +137,7 @@ namespace mame.util
             m_creator = null;
         }
 
-        //bool add_from_string(char type, const char *buffer, int length = -1);
+        //bool add_from_string(char type, std::string_view string);
         //bool remove(char type);
 
         // CRC-specific helpers
@@ -175,10 +175,18 @@ namespace mame.util
             if (flag(FLAG_BAD_DUMP))
                 buffer += "BAD_DUMP ";
 
+            // remove trailing space
+            //if (!buffer.empty())
+            //{
+            //    assert(buffer.back() == ' ');
+            //    buffer = buffer.substr(0, buffer.length() - 1);
+            //}
             return buffer.Trim();
         }
 
+
         //string attribute_string() const;
+
 
         //-------------------------------------------------
         //  from_internal_string - convert an internal
@@ -186,22 +194,17 @@ namespace mame.util
         //-------------------------------------------------
         public bool from_internal_string(string string_)
         {
-            assert(string_ != null);
-
             // start fresh
             reset();
 
-            // determine the end of the string
-            int stringendIdx = string_.Length;  //const char *stringend = string + strlen(string);
-            int ptrIdx = 0;  //const char *ptr = string;
-
-            // loop until we hit it
+            // loop until we hit the end of the string
             bool errors = false;
             int skip_digits = 0;
-            while (ptrIdx < stringendIdx)  //while (ptr < stringend)
+            while (!string_.empty())
             {
-                char c = string_[ptrIdx++];  //char c = *ptr++;
+                char c = string_[0];
                 char uc = char.ToUpper(c);
+                string_ = string_.Substring(1);  //string.remove_prefix(1);
 
                 // non-hex alpha values specify a hash type
                 if (uc >= 'G' && uc <= 'Z')
@@ -211,13 +214,13 @@ namespace mame.util
                     if (uc == HASH_CRC)
                     {
                         m_has_crc32 = true;
-                        errors = !m_crc32.from_string(string_.Remove(0, ptrIdx), stringendIdx - ptrIdx);  //errors = !m_crc32.from_string(ptr, stringend - ptr);
+                        errors = !m_crc32.from_string(string_);
                         skip_digits = 2 * 4;  //skip_digits = 2 * sizeof(crc32_t);
                     }
                     else if (uc == HASH_SHA1)
                     {
                         m_has_sha1 = true;
-                        errors = !m_sha1.from_string(string_.Remove(0, ptrIdx), stringendIdx - ptrIdx);  //errors = !m_sha1.from_string(ptr, stringend - ptr);
+                        errors = !m_sha1.from_string(string_);
                         skip_digits = 2 * 4;  //skip_digits = 2 * sizeof(sha1_t);
                     }
                     else

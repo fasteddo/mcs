@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 using NAudio;
 using NAudio.Wave;
 
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 
 
 namespace mcsForm

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s8 = System.SByte;
 using s16 = System.Int16;
 using s32 = System.Int32;
@@ -199,7 +199,7 @@ namespace mame
             {
                 m_screenless_frame_timer = machine.scheduler().timer_alloc(screenless_update_callback, this);
                 m_screenless_frame_timer.adjust(screen_device.DEFAULT_FRAME_PERIOD, 0, screen_device.DEFAULT_FRAME_PERIOD);
-                machine.output().set_notifier(null, video_notifier_callback, this);
+                machine.output().set_global_notifier(video_notifier_callback, this);
             }
         }
 

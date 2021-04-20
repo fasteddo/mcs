@@ -21,7 +21,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_read_address<Width, AddrShift, Endian>;
 
 
         //READ m_delegate;
@@ -137,7 +136,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_write_address<Width, AddrShift, Endian>;
 
 
         //WRITE m_delegate;
@@ -260,7 +258,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_read<Width, AddrShift, Endian>;
 
 
         ioport_port m_port;
@@ -287,7 +284,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_write<Width, AddrShift, Endian>;
 
 
         ioport_port m_port;

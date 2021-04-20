@@ -386,8 +386,7 @@ namespace mame
                                         length = romload_global.rom_file_size(rom);
 
                                     // start with the name
-                                    string name = ROM_GETNAME(rom[0]);
-                                    osd_printf_info("{0} ", name);
+                                    osd_printf_info("{0} ", rom[0].name());
 
                                     // output the length next
                                     if (length >= 0)
@@ -396,7 +395,7 @@ namespace mame
                                         osd_printf_info("{0}", "");
 
                                     // output the hash data
-                                    util.hash_collection hashes = new util.hash_collection(ROM_GETHASHDATA(rom[0]));
+                                    util.hash_collection hashes = new util.hash_collection(rom[0].hashdata());
                                     if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP))
                                     {
                                         if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
@@ -1271,11 +1270,8 @@ namespace mame
 
             manager.start_luaengine();
 
-            if (option_errors.Length > 0)
-            {
-                string option_errors_string = option_errors.str();
-                osd_printf_error("Error in command line:\n{0}\n", strtrimspace(option_errors_string));
-            }
+            if (option_errors.Length > 0)  //if (option_errors.tellp() > 0)
+                osd_printf_error("Error in command line:\n{0}\n", strtrimspace(option_errors.str()));
 
             // if we can't find it, give an appropriate error
             game_driver system = mame_options.system(m_options);

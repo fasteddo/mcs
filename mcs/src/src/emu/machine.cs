@@ -266,6 +266,7 @@ namespace mame
         image_manager m_image;            // internal data from image.cpp
         rom_load_manager m_rom_load;      // internal data from romload.cpp
         debugger_manager m_debugger;      // internal data from debugger.cpp
+        natural_keyboard m_natkeyboard;   // internal data from natkeyboard.cpp
 
         // system state
         machine_phase m_current_phase;        // current execution phase
@@ -439,6 +440,7 @@ namespace mame
         public tilemap_manager tilemap() { assert(m_tilemap != null); return m_tilemap; }
         //debug_view_manager &debug_view() const { assert(m_debug_view != NULL); return *m_debug_view; }
         public debugger_manager debugger() { assert(m_debugger != null); return m_debugger; }
+        public natural_keyboard natkeyboard() { assert(m_natkeyboard != null); return m_natkeyboard; }
         public DriverClass driver_data<DriverClass>() where DriverClass : driver_device { return (DriverClass)root_device(); }
         public machine_phase phase() { return m_current_phase; }
         public bool paused() { return m_paused || (m_current_phase != machine_phase.RUNNING); }
@@ -1072,9 +1074,12 @@ namespace mame
             // initialize the input system and input ports for the game
             // this must be done before memory_init in order to allow specifying
             // callbacks based on input port tags
-            Int64 newbase = m_ioport.initialize();
+            time_t newbase = m_ioport.initialize();
             if (newbase != 0)
                 m_base_time = newbase;
+
+            // initialize natural keyboard support after ports have been initialized
+            m_natkeyboard = new natural_keyboard(this);
 
             // initialize the streams engine before the sound devices start
             m_sound = new sound_manager(this);

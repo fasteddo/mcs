@@ -9,7 +9,7 @@ using char32_t = System.UInt32;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
 using mame_ui_manager_device_feature_set = mame.std.set<mame.std.pair<string, string>>;  //using device_feature_set = std::set<std::pair<std::string, std::string> >;
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using std_string = System.String;
 using std_time_t = System.Int64;
@@ -379,7 +379,7 @@ namespace mame
 
 
         // getters
-        public  running_machine machine() { return m_machine; }
+        public running_machine machine() { return m_machine; }
         bool single_step() { return m_single_step; }
         public ui_options options() { return m_ui_options; }
         public ui_colors colors() { return m_ui_colors; }
@@ -983,8 +983,7 @@ namespace mame
             if (file.open("ui.ini") == osd_file.error.NONE)
             {
                 // generate the updated INI
-                string initext = options().output_ini();
-                file.puts(initext.c_str());
+                file.puts(options().output_ini());
                 file.close();
             }
             else
@@ -1394,14 +1393,14 @@ namespace mame
             }
 
             // is the natural keyboard enabled?
-            if (machine().ioport().natkeyboard().in_use() && (machine().phase() == machine_phase.RUNNING))
+            if (machine().natkeyboard().in_use() && (machine().phase() == machine_phase.RUNNING))
                 process_natural_keyboard();
 
             if (!ui_disabled)
             {
                 // paste command
                 if (machine().ui_input().pressed((int)ioport_type.IPT_UI_PASTE))
-                    machine().ioport().natkeyboard().paste();
+                    machine().natkeyboard().paste();
             }
 
             image_handler_ingame();

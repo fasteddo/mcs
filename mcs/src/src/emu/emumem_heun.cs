@@ -21,7 +21,7 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_read<Width, AddrShift, Endian>;
+
 
         public handler_entry_read_unmapped(address_space space) : base(space, 0) { }
         //~handler_entry_read_unmapped() = default;
@@ -51,7 +51,7 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_write<Width, AddrShift, Endian>;
+
 
         public handler_entry_write_unmapped(address_space space) : base(space, 0) { }
         //~handler_entry_write_unmapped() = default;
@@ -86,7 +86,7 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_read<Width, AddrShift, Endian>;
+
 
         public handler_entry_read_nop(address_space space) : base(space, 0) { }
         //~handler_entry_read_nop() = default;
@@ -109,7 +109,7 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_write<Width, AddrShift, Endian>;
+
 
         public handler_entry_write_nop(address_space space) : base(space, 0) { }
         //~handler_entry_write_nop() = default;

@@ -796,7 +796,7 @@ namespace mame
                 str += " " + modifier;
 
             // delete any leading spaces
-            return str.Trim();
+            return str.Trim();  //return std::string(strtrimspace(str));
         }
 
 

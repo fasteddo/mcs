@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using int32_t = System.Int32;
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;

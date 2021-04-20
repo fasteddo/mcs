@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using bitmap_vector = mame.std.vector<mame.bitmap_argb32>;
 using cache_ptr_map = mame.std.map<mame.running_machine, mame.ui.menu_select_launch.cache>;
 using flags_cache = mame.util.lru_cache_map<mame.game_driver, mame.ui.menu_select_launch.system_flags>;
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s_bios = mame.std.vector<System.Collections.Generic.KeyValuePair<string, int>>;
 using s_parts = mame.std.unordered_map<string, string>;
 using size_t = System.UInt32;
@@ -1066,7 +1066,7 @@ namespace mame.ui
                 osd_printf_verbose("Checking for icons in directory {0}\n", current);
 
                 // open and walk the directory
-                osd.directory dir = osdcore_global.m_osddirectory.open(current);
+                osd.directory dir = osdfile_global.m_osddirectory.open(current);
                 if (dir != null)
                 {
                     // this could be improved in many ways - it's just a rough go/no-go

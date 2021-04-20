@@ -297,6 +297,7 @@ namespace mame
             21328100, /* 21.3281_MHz_XTAL       Philips NMS8245 */
             21477272, /* 21.477272_MHz_XTAL     BMC bowling, some Data East 90's games, Vtech Socrates; (6x NTSC subcarrier) */
             21667500, /* 21.6675_MHz_XTAL       AT&T 610 80-column display clock */
+            21756600, /* 21.7566_MHz_XTAL       Tab Products E-22 80-column display clock */
             22000000, /* 22_MHz_XTAL            - */
             22032000, /* 22.032_MHz_XTAL        Intellec Series II I/O controller */
             22096000, /* 22.096_MHz_XTAL        ADDS Viewpoint 122 */
@@ -332,6 +333,7 @@ namespace mame
             26590906, /* 26.590906_MHz_XTAL     Atari Jaguar NTSC */
             26593900, /* 26.5939_MHz_XTAL       Atari Jaguar PAL */
             26601712, /* 26.601712_MHz_XTAL     Astro Corp.'s Show Hand, PAL Vtech/Yeno Socrates (6x PAL subcarrier) */
+            26666000, /* 26.666_MHz_XTAL        Imagetek I4220/I4300 */
             26666000, /* 26.666_MHz_XTAL        Imagetek I4100/I4220/I4300 */
             26666666, /* 26.666666_MHz_XTAL     Irem M92 but most use 27MHz */
             26686000, /* 26.686_MHz_XTAL        Typically used on 90's Taito PCBs to drive the custom chips */
@@ -381,6 +383,7 @@ namespace mame
             34000000, /* 34_MHz_XTAL            Gaelco PCBs */
             34291712, /* 34.291712_MHz_XTAL     Fairlight CMI master card */
             34846000, /* 34.846_MHz_XTAL        Visual 550 */
+            35834400, /* 35.8344_MHz_XTAL       Tab Products E-22 132-column display clock */
             35904000, /* 35.904_MHz_XTAL        Used on HP98543 graphics board */
             36000000, /* 36_MHz_XTAL            Sega Model 1 video board */
             36864000, /* 36.864_MHz_XTAL        Unidesa Cirsa Rock 'n' Roll */

@@ -50,8 +50,8 @@ namespace mcsForm
             //options.set_value(emu_options.OPTION_SYSTEMNAME, gamename, global_object.OPTION_PRIORITY_MAXIMUM);
 
             osdcore_global.set_osdcore(osdcore);
-            osdcore_global.set_osdfile(osdfile);
-            osdcore_global.set_osddirectory(osddirectory);
+            osdfile_global.set_osdfile(osdfile);
+            osdfile_global.set_osddirectory(osddirectory);
             mame_machine_manager.instance(options, osd);
 
             new Thread(() => 

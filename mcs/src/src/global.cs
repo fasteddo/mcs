@@ -1015,12 +1015,12 @@ namespace mame
 
 
         // osdcore
-        public const string PATH_SEPARATOR = osdcore_global.PATH_SEPARATOR;
-        public const UInt32 OPEN_FLAG_READ = osdcore_global.OPEN_FLAG_READ;
-        protected const UInt32 OPEN_FLAG_WRITE = osdcore_global.OPEN_FLAG_WRITE;
-        protected const UInt32 OPEN_FLAG_CREATE = osdcore_global.OPEN_FLAG_CREATE;
-        protected const UInt32 OPEN_FLAG_CREATE_PATHS = osdcore_global.OPEN_FLAG_CREATE_PATHS;
-        protected const UInt32 OPEN_FLAG_NO_PRELOAD = osdcore_global.OPEN_FLAG_NO_PRELOAD;
+        public const string PATH_SEPARATOR = osdfile_global.PATH_SEPARATOR;
+        public const uint32_t OPEN_FLAG_READ = osdfile_global.OPEN_FLAG_READ;
+        protected const uint32_t OPEN_FLAG_WRITE = osdfile_global.OPEN_FLAG_WRITE;
+        protected const uint32_t OPEN_FLAG_CREATE = osdfile_global.OPEN_FLAG_CREATE;
+        protected const uint32_t OPEN_FLAG_CREATE_PATHS = osdfile_global.OPEN_FLAG_CREATE_PATHS;
+        protected const uint32_t OPEN_FLAG_NO_PRELOAD = osdfile_global.OPEN_FLAG_NO_PRELOAD;
         public static void osd_printf_error(string format, params object [] args) { osdcore_interface.osd_printf_error(format, args); }
         public static void osd_printf_warning(string format, params object [] args) { osdcore_interface.osd_printf_warning(format, args); }
         public static void osd_printf_info(string format, params object [] args) { osdcore_interface.osd_printf_info(format, args); }
@@ -1099,7 +1099,6 @@ namespace mame
         protected static bool ROMREGION_ISROMDATA(rom_entry_interface r) { return romload_global.ROMREGION_ISROMDATA(r); }
         protected static bool ROMREGION_ISDISKDATA(rom_entry_interface r) { return romload_global.ROMREGION_ISDISKDATA(r); }
         protected static string ROM_GETNAME(rom_entry_interface r) { return romload_global.ROM_GETNAME(r); }
-        protected static string ROM_GETHASHDATA(rom_entry_interface r) { return romload_global.ROM_GETHASHDATA(r); }
         protected static UInt32 ROM_GETBIOSFLAGS(rom_entry_interface r) { return romload_global.ROM_GETBIOSFLAGS(r); }
         protected static std.vector<rom_entry> rom_build_entries(Pointer<tiny_rom_entry> tinyentries) { return romload_global.rom_build_entries(tinyentries); }
 

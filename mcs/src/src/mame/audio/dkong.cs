@@ -12,7 +12,7 @@ using System;
 using System.Collections.Generic;
 
 using offs_t = System.UInt32;
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
 

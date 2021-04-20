@@ -79,6 +79,7 @@ namespace mame
 
         required_shared_ptr<uint8_t> m_spriteram;
         required_shared_ptr<uint8_t> m_videoram;
+        optional_shared_ptr<uint8_t> m_exattrram; // belongs in namenayo_state but the callbacks are problematic as things are set up
         optional_shared_ptr<uint8_t> m_decrypted_opcodes;
         output_finder<uint32_constant_2> m_lamps;
         memory_bank_creator m_bank1;
@@ -106,7 +107,7 @@ namespace mame
         uint8_t m_sfx_tilemap;
 
         /* video extension callbacks */
-        delegate void galaxian_extend_tile_info_func(ref uint16_t code, ref uint8_t color, uint8_t attrib, uint8_t x);  //typedef void (galaxian_state::*galaxian_extend_tile_info_func)(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x);
+        delegate void galaxian_extend_tile_info_func(ref uint16_t code, ref uint8_t color, uint8_t attrib, uint8_t x, uint8_t y);  //typedef void (galaxian_state::*galaxian_extend_tile_info_func)(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x, uint8_t y);
         delegate void galaxian_extend_sprite_info_func(Pointer<uint8_t> basePtr, ref uint8_t sx, ref uint8_t sy, ref uint8_t flipx, ref uint8_t flipy, ref uint16_t code, ref uint8_t color);  //typedef void (galaxian_state::*galaxian_extend_sprite_info_func)(const uint8_t *base, uint8_t *sx, uint8_t *sy, uint8_t *flipx, uint8_t *flipy, uint16_t *code, uint8_t *color);
         delegate void galaxian_draw_bullet_func(bitmap_rgb32 bitmap, rectangle cliprect, int offs, int x, int y);  //typedef void (galaxian_state::*galaxian_draw_bullet_func)(bitmap_rgb32 &bitmap, const rectangle &cliprect, int offs, int x, int y);
         delegate void galaxian_draw_background_func(bitmap_rgb32 bitmap, rectangle cliprect);  //typedef void (galaxian_state::*galaxian_draw_background_func)(bitmap_rgb32 &bitmap, const rectangle &cliprect);
@@ -132,6 +133,7 @@ namespace mame
         uint8_t m_stars_blink_state;
         rgb_t [] m_bullet_color = new rgb_t[8];
         uint8_t [] m_gfxbank = new uint8_t[5];
+        uint8_t m_leftspriteclip;
 
 
         public galaxian_state(machine_config mconfig, device_type type, string tag)
@@ -156,9 +158,11 @@ namespace mame
             m_tenspot_game_dsw = new optional_ioport_array<uint32_constant_10>(this, "IN2_GAME{0}", 0);  //{"IN2_GAME0", "IN2_GAME1", "IN2_GAME2", "IN2_GAME3", "IN2_GAME4", "IN2_GAME5", "IN2_GAME6", "IN2_GAME7", "IN2_GAME8", "IN2_GAME9"});
             m_spriteram = new required_shared_ptr<uint8_t>(this, "spriteram");
             m_videoram = new required_shared_ptr<uint8_t>(this, "videoram");
+            m_exattrram = new optional_shared_ptr<uint8_t>(this, "extattrram");
             m_decrypted_opcodes = new optional_shared_ptr<uint8_t>(this, "decrypted_opcodes");
             m_lamps = new output_finder<uint32_constant_2>(this, "lamp{0}", 0U);  //"lamp%u"
             m_bank1 = new memory_bank_creator(this, "bank1");
+            m_leftspriteclip = 16;
         }
 
 

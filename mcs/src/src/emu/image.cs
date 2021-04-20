@@ -88,6 +88,9 @@ namespace mame
         running_machine machine() { return m_machine; }
 
 
+        //std::string setup_working_directory();
+
+
         void config_load(config_type cfg_type, util.xml.data_node parentnode)
         {
             if ((cfg_type == config_type.GAME) && (parentnode != null))
@@ -189,5 +192,8 @@ namespace mame
 
             return retval;
         }
+
+
+        //bool try_change_working_directory(std::string &working_directory, const std::string &subdir);;
     }
 }

@@ -973,8 +973,7 @@ namespace mame.ui
             std.unordered_set<string> available = new std.unordered_set<string>();
             while (file.gets(out rbuf, utils_global.MAX_CHAR_INFO) != null)
             {
-                readbuf = rbuf;
-                readbuf = readbuf.Trim();
+                readbuf = rbuf.Trim();  //readbuf = strtrimspace(rbuf);
 
                 if (readbuf.empty() || ('#' == readbuf[0])) // ignore empty lines and line comments
                     ;

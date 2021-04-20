@@ -150,8 +150,9 @@ namespace mame
             public void resize(uint32_t colors)
             {
                 // resize to the correct number of dwords and mark all entries dirty
-                UInt32 dirty_dwords = (colors + 31) / 32;
-                m_dirty.resize((int)dirty_dwords, (UInt32)0xff);
+                uint32_t dirty_dwords = (colors + 31) / 32;
+                m_dirty.resize((int)dirty_dwords);
+                std.fill(m_dirty, uint32_t.MaxValue);  //std::fill(m_dirty.begin(), m_dirty.end(), ~uint32_t(0));
 
                 // mark all entries dirty
                 m_dirty[dirty_dwords - 1] &= (UInt32)((1 << ((int)colors % 32)) - 1);
@@ -166,9 +167,9 @@ namespace mame
             //-------------------------------------------------
             public void mark_dirty(uint32_t index)
             {
-                m_dirty[index / 32] |= (UInt32)(1 << ((int)index % 32));
-                m_mindirty = Math.Min(m_mindirty, index);
-                m_maxdirty = Math.Max(m_maxdirty, index);
+                m_dirty[index / 32] |= 1U << ((int)index % 32);
+                m_mindirty = std.min(m_mindirty, index);
+                m_maxdirty = std.min(m_maxdirty, index);
             }
 
             //-------------------------------------------------
@@ -179,8 +180,8 @@ namespace mame
             {
                 //throw new emu_unimplemented();
 #if false
-                // erase relevant entries in the new live one
-                memset(&m_dirty[m_mindirty / 32], 0, ((m_maxdirty / 32) + 1 - (m_mindirty / 32)) * sizeof(UINT32));
+                if (m_mindirty <= m_maxdirty)
+                    std::fill(&m_dirty[m_mindirty / 32], &m_dirty[(m_maxdirty / 32) + 1], 0);
 #endif
                 m_mindirty = (UInt32)(m_dirty.size() * 32 - 1);
                 m_maxdirty = 0;

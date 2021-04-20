@@ -23,7 +23,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_read_address<Width, AddrShift, Endian>;
 
 
         PointerRef<u8> m_base;  //uX *m_base;
@@ -68,7 +67,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_write_address<Width, AddrShift, Endian>;
 
 
         PointerRef<u8> m_base;  //uX *m_base;
@@ -136,7 +134,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_read_address<Width, AddrShift, Endian>;
 
 
         memory_bank m_bank;
@@ -177,7 +174,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_write_address<Width, AddrShift, Endian>;
 
 
         memory_bank m_bank;

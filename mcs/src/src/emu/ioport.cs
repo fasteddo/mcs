@@ -11,6 +11,7 @@ using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using s64 = System.Int64;
+using std_string = System.String;
 using time_t = System.Int64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -2290,14 +2291,14 @@ namespace mame
                     if (codes.empty())
                         break;
 
-                    name += string.Format("{1} ", Math.Max(ioport_global.SPACE_COUNT - 1, 0), field.key_name(which));  // %-*s 
+                    name += util_.string_format("{0}{1} ", std.max(ioport_global.SPACE_COUNT - 1, 0), field.key_name(which));
                 }
 
                 // trim extra spaces
-                name = name.Trim();
+                name = name.Trim();  //name = strtrimspace(name);
 
                 // special case
-                if (name.Length == 0)
+                if (name.empty())
                     name = "Unnamed Key";
             }
         }
@@ -3493,7 +3494,6 @@ namespace mame
 
         // specific special global input states
         simple_list<digital_joystick> m_joystick_list = new simple_list<digital_joystick>();  // list of digital joysticks
-        natural_keyboard m_natkeyboard; // natural keyboard support
 
         // frame time tracking
         attotime m_last_frame_time;      // time of the last frame callback
@@ -3520,11 +3520,11 @@ namespace mame
             m_safe_to_read = false;
             m_last_frame_time = attotime.zero;
             m_last_delta_nsec = 0;
-            m_record_file = new emu_file(machine.options().input_directory(), osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
-            m_playback_file = new emu_file(machine.options().input_directory(), osdcore_global.OPEN_FLAG_READ);
+            m_record_file = new emu_file(machine.options().input_directory(), osdfile_global.OPEN_FLAG_WRITE | osdfile_global.OPEN_FLAG_CREATE | osdfile_global.OPEN_FLAG_CREATE_PATHS);
+            m_playback_file = new emu_file(machine.options().input_directory(), osdfile_global.OPEN_FLAG_READ);
             m_playback_accumulated_speed = 0;
             m_playback_accumulated_frames = 0;
-            m_timecode_file = new emu_file(machine.options().input_directory(), osdcore_global.OPEN_FLAG_WRITE | osdcore_global.OPEN_FLAG_CREATE | osdcore_global.OPEN_FLAG_CREATE_PATHS);
+            m_timecode_file = new emu_file(machine.options().input_directory(), osdfile_global.OPEN_FLAG_WRITE | osdfile_global.OPEN_FLAG_CREATE | osdfile_global.OPEN_FLAG_CREATE_PATHS);
             m_timecode_count = 0;
             m_timecode_last_time = attotime.zero;
 
@@ -3611,9 +3611,6 @@ namespace mame
                 }
             }
 
-            // initialize natural keyboard
-            m_natkeyboard = new natural_keyboard(machine());
-
             // register callbacks for when we load configurations
             machine().configuration().config_register("input", load_config, save_config);
 
@@ -3630,7 +3627,6 @@ namespace mame
         running_machine machine() { return m_machine; }
         public ioport_list ports() { return m_portlist; }
         public bool safe_to_read() { return m_safe_to_read; }
-        public natural_keyboard natkeyboard() { assert(m_natkeyboard != null);  return m_natkeyboard; }
 
 
         // type helpers
@@ -3872,7 +3868,7 @@ namespace mame
         }
 
 
-        public ioport_port port(string tag) { if (!string.IsNullOrEmpty(tag)) return m_portlist.find(tag); else return null; }
+        public ioport_port port(std_string tag) { var search = m_portlist.find(tag); if (search != default) return search; else return null; }
 
 
         //-------------------------------------------------

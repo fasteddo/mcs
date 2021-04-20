@@ -24,7 +24,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_read<Width, AddrShift, Endian>;
 
 
         u32 SUBUNIT_COUNT;// = 1 << Width;
@@ -215,7 +214,6 @@ namespace mame
         where endianness_t_Endian : endianness_t_constant, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
-        //using inh = handler_entry_write<Width, AddrShift, Endian>;
 
 
         struct subunit_info
