@@ -9,7 +9,7 @@ using nl_fptype = System.Double;
 
 namespace mame.plib
 {
-    public class pstonum_global
+    public static class pstonum_global
     {
         //template<typename T, bool CLOCALE, typename S>
         //T pstonum(const S &arg)

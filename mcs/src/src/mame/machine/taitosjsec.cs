@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -16,7 +15,7 @@ namespace mame
     public class taito_sj_security_mcu_device : device_t
     {
         //DEFINE_DEVICE_TYPE(TAITO_SJ_SECURITY_MCU,  taito_sj_security_mcu_device, "taitosjsecmcu", "Taito SJ Security MCU Interface")
-        static device_t device_creator_taito_sj_security_mcu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taito_sj_security_mcu_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_taito_sj_security_mcu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taito_sj_security_mcu_device(mconfig, tag, owner, clock); }
         public static readonly device_type TAITO_SJ_SECURITY_MCU = DEFINE_DEVICE_TYPE(device_creator_taito_sj_security_mcu_device, "taitosjsecmcu", "Taito SJ Security MCU Interface");
 
 
@@ -95,16 +94,16 @@ namespace mame
             m_68intrq_cb.resolve_safe();
             m_busrq_cb.resolve_safe();
 
-            save_item(m_addr, "m_addr");
-            save_item(m_mcu_data, "m_mcu_data");
-            save_item(m_host_data, "m_host_data");
-            save_item(m_read_data, "m_read_data");
-            save_item(m_zaccept, "m_zaccept");
-            save_item(m_zready, "m_zready");
-            save_item(m_pa_val, "m_pa_val");
-            save_item(m_pb_val, "m_pb_val");
-            save_item(m_busak, "m_busak");
-            save_item(m_reset, "m_reset");
+            save_item(NAME(new { m_addr }));
+            save_item(NAME(new { m_mcu_data }));
+            save_item(NAME(new { m_host_data }));
+            save_item(NAME(new { m_read_data }));
+            save_item(NAME(new { m_zaccept }));
+            save_item(NAME(new { m_zready }));
+            save_item(NAME(new { m_pa_val }));
+            save_item(NAME(new { m_pb_val }));
+            save_item(NAME(new { m_busak }));
+            save_item(NAME(new { m_reset }));
 
             m_addr = 0xffff;
             m_mcu_data = 0xff;

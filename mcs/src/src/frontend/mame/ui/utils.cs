@@ -390,7 +390,7 @@ namespace mame
             protected machine_filter() : base() { }
 
 
-            public void apply(ListBase<ui_system_info> source, ListBase<ui_system_info> dest)
+            public void apply(MemoryContainer<ui_system_info> source, MemoryContainer<ui_system_info> dest)
             {
                 foreach (var s in source)
                     if (apply(s))
@@ -1757,7 +1757,7 @@ namespace mame
 
             public override bool apply(ui_system_info system)
             {
-                bool have_parent = string.IsNullOrEmpty(system.driver.parent) ? false : strcmp(system.driver.parent, "0") != 0;
+                bool have_parent = strcmp(system.driver.parent, "0") != 0;
                 var parent_idx = have_parent ? driver_list.find(system.driver.parent) : -1;
                 return !have_parent || (0 > parent_idx) || (driver_list.driver(parent_idx).flags & machine_flags.type.IS_BIOS_ROOT) != 0;
             }
@@ -1960,7 +1960,7 @@ namespace mame
 
                 category_machine_filter m_parent;
                 filter_handler m_handler;  //std::function<void (machine_filter &)> m_handler;
-                KeyValuePair<UInt32, bool> [] m_state;  //std::unique_ptr<std::pair<unsigned, bool> []> const m_state;
+                std.pair<UInt32, bool> [] m_state;  //std::unique_ptr<std::pair<unsigned, bool> []> const m_state;
                 UInt32 m_ini;
 
 
@@ -1973,7 +1973,7 @@ namespace mame
                 {
                     m_parent = parent;
                     m_handler = handler;
-                    m_state = new KeyValuePair<uint, bool>[mame_machine_manager.instance().inifile().get_file_count()];  //m_state(std::make_unique<std::pair<UInt32, bool> []>(mame_machine_manager.instance().inifile().get_file_count()));
+                    m_state = new std.pair<UInt32, bool>[mame_machine_manager.instance().inifile().get_file_count()];  //m_state(std::make_unique<std::pair<UInt32, bool> []>(mame_machine_manager.instance().inifile().get_file_count()));
                     m_ini = parent.m_ini;
 
 
@@ -1982,7 +1982,7 @@ namespace mame
                     {
                         //m_state[i].first = (m_ini == i) ? m_parent.m_group : 0U;
                         //m_state[i].second = (m_ini == i) ? m_parent.m_include_clones : include_clones_default(mgr.get_file_name(i));
-                        m_state[i] = new KeyValuePair<char32_t, bool>((m_ini == i) ? m_parent.m_group : 0U, (m_ini == i) ? m_parent.m_include_clones : include_clones_default(mgr.get_file_name(i)));
+                        m_state[i] = new std.pair<char32_t, bool>((m_ini == i) ? m_parent.m_group : 0U, (m_ini == i) ? m_parent.m_include_clones : include_clones_default(mgr.get_file_name(i)));
                     }
                 }
 

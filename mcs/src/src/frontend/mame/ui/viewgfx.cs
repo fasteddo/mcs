@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using pen_t = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -357,7 +356,7 @@ cancel:
             palette_device paldev = (palette_device)palette.device();
 
             int total = state.palette.which != 0 ? (int)palette.indirect_entries() : (int)palette.entries();
-            ListBase<rgb_t> raw_color = palette.palette().entry_list_raw();  //const rgb_t *raw_color = palette->palette()->entry_list_raw();
+            MemoryContainer<rgb_t> raw_color = palette.palette().entry_list_raw();  //const rgb_t *raw_color = palette->palette()->entry_list_raw();
             render_font ui_font = mui.get_font();
             float titlewidth;
             float x0;
@@ -415,7 +414,7 @@ cancel:
                     title_buf += string.Format(" #{0}", index);  // #%X
                     if (palette.indirect_entries() > 0 && state.palette.which == 0)
                         title_buf += string.Format(" => {0}", palette.pen_indirect(index));  // %X
-                    else if (paldev != null && paldev.basemem().baseptr() != null)
+                    else if (paldev != null && paldev.basemem().base_() != null)
                         title_buf += string.Format(" = {0}", paldev.read_entry((pen_t)index));  // %X
 
                     rgb_t col = state.palette.which != 0 ? palette.indirect_color(index) : raw_color[index];
@@ -938,7 +937,7 @@ cancel:
                 // loop over rows
                 for (y = 0; y < ycells; y++)
                 {
-                    rectangle cellbounds = new rectangle();
+                    rectangle cellbounds = default;
 
                     // make a rect that covers this row
                     cellbounds.set(0, state.bitmap.width() - 1, y * cellypix, (y + 1) * cellypix - 1);
@@ -987,22 +986,22 @@ cancel:
         {
             int width = (rotate & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width();
             int height = (rotate & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height();
-            ListPointer<rgb_t> palette = new ListPointer<rgb_t>(dpalette.palette().entry_list_raw(), (int)gfx.colorbase() + color * gfx.granularity());  //const rgb_t *palette = dpalette->palette()->entry_list_raw() + gfx.colorbase() + color * gfx.granularity();
+            Pointer<rgb_t> palette = new Pointer<rgb_t>(dpalette.palette().entry_list_raw(), (int)gfx.colorbase() + color * gfx.granularity());  //const rgb_t *palette = dpalette->palette()->entry_list_raw() + gfx.colorbase() + color * gfx.granularity();
             int x;
             int y;
 
             // loop over rows in the cell
             for (y = 0; y < height; y++)
             {
-                UInt32BufferPointer dest = bitmap.pix32(dsty + y, dstx);  //uint32_t *dest = &bitmap.pix32(dsty + y, dstx);
-                ListBytesPointer src = gfx.get_data((UInt32)index);  //const uint8_t *src = gfx.get_data(index);
+                PointerU32 dest = bitmap.pix32(dsty + y, dstx);  //uint32_t *dest = &bitmap.pix32(dsty + y, dstx);
+                Pointer<uint8_t> src = gfx.get_data((UInt32)index);  //const uint8_t *src = gfx.get_data(index);
 
                 // loop over columns in the cell
                 for (x = 0; x < width; x++)
                 {
                     int effx = x;
                     int effy = y;
-                    ListBytesPointer s;  //const uint8_t *s;
+                    Pointer<uint8_t> s;  //const uint8_t *s;
 
                     // compute effective x,y values after rotation
                     if ((rotate & global_object.ORIENTATION_SWAP_XY) == 0)

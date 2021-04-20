@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using ioport_value = System.UInt32;
 using uint8_t = System.Byte;
 
 

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -275,7 +274,7 @@ namespace mame.util
         //-------------------------------------------------
         //  buffer - add the given buffer to the hash
         //-------------------------------------------------
-        void buffer(ListBytesPointer data, uint32_t length)  //const uint8_t *data
+        void buffer(Pointer<uint8_t> data, uint32_t length)  //void buffer(const uint8_t *data, uint32_t length)
         {
             assert(m_creator != null);
 
@@ -312,7 +311,7 @@ namespace mame.util
             m_creator = null;
         }
 
-        public void compute(ListBytesPointer data, uint32_t length, string types = null) { begin(types); buffer(data, length); end(); }  //const uint8_t *data
+        public void compute(Pointer<uint8_t> data, uint32_t length, string types = null) { begin(types); buffer(data, length); end(); }  //void compute(const uint8_t *data, uint32_t length, const char *types = nullptr) { begin(types); buffer(data, length); end(); }
 
 
         // internal helpers

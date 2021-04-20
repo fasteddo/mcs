@@ -4,9 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using offs_t = System.UInt32;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
 
@@ -17,7 +16,7 @@ namespace mame
     public class watchdog_timer_device : device_t
     {
         //DEFINE_DEVICE_TYPE(WATCHDOG_TIMER, watchdog_timer_device, "watchdog", "Watchdog Timer")
-        static device_t device_creator_watchdog_timer_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new watchdog_timer_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_watchdog_timer_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new watchdog_timer_device(mconfig, tag, owner, clock); }
         public static readonly device_type WATCHDOG_TIMER = DEFINE_DEVICE_TYPE(device_creator_watchdog_timer_device, "watchdog", "Watchdog Timer");
 
 
@@ -90,7 +89,7 @@ namespace mame
         public void reset_w(u8 data = 0) { watchdog_reset(); }
         public u8 reset_r(address_space space) { watchdog_reset(); return (u8)space.unmap(); }
 
-        //void reset16_w(u16 data = 0);
+        public void reset16_w(u16 data = 0) { watchdog_reset(); }
         //u16 reset16_r(address_space &space);
         //void reset32_w(u32 data = 0);
         //u32 reset32_r(address_space &space);
@@ -118,8 +117,8 @@ namespace mame
                     m_screen.target.register_vblank_callback(watchdog_vblank);
             }
 
-            save_item(m_enabled, "m_enabled");
-            save_item(m_counter, "m_counter");
+            save_item(NAME(new { m_enabled }));
+            save_item(NAME(new { m_counter }));
         }
 
 

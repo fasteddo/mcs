@@ -4,8 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytes = mame.ListBase<System.Byte>;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -38,10 +37,10 @@ namespace mame.util
         //static const sha1_t null;
 
 
-        ListBytes m_raw = new ListBytes();  //uint8_t m_raw[20];
+        MemoryU8 m_raw = new MemoryU8();  //uint8_t m_raw[20];
 
 
-        public sha1_t() { m_raw.resize(20); }
+        public sha1_t() { m_raw.Resize(20); }
 
 
         //bool operator==(const sha1_t &rhs) const { return memcmp(m_raw, rhs.m_raw, sizeof(m_raw)) == 0; }
@@ -49,7 +48,7 @@ namespace mame.util
         public static bool operator==(sha1_t left, sha1_t right) { return memcmp(left.m_raw, right.m_raw, (UInt32)left.m_raw.Count) == 0; }
         public static bool operator!=(sha1_t left, sha1_t right) { return memcmp(left.m_raw, right.m_raw, (UInt32)left.m_raw.Count) != 0; }
 
-        public ListBytes op() { return m_raw; }  //operator UINT8 *() { return m_raw; }
+        public MemoryU8 op() { return m_raw; }  //operator UINT8 *() { return m_raw; }
 
 
         //-------------------------------------------------
@@ -109,19 +108,19 @@ namespace mame.util
         void reset() { sha1_global.sha1_init(out m_context); }
 
         // append data
-        public void append(ListBytesPointer data, uint32_t length) { sha1_global.sha1_update(m_context, length, data); }
+        public void append(Pointer<uint8_t> data, uint32_t length) { sha1_global.sha1_update(m_context, length, data); }
     
         // finalize and compute the final digest
         public sha1_t finish()
         {
             sha1_t result = new sha1_t();
             sha1_global.sha1_final(m_context);
-            sha1_global.sha1_digest(m_context, (UInt32)result.op().Count, new ListBytesPointer(result.op()));
+            sha1_global.sha1_digest(m_context, (UInt32)result.op().Count, new Pointer<uint8_t>(result.op()));
             return result;
         }
 
         // static wrapper to just get the digest from a block
-        static sha1_t simple(ListBytesPointer data, uint32_t length)
+        static sha1_t simple(Pointer<uint8_t> data, uint32_t length)
         {
             sha1_creator creator = new sha1_creator();
             creator.append(data, length);
@@ -213,7 +212,7 @@ namespace mame.util
         //  append - hash a block of data, appending to
         //  the currently-accumulated value
         //-------------------------------------------------
-        public void append(ListBytesPointer data, uint32_t length)  //const void *data, UINT32 length)
+        public void append(Pointer<uint8_t> data, uint32_t length)  //void append(const void *data, uint32_t length);
         {
             m_accum.op = crc32_global.crc32(m_accum.op, data, length);
         }
@@ -222,10 +221,10 @@ namespace mame.util
         public crc32_t finish() { return m_accum; }
 
         // static wrapper to just get the digest from a block
-        static crc32_t simple(ListBytesPointer data, uint32_t length)  //const void *data
+        static crc32_t simple(Pointer<uint8_t> data, uint32_t length)  //static crc32_t simple(const void *data, uint32_t length)
         {
             crc32_creator creator = new crc32_creator();
-            creator.append(new ListBytesPointer(data), length);
+            creator.append(data, length);
             return creator.finish();
         }
     }

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -38,10 +37,10 @@ namespace mame
         //MACHINE_START_MEMBER(centiped_state,centiped)
         void machine_start_centiped()
         {
-            save_item(m_oldpos, "m_oldpos");
-            save_item(m_sign, "m_sign");
-            save_item(m_dsw_select, "m_dsw_select");
-            save_item(m_prg_bank, "m_prg_bank");
+            save_item(NAME(new { m_oldpos }));
+            save_item(NAME(new { m_sign }));
+            save_item(NAME(new { m_dsw_select }));
+            save_item(NAME(new { m_prg_bank }));
         }
 
 
@@ -312,8 +311,8 @@ namespace mame
             map.op(0x1680, 0x1680).w(earom_control_w);
             map.op(0x1700, 0x173f).r(earom_read);
             map.op(0x1800, 0x1800).w(irq_ack_w);
-            map.op(0x1c00, 0x1c07).nopr().w("outlatch", (space, offset, data, mem_mask) => { ((addressable_latch_device)subdevice("outlatch")).write_d7(offset, data); });  //FUNC(ls259_device::write_d7));
-            map.op(0x2000, 0x2000).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x1c00, 0x1c07).nopr().w("outlatch", (offset, data) => { ((addressable_latch_device)subdevice("outlatch")).write_d7(offset, data); });  //FUNC(ls259_device::write_d7));
+            map.op(0x2000, 0x2000).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x2000, 0x3fff).rom();
         }
 
@@ -591,11 +590,11 @@ namespace mame
         static centiped m_centiped = new centiped();
 
 
-        static device_t device_creator_centipede(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new centiped_state(mconfig, type, tag); }
+        static device_t device_creator_centipede(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new centiped_state(mconfig, (device_type)type, tag); }
 
 
         // Centipede, Millipede, and clones
         //                                                          creator,                  rom           YEAR,   NAME,       PARENT,  MACHINE,                           INPUT,                                 INIT,                      MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_centipede = GAME( device_creator_centipede, rom_centiped, "1980", "centiped", null,    centiped.centiped_state_centiped,  m_centiped.construct_ioport_centiped,  driver_device.empty_init,  ROT270, "Atari", "Centipede (revision 4)", MACHINE_SUPPORTS_SAVE );  /* 1 Player Only with Timer Options */
+        public static readonly game_driver driver_centipede = GAME( device_creator_centipede, rom_centiped, "1980", "centiped", "0",     centiped.centiped_state_centiped,  m_centiped.construct_ioport_centiped,  driver_device.empty_init,  ROT270, "Atari", "Centipede (revision 4)", MACHINE_SUPPORTS_SAVE );  /* 1 Player Only with Timer Options */
     }
 }

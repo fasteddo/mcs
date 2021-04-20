@@ -5,12 +5,12 @@ using System;
 using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;
-using device_type = mame.emu.detail.device_type_impl_base;
 using stream_sample_t = System.Int32;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -19,7 +19,7 @@ namespace mame
                                   //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(MSM5205, msm5205_device, "msm5205", "OKI MSM5205 ADPCM")
-        static device_t device_creator_msm5205_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new msm5205_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_msm5205_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new msm5205_device(mconfig, tag, owner, clock); }
         public static readonly device_type MSM5205 = DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "OKI MSM5205 ADPCM");
 
 
@@ -27,7 +27,7 @@ namespace mame
         {
             public device_sound_interface_msm5205(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((msm5205_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((msm5205_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
         }
 
 
@@ -111,7 +111,6 @@ namespace mame
 
 
         // reset signal should keep for 2cycle of VCLK
-        //WRITE_LINE_MEMBER(msm5205_device::reset_w)
         public void reset_w(int state)
         {
             m_reset = state != 0;
@@ -122,7 +121,7 @@ namespace mame
         /*
          *    Handle an update of the data to the chip
          */
-        public void write_data(int data)
+        public void data_w(uint8_t data)
         {
             if (m_bitwidth == 4)
                 m_data = (u8)(data & 0x0f);
@@ -131,13 +130,10 @@ namespace mame
         }
 
 
-        //DECLARE_WRITE8_MEMBER(data_w) { write_data(data); }
-
-
         // VCLK slave mode option
         // if VCLK and reset or data is changed at the same time,
         // call vclk_w after data_w and reset_w.
-        //DECLARE_WRITE_LINE_MEMBER(vclk_w);
+        //void vclk_w(int state);
 
 
         // option , selected pin selector
@@ -167,8 +163,8 @@ namespace mame
         }
 
 
-        //DECLARE_WRITE_LINE_MEMBER(s1_w);
-        //DECLARE_WRITE_LINE_MEMBER(s2_w);
+        //void s1_w(int state);
+        //void s2_w(int state);
 
 
         // device-level overrides
@@ -186,14 +182,14 @@ namespace mame
             m_capture_timer = timer_alloc(TIMER_ADPCM_CAPTURE);
 
             /* register for save states */
-            save_item(m_data, "m_data");
-            save_item(m_vck, "m_vck");
-            save_item(m_reset, "m_reset");
-            save_item(m_s1, "m_s1");
-            save_item(m_s2, "m_s2");
-            save_item(m_bitwidth, "m_bitwidth");
-            save_item(m_signal, "m_signal");
-            save_item(m_step, "m_step");
+            save_item(NAME(new { m_data }));
+            save_item(NAME(new { m_vck }));
+            save_item(NAME(new { m_reset }));
+            save_item(NAME(new { m_s1 }));
+            save_item(NAME(new { m_s2 }));
+            save_item(NAME(new { m_bitwidth }));
+            save_item(NAME(new { m_signal }));
+            save_item(NAME(new { m_step }));
         }
 
 
@@ -290,9 +286,9 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
-            ListPointer<stream_sample_t> buffer = outputs[0];
+            Pointer<stream_sample_t> buffer = new Pointer<stream_sample_t>(outputs[0]);
 
             /* if this voice is active */
             if (m_signal != 0)

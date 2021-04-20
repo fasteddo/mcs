@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using char32_t = System.UInt32;
 using cleanup_callback_vector = mame.std.vector<mame.ui.menu.cleanup_callback>;
 using global_state_map = mame.std.map<mame.running_machine, mame.ui.menu.global_state>;
-using osd_ticks_t = System.UInt64;
 using texture_ptr = mame.render_texture;
 using uint32_t = System.UInt32;
 
@@ -38,6 +37,38 @@ namespace mame.ui
         const uint32_t FLAG_UI_HEADING     = 1 << 7;
         const uint32_t FLAG_COLOR_BOX      = 1 << 8;
         //}
+
+
+        protected enum menu_options
+        {
+            INPUT_GROUPS,
+            INPUT_SPECIFIC,
+            SETTINGS_DIP_SWITCHES,
+            SETTINGS_DRIVER_CONFIG,
+            ANALOG,
+            BOOKKEEPING,
+            GAME_INFO,
+            IMAGE_MENU_IMAGE_INFO,
+            IMAGE_MENU_FILE_MANAGER,
+            TAPE_CONTROL,
+            SLOT_DEVICES,
+            NETWORK_DEVICES,
+            KEYBOARD_MODE,
+            SLIDERS,
+            VIDEO_TARGETS,
+            VIDEO_OPTIONS,
+            CROSSHAIR,
+            CHEAT,
+            PLUGINS,
+            SELECT_GAME,
+            BIOS_SELECTION,
+            BARCODE_READ,
+            PTY_INFO,
+            EXTERNAL_DATS,
+            ADD_FAVORITE,
+            REMOVE_FAVORITE,
+            QUIT_GAME,
+        }
 
 
         // flags to pass to process
@@ -317,8 +348,8 @@ namespace mame.ui
 
             // allocate a new item and populate it
             menu_item pitem = new menu_item();
-            pitem.text = string.Copy(text);
-            pitem.subtext = string.Copy(subtext);
+            pitem.text = text;
+            pitem.subtext = subtext;
             pitem.flags = flags;
             pitem.ref_ = ref_;
             pitem.type = type;

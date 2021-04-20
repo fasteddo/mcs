@@ -18,22 +18,18 @@ namespace mame.plib
         Element m_object;
 
 
-        pqentry_t() { m_exec_time = new netlist_time();  m_object = default(Element); }  //constexpr pqentry_t() noexcept : m_exec_time(), m_object(nullptr) { }
+        public pqentry_t() { m_exec_time = new netlist_time();  m_object = default(Element); }  //constexpr pqentry_t() noexcept : m_exec_time(), m_object(nullptr) { }
         public pqentry_t(netlist_time t, Element o) { m_exec_time = t;  m_object = o; }  //constexpr pqentry_t(const Time &t, const Element &o) noexcept : m_exec_time(t), m_object(o) { }
         //~pqentry_t() = default;
         //constexpr pqentry_t(const pqentry_t &e) noexcept = default;
         //constexpr pqentry_t(pqentry_t &&e) = default;
 
 
-        //inline bool operator ==(const pqentry_t &rhs) const noexcept
-        //{
-        //    return m_object == rhs.m_object;
-        //}
+        public static bool operator ==(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_object.Equals(rhs.m_object); }
+        public static bool operator !=(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return !lhs.m_object.Equals(rhs.m_object); }
 
-        //inline bool operator ==(const Element &rhs) const noexcept
-        //{
-        //    return m_object == rhs;
-        //}
+        public static bool operator ==(pqentry_t<Element, Time> lhs, Element rhs) { return lhs.m_object.Equals(rhs); }
+        public static bool operator !=(pqentry_t<Element, Time> lhs, Element rhs) { return !lhs.m_object.Equals(rhs); }
 
         //inline bool operator <=(const pqentry_t &rhs) const noexcept
         //{
@@ -82,6 +78,8 @@ namespace mame.plib
 
 
             m_list = new std.vector<pqentry_t<netlist.detail.net_t, netlist_time>>(list_size);
+            for (int i = 0; i < list_size; i++)
+                m_list[i] = new pqentry_t<netlist.detail.net_t, netlist_time>();
 
 
             clear();
@@ -91,18 +89,21 @@ namespace mame.plib
         //constexpr std::size_t capacity() const noexcept { return m_list.capacity() - 1; }
         //constexpr bool empty() const noexcept { return (m_end == &m_list[1]); }
 
-        public void push(bool KEEPSTAT, pqentry_t<netlist.detail.net_t, netlist_time> e)
+
+        //template<bool KEEPSTAT>
+        public void push(bool KEEPSTAT, pqentry_t<netlist.detail.net_t, netlist_time> e)  //void push(T && e) noexcept
         {
             /* Lock */
             lock (m_lock)  //lock_guard_type lck(m_lock);
             {
-                int iIdx = m_endIdx;  //T * i(m_end-1);
-                // handled in the insert below
-                //*i = std::move(e);
+                int iIdx = m_endIdx++;  //T * i(m_end++);
+                m_list[iIdx] = e;  //*i = std::move(e);
                 for (; m_list[iIdx - 1] < m_list[iIdx]; --iIdx)  //for (; *(i-1) < *i; --i)
                 {
-                    // handled in the insert below
                     //std::swap(*(i-1), *(i));
+                    var temp = m_list[iIdx - 1];
+                    m_list[iIdx - 1] = m_list[iIdx];
+                    m_list[iIdx] = temp;
 
                     //throw new emu_unimplemented();
 #if false
@@ -110,9 +111,6 @@ namespace mame.plib
                         m_prof_sortmove.inc();
 #endif
                 }
-
-                m_list.Insert(iIdx, e);  //*i = std::move(e);
-                ++m_endIdx;
 
                 //throw new emu_unimplemented();
 #if false
@@ -123,50 +121,34 @@ namespace mame.plib
         }
 
 
-        //asdfasdfapublic void push_nostats(pqentry_t<netlist.detail.net_t, netlist_time> e)  //void push_nostats(T && e) noexcept
-        //{
-        //    /* Lock */
-        //    lock (m_lock)  //lock_guard_type lck(m_lock);
-        //    {
-//#if 1 //
-        //        //T * i(m_end-1);
-        //        //for (; QueueOp::less(*(i), e); --i)
-        //        //{
-        //        //    *(i+1) = *(i);
-        //        //}
-        //        //*(i+1) = std::move(e);
-        //        //++m_end;
-//#else //
-        //        //T * i(m_end++);
-        //        //while (QueueOp::less(*(--i), e))
-        //        //{
-        //        //    *(i+1) = *(i);
-        //        //}
-        //        //*(i+1) = std::move(e);
-//#endif//
-        //
-        //        int iIdx = m_endIdx;  //T * i(m_end-1);
-        //        m_list.Insert(iIdx, e);  //*i = std::move(e);
-        //        ++m_endIdx;
-        //    }
-        //}
-
-
         public pqentry_t<netlist.detail.net_t, netlist_time> pop() { return m_list[--m_endIdx]; }  //{ return *(--m_end); }
         public pqentry_t<netlist.detail.net_t, netlist_time> top() { return m_list[m_endIdx - 1]; }  //{ return *(m_end-1); }
 
 
         //template <bool KEEPSTAT, class R>
-        public void remove<R>(bool KEEPSTAT, R elem)
+        public void remove(bool KEEPSTAT, netlist.detail.net_t elem)  //void remove(const R &elem) noexcept
         {
-            throw new emu_unimplemented();
+            // Lock
+            lock (m_lock)  //lock_guard_type lck(m_lock);
+            {
+                //throw new emu_unimplemented();
+#if false
+                if (KEEPSTAT)
+                    m_prof_remove.inc();
+#endif
+
+                for (int iIdx = m_endIdx - 1; m_list[iIdx] > m_list[0]; --iIdx)  //for (T * i = m_end - 1; i > &m_list[0]; --i)
+                {
+                    // == operator ignores time!
+                    if (m_list[iIdx] == elem)  //if (*i == elem)
+                    {
+                        m_list.CopyTo(iIdx + 1, m_list, iIdx, m_endIdx-- - (iIdx + 1));  //std::copy(i+1, m_end--, i);
+                        return;
+                    }
+                }
+            }
         }
 
-        //removeme asdfasd//template <class R>
-        //public void remove_nostats<R>(R elem)
-        //{
-        //    throw new emu_unimplemented();
-        //}
 
         //void retime(const T &elem) noexcept
         //{

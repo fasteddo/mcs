@@ -17,7 +17,7 @@ using u64 = System.UInt64;
 namespace mame
 {
     //typedef delegate<void (sound_stream &, stream_sample_t **inputs, stream_sample_t **outputs, int samples)> stream_update_delegate;
-    public delegate void stream_update_delegate(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples);
+    public delegate void stream_update_delegate(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples);
 
 
     public static class sound_global
@@ -115,14 +115,14 @@ namespace mame
 
         // input information
         std.vector<stream_input> m_input = new std.vector<stream_input>();              // list of streams we directly depend upon
-        ListPointer<stream_sample_t> [] m_input_array;  //std::vector<stream_sample_t *> m_input_array;   // array of inputs for passing to the callback
+        Pointer<stream_sample_t> [] m_input_array;  //std::vector<stream_sample_t *> m_input_array;   // array of inputs for passing to the callback
 
         // resample buffer information
         u32 m_resample_bufalloc;          // allocated size of each resample buffer
 
         // output information
         std.vector<stream_output> m_output = new std.vector<stream_output>();            // list of streams which directly depend upon us
-        ListPointer<stream_sample_t> [] m_output_array;  //std::vector<stream_sample_t *> m_output_array;  // array of outputs for passing to the callback
+        Pointer<stream_sample_t> [] m_output_array;  //std::vector<stream_sample_t *> m_output_array;  // array of outputs for passing to the callback
 
         // output buffer information
         u32 m_output_bufalloc;            // allocated size of each output buffer
@@ -148,11 +148,11 @@ namespace mame
             m_max_samples_per_update = 0;
             m_input = new std.vector<stream_input>();  //(inputs)
             for (int i = 0; i < inputs; i++) m_input.Add(new stream_input());
-            m_input_array = new ListPointer<stream_sample_t>[inputs];
+            m_input_array = new Pointer<stream_sample_t>[inputs];
             m_resample_bufalloc = 0;
             m_output = new std.vector<stream_output>();  //(outputs)
             for (int i = 0; i < outputs; i++) m_output.Add(new stream_output());
-            m_output_array = new ListPointer<stream_sample_t>[outputs];
+            m_output_array = new Pointer<stream_sample_t>[outputs];
             m_output_bufalloc = 0;
             m_output_sampindex = 0;
             m_output_update_sampindex = 0;
@@ -297,8 +297,8 @@ namespace mame
 
             //throw new emu_unimplemented();
 #if false
-            osdcomm_global.assert(m_output_sampindex - m_output_base_sampindex >= 0);
-            osdcomm_global.assert(update_sampindex - m_output_base_sampindex <= m_output_bufalloc);
+            assert(m_output_sampindex - m_output_base_sampindex >= 0);
+            assert(update_sampindex - m_output_base_sampindex <= m_output_bufalloc);
 #endif
 
             generate_samples(update_sampindex - m_output_sampindex);
@@ -313,14 +313,14 @@ namespace mame
         //  the output buffer and the number of samples
         //  since the last global update
         //-------------------------------------------------
-        public ListPointer<stream_sample_t> output_since_last_update(int outputnum, out int numsamples)
+        public Pointer<stream_sample_t> output_since_last_update(int outputnum, out int numsamples)
         {
             // force an update on the stream
             update();
 
             // compute the number of samples and a pointer to the output buffer
             numsamples = m_output_sampindex - m_output_update_sampindex;
-            return new ListPointer<stream_sample_t>(m_output[outputnum].m_buffer, m_output_update_sampindex - m_output_base_sampindex);  // &m_output[outputnum].m_buffer[m_output_update_sampindex - m_output_base_sampindex];
+            return new Pointer<stream_sample_t>(m_output[outputnum].m_buffer, m_output_update_sampindex - m_output_base_sampindex);  // &m_output[outputnum].m_buffer[m_output_update_sampindex - m_output_base_sampindex];
         }
 
 
@@ -390,8 +390,8 @@ namespace mame
                         for (int outputnum = 0; outputnum < m_output.size(); outputnum++)
                         {
                             stream_output output = m_output[outputnum];
-                            //memmove(&output.m_buffer[0], &output.m_buffer[samples_to_lose], sizeof(output.m_buffer[0]) * (output_bufindex - samples_to_lose));
-                            output.m_buffer.copy(0, samples_to_lose, output.m_buffer, output_bufindex - samples_to_lose);  // TODO: not sure if there's supposed to be overlap here
+                            // TODO: not sure if there's supposed to be overlap here
+                            memmove(new Pointer<stream_sample_t>(output.m_buffer), new Pointer<stream_sample_t>(output.m_buffer, samples_to_lose), (UInt32)(output_bufindex - samples_to_lose));  //memmove(&output.m_buffer[0], &output.m_buffer[samples_to_lose], sizeof(output.m_buffer[0]) * (output_bufindex - samples_to_lose));
                         }
                     }
 
@@ -439,7 +439,7 @@ namespace mame
                 for (int outputnum = 0; outputnum < m_output.size(); outputnum++)  // for (auto & elem : m_output)
                 {
                     var elem = m_output[outputnum];
-                    std.fill_n(elem.m_buffer, m_max_samples_per_update, 0);  //std::fill_n(&elem.m_buffer[0], m_max_samples_per_update, 0);
+                    std.fill_n(elem.m_buffer, m_max_samples_per_update, 0);
                 }
             }
         }
@@ -609,8 +609,8 @@ namespace mame
         //-------------------------------------------------
         void generate_samples(int samples)
         {
-            ListPointer<stream_sample_t> [] inputs = null;  //stream_sample_t **inputs = nullptr;
-            ListPointer<stream_sample_t> [] outputs = null;  //stream_sample_t **outputs = nullptr;
+            Pointer<stream_sample_t> [] inputs = null;  //stream_sample_t **inputs = nullptr;
+            Pointer<stream_sample_t> [] outputs = null;  //stream_sample_t **outputs = nullptr;
 
             sound_global.VPRINTF("generate_samples({0}, {1})\n", this, samples);
             assert(samples > 0);
@@ -636,7 +636,7 @@ namespace mame
             for (int outputnum = 0; outputnum < m_output.size(); outputnum++)
             {
                 stream_output output = m_output[outputnum];
-                m_output_array[outputnum] = new ListPointer<stream_sample_t>(output.m_buffer, m_output_sampindex - m_output_base_sampindex);  // m_output_array[outputnum] = &output.m_buffer[m_output_sampindex - m_output_base_sampindex];
+                m_output_array[outputnum] = new Pointer<stream_sample_t>(output.m_buffer, m_output_sampindex - m_output_base_sampindex);  // m_output_array[outputnum] = &output.m_buffer[m_output_sampindex - m_output_base_sampindex];
             }
 
             if (!m_output.empty())
@@ -654,14 +654,14 @@ namespace mame
         //  generate_resampled_data - generate the
         //  resample buffer for a given input
         //-------------------------------------------------
-        ListPointer<stream_sample_t> generate_resampled_data(stream_input input, UInt32 numsamples)
+        Pointer<stream_sample_t> generate_resampled_data(stream_input input, UInt32 numsamples)
         {
             // if we don't have an output to pull data from, generate silence
-            ListPointer<stream_sample_t> dest = new ListPointer<stream_sample_t>(input.m_resample);  // stream_sample_t *dest = input.m_resample;
+            Pointer<stream_sample_t> dest = new Pointer<stream_sample_t>(input.m_resample);  // stream_sample_t *dest = input.m_resample;
             if (input.m_source == null || input.m_source.m_stream.m_attoseconds_per_sample == 0)
             {
                 std.fill_n(dest, (int)numsamples, 0);
-                return new ListPointer<stream_sample_t>(input.m_resample);
+                return new Pointer<stream_sample_t>(input.m_resample);
             }
 
             // grab data from the output
@@ -682,7 +682,7 @@ namespace mame
 
             // compute a source pointer to the first sample
             assert(basesample >= input_stream.m_output_base_sampindex);
-            ListPointer<stream_sample_t> source = new ListPointer<stream_sample_t>(output.m_buffer, basesample - input_stream.m_output_base_sampindex);  // stream_sample_t *source = &output.m_buffer[basesample - input_stream.m_output_base_sampindex];
+            Pointer<stream_sample_t> source = new Pointer<stream_sample_t>(output.m_buffer, basesample - input_stream.m_output_base_sampindex);  // stream_sample_t *source = &output.m_buffer[basesample - input_stream.m_output_base_sampindex];
 
             // determine the current fraction of a sample, expressed as a fraction of FRAC_ONE
             // (Note: this formula is valid as long as input_stream.m_attoseconds_per_sample signficantly exceeds FRAC_ONE > attoseconds = 4.2E-12 s)
@@ -771,7 +771,7 @@ namespace mame
                 }
             }
 
-            return new ListPointer<stream_sample_t>(input.m_resample);
+            return new Pointer<stream_sample_t>(input.m_resample);
         }
 
         void sync_update(object o, int param)  //(void *, INT32)
@@ -1078,7 +1078,7 @@ namespace mame
             // now downmix the final result
             u32 finalmix_step = (UInt32)machine().video().speed_factor();
             u32 finalmix_offset = 0;
-            ListPointer<s16> finalmix = new ListPointer<s16>(m_finalmix);  //s16 *finalmix = &m_finalmix[0];
+            Pointer<s16> finalmix = new Pointer<s16>(m_finalmix);  //s16 *finalmix = &m_finalmix[0];
             int sample;
             for (sample = (int)m_finalmix_leftover; sample < m_samples_this_update * 1000; sample += (int)finalmix_step)
             {

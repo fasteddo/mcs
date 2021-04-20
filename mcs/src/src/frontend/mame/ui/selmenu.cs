@@ -177,12 +177,12 @@ namespace mame.ui
                 m_snapx_texture = render.texture_alloc(render_texture.hq_scale);  //m_snapx_texture.reset(render.texture_alloc(render_texture::hq_scale));
 
                 //std::memcpy(&m_no_avail_bitmap.pix32(0), no_avail_bmp, 256 * 256 * sizeof(uint32_t));
-                UInt32BufferPointer m_no_avail_bitmapBuf = m_no_avail_bitmap.pix32(0);
+                PointerU32 m_no_avail_bitmapBuf = m_no_avail_bitmap.pix32(0);
                 for (int i = 0; i < 256 * 256; i++)  // sizeof(UInt32)
                     m_no_avail_bitmapBuf[i] = defimg_global.no_avail_bmp[i];
 
                 //std::memcpy(&m_star_bitmap.pix32(0), favorite_star_bmp, 32 * 32 * sizeof(uint32_t));
-                UInt32BufferPointer m_star_bitmapBuf = m_star_bitmap.pix32(0);
+                PointerU32 m_star_bitmapBuf = m_star_bitmap.pix32(0);
                 for (int i = 0; i < 32 * 32; i++)  // sizeof(UInt32)
                     m_star_bitmapBuf[i] = starimg_global.favorite_star_bmp[i];
 
@@ -202,7 +202,7 @@ namespace mame.ui
                     m_sw_toolbar_texture.emplace_back(render.texture_alloc());  //m_sw_toolbar_texture.emplace_back(render.texture_alloc(), render);
 
                     //std::memcpy(&m_toolbar_bitmap.back().pix32(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
-                    UInt32BufferPointer m_toolbar_bitmapBuf = m_toolbar_bitmap.back().pix32(0);
+                    PointerU32 m_toolbar_bitmapBuf = m_toolbar_bitmap.back().pix32(0);
                     for (int idx = 0; idx < 32 * 32; idx++)  // sizeof(uint32_t)
                         m_toolbar_bitmapBuf[idx] = toolbar_global.toolbar_bitmap_bmp[i, idx];
 
@@ -214,7 +214,7 @@ namespace mame.ui
                     if ((i == 0U) || (i == 2U))
                     {
                         //std::memcpy(&m_sw_toolbar_bitmap.back().pix32(0), toolbar_bitmap_bmp[i], 32 * 32 * sizeof(uint32_t));
-                        UInt32BufferPointer m_sw_toolbar_bitmapBuf = m_sw_toolbar_bitmap.back().pix32(0);
+                        PointerU32 m_sw_toolbar_bitmapBuf = m_sw_toolbar_bitmap.back().pix32(0);
                         for (int idx = 0; idx < 32 * 32; idx++)  // sizeof(uint32_t)
                             m_sw_toolbar_bitmapBuf[idx] = toolbar_global.toolbar_bitmap_bmp[i, idx];
 
@@ -2313,7 +2313,7 @@ namespace mame.ui
             custom_render(get_selection_ref(), get_customtop(), get_custombottom(), x1, y1, x2, y2);
 
             // return the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
-            m_visible_items = m_visible_lines - (top_line != 0 ? 1 : 0) - (top_line + (m_visible_lines != m_available_items ? 1 : 0));
+            m_visible_items = m_visible_lines - (top_line != 0 ? 1 : 0) - ((top_line + m_visible_lines) != m_available_items ? 1 : 0);
 
             // noinput
             if (noinput)
@@ -2563,7 +2563,7 @@ namespace mame.ui
                     if (!tmp_bitmap.valid())
                     {
                         // set clone status
-                        bool cloneof = string.IsNullOrEmpty(driver.parent) ? false : strcmp(driver.parent, "0") != 0;
+                        bool cloneof = strcmp(driver.parent, "0") != 0;
                         if (cloneof)
                         {
                             int cx = driver_list.find(driver.parent);

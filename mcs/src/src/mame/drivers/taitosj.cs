@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using ioport_value = System.UInt32;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
@@ -77,7 +76,7 @@ namespace mame
             map.op(0xd40b, 0xd40b).mirror(0x00f0).portr("IN2");
             map.op(0xd40c, 0xd40c).mirror(0x00f0).portr("IN3");          /* Service */
             map.op(0xd40d, 0xd40d).mirror(0x00f0).portr("IN4");
-            map.op(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay1, (space, offset, data, mem_mask) => { m_ay1.target.address_data_w(offset, data); });  //m_ay1, FUNC(ay8910_device::address_data_w));
+            map.op(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay1, (offset, data) => { m_ay1.target.address_data_w(offset, data); });  //m_ay1, FUNC(ay8910_device::address_data_w));
             map.op(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay1, () => { return m_ay1.target.data_r(); });  //m_ay1, FUNC(ay8910_device::data_r));   /* DSW2 and DSW3 */
             map.op(0xd500, 0xd505).mirror(0x00f0).writeonly().share("scroll");
             map.op(0xd506, 0xd507).mirror(0x00f0).writeonly().share("colorbank");
@@ -85,7 +84,7 @@ namespace mame
             map.op(0xd509, 0xd50a).mirror(0x00f0).writeonly().share("gfxpointer");
             map.op(0xd50b, 0xd50b).mirror(0x00f0).w(soundlatch_w);
             map.op(0xd50c, 0xd50c).mirror(0x00f0).w(sound_semaphore2_w);
-            map.op(0xd50d, 0xd50d).mirror(0x00f0).w("watchdog", (space, offset, data, mem_mask) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0xd50d, 0xd50d).mirror(0x00f0).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0xd50e, 0xd50e).mirror(0x00f0).w(taitosj_bankswitch_w);
             map.op(0xd50f, 0xd50f).mirror(0x00f0).nopw();
             map.op(0xd600, 0xd600).mirror(0x00ff).writeonly().share("video_mode");
@@ -763,11 +762,11 @@ namespace mame
 
         void init_common()
         {
-            save_item(m_soundlatch_data, "m_soundlatch_data");
-            save_item(m_soundlatch_flag, "m_soundlatch_flag");
-            save_item(m_sound_semaphore2, "m_sound_semaphore2");
-            save_item(m_input_port_4_f0, "m_input_port_4_f0");
-            save_item(m_kikstart_gears, "m_kikstart_gears");
+            save_item(NAME(new { m_soundlatch_data }));
+            save_item(NAME(new { m_soundlatch_flag }));
+            save_item(NAME(new { m_sound_semaphore2 }));
+            save_item(NAME(new { m_input_port_4_f0 }));
+            save_item(NAME(new { m_kikstart_gears }));
 
             machine().add_notifier(machine_notification.MACHINE_NOTIFY_RESET, reset_common);
         }
@@ -790,14 +789,14 @@ namespace mame
         static taitosj m_taitosj = new taitosj();
 
 
-        static device_t device_creator_junglek(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, type, tag); }
-        static device_t device_creator_jungleh(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, type, tag); }
-        static device_t device_creator_elevator(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, type, tag); }
+        static device_t device_creator_junglek(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_jungleh(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_elevator(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, (device_type)type, tag); }
 
 
         //                                                                                                           rom          parent      machine               inp                                  init
-        public static readonly game_driver driver_junglek  = GAME( device_creator_junglek,   rom_junglek,   "1982",  "junglek",   null,       taitosj_state_nomcu,  m_taitosj.construct_ioport_junglek,  taitosj_state_init_taitosj, ROT180, "Taito Corporation", "Jungle King (Japan)", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_junglek  = GAME( device_creator_junglek,   rom_junglek,   "1982",  "junglek",   "0",        taitosj_state_nomcu,  m_taitosj.construct_ioport_junglek,  taitosj_state_init_taitosj, ROT180, "Taito Corporation", "Jungle King (Japan)", MACHINE_SUPPORTS_SAVE );
         public static readonly game_driver driver_jungleh  = GAME( device_creator_jungleh,   rom_jungleh,   "1982",  "jungleh",   "junglek",  taitosj_state_nomcu,  m_taitosj.construct_ioport_junglek,  taitosj_state_init_taitosj, ROT180, "Taito America Corporation", "Jungle Hunt (US)", MACHINE_SUPPORTS_SAVE );
-        public static readonly game_driver driver_elevator = GAME( device_creator_elevator,  rom_elevator,  "1983",  "elevator",  null,       taitosj_state_mcu,    m_taitosj.construct_ioport_elevator, taitosj_state_init_taitosj, ROT0,   "Taito Corporation", "Elevator Action (5 pcb version, 1.1)", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_elevator = GAME( device_creator_elevator,  rom_elevator,  "1983",  "elevator",  "0",        taitosj_state_mcu,    m_taitosj.construct_ioport_elevator, taitosj_state_init_taitosj, ROT0,   "Taito Corporation", "Elevator Action (5 pcb version, 1.1)", MACHINE_SUPPORTS_SAVE );
     }
 }

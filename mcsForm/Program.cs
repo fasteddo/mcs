@@ -1,22 +1,28 @@
 ﻿// license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using mame;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
+using mame;
 
 
-namespace mameForm
+namespace mcsForm
 {
     static class Program
     {
         [STAThread]
         static void Main()
         {
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+
+            System.Diagnostics.Trace.WriteLine(string.Format("Environment.OSVersion.Platform: {0}", Environment.OSVersion.Platform));
+            System.Diagnostics.Trace.WriteLine(string.Format("Environment.OSVersion.VersionString: {0}", Environment.OSVersion.VersionString));
+            System.Diagnostics.Trace.WriteLine(string.Format("RuntimeInformation.FrameworkDescription: {0}", System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription));
 
 
             Form1 form = new Form1();
@@ -40,8 +46,8 @@ namespace mameForm
             //string gamename = "xevious";
             //string gamename = "digdug";
             //string gamename = "1942";
-            //string errorstring;
-            //options.set_value(emu_options.OPTION_SYSTEMNAME, gamename, OPTION_PRIORITY.OPTION_PRIORITY_MAXIMUM, out errorstring);
+            //string gamename = "paperboy";
+            //options.set_value(emu_options.OPTION_SYSTEMNAME, gamename, global_object.OPTION_PRIORITY_MAXIMUM);
 
             osdcore_global.set_osdcore(osdcore);
             osdcore_global.set_osdfile(osdfile);

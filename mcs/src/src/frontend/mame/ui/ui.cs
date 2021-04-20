@@ -343,7 +343,7 @@ namespace mame
             machine().add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit);
 
             // create mouse bitmap
-            UInt32BufferPointer dst = m_mouse_bitmap.pix32(0);  //uint32_t *dst = &m_mouse_bitmap.pix32(0);
+            PointerU32 dst = m_mouse_bitmap.pix32(0);  //uint32_t *dst = &m_mouse_bitmap.pix32(0);
             //memcpy(dst,mouse_bitmap,32*32*sizeof(UINT32));
             for (int i = 0; i < 32*32; i++)
                 dst[i] = ui_global.mouse_bitmap[i];
@@ -614,7 +614,7 @@ namespace mame
 
             // disable everything if we are using -str for 300 or fewer seconds, or if we're the empty driver,
             // or if we are debugging, or if there's no mame window to send inputs to
-            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0 || video_none)
+            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0 || video_none)
                 show_gameinfo = show_warnings = show_mandatory_fileman = false;
 
 #if EMSCRIPTEN
@@ -1460,7 +1460,7 @@ namespace mame
             }
 
             // if the on-screen display isn't up and the user has toggled it, turn it on
-            if ((machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
+            if ((machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
             {
                 //using namespace std::placeholders;
                 set_handler(ui_callback_type.MENU, ui.menu_sliders.ui_handler);  //, _1, std::ref_(*this)));

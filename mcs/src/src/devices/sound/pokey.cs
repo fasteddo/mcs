@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;
-using device_type = mame.emu.detail.device_type_impl_base;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;
 using stream_sample_t = System.Int32;
@@ -24,7 +23,7 @@ namespace mame
                                 //device_state_interface
     {
         //DEFINE_DEVICE_TYPE(POKEY, pokey_device, "pokey", "Atari C012294 POKEY")
-        static device_t device_creator_pokey_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pokey_device(mconfig, tag, owner, clock); }
+        static pokey_device device_creator_pokey_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pokey_device(mconfig, tag, owner, clock); }
         public static readonly device_type POKEY = DEFINE_DEVICE_TYPE(device_creator_pokey_device, "pokey", "Atari C012294 POKEY");
 
 
@@ -32,7 +31,7 @@ namespace mame
         {
             public device_sound_interface_pokey(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((pokey_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((pokey_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
         }
 
 
@@ -264,7 +263,7 @@ namespace mame
 
 
         // other internal states
-        intref m_icountRef = new intref();  //int m_icount;
+        intref m_icount = new intref();  //int m_icount;
 
 
         // internal state
@@ -282,7 +281,7 @@ namespace mame
         uint32_t m_p9;              /* poly9 index */
         uint32_t m_p17;             /* poly17 index */
 
-        devcb_read8.array<i8, devcb_read8> m_pot_r_cb;
+        devcb_read8.array<devcb_read8> m_pot_r_cb;
         devcb_read8 m_allpot_r_cb;
         devcb_read8 m_serin_r_cb;
         devcb_write8 m_serout_w_cb;
@@ -335,9 +334,9 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_pokey>();
 
 
-            m_icountRef.i = 0;  //m_icount = 0;
+            m_icount.i = 0;  //m_icount = 0;
             m_stream = null;
-            m_pot_r_cb = new devcb_read8.array<i8, devcb_read8>(this, () => { return new devcb_read8(this); });
+            m_pot_r_cb = new devcb_read8.array<devcb_read8>(8, this, () => { return new devcb_read8(this); });
             m_allpot_r_cb = new devcb_read8(this);
             m_serin_r_cb = new devcb_read8(this);
             m_serout_w_cb = new devcb_write8(this);
@@ -351,7 +350,11 @@ namespace mame
 
 
         //template <unsigned N> auto pot_r() { return m_pot_r_cb[N].bind(); }
-        //auto allpot_r() { return m_allpot_r_cb.bind(); }
+
+
+        public devcb_read.binder allpot_r() { return m_allpot_r_cb.bind(); }  //auto allpot_r() { return m_allpot_r_cb.bind(); }
+
+
         //auto serin_r() { return m_serin_r_cb.bind(); }
         //auto serout_w() { return m_serout_w_cb.bind(); }
 
@@ -583,7 +586,7 @@ namespace mame
             m_kbd_state = 0;
 
             /* reset more internal state */
-            std.fill(m_clock_cnt, 0);  //std::fill(std::begin(m_clock_cnt), std::end(m_clock_cnt), 0);
+            std.fill(m_clock_cnt, 0);
             std.fill<uint8_t>(m_POTx, 0);
             
             m_pot_r_cb.resolve_all();
@@ -611,27 +614,27 @@ namespace mame
 #endif
             }
 
-            save_item(m_clock_cnt, "m_clock_cnt");
-            save_item(m_p4, "m_p4");
-            save_item(m_p5, "m_p5");
-            save_item(m_p9, "m_p9");
-            save_item(m_p17, "m_p17");
+            save_item(NAME(new { m_clock_cnt }));
+            save_item(NAME(new { m_p4 }));
+            save_item(NAME(new { m_p5 }));
+            save_item(NAME(new { m_p9 }));
+            save_item(NAME(new { m_p17 }));
 
-            save_item(m_POTx, "m_POTx");
-            save_item(m_AUDCTL, "m_AUDCTL");
-            save_item(m_ALLPOT, "m_ALLPOT");
-            save_item(m_KBCODE, "m_KBCODE");
-            save_item(m_SERIN, "m_SERIN");
-            save_item(m_SEROUT, "m_SEROUT");
-            save_item(m_IRQST, "m_IRQST");
-            save_item(m_IRQEN, "m_IRQEN");
-            save_item(m_SKSTAT, "m_SKSTAT");
-            save_item(m_SKCTL, "m_SKCTL");
+            save_item(NAME(new { m_POTx }));
+            save_item(NAME(new { m_AUDCTL }));
+            save_item(NAME(new { m_ALLPOT }));
+            save_item(NAME(new { m_KBCODE }));
+            save_item(NAME(new { m_SERIN }));
+            save_item(NAME(new { m_SEROUT }));
+            save_item(NAME(new { m_IRQST }));
+            save_item(NAME(new { m_IRQEN }));
+            save_item(NAME(new { m_SKSTAT }));
+            save_item(NAME(new { m_SKCTL }));
 
-            save_item(m_pot_counter, "m_pot_counter");
-            save_item(m_kbd_cnt, "m_kbd_cnt");
-            save_item(m_kbd_latch, "m_kbd_latch");
-            save_item(m_kbd_state, "m_kbd_state");
+            save_item(NAME(new { m_pot_counter }));
+            save_item(NAME(new { m_kbd_cnt }));
+            save_item(NAME(new { m_kbd_latch }));
+            save_item(NAME(new { m_kbd_state }));
 
             // State support
 
@@ -654,7 +657,7 @@ namespace mame
             m_distate.state_add(SKCTL_C, "SKCTL", m_SKCTL);
 
             // set our instruction counter
-            set_icountptr(m_icountRef);
+            set_icountptr(m_icount);
         }
 
 
@@ -746,9 +749,9 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
-            var buffer = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t *buffer = outputs[0];
+            var buffer = new Pointer<stream_sample_t>(outputs[0]);  //stream_sample_t *buffer = outputs[0];
 
             if (m_output_type == output_type.LEGACY_LINEAR)
             {
@@ -836,14 +839,18 @@ namespace mame
         }
 
 
+        // device_execute_interface helpers
+        public void set_icountptr(intref icount) { execute().set_icountptr(icount); }
+
+
         // device_execute_interface overrides
         void device_execute_interface_execute_run()
         {
             do
             {
                 step_one_clock();
-                m_icountRef.i--;
-            } while (m_icountRef.i > 0);
+                m_icount.i--;
+            } while (m_icount.i > 0);
         }
 
 

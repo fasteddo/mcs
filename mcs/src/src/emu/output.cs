@@ -403,4 +403,5 @@ namespace mame
 
 
     //template <unsigned... N> using output_finder = output_manager::output_finder<void, N...>;
+    public class output_finder : output_manager.output_finder { public output_finder(int N, device_t device, string format, u32 start) : base(N, device, format, start) { } }
 }

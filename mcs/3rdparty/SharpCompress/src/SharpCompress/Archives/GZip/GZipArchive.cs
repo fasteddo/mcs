@@ -13,8 +13,6 @@ namespace SharpCompress.Archives.GZip
 {
     public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
     {
-#if !NO_FILE
-
         /// <summary>
         /// Constructor expects a filepath to an existing file.
         /// </summary>
@@ -22,7 +20,7 @@ namespace SharpCompress.Archives.GZip
         /// <param name="readerOptions"></param>
         public static GZipArchive Open(string filePath, ReaderOptions readerOptions = null)
         {
-            filePath.CheckNotNullOrEmpty("filePath");
+            filePath.CheckNotNullOrEmpty(nameof(filePath));
             return Open(new FileInfo(filePath), readerOptions ?? new ReaderOptions());
         }
 
@@ -33,10 +31,9 @@ namespace SharpCompress.Archives.GZip
         /// <param name="readerOptions"></param>
         public static GZipArchive Open(FileInfo fileInfo, ReaderOptions readerOptions = null)
         {
-            fileInfo.CheckNotNull("fileInfo");
+            fileInfo.CheckNotNull(nameof(fileInfo));
             return new GZipArchive(fileInfo, readerOptions ?? new ReaderOptions());
         }
-#endif
 
         /// <summary>
         /// Takes a seekable Stream as a source
@@ -45,7 +42,7 @@ namespace SharpCompress.Archives.GZip
         /// <param name="readerOptions"></param>
         public static GZipArchive Open(Stream stream, ReaderOptions readerOptions = null)
         {
-            stream.CheckNotNull("stream");
+            stream.CheckNotNull(nameof(stream));
             return new GZipArchive(stream, readerOptions ?? new ReaderOptions());
         }
 
@@ -53,8 +50,6 @@ namespace SharpCompress.Archives.GZip
         {
             return new GZipArchive();
         }
-
-#if !NO_FILE
 
         /// <summary>
         /// Constructor with a FileInfo object to an existing file.
@@ -100,7 +95,6 @@ namespace SharpCompress.Archives.GZip
                 SaveTo(stream, new WriterOptions(CompressionType.GZip));
             }
         }
-#endif
 
         public static bool IsGZipFile(Stream stream)
         {

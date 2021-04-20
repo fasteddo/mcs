@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
 
@@ -229,8 +228,8 @@ namespace mame
             EXTENDED_XOFFS,
             EXTENDED_YOFFS,
             0x8000,
-            new ListBase<u32>(bgcharlayout_xoffset),
-            new ListBase<u32>(bgcharlayout_yoffset)
+            new MemoryContainer<u32>(bgcharlayout_xoffset),
+            new MemoryContainer<u32>(bgcharlayout_yoffset)
         );
 
 
@@ -374,10 +373,10 @@ namespace mame
         static m52 m_m52 = new m52();
 
 
-        static device_t device_creator_m52(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_state(mconfig, type, tag); }
+        static device_t device_creator_m52(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_state(mconfig, (device_type)type, tag); }
 
 
         //                                                       creator,            rom          YEAR,   NAME,       PARENT,  MACHINE,            INPUT,                           INIT,                     MONITOR, COMPANY, FULLNAME,      FLAGS
-        public static readonly game_driver driver_mpatrol = GAME(device_creator_m52, rom_mpatrol, "1982", "mpatrol",  null,    m52.m52_state_m52,  m_m52.construct_ioport_mpatrol,  driver_device.empty_init, ROT0,    "Irem",  "Moon Patrol", MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_mpatrol = GAME(device_creator_m52, rom_mpatrol, "1982", "mpatrol",  "0",     m52.m52_state_m52,  m_m52.construct_ioport_mpatrol,  driver_device.empty_init, ROT0,    "Irem",  "Moon Patrol", MACHINE_SUPPORTS_SAVE);
     }
 }

@@ -47,16 +47,16 @@ namespace mame.netlist
         public struct solver_parameters_t
         {
             param_fp_t m_freq;
-            param_fp_t m_gs_sor;
+            public param_fp_t m_gs_sor;
             public param_enum_t_matrix_type_e m_method;
             public param_enum_t_matrix_fp_type_e m_fp_type;
-            param_fp_t m_reltol;
-            param_fp_t m_vntol;
-            param_fp_t m_accuracy;
+            public param_fp_t m_reltol;
+            public param_fp_t m_vntol;
+            public param_fp_t m_accuracy;
             public param_num_t_size_t m_nr_loops;
-            param_num_t_size_t m_gs_loops;
+            public param_num_t_size_t m_gs_loops;
             public param_fp_t m_gmin;
-            param_logic_t m_pivot;
+            public param_logic_t m_pivot;
             public param_fp_t m_nr_recalc_delay;
             public param_int_t m_parallel;
             public param_logic_t m_dynamic_ts;
@@ -64,7 +64,7 @@ namespace mame.netlist
             param_fp_t m_dynamic_min_ts;
             public param_enum_t_matrix_sort_type_e m_sort_type;
 
-            param_logic_t m_use_gabs;
+            public param_logic_t m_use_gabs;
 
             public nl_fptype m_min_timestep;
             public nl_fptype m_max_timestep;
@@ -103,7 +103,7 @@ namespace mame.netlist
 
                 {
                     m_min_timestep = m_dynamic_min_ts.op();
-                    m_max_timestep = netlist_time.from_fp(plib.pmath_global.reciprocal(m_freq.op())).as_fp();  //m_max_timestep = netlist_time::from_fp(plib::reciprocal(m_freq())).as_fp<decltype(m_max_timestep)>();
+                    m_max_timestep = netlist_time.from_fp(plib.pglobal.reciprocal(m_freq.op())).as_fp();  //m_max_timestep = netlist_time::from_fp(plib::reciprocal(m_freq())).as_fp<decltype(m_max_timestep)>();
 
 
                     if (m_dynamic_ts != null)
@@ -121,14 +121,14 @@ namespace mame.netlist
 
         public class terms_for_net_t
         {
-            public plib.aligned_vector<UInt32> m_nz;   //!< all non zero for multiplication
-            public plib.aligned_vector<UInt32> m_nzrd; //!< non zero right of the diagonal for elimination, may include RHS element
-            public plib.aligned_vector<UInt32> m_nzbd; //!< non zero below of the diagonal for elimination
+            public plib.aligned_vector<UInt32> m_nz = new plib.aligned_vector<UInt32>();   //!< all non zero for multiplication
+            public plib.aligned_vector<UInt32> m_nzrd = new plib.aligned_vector<UInt32>(); //!< non zero right of the diagonal for elimination, may include RHS element
+            public plib.aligned_vector<UInt32> m_nzbd = new plib.aligned_vector<UInt32>(); //!< non zero below of the diagonal for elimination
 
-            public plib.aligned_vector<int> m_connected_net_idx;
+            public plib.aligned_vector<int> m_connected_net_idx = new plib.aligned_vector<int>();
 
             analog_net_t m_net;
-            plib.aligned_vector<terminal_t> m_terms;
+            plib.aligned_vector<terminal_t> m_terms = new plib.aligned_vector<terminal_t>();
             UInt32 m_railstart;  //std::size_t m_railstart;
 
 
@@ -170,7 +170,7 @@ namespace mame.netlist
             public double getV() { return m_net.Q_Analog(); }  //FT getV() const noexcept { return static_cast<FT>(m_net->Q_Analog()); }
 
             //template <typename FT, typename = std::enable_if<std::is_floating_point<FT>::value, void>>
-            //void setV(FT v) noexcept { m_net->set_Q_Analog(static_cast<nl_fptype>(v)); }
+            public void setV(double v) { m_net.set_Q_Analog((nl_fptype)v); }  //void setV(FT v) noexcept { m_net->set_Q_Analog(static_cast<nl_fptype>(v)); }
 
 
             public bool isNet(analog_net_t net) { return net == m_net; }
@@ -185,14 +185,14 @@ namespace mame.netlist
             analog_net_t m_proxied_net; // only for proxy nets in analog input logic
 
 
-            public proxied_analog_output_t(core_device_t dev, string aname)
+            public proxied_analog_output_t(core_device_t dev, string aname, analog_net_t pnet)
                 : base(dev, aname)
             {
-                m_proxied_net = null;
+                m_proxied_net = pnet;
             }
 
 
-            public analog_net_t proxied_net { get { return m_proxied_net; } set { m_proxied_net = value; } }
+            public analog_net_t proxied_net() { return m_proxied_net; }
         }
 
 
@@ -202,19 +202,19 @@ namespace mame.netlist
             //template <typename T> using aligned_alloc = plib::aligned_allocator<T, PALIGN_VECTOROPT>;
 
 
-            plib.pmatrix2d_nl_fptype m_gonn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_gonn;
-            plib.pmatrix2d_nl_fptype m_gtn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_gtn;
-            plib.pmatrix2d_nl_fptype m_Idrn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_Idrn;
-            plib.pmatrix2d_listpointer_nl_fptype m_connected_net_Vn = new plib.pmatrix2d_listpointer_nl_fptype();  //plib::pmatrix2d<nl_fptype *, aligned_alloc<nl_fptype *>>    m_connected_net_Vn;
+            protected plib.pmatrix2d_nl_fptype m_gonn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_gonn;
+            protected plib.pmatrix2d_nl_fptype m_gtn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_gtn;
+            protected plib.pmatrix2d_nl_fptype m_Idrn = new plib.pmatrix2d_nl_fptype();  //plib::pmatrix2d<nl_fptype, aligned_alloc<nl_fptype>>        m_Idrn;
+            protected plib.pmatrix2d_listpointer_nl_fptype m_connected_net_Vn = new plib.pmatrix2d_listpointer_nl_fptype();  //plib::pmatrix2d<nl_fptype *, aligned_alloc<nl_fptype *>>    m_connected_net_Vn;
 
-            protected plib.aligned_vector<terms_for_net_t> m_terms;
+            protected plib.aligned_vector<terms_for_net_t> m_terms = new plib.aligned_vector<terms_for_net_t>();
 
             protected solver_parameters_t m_params;
 
-            state_var<UInt32> m_iterative_fail;
-            state_var<UInt32> m_iterative_total;
+            protected state_var<UInt32> m_iterative_fail;
+            protected state_var<UInt32> m_iterative_total;
 
-            plib.aligned_vector<terms_for_net_t> m_rails_temp;
+            plib.aligned_vector<terms_for_net_t> m_rails_temp = new plib.aligned_vector<terms_for_net_t>();
             std.vector<proxied_analog_output_t> m_inps = new std.vector<proxied_analog_output_t>();  //std::vector<unique_pool_ptr<proxied_analog_output_t>> m_inps;
 
             state_var<UInt32> m_stat_calculations;
@@ -306,7 +306,7 @@ namespace mame.netlist
             {
                 // avoid recursive calls. Inputs are updated outside this call
                 foreach (var inp in m_inps)
-                    inp.push(inp.proxied_net.Q_Analog());
+                    inp.push(inp.proxied_net().Q_Analog());
             }
 
 
@@ -338,9 +338,15 @@ namespace mame.netlist
 
             // netdevice functions
             //NETLIB_UPDATEI();
-            protected override void update()
+            public override void update()
             {
-                throw new emu_unimplemented();
+                netlist_time new_timestep = solve(exec().time());
+                update_inputs();
+
+                if (m_params.m_dynamic_ts.op() && has_timestep_devices() && new_timestep > netlist_time.zero())
+                {
+                    m_Q_sync.net().toggle_and_push_to_queue(new_timestep);
+                }
             }
 
 
@@ -427,7 +433,7 @@ namespace mame.netlist
                                     proxied_analog_output_t net_proxy_output = null;
                                     foreach (var input in m_inps)
                                     {
-                                        if (input.proxied_net == p.net())
+                                        if (input.proxied_net() == p.net())
                                         {
                                             net_proxy_output = input;
                                             break;
@@ -438,7 +444,7 @@ namespace mame.netlist
                                     {
                                         string nname = this.name() + "." + new plib.pfmt("m{0}").op(m_inps.size());
                                         nl_config_global.nl_assert(p.net().is_analog());
-                                        var net_proxy_output_u = new proxied_analog_output_t(this, nname);  //auto net_proxy_output_u = state().make_object<proxied_analog_output_t>(*this, nname, static_cast<analog_net_t *>(&p->net()));
+                                        var net_proxy_output_u = new proxied_analog_output_t(this, nname, (analog_net_t)p.net());  //auto net_proxy_output_u = state().make_object<proxied_analog_output_t>(*this, nname, static_cast<analog_net_t *>(&p->net()));
                                         net_proxy_output = net_proxy_output_u;
                                         m_inps.emplace_back(net_proxy_output_u);
                                     }
@@ -463,7 +469,106 @@ namespace mame.netlist
 
             void sort_terms(matrix_sort_type_e sort)
             {
-                throw new emu_unimplemented();
+                // Sort in descending order by number of connected matrix voltages.
+                // The idea is, that for Gauss-Seidel algo the first voltage computed
+                // depends on the greatest number of previous voltages thus taking into
+                // account the maximum amout of information.
+                //
+                // This actually improves performance on popeye slightly. Average
+                // GS computations reduce from 2.509 to 2.370
+                //
+                // Smallest to largest : 2.613
+                // Unsorted            : 2.509
+                // Largest to smallest : 2.370
+                //
+                // Sorting as a general matrix pre-conditioning is mentioned in
+                // literature but I have found no articles about Gauss Seidel.
+                //
+                // For Gaussian Elimination however increasing order is better suited.
+                // NOTE: Even better would be to sort on elements right of the matrix diagonal.
+                //
+
+                int iN = m_terms.size();
+
+                switch (sort)
+                {
+                    case matrix_sort_type_e.PREFER_BAND_MATRIX:
+                        {
+                            for (int k = 0; k < iN - 1; k++)
+                            {
+                                var pk = get_weight_around_diag(k, k);
+                                for (int i = k + 1; i < iN; i++)
+                                {
+                                    var pi = get_weight_around_diag(i, k);
+                                    if (pi < pk)
+                                    {
+                                        //std::swap(m_terms[i], m_terms[k]);
+                                        var temp = m_terms[i];
+                                        m_terms[i] = m_terms[k];
+                                        m_terms[k] = temp;
+
+                                        pk = get_weight_around_diag(k, k);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    case matrix_sort_type_e.PREFER_IDENTITY_TOP_LEFT:
+                        {
+                            for (int k = 0; k < iN - 1; k++)
+                            {
+                                var pk = get_left_right_of_diag(k, k);
+                                for (int i = k + 1; i < iN; i++)
+                                {
+                                    var pi = get_left_right_of_diag(i, k);
+                                    if (pi.first <= pk.first && pi.second >= pk.second)
+                                    {
+                                        //std::swap(m_terms[i], m_terms[k]);
+                                        var temp = m_terms[i];
+                                        m_terms[i] = m_terms[k];
+                                        m_terms[k] = temp;
+
+                                        pk = get_left_right_of_diag(k, k);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    case matrix_sort_type_e.ASCENDING:
+                    case matrix_sort_type_e.DESCENDING:
+                        {
+                            int sort_order = (sort == matrix_sort_type_e.DESCENDING ? 1 : -1);
+
+                            for (int k = 0; k < iN - 1; k++)
+                            {
+                                for (int i = k + 1; i < iN; i++)
+                                {
+                                    if (((int)m_terms[k].railstart() - (int)m_terms[i].railstart()) * sort_order < 0)
+                                    {
+                                        //std::swap(m_terms[i], m_terms[k]);
+                                        var temp = m_terms[i];
+                                        m_terms[i] = m_terms[k];
+                                        m_terms[k] = temp;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    case matrix_sort_type_e.NOSORT:
+                        break;
+                }
+
+                // rebuild
+                foreach (var term in m_terms)
+                {
+                    var other = term.m_connected_net_idx;  //int *other = term.m_connected_net_idx.data();
+                    for (UInt32 i = 0; i < term.count(); i++)
+                    {
+                        //FIXME: this is weird
+                        if (other[i] != -1)
+                            other[i] = get_net_idx(get_connected_net(term.terms()[i]));
+                    }
+                }
             }
 
 
@@ -494,8 +599,71 @@ namespace mame.netlist
             }
 
 
-            //std::pair<int, int> get_left_right_of_diag(std::size_t irow, std::size_t idiag);
-            //nl_fptype get_weight_around_diag(std::size_t row, std::size_t diag);
+            std.pair<int, int> get_left_right_of_diag(int irow, int idiag)
+            {
+                //
+                // return the maximum column left of the diagonal (-1 if no cols found)
+                // return the minimum column right of the diagonal (999999 if no cols found)
+                //
+
+                var row = (int)irow;
+                var diag = (int)idiag;
+
+                int colmax = -1;
+                int colmin = 999999;
+
+                var term = m_terms[irow];
+
+                for (UInt32 i = 0; i < term.count(); i++)
+                {
+                    var col = get_net_idx(get_connected_net(term.terms()[i]));
+                    if (col != -1)
+                    {
+                        if (col == row) col = diag;
+                        else if (col == diag) col = row;
+
+                        if (col > diag && col < colmin)
+                            colmin = col;
+                        else if (col < diag && col > colmax)
+                            colmax = col;
+                    }
+                }
+
+                return new std.pair<int, int>(colmax, colmin);
+            }
+
+
+            nl_fptype get_weight_around_diag(int row, int diag)
+            {
+                {
+                    //
+                    // return average absolute distance
+                    //
+
+                    std.vector<bool> touched = new std.vector<bool>(1024, false); // FIXME!
+
+                    nl_fptype weight = nlconst.zero();
+                    var term = m_terms[row];
+                    for (int i = 0; i < term.count(); i++)
+                    {
+                        var col = get_net_idx(get_connected_net(term.terms()[i]));
+                        if (col >= 0)
+                        {
+                            var colu = (UInt32)col;  //auto colu = static_cast<std::size_t>(col);
+                            if (!touched[colu])
+                            {
+                                if (colu == row) colu = (UInt32)diag;
+                                else if (colu == diag) colu = (UInt32)row;
+
+                                weight = weight + plib.pglobal.abs((nl_fptype)colu - (nl_fptype)diag);
+                                touched[colu] = true;
+                            }
+                        }
+                    }
+
+                    return weight;
+                }
+            }
 
 
             void add_term(UInt32 net_idx, terminal_t term)
@@ -603,7 +771,7 @@ namespace mame.netlist
                 //std::vector<std::vector<bool>> touched(iN, std::vector<bool>(iN));
                 std.vector<std.vector<bool>> touched = new std.vector<std.vector<bool>>();
                 for (int i = 0; i < iN; i++)
-                    touched.Add(new std.vector<bool>());
+                    touched.Add(new std.vector<bool>(iN));
 
                 for (UInt32 k = 0; k < iN; k++)
                 {
@@ -688,9 +856,9 @@ namespace mame.netlist
 
                     for (int i = 0; i < count; i++)
                     {
-                        m_terms[k].terms()[i].set_ptrs(new ListPointer<nl_fptype>(m_gtn.op(k), i), new ListPointer<nl_fptype>(m_gonn.op(k), i), new ListPointer<nl_fptype>(m_Idrn.op(k), i));  //m_terms[k].terms()[i]->set_ptrs(&m_gtn[k][i], &m_gonn[k][i], &m_Idrn[k][i]);
+                        m_terms[k].terms()[i].set_ptrs(new Pointer<nl_fptype>(m_gtn.op(k), i), new Pointer<nl_fptype>(m_gonn.op(k), i), new Pointer<nl_fptype>(m_Idrn.op(k), i));  //m_terms[k].terms()[i]->set_ptrs(&m_gtn[k][i], &m_gonn[k][i], &m_Idrn[k][i]);
                         //m_connected_net_Vn[k][i] = m_terms[k].terms()[i]->connected_terminal()->net().Q_Analog_state_ptr();
-                        m_connected_net_Vn.op(k)[i] = new ListPointer<nl_fptype>(get_connected_net(m_terms[k].terms()[i]).Q_Analog_state_ptr());  //m_connected_net_Vn[k][i] = get_connected_net(m_terms[k].terms()[i])->Q_Analog_state_ptr();
+                        m_connected_net_Vn.op(k)[i] = new Pointer<nl_fptype>(get_connected_net(m_terms[k].terms()[i]).Q_Analog_state_ptr());  //m_connected_net_Vn[k][i] = get_connected_net(m_terms[k].terms()[i])->Q_Analog_state_ptr();
                     }
                 }
             }
@@ -712,21 +880,21 @@ namespace mame.netlist
 
 
             // template parameters
-            int SIZE;
+            protected int SIZE;
 
 
-            //const std::size_t m_dim;
+            UInt32 m_dim;  //const std::size_t m_dim;
 
             //static constexpr const std::size_t SIZEABS = plib::parray<FT, SIZE>::SIZEABS();
             //static constexpr const std::size_t m_pitch_ABS = (((SIZEABS + 0) + 7) / 8) * 8;
 
             //PALIGNAS_VECTOROPT()
-            //plib::parray<FT, SIZE> m_new_V;
+            protected nl_fptype [] m_new_V;  //plib::parray<FT, SIZE> m_new_V;
             //PALIGNAS_VECTOROPT()
-            //plib::parray<FT, SIZE> m_RHS;
+            protected nl_fptype [] m_RHS;  //plib::parray<FT, SIZE> m_RHS;
 
             //PALIGNAS_VECTOROPT()
-            //plib::parray2D<float_type *, SIZE, 0> m_mat_ptr;
+            MemoryContainer<MemoryContainer<Pointer<nl_fptype>>> m_mat_ptr;  //plib::parray2D<float_type *, SIZE, 0> m_mat_ptr;
 
             // FIXME: below should be private
             // state - variable time_stepping
@@ -746,28 +914,34 @@ namespace mame.netlist
                 this.SIZE = SIZE;
 
 
-                throw new emu_unimplemented();
-#if false
-                m_dim(size)
-                m_new_V(size)
-                m_RHS(size)
-                m_mat_ptr(size, this->max_railstart() + 1)
-                m_last_V(size, nlconst::zero())
-                m_DD_n_m_1(size, nlconst::zero())
-                m_h_n_m_1(size, nlconst::zero())
+                m_dim = size;
+                m_new_V = new nl_fptype[size];
+                m_RHS = new nl_fptype[size];
+                //, m_mat_ptr(size, this->max_railstart() + 1)
+                m_mat_ptr = new MemoryContainer<MemoryContainer<Pointer<nl_fptype>>>((int)size);
+                for (int i = 0; i < size; i++)
+                    m_mat_ptr[i] = new MemoryContainer<Pointer<nl_fptype>>((int)this.max_railstart() + 1);
+                m_last_V = new nl_fptype[size];
+                m_DD_n_m_1 = new nl_fptype[size];
+                m_h_n_m_1 = new nl_fptype[size];
 
 
                 //
                 // save states
                 //
-                state().save(*this, m_last_V.as_base(), this->name(), "m_last_V");
-                state().save(*this, m_DD_n_m_1.as_base(), this->name(), "m_DD_n_m_1");
-                state().save(*this, m_h_n_m_1.as_base(), this->name(), "m_h_n_m_1");
-#endif
+                state().save(this, m_last_V, this.name(), "m_last_V");
+                state().save(this, m_DD_n_m_1, this.name(), "m_DD_n_m_1");
+                state().save(this, m_h_n_m_1, this.name(), "m_h_n_m_1");
             }
 
 
-            //std::size_t max_railstart() const noexcept
+            UInt32 max_railstart()
+            {
+                UInt32 max_rail = 0;
+                for (UInt32 k = 0; k < m_terms.size(); k++)
+                    max_rail = std.max(max_rail, m_terms[k].railstart());
+                return max_rail;
+            }
 
 
             //template <typename T, typename M>
@@ -777,18 +951,40 @@ namespace mame.netlist
             }
 
 
-            protected UInt32 size()
+            protected int size()
             {
-                throw new emu_unimplemented();
-#if false
-                return (SIZE > 0) ? (UInt32)SIZE : m_dim;  //return (SIZE > 0) ? static_cast<std::size_t>(SIZE) : m_dim;
-#endif
+                return (SIZE > 0) ? SIZE : (int)m_dim;  //return (SIZE > 0) ? static_cast<std::size_t>(SIZE) : m_dim;
             }
 
 
-            //void store()
+            protected void store()
+            {
+                int iN = size();
+                for (int i = 0; i < iN; i++)
+                    this.m_terms[i].setV(m_new_V[i]);
+            }
 
-            //bool check_err()
+
+            protected bool check_err()
+            {
+                // NOTE: Ideally we should also include currents (RHS) here. This would
+                // need a reevaluation of the right hand side after voltages have been updated
+                // and thus belong into a different calculation. This applies to all solvers.
+
+                int iN = size();
+                var reltol = (nl_fptype)m_params.m_reltol.op();
+                var vntol = (nl_fptype)m_params.m_vntol.op();
+                for (int i = 0; i < iN; i++)
+                {
+                    var vold = this.m_terms[i].getV();
+                    var vnew = m_new_V[i];
+                    var tol = vntol + reltol * std.max(plib.pglobal.abs(vnew), plib.pglobal.abs(vold));
+                    if (plib.pglobal.abs(vnew - vold) > tol)
+                        return true;
+                }
+
+                return false;
+            }
 
 
             protected override netlist_time compute_next_timestep(nl_fptype cur_ts)
@@ -814,8 +1010,8 @@ namespace mame.netlist
 
                         m_h_n_m_1[k] = hn;
                         m_DD_n_m_1[k] = DD_n;
-                        if (plib.pmath_global.abs(DD2) > fp_constants.TIMESTEP_MINDIV()) // avoid div-by-zero
-                            new_net_timestep = plib.pmath_global.sqrt(m_params.m_dynamic_lte.op() / plib.pmath_global.abs(nlconst.magic(0.5) * DD2));
+                        if (plib.pglobal.abs(DD2) > fp_constants.TIMESTEP_MINDIV()) // avoid div-by-zero
+                            new_net_timestep = plib.pglobal.sqrt(m_params.m_dynamic_lte.op() / plib.pglobal.abs(nlconst.magic(0.5) * DD2));
                         else
                             new_net_timestep = m_params.m_max_timestep;
 
@@ -831,12 +1027,90 @@ namespace mame.netlist
 
 
             //template <typename M>
-            //void build_mat_ptr(M &mat)
+            protected void build_mat_ptr(MemoryContainer<MemoryContainer<nl_fptype>> mat)
+            {
+                int iN = size();
+
+                for (int k = 0; k < iN; k++)
+                {
+                    int cnt = 0;
+                    // build pointers into the compressed row format matrix for each terminal
+                    for (int j = 0; j < this.m_terms[k].railstart(); j++)
+                    {
+                        int other = this.m_terms[k].m_connected_net_idx[j];
+                        if (other >= 0)
+                        {
+                            m_mat_ptr[k][j] = new Pointer<nl_fptype>(mat[k], other);  //m_mat_ptr[k][j] = &(mat[k][static_cast<std::size_t>(other)]);
+                            cnt++;
+                        }
+                    }
+
+                    nl_config_global.nl_assert_always(cnt == this.m_terms[k].railstart(), "Count and railstart mismatch");
+                    m_mat_ptr[k][this.m_terms[k].railstart()] = new Pointer<nl_fptype>(mat[k], k);  //m_mat_ptr[k][this->m_terms[k].railstart()] = &(mat[k][k]);
+                }
+            }
+
 
             //template <typename M>
-            //void clear_square_mat(M &m)
+            public void clear_square_mat(MemoryContainer<MemoryContainer<double>> m)  //void clear_square_mat(M &m)
+            {
+                int n = size();
+                for (int k = 0; k < n; k++)
+                {
+                    var p = new Pointer<double>(m[k], 0);  //auto *p = &(m[k][0]);
+                    //using mat_elem_type = typename std::decay<decltype(*p)>::type;
+                    for (int i = 0; i < n; i++)
+                        p[i] = plib.constants.zero();
+                }
+            }
 
-            //void fill_matrix_and_rhs()
+
+            public void fill_matrix_and_rhs()
+            {
+                UInt32 N = (UInt32)size();
+
+                for (UInt32 k = 0; k < N; k++)
+                {
+                    var net = m_terms[k];  //auto &net = m_terms[k];
+                    var tcr_r = m_mat_ptr[k][0];  //auto **tcr_r = &(m_mat_ptr[k][0]);
+
+                    UInt32 term_count = net.count();
+                    UInt32 railstart = net.railstart();
+                    var go = m_gonn.op(k);
+                    var gt = m_gtn.op(k);
+                    var Idr = m_Idrn.op(k);
+                    var cnV = m_connected_net_Vn.op(k);
+
+                    // FIXME: gonn, gtn and Idr - which float types should they have?
+
+                    for (UInt32 i = 0; i < railstart; i++)
+                        tcr_r[i]       += (nl_fptype)go[i];  //*tcr_r[i]       += static_cast<FT>(go[i]);
+
+                    // use native floattype for now
+                    var gtot_t = nlconst.zero();
+                    var RHS_t = nlconst.zero();
+
+                    for (UInt32 i = 0; i < term_count; i++)
+                    {
+                        gtot_t        += gt[i];
+                        RHS_t         += Idr[i];
+                    }
+                    // FIXME: Code above is faster than vec_sum - Check this
+#if false
+                    auto gtot_t = plib::vec_sum<FT>(term_count, m_gt);
+                    auto RHS_t = plib::vec_sum<FT>(term_count, m_Idr);
+#endif
+
+                    for (UInt32 i = railstart; i < term_count; i++)
+                    {
+                        RHS_t +=  (- go[i]) * cnV[i][0];
+                    }
+
+                    m_RHS[k] = (nl_fptype)RHS_t;  //m_RHS[k] = static_cast<FT>(RHS_t);
+                    // update diagonal element ...
+                    tcr_r[railstart] += (nl_fptype)gtot_t;  //*tcr_r[railstart] += static_cast<FT>(gtot_t); //mat.A[mat.diag[k]] += gtot_t;
+                }
+            }
         }
     }
 }

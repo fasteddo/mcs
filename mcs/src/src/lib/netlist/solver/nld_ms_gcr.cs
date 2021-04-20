@@ -14,7 +14,7 @@ namespace mame.netlist
     namespace solver
     {
         //template <typename FT, int SIZE>
-        abstract class matrix_solver_GCR_t : matrix_solver_ext_t  //class matrix_solver_GCR_t: public matrix_solver_ext_t<FT, SIZE>
+        class matrix_solver_GCR_t : matrix_solver_ext_t  //class matrix_solver_GCR_t: public matrix_solver_ext_t<FT, SIZE>
         {
             //using mat_type = plib::pGEmatrix_cr_t<plib::pmatrix_cr_t<FT, SIZE>>;
             //using mat_index_type = typename plib::pmatrix_cr_t<FT, SIZE>::index_type;
@@ -33,7 +33,7 @@ namespace mame.netlist
                 m_proc = null;
 
 
-                UInt32 iN = this.size();
+                int iN = this.size();
 
                 // build the final matrix
 
@@ -43,13 +43,12 @@ namespace mame.netlist
 
                 for (UInt32 k = 0; k < iN; k++)
                 {
-                    fill[k].resize((int)iN, (UInt32)plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16.constants_e.FILL_INFINITY);
+                    fill[k].resize(iN, (UInt32)plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16.constants_e.FILL_INFINITY);
                     foreach (var j in this.m_terms[k].m_nz)
                     {
                         fill[k][j] = 0;
                         raw_elements++;
                     }
-
                 }
 
                 var gr = mat.gaussian_extend_fill_mat(fill);
@@ -86,8 +85,8 @@ namespace mame.netlist
 #endif
                 }
 
-                anetlist.log().verbose.op("maximum fill: {0}", gr.first());
-                anetlist.log().verbose.op("Post elimination occupancy ratio: {1} Ops: {0}", gr.second(),
+                anetlist.log().verbose.op("maximum fill: {0}", gr.first);
+                anetlist.log().verbose.op("Post elimination occupancy ratio: {1} Ops: {0}", gr.second,
                         (nl_fptype)mat.nz_num / (nl_fptype)(iN * iN));
                 anetlist.log().verbose.op(" Pre elimination occupancy ratio: {0}",
                         (nl_fptype)raw_elements / (nl_fptype)(iN * iN));

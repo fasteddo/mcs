@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using s32 = System.Int32;
 using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
@@ -18,7 +17,7 @@ namespace mame
                                   // public device_mixer_interface
     {
         //DEFINE_DEVICE_TYPE(SPEAKER, speaker_device, "speaker", "Speaker")
-        static device_t device_creator_speaker_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new speaker_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_speaker_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new speaker_device(mconfig, tag, owner, clock); }
         public static readonly device_type SPEAKER = DEFINE_DEVICE_TYPE(device_creator_speaker_device, "speaker", "Speaker");
 
 
@@ -51,6 +50,8 @@ namespace mame
             : base(mconfig, SPEAKER, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_mixer_interface(mconfig, this));
+
+            m_dimixer = GetClassInterface<device_mixer_interface>();
 
 
             m_x = 0;
@@ -89,9 +90,9 @@ namespace mame
 
         speaker_device set_position(double x, double y, double z) { m_x = x; m_y = y; m_z = z; return this; }
         public speaker_device front_center()  { set_position( 0.0,  0.0,  1.0); return this; }
-        //speaker_device &front_left()        { set_position(-0.2,  0.0,  1.0); return *this; }
+        public speaker_device front_left()    { set_position(-0.2,  0.0,  1.0); return this; }
         //speaker_device &front_floor()       { set_position( 0.0, -0.5,  1.0); return *this; }
-        //speaker_device &front_right()       { set_position( 0.2,  0.0,  1.0); return *this; }
+        public speaker_device front_right()   { set_position( 0.2,  0.0,  1.0); return this; }
         //speaker_device &rear_center()       { set_position( 0.0,  0.0, -0.5); return *this; }
         //speaker_device &rear_left()         { set_position(-0.2,  0.0, -0.5); return *this; }
         //speaker_device &rear_right()        { set_position( 0.2,  0.0, -0.5); return *this; }
@@ -106,7 +107,7 @@ namespace mame
         //-------------------------------------------------
         //  mix - mix in samples from the speaker's stream
         //-------------------------------------------------
-        public void mix(ListBase<s32> leftmix, ListBase<s32> rightmix, ref int samples_this_update, bool suppress)  //s32 *leftmix, s32 *rightmix, int &samples_this_update, bool suppress)
+        public void mix(MemoryContainer<s32> leftmix, MemoryContainer<s32> rightmix, ref int samples_this_update, bool suppress)  //s32 *leftmix, s32 *rightmix, int &samples_this_update, bool suppress)
         {
             // skip if no stream
             if (m_dimixer.mixer_stream() == null)
@@ -114,7 +115,7 @@ namespace mame
 
             // update the stream, getting the start/end pointers around the operation
             int numsamples;
-            ListPointer<stream_sample_t> stream_buf = m_dimixer.mixer_stream().output_since_last_update(0, out numsamples);
+            Pointer<stream_sample_t> stream_buf = m_dimixer.mixer_stream().output_since_last_update(0, out numsamples);
 
             // set or assert that all streams have the same count
             if (samples_this_update == 0)
@@ -176,9 +177,7 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            base.device_start();
-
-            m_dimixer = GetClassInterface<device_mixer_interface>();
+            // dummy save to make device.c happy
         }
     }
 

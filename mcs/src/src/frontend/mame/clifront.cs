@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using int64_t = System.Int64;
 using uint32_t = System.UInt32;
 
@@ -95,6 +94,16 @@ namespace mame
             new options_entry(CLIOPTION_DTD,                        "1",    OPTION_BOOLEAN,    "include DTD in XML output"),
             new options_entry(null),
         };
+
+
+        struct info_command_struct
+        {
+            string option;
+            int min_args;
+            int max_args;
+            Action<std.vector<string>> function;  //void (cli_frontend::*function)(const std::vector<std::string> &args);
+            string usage;
+        }
 
 
         //static const char s_softlist_xml_dtd[];
@@ -1053,16 +1062,12 @@ namespace mame
         //  systems/devices
         //-------------------------------------------------
 
-        delegate void apply_action_drvact(driver_enumerator drivlist, bool first);
-        delegate void apply_action_devact(device_type type, bool first);
-        delegate bool apply_action_included(string name);
-
         //template <typename T, typename U>
-        void apply_action(std.vector<string> args, apply_action_drvact drvact, apply_action_devact devact)  //void cli_frontend::apply_action(const std::vector<std::string> &args, T &&drvact, U &&devact)
+        void apply_action(std.vector<string> args, Action<driver_enumerator, bool> drvact, Action<device_type, bool> devact)  //void cli_frontend::apply_action(const std::vector<std::string> &args, T &&drvact, U &&devact)
         {
             bool iswild = (1U != args.size()) || core_iswildstr(args[0].c_str());
             std.vector<bool> matched = new std.vector<bool>(args.size(), false);
-            apply_action_included included = (name) =>
+            Func<string, bool> included = (name) =>
             {
                 if (args.empty())
                     return true;
@@ -1134,10 +1139,8 @@ namespace mame
         //  systems/devices
         //-------------------------------------------------
 
-        delegate void apply_device_action_action(device_t root, string type, bool first);
-
         //template <typename T>
-        void apply_device_action(std.vector<string> args, apply_device_action_action action)  //void cli_frontend::apply_device_action(const std::vector<std::string> &args, T &&action)
+        void apply_device_action(std.vector<string> args, Action<device_t, string, bool> action)  //void cli_frontend::apply_device_action(const std::vector<std::string> &args, T &&action)
         {
             machine_config config = new machine_config(___empty.driver____empty, m_options);
             machine_config.token tok = config.begin_configuration(config.root_device());
@@ -1155,18 +1158,6 @@ namespace mame
                     });
         }
 
-
-        // all other commands call out to one of these helpers
-        delegate void info_commands_function(string gamename);
-
-        struct info_commands_struct
-        {
-            public string option;
-            int min_args;
-            int max_args;
-            public info_commands_function function;  // void (cli_frontend::*function)(const char *gamename);
-            string usage;
-        }
 
         //-------------------------------------------------
         //  execute_commands - execute various frontend
@@ -1220,7 +1211,7 @@ namespace mame
             {
                 // attempt to open the output file
                 emu_file file = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-                if (file.open(emulator_info.get_configname(), ".ini") != osd_file.error.NONE)
+                if (file.open(emulator_info.get_configname() + ".ini") != osd_file.error.NONE)
                     throw new emu_fatalerror("Unable to create file {0}.ini\n", emulator_info.get_configname());
 
                 // generate the updated INI

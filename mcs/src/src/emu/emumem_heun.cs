@@ -24,8 +24,7 @@ namespace mame
         //~handler_entry_read_unmapped() = default;
 
 
-        //uX read(offs_t offset, uX mem_mask) override;
-        public override u8 read(offs_t offset, u8 mem_mask)
+        public override uX read(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX mem_mask)
         {
             if (m_space.log_unmap() && !m_space.manager().machine().side_effects_disabled())
                 m_space.device().logerror(m_space.is_octal()
@@ -33,12 +32,12 @@ namespace mame
                                                 : "{0}: unmapped {1} memory read from {2} & {3}\n",  //: "%s: unmapped %s memory read from %0*X & %0*X\n",
                                                 m_space.manager().machine().describe_context(), m_space.name(),
                                                 m_space.addrchars(), offset,
-                                                2 << Width, mem_mask);
-            return (u8)m_space.unmap();
+                                                2 << WidthOverride, mem_mask);
+            return new uX(WidthOverride, m_space.unmap());
         }
 
 
-        //std::string name() const override;
+        protected override string name() { throw new emu_unimplemented(); }
     }
 
 
@@ -52,7 +51,7 @@ namespace mame
         //~handler_entry_write_unmapped() = default;
 
 
-        public override void write(offs_t offset, u8 data, u8 mem_mask)
+        public override void write(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX data, uX mem_mask)
         {
             if (m_space.log_unmap() && !m_space.manager().machine().side_effects_disabled())
                 m_space.device().logerror(m_space.is_octal()
@@ -60,12 +59,12 @@ namespace mame
                                                 : "{0}: unmapped {1} memory write to {2} = {3} & {4}\n",  // %0*X = %0*X & %0*X\n",
                                                 m_space.manager().machine().describe_context(), m_space.name(),
                                                 m_space.addrchars(), offset,
-                                                2 << Width, data,
-                                                2 << Width, mem_mask);
+                                                2 << WidthOverride, data,
+                                                2 << WidthOverride, mem_mask);
         }
 
 
-        //std::string name() const override;
+        protected override string name() { throw new emu_unimplemented(); }
     }
 
 
@@ -84,14 +83,13 @@ namespace mame
         //~handler_entry_read_nop() = default;
 
 
-        //uX read(offs_t offset, uX mem_mask) override;
-        public override u8 read(offs_t offset, u8 mem_mask)
+        public override uX read(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX mem_mask)
         {
-            return (u8)m_space.unmap();
+            return new uX(WidthOverride, m_space.unmap());
         }
 
 
-        //std::string name() const override;
+        protected override string name() { throw new emu_unimplemented(); }
     }
 
 
@@ -105,11 +103,11 @@ namespace mame
         //~handler_entry_write_nop() = default;
 
 
-        public override void write(offs_t offset, u8 data, u8 mem_mask)
+        public override void write(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX data, uX mem_mask)
         {
         }
 
 
-        //std::string name() const override;
+        protected override string name() { throw new emu_unimplemented(); }
     }
 }

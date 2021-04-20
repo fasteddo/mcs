@@ -176,8 +176,8 @@ namespace mame
             long range = std.max((long)(longer.length() / 2) - 1, 0L);
             long [] match_idx = new long [shorter.length()];  //std::unique_ptr<long []> match_idx(std::make_unique<long []>(shorter.length()));
             bool [] match_flg = new bool [longer.length()];
-            match_idx.Fill(-1);  //std::fill_n(match_idx.get(), shorter.length(), -1);
-            match_flg.Fill(false);  //std::fill_n(match_flg.get(), longer.length(), false);
+            std.fill_n(match_idx, shorter.length(), -1);
+            std.fill_n(match_flg, longer.length(), false);
             long match_cnt = 0;
             for (int i = 0; shorter.length() > i; ++i)
             {
@@ -201,7 +201,7 @@ namespace mame
 
             // now find transpositions
             char [] ms = new char [2 * match_cnt];  //std::unique_ptr<char32_t []> ms(std::make_unique<char32_t []>(2 * match_cnt));
-            ms.Fill((char)0);  //std::fill_n(ms.get(), 2 * match_cnt, char32_t(0));
+            std.fill_n(ms, (int)(2 * match_cnt), (char)0);
             int ms1Idx = 0;  //char32_t *const ms1(&ms[0]);
             int ms2Idx = (int)match_cnt;  //char32_t *const ms2(&ms[match_cnt]);
             for (int i = 0, j = 0; shorter.length() > i; ++i)

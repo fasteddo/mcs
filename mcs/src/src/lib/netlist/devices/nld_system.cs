@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
-
 
 namespace mame.netlist
 {
@@ -28,6 +26,11 @@ namespace mame.netlist
 
             //#define LOGIC_INPUT(name, v, family)                                            \
             //        NET_REGISTER_DEV(LOGIC_INPUT, name)                                     \
+            //        PARAM(name.IN, v)                                                       \
+            //        PARAM(name.FAMILY, family)
+
+            //#define LOGIC_INPUT8(name, v, family)                                           \
+            //        NET_REGISTER_DEV(LOGIC_INPUT8, name)                                    \
             //        PARAM(name.IN, v)                                                       \
             //        PARAM(name.FAMILY, family)
 
@@ -97,6 +100,9 @@ namespace mame.netlist
             //NETLIB_DEVICE_IMPL(mainclock,           "MAINCLOCK",              "FREQ")
             //NETLIB_DEVICE_IMPL(gnd,                 "GND",                    "")
             //NETLIB_DEVICE_IMPL(netlistparams,       "PARAMETER",              "")
+
+            //using NETLIB_NAME(logic_input8) = NETLIB_NAME(logic_inputN)<8>;
+            //NETLIB_DEVICE_IMPL(logic_input8,         "LOGIC_INPUT8",            "IN,FAMILY")
 
             //NETLIB_DEVICE_IMPL(logic_input, "LOGIC_INPUT", "IN,FAMILY")
             //NETLIB_DEVICE_IMPL_ALIAS(logic_input_ttl, logic_input, "TTL_INPUT", "IN")

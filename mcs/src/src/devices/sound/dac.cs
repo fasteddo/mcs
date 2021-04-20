@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using stream_sample_t = System.Int32;
 using u8 = System.Byte;
@@ -79,7 +78,7 @@ namespace mame
         }
 
 
-        public abstract void sound_stream_update_tag(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples);
+        public abstract void sound_stream_update_tag(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples);
     }
 
 
@@ -94,7 +93,7 @@ namespace mame
         { }
 
 
-        public override void sound_stream_update_tag(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        public override void sound_stream_update_tag(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
             for (int samp = 0; samp < samples; samp++)
             {
@@ -116,7 +115,7 @@ namespace mame
         {
             public device_sound_interface_dac(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((dac_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((dac_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
         }
 
 
@@ -143,12 +142,12 @@ namespace mame
 
             m_dac_code.m_stream = m_disound.stream_alloc(2, 1, 48000 * 4);
 
-            save_item(m_dac_code.m_code, "m_code");
+            save_item(NAME(new { m_dac_code.m_code }));
         }
 
 
         // device_sound_interface overrides
-        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
             m_dac_code.sound_stream_update_tag(stream, inputs, outputs, samples);
         }
@@ -239,7 +238,7 @@ namespace mame
     public class dac_8bit_r2r_device : dac_generator //dac_generator_dac_byte_interface_dac_code_binary_8
     {
         //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
-        static device_t device_creator_dac_8bit_r2r_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_8bit_r2r_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_dac_8bit_r2r_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_8bit_r2r_device(mconfig, tag, owner, clock); }
         public static readonly device_type DAC_8BIT_R2R = DEFINE_DEVICE_TYPE(device_creator_dac_8bit_r2r_device, "dac_8bit_r2r", "8-Bit R-2R DAC");
 
         dac_8bit_r2r_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)

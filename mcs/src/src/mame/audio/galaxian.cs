@@ -4,9 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -17,7 +15,7 @@ namespace mame
     public class galaxian_sound_device : device_t
     {
         //DEFINE_DEVICE_TYPE(GALAXIAN_SOUND, galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound")
-        static device_t device_creator_galaxian_sound_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_sound_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_galaxian_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_sound_device(mconfig, tag, owner, clock); }
         public static readonly device_type GALAXIAN_SOUND = DEFINE_DEVICE_TYPE(device_creator_galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound");
 
 
@@ -128,7 +126,7 @@ namespace mame
         {
             m_lfo_val = 0;
 
-            save_item(m_lfo_val, "m_lfo_val");
+            save_item(NAME(new { m_lfo_val }));
         }
 
 

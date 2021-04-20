@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using s8 = System.SByte;
 using s32 = System.Int32;
@@ -45,7 +44,7 @@ namespace mame
                                  //public device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(AY8910, ay8910_device, "ay8910", "AY-3-8910A PSG")
-        static device_t device_creator_ay8910_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8910_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_ay8910_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8910_device(mconfig, tag, owner, clock); }
         public static readonly device_type AY8910 = DEFINE_DEVICE_TYPE(device_creator_ay8910_device, "ay8910", "AY-3-8910A PSG");
 
 
@@ -53,7 +52,7 @@ namespace mame
         {
             public device_sound_interface_ay8910(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((ay8910_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((ay8910_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
         }
 
 
@@ -685,19 +684,19 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
-            ListPointer<stream_sample_t> [] buf = new ListPointer<stream_sample_t> [NUM_CHANNELS];  //stream_sample_t *buf[NUM_CHANNELS];
+            Pointer<stream_sample_t> [] buf = new Pointer<stream_sample_t> [NUM_CHANNELS];  //stream_sample_t *buf[NUM_CHANNELS];
             //tone_t *tone;
             //envelope_t *envelope;
 
-            buf[0] = new ListPointer<stream_sample_t>(outputs[0]);
+            buf[0] = new Pointer<stream_sample_t>(outputs[0]);
             buf[1] = null;
             buf[2] = null;
             if (m_streams == NUM_CHANNELS)
             {
-                buf[1] = outputs[1];
-                buf[2] = outputs[2];
+                buf[1] = new Pointer<stream_sample_t>(outputs[1]);
+                buf[2] = new Pointer<stream_sample_t>(outputs[2]);
             }
 
             /* hack to prevent us from hanging when starting filtered outputs */
@@ -816,72 +815,38 @@ namespace mame
                                 {
                                     env_volume >>= 1;
                                     if ((m_feature & (int)config_t.PSG_EXTENDED_ENVELOPE) != 0) // AY8914 Has a two bit tone_envelope field
-                                    {
-                                        //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
-                                        buf[chan]++;
-                                        buf[chan][0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
-                                    }
+                                        (buf[chan]++)[0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3 - tone_envelope(ref tone)) : 0];  //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
                                     else
-                                    {
-                                        //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
-                                        buf[chan]++;
-                                        buf[chan][0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];
-                                    }
+                                        (buf[chan]++)[0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];  //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
                                 }
                                 else
                                 {
                                     if ((m_feature & (int)config_t.PSG_EXTENDED_ENVELOPE) != 0) // AY8914 Has a two bit tone_envelope field
-                                    {
-                                        //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
-                                        buf[chan]++;
-                                        buf[chan][0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
-                                    }
+                                        (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3 - tone_envelope(ref tone)) : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
                                     else
-                                    {
-                                        //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
-                                        buf[chan]++;
-                                        buf[chan][0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];
-                                    }
+                                        (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
                                 }
                             }
                             else
                             {
                                 if ((m_feature & (int)config_t.PSG_EXTENDED_ENVELOPE) != 0) // AY8914 Has a two bit tone_envelope field
-                                {
-                                    //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
-                                    buf[chan]++;
-                                    buf[chan][0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
-                                }
+                                    (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume >> (3-tone_envelope(ref tone)) : 0];
                                 else
-                                {
-                                    //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
-                                    buf[chan]++;
-                                    buf[chan][0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];
-                                }
+                                    (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? env_volume : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? env_volume : 0];
                             }
                         }
                         else
                         {
                             if (is_expanded_mode())
-                            {
-                                //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];
-                                buf[chan]++;
-                                buf[chan][0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];
-                            }
+                                (buf[chan]++)[0] = m_env_table[chan, m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];  //*(buf[chan]++) = m_env_table[chan][m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];
                             else
-                            {
-                                //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];
-                                buf[chan]++;
-                                buf[chan][0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];
-                            }
+                                (buf[chan]++)[0] = m_vol_table[chan, m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];  //*(buf[chan]++) = m_vol_table[chan][m_vol_enabled[chan] != 0 ? tone_volume(ref tone) : 0];
                         }
                     }
                 }
                 else
                 {
-                    //*(buf[0]++) = mix_3D();
-                    buf[0]++;
-                    buf[0][0] = mix_3D();
+                    (buf[0]++)[0] = mix_3D();  //*(buf[0]++) = mix_3D();
                 }
 
                 samples--;
@@ -1193,17 +1158,17 @@ namespace mame
             save_item(STRUCT_MEMBER(m_envelope, holding));
 #endif
 
-            save_item(m_active, "m_active");
-            save_item(m_register_latch, "m_register_latch");
-            save_item(m_regs, "m_regs");
-            save_item(m_last_enable, "m_last_enable");
+            save_item(NAME(new { m_active }));
+            save_item(NAME(new { m_register_latch }));
+            save_item(NAME(new { m_regs }));
+            save_item(NAME(new { m_last_enable }));
 
-            save_item(m_count_noise, "m_count_noise");
-            save_item(m_prescale_noise, "m_prescale_noise");
+            save_item(NAME(new { m_count_noise }));
+            save_item(NAME(new { m_prescale_noise }));
 
-            save_item(m_rng, "m_rng");
-            save_item(m_mode, "m_mode");
-            save_item(m_flags, "m_flags");
+            save_item(NAME(new { m_rng }));
+            save_item(NAME(new { m_mode }));
+            save_item(NAME(new { m_flags }));
         }
 
 
@@ -1342,7 +1307,7 @@ namespace mame
     class ay8914_device : ay8910_device
     {
         //DEFINE_DEVICE_TYPE(AY8914, ay8914_device, "ay8914", "AY-3-8914A PSG")
-        static device_t device_creator_ay8914_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8914_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_ay8914_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8914_device(mconfig, tag, owner, clock); }
         public static readonly device_type AY8914 = DEFINE_DEVICE_TYPE(device_creator_ay8914_device, "ay8914", "AY-3-8914A PSG");
 
 

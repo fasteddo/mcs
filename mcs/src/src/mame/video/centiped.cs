@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -27,7 +27,7 @@ namespace mame
             var videoram = m_videoram.target;  //uint8_t *videoram = m_videoram;
 
             int data = videoram[tile_index];
-            SET_TILE_INFO_MEMBER(ref tileinfo, 0, ((UInt32)data & 0x3f) + 0x40, 0, (byte)TILE_FLIPYX(data >> 6));
+            tileinfo.set(0, ((u32)data & 0x3f) + 0x40, 0, TILE_FLIPYX(data >> 6));
         }
 
 
@@ -54,9 +54,9 @@ namespace mame
 
         void init_common()
         {
-            save_item(m_flipscreen, "m_flipscreen");
-            save_item(m_gfx_bank, "m_gfx_bank");
-            save_item(m_bullsdrt_sprites_bank, "m_bullsdrt_sprites_bank");
+            save_item(NAME(new { m_flipscreen }));
+            save_item(NAME(new { m_gfx_bank }));
+            save_item(NAME(new { m_bullsdrt_sprites_bank }));
 
             m_flipscreen = 0;
             m_gfx_bank = 0;
@@ -197,7 +197,7 @@ namespace mame
 
                 /* character colors, set directly */
                 if ((offset & 0x08) == 0)
-                    m_palette.target.palette_interface.set_pen_color(offset & 0x03, color);
+                    m_palette.target.dipalette.set_pen_color(offset & 0x03, color);
 
                 /* sprite colors - set all the applicable ones */
                 else
@@ -209,13 +209,13 @@ namespace mame
                     for (i = 0; i < 0x100; i += 4)
                     {
                         if (offset == ((i >> 2) & 0x03))
-                            m_palette.target.palette_interface.set_pen_color((UInt32)i + 4 + 1, color);
+                            m_palette.target.dipalette.set_pen_color((UInt32)i + 4 + 1, color);
 
                         if (offset == ((i >> 4) & 0x03))
-                            m_palette.target.palette_interface.set_pen_color((UInt32)i + 4 + 2, color);
+                            m_palette.target.dipalette.set_pen_color((UInt32)i + 4 + 2, color);
 
                         if (offset == ((i >> 6) & 0x03))
-                            m_palette.target.palette_interface.set_pen_color((UInt32)i + 4 + 3, color);
+                            m_palette.target.dipalette.set_pen_color((UInt32)i + 4 + 3, color);
                     }
                 }
             }
@@ -230,7 +230,7 @@ namespace mame
 
         u32 screen_update_centiped(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            ListBytesPointer spriteram = m_spriteram.target;  //uint8_t *spriteram = m_spriteram;
+            Pointer<uint8_t> spriteram = m_spriteram.target;  //uint8_t *spriteram = m_spriteram;
             rectangle spriteclip = cliprect;
             int offs;
 

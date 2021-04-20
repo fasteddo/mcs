@@ -4,9 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using offs_t = System.UInt32;
-using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -25,7 +22,7 @@ namespace mame
                               //z80_daisy_chain_interface
     {
         //DEFINE_DEVICE_TYPE(Z80, z80_device, "z80", "Zilog Z80")
-        static device_t device_creator_z80_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new z80_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_z80_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new z80_device(mconfig, tag, owner, clock); }
         public static readonly device_type Z80 = DEFINE_DEVICE_TYPE(device_creator_z80_device, "z80", "Zilog Z80");
 
 
@@ -303,7 +300,7 @@ namespace mame
         bool m_after_ldair;        /* same, but for LD A,I or LD A,R */
         uint32_t m_ea;
 
-        intref m_icountRef = new intref();  //int m_icount;
+        intref m_icount = new intref();  //int m_icount;
         uint8_t m_rtemp;
         uint8_t [] m_cc_op;  //const uint8_t *   m_cc_op;
         uint8_t [] m_cc_cb;
@@ -506,34 +503,34 @@ namespace mame
                 tables_initialised = true;
             }
 
-            save_item(m_prvpc.w.l,    "m_prvpc.w.l");
-            save_item(PC,             "PC");
-            save_item(SP,             "SP");
-            save_item(AF,             "AF");
-            save_item(BC,             "BC");
-            save_item(DE,             "DE");
-            save_item(HL,             "HL");
-            save_item(IX,             "IX");
-            save_item(IY,             "IY");
-            save_item(WZ,             "WZ");
-            save_item(m_af2.w.l,      "m_af2.w.l");
-            save_item(m_bc2.w.l,      "m_bc2.w.l");
-            save_item(m_de2.w.l,      "m_de2.w.l");
-            save_item(m_hl2.w.l,      "m_hl2.w.l");
-            save_item(m_r,            "m_r");
-            save_item(m_r2,           "m_r2");
-            save_item(m_iff1,         "m_iff1");
-            save_item(m_iff2,         "m_iff2");
-            save_item(m_halt,         "m_halt");
-            save_item(m_im,           "m_im");
-            save_item(m_i,            "m_i");
-            save_item(m_nmi_state,    "m_nmi_state");
-            save_item(m_nmi_pending,  "m_nmi_pending");
-            save_item(m_irq_state,    "m_irq_state");
-            save_item(m_wait_state,   "m_wait_state");
-            save_item(m_busrq_state,  "m_busrq_state");
-            save_item(m_after_ei,     "m_after_ei");
-            save_item(m_after_ldair,  "m_after_ldair");
+            save_item(NAME(new { m_prvpc.w.l }));
+            save_item(NAME(new { PC }));
+            save_item(NAME(new { SP }));
+            save_item(NAME(new { AF }));
+            save_item(NAME(new { BC }));
+            save_item(NAME(new { DE }));
+            save_item(NAME(new { HL }));
+            save_item(NAME(new { IX }));
+            save_item(NAME(new { IY }));
+            save_item(NAME(new { WZ }));
+            save_item(NAME(new { m_af2.w.l }));
+            save_item(NAME(new { m_bc2.w.l }));
+            save_item(NAME(new { m_de2.w.l }));
+            save_item(NAME(new { m_hl2.w.l }));
+            save_item(NAME(new { m_r }));
+            save_item(NAME(new { m_r2 }));
+            save_item(NAME(new { m_iff1 }));
+            save_item(NAME(new { m_iff2 }));
+            save_item(NAME(new { m_halt }));
+            save_item(NAME(new { m_im }));
+            save_item(NAME(new { m_i }));
+            save_item(NAME(new { m_nmi_state }));
+            save_item(NAME(new { m_nmi_pending }));
+            save_item(NAME(new { m_irq_state }));
+            save_item(NAME(new { m_wait_state }));
+            save_item(NAME(new { m_busrq_state }));
+            save_item(NAME(new { m_after_ei }));
+            save_item(NAME(new { m_after_ldair }));
 
             /* Reset registers to their initial values */
             PRVPC = 0;
@@ -607,7 +604,7 @@ namespace mame
             m_distate.state_add(Z80_HALT,        "HALT",      m_halt).mask(0x1);
 
             // set our instruction counter
-            set_icountptr(m_icountRef);
+            set_icountptr(m_icount);
 
             /* setup cycle tables */
             m_cc_op = cc_op;
@@ -672,7 +669,7 @@ namespace mame
                 if (m_wait_state != 0)
                 {
                     // stalled
-                    m_icountRef.i = 0;
+                    m_icount.i = 0;
                     return;
                 }
 
@@ -705,7 +702,7 @@ namespace mame
 
                 EXEC_op(r);
 
-            } while (m_icountRef.i > 0);
+            } while (m_icount.i > 0);
         }
 
         void device_execute_interface_execute_set_input(int inputnum, int state)
@@ -825,7 +822,7 @@ namespace mame
         //#define CC(prefix,opcode) do { m_icount -= m_cc_##prefix[opcode]; } while (0)
         void CC_ex(int opcode)
         {
-            m_icountRef.i -= m_cc_ex[opcode];
+            m_icount.i -= m_cc_ex[opcode];
         }
 
 
@@ -834,7 +831,7 @@ namespace mame
         {
             //byte op = opcode; //unsigned op = opcode; \
 
-            m_icountRef.i -= m_cc_op[opcode];  //CC(prefix,op);
+            m_icount.i -= m_cc_op[opcode];  //CC(prefix,op);
 
             switch (opcode)
             {
@@ -909,7 +906,7 @@ namespace mame
         {
             //byte op = opcode; //unsigned op = opcode; \
 
-            m_icountRef.i -= m_cc_cb[opcode];  //CC(prefix,op);
+            m_icount.i -= m_cc_cb[opcode];  //CC(prefix,op);
 
             switch (opcode)
             {
@@ -984,7 +981,7 @@ namespace mame
         {
             //byte op = opcode; //unsigned op = opcode; \
 
-            m_icountRef.i -= m_cc_dd[opcode];  //CC(prefix,op);
+            m_icount.i -= m_cc_dd[opcode];  //CC(prefix,op);
 
             switch (opcode)
             {
@@ -1059,7 +1056,7 @@ namespace mame
         {
             //byte op = opcode; //unsigned op = opcode; \
 
-            m_icountRef.i -= m_cc_ed[opcode];  //CC(prefix,op);
+            m_icount.i -= m_cc_ed[opcode];  //CC(prefix,op);
 
             switch (opcode)
             {
@@ -1134,7 +1131,7 @@ namespace mame
         {
             //byte op = opcode; //unsigned op = opcode; \
 
-            m_icountRef.i -= m_cc_fd[opcode];  //CC(prefix,op);
+            m_icount.i -= m_cc_fd[opcode];  //CC(prefix,op);
 
             switch (opcode)
             {
@@ -1210,7 +1207,7 @@ namespace mame
         {
             //byte op = opcode; //unsigned op = opcode; \
 
-            m_icountRef.i -= m_cc_xycb[opcode];  //CC(prefix,op);
+            m_icount.i -= m_cc_xycb[opcode];  //CC(prefix,op);
 
             switch (opcode)
             {
@@ -3130,9 +3127,9 @@ namespace mame
             UInt32 pc = PCD;
             PC++;
             uint8_t res = m_opcodes_cache.read_byte(pc);
-            m_icountRef.i -= 2;  // m_icount -= 2;
+            m_icount.i -= 2;  // m_icount -= 2;
             m_refresh_cb.op((UInt16)((m_i << 8) | (m_r2 & 0x80) | ((m_r-1) & 0x7f)), 0x00, 0xff);
-            m_icountRef.i += 2;  //m_icount += 2;
+            m_icount.i += 2;  //m_icount += 2;
             return res;
         }
 
@@ -4048,7 +4045,7 @@ namespace mame
                 rm16((UInt16)irq_vector, ref m_pc);
                 LOG("Z80 IM2 [${0}] = ${1}\n", irq_vector, PCD);  //[$%04x] = $%04x
                 /* CALL opcode timing + 'interrupt latency' cycles */
-                m_icountRef.i -= m_cc_op[0xcd] + m_cc_ex[0xff];
+                m_icount.i -= m_cc_op[0xcd] + m_cc_ex[0xff];
             }
             else
             /* Interrupt mode 1. RST 38h */
@@ -4058,7 +4055,7 @@ namespace mame
                 push(m_pc);
                 PCD = 0x0038;
                 /* RST $38 + 'interrupt latency' cycles */
-                m_icountRef.i -= m_cc_op[0xff] + cc_ex[0xff];
+                m_icount.i -= m_cc_op[0xff] + cc_ex[0xff];
             }
             else
             {
@@ -4076,24 +4073,24 @@ namespace mame
                             push(m_pc);
                             PCD = (UInt32)(irq_vector & 0xffff);
                                 /* CALL $xxxx cycles */
-                            m_icountRef.i -= m_cc_op[0xcd];
+                            m_icount.i -= m_cc_op[0xcd];
                             break;
                         case 0xc30000:  /* jump */
                             PCD = (UInt32)(irq_vector & 0xffff);
                             /* JP $xxxx cycles */
-                            m_icountRef.i -= m_cc_op[0xc3];
+                            m_icount.i -= m_cc_op[0xc3];
                             break;
                         default:        /* rst (or other opcodes?) */
                             push(m_pc);
                             PCD = (UInt32)(irq_vector & 0x0038);
                             /* RST $xx cycles */
-                            m_icountRef.i -= m_cc_op[0xff];
+                            m_icount.i -= m_cc_op[0xff];
                             break;
                     }
                 }
 
                 /* 'interrupt latency' cycles */
-                m_icountRef.i -= m_cc_ex[0xff];
+                m_icount.i -= m_cc_ex[0xff];
             }
 
             WZ = (UInt16)PCD;
@@ -4119,7 +4116,7 @@ namespace mame
             push(m_pc);
             PCD = 0x0066;
             WZ = (UInt16)PCD;
-            m_icountRef.i -= 11;
+            m_icount.i -= 11;
             m_nmi_pending = false;
         }
     }

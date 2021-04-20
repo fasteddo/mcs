@@ -1,19 +1,18 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using mame;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using mame;
 
 using int32_t = System.Int32;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using osd_ticks_t = System.UInt64;
 using uint32_t = System.UInt32;
 
 
-namespace mameForm
+namespace mcsForm
 {
     public class osd_file_WinForms : osd_file
     {
@@ -146,7 +145,7 @@ namespace mameForm
                 a file_error describing any error that occurred while reading
                 from the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error read(ListBytesPointer buffer, UInt64 offset, UInt32 length, out UInt32 actual)  //void *buffer
+        public override error read(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)  //virtual error read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
         {
             m_file.Position = 0;
 
@@ -185,7 +184,7 @@ namespace mameForm
                 a file_error describing any error that occurred while writing to
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error write(ListBytesPointer buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }  //void const *buffer
+        public override error write(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }  //virtual error write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
 
 
         /*-----------------------------------------------------------------------------
@@ -365,7 +364,7 @@ namespace mameForm
                 a file_error describing any error that occurred while reading
                 from the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public osd_file.error osd_read(osd_file file, ListBytesPointer buffer, UInt64 offset, UInt32 length, out UInt32 actual)
+        public osd_file.error osd_read(osd_file file, Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)
         {
             throw new emu_fatalerror("Fix inheritence");
 

@@ -4,9 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using int16_t = System.Int16;
-using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -15,10 +13,10 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    partial class m6800_cpu_device : cpu_device
+    public partial class m6800_cpu_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6800, m6800_cpu_device, "m6800", "Motorola MC6800")
-        static device_t device_creator_m6800_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6800_cpu_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_m6800_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6800_cpu_device(mconfig, tag, owner, clock); }
         public static readonly device_type M6800 = DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola MC6800");
 
 
@@ -283,7 +281,7 @@ namespace mame
         op_func [] m_insn;
         uint8_t [] m_cycles;            /* clock cycle of instruction table */
 
-        intref m_icountRef = new intref();  //int m_icount;
+        intref m_icount = new intref();  //int m_icount;
 
         PAIR m_ea;        /* effective address */
 
@@ -390,16 +388,16 @@ namespace mame
             m_irq_state[1] = 0;
             m_irq_state[2] = 0;
 
-            save_item(m_ppc.w.l, "m_ppc.w.l");
-            save_item(m_pc.w.l, "m_pc.w.l");
-            save_item(m_s.w.l, "m_s.w.l");
-            save_item(m_x.w.l, "m_x.w.l");
-            save_item(m_d.w.l, "m_d.w.l");
-            save_item(m_cc, "m_cc");
-            save_item(m_wai_state, "m_wai_state");
-            save_item(m_nmi_state, "m_nmi_state");
-            save_item(m_nmi_pending, "m_nmi_pending");
-            save_item(m_irq_state, "m_irq_state");
+            save_item(NAME(new { m_ppc.w.l }));
+            save_item(NAME(new { m_pc.w.l }));
+            save_item(NAME(new { m_s.w.l }));
+            save_item(NAME(new { m_x.w.l }));
+            save_item(NAME(new { m_d.w.l }));
+            save_item(NAME(new { m_cc }));
+            save_item(NAME(new { m_wai_state }));
+            save_item(NAME(new { m_nmi_state }));
+            save_item(NAME(new { m_nmi_pending }));
+            save_item(NAME(new { m_irq_state }));
 
             m_distate.state_add( M6800_A,         "A", m_d.b.h).formatstr("%02X");
             m_distate.state_add( M6800_B,         "B", m_d.b.l).formatstr("%02X");
@@ -413,7 +411,7 @@ namespace mame
             m_distate.state_add( STATE_GENPCBASE, "CURPC", m_pc.w.l).noshow();
             m_distate.state_add( STATE_GENFLAGS, "GENFLAGS", m_cc).formatstr("%8s").noshow();
 
-            set_icountptr(m_icountRef);
+            set_icountptr(m_icount);
         }
 
 
@@ -468,7 +466,7 @@ namespace mame
                     m_insn[ireg](this);
                     increment_counter(m_cycles[ireg]);
                 }
-            } while (m_icountRef.i > 0);
+            } while (m_icount.i > 0);
         }
 
         protected void device_execute_interface_execute_set_input(int irqline, int state)
@@ -540,7 +538,7 @@ namespace mame
             if ((m_wai_state & (M6800_WAI | M6800_SLP)) != 0)
             {
                 if ((m_wai_state & M6800_WAI) != 0)
-                    m_icountRef.i -= 4;
+                    m_icount.i -= 4;
 
                 m_wai_state = (uint8_t)(m_wai_state & ~(M6800_WAI | M6800_SLP));
             }
@@ -551,7 +549,7 @@ namespace mame
                 PUSHBYTE(A);
                 PUSHBYTE(B);
                 PUSHBYTE(CC);
-                m_icountRef.i -= 12;
+                m_icount.i -= 12;
             }
 
             SEI();
@@ -586,7 +584,7 @@ namespace mame
                     if ((CC & 0x10) == 0)
                     {
                         enter_interrupt("take IRQ1\n", 0xfff8);
-                        m_diexec.standard_irq_callback(M6800_IRQ_LINE);
+                        standard_irq_callback(M6800_IRQ_LINE);
                     }
                 }
                 else
@@ -600,7 +598,7 @@ namespace mame
 
         public virtual void increment_counter(int amount)
         {
-            m_icountRef.i -= amount;
+            m_icount.i -= amount;
         }
 
 

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;
 using osd_ticks_t = System.UInt64;
@@ -766,13 +765,13 @@ namespace mame
         //#define DISCRETE_SOUND_EXTERN(name) extern const discrete_block name[]
         //#define DISCRETE_SOUND_START(name) const discrete_block name[] = {
         //#define DSC_SND_ENTRY(_nod, _class, _dss, _num, _iact, _iinit, _custom, _name) { _nod,  new discrete_node_factory< DISCRETE_CLASS_NAME(_class) >, _dss, _num, _iact, _iinit, _custom, _name, # _class }
-        public static discrete_block DSC_SND_ENTRY<class_type>(int node, int dss, int num, int [] iact, ListPointer<double> iinit, Object custom, string name) where class_type : discrete_base_node, new()
+        public static discrete_block DSC_SND_ENTRY<class_type>(int node, int dss, int num, int [] iact, Pointer<double> iinit, Object custom, string name) where class_type : discrete_base_node, new()
         { return new discrete_block(node, discrete_create_node<class_type>, dss, num, iact, iinit, custom, name, typeof(class_type).FullName); } // _nod,  &discrete_create_node< DISCRETE_CLASS_NAME(_class) >, _dss, _num, _iact, _iinit, _custom, _name, /* # _class*/ }; }
 
         public static discrete_block DISCRETE_SOUND_END { get { return DSC_SND_ENTRY<discrete_special_node>( NODE_00, (int)discrete_node_type.DSS_NULL     , 0, DSE( NODE_NC ), DSE( 0.0 ) ,null  ,"DISCRETE_SOUND_END" ); } }
 
         static int [] DSE(params int [] objects) { return objects; }  //#define DSE( ... ) { __VA_ARGS__ }
-        static ListPointer<double> DSE(params double [] objects) { return new ListPointer<double>(new ListBase<double>(objects)); }  //#define DSE( ... ) { __VA_ARGS__ }
+        static Pointer<double> DSE(params double [] objects) { return new Pointer<double>(new MemoryContainer<double>(objects)); }  //#define DSE( ... ) { __VA_ARGS__ }
 
         /*      Module Name                                                       out,  enum value,      #in,   {variable inputs},              {static inputs},    data pointer,   "name" */
 
@@ -1251,18 +1250,25 @@ namespace mame
         public int type;                           /* see defines below */
         public int active_inputs;                  /* Number of active inputs on this node type */
         public int [] input_node = new int[DISCRETE_MAX_INPUTS];/* input/control nodes */
-        public ListPointer<double> initial;  //double          initial[DISCRETE_MAX_INPUTS];   /* Initial values */
+        public Pointer<double> initial;  //double          initial[DISCRETE_MAX_INPUTS];   /* Initial values */
         public Object custom;  //const void *    custom;                         /* Custom function specific initialisation data */
         string name;                        /* Node Name */
         public string mod_name;                       /* Module / class name */
 
-        public discrete_block(int node, discrete_block_factory factory, int type, int active_inputs, int [] input_node, ListPointer<double> initial, Object custom, string name, string mod_name)
+        public discrete_block(int node, discrete_block_factory factory, int type, int active_inputs, int [] input_node, Pointer<double> initial, Object custom, string name, string mod_name)
         {
-            this.node = node; this.factory = factory; this.type = type; this.active_inputs = active_inputs; Array.Copy(input_node, this.input_node, input_node.Length); this.custom = custom; this.name = name; this.mod_name = mod_name;
-            ListBase<double> initial_base = new ListBase<double>(DISCRETE_MAX_INPUTS);
-            initial_base.resize(10);
-            this.initial = new ListPointer<double>(initial_base);
-            this.initial.copy(0, 0, initial, initial.Count);
+            this.node = node;
+            this.factory = factory;
+            this.type = type;
+            this.active_inputs = active_inputs;
+            Array.Copy(input_node, this.input_node, input_node.Length);
+            this.custom = custom;
+            this.name = name;
+            this.mod_name = mod_name;
+            MemoryContainer<double> initial_base = new MemoryContainer<double>(DISCRETE_MAX_INPUTS);
+            initial_base.Resize(10);
+            this.initial = new Pointer<double>(initial_base);
+            initial.CopyTo(0, this.initial, 0, initial.Count);
         }
     }
 
@@ -1301,7 +1307,7 @@ namespace mame
     {
         //~discrete_sound_output_interface() { }
 
-        void set_output_ptr(ListPointer<stream_sample_t> ptr);
+        void set_output_ptr(Pointer<stream_sample_t> ptr);
     }
 
 
@@ -1390,7 +1396,7 @@ namespace mame
                 /* Bring the system up to now */
                 update_to_current_time();
 
-                data = (byte)node.m_output[NODE_CHILD_NODE_NUM((int)offset)].m_listPtr[0];
+                data = (byte)node.m_output[NODE_CHILD_NODE_NUM((int)offset)].m_pointer[0];
             }
             else
             {
@@ -1506,14 +1512,14 @@ namespace mame
         }
 
         /* get pointer to a info struct node ref */
-        public ListPointer<double> node_output_ptr(int onode)  // const double *discrete_device::node_output_ptr(int onode)
+        public Pointer<double> node_output_ptr(int onode)  // const double *discrete_device::node_output_ptr(int onode)
         {
             discrete_base_node node;
             node = discrete_find_node(onode);
 
             if (node != null)
             {
-                return new ListPointer<double>(node.m_output[NODE_CHILD_NODE_NUM(onode)].m_listPtr);  //&(node->m_output[NODE_CHILD_NODE_NUM(onode)]);
+                return new Pointer<double>(node.m_output[NODE_CHILD_NODE_NUM(onode)].m_pointer);  //&(node->m_output[NODE_CHILD_NODE_NUM(onode)]);
             }
             else
             {
@@ -1994,7 +2000,7 @@ namespace mame
                                          //public device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(DISCRETE, discrete_sound_device, "discrete", "Discrete Sound")
-        static device_t device_creator_discrete_sound_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new discrete_sound_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_discrete_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new discrete_sound_device(mconfig, tag, owner, clock); }
         public static readonly device_type DISCRETE = DEFINE_DEVICE_TYPE(device_creator_discrete_sound_device, "discrete", "Discrete Sound");
 
 
@@ -2002,7 +2008,7 @@ namespace mame
         {
             public device_sound_interface_discrete(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((discrete_sound_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((discrete_sound_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
         }
 
 
@@ -2110,7 +2116,7 @@ namespace mame
 
 
         // device_sound_interface overrides
-        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
             int outputnum = 0;
 
@@ -2122,7 +2128,7 @@ namespace mame
             {
                 discrete_sound_output_interface node = m_output_list[i];
 
-                node.set_output_ptr(new ListPointer<stream_sample_t>(outputs[outputnum]));
+                node.set_output_ptr(new Pointer<stream_sample_t>(outputs[outputnum]));
                 outputnum++;
             }
 
@@ -2131,7 +2137,7 @@ namespace mame
             {
                 discrete_dss_input_stream_node node = m_input_stream_list[i];
 
-                node.m_ptr = new ListPointer<stream_sample_t>(inputs[node.m_stream_in_number]);
+                node.m_ptr = new Pointer<stream_sample_t>(inputs[node.m_stream_in_number]);
             }
 
             /* just process it */
@@ -2164,8 +2170,8 @@ namespace mame
         public double DISCRETE_INPUT(int num) { return input(num); }
 
 
-        public ListPointerRef<double> [] m_output = new ListPointerRef<double> [DISCRETE_MAX_OUTPUTS];  //double                          m_output[DISCRETE_MAX_OUTPUTS];     /* The node's last output value */
-        public ListPointerRef<double> [] m_input = new ListPointerRef<double> [DISCRETE_MAX_INPUTS];  //const double *                  m_input[DISCRETE_MAX_INPUTS];       /* Addresses of Input values */
+        public PointerRef<double> [] m_output = new PointerRef<double> [DISCRETE_MAX_OUTPUTS];  //double                          m_output[DISCRETE_MAX_OUTPUTS];     /* The node's last output value */
+        public PointerRef<double> [] m_input = new PointerRef<double> [DISCRETE_MAX_INPUTS];  //const double *                  m_input[DISCRETE_MAX_INPUTS];       /* Addresses of Input values */
         protected discrete_device m_device;                           /* Points to the parent */
 
 
@@ -2201,9 +2207,9 @@ namespace mame
 
 
             for (int i = 0; i < DISCRETE_MAX_OUTPUTS; i++)
-                m_output[i] = new ListPointerRef<double>(new ListPointer<double>(new ListBase<double>(new double [] { 0 })));
+                m_output[i] = new PointerRef<double>(new Pointer<double>(new MemoryContainer<double>(new double [] { 0 })));
             for (int i = 0; i < DISCRETE_MAX_INPUTS; i++)
-                m_input[i] = new ListPointerRef<double>(new ListPointer<double>(new ListBase<double>(new double [] { 0 })));
+                m_input[i] = new PointerRef<double>(new Pointer<double>(new MemoryContainer<double>(new double [] { 0 })));
         }
 
         //~discrete_base_node() { }
@@ -2216,7 +2222,7 @@ namespace mame
         public virtual void save_state()
         {
             if (m_block.node != NODE_SPECIAL)
-                m_device.save_item(m_output, "m_output", m_block.node);
+                m_device.save_item(NAME(new { m_output }), m_block.node);
         }
 
         protected virtual int max_output() { return 1; }
@@ -2228,10 +2234,10 @@ namespace mame
 
 
         /* get the input value from node #n */
-        double input(int n) { return m_input[n].m_listPtr[0]; }
+        double input(int n) { return m_input[n].m_pointer[0]; }
 
         /* set an output */
-        public void set_output(int n, double val) { if (m_output[n].m_listPtr != null && m_output[n].m_listPtr.Buffer != null) m_output[n].m_listPtr[0] = val; }
+        public void set_output(int n, double val) { if (m_output[n].m_pointer != null && m_output[n].m_pointer.Buffer != null) m_output[n].m_pointer[0] = val; }
 
         /* Return the node index, i.e. X from NODE(X) */
         public int index() { return NODE_INDEX(m_block.node); }
@@ -2311,7 +2317,7 @@ namespace mame
                     }
                     else
                     {
-                        m_input[inputnum].m_listPtr = new ListPointer<double>(m_block.initial, inputnum);  //m_input[inputnum] = &(m_block->initial[inputnum]);
+                        m_input[inputnum].m_pointer = new Pointer<double>(m_block.initial, inputnum);  //m_input[inputnum] = &(m_block->initial[inputnum]);
                     }
                 }
             }
@@ -2319,7 +2325,7 @@ namespace mame
             for (inputnum = m_active_inputs; inputnum < DISCRETE_MAX_INPUTS; inputnum++)
             {
                 /* FIXME: Check that no nodes follow ! */
-                m_input[inputnum].m_listPtr = new ListPointer<double>(m_block.initial, inputnum);  //m_input[inputnum] = &(m_block->initial[inputnum]);
+                m_input[inputnum].m_pointer = new Pointer<double>(m_block.initial, inputnum);  //m_input[inputnum] = &(m_block->initial[inputnum]);
             }
         }
     }
@@ -2339,18 +2345,18 @@ namespace mame
 
     class output_buffer
     {
-        public ListBase<double> node_buf;  //double                      *node_buf;
-        public ListPointerRef<double> source;  //const double                *source;
-        public ListPointer<double> ptr;  //volatile double             *ptr;
+        public MemoryContainer<double> node_buf;  //double                      *node_buf;
+        public PointerRef<double> source;  //const double                *source;
+        public Pointer<double> ptr;  //volatile double             *ptr;
         public int node_num;
     }
 
 
     class input_buffer
     {
-        public ListPointer<double> ptr;  //volatile const double       *ptr;               /* pointer into linked_outbuf.nodebuf */
+        public Pointer<double> ptr;  //volatile const double       *ptr;               /* pointer into linked_outbuf.nodebuf */
         public output_buffer linked_outbuf;  //output_buffer *             linked_outbuf;      /* what output are we connected to ? */
-        public ListPointerRef<double> buffer;  //double                      buffer;             /* input[] will point here */
+        public PointerRef<double> buffer;  //double                      buffer;             /* input[] will point here */
     }
 
 
@@ -2402,7 +2408,7 @@ namespace mame
             {
                 input_buffer sn = source_list[i];
 
-                sn.buffer.m_listPtr = new ListPointer<double>(new ListBase<double>(new double [] { sn.ptr[0] }));  //sn.buffer = *sn.ptr++;
+                sn.buffer.m_pointer = new Pointer<double>(new MemoryContainer<double>(new double [] { sn.ptr[0] }));  //sn.buffer = *sn.ptr++;
                 sn.ptr++;
             }
 
@@ -2438,7 +2444,7 @@ namespace mame
             {
                 output_buffer outbuf = m_buffers[i];
 
-                outbuf.ptr.Buffer[0] = outbuf.source.m_listPtr[0];  //*(outbuf.ptr++) = *outbuf.source;
+                outbuf.ptr.Buffer[0] = outbuf.source.m_pointer[0];  //*(outbuf.ptr++) = *outbuf.source;
                 outbuf.ptr++;
             }
         }
@@ -2572,7 +2578,7 @@ namespace mame
                                     output_buffer buf = new output_buffer();
 
                                     buf.node_buf = auto_alloc_array<double>(m_device.machine(), (UInt32)((task_node.sample_rate() + sound_manager.STREAMS_UPDATE_FREQUENCY) / sound_manager.STREAMS_UPDATE_FREQUENCY));
-                                    buf.ptr = new ListPointer<double>(buf.node_buf);  //buf.ptr = buf.node_buf;
+                                    buf.ptr = new Pointer<double>(buf.node_buf);  //buf.ptr = buf.node_buf;
                                     buf.source = dest_node.m_input[inputnum];  //buf.source = dest_node->m_input[inputnum];
                                     buf.node_num = inputnode_num;
                                     //buf.node = device->discrete_find_node(inputnode);
@@ -2587,7 +2593,7 @@ namespace mame
                                 //source.task = this;
                                 //source.output_node = i;
                                 source.linked_outbuf = pbuf;
-                                source.buffer = new ListPointerRef<double>(new ListPointer<double>(new ListBase<double>(new double [] { 0 })));  //source.buffer = 0.0; /* please compiler */
+                                source.buffer = new PointerRef<double>(new Pointer<double>(new MemoryContainer<double>(new double [] { 0 })));  //source.buffer = 0.0; /* please compiler */
                                 source.ptr = null;
                                 dest_task.source_list.add(source);
 
@@ -2609,7 +2615,7 @@ namespace mame
             {
                 output_buffer ob = m_buffers[i];
 
-                ob.ptr = new ListPointer<double>(ob.node_buf);
+                ob.ptr = new Pointer<double>(ob.node_buf);
             }
 
             /* initialize sources */
@@ -2617,7 +2623,7 @@ namespace mame
             {
                 input_buffer sn = source_list[i];
 
-                sn.ptr = new ListPointer<double>(sn.linked_outbuf.node_buf);
+                sn.ptr = new Pointer<double>(sn.linked_outbuf.node_buf);
             }
         }
     }

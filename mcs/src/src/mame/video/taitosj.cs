@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using int8_t = System.SByte;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using u8 = System.Byte;
@@ -92,7 +91,7 @@ namespace mame
                 bit2 = (~val >> 2) & 0x01;
                 b = combine_weights(bweights, bit0, bit1, bit2);
 
-                m_palette.target.palette_interface.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
+                m_palette.target.dipalette.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
             }
         }
 
@@ -147,10 +146,10 @@ namespace mame
             m_sprite_sprite_collbitmap1.allocate(32,32);
             m_sprite_sprite_collbitmap2.allocate(32,32);
 
-            m_gfxdecode.target.digfx.gfx(0).set_source(new ListBytesPointer(m_characterram.target));
-            m_gfxdecode.target.digfx.gfx(1).set_source(new ListBytesPointer(m_characterram.target));
-            m_gfxdecode.target.digfx.gfx(2).set_source(new ListBytesPointer(m_characterram.target, 0x1800));
-            m_gfxdecode.target.digfx.gfx(3).set_source(new ListBytesPointer(m_characterram.target, 0x1800));
+            m_gfxdecode.target.digfx.gfx(0).set_source(new Pointer<uint8_t>(m_characterram.target));
+            m_gfxdecode.target.digfx.gfx(1).set_source(new Pointer<uint8_t>(m_characterram.target));
+            m_gfxdecode.target.digfx.gfx(2).set_source(new Pointer<uint8_t>(m_characterram.target, 0x1800));
+            m_gfxdecode.target.digfx.gfx(3).set_source(new Pointer<uint8_t>(m_characterram.target, 0x1800));
 
             compute_draw_order();
         }
@@ -395,7 +394,6 @@ namespace mame
                     if (maxy >= height - 1)
                         maxy = height - 1;
 
-                    sprite_areas[which] = new rectangle();
                     sprite_areas[which].min_x = minx;
                     sprite_areas[which].max_x = maxx;
                     sprite_areas[which].min_y = miny;

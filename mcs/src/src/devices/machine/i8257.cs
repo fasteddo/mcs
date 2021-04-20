@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -19,7 +18,7 @@ namespace mame
                                 //device_execute_interface
     {
         //DEFINE_DEVICE_TYPE(I8257, i8257_device, "i8257", "Intel 8257 DMA Controller")
-        static device_t device_creator_i8257_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8257_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_i8257_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8257_device(mconfig, tag, owner, clock); }
         public static readonly device_type I8257 = DEFINE_DEVICE_TYPE(device_creator_i8257_device, "i8257", "Intel 8257 DMA Controller");
 
 
@@ -95,9 +94,9 @@ namespace mame
         devcb_write8       m_out_memw_cb;
 
         // channel accessors
-        devcb_read8.array<i4, devcb_read8> m_in_ior_cb;
-        devcb_write8.array<i4, devcb_write8> m_out_iow_cb;
-        devcb_write_line.array<i4, devcb_write_line> m_out_dack_cb;
+        devcb_read8.array<devcb_read8> m_in_ior_cb;
+        devcb_write8.array<devcb_write8> m_out_iow_cb;
+        devcb_write_line.array<devcb_write_line> m_out_dack_cb;
 
         struct channel
         {
@@ -108,7 +107,7 @@ namespace mame
         channel [] m_channel = new channel [4];
 
 
-        intref m_icountRef = new intref();  //int m_icount;
+        intref m_icount = new intref();  //int m_icount;
 
 
         // construction/destruction
@@ -118,7 +117,7 @@ namespace mame
             m_class_interfaces.Add(new device_execute_interface_i8257(mconfig, this));  //device_execute_interface(mconfig, *this),
 
 
-            m_icountRef.i = 0;
+            m_icount.i = 0;
             m_reverse_rw = false;
             m_tc = false;
             m_msb = 0;
@@ -136,9 +135,9 @@ namespace mame
             m_out_tc_cb = new devcb_write_line(this);
             m_in_memr_cb = new devcb_read8(this);
             m_out_memw_cb = new devcb_write8(this);
-            m_in_ior_cb = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
-            m_out_iow_cb = new devcb_write8.array<i4, devcb_write8>(this, () => { return new devcb_write8(this); });
-            m_out_dack_cb = new devcb_write_line.array<i4, devcb_write_line>(this, () => { return new devcb_write_line(this); });
+            m_in_ior_cb = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
+            m_out_iow_cb = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
+            m_out_dack_cb = new devcb_write_line.array<devcb_write_line>(4, this, () => { return new devcb_write_line(this); });
         }
 
 
@@ -269,7 +268,7 @@ namespace mame
             LOG("{0}\n", "device_start"); //FUNCNAME);
 
             // set our instruction counter
-            set_icountptr(m_icountRef);
+            set_icountptr(m_icount);
 
             // resolve callbacks
             m_out_hrq_cb.resolve_safe();
@@ -281,16 +280,16 @@ namespace mame
             m_out_dack_cb.resolve_all_safe();
 
             // state saving
-            save_item(m_msb, "m_msb");
-            save_item(m_hreq, "m_hreq");
-            save_item(m_hack, "m_hack");
-            save_item(m_ready, "m_ready");
-            save_item(m_state, "m_state");
-            save_item(m_current_channel, "m_current_channel");
-            save_item(m_last_channel, "m_last_channel");
-            save_item(m_transfer_mode, "m_transfer_mode");
-            save_item(m_status, "m_status");
-            save_item(m_request, "m_request");
+            save_item(NAME(new { m_msb }));
+            save_item(NAME(new { m_hreq }));
+            save_item(NAME(new { m_hack }));
+            save_item(NAME(new { m_ready }));
+            save_item(NAME(new { m_state }));
+            save_item(NAME(new { m_current_channel }));
+            save_item(NAME(new { m_last_channel }));
+            save_item(NAME(new { m_transfer_mode }));
+            save_item(NAME(new { m_status }));
+            save_item(NAME(new { m_request }));
 
             //throw new emu_unimplemented();
 #if false
@@ -326,6 +325,13 @@ namespace mame
         }
 
 
+        // device_execute_interface helpers
+        public void set_icountptr(intref icount) { execute().set_icountptr(icount); }
+        public void suspend_until_trigger(int trigid, bool eatcycles) { execute().suspend_until_trigger(trigid, eatcycles); }
+        public void trigger(int trigid) { execute().trigger(trigid); }
+
+
+        // device_execute_interface overrides
         void device_execute_interface_execute_run()
         {
             LOG("{0}\n", "execute_run");
@@ -342,7 +348,7 @@ namespace mame
                     }
                     else
                     {
-                        m_icountRef.i = 0;
+                        m_icount.i = 0;
                         suspend_until_trigger(1, true);
                     }
                     break;
@@ -356,7 +362,7 @@ namespace mame
                     }
                     else
                     {
-                        m_icountRef.i = 0;
+                        m_icount.i = 0;
                         suspend_until_trigger(1, true);
                     }
                     break;
@@ -422,9 +428,9 @@ namespace mame
                     break;
                 }
 
-                m_icountRef.i--;
+                m_icount.i--;
 
-            } while (m_icountRef.i > 0);
+            } while (m_icount.i > 0);
         }
 
 

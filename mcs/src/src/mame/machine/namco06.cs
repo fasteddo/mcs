@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -16,7 +15,7 @@ namespace mame
     public class namco_06xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_06XX, namco_06xx_device, "namco06", "Namco 06xx")
-        static device_t device_creator_namco_06xx_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_06xx_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_namco_06xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_06xx_device(mconfig, tag, owner, clock); }
         public static readonly device_type NAMCO_06XX = DEFINE_DEVICE_TYPE(device_creator_namco_06xx_device, "namco06", "Namco 06xx");
 
 
@@ -30,9 +29,9 @@ namespace mame
 
         required_device<cpu_device> m_nmicpu;
 
-        devcb_read8.array<i4, devcb_read8> m_read;
-        devcb_write_line.array<i4, devcb_write_line> m_readreq;
-        devcb_write8.array<i4, devcb_write8> m_write;
+        devcb_read8.array<devcb_read8> m_read;
+        devcb_write_line.array<devcb_write_line> m_readreq;
+        devcb_write8.array<devcb_write8> m_write;
 
 
         namco_06xx_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -41,9 +40,9 @@ namespace mame
             m_control = 0;
             m_nmicpu = new required_device<cpu_device>(this, finder_base.DUMMY_TAG);
 
-            m_read = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
-            m_readreq = new devcb_write_line.array<i4, devcb_write_line>(this, () => { return new devcb_write_line(this); });
-            m_write = new devcb_write8.array<i4, devcb_write8>(this, () => { return new devcb_write8(this); });
+            m_read = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
+            m_readreq = new devcb_write_line.array<devcb_write_line>(4, this, () => { return new devcb_write_line(this); });
+            m_write = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
         }
 
 
@@ -147,7 +146,7 @@ namespace mame
             /* allocate a timer */
             m_nmi_timer = machine().scheduler().timer_alloc(nmi_generate); //timer_expired_delegate(FUNC(namco_06xx_device::nmi_generate),this));
 
-            save_item(m_control, "m_control");
+            save_item(NAME(new { m_control }));
         }
 
         //-------------------------------------------------

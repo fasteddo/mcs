@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 using int64_t = System.Int64;
 using nl_fptype = System.Double;
-using uint64_t = System.UInt64;
 
 
 namespace mame.netlist

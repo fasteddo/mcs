@@ -1,14 +1,12 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using mame;
 using System;
 using System.Collections.Generic;
+using mame;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 
-
-namespace mameForm
+namespace mcsForm
 {
     public class osd_options_WinForms : osd_options  // windows_options
     {
@@ -388,8 +386,8 @@ namespace mameForm
 
 
         render_target m_target;
-        RawBuffer screenbuffer;  //g_state.screenbuffer = new uint32_t[400 * 400 * 2];
-        public RawBufferPointer screenbufferptr;
+        MemoryContainer<byte> screenbuffer;  //g_state.screenbuffer = new uint32_t[400 * 400 * 2];
+        public Pointer<byte> screenbufferptr;
         public Queue<Int16> m_audiobuffer = new Queue<Int16>();
 
         public object osdlock = new object();
@@ -567,7 +565,7 @@ namespace mameForm
                 if (keyboard_device == null)
                     throw new emu_fatalerror("osd_interface.init() - FAILED - add_device() failed\n");
 
-                foreach (var entry in mameForm.Form1.keymap)
+                foreach (var entry in Form1.keymap)
                 {
                     string defname = entry.Key.ToString();  //string.Format("Scan{0}", count++);
                     input_item_id itemid = entry.Value;
@@ -655,7 +653,7 @@ namespace mameForm
         }
 
 
-        public override void update_audio_stream(ListPointer<Int16> buffer, int samples_this_frame)  //const int16_t *buffer, int samples_this_frame) = 0;
+        public override void update_audio_stream(Pointer<Int16> buffer, int samples_this_frame)  //const int16_t *buffer, int samples_this_frame) = 0;
         {
             base.update_audio_stream(buffer, samples_this_frame);
 
@@ -704,8 +702,8 @@ namespace mameForm
 
             const int bpp = 32;
             const int bytes_per_pixel = bpp / 8;
-            screenbuffer = new RawBuffer(width * height * bytes_per_pixel);  //g_state.screenbuffer = new uint32_t[400 * 400 * 2];
-            screenbufferptr = new RawBufferPointer(screenbuffer);
+            screenbuffer = new MemoryContainer<byte>(width * height * bytes_per_pixel);  //g_state.screenbuffer = new uint32_t[400 * 400 * 2];
+            screenbufferptr = new Pointer<byte>(screenbuffer);
         }
 
 

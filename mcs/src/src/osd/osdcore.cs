@@ -4,9 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+
 using int32_t = System.Int32;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using osd_ticks_t = System.UInt64;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
@@ -193,7 +194,7 @@ namespace mame
         /// \param [out] actual Receives the number of bytes read if the
         ///   operation succeeds.  Not valid if the operation fails.
         /// \return Result of the operation.
-        public abstract error read(ListBytesPointer buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //void *buffer
+        public abstract error read(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //virtual error read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
 
 
         /// \brief Write to an open file
@@ -209,7 +210,7 @@ namespace mame
         /// \param [out] actual Receives the number of bytes written if the
         ///   operation succeeds.  Not valid if the operation fails.
         /// \return Result of the operation.
-        public abstract error write(ListBytesPointer buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //void const *buffer
+        public abstract error write(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //virtual error write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
 
 
         /// \brief Change the size of an open file

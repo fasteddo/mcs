@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using u32 = System.UInt32;
 
 
@@ -26,7 +25,7 @@ namespace mame
 
 
         //DEFINE_DEVICE_TYPE(SOFTWARE_LIST, software_list_device, "software_list", "Software List")
-        static device_t device_creator_software_list_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new software_list_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_software_list_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new software_list_device(mconfig, tag, owner, clock); }
         public static readonly device_type SOFTWARE_LIST = DEFINE_DEVICE_TYPE(device_creator_software_list_device, "software_list", "Software List");
 
 

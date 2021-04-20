@@ -4,14 +4,14 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using uint8_t = System.Byte;
 
 
 namespace mame
 {
     public static class crc32_global
     {
-        public static UInt32 crc32(UInt32 crc, ListBytesPointer buf, UInt32 len)
+        public static UInt32 crc32(UInt32 crc, Pointer<uint8_t> buf, UInt32 len)
         {
             //throw new emu_unimplemented();
             return 0;

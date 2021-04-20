@@ -3,10 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -164,12 +163,12 @@ namespace mame
         address_space_config m_data_config;
         address_space_config m_io_config;
 
-        devcb_read8.array<i2, devcb_read8> m_port_in_cb;
-        devcb_write8.array<i2, devcb_write8> m_port_out_cb;
+        devcb_read8.array<devcb_read8> m_port_in_cb;
+        devcb_write8.array<devcb_write8> m_port_out_cb;
         devcb_read8 m_bus_in_cb;
         devcb_write8 m_bus_out_cb;
 
-        devcb_read_line.array<i2, devcb_read_line> m_test_in_cb;
+        devcb_read_line.array<devcb_read_line> m_test_in_cb;
         clock_update_delegate m_t0_clk_func;
         devcb_write_line m_prog_out_cb;
 
@@ -177,7 +176,7 @@ namespace mame
         uint16_t      m_pc;                 /* 16-bit program counter */
 
         uint8_t       m_a;                  /* 8-bit accumulator */
-        ListPointer<uint8_t> m_regptr;  //uint8_t *     m_regptr;             /* pointer to r0-r7 */
+        Pointer<uint8_t> m_regptr;  //uint8_t *     m_regptr;             /* pointer to r0-r7 */
         uint8_t       m_psw;                /* 8-bit psw */
         uint8_t       m_p1;                 /* 8-bit latched port 1 */
         uint8_t       m_p2;                 /* 8-bit latched port 2 */
@@ -202,7 +201,7 @@ namespace mame
 
         uint16_t      m_a11;                /* A11 value, either 0x000 or 0x800 */
 
-        intref m_icountRef = new intref();  //int         m_icount;
+        intref m_icount = new intref();  //int         m_icount;
 
         /* Memory spaces */
         address_space m_program;
@@ -612,8 +611,8 @@ namespace mame
             // https://www.red-gate.com/simple-talk/blogs/introduction-to-open-instance-delegates/
             for (int i = 0; i < mcs48_opcodes.Length; i++)
             {
-                System.Reflection.MethodInfo methodInfo = typeof(mcs48_cpu_device).GetMethod(mcs48_opcodes[i], System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                s_mcs48_opcodes[i] = (mcs48_ophandler)Delegate.CreateDelegate(typeof(mcs48_ophandler), null, methodInfo);
+                MethodInfo methodInfo = typeof(mcs48_cpu_device).GetMethod(mcs48_opcodes[i], BindingFlags.NonPublic | BindingFlags.Instance);
+                s_mcs48_opcodes[i] = (mcs48_ophandler)methodInfo.CreateDelegate(typeof(mcs48_ophandler), null);
             }
         }
 
@@ -648,11 +647,11 @@ namespace mame
             m_data_config = new address_space_config("data", endianness_t.ENDIANNESS_LITTLE, 8, ( ( ram_size == 64 ) ? (u8)6 : ( ( ram_size == 128 ) ? (u8)7 : (u8)8 ) ), 0
                             , (ram_size == 64) ? data_6bit : (ram_size == 128) ? data_7bit : (address_map_constructor)data_8bit);
             m_io_config = new address_space_config("io", endianness_t.ENDIANNESS_LITTLE, 8, 8, 0);
-            m_port_in_cb = new devcb_read8.array<i2, devcb_read8>(this, () => { return new devcb_read8(this); });
-            m_port_out_cb = new devcb_write8.array<i2, devcb_write8>(this, () => { return new devcb_write8(this); });
+            m_port_in_cb = new devcb_read8.array<devcb_read8>(2, this, () => { return new devcb_read8(this); });
+            m_port_out_cb = new devcb_write8.array<devcb_write8>(2, this, () => { return new devcb_write8(this); });
             m_bus_in_cb = new devcb_read8(this);
             m_bus_out_cb = new devcb_write8(this);
-            m_test_in_cb = new devcb_read_line.array<i2, devcb_read_line>(this, () => { return new devcb_read_line(this); });
+            m_test_in_cb = new devcb_read_line.array<devcb_read_line>(2, this, () => { return new devcb_read_line(this); });
             m_t0_clk_func = null;
             m_prog_out_cb = new devcb_write_line(this);
             m_psw = 0;
@@ -813,35 +812,35 @@ namespace mame
             /* ensure that regptr is valid before get_info gets called */
             update_regptr();
 
-            save_item(m_prevpc, "m_prevpc");
-            save_item(m_pc, "m_pc");
+            save_item(NAME(new { m_prevpc }));
+            save_item(NAME(new { m_pc }));
 
-            save_item(m_a, "m_a");
-            save_item(m_psw, "m_psw");
-            save_item(m_p1, "m_p1");
-            save_item(m_p2, "m_p2");
-            save_item(m_ea, "m_ea");
-            save_item(m_timer, "m_timer");
-            save_item(m_prescaler, "m_prescaler");
-            save_item(m_t1_history, "m_t1_history");
-            save_item(m_sts, "m_sts");
-            save_item(m_dbbi, "m_dbbi");
-            save_item(m_dbbo, "m_dbbo");
+            save_item(NAME(new { m_a }));
+            save_item(NAME(new { m_psw }));
+            save_item(NAME(new { m_p1 }));
+            save_item(NAME(new { m_p2 }));
+            save_item(NAME(new { m_ea }));
+            save_item(NAME(new { m_timer }));
+            save_item(NAME(new { m_prescaler }));
+            save_item(NAME(new { m_t1_history }));
+            save_item(NAME(new { m_sts }));
+            save_item(NAME(new { m_dbbi }));
+            save_item(NAME(new { m_dbbo }));
 
-            save_item(m_irq_state, "m_irq_state");
-            save_item(m_irq_polled, "m_irq_polled");
-            save_item(m_irq_in_progress, "m_irq_in_progress");
-            save_item(m_timer_overflow, "m_timer_overflow");
-            save_item(m_timer_flag, "m_timer_flag");
-            save_item(m_tirq_enabled, "m_tirq_enabled");
-            save_item(m_xirq_enabled, "m_xirq_enabled");
-            save_item(m_timecount_enabled, "m_timecount_enabled");
-            save_item(m_flags_enabled, "m_flags_enabled");
-            save_item(m_dma_enabled, "m_dma_enabled");
+            save_item(NAME(new { m_irq_state }));
+            save_item(NAME(new { m_irq_polled }));
+            save_item(NAME(new { m_irq_in_progress }));
+            save_item(NAME(new { m_timer_overflow }));
+            save_item(NAME(new { m_timer_flag }));
+            save_item(NAME(new { m_tirq_enabled }));
+            save_item(NAME(new { m_xirq_enabled }));
+            save_item(NAME(new { m_timecount_enabled }));
+            save_item(NAME(new { m_flags_enabled }));
+            save_item(NAME(new { m_dma_enabled }));
 
-            save_item(m_a11, "m_a11");
+            save_item(NAME(new { m_a11 }));
 
-            set_icountptr(m_icountRef);
+            set_icountptr(m_icount);
         }
 
 
@@ -905,7 +904,7 @@ namespace mame
 
             /* external interrupts may have been set since we last checked */
             curcycles = check_irqs();
-            m_icountRef.i -= curcycles;
+            m_icount.i -= curcycles;
             if (m_timecount_enabled != 0)
                 burn_cycles(curcycles);
 
@@ -924,11 +923,11 @@ namespace mame
                 curcycles = m_opcode_table[opcode](this);
 
                 /* burn the cycles */
-                m_icountRef.i -= curcycles;
+                m_icount.i -= curcycles;
                 if (m_timecount_enabled != 0)
                     burn_cycles(curcycles);
 
-            } while (m_icountRef.i > 0);
+            } while (m_icount.i > 0);
         }
 
         void device_execute_interface_execute_set_input(int inputnum, int state)
@@ -1021,7 +1020,7 @@ namespace mame
         -------------------------------------------------*/
         void update_regptr()
         {
-            m_regptr = new ListPointer<u8>(m_dataptr.target, (m_psw & B_FLAG) != 0 ? 24 : 0);  //m_regptr = &m_dataptr[(m_psw & B_FLAG) ? 24 : 0];
+            m_regptr = new Pointer<u8>(m_dataptr.target, (m_psw & B_FLAG) != 0 ? 24 : 0);  //m_regptr = &m_dataptr[(m_psw & B_FLAG) ? 24 : 0];
         }
 
 
@@ -1275,7 +1274,7 @@ namespace mame
     class mb8884_device : mcs48_cpu_device
     {
         //DEFINE_DEVICE_TYPE(MB8884, mb8884_device, "mb8884", "MB8884")
-        static device_t device_creator_mb8884_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8884_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_mb8884_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8884_device(mconfig, tag, owner, clock); }
         public static readonly device_type MB8884 = DEFINE_DEVICE_TYPE(device_creator_mb8884_device, "mb8884", "MB8884");
 
         // construction/destruction

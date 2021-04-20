@@ -4,9 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -18,7 +16,7 @@ namespace mame
     public class i8255_device : device_t
     {
         //DEFINE_DEVICE_TYPE(I8255, i8255_device, "i8255", "Intel 8255 PPI")
-        static device_t device_creator_i8255_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8255_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_i8255_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8255_device(mconfig, tag, owner, clock); }
         public static readonly device_type I8255 = DEFINE_DEVICE_TYPE(device_creator_i8255_device, "i8255", "Intel 8255 PPI");
 
         public static readonly device_type I8255A = I8255;  //decltype(I8255) I8255A = I8255;
@@ -268,15 +266,15 @@ namespace mame
         protected override void device_start()
         {
             // register for state saving
-            save_item(m_control, "m_control");
-            save_item(m_output, "m_output");
-            save_item(m_input, "m_input");
-            save_item(m_ibf, "m_ibf");
-            save_item(m_obf, "m_obf");
-            save_item(m_inte, "m_inte");
-            save_item(m_inte1, "m_inte1");
-            save_item(m_inte2, "m_inte2");
-            save_item(m_intr, "m_intr");
+            save_item(NAME(new { m_control }));
+            save_item(NAME(new { m_output }));
+            save_item(NAME(new { m_input }));
+            save_item(NAME(new { m_ibf }));
+            save_item(NAME(new { m_obf }));
+            save_item(NAME(new { m_inte }));
+            save_item(NAME(new { m_inte1 }));
+            save_item(NAME(new { m_inte2 }));
+            save_item(NAME(new { m_intr }));
         }
 
 

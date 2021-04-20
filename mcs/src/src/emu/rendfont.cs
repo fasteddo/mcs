@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using ListBytes = mame.ListBase<System.Byte>;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using s32 = System.Int32;
 using u8 = System.Byte;
+using u32 = System.UInt32;
 using u64 = System.UInt64;
 
 
@@ -43,7 +43,7 @@ namespace mame
             public s32 yoffs;       // X and Y offset from baseline to top,left of bitmap
             public s32 bmwidth;
             public s32 bmheight;  // width and height of bitmap
-            public ListBytesPointer rawdata;  //const char *        rawdata;            // pointer to the raw data for this one
+            public Pointer<u8> rawdata;  //const char *        rawdata;            // pointer to the raw data for this one
             public render_texture texture;            // pointer to a texture for rendering and sizing
             public bitmap_argb32 bitmap;             // pointer to the bitmap containing the raw data
 
@@ -140,7 +140,7 @@ namespace mame
 
             // load the compiled in data instead
             emu_file ramfile = new emu_file(OPEN_FLAG_READ);
-            osd_file.error filerr = ramfile.open_ram(new ListBytes(uismall_global.font_uismall), (UInt32)uismall_global.font_uismall.Length);//, sizeof(font_uismall));
+            osd_file.error filerr = ramfile.open_ram(new MemoryU8(uismall_global.font_uismall), (UInt32)uismall_global.font_uismall.Length);//, sizeof(font_uismall));
             if (osd_file.error.NONE == filerr)
                 load_cached(ramfile, 0, 0);
 
@@ -276,7 +276,7 @@ namespace mame
         //-------------------------------------------------
         public void get_scaled_bitmap_and_bounds(bitmap_argb32 dest, float height, float aspect, char32_t chnum, out rectangle bounds)
         {
-            bounds = new rectangle();
+            bounds = default;
 
             glyph gl = get_char(chnum);
 
@@ -457,13 +457,13 @@ namespace mame
                 gl.bitmap.fill(0);
 
                 // extract the data
-                ListBytesPointer ptr = new ListBytesPointer(gl.rawdata);  //const char *ptr = gl.rawdata;
+                Pointer<u8> ptr = new Pointer<u8>(gl.rawdata);  //const char *ptr = gl.rawdata;
                 u8 accum = 0;
                 u8 accumbit = 7;
                 for (int y = 0; y < gl.bmheight; y++)
                 {
                     int desty = y + m_height + m_yoffs - gl.yoffs - gl.bmheight;
-                    UInt32BufferPointer dest = ((0 <= desty) && (m_height > desty)) ? gl.bitmap.pix32(desty) : null;  //u32 *dest(((0 <= desty) && (m_height > desty)) ? &gl.bitmap.pix32(desty) : nullptr);
+                    PointerU32 dest = ((0 <= desty) && (m_height > desty)) ? gl.bitmap.pix32(desty) : null;  //u32 *dest(((0 <= desty) && (m_height > desty)) ? &gl.bitmap.pix32(desty) : nullptr);
 
                     if (m_format == format.TEXT)
                     {
@@ -621,10 +621,10 @@ namespace mame
             {
                 osd_printf_error("render_font::load_cached: allocation error\n");
             }
-            for (UInt64 bytes_read = 0; remaining > bytes_read; )
+            for (u64 bytes_read = 0; remaining > bytes_read; )
             {
-                UInt32 chunk = (UInt32)Math.Min(UInt32.MaxValue, remaining);
-                if (file.read(new ListBytesPointer(m_rawdata, (int)bytes_read), chunk) != chunk)  // &m_rawdata[bytes_read], chunk) != chunk)
+                u32 chunk = (u32)std.min(u32.MaxValue, remaining);
+                if (file.read(new Pointer<u8>(m_rawdata, (int)bytes_read), chunk) != chunk)  //if (file.read(&m_rawdata[bytes_read], chunk) != chunk)
                 {
                     osd_printf_error("render_font::load_cached: error reading BDC data\n");
                     m_rawdata.clear();
@@ -635,7 +635,7 @@ namespace mame
 
             // extract the data from the data
             UInt32 offset = (UInt32)numchars * bdc_table_entry.size();
-            bdc_table_entry entry = new bdc_table_entry(m_rawdata.empty() ? null : new ListBytesPointer(m_rawdata));
+            bdc_table_entry entry = new bdc_table_entry(m_rawdata.empty() ? null : new Pointer<u8>(m_rawdata));
             for (UInt32 chindex = 0; chindex < numchars; chindex++, entry = entry.get_next())
             {
                 // if we don't have a subtable yet, make one
@@ -664,7 +664,7 @@ namespace mame
                 gl.yoffs = entry.get_bb_y_offset();
                 gl.bmwidth = entry.get_bb_width();
                 gl.bmheight = entry.get_bb_height();
-                gl.rawdata = new ListBytesPointer(m_rawdata, (int)offset);
+                gl.rawdata = new Pointer<u8>(m_rawdata, (int)offset);
 
                 // advance the offset past the character
                 offset += (UInt32)((gl.bmwidth * gl.bmheight + 7) / 8);
@@ -696,7 +696,7 @@ namespace mame
         {
             // FIXME: this is copy/pasta from the BDC loading, and it shouldn't be injected into every font
             emu_file file = new emu_file(OPEN_FLAG_READ);
-            if (file.open_ram(new ListBytes(uicmd14_global.font_uicmd14), (UInt32)uicmd14_global.font_uicmd14.Length) == osd_file.error.NONE)
+            if (file.open_ram(new MemoryU8(uicmd14_global.font_uicmd14), (UInt32)uicmd14_global.font_uicmd14.Length) == osd_file.error.NONE)
             {
                 // get the file size, read the header, and check that it looks good
                 UInt64 filesize = file.size();
@@ -739,7 +739,7 @@ namespace mame
                 for (UInt64 bytes_read = 0; remaining > bytes_read; )
                 {
                     UInt32 chunk = (UInt32)Math.Min(UInt32.MaxValue, remaining);
-                    if (file.read(new ListBytesPointer(m_rawdata_cmd, (int)bytes_read), chunk) != chunk)
+                    if (file.read(new Pointer<u8>(m_rawdata_cmd, (int)bytes_read), chunk) != chunk)
                     {
                         osd_printf_error("render_font::render_font_command_glyph: error reading BDC data\n");
                         m_rawdata_cmd.clear();
@@ -753,7 +753,7 @@ namespace mame
 
                 // extract the data from the data
                 UInt32 offset = (UInt32)numchars * bdc_table_entry.size();
-                bdc_table_entry entry = new bdc_table_entry(m_rawdata_cmd.empty() ? null : new ListBytesPointer(m_rawdata_cmd));
+                bdc_table_entry entry = new bdc_table_entry(m_rawdata_cmd.empty() ? null : new Pointer<u8>(m_rawdata_cmd));
                 for (UInt32 chindex = 0; chindex < numchars; chindex++, entry = entry.get_next())
                 {
                     // if we don't have a subtable yet, make one
@@ -782,7 +782,7 @@ namespace mame
                     gl.yoffs = entry.get_bb_y_offset();
                     gl.bmwidth = entry.get_bb_width();
                     gl.bmheight = entry.get_bb_height();
-                    gl.rawdata = new ListBytesPointer(m_rawdata_cmd, (int)offset);
+                    gl.rawdata = new Pointer<u8>(m_rawdata_cmd, (int)offset);
 
                     // advance the offset past the character
                     offset += (UInt32)((gl.bmwidth * gl.bmheight + 7) / 8);
@@ -801,7 +801,7 @@ namespace mame
         //  next_line - return a pointer to the start of
         //  the next line
         //-------------------------------------------------
-        static ListBytesPointer next_line(ListBytesPointer ptr)  //static const char *next_line(const char *ptr)
+        static Pointer<u8> next_line(Pointer<u8> ptr)  //static const char *next_line(const char *ptr)
         {
             // scan forward until we hit the end or a carriage return
             while (ptr[0] != 13 && ptr[0] != 10 && ptr[0] != 0)
@@ -924,16 +924,16 @@ namespace mame
         const UInt32 OFFS_DEFCHAR    = 0x1c; // 0x04 bytes (big-endian binary integer)
         const UInt32 OFFS_END        = 0x20;
 
-        static RawBuffer MAGIC = new RawBuffer((int)(OFFS_MAJVERSION - OFFS_MAGIC));  //static u8 const                 MAGIC[OFFS_MAJVERSION - OFFS_MAGIC];
+        static MemoryU8 MAGIC = new MemoryU8((int)(OFFS_MAJVERSION - OFFS_MAGIC), true);  //static u8 const                 MAGIC[OFFS_MAJVERSION - OFFS_MAGIC];
         //u8 const bdc_header::MAGIC[OFFS_MAJVERSION - OFFS_MAGIC] = { 'b', 'd', 'c', 'f', 'n', 't' };
 
 
-        RawBuffer m_data = new RawBuffer((int)OFFS_END);  //u8                              m_data[OFFS_END];
+        MemoryU8 m_data = new MemoryU8((int)OFFS_END, true);  //u8                              m_data[OFFS_END];
 
 
         public bool read(emu_file f)
         {
-            return f.read(new ListBytesPointer(m_data), (UInt32)m_data.Count) == m_data.Count;
+            return f.read(new Pointer<u8>(m_data), (UInt32)m_data.Count) == m_data.Count;
         }
         //bool write(emu_file &f)
         //{
@@ -954,7 +954,7 @@ namespace mame
                 MAGIC[5] = Convert.ToByte('t');
             }
 
-            return memcmp(new ListBytesPointer(MAGIC), new ListBytesPointer(m_data, (int)OFFS_MAGIC), OFFS_MAJVERSION - OFFS_MAGIC) == 0;
+            return memcmp(new Pointer<u8>(MAGIC), new Pointer<u8>(m_data, (int)OFFS_MAGIC), OFFS_MAJVERSION - OFFS_MAGIC) == 0;
         }
         public UInt32 get_major_version()
         {
@@ -1078,10 +1078,10 @@ namespace mame
         const UInt32 OFFS_BBHEIGHT   = 0x0e; // 0x02 bytes (big-endian binary integer)
         const UInt32 OFFS_END        = 0x10;
 
-        ListBytesPointer m_ptr;  //u8                              *m_ptr;
+        Pointer<u8> m_ptr;  //u8                              *m_ptr;
 
 
-        public bdc_table_entry(ListBytesPointer bytes)  //void *bytes)
+        public bdc_table_entry(Pointer<u8> bytes)  //bdc_table_entry(void *bytes)
         {
             m_ptr = bytes;
         }
@@ -1090,7 +1090,7 @@ namespace mame
 
         public bdc_table_entry get_next()
         {
-            return new bdc_table_entry(new ListBytesPointer(m_ptr, (int)OFFS_END));
+            return new bdc_table_entry(new Pointer<u8>(m_ptr, (int)OFFS_END));
         }
 
         public UInt32 get_encoding()

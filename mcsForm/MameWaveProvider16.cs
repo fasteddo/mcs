@@ -1,13 +1,13 @@
 ﻿// license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using NAudio;
-using NAudio.Wave;
 using System;
 using System.Collections.Generic;
+using NAudio;
+using NAudio.Wave;
 
 
-namespace mameForm
+namespace mcsForm
 {
     public class MameWaveProvider16 : WaveProvider16
     {

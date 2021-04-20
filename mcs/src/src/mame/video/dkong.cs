@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using int8_t = System.SByte;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using s16 = System.Int16;
@@ -127,11 +126,11 @@ namespace mame
 
         void dkong2b_palette(palette_device palette)
         {
-            ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
+            Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
             std.vector<rgb_t> rgb;
             compute_res_net_all(out rgb, color_prom, dkong_decode_info, dkong_net_info);
-            palette.palette_interface.set_pen_colors(0, rgb);
+            palette.dipalette.set_pen_colors(0, rgb);
 
             // Now treat tri-state black background generation
 
@@ -142,11 +141,11 @@ namespace mame
                     int r = compute_res_net(1, 0, dkong_net_bck_info);
                     int g = compute_res_net(1, 1, dkong_net_bck_info);
                     int b = compute_res_net(1, 2, dkong_net_bck_info);
-                    palette.palette_interface.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
+                    palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
                 }
             }
 
-            palette.device_palette_interface.palette().normalize_range(0, 255);
+            palette.dipalette.palette().normalize_range(0, 255);
 
             color_prom += 512;
             // color_prom now points to the beginning of the character color codes
@@ -156,7 +155,7 @@ namespace mame
 
         void radarscp_palette(palette_device palette)
         {
-            ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
+            Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
             for (int i = 0; i < 256; i++)
             {
@@ -167,7 +166,7 @@ namespace mame
                 // blue component
                 int b = compute_res_net((color_prom[0] >> 0) & 0x03, 2, radarscp_net_info);
 
-                palette.palette_interface.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
+                palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
                 color_prom++;
             }
 
@@ -180,12 +179,12 @@ namespace mame
                     int r = compute_res_net( 1, 0, radarscp_net_bck_info );
                     int g = compute_res_net( 1, 1, radarscp_net_bck_info );
                     int b = compute_res_net( 1, 2, radarscp_net_bck_info );
-                    palette.palette_interface.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
+                    palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
                 }
             }
 
             // Star color
-            palette.palette_interface.set_pen_color(RADARSCP_STAR_COL,
+            palette.dipalette.set_pen_color(RADARSCP_STAR_COL,
                     (u8)compute_res_net(1, 0, radarscp_stars_net_info),
                     (u8)compute_res_net(0, 1, radarscp_stars_net_info),
                     (u8)compute_res_net(0, 2, radarscp_stars_net_info));
@@ -197,7 +196,7 @@ namespace mame
                 int g = compute_res_net( 0, 1, radarscp_blue_net_info );
                 int b = compute_res_net( i, 2, radarscp_blue_net_info );
 
-                palette.palette_interface.set_pen_color(RADARSCP_BCK_COL_OFFSET + (pen_t)i, (u8)r, (u8)g, (u8)b);
+                palette.dipalette.set_pen_color(RADARSCP_BCK_COL_OFFSET + (pen_t)i, (u8)r, (u8)g, (u8)b);
             }
 
             // Grid
@@ -207,10 +206,10 @@ namespace mame
                 int g = compute_res_net( BIT(i, 1), 1, radarscp_grid_net_info );
                 int b = compute_res_net( BIT(i, 2), 2, radarscp_grid_net_info );
 
-                palette.palette_interface.set_pen_color(RADARSCP_GRID_COL_OFFSET + (pen_t)i, (u8)r, (u8)g, (u8)b);
+                palette.dipalette.set_pen_color(RADARSCP_GRID_COL_OFFSET + (pen_t)i, (u8)r, (u8)g, (u8)b);
             }
 
-            palette.device_palette_interface.palette().normalize_range(0, RADARSCP_GRID_COL_OFFSET + 7);
+            palette.dipalette.palette().normalize_range(0, RADARSCP_GRID_COL_OFFSET + 7);
 
             color_prom += 256;
             // color_prom now points to the beginning of the character color codes
@@ -224,7 +223,7 @@ namespace mame
             int code = m_video_ram[tile_index] + 256 * m_gfx_bank;
             int color = (m_color_codes[tile_index % 32 + 32 * (tile_index / 32 / 4)] & 0x0f) + 0x10 * m_palette_bank;
 
-            tileinfo.set(0, (u32)code, (u32)color, 0);  //SET_TILE_INFO_MEMBER(0, code, color, 0);
+            tileinfo.set(0, (u32)code, (u32)color, 0);
         }
 
 
@@ -235,7 +234,7 @@ namespace mame
             int color = (m_color_codes[tile_index % 32] & 0x0f);
             color = color | (m_palette_bank<<4);
 
-            tileinfo.set(0, (u32)code, (u32)color, 0);  //SET_TILE_INFO_MEMBER(0, code, color, 0);
+            tileinfo.set(0, (u32)code, (u32)color, 0);
         }
 
 
@@ -500,33 +499,33 @@ namespace mame
             m_sprite_bank = 0;
             m_vidhw = -1;
 
-            save_item(m_vidhw, "m_vidhw");
-            save_item(m_gfx_bank, "m_gfx_bank");
-            save_item(m_palette_bank, "m_palette_bank");
-            save_item(m_sprite_bank, "m_sprite_bank");
-            save_item(m_grid_on, "m_grid_on");
+            save_item(NAME(new { m_vidhw }));
+            save_item(NAME(new { m_gfx_bank }));
+            save_item(NAME(new { m_palette_bank }));
+            save_item(NAME(new { m_sprite_bank }));
+            save_item(NAME(new { m_grid_on }));
 
-            save_item(m_grid_col, "m_grid_col");
-            save_item(m_flip, "m_flip");
+            save_item(NAME(new { m_grid_col }));
+            save_item(NAME(new { m_flip }));
 
             // TRS01 TRS02
-            save_item(m_sig30Hz, "m_sig30Hz");
-            save_item(m_blue_level, "m_blue_level");
-            save_item(m_cv1, "m_cv1");
-            save_item(m_cv2, "m_cv2");
-            save_item(m_vg1, "m_vg1");
-            save_item(m_vg2, "m_vg2");
-            save_item(m_vg3, "m_vg3");
-            save_item(m_cv3, "m_cv3");
-            save_item(m_cv4, "m_cv4");
+            save_item(NAME(new { m_sig30Hz }));
+            save_item(NAME(new { m_blue_level }));
+            save_item(NAME(new { m_cv1 }));
+            save_item(NAME(new { m_cv2 }));
+            save_item(NAME(new { m_vg1 }));
+            save_item(NAME(new { m_vg2 }));
+            save_item(NAME(new { m_vg3 }));
+            save_item(NAME(new { m_cv3 }));
+            save_item(NAME(new { m_cv4 }));
 
-            save_item(m_lfsr_5I, "m_lfsr_5I");
-            save_item(m_grid_sig, "m_grid_sig");
-            save_item(m_rflip_sig, "m_rflip_sig");
-            save_item(m_star_ff, "m_star_ff");
-            save_item(m_counter, "m_counter");
-            save_item(m_pixelcnt, "m_pixelcnt");
-            save_item(m_bg_bits, "m_bg_bits");
+            save_item(NAME(new { m_lfsr_5I }));
+            save_item(NAME(new { m_grid_sig }));
+            save_item(NAME(new { m_rflip_sig }));
+            save_item(NAME(new { m_star_ff }));
+            save_item(NAME(new { m_counter }));
+            save_item(NAME(new { m_pixelcnt }));
+            save_item(NAME(new { m_bg_bits }));
         }
 
 

@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
+using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using uint32_t = System.UInt32;
@@ -43,8 +45,8 @@ namespace mame
         };
 #endif
 
-        static RawBuffer f_translation_data_buffer;  //std::unique_ptr<u32 []> f_translation_data;
-        static UInt32BufferPointer f_translation_data;  //std::unique_ptr<u32 []> f_translation_data;
+        static MemoryU8 f_translation_data_buffer;  //std::unique_ptr<u32 []> f_translation_data;
+        static PointerU32 f_translation_data;  //std::unique_ptr<u32 []> f_translation_data;
         static std.unordered_map<string, string> f_translation_map = new std.unordered_map<string, string>();  //std::unordered_map<char const *, char const *, cstr_hash, cstr_compare> f_translation_map;
 
 
@@ -70,7 +72,7 @@ namespace mame
             global_object.strreplace(ref name, "(", "");
             global_object.strreplace(ref name, ")", "");
             emu_file file = new emu_file(m_options.language_path(), global_object.OPEN_FLAG_READ);
-            if (file.open(name, osdcore_global.PATH_SEPARATOR + "strings.mo") != osd_file.error.NONE)
+            if (file.open(name + global_object.PATH_SEPARATOR + "strings.mo") != osd_file.error.NONE)
             {
                 global_object.osd_printf_error("Error opening translation file {0}\n", name);
                 return;
@@ -84,8 +86,8 @@ namespace mame
                 return;
             }
 
-            f_translation_data_buffer = new RawBuffer((int)size + 3);  //f_translation_data.reset(new uint32_t [(size + 3) / 4]);
-            f_translation_data = new UInt32BufferPointer(f_translation_data);
+            f_translation_data_buffer = new MemoryU8((int)size + 3, true);  //f_translation_data.reset(new uint32_t [(size + 3) / 4]);
+            f_translation_data = new PointerU32(f_translation_data);
             if (f_translation_data == null)
             {
                 file.close();
@@ -93,7 +95,7 @@ namespace mame
                 return;
             }
 
-            var read = file.read(new RawBufferPointer(f_translation_data), (u32)size);
+            var read = file.read(new PointerU8(f_translation_data), (u32)size);
             file.close();
             if (read != size)
             {
@@ -147,7 +149,7 @@ namespace mame
             }
             global_object.osd_printf_verbose("Reading translation file {0}: {1} strings, original table at word offset {2}, translated table at word offset {3}\n", name, number_of_strings, original_table_offset, translation_table_offset);
 
-            RawBufferPointer data = new RawBufferPointer(f_translation_data);  //char const *const data = reinterpret_cast<char const *>(f_translation_data.get());
+            PointerU8 data = new PointerU8(f_translation_data);  //char const *const data = reinterpret_cast<char const *>(f_translation_data.get());
             for (u32 i = 1; number_of_strings > i; ++i)
             {
                 u32 original_length = fetch_word(original_table_offset + (2 * i));
@@ -176,8 +178,8 @@ namespace mame
                     continue;
                 }
 
-                string original = data.get_string((int)original_offset, int.MaxValue);  //string original = &data[original_offset];
-                string translation = data.get_string((int)translation_offset, int.MaxValue);  //string translation = &data[translation_offset];
+                string original = data.ToString((int)original_offset, int.MaxValue);  //string original = &data[original_offset];
+                string translation = data.ToString((int)translation_offset, int.MaxValue);  //string translation = &data[translation_offset];
                 var ins = f_translation_map.emplace(original, translation);
                 if (!ins)
                     global_object.osd_printf_warning("Loading translation file {0}: translation {1} '{2}'='{3}' conflicts with previous translation '{4}'='{5}'\n", name, i, original, translation, null, null);  //ins.first->first, ins.first->second);

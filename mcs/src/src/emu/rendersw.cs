@@ -5,7 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -193,7 +193,7 @@ namespace mame
         //-------------------------------------------------
         static u32 get_texel_palette16(TemplateParams t, render_texinfo texture, s32 curu, s32 curv)
         {
-            ListBase<rgb_t> palbase = texture.palette;  //const rgb_t *palbase = texture.palette();
+            MemoryContainer<rgb_t> palbase = texture.palette;  //const rgb_t *palbase = texture.palette;
             if (t._BilinearFilter)
             {
                 s32 u0 = curu >> 16;
@@ -222,7 +222,7 @@ namespace mame
                     v1 = 0;
                 }
 
-                UInt16BufferPointer texbase = new UInt16BufferPointer(texture.base_);  //const u16 *texbase = reinterpret_cast<const u16 *>(texture.base);
+                PointerU16 texbase = new PointerU16(texture.base_);  //const u16 *texbase = reinterpret_cast<const u16 *>(texture.base);
                 texbase += v0 * (s32)texture.rowpixels + u0;
 
                 u32 pix00 = palbase[texbase[0]];
@@ -233,7 +233,7 @@ namespace mame
             }
             else
             {
-                UInt16BufferPointer texbase = new UInt16BufferPointer(texture.base_) + ((curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u16 *texbase = reinterpret_cast<const u16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+                PointerU16 texbase = new PointerU16(texture.base_, (curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u16 *texbase = reinterpret_cast<const u16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
                 return palbase[texbase[0]];
             }
         }
@@ -285,14 +285,14 @@ namespace mame
                     v1 = 0;
                 }
 
-                UInt32BufferPointer texbase = new UInt32BufferPointer(texture.base_);  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base);
+                PointerU32 texbase = new PointerU32(texture.base_);  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base);
                 texbase += v0 * (s32)texture.rowpixels + u0;
 
                 return rgbaint_t.bilinear_filter(texbase[0], texbase[u1], texbase[v1], texbase[u1 + v1], (u8)(curu >> 8), (u8)(curv >> 8));
             }
             else
             {
-                UInt32BufferPointer texbase = new UInt32BufferPointer(texture.base_) + ((curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+                PointerU32 texbase = new PointerU32(texture.base_) + ((curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
                 return texbase[0];
             }
         }
@@ -329,14 +329,14 @@ namespace mame
                     v1 = 0;
                 }
 
-                UInt32BufferPointer texbase = new UInt32BufferPointer(texture.base_);  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base);
+                PointerU32 texbase = new PointerU32(texture.base_);  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base);
                 texbase += v0 * (s32)texture.rowpixels + u0;
 
                 return rgbaint_t.bilinear_filter(texbase[0], texbase[u1], texbase[v1], texbase[u1 + v1], (u8)(curu >> 8), (u8)(curv >> 8));
             }
             else
             {
-                UInt32BufferPointer texbase = new UInt32BufferPointer(texture.base_) + ((curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+                PointerU32 texbase = new PointerU32(texture.base_) + ((curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
                 return texbase[0];
             }
         }
@@ -346,17 +346,17 @@ namespace mame
         //  draw_aa_pixel - draw an antialiased pixel
         //-------------------------------------------------
         //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-        static void draw_aa_pixel(TemplateParams t, RawBufferPointer dstdata, u32 pitch, int x, int y, u32 col)  // _PixelType *dstdata
+        static void draw_aa_pixel(TemplateParams t, PointerU8 dstdata, u32 pitch, int x, int y, u32 col)  // _PixelType *dstdata
         {
             //_PixelType *dest = dstdata + y * pitch + x;
-            RawBufferPointer dest8 = null;
-            UInt16BufferPointer dest16 = null;
-            UInt32BufferPointer dest32 = null;
+            PointerU8 dest8 = null;
+            PointerU16 dest16 = null;
+            PointerU32 dest32 = null;
             switch (t._bpp)
             {
-                case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + x); break;
-                case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + x); break;
-                case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + x); break;
+                case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + x); break;
+                case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + x); break;
+                case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + x); break;
                 default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", t._bpp);
             }
 
@@ -396,7 +396,7 @@ namespace mame
         //-------------------------------------------------
         //  draw_line - draw a line or point
         //-------------------------------------------------
-        static void draw_line(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, s32 width, s32 height, u32 pitch)  // _PixelType *dstdata
+        static void draw_line(TemplateParams t, render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  // _PixelType *dstdata
         {
             // compute the start/end coordinates
             int x1 = (int)(prim.bounds.x0 * 65536.0f);
@@ -550,7 +550,7 @@ namespace mame
         //-------------------------------------------------
         //  draw_rect - draw a solid rectangle
         //-------------------------------------------------
-        static void draw_rect(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, s32 width, s32 height, u32 pitch)  // _PixelType *dstdata
+        static void draw_rect(TemplateParams t, render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_rect(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
             render_bounds fpos = prim.bounds;
 
@@ -598,14 +598,14 @@ namespace mame
                 for (s32 y = starty; y < endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + startx); break;
                         default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -650,14 +650,14 @@ namespace mame
                 for (s32 y = starty; y < endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + startx); break;
                         default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -700,7 +700,7 @@ namespace mame
         //  draw_quad_palette16_none - perform
         //  rasterization of a 16bpp palettized texture
         //-------------------------------------------------
-        static void draw_quad_palette16_none(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata
+        static void draw_quad_palette16_none(TemplateParams t, render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata
         {
             // ensure all parameters are valid
             assert(prim.texture.palette != null);
@@ -712,14 +712,14 @@ namespace mame
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
                         default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -761,14 +761,14 @@ namespace mame
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
                         default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -815,14 +815,14 @@ namespace mame
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
                         default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -868,7 +868,7 @@ namespace mame
         //  draw_quad_palette16_add - perform
         //  rasterization of a 16bpp palettized texture
         //-------------------------------------------------
-        static void draw_quad_palette16_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata,
+        static void draw_quad_palette16_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_add(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             // ensure all parameters are valid
             assert(prim.texture.palette != null);
@@ -885,7 +885,7 @@ namespace mame
         //  draw_quad_yuy16_none - perform
         //  rasterization of a 16bpp YUY image
         //-------------------------------------------------
-        static void draw_quad_yuy16_none(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_yuy16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_yuy16_none(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             throw new emu_unimplemented();
         }
@@ -896,7 +896,7 @@ namespace mame
         //  rasterization by using RGB add after YUY
         //  conversion
         //-------------------------------------------------
-        static void draw_quad_yuy16_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_yuy16_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_yuy16_add(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             throw new emu_unimplemented();
         }
@@ -910,9 +910,9 @@ namespace mame
         //  draw_quad_rgb32 - perform rasterization of
         //  a 32bpp RGB texture
         //-------------------------------------------------
-        static void draw_quad_rgb32(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_rgb32(TemplateParams t, render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_rgb32(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
-            ListBase<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
+            MemoryContainer<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(t, prim.color.a))
@@ -921,14 +921,14 @@ namespace mame
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
                         default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -1000,14 +1000,14 @@ namespace mame
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
                         default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -1084,14 +1084,14 @@ namespace mame
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
                         default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -1178,7 +1178,7 @@ namespace mame
         //  draw_quad_rgb32_add - perform
         //  rasterization by using RGB add
         //-------------------------------------------------
-        static void draw_quad_rgb32_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_rgb32_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_rgb32_add(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             throw new emu_unimplemented();
         }
@@ -1188,7 +1188,7 @@ namespace mame
         //  draw_quad_rgb32_multiply - perform
         //  rasterization using RGB multiply
         //-------------------------------------------------
-        static void draw_quad_rgb32_multiply(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata
+        static void draw_quad_rgb32_multiply(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_rgb32_multiply(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             throw new emu_unimplemented();
         }
@@ -1202,9 +1202,9 @@ namespace mame
         //  draw_quad_argb32_alpha - perform
         //  rasterization using standard alpha blending
         //-------------------------------------------------
-        static void draw_quad_argb32_alpha(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata,
+        static void draw_quad_argb32_alpha(TemplateParams t, render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_alpha(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
-            ListBase<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
+            MemoryContainer<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(t, prim.color.a))
@@ -1213,14 +1213,14 @@ namespace mame
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
                         default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -1345,14 +1345,14 @@ namespace mame
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
                     //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    RawBufferPointer dest8 = null;
-                    UInt16BufferPointer dest16 = null;
-                    UInt32BufferPointer dest32 = null;
+                    PointerU8 dest8 = null;
+                    PointerU16 dest16 = null;
+                    PointerU32 dest32 = null;
                     switch (t._bpp)
                     {
-                        case 8:  dest8 = new RawBufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new UInt16BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new UInt32BufferPointer(dstdata, y * (int)pitch + setup.startx); break;
+                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
+                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
+                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
                         default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
                     }
 
@@ -1465,7 +1465,7 @@ namespace mame
         //  draw_quad_argb32_add - perform
         //  rasterization by using RGB add
         //-------------------------------------------------
-        static void draw_quad_argb32_add(render_primitive prim, ListBytesPointer dstdata, u32 pitch, quad_setup_data setup)  // _PixelType *dstdata
+        static void draw_quad_argb32_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_add(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             throw new emu_unimplemented();
         }
@@ -1480,7 +1480,7 @@ namespace mame
         //  and then dispatch to a texture-mode-specific
         //  drawing routine
         //-------------------------------------------------
-        static void setup_and_draw_textured_quad(TemplateParams t, render_primitive prim, RawBufferPointer dstdata, s32 width, s32 height, u32 pitch)  //_PixelType *dstdata
+        static void setup_and_draw_textured_quad(TemplateParams t, render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void setup_and_draw_textured_quad(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
             assert(prim.bounds.x0 <= prim.bounds.x1);
             assert(prim.bounds.y0 <= prim.bounds.y1);
@@ -1578,7 +1578,7 @@ namespace mame
         //  using a software rasterizer
         //-------------------------------------------------
         //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-        public static void draw_primitives(TemplateParams t, render_primitive_list primlist, RawBufferPointer dstdata, u32 width, u32 height, u32 pitch)  //static void draw_primitives(const render_primitive_list &primlist, void *dstdata, u32 width, u32 height, u32 pitch)
+        public static void draw_primitives(TemplateParams t, render_primitive_list primlist, PointerU8 dstdata, u32 width, u32 height, u32 pitch)  //static void draw_primitives(const render_primitive_list &primlist, void *dstdata, u32 width, u32 height, u32 pitch)
         {
             // loop over the list and render each element
             for (render_primitive prim = primlist.first(); prim != null; prim = prim.next())

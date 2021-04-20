@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -21,7 +20,7 @@ namespace mame
 
 
         // device callbacks
-        devcb_write_line.array<i8, devcb_write_line> m_q_out_cb;      // output line callback array
+        devcb_write_line.array<devcb_write_line> m_q_out_cb;      // output line callback array
         devcb_write8 m_parallel_out_cb;  // parallel output option
 
         // miscellaneous configuration
@@ -39,7 +38,7 @@ namespace mame
         protected addressable_latch_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock, bool clear_active)
             : base(mconfig, type, tag, owner, clock)
         {
-            m_q_out_cb = new devcb_write_line.array<i8, devcb_write_line>(this, () => { return new devcb_write_line(this); });
+            m_q_out_cb = new devcb_write_line.array<devcb_write_line>(8, this, () => { return new devcb_write_line(this); });
             m_parallel_out_cb = new devcb_write8(this);
             m_clear_active = clear_active;
         }
@@ -183,11 +182,11 @@ namespace mame
             // arbitrary initial output state
             m_q = 0xff;
 
-            save_item(m_address, "m_address");
-            save_item(m_data, "m_data");
-            save_item(m_enable, "m_enable");
-            save_item(m_q, "m_q");
-            save_item(m_clear, "m_clear");
+            save_item(NAME(new { m_address }));
+            save_item(NAME(new { m_data }));
+            save_item(NAME(new { m_enable }));
+            save_item(NAME(new { m_q }));
+            save_item(NAME(new { m_clear }));
         }
 
 
@@ -268,7 +267,7 @@ namespace mame
     public class ls259_device : addressable_latch_device
     {
         //DEFINE_DEVICE_TYPE(LS259, ls259_device, "ls259", "74LS259 Addressable Latch")
-        static device_t device_creator_ls259_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ls259_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_ls259_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ls259_device(mconfig, tag, owner, clock); }
         public static readonly device_type LS259 = DEFINE_DEVICE_TYPE(device_creator_ls259_device, "ls259", "74LS259 Addressable Latch");
 
 

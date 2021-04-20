@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -18,7 +17,7 @@ namespace mame
     {
         // device type definition
         //DEFINE_DEVICE_TYPE(ER2055, er2055_device, "er2055", "ER2055 EAROM (64x8)")
-        static device_t device_creator_er2055_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new er2055_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_er2055_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new er2055_device(mconfig, tag, owner, clock); }
         public static readonly device_type ER2055 = DEFINE_DEVICE_TYPE(device_creator_er2055_device, "er2055", "ER2055 EAROM (64x8)");
 
 
@@ -128,9 +127,9 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            save_item(m_control_state, "m_control_state");
-            save_item(m_address, "m_address");
-            save_item(m_data, "m_data");
+            save_item(NAME(new { m_control_state }));
+            save_item(NAME(new { m_address }));
+            save_item(NAME(new { m_data }));
 
             m_rom_data = new uint8_t[SIZE_DATA];  // std::make_unique<uint8_t[]>(SIZE_DATA);
 

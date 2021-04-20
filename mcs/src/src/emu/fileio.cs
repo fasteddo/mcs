@@ -4,8 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytes = mame.ListBase<System.Byte>;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using s64 = System.Int64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -272,17 +271,17 @@ namespace mame
             // if we have ZIP data, just hash that directly
             if (!m_zipdata.empty())
             {
-                m_hashes.compute(new ListBytesPointer(m_zipdata), (UInt32)m_zipdata.size(), needed.c_str());
+                m_hashes.compute(new Pointer<u8>(m_zipdata), (UInt32)m_zipdata.size(), needed.c_str());  //m_hashes.compute(&m_zipdata[0], m_zipdata.size(), needed.c_str());
                 return m_hashes;
             }
 
             // read the data if we can
-            ListBytes filedata = m_file.buffer();
+            MemoryU8 filedata = m_file.buffer();  //const u8 *filedata = (const u8 *)m_file->buffer();
             if (filedata == null)
                 return m_hashes;
 
             // compute the hash
-            m_hashes.compute(new ListBytesPointer(filedata), (UInt32)m_file.size(), needed);
+            m_hashes.compute(new Pointer<u8>(filedata), (UInt32)m_file.size(), needed);
 
             return m_hashes;
         }
@@ -332,10 +331,6 @@ namespace mame
             m_iterator.reset();
             return open_next();
         }
-
-        public osd_file.error open(string name1, string name2) { return open(name1 + name2); }
-        public osd_file.error open(string name1, string name2, string name3) { return open(name1 + name2 + name3); }
-        public osd_file.error open(string name1, string name2, string name3, string name4) { return open(name1 + name2 + name3 + name4); }
 
         public osd_file.error open(string name, UInt32 crc)
         {
@@ -390,7 +385,7 @@ namespace mame
         //  open_ram - open a "file" which is actually
         //  just an array of data in RAM
         //-------------------------------------------------
-        public osd_file.error open_ram(ListBytes data, u32 length)  //const void *data, u32 length)
+        public osd_file.error open_ram(MemoryU8 data, u32 length)  //const void *data, u32 length)
         {
             // set a fake filename and CRC
             m_filename = "RAM";
@@ -493,7 +488,7 @@ namespace mame
         //-------------------------------------------------
         //  read - read from a file
         //-------------------------------------------------
-        public u32 read(ListBytesPointer buffer, u32 length)  //void *buffer, UINT32 length)
+        public u32 read(Pointer<u8> buffer, u32 length)  //u32 read(void *buffer, u32 length)
         {
             // load the ZIP file now if we haven't yet
             if (compressed_file_ready())
@@ -535,7 +530,7 @@ namespace mame
         //-------------------------------------------------
         //  write - write to a file
         //-------------------------------------------------
-        public u32 write(ListBytesPointer buffer, u32 length)  //const void *buffer, u32 length)
+        public u32 write(Pointer<u8> buffer, u32 length)  //u32 write(const void *buffer, u32 length)
         {
             // write the data if we can
             if (m_file != null)

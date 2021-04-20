@@ -47,15 +47,16 @@ namespace mame.netlist
                 //LIB_ENTRY(CCCS)
                 //LIB_ENTRY(CCVS)
                 //LIB_ENTRY(LVCCS)
-                //LIB_ENTRY(opamp)
+                LIB_ENTRY("opamp", analog.nld_opamp.decl_opamp);
                 //LIB_ENTRY(nc_pin)
                 //LIB_ENTRY(frontier)   // not intended to be used directly
                 //LIB_ENTRY(function)   // only for macro devices - NO FEEDBACK loops
                 //LIB_ENTRY(QBJT_EB)
                 //LIB_ENTRY(QBJT_switch)
                 //LIB_ENTRY(MOSFET)
-                //LIB_ENTRY(logic_input_ttl)
+                LIB_ENTRY("logic_input_ttl", nld_logic_input.decl_logic_input_ttl);
                 LIB_ENTRY("logic_input", nld_logic_input.decl_logic_input);
+                //LIB_ENTRY(logic_input8)
                 LIB_ENTRY("analog_input", nld_analog_input.decl_analog_input);
                 //LIB_ENTRY(log)
                 //LIB_ENTRY(logD)
@@ -145,7 +146,7 @@ namespace mame.netlist
                 //LIB_ENTRY(CD4006_dip)
                 //LIB_ENTRY(CD4020_WI)
                 //LIB_ENTRY(CD4020)
-                //LIB_ENTRY(CD4066_GATE)
+                LIB_ENTRY("CD4066_GATE", nld_CD4066_GATE.decl_CD4066_GATE);
                 //LIB_ENTRY(CD4316_GATE)
                 //LIB_ENTRY(4538_dip)
                 //LIB_ENTRY(schmitt_trigger)

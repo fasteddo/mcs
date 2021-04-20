@@ -9,38 +9,6 @@ namespace mame.ui
 {
     class menu_main : menu
     {
-        enum ui_menu_main_options
-        {
-            INPUT_GROUPS,
-            INPUT_SPECIFIC,
-            SETTINGS_DIP_SWITCHES,
-            SETTINGS_DRIVER_CONFIG,
-            ANALOG,
-            BOOKKEEPING,
-            GAME_INFO,
-            IMAGE_MENU_IMAGE_INFO,
-            IMAGE_MENU_FILE_MANAGER,
-            TAPE_CONTROL,
-            SLOT_DEVICES,
-            NETWORK_DEVICES,
-            KEYBOARD_MODE,
-            SLIDERS,
-            VIDEO_TARGETS,
-            VIDEO_OPTIONS,
-            CROSSHAIR,
-            CHEAT,
-            PLUGINS,
-            SELECT_GAME,
-            BIOS_SELECTION,
-            BARCODE_READ,
-            PTY_INFO,
-            EXTERNAL_DATS,
-            ADD_FAVORITE,
-            REMOVE_FAVORITE,
-            QUIT_GAME,
-        }
-
-
         /*-------------------------------------------------
             ui_menu_main constructor - populate the main menu
         -------------------------------------------------*/
@@ -50,28 +18,28 @@ namespace mame.ui
         protected override void populate(ref float customtop, ref float custombottom)
         {
             /* add main menu items */
-            item_append("Input (general)", "", 0, ui_menu_main_options.INPUT_GROUPS);
+            item_append("Input (general)", "", 0, menu_options.INPUT_GROUPS);
 
-            item_append("Input (this machine)", "", 0, ui_menu_main_options.INPUT_SPECIFIC);
+            item_append("Input (this machine)", "", 0, menu_options.INPUT_SPECIFIC);
 
             if (ui().machine_info().has_analog())
-                item_append("Analog Controls", "", 0, ui_menu_main_options.ANALOG);
+                item_append("Analog Controls", "", 0, menu_options.ANALOG);
             if (ui().machine_info().has_dips())
-                item_append("Dip Switches", "", 0, ui_menu_main_options.SETTINGS_DIP_SWITCHES);
+                item_append("DIP Switches", "", 0, menu_options.SETTINGS_DIP_SWITCHES);
             if (ui().machine_info().has_configs())
-                item_append("Machine Configuration", null, 0, ui_menu_main_options.SETTINGS_DRIVER_CONFIG);
+                item_append("Machine Configuration", null, 0, menu_options.SETTINGS_DRIVER_CONFIG);
 
-            item_append("Bookkeeping Info", "", 0, ui_menu_main_options.BOOKKEEPING);
+            item_append("Bookkeeping Info", "", 0, menu_options.BOOKKEEPING);
 
-            item_append("Machine Information", "", 0, ui_menu_main_options.GAME_INFO);
+            item_append("Machine Information", "", 0, menu_options.GAME_INFO);
 
             foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
             {
                 if (image.user_loadable())
                 {
-                    item_append("Image Information", "", 0, ui_menu_main_options.IMAGE_MENU_IMAGE_INFO);
+                    item_append("Image Information", "", 0, menu_options.IMAGE_MENU_IMAGE_INFO);
 
-                    item_append("File Manager", "", 0, ui_menu_main_options.IMAGE_MENU_FILE_MANAGER);
+                    item_append("File Manager", "", 0, menu_options.IMAGE_MENU_FILE_MANAGER);
 
                     break;
                 }
@@ -93,10 +61,10 @@ namespace mame.ui
 #endif
 
             if (ui().machine_info().has_bioses())
-                item_append("BIOS Selection", "", 0, ui_menu_main_options.BIOS_SELECTION);
+                item_append("BIOS Selection", "", 0, menu_options.BIOS_SELECTION);
 
             if (new slot_interface_iterator(machine().root_device()).first() != null)
-                item_append("Slot Devices", "", 0, ui_menu_main_options.SLOT_DEVICES);
+                item_append("Slot Devices", "", 0, menu_options.SLOT_DEVICES);
 
             throw new emu_unimplemented();
 #if false
@@ -110,9 +78,9 @@ namespace mame.ui
                 item_append("Keyboard Mode", "", 0, ui_menu_main_options.KEYBOARD_MODE);
 #endif
 
-            item_append("Slider Controls", "", 0, ui_menu_main_options.SLIDERS);
+            item_append("Slider Controls", "", 0, menu_options.SLIDERS);
 
-            item_append("Video Options", "", 0, (machine().render().target_by_index(1) != null) ? ui_menu_main_options.VIDEO_TARGETS : ui_menu_main_options.VIDEO_OPTIONS);
+            item_append("Video Options", "", 0, (machine().render().target_by_index(1) != null) ? menu_options.VIDEO_TARGETS : menu_options.VIDEO_OPTIONS);
 
             throw new emu_unimplemented();
 #if false
@@ -127,7 +95,7 @@ namespace mame.ui
 #endif
 
             if (machine().options().plugins())
-                item_append("Plugin Options", "", 0, ui_menu_main_options.PLUGINS);
+                item_append("Plugin Options", "", 0, menu_options.PLUGINS);
 
             throw new emu_unimplemented();
 #if false
@@ -140,13 +108,17 @@ namespace mame.ui
                 item_append("Add To Favorites", null, 0, ui_menu_main_options.ADD_FAVORITE);
             else
                 item_append("Remove From Favorites", null, 0, ui_menu_main_options.REMOVE_FAVORITE);
-#endif
 
             item_append(menu_item_type.SEPARATOR);
 
+            item_append(string_format(_("About %s"), emulator_info::get_appname()), "", 0, (void *)ABOUT);
+
+            item_append(menu_item_type::SEPARATOR);
+#endif
+
             //  item_append(_("Quit from Machine"), nullptr, 0, (void *)QUIT_GAME);
 
-            item_append("Select New Machine", "", 0, ui_menu_main_options.SELECT_GAME);
+            item_append("Select New Machine", "", 0, menu_options.SELECT_GAME);
         }
 
 
@@ -160,6 +132,8 @@ namespace mame.ui
             if (menu_event != null && menu_event.iptkey == (int)ioport_type.IPT_UI_SELECT)
             {
                 throw new emu_unimplemented();
+#if false
+#endif
             }
         }
     }

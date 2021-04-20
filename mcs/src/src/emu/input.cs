@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using osd_ticks_t = System.UInt64;
 using u32 = System.UInt32;
 
 
@@ -404,7 +403,7 @@ namespace mame
 
 
         // internal state
-        std.array<input_code> m_code = new std.array<input_code>(16);  //std::array<input_code, 16> m_code;
+        std.array<input_code> m_code = new std.array<input_code>(16);
 
 
         // construction/destruction
@@ -515,7 +514,7 @@ namespace mame
 
 
         //void reset() noexcept { set(end_code); }
-        public void set_default() { var codes = new input_code[16]; codes.Fill(end_code); codes[0] = default_code; set(codes); }  //void set_default() noexcept { set(default_code); }
+        public void set_default() { var codes = new input_code[16]; std.fill(codes, end_code); codes[0] = default_code; set(codes); }  //void set_default() noexcept { set(default_code); }
 
 
         public void backspace()
@@ -552,7 +551,7 @@ namespace mame
         input_code [] m_switch_memory = new input_code[64];
 
         // classes
-        input_class [] m_class = new input_class[(int)input_device_class.DEVICE_CLASS_MAXIMUM];  //std::array<std::unique_ptr<input_class>, DEVICE_CLASS_MAXIMUM> m_class;
+        std.array<input_class> m_class = new std.array<input_class>((int)input_device_class.DEVICE_CLASS_MAXIMUM);  //std::array<std::unique_ptr<input_class>, DEVICE_CLASS_MAXIMUM> m_class;
 
 
         // construction/destruction

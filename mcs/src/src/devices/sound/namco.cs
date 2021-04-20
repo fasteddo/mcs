@@ -4,10 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
@@ -36,7 +34,7 @@ namespace mame
         {
             public device_sound_interface_namco_audio(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((namco_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((namco_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
         }
 
 
@@ -75,7 +73,7 @@ namespace mame
         protected sound_channel [] m_channel_list = new sound_channel[MAX_VOICES];
         sound_channel m_last_channel;
         protected uint8_t [] m_soundregs;  //uint8_t *m_soundregs;
-        ListBytesPointer m_wavedata;  //uint8_t *m_wavedata;
+        Pointer<uint8_t> m_wavedata;  //uint8_t *m_wavedata;
 
         /* global sound parameters */
         int m_wave_size;
@@ -89,7 +87,7 @@ namespace mame
         bool m_stereo;     /* set to indicate stereo (e.g., System 1) */
 
         /* decoded waveform table */
-        ListBase<int16_t> [] m_waveform = new ListBase<int16_t>[MAX_VOLUME];  //int16_t *m_waveform[MAX_VOLUME];
+        MemoryContainer<int16_t> [] m_waveform = new MemoryContainer<int16_t>[MAX_VOLUME];  //int16_t *m_waveform[MAX_VOLUME];
 
 
         public namco_audio_device(machine_config mconfig, device_type type, string tag, device_t owner, UInt32 clock)
@@ -124,7 +122,6 @@ namespace mame
         //void set_stereo(bool stereo) { m_stereo = stereo; }
 
 
-        //WRITE_LINE_MEMBER(namco_audio_device::sound_enable_w)
         public void sound_enable_w(int state)
         {
             m_sound_enable = state != 0;
@@ -188,15 +185,15 @@ namespace mame
                 voice.noise_hold = 0;
 
                 /* register with the save state system */
-                save_item(voice.frequency,       "voice.frequency", voicenum);
-                save_item(voice.counter,         "voice.counter", voicenum);
-                save_item(voice.volume,          "voice.volume", voicenum);
-                save_item(voice.noise_sw,        "voice.noise_sw", voicenum);
-                save_item(voice.noise_state,     "voice.noise_state", voicenum);
-                save_item(voice.noise_seed,      "voice.noise_seed", voicenum);
-                save_item(voice.noise_hold,      "voice.noise_hold", voicenum);
-                save_item(voice.noise_counter,   "voice.noise_counter", voicenum);
-                save_item(voice.waveform_select, "voice.waveform_select", voicenum);
+                save_item(NAME(new { voice.frequency }), voicenum);
+                save_item(NAME(new { voice.counter }), voicenum);
+                save_item(NAME(new { voice.volume }), voicenum);
+                save_item(NAME(new { voice.noise_sw }), voicenum);
+                save_item(NAME(new { voice.noise_state }), voicenum);
+                save_item(NAME(new { voice.noise_seed }), voicenum);
+                save_item(NAME(new { voice.noise_hold }), voicenum);
+                save_item(NAME(new { voice.noise_counter }), voicenum);
+                save_item(NAME(new { voice.waveform_select }), voicenum);
             }
         }
 
@@ -222,14 +219,14 @@ namespace mame
 
 
         /* build the decoded waveform table */
-        void build_decoded_waveform(ListBytesPointer rgnbase)  //uint8_t *rgnbase)
+        void build_decoded_waveform(Pointer<uint8_t> rgnbase)  //uint8_t *rgnbase)
         {
-            ListBase<int16_t> p;  //int16_t *p;
+            MemoryContainer<int16_t> p;  //int16_t *p;
             int size;
             int offset;
             int v;
 
-            m_wavedata = (rgnbase != null) ? new ListBytesPointer(rgnbase) : new ListBytesPointer(auto_alloc_array_clear<uint8_t>(machine(), 0x400));  //m_wavedata = (rgnbase != nullptr) ? rgnbase : auto_alloc_array_clear(machine(), uint8_t, 0x400);
+            m_wavedata = (rgnbase != null) ? new Pointer<uint8_t>(rgnbase) : new Pointer<uint8_t>(auto_alloc_array_clear<uint8_t>(machine(), 0x400));  //m_wavedata = (rgnbase != nullptr) ? rgnbase : auto_alloc_array_clear(machine(), uint8_t, 0x400);
 
             /* 20pacgal has waves in RAM but old sound system */
             if (rgnbase == null && m_voices != 3)
@@ -288,7 +285,7 @@ namespace mame
         }
 
         /* generate sound by oversampling */
-        protected uint32_t namco_update_one(ListPointer<stream_sample_t> buffer, int length, ListPointer<int16_t> wave, uint32_t counter, uint32_t freq)  //uint32_t namco_audio_device::namco_update_one(stream_sample_t *buffer, int length, const int16_t *wave, uint32_t counter, uint32_t freq)
+        protected uint32_t namco_update_one(Pointer<stream_sample_t> buffer, int length, Pointer<int16_t> wave, uint32_t counter, uint32_t freq)  //uint32_t namco_audio_device::namco_update_one(stream_sample_t *buffer, int length, const int16_t *wave, uint32_t counter, uint32_t freq)
         {
             while (length-- > 0)
             {
@@ -305,7 +302,7 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
             if (m_stereo)
             {
@@ -329,8 +326,8 @@ namespace mame
                 {
                     sound_channel voice = m_channel_list[voiceIdx];
 
-                    ListPointer<stream_sample_t> lmix = new ListPointer<stream_sample_t>(outputs[0]);  // stream_sample_t *lmix = outputs[0];
-                    ListPointer<stream_sample_t> rmix = new ListPointer<stream_sample_t>(outputs[1]);  // stream_sample_t *rmix = outputs[1];
+                    Pointer<stream_sample_t> lmix = new Pointer<stream_sample_t>(outputs[0]);  // stream_sample_t *lmix = outputs[0];
+                    Pointer<stream_sample_t> rmix = new Pointer<stream_sample_t>(outputs[1]);  // stream_sample_t *rmix = outputs[1];
                     int lv = voice.volume[0];
                     int rv = voice.volume[1];
 
@@ -404,7 +401,7 @@ namespace mame
                             /* only update if we have non-zero left volume */
                             if (lv != 0)
                             {
-                                ListPointer<int16_t> lw = new ListPointer<int16_t>(m_waveform[lv], voice.waveform_select * 32);  //const int16_t *lw = &m_waveform[lv][voice->waveform_select * 32];
+                                Pointer<int16_t> lw = new Pointer<int16_t>(m_waveform[lv], voice.waveform_select * 32);  //const int16_t *lw = &m_waveform[lv][voice->waveform_select * 32];
 
                                 /* generate sound into the buffer */
                                 c = namco_update_one(lmix, samples, lw, voice.counter, voice.frequency);
@@ -413,7 +410,7 @@ namespace mame
                             /* only update if we have non-zero right volume */
                             if (rv != 0)
                             {
-                                ListPointer<int16_t> rw = new ListPointer<int16_t>(m_waveform[rv], voice.waveform_select * 32);  //const int16_t *rw = &m_waveform[rv][voice->waveform_select * 32];
+                                Pointer<int16_t> rw = new Pointer<int16_t>(m_waveform[rv], voice.waveform_select * 32);  //const int16_t *rw = &m_waveform[rv][voice->waveform_select * 32];
 
                                 /* generate sound into the buffer */
                                 c = namco_update_one(rmix, samples, rw, voice.counter, voice.frequency);
@@ -429,7 +426,7 @@ namespace mame
             {
                 int voiceIdx;  // sound_channel *voice;
 
-                ListPointer<stream_sample_t> buffer = new ListPointer<stream_sample_t>(outputs[0]);  // stream_sample_t *buffer = outputs[0];
+                Pointer<stream_sample_t> buffer = new Pointer<stream_sample_t>(outputs[0]);  // stream_sample_t *buffer = outputs[0];
 
                 /* zap the contents of the buffer */
                 //memset(buffer, 0, samples * sizeof(*buffer));
@@ -445,7 +442,7 @@ namespace mame
                 {
                     sound_channel voice = m_channel_list[voiceIdx];
 
-                    ListPointer<stream_sample_t> mix = new ListPointer<stream_sample_t>(buffer);  // stream_sample_t *mix = buffer;
+                    Pointer<stream_sample_t> mix = new Pointer<stream_sample_t>(buffer);  // stream_sample_t *mix = buffer;
                     int v = voice.volume[0];
                     if (voice.noise_sw != 0)
                     {
@@ -506,10 +503,10 @@ namespace mame
                         /* only update if we have non-zero volume and frequency */
                         if (v != 0 && voice.frequency != 0)
                         {
-                            ListPointer<int16_t> w = new ListPointer<int16_t>(m_waveform[v], voice.waveform_select * 32);  //const int16_t *w = &m_waveform[v][voice->waveform_select * 32];
+                            Pointer<int16_t> w = new Pointer<int16_t>(m_waveform[v], voice.waveform_select * 32);  //const int16_t *w = &m_waveform[v][voice->waveform_select * 32];
 
                             /* generate sound into buffer and update the counter for this voice */
-                            voice.counter = namco_update_one(new ListPointer<stream_sample_t>(mix), samples, w, voice.counter, voice.frequency);
+                            voice.counter = namco_update_one(new Pointer<stream_sample_t>(mix), samples, w, voice.counter, voice.frequency);
                         }
                     }
                 }
@@ -521,7 +518,7 @@ namespace mame
     public class namco_device : namco_audio_device
     {
         //DEFINE_DEVICE_TYPE(NAMCO,       namco_device,       "namco",       "Namco")
-        static device_t device_creator_namco_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_namco_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_device(mconfig, tag, owner, clock); }
         public static readonly device_type NAMCO = DEFINE_DEVICE_TYPE(device_creator_namco_device, "namco",       "Namco");
 
 
@@ -530,8 +527,7 @@ namespace mame
         { }
 
 
-        //WRITE8_MEMBER( namco_device::pacman_sound_w )
-        public void pacman_sound_w(address_space space, offs_t offset, byte data, byte mem_mask = 0xff)
+        public void pacman_sound_w(offs_t offset, uint8_t data)
         {
             sound_channel voice;
             int ch;
@@ -587,7 +583,7 @@ namespace mame
 
         //void polepos_sound_enable(int enable);
 
-        //DECLARE_READ8_MEMBER(polepos_sound_r);
-        //DECLARE_WRITE8_MEMBER(polepos_sound_w);
+        //uint8_t polepos_sound_r(offs_t offset);
+        //void polepos_sound_w(offs_t offset, uint8_t data);
     }
 }

@@ -8,6 +8,7 @@ using attoseconds_t = System.Int64;
 using device_timer_id = System.UInt32;
 using s32 = System.Int32;
 using u32 = System.UInt32;
+using u64 = System.UInt64;
 
 
 namespace mame
@@ -28,18 +29,18 @@ namespace mame
 
         // internal state
         running_machine m_machine;      // reference to the owning machine
-        emu_timer m_next;         // next timer in order in the list
-        emu_timer m_prev;         // previous timer in order in the list
-        timer_expired_delegate m_callback;  // callback function
-        int m_param;        // integer parameter
-        object m_ptr;          // pointer parameter
-        bool m_enabled;      // is the timer enabled?
-        bool m_temporary;    // is the timer temporary?
-        attotime m_period;       // the repeat frequency of the timer
+        public emu_timer m_next;         // next timer in order in the list
+        public emu_timer m_prev;         // previous timer in order in the list
+        public timer_expired_delegate m_callback;  // callback function
+        public int m_param;        // integer parameter
+        public object m_ptr;          // pointer parameter
+        public bool m_enabled;      // is the timer enabled?
+        public bool m_temporary;    // is the timer temporary?
+        public attotime m_period;       // the repeat frequency of the timer
         attotime m_start;        // time when the timer was started
         attotime m_expire;       // time when the timer will expire
-        device_t m_device;       // for device timers, a pointer to the device
-        device_timer_id m_id;           // for device timers, the ID of the timer
+        public device_t m_device;       // for device timers, a pointer to the device
+        public device_timer_id m_id;           // for device timers, the ID of the timer
 
 
         // construction/destruction
@@ -52,15 +53,6 @@ namespace mame
             m_start = attotime.zero;
             m_expire = attotime.never;
         }
-
-
-        public emu_timer prev { get { return m_prev; } set { m_prev = value; } }
-        public timer_expired_delegate callback { get { return m_callback; } }
-        public bool temporary { get { return m_temporary; } }
-        public attotime period { get { return m_period; } }
-        public device_t device { get { return m_device; } }
-        public device_timer_id id { get { return m_id; } }
-        public bool enabled_set { get { return m_enabled; } set { m_enabled = value; } }
 
 
         // allocation and re-use
@@ -179,7 +171,7 @@ namespace mame
         // control
 
         void reset() { reset(attotime.never); }
-        void reset(attotime duration /*= attotime.never*/) { adjust(duration, m_param, m_period); }
+        void reset(attotime duration) { adjust(duration, m_param, m_period); }  //void reset(const attotime &duration = attotime::never) { adjust(duration, m_param, m_period); }
 
         //-------------------------------------------------
         //  adjust - adjust the time when this timer will
@@ -188,7 +180,7 @@ namespace mame
         //-------------------------------------------------
         public void adjust(attotime start_delay) { adjust(start_delay, 0, attotime.never); }
         public void adjust(attotime start_delay, int param) { adjust(start_delay, param, attotime.never); }
-        public void adjust(attotime start_delay, int param/* = 0*/, attotime period/* = attotime.never*/)
+        public void adjust(attotime start_delay, int param, attotime period)  //void adjust(attotime start_delay, s32 param = 0, const attotime &periodicity = attotime::never);
         {
             // if this is the callback timer, mark it modified
             device_scheduler scheduler = machine().scheduler();
@@ -286,7 +278,7 @@ namespace mame
     // ======================> device_scheduler
     public class device_scheduler : global_object, IDisposable
     {
-        const bool VERBOSE = true;
+        const bool VERBOSE = false;
         void LOG(string format, params object [] args) { if (VERBOSE) machine().logerror(format, args); }
 
 
@@ -419,7 +411,7 @@ namespace mame
         //-------------------------------------------------
         public void timeslice()
         {
-            bool call_debugger = (machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0;
+            bool call_debugger = (machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0;
 
             // build the execution list if we don't have one yet
             //if (UNEXPECTED(m_execute_list == null))
@@ -451,47 +443,46 @@ namespace mame
                     apply_suspend_changes();
 
                 // loop over all CPUs
-                for (device_execute_interface exec = m_execute_list; exec != null; exec = exec.nextexec)
+                for (device_execute_interface exec = m_execute_list; exec != null; exec = exec.m_nextexec)
                 {
                     // only process if this CPU is executing or truly halted (not yielding)
                     // and if our target is later than the CPU's current time (coarse check)
-                    //if (EXPECTED((exec.m_suspend == 0 || exec.m_eatcycles) && target.seconds >= exec.m_localtime.seconds))
-                    if ((exec.suspend_ == 0 || exec.eatcycles > 0) && target.seconds() >= exec.localtime.seconds())
+                    if ((exec.m_suspend == 0 || exec.m_eatcycles > 0) && target.seconds() >= exec.m_localtime.seconds())  //if (EXPECTED((exec->m_suspend == 0 || exec->m_eatcycles) && target.seconds() >= exec->m_localtime.seconds()))
                     {
                         // compute how many attoseconds to execute this CPU
-                        attoseconds_t delta = target.attoseconds() - exec.localtime.attoseconds();
-                        if (delta < 0 && target.seconds() > exec.localtime.seconds())
+                        attoseconds_t delta = target.attoseconds() - exec.m_localtime.attoseconds();
+                        if (delta < 0 && target.seconds() > exec.m_localtime.seconds())
                             delta += attotime.ATTOSECONDS_PER_SECOND;
 
-                        assert(delta == (target - exec.localtime).as_attoseconds());
+                        assert(delta == (target - exec.m_localtime).as_attoseconds());
 
-                        if (exec.attoseconds_per_cycle == 0)
+                        if (exec.m_attoseconds_per_cycle == 0)
                         {
-                            exec.localtime = target;
+                            exec.m_localtime = target;
                         }
                         // if we have enough for at least 1 cycle, do the math
-                        else if (delta >= exec.attoseconds_per_cycle)
+                        else if (delta >= exec.m_attoseconds_per_cycle)
                         {
                             // compute how many cycles we want to execute
-                            int ran = exec.cycles_running = (int)divu_64x32((UInt64)delta >> exec.divshift, (UInt32)exec.divisor);
+                            int ran = exec.m_cycles_running = (int)divu_64x32((u64)delta >> exec.m_divshift, (u32)exec.m_divisor);
 
                             if (machine().video().frame_update_count() % 1000 == 0)
                             {
-                            LOG("device_scheduler.timeslice() - cpu '{0}': {1} ({2} cycles)\n", exec.device().tag(), delta, exec.cycles_running);
+                            LOG("device_scheduler.timeslice() - cpu '{0}': {1} ({2} cycles)\n", exec.device().tag(), delta, exec.m_cycles_running);
                             }
 
                             // if we're not suspended, actually execute
-                            if (exec.suspend_ == 0)
+                            if (exec.m_suspend == 0)
                             {
-                                profiler_global.g_profiler.start(exec.profiler);
+                                profiler_global.g_profiler.start(exec.m_profiler);
 
 
                                 // note that this global variable cycles_stolen can be modified
                                 // via the call to cpu_execute
-                                exec.cycles_stolen = 0;
+                                exec.m_cycles_stolen = 0;
                                 m_executing_device = exec;
 
-                                exec.icount_set(exec.cycles_running);  // *exec->m_icountptr = exec->m_cycles_running;
+                                exec.m_icountptr.i = exec.m_cycles_running;  // *exec->m_icountptr = exec->m_cycles_running;
 
                                 if (!call_debugger)
                                 {
@@ -505,44 +496,52 @@ namespace mame
                                 }
 
                                 // adjust for any cycles we took back
-                                /*assert(ran >= *exec->m_icountptr);*/
-                                ran -= exec.icountptrRef.i;
 
-                                /*assert(ran >= exec->m_cycles_stolen);*/
-                                ran -= exec.cycles_stolen;
+                                //throw new emu_unimplemented();
+#if false
+                                assert(ran >= *exec->m_icountptr);
+#endif
 
+                                ran -= exec.m_icountptr.i;  //ran -= *exec->m_icountptr;
+
+                                //throw new emu_unimplemented();
+#if false
+                                assert(ran >= exec->m_cycles_stolen);
+#endif
+
+                                ran -= exec.m_cycles_stolen;
 
                                 profiler_global.g_profiler.stop();
                             }
 
                             // account for these cycles
-                            exec.totalcycles += (UInt64)ran;
+                            exec.m_totalcycles += (u64)ran;
 
                             // update the local time for this CPU
                             attotime deltatime;
-                            if (ran < exec.cycles_per_second)
+                            if (ran < exec.m_cycles_per_second)
                             {
-                                deltatime = new attotime(0, exec.attoseconds_per_cycle * ran);
+                                deltatime = new attotime(0, exec.m_attoseconds_per_cycle * ran);
                             }
                             else
                             {
-                                UInt32 remainder;
-                                int secs = (int)divu_64x32_rem((UInt64)ran, exec.cycles_per_second, out remainder);
-                                deltatime = new attotime(secs, remainder * exec.attoseconds_per_cycle);
+                                u32 remainder;
+                                s32 secs = (s32)divu_64x32_rem((u64)ran, exec.m_cycles_per_second, out remainder);
+                                deltatime = new attotime(secs, remainder * exec.m_attoseconds_per_cycle);
                             }
 
                             assert(deltatime >= attotime.zero);
-                            exec.localtime += deltatime;
+                            exec.m_localtime += deltatime;
 
                             if (machine().video().frame_update_count() % 100 == 0)
                             {
-                            LOG("device_scheduler.timeslice() - {0} ran, {1} total, time = {2}\n", ran, exec.totalcycles, exec.localtime.as_string());
+                            LOG("device_scheduler.timeslice() - {0} ran, {1} total, time = {2}\n", ran, exec.m_totalcycles, exec.m_localtime.as_string());
                             }
 
                             // if the new local CPU time is less than our target, move the target up, but not before the base
-                            if (exec.localtime < target)
+                            if (exec.m_localtime < target)
                             {
-                                target = std.max(exec.localtime, m_basetime);
+                                target = std.max(exec.m_localtime, m_basetime);
 
                                 if (machine().video().frame_update_count() % 1000 == 0)
                                 {
@@ -552,6 +551,7 @@ namespace mame
                         }
                     }
                 }
+
                 m_executing_device = null;
 
                 // update the base time
@@ -561,6 +561,7 @@ namespace mame
             // execute timers
             execute_timers();
         }
+
 
         //-------------------------------------------------
         //  abort_timeslice - abort execution for the
@@ -648,7 +649,7 @@ namespace mame
         //-------------------------------------------------
         public void eat_all_cycles()
         {
-            for (device_execute_interface exec = m_execute_list; exec != null; exec = exec.nextexec)
+            for (device_execute_interface exec = m_execute_list; exec != null; exec = exec.m_nextexec)
                 exec.eat_cycles(1000000000);
         }
 
@@ -680,7 +681,7 @@ namespace mame
                 emu_timer timer = m_timer_list;
 
                 // temporary timers go away entirely (except our special never-expiring one)
-                if (timer.temporary && !timer.expire().is_never())
+                if (timer.m_temporary && !timer.expire().is_never())
                     m_timer_allocator.reclaim(timer.release());
 
                 // permanent ones get added to our private list
@@ -723,7 +724,7 @@ namespace mame
                 // start with a huge time factor and find the 2nd smallest cycle time
                 attoseconds_t smallest = first.minimum_quantum();
                 attoseconds_t perfect = attotime.ATTOSECONDS_PER_SECOND - 1;
-                for (device_execute_interface exec = first.nextexec; exec != null; exec = exec.nextexec)
+                for (device_execute_interface exec = first.m_nextexec; exec != null; exec = exec.m_nextexec)
                 {
                     // find the 2nd smallest cycle interval
                     attoseconds_t curquantum = exec.minimum_quantum();
@@ -788,8 +789,8 @@ namespace mame
             foreach (device_execute_interface exec in new execute_interface_iterator(machine().root_device()))
             {
                 // append to the appropriate list
-                exec.nextexec = null;
-                if (exec.suspend_ == 0)
+                exec.m_nextexec = null;
+                if (exec.m_suspend == 0)
                 {
                     //*active_tailptr = exec;
                     //active_tailptr = &exec.m_nextexec;
@@ -814,9 +815,9 @@ namespace mame
                 for (int i = 0; i < active_list.Count; i++)
                 {
                     if (i < active_list.Count - 1)
-                        active_list[i].nextexec = active_list[i + 1];
+                        active_list[i].m_nextexec = active_list[i + 1];
                     else
-                        active_list[i].nextexec = null;
+                        active_list[i].m_nextexec = null;
                 }
             }
         }
@@ -829,12 +830,12 @@ namespace mame
         {
             u32 suspendchanged = 0;
 
-            for (device_execute_interface exec = m_execute_list; exec != null; exec = exec.nextexec)
+            for (device_execute_interface exec = m_execute_list; exec != null; exec = exec.m_nextexec)
             {
-                suspendchanged |= exec.suspend_ ^ exec.nextsuspend;
-                exec.suspend_ = exec.nextsuspend;
-                exec.nextsuspend &= ~device_execute_interface.SUSPEND_REASON_TIMESLICE;
-                exec.eatcycles = exec.nexteatcycles;
+                suspendchanged |= exec.m_suspend ^ exec.m_nextsuspend;
+                exec.m_suspend = exec.m_nextsuspend;
+                exec.m_nextsuspend &= ~device_execute_interface.SUSPEND_REASON_TIMESLICE;
+                exec.m_eatcycles = exec.m_nexteatcycles;
             }
 
             // recompute the execute list if any CPUs changed their suspension state
@@ -907,15 +908,15 @@ namespace mame
                 if (curtimer.expire() > expire)
                 {
                     // link the new guy in before the current list entry
-                    timer.prev = prevtimer;
-                    timer.m_next_set(curtimer);
+                    timer.m_prev = prevtimer;
+                    timer.m_next = curtimer;
 
                     if (prevtimer != null)
-                        prevtimer.m_next_set(timer);
+                        prevtimer.m_next = timer;
                     else
                         m_timer_list = timer;
 
-                    curtimer.prev = timer;
+                    curtimer.m_prev = timer;
 
                     return timer;
                 }
@@ -923,12 +924,12 @@ namespace mame
 
             // need to insert after the last one
             if (prevtimer != null)
-                prevtimer.m_next_set(timer);
+                prevtimer.m_next = timer;
             else
                 m_timer_list = timer;
 
-            timer.prev = prevtimer;
-            timer.m_next_set(null);
+            timer.m_prev = prevtimer;
+            timer.m_next = null;
 
             return timer;
         }
@@ -940,13 +941,13 @@ namespace mame
         public emu_timer timer_list_remove(emu_timer timer)
         {
             // remove it from the list
-            if (timer.prev != null)
-                timer.prev.m_next_set(timer.next());
+            if (timer.m_prev != null)
+                timer.m_prev.m_next = timer.m_next;
             else
-                m_timer_list = timer.next();
+                m_timer_list = timer.m_next;
 
-            if (timer.next() != null)
-                timer.next().prev = timer.prev;
+            if (timer.m_next != null)
+                timer.m_next.m_prev = timer.m_prev;
 
             return timer;
         }
@@ -967,8 +968,8 @@ namespace mame
                 // if this is a one-shot timer, disable it now
                 emu_timer timer = m_timer_list;
                 bool was_enabled = timer.enabled();
-                if (timer.period.is_zero() || timer.period.is_never())
-                    timer.enabled_set = false;
+                if (timer.m_period.is_zero() || timer.m_period.is_never())
+                    timer.m_enabled = false;
 
                 // set the global state of which callback we're in
                 m_callback_timer_modified = false;
@@ -980,17 +981,14 @@ namespace mame
                 {
                     profiler_global.g_profiler.start(profile_type.PROFILER_TIMER_CALLBACK);
 
-                    if (timer.callback != null)
+                    if (timer.m_callback != null)
                     {
-                        if (machine().video().frame_update_count() % 400 == 0)
-                        {
-                        if (timer.device != null)
-                            LOG("execute_timers: timer device {0} timer {1}\n", timer.device.tag(), timer.id);
+                        if (timer.m_device != null)
+                            LOG("execute_timers: expired: {0} timer device {1} timer {2}\n", timer.expire().attoseconds(), timer.m_device.tag(), timer.m_id);
                         else
-                            LOG("execute_timers: timer callback {0}\n", timer.callback.ToString());
-                        }
+                            LOG("execute_timers: expired: {0} timer callback {1}\n", timer.expire().attoseconds(), timer.m_callback.ToString());
 
-                        timer.callback(timer.ptr(), timer.param());
+                        timer.m_callback(timer.m_ptr, timer.m_param);
                     }
 
                     profiler_global.g_profiler.stop();
@@ -1000,7 +998,7 @@ namespace mame
                 if (!m_callback_timer_modified)
                 {
                     // if the timer is temporary, remove it now
-                    if (timer.temporary)
+                    if (timer.m_temporary)
                         m_timer_allocator.reclaim(timer.release());
 
                     // otherwise, reschedule it

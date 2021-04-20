@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using u8 = System.Byte;
 
 
 namespace mame
@@ -41,12 +41,12 @@ namespace mame
 
     public struct z_stream
     {
-        public ListBytesPointer next_in;  //z_const Bytef *next_in;     /* next input byte */
+        public Pointer<u8> next_in;  //z_const Bytef *next_in;     /* next input byte */
         public UInt32 next_inOffset;
         public UInt32 avail_in;  /* number of bytes available at next_in */
         //uLong    total_in;  /* total number of input bytes read so far */
 
-        public ListBytesPointer next_out;  //Bytef    *next_out; /* next output byte should be put there */
+        public Pointer<u8> next_out;  //Bytef    *next_out; /* next output byte should be put there */
         public UInt32 avail_out; /* remaining free space at next_out */
         //uLong    total_out; /* total number of bytes output so far */
 

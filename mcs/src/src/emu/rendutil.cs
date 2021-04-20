@@ -24,7 +24,7 @@ namespace mame
                 return;
 
             /* adjust the source base */
-            UInt32BufferPointer sbase = source.pix32(0);  //const u32 *sbase = &source.pix32(0);
+            PointerU32 sbase = source.pix32(0);  //const u32 *sbase = &source.pix32(0);
 
             /* determine the steppings */
             u32 swidth = (u32)source.width();
@@ -426,7 +426,7 @@ namespace mame
             by performing a true weighted average over
             all contributing pixels
         -------------------------------------------------*/
-        static void resample_argb_bitmap_average(UInt32BufferPointer dest, u32 drowpixels, u32 dwidth, u32 dheight, UInt32BufferPointer source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_average(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
+        static void resample_argb_bitmap_average(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_average(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
         {
             u64 sumscale = (u64)dx * (u64)dy;
             u32 r;
@@ -525,7 +525,7 @@ namespace mame
             resample_argb_bitmap_bilinear - perform texture
             sampling via a bilinear filter
         -------------------------------------------------*/
-        static void resample_argb_bitmap_bilinear(UInt32BufferPointer dest, u32 drowpixels, u32 dwidth, u32 dheight, UInt32BufferPointer source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_bilinear(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
+        static void resample_argb_bitmap_bilinear(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_bilinear(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
         {
             u32 maxx = swidth << 12;
             u32 maxy = sheight << 12;

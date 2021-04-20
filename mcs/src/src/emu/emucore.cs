@@ -7,15 +7,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-using pen_t = System.UInt32;
 using s8 = System.SByte;
 using s16 = System.Int16;
 using s32 = System.Int32;
-using stream_sample_t = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
-
+using System.Reflection;
 
 namespace mame
 {
@@ -86,6 +84,13 @@ namespace mame
 
         // this macro passes an item followed by a string version of itself as two consecutive parameters
         //#define NAME(x) x, #x
+        public static Tuple<object, string> NAME<T>(T x)
+        {
+            var param = typeof(T).GetProperties()[0];
+            var name = param.Name;
+            var value = param.GetValue(x, null);
+            return new Tuple<object, string>(value, name);
+        }
 
         // this macro wraps a function 'x' and can be used to pass a function followed by its name
         //#define FUNC(x) &x, #x

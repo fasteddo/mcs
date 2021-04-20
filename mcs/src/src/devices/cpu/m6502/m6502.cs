@@ -1,12 +1,12 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
+//#define MCS_DEBUG
+
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -16,10 +16,10 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    partial class m6502_device : cpu_device
+    public partial class m6502_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6502, m6502_device, "m6502", "MOS Technology M6502")
-        static device_t device_creator_mb6502_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6502_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_mb6502_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6502_device(mconfig, tag, owner, clock); }
         public static readonly device_type M6502 = DEFINE_DEVICE_TYPE(device_creator_mb6502_cpu_device, "m6502", "MOS Technology M6502");
 
 
@@ -71,6 +71,14 @@ namespace mame
         const int M6502_P  = 5;
         const int M6502_S  = 6;
         const int M6502_IR = 7; 
+        //}
+
+
+        //enum
+        //{
+        public const int M6502_IRQ_LINE = IRQ_LINE;
+        const int M6502_NMI_LINE = NMI_LINE;
+        const int M6502_SET_OVERFLOW = V_LINE;
         //}
 
 
@@ -157,7 +165,7 @@ namespace mame
         memory_interface mintf;
         int inst_state;
         int inst_substate;
-        intref icountRef = new intref();  //int icount;
+        intref icount_ = new intref();  //int icount;
         int bcount;
         int count_before_instruction_step;
         bool nmi_state;
@@ -167,6 +175,11 @@ namespace mame
         bool irq_taken;
         bool sync;
         bool inhibit_interrupts;
+
+
+#if MCS_DEBUG
+        int m6502opcount = 0;
+#endif
 
 
         m6502_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -202,7 +215,7 @@ namespace mame
             mintf = null;
             inst_state = 0;
             inst_substate = 0;
-            icountRef.i = 0;  //icount = 0;
+            icount_.i = 0;  //icount = 0;
             nmi_state = false;
             irq_state = false;
             apu_irq_state = false;
@@ -214,7 +227,7 @@ namespace mame
         }
 
 
-        int icount { get { return icountRef.i; } set { icountRef.i = value; } }
+        int icount { get { return icount_.i; } set { icount_.i = value; } }
 
 
         //bool get_sync() const { return sync; }
@@ -246,28 +259,28 @@ namespace mame
             m_distate.state_add(M6502_S,         "SP",        SP);
             m_distate.state_add(M6502_IR,        "IR",        IR);
 
-            save_item(PC, "PC");
-            save_item(NPC, "NPC");
-            save_item(PPC, "PPC");
-            save_item(A, "A");
-            save_item(X, "X");
-            save_item(Y, "Y");
-            save_item(P, "P");
-            save_item(SP, "SP");
-            save_item(TMP, "TMP");
-            save_item(TMP2, "TMP2");
-            save_item(IR, "IR");
-            save_item(nmi_state, "nmi_state");
-            save_item(irq_state, "irq_state");
-            save_item(apu_irq_state, "apu_irq_state");
-            save_item(v_state, "v_state");
-            save_item(inst_state, "inst_state");
-            save_item(inst_substate, "inst_substate");
-            save_item(inst_state_base, "inst_state_base");
-            save_item(irq_taken, "irq_taken");
-            save_item(inhibit_interrupts, "inhibit_interrupts");
+            save_item(NAME(new { PC }));
+            save_item(NAME(new { NPC }));
+            save_item(NAME(new { PPC }));
+            save_item(NAME(new { A }));
+            save_item(NAME(new { X }));
+            save_item(NAME(new { Y }));
+            save_item(NAME(new { P }));
+            save_item(NAME(new { SP }));
+            save_item(NAME(new { TMP }));
+            save_item(NAME(new { TMP2 }));
+            save_item(NAME(new { IR }));
+            save_item(NAME(new { nmi_state }));
+            save_item(NAME(new { irq_state }));
+            save_item(NAME(new { apu_irq_state }));
+            save_item(NAME(new { v_state }));
+            save_item(NAME(new { inst_state }));
+            save_item(NAME(new { inst_substate }));
+            save_item(NAME(new { inst_state_base }));
+            save_item(NAME(new { irq_taken }));
+            save_item(NAME(new { inhibit_interrupts }));
 
-            set_icountptr(icountRef);
+            set_icountptr(icount_);
 
             PC = 0x0000;
             NPC = 0x0000;
@@ -337,22 +350,45 @@ namespace mame
         //virtual uint32_t execute_max_cycles() const override;
         uint32_t device_execute_interface_execute_input_lines() { return NMI_LINE + 1; }
 
+
         void device_execute_interface_execute_run()
         {
             if (inst_substate != 0)
                 do_exec_partial();
 
-            while (icountRef.i > 0)
+            while (icount > 0)
             {
                 if (inst_state < 0xff00)
                 {
                     PPC = NPC;
                     inst_state = IR | inst_state_base;
-                    if ((machine().debug_flags_get & DEBUG_FLAG_ENABLED) != 0)
+                    if ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0)
                         debugger_instruction_hook(pc_to_external(NPC));
                 }
 
+
+#if MCS_DEBUG
+                var atari_sound_comm = (atari_sound_comm_device)owner().subdevice("soundcomm");
+                int s2m = atari_sound_comm.sound_to_main_ready();
+                int m2s = atari_sound_comm.main_to_sound_ready();
+                uint8_t m2sd = atari_sound_comm.m_main_to_sound_data;
+
+
+                if (m6502opcount >= 0 && m6502opcount % 50000 == 0)
+                    osd_printf_debug("m6502_device.execute_run() - {0,6} - {1,5} - {2,5} - {3,5} - {4,5} - {5,5} - {6,5} - {7,5}\n", m6502opcount, inst_state, icount, A, Y, read(513), X, m2sd);
+                //if (m6502opcount >= 9000 && m6502opcount <= 10000)
+                //    osd_printf_debug("m6502_device.execute_run() - {0,6} - {1,5} - {2,5} - {3,5} - {4,5} - {5,5} - {6,5} - {7,5}\n", m6502opcount, inst_state, icount, A, Y, read(513), X, m2sd);
+                //if (opcount == 10000)
+                //    osd_printf_debug("m6502_device.execute_run() - {0,6} - {1,5} - {2,5}\n", opcount, inst_state, icount);
+#endif
+
+
                 do_exec_full();
+
+
+#if MCS_DEBUG
+                m6502opcount++;
+#endif
             }
         }
 

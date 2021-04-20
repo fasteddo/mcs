@@ -1,14 +1,15 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using SharpCompress.Archives.SevenZip;
-using SharpCompress.Archives;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SharpCompress.Archives.SevenZip;
+using SharpCompress.Archives;
 
 using int64_t = System.Int64;
-using ListBytes = mame.ListBase<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
@@ -293,7 +294,7 @@ namespace mame.util
         public int64_t current_crc() { return m_curr_crc; }
 
 
-        public archive_file.error decompress(ListBytes buffer, uint32_t length)
+        public archive_file.error decompress(MemoryU8 buffer, uint32_t length)
         {
 #if false
             // if we don't have enough buffer, error
@@ -445,6 +446,6 @@ namespace mame.util
         protected override int64_t current_last_modified() { return m_impl.current_last_modified(); }
         public override uint32_t current_crc() { return (uint32_t)m_impl.current_crc(); }
 
-        public override error decompress(ListBytes buffer, uint32_t length) { return m_impl.decompress(buffer, length); }
+        public override error decompress(MemoryU8 buffer, uint32_t length) { return m_impl.decompress(buffer, length); }
     }
 }

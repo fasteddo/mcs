@@ -91,7 +91,7 @@ namespace mame
 
             s32 m_stored_vector;    // most recently written vector
             s32 m_curvector;        // most recently processed vector
-            u8 m_curstate;         // most recently processed state
+            public u8 m_curstate;         // most recently processed state
             s32 [] m_queue = new s32 [32];        // queue of pending events
             int m_qindex;           // index within the queue
 
@@ -111,9 +111,6 @@ namespace mame
 
                 Array.Clear(m_queue, 0, m_queue.Length);  // std::fill(std::begin(m_queue), std::end(m_queue), 0);
             }
-
-
-            public u8 curstate { get { return m_curstate; } }
 
 
             //-------------------------------------------------
@@ -303,7 +300,7 @@ namespace mame
         attotime m_timed_interrupt_period;   // period for periodic interrupts
 
         // execution lists
-        device_execute_interface m_nextexec;               // pointer to the next device to execute, in order
+        public device_execute_interface m_nextexec;               // pointer to the next device to execute, in order
 
         // input states and IRQ callbacks
         device_irq_acknowledge_delegate m_driver_irq;       // driver-specific IRQ callback
@@ -311,26 +308,26 @@ namespace mame
         emu_timer m_timedint_timer;           // reference to this device's periodic interrupt timer
 
         // cycle counting and executing
-        profile_type m_profiler;                 // profiler tag
-        intref m_icountptrRef; //int *                   m_icountptr;                // pointer to the icount
-        int m_cycles_running;           // number of cycles we are executing
-        int m_cycles_stolen;            // number of cycles we artificially stole
+        public profile_type m_profiler;                 // profiler tag
+        public intref m_icountptr;  //int *                   m_icountptr;                // pointer to the icount
+        public int m_cycles_running;           // number of cycles we are executing
+        public int m_cycles_stolen;            // number of cycles we artificially stole
 
         // suspend states
-        u32 m_suspend;                  // suspend reason mask (0 = not suspended)
-        u32 m_nextsuspend;              // pending suspend reason mask
-        u8 m_eatcycles;                // true if we eat cycles while suspended
-        u8 m_nexteatcycles;            // pending value
+        public u32 m_suspend;                  // suspend reason mask (0 = not suspended)
+        public u32 m_nextsuspend;              // pending suspend reason mask
+        public u8 m_eatcycles;                // true if we eat cycles while suspended
+        public u8 m_nexteatcycles;            // pending value
         s32 m_trigger;                  // pending trigger to release a trigger suspension
         s32 m_inttrigger;               // interrupt trigger index
 
         // clock and timing information
-        u64 m_totalcycles;              // total device cycles executed
-        attotime m_localtime = new attotime();                // local time, relative to the timer system's global time
-        s32 m_divisor;                  // 32-bit attoseconds_per_cycle divisor
-        u8 m_divshift;                 // right shift amount to fit the divisor into 32 bits
-        u32 m_cycles_per_second;        // cycles per second, adjusted for multipliers
-        attoseconds_t m_attoseconds_per_cycle;    // attoseconds per adjusted clock cycle
+        public u64 m_totalcycles;              // total device cycles executed
+        public attotime m_localtime;                // local time, relative to the timer system's global time
+        public s32 m_divisor;                  // 32-bit attoseconds_per_cycle divisor
+        public u8 m_divshift;                 // right shift amount to fit the divisor into 32 bits
+        public u32 m_cycles_per_second;        // cycles per second, adjusted for multipliers
+        public attoseconds_t m_attoseconds_per_cycle;    // attoseconds per adjusted clock cycle
 
 
         // construction/destruction
@@ -351,7 +348,7 @@ namespace mame
             m_driver_irq = null;
             m_timedint_timer = null;
             m_profiler = profile_type.PROFILER_IDLE;
-            m_icountptrRef = null;
+            m_icountptr = null;
             m_cycles_running = 0;
             m_cycles_stolen = 0;
             m_suspend = 0;
@@ -377,28 +374,6 @@ namespace mame
         }
 
 
-        // getters
-        public device_execute_interface nextexec { get { return m_nextexec; } set { m_nextexec = value; } }
-        public profile_type profiler { get { return m_profiler; } }
-        public intref icountptrRef { get { return m_icountptrRef; } set { m_icountptrRef = value; } }
-        public int cycles_running { get { return m_cycles_running; } set { m_cycles_running = value; } }
-        public int cycles_stolen { get { return m_cycles_stolen; } set { m_cycles_stolen = value; } }
-        public u32 suspend_ { get { return m_suspend; } set { m_suspend = value; } }
-        public u32 nextsuspend { get { return m_nextsuspend; } set { m_nextsuspend = value; } }
-        public u8 eatcycles { get { return m_eatcycles; } set { m_eatcycles = value; } }
-        public u8 nexteatcycles { get { return m_nexteatcycles; } }
-        public u64 totalcycles { get { return m_totalcycles; } set { m_totalcycles = value; } }
-        public attotime localtime { get { return m_localtime; } set { m_localtime = value; } }
-        public s32 divisor { get { return m_divisor; } }
-        public u8 divshift { get { return m_divshift; } }
-        public u32 cycles_per_second { get { return m_cycles_per_second; } }
-        public attoseconds_t attoseconds_per_cycle { get { return m_attoseconds_per_cycle; } }
-
-
-        // setters
-        public void icount_set(int value) { m_icountptrRef.i = value; }
-
-
         // configuration access
         bool disabled() { return m_disabled; }
         u64 clocks_to_cycles(u64 clocks) { return execute_clocks_to_cycles(clocks); }
@@ -406,8 +381,8 @@ namespace mame
         u32 min_cycles() { return execute_min_cycles(); }
         //u32 max_cycles() const { return execute_max_cycles(); }
         public attotime cycles_to_attotime(u64 cycles) { return device().clocks_to_attotime(cycles_to_clocks(cycles)); }
-        //UINT64 attotime_to_cycles(const attotime &duration) const { return clocks_to_cycles(device().attotime_to_clocks(duration)); }
-        //UINT32 input_lines() const { return execute_input_lines(); }
+        //u64 attotime_to_cycles(const attotime &duration) const { return clocks_to_cycles(device().attotime_to_clocks(duration)); }
+        //u32 input_lines() const { return execute_input_lines(); }
         u32 default_irq_vector(int linenum) { return execute_default_irq_vector(linenum); }
         bool input_edge_triggered(int linenum) { return execute_input_edge_triggered(linenum); }
 
@@ -480,9 +455,9 @@ namespace mame
         // execution management
         device_scheduler scheduler() { assert(m_scheduler != null); return m_scheduler; }
         bool executing() { return scheduler().currently_executing() == this; }
-        s32 cycles_remaining() { return executing() ? m_icountptrRef.i : 0; }  // *m_icountptr : 0; } // cycles remaining in this timeslice
-        public void eat_cycles(int cycles) { if (executing()) m_icountptrRef.i = (cycles > m_icountptrRef.i) ? 0 : (m_icountptrRef.i - cycles); }  // *m_icountptr = (cycles > *m_icountptr) ? 0 : (*m_icountptr - cycles); }
-        void adjust_icount(int delta) { if (executing()) m_icountptrRef.i += delta; }  // *m_icountptr += delta;
+        s32 cycles_remaining() { return executing() ? m_icountptr.i : 0; }  // *m_icountptr : 0; } // cycles remaining in this timeslice
+        public void eat_cycles(int cycles) { if (executing()) m_icountptr.i = (cycles > m_icountptr.i) ? 0 : (m_icountptr.i - cycles); }  // *m_icountptr = (cycles > *m_icountptr) ? 0 : (*m_icountptr - cycles); }
+        void adjust_icount(int delta) { if (executing()) m_icountptr.i += delta; }  // *m_icountptr += delta;
 
 
         //-------------------------------------------------
@@ -497,12 +472,12 @@ namespace mame
                 return;
 
             // swallow the remaining cycles
-            if (icountptrRef != null)
+            if (m_icountptr != null)
             {
-                int delta = icountptrRef.i;
+                int delta = m_icountptr.i;
                 m_cycles_stolen += delta;
                 m_cycles_running -= delta;
-                icountptrRef.i -= delta;
+                m_icountptr.i -= delta;
             }
         }
 
@@ -624,9 +599,12 @@ namespace mame
             // if we're active, add in the time from the current slice
             if (executing())
             {
-                /*assert(m_cycles_running >= *m_icountptr);*/
-                int cycles = m_cycles_running - icountptrRef.i;
-                return m_localtime + cycles_to_attotime((UInt64)cycles);
+                //throw new emu_unimplemented();
+#if false
+                assert(m_cycles_running >= *m_icountptr);
+#endif
+                int cycles = m_cycles_running - m_icountptr.i;
+                return m_localtime + cycles_to_attotime((u64)cycles);
             }
 
             return m_localtime;
@@ -641,8 +619,8 @@ namespace mame
         {
             if (executing())
             {
-                assert(m_cycles_running >= m_icountptrRef.i);
-                return m_totalcycles + (u64)m_cycles_running - (u64)m_icountptrRef.i;
+                assert(m_cycles_running >= m_icountptr.i);
+                return m_totalcycles + (u64)m_cycles_running - (u64)m_icountptr.i;
             }
             else
             {
@@ -780,17 +758,17 @@ namespace mame
         public override void interface_post_start()
         {
             // make sure somebody set us up the icount
-            if (m_icountptrRef == null)
+            if (m_icountptr == null)
                 throw new emu_fatalerror("m_icountptr never initialized!");
 
             // register for save states
-            device().save_item(m_suspend,       "m_suspend");
-            device().save_item(m_nextsuspend,   "m_nextsuspend");
-            device().save_item(m_eatcycles,     "m_eatcycles");
-            device().save_item(m_nexteatcycles, "m_nexteatcycles");
-            device().save_item(m_trigger,       "m_trigger");
-            device().save_item(m_totalcycles,   "m_totalcycles");
-            device().save_item(m_localtime,     "m_localtime");
+            device().save_item(NAME(new { m_suspend }));
+            device().save_item(NAME(new { m_nextsuspend }));
+            device().save_item(NAME(new { m_eatcycles }));
+            device().save_item(NAME(new { m_nexteatcycles }));
+            device().save_item(NAME(new { m_trigger }));
+            device().save_item(NAME(new { m_totalcycles }));
+            device().save_item(NAME(new { m_localtime }));
 
             //throw new emu_unimplemented();
 #if false
@@ -828,8 +806,8 @@ namespace mame
         public override void interface_post_reset()
         {
             // reset the interrupt vectors and queues
-            for (int line = 0; line < m_input.Length; line++)
-                m_input[line].reset();
+            foreach (var elem in m_input)
+                elem.reset();
 
             // reconfingure VBLANK interrupts
             if (!string.IsNullOrEmpty(m_vblank_interrupt_screen))
@@ -837,7 +815,11 @@ namespace mame
                 // get the screen that will trigger the VBLANK
                 screen_device screen = device().siblingdevice<screen_device>(m_vblank_interrupt_screen);
 
-                //assert(screen != NULL);
+                //throw new emu_unimplemented();
+#if false
+                assert(screen != nullptr);
+#endif
+
                 screen.register_vblank_callback(on_vblank);
             }
 
@@ -845,7 +827,12 @@ namespace mame
             if (m_timed_interrupt_period != attotime.zero)
             {
                 attotime timedint_period = m_timed_interrupt_period;
-                //assert(m_timedint_timer != NULL);
+
+                //throw new emu_unimplemented();
+#if false
+                assert(m_timedint_timer != nullptr);
+#endif
+
                 m_timedint_timer.adjust(timedint_period, 0, timedint_period);
             }
         }
@@ -888,8 +875,8 @@ namespace mame
 
         // for use by devcpu for now...
 
-        int current_input_state(UInt32 i) { return (int)m_input[i].curstate; }
-        public void set_icountptr(intref icountptrRef) { assert(m_icountptrRef == null); m_icountptrRef = icountptrRef; }
+        int current_input_state(UInt32 i) { return (int)m_input[i].m_curstate; }
+        public void set_icountptr(intref icount) { assert(m_icountptr == null); m_icountptr = icount; }
 
         //IRQ_CALLBACK_MEMBER(standard_irq_callback_member);
         //int standard_irq_callback(int irqline);
@@ -914,7 +901,7 @@ namespace mame
                 vector = m_driver_irq(device(), irqline);
 
             // notify the debugger
-            if ((device().machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0)
+            if ((device().machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0)
                 device().debug().interrupt_hook(irqline);
 
             return vector;
@@ -923,14 +910,14 @@ namespace mame
 
         // debugger hooks
         //bool debugger_enabled() const { return bool(device().machine().debug_flags & DEBUG_FLAG_ENABLED); }
-        public void debugger_instruction_hook(offs_t curpc) { if ((device().machine().debug_flags_get & machine_global.DEBUG_FLAG_CALL_HOOK) != 0) device().debug().instruction_hook(curpc); }
+        public void debugger_instruction_hook(offs_t curpc) { if ((device().machine().debug_flags & machine_global.DEBUG_FLAG_CALL_HOOK) != 0) device().debug().instruction_hook(curpc); }
         //void debugger_exception_hook(int exception) { if (device().machine().debug_flags & DEBUG_FLAG_ENABLED) device().debug()->exception_hook(exception); }
         //void debugger_privilege_hook() { if (device().machine().debug_flags & DEBUG_FLAG_ENABLED) device().debug()->privilege_hook(); }
 
 
         // internal debugger hooks
-        public void debugger_start_cpu_hook(attotime endtime) { if ((device().machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0) device().debug().start_hook(endtime); }
-        public void debugger_stop_cpu_hook() { if ((device().machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0) device().debug().stop_hook(); }
+        public void debugger_start_cpu_hook(attotime endtime) { if ((device().machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0) device().debug().start_hook(endtime); }
+        public void debugger_stop_cpu_hook() { if ((device().machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0) device().debug().stop_hook(); }
 
 
         // callbacks

@@ -4,11 +4,20 @@
 using System;
 using System.Collections.Generic;
 
-using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
+using u32 = System.UInt32;
 
 
 namespace mame
 {
+    public class space_config_vector : std.vector<std.pair<int, address_space_config>>
+    {
+        public space_config_vector() : base() { }
+        public space_config_vector(int count, std.pair<int, address_space_config> data = default) : base(count, data) { }
+        public space_config_vector(u32 count, std.pair<int, address_space_config> data = default) : base(count, data) { }
+        public space_config_vector(IEnumerable<std.pair<int, address_space_config>> collection) : base(collection) { }
+    }
+
+
     // ======================> device_memory_interface
     public abstract class device_memory_interface : device_interface
     {
@@ -94,7 +103,7 @@ namespace mame
         public void allocate(address_space Space, memory_manager manager, int spacenum)
         {
             assert((0 <= spacenum) && (max_space_count() > spacenum));
-            m_addrspace.resize(Math.Max(m_addrspace.size(), spacenum + 1));
+            m_addrspace.resize(std.max(m_addrspace.size(), spacenum + 1));
             assert(m_addrspace[spacenum] == null);
             m_addrspace[spacenum] = Space;  //std::make_unique<Space>(manager, *this, spacenum, space_config(spacenum)->addr_width());
         }
@@ -124,9 +133,9 @@ namespace mame
             space_config_vector r = memory_space_config();
             foreach (var entry in r)
             {
-                if (entry.Key >= (int)(m_address_config.size()))
-                    m_address_config.resize(entry.Key + 1);
-                m_address_config[entry.Key] = entry.Value;
+                if (entry.first >= (int)(m_address_config.size()))
+                    m_address_config.resize(entry.first + 1);
+                m_address_config[entry.first] = entry.second;
             }
         }
 

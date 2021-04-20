@@ -10,7 +10,7 @@ using nl_fptype = System.Double;
 namespace mame.plib
 {
     //template<typename T, typename A = aligned_allocator<T>>
-    class pmatrix2d_nl_fptype
+    public class pmatrix2d_nl_fptype
     {
         //using value_type = T;
         //using allocator_type = A;
@@ -67,8 +67,7 @@ namespace mame.plib
         //{
         //    return assume_aligned_ptr<T, align_size>(&m_v[m_stride * row]);
         //}
-
-        public ListPointer<nl_fptype> op(UInt32 row) { return new ListPointer<nl_fptype>(m_v[row]); }
+        public Pointer<nl_fptype> op(UInt32 row) { return new Pointer<nl_fptype>(m_v[row]); }
 
 
         //T & operator()(std::size_t r, std::size_t c) noexcept
@@ -83,7 +82,7 @@ namespace mame.plib
     }
 
 
-    class pmatrix2d_listpointer_nl_fptype
+    public class pmatrix2d_listpointer_nl_fptype
     {
         //using value_type = T;
         //using allocator_type = A;
@@ -96,7 +95,7 @@ namespace mame.plib
         UInt32 m_M;
         UInt32 m_stride;
 
-        std.vector<ListPointer<nl_fptype>> [] m_v;  //std::vector<T, A> m_v;
+        std.vector<Pointer<nl_fptype>> [] m_v;  //std::vector<T, A> m_v;
 
 
         public pmatrix2d_listpointer_nl_fptype()
@@ -126,9 +125,9 @@ namespace mame.plib
             m_stride = ((M + stride_size-1) / stride_size) * stride_size;
 
             //m_v.resize(N * m_stride);
-            m_v = new std.vector<ListPointer<nl_fptype>> [N];
+            m_v = new std.vector<Pointer<nl_fptype>> [N];
             for (int i = 0; i < N; i++)
-                m_v[i] = new std.vector<ListPointer<nl_fptype>>(M);
+                m_v[i] = new std.vector<Pointer<nl_fptype>>(M);
         }
 
         //C14CONSTEXPR T * operator[] (std::size_t row) noexcept
@@ -141,7 +140,7 @@ namespace mame.plib
         //    return assume_aligned_ptr<T, align_size>(&m_v[m_stride * row]);
         //}
 
-        public ListPointer<ListPointer<nl_fptype>> op(UInt32 row) { return new ListPointer<ListPointer<nl_fptype>>(m_v[row]); }
+        public Pointer<Pointer<nl_fptype>> op(UInt32 row) { return new Pointer<Pointer<nl_fptype>>(m_v[row]); }
 
 
         //T & operator()(std::size_t r, std::size_t c) noexcept

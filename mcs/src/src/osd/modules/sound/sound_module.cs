@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using int16_t = System.Int16;
+
 
 namespace mame
 {
@@ -25,7 +27,7 @@ namespace mame
         //~sound_module() { }
 
 
-        public abstract void update_audio_stream(bool is_throttled, ListPointer<Int16> buffer, int samples_this_frame);  //const int16_t *buffer, int samples_this_frame)
+        public abstract void update_audio_stream(bool is_throttled, Pointer<int16_t> buffer, int samples_this_frame);  //virtual void update_audio_stream(bool is_throttled, const int16_t *buffer, int samples_this_frame) = 0;
         public abstract void set_mastervolume(int attenuation);
 
 

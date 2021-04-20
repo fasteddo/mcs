@@ -16,6 +16,16 @@ namespace mame
     public static class eminline_global
     {
         /*-------------------------------------------------
+            mul_32x32 - perform a signed 32 bit x 32 bit
+            multiply and return the full 64 bit result
+        -------------------------------------------------*/
+        public static int64_t mul_32x32(int32_t a, int32_t b)
+        {
+            return (int64_t)a * (int64_t)b;
+        }
+
+
+        /*-------------------------------------------------
             mulu_32x32 - perform an unsigned 32 bit x
             32 bit multiply and return the full 64 bit
             result

@@ -4,10 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using s64 = System.Int64;
-using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using time_t = System.Int64;
 using u32 = System.UInt32;
 
@@ -62,8 +60,8 @@ namespace mame
         // global allocation helpers
         //#define auto_alloc(m, t)                pool_alloc(static_cast<running_machine &>(m).respool(), t)
         //#define auto_alloc_clear(m, t)          pool_alloc_clear(static_cast<running_machine &>(m).respool(), t)
-        public static ListBase<T> auto_alloc_array<T>(running_machine m, UInt32 c) where T : new() { return global_object.pool_alloc_array<T>(c); }  //#define auto_alloc_array(m, t, c)       pool_alloc_array(static_cast<running_machine &>(m).respool(), t, c)
-        public static ListBase<T> auto_alloc_array_clear<T>(running_machine m, UInt32 c) where T : new() { return global_object.pool_alloc_array_clear<T>(c); }  //#define auto_alloc_array_clear(m, t, c) pool_alloc_array_clear(static_cast<running_machine &>(m).respool(), t, c)
+        public static MemoryContainer<T> auto_alloc_array<T>(running_machine m, UInt32 c) where T : new() { return global_object.pool_alloc_array<T>(c); }  //#define auto_alloc_array(m, t, c)       pool_alloc_array(static_cast<running_machine &>(m).respool(), t, c)
+        public static MemoryContainer<T> auto_alloc_array_clear<T>(running_machine m, UInt32 c) where T : new() { return global_object.pool_alloc_array_clear<T>(c); }  //#define auto_alloc_array_clear(m, t, c) pool_alloc_array_clear(static_cast<running_machine &>(m).respool(), t, c)
         //#define auto_free(m, v)                 pool_free(static_cast<running_machine &>(m).respool(), v)
     }
 
@@ -131,7 +129,7 @@ namespace mame
                                       //device_memory_interface
     {
         //DEFINE_DEVICE_TYPE(DUMMY_SPACE, dummy_space_device, "dummy_space", "Dummy Space")
-        static device_t device_creator_dummy_space_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dummy_space_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_dummy_space_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dummy_space_device(mconfig, tag, owner, clock); }
         public static readonly device_type DUMMY_SPACE = DEFINE_DEVICE_TYPE(device_creator_dummy_space_device, "dummy_space", "Dummy Space");
 
 
@@ -244,7 +242,7 @@ namespace mame
         u32 m_side_effects_disabled;
 
         // debugger-related information
-        u32 debug_flags;        // the current debug flags
+        public u32 debug_flags;        // the current debug flags
 
         // internal state
         machine_config m_config;               // reference to the constructed machine_config
@@ -413,8 +411,6 @@ namespace mame
 
         // getters
 
-        public u32 debug_flags_get { get { return debug_flags; } }
-
         public machine_config config() { return m_config; }
         public device_t root_device() { return m_config.root_device(); }
         public game_driver system() { return m_system; }
@@ -442,7 +438,8 @@ namespace mame
         public tilemap_manager tilemap() { assert(m_tilemap != null); return m_tilemap; }
         //debug_view_manager &debug_view() const { assert(m_debug_view != NULL); return *m_debug_view; }
         public debugger_manager debugger() { assert(m_debugger != null); return m_debugger; }
-        public driver_device driver_data() { return (driver_device)root_device(); }  //template<class _DriverClass> _DriverClass *driver_data() const { return &downcast<_DriverClass &>(root_device()); }
+        //driver_device driver_data() { return (driver_device)root_device(); }
+        public DriverClass driver_data<DriverClass>() where DriverClass : driver_device { return (DriverClass)root_device(); }
         public machine_phase phase() { return m_current_phase; }
         public bool paused() { return m_paused || (m_current_phase != machine_phase.RUNNING); }
         public bool exit_pending() { return m_exit_pending; }

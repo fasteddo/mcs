@@ -63,7 +63,7 @@ namespace mame
             for (UInt32 i = 0; i != COUNT; i++)
             {
                 m_dispatch[i] = handler;
-                m_ranges[i] = init;
+                m_ranges[i] = new range() { start = init.start, end = init.end };
             }
         }
 
@@ -86,18 +86,32 @@ namespace mame
         }
 
 
-        public override void write(offs_t offset, u8 data, u8 mem_mask)
+        public override void write(int WidthOverride, int AddrShiftOverride, int EndianOverride, offs_t offset, uX data, uX mem_mask)
         {
-            m_dispatch[(offset >> (int)LowBits) & BITMASK].write(offset, data, mem_mask);
+            m_dispatch[(offset >> (int)LowBits) & BITMASK].write(WidthOverride, AddrShiftOverride, EndianOverride, offset, data, mem_mask);
         }
 
 
-        //void *get_ptr(offs_t offset) const override;
-        //void lookup(offs_t address, offs_t &start, offs_t &end, handler_entry_write<Width, AddrShift, Endian> *&handler) const override;
+        protected override object get_ptr(offs_t offset)
+        {
+            throw new emu_unimplemented();
+        }
 
-        //void dump_map(std::vector<memory_entry> &map) const override;
 
-        //std::string name() const override;
+        protected override void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_write handler)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        protected override void dump_map(std.vector<memory_entry> map)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        protected override string name() { throw new emu_unimplemented(); }
+
 
         public override void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write handler)
         {
@@ -201,11 +215,132 @@ namespace mame
         }
 
 
-        //void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, const memory_units_descriptor<Width, AddrShift, Endian> &descriptor, u8 rkey, std::vector<mapping> &mappings) override;
-        //void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, const memory_units_descriptor<Width, AddrShift, Endian> &descriptor, std::vector<mapping> &mappings) override;
-        //void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write_passthrough<Width, AddrShift, Endian> *handler, std::vector<mapping> &mappings) override;
-        //void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write_passthrough<Width, AddrShift, Endian> *handler, std::vector<mapping> &mappings) override;
-        //void detach(const std::unordered_set<handler_entry *> &handlers) override;
+        public override void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor descriptor, u8 rkey, std.vector<mapping> mappings)
+        {
+            offs_t start_entry = (start & HIGHMASK) >> (int)LowBits;
+            offs_t end_entry = (end & HIGHMASK) >> (int)LowBits;
+            range_cut_before(ostart - 1, (int)start_entry);
+            range_cut_after(oend + 1, (int)end_entry);
+
+            if (LowBits <= Width + AddrShift)
+            {
+                for (offs_t ent = start_entry; ent <= end_entry; ent++)
+                {
+                    u8 rkey1 = rkey;
+                    if (ent != start_entry)
+                        rkey1 &= unchecked((u8)~handler_entry.START);
+                    if (ent != end_entry)
+                        rkey1 &= unchecked((u8)~handler_entry.END);
+                    mismatched_patch(descriptor, rkey1, mappings, ref m_dispatch[ent]);
+                    m_ranges[ent].intersect(ostart, oend);
+                }
+            }
+            else if (start_entry == end_entry)
+            {
+                if ((start & LOWMASK) == 0 && (end & LOWMASK) == LOWMASK)
+                {
+                    if (m_dispatch[start_entry].is_dispatch())
+                    {
+                        m_dispatch[start_entry].populate_mismatched_nomirror(start & LOWMASK, end & LOWMASK, ostart, oend, descriptor, rkey, mappings);
+                    }
+                    else
+                    {
+                        mismatched_patch(descriptor, rkey, mappings, ref m_dispatch[start_entry]);
+                        m_ranges[start_entry].intersect(ostart, oend);
+                    }
+                }
+                else
+                {
+                    populate_mismatched_nomirror_subdispatch(start_entry, start & LOWMASK, end & LOWMASK, ostart, oend, descriptor, rkey, mappings);
+                }
+            }
+            else
+            {
+                if ((start & LOWMASK) != 0)
+                {
+                    populate_mismatched_nomirror_subdispatch(start_entry, start & LOWMASK, LOWMASK, ostart, oend, descriptor, (u8)(rkey & unchecked((u8)~handler_entry.END)), mappings);
+                    start_entry++;
+                    rkey &= unchecked((u8)~handler_entry.START);
+                }
+
+                if ((end & LOWMASK) != LOWMASK)
+                {
+                    populate_mismatched_nomirror_subdispatch(end_entry, 0, end & LOWMASK, ostart, oend, descriptor, (u8)(rkey & unchecked((u8)~handler_entry.START)), mappings);
+                    end_entry--;
+                    rkey &= unchecked((u8)~handler_entry.END);
+                }
+
+                if (start_entry <= end_entry)
+                {
+                    for(offs_t ent = start_entry; ent <= end_entry; ent++)
+                    {
+                        u8 rkey1 = rkey;
+                        if (ent != start_entry)
+                            rkey1 &= unchecked((u8)~handler_entry.START);
+                        if (ent != end_entry)
+                            rkey1 &= unchecked((u8)~handler_entry.END);
+
+                        if (m_dispatch[ent].is_dispatch())
+                        {
+                            m_dispatch[ent].populate_mismatched_nomirror(start & LOWMASK, end & LOWMASK, ostart, oend, descriptor, rkey1, mappings);
+                        }
+                        else
+                        {
+                            mismatched_patch(descriptor, rkey1, mappings, ref m_dispatch[ent]);
+                            m_ranges[ent].intersect(ostart, oend);
+                        }
+                    }
+                }
+            }
+        }
+
+        public override void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor descriptor, std.vector<mapping> mappings)
+        {
+            offs_t hmirror = mirror & HIGHMASK;
+            offs_t lmirror = mirror & LOWMASK;
+
+            if (lmirror != 0)
+            {
+                // If lmirror is non-zero, then each mirror instance is a single entry
+                offs_t add = 1 + ~hmirror;
+                offs_t offset = 0;
+                offs_t base_entry = start >> (int)LowBits;
+                start &= LOWMASK;
+                end &= LOWMASK;
+                do
+                {
+                    populate_mismatched_mirror_subdispatch(base_entry | (offset >> (int)LowBits), start, end, ostart | offset, oend | offset, lmirror, descriptor, mappings);
+                    offset = (offset + add) & hmirror;
+                } while (offset != 0);
+            }
+            else
+            {
+                // If lmirror is zero, call the nomirror version as needed
+                offs_t add = 1 + ~hmirror;
+                offs_t offset = 0;
+                do
+                {
+                    populate_mismatched_nomirror(start | offset, end | offset, ostart | offset, oend | offset, descriptor, handler_entry.START|handler_entry.END, mappings);
+                    offset = (offset + add) & hmirror;
+                } while (offset != 0);
+            }
+        }
+
+        protected override void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write_passthrough handler, std.vector<mapping> mappings)
+        {
+            throw new emu_unimplemented();
+        }
+
+        protected override void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write_passthrough handler, std.vector<mapping> mappings)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        protected override void detach(std.unordered_set<handler_entry> handlers)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         void range_cut_before(offs_t address) { range_cut_before(address, (int)COUNT); }
@@ -244,7 +379,10 @@ namespace mame
         }
 
 
-        //void enumerate_references(handler_entry::reflist &refs) const override;
+        protected override void enumerate_references(handler_entry.reflist refs)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         void populate_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write handler)
@@ -281,9 +419,72 @@ namespace mame
         }
 
 
-        //void populate_mismatched_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, const memory_units_descriptor<Width, AddrShift, Endian> &descriptor, u8 rkey, std::vector<mapping> &mappings);
-        //void populate_mismatched_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, const memory_units_descriptor<Width, AddrShift, Endian> &descriptor, std::vector<mapping> &mappings);
-        //void mismatched_patch(const memory_units_descriptor<Width, AddrShift, Endian> &descriptor, u8 rkey, std::vector<mapping> &mappings, handler_entry_write<Width, AddrShift, Endian> *&target);
+        void populate_mismatched_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor descriptor, u8 rkey, std.vector<mapping> mappings)
+        {
+            var cur = m_dispatch[entry];
+            if (cur.is_dispatch())
+            {
+                cur.populate_mismatched_nomirror(start, end, ostart, oend, descriptor, rkey, mappings);
+            }
+            else
+            {
+                var subdispatch = new handler_entry_write_dispatch((int)LowBits, Width, AddrShift, Endian, m_space, m_ranges[entry], cur);
+                cur.unref();
+                m_dispatch[entry] = subdispatch;
+                subdispatch.populate_mismatched_nomirror(start, end, ostart, oend, descriptor, rkey, mappings);
+            }
+        }
+
+
+        void populate_mismatched_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor descriptor, std.vector<mapping> mappings)
+        {
+            var cur = m_dispatch[entry];
+            if (cur.is_dispatch())
+            {
+                cur.populate_mismatched_mirror(start, end, ostart, oend, mirror, descriptor, mappings);
+            }
+            else
+            {
+                var subdispatch = new handler_entry_write_dispatch((int)LowBits, Width, AddrShift, Endian, m_space, m_ranges[entry], cur);
+                cur.unref();
+                m_dispatch[entry] = subdispatch;
+                subdispatch.populate_mismatched_mirror(start, end, ostart, oend, mirror, descriptor, mappings);
+            }
+        }
+
+
+        void mismatched_patch(memory_units_descriptor descriptor, u8 rkey, std.vector<mapping> mappings, ref handler_entry_write target)
+        {
+            u8 ukey = descriptor.rkey_to_ukey(rkey);
+            handler_entry_write original = target.is_units() ? target : null;
+            handler_entry_write replacement = null;
+            foreach (var p in mappings)
+            {
+                if (p.ukey == ukey && p.original == original)
+                {
+                    replacement = p.patched;
+                    break;
+                }
+            }
+
+            if (replacement == null)
+            {
+                if (original != null)
+                    replacement = new handler_entry_write_units(Width, AddrShift, Endian, descriptor, ukey, (handler_entry_write_units)original);
+                else
+                    replacement = new handler_entry_write_units(Width, AddrShift, Endian, descriptor, ukey, m_space);
+
+                mappings.emplace_back(new mapping( original, replacement, ukey ));
+            }
+            else
+            {
+                replacement.ref_();
+            }
+
+            target.unref();
+            target = replacement;
+        }
+
 
         //void populate_passthrough_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write_passthrough<Width, AddrShift, Endian> *handler, std::vector<mapping> &mappings);
         //void populate_passthrough_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write_passthrough<Width, AddrShift, Endian> *handler, std::vector<mapping> &mappings);

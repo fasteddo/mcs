@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -51,11 +51,11 @@ namespace mame
         void pacplus_decode()
         {
             int i;
-            ListBytesPointer RAM;  //uint8_t *RAM;
+            Pointer<uint8_t> RAM;  //uint8_t *RAM;
 
             /* CPU ROMs */
 
-            RAM = new ListBytesPointer(memregion("maincpu").base_());
+            RAM = new Pointer<uint8_t>(memregion("maincpu").base_());
             for (i = 0; i < 0x4000; i++)
             {
                 RAM[i] = pacplus_decrypt(i,RAM[i]);

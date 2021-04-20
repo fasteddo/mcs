@@ -279,9 +279,9 @@ namespace mame
         }
 
 
-        void stream_generate(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void stream_generate(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
-            ListPointer<stream_sample_t> ptr = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t *ptr = outputs[0];
+            Pointer<stream_sample_t> ptr = new Pointer<stream_sample_t>(outputs[0]);  //stream_sample_t *ptr = outputs[0];
             int samplenum = samples;
 
             while (samplenum-- > 0)

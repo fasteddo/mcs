@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -18,11 +17,11 @@ namespace mame
     {
         optional_device<netlist_mame_logic_input_device> m_audio_SINH;
 
-        required_device<cpu_device> m_cpu;  //required_device<cpu_device> m_cpu;
-        required_device<msm5205_device> m_adpcm1;
+        protected required_device<m6803_cpu_device> m_cpu;  //required_device<cpu_device> m_cpu;
+        protected required_device<msm5205_device> m_adpcm1;
         optional_device<msm5205_device> m_adpcm2;
-        required_device<ay8910_device> m_ay_45L;
-        required_device<ay8910_device> m_ay_45M;
+        protected required_device<ay8910_device> m_ay_45L;
+        protected required_device<ay8910_device> m_ay_45M;
 
 
         // internal state
@@ -41,7 +40,7 @@ namespace mame
             : base(mconfig, type, tag, owner, clock)
         {
             m_audio_SINH = new optional_device<netlist_mame_logic_input_device>(this, "snd_nl:sinh");
-            m_cpu = new required_device<cpu_device>(this, "iremsound");
+            m_cpu = new required_device<m6803_cpu_device>(this, "iremsound");
             m_adpcm1 = new required_device<msm5205_device>(this, "msm1");
             m_adpcm2 = new optional_device<msm5205_device>(this, "msm2");
             m_ay_45L = new required_device<ay8910_device>(this, "ay_45l");
@@ -54,12 +53,6 @@ namespace mame
             m_audio_OH = new optional_device<netlist_mame_logic_input_device>(this, "snd_nl:ioh");
             m_audio_CH = new optional_device<netlist_mame_logic_input_device>(this, "snd_nl:ich");
         }
-
-
-        protected required_device<cpu_device> cpu { get { return m_cpu; } }
-        protected required_device<msm5205_device> adpcm1 { get { return m_adpcm1; } }
-        protected required_device<ay8910_device> ay_45L { get { return m_ay_45L; } }
-        protected required_device<ay8910_device> ay_45M { get { return m_ay_45M; } }
 
 
         /*************************************
@@ -166,13 +159,13 @@ namespace mame
         {
             if ((offset & 1) != 0)
             {
-                m_adpcm1.target.write_data(data);
+                m_adpcm1.target.data_w(data);
             }
 
             if ((offset & 2) != 0)
             {
                 if (m_adpcm2.target != null)
-                    m_adpcm2.target.write_data(data);
+                    m_adpcm2.target.data_w(data);
             }
         }
 
@@ -341,9 +334,9 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            save_item(m_port1, "m_port1");
-            save_item(m_port2, "m_port2");
-            save_item(m_soundlatch, "m_soundlatch");
+            save_item(NAME(new { m_port1 }));
+            save_item(NAME(new { m_port2 }));
+            save_item(NAME(new { m_soundlatch }));
         }
 
         //-------------------------------------------------
@@ -362,7 +355,7 @@ namespace mame
     public class m52_soundc_audio_device : irem_audio_device
     {
         //DEFINE_DEVICE_TYPE(IREM_M52_SOUNDC_AUDIO, m52_soundc_audio_device, "m52_soundc_audio", "Irem M52 SoundC Audio")
-        static device_t device_creator_m52_soundc_audio_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_soundc_audio_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_m52_soundc_audio_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_soundc_audio_device(mconfig, tag, owner, clock); }
         public static readonly device_type IREM_M52_SOUNDC_AUDIO = DEFINE_DEVICE_TYPE(device_creator_m52_soundc_audio_device, "m52_soundc_audio", "Irem M52 SoundC Audio");
 
 
@@ -375,33 +368,33 @@ namespace mame
         protected override void device_add_mconfig(machine_config config)
         {
             /* basic machine hardware */
-            m6803_cpu_device local_cpu = (m6803_cpu_device)M6803(config, cpu, new XTAL(3579545)); /* verified on pcb */
-            local_cpu.memory().set_addrmap(AS_PROGRAM, m52_small_sound_map);
-            local_cpu.in_p1_cb().set(m6803_port1_r).reg();
-            local_cpu.out_p1_cb().set(m6803_port1_w).reg();
-            local_cpu.in_p2_cb().set(m6803_port2_r).reg();
-            local_cpu.out_p2_cb().set(m6803_port2_w).reg();
+            m6803_cpu_device cpu = M6803(config, m_cpu, new XTAL(3579545)); /* verified on pcb */
+            cpu.memory().set_addrmap(AS_PROGRAM, m52_small_sound_map);
+            cpu.in_p1_cb().set(m6803_port1_r).reg();
+            cpu.out_p1_cb().set(m6803_port1_w).reg();
+            cpu.in_p2_cb().set(m6803_port2_r).reg();
+            cpu.out_p2_cb().set(m6803_port2_w).reg();
 
             /* sound hardware */
             SPEAKER(config, "mono").front_center();
 
-            AY8910(config, ay_45M, new XTAL(3579545)/4); /* verified on pcb */
-            ay_45M.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT | ay8910_global.AY8910_DISCRETE_OUTPUT);
-            ay_45M.target.set_resistors_load(470, 0, 0);
-            ay_45M.target.port_a_read_callback().set(soundlatch_r).reg();
-            ay_45M.target.port_b_write_callback().set(ay8910_45M_portb_w).reg();
-            ay_45M.target.disound.add_route(0, "filtermix", 1.0, 0);
+            AY8910(config, m_ay_45M, new XTAL(3579545)/4); /* verified on pcb */
+            m_ay_45M.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT | ay8910_global.AY8910_DISCRETE_OUTPUT);
+            m_ay_45M.target.set_resistors_load(470, 0, 0);
+            m_ay_45M.target.port_a_read_callback().set(soundlatch_r).reg();
+            m_ay_45M.target.port_b_write_callback().set(ay8910_45M_portb_w).reg();
+            m_ay_45M.target.disound.add_route(0, "filtermix", 1.0, 0);
 
-            AY8910(config, ay_45L, new XTAL(3579545)/4); /* verified on pcb */
-            ay_45L.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT | ay8910_global.AY8910_DISCRETE_OUTPUT);
-            ay_45L.target.set_resistors_load(470, 0, 0);
-            ay_45L.target.port_a_write_callback().set(ay8910_45L_porta_w).reg();
-            ay_45L.target.disound.add_route(0, "filtermix", 1.0, 1);
+            AY8910(config, m_ay_45L, new XTAL(3579545)/4); /* verified on pcb */
+            m_ay_45L.target.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT | ay8910_global.AY8910_DISCRETE_OUTPUT);
+            m_ay_45L.target.set_resistors_load(470, 0, 0);
+            m_ay_45L.target.port_a_write_callback().set(ay8910_45L_porta_w).reg();
+            m_ay_45L.target.disound.add_route(0, "filtermix", 1.0, 1);
 
-            MSM5205(config, adpcm1, new XTAL(384000)); /* verified on pcb */
-            adpcm1.target.vck_callback().set_inputline(cpu, device_execute_interface.INPUT_LINE_NMI).reg(); // driven through NPN inverter
-            adpcm1.target.set_prescaler_selector(msm5205_device.S96_4B);      /* default to 4KHz, but can be changed at run time */
-            adpcm1.target.disound.add_route(0, "filtermix", 1.0, 2);
+            MSM5205(config, m_adpcm1, new XTAL(384000)); /* verified on pcb */
+            m_adpcm1.target.vck_callback().set_inputline(m_cpu, device_execute_interface.INPUT_LINE_NMI).reg(); // driven through NPN inverter
+            m_adpcm1.target.set_prescaler_selector(msm5205_device.S96_4B);      /* default to 4KHz, but can be changed at run time */
+            m_adpcm1.target.disound.add_route(0, "filtermix", 1.0, 2);
 
             DISCRETE(config, "filtermix", m52_sound_c_discrete).disound.add_route(ALL_OUTPUTS, "mono", 1.0);
         }

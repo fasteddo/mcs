@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using indirect_pen_t = System.UInt16;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
@@ -41,7 +40,7 @@ namespace mame
 
         void galaga_palette(palette_device palette)
         {
-            ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
+            Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
             // core palette
             for (int i = 0; i < 32; i++)
@@ -63,7 +62,7 @@ namespace mame
                 bit2 = BIT(color_prom[0], 7);
                 int b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-                palette.palette_interface.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
                 color_prom++;
             }
 
@@ -76,26 +75,26 @@ namespace mame
                 int g = map[(i >> 2) & 0x03];
                 int b = map[(i >> 4) & 0x03];
 
-                palette.palette_interface.set_indirect_color(32 + i, new rgb_t((byte)r, (byte)g, (byte)b));
+                palette.dipalette.set_indirect_color(32 + i, new rgb_t((byte)r, (byte)g, (byte)b));
             }
 
             // characters
             for (int i = 0; i < 64*4; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)i, (indirect_pen_t)((color_prom[0] & 0x0f) | 0x10));
+                palette.dipalette.set_pen_indirect((pen_t)i, (indirect_pen_t)((color_prom[0] & 0x0f) | 0x10));
                 color_prom++;
             }
 
             // sprites
             for (int i = 0; i < 64*4; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(64*4 + i), (indirect_pen_t)((color_prom[0] & 0x0f)));
+                palette.dipalette.set_pen_indirect((pen_t)(64*4 + i), (indirect_pen_t)((color_prom[0] & 0x0f)));
                 color_prom++;
             }
 
             // now the stars
             for (int i = 0; i < 64; i++)
-                palette.palette_interface.set_pen_indirect((pen_t)(64*4 + 64*4 + i), (indirect_pen_t)(32 + i));
+                palette.dipalette.set_pen_indirect((pen_t)(64*4 + 64*4 + i), (indirect_pen_t)(32 + i));
         }
 
 
@@ -130,12 +129,12 @@ namespace mame
                characters when screen is flipped, we have to flip them back. */
             int color = m_videoram[tile_index + 0x400] & 0x3f;
 
-            SET_TILE_INFO_MEMBER(ref tileinfo, 0,
-                    (UInt32)((m_videoram[tile_index] & 0x7f) | (flip_screen() != 0 ? 0x80 : 0) | (m_galaga_gfxbank << 8)),
-                    (UInt32)color,
-                    flip_screen() != 0 ? TILE_FLIPX : (byte)0);
+            tileinfo.set(0,
+                    (u32)((m_videoram[tile_index] & 0x7f) | (flip_screen() != 0 ? 0x80 : 0) | (m_galaga_gfxbank << 8)),
+                    (u32)color,
+                    flip_screen() != 0 ? TILE_FLIPX : (u8)0);
 
-            tileinfo.group = (byte)color;
+            tileinfo.group = (u8)color;
         }
 
 
@@ -152,7 +151,7 @@ namespace mame
 
             m_galaga_gfxbank = 0;
 
-            save_item(m_galaga_gfxbank, "m_galaga_gfxbank");
+            save_item(NAME(new { m_galaga_gfxbank }));
         }
 
 
@@ -177,11 +176,11 @@ namespace mame
             { 2, 3 }
         };
 
-        protected virtual void draw_sprites(bitmap_ind16 bitmap, rectangle cliprect )
+        protected virtual void draw_sprites(bitmap_ind16 bitmap, rectangle cliprect)
         {
-            ListBytesPointer spriteram = new ListBytesPointer(m_galaga_ram1.target, 0x380);  //uint8_t *spriteram = m_galaga_ram1 + 0x380;
-            ListBytesPointer spriteram_2 = new ListBytesPointer(m_galaga_ram2.target, 0x380);  //uint8_t *spriteram_2 = m_galaga_ram2 + 0x380;
-            ListBytesPointer spriteram_3 = new ListBytesPointer(m_galaga_ram3.target, 0x380);  //uint8_t *spriteram_3 = m_galaga_ram3 + 0x380;
+            Pointer<uint8_t> spriteram = new Pointer<uint8_t>(m_galaga_ram1.target, 0x380);  //uint8_t *spriteram = m_galaga_ram1 + 0x380;
+            Pointer<uint8_t> spriteram_2 = new Pointer<uint8_t>(m_galaga_ram2.target, 0x380);  //uint8_t *spriteram_2 = m_galaga_ram2 + 0x380;
+            Pointer<uint8_t> spriteram_3 = new Pointer<uint8_t>(m_galaga_ram3.target, 0x380);  //uint8_t *spriteram_3 = m_galaga_ram3 + 0x380;
             int offs;
 
             for (offs = 0; offs < 0x80; offs += 2)
@@ -214,7 +213,7 @@ namespace mame
                             (UInt32)color,
                             flipx,flipy,
                             sx + 16*x, sy + 16*y,
-                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x0f));
+                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x0f));
                     }
                 }
             }
@@ -223,7 +222,7 @@ namespace mame
 
         u32 screen_update_galaga(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            bitmap.fill(m_palette.target.palette_interface.black_pen(), cliprect);
+            bitmap.fill(m_palette.target.dipalette.black_pen(), cliprect);
             m_starfield.target.draw_starfield(bitmap,cliprect,0);
             draw_sprites(bitmap,cliprect);
             m_fg_tilemap.draw(screen, bitmap, cliprect, 0,0);

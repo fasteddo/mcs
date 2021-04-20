@@ -4,8 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytes = mame.ListBase<System.Byte>;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -21,7 +20,7 @@ namespace mame
         public const int _SHA1_DIGEST_LENGTH = 5;
 
 
-        static UInt32 READ_UINT32(ListBytesPointer data)
+        static UInt32 READ_UINT32(Pointer<uint8_t> data)
         {
             return ((uint32_t)data[0] << 24) |
                    ((uint32_t)data[1] << 16) |
@@ -30,7 +29,7 @@ namespace mame
         }
 
 
-        static void WRITE_UINT32(ListBytesPointer data, uint32_t val)
+        static void WRITE_UINT32(Pointer<uint8_t> data, uint32_t val)
         {
             data[0] = (uint8_t)((val >> 24) & 0xFF);
             data[1] = (uint8_t)((val >> 16) & 0xFF);
@@ -268,9 +267,9 @@ namespace mame
          * @param [in,out]  ctx If non-null, the context.
          * @param   block       The block.
          */
-        static void sha1_block(sha1_ctx ctx, ListBytesPointer block_)  //static void sha1_block(struct sha1_ctx *ctx, const uint8_t *block)
+        static void sha1_block(sha1_ctx ctx, Pointer<uint8_t> block_)  //static void sha1_block(struct sha1_ctx *ctx, const uint8_t *block)
         {
-            ListBytesPointer block = new ListBytesPointer(block_);
+            Pointer<uint8_t> block = new Pointer<uint8_t>(block_);
 
             uint32_t [] data = new uint32_t [SHA1_DATA_LENGTH];
             int i;
@@ -296,9 +295,9 @@ namespace mame
          * @param   length      The length.
          * @param   buffer      The buffer.
          */
-        public static void sha1_update(sha1_ctx ctx, UInt32 length, ListBytesPointer buffer_)  //void sha1_update(struct sha1_ctx *ctx, unsigned length, const uint8_t *buffer)
+        public static void sha1_update(sha1_ctx ctx, UInt32 length, Pointer<uint8_t> buffer_)  //void sha1_update(struct sha1_ctx *ctx, unsigned length, const uint8_t *buffer)
         {
-            ListBytesPointer buffer = new ListBytesPointer(buffer_);
+            Pointer<uint8_t> buffer = new Pointer<uint8_t>(buffer_);
 
             if (ctx.index != 0)
             { 
@@ -306,14 +305,14 @@ namespace mame
                 UInt32 left = SHA1_DATA_SIZE - ctx.index;
                 if (length < left)
                 {
-                    std.memcpy(new ListBytesPointer(ctx.block, (int)ctx.index), buffer, length);
+                    std.memcpy(new Pointer<uint8_t>(ctx.block, (int)ctx.index), buffer, length);
                     ctx.index += length;
                     return; /* Finished */
                 }
                 else
                 {
-                    std.memcpy(new ListBytesPointer(ctx.block, (int)ctx.index), buffer, left);
-                    sha1_block(ctx, new ListBytesPointer(ctx.block));
+                    std.memcpy(new Pointer<uint8_t>(ctx.block, (int)ctx.index), buffer, left);
+                    sha1_block(ctx, new Pointer<uint8_t>(ctx.block));
                     buffer += left;
                     length -= left;
                 }
@@ -329,7 +328,7 @@ namespace mame
             ctx.index = length;
             if (length != 0)
                 /* Buffer leftovers */
-                std.memcpy(new ListBytesPointer(ctx.block), buffer, length);
+                std.memcpy(new Pointer<uint8_t>(ctx.block), buffer, length);
         }
 
 
@@ -363,7 +362,7 @@ namespace mame
             /* i is now a multiple of the word size 4 */
             words = i >> 2;
             for (i = 0; i < words; i++)
-                data[i] = READ_UINT32(new ListBytesPointer(ctx.block, 4 * i));
+                data[i] = READ_UINT32(new Pointer<uint8_t>(ctx.block, 4 * i));
 
             if (words > (SHA1_DATA_LENGTH-2))
             {
@@ -399,9 +398,9 @@ namespace mame
          * @param   length          The length.
          * @param [in,out]  digest  If non-null, the digest.
          */
-        public static void sha1_digest(sha1_ctx ctx, UInt32 length, ListBytesPointer digest_)  //void sha1_digest(const struct sha1_ctx *ctx, unsigned length, uint8_t *digest)
+        public static void sha1_digest(sha1_ctx ctx, UInt32 length, Pointer<uint8_t> digest_)  //void sha1_digest(const struct sha1_ctx *ctx, unsigned length, uint8_t *digest)
         {
-            ListBytesPointer digest = new ListBytesPointer(digest_);
+            Pointer<uint8_t> digest = new Pointer<uint8_t>(digest_);
 
             UInt32 i;
             UInt32 words;
@@ -451,9 +450,9 @@ namespace mame
         public uint32_t [] digest = new uint32_t[sha1_global._SHA1_DIGEST_LENGTH];   /* Message digest */
         public uint32_t count_low;
         public uint32_t count_high;         /* 64-bit block count */
-        public ListBytes block = new ListBytes();          /* SHA1 data buffer */
+        public MemoryU8 block = new MemoryU8();  //uint8_t block[SHA1_DATA_SIZE];          /* SHA1 data buffer */
         public UInt32 index;                     /* index into buffer */
 
-        public sha1_ctx() { block.resize(sha1_global.SHA1_DATA_SIZE); }
+        public sha1_ctx() { block.Resize(sha1_global.SHA1_DATA_SIZE); }
     }
 }

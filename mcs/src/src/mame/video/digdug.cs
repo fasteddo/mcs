@@ -4,12 +4,12 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -37,7 +37,7 @@ namespace mame
 
         void digdug_palette(palette_device palette)
         {
-            ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
+            Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
             for (int i = 0;i < 32;i++)
             {
@@ -57,28 +57,28 @@ namespace mame
                 bit1 = BIT(color_prom[0], 6);
                 bit2 = BIT(color_prom[0], 7);
                 int b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                palette.palette_interface.set_indirect_color(i, new rgb_t((byte)r,(byte)g,(byte)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r,(byte)g,(byte)b));
                 color_prom++;
             }
 
             // characters - direct mapping
             for (int i = 0; i < 16; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)((i << 1) | 0), 0);
-                palette.palette_interface.set_pen_indirect((pen_t)((i << 1) | 1), (UInt16)i);
+                palette.dipalette.set_pen_indirect((pen_t)((i << 1) | 0), 0);
+                palette.dipalette.set_pen_indirect((pen_t)((i << 1) | 1), (UInt16)i);
             }
 
             // sprites
             for (int i = 0; i < 0x100; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(16*2 + i), (UInt16)((color_prom[0] & 0x0f) | 0x10));
+                palette.dipalette.set_pen_indirect((pen_t)(16*2 + i), (UInt16)((color_prom[0] & 0x0f) | 0x10));
                 color_prom++;
             }
 
             // bg_select
             for (int i = 0; i < 0x100; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(16*2 + 256 + i), (UInt16)(color_prom[0] & 0x0f));
+                palette.dipalette.set_pen_indirect((pen_t)(16*2 + 256 + i), (UInt16)(color_prom[0] & 0x0f));
                 color_prom++;
             }
         }
@@ -107,7 +107,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(digdug_state::bg_get_tile_info)
         void bg_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            ListBytesPointer rom = new ListBytesPointer(memregion("gfx4").base_());  //uint8_t *rom = memregion("gfx4")->base();
+            Pointer<uint8_t> rom = new Pointer<uint8_t>(memregion("gfx4").base_());  //uint8_t *rom = memregion("gfx4")->base();
 
             int code = rom[(int)(tile_index | (m_bg_select << 10))];
 
@@ -118,9 +118,9 @@ namespace mame
                the top 4 bits of alpha code. This feature is not used by Dig Dug. */
 
             int color = m_bg_disable != 0 ? 0xf : (code >> 4);
-            SET_TILE_INFO_MEMBER(ref tileinfo, 2,
-                    (UInt32)code,
-                    (UInt32)(color | m_bg_color_bank),
+            tileinfo.set(2,
+                    (u32)code,
+                    (u32)(color | m_bg_color_bank),
                     0);
         }
 
@@ -146,10 +146,10 @@ namespace mame
                timing signals, while x flip is done by selecting the 2nd character set.
                We reproduce this here, but since the tilemap system automatically flips
                characters when screen is flipped, we have to flip them back. */
-            SET_TILE_INFO_MEMBER(ref tileinfo, 0,
-                    (UInt32)((code & 0x7f) | (flip_screen() != 0 ? 0x80 : 0)),
-                    (UInt32)color,
-                    flip_screen() != 0 ? TILE_FLIPX : (byte)0);
+            tileinfo.set(0,
+                    (u32)((code & 0x7f) | (flip_screen() != 0 ? 0x80 : 0)),
+                    (u32)color,
+                    flip_screen() != 0 ? TILE_FLIPX : (u8)0);
         }
 
 
@@ -164,15 +164,15 @@ namespace mame
             m_bg_disable = 0;
             m_bg_color_bank = 0;
 
-            m_bg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::bg_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
-            m_fg_tilemap = machine().tilemap().create(gfxdecode.target.digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::tx_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::bg_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
+            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.target.digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::tx_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
 
             m_fg_tilemap.set_transparent_pen(0);
 
-            save_item(m_bg_select, "m_bg_select");
-            save_item(m_tx_color_mode, "m_tx_color_mode");
-            save_item(m_bg_disable, "m_bg_disable");
-            save_item(m_bg_color_bank, "m_bg_color_bank");
+            save_item(NAME(new { m_bg_select }));
+            save_item(NAME(new { m_tx_color_mode }));
+            save_item(NAME(new { m_bg_disable }));
+            save_item(NAME(new { m_bg_color_bank }));
         }
 
 
@@ -188,9 +188,9 @@ namespace mame
 
         protected override void draw_sprites(bitmap_ind16 bitmap, rectangle cliprect)
         {
-            ListBytesPointer spriteram = new ListBytesPointer(m_digdug_objram.target, 0x380);  //uint8_t *spriteram = m_digdug_objram + 0x380;
-            ListBytesPointer spriteram_2 = new ListBytesPointer(m_digdug_posram.target, 0x380);  //uint8_t *spriteram_2 = m_digdug_posram + 0x380;
-            ListBytesPointer spriteram_3 = new ListBytesPointer(m_digdug_flpram.target, 0x380);  //uint8_t *spriteram_3 = m_digdug_flpram + 0x380;
+            Pointer<uint8_t> spriteram = new Pointer<uint8_t>(m_digdug_objram.target, 0x380);  //uint8_t *spriteram = m_digdug_objram + 0x380;
+            Pointer<uint8_t> spriteram_2 = new Pointer<uint8_t>(m_digdug_posram.target, 0x380);  //uint8_t *spriteram_2 = m_digdug_posram + 0x380;
+            Pointer<uint8_t> spriteram_3 = new Pointer<uint8_t>(m_digdug_flpram.target, 0x380);  //uint8_t *spriteram_3 = m_digdug_flpram + 0x380;
             int offs;
 
             // mask upper and lower columns
@@ -225,14 +225,14 @@ namespace mame
                 {
                     for (x = 0;x <= size;x++)
                     {
-                        UInt32 transmask =  palette.target.palette_interface.transpen_mask(gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x1f);
-                        gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
+                        UInt32 transmask =  m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color, 0x1f);
+                        m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
                             (UInt32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
                             (UInt32)color,
                             flipx,flipy,
                             ((sx + 16*x) & 0xff), sy + 16*y,transmask);
                         /* wraparound */
-                        gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
+                        m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,visarea,
                             (UInt32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
                             (UInt32)color,
                             flipx,flipy,

@@ -125,8 +125,8 @@ namespace mame.netlist
 
         // nld_opamps.cpp
 
-        //PERRMSGV(MF_OPAMP_UNKNOWN_TYPE,                 1, "Unknown opamp type: {1}")
-        //PERRMSGV(MW_OPAMP_FAIL_CONVERGENCE,             1, "Opamp <{1}> parameters fail convergence criteria")
+        public static string MF_OPAMP_UNKNOWN_TYPE(params object [] args) { return PERRMSGV(1, "Unknown opamp type: {0}", args); }
+        public static string MW_OPAMP_FAIL_CONVERGENCE(params object [] args) { return PERRMSGV(1, "Opamp <{0}> parameters fail convergence criteria", args); }
 
         // nld_mosfet.cpp
 

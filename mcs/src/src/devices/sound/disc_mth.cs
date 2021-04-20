@@ -448,11 +448,11 @@ namespace mame
 
 
         //#define DISCRETE_CLASS_INPUT(_name, _num)   inline double _name (void) { return *(m_input[_num]); }
-        double I_IN0() { return m_input[0].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_IN0,     0);
-        double I_IN1() { return m_input[1].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_IN1,     1);
-        double I_IN2() { return m_input[2].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_IN2,     2);
-        double I_IN3() { return m_input[3].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_IN3,     3);
-        double I_IN4() { return m_input[4].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_IN4,     4);
+        double I_IN0() { return m_input[0].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_IN0,     0);
+        double I_IN1() { return m_input[1].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_IN1,     1);
+        double I_IN2() { return m_input[2].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_IN2,     2);
+        double I_IN3() { return m_input[3].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_IN3,     3);
+        double I_IN4() { return m_input[4].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_IN4,     4);
 
 
         enum token
@@ -938,7 +938,7 @@ namespace mame
         int m_r_node_bit_flag;
         int m_c_bit_flag;
         double m_r_total;
-        ListPointer<double> [] m_r_node = new ListPointer<double> [DISC_MIXER_MAX_INPS];  //const double *  m_r_node[DISC_MIXER_MAX_INPS];      /* Either pointer to resistance node output OR NULL */
+        Pointer<double> [] m_r_node = new Pointer<double> [DISC_MIXER_MAX_INPS];  //const double *  m_r_node[DISC_MIXER_MAX_INPS];      /* Either pointer to resistance node output OR NULL */
         double [] m_r_last = new double[DISC_MIXER_MAX_INPS];
         double [] m_exponent_rc = new double[DISC_MIXER_MAX_INPS]; /* For high pass filtering cause by cIn */
         double [] m_v_cap = new double[DISC_MIXER_MAX_INPS];       /* cap voltage of each input */
@@ -973,8 +973,8 @@ namespace mame
 
             for (bit = 0; bit < 8; bit++)
             {
-                ListPointer<double> node_output_ptr = m_device.node_output_ptr(info.r_node[bit]);
-                m_r_node[bit] = node_output_ptr != null ? new ListPointer<double>(node_output_ptr) : null;
+                Pointer<double> node_output_ptr = m_device.node_output_ptr(info.r_node[bit]);
+                m_r_node[bit] = node_output_ptr != null ? new Pointer<double>(node_output_ptr) : null;
                 if (m_r_node[bit] != null)
                 {
                     m_r_node_bit_flag |= 1 << bit;

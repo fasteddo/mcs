@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using u32 = System.UInt32;
 
 
@@ -28,6 +27,9 @@ namespace mame
             screen.set_visarea(0, 639, 0, 479);
             screen.set_refresh_hz(30);
         }
+
+
+        public override std.vector<string> searchpath() { return new std.vector<string>(); }
 
 
         protected override void machine_start()
@@ -60,10 +62,10 @@ namespace mame
         static ___empty m____empty = new ___empty();
 
 
-        static device_t device_creator____empty(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new empty_state(mconfig, type, tag); }
+        static device_t device_creator____empty(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new empty_state(mconfig, (device_type)type, tag); }
 
 
         //                                                        creator,                 rom           YEAR,   NAME,       PARENT,  MACHINE,              INPUT, INIT,                     MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver____empty = GAME(device_creator____empty, rom____empty, "2007", "___empty", null,    empty_state____empty, null,  driver_device.empty_init, ROT0, "MAME", "No Driver Loaded", MACHINE_NO_SOUND_HW );
+        public static readonly game_driver driver____empty = GAME(device_creator____empty, rom____empty, "2007", "___empty", "0",     empty_state____empty, null,  driver_device.empty_init, ROT0, "MAME", "No Driver Loaded", MACHINE_NO_SOUND_HW );
     }
 }

@@ -8,8 +8,7 @@ using System.IO;
 using char16_t = System.UInt16;
 using char32_t = System.UInt32;
 using int64_t = System.Int64;
-using ListBytes = mame.ListBase<System.Byte>;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
@@ -120,7 +119,7 @@ namespace mame.util
             open_ram - open a RAM-based buffer for file-
             like access and return an error code
         -------------------------------------------------*/
-        public static osd_file.error open_ram(ListBytes data, UInt32 length, uint32_t openflags, out core_file file)  // void const *data
+        public static osd_file.error open_ram(MemoryU8 data, UInt32 length, uint32_t openflags, out core_file file)  //osd_file::error open_ram(void const *data, std::size_t length, std::uint32_t openflags, ptr &file)
         {
             file = null;
 
@@ -172,7 +171,7 @@ namespace mame.util
         // ----- file read -----
 
         // standard binary read from a file
-        public abstract uint32_t read(ListBytesPointer buffer, uint32_t length);  //void *buffer, std::uint32_t length) = 0;
+        public abstract uint32_t read(Pointer<uint8_t> buffer, uint32_t length);  //virtual std::uint32_t read(void *buffer, std::uint32_t length) = 0;
 
         // read one character from the file
         public abstract int getc();
@@ -185,7 +184,7 @@ namespace mame.util
 
         // get a pointer to a buffer that holds the full file data in RAM
         // this function may cause the full file data to be read
-        public abstract ListBytes buffer();  //virtual const void *buffer() = 0;
+        public abstract MemoryU8 buffer();  //virtual const void *buffer() = 0;
 
         // open a file with the specified filename, read it into memory, and return a pointer
         //static osd_file::error load(std::string const &filename, void **data, std::uint32_t &length);
@@ -195,9 +194,9 @@ namespace mame.util
             filename, read it into memory, and return a
             pointer
         -------------------------------------------------*/
-        public static osd_file.error load(string filename, out ListBytes data)  //void **data, std::uint32_t &length)
+        public static osd_file.error load(string filename, out MemoryU8 data)  //osd_file::error load(std::string const &filename, void **data, std::uint32_t &length)
         {
-            data = new ListBytes();
+            data = new MemoryU8();
 
             core_file file;
 
@@ -214,10 +213,10 @@ namespace mame.util
             // allocate memory
             //*data = malloc(size);
             //length = std::uint32_t(size);
-            data.resize((int)size);
+            data.Resize((int)size);
 
             // read the data
-            if (file.read(new ListBytesPointer(data), (UInt32)size) != size)
+            if (file.read(new Pointer<uint8_t>(data), (UInt32)size) != size)
             {
                 data.Clear();
                 return osd_file.error.FAILURE;
@@ -231,7 +230,7 @@ namespace mame.util
         // ----- file write -----
 
         // standard binary write to a file
-        public abstract uint32_t write(ListBytesPointer buffer, uint32_t length);  //const void *buffer, std::uint32_t length) = 0;
+        public abstract uint32_t write(Pointer<uint8_t> buffer, uint32_t length);  //virtual std::uint32_t write(const void *buffer, std::uint32_t length) = 0;
 
         // write a line of text to the file
         public abstract int puts(string s);
@@ -270,14 +269,14 @@ namespace mame.util
         ~zlib_data() { throw new emu_unimplemented(); }
 
         public UInt32 buffer_size() { throw new emu_unimplemented(); }
-        public ListBytes buffer_data() { throw new emu_unimplemented(); }  //void *buffer_data() { return m_buffer; }
+        public MemoryU8 buffer_data() { throw new emu_unimplemented(); }  //void *buffer_data() { return m_buffer; }
 
 
         // general-purpose output buffer manipulation
         public bool output_full() { throw new emu_unimplemented(); }
         public UInt32 output_space() { throw new emu_unimplemented(); }
 
-        public void set_output(ListBytesPointer data, uint32_t size) { throw new emu_unimplemented(); }  //void *data, std::uint32_t size)
+        public void set_output(Pointer<uint8_t> data, uint32_t size) { throw new emu_unimplemented(); }  //void set_output(void *data, std::uint32_t size)
 
 
         // working with output to the internal buffer
@@ -291,7 +290,7 @@ namespace mame.util
         public bool has_input() { throw new emu_unimplemented(); }
         public UInt32 input_size() { throw new emu_unimplemented(); }
 
-        public void set_input(ListBytesPointer data, uint32_t size) { throw new emu_unimplemented(); }  //void const *data, std::uint32_t size)
+        public void set_input(Pointer<uint8_t> data, uint32_t size) { throw new emu_unimplemented(); }  //void set_input(void const *data, std::uint32_t size)
 
         // working with input from the internal buffer
         public void reset_input(uint32_t size) { throw new emu_unimplemented(); }
@@ -358,10 +357,10 @@ namespace mame.util
                 // do we need to check the byte order marks?
                 if (tell() == 0)
                 {
-                    RawBuffer bom = new RawBuffer(4);  //std::uint8_t bom[4];
+                    MemoryU8 bom = new MemoryU8(4, true);  //std::uint8_t bom[4];
                     int pos = 0;
 
-                    if (read(new ListBytesPointer(bom), 4) == 4)
+                    if (read(new Pointer<uint8_t>(bom), 4) == 4)
                     {
                         if (bom[0] == 0xef && bom[1] == 0xbb && bom[2] == 0xbf)
                         {
@@ -405,8 +404,8 @@ namespace mame.util
                 default:
                 case text_file_type.OSD:
                     {
-                        RawBuffer default_bufferBuf = new RawBuffer(16);  //char [] default_buffer = new char[16];
-                        var readlen = read(new ListBytesPointer(default_bufferBuf), (UInt32)default_bufferBuf.Count);
+                        MemoryU8 default_bufferBuf = new MemoryU8(16, true);  //char [] default_buffer = new char[16];
+                        var readlen = read(new Pointer<uint8_t>(default_bufferBuf), (UInt32)default_bufferBuf.Count);
                         if (readlen > 0)
                         {
                             //var charlen = osd_uchar_from_osdchar(&uchar, default_buffer, readlen / sizeof(default_buffer[0]));
@@ -564,12 +563,12 @@ namespace mame.util
     class core_in_memory_file : core_text_file
     {
         bool m_data_allocated;   // was the data allocated by us?
-        ListBytes m_data;  //void const *    m_data;             // file data, if RAM-based
+        MemoryU8 m_data;  //void const *    m_data;             // file data, if RAM-based
         uint64_t m_offset;           // current file offset
         uint64_t m_length;           // total file length
 
 
-        public core_in_memory_file(uint32_t openflags, ListBytes data, UInt32 length, bool copy)  // void *data
+        public core_in_memory_file(uint32_t openflags, MemoryU8 data, UInt32 length, bool copy)  //core_in_memory_file(std::uint32_t openflags, void const *data, std::size_t length, bool copy)
             : base(openflags)
         {
             m_data_allocated = false;
@@ -580,9 +579,9 @@ namespace mame.util
 
             if (copy)
             {
-                ListBytes buf = allocate();  // void *const buf = allocate();
+                MemoryU8 buf = allocate();  // void *const buf = allocate();
                 if (buf != null)
-                    memcpy(new ListBytesPointer(buf), new ListBytesPointer(data), length);  // std::memcpy(buf, data, length);
+                    memcpy(new Pointer<uint8_t>(buf), new Pointer<uint8_t>(data), length);  //if (buf) std::memcpy(buf, data, length);
             }
         }
 
@@ -630,20 +629,20 @@ namespace mame.util
         /*-------------------------------------------------
             read - read from a file
         -------------------------------------------------*/
-        public override uint32_t read(ListBytesPointer buffer, uint32_t length)  //void *buffer, std::uint32_t length)
+        public override uint32_t read(Pointer<uint8_t> buffer, uint32_t length)  //std::uint32_t read(void *buffer, std::uint32_t length)
         {
             clear_putback();
 
             // handle RAM-based files
-            var bytes_read = safe_buffer_copy(new ListBytesPointer(m_data), (UInt32)m_offset, (UInt32)m_length, buffer, 0, length);
+            var bytes_read = safe_buffer_copy(new Pointer<uint8_t>(m_data), (UInt32)m_offset, (UInt32)m_length, buffer, 0, length);
             m_offset += bytes_read;
             return bytes_read;
         }
 
-        public override ListBytes buffer() { return m_data; }
+        public override MemoryU8 buffer() { return m_data; }  //virtual void const *buffer() override { return m_data; }
 
 
-        public override uint32_t write(ListBytesPointer buffer, uint32_t length) { return 0; }  //void const *buffer, std::uint32_t length)
+        public override uint32_t write(Pointer<uint8_t> buffer, uint32_t length) { return 0; }  //virtual std::uint32_t write(void const *buffer, std::uint32_t length) override { return 0; }
 
 
         //virtual osd_file::error truncate(std::uint64_t offset) override;
@@ -665,13 +664,13 @@ namespace mame.util
         protected bool is_loaded() { return null != m_data; }
 
 
-        protected ListBytes allocate()  // void *allocate()
+        protected MemoryU8 allocate()  //void *allocate()
         {
             if (m_data != null)
                 return null;
 
-            ListBytes data = new ListBytes((int)m_length);  // void *data = malloc(m_length);
-            data.resize((int)m_length);
+            MemoryU8 data = new MemoryU8((int)m_length, true);  //void *data = malloc(m_length);
+            data.Resize((int)m_length);
             if (data != null)
             {
                 m_data_allocated = true;
@@ -701,9 +700,9 @@ namespace mame.util
             safe_buffer_copy - copy safely from one
             bounded buffer to another
         -------------------------------------------------*/
-        protected static UInt32 safe_buffer_copy(
-                ListBytesPointer source, UInt32 sourceoffs, UInt32 sourcelen,  // void const *source, UInt32 sourceoffs, UInt32 sourcelen,
-                ListBytesPointer dest, UInt32 destoffs, UInt32 destlen)  // void *dest, UInt32 destoffs, UInt32 destlen)
+        protected static UInt32 safe_buffer_copy(  //std::size_t safe_buffer_copy(
+                Pointer<uint8_t> source, UInt32 sourceoffs, UInt32 sourcelen,  //void const *source, std::size_t sourceoffs, std::size_t sourcelen,
+                Pointer<uint8_t> dest, UInt32 destoffs, UInt32 destlen)  //void *dest, std::size_t destoffs, std::size_t destlen)
         {
             var sourceavail = sourcelen - sourceoffs;
             var destavail = destlen - destoffs;
@@ -714,7 +713,10 @@ namespace mame.util
                 //        reinterpret_cast<std::uint8_t *>(dest) + destoffs,
                 //        reinterpret_cast<std::uint8_t const *>(source) + sourceoffs,
                 //        bytes_to_copy);
-                memcpy(new ListBytesPointer(dest, (int)destoffs), new ListBytesPointer(source, (int)sourceoffs), bytes_to_copy);
+                memcpy(
+                    new Pointer<uint8_t>(dest, (int)destoffs),
+                    new Pointer<uint8_t>(source, (int)sourceoffs),
+                    bytes_to_copy);
             }
 
             return bytes_to_copy;
@@ -731,7 +733,7 @@ namespace mame.util
         zlib_data m_zdata;                    // compression data
         uint64_t m_bufferbase;               // base offset of internal buffer
         uint32_t m_bufferbytes;              // bytes currently loaded into buffer
-        RawBuffer m_buffer = new RawBuffer(FILE_BUFFER_SIZE);  //std::uint8_t    m_buffer[FILE_BUFFER_SIZE]; // buffer data
+        MemoryU8 m_buffer = new MemoryU8(FILE_BUFFER_SIZE, true);  //std::uint8_t    m_buffer[FILE_BUFFER_SIZE]; // buffer data
 
 
         public core_osd_file(uint32_t openmode, osd_file file, uint64_t length)
@@ -792,7 +794,7 @@ namespace mame.util
                     if (m_zdata.has_output())
                     {
                         UInt32 actualdata;
-                        var filerr = m_file.write(new ListBytesPointer(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.output_size(), out actualdata);
+                        var filerr = m_file.write(new Pointer<uint8_t>(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.output_size(), out actualdata);
                         if (filerr != osd_file.error.NONE)
                             break;
                         m_zdata.add_realoffset(actualdata);
@@ -843,7 +845,7 @@ namespace mame.util
         /*-------------------------------------------------
             read - read from a file
         -------------------------------------------------*/
-        public override uint32_t read(ListBytesPointer buffer, uint32_t length)  //void *buffer, std::uint32_t length)
+        public override uint32_t read(Pointer<uint8_t> buffer, uint32_t length)  //std::uint32_t read(void *buffer, std::uint32_t length)
         {
             if (m_file == null || is_loaded())
                 return base.read(buffer, length);
@@ -855,7 +857,7 @@ namespace mame.util
 
             // if we're within the buffer, consume that first
             if (is_buffered())
-                bytes_read += safe_buffer_copy(new ListBytesPointer(m_buffer), (UInt32)(offset() - m_bufferbase), m_bufferbytes, buffer, bytes_read, length);
+                bytes_read += safe_buffer_copy(new Pointer<uint8_t>(m_buffer), (UInt32)(offset() - m_bufferbase), m_bufferbytes, buffer, bytes_read, length);
 
             // if we've got a small amount left, read it into the buffer first
             if (bytes_read < length)
@@ -865,16 +867,16 @@ namespace mame.util
                     // read as much as makes sense into the buffer
                     m_bufferbase = offset() + bytes_read;
                     m_bufferbytes = 0;
-                    osd_or_zlib_read(new ListBytesPointer(m_buffer), m_bufferbase, (UInt32)m_buffer.Count, out m_bufferbytes);
+                    osd_or_zlib_read(new Pointer<uint8_t>(m_buffer), m_bufferbase, (UInt32)m_buffer.Count, out m_bufferbytes);
 
                     // do a bounded copy from the buffer to the destination
-                    bytes_read += safe_buffer_copy(new ListBytesPointer(m_buffer), 0, m_bufferbytes, buffer, bytes_read, length);
+                    bytes_read += safe_buffer_copy(new Pointer<uint8_t>(m_buffer), 0, m_bufferbytes, buffer, bytes_read, length);
                 }
                 else
                 {
                     // read the remainder directly from the file
                     UInt32 new_bytes_read = 0;
-                    osd_or_zlib_read(new ListBytesPointer(buffer, (int)bytes_read), offset() + bytes_read, length - bytes_read, out new_bytes_read);
+                    osd_or_zlib_read(new Pointer<uint8_t>(buffer, (int)bytes_read), offset() + bytes_read, length - bytes_read, out new_bytes_read);  //osd_or_zlib_read(reinterpret_cast<std::uint8_t *>(buffer) + bytes_read, offset() + bytes_read, length - bytes_read, new_bytes_read);
                     bytes_read += new_bytes_read;
                 }
             }
@@ -890,18 +892,18 @@ namespace mame.util
             if it doesn't yet exist, load the file into
             RAM first
         -------------------------------------------------*/
-        public override ListBytes buffer()  //void const *core_osd_file::buffer()
+        public override MemoryU8 buffer()  //void const *buffer()
         {
             // if we already have data, just return it
             if (!is_loaded() && length() != 0)
             {
                 // allocate some memory
-                ListBytes buf = allocate();  // void *buf = allocate();
+                MemoryU8 buf = allocate();  // void *buf = allocate();
                 if (buf == null) return null;
 
                 // read the file
                 UInt32 read_length = 0;
-                var filerr = osd_or_zlib_read(new ListBytesPointer(buf), 0, (UInt32)length(), out read_length);
+                var filerr = osd_or_zlib_read(new Pointer<uint8_t>(buf), 0, (UInt32)length(), out read_length);
                 if ((filerr != osd_file.error.NONE) || (read_length != length()))
                 {
                     purge();
@@ -920,7 +922,7 @@ namespace mame.util
         /*-------------------------------------------------
             write - write to a file
         -------------------------------------------------*/
-        public override uint32_t write(ListBytesPointer buffer, uint32_t length)  //void *buffer, std::uint32_t length)
+        public override uint32_t write(Pointer<uint8_t> buffer, uint32_t length)  //std::uint32_t write(void const *buffer, std::uint32_t length)
         {
             // can't write to RAM-based stuff
             if (is_loaded())
@@ -953,7 +955,7 @@ namespace mame.util
             osd_or_zlib_read - wrapper for osd_read that
             handles zlib-compressed data
         -------------------------------------------------*/
-        osd_file.error osd_or_zlib_read(ListBytesPointer buffer, uint64_t offset, uint32_t length, out uint32_t actual)  //void *buffer
+        osd_file.error osd_or_zlib_read(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual)  //osd_file::error osd_or_zlib_read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual)
         {
             actual = 0;
 
@@ -985,7 +987,7 @@ namespace mame.util
                 if (!m_zdata.has_input())
                 {
                     UInt32 actualdata = 0;
-                    filerr = m_file.read(new ListBytesPointer(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.buffer_size(), out actualdata);
+                    filerr = m_file.read(new Pointer<uint8_t>(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.buffer_size(), out actualdata);
                     if (filerr != osd_file.error.NONE) break;
                     m_zdata.add_realoffset(actualdata);
                     m_zdata.reset_input(actualdata);
@@ -1016,7 +1018,7 @@ namespace mame.util
          *
          * @return  A osd_file::error.
          */
-        osd_file.error osd_or_zlib_write(ListBytesPointer buffer, uint64_t offset, uint32_t length, out uint32_t actual)  //void const *buffer
+        osd_file.error osd_or_zlib_write(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual)  //osd_file::error osd_or_zlib_write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual);
         {
             actual = 0;
 
@@ -1045,7 +1047,7 @@ namespace mame.util
                 if (m_zdata.output_full())
                 {
                     UInt32 actualdata = 0;
-                    var filerr = m_file.write(new ListBytesPointer(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.output_size(), out actualdata);
+                    var filerr = m_file.write(new Pointer<uint8_t>(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.output_size(), out actualdata);
                     if (filerr != osd_file.error.NONE)
                         return filerr;
                     m_zdata.add_realoffset(actualdata);

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -16,6 +15,22 @@ namespace mame
 {
     static class m68705_global
     {
+        //#define LOG_GENERAL (1U <<  0)
+        //#define LOG_INT     (1U <<  1)
+        //#define LOG_IOPORT  (1U <<  2)
+        public const int LOG_TIMER   = 1 <<  3;
+        //#define LOG_EPROM   (1U <<  4)
+
+        //#define VERBOSE (LOG_GENERAL | LOG_IOPORT | LOG_TIMER | LOG_EPROM)
+        //#define LOG_OUTPUT_FUNC printf
+        //#include "logmacro.h"
+
+        //#define LOGINT(...)     LOGMASKED(LOG_INT,    __VA_ARGS__)
+        //#define LOGIOPORT(...)  LOGMASKED(LOG_IOPORT, __VA_ARGS__)
+        //#define LOGTIMER(...)   LOGMASKED(LOG_TIMER,  __VA_ARGS__)
+        //#define LOGEPROM(...)   LOGMASKED(LOG_EPROM,  __VA_ARGS__)
+
+
         //enum : u16 {
         public const u16 M68705_VECTOR_BOOTSTRAP  = 0xfff6;
         public const u16 M6805_VECTOR_TIMER       = 0xfff8;
@@ -37,7 +52,7 @@ namespace mame
     }
 
 
-    public class m6805_timer
+    public class m6805_timer : global_object
     {
         public enum timer_options //: u8
         {
@@ -54,31 +69,31 @@ namespace mame
             TIMER       = 3, // external input
         }
 
+        enum tcr_mask //: u8
+        {
+            TCR_PS  = 0x07, // prescaler value
+            TCR_PSC = 0x08, // prescaler clear (write only, read as zero)
+            TCR_TIE = 0x10, // timer external input enable
+            TCR_TIN = 0x20, // timer input select
+            TCR_TIM = 0x40, // timer interrupt mask
+            TCR_TIR = 0x80, // timer interrupt request
+        }
 
-        //enum tcr_mask : u8
-        //{
-        //    TCR_PS  = 0x07, // prescaler value
-        //    TCR_PSC = 0x08, // prescaler clear (write only, read as zero)
-        //    TCR_TIE = 0x10, // timer external input enable
-        //    TCR_TIN = 0x20, // timer input select
-        //    TCR_TIM = 0x40, // timer interrupt mask
-        //    TCR_TIR = 0x80, // timer interrupt request
-        //};
 
         // configuration state
-        cpu_device m_parent;
+        m6805_base_device m_parent;  //cpu_device &m_parent;
         timer_options m_options;  //u8 m_options;
 
         // internal state
         UInt32 m_divisor;
         timer_source m_source;
         bool m_timer;
-        //unsigned m_timer_edges;
-        //u8 m_prescale;
+        UInt32 m_timer_edges;  //unsigned m_timer_edges;
+        u8 m_prescale;
 
         // visible state
         u8 m_tdr;
-        //u8 m_tcr;
+        u8 m_tcr;
 
 
         public m6805_timer(m6805_base_device parent)
@@ -99,35 +114,88 @@ namespace mame
 
         public void start(UInt32 base_ = 0)
         {
-            throw new emu_unimplemented();
+            m_parent.save_item(NAME(new { m_timer }));
+            m_parent.save_item(NAME(new { m_timer_edges }));
+            m_parent.save_item(NAME(new { m_prescale }));
+            m_parent.save_item(NAME(new { m_tdr }));
+            m_parent.save_item(NAME(new { m_tcr }));
+
+            m_parent.m_distate.state_add((int)base_ + 0, "PS", m_prescale);
+            m_parent.m_distate.state_add((int)base_ + 1, "TDR", m_tdr);
+            m_parent.m_distate.state_add((int)base_ + 2, "TCR", m_tcr);
         }
 
 
         public void reset()
         {
-            throw new emu_unimplemented();
+            m_timer_edges = 0;
+            m_prescale = 0x7f;
+            m_tdr = 0xff;
+            m_tcr = 0x7f;
         }
 
 
-        u8 tdr_r() { return m_tdr; }
-        void tdr_w(u8 data) { m_tdr = data; }
+        public u8 tdr_r() { return m_tdr; }
+        public void tdr_w(u8 data) { m_tdr = data; }
 
 
-        u8 tcr_r()
+        public u8 tcr_r()
         {
             throw new emu_unimplemented();
         }
 
 
-        void tcr_w(u8 data)
+        public void tcr_w(u8 data)
         {
-            throw new emu_unimplemented();
+            if ((logmacro_global.VERBOSE & m68705_global.LOG_TIMER) != 0)
+                m_parent.logerror("tcr_w 0x{0}\n", data);
+
+            if ((m_options & timer_options.TIMER_MOR) != 0)
+                data |= (u8)tcr_mask.TCR_TIE;
+
+            if ((m_options & timer_options.TIMER_PGM) != 0)
+            {
+                set_divisor((UInt32)(data & (u8)tcr_mask.TCR_PS));
+                set_source((timer_source)((data & (u8)(tcr_mask.TCR_TIN | tcr_mask.TCR_TIE)) >> 4));
+            }
+
+            if ((data & (u8)tcr_mask.TCR_PSC) != 0 && (m_options & timer_options.TIMER_NPC) == 0)
+                m_prescale = 0;
+
+            m_tcr = (u8)((m_tcr & (data & (u8)tcr_mask.TCR_TIR)) | (data & (int)(~(tcr_mask.TCR_TIR | tcr_mask.TCR_PSC))));
+
+            // this is a level-sensitive interrupt
+            m_parent.set_input_line(m68705_global.M6805_INT_TIMER, ((m_tcr & (u8)tcr_mask.TCR_TIR) != 0 && (m_tcr & (u8)tcr_mask.TCR_TIM) == 0) ? 1 : 0);
         }
 
 
         public void update(UInt32 count)
         {
-            throw new emu_unimplemented();
+            if (m_source == timer_source.DISABLED || (m_source == timer_source.CLOCK_TIMER && !m_timer))
+                return;
+
+            // compute new prescaler value and counter decrements
+            UInt32 prescale = (m_prescale & ((1U << (int)m_divisor) - 1)) + ((m_source == timer_source.TIMER) ? m_timer_edges : count);
+            UInt32 decrements = prescale >> (int)m_divisor;
+
+            // check for zero crossing
+            bool interrupt = ((m_tdr != 0) ? (UInt32)m_tdr : 256U) <= decrements;
+
+            // update state
+            m_prescale = (u8)(prescale & 0x7f);
+            m_tdr -= (u8)decrements;
+            m_timer_edges = 0;
+
+            if (interrupt)
+            {
+                if ((logmacro_global.VERBOSE & m68705_global.LOG_TIMER) != 0)
+                    m_parent.logerror("timer interrupt\n");
+
+                m_tcr |= (u8)tcr_mask.TCR_TIR;
+
+                if ((m_tcr & (u8)tcr_mask.TCR_TIM) == 0)
+                    m_parent.set_input_line(m68705_global.M6805_INT_TIMER, ASSERT_LINE);
+            }
         }
 
 
@@ -197,8 +265,7 @@ namespace mame
         public void LOGEPROM(string format, params object [] args) { LOGMASKED(LOG_EPROM, format, args); }
 
 
-        const int PORT_COUNT = 4;  //static unsigned const PORT_COUNT = 4;
-        public class iPORT_COUNT : const_value_int { public int op { get { return PORT_COUNT; } } }
+        const int PORT_COUNT = 4;
 
 
         // timer/counter
@@ -210,8 +277,8 @@ namespace mame
         u8 [] m_port_input;  //u8              m_port_input[PORT_COUNT];
         u8 [] m_port_latch;  //u8              m_port_latch[PORT_COUNT];
         u8 [] m_port_ddr;  //u8              m_port_ddr[PORT_COUNT];
-        devcb_read8.array<iPORT_COUNT, devcb_read8> m_port_cb_r;
-        devcb_write8.array<iPORT_COUNT, devcb_write8> m_port_cb_w;
+        devcb_read8.array<devcb_read8> m_port_cb_r;
+        devcb_write8.array<devcb_write8> m_port_cb_w;
 
         // miscellaneous register
         //enum mr_mask : u8
@@ -239,8 +306,8 @@ namespace mame
             m_port_input = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_latch = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_ddr = new u8 [PORT_COUNT] { 0x00, 0x00, 0x00, 0x00 };
-            m_port_cb_r = new devcb_read8.array<iPORT_COUNT, devcb_read8>(this, () => { return new devcb_read8(this); });
-            m_port_cb_w = new devcb_write8.array<iPORT_COUNT, devcb_write8>(this, () => { return new devcb_write8(this); });
+            m_port_cb_r = new devcb_read8.array<devcb_read8>(PORT_COUNT, this, () => { return new devcb_read8(this); });
+            m_port_cb_w = new devcb_write8.array<devcb_write8>(PORT_COUNT, this, () => { return new devcb_write8(this); });
             m_ram_size = ram_size;
         }
 
@@ -275,12 +342,8 @@ namespace mame
             map.op(0x0005, 0x0005).w(port_ddr_w_1);
             map.op(0x0006, 0x0006).w(port_ddr_w_2);
 
-
-            throw new emu_unimplemented();
-#if false
-            map(0x0008, 0x0008).lrw8(NAME([this]() { return m_timer.tdr_r(); }), NAME([this](u8 data) { m_timer.tdr_w(data); }));
-            map(0x0009, 0x0009).lrw8(NAME([this]() { return m_timer.tcr_r(); }), NAME([this](u8 data) { m_timer.tcr_w(data); }));
-#endif
+            map.op(0x0008, 0x0008).lrw8(() => { return m_timer.tdr_r(); }, "", (data) => { m_timer.tdr_w(data); }, "");  //map(0x0008, 0x0008).lrw8(NAME([this]() { return m_timer.tdr_r(); }), NAME([this](u8 data) { m_timer.tdr_w(data); }));
+            map.op(0x0009, 0x0009).lrw8(() => { return m_timer.tcr_r(); }, "", (data) => { m_timer.tcr_w(data); }, "");  //map(0x0009, 0x0009).lrw8(NAME([this]() { return m_timer.tcr_r(); }), NAME([this](u8 data) { m_timer.tcr_w(data); }));
 
             // M68?05Px devices don't have Port D or the Miscellaneous register
             if (m_port_mask[3] != 0xff)
@@ -393,9 +456,9 @@ namespace mame
         {
             base.device_start();
 
-            save_item(m_port_input, "m_port_input");
-            save_item(m_port_latch, "m_port_latch");
-            save_item(m_port_ddr, "m_port_ddr");
+            save_item(NAME(new { m_port_input }));
+            save_item(NAME(new { m_port_latch }));
+            save_item(NAME(new { m_port_ddr }));
 
             // initialise digital I/O
             for (int i = 0; i < m_port_input.Length; i++) m_port_input[i] = 0xff;  //for (u8 &input : m_port_input) input = 0xff;
@@ -475,7 +538,7 @@ namespace mame
                         throw new emu_fatalerror("Unknown pending interrupt");
                     }
 
-                    m_icountRef.i -= 11;
+                    m_icount.i -= 11;
                     burn_cycles(11);
                 }
             }
@@ -588,10 +651,10 @@ namespace mame
         {
             base.device_start();
 
-            save_item(m_vihtp, "m_vihtp");
-            save_item(m_pcr, "m_pcr");
-            save_item(m_pl_data, "m_pl_data");
-            save_item(m_pl_addr, "m_pl_addr");
+            save_item(NAME(new { m_vihtp }));
+            save_item(NAME(new { m_pcr }));
+            save_item(NAME(new { m_pl_data }));
+            save_item(NAME(new { m_pl_addr }));
 
             // initialise timer/counter
             u8 options = get_mask_options();
@@ -705,7 +768,7 @@ namespace mame
         }
 
 
-        protected ListPointer<u8> get_user_rom() { return m_user_rom.target; }  //u8 *const get_user_rom() const { return &m_user_rom[0]; }
+        protected Pointer<u8> get_user_rom() { return m_user_rom.target; }  //u8 *const get_user_rom() const { return &m_user_rom[0]; }
         protected abstract u8 get_mask_options();
 
 
@@ -771,7 +834,7 @@ namespace mame
     class m68705p5_device : m68705p_device
     {
         //DEFINE_DEVICE_TYPE(M68705P5, m68705p5_device, "m68705p5", "Motorola MC68705P5")
-        static device_t device_creator_m68705p5_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m68705p5_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_m68705p5_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m68705p5_device(mconfig, tag, owner, clock); }
         public static readonly device_type M68705P5 = DEFINE_DEVICE_TYPE(device_creator_m68705p5_device, "m68705p5", "Motorola MC68705P5");
 
 

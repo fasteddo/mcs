@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -17,7 +16,7 @@ namespace mame
     public class latch8_device : device_t
     {
         //DEFINE_DEVICE_TYPE(LATCH8, latch8_device, "latch8", "8-bit latch")
-        static device_t device_creator_latch8_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new latch8_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_latch8_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new latch8_device(mconfig, tag, owner, clock); }
         public static readonly device_type LATCH8 = DEFINE_DEVICE_TYPE(device_creator_latch8_device, "latch8", "8-bit latch");
 
 
@@ -31,8 +30,8 @@ namespace mame
         uint32_t           m_xorvalue;  /* after mask */
         uint32_t           m_nosync;
 
-        devcb_write_line.array<i8, devcb_write_line> m_write_cb;
-        devcb_read_line.array<i8, devcb_read_line> m_read_cb;
+        devcb_write_line.array<devcb_write_line> m_write_cb;
+        devcb_read_line.array<devcb_read_line> m_read_cb;
 
 
         latch8_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)
@@ -44,8 +43,8 @@ namespace mame
             m_maskout = 0;
             m_xorvalue = 0;
             m_nosync = 0;
-            m_write_cb = new devcb_write_line.array<i8, devcb_write_line>(this, () => { return new devcb_write_line(this); });
-            m_read_cb = new devcb_read_line.array<i8, devcb_read_line>(this, () => { return new devcb_read_line(this); });
+            m_write_cb = new devcb_write_line.array<devcb_write_line>(8, this, () => { return new devcb_write_line(this); });
+            m_read_cb = new devcb_read_line.array<devcb_read_line>(8, this, () => { return new devcb_read_line(this); });
         }
 
 
@@ -158,7 +157,7 @@ namespace mame
                 cb.resolve();
             }
 
-            save_item(m_value, "m_value");
+            save_item(NAME(new { m_value }));
         }
 
 

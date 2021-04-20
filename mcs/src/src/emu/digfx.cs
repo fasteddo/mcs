@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -128,8 +127,8 @@ namespace mame
         public u32 [] xoffset = new u32[digfx_global.MAX_GFX_SIZE]; // bit offset of each horizontal pixel
         public u32 [] yoffset = new u32[digfx_global.MAX_GFX_SIZE]; // bit offset of each vertical pixel
         public u32 charincrement;      // distance between two consecutive elements (in bits)
-        public ListBase<u32> extxoffs;  //const u32 *     extxoffs;           // extended X offset array for really big layouts
-        public ListBase<u32> extyoffs;  //const u32 *     extyoffs;           // extended Y offset array for really big layouts
+        public MemoryContainer<u32> extxoffs;  //const u32 *     extxoffs;           // extended X offset array for really big layouts
+        public MemoryContainer<u32> extyoffs;  //const u32 *     extyoffs;           // extended Y offset array for really big layouts
 
 
         public gfx_layout
@@ -142,8 +141,8 @@ namespace mame
                 u32 [] xoffset,
                 u32 [] yoffset,
                 u32 charincrement,
-                ListBase<u32> extxoffs = null,
-                ListBase<u32> extyoffs = null
+                MemoryContainer<u32> extxoffs = null,
+                MemoryContainer<u32> extyoffs = null
             )
         {
             this.width = width;
@@ -226,7 +225,7 @@ namespace mame
 
 
         // getters
-        public device_palette_interface palette() { assert(m_paletteDevice != null); return m_paletteDevice.target.palette_interface; }  //{ assert(m_palette); return *m_palette; }
+        public device_palette_interface palette() { assert(m_paletteDevice != null); return m_paletteDevice.target.dipalette; }  //{ assert(m_palette); return *m_palette; }
         public gfx_element gfx(int index) { assert(index < digfx_global.MAX_GFX_ELEMENTS); return m_gfx[index]; }
 
 
@@ -258,7 +257,7 @@ namespace mame
 
                 // resolve the region
                 u32 region_length;
-                ListBytesPointer region_base;  //const u8     *region_base;
+                Pointer<u8> region_base;  //const u8     *region_base;
                 u8 region_width;
                 endianness_t region_endianness;
 
@@ -279,7 +278,7 @@ namespace mame
                         memory_region region = basedevice.memregion(gfx.memory_region);
                         //assert(region != NULL);
                         region_length = 8 * region.bytes();
-                        region_base = new ListBytesPointer(region.base_());  //region_base = region->base();
+                        region_base = new Pointer<u8>(region.base_());  //region_base = region->base();
                         region_width = region.bytewidth();
                         region_endianness = region.endianness();
                     }
@@ -404,7 +403,7 @@ namespace mame
 
                 // allocate the graphics
                 //m_gfx[curgfx] = new gfx_element(m_palette, glcopy, region_base != null ? region_base + gfx.start : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
-                m_gfx[curgfx] = new gfx_element(m_paletteDevice.target.palette_interface, glcopy, region_base != null ? new ListBytesPointer(region_base, (int)gfx.start) : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
+                m_gfx[curgfx] = new gfx_element(m_paletteDevice.target.dipalette, glcopy, region_base != null ? new Pointer<u8>(region_base, (int)gfx.start) : null, xormask, gfx.total_color_codes, gfx.color_codes_start);
             }
 
             m_decoded = true;
@@ -426,8 +425,8 @@ namespace mame
         {
             if (!m_palette_is_disabled && m_paletteDevice == null)
             {
-                KeyValuePair<device_t, string> target = m_paletteDevice.finder_target();
-                if (target.second() == finder_base.DUMMY_TAG)
+                std.pair<device_t, string> target = m_paletteDevice.finder_target();
+                if (target.second == finder_base.DUMMY_TAG)
                 {
                     osd_printf_error("No palette specified for device '{0}'\n", device().tag());
                 }
@@ -436,8 +435,8 @@ namespace mame
                     osd_printf_error(
                             "Device '{0}' specifies nonexistent device '{1}' relative to '{2}' as palette\n",
                             device().tag(),
-                            target.second(),
-                            target.first().tag());
+                            target.second,
+                            target.first.tag());
                 }
             }
 
@@ -518,8 +517,8 @@ namespace mame
         {
             if (!m_palette_is_disabled && m_paletteDevice == null)
             {
-                KeyValuePair<device_t, string> target = m_paletteDevice.finder_target();
-                if (target.second() == finder_base.DUMMY_TAG)
+                std.pair<device_t, string> target = m_paletteDevice.finder_target();
+                if (target.second == finder_base.DUMMY_TAG)
                 {
                     fatalerror("No palette specified for device {0}\n", device().tag());
                 }
@@ -528,8 +527,8 @@ namespace mame
                     fatalerror(
                             "Device '{0}' specifies nonexistent device '{1}' relative to '{2}' as palette\n",
                             device().tag(),
-                            target.second(),
-                            target.first().tag());
+                            target.second,
+                            target.first.tag());
                 }
             }
 

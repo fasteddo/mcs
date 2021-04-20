@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using indirect_pen_t = System.UInt16;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using logical_index = System.UInt32;
+using offs_t = System.UInt32;
+using PointerU8 = mame.Pointer<System.Byte>;
 using pen_t = System.UInt32;
 using s32 = System.Int32;
 using tilemap_memory_index = System.UInt32;
@@ -46,8 +46,8 @@ namespace mame
     public struct tile_data
     {
         public device_gfx_interface decoder;  // set in tilemap_t::init()
-        public ListBytesPointer pen_data;  //const u8 *      pen_data;       // required
-        public ListBytesPointer mask_data;  //const u8 *      mask_data;      // required
+        public PointerU8 pen_data;  //const u8 *      pen_data;       // required
+        public PointerU8 mask_data;  //const u8 *      mask_data;      // required
         public pen_t palette_base;   // defaults to 0
         public u8 category;       // defaults to 0; range from 0..15
         public u8 group;          // defaults to 0; range from 0..TILEMAP_NUM_GROUPS
@@ -119,14 +119,13 @@ namespace mame
         // function definition for a logical-to-memory mapper
         //#define TILEMAP_MAPPER_MEMBER(_name)    tilemap_memory_index _name(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
 
-        // useful macro inside of a TILE_GET_INFO callback to set tile information
-        public static void SET_TILE_INFO_MEMBER(ref tile_data tileinfo, u8 GFX, u32 CODE, u32 COLOR, u8 FLAGS) { tileinfo.set(GFX, CODE, COLOR, FLAGS); }
-
-        // Macros for setting tile attributes in the TILE_GET_INFO callback:
+        // Helpers for setting tile attributes in the TILE_GET_INFO callback:
         //   TILE_FLIP_YX assumes that flipy is in bit 1 and flipx is in bit 0
         //   TILE_FLIP_XY assumes that flipy is in bit 0 and flipx is in bit 1
-        public static int TILE_FLIPYX(int YX) { return YX & 3; }
-        //#define TILE_FLIPXY(XY)                 ((((XY) & 2) >> 1) | (((XY) & 1) << 1))
+        //template <typename T> constexpr u8 TILE_FLIPYX(T yx) { return u8(yx & 3); }
+        public static u8 TILE_FLIPYX(int yx) { return (u8)(yx & 3); }
+
+        //template <typename T> constexpr u8 TILE_FLIPXY(T xy) { return u8(((xy & 2) >> 1) | ((xy & 1) << 1)); }
     }
 
 
@@ -538,10 +537,10 @@ namespace mame
         // drawing
 
         public void draw(screen_device screen, bitmap_ind16 dest, rectangle cliprect, u32 flags, u8 priority = 0, u8 priority_mask = 0xff)
-        { draw_common<bitmap_ind16, u16, UInt16BufferPointer>(screen, dest, cliprect, flags, priority, priority_mask); }
+        { draw_common<bitmap_ind16, u16, PointerU16>(screen, dest, cliprect, flags, priority, priority_mask); }
 
         public void draw(screen_device screen, bitmap_rgb32 dest, rectangle cliprect, u32 flags, u8 priority = 0, u8 priority_mask = 0xff)
-        { draw_common<bitmap_rgb32, u32, UInt32BufferPointer>(screen, dest, cliprect, flags, priority, priority_mask); }
+        { draw_common<bitmap_rgb32, u32, PointerU32>(screen, dest, cliprect, flags, priority, priority_mask); }
 
         //void draw_roz(screen_device &screen, bitmap_ind16 &dest, const rectangle &cliprect, UINT32 startx, UINT32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, UINT32 flags, UINT8 priority = 0, UINT8 priority_mask = 0xff);
         //void draw_roz(screen_device &screen, bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 startx, UINT32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, UINT32 flags, UINT8 priority = 0, UINT8 priority_mask = 0xff);
@@ -572,7 +571,7 @@ namespace mame
             for (int ypos = (int)(scrolly - m_height); ypos <= blit.cliprect.bottom(); ypos += (int)m_height)
             {
                 for (int xpos = (int)(scrollx - m_width); xpos <= blit.cliprect.right(); xpos += (int)m_width)
-                    draw_instance<bitmap_rgb32, u32, UInt32BufferPointer>(screen, dest, blit, xpos, ypos);
+                    draw_instance<bitmap_rgb32, u32, PointerU32>(screen, dest, blit, xpos, ypos);
             }
         }
 
@@ -727,7 +726,7 @@ namespace mame
         //  scanline_draw_opaque_null - draw to a NULL
         //  bitmap, setting priority only
         //-------------------------------------------------
-        void scanline_draw_opaque_null(int count, ListBytesPointer pri, /*byte *pri,*/ u32 pcode)
+        void scanline_draw_opaque_null(int count, PointerU8 pri, u32 pcode)  //void scanline_draw_opaque_null(int count, u8 *pri, u32 pcode);
         {
             // skip entirely if not changing priority
             if (pcode == 0xff00)
@@ -742,7 +741,7 @@ namespace mame
         //  scanline_draw_masked_null - draw to a NULL
         //  bitmap using a mask, setting priority only
         //-------------------------------------------------
-        void scanline_draw_masked_null(ListBytesPointer maskptr, /*byte *maskptr,*/ int mask, int value, int count, ListBytesPointer pri, /*byte *pri,*/ u32 pcode)
+        void scanline_draw_masked_null(PointerU8 maskptr, int mask, int value, int count, PointerU8 pri, u32 pcode)  //void scanline_draw_masked_null(const u8 *maskptr, int mask, int value, int count, u8 *pri, u32 pcode);
         {
             // skip entirely if not changing priority
             if (pcode == 0xff00)
@@ -760,16 +759,14 @@ namespace mame
         //  scanline_draw_opaque_ind16 - draw to a 16bpp
         //  indexed bitmap
         //-------------------------------------------------
-        void scanline_draw_opaque_ind16(UInt16BufferPointer dest, UInt16BufferPointer source, int count, ListBytesPointer pri, u32 pcode)  //inline void tilemap_t::scanline_draw_opaque_ind16(u16 *dest, const u16 *source, int count, u8 *pri, u32 pcode)
+        void scanline_draw_opaque_ind16(PointerU16 dest, PointerU16 source, int count, PointerU8 pri, u32 pcode)  //void scanline_draw_opaque_ind16(u16 *dest, const u16 *source, int count, u8 *pri, u32 pcode)
         {
             // special case for no palette offset
             int pal = (int)pcode >> 16;
             if (pal == 0)
             {
                 // use memcpy which should be well-optimized for the platform
-                //memcpy(dest, source, count * 2);
-                for (int i = 0; i < count; i++)
-                    dest[i] = source[i];
+                memcpy(dest, source, (UInt32)(count * 2));
 
                 // skip the rest if not changing priority
                 if (pcode == 0xff00)
@@ -802,7 +799,7 @@ namespace mame
         //  scanline_draw_masked_ind16 - draw to a 16bpp
         //  indexed bitmap using a mask
         //-------------------------------------------------
-        void scanline_draw_masked_ind16(UInt16BufferPointer dest, UInt16BufferPointer source, ListBytesPointer maskptr, int mask, int value, int count, ListBytesPointer pri, u32 pcode)  //inline void tilemap_t::scanline_draw_masked_ind16(u16 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, u8 *pri, u32 pcode)
+        void scanline_draw_masked_ind16(PointerU16 dest, PointerU16 source, PointerU8 maskptr, int mask, int value, int count, PointerU8 pri, u32 pcode)  //void scanline_draw_masked_ind16(u16 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, u8 *pri, u32 pcode)
         {
             int pal = (int)pcode >> 16;
 
@@ -834,9 +831,9 @@ namespace mame
         //  scanline_draw_opaque_rgb32 - draw to a 32bpp
         //  RGB bitmap
         //-------------------------------------------------
-        void scanline_draw_opaque_rgb32(UInt32BufferPointer dest, UInt16BufferPointer source, int count, ListBase<rgb_t> pens, ListBytesPointer pri, u32 pcode)  //inline void tilemap_t::scanline_draw_opaque_rgb32(u32 *dest, const u16 *source, int count, const rgb_t *pens, u8 *pri, u32 pcode)
+        void scanline_draw_opaque_rgb32(PointerU32 dest, PointerU16 source, int count, MemoryContainer<rgb_t> pens, PointerU8 pri, u32 pcode)  //void scanline_draw_opaque_rgb32(u32 *dest, const u16 *source, int count, const rgb_t *pens, u8 *pri, u32 pcode)
         {
-            ListPointer<rgb_t> clut = new ListPointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
+            Pointer<rgb_t> clut = new Pointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
 
             // priority case
             if ((pcode & 0xffff) != 0xff00)
@@ -860,9 +857,9 @@ namespace mame
         //  scanline_draw_masked_rgb32 - draw to a 32bpp
         //  RGB bitmap using a mask
         //-------------------------------------------------
-        void scanline_draw_masked_rgb32(UInt32BufferPointer dest, UInt16BufferPointer source, ListBytesPointer maskptr, int mask, int value, int count, ListBase<rgb_t> pens, ListBytesPointer pri, u32 pcode)  //inline void tilemap_t::scanline_draw_masked_rgb32(u32 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, const rgb_t *pens, u8 *pri, u32 pcode)
+        void scanline_draw_masked_rgb32(PointerU32 dest, PointerU16 source, PointerU8 maskptr, int mask, int value, int count, MemoryContainer<rgb_t> pens, PointerU8 pri, u32 pcode)  //void scanline_draw_masked_rgb32(u32 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, const rgb_t *pens, u8 *pri, u32 pcode)
         {
-            ListPointer<rgb_t> clut = new ListPointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
+            Pointer<rgb_t> clut = new Pointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
 
             // priority case
             if ((pcode & 0xffff) != 0xff00)
@@ -892,9 +889,9 @@ namespace mame
         //  scanline_draw_opaque_rgb32_alpha - draw to a
         //  32bpp RGB bitmap with alpha blending
         //-------------------------------------------------
-        void scanline_draw_opaque_rgb32_alpha(UInt32BufferPointer dest, UInt16BufferPointer source, int count, ListBase<rgb_t> pens, ListBytesPointer pri, u32 pcode, u8 alpha)  //inline void tilemap_t::scanline_draw_opaque_rgb32_alpha(u32 *dest, const u16 *source, int count, const rgb_t *pens, u8 *pri, u32 pcode, u8 alpha)
+        void scanline_draw_opaque_rgb32_alpha(PointerU32 dest, PointerU16 source, int count, MemoryContainer<rgb_t> pens, PointerU8 pri, u32 pcode, u8 alpha)  //void scanline_draw_opaque_rgb32_alpha(u32 *dest, const u16 *source, int count, const rgb_t *pens, u8 *pri, u32 pcode, u8 alpha)
         {
-            ListPointer<rgb_t> clut = new ListPointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
+            Pointer<rgb_t> clut = new Pointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
 
             // priority case
             if ((pcode & 0xffff) != 0xff00)
@@ -919,9 +916,9 @@ namespace mame
         //  32bpp RGB bitmap using a mask and alpha
         //  blending
         //-------------------------------------------------
-        void scanline_draw_masked_rgb32_alpha(UInt32BufferPointer dest, UInt16BufferPointer source, ListBytesPointer maskptr, int mask, int value, int count, ListBase<rgb_t> pens, ListBytesPointer pri, u32 pcode, u8 alpha)  //inline void tilemap_t::scanline_draw_masked_rgb32_alpha(u32 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, const rgb_t *pens, u8 *pri, u32 pcode, u8 alpha)
+        void scanline_draw_masked_rgb32_alpha(PointerU32 dest, PointerU16 source, PointerU8 maskptr, int mask, int value, int count, MemoryContainer<rgb_t> pens, PointerU8 pri, u32 pcode, u8 alpha)  //void scanline_draw_masked_rgb32_alpha(u32 *dest, const u16 *source, const u8 *maskptr, int mask, int value, int count, const rgb_t *pens, u8 *pri, u32 pcode, u8 alpha)
         {
-            ListPointer<rgb_t> clut = new ListPointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
+            Pointer<rgb_t> clut = new Pointer<rgb_t>(pens, (int)pcode >> 16);  //const rgb_t *clut = &pens[pcode >> 16];
 
             // priority case
             if ((pcode & 0xffff) != 0xff00)
@@ -1081,7 +1078,7 @@ namespace mame
         //  the pen_to_flags lookup value, and adding
         //  the palette_base
         //-------------------------------------------------
-        u8 tile_draw(ListBytesPointer pendata, u32 x0, u32 y0, u32 palette_base, u8 category, u8 group, u8 flags, u8 pen_mask)  //const u8 *pendata
+        u8 tile_draw(PointerU8 pendata, u32 x0, u32 y0, u32 palette_base, u8 category, u8 group, u8 flags, u8 pen_mask)  //u8 tile_draw(const u8 *pendata, u32 x0, u32 y0, u32 palette_base, u8 category, u8 group, u8 flags, u8 pen_mask);
         {
             // OR in the force layer flags
             category |= (byte)(flags & (tilemap_global.TILE_FORCE_LAYER0 | tilemap_global.TILE_FORCE_LAYER1 | tilemap_global.TILE_FORCE_LAYER2));
@@ -1109,8 +1106,8 @@ namespace mame
             u8 ormask = 0;
             for (int ty = 0; ty < m_tileheight; ty++)
             {
-                UInt16BufferPointer pixptr = m_pixmap.pix16((int)y0, (int)x0);  //u16 *pixptr = &m_pixmap.pix16(y0, x0);
-                RawBufferPointer flagsptr = m_flagsmap.pix8((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix8(y0, x0);
+                PointerU16 pixptr = m_pixmap.pix16((int)y0, (int)x0);  //u16 *pixptr = &m_pixmap.pix16(y0, x0);
+                PointerU8 flagsptr = m_flagsmap.pix8((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix8(y0, x0);
 
                 // pre-advance to the next row
                 y0 += (UInt32)dy0;
@@ -1138,7 +1135,7 @@ namespace mame
         //  already-rendered tile by modifying the
         //  flagsmap appropriately
         //-------------------------------------------------
-        u8 tile_apply_bitmask(ListBytesPointer maskdata, u32 x0, u32 y0, u8 category, u8 flags)  //const u8 *maskdata
+        u8 tile_apply_bitmask(PointerU8 maskdata, u32 x0, u32 y0, u8 category, u8 flags)  //u8 tile_apply_bitmask(const u8 *maskdata, u32 x0, u32 y0, u8 category, u8 flags);
         {
             // if we're vertically flipped, point to the bottom row and work backwards
             int dy0 = 1;
@@ -1163,7 +1160,7 @@ namespace mame
             for (UInt16 ty = 0; ty < m_tileheight; ty++)
             {
                 // pre-advance to the next row
-                ListBytesPointer flagsptr = m_flagsmap.pix8((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix8(y0, x0);
+                PointerU8 flagsptr = m_flagsmap.pix8((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix8(y0, x0);
 
                 y0 += (UInt32)dy0;
 
@@ -1249,7 +1246,7 @@ namespace mame
             u8 priority_mask
         )
             where _BitmapClass : bitmap_specific<_BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
-            where _BitmapClass_PixelTypeBufferPointer : RawBufferPointer
+            where _BitmapClass_PixelTypeBufferPointer : PointerU8
         {
             // skip if disabled
             if (!m_enable)
@@ -1289,7 +1286,7 @@ namespace mame
             // scrolling rows + vertical scroll
             else if (m_scrollcols == 1)
             {
-                rectangle original_cliprect = new rectangle(blit.cliprect);
+                rectangle original_cliprect = blit.cliprect;
 
                 // iterate over Y to handle wraparound
                 int rowheight = (int)(m_height / m_scrollrows);
@@ -1327,7 +1324,7 @@ namespace mame
             // scrolling columns + horizontal scroll
             else if (m_scrollrows == 1)
             {
-                rectangle original_cliprect = new rectangle(blit.cliprect);
+                rectangle original_cliprect = blit.cliprect;
 
                 // iterate over columns in the tilemap
                 int scrollx = effective_rowscroll(0, xextent);
@@ -1385,7 +1382,7 @@ namespace mame
             int ypos
         )
             where _BitmapClass : bitmap_specific<_BitmapClass_PixelType, _BitmapClass_PixelTypeBufferPointer>
-            where _BitmapClass_PixelTypeBufferPointer : RawBufferPointer
+            where _BitmapClass_PixelTypeBufferPointer : PointerU8
         {
             // clip destination coordinates to the tilemap
             // note that x2/y2 are exclusive, not inclusive
@@ -1400,13 +1397,13 @@ namespace mame
 
             // look up priority and destination base addresses for y1
             bitmap_ind8 priority_bitmap = blit.priority;
-            ListBytesPointer priority_baseaddr = priority_bitmap.pix8(y1, xpos);  //u8 *priority_baseaddr = &priority_bitmap.pix8(y1, xpos);
+            PointerU8 priority_baseaddr = priority_bitmap.pix8(y1, xpos);  //u8 *priority_baseaddr = &priority_bitmap.pix8(y1, xpos);
 
             //typename _BitmapClass::pixel_t *dest_baseaddr = NULL;
-            RawBufferPointer dest_baseaddr8 = null;
-            UInt16BufferPointer dest_baseaddr16 = null;
-            UInt32BufferPointer dest_baseaddr32 = null;
-            UInt64BufferPointer dest_baseaddr64 = null;
+            PointerU8 dest_baseaddr8 = null;
+            PointerU16 dest_baseaddr16 = null;
+            PointerU32 dest_baseaddr32 = null;
+            PointerU64 dest_baseaddr64 = null;
 
             int dest_rowpixels = 0;
             if (dest.valid())
@@ -1431,8 +1428,8 @@ namespace mame
             y2 -= ypos;
 
             // get tilemap pixels
-            UInt16BufferPointer source_baseaddr = m_pixmap.pix16(y1);  //const u16 *source_baseaddr = &m_pixmap.pix16(y1);
-            ListBytesPointer mask_baseaddr = m_flagsmap.pix8(y1);  //const u8 *mask_baseaddr = &m_flagsmap.pix8(y1);
+            PointerU16 source_baseaddr = m_pixmap.pix16(y1);  //const u16 *source_baseaddr = &m_pixmap.pix16(y1);
+            PointerU8 mask_baseaddr = m_flagsmap.pix8(y1);  //const u8 *mask_baseaddr = &m_flagsmap.pix8(y1);
 
             // get start/stop columns, rounding outward
             int mincol = (int)(x1 / m_tilewidth);
@@ -1488,16 +1485,16 @@ namespace mame
                     x_end = std.min(x_end, x2);
 
                     // if we're rendering something, compute the pointers
-                    ListBase<rgb_t> clut = m_palette.palette().entry_list_adjusted();  //rgb_t *clut = m_palette.palette().entry_list_adjusted();
+                    MemoryContainer<rgb_t> clut = m_palette.palette().entry_list_adjusted();  //rgb_t *clut = m_palette.palette().entry_list_adjusted();
                     if (prev_trans != trans_t.WHOLLY_TRANSPARENT)
                     {
-                        UInt16BufferPointer source0 = source_baseaddr + x_start;  //const u16 *source0 = source_baseaddr + x_start;
+                        PointerU16 source0 = source_baseaddr + x_start;  //const u16 *source0 = source_baseaddr + x_start;
 
                         //typename _BitmapClass::pixel_t *dest0 = dest_baseaddr + x_start;
-                        RawBufferPointer dest0_8 = null;
-                        UInt16BufferPointer dest0_16 = null;
-                        UInt32BufferPointer dest0_32 = null;
-                        UInt64BufferPointer dest0_64 = null;
+                        PointerU8 dest0_8 = null;
+                        PointerU16 dest0_16 = null;
+                        PointerU32 dest0_32 = null;
+                        PointerU64 dest0_64 = null;
                         switch (dest.bpp())
                         {
                             case 8:  dest0_8 = dest_baseaddr8 + x_start; break;
@@ -1507,7 +1504,7 @@ namespace mame
                             default: throw new emu_fatalerror("draw_instance() - unknown bpp - {0}\n", dest.bpp());
                         }
 
-                        ListBytesPointer pmap0 = new ListBytesPointer(priority_baseaddr) + x_start;  //u8 *pmap0 = priority_baseaddr + x_start;
+                        PointerU8 pmap0 = priority_baseaddr + x_start;  //u8 *pmap0 = priority_baseaddr + x_start;
 
                         // if we were opaque, use the opaque renderer
                         if (prev_trans == trans_t.WHOLLY_OPAQUE)
@@ -1540,7 +1537,7 @@ namespace mame
                         // otherwise use the masked renderer
                         else
                         {
-                            ListBytesPointer mask0 = mask_baseaddr + x_start;  //const u8 *mask0 = mask_baseaddr + x_start;
+                            PointerU8 mask0 = mask_baseaddr + x_start;  //const u8 *mask0 = mask_baseaddr + x_start;
 
                             for (int cury = y; cury < nexty; cury++)
                             {
@@ -1680,9 +1677,9 @@ namespace mame
         // tilemap creation
 
         //template <typename T, typename U>
-        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_mapper_delegate mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)  ////tilemap_t &create(device_gfx_interface &decoder, T &&tile_get_info, U &&mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)
+        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_mapper_delegate mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)  //tilemap_t &create(device_gfx_interface &decoder, T &&tile_get_info, U &&mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)
         { return create(decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows, null); }
-        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_standard_mapper mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)  ////tilemap_t &create(device_gfx_interface &decoder, T &&tile_get_info, U &&mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)
+        public tilemap_t create(device_gfx_interface decoder, tilemap_get_info_delegate tile_get_info, tilemap_standard_mapper mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)  //tilemap_t &create(device_gfx_interface &decoder, T &&tile_get_info, U &&mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows)
         { return create(decoder, tile_get_info, mapper, tilewidth, tileheight, cols, rows, null); }
         //template <typename T, typename U, class V>
         //std::enable_if_t<std::is_base_of<device_t, V>::value, tilemap_t &> create(device_gfx_interface &decoder, T &&tile_get_info, U &&mapper, u16 tilewidth, u16 tileheight, u32 cols, u32 rows, V &allocated)
@@ -1736,28 +1733,31 @@ namespace mame
                                   //tilemap_t
     {
         //DEFINE_DEVICE_TYPE(TILEMAP, tilemap_device, "tilemap", "Tilemap")
-        static device_t device_creator_tilemap_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new tilemap_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_tilemap_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new tilemap_device(mconfig, tag, owner, clock); }
         public static readonly device_type TILEMAP = DEFINE_DEVICE_TYPE(device_creator_tilemap_device, "tilemap", "Tilemap");
 
 
+        tilemap_t m_tilemap_t;
+
+
         // devices
-        //required_device<gfxdecode_device> m_gfxdecode;
+        required_device<gfxdecode_device> m_gfxdecode;
 
         // configuration state
-        //tilemap_get_info_delegate m_get_info;
-        //tilemap_standard_mapper m_standard_mapper;
-        //tilemap_mapper_delegate m_mapper;
-        //int             m_bytes_per_entry;
-        //u16                         m_tile_width;
-        //u16                         m_tile_height;
-        //u32                         m_num_columns;
-        //u32                         m_num_rows;
-        //bool            m_transparent_pen_set;
-        //pen_t           m_transparent_pen;
+        tilemap_get_info_delegate m_get_info;
+        tilemap_standard_mapper m_standard_mapper;
+        tilemap_mapper_delegate m_mapper;
+        int m_bytes_per_entry;
+        u16 m_tile_width;
+        u16 m_tile_height;
+        u32 m_num_columns;
+        u32 m_num_rows;
+        bool m_transparent_pen_set;
+        pen_t m_transparent_pen;
 
         // optional memory info
-        //memory_array                m_basemem;              // info about base memory
-        //memory_array                m_extmem;               // info about extension memory
+        memory_array m_basemem = new memory_array();              // info about base memory
+        memory_array m_extmem;               // info about extension memory
 
 
         // construction/destruction
@@ -1797,26 +1797,67 @@ namespace mame
         //    set_tile_size(tilewidth, tileheight);
         //}
 
+
         tilemap_device(machine_config mconfig, string tag, device_t owner, u32 clock = 0)
             : base(mconfig, TILEMAP, tag, owner, clock)
         {
-            throw new emu_unimplemented();
+            m_tilemap_t = new tilemap_t((device_t)this);  //tilemap_t(static_cast<device_t &>(*this))
+
+
+            m_gfxdecode = new required_device<gfxdecode_device>(this, finder_base.DUMMY_TAG);
+            m_get_info = null;  //, m_get_info(*this)
+            m_standard_mapper = tilemap_standard_mapper.TILEMAP_STANDARD_COUNT;
+            m_mapper = null;  //, m_mapper(*this)
+            m_bytes_per_entry = 0;
+            m_tile_width = 8;
+            m_tile_height = 8;
+            m_num_columns = 64;
+            m_num_rows = 64;
+            m_transparent_pen_set = false;
+            m_transparent_pen = 0;
         }
 
 
-        //template <typename T> void set_gfxdecode(T &&tag) { m_gfxdecode.set_tag(std::forward<T>(tag)); }
+        public void tilemap_device_after_ctor(string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows, pen_t transpen)
+        {
+            set_gfxdecode(gfxtag);
+            set_bytes_per_entry(entrybytes);
+            set_layout(mapper, columns, rows);
+            set_tile_size(tilewidth, tileheight);
+            set_configured_transparent_pen(transpen);
+        }
 
-        //void set_bytes_per_entry(int bpe) { m_bytes_per_entry = bpe; }
+        public void tilemap_device_after_ctor(string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows)
+        {
+            set_gfxdecode(gfxtag);
+            set_bytes_per_entry(entrybytes);
+            set_layout(mapper, columns, rows);
+            set_tile_size(tilewidth, tileheight);
+        }
 
-        //template <typename... T> void set_info_callback(T &&... args) { m_get_info.set(std::forward<T>(args)...); }
 
-        //void set_layout(tilemap_standard_mapper mapper, u32 columns, u32 rows)
-        //{
-        //    assert(TILEMAP_STANDARD_COUNT > mapper);
-        //    m_standard_mapper = mapper;
-        //    m_num_columns = columns;
-        //    m_num_rows = rows;
-        //}
+        public tilemap_t tilemap { get { return m_tilemap_t; } }
+
+
+        void set_gfxdecode(string tag) { m_gfxdecode.set_tag(tag); }  //template <typename T> void set_gfxdecode(T &&tag) { m_gfxdecode.set_tag(std::forward<T>(tag)); }
+
+        void set_bytes_per_entry(int bpe) { m_bytes_per_entry = bpe; }
+
+
+        public void set_info_callback(tilemap_get_info_delegate args)  //template <typename... T> void set_info_callback(T &&... args) { m_get_info.set(std::forward<T>(args)...); }
+        {
+            m_get_info = args;
+        }
+
+
+        void set_layout(tilemap_standard_mapper mapper, u32 columns, u32 rows)
+        {
+            assert(tilemap_standard_mapper.TILEMAP_STANDARD_COUNT > mapper);
+            m_standard_mapper = mapper;
+            m_num_columns = columns;
+            m_num_rows = rows;
+        }
+
         //template <typename F>
         //void set_layout(F &&callback, const char *name, u32 columns, u32 rows)
         //{
@@ -1833,8 +1874,9 @@ namespace mame
         //    m_num_columns = columns;
         //    m_num_rows = rows;
         //}
-        //void set_tile_size(u16 width, u16 height) { m_tile_width = width; m_tile_height = height; }
-        //void set_configured_transparent_pen(pen_t pen) { m_transparent_pen_set = true; m_transparent_pen = pen; }
+
+        void set_tile_size(u16 width, u16 height) { m_tile_width = width; m_tile_height = height; }
+        void set_configured_transparent_pen(pen_t pen) { m_transparent_pen_set = true; m_transparent_pen = pen; }
 
 
         // getters
@@ -1844,7 +1886,18 @@ namespace mame
 
         // write handlers
         //void write8(offs_t offset, u8 data);
-        //void write16(offs_t offset, u16 data, u16 mem_mask = ~0);
+
+
+        public void write16(offs_t offset, u16 data, u16 mem_mask = u16.MaxValue)// ~0)
+        {
+            m_basemem.write16(offset, data, mem_mask);
+            offset = offset * 2 / (offs_t)m_bytes_per_entry;
+            m_tilemap_t.mark_tile_dirty(offset);
+            if (m_bytes_per_entry < 2)
+                m_tilemap_t.mark_tile_dirty(offset + 1);
+        }
+
+
         //void write32(offs_t offset, u32 data, u32 mem_mask = ~0);
         //void write8_ext(offs_t offset, u8 data);
         //void write16_ext(offs_t offset, u16 data, u16 mem_mask = ~0);
@@ -1852,7 +1905,7 @@ namespace mame
 
 
         // optional memory accessors
-        //u32 basemem_read(offs_t offset) { return m_basemem.read(offset); }
+        public u32 basemem_read(offs_t offset) { return m_basemem.read((int)offset); }
         //u32 extmem_read(offs_t offset) { return m_extmem.read(offset); }
         //void basemem_write(offs_t offset, u32 data) { m_basemem.write(offset, data); mark_tile_dirty(offset); }
         //void extmem_write(offs_t offset, u32 data) { m_extmem.write(offset, data); mark_tile_dirty(offset); }
@@ -1865,7 +1918,41 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            throw new emu_unimplemented();
+            // check configuration
+            if (m_get_info == null)  //if (m_get_info.isnull())
+                throw new emu_fatalerror("Tilemap device '{0}' has no get info callback!", tag());
+            if (m_standard_mapper == tilemap_standard_mapper.TILEMAP_STANDARD_COUNT && m_mapper == null)  //if (m_standard_mapper == TILEMAP_STANDARD_COUNT && m_mapper.isnull())
+                throw new emu_fatalerror("Tilemap device '{0}' has no mapper callback!", tag());
+
+            if (!m_gfxdecode.target.started())
+                throw new device_missing_dependencies();
+
+            // bind our callbacks
+            //m_get_info.resolve();
+            //m_mapper.resolve();
+
+            // allocate the tilemap
+            if (m_standard_mapper == tilemap_standard_mapper.TILEMAP_STANDARD_COUNT)
+                machine().tilemap().create(m_gfxdecode.target.digfx, m_get_info, m_mapper, m_tile_width, m_tile_height, m_num_columns, m_num_rows, this.m_tilemap_t);
+            else
+                machine().tilemap().create(m_gfxdecode.target.digfx, m_get_info, m_standard_mapper, m_tile_width, m_tile_height, m_num_columns, m_num_rows, this.m_tilemap_t);
+
+            // find the memory, if present
+            memory_share share = memshare(tag());
+            if (share != null)
+            {
+                m_basemem.set(share, m_bytes_per_entry);
+
+                // look for an extension entry
+                string tag_ext = tag().append("_ext");
+                share = memshare(tag_ext);
+                if (share != null)
+                    m_extmem.set(share, m_bytes_per_entry);
+            }
+
+            // configure the device and set the pen
+            if (m_transparent_pen_set)
+                m_tilemap_t.set_transparent_pen(m_transparent_pen);
         }
     }
 }

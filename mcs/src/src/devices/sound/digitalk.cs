@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 
@@ -16,7 +15,7 @@ namespace mame
                               //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(DIGITALKER, digitalker_device, "digitalker", "MM54104 Digitalker")
-        static device_t device_creator_digitalker_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new digitalker_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_digitalker_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new digitalker_device(mconfig, tag, owner, clock); }
         public static readonly device_type DIGITALKER = DEFINE_DEVICE_TYPE(device_creator_digitalker_device, "digitalker", "MM54104 Digitalker");
 
 
@@ -24,7 +23,7 @@ namespace mame
         {
             public device_sound_interface_digitalker(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { throw new emu_unimplemented(); }
+            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { throw new emu_unimplemented(); }
         }
 
 
@@ -82,7 +81,7 @@ namespace mame
         //void digitalker_0_wr_w(int line);
         //int digitalker_0_intr_r();
 
-        //DECLARE_WRITE8_MEMBER(digitalker_data_w);
+        //void digitalker_data_w(uint8_t data);
 
         // device-level overrides
 

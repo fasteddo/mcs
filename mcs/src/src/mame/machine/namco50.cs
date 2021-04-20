@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -17,7 +16,7 @@ namespace mame
     public class namco_50xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_50XX, namco_50xx_device, "namco50", "Namco 50xx")
-        static device_t device_creator_namco_50xx_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_50xx_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_namco_50xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_50xx_device(mconfig, tag, owner, clock); }
         public static readonly device_type NAMCO_50XX = DEFINE_DEVICE_TYPE(device_creator_namco_50xx_device, "namco50", "Namco 50xx");
 
 
@@ -115,9 +114,9 @@ namespace mame
         {
             m_irq_cleared_timer = machine().scheduler().timer_alloc(irq_clear);  //timer_expired_delegate(FUNC(namco_50xx_device::irq_clear), this));
 
-            save_item(m_latched_cmd, "m_latched_cmd");
-            save_item(m_latched_rw, "m_latched_rw");
-            save_item(m_portO, "m_portO");
+            save_item(NAME(new { m_latched_cmd }));
+            save_item(NAME(new { m_latched_rw }));
+            save_item(NAME(new { m_portO }));
         }
 
         //-------------------------------------------------

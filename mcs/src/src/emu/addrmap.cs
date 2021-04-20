@@ -3,10 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
+using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using u64 = System.UInt64;
 
 
@@ -35,20 +37,13 @@ namespace mame
     // address map handler data
     public class map_handler_data
     {
-        map_handler_type m_type = map_handler_type.AMH_NONE;             // type of the handler
-        u8 m_bits = 0;             // width of the handler in bits, or 0 for default
-        string m_name = null;             // name of the handler
-        string m_tag = null;              // tag for I/O ports and banks
+        public map_handler_type m_type = map_handler_type.AMH_NONE;             // type of the handler
+        public u8 m_bits = 0;             // width of the handler in bits, or 0 for default
+        public string m_name = null;             // name of the handler
+        public string m_tag = null;              // tag for I/O ports and banks
 
 
         public map_handler_data() { }
-
-
-        // accessors
-        public map_handler_type type { get { return m_type; } set { m_type = value; } }
-        public u8 bits { get { return m_bits; } set { m_bits = value; } }
-        public string name { get { return m_name; } set { m_name = value; } }
-        public string tag { get { return m_tag; } set { m_tag = value; } }
     }
 
 
@@ -88,31 +83,31 @@ namespace mame
         // public state
         address_map_entry m_next;                 // pointer to the next entry
         address_map m_map;                  // reference to our owning map
-        device_t m_devbase;              // reference to "base" device for tag lookups
+        public device_t m_devbase;              // reference to "base" device for tag lookups
 
         // basic information
-        offs_t m_addrstart;            // start address
-        offs_t m_addrend;              // end address
-        offs_t m_addrmirror;           // mirror bits
-        offs_t m_addrmask;             // mask bits
-        offs_t m_addrselect;           // select bits
-        u64 m_mask;                 // mask for which lanes apply
-        int m_cswidth;              // chip select width override
-        map_handler_data m_read = new map_handler_data();                 // data for read handler
-        map_handler_data m_write = new map_handler_data();                // data for write handler
-        string m_share;                // tag of a shared memory block
-        string m_region;               // tag of region containing the memory backing this entry
-        offs_t m_rgnoffs;              // offset within the region
+        public offs_t m_addrstart;            // start address
+        public offs_t m_addrend;              // end address
+        public offs_t m_addrmirror;           // mirror bits
+        public offs_t m_addrmask;             // mask bits
+        public offs_t m_addrselect;           // select bits
+        public u64 m_mask;                 // mask for which lanes apply
+        public int m_cswidth;              // chip select width override
+        public map_handler_data m_read = new map_handler_data();                 // data for read handler
+        public map_handler_data m_write = new map_handler_data();                // data for write handler
+        public string m_share;                // tag of a shared memory block
+        public string m_region;               // tag of region containing the memory backing this entry
+        public offs_t m_rgnoffs;              // offset within the region
 
         // handlers
-        read8_delegate m_rproto8;              // 8-bit read proto-delegate
-        read16_delegate m_rproto16;             // 16-bit read proto-delegate
-        read32_delegate m_rproto32;             // 32-bit read proto-delegate
-        read64_delegate m_rproto64;             // 64-bit read proto-delegate
-        write8_delegate m_wproto8;              // 8-bit write proto-delegate
-        write16_delegate m_wproto16;             // 16-bit write proto-delegate
-        write32_delegate m_wproto32;             // 32-bit write proto-delegate
-        write64_delegate m_wproto64;             // 64-bit write proto-delegate
+        public read8_delegate          m_rproto8;              // 8-bit read proto-delegate
+        public read16_delegate         m_rproto16;             // 16-bit read proto-delegate
+        public read32_delegate         m_rproto32;             // 32-bit read proto-delegate
+        public read64_delegate         m_rproto64;             // 64-bit read proto-delegate
+        public write8_delegate         m_wproto8;              // 8-bit write proto-delegate
+        public write16_delegate        m_wproto16;             // 16-bit write proto-delegate
+        public write32_delegate        m_wproto32;             // 32-bit write proto-delegate
+        public write64_delegate        m_wproto64;             // 64-bit write proto-delegate
 
         //read8m_delegate         m_rproto8m;             // 8-bit read proto-delegate
         //read16m_delegate        m_rproto16m;            // 16-bit read proto-delegate
@@ -123,47 +118,47 @@ namespace mame
         //write32m_delegate       m_wproto32m;            // 32-bit write proto-delegate
         //write64m_delegate       m_wproto64m;            // 64-bit write proto-delegate
 
-        //read8s_delegate         m_rproto8s;             // 8-bit read proto-delegate
-        //read16s_delegate        m_rproto16s;            // 16-bit read proto-delegate
+        read8s_delegate         m_rproto8s;             // 8-bit read proto-delegate
+        public read16s_delegate        m_rproto16s;            // 16-bit read proto-delegate
         //read32s_delegate        m_rproto32s;            // 32-bit read proto-delegate
         //read64s_delegate        m_rproto64s;            // 64-bit read proto-delegate
-        //write8s_delegate        m_wproto8s;             // 8-bit write proto-delegate
-        //write16s_delegate       m_wproto16s;            // 16-bit write proto-delegate
+        public write8s_delegate        m_wproto8s;             // 8-bit write proto-delegate
+        public write16s_delegate       m_wproto16s;            // 16-bit write proto-delegate
         //write32s_delegate       m_wproto32s;            // 32-bit write proto-delegate
         //write64s_delegate       m_wproto64s;            // 64-bit write proto-delegate
 
-        read8sm_delegate        m_rproto8sm;            // 8-bit read proto-delegate
+        public read8sm_delegate        m_rproto8sm;            // 8-bit read proto-delegate
         //read16sm_delegate       m_rproto16sm;           // 16-bit read proto-delegate
         //read32sm_delegate       m_rproto32sm;           // 32-bit read proto-delegate
         //read64sm_delegate       m_rproto64sm;           // 64-bit read proto-delegate
-        write8sm_delegate       m_wproto8sm;            // 8-bit write proto-delegate
+        public write8sm_delegate       m_wproto8sm;            // 8-bit write proto-delegate
         //write16sm_delegate      m_wproto16sm;           // 16-bit write proto-delegate
         //write32sm_delegate      m_wproto32sm;           // 32-bit write proto-delegate
         //write64sm_delegate      m_wproto64sm;           // 64-bit write proto-delegate
 
-        //read8mo_delegate        m_rproto8mo;            // 8-bit read proto-delegate
+        read8mo_delegate        m_rproto8mo;            // 8-bit read proto-delegate
         //read16mo_delegate       m_rproto16mo;           // 16-bit read proto-delegate
         //read32mo_delegate       m_rproto32mo;           // 32-bit read proto-delegate
         //read64mo_delegate       m_rproto64mo;           // 64-bit read proto-delegate
-        //write8mo_delegate       m_wproto8mo;            // 8-bit write proto-delegate
+        write8mo_delegate       m_wproto8mo;            // 8-bit write proto-delegate
         //write16mo_delegate      m_wproto16mo;           // 16-bit write proto-delegate
         //write32mo_delegate      m_wproto32mo;           // 32-bit write proto-delegate
         //write64mo_delegate      m_wproto64mo;           // 64-bit write proto-delegate
 
-        read8smo_delegate       m_rproto8smo;           // 8-bit read proto-delegate
-        //read16smo_delegate      m_rproto16smo;          // 16-bit read proto-delegate
+        public read8smo_delegate       m_rproto8smo;           // 8-bit read proto-delegate
+        public read16smo_delegate      m_rproto16smo;          // 16-bit read proto-delegate
         //read32smo_delegate      m_rproto32smo;          // 32-bit read proto-delegate
         //read64smo_delegate      m_rproto64smo;          // 64-bit read proto-delegate
-        write8smo_delegate      m_wproto8smo;           // 8-bit write proto-delegate
-        //write16smo_delegate     m_wproto16smo;          // 16-bit write proto-delegate
+        public write8smo_delegate      m_wproto8smo;           // 8-bit write proto-delegate
+        public write16smo_delegate     m_wproto16smo;          // 16-bit write proto-delegate
         //write32smo_delegate     m_wproto32smo;          // 32-bit write proto-delegate
         //write64smo_delegate     m_wproto64smo;          // 64-bit write proto-delegate
 
-        device_t m_submap_device;
-        address_map_constructor m_submap_delegate;
+        public device_t m_submap_device;
+        public address_map_constructor m_submap_delegate;
 
         // information used during processing
-        ListBytesPointer m_memory;  //void *                  m_memory;               // pointer to memory backing this entry
+        public PointerU8 m_memory;  //void *                  m_memory;               // pointer to memory backing this entry
 
 
         // construction/destruction
@@ -202,8 +197,8 @@ namespace mame
             //m_wproto16m(device)
             //m_wproto32m(device)
             //m_wproto64m(device)
-            //m_rproto8s(device)
-            //m_rproto16s(device)
+            m_rproto8s = null;
+            m_rproto16s = null;
             //m_rproto32s(device)
             //m_rproto64s(device)
             //m_wproto8s(device)
@@ -218,20 +213,20 @@ namespace mame
             //m_wproto16sm(device)
             //m_wproto32sm(device)
             //m_wproto64sm(device)
-            //m_rproto8mo(device)
+            m_rproto8mo = null;
             //m_rproto16mo(device)
             //m_rproto32mo(device)
             //m_rproto64mo(device)
-            //m_wproto8mo(device)
+            m_wproto8mo = null;
             //m_wproto16mo(device)
             //m_wproto32mo(device)
             //m_wproto64mo(device)
             m_rproto8smo = null;
-            //m_rproto16smo(device)
+            m_rproto16smo = null;
             //m_rproto32smo(device)
             //m_rproto64smo(device)
             m_wproto8smo = null;
-            //m_wproto16smo(device)
+            m_wproto16smo = null;
             //m_wproto32smo(device)
             //m_wproto64smo(device)
             m_submap_device = null;
@@ -243,32 +238,6 @@ namespace mame
         public address_map_entry next() { return m_next; }
         public address_map_entry m_next_get() { return m_next; }
         public void m_next_set(address_map_entry value) { m_next = value; }
-
-        public device_t devbase { get { return m_devbase; } }
-        public offs_t addrstart { get { return m_addrstart; } set { m_addrstart = value; } }
-        public offs_t addrend { get { return m_addrend; } set { m_addrend = value; } }
-        public offs_t addrmirror { get { return m_addrmirror; } set { m_addrmirror = value; } }
-        public offs_t addrmask { get { return m_addrmask; } set { m_addrmask = value; } }
-        public offs_t addrselect { get { return m_addrselect; } set { m_addrselect = value; } }
-        public u64 mask { get { return m_mask; } set { m_mask = value; } }
-        public int cswidth_get { get { return m_cswidth; } }
-        public int cswidth_set { set { m_cswidth = value; } }  // this is because of dup cswidth() below
-        public map_handler_data read { get { return m_read; } }
-        public map_handler_data write { get { return m_write; } }
-        public string share_get { get { return m_share; } }
-        public string region_var { get { return m_region; } set { m_region = value; } }
-        public offs_t rgnoffs { get { return m_rgnoffs; } set { m_rgnoffs = value; } }
-        public read8_delegate rproto8 { get { return m_rproto8; } }
-        public read16_delegate rproto16 { get { return m_rproto16; } }
-        public read32_delegate rproto32 { get { return m_rproto32; } }
-        public read64_delegate rproto64 { get { return m_rproto64; } }
-        public write8_delegate wproto8 { get { return m_wproto8; } }
-        public write16_delegate wproto16 { get { return m_wproto16; } }
-        public write32_delegate wproto32 { get { return m_wproto32; } }
-        public write64_delegate wproto64 { get { return m_wproto64; } }
-        public device_t submap_device { get { return m_submap_device; } }
-        public address_map_constructor submap_delegate { get { return m_submap_delegate; } }
-        public ListBytesPointer memory { get { return m_memory; } set { m_memory = value; } }
 
 
         // simple inline setters
@@ -294,16 +263,16 @@ namespace mame
         //    return share(target.second);
         //}
 
-        public address_map_entry rom() { m_read.type = map_handler_type.AMH_ROM; return this; }
-        public address_map_entry ram() { m_read.type = map_handler_type.AMH_RAM; m_write.type = map_handler_type.AMH_RAM; return this; }
-        public address_map_entry readonly_() { m_read.type = map_handler_type.AMH_RAM; return this; }
-        public address_map_entry writeonly() { m_write.type = map_handler_type.AMH_RAM; return this; }
-        public address_map_entry unmaprw() { m_read.type = map_handler_type.AMH_UNMAP; m_write.type = map_handler_type.AMH_UNMAP; return this; }
+        public address_map_entry rom() { m_read.m_type = map_handler_type.AMH_ROM; return this; }
+        public address_map_entry ram() { m_read.m_type = map_handler_type.AMH_RAM; m_write.m_type = map_handler_type.AMH_RAM; return this; }
+        public address_map_entry readonly_() { m_read.m_type = map_handler_type.AMH_RAM; return this; }
+        public address_map_entry writeonly() { m_write.m_type = map_handler_type.AMH_RAM; return this; }
+        public address_map_entry unmaprw() { m_read.m_type = map_handler_type.AMH_UNMAP; m_write.m_type = map_handler_type.AMH_UNMAP; return this; }
         //address_map_entry &unmapr() { m_read.m_type = AMH_UNMAP; return *this; }
         //address_map_entry &unmapw() { m_write.m_type = AMH_UNMAP; return *this; }
-        public address_map_entry noprw() { m_read.type = map_handler_type.AMH_NOP; m_write.type = map_handler_type.AMH_NOP; return this; }
-        public address_map_entry nopr() { m_read.type = map_handler_type.AMH_NOP; return this; }
-        public address_map_entry nopw() { m_write.type = map_handler_type.AMH_NOP; return this; }
+        public address_map_entry noprw() { m_read.m_type = map_handler_type.AMH_NOP; m_write.m_type = map_handler_type.AMH_NOP; return this; }
+        public address_map_entry nopr() { m_read.m_type = map_handler_type.AMH_NOP; return this; }
+        public address_map_entry nopw() { m_write.m_type = map_handler_type.AMH_NOP; return this; }
 
 
         // address mask setting
@@ -311,7 +280,7 @@ namespace mame
 
 
         // unit mask setting
-        //address_map_entry &umask16(u16 _mask);
+        public address_map_entry umask16(u16 _mask) { m_mask = ((u64)_mask << 48) | ((u64)_mask << 32) | ((u64)_mask << 16) | _mask; return this; }
         //address_map_entry &umask32(u32 _mask);
         public address_map_entry umask64(u64 _mask) { m_mask = _mask; return this; }
 
@@ -321,13 +290,13 @@ namespace mame
 
 
         // I/O port configuration
-        public address_map_entry portr(string tag) { m_read.type = map_handler_type.AMH_PORT; m_read.tag = tag; return this; }
+        public address_map_entry portr(string tag) { m_read.m_type = map_handler_type.AMH_PORT; m_read.m_tag = tag; return this; }
         //address_map_entry &portw(const char *tag) { m_write.m_type = AMH_PORT; m_write.m_tag = tag; return *this; }
         //address_map_entry &portrw(const char *tag) { read_port(tag); write_port(tag); return *this; }
 
 
         // memory bank configuration
-        public address_map_entry bankr(string tag) { m_read.type = map_handler_type.AMH_BANK; m_read.tag = tag; return this; }
+        public address_map_entry bankr(string tag) { m_read.m_type = map_handler_type.AMH_BANK; m_read.m_tag = tag; return this; }
         //address_map_entry &bankw(const char *tag) { m_write.m_type = AMH_BANK; m_write.m_tag = tag; return *this; }
         //address_map_entry &bankrw(const char *tag) { read_bank(tag); write_bank(tag); return *this; }
 
@@ -361,22 +330,22 @@ namespace mame
         //-------------------------------------------------
         public address_map_entry m(string tag, address_map_constructor func)
         {
-            m_read.type = map_handler_type.AMH_DEVICE_SUBMAP;
-            m_read.tag = tag;
-            m_write.type = map_handler_type.AMH_DEVICE_SUBMAP;
-            m_write.tag = tag;
+            m_read.m_type = map_handler_type.AMH_DEVICE_SUBMAP;
+            m_read.m_tag = tag;
+            m_write.m_type = map_handler_type.AMH_DEVICE_SUBMAP;
+            m_write.m_tag = tag;
             m_submap_device = null;
             m_submap_delegate = func;
 
             return this;
         }
 
-        address_map_entry m(device_t device, address_map_constructor func)
+        public address_map_entry m(device_t device, address_map_constructor func)
         {
-            m_read.type = map_handler_type.AMH_DEVICE_SUBMAP;
-            m_read.tag = null;
-            m_write.type = map_handler_type.AMH_DEVICE_SUBMAP;
-            m_write.tag = null;
+            m_read.m_type = map_handler_type.AMH_DEVICE_SUBMAP;
+            m_read.m_tag = null;
+            m_write.m_type = map_handler_type.AMH_DEVICE_SUBMAP;
+            m_write.m_tag = null;
             m_submap_device = device;
             m_submap_delegate = func;
 
@@ -397,6 +366,9 @@ namespace mame
         //address_map_entry &rw(RetR (T::*read)(ParamsR...), const char *read_name, RetW (U::*write)(ParamsW...), const char *write_name)
         //{ return r(emu::detail::make_delegate(*make_pointer<T>(m_devbase), read, read_name)).w(emu::detail::make_delegate(*make_pointer<U>(m_devbase), write, write_name)); }
         public address_map_entry rw(read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(read8smo_delegate rfunc, write8smo_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(read16_delegate rfunc, write16_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(read16s_delegate rfunc, write16s_delegate wfunc) { return r(rfunc).w(wfunc); }
 
         //template <typename T, typename Ret, typename... Params>
         //address_map_entry &m(Ret (T::*map)(Params...), const char *map_name)
@@ -408,11 +380,22 @@ namespace mame
         //address_map_entry &r(const char *tag, Ret (T::*read)(Params...), const char *read_name)
         //{ return r(emu::detail::make_delegate(m_devbase, tag, read, read_name)); }
         public address_map_entry r(string tag, read8_delegate func) { return r(func); }
+        public address_map_entry r(string tag, read16_delegate func) { return r(func); }
+        public address_map_entry r(string tag, read8s_delegate func) { return r(func); }
+        public address_map_entry r(string tag, read16s_delegate func) { return r(func); }
+        public address_map_entry r(string tag, read8mo_delegate func) { return r(func); }
+        public address_map_entry r(string tag, read8smo_delegate func) { return r(func); }
 
         //template <typename T, typename Ret, typename... Params>
         //address_map_entry &w(const char *tag, Ret (T::*write)(Params...), const char *write_name)
         //{ return w(emu::detail::make_delegate(m_devbase, tag, write, write_name)); }
         public address_map_entry w(string tag, write8_delegate func) { return w(func); }
+        public address_map_entry w(string tag, write16_delegate func) { return w(func); }
+        public address_map_entry w(string tag, write8s_delegate func) { return w(func); }
+        public address_map_entry w(string tag, write16s_delegate func) { return w(func); }
+        public address_map_entry w(string tag, write8sm_delegate func) { return w(func); }
+        public address_map_entry w(string tag, write8smo_delegate func) { return w(func); }
+        public address_map_entry w(string tag, write16smo_delegate func) { return w(func); }
 
         //template <typename T, typename RetR, typename... ParamsR, typename U, typename RetW, typename... ParamsW>
         //address_map_entry &rw(const char *tag, RetR (T::*read)(ParamsR...), const char *read_name, RetW (U::*write)(ParamsW...), const char *write_name)
@@ -493,52 +476,60 @@ namespace mame
             device_t &device(find_device(finder));
             return m(&device, make_delegate(map, map_name, make_pointer<U>(device)));
         }
-
-
-        // lambda -> delegate converter
-        template <typename T> address_map_entry &lr8(T &&read, const char *name)
-        { return r(emu::detail::make_lr8_delegate(m_devbase, std::forward<T>(read), name)); }
-
-        template <typename T> address_map_entry &lr16(T &&read, const char *name)
-        { return r(emu::detail::make_lr16_delegate(m_devbase, std::forward<T>(read), name)); }
-
-        template <typename T> address_map_entry &lr32(T &&read, const char *name)
-        { return r(emu::detail::make_lr32_delegate(m_devbase, std::forward<T>(read), name)); }
-
-        template <typename T> address_map_entry &lr64(T &&read, const char *name)
-        { return r(emu::detail::make_lr64_delegate(m_devbase, std::forward<T>(read), name)); }
-
-        template <typename T> address_map_entry &lw8(T &&write, const char *name)
-        { return w(emu::detail::make_lw8_delegate(m_devbase, std::forward<T>(write), name)); }
-
-        template <typename T> address_map_entry &lw16(T &&write, const char *name)
-        { return w(emu::detail::make_lw16_delegate(m_devbase, std::forward<T>(write), name)); }
-
-        template <typename T> address_map_entry &lw32(T &&write, const char *name)
-        { return w(emu::detail::make_lw32_delegate(m_devbase, std::forward<T>(write), name)); }
-
-        template <typename T> address_map_entry &lw64(T &&write, const char *name)
-        { return w(emu::detail::make_lw64_delegate(m_devbase, std::forward<T>(write), name)); }
-
-        template <typename T, typename U> address_map_entry &lrw8(T &&read, const char *read_name, U &&write, const char *write_name)
-        { return r(emu::detail::make_lr8_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw8_delegate(m_devbase, std::forward<U>(write), write_name)); }
-
-        template <typename T, typename U> address_map_entry &lrw16(T &&read, const char *read_name, U &&write, const char *write_name)
-        { return r(emu::detail::make_lr16_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw16_delegate(m_devbase, std::forward<U>(write), write_name)); }
-
-        template <typename T, typename U> address_map_entry &lrw32(T &&read, const char *read_name, U &&write, const char *write_name)
-        { return r(emu::detail::make_lr32_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw32_delegate(m_devbase, std::forward<U>(write), write_name)); }
-
-        template <typename T, typename U> address_map_entry &lrw64(T &&read, const char *read_name, U &&write, const char *write_name)
-        { return r(emu::detail::make_lr64_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw64_delegate(m_devbase, std::forward<U>(write), write_name)); }
 #endif
 
+        // lambda -> delegate converter
+        //template <typename T> address_map_entry &lr8(T &&read, const char *name)
+        //{ return r(emu::detail::make_lr8_delegate(m_devbase, std::forward<T>(read), name)); }
+
+        //template <typename T> address_map_entry &lr16(T &&read, const char *name)
+        //{ return r(emu::detail::make_lr16_delegate(m_devbase, std::forward<T>(read), name)); }
+
+        //template <typename T> address_map_entry &lr32(T &&read, const char *name)
+        //{ return r(emu::detail::make_lr32_delegate(m_devbase, std::forward<T>(read), name)); }
+
+        //template <typename T> address_map_entry &lr64(T &&read, const char *name)
+        //{ return r(emu::detail::make_lr64_delegate(m_devbase, std::forward<T>(read), name)); }
+
+        //template <typename T> address_map_entry &lw8(T &&write, const char *name)
+        //{ return w(emu::detail::make_lw8_delegate(m_devbase, std::forward<T>(write), name)); }
+
+        //template <typename T> address_map_entry &lw16(T &&write, const char *name)
+        //{ return w(emu::detail::make_lw16_delegate(m_devbase, std::forward<T>(write), name)); }
+
+        //template <typename T> address_map_entry &lw32(T &&write, const char *name)
+        //{ return w(emu::detail::make_lw32_delegate(m_devbase, std::forward<T>(write), name)); }
+
+        //template <typename T> address_map_entry &lw64(T &&write, const char *name)
+        //{ return w(emu::detail::make_lw64_delegate(m_devbase, std::forward<T>(write), name)); }
+
+        //template <typename T, typename U> address_map_entry &lrw8(T &&read, const char *read_name, U &&write, const char *write_name)
+        //{ return r(emu::detail::make_lr8_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw8_delegate(m_devbase, std::forward<U>(write), write_name)); }
+        public address_map_entry lrw8(read8_delegate read, string read_name, write8_delegate write, string write_name)
+        { return r(read).w(write); }
+        public address_map_entry lrw8(read8smo_delegate read, string read_name, write8smo_delegate write, string write_name)
+        { return r(read).w(write); }
+
+        //template <typename T, typename U> address_map_entry &lrw16(T &&read, const char *read_name, U &&write, const char *write_name)
+        //{ return r(emu::detail::make_lr16_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw16_delegate(m_devbase, std::forward<U>(write), write_name)); }
+
+        //template <typename T, typename U> address_map_entry &lrw32(T &&read, const char *read_name, U &&write, const char *write_name)
+        //{ return r(emu::detail::make_lr32_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw32_delegate(m_devbase, std::forward<U>(write), write_name)); }
+
+        //template <typename T, typename U> address_map_entry &lrw64(T &&read, const char *read_name, U &&write, const char *write_name)
+        //{ return r(emu::detail::make_lr64_delegate(m_devbase, std::forward<T>(read), read_name)).w(emu::detail::make_lw64_delegate(m_devbase, std::forward<U>(write), write_name)); }
+
+
         // device pointer/finder -> delegate converter
-        public address_map_entry r(global_object device, read8_delegate func) { return r(func); }
-        public address_map_entry r(global_object device, read8smo_delegate func) { return r(func); }
+        public address_map_entry r(global_object tag, read8_delegate func) { return r(func); }
+        public address_map_entry r(global_object tag, read8smo_delegate func) { return r(func); }
         public address_map_entry w(global_object tag, write8_delegate func) { return w(func); }
+        public address_map_entry w(global_object tag, write8sm_delegate func) { return w(func); }
         public address_map_entry w(global_object tag, write8smo_delegate func) { return w(func); }
+        public address_map_entry w(global_object tag, write16_delegate func) { return w(func); }
+        public address_map_entry w(global_object tag, write16s_delegate func) { return w(func); }
         public address_map_entry rw(global_object tag, read8_delegate rfunc, write8_delegate wfunc) { return r(rfunc).w(wfunc); }
+        public address_map_entry rw(global_object tag, read8sm_delegate rfunc, write8sm_delegate wfunc) { return r(rfunc).w(wfunc); }
 
 
         // handler setters for 8-bit delegates
@@ -550,9 +541,9 @@ namespace mame
         public address_map_entry r(read8_delegate func)
         {
             assert(func != null);
-            m_read.type = map_handler_type.AMH_DEVICE_DELEGATE;
-            m_read.bits = 8;
-            m_read.name = func.Method.Name;
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
+            m_read.m_bits = 8;
+            m_read.m_name = func.GetMethodInfo().Name;
             m_rproto8 = func;
             return this;
         }
@@ -561,9 +552,9 @@ namespace mame
         public address_map_entry w(write8_delegate func)
         {
             assert(func != null);
-            m_write.type = map_handler_type.AMH_DEVICE_DELEGATE;
-            m_write.bits = 8;
-            m_write.name = func.Method.Name;
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
+            m_write.m_bits = 8;
+            m_write.m_name = func.GetMethodInfo().Name;
             m_wproto8 = func;
             return this;
         }
@@ -571,16 +562,36 @@ namespace mame
 
         //address_map_entry &r(read8m_delegate func);
         //address_map_entry &w(write8m_delegate func);
-        //address_map_entry &r(read8s_delegate func);
-        //address_map_entry &w(write8s_delegate func);
+
+
+        public address_map_entry r(read8s_delegate func)
+        {
+            assert(func != null);
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_S;
+            m_read.m_bits = 8;
+            m_read.m_name = func.GetMethodInfo().Name;
+            m_rproto8s = func;
+            return this;
+        }
+
+
+        public address_map_entry w(write8s_delegate func)
+        {
+            assert(func != null);
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_S;
+            m_write.m_bits = 8;
+            m_write.m_name = func.GetMethodInfo().Name;
+            m_wproto8s = func;
+            return this;
+        }
 
 
         public address_map_entry r(read8sm_delegate func)
         {
             assert(func != null);
-            m_read.type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
-            m_read.bits = 8;
-            m_read.name = func.Method.Name;
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
+            m_read.m_bits = 8;
+            m_read.m_name = func.GetMethodInfo().Name;
             m_rproto8sm = func;
             return this;
         }
@@ -589,35 +600,53 @@ namespace mame
         public address_map_entry w(write8sm_delegate func)
         {
             assert(func != null);
-            m_write.type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
-            m_write.bits = 8;
-            m_write.name = func.Method.Name;
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
+            m_write.m_bits = 8;
+            m_write.m_name = func.GetMethodInfo().Name;
             m_wproto8sm = func;
             return this;
         }
 
 
-        //address_map_entry &r(read8mo_delegate func);
-        //address_map_entry &w(write8mo_delegate func);
+        public address_map_entry r(read8mo_delegate func)
+        {
+            assert(func != null);
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_MO;
+            m_read.m_bits = 8;
+            m_read.m_name = func.GetMethodInfo().Name;
+            m_rproto8mo = func;
+            return this;
+        }
+
+
+        public address_map_entry w(write8mo_delegate func)
+        {
+            assert(func != null);
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_MO;
+            m_write.m_bits = 8;
+            m_write.m_name = func.GetMethodInfo().Name;
+            m_wproto8mo = func;
+            return this;
+        }
 
 
         public address_map_entry r(read8smo_delegate func)
         {
             assert(func != null);
-            m_read.type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
-            m_read.bits = 8;
-            m_read.name = func.Method.Name;
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
+            m_read.m_bits = 8;
+            m_read.m_name = func.GetMethodInfo().Name;
             m_rproto8smo = func;
             return this;
         }
 
 
-        address_map_entry w(write8smo_delegate func)
+        public address_map_entry w(write8smo_delegate func)
         {
             assert(func != null);
-            m_write.type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
-            m_write.bits = 8;
-            m_write.name = func.Method.Name;
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
+            m_write.m_bits = 8;
+            m_write.m_name = func.GetMethodInfo().Name;
             m_wproto8smo = func;
             return this;
         }
@@ -629,23 +658,23 @@ namespace mame
         //  16-bit read/write delegates
         //-------------------------------------------------
 
-        address_map_entry r(read16_delegate func)
+        public address_map_entry r(read16_delegate func)
         {
             assert(func != null);
-            m_read.type = map_handler_type.AMH_DEVICE_DELEGATE;
-            m_read.bits = 16;
-            m_read.name = func.Method.Name;
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
+            m_read.m_bits = 16;
+            m_read.m_name = func.GetMethodInfo().Name;
             m_rproto16 = func;
             return this;
         }
 
 
-        address_map_entry w(write16_delegate func)
+        public address_map_entry w(write16_delegate func)
         {
             assert(func != null);
-            m_write.type = map_handler_type.AMH_DEVICE_DELEGATE;
-            m_write.bits = 16;
-            m_write.name = func.Method.Name;
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
+            m_write.m_bits = 16;
+            m_write.m_name = func.GetMethodInfo().Name;
             m_wproto16 = func;
             return this;
         }
@@ -653,14 +682,46 @@ namespace mame
 
         //address_map_entry &r(read16m_delegate func);
         //address_map_entry &w(write16m_delegate func);
-        //address_map_entry &r(read16s_delegate func);
-        //address_map_entry &w(write16s_delegate func);
+
+
+        public address_map_entry r(read16s_delegate func)
+        {
+            assert(func != null);
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_S;
+            m_read.m_bits = 16;
+            m_read.m_name = func.GetMethodInfo().Name;
+            m_rproto16s = func;
+            return this;
+        }
+
+
+        public address_map_entry w(write16s_delegate func)
+        {
+            assert(func != null);
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_S;
+            m_write.m_bits = 16;
+            m_write.m_name = func.GetMethodInfo().Name;
+            m_wproto16s = func;
+            return this;
+        }
+
+
         //address_map_entry &r(read16sm_delegate func);
         //address_map_entry &w(write16sm_delegate func);
         //address_map_entry &r(read16mo_delegate func);
         //address_map_entry &w(write16mo_delegate func);
         //address_map_entry &r(read16smo_delegate func);
-        //address_map_entry &w(write16smo_delegate func);
+
+
+        public address_map_entry w(write16smo_delegate func)
+        {
+            assert(func != null);
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
+            m_write.m_bits = 16;
+            m_write.m_name = func.GetMethodInfo().Name;
+            m_wproto16smo = func;
+            return this;
+        }
 
 
         // handler setters for 32-bit delegates
@@ -669,23 +730,23 @@ namespace mame
         //  32-bit read/write delegates
         //-------------------------------------------------
 
-        address_map_entry r(read32_delegate func)
+        public address_map_entry r(read32_delegate func)
         {
             assert(func != null);
-            m_read.type = map_handler_type.AMH_DEVICE_DELEGATE;
-            m_read.bits = 32;
-            m_read.name = func.Method.Name;
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
+            m_read.m_bits = 32;
+            m_read.m_name = func.GetMethodInfo().Name;
             m_rproto32 = func;
             return this;
         }
 
 
-        address_map_entry w(write32_delegate func)
+        public address_map_entry w(write32_delegate func)
         {
             assert(func != null);
-            m_write.type = map_handler_type.AMH_DEVICE_DELEGATE;
-            m_write.bits = 32;
-            m_write.name = func.Method.Name;
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
+            m_write.m_bits = 32;
+            m_write.m_name = func.GetMethodInfo().Name;
             m_wproto32 = func;
             return this;
         }
@@ -709,23 +770,23 @@ namespace mame
         //  64-bit read/write delegates
         //-------------------------------------------------
 
-        address_map_entry r(read64_delegate func)
+        public address_map_entry r(read64_delegate func)
         {
             assert(func != null);
-            m_read.type = map_handler_type.AMH_DEVICE_DELEGATE;
-            m_read.bits = 64;
-            m_read.name = func.Method.Name;
+            m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
+            m_read.m_bits = 64;
+            m_read.m_name = func.GetMethodInfo().Name;
             m_rproto64 = func;
             return this;
         }
 
 
-        address_map_entry w(write64_delegate func)
+        public address_map_entry w(write64_delegate func)
         {
             assert(func != null);
-            m_write.type = map_handler_type.AMH_DEVICE_DELEGATE;
-            m_write.bits = 64;
-            m_write.name = func.Method.Name;
+            m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
+            m_write.m_bits = 64;
+            m_write.m_name = func.GetMethodInfo().Name;
             m_wproto64 = func;
             return this;
         }
@@ -827,9 +888,9 @@ namespace mame
         int m_spacenum;         // space number of the map
         device_t m_device;       // associated device
         u8 m_databits;         // data bits represented by the map
-        u8 m_unmapval;         // unmapped memory value
-        offs_t m_globalmask;       // global mask
-        simple_list<address_map_entry> m_entrylist = new simple_list<address_map_entry>(); // list of entries
+        public u8 m_unmapval;         // unmapped memory value
+        public offs_t m_globalmask;       // global mask
+        public simple_list<address_map_entry> m_entrylist = new simple_list<address_map_entry>(); // list of entries
 
 
         // construction/destruction
@@ -864,8 +925,8 @@ namespace mame
             }
 
             // construct the internal device map (last so it takes priority)
-            if (spaceconfig.internal_map != null)
-                spaceconfig.internal_map(this, m_device);
+            if (spaceconfig.m_internal_map != null)
+                spaceconfig.m_internal_map(this, m_device);
         }
 
         //-------------------------------------------------
@@ -881,7 +942,7 @@ namespace mame
 
             // Retrieve the submap
             //entry.m_submap_delegate.late_bind(device);
-            entry.submap_delegate(this, m_device);
+            entry.m_submap_delegate(this, m_device);
         }
 
         //----------------------------------------------------------
@@ -897,14 +958,6 @@ namespace mame
 
             op(start, end).m(DEVICE_SELF, submap_delegate).umask64(unitmask).cswidth(cswidth);
         }
-
-
-        // getters
-        public int spacenum { get { return m_spacenum; } }
-        public u8 databits { get { return m_databits; } }
-        public u8 unmapval { get { return m_unmapval; } }
-        public offs_t globalmask { get { return m_globalmask; } }
-        public simple_list<address_map_entry> entrylist { get { return m_entrylist; } }
 
 
         // setters
@@ -944,14 +997,14 @@ namespace mame
 
             while (entry != null)
             {
-                if (entry.read.type == map_handler_type.AMH_DEVICE_SUBMAP)
+                if (entry.m_read.m_type == map_handler_type.AMH_DEVICE_SUBMAP)
                 {
-                    device_t mapdevice = entry.submap_device;
+                    device_t mapdevice = entry.m_submap_device;
                     if (mapdevice == null)
                     {
-                        mapdevice = owner.subdevice(entry.read.tag);
+                        mapdevice = owner.subdevice(entry.m_read.m_tag);
                         if (mapdevice == null)
-                            throw new emu_fatalerror("Attempted to submap a non-existent device '{0}' in space {1} of device '{2}'\n", owner.subtag(entry.read.tag).c_str(), m_spacenum, m_device.basetag());
+                            throw new emu_fatalerror("Attempted to submap a non-existent device '{0}' in space {1} of device '{2}'\n", owner.subtag(entry.m_read.m_tag).c_str(), m_spacenum, m_device.basetag());
                     }
 
                     // Grab the submap
@@ -960,9 +1013,9 @@ namespace mame
                     // Recursively import if needed
                     submap.import_submaps(machine, mapdevice, data_width, endian, addr_shift);
 
-                    offs_t max_end = entry.addrend - entry.addrstart;
+                    offs_t max_end = entry.m_addrend - entry.m_addrstart;
 
-                    if (entry.mask == 0 || (entry.mask & base_unitmask) == base_unitmask)
+                    if (entry.m_mask == 0 || (entry.m_mask & base_unitmask) == base_unitmask)
                     {
                         // Easy case, no unitmask at mapping level - Merge in all the map contents in order
                         while (submap.m_entrylist.count() != 0)
@@ -971,31 +1024,31 @@ namespace mame
 
                             if (addr_shift > 0)
                             {
-                                subentry.addrstart <<= addr_shift;
-                                subentry.addrend = ((subentry.addrend + 1) << addr_shift) - 1;
-                                subentry.addrmirror <<= addr_shift;
-                                subentry.addrmask <<= addr_shift;
-                                subentry.addrselect <<= addr_shift;
+                                subentry.m_addrstart <<= addr_shift;
+                                subentry.m_addrend = ((subentry.m_addrend + 1) << addr_shift) - 1;
+                                subentry.m_addrmirror <<= addr_shift;
+                                subentry.m_addrmask <<= addr_shift;
+                                subentry.m_addrselect <<= addr_shift;
                             }
                             else if (addr_shift < 0)
                             {
-                                subentry.addrstart >>= -addr_shift;
-                                subentry.addrend >>= -addr_shift;
-                                subentry.addrmirror >>= -addr_shift;
-                                subentry.addrmask >>= -addr_shift;
-                                subentry.addrselect >>= -addr_shift;
+                                subentry.m_addrstart >>= -addr_shift;
+                                subentry.m_addrend >>= -addr_shift;
+                                subentry.m_addrmirror >>= -addr_shift;
+                                subentry.m_addrmask >>= -addr_shift;
+                                subentry.m_addrselect >>= -addr_shift;
                             }
 
-                            if (subentry.addrend > max_end)
-                                subentry.addrend = max_end;
+                            if (subentry.m_addrend > max_end)
+                                subentry.m_addrend = max_end;
 
-                            subentry.addrstart += entry.addrstart;
-                            subentry.addrend += entry.addrstart;
-                            subentry.addrmirror |= entry.addrmirror;
-                            subentry.addrmask |= entry.addrmask;
-                            subentry.addrselect |= entry.addrselect;
+                            subentry.m_addrstart += entry.m_addrstart;
+                            subentry.m_addrend += entry.m_addrstart;
+                            subentry.m_addrmirror |= entry.m_addrmirror;
+                            subentry.m_addrmask |= entry.m_addrmask;
+                            subentry.m_addrselect |= entry.m_addrselect;
 
-                            if (subentry.addrstart > entry.addrend)
+                            if (subentry.m_addrstart > entry.m_addrend)
                             {
                                 subentry = null;  // delete subentry;
                                 continue;
@@ -1012,7 +1065,7 @@ namespace mame
                         int ratio = 0;
                         for (int i = 0; i != data_width; i++)
                         {
-                            if (((entry.mask >> i) & 1) != 0)
+                            if (((entry.m_mask >> i) & 1) != 0)
                                 ratio++;
                         }
                         ratio = data_width / ratio;
@@ -1029,62 +1082,62 @@ namespace mame
                         {
                             address_map_entry subentry = submap.m_entrylist.detach_head();
 
-                            if ((subentry.mask != 0) && (subentry.mask != 0xffffffffffffffffU))
+                            if ((subentry.m_mask != 0) && (subentry.m_mask != 0xffffffffffffffffU))
                             {
                                 // Check if the mask can actually fit
                                 int subentry_ratio = 0;
                                 for (int i = 0; i != data_width; i++)
                                 {
-                                    if (((subentry.mask >> i) & 1) != 0)
+                                    if (((subentry.m_mask >> i) & 1) != 0)
                                         subentry_ratio ++;
                                 }
                                 subentry_ratio = data_width / subentry_ratio;
                                 if (ratio * subentry_ratio > data_width / 8)
-                                    fatalerror("import_submap: In range {0}-{1} mask {2} mirror {3} select {4} of device {5}, the import unitmask of {6} combined with an entry unitmask of {7} does not fit in {8} bits.\n", subentry.addrstart, subentry.addrend, subentry.addrmask, subentry.addrmirror, subentry.addrselect, entry.read.tag, core_i64_hex_format(entry.mask, (byte)(data_width / 4)), core_i64_hex_format(subentry.mask, (byte)(data_width / 4)), data_width);
+                                    fatalerror("import_submap: In range {0}-{1} mask {2} mirror {3} select {4} of device {5}, the import unitmask of {6} combined with an entry unitmask of {7} does not fit in {8} bits.\n", subentry.m_addrstart, subentry.m_addrend, subentry.m_addrmask, subentry.m_addrmirror, subentry.m_addrselect, entry.m_read.m_tag, core_i64_hex_format(entry.m_mask, (byte)(data_width / 4)), core_i64_hex_format(subentry.m_mask, (byte)(data_width / 4)), data_width);
 
                                 // Regenerate the unitmask
                                 u64 newmask = 0;
                                 int bit_in_subentry = 0;
                                 for (int i=0; i != data_width; i++)
                                 {
-                                    if (((entry.mask >> i) & 1) != 0)
+                                    if (((entry.m_mask >> i) & 1) != 0)
                                     {
-                                        if (((subentry.mask >> bit_in_subentry) & 1) != 0)
+                                        if (((subentry.m_mask >> bit_in_subentry) & 1) != 0)
                                             newmask |= (u64)1 << i;
 
                                         bit_in_subentry ++;
                                     }
                                 }
-                                subentry.mask = newmask;
+                                subentry.m_mask = newmask;
                             }
                             else
                             {
-                                subentry.mask = entry.mask;
+                                subentry.m_mask = entry.m_mask;
                             }
 
-                            subentry.cswidth_set = Math.Max(subentry.cswidth_get, entry.cswidth_get);
+                            subentry.m_cswidth = std.max(subentry.m_cswidth, entry.m_cswidth);
 
-                            if (subentry.addrend > max_end)
-                                subentry.addrend = max_end;
+                            if (subentry.m_addrend > max_end)
+                                subentry.m_addrend = max_end;
 
                             if (addr_shift < 0)
                             {
-                                subentry.addrstart = ((subentry.addrstart * (offs_t)ratio) >> -addr_shift) + entry.addrstart;
-                                subentry.addrend = (((subentry.addrend + 1) * (offs_t)ratio - 1) >> -addr_shift) + entry.addrstart;
-                                subentry.addrmirror = ((subentry.addrmirror / (offs_t)ratio) << -addr_shift) | entry.addrmirror;
-                                subentry.addrmask = ((subentry.addrmask / (offs_t)ratio) << -addr_shift) | entry.addrmask;
-                                subentry.addrselect = ((subentry.addrselect / (offs_t)ratio) << -addr_shift) | entry.addrselect;
+                                subentry.m_addrstart = ((subentry.m_addrstart * (offs_t)ratio) >> -addr_shift) + entry.m_addrstart;
+                                subentry.m_addrend = (((subentry.m_addrend + 1) * (offs_t)ratio - 1) >> -addr_shift) + entry.m_addrstart;
+                                subentry.m_addrmirror = ((subentry.m_addrmirror / (offs_t)ratio) << -addr_shift) | entry.m_addrmirror;
+                                subentry.m_addrmask = ((subentry.m_addrmask / (offs_t)ratio) << -addr_shift) | entry.m_addrmask;
+                                subentry.m_addrselect = ((subentry.m_addrselect / (offs_t)ratio) << -addr_shift) | entry.m_addrselect;
                             }
                             else
                             {
-                                subentry.addrstart = subentry.addrstart * (offs_t)ratio + entry.addrstart;
-                                subentry.addrend = (subentry.addrend + 1) * (offs_t)ratio - 1 + entry.addrstart;
-                                subentry.addrmirror = (subentry.addrmirror / (offs_t)ratio) | entry.addrmirror;
-                                subentry.addrmask = (subentry.addrmask / (offs_t)ratio) | entry.addrmask;
-                                subentry.addrselect = (subentry.addrselect / (offs_t)ratio) | entry.addrselect;
+                                subentry.m_addrstart = subentry.m_addrstart * (offs_t)ratio + entry.m_addrstart;
+                                subentry.m_addrend = (subentry.m_addrend + 1) * (offs_t)ratio - 1 + entry.m_addrstart;
+                                subentry.m_addrmirror = (subentry.m_addrmirror / (offs_t)ratio) | entry.m_addrmirror;
+                                subentry.m_addrmask = (subentry.m_addrmask / (offs_t)ratio) | entry.m_addrmask;
+                                subentry.m_addrselect = (subentry.m_addrselect / (offs_t)ratio) | entry.m_addrselect;
                             }
 
-                            if (subentry.addrstart > entry.addrend)
+                            if (subentry.m_addrstart > entry.m_addrend)
                             {
                                 subentry = null;  //delete subentry;
                                 continue;

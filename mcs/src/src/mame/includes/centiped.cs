@@ -4,9 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using offs_t = System.UInt32;
-using u8 = System.Byte;
 using uint8_t = System.Byte;
 
 
@@ -20,7 +17,7 @@ namespace mame
         optional_shared_ptr_uint8_t m_paletteram;
         optional_shared_ptr_uint8_t m_bullsdrt_tiles_bankram;
 
-        required_device<cpu_device> m_maincpu;
+        required_device<m6502_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         required_device<ls259_device> m_outlatch;
         optional_device<er2055_device> m_earom;
         optional_device<eeprom_serial_93cxx_device> m_eeprom;
@@ -49,7 +46,7 @@ namespace mame
             m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
             m_paletteram = new optional_shared_ptr_uint8_t(this, "paletteram");
             m_bullsdrt_tiles_bankram = new optional_shared_ptr_uint8_t(this, "bullsdrt_bank");
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
+            m_maincpu = new required_device<m6502_device>(this, "maincpu");
             m_outlatch = new required_device<ls259_device>(this, "outlatch");
             m_earom = new optional_device<er2055_device>(this, "earom");
             m_eeprom = new optional_device<eeprom_serial_93cxx_device>(this, "eeprom");

@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Text;
-using SharpCompress.Converters;
 
 namespace SharpCompress.Common.Tar.Headers
 {
@@ -39,16 +39,17 @@ namespace SharpCompress.Common.Tar.Headers
             WriteOctalBytes(0, buffer, 116, 8); // group ID
 
             //ArchiveEncoding.UTF8.GetBytes("magic").CopyTo(buffer, 257);
-            if (Name.Length > 100)
+            var nameByteCount = ArchiveEncoding.GetEncoding().GetByteCount(Name);
+            if (nameByteCount > 100)
             {
                 // Set mock filename and filetype to indicate the next block is the actual name of the file
                 WriteStringBytes("././@LongLink", buffer, 0, 100);
                 buffer[156] = (byte)EntryType.LongName;
-                WriteOctalBytes(Name.Length + 1, buffer, 124, 12);
+                WriteOctalBytes(nameByteCount + 1, buffer, 124, 12);
             }
             else
             {
-                WriteStringBytes(Name, buffer, 0, 100);
+                WriteStringBytes(ArchiveEncoding.Encode(Name), buffer, 100);
                 WriteOctalBytes(Size, buffer, 124, 12);
                 var time = (long)(LastModifiedTime.ToUniversalTime() - EPOCH).TotalSeconds;
                 WriteOctalBytes(time, buffer, 136, 12);
@@ -56,11 +57,10 @@ namespace SharpCompress.Common.Tar.Headers
 
                 if (Size >= 0x1FFFFFFFF)
                 {
-                    byte[] bytes = DataConverter.BigEndian.GetBytes(Size);
-                    var bytes12 = new byte[12];
-                    bytes.CopyTo(bytes12, 12 - bytes.Length);
+                    Span<byte> bytes12 = stackalloc byte[12];
+                    BinaryPrimitives.WriteInt64BigEndian(bytes12.Slice(4), Size);
                     bytes12[0] |= 0x80;
-                    bytes12.CopyTo(buffer, 124);
+                    bytes12.CopyTo(buffer.AsSpan(124));
                 }
             }
 
@@ -69,10 +69,17 @@ namespace SharpCompress.Common.Tar.Headers
 
             output.Write(buffer, 0, buffer.Length);
 
-            if (Name.Length > 100)
+            if (nameByteCount > 100)
             {
                 WriteLongFilenameHeader(output);
-                Name = Name.Substring(0, 100);
+                // update to short name lower than 100 - [max bytes of one character].
+                // subtracting bytes is needed because preventing infinite loop(example code is here).
+                //
+                // var bytes = Encoding.UTF8.GetBytes(new string(0x3042, 100));
+                // var truncated = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(bytes, 0, 100));
+                //
+                // and then infinite recursion is occured in WriteLongFilenameHeader because truncated.Length is 102.
+                Name = ArchiveEncoding.Decode(ArchiveEncoding.Encode(Name), 0, 100 - ArchiveEncoding.GetEncoding().GetMaxByteCount(1));
                 Write(output);
             }
         }
@@ -168,8 +175,9 @@ namespace SharpCompress.Common.Tar.Headers
         {
             if ((buffer[124] & 0x80) == 0x80) // if size in binary
             {
-                return DataConverter.BigEndian.GetInt64(buffer, 0x80);
+                return BinaryPrimitives.ReadInt64BigEndian(buffer.AsSpan(0x80));
             }
+
             return ReadAsciiInt64Base8(buffer, 124, 11);
         }
 
@@ -182,6 +190,13 @@ namespace SharpCompress.Common.Tar.Headers
                 throw new InvalidOperationException("Buffer is invalid size");
             }
             return buffer;
+        }
+
+        private static void WriteStringBytes(ReadOnlySpan<byte> name, Span<byte> buffer, int length)
+        {
+            name.CopyTo(buffer);
+            int i = Math.Min(length, name.Length);
+            buffer.Slice(i, length - i).Fill(0);
         }
 
         private static void WriteStringBytes(string name, byte[] buffer, int offset, int length)

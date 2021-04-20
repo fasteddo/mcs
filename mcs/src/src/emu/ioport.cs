@@ -7,8 +7,8 @@ using System.Collections.Generic;
 using attoseconds_t = System.Int64;
 using char32_t = System.UInt32;
 using ioport_value = System.UInt32;
-using ListBytes = mame.ListBase<System.Byte>;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using s64 = System.Int64;
 using time_t = System.Int64;
@@ -825,7 +825,7 @@ namespace mame
         //define PORT_ROTATED             configurer.field_set_rotated();
 
         // general flags
-        //define PORT_NAME(_name)             configurer.field_set_name(_name);
+        public static void PORT_NAME(ioport_configurer configurer, string _name) { configurer.field_set_name(_name); }
         public static void PORT_PLAYER(ioport_configurer configurer, int player) { configurer.field_set_player(player); }
         public static void PORT_COCKTAIL(ioport_configurer configurer) { configurer.field_set_cocktail(); }
         //define PORT_TOGGLE             configurer.field_set_toggle();
@@ -836,7 +836,7 @@ namespace mame
 
         // analog settings
         // if this macro is not used, the minimum defaults to 0 and maximum defaults to the mask value
-        //define PORT_MINMAX(_min, _max)             configurer.field_set_min_max(_min, _max);
+        public static void PORT_MINMAX(ioport_configurer configurer, ioport_value _min, ioport_value _max) { configurer.field_set_min_max(_min, _max); }
         public static void PORT_SENSITIVITY(ioport_configurer configurer, int sensitivity) { configurer.field_set_sensitivity(sensitivity); }
         public static void PORT_KEYDELTA(ioport_configurer configurer, int delta) { configurer.field_set_delta(delta); }
         // note that PORT_CENTERDELTA must appear after PORT_KEYDELTA
@@ -846,7 +846,7 @@ namespace mame
         //define PORT_CROSSHAIR_MAPPER_MEMBER(_device, _class, _member)             configurer.field_set_crossmapper(ioport_field_crossmap_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)NULL));
 
         // how many optical counts for 1 full turn of the control
-        //define PORT_FULL_TURN_COUNT(_count)             configurer.field_set_full_turn_count(_count);
+        public static void PORT_FULL_TURN_COUNT(ioport_configurer configurer, u16 _count) { configurer.field_set_full_turn_count(_count); }
 
         // positional controls can be binary or 1 of X
         // 1 of X not completed yet
@@ -885,8 +885,7 @@ namespace mame
         //                _device, \
         //                static_cast<ioport_value (*)(_class &)>([] (_class &device) -> ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; }), \
         //                #_class "::" #_member));
-        public delegate int PORT_READ_LINE_DEVICE_MEMBER_delegate();
-        public static void PORT_READ_LINE_DEVICE_MEMBER(ioport_configurer configurer, string device, PORT_READ_LINE_DEVICE_MEMBER_delegate _member)
+        public static void PORT_READ_LINE_DEVICE_MEMBER(ioport_configurer configurer, string device, Func<int> _member)
         {
             configurer.field_set_dynamic_read(() =>
             {
@@ -974,7 +973,8 @@ namespace mame
         //#define DECLARE_CROSSHAIR_MAPPER_MEMBER(name)   float name(float linear_value)
 
         // macro for wrapping a default string
-        public static string DEF_STR(INPUT_STRING str_num) { return input_port_default_strings[str_num]; }  //#define DEF_STR(str_num) ((const char *)INPUT_STRING_##str_num)
+        public const string DEFAULT_STR_PREFIX = "**DEFAULT_ENUM_";
+        public static string DEF_STR(INPUT_STRING str_num) { return DEFAULT_STR_PREFIX + str_num.ToString(); }  //#define DEF_STR(str_num) ((const char *)INPUT_STRING_##str_num)
 
 
         //-------------------------------------------------
@@ -1024,15 +1024,15 @@ namespace mame
         const UInt32 OFFS_APPDESC     = 0x20;    // 0x20 bytes (ASCII)
         const UInt32 OFFS_END         = 0x40;
 
-        static RawBuffer MAGIC = new RawBuffer((int)(OFFS_BASETIME - OFFS_MAGIC));  //static u8 const                 MAGIC[OFFS_BASETIME - OFFS_MAGIC];
+        static MemoryU8 MAGIC = new MemoryU8((int)(OFFS_BASETIME - OFFS_MAGIC), true);  //static u8 const                 MAGIC[OFFS_BASETIME - OFFS_MAGIC];
 
-        RawBuffer m_data = new RawBuffer(OFFS_END);  //u8                              m_data[OFFS_END];
+        MemoryU8 m_data = new MemoryU8((int)OFFS_END, true);  //u8                              m_data[OFFS_END];
 
 
-        public bool read(emu_file f) { return f.read(new ListBytesPointer(m_data), (UInt32)m_data.Count) == m_data.Count; }
-        public bool write(emu_file f) { return f.write(new ListBytesPointer(m_data), (UInt32)m_data.Count) == m_data.Count; }
+        public bool read(emu_file f) { return f.read(new PointerU8(m_data), (UInt32)m_data.Count) == m_data.Count; }
+        public bool write(emu_file f) { return f.write(new PointerU8(m_data), (UInt32)m_data.Count) == m_data.Count; }
 
-        public bool check_magic() { return 0 == memcmp(new ListBytesPointer(MAGIC), new ListBytesPointer(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
+        public bool check_magic() { return 0 == memcmp(new PointerU8(MAGIC), new PointerU8(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
         public UInt64 get_basetime()
         {
             return
@@ -1050,7 +1050,7 @@ namespace mame
         public string get_sysname() { return get_string(OFFS_SYSNAME, OFFS_APPDESC); }
         public string get_appdesc() { return get_string(OFFS_APPDESC, OFFS_END); }
 
-        public void set_magic() { memcpy(new ListBytesPointer(m_data, (int)OFFS_MAGIC), new ListBytesPointer(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
+        public void set_magic() { memcpy(new PointerU8(m_data, (int)OFFS_MAGIC), new PointerU8(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
         public void set_basetime(UInt64 time)
         {
             m_data[OFFS_BASETIME + 0] = (byte)((time >> (0 * 8)) & 0x00ff);
@@ -1074,11 +1074,11 @@ namespace mame
         //template <std::size_t BEGIN, std::size_t END> void set_string(std::string const &str)
         void set_string(UInt32 BEGIN, UInt32 END, string str)
         {
-            UInt32 used = Math.Min((UInt32)str.Length + 1, END - BEGIN);
+            UInt32 used = std.min((UInt32)str.size() + 1, END - BEGIN);
             byte[] strBytes = System.Text.Encoding.ASCII.GetBytes(str);
-            memcpy(new ListBytesPointer(m_data, (int)BEGIN), new ListBytesPointer(new ListBytes(strBytes)), used);  // std::memcpy(m_data + BEGIN, str.c_str(), used);
+            std.memcpy(new PointerU8(m_data, (int)BEGIN), new PointerU8(new MemoryU8(strBytes)), used);  //std::memcpy(m_data + BEGIN, str.c_str(), used);
             if ((END - BEGIN) > used)
-                memset(new ListBytesPointer(m_data, (int)BEGIN), (u8)0, (END - BEGIN) - used);  //std::memset(m_data + BEGIN + used, 0, (END - BEGIN) - used);
+                std.memset(new PointerU8(m_data, (int)BEGIN), (u8)0, (END - BEGIN) - used);  //std::memset(m_data + BEGIN + used, 0, (END - BEGIN) - used);
         }
 
         //template <std::size_t BEGIN, std::size_t END> std::string get_string() const
@@ -1086,7 +1086,7 @@ namespace mame
         {
             //char const *const begin = reinterpret_cast<char const *>(m_data + BEGIN);
             //return std::string(begin, std::find(begin, reinterpret_cast<char const *>(m_data + END), '\0'));
-            return m_data.get_string((int)BEGIN, m_data.find((int)BEGIN, (int)END, Convert.ToByte('\0')) - (int)BEGIN);
+            return m_data.ToString((int)BEGIN, m_data.IndexOf((int)BEGIN, (int)END, Convert.ToByte('\0')) - (int)BEGIN);
         }
     }
 
@@ -1533,33 +1533,33 @@ namespace mame
         ioport_condition m_condition = new ioport_condition();        // condition under which this field is relevant
         ioport_type m_type;             // IPT_* type for this port
         u8 m_player;           // player number (0-based)
-        u32 m_flags;            // combination of FIELD_FLAG_* and ANALOG_FLAG_* above
-        u8 m_impulse;          // number of frames before reverting to defvalue
-        string m_name;             // user-friendly name to display
-        input_seq [] m_seq = new input_seq[(int)input_seq_type.SEQ_TYPE_TOTAL];// sequences of all types
+        public u32 m_flags;            // combination of FIELD_FLAG_* and ANALOG_FLAG_* above
+        public u8 m_impulse;          // number of frames before reverting to defvalue
+        public string m_name;             // user-friendly name to display
+        public input_seq [] m_seq = new input_seq[(int)input_seq_type.SEQ_TYPE_TOTAL];// sequences of all types
         public ioport_field_read_delegate m_read;             // read callback routine
-        ioport_field_write_delegate m_write;            // write callback routine
-        u32 m_write_param;  // parameter for write callback routine
+        public ioport_field_write_delegate m_write;            // write callback routine
+        public u32 m_write_param;  // parameter for write callback routine
 
         // data relevant to digital control types
         bool m_digital_value;    // externally set value
 
         // data relevant to analog control types
-        ioport_value m_min;              // minimum value for absolute axes
-        ioport_value m_max;              // maximum value for absolute axes
-        s32 m_sensitivity;      // sensitivity (100=normal)
-        s32 m_delta;            // delta to apply each frame a digital inc/dec key is pressed
-        s32 m_centerdelta;      // delta to apply each frame no digital inputs are pressed
+        public ioport_value m_min;              // minimum value for absolute axes
+        public ioport_value m_max;              // maximum value for absolute axes
+        public s32 m_sensitivity;      // sensitivity (100=normal)
+        public s32 m_delta;            // delta to apply each frame a digital inc/dec key is pressed
+        public s32 m_centerdelta;      // delta to apply each frame no digital inputs are pressed
         crosshair_axis_t m_crosshair_axis;   // crosshair axis
         double m_crosshair_scale;  // crosshair scale
         double m_crosshair_offset; // crosshair offset
         double m_crosshair_altaxis;// crosshair alternate axis value
         ioport_field_crossmap_delegate m_crosshair_mapper; // crosshair mapping function
-        u16 m_full_turn_count;  // number of optical counts for 1 full turn of the original control
+        public u16 m_full_turn_count;  // number of optical counts for 1 full turn of the original control
         ioport_value [] m_remap_table;  //const ioport_value *        m_remap_table;      // pointer to an array that remaps the port value
 
         // data relevant to other specific types
-        u8 m_way;              // digital joystick 2/4/8-way descriptions
+        public u8 m_way;              // digital joystick 2/4/8-way descriptions
         char32_t [,] m_chars = new char32_t[1 << (int)(ioport_global.UCHAR_SHIFT_END - ioport_global.UCHAR_SHIFT_BEGIN + 1), 2];         // unicode key data
 
 
@@ -1630,21 +1630,6 @@ namespace mame
         }
 
 
-        public u32 flags { get { return m_flags; } set { m_flags = value; } }
-        public u8 impulse { get { return m_impulse; } set { m_impulse = value; } }
-        public ioport_value min { get { return m_min; } set { m_min = value; } }
-        public ioport_value max { get { return m_max; } set { m_max = value; } }
-        public s32 sensitivity { get { return m_sensitivity; } set { m_sensitivity = value; } }
-        public s32 delta { get { return m_delta; } set { m_delta = value; } }
-        public s32 centerdelta { get { return m_centerdelta; } set { m_centerdelta = value; } }
-        public input_seq seq_raw(input_seq_type which) { return m_seq[(int)which]; }
-        public ioport_field_read_delegate get_read() { return m_read; }
-        public ioport_field_write_delegate get_write() { return m_write; }
-        public u32 get_write_param() { return m_write_param; }
-        public void set_seq(input_seq_type which, input_seq value) { m_seq[(int)which] = value; }
-        public void set_way(u8 way) { m_way = way; }
-
-
         // getters
         public ioport_field next() { return m_next; }
         public ioport_field m_next_get() { return m_next; }
@@ -1675,7 +1660,9 @@ namespace mame
         public bool analog_wraps() { return (m_flags & ANALOG_FLAG_WRAPS) != 0; }
         public bool analog_invert() { return (m_flags & ANALOG_FLAG_INVERT) != 0; }
 
+
         //u8 impulse() const noexcept { return m_impulse; }
+
 
         //-------------------------------------------------
         //  name - return the field name for a given input
@@ -1752,9 +1739,9 @@ namespace mame
 
         public ioport_value minval() { return m_min; }
         public ioport_value maxval() { return m_max; }
-        //s32 sensitivity() const noexcept { return m_sensitivity; }
-        //s32 delta() const noexcept { return m_delta; }
-        //s32 centerdelta() const noexcept { return m_centerdelta; }
+        public s32 sensitivity() { return m_sensitivity; }
+        public s32 delta() { return m_delta; }
+        public s32 centerdelta() { return m_centerdelta; }
         public crosshair_axis_t crosshair_axis() { return m_crosshair_axis; }
         //double crosshair_scale() const { return m_crosshair_scale; }
         //double crosshair_offset() const { return m_crosshair_offset; }
@@ -2655,10 +2642,10 @@ namespace mame
             m_adjdefvalue = (int)(field.defvalue() & field.mask());
             m_adjmin = (int)(field.minval() & field.mask());
             m_adjmax = (int)(field.maxval() & field.mask());
-            m_sensitivity = field.sensitivity;
+            m_sensitivity = field.sensitivity();
             m_reverse = field.analog_reverse();
-            m_delta = field.delta;
-            m_centerdelta = field.centerdelta;
+            m_delta = field.delta();
+            m_centerdelta = field.centerdelta();
             m_accum = 0;
             m_previous = 0;
             m_previousanalog = 0;
@@ -3181,7 +3168,7 @@ namespace mame
                 return;
 
             // call the callback to read a new value
-            ioport_value newval = m_field.get_read()();
+            ioport_value newval = m_field.m_read();
             m_oldval = newval;
 
             // merge in the bits (don't invert yet, as all digitals are inverted together)
@@ -3202,7 +3189,7 @@ namespace mame
             newval = (newval & m_field.mask()) >> m_shift;
             if (m_oldval != newval)
             {
-                m_field.get_write()(m_field, m_field.get_write_param(), m_oldval, newval);
+                m_field.m_write(m_field, m_field.m_write_param, m_oldval, newval);
                 m_oldval = newval;
             }
         }
@@ -3298,16 +3285,10 @@ namespace mame
                 return null;
 
             // if the index is greater than the count, assume it to be a pointer
-            UInt32 result;
-            if (UInt32.TryParse(str, out result))
-            {
-                if (result >= (UInt32)INPUT_STRING.INPUT_STRING_COUNT)
-                    return str;
-            }
-            else
-            {
+            //if (uintptr_t(string) >= INPUT_STRING_COUNT)
+            //    return string;
+            if (!str.StartsWith(ioport_global.DEFAULT_STR_PREFIX))
                 return str;
-            }
 
 #if false // Set TRUE, If you want to take care missing-token or wrong-sorting
 
@@ -3322,7 +3303,13 @@ namespace mame
 
 #else
 
-            return ioport_global.input_port_default_strings[(INPUT_STRING)(result)];
+            //return input_port_default_strings[uintptr_t(string)-1].string;
+            var replace_str = str.Replace(ioport_global.DEFAULT_STR_PREFIX, "");
+            INPUT_STRING result;
+            if (Enum.TryParse(replace_str, out result))
+                return ioport_global.input_port_default_strings[result];
+            else
+                throw new emu_unimplemented();
 
 #endif
         }
@@ -3397,25 +3384,25 @@ namespace mame
         //-------------------------------------------------
         //  field_add_code - add a character to a field
         //-------------------------------------------------
-        public ioport_configurer field_add_code(input_seq_type which, input_code code) { m_curfield.seq_raw(which).append_code_to_sequence_or(code); return this; }  //{ m_curfield.m_seq[which] |= code; return this; }
+        public ioport_configurer field_add_code(input_seq_type which, input_code code) { m_curfield.m_seq[(int)which].append_code_to_sequence_or(code); return this; }  //{ m_curfield.m_seq[which] |= code; return this; }
 
-        public ioport_configurer field_set_way(int way) { m_curfield.set_way((u8)way); return this; }  //{ m_curfield->m_way = way; return *this; }
+        public ioport_configurer field_set_way(int way) { m_curfield.m_way = (u8)way; return this; }  //{ m_curfield->m_way = way; return *this; }
         //ioport_configurer field_set_rotated() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_ROTATED; }
-        //ioport_configurer& field_set_name(const char *name) { assert(m_curfield != nullptr); m_curfield->m_name = string_from_token(name); return *this; }
+        public ioport_configurer field_set_name(string name) { global_object.assert(m_curfield != null); m_curfield.m_name = string_from_token(name); return this; }
         public ioport_configurer field_set_player(int player) { m_curfield.set_player((byte)(player - 1)); return this; }
-        public ioport_configurer field_set_cocktail() { m_curfield.flags |= ioport_field.FIELD_FLAG_COCKTAIL;  field_set_player(2); return this; }  //  m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL; field_set_player(2); }
-        ioport_configurer field_set_toggle() { m_curfield.flags |= ioport_field.FIELD_FLAG_TOGGLE; return this; }  //{ m_curfield.m_flags |= ioport_field::FIELD_FLAG_TOGGLE; }
-        public ioport_configurer field_set_impulse(u8 impulse) { m_curfield.impulse = impulse; return this; }
-        public ioport_configurer field_set_analog_reverse() { m_curfield.flags |= ioport_field.ANALOG_FLAG_REVERSE; return this; }
+        public ioport_configurer field_set_cocktail() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL;  field_set_player(2); return this; }  //  m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL; field_set_player(2); }
+        ioport_configurer field_set_toggle() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_TOGGLE; return this; }  //{ m_curfield.m_flags |= ioport_field::FIELD_FLAG_TOGGLE; }
+        public ioport_configurer field_set_impulse(u8 impulse) { m_curfield.m_impulse = impulse; return this; }
+        public ioport_configurer field_set_analog_reverse() { m_curfield.m_flags |= ioport_field.ANALOG_FLAG_REVERSE; return this; }
         //ioport_configurer field_set_analog_reset() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_RESET; }
         //ioport_configurer field_set_optional() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_OPTIONAL; }
-        public ioport_configurer field_set_min_max(ioport_value minval, ioport_value maxval) { m_curfield.min = minval; m_curfield.max = maxval; return this; }
-        public ioport_configurer field_set_sensitivity(s32 sensitivity) { m_curfield.sensitivity = sensitivity; return this; }
-        public ioport_configurer field_set_delta(s32 delta) { m_curfield.centerdelta = m_curfield.delta = delta; return this; }
+        public ioport_configurer field_set_min_max(ioport_value minval, ioport_value maxval) { m_curfield.m_min = minval; m_curfield.m_max = maxval; return this; }
+        public ioport_configurer field_set_sensitivity(s32 sensitivity) { m_curfield.m_sensitivity = sensitivity; return this; }
+        public ioport_configurer field_set_delta(s32 delta) { m_curfield.m_centerdelta = m_curfield.m_delta = delta; return this; }
         //ioport_configurer field_set_centerdelta(INT32 delta) const { m_curfield->m_centerdelta = delta; }
         //ioport_configurer field_set_crosshair(crosshair_axis_t axis, double altaxis, double scale, double offset) const { m_curfield->m_crosshair_axis = axis; m_curfield->m_crosshair_altaxis = altaxis; m_curfield->m_crosshair_scale = scale; m_curfield->m_crosshair_offset = offset; }
         //ioport_configurer field_set_crossmapper(ioport_field_crossmap_delegate callback) const { m_curfield->m_crosshair_mapper = callback; }
-        //ioport_configurer field_set_full_turn_count(UINT16 count) const { m_curfield->m_full_turn_count = count; }
+        public ioport_configurer field_set_full_turn_count(u16 count) { m_curfield.m_full_turn_count = count; return this; }
         //ioport_configurer field_set_analog_wraps() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_WRAPS; }
         //ioport_configurer field_set_remap_table(const ioport_value *table) { m_curfield->m_remap_table = table; }
         //ioport_configurer field_set_analog_invert() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_INVERT; }
@@ -4088,14 +4075,14 @@ namespace mame
         //  record_write - write a value to the record file
         //-------------------------------------------------
         //template<typename _Type>
-        void record_write(ListBytesPointer buffer)  //_Type value);
+        void record_write(PointerU8 buffer)  //void record_write(_Type value)
         {
             // protect against nullptr handles if previous reads fail
             if (!m_record_file.is_open())
                 return;
 
             // read the value; if we fail, end playback
-            if (m_record_file.write(buffer, (UInt32)buffer.Count) != buffer.Count)  //&value, sizeof(value)) != sizeof(value))
+            if (m_record_file.write(buffer, (UInt32)buffer.Count) != buffer.Count)  //if (m_record_file.write(&value, sizeof(value)) != sizeof(value))
                 record_end("Out of space");
         }
 
@@ -4164,18 +4151,18 @@ namespace mame
             {
                 // first the absolute time
                 //record_write(curtime.seconds());
-                RawBufferPointer secondsBuf = new RawBufferPointer(new RawBuffer(4));
-                secondsBuf.set_uint32(0, (UInt32)curtime.seconds());
+                PointerU8 secondsBuf = new PointerU8(new MemoryU8(4, true));
+                secondsBuf.SetUInt32(0, (UInt32)curtime.seconds());
                 record_write(secondsBuf);
                 //record_write(curtime.attoseconds());
-                RawBufferPointer attosecondsBuf = new RawBufferPointer(new RawBuffer(8));
-                attosecondsBuf.set_uint64(0, (UInt64)curtime.attoseconds());
+                PointerU8 attosecondsBuf = new PointerU8(new MemoryU8(8, true));
+                attosecondsBuf.SetUInt64(0, (UInt64)curtime.attoseconds());
                 record_write(attosecondsBuf);
 
                 // then the current speed
                 //record_write(u32(machine().video().speed_percent() * double(1 << 20)));
-                RawBufferPointer speedBuf = new RawBufferPointer(new RawBuffer(4));
-                speedBuf.set_uint32(0, (UInt32)(machine().video().speed_percent() * (double)(1 << 20)));
+                PointerU8 speedBuf = new PointerU8(new MemoryU8(4, true));
+                speedBuf.SetUInt32(0, (UInt32)(machine().video().speed_percent() * (double)(1 << 20)));
                 record_write(speedBuf);
             }
 

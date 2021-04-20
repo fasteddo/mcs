@@ -4,20 +4,20 @@
 //#define ASSERT_SLOW
 
 using System;
+using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 
 using attoseconds_t = System.Int64;
-using device_type = mame.emu.detail.device_type_impl_base;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using int64_t = System.Int64;
 using ioport_value = System.UInt32;
-using ListBytes = mame.ListBase<System.Byte>;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
 using offs_t = System.UInt32;
+using pen_t = System.UInt32;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -44,7 +44,7 @@ namespace mame
             ioport_configurer m_helper_configurer = null;
             ioport_list m_helper_portlist = null;
             bool m_helper_originated_from_port_include = false;
-            netlist.nlparse_t m_helper_setup = null;
+            Stack<netlist.nlparse_t> m_helper_setups = new Stack<netlist.nlparse_t>();
 
             public machine_config helper_config { get { return m_helper_config; } set { m_helper_config = value; } }
             public device_t helper_owner { get { return m_helper_owner; } set { m_helper_owner = value; } }
@@ -54,7 +54,9 @@ namespace mame
             public ioport_configurer helper_configurer { get { return m_helper_configurer; } set { m_helper_configurer = value; } }
             public ioport_list helper_portlist { get { return m_helper_portlist; } set { m_helper_portlist = value; } }
             public bool helper_originated_from_port_include { get { return m_helper_originated_from_port_include; } set { m_helper_originated_from_port_include = value; } }
-            public netlist.nlparse_t helper_setup { get { return m_helper_setup; } set { m_helper_setup = value; } }
+            public netlist.nlparse_t helper_setup { get { return m_helper_setups.Peek(); } }
+            public void helper_setup_push(netlist.nlparse_t setup) { m_helper_setups.Push(setup); }
+            public void helper_setup_pop() { m_helper_setups.Pop(); }
         }
 
         protected helpers m_globals = new helpers();
@@ -63,6 +65,30 @@ namespace mame
         // _74259
         protected static ls259_device LS259(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ls259_device>(mconfig, tag, ls259_device.LS259, clock); }
         protected static ls259_device LS259(machine_config mconfig, device_finder<ls259_device> finder, u32 clock = 0) { return emu.detail.device_type_impl.op(mconfig, finder, ls259_device.LS259, clock); }
+
+
+        // adc0808
+        protected static adc0809_device ADC0809(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<adc0809_device>(mconfig, tag, adc0809_device.ADC0809, clock); }
+
+
+        // atarigen
+        protected void PORT_ATARI_COMM_SOUND_TO_MAIN_READY(driver_device device, string _tag) { atarigen_global.PORT_ATARI_COMM_SOUND_TO_MAIN_READY(m_globals.helper_configurer, device, _tag); }
+        protected void PORT_ATARI_COMM_MAIN_TO_SOUND_READY(driver_device device, string _tag) { atarigen_global.PORT_ATARI_COMM_MAIN_TO_SOUND_READY(m_globals.helper_configurer, device, _tag); }
+        protected static atari_sound_comm_device ATARI_SOUND_COMM(machine_config mconfig, device_finder<atari_sound_comm_device> finder, device_finder<m6502_device> audiocpu)
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, atari_sound_comm_device.ATARI_SOUND_COMM, 0);
+            device.atari_sound_comm_device_after_ctor(audiocpu);
+            return device;
+        }
+
+
+        // atarimo
+        protected static atari_motion_objects_device ATARI_MOTION_OBJECTS(machine_config mconfig, device_finder<atari_motion_objects_device> finder, uint32_t clock, device_finder<screen_device> screen_tag, atari_motion_objects_config config)
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, atari_motion_objects_device.ATARI_MOTION_OBJECTS, 0);
+            device.atari_motion_objects_device_after_ctor(screen_tag, config);
+            return device;
+        }
 
 
         // attotime
@@ -77,9 +103,13 @@ namespace mame
         protected static ay8910_device AY8910(machine_config mconfig, device_finder<ay8910_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
 
 
+        // bankdev
+        protected static address_map_bank_device ADDRESS_MAP_BANK(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<address_map_bank_device>(mconfig, tag, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
+
+
         // corealloc
-        public static ListBase<T> global_alloc_array<T>(UInt32 num) where T : new() { return corealloc_global.global_alloc_array<T>(num); }
-        public static ListBase<T> global_alloc_array_clear<T>(UInt32 num) where T : new() { return corealloc_global.global_alloc_array_clear<T>(num); }
+        public static MemoryContainer<T> global_alloc_array<T>(UInt32 num) where T : new() { return corealloc_global.global_alloc_array<T>(num); }
+        public static MemoryContainer<T> global_alloc_array_clear<T>(UInt32 num) where T : new() { return corealloc_global.global_alloc_array_clear<T>(num); }
 
 
         // corefile
@@ -97,7 +127,14 @@ namespace mame
 
 
         // coretmpl
-        protected static u32 make_bitmask32(u32 N) { return coretmpl_global.make_bitmask32(N); }
+        protected static u8 make_bitmask8(u32 n) { return coretmpl_global.make_bitmask8(n); }
+        protected static u8 make_bitmask8(s32 n) { return coretmpl_global.make_bitmask8(n); }
+        protected static u16 make_bitmask16(s32 n) { return coretmpl_global.make_bitmask16(n); }
+        protected static u16 make_bitmask16(u32 n) { return coretmpl_global.make_bitmask16(n); }
+        protected static u32 make_bitmask32(s32 n) { return coretmpl_global.make_bitmask32(n); }
+        protected static u32 make_bitmask32(u32 n) { return coretmpl_global.make_bitmask32(n); }
+        protected static u64 make_bitmask64(s32 n) { return coretmpl_global.make_bitmask64(n); }
+        protected static u64 make_bitmask64(u32 n) { return coretmpl_global.make_bitmask64(n); }
         protected static int BIT(int x, int n) { return coretmpl_global.BIT(x, n); }
         protected static UInt32 BIT(UInt32 x, int n)  { return coretmpl_global.BIT(x, n); }
         protected static int bitswap(int val, int B1, int B0) { return coretmpl_global.bitswap(val, B1, B0); }
@@ -133,6 +170,7 @@ namespace mame
         protected const int CLEAR_LINE = (int)line_state.CLEAR_LINE;
         protected const int ASSERT_LINE = (int)line_state.ASSERT_LINE;
         protected const int HOLD_LINE = (int)line_state.HOLD_LINE;
+        protected const int INPUT_LINE_HALT = device_execute_interface.INPUT_LINE_HALT;
 
 
         // digfx
@@ -435,21 +473,26 @@ namespace mame
 
 
         // driver
-        protected void MCFG_MACHINE_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_MACHINE_START_OVERRIDE(config, func); }
-        protected void MCFG_MACHINE_RESET_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_MACHINE_RESET_OVERRIDE(config, func); }
-        protected void MCFG_VIDEO_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_VIDEO_START_OVERRIDE(config, func); }
+        protected static void MCFG_MACHINE_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_MACHINE_START_OVERRIDE(config, func); }
+        protected static void MCFG_MACHINE_RESET_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_MACHINE_RESET_OVERRIDE(config, func); }
+        protected static void MCFG_VIDEO_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_VIDEO_START_OVERRIDE(config, func); }
+
+
+        // eeprom
+        protected static eeprom_parallel_2804_device EEPROM_2804(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<eeprom_parallel_2804_device>(mconfig, tag, eeprom_parallel_2804_device.EEPROM_2804, clock); }
 
 
         // eminline
-        protected static uint64_t mulu_32x32(uint32_t a, uint32_t b) { return eminline_global.mulu_32x32(a, b); }
+        public static int64_t mul_32x32(int32_t a, int32_t b) { return eminline_global.mul_32x32(a, b); }
+        public static uint64_t mulu_32x32(uint32_t a, uint32_t b) { return eminline_global.mulu_32x32(a, b); }
         protected static uint32_t divu_64x32(uint64_t a, uint32_t b) { return eminline_global.divu_64x32(a, b); }
-        protected static uint32_t divu_64x32_rem(uint64_t a, uint32_t b, out uint32_t remainder) { return eminline_global.divu_64x32_rem(a, b, out remainder); }
+        public static uint32_t divu_64x32_rem(uint64_t a, uint32_t b, out uint32_t remainder) { return eminline_global.divu_64x32_rem(a, b, out remainder); }
         protected static int64_t get_profile_ticks() { return eminline_global.get_profile_ticks(); }
 
 
         // emualloc
-        public static ListBase<T> pool_alloc_array<T>(UInt32 num) where T : new() { return emualloc_global.pool_alloc_array<T>(num); }
-        public static ListBase<T> pool_alloc_array_clear<T>(UInt32 num) where T : new() { return emualloc_global.pool_alloc_array_clear<T>(num); }
+        public static MemoryContainer<T> pool_alloc_array<T>(UInt32 num) where T : new() { return emualloc_global.pool_alloc_array<T>(num); }
+        public static MemoryContainer<T> pool_alloc_array_clear<T>(UInt32 num) where T : new() { return emualloc_global.pool_alloc_array_clear<T>(num); }
 
 
         // emucore
@@ -462,10 +505,11 @@ namespace mame
         protected const UInt32 ROT90  = emucore_global.ROT90;
         protected const UInt32 ROT180 = emucore_global.ROT180;
         protected const UInt32 ROT270 = emucore_global.ROT270;
+        protected static Tuple<object, string> NAME<T>(T x) { return emucore_global.NAME(x); }
         public static void fatalerror(string format, params object [] args) { emucore_global.fatalerror(format, args); }
         [Conditional("DEBUG")] public static void assert(bool condition) { emucore_global.assert(condition); }
         [Conditional("DEBUG")] public static void assert(bool condition, string message) { emucore_global.assert(condition, message); }
-        [Conditional("ASSERT_SLOW")] protected static void assert_slow(bool condition) { emucore_global.assert(condition); }
+        [Conditional("ASSERT_SLOW")] public static void assert_slow(bool condition) { emucore_global.assert(condition); }
         [Conditional("DEBUG")] public static void static_assert(bool condition, string message) { assert(condition, message); }
 
 
@@ -474,14 +518,10 @@ namespace mame
         protected const int AS_DATA = emumem_global.AS_DATA;
         public const int AS_IO = emumem_global.AS_IO;
         protected const int AS_OPCODES = emumem_global.AS_OPCODES;
-        protected static u8 memory_read_generic8(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, emumem_global.memory_read_generic8_rop rop, offs_t address, u8 mask) { return emumem_global.memory_read_generic8(Width, AddrShift, Endian, TargetWidth, Aligned, rop, address, mask); }
-        protected static u16 memory_read_generic16(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, emumem_global.memory_read_generic16_rop rop, offs_t address, u16 mask) { return emumem_global.memory_read_generic16(Width, AddrShift, Endian, TargetWidth, Aligned, rop, address, mask); }
-        protected static u32 memory_read_generic32(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, emumem_global.memory_read_generic32_rop rop, offs_t address, u32 mask) { return emumem_global.memory_read_generic32(Width, AddrShift, Endian, TargetWidth, Aligned, rop, address, mask); }
-        protected static u64 memory_read_generic64(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, emumem_global.memory_read_generic64_rop rop, offs_t address, u64 mask) { return emumem_global.memory_read_generic64(Width, AddrShift, Endian, TargetWidth, Aligned, rop, address, mask); }
-        protected static void memory_write_generic8(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, emumem_global.memory_write_generic8_wop wop, offs_t address, u8 data, u8 mask) { emumem_global.memory_write_generic8(Width, AddrShift, Endian, TargetWidth, Aligned, wop, address, data, mask); }
-        protected static void memory_write_generic16(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, emumem_global.memory_write_generic16_wop wop, offs_t address, u16 data, u16 mask) { emumem_global.memory_write_generic16(Width, AddrShift, Endian, TargetWidth, Aligned, wop, address, data, mask); }
-        protected static void memory_write_generic32(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, emumem_global.memory_write_generic32_wop wop, offs_t address, u32 data, u32 mask) { emumem_global.memory_write_generic32(Width, AddrShift, Endian, TargetWidth, Aligned, wop, address, data, mask); }
-        protected static void memory_write_generic64(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, emumem_global.memory_write_generic64_wop wop, offs_t address, u64 data, u64 mask) { emumem_global.memory_write_generic64(Width, AddrShift, Endian, TargetWidth, Aligned, wop, address, data, mask); }
+        public static void COMBINE_DATA(ref u16 varptr, u16 data, u16 mem_mask) { emumem_global.COMBINE_DATA(ref varptr, data, mem_mask); }
+        protected static bool ACCESSING_BITS_0_7(u16 mem_mask) { return emumem_global.ACCESSING_BITS_0_7(mem_mask); }
+        protected static uX memory_read_generic(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, Func<offs_t, uX, uX> rop, offs_t address, uX mask) { return emumem_global.memory_read_generic(Width, AddrShift, Endian, TargetWidth, Aligned, rop, address, mask); }
+        protected static void memory_write_generic(int Width, int AddrShift, int Endian, int TargetWidth, bool Aligned, Action<offs_t, uX, uX> wop, offs_t address, uX data, uX mask) { emumem_global.memory_write_generic(Width, AddrShift, Endian, TargetWidth, Aligned, wop, address, data, mask); }
         protected static string core_i64_hex_format(u64 value, u8 mindigits) { return emumem_global.core_i64_hex_format(value, mindigits); }
         protected static int handler_entry_dispatch_lowbits(int highbits, int width, int ashift) { return emumem_global.handler_entry_dispatch_lowbits(highbits, width, ashift); }
 
@@ -585,6 +625,10 @@ namespace mame
         protected const ioport_type IPT_JOYSTICK_RIGHT = ioport_type.IPT_JOYSTICK_RIGHT;
         protected const ioport_type IPT_BUTTON1 = ioport_type.IPT_BUTTON1;
         protected const ioport_type IPT_BUTTON2 = ioport_type.IPT_BUTTON2;
+        protected const ioport_type IPT_AD_STICK_X = ioport_type.IPT_AD_STICK_X;
+        protected const ioport_type IPT_AD_STICK_Y = ioport_type.IPT_AD_STICK_Y;
+        protected const ioport_type IPT_DIAL = ioport_type.IPT_DIAL;
+        protected const ioport_type IPT_DIAL_V = ioport_type.IPT_DIAL_V;
         protected const ioport_type IPT_TRACKBALL_X = ioport_type.IPT_TRACKBALL_X;
         protected const ioport_type IPT_TRACKBALL_Y = ioport_type.IPT_TRACKBALL_Y;
         protected const ioport_type IPT_SPECIAL = ioport_type.IPT_SPECIAL;
@@ -635,6 +679,7 @@ namespace mame
         protected const INPUT_STRING Easy = INPUT_STRING.INPUT_STRING_Easy;
         protected const INPUT_STRING Normal = INPUT_STRING.INPUT_STRING_Normal;
         protected const INPUT_STRING Medium = INPUT_STRING.INPUT_STRING_Medium;
+        protected const INPUT_STRING Medium_Hard = INPUT_STRING.INPUT_STRING_Medium_Hard;
         protected const INPUT_STRING Hard = INPUT_STRING.INPUT_STRING_Hard;
         protected const INPUT_STRING Hardest = INPUT_STRING.INPUT_STRING_Hardest;
         protected const INPUT_STRING Difficult = INPUT_STRING.INPUT_STRING_Difficult;
@@ -678,14 +723,17 @@ namespace mame
         protected void PORT_2WAY() { ioport_global.PORT_2WAY(m_globals.helper_configurer); }
         protected void PORT_4WAY() { ioport_global.PORT_4WAY(m_globals.helper_configurer); }
         protected void PORT_8WAY() { ioport_global.PORT_8WAY(m_globals.helper_configurer); }
+        protected void PORT_NAME(string _name) { ioport_global.PORT_NAME(m_globals.helper_configurer, _name); }
         protected void PORT_PLAYER(int player) { ioport_global.PORT_PLAYER(m_globals.helper_configurer, player); }
         protected void PORT_COCKTAIL() { ioport_global.PORT_COCKTAIL(m_globals.helper_configurer); }
         protected void PORT_IMPULSE(u8 duration) { ioport_global.PORT_IMPULSE(m_globals.helper_configurer, duration); }
         protected void PORT_REVERSE() { ioport_global.PORT_REVERSE(m_globals.helper_configurer); }
+        protected void PORT_MINMAX(ioport_value _min, ioport_value _max) { ioport_global.PORT_MINMAX(m_globals.helper_configurer, _min, _max); }
         protected void PORT_SENSITIVITY(int sensitivity) { ioport_global.PORT_SENSITIVITY(m_globals.helper_configurer, sensitivity); }
         protected void PORT_KEYDELTA(int delta) { ioport_global.PORT_KEYDELTA(m_globals.helper_configurer, delta); }
+        protected void PORT_FULL_TURN_COUNT(u16 _count) { ioport_global.PORT_FULL_TURN_COUNT(m_globals.helper_configurer, _count); }
         protected void PORT_CUSTOM_MEMBER(string device, ioport_field_read_delegate callback) { ioport_global.PORT_CUSTOM_MEMBER(m_globals.helper_configurer, device, callback); }
-        protected void PORT_READ_LINE_DEVICE_MEMBER(string device, ioport_global.PORT_READ_LINE_DEVICE_MEMBER_delegate _member) { ioport_global.PORT_READ_LINE_DEVICE_MEMBER(m_globals.helper_configurer, device, _member); }
+        protected void PORT_READ_LINE_DEVICE_MEMBER(string device, Func<int> _member) { ioport_global.PORT_READ_LINE_DEVICE_MEMBER(m_globals.helper_configurer, device, _member); }
         public void PORT_DIPNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_DIPNAME(m_globals.helper_configurer, mask, default_, name); }
         public void PORT_DIPSETTING(ioport_value default_, string name) { ioport_global.PORT_DIPSETTING(m_globals.helper_configurer, default_, name); }
         public void PORT_DIPLOCATION(string location) { ioport_global.PORT_DIPLOCATION(m_globals.helper_configurer, location); }
@@ -727,11 +775,12 @@ namespace mame
 
 
         // m6502
-        protected static cpu_device M6502(machine_config mconfig, device_finder<cpu_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
+        protected static m6502_device M6502(machine_config mconfig, device_finder<m6502_device> finder, u32 clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
+        protected static m6502_device M6502(machine_config mconfig, device_finder<m6502_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
 
 
         // m6801
-        protected static cpu_device M6803(machine_config mconfig, device_finder<cpu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
+        protected static m6803_cpu_device M6803(machine_config mconfig, device_finder<m6803_cpu_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
 
 
         // m68705
@@ -740,8 +789,8 @@ namespace mame
 
         // machine
         protected const int DEBUG_FLAG_ENABLED = machine_global.DEBUG_FLAG_ENABLED;
-        protected static ListBase<T> auto_alloc_array<T>(running_machine m, UInt32 c) where T : new() { return machine_global.auto_alloc_array<T>(m, c); }
-        protected static ListBase<T> auto_alloc_array_clear<T>(running_machine m, UInt32 c) where T : new() { return machine_global.auto_alloc_array_clear<T>(m, c); }
+        protected static MemoryContainer<T> auto_alloc_array<T>(running_machine m, UInt32 c) where T : new() { return machine_global.auto_alloc_array<T>(m, c); }
+        protected static MemoryContainer<T> auto_alloc_array_clear<T>(running_machine m, UInt32 c) where T : new() { return machine_global.auto_alloc_array_clear<T>(m, c); }
 
 
         // mcs48
@@ -817,6 +866,12 @@ namespace mame
         }
 
 
+        // nl_factory
+        protected static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_ALIAS<chip>(string p_alias, string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL_ALIAS<chip>(p_alias, p_name, p_def_param); }
+        protected static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL<chip>(string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL<chip>(p_name, p_def_param); }
+        protected static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_NS<chip>(string ns, string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL_NS<chip>(ns, p_name, p_def_param); }
+
+
         // nl_setup
         protected void ALIAS(string alias, string name) { netlist.nl_setup_global.ALIAS(m_globals.helper_setup, alias, name); }
         protected void INCLUDE(string name) { netlist.nl_setup_global.INCLUDE(m_globals.helper_setup, name); }
@@ -826,8 +881,8 @@ namespace mame
         protected void PARAM(string name, double val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
         protected void PARAM(string name, string val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
         protected void SUBMODEL(string model, string name) { netlist.nl_setup_global.SUBMODEL(m_globals.helper_setup, model, name); }
-        protected void NETLIST_START(netlist.nlparse_t setup) { m_globals.helper_setup = setup;  netlist.nl_setup_global.NETLIST_START(); }
-        protected void NETLIST_END() { m_globals.helper_setup = null;  netlist.nl_setup_global.NETLIST_END(); }
+        protected void NETLIST_START(netlist.nlparse_t setup) { m_globals.helper_setup_push(setup);  netlist.nl_setup_global.NETLIST_START(); }
+        protected void NETLIST_END() { m_globals.helper_setup_pop();  netlist.nl_setup_global.NETLIST_END(); }
 
 
         // nld_4066
@@ -891,6 +946,7 @@ namespace mame
 
         // pokey
         protected static pokey_device POKEY(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
+        protected static pokey_device POKEY(machine_config mconfig, device_finder<pokey_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, pokey_device.POKEY, clock); }
 
 
         // render
@@ -929,19 +985,22 @@ namespace mame
         protected const u32 RES_NET_MONITOR_SANYO_EZV20 = resnet_global.RES_NET_MONITOR_SANYO_EZV20;
         protected const u32 RES_NET_VIN_MB7052 = resnet_global.RES_NET_VIN_MB7052;
         protected static int compute_res_net(int inputs, int channel, res_net_info di) { return resnet_global.compute_res_net(inputs, channel, di); }
-        protected static void compute_res_net_all(out std.vector<rgb_t> rgb, ListBytesPointer prom, res_net_decode_info rdi, res_net_info di) { resnet_global.compute_res_net_all(out rgb, prom, rdi, di); }
+        protected static void compute_res_net_all(out std.vector<rgb_t> rgb, Pointer<u8> prom, res_net_decode_info rdi, res_net_info di) { resnet_global.compute_res_net_all(out rgb, prom, rdi, di); }
         protected static double compute_resistor_weights(int minval, int maxval, double scaler, int count_1, int [] resistances_1, out double [] weights_1, int pulldown_1, int pullup_1, int count_2, int [] resistances_2, out double [] weights_2, int pulldown_2, int pullup_2, int count_3, int [] resistances_3, out double [] weights_3, int pulldown_3, int pullup_3 ) { return resnet_global.compute_resistor_weights(minval, maxval, scaler, count_1, resistances_1, out weights_1, pulldown_1, pullup_1, count_2, resistances_2, out weights_2, pulldown_2, pullup_2, count_3, resistances_3, out weights_3, pulldown_3, pullup_3); }
         protected static int combine_weights(double [] tab, int w0, int w1, int w2) { return resnet_global.combine_weights(tab, w0, w1, w2); }
         protected static int combine_weights(double [] tab, int w0, int w1) { return resnet_global.combine_weights(tab, w0, w1); }
 
 
         // romentry
+        protected const           UInt32 ROMREGION_INVERT = romentry_global.ROMREGION_INVERT;
         protected static readonly UInt32 ROMREGION_ERASE00 = romentry_global.ROMREGION_ERASE00;
         protected static readonly UInt32 ROMREGION_ERASEFF = romentry_global.ROMREGION_ERASEFF;
         protected static tiny_rom_entry ROM_END { get { return romentry_global.ROM_END; } }
         protected static tiny_rom_entry ROM_REGION(UInt32 length, string tag, UInt32 flags) { return romentry_global.ROM_REGION(length, tag, flags); }
         protected static tiny_rom_entry ROM_LOAD(string name, UInt32 offset, UInt32 length, string hash) { return romentry_global.ROM_LOAD(name, offset, length, hash); }
+        protected static tiny_rom_entry ROM_CONTINUE(u32 offset, u32 length) { return romentry_global.ROM_CONTINUE(offset, length); }
         protected static tiny_rom_entry ROM_FILL(UInt32 offset, UInt32 length, byte value) { return romentry_global.ROM_FILL(offset, length, value); }
+        protected static tiny_rom_entry ROM_LOAD16_BYTE(string name, u32 offset, u32 length, string hash) { return romentry_global.ROM_LOAD16_BYTE(name, offset, length, hash); }
         protected static tiny_rom_entry ROM_RELOAD(UInt32 offset, UInt32 length) { return romentry_global.ROM_RELOAD(offset, length); }
 
 
@@ -958,17 +1017,17 @@ namespace mame
 
 
         // screen
-        protected screen_device SCREEN(machine_config mconfig, string tag, screen_type_enum type)
+        protected static screen_device SCREEN(machine_config mconfig, string tag, screen_type_enum type)
         {
-            var screen = emu.detail.device_type_impl.op<screen_device>(mconfig, tag, screen_device.SCREEN, 0);
-            screen.screen_device_after_ctor(type);
-            return screen;
+            var device = emu.detail.device_type_impl.op<screen_device>(mconfig, tag, screen_device.SCREEN, 0);
+            device.screen_device_after_ctor(type);
+            return device;
         }
-        protected screen_device SCREEN(machine_config mconfig, device_finder<screen_device> finder, screen_type_enum type)
+        protected static screen_device SCREEN(machine_config mconfig, device_finder<screen_device> finder, screen_type_enum type)
         {
-            var screen = emu.detail.device_type_impl.op(mconfig, finder, screen_device.SCREEN, 0);
-            screen.screen_device_after_ctor(type);
-            return screen;
+            var device = emu.detail.device_type_impl.op(mconfig, finder, screen_device.SCREEN, 0);
+            device.screen_device_after_ctor(type);
+            return device;
         }
         protected const screen_type_enum SCREEN_TYPE_RASTER = screen_type_enum.SCREEN_TYPE_RASTER;
         protected const screen_type_enum SCREEN_TYPE_VECTOR = screen_type_enum.SCREEN_TYPE_VECTOR;
@@ -977,16 +1036,29 @@ namespace mame
         protected const screen_type_enum SCREEN_TYPE_INVALID = screen_type_enum.SCREEN_TYPE_INVALID;
 
 
+        // slapstic
+        protected static atari_slapstic_device SLAPSTIC(machine_config mconfig, device_finder<atari_slapstic_device> finder, int chipnum, bool m68k_mode)
+        {
+            var device = emu.detail.device_type_impl.op<atari_slapstic_device>(mconfig, finder, atari_slapstic_device.SLAPSTIC, 0);
+            device.atari_slapstic_device_after_ctor(chipnum, m68k_mode);
+            return device;
+        }
+
+
         // speaker
         protected static speaker_device SPEAKER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<speaker_device>(mconfig, tag, speaker_device.SPEAKER, 0); }
 
 
         // starfield
-        protected static starfield_05xx_device STARFIELD_05XX(machine_config mconfig, device_finder<starfield_05xx_device> finder, uint32_t clock) { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, 0); }
+        protected static starfield_05xx_device STARFIELD_05XX(machine_config mconfig, device_finder<starfield_05xx_device> finder, uint32_t clock) { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, clock); }
 
 
         // strformat
         public static string string_format(string format, params object [] args) { return strformat_global.string_format(format, args); }
+
+
+        // t11
+        protected static t11_device T11(machine_config mconfig, device_finder<t11_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
 
 
         // taitosjsec
@@ -999,12 +1071,27 @@ namespace mame
         protected const u8 TILE_FORCE_LAYER0 = tilemap_global.TILE_FORCE_LAYER0;
         protected const u32 TILEMAP_FLIPX = tilemap_global.TILEMAP_FLIPX;
         protected const u32 TILEMAP_FLIPY = tilemap_global.TILEMAP_FLIPY;
-        protected static void SET_TILE_INFO_MEMBER(ref tile_data tileinfo, u8 GFX, u32 CODE, u32 COLOR, u8 FLAGS) { tilemap_global.SET_TILE_INFO_MEMBER(ref tileinfo, GFX, CODE, COLOR, FLAGS); }
-        protected static int TILE_FLIPYX(int YX) { return tilemap_global.TILE_FLIPYX(YX); }
+        protected static u8 TILE_FLIPYX(int YX) { return tilemap_global.TILE_FLIPYX(YX); }
+        protected static tilemap_device TILEMAP(machine_config mconfig, device_finder<tilemap_device> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows)
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
+            device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows);
+            return device;
+        }
+        protected static tilemap_device TILEMAP(machine_config mconfig, device_finder<tilemap_device> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows, pen_t transpen)
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
+            device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows, transpen);
+            return device;
+        }
 
 
         // timer
         protected static timer_device TIMER(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, clock); }
+
+
+        // tms5220
+        protected static tms5220c_device TMS5220C(machine_config mconfig, device_finder<tms5220c_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
 
 
         // ui
@@ -1022,6 +1109,10 @@ namespace mame
         // watchdog
         protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
         protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, device_finder<watchdog_timer_device> finder) { return emu.detail.device_type_impl.op(mconfig, finder, watchdog_timer_device.WATCHDOG_TIMER, 0); }
+
+
+        // ym2151
+        protected static ym2151_device YM2151(machine_config mconfig, device_finder<ym2151_device> finder, XTAL clock) { return emu.detail.device_type_impl.op(mconfig, finder, ym2151_device.YM2151, clock); }
 
 
         // z80
@@ -1064,23 +1155,36 @@ namespace mame
 
 
         // c++ math.h
+        protected const double M_PI = Math.PI;
+        protected static float fabs(float arg) { return std.fabs(arg); }
+        protected static double fabs(double arg) { return std.fabs(arg); }
         protected static float floor(float x) { return std.floor(x); }
         protected static double floor(double x) { return std.floor(x); }
+        protected static float log(float arg) { return std.log(arg); }
+        protected static double log(double arg) { return std.log(arg); }
         protected static int lround(double x) { return std.lround(x); }
+        protected static float pow(float base_, float exponent) { return std.pow(base_, exponent); }
+        protected static double pow(double base_, double exponent) { return std.pow(base_, exponent); }
+        protected static float sin(float arg) { return std.sin(arg); }
+        protected static double sin(double arg) { return std.sin(arg); }
 
 
         // c++ stdio.h
-        protected static int memcmp<T>(ListBase<T> ptr1, ListBase<T> ptr2, UInt32 num) { return ptr1.compare(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
-        protected static int memcmp<T>(ListPointer<T> ptr1, ListPointer<T> ptr2, UInt32 num) { return ptr1.compare(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
-        protected static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { std.memcpy<T>(destination, source, num); }  //  void * destination, const void * source, size_t num );
-        protected static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { std.memcpy<T>(destination, source, num); }  //  void * destination, const void * source, size_t num );
+        protected static int memcmp<T>(MemoryContainer<T> ptr1, MemoryContainer<T> ptr2, UInt32 num) { return ptr1.CompareTo(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
+        protected static int memcmp<T>(Pointer<T> ptr1, Pointer<T> ptr2, UInt32 num) { return ptr1.CompareTo(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
+        protected static void memcpy<T>(MemoryContainer<T> destination, MemoryContainer<T> source, UInt32 num) { std.memcpy(destination, source, num); }  //  void * destination, const void * source, size_t num );
+        protected static void memcpy<T>(Pointer<T> destination, Pointer<T> source, UInt32 num) { std.memcpy(destination, source, num); }  //  void * destination, const void * source, size_t num );
+        protected static void memset<T>(MemoryContainer<T> destination, T value) { std.memset(destination, value); }
+        protected static void memset<T>(MemoryContainer<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
+        protected static void memset<T>(Pointer<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
         protected static void memset<T>(IList<T> destination, T value) { std.memset(destination, value, (UInt32)destination.Count); }
         protected static void memset<T>(IList<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
-        protected static void memset<T>(ListPointer<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
         protected static void memset<T>(T [,] destination, T value) { std.memset(destination, value); }
 
 
         // c++ string.h
+        protected static MemoryContainer<T> memmove<T>(MemoryContainer<T> destination, MemoryContainer<T> source, UInt32 num) { memcpy(destination, source, num); return destination; }
+        protected static Pointer<T> memmove<T>(Pointer<T> destination, Pointer<T> source, UInt32 num) { memcpy(destination, source, num); return destination; }
         protected static int strlen(string str) { return std.strlen(str); }
         protected static int strcmp(string str1, string str2) { return std.strcmp(str1, str2); }
         protected static int strncmp(string str1, string str2, int num) { return std.strncmp(str1, str2, num); }
@@ -1090,9 +1194,11 @@ namespace mame
     public static class std
     {
         // c++ algorithm
+        public static void fill<T>(MemoryContainer<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, T value) { std.memset(destination, value); }
+        public static void fill_n<T>(MemoryContainer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
+        public static void fill_n<T>(Pointer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
         public static void fill_n<T>(IList<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
-        public static void fill_n<T>(ListPointer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
         public static T find_if<T>(IEnumerable<T> list, Func<T, bool> pred) { foreach (var item in list) { if (pred(item)) return item; } return default;  }
         public static int max(int a, int b) { return Math.Max(a, b); }
         public static UInt32 max(UInt32 a, UInt32 b) { return Math.Max(a, b); }
@@ -1113,15 +1219,24 @@ namespace mame
         public static int abs(int arg) { return Math.Abs(arg); }
         public static float abs(float arg) { return Math.Abs(arg); }
         public static double abs(double arg) { return Math.Abs(arg); }
+        public static float cos(float arg) { return (float)Math.Cos(arg); }
+        public static double cos(double arg) { return Math.Cos(arg); }
         public static double exp(double x) { return Math.Exp(x); }
         public static float fabs(float arg) { return Math.Abs(arg); }
         public static double fabs(double arg) { return Math.Abs(arg); }
         public static float floor(float arg) { return (float)Math.Floor(arg); }
         public static double floor(double arg) { return Math.Floor(arg); }
+        public static float log(float arg) { return (float)Math.Log(arg); }
+        public static double log(double arg) { return Math.Log(arg); }
         public static float pow(float base_, float exponent) { return (float)Math.Pow(base_, exponent); }
+        public static double pow(double base_, double exponent) { return Math.Pow(base_, exponent); }
         public static int lround(double x) { return (int)Math.Round(x, MidpointRounding.AwayFromZero); }
+        public static float sin(float arg) { return (float)Math.Sin(arg); }
+        public static double sin(double arg) { return Math.Sin(arg); }
         public static float sqrt(float arg) { return (float)Math.Sqrt(arg); }
         public static double sqrt(double arg) { return Math.Sqrt(arg); }
+        public static float trunc(float arg) { return (float)Math.Truncate(arg); }
+        public static double trunc(double arg) { return Math.Truncate(arg); }
 
 
         // c++ cstdlib
@@ -1130,11 +1245,13 @@ namespace mame
 
 
         // c++ cstring
-        public static void memcpy<T>(ListBase<T> destination, ListBase<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
-        public static void memcpy<T>(ListPointer<T> destination, ListPointer<T> source, UInt32 num) { destination.copy(0, 0, source, (int)num); }  //  void * destination, const void * source, size_t num );
+        public static void memcpy<T>(MemoryContainer<T> destination, MemoryContainer<T> source, UInt32 num) { source.CopyTo(0, destination, 0, (int)num); }  //void * destination, const void * source, size_t num );
+        public static void memcpy<T>(Pointer<T> destination, Pointer<T> source, UInt32 num) { source.CopyTo(0, destination, 0, (int)num); }  //void * destination, const void * source, size_t num );
+        public static void memset<T>(MemoryContainer<T> destination, T value) { destination.Fill(value); }
+        public static void memset<T>(MemoryContainer<T> destination, T value, UInt32 num) { destination.Fill(value, (int)num); }
+        public static void memset<T>(Pointer<T> destination, T value, UInt32 num) { destination.Fill(value, (int)num); }
         public static void memset<T>(IList<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
         public static void memset<T>(IList<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
-        public static void memset<T>(ListPointer<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
         public static void memset<T>(T [,] destination, T value) { for (int i = 0; i < destination.GetLength(0); i++) for (int j = 0; j < destination.GetLength(1); j++) destination[i, j] = value; }
         public static int strchr(string str, char character) { return str.IndexOf(character); }
         public static int strcmp(string str1, string str2) { return string.Compare(str1, str2); }
@@ -1144,7 +1261,7 @@ namespace mame
 
 
         // c++ array
-        public class array<T> : IEnumerable<T>
+        public class array<T> : IList<T>
         {
             T [] m_data;
 
@@ -1152,7 +1269,17 @@ namespace mame
             public array(int N) { m_data = new T[N]; }
 
 
-            // IEnumerable
+            // IList
+            public int IndexOf(T value) { return Array.IndexOf(m_data, value); }
+            void IList<T>.Insert(int index, T value) { throw new emu_unimplemented(); }
+            void IList<T>.RemoveAt(int index) { throw new emu_unimplemented(); }
+            void ICollection<T>.Add(T value) { throw new emu_unimplemented(); }
+            bool ICollection<T>.Contains(T value) { throw new emu_unimplemented(); }
+            void ICollection<T>.Clear() { throw new emu_unimplemented(); }
+            void ICollection<T>.CopyTo(T [] array, int index) { throw new emu_unimplemented(); }
+            bool ICollection<T>.Remove(T value) { throw new emu_unimplemented(); }
+            public int Count { get { return m_data.Length; } }
+            bool ICollection<T>.IsReadOnly { get { throw new emu_unimplemented(); } }
             IEnumerator IEnumerable.GetEnumerator() { return m_data.GetEnumerator(); }
             IEnumerator<T> IEnumerable<T>.GetEnumerator() { return ((IEnumerable<T>)m_data).GetEnumerator(); }
 
@@ -1202,6 +1329,7 @@ namespace mame
 
 
             public int size() { return m_data.Length; }
+            public void fill(T value) { std.fill(this, value); }
         }
 
 
@@ -1287,7 +1415,7 @@ namespace mame
             // std::map functions
             public bool emplace(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
             public void erase(K key) { m_dictionary.Remove(key); }
-            public V find(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default(V); }
+            public V find(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default; }
             public int size() { return m_dictionary.Count; }
         }
 
@@ -1390,7 +1518,25 @@ namespace mame
             IEnumerator<KeyValuePair<K, V>> IEnumerable<KeyValuePair<K, V>>.GetEnumerator() { return m_dictionary.GetEnumerator(); }
 
 
-            public V this[K key] { get { return m_dictionary[key]; } set { m_dictionary[key] = value; } }
+            // this behavior matches std::unordered_map [] operator, except it doesn't new() the object, but uses default instead.
+            // this can cause some unexpected issues.  see models_t.value_str() for example
+            public V this[K key]
+            {
+                get
+                {
+                    V value;
+                    if (m_dictionary.TryGetValue(key, out value))
+                        return value;
+
+                    value = default;
+                    m_dictionary.Add(key, value);
+                    return value;
+                }
+                set
+                {
+                    m_dictionary[key] = value;
+                }
+            }
 
 
             // std::unordered_map functions
@@ -1400,6 +1546,7 @@ namespace mame
             public bool erase(K key) { return m_dictionary.Remove(key); }
             public V find(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default; }
             public bool insert(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
+            public bool insert(std.pair<K, V> keyvalue) { return insert(keyvalue.first, keyvalue.second); }
             public int size() { return m_dictionary.Count; }
         }
 
@@ -1429,28 +1576,28 @@ namespace mame
         // c++ utility
         public static void swap<T>(ref T val1, ref T val2)
         {
-            global_object.assert(typeof(T).IsValueType);
+            global_object.assert(typeof(T).GetTypeInfo().IsValueType);
 
             T temp = val1;
             val1 = val2;
             val2 = temp;
         }
 
-        public static KeyValuePair<T, V> make_pair<T, V>(T t, V v) { return new KeyValuePair<T, V>(t, v); }
+        public static std.pair<T, V> make_pair<T, V>(T t, V v) { return new std.pair<T, V>(t, v); }
 
 
         // c++ vector
-        public class vector<T> : ListBase<T>
+        public class vector<T> : MemoryContainer<T>
         {
             public vector() : base() { }
             // this is different behavior as List<T> so that it matches how std::vector works
-            public vector(int capacity, T data = default(T)) : base(capacity) { resize(capacity, data); }
-            public vector(u32 capacity, T data = default(T)) : this((int)capacity, data) { }
+            public vector(int count, T data = default) : base(count) { resize(count, data); }
+            public vector(u32 count, T data = default) : this((int)count, data) { }
             public vector(IEnumerable<T> collection) : base(collection) { }
 
 
             // std::vector functions
-            public T back() { return empty() ? default(T) : this[Count - 1]; }
+            public T back() { return empty() ? default : this[Count - 1]; }
             public void clear() { Clear(); }
             public void emplace(int index, T item) { Insert(index, item); }
             public void emplace_back(T item) { Add(item); }
@@ -1460,61 +1607,155 @@ namespace mame
             public void pop_back() { if (Count > 0) { RemoveAt(Count - 1); } }
             public void push_back(T item) { Add(item); }
             public void push_front(T item) { Insert(0, item); }
+            public void resize(int count, T data = default) { Resize(count, data); }
             public void reserve(int value) { Capacity = value; }
             public int size() { return Count; }
         }
     }
 
 
-    // this is a re-implementation of C# List so that it can be interchanged with RawBuffer
-    public class ListBase<T> : global_object, IEnumerable<T>, IList<T>//, ICollection<T>
+    // this wraps a Memory<T> struct so that bulk operations can be done efficiently
+    // std.vector and MemoryU8 derive from this.
+    public class MemoryContainer<T> : IList<T>
     {
-        List<T> m_list;
+        class MemoryContainerEnumerator<T> : IEnumerator<T>
+        {
+            MemoryContainer<T> m_list;
+            int m_index;
+            int m_endIndex;
+ 
+            public MemoryContainerEnumerator(MemoryContainer<T> list)
+            {
+                m_list = list;
+                m_index = -1;
+                m_endIndex = list.Count;
+            }
+ 
+            public void Dispose() { }
+            public bool MoveNext() { if (m_index < m_endIndex) { m_index++; return m_index < m_endIndex; } return false; }
+            object IEnumerator.Current { get { return null; } }
+            public T Current
+            {
+                get
+                {
+                    if (m_index < 0) throw new InvalidOperationException(string.Format("ListBaseEnumerator() - {0}", m_index));
+                    if (m_index >= m_endIndex) throw new InvalidOperationException(string.Format("ListBaseEnumerator() - {0}", m_index));
+                    return m_list[m_index];
+                }
+            }
+            public void Reset() { m_index = -1; }
+        }
 
 
-        public ListBase() { m_list = new List<T>(); }
-        public ListBase(int capacity) { m_list = new List<T>(capacity); }
-        public ListBase(IEnumerable<T> collection) { m_list = new List<T>(collection); }
+        T [] m_data;
+        Memory<T> m_memory;
+        int m_actualLength = 0;
 
 
-        // IEnumerable
+        public MemoryContainer() : this(0) { }
+        public MemoryContainer(int capacity, bool allocate = false) { m_data = new T [capacity]; m_memory = new Memory<T>(m_data); if (allocate) Resize(capacity); }
+        public MemoryContainer(IEnumerable<T> collection) : this() { foreach (var item in collection) Add(item); }
 
-        public virtual IEnumerator<T> GetEnumerator() { return m_list.GetEnumerator(); }
+
+        // IList
+
+        public virtual T this[int index] { get { return m_data[index]; } set { m_data[index] = value; } }
+
+        public virtual int IndexOf(T item) { return Array.IndexOf(m_data, item, 0, Count); }
+        public virtual void Insert(int index, T item)
+        {
+            var newData = m_data;
+            var newMemory = m_memory;
+            if (Count + 1 > Capacity)
+            {
+                int newSize = Math.Min(Count + 1024, (Count + 1) * 2);  // cap the growth
+                newData = new T [newSize];
+                newMemory = new Memory<T>(newData);
+                if (Capacity > 0)
+                    m_memory.Slice(0, Math.Min(index + 1, Count)).CopyTo(newMemory.Slice(0, Math.Min(index + 1, Count)));  // copy everything before index
+            }
+            if (Capacity > 0 && index < Count)
+                m_memory.Slice(index, Count - index).CopyTo(newMemory.Slice(index + 1));  // copy everything after index
+            newData[index] = item;
+            m_data = newData;
+            m_memory = newMemory;
+            m_actualLength++;
+        }
+        public virtual void RemoveAt(int index) { RemoveRange(index, 1); }
+        public virtual void Add(T item)
+        {
+            if (Count + 1 > Capacity)
+            {
+                int newSize = Math.Min(Count + 1024, (Count + 1) * 2);  // cap the growth
+                var newData = new T [newSize];
+                var newMemory = new Memory<T>(newData);
+                m_memory.CopyTo(newMemory);
+                m_data = newData;
+                m_memory = newMemory;
+            }
+
+            m_data[m_actualLength] = item;
+            m_actualLength++;
+        }
+        public virtual void Clear()
+        {
+            m_data = new T [0];
+            m_memory = new Memory<T>(m_data);
+            m_actualLength = 0;
+        }
+        public virtual bool Contains(T item) { return IndexOf(item) != -1; }
+        public virtual void CopyTo(T[] array, int arrayIndex) { m_data.CopyTo(array, arrayIndex); }
+        public virtual bool Remove(T item)
+        {
+            var index = IndexOf(item);
+            if (index == -1)
+                return false;
+
+            RemoveAt(index);
+            return true;
+        }
+        public virtual int Count { get { return m_actualLength; } }
+        bool ICollection<T>.IsReadOnly { get { return ((ICollection<T>)m_data).IsReadOnly; } }
+        public virtual IEnumerator<T> GetEnumerator() { return new MemoryContainerEnumerator<T>(this); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
 
-        public virtual T this[int index] { get { return m_list[index]; } set { m_list[index] = value; } }
+        // List
 
-        public virtual int Count { get { return m_list.Count; } }
-        public virtual int Capacity { get { return m_list.Capacity; } set { m_list.Capacity = value; } }
-        bool ICollection<T>.IsReadOnly { get { return ((ICollection<T>)m_list).IsReadOnly; } }
+        public virtual int Capacity { get { return m_data.Length; } set { } }
+        public virtual void CopyTo(int index, T[] array, int arrayIndex, int count) { CopyTo(index, new Span<T>(array, arrayIndex, count), count); }
+        public virtual int RemoveAll(Predicate<T> match)
+        {
+            int count = 0;
+            int index = Array.FindIndex(m_data, 0, Count, match);
+            while (index != -1)
+            {
+                RemoveAt(index);
+                count++;
+                index = Array.FindIndex(m_data, 0, Count, match);
+            }
+            return count;
+        }
+        public virtual void RemoveRange(int index, int count)
+        {
+            if (index + count < Count)
+                m_memory.Slice(index + count).CopyTo(m_memory.Slice(index));
+
+            m_actualLength -= count;
+        }
+        public virtual void Sort(Comparison<T> comparison) { Array.Sort(m_data, 0, Count, Comparer<T>.Create(comparison)); }
+        public virtual void Sort() { Array.Sort(m_data, 0, Count); }
+        public virtual void Sort(IComparer<T> comparer) { Array.Sort(m_data, 0, Count, comparer); }
+        public virtual T[] ToArray() { T [] newData = new T [Count]; Array.Copy(m_data, newData, Count); return newData; }
 
 
-        public virtual void Add(T item) { m_list.Add(item); }
-        public virtual void Clear() { m_list.Clear(); }
-        public virtual bool Contains(T item) { return m_list.Contains(item); }
-        public virtual void CopyTo(T[] array, int arrayIndex) { m_list.CopyTo(array, arrayIndex); }
-        public virtual void CopyTo(int index, T[] array, int arrayIndex, int count) { m_list.CopyTo(index, array, arrayIndex, count); }
-        public virtual T Find(Predicate<T> match) { return m_list.Find(match); }
-        public virtual int IndexOf(T item, int index, int count) { return m_list.IndexOf(item, index, count); }
-        public virtual int IndexOf(T item, int index) { return m_list.IndexOf(item, index); }
-        public virtual int IndexOf(T item) { return m_list.IndexOf(item); }
-        public virtual void Insert(int index, T item) { m_list.Insert(index, item); }
-        public virtual bool Remove(T item) { return m_list.Remove(item); }
-        public virtual int RemoveAll(Predicate<T> match) { return m_list.RemoveAll(match); }
-        public virtual void RemoveAt(int index) { m_list.RemoveAt(index); }
-        public virtual void RemoveRange(int index, int count) { m_list.RemoveRange(index, count); }
-        public virtual void Sort(Comparison<T> comparison) { m_list.Sort(comparison); }
-        public virtual void Sort() { m_list.Sort(); }
-        public virtual void Sort(IComparer<T> comparer) { m_list.Sort(comparer); }
-        public virtual T[] ToArray() { return m_list.ToArray(); }
-
+        public Memory<T> memory { get { return m_memory; } }
 
         // UInt32 helper
         public virtual T this[u32 index] { get { return this[(int)index]; } set { this[(int)index] = value; } }
 
 
-        public virtual bool compare(ListBase<T> right, int count)
+        public virtual bool CompareTo(MemoryContainer<T> right, int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -1525,28 +1766,28 @@ namespace mame
         }
 
 
-        public virtual void copy(int destStart, int srcStart, ListBase<T> src, int count)
+        public virtual void CopyTo(int srcStart, MemoryContainer<T> dest, int destStart, int count)
         {
-            if (this != src)
-            {
-                for (int i = 0; i < count; i++)
-                    this[destStart + i] = src[srcStart + i];
-            }
-            else
-            {
-                // handle overlap very inefficiently
-                T [] m_temp = new T[count];
-                src.CopyTo(srcStart, m_temp, 0, count);
-                for (int i = 0; i < count; i++)
-                    this[destStart + i] = m_temp[i];
-            }
+            CopyTo(srcStart, dest.m_memory.Slice(destStart, count).Span, count);
         }
 
 
-        public virtual void resize(int count, T data = default(T))
+        public virtual void CopyTo(int srcStart, Span<T> dest, int count)
         {
-            emucore_global.assert(typeof(T).IsValueType ? true : (data == null || data.Equals(default(T))) ? true : false);  // this function doesn't do what you'd expect for ref classes since it doesn't new() for each item.  Manually Add() in this case.
+            m_memory.Slice(srcStart, count).Span.CopyTo(dest);
+        }
 
+
+        public virtual void Resize(int count) { ResizeInternal(count, default); }
+        public virtual void Resize(int count, T data)
+        {
+            global_object.assert(typeof(T).GetTypeInfo().IsValueType ? true : (data == null || data.Equals(default)) ? true : false);  // this function doesn't do what you'd expect for ref classes since it doesn't new() for each item.  Manually Add() in this case.
+            ResizeInternal(count, data);
+        }
+
+
+        protected virtual void ResizeInternal(int count, T data)
+        {
             int current = Count;
             if (count < current)
             {
@@ -1563,45 +1804,62 @@ namespace mame
         }
 
 
-        public virtual void set(T value) { set(value, 0, Count); }
-        public virtual void set(T value, int count) { set(value, 0, count); }
-        public virtual void set(T value, int start, int count)
+        public virtual void Fill(T value) { Fill(value, 0, Count); }
+        public virtual void Fill(T value, int count) { Fill(value, 0, count); }
+        public virtual void Fill(T value, int start, int count)
         {
-            for (int i = start; i < start + count; i++)
-                this[i] = value;
+            var valueType = typeof(T).GetTypeInfo().IsValueType ? true : ((value == null || value.Equals(default)) ? true : false);
+            if (valueType)
+            {
+                m_memory.Slice(start, count).Span.Fill(value);
+            }
+            else
+            {
+                for (int i = start; i < start + count; i++)
+                    this[i] = value;
+            }
+        }
+        public virtual void Fill(Func<T> creator)
+        {
+            for (int i = 0; i < Count; i++)
+                this[i] = creator();
         }
     }
 
 
-    public class ListPointer<T>
+    // this attempts to act as a C++ pointer.  It has a MemoryContainer and an offset into that container.
+    public class Pointer<T>
     {
-        protected ListBase<T> m_list;
+        protected MemoryContainer<T> m_memory;
         protected int m_offset;
 
 
-        public ListPointer() { }
-        public ListPointer(ListBase<T> list, int offset = 0) { m_list = list; m_offset = offset; }
-        public ListPointer(ListPointer<T> listPtr, int offset = 0) : this(listPtr.m_list, listPtr.m_offset + offset) { }
+        public Pointer() { }
+        public Pointer(MemoryContainer<T> memory, int offset = 0) { m_memory = memory; m_offset = offset; }
+        public Pointer(Pointer<T> pointer, int offset = 0) : this(pointer.m_memory, pointer.m_offset + offset) { }
 
 
-        public virtual ListBase<T> Buffer { get { return m_list; } }
+        public virtual MemoryContainer<T> Buffer { get { return m_memory; } }
         public virtual int Offset { get { return m_offset; } }
-        public virtual int Count { get { return m_list.Count; } }
+        public virtual int Count { get { return m_memory.Count; } }
 
 
-        public virtual T this[int i] { get { return m_list[m_offset + i]; } set { m_list[m_offset + i] = value; } }
-        public virtual T this[UInt32 i] { get { return m_list[m_offset + (int)i]; } set { m_list[m_offset + (int)i] = value; } }
+        public virtual T this[int i] { get { return m_memory[m_offset + i]; } set { m_memory[m_offset + i] = value; } }
+        public virtual T this[UInt32 i] { get { return m_memory[m_offset + (int)i]; } set { m_memory[m_offset + (int)i] = value; } }
 
 
-        public static ListPointer<T> operator +(ListPointer<T> left, int right) { return new ListPointer<T>(left, right); }
-        public static ListPointer<T> operator +(ListPointer<T> left, UInt32 right) { return new ListPointer<T>(left, (int)right); }
-        public static ListPointer<T> operator ++(ListPointer<T> left) { left.m_offset++; return left; }
-        public static ListPointer<T> operator -(ListPointer<T> left, int right) { return new ListPointer<T>(left, -right); }
-        public static ListPointer<T> operator -(ListPointer<T> left, UInt32 right) { return new ListPointer<T>(left, -(int)right); }
-        public static ListPointer<T> operator --(ListPointer<T> left) { left.m_offset--; return left; }
+        public static Pointer<T> operator +(Pointer<T> left, int right) { return new Pointer<T>(left, right); }
+        public static Pointer<T> operator +(Pointer<T> left, UInt32 right) { return new Pointer<T>(left, (int)right); }
+        public static Pointer<T> operator ++(Pointer<T> left) { left.m_offset++; return left; }
+        public static Pointer<T> operator -(Pointer<T> left, int right) { return new Pointer<T>(left, -right); }
+        public static Pointer<T> operator -(Pointer<T> left, UInt32 right) { return new Pointer<T>(left, -(int)right); }
+        public static Pointer<T> operator --(Pointer<T> left) { left.m_offset--; return left; }
 
 
-        public virtual bool compare(ListPointer<T> right, int count)
+        public virtual T op { get { return this[0]; } set { this[0] = value; } }
+
+
+        public virtual bool CompareTo(Pointer<T> right, int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -1611,369 +1869,195 @@ namespace mame
             return true;
         }
 
-        public virtual void copy(int destStart, int srcStart, ListPointer<T> src, int count) { m_list.copy(m_offset + destStart, src.m_offset + srcStart, src.m_list, count); }
+        public virtual void CopyTo(int srcStart, Pointer<T> dest, int destStart, int count) { m_memory.CopyTo(m_offset + srcStart, dest.Buffer, dest.m_offset + destStart, count); }
+        public virtual void CopyTo(int srcStart, Span<T> span, int count) { m_memory.CopyTo(srcStart, span, count); }
 
-        public virtual void set(T value, int count) { set(value, 0, count); }
-        public virtual void set(T value, int start, int count) { m_list.set(value, m_offset + start, count); }
+        public virtual void Fill(T value, int count) { Fill(value, 0, count); }
+        public virtual void Fill(T value, int start, int count) { m_memory.Fill(value, m_offset + start, count); }
     }
 
 
-    public class ListPointerRef<T>
+    public class PointerRef<T>
     {
-        public ListPointer<T> m_listPtr;
+        public Pointer<T> m_pointer;
 
-        public ListPointerRef() { }
-        public ListPointerRef(ListPointer<T> listPtr) { m_listPtr = listPtr; }
+        public PointerRef() { }
+        public PointerRef(Pointer<T> pointer) { m_pointer = pointer; }
     }
 
 
-    public class ListBytesPointerRef
+    public static class PointerU8Extension
     {
-        public ListBytesPointer m_listPtr;
+        //public static PointerU8 operator +(PointerU8 left, int right) { return new PointerU8(left, right); }
+        //public static PointerU8 operator +(PointerU8 left, UInt32 right) { return new PointerU8(left, (int)right); }
+        //public static PointerU8 operator ++(PointerU8 left) { left.m_offset++; return left; }
+        //public static PointerU8 operator -(PointerU8 left, int right) { return new PointerU8(left, -right); }
+        //public static PointerU8 operator -(PointerU8 left, UInt32 right) { return new PointerU8(left, -(int)right); }
+        //public static PointerU8 operator --(PointerU8 left) { left.m_offset--; return left; }
 
-        public ListBytesPointerRef() { }
-        public ListBytesPointerRef(ListBytesPointer listPtr) { m_listPtr = listPtr; }
+        // offset parameter is based on unit size for each function, not based on byte size.  eg, SetUInt16 parameter offset16 is in uint16 units
+        public static void SetUInt16(this Pointer<byte> pointer, int offset16, UInt16 value) { pointer.Buffer.SetUInt16Offs8(pointer.Offset + (offset16 << 1), value); }
+        public static void SetUInt32(this Pointer<byte> pointer, int offset32, UInt32 value) { pointer.Buffer.SetUInt32Offs8(pointer.Offset + (offset32 << 2), value); }
+        public static void SetUInt64(this Pointer<byte> pointer, int offset64, UInt64 value) { pointer.Buffer.SetUInt64Offs8(pointer.Offset + (offset64 << 3), value); }
+
+        // offset parameter is based on unit size for each function, not based on byte size.  eg, GetUInt16 parameter offset16 is in uint16 units
+        public static UInt16 GetUInt16(this Pointer<byte> pointer, int offset16) { return pointer.Buffer.GetUInt16Offs8(pointer.Offset + (offset16 << 1)); }
+        public static UInt32 GetUInt32(this Pointer<byte> pointer, int offset32) { return pointer.Buffer.GetUInt32Offs8(pointer.Offset + (offset32 << 2)); }
+        public static UInt64 GetUInt64(this Pointer<byte> pointer, int offset64) { return pointer.Buffer.GetUInt64Offs8(pointer.Offset + (offset64 << 3)); }
+
+        public static bool CompareTo(this Pointer<byte> pointer, string compareTo) { return pointer.CompareTo(0, compareTo); }
+        public static bool CompareTo(this Pointer<byte> pointer, int startOffset, string compareTo) { return pointer.CompareTo(startOffset, compareTo.ToCharArray()); }
+        public static bool CompareTo(this Pointer<byte> pointer, int startOffset, char [] compareTo) { return pointer.Buffer.CompareTo(startOffset, compareTo); }
+
+        public static string ToString(this Pointer<byte> pointer, int length) { return pointer.ToString(length); }
+        public static string ToString(this Pointer<byte> pointer, int startOffset, int length) { return pointer.Buffer.ToString(startOffset, length); }
     }
 
 
-    public class RawBufferPointer : ListBytesPointer
+    // use these derived pointer classes when you need to do operations on a Pointer with a different base type
+    // eg, note the [] overloads use the type it designates.
+    // note the get/set functions for operating on the data as if it's a different type.
+    // see PointerU16, PointerU32, PointerU64
+    public class PointerU16 : Pointer<byte>
     {
-        public RawBufferPointer() : base() { }
-        public RawBufferPointer(RawBuffer list, int offset = 0) : base(list, offset) { }
-        public RawBufferPointer(RawBufferPointer listPtr, int offset = 0) : base(listPtr, offset) { }
+        public PointerU16() : base() { }
+        public PointerU16(MemoryContainer<byte> list, int offset16 = 0) : base(list, offset16 << 1) { }
+        public PointerU16(Pointer<byte> listPtr, int offset16 = 0) : base(listPtr, offset16 << 1) { }
 
-        public new byte this[int i] { get { return get_uint8(i); } set { set_uint8(i, value); } }
-        public new byte this[UInt32 i] { get { return get_uint8((int)i); } set { set_uint8((int)i, value); } }
+        public new UInt16 this[int i] { get { return this.GetUInt16(i); } set { this.SetUInt16(i, value); } }
+        public new UInt16 this[UInt32 i] { get { return this.GetUInt16((int)i); } set { this.SetUInt16((int)i, value); } }
 
-        public new RawBuffer Buffer { get { return (RawBuffer)m_list; } }
+        public static PointerU16 operator +(PointerU16 left, int right) { return new PointerU16(left, right); }
+        public static PointerU16 operator +(PointerU16 left, UInt32 right) { return new PointerU16(left, (int)right); }
+        public static PointerU16 operator ++(PointerU16 left) { left.m_offset += 2; return left; }
+        public static PointerU16 operator -(PointerU16 left, int right) { return new PointerU16(left, -right); }
+        public static PointerU16 operator -(PointerU16 left, UInt32 right) { return new PointerU16(left, -(int)right); }
+        public static PointerU16 operator --(PointerU16 left) { left.m_offset -= 2; return left; }
+    }
 
-        public static RawBufferPointer operator +(RawBufferPointer left, int right) { return new RawBufferPointer(left, right); }
-        public static RawBufferPointer operator +(RawBufferPointer left, UInt32 right) { return new RawBufferPointer(left, (int)right); }
-        public static RawBufferPointer operator ++(RawBufferPointer left) { left.m_offset++; return left; }
-        public static RawBufferPointer operator -(RawBufferPointer left, int right) { return new RawBufferPointer(left, -right); }
-        public static RawBufferPointer operator -(RawBufferPointer left, UInt32 right) { return new RawBufferPointer(left, -(int)right); }
-        public static RawBufferPointer operator --(RawBufferPointer left) { left.m_offset--; return left; }
+    public class PointerU32 : Pointer<byte>
+    {
+        public PointerU32() : base() { }
+        public PointerU32(MemoryContainer<byte> list, int offset32 = 0) : base(list, offset32 << 2) { }
+        public PointerU32(Pointer<byte> listPtr, int offset32 = 0) : base(listPtr, offset32 << 2) { }
 
-        // set the unit value at the current set offset, using an offset in byte units
-        //public void set_uint8_offs8(int offset8, byte value) { ((RawBuffer)m_list).set_uint8(m_offset + offset8, value); }
-        //public void set_uint16_offs8(int offset8, UInt16 value) { ((RawBuffer)m_list).set_uint16((m_offset / 2) + (offset8 / 2), value); }
-        //public void set_uint32_offs8(int offset8, UInt32 value) { ((RawBuffer)m_list).set_uint32((m_offset / 4) + (offset8 / 4), value); }
-        //public void set_uint64_offs8(int offset8, UInt64 value) { ((RawBuffer)m_list).set_uint64((m_offset / 8) + (offset8 / 8), value); }
-        // offset parameter is based on unit size for each function, not based on byte size.  eg, set_uint16 offset is in uint16 units
-        // Note the different behavior of set_uint16_offs8() vs set_uint16()
-        public void set_uint8(int offset8, byte value) { ((RawBuffer)m_list).set_uint8(m_offset + offset8, value); }
-        public void set_uint16(int offset16, UInt16 value) { ((RawBuffer)m_list).set_uint16((m_offset / 2) + offset16, value); }
-        public void set_uint32(int offset32, UInt32 value) { ((RawBuffer)m_list).set_uint32((m_offset / 4) + offset32, value); }
-        public void set_uint64(int offset64, UInt64 value) { ((RawBuffer)m_list).set_uint64((m_offset / 8) + offset64, value); }
+        public new UInt32 this[int i] { get { return this.GetUInt32(i); } set { this.SetUInt32(i, value); } }
+        public new UInt32 this[UInt32 i] { get { return this.GetUInt32((int)i); } set { this.SetUInt32((int)i, value); } }
 
-        // get the unit value at the current set offset, using an offset in byte units
-        //public byte get_uint8_offs8(int offset8) { return ((RawBuffer)m_list).get_uint8(m_offset + offset8); }
-        //public UInt16 get_uint16_offs8(int offset8) { return ((RawBuffer)m_list).get_uint16((m_offset / 2) + (offset8 / 2)); }
-        //public UInt32 get_uint32_offs8(int offset8) { return ((RawBuffer)m_list).get_uint32((m_offset / 4) + (offset8 / 4)); }
-        //public UInt64 get_uint64_offs8(int offset8) { return ((RawBuffer)m_list).get_uint64((m_offset / 8) + (offset8 / 8)); }
-        // offset parameter is based on unit size for each function, not based on byte size.  eg, get_uint16 offset is in uint16 units
-        // Note the different behavior of get_uint16_offs8() vs get_uint16()
-        public byte get_uint8(int offset8) { return ((RawBuffer)m_list).get_uint8(m_offset + offset8); }
-        public UInt16 get_uint16(int offset16) { return ((RawBuffer)m_list).get_uint16((m_offset / 2) + offset16); }
-        public UInt32 get_uint32(int offset32) { return ((RawBuffer)m_list).get_uint32((m_offset / 4) + offset32); }
-        public UInt64 get_uint64(int offset64) { return ((RawBuffer)m_list).get_uint64((m_offset / 8) + offset64); }
+        public static PointerU32 operator +(PointerU32 left, int right) { return new PointerU32(left, right); }
+        public static PointerU32 operator +(PointerU32 left, UInt32 right) { return new PointerU32(left, (int)right); }
+        public static PointerU32 operator ++(PointerU32 left) { left.m_offset += 4; return left; }
+        public static PointerU32 operator -(PointerU32 left, int right) { return new PointerU32(left, -right); }
+        public static PointerU32 operator -(PointerU32 left, UInt32 right) { return new PointerU32(left, -(int)right); }
+        public static PointerU32 operator --(PointerU32 left) { left.m_offset -= 4; return left; }
+    }
 
-        public bool equals(string compareTo) { return equals(0, compareTo); }
-        public bool equals(int startOffset, string compareTo) { return equals(startOffset, compareTo.ToCharArray()); }
-        public bool equals(int startOffset, char [] compareTo) { return ((RawBuffer)m_list).equals(startOffset, compareTo); }
+    public class PointerU64 : Pointer<byte>
+    {
+        public PointerU64() : base() { }
+        public PointerU64(MemoryContainer<byte> list, int offset64 = 0) : base(list, offset64 << 3) { }
+        public PointerU64(Pointer<byte> listPtr, int offset64 = 0) : base(listPtr, offset64 << 3) { }
 
-        public string get_string(int length) { return get_string(length); }
-        public string get_string(int startOffset, int length) { return ((RawBuffer)m_list).get_string(startOffset, length); }
+        public new UInt64 this[int i] { get { return this.GetUInt64(i); } set { this.SetUInt64(i, value); } }
+        public new UInt64 this[UInt32 i] { get { return this.GetUInt64((int)i); } set { this.SetUInt64((int)i, value); } }
+
+        public static PointerU64 operator +(PointerU64 left, int right) { return new PointerU64(left, right); }
+        public static PointerU64 operator +(PointerU64 left, UInt32 right) { return new PointerU64(left, (int)right); }
+        public static PointerU64 operator ++(PointerU64 left) { left.m_offset += 8; return left; }
+        public static PointerU64 operator -(PointerU64 left, int right) { return new PointerU64(left, -right); }
+        public static PointerU64 operator -(PointerU64 left, UInt32 right) { return new PointerU64(left, -(int)right); }
+        public static PointerU64 operator --(PointerU64 left) { left.m_offset -= 8; return left; }
     }
 
 
-    public class UInt16BufferPointer : RawBufferPointer
+    // the usage of this should be when you have a flat piece of memory and intend to work on it with different types
+    // eg, a byte array that you cast to UInt32 and do operations.
+    // See PointerU8, PointerU16, etc
+    public static class MemoryU8Extension
     {
-        public UInt16BufferPointer() : base() { }
-        public UInt16BufferPointer(RawBuffer list, int offset = 0) : base(list, offset * 2) { }
-        public UInt16BufferPointer(RawBufferPointer listPtr, int offset = 0) : base(listPtr, offset * 2) { }
-
-        public new UInt16 this[int i] { get { return get_uint16(i); } set { set_uint16(i, value); } }
-        public new UInt16 this[UInt32 i] { get { return get_uint16((int)i); } set { set_uint16((int)i, value); } }
-
-        public static UInt16BufferPointer operator +(UInt16BufferPointer left, int right) { return new UInt16BufferPointer(left, right); }
-        public static UInt16BufferPointer operator +(UInt16BufferPointer left, UInt32 right) { return new UInt16BufferPointer(left, (int)right); }
-        public static UInt16BufferPointer operator ++(UInt16BufferPointer left) { left.m_offset += 2; return left; }
-        public static UInt16BufferPointer operator -(UInt16BufferPointer left, int right) { return new UInt16BufferPointer(left, -right); }
-        public static UInt16BufferPointer operator -(UInt16BufferPointer left, UInt32 right) { return new UInt16BufferPointer(left, -(int)right); }
-        public static UInt16BufferPointer operator --(UInt16BufferPointer left) { left.m_offset -= 2; return left; }
-    }
-
-    public class UInt32BufferPointer : RawBufferPointer
-    {
-        public UInt32BufferPointer() : base() { }
-        public UInt32BufferPointer(RawBuffer list, int offset = 0) : base(list, offset * 4) { }
-        public UInt32BufferPointer(RawBufferPointer listPtr, int offset = 0) : base(listPtr, offset * 4) { }
-
-        public new UInt32 this[int i] { get { return get_uint32(i); } set { set_uint32(i, value); } }
-        public new UInt32 this[UInt32 i] { get { return get_uint32((int)i); } set { set_uint32((int)i, value); } }
-
-        public static UInt32BufferPointer operator +(UInt32BufferPointer left, int right) { return new UInt32BufferPointer(left, right); }
-        public static UInt32BufferPointer operator +(UInt32BufferPointer left, UInt32 right) { return new UInt32BufferPointer(left, (int)right); }
-        public static UInt32BufferPointer operator ++(UInt32BufferPointer left) { left.m_offset += 4; return left; }
-        public static UInt32BufferPointer operator -(UInt32BufferPointer left, int right) { return new UInt32BufferPointer(left, -right); }
-        public static UInt32BufferPointer operator -(UInt32BufferPointer left, UInt32 right) { return new UInt32BufferPointer(left, -(int)right); }
-        public static UInt32BufferPointer operator --(UInt32BufferPointer left) { left.m_offset -= 4; return left; }
-    }
-
-    public class UInt64BufferPointer : RawBufferPointer
-    {
-        public UInt64BufferPointer() : base() { }
-        public UInt64BufferPointer(RawBuffer list, int offset = 0) : base(list, offset * 8) { }
-        public UInt64BufferPointer(RawBufferPointer listPtr, int offset = 0) : base(listPtr, offset * 8) { }
-
-        public new UInt64 this[int i] { get { return get_uint64(i); } set { set_uint64(i, value); } }
-        public new UInt64 this[UInt32 i] { get { return get_uint64((int)i); } set { set_uint64((int)i, value); } }
-
-        public static UInt64BufferPointer operator +(UInt64BufferPointer left, int right) { return new UInt64BufferPointer(left, right); }
-        public static UInt64BufferPointer operator +(UInt64BufferPointer left, UInt32 right) { return new UInt64BufferPointer(left, (int)right); }
-        public static UInt64BufferPointer operator ++(UInt64BufferPointer left) { left.m_offset += 8; return left; }
-        public static UInt64BufferPointer operator -(UInt64BufferPointer left, int right) { return new UInt64BufferPointer(left, -right); }
-        public static UInt64BufferPointer operator -(UInt64BufferPointer left, UInt32 right) { return new UInt64BufferPointer(left, -(int)right); }
-        public static UInt64BufferPointer operator --(UInt64BufferPointer left) { left.m_offset -= 8; return left; }
-    }
-
-
-    public class RawBuffer : ListBytes
-    {
-        //[StructLayout(LayoutKind.Explicit)]
-        struct RawBufferData
-        {
-            // these are unioned so that we can access different sizes directly.
-            //[FieldOffset(0)] public byte   [] m_uint8;
-            //[FieldOffset(0)] public UInt16 [] m_uint16; 
-            //[FieldOffset(0)] public UInt32 [] m_uint32; 
-            //[FieldOffset(0)] public UInt64 [] m_uint64;
-            public byte [] m_uint8;
-        }
-
-        RawBufferData m_bufferData = new RawBufferData();
-        int m_actualLength = 0;
-
-
-        public RawBuffer() { m_bufferData.m_uint8 = new byte [0]; }
-        public RawBuffer(int size) : this() { resize(size); }
-        public RawBuffer(UInt32 size) : this((int)size) { }
-
-
-        public override IEnumerator<byte> GetEnumerator() { throw new emu_unimplemented(); }
-
-
-        public override byte this[int index] { get { return get_uint8(index); } set { set_uint8(index, value); } }
-
-        public override int Count { get { return m_actualLength; } }
-        public override int Capacity { get { return m_bufferData.m_uint8.Length; } set { } }
-
-
-        public override void Add(byte item)
-        {
-            if (Capacity <= Count + 1)
-            {
-                int newSize = Math.Min(Count + 1024, (Count + 1) * 2);  // cap the growth
-                Array.Resize(ref m_bufferData.m_uint8, newSize);
-            }
-
-            m_bufferData.m_uint8[m_actualLength] = item;
-            m_actualLength++;
-        }
-
-        public override void Clear() { m_bufferData.m_uint8 = new byte [0];  m_actualLength = 0; }
-
-        public override bool Contains(byte item) { throw new emu_unimplemented(); }
-
-        public override void CopyTo(byte[] array, int arrayIndex) { throw new emu_unimplemented(); }
-
-        public override void CopyTo(int index, byte[] array, int arrayIndex, int count)
-        {
-            Array.Copy(m_bufferData.m_uint8, index, array, arrayIndex, count);
-        }
-
-        public override byte Find(Predicate<byte> match) { throw new emu_unimplemented(); }
-        public override int IndexOf(byte item, int index, int count) { throw new emu_unimplemented(); }
-        public override int IndexOf(byte item, int index) { throw new emu_unimplemented(); }
-        public override int IndexOf(byte item) { throw new emu_unimplemented(); }
-
-        public override void Insert(int index, byte item) { throw new emu_unimplemented(); }
-
-        public override bool Remove(byte item) { throw new emu_unimplemented(); }
-        public override int RemoveAll(Predicate<byte> match) { throw new emu_unimplemented(); }
-
-        public override void RemoveAt(int index)
-        {
-            if (index > 0)
-                Array.Copy(m_bufferData.m_uint8, 0, m_bufferData.m_uint8, 0, index);
-
-            if (index < Count - 1)
-                Array.Copy(m_bufferData.m_uint8, index + 1, m_bufferData.m_uint8, index, Count - index - 1);
-
-            m_actualLength--;
-        }
-
-        public override void RemoveRange(int index, int count)
-        {
-            // horribly inefficient in this case
-            while (count-- > 0)
-                RemoveAt(index);
-        }
-
-        public override void Sort(Comparison<byte> comparison) { throw new emu_unimplemented(); }
-        public override void Sort() { throw new emu_unimplemented(); }
-        public override void Sort(IComparer<byte> comparer) { throw new emu_unimplemented(); }
-
-        public override byte[] ToArray() { throw new emu_unimplemented(); }
-
-
-        // UInt32 helper
-        public override byte this[u32 index] { get { return get_uint8((int)index); } set { set_uint8((int)index, value); } }
-
-
-        public bool equals(int startOffset, string compareTo) { return equals(startOffset, compareTo.ToCharArray()); }
-        public bool equals(int startOffset, char [] compareTo)
+        public static bool CompareTo(this MemoryContainer<byte> container, int startOffset, string compareTo) { return container.CompareTo(startOffset, compareTo.ToCharArray()); }
+        public static bool CompareTo(this MemoryContainer<byte> container, int startOffset, char [] compareTo)
         {
             for (int i = 0; i < compareTo.Length; i++)
             {
-                if (this[i] != compareTo[i])
+                if (container[i] != compareTo[i])
                     return false;
             }
             return true;
         }
 
-        public string get_string(int startOffset, int length)
+        public static string ToString(this MemoryContainer<byte> container, int startOffset, int length)
         {
             string s = "";
             for (int i = startOffset; i < startOffset + length; i++)
             {
-                s += this[i];
+                s += container[i];
             }
 
             return s;
         }
 
 
-        public int find(int startOffset, int endOffset, byte compare)
+        public static int IndexOf(this MemoryContainer<byte> container, int startOffset, int endOffset, byte compare)
         {
             for (int i = startOffset; i < startOffset + endOffset; i++)
             {
-                if (this[i] == compare)
+                if (container[i] == compare)
                     return i;
             }
 
             return endOffset;
         }
 
-        public void set_uint8(int offset8, byte value)
-        {
-            assert_slow(offset8 < Count);
 
-            m_bufferData.m_uint8[offset8] = value;
+        public static void SetUInt16(this MemoryContainer<byte> container, int offset16, UInt16 value) { container.SetUInt16Offs8(offset16 << 1, value); }
+        public static void SetUInt32(this MemoryContainer<byte> container, int offset32, UInt32 value) { container.SetUInt32Offs8(offset32 << 2, value); }
+        public static void SetUInt64(this MemoryContainer<byte> container, int offset64, UInt64 value) { container.SetUInt64Offs8(offset64 << 3, value); }
+
+        public static void SetUInt16Offs8(this MemoryContainer<byte> container, int offset8, UInt16 value)
+        {
+            global_object.assert_slow(offset8 < container.Count);
+            var span = container.memory.Slice(offset8, 2).Span;
+            BinaryPrimitives.WriteUInt16LittleEndian(span, value);
         }
 
-        public void set_uint16(int offset16, UInt16 value)
+        public static void SetUInt32Offs8(this MemoryContainer<byte> container, int offset8, UInt32 value)
         {
-            assert_slow(offset16 * 2 < Count);
-
-            int offset8 = offset16 * 2;
-            //m_bufferData.m_uint8[offset8]     = (byte)(value >> 8);
-            //m_bufferData.m_uint8[offset8 + 1] = (byte)value;
-            //m_bufferData.m_uint16[offset16] = value;
-            var bytes = BitConverter.GetBytes(value);
-            m_bufferData.m_uint8[offset8 + 0] = bytes[0];
-            m_bufferData.m_uint8[offset8 + 1] = bytes[1];
+            global_object.assert_slow(offset8 < container.Count);
+            var span = container.memory.Slice(offset8, 4).Span;
+            BinaryPrimitives.WriteUInt32LittleEndian(span, value);
         }
 
-        public void set_uint32(int offset32, UInt32 value)
+        public static void SetUInt64Offs8(this MemoryContainer<byte> container, int offset8, UInt64 value)
         {
-            assert_slow(offset32 * 4 < Count);
-
-            int offset8 = offset32 * 4;
-            //m_bufferData.m_uint8[offset8]     = (byte)(value >> 24);
-            //m_bufferData.m_uint8[offset8 + 1] = (byte)(value >> 16);
-            //m_bufferData.m_uint8[offset8 + 2] = (byte)(value >>  8);
-            //m_bufferData.m_uint8[offset8 + 3] = (byte)value;
-            //m_bufferData.m_uint32[offset32] = value;
-            var bytes = BitConverter.GetBytes(value);
-            m_bufferData.m_uint8[offset8 + 0] = bytes[0];
-            m_bufferData.m_uint8[offset8 + 1] = bytes[1];
-            m_bufferData.m_uint8[offset8 + 2] = bytes[2];
-            m_bufferData.m_uint8[offset8 + 3] = bytes[3];
+            global_object.assert_slow(offset8 < container.Count);
+            var span = container.memory.Slice(offset8, 8).Span;
+            BinaryPrimitives.WriteUInt64LittleEndian(span, value);
         }
 
-        public void set_uint64(int offset64, UInt64 value)
-        {
-            assert_slow(offset64 * 8 < Count);
+        public static UInt16 GetUInt16(this MemoryContainer<byte> container, int offset16 = 0) { return container.GetUInt16Offs8(offset16 << 1); }
+        public static UInt32 GetUInt32(this MemoryContainer<byte> container, int offset32 = 0) { return container.GetUInt32Offs8(offset32 << 2); }
+        public static UInt64 GetUInt64(this MemoryContainer<byte> container, int offset64 = 0) { return container.GetUInt64Offs8(offset64 << 3); }
 
-            int offset8 = offset64 * 8;
-            //m_bufferData.m_uint8[offset8]     = (byte)(value >> 56);
-            //m_bufferData.m_uint8[offset8 + 1] = (byte)(value >> 48);
-            //m_bufferData.m_uint8[offset8 + 2] = (byte)(value >> 40);
-            //m_bufferData.m_uint8[offset8 + 3] = (byte)(value >> 32);
-            //m_bufferData.m_uint8[offset8 + 4] = (byte)(value >> 24);
-            //m_bufferData.m_uint8[offset8 + 5] = (byte)(value >> 16);
-            //m_bufferData.m_uint8[offset8 + 6] = (byte)(value >>  8);
-            //m_bufferData.m_uint8[offset8 + 7] = (byte)value;
-            //m_bufferData.m_uint64[offset64] = value;
-            var bytes = BitConverter.GetBytes(value);
-            m_bufferData.m_uint8[offset8 + 0] = bytes[0];
-            m_bufferData.m_uint8[offset8 + 1] = bytes[1];
-            m_bufferData.m_uint8[offset8 + 2] = bytes[2];
-            m_bufferData.m_uint8[offset8 + 3] = bytes[3];
-            m_bufferData.m_uint8[offset8 + 4] = bytes[4];
-            m_bufferData.m_uint8[offset8 + 5] = bytes[5];
-            m_bufferData.m_uint8[offset8 + 6] = bytes[6];
-            m_bufferData.m_uint8[offset8 + 7] = bytes[7];
+        public static UInt16 GetUInt16Offs8(this MemoryContainer<byte> container, int offset8 = 0)
+        {
+            global_object.assert_slow(offset8 < container.Count);
+            var span = container.memory.Slice(offset8, 2).Span;
+            return BinaryPrimitives.ReadUInt16LittleEndian(span);
         }
 
-        public byte get_uint8(int offset8 = 0)
+        public static UInt32 GetUInt32Offs8(this MemoryContainer<byte> container, int offset8 = 0)
         {
-            assert_slow(offset8 < Count);
-
-            return m_bufferData.m_uint8[offset8];
+            global_object.assert_slow(offset8 < container.Count);
+            var span = container.memory.Slice(offset8, 4).Span;
+            return BinaryPrimitives.ReadUInt32LittleEndian(span);
         }
 
-        public UInt16 get_uint16(int offset16 = 0)
+        public static UInt64 GetUInt64Offs8(this MemoryContainer<byte> container, int offset8 = 0)
         {
-            assert_slow(offset16 * 2 < Count);
-
-            int offset8 = offset16 * 2;
-            //return (UInt16)(m_bufferData.m_uint8[offset8] << 8 | 
-            //       (UInt16) m_bufferData.m_uint8[offset8 + 1]);
-            //return m_bufferData.m_uint16[offset16];
-            return BitConverter.ToUInt16(m_bufferData.m_uint8, offset8);
-        }
-
-        public UInt32 get_uint32(int offset32 = 0)
-        {
-            assert_slow(offset32 * 4 < Count);
-
-            int offset8 = offset32 * 4;
-            //return (UInt32)m_bufferData.m_uint8[offset8]     << 24 | 
-            //       (UInt32)m_bufferData.m_uint8[offset8 + 1] << 16 | 
-            //       (UInt32)m_bufferData.m_uint8[offset8 + 2] <<  8 | 
-            //       (UInt32)m_bufferData.m_uint8[offset8 + 3]; 
-            //return m_bufferData.m_uint32[offset32];
-            return BitConverter.ToUInt32(m_bufferData.m_uint8, offset8);
-        }
-
-        public UInt64 get_uint64(int offset64 = 0)
-        {
-            assert_slow(offset64 * 8 < Count);
-
-            int offset8 = offset64 * 8;
-            //return (UInt64)m_bufferData.m_uint8[offset8]     << 56 | 
-            //       (UInt64)m_bufferData.m_uint8[offset8 + 1] << 48 | 
-            //       (UInt64)m_bufferData.m_uint8[offset8 + 2] << 40 | 
-            //       (UInt64)m_bufferData.m_uint8[offset8 + 3] << 32 | 
-            //       (UInt64)m_bufferData.m_uint8[offset8 + 4] << 24 | 
-            //       (UInt64)m_bufferData.m_uint8[offset8 + 5] << 16 | 
-            //       (UInt64)m_bufferData.m_uint8[offset8 + 6] <<  8 | 
-            //       (UInt64)m_bufferData.m_uint8[offset8 + 7]; 
-            //return m_bufferData.m_uint64[offset64];
-            return BitConverter.ToUInt64(m_bufferData.m_uint8, offset8);
+            global_object.assert_slow(offset8 < container.Count);
+            var span = container.memory.Slice(offset8, 8).Span;
+            return BinaryPrimitives.ReadUInt16LittleEndian(span);
         }
     }
 
@@ -2008,15 +2092,4 @@ namespace mame
         //public static implicit operator int(intref x) { return x.get(); }
         //public static implicit operator intref(int x) { return new intref(x); }
     }
-
-
-    public interface const_value_int
-    {
-        int op { get; }
-    }
-
-
-    public class i2 : const_value_int { public int op { get { return 2; } } }
-    public class i4 : const_value_int { public int op { get { return 4; } } }
-    public class i8 : const_value_int { public int op { get { return 8; } } }
 }

@@ -4,9 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using offs_t = System.UInt32;
-using u8 = System.Byte;
 using uint8_t = System.Byte;
 
 

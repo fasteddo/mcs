@@ -4,13 +4,12 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+using uint64_t = System.UInt64;
 
 
 namespace mame
@@ -114,7 +113,7 @@ namespace mame
 
 
         //READ8_MEMBER(galaxian_state::konami_sound_timer_r)
-        u8 konami_sound_timer_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        uint8_t konami_sound_timer_r(address_space space, offs_t offset, uint8_t mem_mask = 0xff)
         {
             /*
                 The timer is clocked at KONAMI_SOUND_CLOCK and cascades through a
@@ -131,8 +130,8 @@ namespace mame
                 16*16*2*8*5*2.
             */
 
-            UInt32 cycles = (UInt32)((m_audiocpu.target.total_cycles() * 8) % (UInt64)(16*16*2*8*5*2));
-            byte hibit = 0;
+            uint32_t cycles = (uint32_t)((m_audiocpu.target.total_cycles() * 8) % (uint64_t)(16*16*2*8*5*2));
+            uint8_t hibit = 0;
 
             /* separate the high bit from the others */
             if (cycles >= 16*16*2*8*5)
@@ -142,7 +141,7 @@ namespace mame
             }
 
             /* the top bits of the counter index map to various bits here */
-            return (byte)((hibit << 7) |           /* B7 is the output of the final divide-by-2 counter */
+            return (uint8_t)((hibit << 7) |           /* B7 is the output of the final divide-by-2 counter */
                     (BIT(cycles,14) << 6) | /* B6 is the high bit of the divide-by-5 counter */
                     (BIT(cycles,13) << 5) | /* B5 is the 2nd highest bit of the divide-by-5 counter */
                     (BIT(cycles,11) << 4) | /* B4 is the high bit of the divide-by-8 counter */
@@ -162,7 +161,7 @@ namespace mame
                 /* AV6 .. AV11 ==> AY8910 #1 - 3D */
                 for (int which = 0; which < 2; which++)
                 {
-                    if (m_ay8910.op(which) != null)
+                    if (m_ay8910.op(which).target != null)
                     {
                         for (int flt = 0; flt < 6; flt++)
                         {
@@ -361,7 +360,7 @@ namespace mame
 
         void decode_frogger_sound()
         {
-            ListBytesPointer rombase = new ListBytesPointer(memregion("audiocpu").base_());  //uint8_t *rombase = memregion("audiocpu")->base_();
+            Pointer<uint8_t> rombase = new Pointer<uint8_t>(memregion("audiocpu").base_());  //uint8_t *rombase = memregion("audiocpu")->base_();
             uint32_t offs;
 
             /* the first ROM of the sound CPU has data lines D0 and D1 swapped */
@@ -384,7 +383,7 @@ namespace mame
 
         void decode_frogger_gfx()
         {
-            ListBytesPointer rombase = new ListBytesPointer(memregion("gfx1").base_());  //uint8_t *rombase = memregion("gfx1")->base_();
+            Pointer<uint8_t> rombase = new Pointer<uint8_t>(memregion("gfx1").base_());  //uint8_t *rombase = memregion("gfx1")->base_();
             uint32_t offs;
 
             /* the 2nd gfx ROM has data lines D0 and D1 swapped */
@@ -483,7 +482,7 @@ namespace mame
             map.op(0x7006, 0x7006).mirror(0x07f8).w(galaxian_flip_screen_x_w);
             map.op(0x7007, 0x7007).mirror(0x07f8).w(galaxian_flip_screen_y_w);
             //map(0x7800, 0x7800).mirror(0x07ff).w("cust", FUNC(galaxian_sound_device::pitch_w));
-            map.op(0x7800, 0x7800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)subdevice("watchdog")).reset_r(space); });  //FUNC(watchdog_timer_device::reset_r));
+            map.op(0x7800, 0x7800).mirror(0x07ff).r("watchdog", (space) => { return ((watchdog_timer_device)subdevice("watchdog")).reset_r(space); });  //FUNC(watchdog_timer_device::reset_r));
         }
 
 
@@ -500,7 +499,7 @@ namespace mame
             map.unmap_value_high();
             map.op(0x0000, 0x3fff).rom();
             map.op(0x8000, 0x87ff).ram();
-            map.op(0x8800, 0x8800).mirror(0x07ff).r("watchdog", (space, offset, mem_mask) => { return ((watchdog_timer_device)subdevice("watchdog")).reset_r(space); });  //FUNC(watchdog_timer_device::reset_r));
+            map.op(0x8800, 0x8800).mirror(0x07ff).r("watchdog", (space) => { return ((watchdog_timer_device)subdevice("watchdog")).reset_r(space); });  //FUNC(watchdog_timer_device::reset_r));
             map.op(0xa800, 0xabff).mirror(0x0400).ram().w(galaxian_videoram_w).share("videoram");
             map.op(0xb000, 0xb0ff).mirror(0x0700).ram().w(galaxian_objram_w).share("spriteram");
             map.op(0xb808, 0xb808).mirror(0x07e3).w(irq_enable_w);
@@ -955,8 +954,8 @@ namespace mame
         static galaxian m_galaxian = new galaxian();
 
 
-        static device_t device_creator_galaxian(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_state(mconfig, type, tag); }
-        static device_t device_creator_frogger(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_state(mconfig, type, tag); }
+        static device_t device_creator_galaxian(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_frogger(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_state(mconfig, (device_type)type, tag); }
 
 
         /*************************************
@@ -968,7 +967,7 @@ namespace mame
 
         // Basic galaxian hardware
         //                                                         creator,                 rom           YEAR,   NAME,       PARENT,  MACHINE,                           INPUT,                                 INIT,                                   MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_galaxian = GAME( device_creator_galaxian, rom_galaxian, "1979", "galaxian", null,    galaxian.galaxian_state_galaxian,  m_galaxian.construct_ioport_galaxian,  galaxian.galaxian_state_init_galaxian,  ROT90,  "Namco", "Galaxian (Namco set 1)", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_galaxian = GAME( device_creator_galaxian, rom_galaxian, "1979", "galaxian", "0",     galaxian.galaxian_state_galaxian,  m_galaxian.construct_ioport_galaxian,  galaxian.galaxian_state_init_galaxian,  ROT90,  "Namco", "Galaxian (Namco set 1)", MACHINE_SUPPORTS_SAVE );
 
 
         /*************************************
@@ -980,6 +979,6 @@ namespace mame
 
         // Frogger based hardware: 2nd Z80, AY-8910A, 2 8255 PPI for I/O, custom background
         //                                                        creator,                rom          YEAR,   NAME,      PARENT,  MACHINE,                         INPUT,                               INIT,                                 MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_frogger = GAME( device_creator_frogger, rom_frogger, "1981", "frogger", null,    galaxian.galaxian_state_frogger, m_galaxian.construct_ioport_frogger, galaxian.galaxian_state_init_frogger, ROT90,  "Konami", "Frogger", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_frogger = GAME( device_creator_frogger, rom_frogger, "1981", "frogger", "0",     galaxian.galaxian_state_frogger, m_galaxian.construct_ioport_frogger, galaxian.galaxian_state_init_frogger, ROT90,  "Konami", "Frogger", MACHINE_SUPPORTS_SAVE );
     }
 }

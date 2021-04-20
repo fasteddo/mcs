@@ -4,10 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -22,7 +21,7 @@ namespace mame
                                   //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(SAMPLES, samples_device, "samples", "Samples")
-        static device_t device_creator_samples_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock = 0) { return new samples_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_samples_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock = 0) { return new samples_device(mconfig, tag, owner, clock); }
         public static readonly device_type SAMPLES = DEFINE_DEVICE_TYPE(device_creator_samples_device, "samples", "Samples");
 
 
@@ -30,7 +29,7 @@ namespace mame
         {
             public device_sound_interface_samples(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples) { ((samples_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
+            public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples) { ((samples_device)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs, samples); }
         }
 
 
@@ -51,7 +50,7 @@ namespace mame
         class channel_t
         {
             public sound_stream stream;
-            public ListBase<int16_t> source = new ListBase<int16_t>();  //const int16_t *   source;
+            public MemoryContainer<int16_t> source = new MemoryContainer<int16_t>();  //const int16_t *   source;
             public int32_t source_length;
             public int32_t source_num;
             public uint32_t pos;
@@ -157,8 +156,8 @@ namespace mame
         static bool read_sample(emu_file file, sample_t sample)
         {
             // read the core header and make sure it's a proper file
-            RawBuffer buf = new RawBuffer(4);  //uint8_t buf[4];
-            uint32_t offset = file.read(new ListBytesPointer(buf), 4);
+            MemoryU8 buf = new MemoryU8(4, true);  //uint8_t buf[4];
+            uint32_t offset = file.read(new Pointer<uint8_t>(buf), 4);
             if (offset < 4)
             {
                 osd_printf_warning("Unable to read {0}, 0-byte file?\n", file.filename());
@@ -204,13 +203,13 @@ namespace mame
                 chan.paused = false;
 
                 // register with the save state system
-                save_item(chan.source_length, "chan.source_length", channel);
-                save_item(chan.source_num, "chan.source_num", channel);
-                save_item(chan.pos, "chan.pos", channel);
-                save_item(chan.frac, "chan.frac", channel);
-                save_item(chan.step, "chan.step", channel);
-                save_item(chan.loop, "chan.loop", channel);
-                save_item(chan.paused, "chan.paused", channel);
+                save_item(NAME(new { chan.source_length }), channel);
+                save_item(NAME(new { chan.source_num }), channel);
+                save_item(NAME(new { chan.pos }), channel);
+                save_item(NAME(new { chan.frac }), channel);
+                save_item(NAME(new { chan.step }), channel);
+                save_item(NAME(new { chan.loop }), channel);
+                save_item(NAME(new { chan.paused }), channel);
             }
 
             // initialize any custom handlers
@@ -244,7 +243,7 @@ namespace mame
                 if (chan.source_num >= 0 && chan.source_num < m_sample.Count)
                 {
                     sample_t sample = m_sample[chan.source_num];
-                    chan.source = sample.data;
+                    chan.source = sample.data;  //chan.source = &sample.data[0];
                     chan.source_length = sample.data.Count;
                     if (sample.data.Count == 0)
                         chan.source_num = -1;
@@ -269,7 +268,7 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - update a sound stream
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        void device_sound_interface_sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
             // find the channel with this stream
             for (int channel = 0; channel < m_channels; channel++)
@@ -277,7 +276,7 @@ namespace mame
                 if (stream == m_channel[channel].stream)
                 {
                     channel_t chan = m_channel[channel];
-                    ListPointer<stream_sample_t> buffer = new ListPointer<stream_sample_t>(outputs[0]);  //stream_sample_t * buffer = outputs[0];
+                    Pointer<stream_sample_t> buffer = new Pointer<stream_sample_t>(outputs[0]);  //stream_sample_t * buffer = outputs[0];
 
                     // process if we still have a source and we're not paused
                     if (chan.source != null && !chan.paused)
@@ -286,7 +285,7 @@ namespace mame
                         uint32_t pos = chan.pos;
                         uint32_t frac = chan.frac;
                         uint32_t step = chan.step;
-                        ListBase<int16_t> sample = chan.source;  //const int16_t *sample = chan.source;
+                        MemoryContainer<int16_t> sample = chan.source;  //const int16_t *sample = chan.source;
                         uint32_t sample_length = (UInt32)chan.source_length;
 
                         while (samples-- != 0)
@@ -350,20 +349,20 @@ namespace mame
             // get the total size
             uint32_t filesize;
 
-            RawBuffer filesizeBuffer = new RawBuffer(4);
-            offset += file.read(new ListBytesPointer(filesizeBuffer), 4);
+            MemoryU8 filesizeBuffer = new MemoryU8(4, true);
+            offset += file.read(new Pointer<uint8_t>(filesizeBuffer), 4);
             if (offset < 8)
             {
                 osd_printf_warning("Unexpected size offset {0} ({1})\n", offset, file.filename());
                 return false;
             }
 
-            filesize = filesizeBuffer.get_uint32();
+            filesize = filesizeBuffer.GetUInt32();
             filesize = little_endianize_int32(filesize);
 
             // read the RIFF file type and make sure it's a WAVE file
-            RawBuffer buf = new RawBuffer(32);  //char [] buf = new char[32];
-            offset += file.read(new ListBytesPointer(buf), 4);
+            MemoryU8 buf = new MemoryU8(32, true);  //char [] buf = new char[32];
+            offset += file.read(new Pointer<uint8_t>(buf), 4);
             if (offset < 12)
             {
                 osd_printf_warning("Unexpected WAVE offset {0} ({1})\n", offset, file.filename());
@@ -378,12 +377,12 @@ namespace mame
 
             // seek until we find a format tag
             uint32_t length;
-            RawBuffer lengthBuffer = new RawBuffer(4);
+            MemoryU8 lengthBuffer = new MemoryU8(4, true);
             while (true)
             {
-                offset += file.read(new ListBytesPointer(buf), 4);
-                offset += file.read(new ListBytesPointer(lengthBuffer), 4);
-                length = lengthBuffer.get_uint32();
+                offset += file.read(new Pointer<uint8_t>(buf), 4);
+                offset += file.read(new Pointer<uint8_t>(lengthBuffer), 4);
+                length = lengthBuffer.GetUInt32();
                 length = little_endianize_int32(length);
                 if (buf[0] == 'f' && buf[1] == 'm' && buf[2] == 't' && buf[3] == ' ')  //if (memcmp(&buf[0], "fmt ", 4) == 0)
                     break;
@@ -400,9 +399,9 @@ namespace mame
 
             // read the format -- make sure it is PCM
             uint16_t temp16;
-            RawBuffer temp16Buffer = new RawBuffer(2);
-            offset += file.read(new ListBytesPointer(temp16Buffer), 2);
-            temp16 = temp16Buffer.get_uint16();
+            MemoryU8 temp16Buffer = new MemoryU8(2, true);
+            offset += file.read(new Pointer<uint8_t>(temp16Buffer), 2);
+            temp16 = temp16Buffer.GetUInt16();
             temp16 = little_endianize_int16(temp16);
             if (temp16 != 1)
             {
@@ -411,8 +410,8 @@ namespace mame
             }
 
             // number of channels -- only mono is supported
-            offset += file.read(new ListBytesPointer(temp16Buffer), 2);
-            temp16 = temp16Buffer.get_uint16();
+            offset += file.read(new Pointer<uint8_t>(temp16Buffer), 2);
+            temp16 = temp16Buffer.GetUInt16();
             temp16 = little_endianize_int16(temp16);
             if (temp16 != 1)
             {
@@ -422,19 +421,19 @@ namespace mame
 
             // sample rate
             uint32_t rate;
-            RawBuffer rateBuffer = new RawBuffer(4);
-            offset += file.read(new ListBytesPointer(rateBuffer), 4);
-            rate = rateBuffer.get_uint32();
+            MemoryU8 rateBuffer = new MemoryU8(4, true);
+            offset += file.read(new Pointer<uint8_t>(rateBuffer), 4);
+            rate = rateBuffer.GetUInt32();
             rate = little_endianize_int32(rate);
 
             // bytes/second and block alignment are ignored
-            offset += file.read(new ListBytesPointer(buf), 6);
+            offset += file.read(new Pointer<uint8_t>(buf), 6);
 
             // bits/sample
             uint16_t bits;
-            RawBuffer bitsBuffer = new RawBuffer(2);
-            offset += file.read(new ListBytesPointer(bitsBuffer), 2);
-            bits = bitsBuffer.get_uint16();
+            MemoryU8 bitsBuffer = new MemoryU8(2, true);
+            offset += file.read(new Pointer<uint8_t>(bitsBuffer), 2);
+            bits = bitsBuffer.GetUInt16();
             bits = little_endianize_int16(bits);
             if (bits != 8 && bits != 16)
             {
@@ -449,9 +448,9 @@ namespace mame
             // seek until we find a data tag
             while (true)
             {
-                offset += file.read(new ListBytesPointer(buf), 4);
-                offset += file.read(new ListBytesPointer(lengthBuffer), 4);
-                length = lengthBuffer.get_uint32();
+                offset += file.read(new Pointer<uint8_t>(buf), 4);
+                offset += file.read(new Pointer<uint8_t>(lengthBuffer), 4);
+                length = lengthBuffer.GetUInt32();
                 length = little_endianize_int32(length);
                 if (buf[0] == 'd' && buf[1] == 'a' && buf[2] == 't' && buf[3] == 'a')  //if (memcmp(&buf[0], "data", 4) == 0)
                     break;
@@ -480,11 +479,11 @@ namespace mame
             if (bits == 8)
             {
                 sample.data.resize((int)length);
-                RawBuffer sample_data_8bit = new RawBuffer(length);
-                file.read(new ListBytesPointer(sample_data_8bit), length);
+                MemoryU8 sample_data_8bit = new MemoryU8((int)length, true);
+                file.read(new Pointer<uint8_t>(sample_data_8bit), length);
 
                 // convert 8-bit data to signed samples
-                ListBytesPointer tempptr = new ListBytesPointer(sample_data_8bit);  //uint8_t *tempptr = reinterpret_cast<uint8_t *>(&sample.data[0]);
+                Pointer<uint8_t> tempptr = new Pointer<uint8_t>(sample_data_8bit);  //uint8_t *tempptr = reinterpret_cast<uint8_t *>(&sample.data[0]);
                 for (int sindex = (int)length - 1; sindex >= 0; sindex--)
                     sample.data[sindex] = (Int16)((sbyte)(tempptr[sindex] ^ 0x80) * 256);
             }
@@ -492,14 +491,14 @@ namespace mame
             {
                 // 16-bit data is fine as-is
                 sample.data.resize((int)length / 2);
-                RawBuffer sample_data_8bit = new RawBuffer(length);
-                file.read(new ListBytesPointer(sample_data_8bit), length);
+                MemoryU8 sample_data_8bit = new MemoryU8((int)length, true);
+                file.read(new Pointer<uint8_t>(sample_data_8bit), length);
 
                 // swap high/low on big-endian systems
                 if (ENDIANNESS_NATIVE != endianness_t.ENDIANNESS_LITTLE)
                 {
                     for (UInt32 sindex = 0; sindex < length / 2; sindex++)
-                        sample.data[sindex] = (Int16)little_endianize_int16(sample_data_8bit.get_uint16((int)sindex));  //sample.data[sindex]);
+                        sample.data[sindex] = (Int16)little_endianize_int16(sample_data_8bit.GetUInt16((int)sindex));  //sample.data[sindex]);
                 }
             }
 
@@ -563,15 +562,15 @@ namespace mame
             {
                 // attempt to open as FLAC first
                 emu_file file = new emu_file(machine().options().sample_path(), OPEN_FLAG_READ);
-                osd_file.error filerr = file.open(basename, PATH_SEPARATOR, samplename, ".flac");
+                osd_file.error filerr = file.open(string_format("{0}" + PATH_SEPARATOR + "{1}.flac", basename, samplename));
                 if (filerr != osd_file.error.NONE && altbasename != null)
-                    filerr = file.open(altbasename, PATH_SEPARATOR, samplename, ".flac");
+                    filerr = file.open(string_format("{0}" + PATH_SEPARATOR + "{1}.flac", altbasename, samplename));
 
                 // if not, try as WAV
                 if (filerr != osd_file.error.NONE)
-                    filerr = file.open(basename, PATH_SEPARATOR, samplename, ".wav");
+                    filerr = file.open(string_format("{0}" + PATH_SEPARATOR + "{1}.wav", basename, samplename));
                 if (filerr != osd_file.error.NONE && altbasename != null)
-                    filerr = file.open(altbasename, PATH_SEPARATOR, samplename, ".wav");
+                    filerr = file.open(string_format("{0}" + PATH_SEPARATOR + "{1}.wav", altbasename, samplename));
 
                 // if opened, read it
                 if (filerr == osd_file.error.NONE)

@@ -4,10 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
-using offs_t = System.UInt32;
-using u8 = System.Byte;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -83,7 +79,7 @@ namespace mame
         required_shared_ptr_uint8_t m_spriteram;
         required_shared_ptr_uint8_t m_videoram;
         optional_shared_ptr_uint8_t m_decrypted_opcodes;
-        output_manager.output_finder/*<2>*/ m_lamps;
+        output_finder/*<2>*/ m_lamps;
 
         int m_bullets_base;
         int m_sprites_base;
@@ -112,7 +108,7 @@ namespace mame
         delegate void galaxian_extend_tile_info_func(ref uint16_t code, ref uint8_t color, uint8_t attrib, uint8_t x);
 
         //typedef void (galaxian_state::*galaxian_extend_sprite_info_func)(const uint8_t *base, uint8_t *sx, uint8_t *sy, uint8_t *flipx, uint8_t *flipy, uint16_t *code, uint8_t *color);
-        delegate void galaxian_extend_sprite_info_func(ListBytesPointer basePtr, ref uint8_t sx, ref uint8_t sy, ref uint8_t flipx, ref uint8_t flipy, ref uint16_t code, ref uint8_t color);
+        delegate void galaxian_extend_sprite_info_func(Pointer<uint8_t> basePtr, ref uint8_t sx, ref uint8_t sy, ref uint8_t flipx, ref uint8_t flipy, ref uint16_t code, ref uint8_t color);
 
         //typedef void (galaxian_state::*galaxian_draw_bullet_func)(bitmap_rgb32 &bitmap, const rectangle &cliprect, int offs, int x, int y);
         delegate void galaxian_draw_bullet_func(bitmap_rgb32 bitmap, rectangle cliprect, int offs, int x, int y);
@@ -165,7 +161,7 @@ namespace mame
             m_spriteram = new required_shared_ptr_uint8_t(this, "spriteram");
             m_videoram = new required_shared_ptr_uint8_t(this, "videoram");
             m_decrypted_opcodes = new optional_shared_ptr_uint8_t(this, "decrypted_opcodes");
-            m_lamps = new output_manager.output_finder(2, this, "lamp{0}", 0U);  //"lamp%u"
+            m_lamps = new output_finder(2, this, "lamp{0}", 0U);  //"lamp%u"
         }
 
 

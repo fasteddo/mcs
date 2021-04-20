@@ -15,10 +15,10 @@ using u64 = System.UInt64;
 namespace mame
 {
     // core components of the attotime structure
-    //typedef Int64 attoseconds_t;
-    //typedef int seconds_t;
+    //typedef s64 attoseconds_t;
+    //typedef s32 seconds_t;
 
-    public class attotime : global_object
+    public struct attotime
     {
         // core definitions
         public const attoseconds_t ATTOSECONDS_PER_SECOND_SQRT = 1000000000;
@@ -60,14 +60,7 @@ namespace mame
 
 
         // construction/destruction
-        public attotime() : this(0, 0) { }
-
-        public attotime(seconds_t secs, attoseconds_t attos)
-        {
-            m_seconds = secs;
-            m_attoseconds = attos;
-        }
-
+        public attotime(seconds_t secs, attoseconds_t attos) { m_seconds = secs; m_attoseconds = attos; }
         public attotime(attotime that) : this(that.m_seconds, that.m_attoseconds) { }
 
 
@@ -107,7 +100,7 @@ namespace mame
         u64 as_ticks(u32 frequency)
         {
             u32 fracticks = (u32)((new attotime(0, m_attoseconds) * frequency).m_seconds);
-            return mulu_32x32((u32)m_seconds, frequency) + fracticks;
+            return global_object.mulu_32x32((u32)m_seconds, frequency) + fracticks;
         }
 
 
@@ -127,37 +120,37 @@ namespace mame
 
             // special case: never
             if (this == never)
-                buffer = "(never)";
+                buffer = "(never)";  //sprintf(buffer, "%-*s", precision, "(never)");
 
             // case 1: we want no precision; seconds only
             else if (precision == 0)
-                buffer = string.Format("%d", m_seconds);
+                buffer = string.Format("%d", m_seconds);  //sprintf(buffer, "%d", m_seconds);
 
             // case 2: we want 9 or fewer digits of precision
             else if (precision <= 9)
             {
-                Int64 upper = m_attoseconds / ATTOSECONDS_PER_SECOND_SQRT;
+                s64 upper = m_attoseconds / ATTOSECONDS_PER_SECOND_SQRT;
                 int temp = precision;
                 while (temp < 9)
                 {
                     upper /= 10;
                     temp++;
                 }
-                buffer = string.Format("{0}.{1}", m_seconds, upper.ToString(new string('0', precision)));  // "%d.%0*d", seconds, precision, upper);
+                buffer = string.Format("{0}.{1}", m_seconds, upper.ToString(new string('0', precision)));  //sprintf(buffer, "%d.%0*d", m_seconds, precision, upper);
             }
 
             // case 3: more than 9 digits of precision
             else
             {
-                UInt32 lower;
-                UInt32 upper = divu_64x32_rem((UInt64)m_attoseconds, (UInt32)ATTOSECONDS_PER_SECOND_SQRT, out lower);
+                u32 lower;
+                u32 upper = global_object.divu_64x32_rem((u64)m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out lower);
                 int temp = precision;
                 while (temp < 18)
                 {
                     lower /= 10;
                     temp++;
                 }
-                buffer = string.Format("{0}.{1}{2}", m_seconds, upper, lower);  // "%d.%09d%0*d", seconds, upper, precision - 9, lower);
+                buffer = string.Format("{0}.{1}{2}", m_seconds, upper, lower);  //sprintf(buffer, "%d.%09d%0*d", m_seconds, upper, precision - 9, lower);
             }
 
             return buffer;
@@ -169,8 +162,30 @@ namespace mame
 
 
         //static attotime from_double(double _time);
-        //static attotime from_ticks(UINT64 ticks, UINT32 frequency);
-        //static attotime from_ticks(u64 ticks, const XTAL &xtal) { return from_ticks(ticks, xtal.value()); }
+
+
+        /** Create an attotime from a tick count @ticks at the given frequency @frequency  */
+        public static attotime from_ticks(u64 ticks, u32 frequency)
+        {
+            if (frequency > 0)
+            {
+                attoseconds_t attos_per_tick = HZ_TO_ATTOSECONDS(frequency);
+
+                if (ticks < frequency)
+                    return new attotime(0, (attoseconds_t)ticks * attos_per_tick);  //return attotime(0, ticks * attos_per_tick);
+
+                u32 remainder;
+                s32 secs = (s32)global_object.divu_64x32_rem(ticks, frequency, out remainder);
+                return new attotime(secs, (attoseconds_t)remainder * attos_per_tick);  //return attotime(secs, u64(remainder) * attos_per_tick);
+            }
+            else
+            {
+                return attotime.never;
+            }
+        }
+
+        public static attotime from_ticks(u64 ticks, XTAL xtal) { return from_ticks(ticks, xtal.value()); }
+
 
         public static attotime from_seconds(int seconds) { return new attotime(seconds, 0); }
         public static attotime from_msec(s64 msec) { return new attotime((int)(msec / 1000), (msec % 1000) * (ATTOSECONDS_PER_SECOND / 1000)); }
@@ -206,15 +221,15 @@ namespace mame
         //  operator+ - handle addition between two
         //  attotimes
         //-------------------------------------------------
-        public static attotime operator+(attotime left, attotime right)
+        public static attotime operator+(attotime left, attotime right)  //public static attotime operator+=(attotime right)
         {
             // if one of the items is never, return never
             if (left.m_seconds >= ATTOTIME_MAX_SECONDS || right.m_seconds >= ATTOTIME_MAX_SECONDS)
-                return attotime.never;
+                return attotime.never;  //return this = never;
 
             // add the seconds and attoseconds
-            attoseconds_t attoseconds = left.m_attoseconds + right.m_attoseconds;
-            seconds_t seconds = left.m_seconds + right.m_seconds;
+            attoseconds_t attoseconds = left.m_attoseconds + right.m_attoseconds;  //attoseconds += right.attoseconds;
+            seconds_t seconds = left.m_seconds + right.m_seconds;  //seconds += right.seconds;
             attotime result = new attotime(seconds, attoseconds);
 
             // normalize and return
@@ -226,53 +241,26 @@ namespace mame
 
             // overflow
             if (result.m_seconds >= ATTOTIME_MAX_SECONDS)
-                return attotime.never;
+                return attotime.never;  //return this = never;
 
-            return result;
+            return result;  //return this;
         }
-
-#if false
-        public static attotime operator+=(attotime right)
-        {
-            // if one of the items is never, return never
-            if (this.seconds >= ATTOTIME_MAX_SECONDS || right.seconds >= ATTOTIME_MAX_SECONDS)
-                return this = never;
-
-            // add the seconds and attoseconds
-            attoseconds += right.attoseconds;
-            seconds += right.seconds;
-
-            // normalize and return
-            if (this.attoseconds >= ATTOSECONDS_PER_SECOND)
-            {
-                this.attoseconds -= ATTOSECONDS_PER_SECOND;
-                this.seconds++;
-            }
-
-            // overflow
-            if (this.seconds >= ATTOTIME_MAX_SECONDS)
-                return this = never;
-
-            return this;
-        }
-#endif
 
 
         //-------------------------------------------------
         //  operator- - handle subtraction between two
         //  attotimes
         //-------------------------------------------------
-        public static attotime operator-(attotime left, attotime right)
+        public static attotime operator-(attotime left, attotime right)  //public static attotime operator-=(attotime right)
         {
-            attotime result = new attotime();
-
             // if time1 is never, return never
             if (left.m_seconds >= ATTOTIME_MAX_SECONDS)
-                return attotime.never;
+                return attotime.never;  //return this = never;
 
             // add the seconds and attoseconds
-            result.m_attoseconds = left.m_attoseconds - right.m_attoseconds;
-            result.m_seconds = left.m_seconds - right.m_seconds;
+            attoseconds_t attoseconds = left.m_attoseconds - right.m_attoseconds;  //attoseconds -= right.attoseconds;
+            seconds_t seconds = left.m_seconds - right.m_seconds;  //seconds -= right.seconds;
+            attotime result = new attotime(seconds, attoseconds);
 
             // normalize and return
             if (result.m_attoseconds < 0)
@@ -280,55 +268,97 @@ namespace mame
                 result.m_attoseconds += ATTOSECONDS_PER_SECOND;
                 result.m_seconds--;
             }
-            return result;
+            return result;  //return this;
         }
 
-#if false
-        public static attotime operator-=(attotime right)
+
+        /** handle multiplication by an integral factor; defined in terms of the assignment operators */
+        //-------------------------------------------------
+        //  operator*= - multiply an attotime by a
+        //  constant
+        //-------------------------------------------------
+        public static attotime operator*(attotime left, u32 factor)  //attotime &attotime::operator*=(u32 factor)
         {
-            // if time1 is never, return never
-            if (this.seconds >= ATTOTIME_MAX_SECONDS)
-                return this = never;
+            // if one of the items is attotime::never, return attotime::never
+            if (left.m_seconds >= ATTOTIME_MAX_SECONDS)
+                return never;  //return *this = never;
 
-            // add the seconds and attoseconds
-            attoseconds -= right.attoseconds;
-            seconds -= right.seconds;
+            // 0 times anything is zero
+            if (factor == 0)
+                return zero;  //return *this = zero;
 
-            // normalize and return
-            if (this.attoseconds < 0)
+            // split attoseconds into upper and lower halves which fit into 32 bits
+            u32 attolo;
+            u32 attohi = global_object.divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
+
+            // scale the lower half, then split into high/low parts
+            u64 temp = global_object.mulu_32x32(attolo, factor);
+            u32 reslo;
+            temp = global_object.divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reslo);
+
+            // scale the upper half, then split into high/low parts
+            temp += global_object.mulu_32x32(attohi, factor);
+            u32 reshi;
+            temp = global_object.divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reshi);
+
+            // scale the seconds
+            temp += global_object.mulu_32x32((u32)left.m_seconds, factor);
+            if (temp >= ATTOTIME_MAX_SECONDS)
+                return never;  //return *this = never;
+
+            // build the result
+            seconds_t seconds = (seconds_t)temp;  //m_seconds = temp;
+            attoseconds_t attoseconds = (attoseconds_t)reslo + global_object.mul_32x32((s32)reshi, (s32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mul_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
+            return new attotime(seconds, attoseconds);  //return *this;
+        }
+
+
+        public static attotime operator*(u32 factor, attotime right) { return right * factor; }
+
+
+        //-------------------------------------------------
+        //  operator/= - divide an attotime by a constant
+        //-------------------------------------------------
+        public static attotime operator/(attotime left, u32 factor)  //attotime &attotime::operator/=(u32 factor)
+        {
+            // if one of the items is attotime::never, return attotime::never
+            if (left.m_seconds >= ATTOTIME_MAX_SECONDS)
+                return never;  //return *this = never;
+
+            // ignore divide by zero
+            if (factor == 0)
+                return left;  //return *this;
+
+            // split attoseconds into upper and lower halves which fit into 32 bits
+            u32 attolo;
+            u32 attohi = global_object.divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
+
+            // divide the seconds and get the remainder
+            u32 remainder;
+            seconds_t seconds = (seconds_t)global_object.divu_64x32_rem((u64)left.m_seconds, factor, out remainder);  //m_seconds = divu_64x32_rem(m_seconds, factor, &remainder);
+
+            // combine the upper half of attoseconds with the remainder and divide that
+            u64 temp = (u64)attohi + global_object.mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //u64 temp = s64(attohi) + mulu_32x32(remainder, ATTOSECONDS_PER_SECOND_SQRT);
+            u32 reshi = global_object.divu_64x32_rem(temp, factor, out remainder);
+
+            // combine the lower half of attoseconds with the remainder and divide that
+            temp = attolo + global_object.mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);
+            u32 reslo = global_object.divu_64x32_rem(temp, factor, out remainder);
+
+            // round based on the remainder
+            attoseconds_t attoseconds = (attoseconds_t)reslo + (attoseconds_t)global_object.mulu_32x32(reshi, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mulu_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
+            if (remainder >= factor / 2)
             {
-                this.attoseconds += ATTOSECONDS_PER_SECOND;
-                this.seconds--;
+                if (++attoseconds >= ATTOSECONDS_PER_SECOND)  //if (++m_attoseconds >= ATTOSECONDS_PER_SECOND)
+                {
+                    attoseconds = 0;
+                    seconds++;
+                }
             }
-            return this;
-        }
-#endif
 
-        //-------------------------------------------------
-        //  operator* - handle multiplication/division by
-        //  an integral factor; defined in terms of the
-        //  assignment operators
-        //-------------------------------------------------
-        public static attotime operator*(attotime left, u32 factor)
-        {
-            attotime result = left;
-            result *= factor;
-            return result;
+            return new attotime(seconds, attoseconds);  //return *this;
         }
 
-        public static attotime operator*(UInt32 factor, attotime right)
-        {
-            attotime result = right;
-            result *= factor;
-            return result;
-        }
-
-        public static attotime operator/(attotime left, u32 factor)
-        {
-            attotime result = left;
-            result /= factor;
-            return result;
-        }
 
         //-------------------------------------------------
         //  operator== - handle comparisons between

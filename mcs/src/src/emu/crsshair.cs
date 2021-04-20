@@ -238,8 +238,8 @@ namespace mame
                 for (y = 0; y < CROSSHAIR_RAW_SIZE / 2; y++)
                 {
                     /* assume it is mirrored vertically */
-                    UInt32BufferPointer dest0 = m_bitmap.pix32(y);  //u32 *dest0 = &m_bitmap->pix32(y);
-                    UInt32BufferPointer dest1 = m_bitmap.pix32(CROSSHAIR_RAW_SIZE - 1 - y);  //u32 *dest1 = &m_bitmap->pix32(CROSSHAIR_RAW_SIZE - 1 - y);
+                    PointerU32 dest0 = m_bitmap.pix32(y);  //u32 *dest0 = &m_bitmap->pix32(y);
+                    PointerU32 dest1 = m_bitmap.pix32(CROSSHAIR_RAW_SIZE - 1 - y);  //u32 *dest1 = &m_bitmap->pix32(CROSSHAIR_RAW_SIZE - 1 - y);
 
                     /* extract to two rows simultaneously */
                     for (x = 0; x < CROSSHAIR_RAW_SIZE; x++)

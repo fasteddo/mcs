@@ -11,7 +11,7 @@ namespace mame
     public class parameters_manager
     {
         running_machine m_machine;              // reference to owning machine
-        Dictionary<string, string> m_parameters = new Dictionary<string, string>();  //std::unordered_map<std::string,std::string>       m_parameters;
+        std.unordered_map<string, string> m_parameters = new std.unordered_map<string, string>();  //std::unordered_map<std::string,std::string>       m_parameters;
 
 
         // construction/destruction
@@ -29,7 +29,7 @@ namespace mame
         // setters
         public void add(string tag, string value)
         {
-            m_parameters.Add(tag, value);
+            m_parameters.insert(std.make_pair(tag, value));
         } 
     }
 }

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
 using device_timer_id = System.UInt32;
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using seconds_t = System.Int32;
 using u8 = System.Byte;
@@ -20,6 +19,12 @@ namespace mame
     //typedef UInt32 device_timer_id;
 
     //typedef emu::detail::device_type_impl_base const &device_type;
+    public class device_type : emu.detail.device_type_impl_base
+    {
+        public device_type() : base() { }
+        public device_type(emu.detail.device_tag_struct device_tag) : base(device_tag) { }
+        public device_type(emu.detail.driver_tag_struct driver_tag) : base(driver_tag) { }
+    }
 
     //typedef device_delegate<void (u32)> clock_update_delegate;
     public delegate void clock_update_delegate(u32 param);
@@ -419,8 +424,8 @@ namespace mame
             public static DeviceClass op<DeviceClass>(machine_config mconfig, device_finder<DeviceClass> finder, device_type type, u32 clock) where DeviceClass : device_t //, Params &&... args)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
             {
                 var target = finder.finder_target();  // std::pair<device_t &, char const *> const target(finder.finder_target());
-                assert(mconfig.current_device() == target.first());
-                DeviceClass result = (DeviceClass)mconfig.device_add(target.second(), type, clock);//, std::forward<Params>(args)...)));  //DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
+                assert(mconfig.current_device() == target.first);
+                DeviceClass result = (DeviceClass)mconfig.device_add(target.second, type, clock);//, std::forward<Params>(args)...)));  //DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
                 finder.target = result;
                 return result;  //return finder = result;
             }
@@ -520,9 +525,9 @@ namespace mame
     class device_missing_dependencies : emu_exception { }
 
 
-    public class device_t : global_object,
-                            simple_list_item<device_t>, //: public delegate_late_bind
-                            netlist.detail.netlist_name_interface
+    public abstract class device_t : global_object,
+                                     simple_list_item<device_t>, //: public delegate_late_bind
+                                     netlist.detail.netlist_name_interface
     {
         //friend class simple_list<device_t>;
         //friend class running_machine;
@@ -667,7 +672,6 @@ namespace mame
 
         // core device properties
         device_type m_type;                 // device type
-        protected string m_searchpath;           // search path, used for media loading
 
         // device relationships & interfaces
         device_t m_owner;                // device that owns us
@@ -715,7 +719,6 @@ namespace mame
         public device_t(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
         {
             m_type = type;
-            m_searchpath = type.shortname();
             m_owner = owner;
             m_next = null;
 
@@ -789,7 +792,21 @@ namespace mame
         public device_type type() { return m_type; }
         public string name() { return m_type.fullname(); }
         public string shortname() { return m_type.shortname(); }
-        public string searchpath() { return m_searchpath; }
+
+
+        public virtual std.vector<string> searchpath()
+        {
+            std.vector<string> result = new std.vector<string>();
+            device_t system = owner();
+            while (system != null && !(system is driver_device))
+                system = system.owner();
+            if (system != null)
+                result = system.searchpath();
+            result.emplace(0, shortname());
+            return result;
+        }
+
+
         string source() { return m_type.source(); }
         public device_t owner() { return m_owner; }
 
@@ -804,7 +821,7 @@ namespace mame
         //-------------------------------------------------
         // rom_region_vector
         //-------------------------------------------------
-        public ListBase<rom_entry> rom_region_vector()
+        public std.vector<rom_entry> rom_region_vector()  //const std::vector<rom_entry> &rom_region_vector() const;
         {
             if (m_rom_entries.empty())
             {
@@ -837,11 +854,6 @@ namespace mame
         public device_execute_interface execute() { assert(m_interfaces.m_execute != null);  return m_interfaces.m_execute; }
         public device_memory_interface memory() { assert(m_interfaces.m_memory != null);  return m_interfaces.m_memory; }
         public device_state_interface state() { assert(m_interfaces.m_state != null); return m_interfaces.m_state; }
-
-
-        public void execute_set(device_execute_interface execute) { m_interfaces.m_execute = execute; }
-        public void memory_set(device_memory_interface memory) { m_interfaces.m_memory = memory; }
-        public void state_set(device_state_interface state) { m_interfaces.m_state = state; }
 
 
         // owned object helpers
@@ -908,7 +920,7 @@ namespace mame
             return result;
         }
 
-        public string siblingtag(string tag) { return m_owner != null ? m_owner.subtag(tag) : string.Copy(tag); }
+        public string siblingtag(string tag) { return m_owner != null ? m_owner.subtag(tag) : tag; }
 
         //-------------------------------------------------
         //  memregion - return a pointer to the region
@@ -1003,8 +1015,8 @@ namespace mame
         }
 
 
-        //_DeviceClass subdevice<_DeviceClass>(string tag) where _DeviceClass : device_t { return (_DeviceClass)subdevice(tag); }
-        public DeviceClass siblingdevice<DeviceClass>(string tag) where DeviceClass : device_t { return (DeviceClass)siblingdevice(tag); }
+        public DeviceClass subdevice<DeviceClass>(string tag) where DeviceClass : device_t { return (DeviceClass)subdevice(tag); }  //template<class DeviceClass> DeviceClass *subdevice(const char *tag) const { return downcast<DeviceClass *>(subdevice(tag)); }
+        public DeviceClass siblingdevice<DeviceClass>(string tag) where DeviceClass : device_t { return (DeviceClass)siblingdevice(tag); }  //template<class DeviceClass> DeviceClass *siblingdevice(const char *tag) const { return downcast<DeviceClass *>(siblingdevice(tag)); }
 
         //string parameter(const char *tag) const;
 
@@ -1164,14 +1176,14 @@ namespace mame
         //  set_unscaled_clock - sets the given device's
         //  unscaled clock
         //-------------------------------------------------
-        void set_unscaled_clock(u32 clock)
+        public void set_unscaled_clock(u32 clock)
         {
             // do nothing if no actual change
             if (clock == m_unscaled_clock)
                 return;
 
             m_unscaled_clock = clock;
-            m_clock = (UInt32)(m_unscaled_clock * m_clock_scale);
+            m_clock = (u32)(m_unscaled_clock * m_clock_scale);
             m_attoseconds_per_clock = (m_clock == 0) ? 0 : attotime.HZ_TO_ATTOSECONDS(m_clock);
 
             // recalculate all derived clocks
@@ -1184,9 +1196,9 @@ namespace mame
         }
 
 
-        void set_unscaled_clock(XTAL xtal) { set_unscaled_clock(xtal.value()); }
+        public void set_unscaled_clock(XTAL xtal) { set_unscaled_clock(xtal.value()); }
 
-        
+
         //void set_unscaled_clock_int(u32 clock) { set_unscaled_clock(clock); } // non-overloaded name because binding to overloads is ugly
         //double clock_scale() const { return m_clock_scale; }
         //void set_clock_scale(double clockscale);
@@ -1208,9 +1220,9 @@ namespace mame
             }
             else
             {
-                UInt32 remainder;
-                UInt32 quotient = divu_64x32_rem(numclocks, m_clock, out remainder);
-                return new attotime((seconds_t)quotient, (attoseconds_t)((UInt64)remainder * (UInt64)m_attoseconds_per_clock));
+                u32 remainder;
+                u32 quotient = divu_64x32_rem(numclocks, m_clock, out remainder);
+                return new attotime((seconds_t)quotient, (attoseconds_t)((u64)remainder * (u64)m_attoseconds_per_clock));
             }
         }
 
@@ -1241,11 +1253,12 @@ namespace mame
 
         // state saving interfaces
         //template<typename _ItemType>
-        public void save_item<ItemType>(ItemType value, string valname, int index = 0)
+        public void save_item<ItemType>(Tuple<ItemType, string> value, int index = 0)
         {
             assert(m_save != null);
-            m_save.save_item(this, name(), tag(), index, value, valname);
+            m_save.save_item(this, name(), tag(), index, value.Item1, value.Item2);
         }
+
         //template<typename ItemType, typename StructType, typename ElementType>
         //void ATTR_COLD save_item(ItemType &value, ElementType StructType::*element, const char *valname, int index = 0)
         //{
@@ -1418,16 +1431,16 @@ namespace mame
             notify_clock_changed();
 
             // if we're debugging, create a device_debug object
-            if ((machine().debug_flags_get & DEBUG_FLAG_ENABLED) != 0)
+            if ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0)
             {
                 m_debug = new device_debug(this);
                 debug_setup();
             }
 
             // register our save states
-            save_item(m_clock, "m_clock");
-            save_item(m_unscaled_clock, "m_unscaled_clock");
-            save_item(m_clock_scale, "m_clock_scale");
+            save_item(NAME(new { m_clock }));
+            save_item(NAME(new { m_unscaled_clock }));
+            save_item(NAME(new { m_clock_scale }));
 
             // we're now officially started
             m_started = true;
@@ -1627,7 +1640,7 @@ namespace mame
         /// \sa device_reset device_stop
         ///   device_interface::interface_pre_start
         ///   device_interface::interface_post_start
-        protected virtual void device_start() { }
+        protected abstract void device_start();
 
         //-------------------------------------------------
         //  device_stop - clean up anything that needs to
@@ -1788,22 +1801,6 @@ namespace mame
                 set_unscaled_clock(m_owner.m_clock * ((m_configured_clock >> 12) & 0xfff) / ((m_configured_clock >> 0) & 0xfff));
             }
         }
-
-
-        // device_execute_interface_helpers
-        public attotime cycles_to_attotime(u64 cycles) { return execute().cycles_to_attotime(cycles); }
-        public void set_disable() { execute().set_disable(); }
-        public void set_input_line(int linenum, int state) { execute().set_input_line(linenum, state); }
-        public void set_input_line_vector(int linenum, int vector) { execute().set_input_line_vector(linenum, vector); }
-        public void set_input_line_and_vector(int linenum, int state, int vector) { execute().set_input_line_and_vector(linenum, state, vector); }
-        public void pulse_input_line(int irqline, attotime duration) { execute().pulse_input_line(irqline, duration); }
-        public bool suspended(u32 reason = device_execute_interface.SUSPEND_ANY_REASON) { return execute().suspended(reason); }
-        public void suspend_until_trigger(int trigid, bool eatcycles) { execute().suspend_until_trigger(trigid, eatcycles); }
-        public void trigger(int trigid) { execute().trigger(trigid); }
-        public u64 total_cycles() { return execute().total_cycles(); }
-        public void set_icountptr(intref icountptrRef) { execute().set_icountptr(icountptrRef); }
-        public int standard_irq_callback(int irqline) { return execute().standard_irq_callback(irqline); }
-        public void debugger_instruction_hook(offs_t curpc) { execute().debugger_instruction_hook(curpc); }
 
 
         protected void LOGMASKED(int mask, string format, params object [] args) { LOGMASKED(mask, this, format, args); }

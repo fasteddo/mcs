@@ -9,7 +9,7 @@ namespace mame
 {
     static class logmacro_global
     {
-        const int VERBOSE = 0;
+        public const int VERBOSE = 0;
 
         static void LOG_OUTPUT_FUNC(device_t device, string format, params object [] args) { device.logerror(format, args); }
 

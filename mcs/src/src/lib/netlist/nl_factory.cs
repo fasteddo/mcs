@@ -20,12 +20,15 @@ namespace mame.netlist
         {
             //#define NETLIB_DEVICE_IMPL_ALIAS(p_alias, chip, p_name, p_def_param) \
             //    NETLIB_DEVICE_IMPL_BASE(devices, p_alias, chip, p_name, p_def_param) \
+            public static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_ALIAS<chip>(string p_alias, string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_BASE<chip>("devices", p_alias, p_name, p_def_param); }
 
             //#define NETLIB_DEVICE_IMPL(chip, p_name, p_def_param) \
             //    NETLIB_DEVICE_IMPL_NS(devices, chip, p_name, p_def_param)
+            public static factory.constructor_ptr_t NETLIB_DEVICE_IMPL<chip>(string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_NS<chip>("devices", p_name, p_def_param); }
 
             //#define NETLIB_DEVICE_IMPL_NS(ns, chip, p_name, p_def_param) \
             //    NETLIB_DEVICE_IMPL_BASE(ns, chip, chip, p_name, p_def_param) \
+            public static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_NS<chip>(string ns, string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_BASE<chip>("devices", "devices", p_name, p_def_param); }
 
             //#define NETLIB_DEVICE_IMPL_BASE(ns, p_alias, chip, p_name, p_def_param) \
             //    static plib::unique_ptr<factory::element_t> NETLIB_NAME(p_alias ## _c) \
@@ -35,6 +38,23 @@ namespace mame.netlist
             //    } \
             //    \
             //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
+            static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_BASE<chip>(string ns, string p_alias, string p_name, string p_def_param)
+            {
+                return (classname) => { return new factory.device_element_t<chip>(p_name, classname, p_def_param, "__FILE__"); };
+            }
+        }
+
+
+        class nld_wrapper : device_t  //class NETLIB_NAME(wrapper) : public device_t
+        {
+            public nld_wrapper(netlist_state_t anetlist, string name)  //NETLIB_NAME(wrapper)(netlist_state_t &anetlist, const pstring &name)
+                : base(anetlist, name)
+            {
+            }
+
+
+            public override void reset() { }  //NETLIB_RESETI() { }
+            public override void update() { }  //NETLIB_UPDATEI() { }
         }
 
 
@@ -71,7 +91,12 @@ namespace mame.netlist
 
 
             public abstract device_t Create(nlmempool pool, netlist_state_t anetlist, string name);  //virtual unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) = 0;
-            public virtual void macro_actions(nlparse_t nparser, string name) { }
+
+            public virtual void macro_actions(nlparse_t nparser, string name)
+            {
+                //plib::unused_var(nparser);
+                //plib::unused_var(name);
+            }
 
             public string name() { return m_name; }
             //const pstring &classname() const { return m_classname; }
@@ -94,9 +119,11 @@ namespace mame.netlist
                 if      (type == typeof(nld_sound_in))              return new nld_sound_in(anetlist, name);
                 else if (type == typeof(nld_sound_out))             return new nld_sound_out(anetlist, name);
                 else if (type == typeof(analog.nld_C))              return new analog.nld_C(anetlist, name);
+                else if (type == typeof(analog.nld_opamp))          return new analog.nld_opamp(anetlist, name);
                 else if (type == typeof(analog.nld_POT))            return new analog.nld_POT(anetlist, name);
                 else if (type == typeof(analog.nld_R))              return new analog.nld_R(anetlist, name);
                 else if (type == typeof(devices.nld_analog_input))  return new devices.nld_analog_input(anetlist, name);
+                else if (type == typeof(devices.nld_CD4066_GATE))   return new devices.nld_CD4066_GATE(anetlist, name);
                 else if (type == typeof(devices.nld_gnd))           return new devices.nld_gnd(anetlist, name);
                 else if (type == typeof(devices.nld_logic_input))   return new devices.nld_logic_input(anetlist, name);
                 else if (type == typeof(devices.nld_netlistparams)) return new devices.nld_netlistparams(anetlist, name);
@@ -180,20 +207,14 @@ namespace mame.netlist
 
             public override device_t Create(nlmempool pool, netlist_state_t anetlist, string name)  //unique_pool_ptr<device_t> Create(nlmempool &pool, netlist_state_t &anetlist, const pstring &name) override;
             {
-                throw new emu_unimplemented();
-#if false
-                return pool.make_unique<NETLIB_NAME(wrapper)>(anetlist, name);
-#endif
+                return new nld_wrapper(anetlist, name);  //return pool.make_unique<NETLIB_NAME(wrapper)>(anetlist, name);
             }
 
             public override void macro_actions(nlparse_t nparser, string name)
             {
-                throw new emu_unimplemented();
-#if false
-                anetlist.setup().namespace_push(name);
-                anetlist.setup().include(this.name());
-                anetlist.setup().namespace_pop();
-#endif
+                nparser.namespace_push(name);
+                nparser.include(this.name());
+                nparser.namespace_pop();
             }
         }
     }

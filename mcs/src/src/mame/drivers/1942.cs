@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
+using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -68,7 +68,7 @@ namespace mame
             map.op(0xc002, 0xc002).portr("P2");
             map.op(0xc003, 0xc003).portr("DSWA");
             map.op(0xc004, 0xc004).portr("DSWB");
-            map.op(0xc800, 0xc800).w(m_soundlatch.target, (space, offset, data, mem_mask) => { m_soundlatch.target.write(data); });
+            map.op(0xc800, 0xc800).w(m_soundlatch.target, (data) => { m_soundlatch.target.write(data); });
             map.op(0xc802, 0xc803).w(_1942_scroll_w);
             map.op(0xc804, 0xc804).w(_1942_c804_w);
             map.op(0xc805, 0xc805).w(_1942_palette_bank_w);
@@ -84,9 +84,9 @@ namespace mame
         {
             map.op(0x0000, 0x3fff).rom();
             map.op(0x4000, 0x47ff).ram();
-            map.op(0x6000, 0x6000).r(m_soundlatch.target, (space, offset, mem_mask) => { return m_soundlatch.target.read(); });  //r(m_soundlatch, FUNC(generic_latch_8_device::read));
-            map.op(0x8000, 0x8001).w("ay1", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay1")).address_data_w(offset, data); });  //w("ay1", FUNC(ay8910_device::address_data_w));
-            map.op(0xc000, 0xc001).w("ay2", (space, offset, data, mem_mask) => { ((ay8910_device)subdevice("ay2")).address_data_w(offset, data); });  //w("ay2", FUNC(ay8910_device::address_data_w));
+            map.op(0x6000, 0x6000).r(m_soundlatch.target, () => { return m_soundlatch.target.read(); });  //r(m_soundlatch, FUNC(generic_latch_8_device::read));
+            map.op(0x8000, 0x8001).w("ay1", (offset, data) => { ((ay8910_device)subdevice("ay1")).address_data_w(offset, data); });  //w("ay1", FUNC(ay8910_device::address_data_w));
+            map.op(0xc000, 0xc001).w("ay2", (offset, data) => { ((ay8910_device)subdevice("ay2")).address_data_w(offset, data); });  //w("ay2", FUNC(ay8910_device::address_data_w));
         }
     }
 
@@ -229,8 +229,8 @@ namespace mame
 
         protected override void machine_start()
         {
-            save_item(m_palette_bank, "m_palette_bank");
-            save_item(m_scroll, "m_scroll");
+            save_item(NAME(new { m_palette_bank }));
+            save_item(NAME(new { m_scroll }));
         }
 
 
@@ -371,8 +371,8 @@ namespace mame
     {
         public override void driver_init()
         {
-            ListBytesPointer ROM = new ListBytesPointer(memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
-            membank("bank1").configure_entries(0, 4, new ListBytesPointer(ROM, 0x10000), 0x4000);  //membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x4000);
+            PointerU8 ROM = new PointerU8(memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
+            membank("bank1").configure_entries(0, 4, new PointerU8(ROM, 0x10000), 0x4000);  //membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x4000);
         }
     }
 
@@ -386,10 +386,10 @@ namespace mame
         static _1942 m_1942 = new _1942();
 
 
-        static device_t device_creator_1942(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new _1942_state(mconfig, type, tag); }
+        static device_t device_creator_1942(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new _1942_state(mconfig, (device_type)type, tag); }
 
 
-        //                                                     creator,             rom       YEAR,   NAME,   PARENT,  MACHINE,                 INPUT,                        INIT,                          MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_1942 = GAME( device_creator_1942, rom_1942, "1984", "1942", null,    _1942._1942_state__1942, m_1942.construct_ioport_1942, _1942._1942_state_driver_init, ROT270, "Capcom", "1942 (Revision B)", MACHINE_SUPPORTS_SAVE);
+        //                                                     creator,             rom       YEAR,   NAME,   PARENT,  MACHINE,           INPUT,                        INIT,                    MONITOR,COMPANY, FULLNAME,FLAGS
+        public static readonly game_driver driver_1942 = GAME( device_creator_1942, rom_1942, "1984", "1942", "0",     _1942_state__1942, m_1942.construct_ioport_1942, _1942_state_driver_init, ROT270, "Capcom", "1942 (Revision B)", MACHINE_SUPPORTS_SAVE);
     }
 }

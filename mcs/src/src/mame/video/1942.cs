@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using indirect_pen_t = System.UInt16;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
@@ -21,7 +20,7 @@ namespace mame
     {
         void create_palette(palette_device palette)
         {
-            ListBytesPointer color_prom = new ListBytesPointer(memregion("palproms").base_());  //const uint8_t *color_prom = memregion("palproms")->base();
+            Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("palproms").base_());  //const uint8_t *color_prom = memregion("palproms")->base();
 
             for (int i = 0; i < 256; i++)
             {
@@ -44,7 +43,7 @@ namespace mame
                 bit3 = BIT(color_prom[i + 2 * 256], 3);
                 int b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-                palette.palette_interface.set_indirect_color(i, new rgb_t((u8)r, (u8)g, (u8)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((u8)r, (u8)g, (u8)b));
             }
         }
 
@@ -55,29 +54,29 @@ namespace mame
 
             /* characters use palette entries 128-143 */
             int colorbase = 0;
-            ListBytesPointer charlut_prom = new ListBytesPointer(memregion("charprom").base_());  //const uint8_t *charlut_prom = memregion("charprom")->base();
+            Pointer<uint8_t> charlut_prom = new Pointer<uint8_t>(memregion("charprom").base_());  //const uint8_t *charlut_prom = memregion("charprom")->base();
             for (int i = 0; i < 64 * 4; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x80 | charlut_prom[i]));
+                palette.dipalette.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x80 | charlut_prom[i]));
             }
 
             // background tiles use palette entries 0-63 in four banks
             colorbase += 64 * 4;
-            ListBytesPointer tilelut_prom = new ListBytesPointer(memregion("tileprom").base_());  //const uint8_t *tilelut_prom = memregion("tileprom")->base();
+            Pointer<uint8_t> tilelut_prom = new Pointer<uint8_t>(memregion("tileprom").base_());  //const uint8_t *tilelut_prom = memregion("tileprom")->base();
             for (int i = 0; i < 32 * 8; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 0 * 32 * 8 + i), (indirect_pen_t)(0x00 | tilelut_prom[i]));
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 1 * 32 * 8 + i), (indirect_pen_t)(0x10 | tilelut_prom[i]));
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 2 * 32 * 8 + i), (indirect_pen_t)(0x20 | tilelut_prom[i]));
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + 3 * 32 * 8 + i), (indirect_pen_t)(0x30 | tilelut_prom[i]));
+                palette.dipalette.set_pen_indirect((pen_t)(colorbase + 0 * 32 * 8 + i), (indirect_pen_t)(0x00 | tilelut_prom[i]));
+                palette.dipalette.set_pen_indirect((pen_t)(colorbase + 1 * 32 * 8 + i), (indirect_pen_t)(0x10 | tilelut_prom[i]));
+                palette.dipalette.set_pen_indirect((pen_t)(colorbase + 2 * 32 * 8 + i), (indirect_pen_t)(0x20 | tilelut_prom[i]));
+                palette.dipalette.set_pen_indirect((pen_t)(colorbase + 3 * 32 * 8 + i), (indirect_pen_t)(0x30 | tilelut_prom[i]));
             }
 
             // sprites use palette entries 64-79
             colorbase += 4 * 32 * 8;
-            ListBytesPointer sprlut_prom = new ListBytesPointer(memregion("sprprom").base_());  //const uint8_t *sprlut_prom = memregion("sprprom")->base();
+            Pointer<uint8_t> sprlut_prom = new Pointer<uint8_t>(memregion("sprprom").base_());  //const uint8_t *sprlut_prom = memregion("sprprom")->base();
             for (int i = 0; i < 16 * 16; i++)
             {
-                palette.palette_interface.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x40 | sprlut_prom[i]));
+                palette.dipalette.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x40 | sprlut_prom[i]));
             }
         }
 
@@ -93,9 +92,9 @@ namespace mame
         {
             int code = m_fg_videoram[tile_index];
             int color = m_fg_videoram[tile_index + 0x400];
-            SET_TILE_INFO_MEMBER(ref tileinfo, 0,
-                    (UInt32)(code + ((color & 0x80) << 1)),
-                    (UInt32)(color & 0x3f),
+            tileinfo.set(0,
+                    (u32)(code + ((color & 0x80) << 1)),
+                    (u32)(color & 0x3f),
                     0);
         }
 
@@ -106,10 +105,10 @@ namespace mame
 
             int code = m_bg_videoram[tile_index];
             int color = m_bg_videoram[tile_index + 0x10];
-            SET_TILE_INFO_MEMBER(ref tileinfo, 1,
-                    (UInt32)(code + ((color & 0x80) << 1)),
-                    (UInt32)((color & 0x1f) + (0x20 * m_palette_bank)),
-                    (byte)TILE_FLIPYX((color & 0x60) >> 5));
+            tileinfo.set(1,
+                    (u32)(code + ((color & 0x80) << 1)),
+                    (u32)((color & 0x1f) + (0x20 * m_palette_bank)),
+                    TILE_FLIPYX((color & 0x60) >> 5));
         }
 
 

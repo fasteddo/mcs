@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -48,8 +47,8 @@ namespace mame
         {
             m_hardware_type = HARDWARE_TKG04;
 
-            save_item(m_decrypt_counter, "m_decrypt_counter");
-            save_item(m_dma_latch, "m_dma_latch");
+            save_item(NAME(new { m_decrypt_counter }));
+            save_item(NAME(new { m_dma_latch }));
         }
 
 
@@ -643,7 +642,7 @@ namespace mame
         static dkong m_dkong = new dkong();
 
 
-        static device_t device_creator_dkong(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dkong_state(mconfig, type, tag); }
+        static device_t device_creator_dkong(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dkong_state(mconfig, (device_type)type, tag); }
 
 
         /*************************************
@@ -653,6 +652,6 @@ namespace mame
          *************************************/
 
         //                                                      creator,              rom        YEAR,   NAME,       PARENT,  MACHINE,                     INPUT,                          INIT,                      MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_dkong = GAME( device_creator_dkong, rom_dkong, "1981", "dkong",    null,    dkong.dkong_state_dkong2b,   m_dkong.construct_ioport_dkong, driver_device.empty_init,  ROT270, "Nintendo of America", "Donkey Kong (US set 1)",    MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_dkong = GAME( device_creator_dkong, rom_dkong, "1981", "dkong",    "0",     dkong.dkong_state_dkong2b,   m_dkong.construct_ioport_dkong, driver_device.empty_init,  ROT270, "Nintendo of America", "Donkey Kong (US set 1)",    MACHINE_SUPPORTS_SAVE );
     }
 }

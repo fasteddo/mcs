@@ -50,7 +50,7 @@ namespace SharpCompress.Common.SevenZip
                     throw new InvalidOperationException();
                 }
 
-#if DEBUG
+#if SHARPCOMPRESS_DEBUG
                 Log.WriteLine("[switch to stream {0}]", dataIndex);
 #endif
                 _archive = archive;

@@ -123,15 +123,15 @@ namespace mame
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             //fclose(wav.file);
-            wav.writer.Close();
-            wav.file.Close();
+            wav.writer.Dispose();
+            wav.file.Dispose();
             wav.writer = null;
             wav.file = null;
 
             //global_free(wav);
         }
 
-        public static void wav_add_data_16(wav_file wav, ListPointer<int16_t> data, int samples)  //wav_file *wav, int16_t *data, int samples)
+        public static void wav_add_data_16(wav_file wav, Pointer<int16_t> data, int samples)  //void wav_add_data_16(wav_file *wavptr, std::int16_t *data, int samples);
         {
             if (wav == null || samples == 0)
                 return;
@@ -139,7 +139,7 @@ namespace mame
             throw new emu_unimplemented();
         }
 
-        public static void wav_add_data_32(wav_file wav, ListPointer<int32_t> data, int samples, int shift)  //wav_file *wav, int32_t *data, int samples, int shift)
+        public static void wav_add_data_32(wav_file wav, Pointer<int32_t> data, int samples, int shift)  //void wav_add_data_32(wav_file *wavptr, std::int32_t *data, int samples, int shift);
         {
             std.vector<int16_t> temp = new std.vector<int16_t>();
             int i;
@@ -160,7 +160,7 @@ namespace mame
             throw new emu_unimplemented();
         }
 
-        public static void wav_add_data_16lr(wav_file wav, ListPointer<int16_t> left, ListPointer<int16_t> right, int samples)  //wav_file *wav, int16_t *left, int16_t *right, int samples)
+        public static void wav_add_data_16lr(wav_file wav, Pointer<int16_t> left, Pointer<int16_t> right, int samples)  //void wav_add_data_16lr(wav_file *wavptr, std::int16_t *left, std::int16_t *right, int samples);
         {
             std.vector<int16_t> temp = new std.vector<int16_t>();
             int i;
@@ -178,7 +178,7 @@ namespace mame
             throw new emu_unimplemented();
         }
 
-        public static void wav_add_data_32lr(wav_file wav, ListPointer<int32_t> left, ListPointer<int32_t> right, int samples, int shift)  //wav_file *wav, int32_t *left, int32_t *right, int samples, int shift)
+        public static void wav_add_data_32lr(wav_file wav, Pointer<int32_t> left, Pointer<int32_t> right, int samples, int shift)  //void wav_add_data_32lr(wav_file *wavptr, std::int32_t *left, std::int32_t *right, int samples, int shift);
         {
             std.vector<int16_t> temp = new std.vector<int16_t>();
             int i;

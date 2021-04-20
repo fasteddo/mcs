@@ -232,6 +232,9 @@ namespace mame
         //save_error write_file(emu_file &file);
         //save_error read_file(emu_file &file);
 
+        //save_error write_buffer(u8 *data, size_t size);
+        //save_error read_buffer(u8 *data, size_t size);
+
 
         // internal helpers
         //u32 signature() const;

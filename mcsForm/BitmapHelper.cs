@@ -1,6 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
+//#define USE_UNSAFE_FUNCTIONS
+
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -13,9 +15,13 @@ public class BitmapHelper
     int m_width;
     int m_height;
     bool m_isAlpha;
-    byte [] m_rgbValues;
     BitmapData m_bitmapData;
+    int m_bitmapSizeBytes;
+#if !USE_UNSAFE_FUNCTIONS
     IntPtr m_bitmapPtr;
+    byte [] m_bitmapDataCopy;
+#endif
+
     bool m_locked = false;
 
 
@@ -23,8 +29,6 @@ public class BitmapHelper
     public int Width { get { return m_width; } }
     public int Height { get { return m_height; } }
     public bool IsAlphaBitmap { get { return m_isAlpha; } }
-
-    public byte[] rgbValues { get { return m_rgbValues; } }  // NOTE: no lock check!
 
 
     public BitmapHelper(Bitmap bitmap)
@@ -47,38 +51,74 @@ public class BitmapHelper
 
         Rectangle rect = new Rectangle(0, 0, Width, Height);
         m_bitmapData = BitmapRef.LockBits(rect, ImageLockMode.ReadWrite, BitmapRef.PixelFormat);
-        m_bitmapPtr = m_bitmapData.Scan0;
 
         //int rgbValueLength = IsAlphaBitmap ? 4 : 3;
         int rgbValueLength = 4;  // TODO fix this
 
-        int bytes = (Width * Height) * rgbValueLength;
-        if (m_rgbValues == null || m_rgbValues.Length != bytes)
-            m_rgbValues = new byte [bytes];
+        m_bitmapSizeBytes = (Width * Height) * rgbValueLength;
 
-        Marshal.Copy(m_bitmapPtr, m_rgbValues, 0, m_rgbValues.Length);
+#if !USE_UNSAFE_FUNCTIONS
+        m_bitmapPtr = m_bitmapData.Scan0;
+
+        if (m_bitmapDataCopy == null || m_bitmapDataCopy.Length != m_bitmapSizeBytes)
+            m_bitmapDataCopy = new byte [m_bitmapSizeBytes];
+
+        Marshal.Copy(m_bitmapPtr, m_bitmapDataCopy, 0, m_bitmapDataCopy.Length);
+#endif
 
         m_locked = true;
     }
 
-    public void Unlock(bool writePixels)
+    public void Unlock(bool writePixels = true)
     {
         if (!m_locked)
             throw new Exception("Bitmap not locked.");
 
+#if !USE_UNSAFE_FUNCTIONS
         // Write the color values back to the bitmap
         if (writePixels)
-            Marshal.Copy(m_rgbValues, 0, m_bitmapPtr, m_rgbValues.Length);
+            Marshal.Copy(m_bitmapDataCopy, 0, m_bitmapPtr, m_bitmapDataCopy.Length);
+#endif
 
         // Unlock the bitmap
         BitmapRef.UnlockBits(m_bitmapData);
 
-        //m_rgbValues = null;  // keep this memory around for re-use
         m_bitmapData = null;
+        m_bitmapSizeBytes = 0;
+#if !USE_UNSAFE_FUNCTIONS
+        //m_rgbValues = null;  // don't null this, keep this memory around for re-use
         m_bitmapPtr = (IntPtr)0;
+#endif
 
         m_locked = false;
     }
+
+#if USE_UNSAFE_FUNCTIONS
+    public unsafe Span<byte> GetBitmapData()
+    {
+        // NOTE: no lock check!
+        return new Span<byte>(m_bitmapData.Scan0.ToPointer(), m_bitmapSizeBytes);
+    }
+
+    public unsafe Span<byte> GetBitmapData(int start, int count)
+    {
+        // NOTE: no lock check!
+        return new Span<byte>(m_bitmapData.Scan0.ToPointer(), m_bitmapSizeBytes).Slice(start, count);
+    }
+#else
+    public Span<byte> GetBitmapData()
+    {
+        // NOTE: no lock check!
+        return new Span<byte>(m_bitmapDataCopy);
+    }
+
+    public Span<byte> GetBitmapData(int start, int count)
+    {
+        // NOTE: no lock check!
+        return new Span<byte>(m_bitmapDataCopy, start, count);
+    }
+#endif
+
 
     public void Clear(Color color)
     {
@@ -87,21 +127,23 @@ public class BitmapHelper
 
         if (true)
         {
-            for (int index = 0; index < m_rgbValues.Length - 1; index += 4)
+            var bitmapData = GetBitmapData();
+            for (int index = 0; index < bitmapData.Length - 1; index += 4)
             {
-                m_rgbValues[index]     = color.B;
-                m_rgbValues[index + 1] = color.G;
-                m_rgbValues[index + 2] = color.R;
-                m_rgbValues[index + 3] = color.A;
+                bitmapData[index]     = color.B;
+                bitmapData[index + 1] = color.G;
+                bitmapData[index + 2] = color.R;
+                bitmapData[index + 3] = color.A;
             }
         }
         else
         {
-            for (int index = 0; index < m_rgbValues.Length - 1; index += 3)
+            var bitmapData = GetBitmapData();
+            for (int index = 0; index < bitmapData.Length - 1; index += 3)
             {
-                m_rgbValues[index]     = color.B;
-                m_rgbValues[index + 1] = color.G;
-                m_rgbValues[index + 2] = color.R;
+                bitmapData[index]     = color.B;
+                bitmapData[index + 1] = color.G;
+                bitmapData[index + 2] = color.R;
             }
         }
     }
@@ -115,18 +157,20 @@ public class BitmapHelper
 
         if (IsAlphaBitmap)
         {
+            var bitmapData = GetBitmapData();
             int index = ((y * Width + x) * 4);
-            m_rgbValues[index]     = color.B;
-            m_rgbValues[index + 1] = color.G;
-            m_rgbValues[index + 2] = color.R;
-            m_rgbValues[index + 3] = color.A;
+            bitmapData[index]     = color.B;
+            bitmapData[index + 1] = color.G;
+            bitmapData[index + 2] = color.R;
+            bitmapData[index + 3] = color.A;
         }
         else
         {
+            var bitmapData = GetBitmapData();
             int index = ((y * Width + x) * 3);
-            m_rgbValues[index]     = color.B;
-            m_rgbValues[index + 1] = color.G;
-            m_rgbValues[index + 2] = color.R;
+            bitmapData[index]     = color.B;
+            bitmapData[index + 1] = color.G;
+            bitmapData[index + 2] = color.R;
         }
     }
 
@@ -143,9 +187,10 @@ public class BitmapHelper
         //if (!m_locked)
         //    throw new Exception("Bitmap not locked.");
 
-        m_rgbValues[arrayIndex]     = (byte)((color >> ARGBBlueShift) & 0xFF);
-        m_rgbValues[arrayIndex + 1] = (byte)((color >> ARGBGreenShift) & 0xFF);
-        m_rgbValues[arrayIndex + 2] = (byte)((color >> ARGBRedShift) & 0xFF);
+        var bitmapData = GetBitmapData();
+        bitmapData[arrayIndex]     = (byte)((color >> ARGBBlueShift) & 0xFF);
+        bitmapData[arrayIndex + 1] = (byte)((color >> ARGBGreenShift) & 0xFF);
+        bitmapData[arrayIndex + 2] = (byte)((color >> ARGBRedShift) & 0xFF);
     }
 
     public void SetPixelRawAlpha(int arrayIndex, UInt32 color)
@@ -154,10 +199,11 @@ public class BitmapHelper
         //if (!m_locked)
         //    throw new Exception("Bitmap not locked.");
 
-        m_rgbValues[arrayIndex]     = (byte)((color >> ARGBBlueShift) & 0xFF);
-        m_rgbValues[arrayIndex + 1] = (byte)((color >> ARGBGreenShift) & 0xFF);
-        m_rgbValues[arrayIndex + 2] = (byte)((color >> ARGBRedShift) & 0xFF);
-        m_rgbValues[arrayIndex + 3] = (byte)((color >> ARGBAlphaShift) & 0xFF);
+        var bitmapData = GetBitmapData();
+        bitmapData[arrayIndex]     = (byte)((color >> ARGBBlueShift) & 0xFF);
+        bitmapData[arrayIndex + 1] = (byte)((color >> ARGBGreenShift) & 0xFF);
+        bitmapData[arrayIndex + 2] = (byte)((color >> ARGBRedShift) & 0xFF);
+        bitmapData[arrayIndex + 3] = (byte)((color >> ARGBAlphaShift) & 0xFF);
     }
 
     public int GetRawPixelSize()
@@ -179,19 +225,21 @@ public class BitmapHelper
 
         if (IsAlphaBitmap)
         {
+            var bitmapData = GetBitmapData();
             int index = ((y * Width + x) * 4);
-            int b = m_rgbValues[index];
-            int g = m_rgbValues[index + 1];
-            int r = m_rgbValues[index + 2];
-            int a = m_rgbValues[index + 3];
+            int b = bitmapData[index];
+            int g = bitmapData[index + 1];
+            int r = bitmapData[index + 2];
+            int a = bitmapData[index + 3];
             return Color.FromArgb(a, r, g, b);
         }
         else
         {
+            var bitmapData = GetBitmapData();
             int index = ((y * Width + x) * 3);
-            int b = m_rgbValues[index];
-            int g = m_rgbValues[index + 1];
-            int r = m_rgbValues[index + 2];
+            int b = bitmapData[index];
+            int g = bitmapData[index + 1];
+            int r = bitmapData[index + 2];
             return Color.FromArgb(r, g, b);
         }
     }

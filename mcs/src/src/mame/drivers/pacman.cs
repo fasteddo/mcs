@@ -4,9 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
+using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -139,12 +138,12 @@ namespace mame
             map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_read_nop).nopw();
             map.op(0x4c00, 0x4fef).mirror(0xa000).ram();
             map.op(0x4ff0, 0x4fff).mirror(0xa000).ram().share("spriteram");
-            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (space, offset, data, mem_mask) => { m_mainlatch.target.write_d0(offset, data); });  //FUNC(addressable_latch_device::write_d0));
-            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (space, offset, data, mem_mask) => { m_namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
+            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (offset, data) => { m_mainlatch.target.write_d0(offset, data); });  //FUNC(addressable_latch_device::write_d0));
+            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (offset, data) => { m_namco_sound.target.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
             map.op(0x5080, 0x5080).mirror(0xaf3f).nopw();
-            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (space, offset, data, mem_mask) => { m_watchdog.target.reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (data) => { m_watchdog.target.reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x5000, 0x5000).mirror(0xaf3f).portr("IN0");
             map.op(0x5040, 0x5040).mirror(0xaf3f).portr("IN1");
             map.op(0x5080, 0x5080).mirror(0xaf3f).portr("DSW1");
@@ -163,12 +162,12 @@ namespace mame
             map.op(0x4800, 0x4bff).mirror(0xa000).r(pacman_read_nop).nopw();
             map.op(0x4c00, 0x4fef).mirror(0xa000).ram();
             map.op(0x4ff0, 0x4fff).mirror(0xa000).ram().share("spriteram");
-            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (space, offset, data, mem_mask) => { m_mainlatch.target.write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
-            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (space, offset, data, mem_mask) => { m_namco_sound.target.pacman_sound_w(space, offset, data, mem_mask); });  //FUNC(namco_device::pacman_sound_w));
+            map.op(0x5000, 0x5007).mirror(0xaf38).w(m_mainlatch.target, (offset, data) => { m_mainlatch.target.write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
+            map.op(0x5040, 0x505f).mirror(0xaf00).w(m_namco_sound.target, (offset, data) => { m_namco_sound.target.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
             map.op(0x5060, 0x506f).mirror(0xaf00).writeonly().share("spriteram2");
             map.op(0x5070, 0x507f).mirror(0xaf00).nopw();
             map.op(0x5080, 0x5080).mirror(0xaf3f).nopw();
-            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (space, offset, data, mem_mask) => { m_watchdog.target.reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
+            map.op(0x50c0, 0x50c0).mirror(0xaf3f).w(m_watchdog.target, (data) => { m_watchdog.target.reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x5000, 0x5000).mirror(0xaf3f).portr("IN0");
             map.op(0x5040, 0x5040).mirror(0xaf3f).portr("IN1");
             map.op(0x5080, 0x5080).mirror(0xaf3f).portr("DSW1");
@@ -567,7 +566,7 @@ namespace mame
         static int BITSWAP11(int val, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return bitswap(val,15,14,13,12,11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0); }
 
 
-        void mspacman_install_patches(ListBytesPointer ROM)  //uint8_t *ROM)
+        void mspacman_install_patches(Pointer<uint8_t> ROM)  //void mspacman_install_patches(uint8_t *ROM)
         {
             int i;
 
@@ -625,10 +624,10 @@ namespace mame
             /* CPU ROMs */
 
             /* Pac-Man code is in low bank */
-            ListBytesPointer ROM = new ListBytesPointer(memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
+            PointerU8 ROM = new PointerU8(memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
 
             /* decrypted Ms. Pac-Man code is in high bank */
-            ListBytesPointer DROM = new ListBytesPointer(memregion("maincpu").base_(), 0x10000);  // uint8_t *DROM = &memregion("maincpu")->base()[0x10000];
+            PointerU8 DROM = new PointerU8(memregion("maincpu").base_(), 0x10000);  // uint8_t *DROM = &memregion("maincpu")->base()[0x10000];
 
             /* copy ROMs into decrypted bank */
             for (int i = 0; i < 0x1000; i++)
@@ -654,7 +653,7 @@ namespace mame
             }
 
             /* install patches into decrypted bank */
-            mspacman_install_patches(new ListBytesPointer(DROM));
+            mspacman_install_patches(new Pointer<uint8_t>(DROM));
 
             /* mirror Pac-Man ROMs into upper addresses of normal bank */
             for (int i = 0; i < 0x1000; i++)
@@ -666,7 +665,7 @@ namespace mame
             }
 
             /* initialize the banks */
-            membank("bank1").configure_entries(0, 2, new ListBytesPointer(ROM), 0x10000);
+            membank("bank1").configure_entries(0, 2, new PointerU8(ROM), 0x10000);
             membank("bank1").set_entry(1);
         }
 
@@ -689,16 +688,16 @@ namespace mame
         static pacman m_pacman = new pacman();
 
 
-        static device_t device_creator_puckman(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
-        static device_t device_creator_pacman(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
-        static device_t device_creator_mspacman(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
-        static device_t device_creator_pacplus(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
+        static device_t device_creator_puckman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_pacman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_mspacman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_pacplus(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, (device_type)type, tag); }
 
 
         //                                                                                                        rom         parent     machine                       inp                                 init
-        public static readonly game_driver driver_puckman  = GAME( device_creator_puckman,  rom_puckman,  "1980", "puckman",  null,      pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   driver_device.empty_init,          ROT90,  "Namco", "Puck Man (Japan set 1)", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_puckman  = GAME( device_creator_puckman,  rom_puckman,  "1980", "puckman",  "0",       pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   driver_device.empty_init,          ROT90,  "Namco", "Puck Man (Japan set 1)", MACHINE_SUPPORTS_SAVE );
         public static readonly game_driver driver_pacman   = GAME( device_creator_pacman,   rom_pacman,   "1980", "pacman",   "puckman", pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   driver_device.empty_init,          ROT90,  "Namco (Midway license)", "Pac-Man (Midway)", MACHINE_SUPPORTS_SAVE );
-        public static readonly game_driver driver_mspacman = GAME( device_creator_mspacman, rom_mspacman, "1981", "mspacman", null,      pacman.pacman_state_mspacman, m_pacman.construct_ioport_mspacman, pacman.pacman_state_init_mspacman, ROT90,  "Midway / General Computer Corporation", "Ms. Pac-Man", MACHINE_SUPPORTS_SAVE );
-        public static readonly game_driver driver_pacplus  = GAME( device_creator_pacplus,  rom_pacplus,  "1982", "pacplus",  null,      pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   pacman.pacman_state_init_pacplus,  ROT90,  "Namco (Midway license)", "Pac-Man Plus", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_mspacman = GAME( device_creator_mspacman, rom_mspacman, "1981", "mspacman", "0",       pacman.pacman_state_mspacman, m_pacman.construct_ioport_mspacman, pacman.pacman_state_init_mspacman, ROT90,  "Midway / General Computer Corporation", "Ms. Pac-Man", MACHINE_SUPPORTS_SAVE );
+        public static readonly game_driver driver_pacplus  = GAME( device_creator_pacplus,  rom_pacplus,  "1982", "pacplus",  "0",       pacman.pacman_state_pacman,   m_pacman.construct_ioport_pacman,   pacman.pacman_state_init_pacplus,  ROT90,  "Namco (Midway license)", "Pac-Man Plus", MACHINE_SUPPORTS_SAVE );
     }
 }

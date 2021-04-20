@@ -4,11 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using int8_t = System.SByte;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
-using offs_t = System.UInt32;
-using u8 = System.Byte;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -104,14 +101,14 @@ namespace mame
         tilemap_t m_bg_tilemap;
 
         bitmap_ind16  m_bg_bits;
-        ListBytesPointer m_color_codes;  //const uint8_t *     m_color_codes;
+        Pointer<uint8_t> m_color_codes;  //const uint8_t *     m_color_codes;
         emu_timer m_scanline_timer;
         int8_t              m_vidhw;          /* Selected video hardware RS Conversion / TKG04 */
 
         /* radar scope */
 
-        ListBase<uint8_t> m_gfx4;  //uint8_t *           m_gfx4;
-        ListBase<uint8_t> m_gfx3;  //uint8_t *           m_gfx3;
+        MemoryU8 m_gfx4;  //uint8_t *           m_gfx4;
+        MemoryU8 m_gfx3;  //uint8_t *           m_gfx3;
         int               m_gfx3_len;
 
         uint8_t             m_sig30Hz;

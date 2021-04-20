@@ -46,7 +46,7 @@ namespace mame
         double          m_trigger;
         double          m_v_out_high;               /* Logic 1 voltage level */
         double          m_v_charge;
-        ListPointer<double> m_v_charge_node;  //const double *  m_v_charge_node;            /* point to output of node */
+        Pointer<double> m_v_charge_node;  //const double *  m_v_charge_node;            /* point to output of node */
         int             m_has_rc_nodes;
         double          m_exp_bleed;
         double          m_exp_charge;

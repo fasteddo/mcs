@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 using offs_t = System.UInt32;
 using s32 = System.Int32;
@@ -170,27 +169,21 @@ namespace mame
         ///
         /// Simplifies construction and resolution of arrays of callbacks.
         //template <typename T, unsigned Count>
-        public class array<T, Count_> : std.array<T> where Count_ : const_value_int, new() where T : devcb_base //class array : public std::array<T, Count>
+        public class array<T> : std.array<T> where T : devcb_base //class array : public std::array<T, Count>
         {
             //using std::array<T, Count>::array;
 
-            static Count_ Count = new Count_();
-
             //template <unsigned... V>
-            array(device_t owner, int unused, Func<T> add_function)  //array(device_t &owner, std::integer_sequence<unsigned, V...> const &)
-                : base(Count.op)  //: std::array<T, Count>{{ { make_one<V>(owner) }... }}
+            array(int Count, device_t owner, int unused, Func<T> add_function)  //array(device_t &owner, std::integer_sequence<unsigned, V...> const &)
+                : base(Count)  //: std::array<T, Count>{{ { make_one<V>(owner) }... }}
             {
                 for (int i = 0; i < this.size(); i++)
-                {
                     this[i] = add_function();
-                }
             }
 
-            protected array(device_t owner, Func<T> add_function) : this(owner, 0, add_function) { }  //array(device_t &owner) : array(owner, std::make_integer_sequence<unsigned, Count>()) { }
-
+            protected array(int Count, device_t owner, Func<T> add_function) : this(Count, owner, 0, add_function) { }  //array(device_t &owner) : array(owner, std::make_integer_sequence<unsigned, Count>()) { }
 
             //template <unsigned N> device_t &make_one(device_t &owner) { return owner; }
-
 
             public virtual void resolve_all()
             {
@@ -1029,14 +1022,14 @@ namespace mame
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                return new delegate_builder(m_target, m_append, target.first(), target.second(), func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+                return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
             }
 
             public delegate_builder set<U>(device_finder<U> finder, read_line_delegate func) where U : class //, char const *name)
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                return new delegate_builder(m_target, m_append, target.first(), target.second(), func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+                return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
             }
 
 
@@ -1124,11 +1117,11 @@ namespace mame
 
 
         //template <unsigned Count>
-        public new class array<Count, devcb_read_type> : devcb_read_base.array<devcb_read_type, Count> where Count : const_value_int, new() where devcb_read_type : devcb_read  //class array : public devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>
+        public new class array<devcb_read_type> : devcb_read_base.array<devcb_read_type> where devcb_read_type : devcb_read  //class array : public devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>
         {
             //using devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>::array;
 
-            public array(device_t owner, Func<devcb_read_type> add_function) : base(owner, add_function) { }
+            public array(int Count, device_t owner, Func<devcb_read_type> add_function) : base(Count, owner, add_function) { }
 
             public override void resolve_all()
             {
@@ -1295,14 +1288,27 @@ namespace mame
             }
         }
 
-#if false
-        class nop_creator : public creator
+
+        class nop_creator : creator
         {
-        public:
-            virtual void validity_check(validity_checker &valid) const override { }
-            virtual func_t create() override { return [] (address_space &space, offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { }; }
-        };
-#endif
+            //virtual void validity_check(validity_checker &valid) const override { }
+
+            //virtual func_t create() override { return [] (address_space &space, offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { }; }
+            public override write8_delegate create_w8()
+            {
+                return (address_space space, offs_t offset, u8 data, u8 mem_mask) => { };
+            }
+
+            public override write32_delegate create_w32()
+            {
+                return (address_space space, offs_t offset, u32 data, u32 mem_mask) => { };
+            }
+
+            public override write_line_delegate create_wl()
+            {
+                return (int param) => { };
+            }
+        }
 
 
         //template <typename Source, typename Func> class transform_builder; // workaround for MSVC
@@ -2654,14 +2660,14 @@ namespace mame
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                return new delegate_builder(m_target, m_append, target.first(), target.second(), func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+                return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
             }
 
             public delegate_builder set<U>(device_finder<U> finder, write_line_delegate func) where U : class //, string name)
             {
                 set_used();
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                return new delegate_builder(m_target, m_append, target.first(), target.second(), func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+                return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
             }
 
 
@@ -2705,8 +2711,8 @@ namespace mame
             public inputline_builder set_inputline<T>(device_finder<T> finder, int linenum) where T : class
             {
                 //set_used();
-                KeyValuePair<device_t, string> target = finder.finder_target();
-                return new inputline_builder(m_target, m_append, target.first(), target.second(), linenum);
+                std.pair<device_t, string> target = finder.finder_target();
+                return new inputline_builder(m_target, m_append, target.first, target.second, linenum);
             }
 
 
@@ -2837,14 +2843,15 @@ namespace mame
                 m_append = true;
                 return set_log(std::forward<Params>(args)...);
             }
+#endif
 
-            void set_nop()
+
+            public void set_nop()
             {
                 set_used();
                 m_target.m_creators.clear();
-                m_target.m_creators.emplace_back(std::make_unique<nop_creator>());
+                m_target.m_creators.emplace_back(new nop_creator());
             }
-#endif
 
 
             void set_used() { assert(!m_used); m_used = true; }
@@ -2852,11 +2859,11 @@ namespace mame
 
 
         //template <unsigned Count>
-        public new class array<Count, devcb_write_type> : devcb_write_base.array<devcb_write_type, Count> where Count : const_value_int, new() where devcb_write_type : devcb_write  //class array : public devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>
+        public new class array<devcb_write_type> : devcb_write_base.array<devcb_write_type> where devcb_write_type : devcb_write  //class array : public devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>
         {
             //using devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>::array;
 
-            public array(device_t owner, Func<devcb_write_type> add_function) : base(owner, add_function) { }
+            public array(int Count, device_t owner, Func<devcb_write_type> add_function) : base(Count, owner, add_function) { }
 
             public override void resolve_all()
             {
@@ -2877,7 +2884,7 @@ namespace mame
         protected std.vector<write8_delegate> m_functions_w8 = new std.vector<write8_delegate>();  //std::vector<func_t> m_functions;
         protected std.vector<write32_delegate> m_functions_w32 = new std.vector<write32_delegate>();  //std::vector<func_t> m_functions;
         protected std.vector<write_line_delegate> m_functions_wl = new std.vector<write_line_delegate>();  //std::vector<func_t> m_functions;
-        protected std.vector<creator_impl> m_creators = new std.vector<creator_impl>();  //std::vector<typename creator::ptr> m_creators;
+        protected std.vector<creator> m_creators = new std.vector<creator>();  //std::vector<typename creator::ptr> m_creators;
 
 
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask>

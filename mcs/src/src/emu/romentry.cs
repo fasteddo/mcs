@@ -83,7 +83,7 @@ namespace mame
         //#define     ROM_GROUPDWORD          ROM_GROUPSIZE(4)
 
         public const UInt32 ROM_SKIPMASK                = 0x0000f000;          /* skip this many bytes after each group */
-        //#define     ROM_SKIP(n)             (((n) & 15) << 12)
+        public static UInt32 ROM_SKIP(UInt32 n) { return (n & 15) << 12; }
         //#define     ROM_NOSKIP              ROM_SKIP(0)
 
         public const UInt32 ROM_BITWIDTHMASK            = 0x000f0000;          /* width of data in bits */
@@ -110,7 +110,7 @@ namespace mame
 
 
         /* ----- ROM region macros ----- */
-        public static tiny_rom_entry ROM_REGION(UInt32 length, string tag, UInt32 flags) { return new tiny_rom_entry(tag, null, 0, length, ROMENTRYTYPE_REGION | flags); }
+        public static tiny_rom_entry ROM_REGION(UInt32 length, string tag, u32 flags) { return new tiny_rom_entry(tag, null, 0, length, ROMENTRYTYPE_REGION | flags); }
         //#define ROM_REGION16_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_LE)
         //#define ROM_REGION16_BE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_BE)
         //#define ROM_REGION32_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_32BIT | ROMREGION_LE)
@@ -120,15 +120,15 @@ namespace mame
 
 
         /* ----- core ROM loading macros ----- */
-        public static tiny_rom_entry ROMX_LOAD(string name, UInt32 offset, UInt32 length, string hash, UInt32 flags) { return new tiny_rom_entry(name, hash, offset, length, ROMENTRYTYPE_ROM | flags); }
-        public static tiny_rom_entry ROM_LOAD(string name, UInt32 offset, UInt32 length, string hash) { return ROMX_LOAD(name, offset, length, hash, 0); }
+        public static tiny_rom_entry ROMX_LOAD(string name, u32 offset, u32 length, string hash, u32 flags) { return new tiny_rom_entry(name, hash, offset, length, ROMENTRYTYPE_ROM | flags); }
+        public static tiny_rom_entry ROM_LOAD(string name, u32 offset, u32 length, string hash) { return ROMX_LOAD(name, offset, length, hash, 0); }
         //#define ROM_LOAD_OPTIONAL(name,offset,length,hash)  ROMX_LOAD(name, offset, length, hash, ROM_OPTIONAL)
 
 
         /* ----- specialized loading macros ----- */
         //#define ROM_LOAD_NIB_HIGH(name,offset,length,hash)      ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI)
         //#define ROM_LOAD_NIB_LOW(name,offset,length,hash)       ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO)
-        //#define ROM_LOAD16_BYTE(name,offset,length,hash)        ROMX_LOAD(name, offset, length, hash, ROM_SKIP(1))
+        public static tiny_rom_entry ROM_LOAD16_BYTE(string name, u32 offset, u32 length, string hash) { return ROMX_LOAD(name, offset, length, hash, ROM_SKIP(1)); }
         //#define ROM_LOAD16_WORD(name,offset,length,hash)        ROM_LOAD(name, offset, length, hash)
         //#define ROM_LOAD16_WORD_SWAP(name,offset,length,hash)   ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_REVERSE)
         //#define ROM_LOAD32_BYTE(name,offset,length,hash)        ROMX_LOAD(name, offset, length, hash, ROM_SKIP(3))
@@ -142,13 +142,13 @@ namespace mame
 
 
         /* ----- ROM_RELOAD related macros ----- */
-        public static tiny_rom_entry ROM_RELOAD(UInt32 offset, UInt32 length) { return new tiny_rom_entry(null, null, offset, length, ROMENTRYTYPE_RELOAD | ROM_INHERITFLAGS); }
+        public static tiny_rom_entry ROM_RELOAD(u32 offset, u32 length) { return new tiny_rom_entry(null, null, offset, length, ROMENTRYTYPE_RELOAD | ROM_INHERITFLAGS); }
         //#define ROM_RELOAD_PLAIN(offset,length)             { nullptr, nullptr, offset, length, ROMENTRYTYPE_RELOAD },
 
         /* ----- additional ROM-related macros ----- */
-        //#define ROM_CONTINUE(offset,length)                 { nullptr,  nullptr,                 (offset), (length), ROMENTRYTYPE_CONTINUE | ROM_INHERITFLAGS },
+        public static tiny_rom_entry ROM_CONTINUE(u32 offset, u32 length) { return new tiny_rom_entry(null, null, offset, length, ROMENTRYTYPE_CONTINUE | ROM_INHERITFLAGS); }
         //#define ROM_IGNORE(length)                          { nullptr,  nullptr,                 0,        (length), ROMENTRYTYPE_IGNORE | ROM_INHERITFLAGS },
-        public static tiny_rom_entry ROM_FILL(UInt32 offset, UInt32 length, byte value) { return new tiny_rom_entry(null, value.ToString(), offset, length, ROMENTRYTYPE_FILL); }
+        public static tiny_rom_entry ROM_FILL(u32 offset, u32 length, byte value) { return new tiny_rom_entry(null, value.ToString(), offset, length, ROMENTRYTYPE_FILL); }
         //#define ROMX_FILL(offset,length,value,flags)        { nullptr,  (const char *)(value),   (offset), (length), ROMENTRYTYPE_FILL | flags },
         //#define ROM_COPY(srctag,srcoffs,offset,length)      { (srctag), (const char *)(srcoffs), (offset), (length), ROMENTRYTYPE_COPY },
 
@@ -215,8 +215,8 @@ namespace mame
         //-------------------------------------------------
         public rom_entry(string name, string hashdata, u32 offset, u32 length, u32 flags)
         {
-            m_name = string.Copy(name);
-            m_hashdata = string.Copy(hashdata);
+            m_name = name;
+            m_hashdata = hashdata;
             m_offset = offset;
             m_length = length;
             m_flags = flags;

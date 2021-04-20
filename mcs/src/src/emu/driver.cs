@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
@@ -48,7 +46,8 @@ namespace mame
 
 
         // internal state
-        game_driver m_system;                   // pointer to the game driver
+        game_driver m_system;                   // reference to the system description
+        std.vector<string> m_searchpath = new std.vector<string>();           // media search path following parent/clone links
         driver_callback_delegate [] m_callbacks = new driver_callback_delegate[(int)callback_type.CB_COUNT];     // start/reset callbacks
 
         // generic video
@@ -65,39 +64,28 @@ namespace mame
         public driver_device(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag, null, 0)
         {
-            m_system = null;
+            m_system = mconfig.gamedrv();
             m_flip_screen_x = 0;
             m_flip_screen_y = 0;
+
+
+            // set the search path to include all parents and cache it because devices search system paths
+            m_searchpath.emplace_back(m_system.name);
+            std.set<game_driver> seen = new std.set<game_driver>();
+            for (int ancestor = driver_list.clone(m_system); 0 <= ancestor; ancestor = driver_list.clone(ancestor))
+            {
+                if (!seen.insert(driver_list.driver(ancestor)))
+                    throw new emu_fatalerror("driver_device({0}): parent/clone relationships form a loop", m_system.name);
+                m_searchpath.emplace_back(driver_list.driver(ancestor).name);
+            }
         }
 
 
         // getters
-        //const game_driver &system() const { assert(m_system != NULL); return *m_system; }
+        //const game_driver &system() const { return m_system; }
 
 
         // inline configuration helpers
-
-        //-------------------------------------------------
-        //  set_game_driver - set the game in the device
-        //  configuration
-        //-------------------------------------------------
-        public void set_game_driver(game_driver game)
-        {
-            assert(m_system == null);
-
-            // set the system
-            m_system = game;
-
-            // and set the search path to include all parents
-            m_searchpath = game.name;
-            std.set<game_driver> seen = new std.set<game_driver>();
-            for (int parent = driver_list.clone(game); parent != -1; parent = driver_list.clone(parent))
-            {
-                if (!seen.insert(driver_list.driver(parent)))  //.second)
-                    throw new emu_fatalerror("driver_device::set_game_driver({0}): parent/clone relationships form a loop", game.name);
-                m_searchpath += ";" + driver_list.driver(parent).name;
-            }
-        }
 
         //-------------------------------------------------
         //  static_set_callback - set the a callback in
@@ -165,6 +153,15 @@ namespace mame
         //void irq7_line_assert(device_t &device);
 
 
+        //-------------------------------------------------
+        //  searchpath - return cached search path
+        //-------------------------------------------------
+        public override std.vector<string> searchpath()
+        {
+            return m_searchpath;
+        }
+
+
         public virtual void driver_init() { }
 
 
@@ -190,7 +187,6 @@ namespace mame
         //-------------------------------------------------
         protected override List<tiny_rom_entry> device_rom_region()
         {
-            assert(m_system != null);
             return m_system.rom;
         }
 
@@ -200,7 +196,6 @@ namespace mame
         //-------------------------------------------------
         protected override void device_add_mconfig(machine_config config)
         {
-            assert(m_system != null);
             m_system.machine_creator(config, this);
         }
 
@@ -250,8 +245,8 @@ namespace mame
                 video_start();
 
             // save generic states
-            save_item(m_flip_screen_x, "m_flip_screen_x");
-            save_item(m_flip_screen_y, "m_flip_screen_y");
+            save_item(NAME(new { m_flip_screen_x }));
+            save_item(NAME(new { m_flip_screen_y }));
         }
 
         //-------------------------------------------------

@@ -20,17 +20,15 @@ namespace mame.netlist
         class nld_solver : device_t
         {
             //NETLIB_DEVICE_IMPL(solver, "SOLVER", "FREQ")
-            static factory.element_t nld_solver_c(string classname)
-            { return new factory.device_element_t<nld_solver>("SOLVER", classname, "FREQ", "__FILE__"); }
-            public static factory.constructor_ptr_t decl_solver = nld_solver_c;
+            public static readonly factory.constructor_ptr_t decl_solver = NETLIB_DEVICE_IMPL<nld_solver>("SOLVER", "FREQ");
 
 
             logic_input_t m_fb_step;
             logic_output_t m_Q_step;
 
-            std.vector<solver.matrix_solver_t> m_mat_solvers;  //std::vector<plib::unique_ptr<solver::matrix_solver_t>> m_mat_solvers;
-            std.vector<solver.matrix_solver_t> m_mat_solvers_all;  //std::vector<solver::matrix_solver_t *> m_mat_solvers_all;
-            std.vector<solver.matrix_solver_t> m_mat_solvers_timestepping;  //std::vector<solver::matrix_solver_t *> m_mat_solvers_timestepping;
+            std.vector<solver.matrix_solver_t> m_mat_solvers = new std.vector<solver.matrix_solver_t>();  //std::vector<plib::unique_ptr<solver::matrix_solver_t>> m_mat_solvers;
+            std.vector<solver.matrix_solver_t> m_mat_solvers_all = new std.vector<solver.matrix_solver_t>();  //std::vector<solver::matrix_solver_t *> m_mat_solvers_all;
+            std.vector<solver.matrix_solver_t> m_mat_solvers_timestepping = new std.vector<solver.matrix_solver_t>();  //std::vector<solver::matrix_solver_t *> m_mat_solvers_timestepping;
 
             solver.solver_parameters_t m_params;
 
@@ -125,7 +123,6 @@ namespace mame.netlist
                 switch (net_count)
                 {
                     case 1:
-                        throw new emu_unimplemented();
                         return new solver.matrix_solver_direct1_t(state(), sname, nets, m_params);  //return plib::make_unique<solver::matrix_solver_direct1_t<FT>>(state(), sname, nets, &m_params);
                         break;
                     case 2:
@@ -239,7 +236,7 @@ namespace mame.netlist
 
 
             //NETLIB_UPDATE(solver)
-            protected override void update()
+            public override void update()
             {
                 if (m_params.m_dynamic_ts.op())
                     return;
@@ -297,39 +294,46 @@ namespace mame.netlist
             // NETLIB_UPDATE_PARAMI();
 
 
+            //template <class C>
+            //plib::unique_ptr<solver::matrix_solver_t> create_it(netlist_state_t &nl, pstring name,
+            //    analog_net_t::list_t &nets,
+            //    solver::solver_parameters_t &params, std::size_t size)
+            //{
+            //    return plib::make_unique<C>(nl, name, nets, &params, size);
+            //}
+
+
             //template <typename FT, int SIZE>
             solver.matrix_solver_t create_solver(int SIZE, UInt32 size, string solvername, analog_net_t.list_t nets)  //plib::unique_ptr<solver::matrix_solver_t> create_solver(std::size_t size, const pstring &solvername, analog_net_t::list_t &nets);
             {
-                throw new emu_unimplemented();
-#if false
-                switch (m_params.m_method())
+                switch (m_params.m_method.op())
                 {
-                    case solver::matrix_type_e::MAT_CR:
+                    case solver.matrix_type_e.MAT_CR:
                         if (size > 0) // GCR always outperforms MAT solver
                         {
-                            return create_it<solver::matrix_solver_GCR_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+                            return new solver.matrix_solver_GCR_t(SIZE, state(), solvername, nets, m_params, size);  //return create_it<solver::matrix_solver_GCR_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
                         }
                         else
                         {
-                            return create_it<solver::matrix_solver_direct_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+                            throw new emu_unimplemented();  //return create_it<solver::matrix_solver_direct_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
                         }
-                    case solver::matrix_type_e::SOR_MAT:
-                        return create_it<solver::matrix_solver_SOR_mat_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
-                    case solver::matrix_type_e::MAT:
-                        return create_it<solver::matrix_solver_direct_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
-                    case solver::matrix_type_e::SM:
+                    case solver.matrix_type_e.SOR_MAT:
+                        return new solver.matrix_solver_SOR_mat_t(SIZE, state(), solvername, nets, m_params, size);  //return create_it<solver::matrix_solver_SOR_mat_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+                    case solver.matrix_type_e.MAT:
+                        throw new emu_unimplemented();  //return create_it<solver::matrix_solver_direct_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+                    case solver.matrix_type_e.SM:
                         // Sherman-Morrison Formula
-                        return create_it<solver::matrix_solver_sm_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
-                    case solver::matrix_type_e::W:
+                        throw new emu_unimplemented();  //return create_it<solver::matrix_solver_sm_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+                    case solver.matrix_type_e.W:
                         // Woodbury Formula
-                        return create_it<solver::matrix_solver_w_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
-                    case solver::matrix_type_e::SOR:
-                        return create_it<solver::matrix_solver_SOR_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
-                    case solver::matrix_type_e::GMRES:
-                        return create_it<solver::matrix_solver_GMRES_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+                        throw new emu_unimplemented();  //return create_it<solver::matrix_solver_w_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+                    case solver.matrix_type_e.SOR:
+                        throw new emu_unimplemented();  //return create_it<solver::matrix_solver_SOR_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
+                    case solver.matrix_type_e.GMRES:
+                        throw new emu_unimplemented();  //return create_it<solver::matrix_solver_GMRES_t<FT, SIZE>>(state(), solvername, nets, m_params, size);
                 }
-                return plib::unique_ptr<solver::matrix_solver_t>();
-#endif
+
+                throw new emu_unimplemented();  //return plib::unique_ptr<solver::matrix_solver_t>();
             }
 
 
@@ -342,7 +346,7 @@ namespace mame.netlist
         {
             public std.vector<analog_net_t.list_t> groups = new std.vector<analog_net_t.list_t>();
 
-            std.vector<analog_net_t.list_t> groupspre;
+            std.vector<analog_net_t.list_t> groupspre = new std.vector<analog_net_t.list_t>();
 
 
             public void run(netlist_state_t netlist)
@@ -394,11 +398,11 @@ namespace mame.netlist
                 {
                     for (UInt32 i = 0; i < groupspre.size() - 1; i++)
                     {
-                        if (plib.putil_global.contains(groupspre[i], n))
+                        if (plib.container.contains(groupspre[i], n))
                         {
                             // copy all nets
                             foreach (var cn in groupspre[i])
-                                if (!plib.putil_global.contains(groupspre.back(), cn))
+                                if (!plib.container.contains(groupspre.back(), cn))
                                     groupspre.back().push_back(cn);
 
                             // clear
@@ -409,7 +413,7 @@ namespace mame.netlist
                 }
 
                 // if it's already processed - no need to continue
-                if (!groupspre.empty() && plib.putil_global.contains(groupspre.back(), n))
+                if (!groupspre.empty() && plib.container.contains(groupspre.back(), n))
                     return true;
 
                 return false;

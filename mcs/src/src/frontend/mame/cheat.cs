@@ -57,31 +57,6 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            // if the cheat engine is disabled, we're done
-            if (!machine().options().cheat())
-                return;
-
-            // if we're enabled currently and we don't want to be, turn things off
-            if (!m_disabled && !enable)
-            {
-                // iterate over running cheats and execute any OFF Scripts
-                for (cheat_entry *cheat = m_cheatlist.first(); cheat != NULL; cheat = cheat->next())
-                    if (cheat->state() == SCRIPT_STATE_RUN)
-                        cheat->execute_off_script();
-                machine().popmessage("Cheats Disabled");
-                m_disabled = true;
-            }
-
-            // if we're disabled currently and we want to be enabled, turn things on
-            else if (m_disabled && enable)
-            {
-                // iterate over running cheats and execute any ON Scripts
-                m_disabled = false;
-                for (cheat_entry *cheat = m_cheatlist.first(); cheat != NULL; cheat = cheat->next())
-                    if (cheat->state() == SCRIPT_STATE_RUN)
-                        cheat->execute_on_script();
-                machine().popmessage("Cheats Enabled");
-            }
 #endif
         }
 
@@ -98,16 +73,6 @@ namespace mame
         {
             //throw new emu_unimplemented();
 #if false
-            // render any text and free it along the way
-            for (int linenum = 0; linenum < ARRAY_LENGTH(m_output); linenum++)
-                if (m_output[linenum])
-                {
-                    // output the text
-                    machine().ui().draw_text_full(&container, m_output[linenum],
-                            0.0f, (float)linenum * machine().ui().get_line_height(), 1.0f,
-                            m_justify[linenum], WRAP_NEVER, DRAW_OPAQUE,
-                            ARGB_WHITE, ARGB_BLACK, NULL, NULL);
-                }
 #endif
         }
 

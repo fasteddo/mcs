@@ -4,9 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using indirect_pen_t = System.UInt16;
+using offs_t = System.UInt32;
 using pen_t = System.UInt32;
+using u16 = System.UInt16;
 using u32 = System.UInt32;
 
 
@@ -16,11 +17,11 @@ namespace mame
 
 
     // ======================> raw_to_rgb_converter
-    class raw_to_rgb_converter
+    public class raw_to_rgb_converter
     {
         // helper function
-        //typedef rgb_t (*raw_to_rgb_func)(UINT32 raw);
-        public delegate rgb_t raw_to_rgb_func(UInt32 raw);
+        //typedef rgb_t (*raw_to_rgb_func)(u32 raw);
+        public delegate rgb_t raw_to_rgb_func(u32 raw);
 
 
         // internal data
@@ -41,7 +42,8 @@ namespace mame
 
 
         // helpers
-        //rgb_t operator()(UINT32 raw) const { return (*m_func)(raw); }
+        //rgb_t operator()(u32 raw) const { return (*m_func)(raw); }
+        public rgb_t op(u32 raw) { return m_func(raw); }
 
 
 #if false
@@ -78,10 +80,11 @@ namespace mame
 
 
         // other standard decoders
-        //static rgb_t IRRRRRGGGGGBBBBB_decoder(UINT32 raw);
-        //static rgb_t RRRRGGGGBBBBRGBx_decoder(UINT32 raw);  // bits 3/2/1 are LSb
-        //static rgb_t xRGBRRRRGGGGBBBB_bit0_decoder(UINT32 raw);  // bits 14/13/12 are LSb
-        //static rgb_t xRGBRRRRGGGGBBBB_bit4_decoder(UINT32 raw);  // bits 14/13/12 are MSb
+        //static rgb_t IRRRRRGGGGGBBBBB_decoder(u32 raw);
+        //static rgb_t RRRRGGGGBBBBRGBx_decoder(u32 raw);  // bits 3/2/1 are LSb
+        //static rgb_t xRGBRRRRGGGGBBBB_bit0_decoder(u32 raw);  // bits 14/13/12 are LSb
+        //static rgb_t xRGBRRRRGGGGBBBB_bit4_decoder(u32 raw);  // bits 14/13/12 are MSb
+        //static rgb_t xBGRBBBBGGGGRRRR_bit0_decoder(u32 raw);  // bits 12/13/14 are LSb
     }
 
 
@@ -108,7 +111,7 @@ namespace mame
                                   //device_palette_interface
     {
         //DEFINE_DEVICE_TYPE(PALETTE, palette_device, "palette", "palette")
-        static device_t device_creator_palette_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new palette_device(mconfig, tag, owner); }
+        static device_t device_creator_palette_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new palette_device(mconfig, tag, owner); }
         public static readonly device_type PALETTE = DEFINE_DEVICE_TYPE(device_creator_palette_device, "palette", "palette");
 
 
@@ -188,7 +191,7 @@ namespace mame
         //enum xbgrbbbbggggrrrr_bit0_t { xBGRBBBBGGGGRRRR_bit0 };
 
 
-        device_palette_interface_palette_device m_device_palette_interface;
+        device_palette_interface_palette_device m_dipalette;
 
 
         // configuration state
@@ -205,11 +208,8 @@ namespace mame
 
         // palette RAM
         raw_to_rgb_converter m_raw_to_rgb;          // format of palette RAM
-        memory_array m_paletteram;           // base memory
-        memory_array m_paletteram_ext;       // extended memory
-
-
-        public device_palette_interface_palette_device device_palette_interface { get { return m_device_palette_interface; } }
+        memory_array m_paletteram = new memory_array();           // base memory
+        memory_array m_paletteram_ext = new memory_array();       // extended memory
 
 
         // construction/destruction
@@ -244,7 +244,7 @@ namespace mame
             m_class_interfaces.Add(new device_palette_interface_palette_device(mconfig, this));  //device_palette_interface(mconfig, *this),
 
 
-            m_device_palette_interface = GetClassInterface<device_palette_interface_palette_device>();
+            m_dipalette = GetClassInterface<device_palette_interface_palette_device>();
 
 
             m_entries = 0;
@@ -289,11 +289,21 @@ namespace mame
         }
 
 
+        public device_palette_interface_palette_device dipalette { get { return m_dipalette; } }
+
+
         // configuration
         public palette_device set_init(init_delegate init) { m_init = init; return this; }  //template <typename... T> palette_device &set_init(T &&... args) { m_init.set(std::forward<T>(args)...); return *this; }
 
-        //palette_device &set_format(raw_to_rgb_converter raw_to_rgb) { m_raw_to_rgb = raw_to_rgb; return *this; }
-        //palette_device &set_format(int bytes_per_entry, raw_to_rgb_converter::raw_to_rgb_func func, u32 entries);
+        palette_device set_format(raw_to_rgb_converter raw_to_rgb) { m_raw_to_rgb = raw_to_rgb; return this; }
+
+        public palette_device set_format(int bytes_per_entry, raw_to_rgb_converter.raw_to_rgb_func func, u32 entries)
+        {
+            set_format(new raw_to_rgb_converter(bytes_per_entry, func));
+            set_entries(entries);
+            return this;
+        }
+
         //palette_device &set_format(rgb_332_t, u32 entries);
         //palette_device &set_format(bgr_233_t, u32 entries);
         //palette_device &set_format(rgb_332_inv_t, u32 entries);
@@ -357,9 +367,6 @@ namespace mame
         //void set_prom_region(const char *region) { m_prom_region.set_tag(region); }
 
 
-        public device_palette_interface_palette_device palette_interface { get { return m_device_palette_interface; } }
-
-
         // palette RAM accessors
         public memory_array basemem() { return m_paletteram; }
         //memory_array &extmem() { return m_paletteram_ext; }
@@ -369,7 +376,7 @@ namespace mame
         public u32 read_entry(pen_t pen)
         {
             u32 data = m_paletteram.read((int)pen);
-            if (m_paletteram_ext.baseptr() != null)
+            if (m_paletteram_ext.base_() != null)
                 data |= m_paletteram_ext.read((int)pen) << (8 * m_paletteram.bytes_per_entry());
             return data;
         }
@@ -384,7 +391,15 @@ namespace mame
         //void write_indirect_ext(offs_t offset, u8 data);
         //u16 read16(offs_t offset);
         //u16 read16_ext(offs_t offset);
-        //void write16(offs_t offset, u16 data, u16 mem_mask = u16(~0));
+
+
+        public void write16(offs_t offset, u16 data, u16 mem_mask = u16.MaxValue)  //u16(~0))
+        {
+            m_paletteram.write16(offset, data, mem_mask);
+            update_for_write(offset * 2, 2);
+        }
+
+
         //void write16_ext(offs_t offset, u16 data, u16 mem_mask = u16(~0));
         //u32 read32(offs_t offset);
         //void write32(offs_t offset, u32 data, u32 mem_mask = u32(~0));
@@ -483,6 +498,33 @@ namespace mame
         //void palette_init_bgr_565(palette_device &palette);
 
 
-        //void update_for_write(offs_t byte_offset, int bytes_modified, bool indirect = false);
+        //**************************************************************************
+        //  GENERIC WRITE HANDLERS
+        //**************************************************************************
+
+        //-------------------------------------------------
+        //  update_for_write - given a write of a given
+        //  length to a given byte offset, update all
+        //  potentially modified palette entries
+        //-------------------------------------------------
+        void update_for_write(offs_t byte_offset, int bytes_modified, bool indirect = false)
+        {
+            assert((m_indirect_entries != 0) == indirect);
+
+            // determine how many entries were modified
+            int bpe = m_paletteram.bytes_per_entry();
+            assert(bpe != 0);
+            int count = (bytes_modified + bpe - 1) / bpe;
+
+            // for each entry modified, fetch the palette data and set the pen color or indirect color
+            offs_t base_ = byte_offset / (offs_t)bpe;
+            for (int index = 0; index < count; index++)
+            {
+                if (indirect)
+                    dipalette.set_indirect_color((int)base_ + index, m_raw_to_rgb.op(read_entry(base_ + (offs_t)index)));
+                else
+                    dipalette.set_pen_color(base_ + (offs_t)index, m_raw_to_rgb.op(read_entry(base_ + (offs_t)index)));
+            }
+        }
     }
 }

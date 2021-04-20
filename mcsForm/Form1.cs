@@ -1,19 +1,19 @@
 ﻿// license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using NAudio;
-using NAudio.Wave;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
-using System.IO;
+using NAudio;
+using NAudio.Wave;
 
 using osd_ticks_t = System.UInt64;
 
 
-namespace mameForm
+namespace mcsForm
 {
     public partial class Form1 : Form
     {
@@ -349,10 +349,13 @@ namespace mameForm
             int mouseX = e.X;
             int mouseY = e.Y;
 
-            float dpiX = m_graphics.DpiX;
-            float dpiY = m_graphics.DpiY;
-            float scaleX = dpiX / 96.0f;
-            float scaleY = dpiY / 96.0f;
+            //float dpiX = m_graphics.DpiX;
+            //float dpiY = m_graphics.DpiY;
+            //float scaleX = dpiX / 96.0f;
+            //float scaleY = dpiY / 96.0f;
+            float dpiX = 96;
+            float scaleX = 1;
+            float scaleY = 1;
 
             mouseX -= m_bitmapXOffset;
             mouseY -= m_bitmapYOffset;
@@ -513,7 +516,8 @@ namespace mameForm
 
 
             osd_interface_WinForms osd = (osd_interface_WinForms)mame.mame_machine_manager.instance().osd();
-            mame.RawBufferPointer framedata = osd.screenbufferptr;
+            mame.Pointer<byte> framedata = osd.screenbufferptr;
+            ConcurrentDictionary<int, int> frameDataCopyThreadIds = new ConcurrentDictionary<int, int>();
 
             if (framedata == null)
                 return;
@@ -601,10 +605,12 @@ namespace mameForm
                     sourceHeight = Math.Min(sourceHeight, destHeight);
                     int copyLength = Math.Min(sourceStride, destStride);
 
-                    for (int y = 0; y < sourceHeight; y++)
+                    System.Threading.Tasks.Parallel.For(0, sourceHeight, y =>
+                    //for (int y = 0; y < sourceHeight; y++)
                     {
-                        framedata.Buffer.CopyTo(y * sourceStride, m_bitmapHelper.rgbValues, y * destStride, copyLength);
-                    }
+                        frameDataCopyThreadIds.TryAdd(System.Threading.Thread.CurrentThread.ManagedThreadId, 0);  // count how many threads are in use when using Parallel.For() version
+                        framedata.CopyTo(y * sourceStride, m_bitmapHelper.GetBitmapData(y * destStride, copyLength), copyLength);
+                    });
                 }
 
 #if false
@@ -650,11 +656,11 @@ namespace mameForm
 
                 var video = mame.mame_machine_manager.instance().machine().video();
                 osd_ticks_t tps = mame.osdcore_global.m_osdcore.osd_ticks_per_second();
-                double final_real_time = tps == 0 ? 0 : (double)video.overall_real_seconds + (double)video.overall_real_ticks / (double)tps;
-                double final_emu_time = video.overall_emutime.as_double();
+                double final_real_time = tps == 0 ? 0 : (double)video.m_overall_real_seconds + (double)video.m_overall_real_ticks / (double)tps;
+                double final_emu_time = video.m_overall_emutime.as_double();
                 double average_speed_percentage = final_real_time == 0 ? 0 : 100 * final_emu_time / final_real_time;
-                string total_time = (video.overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
-                this.Text = string.Format("Emulator running... Avg Speed: {0:f2}% ({1} seconds) - speed_text: {2}", average_speed_percentage, total_time, video.speed_text());
+                string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
+                this.Text = string.Format("Emulator running... Avg Speed: {0:f2}% ({1} seconds) Framedata_Copy_Threads: {2} - speed_text: {3}", average_speed_percentage, total_time, frameDataCopyThreadIds.Count, video.speed_text());
             }
         }
 

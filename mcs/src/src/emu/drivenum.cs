@@ -244,7 +244,7 @@ namespace mame
         //-------------------------------------------------
         void include_all()
         {
-            std.fill(m_included, true);  // std::fill(m_included.begin(), m_included.end(), true);
+            std.fill(m_included, true);
             m_filtered_count = m_included.size();
 
             // always exclude the empty driver
@@ -254,7 +254,7 @@ namespace mame
 
         public void exclude_all()
         {
-            std.fill(m_included, false);  //std::fill(m_included.begin(), m_included.end(), false);
+            std.fill(m_included, false);
             m_filtered_count = 0;
         }
 

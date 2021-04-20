@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
 
@@ -46,7 +45,7 @@ namespace mame
         protected override void device_start()
         {
             m_output_handler.resolve_safe();
-            save_item(m_state, "m_state");
+            save_item(NAME(new { m_state }));
             m_state = m_initval;
         }
 
@@ -80,7 +79,7 @@ namespace mame
     class input_merger_any_high_device : input_merger_device
     {
         //DEFINE_DEVICE_TYPE(INPUT_MERGER_ANY_HIGH, input_merger_any_high_device, "ipt_merge_any_hi", "Input Merger (any high)")
-        static device_t device_creator_input_merger_any_high_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new input_merger_any_high_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_input_merger_any_high_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new input_merger_any_high_device(mconfig, tag, owner, clock); }
         public static readonly device_type INPUT_MERGER_ANY_HIGH = DEFINE_DEVICE_TYPE(device_creator_input_merger_any_high_device, "ipt_merge_any_hi", "Input Merger (any high)");
 
         input_merger_any_high_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)
@@ -92,7 +91,7 @@ namespace mame
     class input_merger_all_high_device : input_merger_device
     {
         //DEFINE_DEVICE_TYPE(INPUT_MERGER_ALL_HIGH, input_merger_all_high_device, "ipt_merge_all_hi", "Input Merger (all high)")
-        static device_t device_creator_input_merger_all_high_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new input_merger_all_high_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_input_merger_all_high_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new input_merger_all_high_device(mconfig, tag, owner, clock); }
         public static readonly device_type INPUT_MERGER_ALL_HIGH = DEFINE_DEVICE_TYPE(device_creator_input_merger_all_high_device, "ipt_merge_all_hi", "Input Merger (all high)");
 
         input_merger_all_high_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)

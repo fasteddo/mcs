@@ -26,7 +26,7 @@ namespace mame
 
         // internal state
         ui_options m_options;
-        std.vector<KeyValuePair<string, categoryindex>> m_ini_index;  //std::vector<std::pair<std::string, categoryindex> > m_ini_index;
+        std.vector<std.pair<string, categoryindex>> m_ini_index;  //std::vector<std::pair<std::string, categoryindex> > m_ini_index;
 
 
         // construction/destruction
@@ -36,7 +36,7 @@ namespace mame
         public inifile_manager(ui_options moptions)
         {
             m_options = moptions;
-            m_ini_index = new std.vector<KeyValuePair<string, categoryindex>>();
+            m_ini_index = new std.vector<std.pair<string, categoryindex>>();
 
 
             // scan directories and create index
@@ -56,14 +56,14 @@ namespace mame
             }
 
             //std::stable_sort(m_ini_index.begin(), m_ini_index.end());//, [] (auto const &x, auto const &y) { return 0 > core_stricmp(x.first.c_str(), y.first.c_str()); });
-            m_ini_index.Sort((x, y) => { return core_stricmp(x.Key.c_str(), y.Key.c_str()); });
+            m_ini_index.Sort((x, y) => { return core_stricmp(x.first.c_str(), y.first.c_str()); });
         }
 
 
         // load games from category
         public void load_ini_category(UInt32 file, UInt32 category, std.unordered_set<game_driver> result)
         {
-            string filename = m_ini_index[(int)file].Key;
+            string filename = m_ini_index[(int)file].first;
             emu_file fp = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
             if (fp.open(filename) != osd_file.error.NONE)
             {
@@ -71,7 +71,7 @@ namespace mame
                 return;
             }
 
-            Int64 offset = m_ini_index[(int)file].Value[(int)category].Value;
+            Int64 offset = m_ini_index[(int)file].second[(int)category].Value;
             if (fp.seek(offset, emu_file.SEEK_SET) != 0 || (fp.tell() != (UInt64)offset))
             {
                 fp.close();
@@ -97,9 +97,9 @@ namespace mame
 
         // getters
         public UInt32 get_file_count() { return (UInt32)m_ini_index.size(); }
-        public string get_file_name(UInt32 file) { return m_ini_index[(int)file].Key; }
-        public UInt32 get_category_count(UInt32 file) { return (UInt32)m_ini_index[(int)file].Value.size(); }
-        public string get_category_name(UInt32 file, UInt32 category) { return m_ini_index[(int)file].Value[(int)category].Key; }
+        public string get_file_name(UInt32 file) { return m_ini_index[(int)file].first; }
+        public UInt32 get_category_count(UInt32 file) { return (UInt32)m_ini_index[(int)file].second.size(); }
+        public string get_category_name(UInt32 file, UInt32 category) { return m_ini_index[(int)file].second[(int)category].Key; }
 
 
         // init category index

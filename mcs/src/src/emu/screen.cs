@@ -6,11 +6,9 @@ using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;
 using device_timer_id = System.UInt32;
-using device_type = mame.emu.detail.device_type_impl_base;
 using s8  = System.SByte;
 using s16 = System.Int16;
 using s32 = System.Int32;
-using seconds_t = System.Int32;
 using u8  = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -136,7 +134,7 @@ namespace mame
     public class screen_device : device_t
     {
         //DEFINE_DEVICE_TYPE(SCREEN, screen_device, "screen", "Video Screen")
-        static device_t device_creator_screen_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new screen_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_screen_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new screen_device(mconfig, tag, owner, clock); }
         public static readonly device_type SCREEN = DEFINE_DEVICE_TYPE(device_creator_screen_device, "screen", "Video Screen");
 
 
@@ -215,7 +213,7 @@ namespace mame
          @}
          */
 
-        //constexpr u32 VIDEO_UPDATE_BEFORE_VBLANK    = 0x0000;
+        public const u32 VIDEO_UPDATE_BEFORE_VBLANK      = 0x0000;
         const u32 VIDEO_UPDATE_AFTER_VBLANK       = 0x0004;
 
         const u32 VIDEO_SELF_RENDER               = 0x0008;
@@ -232,7 +230,7 @@ namespace mame
         // inline configuration data
         screen_type_enum m_type;                     // type of screen
         int m_orientation;              // orientation flags combined with system flags
-        KeyValuePair<UInt32, UInt32> m_phys_aspect;  //std::pair<unsigned, unsigned> m_phys_aspect;    // physical aspect ratio
+        std.pair<UInt32, UInt32> m_phys_aspect;  //std::pair<unsigned, unsigned> m_phys_aspect;    // physical aspect ratio
         bool m_oldstyle_vblank_supplied; // set_vblank_time call used
         attoseconds_t m_refresh;                  // default refresh period
         attoseconds_t m_vblank;                   // duration of a VBLANK
@@ -306,7 +304,7 @@ namespace mame
         {
             m_type = screen_type_enum.SCREEN_TYPE_RASTER;
             m_orientation = (int)ROT0;
-            m_phys_aspect = new KeyValuePair<UInt32, UInt32>(0U, 0U);
+            m_phys_aspect = new std.pair<UInt32, UInt32>(0U, 0U);
             m_oldstyle_vblank_supplied = false;
             m_refresh = 0;
             m_vblank = 0;
@@ -389,14 +387,14 @@ namespace mame
         //  physical_aspect - determine the physical
         //  aspect ratio to be used for rendering
         //-------------------------------------------------
-        public KeyValuePair<UInt32, UInt32> physical_aspect()  //std::pair<unsigned, unsigned> physical_aspect() const;
+        public std.pair<UInt32, UInt32> physical_aspect()  //std::pair<unsigned, unsigned> physical_aspect() const;
         {
             assert(configured());
 
-            KeyValuePair<UInt32, UInt32> phys_aspect = m_phys_aspect;
+            std.pair<UInt32, UInt32> phys_aspect = m_phys_aspect;
 
             // physical aspect ratio unconfigured
-            if (phys_aspect.first() == 0 || phys_aspect.second() == 0)
+            if (phys_aspect.first == 0 || phys_aspect.second == 0)
             {
                 switch (m_type)
                 {
@@ -415,18 +413,18 @@ namespace mame
             }
 
             // square pixels?
-            if ((~0U == phys_aspect.first()) && (~0U == phys_aspect.second()))
+            if ((~0U == phys_aspect.first) && (~0U == phys_aspect.second))
             {
                 //phys_aspect.first = visible_area().width();
                 //phys_aspect.second = visible_area().height();
-                phys_aspect = new KeyValuePair<UInt32, UInt32>((UInt32)visible_area().width(), (UInt32)visible_area().height());
+                phys_aspect = new std.pair<UInt32, UInt32>((UInt32)visible_area().width(), (UInt32)visible_area().height());
             }
 
             // always keep this in reduced form
-            UInt32 tempFirst = phys_aspect.first();
-            UInt32 tempSecond = phys_aspect.second();
+            UInt32 tempFirst = phys_aspect.first;
+            UInt32 tempSecond = phys_aspect.second;
             reduce_fraction(ref tempFirst, ref tempSecond);
-            phys_aspect = new KeyValuePair<UInt32, UInt32>(tempFirst, tempSecond);
+            phys_aspect = new std.pair<UInt32, UInt32>(tempFirst, tempSecond);
 
             return phys_aspect;
         }
@@ -617,7 +615,7 @@ namespace mame
         public screen_device set_palette(finder_base finder) { m_paletteDevice.set_tag(finder); return this; }
 
         //screen_device &set_no_palette() { m_palette.set_tag(finder_base::DUMMY_TAG); return *this; }
-        //screen_device set_video_attributes(u32 flags) { m_video_attributes = flags; return this; }
+        public screen_device set_video_attributes(u32 flags) { m_video_attributes = flags; return this; }
         screen_device set_color(rgb_t color) { m_color = color; return this; }
         //template <typename T> screen_device &set_svg_region(T &&tag) { m_svg_region.set_tag(std::forward<T>(tag)); return *this; } // default region is device tag
 
@@ -625,7 +623,7 @@ namespace mame
         // information getters
         public render_container container() { /*assert(m_container != NULL);*/ return m_container; }
         public bitmap_ind8 priority() { return m_priority; }
-        public device_palette_interface palette() { assert(m_paletteDevice != null); return m_paletteDevice.target.device_palette_interface; }
+        public device_palette_interface palette() { assert(m_paletteDevice != null); return m_paletteDevice.target.dipalette; }
         public bool has_palette() { return m_paletteDevice != null; }
         //screen_bitmap &curbitmap() { return m_bitmap[m_curtexture]; }
 
@@ -844,7 +842,7 @@ namespace mame
             }
 
             // set the range of scanlines to render
-            rectangle clip = new rectangle(m_visarea);
+            rectangle clip = m_visarea;
             clip.sety(std.max(clip.top(), m_last_partial_scan), std.min(clip.bottom(), scanline));
 
             // skip if entirely outside of visible area
@@ -868,7 +866,7 @@ namespace mame
             u32 flags = 0;
             if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
             {
-                rectangle scan_clip = new rectangle(clip);
+                rectangle scan_clip = clip;
                 for (int y = clip.top(); y <= clip.bottom(); y++)
                 {
                     scan_clip.sety(y, y);
@@ -972,7 +970,7 @@ namespace mame
             // if allocating now, just do it
             bitmap.allocate(width(), height());
             if (m_paletteDevice != null && m_paletteDevice.target != null)
-                bitmap.set_palette(m_paletteDevice.target.palette_interface.palette());
+                bitmap.set_palette(m_paletteDevice.target.dipalette.palette());
         }
 
 
@@ -1025,62 +1023,6 @@ namespace mame
         {
             //throw new emu_unimplemented();
 #if false
-            if (!m_burnin.valid())
-                return;
-
-            screen_bitmap &curbitmap = m_bitmap[m_curtexture];
-            if (!curbitmap.valid())
-                return;
-
-            int srcwidth = curbitmap.width();
-            int srcheight = curbitmap.height();
-            int dstwidth = m_burnin.width();
-            int dstheight = m_burnin.height();
-            int xstep = (srcwidth << 16) / dstwidth;
-            int ystep = (srcheight << 16) / dstheight;
-            int xstart = ((UINT32)rand() % 32767) * xstep / 32767;
-            int ystart = ((UINT32)rand() % 32767) * ystep / 32767;
-            int srcx, srcy;
-            int x, y;
-
-            switch (curbitmap.format())
-            {
-                default:
-                case BITMAP_FORMAT_IND16:
-                {
-                    // iterate over rows in the destination
-                    bitmap_ind16 &srcbitmap = curbitmap.as_ind16();
-                    for (y = 0, srcy = ystart; y < dstheight; y++, srcy += ystep)
-                    {
-                        UINT64 *dst = &m_burnin.pix64(y);
-                        const UINT16 *src = &srcbitmap.pix16(srcy >> 16);
-                        const rgb_t *palette = m_palette->palette()->entry_list_adjusted();
-                        for (x = 0, srcx = xstart; x < dstwidth; x++, srcx += xstep)
-                        {
-                            rgb_t pixel = palette[src[srcx >> 16]];
-                            dst[x] += pixel.g() + pixel.r() + pixel.b();
-                        }
-                    }
-                    break;
-                }
-
-                case BITMAP_FORMAT_RGB32:
-                {
-                    // iterate over rows in the destination
-                    bitmap_rgb32 &srcbitmap = curbitmap.as_rgb32();
-                    for (y = 0, srcy = ystart; y < dstheight; y++, srcy += ystep)
-                    {
-                        UINT64 *dst = &m_burnin.pix64(y);
-                        const UINT32 *src = &srcbitmap.pix32(srcy >> 16);
-                        for (x = 0, srcx = xstart; x < dstwidth; x++, srcx += xstep)
-                        {
-                            rgb_t pixel = src[srcx >> 16];
-                            dst[x] += pixel.g() + pixel.r() + pixel.b();
-                        }
-                    }
-                    break;
-                }
-            }
 #endif
         }
 
@@ -1162,7 +1104,7 @@ namespace mame
 
             // assign our format to the palette before it starts
             if (m_paletteDevice != null && m_paletteDevice.target != null)
-                m_paletteDevice.target.device_palette_interface.set_format(format());
+                m_paletteDevice.target.dipalette.set_format(format());
         }
 
         //-------------------------------------------------
@@ -1171,7 +1113,7 @@ namespace mame
         protected override void device_start()
         {
             // if we have a palette and it's not started, wait for it
-            if (m_paletteDevice != null && m_paletteDevice.target != null && !m_paletteDevice.target.device_palette_interface.device().started())
+            if (m_paletteDevice != null && m_paletteDevice.target != null && !m_paletteDevice.target.dipalette.device().started())
                 throw new device_missing_dependencies();
 
             if (m_type == screen_type_enum.SCREEN_TYPE_SVG)
@@ -1248,21 +1190,21 @@ namespace mame
                 load_effect_overlay(overname);
 
             // register items for saving
-            save_item(m_width, "m_width");
-            save_item(m_height, "m_height");
-            save_item(m_visarea.min_x, "m_visarea.get_min_x()");
-            save_item(m_visarea.min_y, "m_visarea.get_min_y()");
-            save_item(m_visarea.max_x, "m_visarea.get_max_x()");
-            save_item(m_visarea.max_y, "m_visarea.get_max_y()");
-            save_item(m_last_partial_scan, "m_last_partial_scan");
-            save_item(m_frame_period, "m_frame_period");
-            save_item(m_brightness, "m_brightness");
-            save_item(m_scantime, "m_scantime");
-            save_item(m_pixeltime, "m_pixeltime");
-            save_item(m_vblank_period, "m_vblank_period");
-            save_item(m_vblank_start_time, "m_vblank_start_time");
-            save_item(m_vblank_end_time, "m_vblank_end_time");
-            save_item(m_frame_number, "m_frame_number");
+            save_item(NAME(new { m_width }));
+            save_item(NAME(new { m_height }));
+            save_item(NAME(new { m_visarea.min_x }));
+            save_item(NAME(new { m_visarea.min_y }));
+            save_item(NAME(new { m_visarea.max_x }));
+            save_item(NAME(new { m_visarea.max_y }));
+            save_item(NAME(new { m_last_partial_scan }));
+            save_item(NAME(new { m_frame_period }));
+            save_item(NAME(new { m_brightness }));
+            save_item(NAME(new { m_scantime }));
+            save_item(NAME(new { m_pixeltime }));
+            save_item(NAME(new { m_vblank_period }));
+            save_item(NAME(new { m_vblank_start_time }));
+            save_item(NAME(new { m_vblank_end_time }));
+            save_item(NAME(new { m_frame_number }));
             if (m_oldstyle_vblank_supplied)
                 logerror("{0}: Deprecated legacy Old Style screen configured (MCFG_SCREEN_VBLANK_TIME), please use MCFG_SCREEN_RAW_PARAMS instead.\n", tag());
 
@@ -1379,8 +1321,8 @@ namespace mame
             // re-set up textures
             if (m_paletteDevice != null && m_paletteDevice.target != null)
             {
-                m_bitmap[0].set_palette(m_paletteDevice.target.device_palette_interface.palette());
-                m_bitmap[1].set_palette(m_paletteDevice.target.device_palette_interface.palette());
+                m_bitmap[0].set_palette(m_paletteDevice.target.dipalette.palette());
+                m_bitmap[1].set_palette(m_paletteDevice.target.dipalette.palette());
             }
             m_texture[0].set_bitmap(m_bitmap[0].live(), m_visarea, m_bitmap[0].texformat());
             m_texture[1].set_bitmap(m_bitmap[1].live(), m_visarea, m_bitmap[1].texformat());
@@ -1456,20 +1398,6 @@ namespace mame
         {
             //throw new emu_unimplemented();
 #if false
-            // ensure that there is a .png extension
-            string fullname = filename;
-            int extension = fullname.rchr(0, '.');
-            if (extension != -1)
-                fullname.del(extension, -1);
-            fullname += ".png";
-
-            // load the file
-            emu_file file = new emu_file(machine().options().art_path(), osdcore_global.OPEN_FLAG_READ);
-            render_load_png(m_screen_overlay_bitmap, file, null, fullname);
-            if (m_screen_overlay_bitmap.valid())
-                m_container.set_overlay(m_screen_overlay_bitmap);
-            else
-                osd_printf_global.osd_printf_warning(string.Format("Unable to load effect PNG file '{0}'\n", fullname));
 #endif
         }
 
@@ -1514,8 +1442,8 @@ namespace mame
                     for (int y = 0; y < dstheight; y++)
                     {
                         bitmap_ind16 srcbitmap = (bitmap_ind16)m_scan_bitmaps[m_curbitmap][y];
-                        UInt16BufferPointer dst = curbitmap.as_ind16().pix16(y);  //u16 *dst = &curbitmap.as_ind16().pix16(y);
-                        UInt16BufferPointer src = srcbitmap.pix16(0);  //const u16 *src = &srcbitmap.pix16(0);
+                        PointerU16 dst = curbitmap.as_ind16().pix16(y);  //u16 *dst = &curbitmap.as_ind16().pix16(y);
+                        PointerU16 src = srcbitmap.pix16(0);  //const u16 *src = &srcbitmap.pix16(0);
                         int dx = (m_scan_widths[y] << 15) / dstwidth;
                         for (int x = 0; x < m_scan_widths[y]; x += dx)
                         {
@@ -1530,8 +1458,8 @@ namespace mame
                     for (int y = 0; y < dstheight; y++)
                     {
                         bitmap_rgb32 srcbitmap = (bitmap_rgb32)m_scan_bitmaps[m_curbitmap][y];
-                        UInt32BufferPointer dst = curbitmap.as_rgb32().pix32(y);  //u32 *dst = &curbitmap.as_rgb32().pix32(y);
-                        UInt32BufferPointer src = srcbitmap.pix32(0);  //const u32 *src = &srcbitmap.pix32(0);
+                        PointerU32 dst = curbitmap.as_rgb32().pix32(y);  //u32 *dst = &curbitmap.as_rgb32().pix32(y);
+                        PointerU32 src = srcbitmap.pix32(0);  //const u32 *src = &srcbitmap.pix32(0);
                         int dx = (m_scan_widths[y] << 15) / dstwidth;
                         for (int x = 0; x < dstwidth << 15; x += dx)
                         {

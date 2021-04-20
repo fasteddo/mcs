@@ -11,7 +11,7 @@ using uint32_t = System.UInt32;
 
 namespace mame
 {
-    partial class m6800_cpu_device : cpu_device
+    public partial class m6800_cpu_device : cpu_device
     {
         //define OP_HANDLER(_name) void m6800_cpu_device::_name ()
 

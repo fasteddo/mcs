@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 using default_layout_map = mame.std.map<string, mame.internal_layout>;  //std::map<char const *, internal_layout const *, bool (*)(char const *, char const *)> default_layout_map;
-using device_type = mame.emu.detail.device_type_impl_base;
 using maximum_quantum_map = mame.std.map<string, mame.attotime>;  //std::map<char const *, attotime, bool (*)(char const *, char const *)> maximum_quantum_map;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -346,8 +345,8 @@ namespace mame
         //-------------------------------------------------
         public device_t device_add(string tag, device_type type, u32 clock)
         {
-            KeyValuePair<string, device_t> owner = resolve_owner(tag);
-            return add_device(type.create(this, owner.first(), owner.second(), clock), owner.second());
+            std.pair<string, device_t> owner = resolve_owner(tag);
+            return add_device(type.create(this, owner.first, owner.second, clock), owner.second);
         }
 
         //template <typename Creator>
@@ -435,14 +434,14 @@ namespace mame
         //  resolve_owner - get the actual owner and base
         //  tag given tag relative to current context
         //-------------------------------------------------
-        KeyValuePair<string, device_t> resolve_owner(string tag)
+        std.pair<string, device_t> resolve_owner(string tag)
         {
             //throw new emu_unimplemented();
 #if false
             global.assert(m_current_device == m_root_device);
 #endif
 
-            string orig_tag = string.Copy(tag);
+            string orig_tag = tag;
 
             device_t owner = m_current_device;
 
@@ -493,9 +492,6 @@ namespace mame
                     // allocate the root device directly
                     assert(m_root_device == null);
                     m_root_device = device;
-                    driver_device driver = (driver_device)m_root_device.get();
-                    if (driver != null)
-                        driver.set_game_driver(m_gamedrv);
                     m_root_device.add_machine_configuration(this);
                     return m_root_device;
                 }

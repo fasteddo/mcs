@@ -13,10 +13,54 @@ namespace mame.plib
         // string list
         // ----------------------------------------------------------------------------------------
 
-        public static string [] psplit(string str, string onstr, bool ignore_empty = false)
+        public static std.vector<string> psplit(string str, string onstr, bool ignore_empty = false)
         {
-            return str.Split(onstr.ToCharArray(), ignore_empty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+            return new std.vector<string>(str.Split(new string [] { onstr }, ignore_empty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None));
         }
+
+
+        // this version keeps the delimeters, and stores them in a sep entry in the vector
+        public static std.vector<string> psplit(string str, std.vector<string> onstrl)
+        {
+            string col = "";
+            std.vector<string> ret = new std.vector<string>();
+
+            var i = 0;  //auto i = str.begin();
+            while (i != str.Length)  //while (i != str.end())
+            {
+                var p = -1;  //auto p = static_cast<std::size_t>(-1);
+                for (int j = 0; j < onstrl.size(); j++)
+                {
+                    if (onstrl[j] == str.Substring(i, onstrl[j].Length))  //if (std::equal(onstrl[j].begin(), onstrl[j].end(), i))
+                    {
+                        p = j;
+                        break;
+                    }
+                }
+
+                if (p != -1)
+                {
+                    if (col != "")
+                        ret.push_back(col);
+
+                    col = "";
+                    ret.push_back(onstrl[p]);
+                    i += onstrl[p].length();  //i = std::next(i, static_cast<pstring::difference_type>(onstrl[p].length()));
+                }
+                else
+                {
+                    char c = str[i];  //pstring::value_type c = *i;
+                    col += c;
+                    i++;
+                }
+            }
+
+            if (col != "")
+                ret.push_back(col);
+
+            return ret;
+        }
+
 
         //std::vector<pstring> psplit(const pstring &str, const std::vector<pstring> &onstrl);
         //std::vector<std::string> psplit_r(const std::string &stri,
@@ -28,8 +72,11 @@ namespace mame.plib
             return (std.getenv(var.c_str()) == null) ? default_val
                 : std.getenv(var.c_str());
         }
+    }
 
 
+    public static class container
+    {
         //template <class C, class T>
         public static bool contains<C, T>(C con, T elem) where C : ICollection<T>  //bool contains(C &con, const T &elem)
         {
@@ -123,7 +170,7 @@ namespace mame.plib
         //using source_type = plib::unique_ptr<TS>;
         //using list_t = std::vector<source_type>;
 
-        std.vector<psource_t> m_collection;  //list_t m_collection;
+        std.vector<psource_t> m_collection = new std.vector<psource_t>();  //list_t m_collection;
 
 
         public psource_collection_t() { }
@@ -156,17 +203,15 @@ namespace mame.plib
         }
 
 
-        public delegate bool for_all_F(netlist.source_netlist_t source);
-
         //template <typename S, typename F>
-        public bool for_all(for_all_F lambda)
+        public bool for_all(Func<netlist.source_netlist_t, bool> lambda)  //bool for_all(F lambda)
         {
             foreach (var s in m_collection)
             {
-                var source = s;  //auto source(dynamic_cast<S *>(s.get()));
-                if (source != null)
+                bool isSource = s is netlist.source_netlist_t;  //auto source(dynamic_cast<S *>(s.get()));
+                if (isSource)  //if (source)
                 {
-                    if (lambda((netlist.source_netlist_t)source))
+                    if (lambda((netlist.source_netlist_t)s))
                         return true;
                 }
             }

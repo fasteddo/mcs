@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
 
@@ -34,11 +33,11 @@ namespace mame
 
     // ======================> cassette_image_device
     public class cassette_image_device : device_t
-                                  //  public device_image_interface
-                                  //  public device_sound_interface
+                                         //device_image_interface
+                                         //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(CASSETTE, cassette_image_device, "cassette_image", "Cassette")
-        static device_t device_creator_cassette_image_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new cassette_image_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_cassette_image_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new cassette_image_device(mconfig, tag, owner, clock); }
         public static readonly device_type CASSETTE = DEFINE_DEVICE_TYPE(device_creator_cassette_image_device, "cassette_image", "Cassette");
 
 
@@ -127,7 +126,7 @@ namespace mame
 
         // device-level overrides
         //virtual void device_config_complete();
-        //virtual void device_start();
+        protected override void device_start() { throw new emu_unimplemented(); }
         //virtual const bool use_software_list_file_extension_for_filetype() const override { return true; }
 
         // device_image_interface implementation

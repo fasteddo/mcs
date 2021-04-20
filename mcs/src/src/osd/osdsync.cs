@@ -102,6 +102,8 @@ namespace mame
         //============================================================
         //  osd_thread_adjust_priority
         //============================================================
+        // TODO - find workaround for .net standard 1.3
+#if false
         static int thread_adjust_priority(Thread thread, ThreadPriority adjust)  // std::thread *thread, int adjust)
         {
 #if false
@@ -130,6 +132,7 @@ namespace mame
 
             return 1;  //true;
         }
+#endif
 
 
         //============================================================
@@ -186,6 +189,8 @@ namespace mame
             {
                 work_thread_info thread = queue.thread[threadnum];
 
+                throw new emu_unimplemented();
+#if false
                 // create the thread
                 thread.handle = new Thread(worker_thread_entry);  // new std::thread(worker_thread_entry, thread);
                 thread.handle.IsBackground = true;
@@ -200,6 +205,7 @@ namespace mame
                     thread_adjust_priority(thread.handle, thread.handle.Priority);
 
                 thread.handle.Start(thread);
+#endif
             }
 
             // start a timer going for "waittime" on the main thread
@@ -949,6 +955,7 @@ error:
         public work_thread_info(UInt32 aid, osd_work_queue aqueue)
         {
             queue = aqueue;
+
             handle = null;
             wakeevent = new osd_event(0, 0);  //(false, false);  // auto-reset, not signalled
             active = 0;

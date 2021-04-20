@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -84,8 +84,8 @@ namespace mame
         public static osd_file.error common_process_file(emu_options options, string location, string ext, rom_entry romp, ref emu_file image_file)
         {
             return (location != null && !string.IsNullOrEmpty(location))
-                    ? image_file.open(location, global_object.PATH_SEPARATOR, ROM_GETNAME(romp), ext)
-                    : image_file.open(ROM_GETNAME(romp), ext);
+                    ? image_file.open(global_object.string_format("{0}" + global_object.PATH_SEPARATOR + "{1}{2}", location, ROM_GETNAME(romp), ext))
+                    : image_file.open(ROM_GETNAME(romp) + ext);
         }
 
 
@@ -96,7 +96,7 @@ namespace mame
             if (has_crc)
                 filerr = image_file.open(location, global_object.PATH_SEPARATOR, ROM_GETNAME(romp), crc);
             else
-                filerr = image_file.open(location, global_object.PATH_SEPARATOR, ROM_GETNAME(romp));
+                filerr = image_file.open(global_object.string_format("{0}" + global_object.PATH_SEPARATOR + "{1}", location, ROM_GETNAME(romp)));
 
             if (filerr != osd_file.error.NONE)
                 image_file = null;
@@ -116,9 +116,9 @@ namespace mame
             rom_first_region - return pointer to first ROM
             region
         -------------------------------------------------*/
-        public static ListPointer<rom_entry> rom_first_region(device_t device)
+        public static Pointer<rom_entry> rom_first_region(device_t device)  //const rom_entry *rom_first_region(const device_t &device);
         {
-            ListPointer<rom_entry> romp = new ListPointer<rom_entry>(device.rom_region_vector());  //const rom_entry *romp = &device.rom_region_vector().front();
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(device.rom_region_vector());  //const rom_entry *romp = &device.rom_region_vector().front();
             while (ROMENTRY_ISPARAMETER(romp[0]) || ROMENTRY_ISSYSTEM_BIOS(romp[0]) || ROMENTRY_ISDEFAULT_BIOS(romp[0]))
                 romp++;
             return !ROMENTRY_ISEND(romp[0]) ? romp : null;
@@ -129,9 +129,9 @@ namespace mame
             rom_next_region - return pointer to next ROM
             region
         -------------------------------------------------*/
-        public static ListPointer<rom_entry> rom_next_region(ListPointer<rom_entry> rompIn)  //(const rom_entry *romp)
+        public static Pointer<rom_entry> rom_next_region(Pointer<rom_entry> rompIn)  //const rom_entry *rom_next_region(const rom_entry *romp);
         {
-            ListPointer<rom_entry> romp = new ListPointer<rom_entry>(rompIn);
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
 
             romp++;
             while (!ROMENTRY_ISREGIONEND(romp[0]))
@@ -146,9 +146,9 @@ namespace mame
             rom_first_file - return pointer to first ROM
             file
         -------------------------------------------------*/
-        public static ListPointer<rom_entry> rom_first_file(ListPointer<rom_entry> rompIn)  //(const rom_entry *romp)
+        public static Pointer<rom_entry> rom_first_file(Pointer<rom_entry> rompIn)  //const rom_entry *rom_first_file(const rom_entry *romp);
         {
-            ListPointer<rom_entry> romp = new ListPointer<rom_entry>(rompIn);
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
 
             romp++;
             while (!ROMENTRY_ISFILE(romp[0]) && !ROMENTRY_ISREGIONEND(romp[0]))
@@ -161,9 +161,9 @@ namespace mame
             rom_next_file - return pointer to next ROM
             file
         -------------------------------------------------*/
-        public static ListPointer<rom_entry> rom_next_file(ListPointer<rom_entry> rompIn)  //(const rom_entry *romp)
+        public static Pointer<rom_entry> rom_next_file(Pointer<rom_entry> rompIn)  //const rom_entry *rom_next_file(const rom_entry *romp);
         {
-            ListPointer<rom_entry> romp = new ListPointer<rom_entry>(rompIn);
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
 
             romp++;
             while (!ROMENTRY_ISFILE(romp[0]) && !ROMENTRY_ISREGIONEND(romp[0]))
@@ -176,10 +176,9 @@ namespace mame
             rom_file_size - return the expected size of a
             file given the ROM description
         -------------------------------------------------*/
-        //public static u32 rom_file_size(device_t device, int curIndex)  // rom_entry romp)
-        public static u32 rom_file_size(ListPointer<rom_entry> rompIn)  // (const rom_entry *romp)
+        public static u32 rom_file_size(Pointer<rom_entry> rompIn)  //u32 rom_file_size(const rom_entry *romp);
         {
-            ListPointer<rom_entry> romp = new ListPointer<rom_entry>(rompIn);
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
 
             u32 maxlength = 0;
 
@@ -211,7 +210,7 @@ namespace mame
         -------------------------------------------------*/
         public static rom_entry rom_first_parameter(device_t device, ref int curIndex)
         {
-            ListBase<rom_entry> romp = device.rom_region_vector();
+            MemoryContainer<rom_entry> romp = device.rom_region_vector();
             while (romp != null && romp.Count > 0 && romp[curIndex] != null && !ROMENTRY_ISEND(romp[curIndex]) && !ROMENTRY_ISPARAMETER(romp[curIndex]))
                 curIndex++;
 
@@ -229,7 +228,7 @@ namespace mame
             //romp++;
             curIndex++;
 
-            ListBase<rom_entry> romp = device.rom_region_vector();
+            MemoryContainer<rom_entry> romp = device.rom_region_vector();
 
             while (!ROMENTRY_ISREGIONEND(romp[curIndex]) && !ROMENTRY_ISPARAMETER(romp[curIndex]))
                 curIndex++;
@@ -598,7 +597,7 @@ namespace mame
     // ======================> rom_load_manager
     public class rom_load_manager : global_object
     {
-        const bool LOG_LOAD = true;
+        const bool LOG_LOAD = false;
         static void LOG(string format, params object [] args) { if (LOG_LOAD) debugload(format, args); }
 
 
@@ -630,7 +629,6 @@ namespace mame
         u64 m_romsloadedsize;     // total size of ROMs loaded so far
         u64 m_romstotalsize;      // total size of ROMs to read
 
-        emu_file m_file;  //std::unique_ptr<emu_file>  m_file;               /* current file */
         std.vector<open_chd> m_chd_list = new std.vector<open_chd>();  //std::vector<std::unique_ptr<open_chd>> m_chd_list;     /* disks */
 
         memory_region m_region;           // info about current region
@@ -755,7 +753,10 @@ namespace mame
 
                 // if we got neither an empty string nor 'default' then warn the user
                 if (!found)
+                {
                     m_errorstring += string_format("{0}: invalid BIOS \"{1}\", reverting to default\n", device.tag(), specbios);
+                    m_warnings++;
+                }
             }
 
             // log final result
@@ -769,8 +770,8 @@ namespace mame
         -------------------------------------------------*/
         void count_roms()
         {
-            ListPointer<rom_entry> region;
-            ListPointer<rom_entry> rom;
+            Pointer<rom_entry> region;  //const rom_entry *region, *rom;
+            Pointer<rom_entry> rom;
 
             /* start with 0 */
             m_romstotal = 0;
@@ -798,7 +799,7 @@ namespace mame
             fill_random - fills an area of memory with
             random data
         -------------------------------------------------*/
-        void fill_random(ListBytesPointer base_, u32 length)  //u8 *base
+        void fill_random(Pointer<u8> base_, u32 length)  //u8 *base
         {
             while (length-- > 0)
             {
@@ -812,10 +813,19 @@ namespace mame
             handle_missing_file - handles error generation
             for missing files
         -------------------------------------------------*/
-        void handle_missing_file(rom_entry romp, ref string tried_file_names, chd_error chderr)
+        void handle_missing_file(rom_entry romp, std.vector<string> tried_file_names, chd_error chderr)
         {
-            if (tried_file_names.Length != 0)
-                tried_file_names = " (tried in " + tried_file_names + ")";
+            string tried = "";
+            if (!tried_file_names.empty())
+            {
+                tried = " (tried in";
+                foreach (string path in tried_file_names)
+                {
+                    tried += ' ';
+                    tried += path;
+                }
+                tried += ')';
+            }
 
             string name = romload_global.ROM_GETNAME(romp);
 
@@ -827,27 +837,25 @@ namespace mame
             if (is_chd_error)
                 m_errorstring += string.Format("{0} CHD ERROR: {1}\n", name, chd_file.error_string(chderr));
 
-            /* optional files are okay */
             if (romload_global.ROM_ISOPTIONAL(romp))
             {
+                // optional files are okay
                 if (!is_chd_error)
-                    m_errorstring += string.Format("OPTIONAL {0} NOT FOUND{1}\n", name, tried_file_names);
+                    m_errorstring += string.Format("OPTIONAL {0} NOT FOUND{1}\n", name, tried);
                 m_warnings++;
             }
-
-            /* no good dumps are okay */
             else if (new util.hash_collection(romload_global.ROM_GETHASHDATA(romp)).flag(util.hash_collection.FLAG_NO_DUMP))
             {
+                // no good dumps are okay
                 if (!is_chd_error)
-                    m_errorstring += string.Format("{0} NOT FOUND (NO GOOD DUMP KNOWN){1}\n", name, tried_file_names);
+                    m_errorstring += string.Format("{0} NOT FOUND (NO GOOD DUMP KNOWN){1}\n", name, tried);
                 m_knownbad++;
             }
-
-            /* anything else is bad */
             else
             {
+                // anything else is bad
                 if (!is_chd_error)
-                    m_errorstring += string.Format("{0} NOT FOUND{1}\n", name, tried_file_names);
+                    m_errorstring += string.Format("{0} NOT FOUND{1}\n", name, tried);
                 m_errors++;
             }
         }
@@ -869,43 +877,46 @@ namespace mame
             verify_length_and_hash - verify the length
             and hash signatures of a file
         -------------------------------------------------*/
-        void verify_length_and_hash(string name, u32 explength, util.hash_collection hashes)
+        void verify_length_and_hash(emu_file file, string name, u32 explength, util.hash_collection hashes)
         {
-            /* we've already complained if there is no file */
-            if (m_file == null)
+            // we've already complained if there is no file
+            if (file == null)
                 return;
 
-            /* verify length */
-            u32 actlength = (u32)m_file.size();
+            // verify length
+            u64 actlength = file.size();
             if (explength != actlength)
             {
                 m_errorstring += string.Format("{0} WRONG LENGTH (expected: {1} found: {2})\n", name, explength, actlength);  // %08x found: %08x
                 m_warnings++;
             }
 
-            /* If there is no good dump known, write it */
-            util.hash_collection acthashes = m_file.hashes(hashes.hash_types());
             if (hashes.flag(util.hash_collection.FLAG_NO_DUMP))
             {
+                // If there is no good dump known, write it
                 m_errorstring += string.Format("{0} NO GOOD DUMP KNOWN\n", name);
                 m_knownbad++;
             }
-            /* verify checksums */
-            else if (hashes != acthashes)
+            else
             {
-                /* otherwise, it's just bad */
-                util.hash_collection all_acthashes = acthashes.hash_types() == util.hash_collection.HASH_TYPES_ALL
-                    ? acthashes
-                    : m_file.hashes(util.hash_collection.HASH_TYPES_ALL);
-                m_errorstring += string.Format("{0} WRONG CHECKSUMS:\n", name);
-                dump_wrong_and_correct_checksums(hashes, all_acthashes);
-                m_warnings++;
-            }
-            /* If it matches, but it is actually a bad dump, write it */
-            else if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
-            {
-                m_errorstring += string.Format("{0} ROM NEEDS REDUMP\n", name);
-                m_knownbad++;
+                // verify checksums
+                util.hash_collection acthashes = file.hashes(hashes.hash_types().c_str());
+                if (hashes != acthashes)
+                {
+                    // otherwise, it's just bad
+                    util.hash_collection all_acthashes = (acthashes.hash_types() == util.hash_collection.HASH_TYPES_ALL)
+                            ? acthashes
+                            : file.hashes(util.hash_collection.HASH_TYPES_ALL);
+                    m_errorstring += string_format("{0} WRONG CHECKSUMS:\n", name);
+                    dump_wrong_and_correct_checksums(hashes, all_acthashes);
+                    m_warnings++;
+                }
+                else if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
+                {
+                    // If it matches, but it is actually a bad dump, write it
+                    m_errorstring += string_format("{0} ROM NEEDS REDUMP\n", name);
+                    m_knownbad++;
+                }
             }
         }
 
@@ -916,15 +927,15 @@ namespace mame
         -------------------------------------------------*/
         void display_loading_rom_message(string name, bool from_list)
         {
-            string buffer;  //char buffer[200];
+            string buffer;
 
             if (!string.IsNullOrEmpty(name))
-                buffer = string.Format("{0} ({1}%)", from_list ? "Loading Software" : "Loading Machine", (UInt32)(100 * m_romsloadedsize / m_romstotalsize));
+                buffer = string_format("{0} ({1}%)", from_list ? "Loading Software" : "Loading Machine", (u32)(100 * m_romsloadedsize / m_romstotalsize));
             else
-                buffer = string.Format("Loading Complete");
+                buffer = "Loading Complete";
 
             if (!machine().ui().is_menu_active())
-                machine().ui().set_startup_text(buffer, false);
+                machine().ui().set_startup_text(buffer.c_str(), false);
         }
 
 
@@ -971,7 +982,7 @@ namespace mame
             if (invert)
             {
                 LOG(("+ Inverting region\n"));
-                var base_ = new ListBytesPointer(region.base_());  //u8 *base_ = region->base_();
+                var base_ = new Pointer<u8>(region.base_());  //u8 *base_ = region->base_();
                 for (int i = 0; i < region.bytes(); i++)
                 {
                     base_[0] ^= 0xff;  base_++;  //*base_++ ^= 0xff;
@@ -983,11 +994,11 @@ namespace mame
             {
                 LOG("+ Byte swapping region\n");
                 int datawidth = region.bytewidth();
-                var base_ = new ListBytesPointer(region.base_());  //u8 *base = region->base();
+                var base_ = new Pointer<u8>(region.base_());  //u8 *base = region->base();
                 for (int i = 0; i < region.bytes(); i += datawidth)
                 {
-                    RawBuffer temp = new RawBuffer(8);  //u8 temp[8];
-                    memcpy(new ListBytesPointer(temp), base_, (UInt32)datawidth);  //memcpy(temp, base, datawidth);
+                    MemoryU8 temp = new MemoryU8(8, true);  //u8 temp[8];
+                    memcpy(new Pointer<u8>(temp), base_, (UInt32)datawidth);  //memcpy(temp, base, datawidth);
                     for (int j = datawidth - 1; j >= 0; j--)
                     {
                         base_[0] = temp[j];  base_++;  //*base++ = temp[j];
@@ -1001,34 +1012,31 @@ namespace mame
             open_rom_file - open a ROM file, searching
             up the parent and loading by checksum
         -------------------------------------------------*/
-        int open_rom_file(string regiontag, ListPointer<rom_entry> romp, out string tried_file_names, bool from_list)  //const rom_entry *romp
+        emu_file open_rom_file(string regiontag, Pointer<rom_entry> romp, std.vector<string> tried_file_names, bool from_list)  //std::unique_ptr<emu_file> open_rom_file(const char *regiontag, const rom_entry *romp, std::vector<std::string> &tried_file_names, bool from_list);
         {
             osd_file.error filerr = osd_file.error.NOT_FOUND;
             int curIndex = 0;
             u32 romsize = romload_global.rom_file_size(romp);
-            tried_file_names = "";
+            tried_file_names.clear();
 
-            /* update status display */
+            // update status display
             display_loading_rom_message(romload_global.ROM_GETNAME(romp[0]), from_list);
 
-            /* extract CRC to use for searching */
+            // extract CRC to use for searching
             u32 crc = 0;
             bool has_crc = new util.hash_collection(romload_global.ROM_GETHASHDATA(romp[0])).crc(out crc);
 
-            /* attempt reading up the chain through the parents. It automatically also
-             attempts any kind of load by checksum supported by the archives. */
-            m_file = null;
-            for (int drv = driver_list.find(machine().system()); m_file == null && drv != -1; drv = driver_list.clone(drv))
+            // attempt reading up the chain through the parents
+            // It also automatically attempts any kind of load by checksum supported by the archives.
+            emu_file result = null;
+            for (int drv = driver_list.find(machine().system()); (result == null) && (0 <= drv); drv = driver_list.clone(drv))
             {
-                if (tried_file_names.Length != 0)
-                    tried_file_names += " ";
-
-                tried_file_names += driver_list.driver(drv).name;
-                m_file = romload_global.common_process_file(machine().options(), driver_list.driver(drv).name, has_crc, crc, romp[0], out filerr);
+                tried_file_names.emplace_back(driver_list.driver(drv).name);
+                result = romload_global.common_process_file(machine().options(), driver_list.driver(drv).name, has_crc, crc, romp[0], out filerr);
             }
 
-            /* if the region is load by name, load the ROM from there */
-            if (m_file == null && regiontag != null)
+            // if the region is load by name, load the ROM from there
+            if (result == null && regiontag != null)
             {
                 // check if we are dealing with softwarelists. if so, locationtag
                 // is actually a concatenation of: listname + setname + parentname
@@ -1080,44 +1088,47 @@ namespace mame
                 // - if we are using lists, we have: list/clonename, list/parentname, clonename, parentname
                 if (!is_list)
                 {
-                    tried_file_names += " " + tag1;
-                    m_file = romload_global.common_process_file(machine().options(), tag1, has_crc, crc, romp[0], out filerr);
+                    tried_file_names.emplace_back(tag1);
+                    result = romload_global.common_process_file(machine().options(), tag1, has_crc, crc, romp[0], out filerr);
                 }
                 else
                 {
                     // try to load from list/setname
-                    if ((m_file == null) && (tag2 != null))
+                    if ((result == null) && (tag2.c_str() != null)) // FIXME: std::string::c_str will never return nullptr
                     {
-                        tried_file_names += " " + tag2;
-                        m_file = romload_global.common_process_file(machine().options(), tag2, has_crc, crc, romp[0], out filerr);
+                        tried_file_names.emplace_back(tag2);
+                        result = romload_global.common_process_file(machine().options(), tag2, has_crc, crc, romp[0], out filerr);
                     }
                     // try to load from list/parentname
-                    if ((m_file == null) && has_parent && (tag3 != null))
+                    if ((result == null) && has_parent && (tag3.c_str() != null)) // FIXME: std::string::c_str will never return nullptr
                     {
-                        tried_file_names += " " + tag3;
-                        m_file = romload_global.common_process_file(machine().options(), tag3, has_crc, crc, romp[0], out filerr);
+                        tried_file_names.emplace_back(tag3);
+                        result = romload_global.common_process_file(machine().options(), tag3, has_crc, crc, romp[0], out filerr);
                     }
                     // try to load from setname
-                    if ((m_file == null) && (tag4 != null))
+                    if ((result == null) && (tag4.c_str() != null)) // FIXME: std::string::c_str will never return nullptr
                     {
-                        tried_file_names += " " + tag4;
-                        m_file = romload_global.common_process_file(machine().options(), tag4, has_crc, crc, romp[0], out filerr);
+                        tried_file_names.emplace_back(tag4);
+                        result = romload_global.common_process_file(machine().options(), tag4, has_crc, crc, romp[0], out filerr);
                     }
                     // try to load from parentname
-                    if ((m_file == null) && has_parent && (tag5 != null))
+                    if ((result == null) && has_parent && (tag5.c_str() != null)) // FIXME: std::string::c_str will never return nullptr
                     {
-                        tried_file_names += " " + tag5;
-                        m_file = romload_global.common_process_file(machine().options(), tag5, has_crc, crc, romp[0], out filerr);
+                        tried_file_names.emplace_back(tag5);
+                        result = romload_global.common_process_file(machine().options(), tag5, has_crc, crc, romp[0], out filerr);
                     }
                 }
             }
 
-            /* update counters */
+            // update counters
             m_romsloaded++;
             m_romsloadedsize += romsize;
 
-            /* return the result */
-            return filerr == osd_file.error.NONE ? 1 : 0;
+            // return the result
+            if (osd_file.error.NONE != filerr)
+                return null;
+            else
+                return result;
         }
 
 
@@ -1125,14 +1136,12 @@ namespace mame
             rom_fread - cheesy fread that fills with
             random data for a nullptr file
         -------------------------------------------------*/
-        int rom_fread(ListBytesPointer buffer, int length, rom_entry parent_region)  //u8 *buffer
+        int rom_fread(emu_file file, Pointer<u8> buffer, int length, rom_entry parent_region)  //int rom_fread(emu_file *file, u8 *buffer, int length, const rom_entry *parent_region);
         {
-            /* files just pass through */
-            if (m_file != null)
-                return (int)m_file.read(buffer, (UInt32)length);
+            if (file != null) // files just pass through
+                return (int)file.read(buffer, (UInt32)length);
 
-            /* otherwise, fill with randomness unless it was already specifically erased */
-            else if (!romload_global.ROMREGION_ISERASE(parent_region))
+            if (!romload_global.ROMREGION_ISERASE(parent_region)) // otherwise, fill with randomness unless it was already specifically erased
                 fill_random(buffer, (UInt32)length);
 
             return length;
@@ -1143,7 +1152,7 @@ namespace mame
             read_rom_data - read ROM data for a single
             entry
         -------------------------------------------------*/
-        int read_rom_data(rom_entry parent_region, rom_entry romp)
+        int read_rom_data(emu_file file, rom_entry parent_region, rom_entry romp)
         {
             int datashift = (int)romload_global.ROM_GETBITSHIFT(romp);
             int datamask = ((1 << (int)romload_global.ROM_GETBITWIDTH(romp)) - 1) << datashift;
@@ -1152,7 +1161,7 @@ namespace mame
             int skip = (int)romload_global.ROM_GETSKIPCOUNT(romp);
             int reversed = romload_global.ROM_ISREVERSED(romp) ? 1 : 0;
             int numgroups = (numbytes + groupsize - 1) / groupsize;
-            ListBytesPointer base_ = new ListBytesPointer(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
+            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
 
             u32 tempbufsize;
             int i;
@@ -1173,11 +1182,11 @@ namespace mame
 
             /* special case for simple loads */
             if (datamask == 0xff && (groupsize == 1 || reversed == 0) && skip == 0)
-                return rom_fread(base_, numbytes, parent_region);
+                return rom_fread(file, base_, numbytes, parent_region);
 
             /* use a temporary buffer for complex loads */
             tempbufsize = Math.Min(romload_global.TEMPBUFFER_MAX_SIZE, (UInt32)numbytes);
-            RawBuffer tempbuf = new RawBuffer(tempbufsize);
+            MemoryU8 tempbuf = new MemoryU8((int)tempbufsize, true);
 
             /* chunky reads for complex loads */
             skip += groupsize;
@@ -1185,11 +1194,11 @@ namespace mame
             {
                 int evengroupcount = ((int)tempbufsize / groupsize) * groupsize;
                 int bytesleft = (numbytes > evengroupcount) ? evengroupcount : numbytes;
-                ListBytesPointer bufptr = new ListBytesPointer(tempbuf);  //u8 *bufptr = &tempbuf[0];
+                Pointer<u8> bufptr = new Pointer<u8>(tempbuf);  //u8 *bufptr = &tempbuf[0];
 
                 /* read as much as we can */
                 LOG("  Reading {0} bytes into buffer\n", bytesleft);  // %X
-                if (rom_fread(bufptr, bytesleft, parent_region) != bytesleft)
+                if (rom_fread(file, bufptr, bytesleft, parent_region) != bytesleft)
                     return 0;
                 numbytes -= bytesleft;
 
@@ -1295,7 +1304,7 @@ namespace mame
         void fill_rom_data(rom_entry romp)
         {
             u32 numbytes = romload_global.ROM_GETLENGTH(romp);
-            ListBytesPointer base_ = new ListBytesPointer(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
+            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
 
             /* make sure we fill within the region space */
             if (romload_global.ROM_GETOFFSET(romp) + numbytes > m_region.bytes())
@@ -1315,7 +1324,7 @@ namespace mame
         -------------------------------------------------*/
         void copy_rom_data(rom_entry romp)
         {
-            ListBytesPointer base_ = new ListBytesPointer(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
+            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
             string srcrgntag = romload_global.ROM_GETNAME(romp);
             u32 numbytes = romload_global.ROM_GETLENGTH(romp);
             u32 srcoffs = romload_global.ROM_GETHASHDATA(romp)[0];  /* srcoffset in place of hashdata */
@@ -1338,7 +1347,7 @@ namespace mame
                 throw new emu_fatalerror("Error in RomModule definition: COPY out of source memory region space\n");
 
             /* fill the data */
-            memcpy(base_, new ListBytesPointer(region.base_(), (int)srcoffs), numbytes);  // memcpy(base_, region->base_() + srcoffs, numbytes);
+            memcpy(base_, new Pointer<u8>(region.base_(), (int)srcoffs), numbytes);  // memcpy(base_, region->base_() + srcoffs, numbytes);
         }
 
 
@@ -1346,13 +1355,16 @@ namespace mame
             process_rom_entries - process all ROM entries
             for a region
         -------------------------------------------------*/
-        void process_rom_entries(string regiontag, rom_entry parent_region, ListPointer<rom_entry> romp, device_t device, bool from_list)  //const rom_entry *parent_region, const rom_entry *romp
+        void process_rom_entries(device_t device, string regiontag, rom_entry parent_region, Pointer<rom_entry> romp, bool from_list)  //void process_rom_entries(const device_t &device, const char *regiontag, const rom_entry *parent_region, const rom_entry *romp, bool from_list);
         {
             u32 lastflags = 0;
+            std.vector<string> tried_file_names = new std.vector<string>();
 
-            /* loop until we hit the end of this region */
+            // loop until we hit the end of this region
             while (!romload_global.ROMENTRY_ISREGIONEND(romp[0]))
             {
+                tried_file_names.clear();
+
                 if (romload_global.ROMENTRY_ISCONTINUE(romp[0]))
                     throw new emu_fatalerror("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
 
@@ -1376,28 +1388,32 @@ namespace mame
                 }
                 else if (romload_global.ROMENTRY_ISFILE(romp[0]))
                 {
-                    /* handle files */
-                    int irrelevantbios = (romload_global.ROM_GETBIOSFLAGS(romp[0]) != 0 && romload_global.ROM_GETBIOSFLAGS(romp[0]) != device.system_bios()) ? 1 : 0;
+                    // handle files
+                    bool irrelevantbios = (romload_global.ROM_GETBIOSFLAGS(romp[0]) != 0) && (romload_global.ROM_GETBIOSFLAGS(romp[0]) != device.system_bios());
                     rom_entry baserom = romp[0];
                     int explength = 0;
 
-                    /* open the file if it is a non-BIOS or matches the current BIOS */
+                    // open the file if it is a non-BIOS or matches the current BIOS
                     LOG("Opening ROM file: {0}\n", romload_global.ROM_GETNAME(romp[0]));
-                    string tried_file_names = "";
-                    if (irrelevantbios == 0 && open_rom_file(regiontag, romp, out tried_file_names, from_list) == 0)
-                        handle_missing_file(romp[0], ref tried_file_names, chd_error.CHDERR_NONE);
+                    emu_file file = null;
+                    if (!irrelevantbios)
+                    {
+                        file = open_rom_file(regiontag, romp, tried_file_names, from_list);
+                        if (file == null)
+                            handle_missing_file(romp[0], tried_file_names, chd_error.CHDERR_NONE);
+                    }
 
-                    /* loop until we run out of reloads */
+                    // loop until we run out of reloads
                     do
                     {
-                        /* loop until we run out of continues/ignores */
+                        // loop until we run out of continues/ignores
                         do
                         {
                             rom_entry modified_romp = romp[0]; // *romp++;
                             romp++;
                             //int readresult;
 
-                            /* handle flag inheritance */
+                            // handle flag inheritance
                             if (!romload_global.ROM_INHERITSFLAGS(modified_romp))
                                 lastflags = modified_romp.get_flags();
                             else
@@ -1405,35 +1421,35 @@ namespace mame
 
                             explength += (int)romload_global.ROM_GETLENGTH(modified_romp);
 
-                            /* attempt to read using the modified entry */
-                            if (!romload_global.ROMENTRY_ISIGNORE(modified_romp) && irrelevantbios == 0)
-                                /*readresult = */read_rom_data(parent_region, modified_romp);
+                            // attempt to read using the modified entry
+                            if (!romload_global.ROMENTRY_ISIGNORE(modified_romp) && !irrelevantbios)
+                                /*readresult = */read_rom_data(file, parent_region, modified_romp);
                         }
                         while (romload_global.ROMENTRY_ISCONTINUE(romp[0]) || romload_global.ROMENTRY_ISIGNORE(romp[0]));
 
-                        /* if this was the first use of this file, verify the length and CRC */
+                        // if this was the first use of this file, verify the length and CRC
                         if (baserom != null)
                         {
                             LOG("Verifying length ({0}) and checksums\n", explength);  // %X
-                            verify_length_and_hash(romload_global.ROM_GETNAME(baserom), (UInt32)explength, new util.hash_collection(romload_global.ROM_GETHASHDATA(baserom)));
+                            verify_length_and_hash(file, romload_global.ROM_GETNAME(baserom), (UInt32)explength, new util.hash_collection(romload_global.ROM_GETHASHDATA(baserom)));
                             LOG("Verify finished\n");
                         }
 
-                        /* reseek to the start and clear the baserom so we don't reverify */
-                        if (m_file != null)
-                            m_file.seek(0, emu_file.SEEK_SET);
+                        // re-seek to the start and clear the baserom so we don't reverify
+                        if (file != null)
+                            file.seek(0, emu_file.SEEK_SET);
 
                         baserom = null;
                         explength = 0;
                     }
                     while (romload_global.ROMENTRY_ISRELOAD(romp[0]));
 
-                    /* close the file */
-                    if (m_file != null)
+                    // close the file
+                    if (file != null)
                     {
                         LOG(("Closing ROM file\n"));
-                        m_file.close();
-                        m_file = null;
+                        file.close();
+                        file = null;
                     }
                 }
                 else
@@ -1457,7 +1473,7 @@ namespace mame
             process_disk_entries - process all disk entries
             for a region
         -------------------------------------------------*/
-        void process_disk_entries(string regiontag, rom_entry parent_region, ListPointer<rom_entry> romp, device_t device, string locationtag)  //const rom_entry *parent_region, const rom_entry *romp
+        void process_disk_entries(string regiontag, rom_entry parent_region, Pointer<rom_entry> romp, string locationtag)  //void process_disk_entries(const char *regiontag, const rom_entry *parent_region, const rom_entry *romp, const char *locationtag);
         {
             //throw new emu_unimplemented();
 #if false
@@ -1484,8 +1500,7 @@ namespace mame
                     err = (chd_error)romload_global.open_disk_image(machine().options(), machine().system(), romp[0], chd.orig_chd(), locationtag);
                     if (err != chd_error.CHDERR_NONE)
                     {
-                        string unused = "";
-                        handle_missing_file(romp[0], ref unused, err);
+                        handle_missing_file(romp[0], new std.vector<string>(), err);
                         chd = null;
                         continue;
                     }
@@ -1574,7 +1589,7 @@ namespace mame
             device_iterator deviter = new device_iterator(machine().root_device());
             foreach (device_t device in deviter)
             {
-                for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
                     u32 regionlength = romload_global.ROMREGION_GETLENGTH(region[0]);
 
@@ -1593,46 +1608,38 @@ namespace mame
 
                         /* remember the base and length */
                         m_region = machine().memory().region_alloc(regiontag, regionlength, width, endianness);
-                        LOG("Allocated {0} bytes @ {1}\n", m_region.bytes(), m_region.base_());  // %X bytes @ %p\n
+                        LOG("Allocated {0} bytes @ {1}\n", m_region.bytes(), m_region.name());  // %X bytes @ %p\n
 
-                        /* clear the region if it's requested */
-                        if (romload_global.ROMREGION_ISERASE(region[0]))
-                        {
-                            memset(new ListBytesPointer(m_region.base_()), (byte)romload_global.ROMREGION_GETERASEVAL(region[0]), m_region.bytes());
-                        }
-
-                        /* or if it's sufficiently small (<= 4MB) */
-                        else if (m_region.bytes() <= 0x400000)
-                        {
-                            memset(new ListBytesPointer(m_region.base_()), (u8)0, m_region.bytes());
-                        }
+                        if (romload_global.ROMREGION_ISERASE(region[0])) // clear the region if it's requested
+                            memset(new Pointer<u8>(m_region.base_()), (u8)romload_global.ROMREGION_GETERASEVAL(region[0]), m_region.bytes());
+                        else if (m_region.bytes() <= 0x400000) // or if it's sufficiently small (<= 4MB)
+                            memset(new Pointer<u8>(m_region.base_()), (u8)0, m_region.bytes());
 
 #if MAME_DEBUG
-                        /* if we're debugging, fill region with random data to catch errors */
-                        else
+                        else // if we're debugging, fill region with random data to catch errors
                             fill_random(m_region->base_(), m_region->bytes());
 #endif
 
-                        /* now process the entries in the region */
-                        process_rom_entries(device.shortname(), region[0], new ListPointer<rom_entry>(region) + 1, device, false);  // process_rom_entries(device.shortname(), region, region + 1, device, false);
+                        // now process the entries in the region
+                        process_rom_entries(device, device.shortname(), region[0], new Pointer<rom_entry>(region) + 1, false);  //process_rom_entries(device, device.shortname(), region, region + 1, false);
                     }
                     else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
                     {
-                        process_disk_entries(regiontag, region[0], new ListPointer<rom_entry>(region) + 1, device, null);  // process_disk_entries(regiontag, region, region + 1, null);
+                        process_disk_entries(regiontag.c_str(), region[0], new Pointer<rom_entry>(region) + 1, null);  //process_disk_entries(regiontag.c_str(), region, region + 1, nullptr);
                     }
                 }
             }
 
-            /* now go back and post-process all the regions */
+            // now go back and post-process all the regions
             foreach (device_t device in deviter)
             {
-                for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
                     region_post_process(device.memregion(ROM_GETNAME(region[0])), romload_global.ROMREGION_ISINVERTED(region[0]));
                 }
             }
 
-            /* and finally register all per-game parameters */
+            // and finally register all per-game parameters
             foreach (device_t device in deviter)
             {
                 int curIndex = 0;

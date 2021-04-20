@@ -100,6 +100,6 @@ namespace mame
 
         public abstract error append_video_frame(bitmap_yuy16 bitmap);
         public abstract error append_video_frame(bitmap_rgb32 bitmap);
-        public abstract error append_sound_samples(int channel, ListPointer<int16_t> samples, uint32_t numsamples, uint32_t sampleskip);  //std::int16_t const *samples
+        public abstract error append_sound_samples(int channel, Pointer<int16_t> samples, uint32_t numsamples, uint32_t sampleskip);  //virtual error append_sound_samples(int channel, std::int16_t const *samples, std::uint32_t numsamples, std::uint32_t sampleskip) = 0;
     }
 }

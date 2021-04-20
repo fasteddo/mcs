@@ -5,7 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -118,19 +118,19 @@ namespace mame
         //        (DEST) = paldata[srcdata];                                                  \
         //}                                                                                   \
         //while (0)
-        public static void PIXEL_OP_REMAP_TRANSPEN(u32 trans_pen, ListPointer<rgb_t> paldata, ref u32 DEST, u8 SOURCE)
+        public static void PIXEL_OP_REMAP_TRANSPEN(u32 trans_pen, Pointer<rgb_t> paldata, ref u32 DEST, u8 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
                 DEST = paldata[srcdata];
         }
-        public static void PIXEL_OP_REMAP_TRANSPEN(u32 trans_pen, ListPointer<rgb_t> paldata, ref u32 DEST, u16 SOURCE)
+        public static void PIXEL_OP_REMAP_TRANSPEN(u32 trans_pen, Pointer<rgb_t> paldata, ref u32 DEST, u16 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
                 DEST = paldata[srcdata];
         }
-        public static void PIXEL_OP_REMAP_TRANSPEN(u32 trans_pen, ListPointer<rgb_t> paldata, ref u32 DEST, u32 SOURCE)
+        public static void PIXEL_OP_REMAP_TRANSPEN(u32 trans_pen, Pointer<rgb_t> paldata, ref u32 DEST, u32 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
@@ -307,7 +307,7 @@ namespace mame
             FunctionClass pixel_op
         )
             where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelTypeBufferPointer> 
-            where BitmapType_PixelTypeBufferPointer : RawBufferPointer
+            where BitmapType_PixelTypeBufferPointer : PointerU8
         {
             profiler_global.g_profiler.start(profile_type.PROFILER_DRAWGFX);
 
@@ -368,7 +368,7 @@ namespace mame
                 }
 
                 // fetch the source data
-                ListBytesPointer srcdata = get_data(code);  //const u8 *srcdata = get_data(code);
+                PointerU8 srcdata = get_data(code);  //const u8 *srcdata = get_data(code);
 
                 // compute how many blocks of 4 pixels we have
                 u32 numblocks = (u32)((destendx + 1 - destx) / 4);
@@ -384,10 +384,10 @@ namespace mame
                     for (s32 cury = desty; cury <= destendy; cury++)
                     {
                         //auto *destptr = &dest.pix(cury, destx);
-                        RawBufferPointer destptr8 = null;
-                        UInt16BufferPointer destptr16 = null;
-                        UInt32BufferPointer destptr32 = null;
-                        UInt64BufferPointer destptr64 = null;
+                        PointerU8 destptr8 = null;
+                        PointerU16 destptr16 = null;
+                        PointerU32 destptr32 = null;
+                        PointerU64 destptr64 = null;
                         switch (dest.bpp())
                         {
                             case 8:  destptr8 = dest.pix8(cury, destx); break;
@@ -397,7 +397,7 @@ namespace mame
                             default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
                         }
 
-                        ListBytesPointer srcptr = new ListBytesPointer(srcdata);  //const u8 *srcptr = srcdata;
+                        PointerU8 srcptr = new PointerU8(srcdata);  //const u8 *srcptr = srcdata;
                         srcdata += dy;
 
                         // iterate over unrolled blocks of 4
@@ -483,10 +483,10 @@ namespace mame
                     for (s32 cury = desty; cury <= destendy; cury++)
                     {
                         //auto *destptr = &dest.pix(cury, destx);
-                        RawBufferPointer destptr8 = null;
-                        UInt16BufferPointer destptr16 = null;
-                        UInt32BufferPointer destptr32 = null;
-                        UInt64BufferPointer destptr64 = null;
+                        PointerU8 destptr8 = null;
+                        PointerU16 destptr16 = null;
+                        PointerU32 destptr32 = null;
+                        PointerU64 destptr64 = null;
                         switch (dest.bpp())
                         {
                             case 8:  destptr8 = dest.pix8(cury, destx); break;
@@ -496,7 +496,7 @@ namespace mame
                             default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
                         }
 
-                        ListBytesPointer srcptr = new ListBytesPointer(srcdata);  //const u8 *srcptr = srcdata;
+                        PointerU8 srcptr = new PointerU8(srcdata);  //const u8 *srcptr = srcdata;
                         srcdata += dy;
 
                         // iterate over unrolled blocks of 4
@@ -586,7 +586,7 @@ namespace mame
             FunctionClass pixel_op
         )
             where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelTypeBufferPointer> 
-            where BitmapType_PixelTypeBufferPointer : RawBufferPointer
+            where BitmapType_PixelTypeBufferPointer : PointerU8
         {
             throw new emu_unimplemented();
         }
@@ -626,7 +626,7 @@ namespace mame
             gfx_element.FunctionClass pixel_op
         )
             where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelTypeBufferPointer> 
-            where BitmapType_PixelTypeBufferPointer : RawBufferPointer
+            where BitmapType_PixelTypeBufferPointer : PointerU8
         {
             profiler_global.g_profiler.start(profile_type.PROFILER_COPYBITMAP);
 
@@ -697,10 +697,10 @@ namespace mame
 
                 // compute the address of the first source pixel of the first row
                 //const auto *srcdata = &src.pix(srcy, srcx);
-                RawBufferPointer srcdata8 = null;
-                UInt16BufferPointer srcdata16 = null;
-                UInt32BufferPointer srcdata32 = null;
-                UInt64BufferPointer srcdata64 = null;
+                PointerU8 srcdata8 = null;
+                PointerU16 srcdata16 = null;
+                PointerU32 srcdata32 = null;
+                PointerU64 srcdata64 = null;
                 switch (src.bpp())
                 {
                     case 8:  srcdata8 = src.pix8(srcy, srcx); break;
@@ -717,10 +717,10 @@ namespace mame
                     for (s32 cury = desty; cury <= destendy; cury++)
                     {
                         //auto *destptr = &dest.pix(cury, destx);
-                        RawBufferPointer destptr8 = null;
-                        UInt16BufferPointer destptr16 = null;
-                        UInt32BufferPointer destptr32 = null;
-                        UInt64BufferPointer destptr64 = null;
+                        PointerU8 destptr8 = null;
+                        PointerU16 destptr16 = null;
+                        PointerU32 destptr32 = null;
+                        PointerU64 destptr64 = null;
                         switch (dest.bpp())
                         {
                             case 8:  destptr8 = dest.pix8(cury, destx); break;
@@ -731,16 +731,16 @@ namespace mame
                         }
 
                         //const auto *srcptr = srcdata;
-                        RawBufferPointer srcptr8 = null;
-                        UInt16BufferPointer srcptr16 = null;
-                        UInt32BufferPointer srcptr32 = null;
-                        UInt64BufferPointer srcptr64 = null;
+                        PointerU8 srcptr8 = null;
+                        PointerU16 srcptr16 = null;
+                        PointerU32 srcptr32 = null;
+                        PointerU64 srcptr64 = null;
                         switch (src.bpp())
                         {
-                            case 8:  srcptr8 = new RawBufferPointer(srcdata8); break;
-                            case 16: srcptr16 = new UInt16BufferPointer(srcdata16); break;
-                            case 32: srcptr32 = new UInt32BufferPointer(srcdata32); break;
-                            case 64: srcptr64 = new UInt64BufferPointer(srcdata64); break;
+                            case 8:  srcptr8 = new PointerU8(srcdata8); break;
+                            case 16: srcptr16 = new PointerU16(srcdata16); break;
+                            case 32: srcptr32 = new PointerU32(srcdata32); break;
+                            case 64: srcptr64 = new PointerU64(srcdata64); break;
                             default: throw new emu_fatalerror("copybitmap_core() - unknown bpp - {0}\n", src.bpp());
                         }
 
@@ -831,10 +831,10 @@ namespace mame
                     for (s32 cury = desty; cury <= destendy; cury++)
                     {
                         //auto *destptr = &dest.pix(cury, destx);
-                        RawBufferPointer destptr8 = null;
-                        UInt16BufferPointer destptr16 = null;
-                        UInt32BufferPointer destptr32 = null;
-                        UInt64BufferPointer destptr64 = null;
+                        PointerU8 destptr8 = null;
+                        PointerU16 destptr16 = null;
+                        PointerU32 destptr32 = null;
+                        PointerU64 destptr64 = null;
                         switch (dest.bpp())
                         {
                             case 8:  destptr8 = dest.pix8(cury, destx); break;
@@ -845,16 +845,16 @@ namespace mame
                         }
 
                         //const auto *srcptr = srcdata;
-                        RawBufferPointer srcptr8 = null;
-                        UInt16BufferPointer srcptr16 = null;
-                        UInt32BufferPointer srcptr32 = null;
-                        UInt64BufferPointer srcptr64 = null;
+                        PointerU8 srcptr8 = null;
+                        PointerU16 srcptr16 = null;
+                        PointerU32 srcptr32 = null;
+                        PointerU64 srcptr64 = null;
                         switch (src.bpp())
                         {
-                            case 8:  srcptr8 = new RawBufferPointer(srcdata8); break;
-                            case 16: srcptr16 = new UInt16BufferPointer(srcdata16); break;
-                            case 32: srcptr32 = new UInt32BufferPointer(srcdata32); break;
-                            case 64: srcptr64 = new UInt64BufferPointer(srcdata64); break;
+                            case 8:  srcptr8 = new PointerU8(srcdata8); break;
+                            case 16: srcptr16 = new PointerU16(srcdata16); break;
+                            case 32: srcptr32 = new PointerU32(srcdata32); break;
+                            case 64: srcptr64 = new PointerU64(srcdata64); break;
                             default: throw new emu_fatalerror("copybitmap_core() - unknown bpp - {0}\n", src.bpp());
                         }
 
@@ -958,7 +958,7 @@ namespace mame
             gfx_element.FunctionClass pixel_op
         )
             where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelTypeBufferPointer> 
-            where BitmapType_PixelTypeBufferPointer : RawBufferPointer
+            where BitmapType_PixelTypeBufferPointer : PointerU8
         {
             throw new emu_unimplemented();
         }

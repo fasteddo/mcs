@@ -20,7 +20,7 @@ namespace mame
 
         // keyboard helper function delegates
         //typedef delegate<int (const char32_t *, size_t)> ioport_queue_chars_delegate;
-        delegate int ioport_queue_chars_delegate(ListBase<char32_t> param1, UInt32 param2, UInt32 param3);
+        delegate int ioport_queue_chars_delegate(Pointer<char32_t> param1, UInt32 param2);
 
         //typedef delegate<bool (char32_t)> ioport_accept_char_delegate;
         delegate bool ioport_accept_char_delegate(char32_t param1);
@@ -180,14 +180,14 @@ namespace mame
             // find all shift keys
             UInt32 mask = 0;
             std.array<ioport_field> shift = new std.array<ioport_field>(SHIFT_COUNT);
-            for (int i = 0; i < shift.size(); i++) shift[i] = null;  //std::fill(std::begin(shift), std::end(shift), nullptr);
+            std.fill(shift, null);
             foreach (var port in manager.ports())
             {
                 foreach (ioport_field field in port.Value.fields())
                 {
                     if (field.type() == ioport_type.IPT_KEYBOARD)
                     {
-                        ListBase<char32_t> codes = field.keyboard_codes(0);
+                        std.vector<char32_t> codes = field.keyboard_codes(0);
                         foreach (char32_t code in codes)
                         {
                             if ((code >= ioport_global.UCHAR_SHIFT_BEGIN) && (code <= ioport_global.UCHAR_SHIFT_END))
@@ -213,7 +213,7 @@ namespace mame
                             if ((curshift & ~mask) == 0)
                             {
                                 // fetch the code, ignoring 0 and shifters
-                                ListBase<char32_t> codes = field.keyboard_codes((int)curshift);
+                                std.vector<char32_t> codes = field.keyboard_codes((int)curshift);
                                 foreach (char32_t code in codes)
                                 {
                                     if (((code < ioport_global.UCHAR_SHIFT_BEGIN) || (code > ioport_global.UCHAR_SHIFT_END)) && (code != 0))
@@ -223,9 +223,7 @@ namespace mame
                                         if ((null == found) || (found.shift > curshift))
                                         {
                                             keycode_map_entry newcode = new keycode_map_entry();
-                                            //std::fill(std::begin(newcode.field), std::end(newcode.field), nullptr);
-                                            for (int i = 0; i < newcode.field.size(); i++)
-                                                newcode.field[i] = null;
+                                            std.fill(newcode.field, null);
                                             newcode.shift = curshift;
 
                                             UInt32 fieldnum = 0;
@@ -292,7 +290,7 @@ namespace mame
             if (m_queue_chars != null)
             {
                 // the driver has a queue_chars handler
-                while (!empty() && m_queue_chars(m_buffer, m_bufbegin, 1) != 0)
+                while (!empty() && m_queue_chars(new Pointer<char32_t>(m_buffer, (int)m_bufbegin), 1) != 0)  //while (!empty() && m_queue_chars(&m_buffer[m_bufbegin], 1))
                 {
                     m_bufbegin = (m_bufbegin + 1) % (UInt32)m_buffer.size();
                     if (m_current_rate != attotime.zero)

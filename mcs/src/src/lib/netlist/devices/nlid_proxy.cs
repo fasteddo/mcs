@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using nl_fptype = System.Double;
+
 
 namespace mame.netlist
 {
@@ -17,8 +19,8 @@ namespace mame.netlist
         {
             // FIXME: these should be core_terminal_t and only used for connecting
             //        inputs. Fix, once the ugly hacks have been removed
-            analog_t m_tp;
-            analog_t m_tn;
+            protected analog_t m_tp;
+            protected analog_t m_tn;
 
 
             protected nld_base_proxy(netlist_state_t anetlist, string name, logic_t inout_proxied)
@@ -123,7 +125,7 @@ namespace mame.netlist
 
 
             //NETLIB_UPDATEI();
-            protected override void update()
+            public override void update()
             {
                 throw new emu_unimplemented();
             }
@@ -150,19 +152,42 @@ namespace mame.netlist
         //NETLIB_OBJECT_DERIVED(d_to_a_proxy, base_d_to_a_proxy)
         class nld_d_to_a_proxy : nld_base_d_to_a_proxy
         {
-            //static constexpr const nl_fptype G_OFF = nlconst::magic(1e-9);
+            static readonly nl_fptype G_OFF = nlconst.magic(1e-9);
 
             logic_input_t m_I;
-            //analog::NETLIB_NAME(twoterm) m_RP;
+            analog.nld_twoterm m_RP;  //analog::NETLIB_NAME(twoterm) m_RP;
             analog.nld_twoterm m_RN;  //analog::NETLIB_NAME(twoterm) m_RN;
-            //state_var<int> m_last_state;
-            //bool m_is_timestep;
+            state_var<int> m_last_state;
+            bool m_is_timestep;
 
 
             public nld_d_to_a_proxy(netlist_state_t anetlist, string name, logic_output_t out_proxied)
                 : base(anetlist, name, out_proxied)
             {
-                throw new emu_unimplemented();
+                m_I = new logic_input_t(this, "I");
+                m_RP = new analog.nld_twoterm(this, "RP");
+                m_RN = new analog.nld_twoterm(this, "RN");
+                m_last_state = new state_var<int>(this, "m_last_var", -1);
+                m_is_timestep = false;
+
+
+                register_subalias("Q", m_RN.m_P);
+
+                log().verbose.op("D/A Proxy: Found power terminals on device {0}", out_proxied.device().name());
+                if (anetlist.is_extended_validation())
+                {
+                    // During validation, don't connect to terminals found
+                    // This will cause terminals not connected to a rail net to
+                    // fail connection stage.
+                    connect(m_RN.m_N, m_RP.m_P);
+                }
+                else
+                {
+                    connect(m_RN.m_N, m_tn);
+                    connect(m_RP.m_P, m_tp);
+                }
+                connect(m_RN.m_P, m_RP.m_N);
+                //printf("vcc: %f\n", logic_family()->fixed_V());
             }
 
 
@@ -171,20 +196,57 @@ namespace mame.netlist
 
             public override detail.core_terminal_t proxy_term()
             {
-                return m_RN.P;
+                return m_RN.m_P;
             }
 
 
             //NETLIB_RESETI();
             public override void reset()
             {
-                throw new emu_unimplemented();
+                //m_Q.initial(0.0);
+                m_last_state.op = -1;
+                m_RN.reset();
+                m_RP.reset();
+                m_is_timestep = m_RN.m_P.net().solver().has_timestep_devices();
+                m_RN.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_low()),
+                        logic_family().low_offset_V(), nlconst.zero());
+                m_RP.set_G_V_I(G_OFF,
+                    nlconst.zero(),
+                    nlconst.zero());
             }
 
             //NETLIB_UPDATEI();
-            protected override void update()
+            //NETLIB_UPDATE(d_to_a_proxy)
+            public override void update()
             {
-                throw new emu_unimplemented();
+                var state = (int)m_I.op();
+                if (state != m_last_state.op)
+                {
+                    // We only need to update the net first if this is a time stepping net
+                    if (m_is_timestep)
+                    {
+                        m_RN.update(); // RN, RP are connected ...
+                    }
+
+                    if (state != 0)
+                    {
+                        m_RN.set_G_V_I(G_OFF,
+                            nlconst.zero(),
+                            nlconst.zero());
+                        m_RP.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_high()),
+                                logic_family().high_offset_V(), nlconst.zero());
+                    }
+                    else
+                    {
+                        m_RN.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_low()),
+                                logic_family().low_offset_V(), nlconst.zero());
+                        m_RP.set_G_V_I(G_OFF,
+                            nlconst.zero(),
+                            nlconst.zero());
+                    }
+                    m_RN.solve_later(); // RN, RP are connected ...
+                    m_last_state.op = state;
+                }
             }
         }
     } //namespace devices

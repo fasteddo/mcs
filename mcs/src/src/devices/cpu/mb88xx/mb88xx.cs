@@ -4,9 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -142,7 +140,7 @@ namespace mame
         void UPDATE_CF(byte v) { m_cf=((v&0x10)==0) ? (byte)0 : (byte)1; }
         void UPDATE_ZF(byte v) { m_zf=(v!=0) ? (byte)0 : (byte)1; }
 
-        void CYCLES(int x) { m_icountRef.i -= x; }
+        void CYCLES(int x) { m_icount.i -= x; }
 
         UInt16 GETPC() { return (UInt16)(((int)m_PA << 6) + m_PC); }
         offs_t GETEA() { return (offs_t)((m_X << 4) + m_Y); }
@@ -190,8 +188,8 @@ namespace mame
         devcb_read8 m_read_k;
         devcb_write8 m_write_o;
         devcb_write8 m_write_p;
-        devcb_read8.array<i4, devcb_read8> m_read_r;
-        devcb_write8.array<i4, devcb_write8> m_write_r;
+        devcb_read8.array<devcb_read8> m_read_r;
+        devcb_write8.array<devcb_write8> m_write_r;
         devcb_read_line m_read_si;
         devcb_write_line m_write_so;
 
@@ -203,7 +201,7 @@ namespace mame
         address_space m_data;
 
         //int m_icount;
-        intref m_icountRef = new intref();
+        intref m_icount = new intref();
 
         // For the debugger
         uint16_t m_debugger_pc;
@@ -226,8 +224,8 @@ namespace mame
             m_read_k = new devcb_read8(this);
             m_write_o = new devcb_write8(this);
             m_write_p = new devcb_write8(this);
-            m_read_r = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
-            m_write_r = new devcb_write8.array<i4, devcb_write8>(this, () => { return new devcb_write8(this); });
+            m_read_r = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
+            m_write_r = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
             m_read_si = new devcb_read_line(this);
             m_write_so = new devcb_write_line(this);
         }
@@ -298,30 +296,30 @@ namespace mame
 
             m_ctr = 0;
 
-            save_item(m_PC, "m_PC");
-            save_item(m_PA, "m_PA");
-            save_item(m_SP[0], "m_SP[0]");
-            save_item(m_SP[1], "m_SP[1]");
-            save_item(m_SP[2], "m_SP[2]");
-            save_item(m_SP[3], "m_SP[3]");
-            save_item(m_SI, "m_SI");
-            save_item(m_A, "m_A");
-            save_item(m_X, "m_X");
-            save_item(m_Y, "m_Y");
-            save_item(m_st, "m_st");
-            save_item(m_zf, "m_zf");
-            save_item(m_cf, "m_cf");
-            save_item(m_vf, "m_vf");
-            save_item(m_sf, "m_sf");
-            save_item(m_nf, "m_nf");
-            save_item(m_pio, "m_pio");
-            save_item(m_TH, "m_TH");
-            save_item(m_TL, "m_TL");
-            save_item(m_TP, "m_TP");
-            save_item(m_ctr, "m_ctr");
-            save_item(m_SB, "m_SB");
-            save_item(m_SBcount, "m_SBcount");
-            save_item(m_pending_interrupt, "m_pending_interrupt");
+            save_item(NAME(new { m_PC }));
+            save_item(NAME(new { m_PA }));
+            save_item(NAME(new { m_SP }));  //save_item(NAME(m_SP[0]));
+            //save_item(NAME(new { m_SP[1] }));
+            //save_item(NAME(new { m_SP[2] }));
+            //save_item(NAME(new { m_SP[3] }));
+            save_item(NAME(new { m_SI }));
+            save_item(NAME(new { m_A }));
+            save_item(NAME(new { m_X }));
+            save_item(NAME(new { m_Y }));
+            save_item(NAME(new { m_st }));
+            save_item(NAME(new { m_zf }));
+            save_item(NAME(new { m_cf }));
+            save_item(NAME(new { m_vf }));
+            save_item(NAME(new { m_sf }));
+            save_item(NAME(new { m_nf }));
+            save_item(NAME(new { m_pio }));
+            save_item(NAME(new { m_TH }));
+            save_item(NAME(new { m_TL }));
+            save_item(NAME(new { m_TP }));
+            save_item(NAME(new { m_ctr }));
+            save_item(NAME(new { m_SB }));
+            save_item(NAME(new { m_SBcount }));
+            save_item(NAME(new { m_pending_interrupt }));
 
             m_distate.state_add( MB88_PC,  "PC",  m_PC).formatstr("%02X");
             m_distate.state_add( MB88_PA,  "PA",  m_PA).formatstr("%02X");
@@ -338,7 +336,7 @@ namespace mame
             m_distate.state_add( STATE_GENPCBASE, "CURPC", m_debugger_pc ).callimport().callexport().noshow();
             m_distate.state_add( STATE_GENFLAGS, "GENFLAGS", m_debugger_flags).callimport().callexport().formatstr("%6s").noshow();
 
-            set_icountptr(m_icountRef);
+            set_icountptr(m_icount);
         }
 
 
@@ -377,13 +375,13 @@ namespace mame
 
 
         // device_execute_interface overrides
-        //virtual UINT32 execute_min_cycles() const { return 1; }
-        //virtual UINT32 execute_max_cycles() const { return 3; }
-        //virtual UINT32 execute_input_lines() const { return 1; }
+        //virtual uint32_t execute_min_cycles() const noexcept override { return 1; }
+        //virtual uint32_t execute_max_cycles() const noexcept override { return 3; }
+        //virtual uint32_t execute_input_lines() const noexcept override { return 1; }
 
         void device_execute_interface_execute_run()
         {
-            while (m_icountRef.i > 0)
+            while (m_icount.i > 0)
             {
                 byte opcode;
                 byte arg;
@@ -914,8 +912,8 @@ namespace mame
             m_nf = (state != CLEAR_LINE) ? (byte)1 : (byte)0;
         }
 
-        //virtual UINT64 execute_clocks_to_cycles(UINT64 clocks) const { return (clocks + 6 - 1) / 6; }
-        //virtual UINT64 execute_cycles_to_clocks(UINT64 cycles) const { return (cycles * 6); }
+        //virtual uint64_t execute_clocks_to_cycles(uint64_t clocks) const noexcept override { return (clocks + 6 - 1) / 6; }
+        //virtual uint64_t execute_cycles_to_clocks(uint64_t cycles) const noexcept override { return (cycles * 6); }
 
 
         // device_memory_interface overrides
@@ -1088,7 +1086,7 @@ namespace mame
                 if ((m_pending_interrupt & m_pio & INT_CAUSE_EXTERNAL) != 0)
                 {
                     /* if we have a live external source, call the irqcallback */
-                    m_diexec.standard_irq_callback( 0 );
+                    standard_irq_callback( 0 );
                     m_PC = 0x02;
                 }
                 else if ((m_pending_interrupt & m_pio & INT_CAUSE_TIMER) != 0)
@@ -1143,7 +1141,7 @@ namespace mame
     class mb8842_cpu_device : mb88_cpu_device
     {
         //DEFINE_DEVICE_TYPE(MB8842,  mb8842_cpu_device,  "mb8842",  "Fujitsu MB8842")
-        static device_t device_creator_mb8842_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8842_cpu_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_mb8842_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8842_cpu_device(mconfig, tag, owner, clock); }
         public static readonly device_type MB8842 = DEFINE_DEVICE_TYPE(device_creator_mb8842_cpu_device, "mb8842",  "Fujitsu MB8842");
 
 
@@ -1158,7 +1156,7 @@ namespace mame
     class mb8843_cpu_device : mb88_cpu_device
     {
         //DEFINE_DEVICE_TYPE(MB8843,  mb8843_cpu_device,  "mb8843",  "Fujitsu MB8843")
-        static device_t device_creator_mb8843_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8843_cpu_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_mb8843_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8843_cpu_device(mconfig, tag, owner, clock); }
         public static readonly device_type MB8843 = DEFINE_DEVICE_TYPE(device_creator_mb8843_cpu_device, "mb8843",  "Fujitsu MB8843");
 
 
@@ -1173,7 +1171,7 @@ namespace mame
     class mb8844_cpu_device : mb88_cpu_device
     {
         //DEFINE_DEVICE_TYPE(MB8844,  mb8844_cpu_device,  "mb8844",  "Fujitsu MB8844")
-        static device_t device_creator_mb8844_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8844_cpu_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_mb8844_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8844_cpu_device(mconfig, tag, owner, clock); }
         public static readonly device_type MB8844 = DEFINE_DEVICE_TYPE(device_creator_mb8844_cpu_device, "mb8844", "Fujitsu MB8844");
 
 

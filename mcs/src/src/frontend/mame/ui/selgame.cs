@@ -5,7 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using icon_cache = mame.util.lru_cache_map<mame.game_driver, mame.ui.menu_select_game.texture_and_bitmap>;
-using ListBytes = mame.ListBase<System.Byte>;
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 
@@ -192,7 +193,7 @@ namespace mame.ui
                 //        m_sorted_list.begin(),
                 //        m_sorted_list.end(),
                 //        [] (ui_system_info const &lhs, ui_system_info const &rhs) { return sorted_game_list(lhs.driver, rhs.driver); });
-                m_sorted_list.Sort((lhs, rhs) => { return auditmenu_global.sorted_game_list(lhs.driver, rhs.driver); });
+                m_sorted_list.Sort((lhs, rhs) => { return auditmenu_global.sorted_game_list(lhs.driver, rhs.driver) ? -1 : 1; });
                 notify_available(available.AVAIL_SORTED_LIST);
 
                 // sort manufacturers and years
@@ -234,7 +235,7 @@ namespace mame.ui
         string m_icon_paths;
         std.vector<ui_system_info> m_displaylist;  //std::vector<std::reference_wrapper<ui_system_info const> > m_displaylist;
 
-        std.vector<KeyValuePair<double, ui_system_info>> m_searchlist;  //std::vector<std::pair<double, std::reference_wrapper<ui_system_info const> > > m_searchlist;
+        std.vector<std.pair<double, ui_system_info>> m_searchlist;  //std::vector<std::pair<double, std::reference_wrapper<ui_system_info const> > > m_searchlist;
         UInt32 m_searched_fields;
         bool m_populated_favorites;
 
@@ -251,7 +252,7 @@ namespace mame.ui
             m_icons = new icon_cache(MAX_ICONS_RENDER);
             m_icon_paths = "";
             m_displaylist = new std.vector<ui_system_info>();
-            m_searchlist = new std.vector<KeyValuePair<double, ui_system_info>>();
+            m_searchlist = new std.vector<std.pair<double, ui_system_info>>();
             m_searched_fields = (UInt32)persistent_data.available.AVAIL_NONE;
             m_populated_favorites = false;
 
@@ -293,7 +294,7 @@ namespace mame.ui
 
                 emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
 
-                ListBytes temp = new ListBytes();
+                MemoryU8 temp = new MemoryU8();
                 foreach (var s in fake_ini.c_str()) temp.Add(Convert.ToByte(s));
 
                 if (file.open_ram(temp, (UInt32)fake_ini.Length) == osd_file.error.NONE)  // fake_ini.c_str()
@@ -394,8 +395,8 @@ namespace mame.ui
                         for (int i = 0; i < m_searchlist.Count && MAX_VISIBLE_SEARCH > m_displaylist.size(); i++)  //for (auto it = m_searchlist.begin(); (m_searchlist.end() != it) && (MAX_VISIBLE_SEARCH > m_displaylist.size()); ++it)
                         {
                             var it = m_searchlist[i];
-                            if (flt.apply(it.second()))
-                                m_displaylist.emplace_back(it.second());
+                            if (flt.apply(it.second))
+                                m_displaylist.emplace_back(it.second);
                         }
                     }
                     else
@@ -406,7 +407,7 @@ namespace mame.ui
                         //        std.back_inserter(m_displaylist),
                         //        [] (auto const &entry) { return entry.second; });
                         foreach (var it in m_searchlist)
-                            m_displaylist.Add(it.second());
+                            m_displaylist.Add(it.second);
                     }
                 }
                 else
@@ -771,7 +772,7 @@ namespace mame.ui
                             if (machine_filter.type.CUSTOM == new_type)
                             {
                                 emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-                                if (file.open("custom_", emulator_info.get_configname(), "_filter.ini") == osd_file.error.NONE)
+                                if (file.open(string_format("custom_{0}_filter.ini", emulator_info.get_configname())) == osd_file.error.NONE)
                                 {
                                     filter.save_ini(file, 0);
                                     file.close();
@@ -886,7 +887,7 @@ namespace mame.ui
                 std.vector<ui_system_info> sorted = m_persistent_data.sorted_list();
                 m_searchlist.reserve(sorted.size());
                 foreach (ui_system_info info in sorted)
-                    m_searchlist.emplace_back(new KeyValuePair<double, ui_system_info>(1.0, info));
+                    m_searchlist.emplace_back(new std.pair<double, ui_system_info>(1.0, info));
             }
 
             // keep track of what we matched against
@@ -897,7 +898,7 @@ namespace mame.ui
             {
                 m_searched_fields |= (UInt32)persistent_data.available.AVAIL_UCS_SHORTNAME;
                 for (int i = 0; i < m_searchlist.Count; i++)  //for (std::pair<double, std::reference_wrapper<ui_system_info const> > &info : m_searchlist)
-                    m_searchlist[i] = new KeyValuePair<double, ui_system_info>(corestr_global.edit_distance(ucs_search, m_searchlist[i].second().ucs_shortname), m_searchlist[i].second());  //info.first = util::edit_distance(ucs_search, info.second.get().ucs_shortname);
+                    m_searchlist[i] = new std.pair<double, ui_system_info>(corestr_global.edit_distance(ucs_search, m_searchlist[i].second.ucs_shortname), m_searchlist[i].second);  //info.first = util::edit_distance(ucs_search, info.second.get().ucs_shortname);
             }
 
             // match descriptions
@@ -906,10 +907,10 @@ namespace mame.ui
                 m_searched_fields |= (UInt32)persistent_data.available.AVAIL_UCS_DESCRIPTION;
                 for (int i = 0; i < m_searchlist.Count; i++)  //for (std::pair<double, std::reference_wrapper<ui_system_info const> > &info : m_searchlist)
                 {
-                    if (m_searchlist[i].first() != 0)  //if (info.first)
+                    if (m_searchlist[i].first != 0)  //if (info.first)
                     {
-                        double penalty = corestr_global.edit_distance(ucs_search, m_searchlist[i].second().ucs_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_description));
-                        m_searchlist[i] = new KeyValuePair<double, ui_system_info>(std.min(penalty, m_searchlist[i].first()), m_searchlist[i].second());  //info.first = (std::min)(penalty, info.first);
+                        double penalty = corestr_global.edit_distance(ucs_search, m_searchlist[i].second.ucs_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_description));
+                        m_searchlist[i] = new std.pair<double, ui_system_info>(std.min(penalty, m_searchlist[i].first), m_searchlist[i].second);  //info.first = (std::min)(penalty, info.first);
                     }
                 }
             }
@@ -920,10 +921,10 @@ namespace mame.ui
                 m_searched_fields |= (UInt32)persistent_data.available.AVAIL_UCS_MANUF_DESC;
                 for (int i = 0; i < m_searchlist.Count; i++)  //for (std::pair<double, std::reference_wrapper<ui_system_info const> > &info : m_searchlist)
                 {
-                    if (m_searchlist[i].first() != 0)  //if (info.first)
+                    if (m_searchlist[i].first != 0)  //if (info.first)
                     {
-                        double penalty = corestr_global.edit_distance(ucs_search, m_searchlist[i].second().ucs_manufacturer_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_manufacturer_description));
-                        m_searchlist[i] = new KeyValuePair<double, ui_system_info>(std.min(penalty, m_searchlist[i].first()), m_searchlist[i].second());  //info.first = (std::min)(penalty, info.first);
+                        double penalty = corestr_global.edit_distance(ucs_search, m_searchlist[i].second.ucs_manufacturer_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_manufacturer_description));
+                        m_searchlist[i] = new std.pair<double, ui_system_info>(std.min(penalty, m_searchlist[i].first), m_searchlist[i].second);  //info.first = (std::min)(penalty, info.first);
                     }
                 }
             }
@@ -933,7 +934,7 @@ namespace mame.ui
             //        m_searchlist.begin(),
             //        m_searchlist.end());
             //        [] (auto const &lhs, auto const &rhs) { return lhs.first < rhs.first; });
-            m_searchlist.Sort((lhs, rhs) => { return lhs.first().CompareTo(rhs.first()); });
+            m_searchlist.Sort((lhs, rhs) => { return lhs.first.CompareTo(rhs.first); });
         }
 
 
@@ -950,7 +951,7 @@ namespace mame.ui
         {
             // try to load available drivers from file
             emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
-            if (file.open(emulator_info.get_configname(), "_avail.ini") != osd_file.error.NONE)
+            if (file.open(emulator_info.get_configname() + "_avail.ini") != osd_file.error.NONE)
                 return false;
 
             string rbuf;  //char rbuf[MAX_CHAR_INFO];
@@ -1003,7 +1004,7 @@ namespace mame.ui
         void load_custom_filters()
         {
             emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
-            if (file.open("custom_", emulator_info.get_configname(), "_filter.ini") == osd_file.error.NONE)
+            if (file.open(string_format("custom_{0}_filter.ini", emulator_info.get_configname())) == osd_file.error.NONE)
             {
                 machine_filter flt = machine_filter.create(file, m_persistent_data.filter_data());
                 if (flt != null)

@@ -19,16 +19,14 @@ namespace mame.netlist
         public class nld_netlistparams : device_t
         {
             //NETLIB_DEVICE_IMPL(netlistparams,       "PARAMETER",              "")
-            static factory.element_t nld_netlistparams_c(string classname)
-            { return new factory.device_element_t<nld_netlistparams>("PARAMETER", classname, "", "__FILE__"); }
-            public static factory.constructor_ptr_t decl_netlistparams = nld_netlistparams_c;
+            public static readonly factory.constructor_ptr_t decl_netlistparams = NETLIB_DEVICE_IMPL<nld_netlistparams>("PARAMETER", "");
 
 
-            param_logic_t m_use_deactivate;
-            param_num_t_unsigned m_startup_strategy;
-            param_num_t_unsigned m_mos_capmodel;
+            public param_logic_t m_use_deactivate;
+            public param_num_t_unsigned m_startup_strategy;
+            public param_num_t_unsigned m_mos_capmodel;
             //! How many times do we try to resolve links (connections)
-            param_num_t_unsigned m_max_link_loops;
+            public param_num_t_unsigned m_max_link_loops;
 
 
             //NETLIB_CONSTRUCTOR(netlistparams)
@@ -44,13 +42,8 @@ namespace mame.netlist
             }
 
 
-            public param_logic_t use_deactivate { get { return m_use_deactivate; } }
-            public param_num_t_unsigned mos_capmodel { get { return m_mos_capmodel; } }
-            public param_num_t_unsigned max_link_loops { get { return m_max_link_loops; } }
-
-
             //NETLIB_UPDATEI() { }
-            protected override void update() { }
+            public override void update() { }
 
 
             //NETLIB_RESETI() { }
@@ -78,12 +71,12 @@ namespace mame.netlist
             }
 
 
-            analog_input_t VCC()
+            public analog_input_t VCC()
             {
                 return m_VCC;
             }
 
-            analog_input_t GND()
+            public analog_input_t GND()
             {
                 return m_GND;
             }
@@ -118,9 +111,10 @@ namespace mame.netlist
         class nld_logic_input : device_t
         {
             //NETLIB_DEVICE_IMPL(logic_input, "LOGIC_INPUT", "IN,FAMILY")
-            static factory.element_t nld_logic_input_c(string classname)
-            { return new factory.device_element_t<nld_logic_input>("LOGIC_INPUT", classname, "IN,FAMILY", "__FILE__"); }
-            public static factory.constructor_ptr_t decl_logic_input = nld_logic_input_c;
+            public static readonly factory.constructor_ptr_t decl_logic_input = NETLIB_DEVICE_IMPL<nld_logic_input>("LOGIC_INPUT", "IN,FAMILY");
+
+            //NETLIB_DEVICE_IMPL_ALIAS(logic_input_ttl, logic_input, "TTL_INPUT", "IN")
+            public static readonly factory.constructor_ptr_t decl_logic_input_ttl = NETLIB_DEVICE_IMPL_ALIAS<nld_logic_input>("logic_input_ttl", "TTL_INPUT", "IN");
 
 
             logic_output_t m_Q;
@@ -149,7 +143,7 @@ namespace mame.netlist
 
 
             //NETLIB_UPDATEI();
-            protected override void update() { }
+            public override void update() { }
 
             //NETLIB_RESETI();
             public override void reset() { m_Q.initial(0); }
@@ -163,13 +157,15 @@ namespace mame.netlist
         }
 
 
+        //template<std::size_t N>
+        //NETLIB_OBJECT(logic_inputN)
+
+
         //NETLIB_OBJECT(analog_input)
         class nld_analog_input : device_t
         {
             //NETLIB_DEVICE_IMPL(analog_input,        "ANALOG_INPUT",           "IN")
-            static factory.element_t nld_analog_input_c(string classname)
-            { return new factory.device_element_t<nld_analog_input>("ANALOG_INPUT", classname, "IN", "__FILE__"); }
-            public static factory.constructor_ptr_t decl_analog_input = nld_analog_input_c;
+            public static readonly factory.constructor_ptr_t decl_analog_input = NETLIB_DEVICE_IMPL<nld_analog_input>("ANALOG_INPUT", "IN");
 
 
             analog_output_t m_Q;
@@ -188,7 +184,7 @@ namespace mame.netlist
 
 
             //NETLIB_UPDATEI();
-            protected override void update() { }
+            public override void update() { }
 
             //NETLIB_RESETI();
             public override void reset() { m_Q.initial(nlconst.zero()); }
@@ -204,10 +200,8 @@ namespace mame.netlist
         //NETLIB_OBJECT(gnd)
         class nld_gnd : device_t
         {
-            //NETLIB_DEVICE_IMPL(gnd,                 "GND",                    "")
-            static factory.element_t nld_gnd_c(string classname)
-            { return new factory.device_element_t<nld_gnd>("GND", classname, "", "__FILE__"); }
-            public static factory.constructor_ptr_t decl_gnd = nld_gnd_c;
+            //NETLIB_DEVICE_IMPL(gnd,                 "GNDA",                   "")
+            public static readonly factory.constructor_ptr_t decl_gnd = NETLIB_DEVICE_IMPL<nld_gnd>("GNDA", "");
 
 
             analog_output_t m_Q;
@@ -223,7 +217,7 @@ namespace mame.netlist
             }
 
             //NETLIB_UPDATEI()
-            protected override void update()
+            public override void update()
             {
                 m_Q.push(nlconst.zero());
             }
@@ -240,9 +234,7 @@ namespace mame.netlist
         class nld_nc_pin : device_t
         {
             //NETLIB_DEVICE_IMPL(nc_pin,              "NC_PIN",                 "")
-            static factory.element_t nld_nc_pin_c(string classname)
-            { return new factory.device_element_t<nld_nc_pin>("NC_PIN", classname, "", "__FILE__"); }
-            public static factory.constructor_ptr_t decl_nc_pin = nld_nc_pin_c;
+            public static readonly factory.constructor_ptr_t decl_nc_pin = NETLIB_DEVICE_IMPL<nld_nc_pin>("NC_PIN", "");
 
 
             //analog_input_t m_I;
@@ -264,7 +256,7 @@ namespace mame.netlist
             //NETLIB_RESETI() { }
             public override void reset() { }
             //NETLIB_UPDATEI() { }
-            protected override void update() { }
+            public override void update() { }
         }
 
 

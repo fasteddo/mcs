@@ -15,6 +15,8 @@ namespace mame
         {
             ___empty.driver____empty,
             _1942.driver_1942,
+            atarisy2.driver_720,
+            atarisy2.driver_paperboy,
             centiped.driver_centipede,
             dkong.driver_dkong,
             galaga.driver_digdug,

@@ -16,9 +16,9 @@ namespace mame
         // global allocation helpers -- use these instead of new and delete
         //#define global_alloc(Type)                          new Type
         //#define global_alloc_array(Type, Num)               new Type[Num]
-        public static ListBase<T> global_alloc_array<T>(UInt32 Num) where T : new()  //#define global_alloc_array(Type, Num)               new Type[Num]
+        public static MemoryContainer<T> global_alloc_array<T>(UInt32 Num) where T : new()  //#define global_alloc_array(Type, Num)               new Type[Num]
         {
-            ListBase<T> list = new ListBase<T>((int)Num);
+            MemoryContainer<T> list = new MemoryContainer<T>((int)Num);
             for (int i = 0; i < Num; i++)
                 list.Add(new T());
 
@@ -38,7 +38,7 @@ namespace mame
         //}
 
         //template<typename T>
-        public static ListBase<T> global_alloc_array_clear<T>(UInt32 num) where T : new()  //inline T* global_alloc_array_clear(std::size_t num)
+        public static MemoryContainer<T> global_alloc_array_clear<T>(UInt32 num) where T : new()  //inline T* global_alloc_array_clear(std::size_t num)
         {
             //auto const size = sizeof(T) * num;
             //void *const ptr = new unsigned char[size]; // allocate memory

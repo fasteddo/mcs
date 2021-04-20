@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
@@ -50,7 +48,7 @@ namespace mame
         protected override void device_start()
         {
             m_data_pending_cb.resolve_safe();
-            save_item(m_latch_written, "m_latch_written");
+            save_item(NAME(new { m_latch_written }));
 
             // synchronization is needed since other devices may not be initialized yet
             machine().scheduler().synchronize(init_callback);
@@ -97,7 +95,7 @@ namespace mame
     public class generic_latch_8_device : generic_latch_base_device
     {
         //DEFINE_DEVICE_TYPE(GENERIC_LATCH_8, generic_latch_8_device, "generic_latch_8", "Generic 8-bit latch")
-        static device_t device_creator_generic_latch_8_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new generic_latch_8_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_generic_latch_8_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new generic_latch_8_device(mconfig, tag, owner, clock); }
         public static readonly device_type GENERIC_LATCH_8 = DEFINE_DEVICE_TYPE(device_creator_generic_latch_8_device, "generic_latch_8", "Generic 8-bit latch");
 
 
@@ -143,7 +141,7 @@ namespace mame
         {
             // register for state saving
             base.device_start();
-            save_item(m_latched_value, "m_latched_value");
+            save_item(NAME(new { m_latched_value }));
         }
 
 
@@ -170,7 +168,7 @@ namespace mame
     class generic_latch_16_device : generic_latch_base_device
     {
         //DEFINE_DEVICE_TYPE(GENERIC_LATCH_16, generic_latch_16_device, "generic_latch_16", "Generic 16-bit latch")
-        static device_t device_creator_generic_latch_16_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new generic_latch_16_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_generic_latch_16_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new generic_latch_16_device(mconfig, tag, owner, clock); }
         public static readonly device_type GENERIC_LATCH_16 = DEFINE_DEVICE_TYPE(device_creator_generic_latch_16_device, "generic_latch_16", "Generic 16-bit latch");
 
 
@@ -204,7 +202,7 @@ namespace mame
         {
             // register for state saving
             base.device_start();
-            save_item(m_latched_value, "m_latched_value");
+            save_item(NAME(new { m_latched_value }));
         }
 
 

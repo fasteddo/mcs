@@ -66,7 +66,7 @@ namespace mame
         //-------------------------------------------------
         //  audit_record - constructor
         //-------------------------------------------------
-        public audit_record(ListPointer<rom_entry> media, media_type type)
+        public audit_record(Pointer<rom_entry> media, media_type type)
         {
             m_next = null;
             m_type = type;
@@ -171,7 +171,7 @@ namespace mame
         {
             m_enumerator = enumerator;
             m_validation = AUDIT_VALIDATE_FULL;
-            m_searchpath = null;
+            m_searchpath = "";
         }
 
 
@@ -193,10 +193,6 @@ namespace mame
             // store validation for later
             m_validation = validation;
 
-// temporary hack until romload is update: get the driver path and support it for
-// all searches
-string driverpath = m_enumerator.config().root_device().searchpath();
-
             int found = 0;
             int required = 0;
             int shared_found = 0;
@@ -206,18 +202,18 @@ string driverpath = m_enumerator.config().root_device().searchpath();
             foreach (device_t device in new device_iterator(m_enumerator.config().root_device()))
             {
                 // determine the search path for this source and iterate through the regions
-                m_searchpath = device.searchpath();
+                m_searchpath = "";
+                foreach (string path in device.searchpath())
+                {
+                    if (!m_searchpath.empty())
+                        m_searchpath += ';';
+                    m_searchpath += path;
+                }
 
                 // now iterate over regions and ROMs within
-                for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
-// temporary hack: add the driver path & region name
-string combinedpath = device.searchpath() + ";" + driverpath;
-if (!string.IsNullOrEmpty(device.shortname()))
-    combinedpath += ";" + device.shortname();
-m_searchpath = combinedpath;
-
-                    for (ListPointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
+                    for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
                         string name = romload_global.ROM_GETNAME(rom[0]);
                         util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
@@ -285,9 +281,9 @@ m_searchpath = combinedpath;
             int required = 0;
 
             // now iterate over regions and ROMs within
-            for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+            for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
             {
-                for (ListPointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
+                for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                 {
                     util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
 
@@ -406,9 +402,9 @@ m_searchpath = combinedpath;
                     while (path.next(out curpath, samplename))
                     {
                         // attempt to access the file (.flac) or (.wav)
-                        osd_file.error filerr = file.open(curpath, ".flac");
+                        osd_file.error filerr = file.open(curpath + ".flac");
                         if (filerr != osd_file.error.NONE)
-                            filerr = file.open(curpath, ".wav");
+                            filerr = file.open(curpath + ".wav");
 
                         if (filerr == osd_file.error.NONE)
                         {
@@ -535,7 +531,7 @@ m_searchpath = combinedpath;
         //-------------------------------------------------
         //  audit_one_rom - validate a single ROM entry
         //-------------------------------------------------
-        audit_record audit_one_rom(ListPointer<rom_entry> rom)  //(const rom_entry *rom)
+        audit_record audit_one_rom(Pointer<rom_entry> rom)  //audit_record &audit_one_rom(const rom_entry *rom);
         {
             // allocate and append a new record
             audit_record record = m_record_list.emplace_back(new audit_record(rom, audit_record.media_type.MEDIA_ROM)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), *rom, media_type::ROM);
@@ -549,6 +545,7 @@ m_searchpath = combinedpath;
             file.set_restrict_to_mediapath(true);
             path_iterator path = new path_iterator(m_searchpath);
             string curpath;
+            // FIXME: needs to be adjusted to match ROM loading behaviour
             while (path.next(out curpath, record.name()))
             {
                 // open the file if we can
@@ -577,7 +574,7 @@ m_searchpath = combinedpath;
         //-------------------------------------------------
         //  audit_one_disk - validate a single disk entry
         //-------------------------------------------------
-        audit_record audit_one_disk(ListPointer<rom_entry> rom, string locationtag = null)  //const rom_entry *rom
+        audit_record audit_one_disk(Pointer<rom_entry> rom, string locationtag = null)  //audit_record &audit_one_disk(const rom_entry *rom, const char *locationtag);
         {
             // allocate and append a new record
             audit_record record = m_record_list.emplace_back(new audit_record(rom, audit_record.media_type.MEDIA_DISK)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), *rom, media_type::DISK);
@@ -665,9 +662,9 @@ m_searchpath = combinedpath;
             device_t highest_device = null;
             if (device.owner() != null)
             {
-                for (ListPointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                 {
-                    for (ListPointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
+                    for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
                         if (romload_global.ROM_GETLENGTH(rom[0]) == romlength)
                         {
@@ -685,9 +682,9 @@ m_searchpath = combinedpath;
                 {
                     foreach (device_t scandevice in new device_iterator(m_enumerator.config(drvindex).root_device()))
                     {
-                        for (ListPointer<rom_entry> region = romload_global.rom_first_region(scandevice); region != null; region = romload_global.rom_next_region(region))
+                        for (Pointer<rom_entry> region = romload_global.rom_first_region(scandevice); region != null; region = romload_global.rom_next_region(region))
                         {
-                            for (ListPointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
+                            for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                             {
                                 if (romload_global.ROM_GETLENGTH(rom[0]) == romlength)
                                 {

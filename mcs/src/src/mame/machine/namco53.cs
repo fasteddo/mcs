@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -15,7 +14,7 @@ namespace mame
     public class namco_53xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_53XX, namco_53xx_device, "namco53", "Namco 53xx")
-        static device_t device_creator_namco_53xx_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_53xx_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_namco_53xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_53xx_device(mconfig, tag, owner, clock); }
         public static readonly device_type NAMCO_53XX = DEFINE_DEVICE_TYPE(device_creator_namco_53xx_device, "namco53", "Namco 53xx");
 
 
@@ -32,7 +31,7 @@ namespace mame
         required_device<mb88_cpu_device> m_cpu;
         byte m_portO;
         devcb_read8 m_k;
-        devcb_read8.array<i4, devcb_read8> m_in;
+        devcb_read8.array<devcb_read8> m_in;
         devcb_write8 m_p;
         emu_timer m_irq_cleared_timer;
 
@@ -43,7 +42,7 @@ namespace mame
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_portO = 0;
             m_k = new devcb_read8(this);
-            m_in = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
+            m_in = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
             m_p = new devcb_write8(this);
         }
 
@@ -140,7 +139,7 @@ namespace mame
 
             m_irq_cleared_timer = machine().scheduler().timer_alloc(irq_clear);  //timer_expired_delegate(FUNC(namco_53xx_device::irq_clear), this));
 
-            save_item(m_portO, "m_portO");
+            save_item(NAME(new { m_portO }));
         }
 
         //-------------------------------------------------

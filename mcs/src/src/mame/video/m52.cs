@@ -49,7 +49,7 @@ namespace mame
                 int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
                 int b = combine_weights(weights_b, BIT(promval, 6), BIT(promval, 7));
 
-                m_tx_palette.target.palette_interface.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
+                m_tx_palette.target.dipalette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
             }
 
             /* background palette */
@@ -61,7 +61,7 @@ namespace mame
                 int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
                 int b = combine_weights(weights_b, BIT(promval, 6), BIT(promval, 7));
 
-                m_bg_palette.target.palette_interface.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
+                m_bg_palette.target.dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
             }
 
             /* background
@@ -74,18 +74,18 @@ namespace mame
              this seems hacky, surely all bytes in the PROM should be used, not just picking the ones that give the colours we want?
 
              */
-            m_bg_palette.target.palette_interface.set_pen_indirect(0 * 4 + 0, 0);
-            m_bg_palette.target.palette_interface.set_pen_indirect(0 * 4 + 1, 4);
-            m_bg_palette.target.palette_interface.set_pen_indirect(0 * 4 + 2, 8);
-            m_bg_palette.target.palette_interface.set_pen_indirect(0 * 4 + 3, 12);
-            m_bg_palette.target.palette_interface.set_pen_indirect(1 * 4 + 0, 0);
-            m_bg_palette.target.palette_interface.set_pen_indirect(1 * 4 + 1, 1);
-            m_bg_palette.target.palette_interface.set_pen_indirect(1 * 4 + 2, 2);
-            m_bg_palette.target.palette_interface.set_pen_indirect(1 * 4 + 3, 3);
-            m_bg_palette.target.palette_interface.set_pen_indirect(2 * 4 + 0, 0);
-            m_bg_palette.target.palette_interface.set_pen_indirect(2 * 4 + 1, 16 + 1);
-            m_bg_palette.target.palette_interface.set_pen_indirect(2 * 4 + 2, 16 + 2);
-            m_bg_palette.target.palette_interface.set_pen_indirect(2 * 4 + 3, 16 + 3);
+            m_bg_palette.target.dipalette.set_pen_indirect(0 * 4 + 0, 0);
+            m_bg_palette.target.dipalette.set_pen_indirect(0 * 4 + 1, 4);
+            m_bg_palette.target.dipalette.set_pen_indirect(0 * 4 + 2, 8);
+            m_bg_palette.target.dipalette.set_pen_indirect(0 * 4 + 3, 12);
+            m_bg_palette.target.dipalette.set_pen_indirect(1 * 4 + 0, 0);
+            m_bg_palette.target.dipalette.set_pen_indirect(1 * 4 + 1, 1);
+            m_bg_palette.target.dipalette.set_pen_indirect(1 * 4 + 2, 2);
+            m_bg_palette.target.dipalette.set_pen_indirect(1 * 4 + 3, 3);
+            m_bg_palette.target.dipalette.set_pen_indirect(2 * 4 + 0, 0);
+            m_bg_palette.target.dipalette.set_pen_indirect(2 * 4 + 1, 16 + 1);
+            m_bg_palette.target.dipalette.set_pen_indirect(2 * 4 + 2, 16 + 2);
+            m_bg_palette.target.dipalette.set_pen_indirect(2 * 4 + 3, 16 + 3);
 
             init_sprite_palette(resistances_3, resistances_2, weights_r, weights_g, weights_b, scale);
         }
@@ -111,14 +111,14 @@ namespace mame
                 int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
                 int b = combine_weights(weights_b, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
 
-                m_sp_palette.target.palette_interface.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
+                m_sp_palette.target.dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
             }
 
             /* sprite lookup table */
             for (int i = 0; i < 256; i++)
             {
                 uint8_t promval = sprite_table[i];
-                m_sp_palette.target.palette_interface.set_pen_indirect((pen_t)i, promval);
+                m_sp_palette.target.dipalette.set_pen_indirect((pen_t)i, promval);
             }
         }
 
@@ -149,7 +149,7 @@ namespace mame
                 flag |= TILE_FORCE_LAYER0; /* lines 0 to 6 are opaqe? */
             }
 
-            SET_TILE_INFO_MEMBER(ref tileinfo, 0, (u32)code, (u32)(color & 0x7f), (u8)flag);
+            tileinfo.set(0, (u32)code, (u32)(color & 0x7f), (u8)flag);
         }
 
 
@@ -169,11 +169,11 @@ namespace mame
 
             init_palette();
 
-            save_item(m_bg1xpos, "m_bg1xpos");
-            save_item(m_bg1ypos, "m_bg1ypos");
-            save_item(m_bg2xpos, "m_bg2xpos");
-            save_item(m_bg2ypos, "m_bg2ypos");
-            save_item(m_bgcontrol, "m_bgcontrol");
+            save_item(NAME(new { m_bg1xpos }));
+            save_item(NAME(new { m_bg1ypos }));
+            save_item(NAME(new { m_bg2xpos }));
+            save_item(NAME(new { m_bg2ypos }));
+            save_item(NAME(new { m_bgcontrol }));
 
             m_spritelimit = 0x100-4;
             m_do_bg_fills = true;
@@ -309,9 +309,9 @@ namespace mame
 
         void draw_background(bitmap_rgb32 bitmap, rectangle cliprect, int xpos, int ypos, int image)
         {
-            rectangle rect = new rectangle();
+            rectangle rect;
             rectangle visarea = m_screen.target.visible_area();
-            var paldata = m_bg_palette.target.device_palette_interface.pens();
+            var paldata = m_bg_palette.target.dipalette.pens();
 
 
             if (flip_screen() != 0)
@@ -420,7 +420,7 @@ namespace mame
 
                 m_sp_gfxdecode.target.digfx.gfx(0).transmask(bitmap, clip,
                     (u32)code, (u32)color, flipx, flipy, sx, sy,
-                    m_sp_palette.target.palette_interface.transpen_mask(m_sp_gfxdecode.target.digfx.gfx(0), (u32)color,  0));
+                    m_sp_palette.target.dipalette.transpen_mask(m_sp_gfxdecode.target.digfx.gfx(0), (u32)color,  0));
             }
         }
 
@@ -434,7 +434,7 @@ namespace mame
         u32 screen_update_m52(screen_device screen, bitmap_rgb32 bitmap, rectangle cliprect)
         {
             int offs;
-            var paldata = m_sp_palette.target.device_palette_interface.pens();
+            var paldata = m_sp_palette.target.dipalette.pens();
 
             bitmap.fill(paldata[0], cliprect);
 

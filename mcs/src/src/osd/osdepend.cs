@@ -44,7 +44,7 @@ namespace mame
         //virtual void wait_for_debugger(device_t &device, bool firststop) = 0;
 
         // audio overridables
-        void update_audio_stream(ListPointer<int16_t> buffer, int samples_this_frame);  //const int16_t *buffer, int samples_this_frame) = 0;
+        void update_audio_stream(Pointer<int16_t> buffer, int samples_this_frame);  //const int16_t *buffer, int samples_this_frame) = 0;
         void set_mastervolume(int attenuation);
         bool no_sound();
 
@@ -52,7 +52,7 @@ namespace mame
         void customize_input_type_list(std.vector<input_type_entry> typelist);
 
         // video overridables
-        void add_audio_to_recording(ListPointer<int16_t> buffer, int samples_this_frame);  //const int16_t *buffer, int samples_this_frame) = 0;
+        void add_audio_to_recording(Pointer<int16_t> buffer, int samples_this_frame);  //const int16_t *buffer, int samples_this_frame) = 0;
         std.vector<ui.menu_item> get_slider_list();
 
         // font interface

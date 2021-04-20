@@ -72,9 +72,9 @@ namespace mame
         double m_speed_percent;            // most recent speed percentage
 
         // overall speed computation
-        u32 m_overall_real_seconds;     // accumulated real seconds at normal speed
-        osd_ticks_t m_overall_real_ticks;       // accumulated real ticks at normal speed
-        attotime m_overall_emutime;          // accumulated emulated time at normal speed
+        public u32 m_overall_real_seconds;     // accumulated real seconds at normal speed
+        public osd_ticks_t m_overall_real_ticks;       // accumulated real ticks at normal speed
+        public attotime m_overall_emutime;          // accumulated emulated time at normal speed
         u32 m_overall_valid_counter;    // number of consecutive valid time periods
 
         u32 m_frame_update_counter;     // how many times frame_update() has been called
@@ -252,11 +252,6 @@ namespace mame
         bool fastforward() { return m_fastforward; }
 
 
-        public UInt32 overall_real_seconds { get { return m_overall_real_seconds; } }
-        public osd_ticks_t overall_real_ticks { get { return m_overall_real_ticks; } }
-        public attotime overall_emutime { get { return m_overall_emutime; } }
-
-
         //-------------------------------------------------
         //  is_recording - returns whether or not any
         //  screen is currently recording
@@ -404,7 +399,7 @@ namespace mame
             {
                 // reset partial updates if we're paused or if the debugger is active
                 screen_device screen = new screen_device_iterator(machine().root_device()).first();
-                bool debugger_enabled = (machine().debug_flags_get & machine_global.DEBUG_FLAG_ENABLED) != 0;
+                bool debugger_enabled = (machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0;
                 bool within_instruction_hook = debugger_enabled && machine().debugger().within_instruction_hook();
                 if (screen != null && (machine().paused() || from_debugger || within_instruction_hook))
                     screen.reset_partial_updates();
@@ -528,7 +523,7 @@ namespace mame
         //  add_sound_to_recording - add sound to a movie
         //  recording
         //-------------------------------------------------
-        public void add_sound_to_recording(ListPointer<s16> sound, int numsamples)  // const s16 *sound, int numsamples)
+        public void add_sound_to_recording(Pointer<s16> sound, int numsamples)  // const s16 *sound, int numsamples)
         {
             for (UInt32 index = 0; index < m_avis.size(); index++)
             {
@@ -538,7 +533,7 @@ namespace mame
             }
         }
 
-        void add_sound_to_avi_recording(ListPointer<s16> sound, int numsamples, UInt32 index)  //const s16 *sound, int numsamples, uint32_t index);
+        void add_sound_to_avi_recording(Pointer<s16> sound, int numsamples, UInt32 index)  //const s16 *sound, int numsamples, uint32_t index);
         {
             throw new emu_unimplemented();
         }
@@ -1025,20 +1020,20 @@ namespace mame
                     {
                         attoseconds_t period = screen.frame_period().attoseconds();
                         if (period != 0)
-                            min_frame_period = Math.Min(min_frame_period, period);
+                            min_frame_period = std.min(min_frame_period, period);
                     }
 
                     // compute a target speed as an integral percentage
                     // note that we lop 0.25Hz off of the minrefresh when doing the computation to allow for
                     // the fact that most refresh rates are not accurate to 10 digits...
-                    UInt32 target_speed = (UInt32)Math.Floor((minrefresh - 0.25) * 1000.0 / attotime.ATTOSECONDS_TO_HZ((UInt32)min_frame_period));
-                    UInt32 original_speed = (UInt32)original_speed_setting();
-                    target_speed = Math.Min(target_speed, original_speed);
+                    u32 target_speed = (u32)std.floor((minrefresh - 0.25) * 1000.0 / attotime.ATTOSECONDS_TO_HZ(min_frame_period));
+                    u32 original_speed = (u32)original_speed_setting();
+                    target_speed = std.min(target_speed, original_speed);
 
                     // if we changed, log that verbosely
                     if (target_speed != m_speed)
                     {
-                        osd_printf_verbose("Adjusting target speed to {0}%% (hw={1}Hz, game={2}Hz, adjusted={3}Hz)\n", target_speed / 10.0, minrefresh, attotime.ATTOSECONDS_TO_HZ((UInt32)min_frame_period), attotime.ATTOSECONDS_TO_HZ((UInt32)(min_frame_period * 1000.0 / target_speed)));
+                        osd_printf_verbose("Adjusting target speed to {0}%% (hw={1}Hz, game={2}Hz, adjusted={3}Hz)\n", target_speed / 10.0, minrefresh, attotime.ATTOSECONDS_TO_HZ(min_frame_period), attotime.ATTOSECONDS_TO_HZ((attoseconds_t)(min_frame_period * 1000.0 / target_speed)));
                         m_speed = target_speed;
                     }
                 }
@@ -1097,7 +1092,7 @@ namespace mame
             {
                 // create a final screenshot
                 emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-                osd_file.error filerr = file.open(machine().basename(), PATH_SEPARATOR + "final.png");
+                osd_file.error filerr = file.open(machine().basename() + PATH_SEPARATOR + "final.png");
                 if (filerr == osd_file.error.NONE)
                     save_snapshot(null, file);
 

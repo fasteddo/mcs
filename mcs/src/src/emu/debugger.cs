@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
-
 
 namespace mame
 {

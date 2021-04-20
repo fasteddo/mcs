@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -15,7 +14,7 @@ namespace mame
     public class namco_51xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_51XX, namco_51xx_device, "namco51", "Namco 51xx")
-        static device_t device_creator_namco_51xx_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_51xx_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_namco_51xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_51xx_device(mconfig, tag, owner, clock); }
         public static readonly device_type NAMCO_51XX = DEFINE_DEVICE_TYPE(device_creator_namco_51xx_device, "namco51", "Namco 51xx");
 
 
@@ -34,8 +33,8 @@ namespace mame
         // internal state
         required_device<mb88_cpu_device> m_cpu;
         required_device<screen_device> m_screen;
-        devcb_read8.array<i4, devcb_read8> m_in;
-        devcb_write8.array<i2, devcb_write8> m_out;
+        devcb_read8.array<devcb_read8> m_in;
+        devcb_write8.array<devcb_write8> m_out;
 
         int m_lastcoins;
         int m_lastbuttons;
@@ -55,8 +54,8 @@ namespace mame
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_screen = new required_device<screen_device>(this, finder_base.DUMMY_TAG);
 
-            m_in = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
-            m_out = new devcb_write8.array<i2, devcb_write8>(this, () => { return new devcb_write8(this); });
+            m_in = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
+            m_out = new devcb_write8.array<devcb_write8>(2, this, () => { return new devcb_write8(this); });
 
             m_lastcoins = 0;
             m_lastbuttons = 0;
@@ -348,16 +347,16 @@ namespace mame
             /* resolve our write callbacks */
             m_out.resolve_all_safe();
 
-            save_item(m_lastcoins, "m_lastcoins");
-            save_item(m_lastbuttons, "m_lastbuttons");
-            save_item(m_credits, "m_credits");
-            save_item(m_coins, "m_coins");
-            save_item(m_coins_per_cred, "m_coins_per_cred");
-            save_item(m_creds_per_coin, "m_creds_per_coin");
-            save_item(m_in_count, "m_in_count");
-            save_item(m_mode, "m_mode");
-            save_item(m_coincred_mode, "m_coincred_mode");
-            save_item(m_remap_joy, "m_remap_joy");
+            save_item(NAME(new { m_lastcoins }));
+            save_item(NAME(new { m_lastbuttons }));
+            save_item(NAME(new { m_credits }));
+            save_item(NAME(new { m_coins }));
+            save_item(NAME(new { m_coins_per_cred }));
+            save_item(NAME(new { m_creds_per_coin }));
+            save_item(NAME(new { m_in_count }));
+            save_item(NAME(new { m_mode }));
+            save_item(NAME(new { m_coincred_mode }));
+            save_item(NAME(new { m_remap_joy }));
         }
 
         //-------------------------------------------------

@@ -18,7 +18,7 @@ namespace mame
     {
         class shadow_table_data
         {
-            public ListPointer<pen_t> base_;  //pen_t *            base;               // pointer to the base of the table
+            public Pointer<pen_t> base_;  //pen_t *            base;               // pointer to the base of the table
             //s16                dr;                 // delta red value
             //s16                dg;                 // delta green value
             //s16                db;                 // delta blue value
@@ -34,9 +34,9 @@ namespace mame
 
         // internal state
         palette_t m_palette;              // the palette itself
-        ListPointer<rgb_t> m_pens = new ListPointer<rgb_t>();  //const pen_t *       m_pens;                 // remapped palette pen numbers
+        Pointer<rgb_t> m_pens = new Pointer<rgb_t>();  //const pen_t *       m_pens;                 // remapped palette pen numbers
         bitmap_format m_format;               // format assumed for palette data
-        ListPointer<pen_t> m_shadow_table;  //pen_t *             m_shadow_table;         // table for looking up a shadowed pen
+        Pointer<pen_t> m_shadow_table;  //pen_t *             m_shadow_table;         // table for looking up a shadowed pen
         u32 m_shadow_group;         // index of the shadow group, or 0 if none
         u32 m_hilight_group;        // index of the hilight group, or 0 if none
         pen_t m_white_pen;            // precomputed white pen value
@@ -79,7 +79,7 @@ namespace mame
         public u32 indirect_entries() { return palette_indirect_entries(); }
         public palette_t palette() { return m_palette; }
         //const pen_t &pen(int index) const { return m_pens[index]; }
-        public ListPointer<rgb_t> pens() { return m_pens; }  //const pen_t *pens() const { return m_pens; }
+        public Pointer<rgb_t> pens() { return m_pens; }  //const pen_t *pens() const { return m_pens; }
         //pen_t *shadow_table() const { return m_shadow_table; }
         //rgb_t pen_color(pen_t pen) const { return m_palette->entry_color(pen); }
         //double pen_contrast(pen_t pen) const { return m_palette->entry_contrast(pen); }
@@ -230,14 +230,14 @@ namespace mame
             // set up save/restore of the palette
             m_save_pen.resize(m_palette.num_colors());
             m_save_contrast.resize(m_palette.num_colors());
-            device().save_item(m_save_pen, "m_save_pen");
-            device().save_item(m_save_contrast, "m_save_contrast");
+            device().save_item(NAME(new { m_save_pen }));
+            device().save_item(NAME(new { m_save_contrast }));
 
             // save indirection tables if we have them
             if (m_indirect_colors.size() > 0)
             {
-                device().save_item(m_indirect_colors, "m_indirect_colors");
-                device().save_item(m_indirect_pens, "m_indirect_pens");
+                device().save_item(NAME(new { m_indirect_colors }));
+                device().save_item(NAME(new { m_indirect_pens }));
             }
         }
 
@@ -353,15 +353,15 @@ namespace mame
                     // create a dummy 1:1 mapping
                     {
                         m_pen_array.resize(total_colors + 2);
-                        ListPointer<rgb_t> pentable = new ListPointer<rgb_t>(m_pen_array);  //pen_t *pentable = &m_pen_array[0];
-                        m_pens = new ListPointer<rgb_t>(m_pen_array);  //m_pens = &m_pen_array[0];
+                        Pointer<rgb_t> pentable = new Pointer<rgb_t>(m_pen_array);  //pen_t *pentable = &m_pen_array[0];
+                        m_pens = new Pointer<rgb_t>(m_pen_array);  //m_pens = &m_pen_array[0];
                         for (int i = 0; i < total_colors + 2; i++)
                             pentable[i] = new rgb_t((UInt32)i);  //pentable[i] = i;
                     }
                     break;
 
                 case bitmap_format.BITMAP_FORMAT_RGB32:
-                    m_pens = new ListPointer<rgb_t>(m_palette.entry_list_adjusted());  // reinterpret_cast<const pen_t *>(m_palette.entry_list_adjusted());
+                    m_pens = new Pointer<rgb_t>(m_palette.entry_list_adjusted());  // reinterpret_cast<const pen_t *>(m_palette.entry_list_adjusted());
                     break;
 
                 default:
@@ -387,8 +387,8 @@ namespace mame
                 // palettized mode gets a single 64k table in slots 0 and 2
                 if (m_format == bitmap_format.BITMAP_FORMAT_IND16)
                 {
-                    m_shadow_tables[2].base_ = new ListPointer<pen_t>(m_shadow_array, 0);  //m_shadow_tables[0].base = m_shadow_tables[2].base = &m_shadow_array[0];
-                    m_shadow_tables[0].base_ = new ListPointer<pen_t>(m_shadow_array, 0);
+                    m_shadow_tables[2].base_ = new Pointer<pen_t>(m_shadow_array, 0);  //m_shadow_tables[0].base = m_shadow_tables[2].base = &m_shadow_array[0];
+                    m_shadow_tables[0].base_ = new Pointer<pen_t>(m_shadow_array, 0);
                     for (int i = 0; i < 65536; i++)
                         m_shadow_array[i] = (i < numentries) ? (pen_t)(i + numentries) : (pen_t)i;
                 }
@@ -396,8 +396,8 @@ namespace mame
                 // RGB mode gets two 32k tables in slots 0 and 2
                 else
                 {
-                    m_shadow_tables[0].base_ = new ListPointer<pen_t>(m_shadow_array, 0);
-                    m_shadow_tables[2].base_ = new ListPointer<pen_t>(m_shadow_array, 32768);
+                    m_shadow_tables[0].base_ = new Pointer<pen_t>(m_shadow_array, 0);
+                    m_shadow_tables[2].base_ = new Pointer<pen_t>(m_shadow_array, 32768);
                     configure_rgb_shadows(0, PALETTE_DEFAULT_SHADOW_FACTOR);
                 }
             }
@@ -410,8 +410,8 @@ namespace mame
                 // palettized mode gets a single 64k table in slots 1 and 3
                 if (m_format == bitmap_format.BITMAP_FORMAT_IND16)
                 {
-                    m_shadow_tables[3].base_ = new ListPointer<pen_t>(m_hilight_array, 0);  //m_shadow_tables[1].base_ = m_shadow_tables[3].base_ = &m_hilight_array[0];
-                    m_shadow_tables[1].base_ = new ListPointer<pen_t>(m_hilight_array, 0);
+                    m_shadow_tables[3].base_ = new Pointer<pen_t>(m_hilight_array, 0);  //m_shadow_tables[1].base_ = m_shadow_tables[3].base_ = &m_hilight_array[0];
+                    m_shadow_tables[1].base_ = new Pointer<pen_t>(m_hilight_array, 0);
                     for (int i = 0; i < 65536; i++)
                         m_hilight_array[i] = (i < numentries) ? (pen_t)(i + 2 * numentries) : (pen_t)i;
                 }
@@ -419,14 +419,14 @@ namespace mame
                 // RGB mode gets two 32k tables in slots 1 and 3
                 else
                 {
-                    m_shadow_tables[1].base_ = new ListPointer<pen_t>(m_hilight_array, 0);
-                    m_shadow_tables[3].base_ = new ListPointer<pen_t>(m_hilight_array, 32768);
+                    m_shadow_tables[1].base_ = new Pointer<pen_t>(m_hilight_array, 0);
+                    m_shadow_tables[3].base_ = new Pointer<pen_t>(m_hilight_array, 32768);
                     configure_rgb_shadows(1, PALETTE_DEFAULT_HIGHLIGHT_FACTOR);
                 }
             }
 
             // set the default table
-            m_shadow_table = m_shadow_tables[0] != null ? new ListPointer<pen_t>(m_shadow_tables[0].base_) : null;
+            m_shadow_table = m_shadow_tables[0] != null ? new Pointer<pen_t>(m_shadow_tables[0].base_) : null;
         }
 
 

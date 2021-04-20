@@ -133,7 +133,7 @@ namespace mame
             //  dirty_list - return the current list and
             //  min/max values
             //-------------------------------------------------
-            public ListBase<uint32_t> dirty_list(out uint32_t mindirty, out uint32_t maxdirty)  //const uint32_t *dirty_list(uint32_t &mindirty, uint32_t &maxdirty);
+            public MemoryContainer<uint32_t> dirty_list(out uint32_t mindirty, out uint32_t maxdirty)  //const uint32_t *dirty_list(uint32_t &mindirty, uint32_t &maxdirty);
             {
                 // fill in the mindirty/maxdirty
                 mindirty = m_mindirty;
@@ -220,8 +220,8 @@ namespace mame
             m_dirty[1].resize(total_colors);
 
             // now add us to the list of clients
-            m_next = palette.client_list;
-            palette.client_list = this;
+            m_next = palette.m_client_list;
+            palette.m_client_list = this;
         }
 
         ~palette_client()
@@ -261,10 +261,10 @@ namespace mame
         //  dirty_list - atomically get the current dirty
         //  list for a client
         //-------------------------------------------------
-        public ListBase<uint32_t> dirty_list(out uint32_t mindirty, out uint32_t maxdirty)  //const uint32_t *palette_client::dirty_list(uint32_t &mindirty, uint32_t &maxdirty)
+        public MemoryContainer<uint32_t> dirty_list(out uint32_t mindirty, out uint32_t maxdirty)  //const uint32_t *dirty_list(uint32_t &mindirty, uint32_t &maxdirty)
         {
             // if nothing to report, report nothing and don't swap
-            ListBase<uint32_t> result = m_dirty[m_liveIdx].dirty_list(out mindirty, out maxdirty);
+            MemoryContainer<uint32_t> result = m_dirty[m_liveIdx].dirty_list(out mindirty, out maxdirty);
             if (result == null)
                 return null;
 
@@ -309,7 +309,7 @@ namespace mame
         std.vector<float> m_group_bright;          // brightness value for each group
         std.vector<float> m_group_contrast;        // contrast value for each group
 
-        palette_client m_client_list;                // list of clients for this palette
+        public palette_client m_client_list;                // list of clients for this palette
 
 
         // static constructor: used to ensure same new/delete is used
@@ -334,8 +334,6 @@ namespace mame
         public int max_index() { return (int)(m_numcolors * m_numgroups + 2); }
         public uint32_t black_entry() { return m_numcolors * m_numgroups + 0; }
         public uint32_t white_entry() { return m_numcolors * m_numgroups + 1; }
-
-        public palette_client client_list { get { return m_client_list; } set { m_client_list = value; } }
 
 
         // overall adjustments
@@ -400,8 +398,8 @@ namespace mame
 
 
         // entry list getters
-        public ListBase<rgb_t> entry_list_raw() { return m_entry_color; }  //const rgb_t *entry_list_raw() const { return m_entry_color; }
-        public ListBase<rgb_t> entry_list_adjusted() { return m_adjusted_color; }  //rgb_t *entry_list_adjusted() { return m_adjusted_color; }
+        public MemoryContainer<rgb_t> entry_list_raw() { return m_entry_color; }  //const rgb_t *entry_list_raw() const { return m_entry_color; }
+        public MemoryContainer<rgb_t> entry_list_adjusted() { return m_adjusted_color; }  //rgb_t *entry_list_adjusted() { return m_adjusted_color; }
         //const rgb_t *entry_list_adjusted_rgb15() const { return m_adjusted_rgb15; }
 
 

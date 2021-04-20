@@ -30,7 +30,7 @@ namespace mame.plib
         public uint16_t [] diag; //parray<index_type, N> diag;      // diagonal index pointer n
         public uint16_t [] row_idx;  //parray<index_type, Np1> row_idx;      // row index pointer n + 1
         public uint16_t [] col_idx;  //parray<index_type, NSQ> col_idx;       // column index array nz_num, initially (n * n)
-        public ListBase<double> A;  //parray<value_type, NSQ> A;    // Matrix elements nz_num, initially (n * n)
+        public MemoryContainer<double> A;  //parray<value_type, NSQ> A;    // Matrix elements nz_num, initially (n * n)
 
         public UInt32 nz_num;  //std::size_t nz_num;
 
@@ -50,7 +50,7 @@ namespace mame.plib
             diag = new uint16_t [n];  //diag(n)
             row_idx = new uint16_t [n + 1];  //row_idx(n+1)
             col_idx = new uint16_t [n * n];  //col_idx(n*n)
-            A = new ListBase<double>((int)(n * n));  A.resize((int)(n * n));  //A(n*n)
+            A = new MemoryContainer<double>((int)(n * n));  A.Resize((int)(n * n));  //A(n*n)
             nz_num = 0;
             //, nzbd(n * (n+1) / 2)
             nzbd = new std.vector<uint16_t> [n];
@@ -106,7 +106,7 @@ namespace mame.plib
 
 
         //template <typename M>
-        public KeyValuePair<UInt32, UInt32> gaussian_extend_fill_mat(std.vector<std.vector<UInt32>> fill)  //std::pair<std::size_t, std::size_t> gaussian_extend_fill_mat(M &fill)
+        public std.pair<UInt32, UInt32> gaussian_extend_fill_mat(std.vector<std.vector<UInt32>> fill)  //std::pair<std::size_t, std::size_t> gaussian_extend_fill_mat(M &fill)
         {
             throw new emu_unimplemented();
         }

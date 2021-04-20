@@ -3,12 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
-using u8 = System.Byte;
-using u32 = System.UInt32;
-using u64 = System.UInt64;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -17,10 +14,10 @@ using uint64_t = System.UInt64;
 
 namespace mame
 {
-    class m6801_cpu_device : m6800_cpu_device
+    public class m6801_cpu_device : m6800_cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6801, m6801_cpu_device, "m6801", "Motorola MC6801")
-        static device_t device_creator_m6801_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6801_cpu_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_m6801_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new m6801_cpu_device(mconfig, tag, owner, clock); }
         public static readonly device_type M6801 = DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola MC6801");
 
 
@@ -57,6 +54,7 @@ namespace mame
         //#define LOG_RXTICK  (1U << 4)
         const int LOG_PORT    = 1 << 5;
         const int LOG_SER     = 1 << 6;
+        const int LOG_TIMER   = 1 << 7;
 
         //#define VERBOSE (LOG_SER)
         //#define LOG_OUTPUT_STREAM std::cout
@@ -69,6 +67,7 @@ namespace mame
         //#define LOGRXTICK(...)  LOGMASKED(LOG_RXTICK, __VA_ARGS__)
         public void LOGPORT(string format, params object [] args) { LOGMASKED(LOG_PORT, format, args); }
         public void LOGSER(string format, params object [] args) { LOGMASKED(LOG_SER, format, args); }  //#define LOGSER(...)     LOGMASKED(LOG_SER, __VA_ARGS__)
+        public void LOGTIMER(string format, params object [] args) { LOGMASKED(LOG_TIMER, format, args); }  //#define LOGTIMER(...)   LOGMASKED(LOG_TIMER, __VA_ARGS__)
 
 
         uint16_t CT { get { return m_counter.w.l; } set { m_counter.w.l = value; } }
@@ -77,60 +76,11 @@ namespace mame
         uint16_t OC { get { return m_output_compare.w.l; } }
         uint16_t OCH { get { return m_output_compare.w.h; } set { m_output_compare.w.h = value; } }
         uint32_t OCD { get { return m_output_compare.d; } set { m_output_compare.d = value; } }
+        //#define OC2     m_output_compare2.w.l
+        //#define OC2H    m_output_compare2.w.h
+        //#define OC2D    m_output_compare2.d
         uint16_t TOH { get { return m_timer_over.w.l; } set { m_timer_over.w.l = value; } }
         uint32_t TOD { get { return m_timer_over.d; } set { m_timer_over.d = value; } }
-
-
-        void MODIFIED_tcsr() { m_irq2 = (uint8_t)((m_tcsr & (m_tcsr << 3)) & (TCSR_ICF | TCSR_OCF | TCSR_TOF)); }
-
-        void SET_TIMER_EVENT() { m_timer_next = (OCD - CTD < TOD - CTD) ? OCD : TOD; }
-
-
-        /* when change freerunningcounter or outputcapture */
-        void MODIFIED_counters()
-        {
-            OCH = (OC >= CT) ? CTH : (uint16_t)(CTH + 1);
-            SET_TIMER_EVENT();
-        }
-
-
-        // I/O registers
-
-        //enum
-        //{
-        const int IO_P1DDR  =  0;
-        const int IO_P2DDR  =  1;
-        const int IO_P1DATA =  2;
-        const int IO_P2DATA =  3;
-        const int IO_P3DDR  =  4;
-        const int IO_P4DDR  =  5;
-        const int IO_P3DATA =  6;
-        const int IO_P4DATA =  7;
-        const int IO_TCSR   =  8;
-        const int IO_CH     =  9;
-        const int IO_CL     = 10;
-        const int IO_OCRH   = 11;
-        const int IO_OCRL   = 12;
-        const int IO_ICRH   = 13;
-        const int IO_ICRL   = 14;
-        const int IO_P3CSR  = 15;
-        const int IO_RMCR   = 16;
-        const int IO_TRCSR  = 17;
-        const int IO_RDR    = 18;
-        const int IO_TDR    = 19;
-        const int IO_RCR    = 20;
-        const int IO_CAAH   = 21;
-        const int IO_CAAL   = 22;
-        const int IO_TCR1   = 23;
-        const int IO_TCR2   = 24;
-        const int IO_TSR    = 25;
-        const int IO_OCR2H  = 26;
-        const int IO_OCR2L  = 27;
-        const int IO_OCR3H  = 28;
-        const int IO_OCR3L  = 29;
-        const int IO_ICR2H  = 30;
-        const int IO_ICR2L  = 31;
-        //}
 
 
         // serial I/O
@@ -187,6 +137,12 @@ namespace mame
         const uint8_t TCSR_OCF  = 0x40;
         const uint8_t TCSR_ICF  = 0x80;
 
+        //#define TCSR2_OE1   0x01
+        //#define TCSR2_OE2   0x02
+        //#define TCSR2_OLVL2 0x04
+        //#define TCSR2_EOCI2 0x08
+        //#define TCSR2_OCF2  0x20
+
 
         /* Note: don't use 0 cycles here for invalid opcodes so that we don't */
         /* hang in an infinite loop if we hit one */
@@ -213,8 +169,8 @@ namespace mame
         };
 
 
-        devcb_read8.array<i4, devcb_read8> m_in_port_func;
-        devcb_write8.array<i4, devcb_write8> m_out_port_func;
+        devcb_read8.array<devcb_read8> m_in_port_func;
+        devcb_write8.array<devcb_write8> m_out_port_func;
 
         devcb_write_line m_out_sc2_func;
         devcb_write_line m_out_sertx_func;
@@ -248,7 +204,7 @@ namespace mame
         int m_tx;
         int m_ext_serclock;
         bool m_use_ext_serclock;
-        int m_port2_written;
+        bool m_port2_written;
 
         int m_latch09;
 
@@ -306,8 +262,8 @@ namespace mame
             // https://www.red-gate.com/simple-talk/blogs/introduction-to-open-instance-delegates/
             for (int i = 0; i < insn.Length; i++)
             {
-                System.Reflection.MethodInfo methodInfo = typeof(m6801_cpu_device).GetMethod(insn[i], System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                m6803_insn[i] = (op_func)Delegate.CreateDelegate(typeof(op_func), null, methodInfo);
+                MethodInfo methodInfo = typeof(m6801_cpu_device).GetMethod(insn[i], BindingFlags.NonPublic | BindingFlags.Instance);
+                m6803_insn[i] = (op_func)methodInfo.CreateDelegate(typeof(op_func), null);
             }
         }
 
@@ -329,8 +285,8 @@ namespace mame
 
             init_m6803_insn();
 
-            m_in_port_func = new devcb_read8.array<i4, devcb_read8>(this, () => { return new devcb_read8(this); });
-            m_out_port_func = new devcb_write8.array<i4, devcb_write8>(this, () => { return new devcb_write8(this); });
+            m_in_port_func = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
+            m_out_port_func = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
             m_out_sc2_func = new devcb_write_line(this);
             m_out_sertx_func = new devcb_write_line(this);
         }
@@ -349,428 +305,29 @@ namespace mame
         //auto out_ser_tx_cb() { return m_out_sertx_func.bind(); }
 
 
-        //READ8_MEMBER( m6801_cpu_device::m6801_io_r )
-        protected u8 m6801_io_r(address_space space, offs_t offset, u8 mem_mask = 0xff)
+        static void m6801_io(address_map map, m6801_cpu_device m6801) // FIXME: privatize this
         {
-            uint8_t data = 0;
-
-            switch (offset)
-            {
-            case IO_P1DDR:
-                data = m_port_ddr[0];
-                break;
-
-            case IO_P2DDR:
-                data = m_port_ddr[1];
-                break;
-
-            case IO_P1DATA:
-                if (m_port_ddr[0] == 0xff)
-                    data = m_port_data[0];
-                else
-                    data = (uint8_t)((m_in_port_func[0].op() & (m_port_ddr[0] ^ 0xff)) | (m_port_data[0] & m_port_ddr[0]));
-                break;
-
-            case IO_P2DATA:
-                if (m_port_ddr[1] == 0xff)
-                    data = m_port_data[1];
-                else
-                    data = (uint8_t)((m_in_port_func[1].op() & (m_port_ddr[1] ^ 0xff)) | (m_port_data[1] & m_port_ddr[1]));
-                break;
-
-            case IO_P3DDR:
-                data = 0xff;
-                break;
-
-            case IO_P4DDR:
-                data = m_port_ddr[3];
-                break;
-
-            case IO_P3DATA:
-                if (!machine().side_effects_disabled())
-                {
-                    if (m_p3csr_is3_flag_read != 0)
-                    {
-                        LOGPORT("Cleared IS3\n");
-                        m_p3csr = (uint8_t)(m_p3csr & ~M6801_P3CSR_IS3_FLAG);
-                        m_p3csr_is3_flag_read = 0;
-                    }
-
-                    if ((m_p3csr & M6801_P3CSR_OSS) == 0)
-                    {
-                        set_os3(ASSERT_LINE);
-                    }
-                }
-
-                if ((m_p3csr & M6801_P3CSR_LE) != 0 || (m_port_ddr[2] == 0xff))
-                    data = m_port_data[2];
-                else
-                    data = (uint8_t)((m_in_port_func[2].op() & (m_port_ddr[2] ^ 0xff)) | (m_port_data[2] & m_port_ddr[2]));
-
-                if (!machine().side_effects_disabled())
-                {
-                    m_port3_latched = 0;
-
-                    if ((m_p3csr & M6801_P3CSR_OSS) == 0)
-                    {
-                        set_os3(CLEAR_LINE);
-                    }
-                }
-                break;
-
-            case IO_P4DATA:
-                if (m_port_ddr[3] == 0xff)
-                    data = m_port_data[3];
-                else
-                    data = (uint8_t)((m_in_port_func[3].op() & (m_port_ddr[3] ^ 0xff)) | (m_port_data[3] & m_port_ddr[3]));
-                break;
-
-            case IO_TCSR:
-                m_pending_tcsr = 0;
-                data = m_tcsr;
-                break;
-
-            case IO_CH:
-                if ((m_pending_tcsr & TCSR_TOF) == 0 && !machine().side_effects_disabled())
-                {
-                    m_tcsr = (uint8_t)(m_tcsr & ~TCSR_TOF);
-                    MODIFIED_tcsr();
-                }
-                data = m_counter.b.h;
-                break;
-
-            case IO_CL:
-                data = m_counter.b.l;
-                // HACK there should be a break here, but Coleco Adam won't boot with it present, proper fix required to the free-running counter
-                if ((m_pending_tcsr & TCSR_OCF) == 0 && !machine().side_effects_disabled())
-                {
-                    m_tcsr = (uint8_t)(m_tcsr & ~TCSR_OCF);
-                    MODIFIED_tcsr();
-                }
-                data = m_output_compare.b.h;
-                break;
-
-            case IO_OCRH:
-                if ((m_pending_tcsr & TCSR_OCF) == 0 && !machine().side_effects_disabled())
-                {
-                    m_tcsr = (uint8_t)(m_tcsr & ~TCSR_OCF);
-                    MODIFIED_tcsr();
-                }
-                data = m_output_compare.b.h;
-                break;
-
-            case IO_OCRL:
-                if ((m_pending_tcsr & TCSR_OCF) == 0 && !machine().side_effects_disabled())
-                {
-                    m_tcsr = (uint8_t)(m_tcsr & ~TCSR_OCF);
-                    MODIFIED_tcsr();
-                }
-                data = m_output_compare.b.l;
-                break;
-
-            case IO_ICRH:
-                if ((m_pending_tcsr & TCSR_ICF) == 0 && !machine().side_effects_disabled())
-                {
-                    m_tcsr = (uint8_t)(m_tcsr & ~TCSR_ICF);
-                    MODIFIED_tcsr();
-                }
-                data = (uint8_t)((m_input_capture >> 0) & 0xff);
-                break;
-
-            case IO_ICRL:
-                data = (uint8_t)((m_input_capture >> 8) & 0xff);
-                break;
-
-            case IO_P3CSR:
-                if ((m_p3csr & M6801_P3CSR_IS3_FLAG) != 0 && !machine().side_effects_disabled())
-                {
-                    m_p3csr_is3_flag_read = 1;
-                }
-
-                data = m_p3csr;
-                break;
-
-            case IO_RMCR:
-                data = m_rmcr;
-                break;
-
-            case IO_TRCSR:
-                if (!machine().side_effects_disabled())
-                {
-                    if ((m_trcsr & M6801_TRCSR_TDRE) != 0)
-                    {
-                        m_trcsr_read_tdre = 1;
-                    }
-
-                    if ((m_trcsr & M6801_TRCSR_ORFE) != 0)
-                    {
-                        m_trcsr_read_orfe = 1;
-                    }
-
-                    if ((m_trcsr & M6801_TRCSR_RDRF) != 0)
-                    {
-                        m_trcsr_read_rdrf = 1;
-                    }
-                }
-
-                data = m_trcsr;
-                break;
-
-            case IO_RDR:
-                if (!machine().side_effects_disabled())
-                {
-                    if (m_trcsr_read_orfe != 0)
-                    {
-                        LOG("Cleared ORFE\n");
-                        m_trcsr_read_orfe = 0;
-                        m_trcsr = (uint8_t)(m_trcsr & ~M6801_TRCSR_ORFE);
-                    }
-
-                    if (m_trcsr_read_rdrf != 0)
-                    {
-                        LOG("Cleared RDRF\n");
-                        m_trcsr_read_rdrf = 0;
-                        m_trcsr = (uint8_t)(m_trcsr & ~M6801_TRCSR_RDRF);
-                    }
-                }
-
-                data = m_rdr;
-                break;
-
-            case IO_TDR:
-                data = m_tdr;
-                break;
-
-            case IO_RCR:
-                data = m_ram_ctrl;
-                break;
-
-            case IO_CAAH:
-            case IO_CAAL:
-            case IO_TCR1:
-            case IO_TCR2:
-            case IO_TSR:
-            case IO_OCR2H:
-            case IO_OCR2L:
-            case IO_OCR3H:
-            case IO_OCR3L:
-            case IO_ICR2H:
-            case IO_ICR2L:
-            default:
-                logerror("PC {0}: warning - read from reserved internal register {1}\n", state().pc(), offset);
-                break;
-            }
-
-            return data;
-        }
-
-
-        //WRITE8_MEMBER( m6801_cpu_device::m6801_io_w )
-        protected void m6801_io_w(address_space space, offs_t offset, u8 data, u8 mem_mask = 0xff)
-        {
-            switch (offset)
-            {
-            case IO_P1DDR:
-                LOGPORT("Port 1 Data Direction Register: {0}\n", data);
-
-                if (m_port_ddr[0] != data)
-                {
-                    m_port_ddr[0] = data;
-                    m_out_port_func[0].op((uint8_t)((m_port_data[0] & m_port_ddr[0]) | (m_port_ddr[0] ^ 0xff)));
-                }
-                break;
-
-            case IO_P2DDR:
-                LOGPORT("Port 2 Data Direction Register: {0}\n", data);
-
-                if (m_port_ddr[1] != data)
-                {
-                    m_port_ddr[1] = data;
-                    write_port2();
-                }
-                break;
-
-            case IO_P1DATA:
-                LOGPORT("Port 1 Data Register: {0}\n", data);
-
-                m_port_data[0] = data;
-                m_out_port_func[0].op((uint8_t)((m_port_data[0] & m_port_ddr[0]) | (m_port_ddr[0] ^ 0xff)));
-                break;
-
-            case IO_P2DATA:
-                LOGPORT("Port 2 Data Register: {0}\n", data);
-
-                m_port_data[1] = data;
-                m_port2_written = 1;
-                write_port2();
-                break;
-
-            case IO_P3DDR:
-                LOGPORT("Port 3 Data Direction Register: {0}\n", data);
-
-                if (m_port_ddr[2] != data)
-                {
-                    m_port_ddr[2] = data;
-                    m_out_port_func[2].op((uint8_t)((m_port_data[2] & m_port_ddr[2]) | (m_port_ddr[2] ^ 0xff)));
-                }
-                break;
-
-            case IO_P4DDR:
-                LOGPORT("Port 4 Data Direction Register: {0}\n", data);
-
-                if (m_port_ddr[3] != data)
-                {
-                    m_port_ddr[3] = data;
-                    m_out_port_func[3].op((uint8_t)((m_port_data[3] & m_port_ddr[3]) | (m_port_ddr[3] ^ 0xff)));
-                }
-                break;
-
-            case IO_P3DATA:
-                LOGPORT("Port 3 Data Register: {0}\n", data);
-
-                if (m_p3csr_is3_flag_read != 0)
-                {
-                    LOGPORT("Cleared IS3\n");
-                    m_p3csr = (uint8_t)(m_p3csr & ~M6801_P3CSR_IS3_FLAG);
-                    m_p3csr_is3_flag_read = 0;
-                }
-
-                if ((m_p3csr & M6801_P3CSR_OSS) != 0)
-                {
-                    set_os3(ASSERT_LINE);
-                }
-
-                m_port_data[2] = data;
-                m_out_port_func[2].op((uint8_t)((m_port_data[2] & m_port_ddr[2]) | (m_port_ddr[2] ^ 0xff)));
-
-                if ((m_p3csr & M6801_P3CSR_OSS) != 0)
-                {
-                    set_os3(CLEAR_LINE);
-                }
-                break;
-
-            case IO_P4DATA:
-                LOGPORT("Port 4 Data Register: {0}\n", data);
-
-                m_port_data[3] = data;
-                m_out_port_func[3].op((uint8_t)((m_port_data[3] & m_port_ddr[3]) | (m_port_ddr[3] ^ 0xff)));
-                break;
-
-            case IO_TCSR:
-                LOG("Timer Control and Status Register: {0}\n", data);
-
-                m_tcsr = data;
-                m_pending_tcsr &= m_tcsr;
-                MODIFIED_tcsr();
-                if ((cc & 0x10) == 0)
-                    m6800_check_irq2();
-                break;
-
-            case IO_CH:
-                LOG("Counter High Register: {0}\n", data);
-
-                m_latch09 = data & 0xff;    /* 6301 only */
-                CT  = 0xfff8;
-                TOH = CTH;
-                MODIFIED_counters();
-                break;
-
-            case IO_CL: /* 6301 only */
-                LOG("Counter Low Register: {0}\n", data);
-
-                CT = (uint16_t)((m_latch09 << 8) | (data & 0xff));
-                TOH = CTH;
-                MODIFIED_counters();
-                break;
-
-            case IO_OCRH:
-                LOG("Output Compare High Register: {0}\n", data);
-
-                if( m_output_compare.b.h != data)
-                {
-                    m_output_compare.b.h = data;
-                    MODIFIED_counters();
-                }
-                break;
-
-            case IO_OCRL:
-                LOG("Output Compare Low Register: {0}\n", data);
-
-                if( m_output_compare.b.l != data)
-                {
-                    m_output_compare.b.l = data;
-                    MODIFIED_counters();
-                }
-                break;
-
-            case IO_ICRH:
-            case IO_ICRL:
-            case IO_RDR:
-                LOG("PC {0}: warning - write {1} to read only internal register {2}\n", state().pc(), data, offset);
-                break;
-
-            case IO_P3CSR:
-                LOGPORT("Port 3 Control and Status Register: {0}\n", data);
-
-                m_p3csr = data;
-                break;
-
-            case IO_RMCR:
-                LOGSER("Rate and Mode Control Register: {0}\n", data);
-
-                set_rmcr(data);
-                break;
-
-            case IO_TRCSR:
-                LOGSER("Transmit/Receive Control and Status Register: {0}\n", data);
-
-                if ((data & M6801_TRCSR_TE) != 0 && (m_trcsr & M6801_TRCSR_TE) == 0)
-                {
-                    m_txstate = M6801_TX_STATE_INIT;
-                    m_txbits = 0;
-                    m_tx = 1;
-                }
-
-                if ((data & M6801_TRCSR_RE) != 0 && (m_trcsr & M6801_TRCSR_RE) == 0)
-                {
-                    m_rxbits = 0;
-                }
-
-                m_trcsr = (uint8_t)((m_trcsr & 0xe0) | (data & 0x1f));
-                break;
-
-            case IO_TDR:
-                LOGSER("6801 Transmit Data Register: $%02x/%d\n", data, data);
-
-                if (m_trcsr_read_tdre != 0)
-                {
-                    m_trcsr_read_tdre = 0;
-                    m_trcsr = (uint8_t)(m_trcsr & ~M6801_TRCSR_TDRE);
-                }
-                m_tdr = data;
-                break;
-
-            case IO_RCR:
-                LOG("RAM Control Register: {0}\n", data);
-
-                m_ram_ctrl = data;
-                break;
-
-            case IO_CAAH:
-            case IO_CAAL:
-            case IO_TCR1:
-            case IO_TCR2:
-            case IO_TSR:
-            case IO_OCR2H:
-            case IO_OCR2L:
-            case IO_OCR3H:
-            case IO_OCR3L:
-            case IO_ICR2H:
-            case IO_ICR2L:
-            default:
-                logerror("PC {0}: warning - write {1} to reserved internal register {2}\n", state().pc(), data, offset);
-                break;
-            }
+            map.op(0x0000, 0x0000).rw(m6801.ff_r, m6801.p1_ddr_w);
+            map.op(0x0001, 0x0001).rw(m6801.ff_r, m6801.p2_ddr_w);
+            map.op(0x0002, 0x0002).rw(m6801.p1_data_r, m6801.p1_data_w);
+            map.op(0x0003, 0x0003).rw(m6801.p2_data_r, m6801.p2_data_w);
+            map.op(0x0004, 0x0004).rw(m6801.ff_r, m6801.p3_ddr_w); // TODO: external in 6801 modes 0–3 & 6
+            map.op(0x0005, 0x0005).rw(m6801.ff_r, m6801.p4_ddr_w); // TODO: external in 6801 modes 0–3
+            map.op(0x0006, 0x0006).rw(m6801.p3_data_r, m6801.p3_data_w); // TODO: external in 6801 modes 0–3 & 6
+            map.op(0x0007, 0x0007).rw(m6801.p4_data_r, m6801.p4_data_w); // TODO: external in 6801 modes 0–3
+            map.op(0x0008, 0x0008).rw(m6801.tcsr_r, m6801.tcsr_w);
+            map.op(0x0009, 0x0009).rw(m6801.ch_r, m6801.ch_w);
+            map.op(0x000a, 0x000a).rw(m6801.cl_r, m6801.cl_w);
+            map.op(0x000b, 0x000b).rw(m6801.ocrh_r, m6801.ocrh_w);
+            map.op(0x000c, 0x000c).rw(m6801.ocrl_r, m6801.ocrl_w);
+            map.op(0x000d, 0x000d).r(m6801.icrh_r);
+            map.op(0x000e, 0x000e).r(m6801.icrl_r);
+            map.op(0x000f, 0x000f).rw(m6801.p3_csr_r, m6801.p3_csr_w); // TODO: external in 6801 modes 0–3, 5 & 6
+            map.op(0x0010, 0x0010).rw(m6801.sci_rmcr_r, m6801.sci_rmcr_w);
+            map.op(0x0011, 0x0011).rw(m6801.sci_trcsr_r, m6801.sci_trcsr_w);
+            map.op(0x0012, 0x0012).r(m6801.sci_rdr_r);
+            map.op(0x0013, 0x0013).w(m6801.sci_tdr_w);
+            map.op(0x0014, 0x0014).rw(m6801.rcr_r, m6801.rcr_w);
         }
 
 
@@ -803,44 +360,44 @@ namespace mame
             m_rmcr = 0;
             m_ram_ctrl = 0;
 
-            save_item(m_port_ddr, "m_port_ddr");
-            save_item(m_port_data, "m_port_data");
-            save_item(m_p3csr, "m_p3csr");
-            save_item(m_tcsr, "m_tcsr");
-            save_item(m_pending_tcsr, "m_pending_tcsr");
-            save_item(m_irq2, "m_irq2");
-            save_item(m_ram_ctrl, "m_ram_ctrl");
+            save_item(NAME(new { m_port_ddr }));
+            save_item(NAME(new { m_port_data }));
+            save_item(NAME(new { m_p3csr }));
+            save_item(NAME(new { m_tcsr }));
+            save_item(NAME(new { m_pending_tcsr }));
+            save_item(NAME(new { m_irq2 }));
+            save_item(NAME(new { m_ram_ctrl }));
 
-            save_item(m_counter.d, "m_counter.d");
-            save_item(m_output_compare.d, "m_output_compare.d");
-            save_item(m_input_capture, "m_input_capture");
-            save_item(m_p3csr_is3_flag_read, "m_p3csr_is3_flag_read");
-            save_item(m_port3_latched, "m_port3_latched");
-            save_item(m_port2_written, "m_port2_written");
+            save_item(NAME(new { m_counter.d }));
+            save_item(NAME(new { m_output_compare.d }));
+            save_item(NAME(new { m_input_capture }));
+            save_item(NAME(new { m_p3csr_is3_flag_read }));
+            save_item(NAME(new { m_port3_latched }));
+            save_item(NAME(new { m_port2_written }));
 
-            save_item(m_trcsr, "m_trcsr");
-            save_item(m_rmcr, "m_rmcr");
-            save_item(m_rdr, "m_rdr");
-            save_item(m_tdr, "m_tdr");
-            save_item(m_rsr, "m_rsr");
-            save_item(m_tsr, "m_tsr");
-            save_item(m_rxbits, "m_rxbits");
-            save_item(m_txbits, "m_txbits");
-            save_item(m_txstate, "m_txstate");
-            save_item(m_trcsr_read_tdre, "m_trcsr_read_tdre");
-            save_item(m_trcsr_read_orfe, "m_trcsr_read_orfe");
-            save_item(m_trcsr_read_rdrf, "m_trcsr_read_rdrf");
-            save_item(m_tx, "m_tx");
-            save_item(m_ext_serclock, "m_ext_serclock");
-            save_item(m_use_ext_serclock, "m_use_ext_serclock");
+            save_item(NAME(new { m_trcsr }));
+            save_item(NAME(new { m_rmcr }));
+            save_item(NAME(new { m_rdr }));
+            save_item(NAME(new { m_tdr }));
+            save_item(NAME(new { m_rsr }));
+            save_item(NAME(new { m_tsr }));
+            save_item(NAME(new { m_rxbits }));
+            save_item(NAME(new { m_txbits }));
+            save_item(NAME(new { m_txstate }));
+            save_item(NAME(new { m_trcsr_read_tdre }));
+            save_item(NAME(new { m_trcsr_read_orfe }));
+            save_item(NAME(new { m_trcsr_read_rdrf }));
+            save_item(NAME(new { m_tx }));
+            save_item(NAME(new { m_ext_serclock }));
+            save_item(NAME(new { m_use_ext_serclock }));
 
-            save_item(m_latch09, "m_latch09");
+            save_item(NAME(new { m_latch09 }));
 
-            save_item(m_timer_over.d, "m_timer_over.d");
+            save_item(NAME(new { m_timer_over.d }));
 
-            save_item(m_timer_next, "m_timer_next");
+            save_item(NAME(new { m_timer_next }));
 
-            save_item(m_sc1_state, "m_sc1_state");
+            save_item(NAME(new { m_sc1_state }));
         }
 
 
@@ -857,7 +414,7 @@ namespace mame
             m_port_data[0] = 0;
             m_p3csr = 0x00;
             m_p3csr_is3_flag_read = 0;
-            m_port2_written = 0;
+            m_port2_written = false;
             m_port3_latched = 0;
             /* TODO: on reset port 2 should be read to determine the operating mode (bits 0-2) */
             m_tcsr = 0x00;
@@ -931,7 +488,7 @@ namespace mame
                     m_tcsr |= TCSR_ICF;
                     m_pending_tcsr |= TCSR_ICF;
                     m_input_capture = CT;
-                    MODIFIED_tcsr();
+                    modified_tcsr();
                 }
                 break;
 
@@ -946,12 +503,445 @@ namespace mame
         //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
 
+        void p1_ddr_w(uint8_t data)
+        {
+            LOGPORT("Port 1 Data Direction Register: {0}\n", data);
+
+            if (m_port_ddr[0] != data)
+            {
+                m_port_ddr[0] = data;
+                m_out_port_func[0].op(0, (uint8_t)((m_port_data[0] & m_port_ddr[0]) | (m_port_ddr[0] ^ 0xff)), m_port_ddr[0]);
+            }
+        }
+
+
+        uint8_t p1_data_r()
+        {
+            if (m_port_ddr[0] == 0xff)
+                return m_port_data[0];
+            else
+                return (uint8_t)((m_in_port_func[0].op() & (m_port_ddr[0] ^ 0xff)) | (m_port_data[0] & m_port_ddr[0]));
+        }
+
+
+        void p1_data_w(uint8_t data)
+        {
+            LOGPORT("Port 1 Data Register: {0}\n", data);
+
+            m_port_data[0] = data;
+            m_out_port_func[0].op(0, (uint8_t)((m_port_data[0] & m_port_ddr[0]) | (m_port_ddr[0] ^ 0xff)), m_port_ddr[0]);
+        }
+
+
+        void p2_ddr_w(uint8_t data)
+        {
+            LOGPORT("Port 2 Data Direction Register: {0}\n", data);
+
+            if (m_port_ddr[1] != data)
+            {
+                m_port_ddr[1] = data;
+                write_port2();
+            }
+        }
+
+
+        uint8_t p2_data_r()
+        {
+            if(m_port_ddr[1] == 0xff)
+                return m_port_data[1];
+            else
+                return (uint8_t)((m_in_port_func[1].op() & (m_port_ddr[1] ^ 0xff)) | (m_port_data[1] & m_port_ddr[1]));
+        }
+
+
+        void p2_data_w(uint8_t data)
+        {
+            LOGPORT("Port 2 Data Register: {0}\n", data);
+
+            m_port_data[1] = data;
+            m_port2_written = true;
+            write_port2();
+        }
+
+
+        void p3_ddr_w(uint8_t data)
+        {
+            LOGPORT("Port 3 Data Direction Register: {0}\n", data);
+
+            if (m_port_ddr[2] != data)
+            {
+                m_port_ddr[2] = data;
+                m_out_port_func[2].op(0, (uint8_t)((m_port_data[2] & m_port_ddr[2]) | (m_port_ddr[2] ^ 0xff)), m_port_ddr[2]);
+            }
+        }
+
+
+        uint8_t p3_data_r()
+        {
+            uint8_t data;
+
+            if (!machine().side_effects_disabled())
+            {
+                if (m_p3csr_is3_flag_read != 0)
+                {
+                    LOGPORT("Cleared IS3\n");
+                    m_p3csr = (uint8_t)(m_p3csr & ~M6801_P3CSR_IS3_FLAG);
+                    m_p3csr_is3_flag_read = 0;
+                }
+
+                if ((m_p3csr & M6801_P3CSR_OSS) == 0)
+                {
+                    set_os3(ASSERT_LINE);
+                }
+            }
+
+            if (((m_p3csr & M6801_P3CSR_LE) != 0) || (m_port_ddr[2] == 0xff))
+                data = m_port_data[2];
+            else
+                data = (uint8_t)((m_in_port_func[2].op() & (m_port_ddr[2] ^ 0xff))
+                    | (m_port_data[2] & m_port_ddr[2]));
+
+            if (!machine().side_effects_disabled())
+            {
+                m_port3_latched = 0;
+
+                if ((m_p3csr & M6801_P3CSR_OSS) == 0)
+                {
+                    set_os3(CLEAR_LINE);
+                }
+            }
+
+            return data;
+        }
+
+
+        void p3_data_w(uint8_t data)
+        {
+            LOGPORT("Port 3 Data Register: {0}\n", data);
+
+            if (m_p3csr_is3_flag_read != 0)
+            {
+                LOGPORT("Cleared IS3\n");
+                m_p3csr = (uint8_t)(m_p3csr & ~M6801_P3CSR_IS3_FLAG);
+                m_p3csr_is3_flag_read = 0;
+            }
+
+            if ((m_p3csr & M6801_P3CSR_OSS) != 0)
+            {
+                set_os3(ASSERT_LINE);
+            }
+
+            m_port_data[2] = data;
+            m_out_port_func[2].op(0, (uint8_t)((m_port_data[2] & m_port_ddr[2]) | (m_port_ddr[2] ^ 0xff)), m_port_ddr[2]);
+
+            if ((m_p3csr & M6801_P3CSR_OSS) != 0)
+            {
+                set_os3(CLEAR_LINE);
+            }
+        }
+
+
+        uint8_t p3_csr_r()
+        {
+            if (((m_p3csr & M6801_P3CSR_IS3_FLAG) != 0) && !machine().side_effects_disabled())
+            {
+                m_p3csr_is3_flag_read = 1;
+            }
+
+            return m_p3csr;
+        }
+
+
+        void p3_csr_w(uint8_t data)
+        {
+            LOGPORT("Port 3 Control and Status Register: {0}\n", data);
+
+            m_p3csr = data;
+        }
+
+
+        void p4_ddr_w(uint8_t data)
+        {
+            LOGPORT("Port 4 Data Direction Register: {0}\n", data);
+
+            if (m_port_ddr[3] != data)
+            {
+                m_port_ddr[3] = data;
+                m_out_port_func[3].op(0, (uint8_t)((m_port_data[3] & m_port_ddr[3]) | (m_port_ddr[3] ^ 0xff)), m_port_ddr[3]);
+            }
+        }
+
+
+        uint8_t p4_data_r()
+        {
+            if(m_port_ddr[3] == 0xff)
+                return m_port_data[3];
+            else
+                return (uint8_t)((m_in_port_func[3].op() & (m_port_ddr[3] ^ 0xff)) | (m_port_data[3] & m_port_ddr[3]));
+        }
+
+
+        void p4_data_w(uint8_t data)
+        {
+            LOGPORT("Port 4 Data Register: {0}\n", data);
+
+            m_port_data[3] = data;
+            m_out_port_func[3].op(0, (uint8_t)((m_port_data[3] & m_port_ddr[3]) | (m_port_ddr[3] ^ 0xff)), m_port_ddr[3]);
+        }
+
+
+        uint8_t tcsr_r()
+        {
+            if (!machine().side_effects_disabled())
+                m_pending_tcsr = 0;
+
+            return m_tcsr;
+        }
+
+
+        void tcsr_w(uint8_t data)
+        {
+            LOGTIMER("Timer Control and Status Register: {0}\n", data);
+
+            m_tcsr = data;
+            m_pending_tcsr &= m_tcsr;
+            modified_tcsr();
+            if ((cc & 0x10) == 0)
+                m6800_check_irq2();
+        }
+
+
+        uint8_t ch_r()
+        {
+            if (((m_pending_tcsr & TCSR_TOF) == 0) && !machine().side_effects_disabled())
+            {
+                m_tcsr = (uint8_t)(m_tcsr & ~TCSR_TOF);
+                modified_tcsr();
+            }
+
+            return m_counter.b.h;
+        }
+
+
+        uint8_t cl_r()
+        {
+            uint8_t data = m_counter.b.l;
+
+            // HACK there should be a break here, but Coleco Adam won't boot with it present, proper fix required to the free-running counter
+            //(void)data;
+
+            return ocrh_r();
+        }
+
+
+        void ch_w(uint8_t data)
+        {
+            LOGTIMER("Counter High Register: {0}\n", data);
+
+            m_latch09 = data & 0xff;    /* 6301 only */
+            CT  = 0xfff8;
+            TOH = CTH;
+            modified_counters();
+        }
+
+
+        void cl_w(uint8_t data)
+        {
+            LOGTIMER("Counter Low Register: {0}\n", data);
+
+            CT = (uint16_t)((m_latch09 << 8) | (data & 0xff));
+            TOH = CTH;
+            modified_counters();
+        }
+
+
+        uint8_t ocrh_r()
+        {
+            if (((m_pending_tcsr & TCSR_OCF) == 0) && !machine().side_effects_disabled())
+            {
+                m_tcsr = (uint8_t)(m_tcsr & ~TCSR_OCF);
+                modified_tcsr();
+            }
+
+            return m_output_compare.b.h;
+        }
+
+
+        uint8_t ocrl_r()
+        {
+            if (((m_pending_tcsr & TCSR_OCF) == 0) && !machine().side_effects_disabled())
+            {
+                m_tcsr = (uint8_t)(m_tcsr & ~TCSR_OCF);
+                modified_tcsr();
+            }
+
+            return m_output_compare.b.l;
+        }
+
+
+        void ocrh_w(uint8_t data)
+        {
+            LOGTIMER("Output Compare High Register: {0}\n", data);
+
+            if( m_output_compare.b.h != data)
+            {
+                m_output_compare.b.h = data;
+                modified_counters();
+            }
+        }
+
+
+        void ocrl_w(uint8_t data)
+        {
+            LOGTIMER("Output Compare Low Register: {0}\n", data);
+
+            if( m_output_compare.b.l != data)
+            {
+                m_output_compare.b.l = data;
+                modified_counters();
+            }
+        }
+
+
+        uint8_t icrh_r()
+        {
+            if (((m_pending_tcsr & TCSR_ICF) == 0) && !machine().side_effects_disabled())
+            {
+                m_tcsr = (uint8_t)(m_tcsr & ~TCSR_ICF);
+                modified_tcsr();
+            }
+            return (uint8_t)((m_input_capture >> 0) & 0xff);
+        }
+
+
+        uint8_t icrl_r()
+        {
+            return (uint8_t)((m_input_capture >> 8) & 0xff);
+        }
+
+
+        uint8_t sci_rmcr_r()
+        {
+            return m_rmcr;
+        }
+
+
+        void sci_rmcr_w(uint8_t data)
+        {
+            LOGSER("SCI Rate and Mode Control Register: {0}\n", data);
+
+            set_rmcr(data);
+        }
+
+
+        uint8_t sci_trcsr_r()
+        {
+            if (!machine().side_effects_disabled())
+            {
+                if ((m_trcsr & M6801_TRCSR_TDRE) != 0)
+                {
+                    m_trcsr_read_tdre = 1;
+                }
+
+                if ((m_trcsr & M6801_TRCSR_ORFE) != 0)
+                {
+                    m_trcsr_read_orfe = 1;
+                }
+
+                if ((m_trcsr & M6801_TRCSR_RDRF) != 0)
+                {
+                    m_trcsr_read_rdrf = 1;
+                }
+            }
+
+            return m_trcsr;
+        }
+
+
+        void sci_trcsr_w(uint8_t data)
+        {
+            LOGSER("SCI Transmit/Receive Control and Status Register: {0}\n", data);
+
+            if (((data & M6801_TRCSR_TE) != 0) && ((m_trcsr & M6801_TRCSR_TE) == 0))
+            {
+                m_txstate = M6801_TX_STATE_INIT;
+                m_txbits = 0;
+                m_tx = 1;
+            }
+
+            if (((data & M6801_TRCSR_RE) != 0) && ((m_trcsr & M6801_TRCSR_RE) == 0))
+            {
+                m_rxbits = 0;
+            }
+
+            m_trcsr = (uint8_t)((m_trcsr & 0xe0) | (data & 0x1f));
+        }
+
+
+        uint8_t sci_rdr_r()
+        {
+            if (!machine().side_effects_disabled())
+            {
+                if (m_trcsr_read_orfe != 0)
+                {
+                    LOGSER("Cleared ORFE\n");
+                    m_trcsr_read_orfe = 0;
+                    m_trcsr = (uint8_t)(m_trcsr & ~M6801_TRCSR_ORFE);
+                }
+
+                if (m_trcsr_read_rdrf != 0)
+                {
+                    LOGSER("Cleared RDRF\n");
+                    m_trcsr_read_rdrf = 0;
+                    m_trcsr = (uint8_t)(m_trcsr & ~M6801_TRCSR_RDRF);
+                }
+            }
+
+            return m_rdr;
+        }
+
+
+        void sci_tdr_w(uint8_t data)
+        {
+            LOGSER("SCI Transmit Data Register: ${0}/{1}\n", data, data);
+
+            if (m_trcsr_read_tdre != 0)
+            {
+                m_trcsr_read_tdre = 0;
+                m_trcsr = (uint8_t)(m_trcsr & ~M6801_TRCSR_TDRE);
+            }
+            m_tdr = data;
+        }
+
+
+        uint8_t rcr_r()
+        {
+            return m_ram_ctrl;
+        }
+
+
+        void rcr_w(uint8_t data)
+        {
+            LOG("RAM Control Register: {0}\n", data);
+
+            m_ram_ctrl = data;
+        }
+
+
+        uint8_t ff_r()
+        {
+            if (!machine().side_effects_disabled())
+                logerror("PC {0}: warning - read from write-only internal register\n", state().pc());
+
+            return 0xff;
+        }
+
+
         protected static void m6803_mem(address_map map, device_t owner)
         {
             m6801_cpu_device m6801 = (m6801_cpu_device)owner;
 
-            map.op(0x0000, 0x001f).rw(m6801.m6801_io_r, m6801.m6801_io_w);
-            map.op(0x0020, 0x007f).noprw();        /* unused */
+            m6801_io(map, m6801);
             map.op(0x0080, 0x00ff).ram();        /* 6803 internal RAM */
         }
 
@@ -961,7 +951,7 @@ namespace mame
             if ((m_tcsr & (TCSR_EICI | TCSR_ICF)) == (TCSR_EICI | TCSR_ICF))
             {
                 TAKE_ICI();
-                diexec.standard_irq_callback(M6801_TIN_LINE);
+                standard_irq_callback(M6801_TIN_LINE);
             }
             else if ((m_tcsr & (TCSR_EOCI | TCSR_OCF)) == (TCSR_EOCI | TCSR_OCF))
             {
@@ -998,12 +988,34 @@ namespace mame
             OCH -= CTH;
             TOH -= CTH;
             CTH = 0;
-            SET_TIMER_EVENT();
+            set_timer_event();
+            if (CTD >= m_timer_next)
+                check_timer_event();
+        }
+
+
+        protected virtual void modified_tcsr()
+        {
+            m_irq2 = (uint8_t)((m_tcsr & (m_tcsr << 3)) & (TCSR_ICF | TCSR_OCF | TCSR_TOF));
+        }
+
+
+        protected virtual void set_timer_event()
+        {
+            m_timer_next = (OCD - CTD < TOD - CTD) ? OCD : TOD;
+        }
+
+
+        /* when change freerunningcounter or outputcapture */
+        protected virtual void modified_counters()
+        {
+            OCH = (OC >= CT) ? CTH : (uint16_t)(CTH + 1);
+            set_timer_event();
         }
 
 
         /* check OCI or TOI */
-        void check_timer_event()
+        protected virtual void check_timer_event()
         {
             /* OCI */
             if (CTD >= OCD)
@@ -1011,18 +1023,14 @@ namespace mame
                 OCH++;  // next IRQ point
                 m_tcsr |= TCSR_OCF;
                 m_pending_tcsr |= TCSR_OCF;
-                MODIFIED_tcsr();
-                if ((m_tcsr & TCSR_EOCI) != 0 && (wai_state & M6800_SLP) != 0)
-                    wai_state = (uint8_t)(wai_state & ~M6800_SLP);
-                if ((cc & 0x10) == 0 && (m_tcsr & TCSR_EOCI) != 0)
-                    TAKE_OCI();
+                modified_tcsr();
 
                 // if output on P21 is enabled, let's do it
                 if ((m_port_ddr[1] & 2) != 0)
                 {
                     m_port_data[1] = (uint8_t)(m_port_data[1] & ~2);
                     m_port_data[1] |= (uint8_t)((m_tcsr & TCSR_OLVL) << 1);
-                    m_port2_written = 1;
+                    m_port2_written = true;
                     write_port2();
                 }
             }
@@ -1035,15 +1043,19 @@ namespace mame
 #endif
                 m_tcsr |= TCSR_TOF;
                 m_pending_tcsr |= TCSR_TOF;
-                MODIFIED_tcsr();
-                if ((m_tcsr & TCSR_ETOI) != 0 && (wai_state & M6800_SLP) != 0)
+                modified_tcsr();
+            }
+
+            if ((m_irq2 & (TCSR_OCF | TCSR_TOF)) != 0)
+            {
+                if ((wai_state & M6800_SLP) != 0)
                     wai_state = (uint8_t)(wai_state & ~M6800_SLP);
-                if ((cc & 0x10) == 0 && (m_tcsr & TCSR_ETOI) != 0)
-                    TAKE_TOI();
+                if ((cc & 0x10) == 0)
+                    m6800_check_irq2();
             }
 
             /* set next event */
-            SET_TIMER_EVENT();
+            set_timer_event();
         }
 
 
@@ -1056,13 +1068,13 @@ namespace mame
             switch ((m_rmcr & M6801_RMCR_CC_MASK) >> 2)
             {
             case 0:
-                LOGSER("6801: Using external serial clock: false\n");
+                LOGSER("SCI: Using external serial clock: false\n");
                 m_sci_timer.enable(false);
                 m_use_ext_serclock = false;
                 break;
 
             case 3: // external clock
-                LOGSER("6801: Using external serial clock: true\n");
+                LOGSER("SCI: Using external serial clock: true\n");
                 m_use_ext_serclock = true;
                 m_sci_timer.enable(false);
                 break;
@@ -1071,8 +1083,8 @@ namespace mame
             case 2:
                 {
                     int divisor = M6801_RMCR_SS[m_rmcr & M6801_RMCR_SS_MASK];
-                    attotime period = cycles_to_attotime((u64)divisor);
-                    LOGSER("6801: Setting serial rate, Divisor: %d Hz: %d\n", divisor, period.as_hz());
+                    attotime period = cycles_to_attotime((uint64_t)divisor);
+                    LOGSER("SCI: Setting serial rate, Divisor: {0} Hz: {1}\n", divisor, period.as_hz());
                     m_sci_timer.adjust(period, 0, period);
                     m_use_ext_serclock = false;
                 }
@@ -1081,9 +1093,9 @@ namespace mame
         }
 
 
-        void write_port2()
+        protected virtual void write_port2()
         {
-            if (m_port2_written == 0) return;
+            if (!m_port2_written) return;
 
             uint8_t data = m_port_data[1];
             uint8_t ddr = (uint8_t)(m_port_ddr[1] & 0x1f);
@@ -1096,11 +1108,12 @@ namespace mame
             if ((m_trcsr & M6801_TRCSR_TE) != 0)
             {
                 data = (uint8_t)((data & 0xef) | (m_tx << 4));
+                ddr |= 0x10;
             }
 
             data &= 0x1f;
 
-            m_out_port_func[1].op(data);
+            m_out_port_func[1].op(0, data, ddr);
         }
 
 
@@ -1133,10 +1146,10 @@ namespace mame
     }
 
 
-    class m6803_cpu_device : m6801_cpu_device
+    public class m6803_cpu_device : m6801_cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6803, m6803_cpu_device, "m6803", "Motorola MC6803")
-        static device_t device_creator_m6803_cpu_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6803_cpu_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_m6803_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new m6803_cpu_device(mconfig, tag, owner, clock); }
         public static readonly device_type M6803 = DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola MC6803");
 
 
@@ -1157,56 +1170,78 @@ namespace mame
 
 
 #if false
+    class m6803e_cpu_device : public m6801_cpu_device
+
     class hd6301_cpu_device : public m6801_cpu_device
-    {
-    public:
-        hd6301_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-    protected:
-        hd6301_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+    // DP-40 package: HD6301V1P,  HD63A01V1P,  HD63B01V1P
+    // FP-54 package: HD6301V1F,  HD63A01V1F,  HD63B01V1F
+    // CG-40 package: HD6301V1CG, HD63A01V1CG, HD63B01V1CG
+    // CP-52 package: HD6301V1CP, HD63A01V1CP, HD63B01V1CP
+    // CP-44 package: HD6301V1L,  HD63A01V1L,  HD63B01V1L
+    // Not fully emulated yet
+    class hd6301v1_cpu_device : public hd6301_cpu_device
 
-        virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
-    };
+    // DC-40 package: HD63701V0C, HD63A701V0C, HD63B701V0C
+    // Not fully emulated yet
+    class hd63701v0_cpu_device : public hd6301_cpu_device
 
-
-    class hd63701_cpu_device : public m6801_cpu_device
-    {
-    public:
-        hd63701_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-    protected:
-        virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
-
-        virtual void TAKE_TRAP() override;
-    };
-
-
-    // DP-40 package: HD6303RP,  HD63A03RP,  HD63B03RP,
-    // FP-54 package: HD6303RF,  HD63A03RF,  HD63B03RF,
-    // CG-40 package: HD6303RCG, HD63A03RCG, HD63B03RCG,
+    // DP-40 package: HD6303RP,  HD63A03RP,  HD63B03RP
+    // FP-54 package: HD6303RF,  HD63A03RF,  HD63B03RF
+    // CG-40 package: HD6303RCG, HD63A03RCG, HD63B03RCG
     // Not fully emulated yet
     class hd6303r_cpu_device : public hd6301_cpu_device
-    {
-    public:
-        hd6303r_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-    };
 
+    class hd6301x_cpu_device : public hd6301_cpu_device
+
+    // DP-64S package: HD6301X0P,  HD63A01X0P,  HD63B01X0P
+    // FP-80  package: HD6301X0F,  HD63A01X0F,  HD63B01X0F
+    // CP-68  package: HD6301X0CP, HD63A01X0CP, HD63B01X0CP
+    // Not fully emulated yet
+    class hd6301x0_cpu_device : public hd6301x_cpu_device
+
+    // DC-64S package: HD63701X0C, HD63A701X0C, HD63B701X0C
+    // Not fully emulated yet
+    class hd63701x0_cpu_device : public hd6301x_cpu_device
+
+    // DP-64S package: HD6303XP,  HD63A03XP,  HD63B03XP
+    // FP-80  package: HD6303XF,  HD63A03XF,  HD63B03XF
+    // CP-68  package: HD6303XCP, HD63A03XCP, HD63B03XCP
+    // Not fully emulated yet
+    class hd6303x_cpu_device : public hd6301x_cpu_device
+
+    class hd6301y_cpu_device : public hd6301x_cpu_device
+
+    // DP-64S package: HD6301Y0P,  HD63A01Y0P,  HD63B01Y0P,  HD63C01Y0P
+    // FP-64  package: HD6301Y0F,  HD63A01Y0F,  HD63B01Y0F,  HD63C01Y0F
+    // FP-64A package: HD6301Y0H,  HD63A01Y0H,  HD63B01Y0H,  HD63C01Y0H
+    // CP-68  package: HD6301Y0CP, HD63A01Y0CP, HD63B01Y0CP, HD63C01Y0CP
+    // Not fully emulated yet
+    class hd6301y0_cpu_device : public hd6301y_cpu_device
+
+    // DC-64S package: HD63701Y0C, HD63A701Y0C, HD63B701Y0C, HD63C701Y0C
+    // Not fully emulated yet
+    class hd63701y0_cpu_device : public hd6301y_cpu_device
 
     // DP-64S package: HD6303YP,  HD63A03YP,  HD63B03YP,  HD63C03YP
     // FP-64  package: HD6303YF,  HD63A03YF,  HD63B03YF,  HD63C03YF
     // FP-64A package: HD6303YH,  HD63A03YH,  HD63B03YH,  HD63C03YH
     // CP-68  package: HD6303YCP, HD63A03YCP, HD63B03YCP, HD63C03YCP
     // Not fully emulated yet
-    class hd6303y_cpu_device : public hd6301_cpu_device
-    {
-    public:
-        hd6303y_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-    };
+    class hd6303y_cpu_device : public hd6301y_cpu_device
 #endif
 
 
-    //DECLARE_DEVICE_TYPE(HD6301, hd6301_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD63701, hd63701_cpu_device)
+    //DECLARE_DEVICE_TYPE(M6801, m6801_cpu_device)
+    //DECLARE_DEVICE_TYPE(M6803, m6803_cpu_device)
+    //DECLARE_DEVICE_TYPE(M6803E, m6803e_cpu_device)
+    //DECLARE_DEVICE_TYPE(HD6301V1, hd6301v1_cpu_device)
+    //DECLARE_DEVICE_TYPE(HD6301X0, hd6301x0_cpu_device)
+    //DECLARE_DEVICE_TYPE(HD6301Y0, hd6301y0_cpu_device)
+    //DECLARE_DEVICE_TYPE(HD63701V0, hd63701v0_cpu_device)
+    //DECLARE_DEVICE_TYPE(HD63701X0, hd63701x0_cpu_device)
+    //DECLARE_DEVICE_TYPE(HD63701Y0, hd63701y0_cpu_device)
     //DECLARE_DEVICE_TYPE(HD6303R, hd6303r_cpu_device)
+    //DECLARE_DEVICE_TYPE(HD6303X, hd6303x_cpu_device)
     //DECLARE_DEVICE_TYPE(HD6303Y, hd6303y_cpu_device)
 }

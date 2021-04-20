@@ -48,7 +48,7 @@ namespace mame
                                      discrete_sound_output_interface, 
                                      discrete_step_interface
     {
-        ListPointer<stream_sample_t> m_ptr;  //stream_sample_t     *m_ptr;
+        Pointer<stream_sample_t> m_ptr;  //stream_sample_t     *m_ptr;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dso_output, base)
@@ -63,7 +63,7 @@ namespace mame
 
 
         // discrete_sound_output_interface
-        public void set_output_ptr(ListPointer<stream_sample_t> ptr) { m_ptr = new ListPointer<stream_sample_t>(ptr); }
+        public void set_output_ptr(Pointer<stream_sample_t> ptr) { m_ptr = new Pointer<stream_sample_t>(ptr); }
 
 
         // discrete_step_interface
@@ -258,7 +258,7 @@ namespace mame
                                                           discrete_step_interface
     {
         public uint32_t m_stream_in_number;
-        public ListPointer<stream_sample_t> m_ptr;  //stream_sample_t     *m_ptr;         /* current in ptr for stream */
+        public Pointer<stream_sample_t> m_ptr;  //stream_sample_t     *m_ptr;         /* current in ptr for stream */
 
 
         double m_gain;             /* node gain */

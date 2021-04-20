@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "mcsForm": {
+      "commandName": "Project",
+      "workingDirectory": "."
+    }
+  }
+}

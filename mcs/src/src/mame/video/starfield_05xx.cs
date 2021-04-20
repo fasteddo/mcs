@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -16,7 +15,7 @@ namespace mame
     public class starfield_05xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(STARFIELD_05XX, starfield_05xx_device, "starfield_05xx_stars", "Galaga/Bosconian starfield")
-        static device_t device_creator_starfield_05xx_device(device_type type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new starfield_05xx_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_starfield_05xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new starfield_05xx_device(mconfig, tag, owner, clock); }
         public static readonly device_type STARFIELD_05XX = DEFINE_DEVICE_TYPE(device_creator_starfield_05xx_device, "starfield_05xx_stars", "Galaga/Bosconian starfield");
 
 
@@ -188,16 +187,16 @@ namespace mame
 
         protected override void device_start()
         {
-            save_item(m_enable, "m_enable");
-            save_item(m_lfsr, "m_lfsr");
-            save_item(m_pre_vis_cycle_count, "m_pre_vis_cycle_count");
-            save_item(m_post_vis_cycle_count, "m_post_vis_cycle_count");
-            save_item(m_set_a, "m_set_a");
-            save_item(m_set_b, "m_set_b");
+            save_item(NAME(new { m_enable }));
+            save_item(NAME(new { m_lfsr }));
+            save_item(NAME(new { m_pre_vis_cycle_count }));
+            save_item(NAME(new { m_post_vis_cycle_count }));
+            save_item(NAME(new { m_set_a }));
+            save_item(NAME(new { m_set_b }));
 
-            save_item(m_offset_x, "m_offset_x");
-            save_item(m_offset_y, "m_offset_y");
-            save_item(m_limit_x, "m_limit_x");
+            save_item(NAME(new { m_offset_x }));
+            save_item(NAME(new { m_offset_y }));
+            save_item(NAME(new { m_limit_x }));
         }
 
 

@@ -134,7 +134,7 @@ namespace mame
 
 
             // accessors
-            public ListBase<string> names() { return m_names; }
+            public MemoryContainer<string> names() { return m_names; }
             public string name() { return m_names[0]; }
 
             //-------------------------------------------------
@@ -378,7 +378,7 @@ namespace mame
         }
 
         //entry::shared_ptr get_entry(const std::string &name);
-        public ListBase<entry> entries() { return m_entries; }
+        public MemoryContainer<entry> entries() { return m_entries; }
         public bool exists(string name) { return get_entry(name) != null; }
         //bool header_exists(const char *description) const;
 

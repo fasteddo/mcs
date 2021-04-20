@@ -102,7 +102,7 @@ namespace mame.ui
             for (y = 0; y < height; y++)
             {
                 int linewidth = (y * (halfwidth - 1) + (height / 2)) * 255 * 2 / height;
-                UInt32BufferPointer target = dest.pix32(y, halfwidth);  //uint32_t *target = &dest.pix32(y, halfwidth);
+                PointerU32 target = dest.pix32(y, halfwidth);  //uint32_t *target = &dest.pix32(y, halfwidth);
 
                 // don't antialias if height < 12
                 if (dest.height() < 12)

@@ -24,9 +24,9 @@ namespace mame.plib
         public static nl_fptype one() { return 1; }  //static inline constexpr T one()    noexcept { return static_cast<T>(1); }
         public static nl_fptype two() { return 2; }  //static inline constexpr T two()    noexcept { return static_cast<T>(2); }
         //static inline constexpr T three()  noexcept { return static_cast<T>(3); }
-        //static inline constexpr T four()   noexcept { return static_cast<T>(4); }
+        public static nl_fptype four() { return 4; }  //static inline constexpr T four()   noexcept { return static_cast<T>(4); }
         //static inline constexpr T sqrt2()  noexcept { return static_cast<T>(1.414213562373095048801688724209L); }
-        //static inline constexpr T pi()     noexcept { return static_cast<T>(3.14159265358979323846264338327950L); }
+        public static nl_fptype pi() { return 3.14159265358979323846264338327950; }  //static inline constexpr T pi()     noexcept { return static_cast<T>(3.14159265358979323846264338327950L); }
 
         /// \brief Electric constant of vacuum
         ///
@@ -42,15 +42,15 @@ namespace mame.plib
 
         /// \brief Boltzmann constant
         ///
-        //static inline constexpr T k_b() noexcept { return static_cast<T>(1.38064852e-23); }
+        public static nl_fptype k_b() { return 1.38064852e-23; }  //static inline constexpr T k_b() noexcept { return static_cast<T>(1.38064852e-23); }
 
         /// \brief room temperature (gives VT = 0.02585 at T=300)
         ///
-        //static inline constexpr T T0() noexcept { return static_cast<T>(300); }
+        public static nl_fptype T0() { return 300; }  //static inline constexpr T T0() noexcept { return static_cast<T>(300); }
 
         /// \brief Elementary charge
         ///
-        //static inline constexpr T Q_e() noexcept { return static_cast<T>(1.6021765314e-19); }
+        public static nl_fptype Q_e() { return 1.6021765314e-19; }  //static inline constexpr T Q_e() noexcept { return static_cast<T>(1.6021765314e-19); }
 
         /// \brief Intrinsic carrier concentration in 1/m^3 of Silicon
         ///
@@ -143,10 +143,10 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        //log(T v) noexcept
-        //{
-        //    return std::log(v);
-        //}
+        public static nl_fptype log(nl_fptype v)  //log(T v) noexcept
+        {
+            return std.log(v);
+        }
 
         /// \brief tanh function
         ///
@@ -195,10 +195,10 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        //sin(T v) noexcept
-        //{
-        //    return std::sin(v);
-        //}
+        public static nl_fptype sin(nl_fptype v)  //sin(T v) noexcept
+        {
+            return std.sin(v);
+        }
 
         /// \brief cos function
         ///
@@ -208,10 +208,10 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        //cos(T v) noexcept
-        //{
-        //    return std::cos(v);
-        //}
+        public static nl_fptype cos(nl_fptype v)  //cos(T v) noexcept
+        {
+            return std.cos(v);
+        }
 
         /// \brief trunc function
         ///
@@ -221,10 +221,10 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        //trunc(T v) noexcept
-        //{
-        //    return std::trunc(v);
-        //}
+        public static nl_fptype trunc(nl_fptype v)  //trunc(T v) noexcept
+        {
+            return std.trunc(v);
+        }
 
         /// \brief pow function
         ///
@@ -238,10 +238,10 @@ namespace mame.plib
         ///
         //template <typename T1, typename T2>
         //static inline T1
-        //pow(T1 v, T2 p) noexcept
-        //{
-        //    return std::pow(v, p);
-        //}
+        public static nl_fptype pow(nl_fptype v, nl_fptype p)  //pow(T1 v, T2 p) noexcept
+        {
+            return std.pow(v, p);
+        }
 
 #if (PUSE_FLOAT128)
         static inline constexpr __float128 reciprocal(__float128 v) noexcept

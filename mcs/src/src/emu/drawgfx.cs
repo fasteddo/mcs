@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using pen_t = System.UInt32;
 using s32 = System.Int32;
 using u8 = System.Byte;
@@ -36,10 +34,10 @@ namespace mame
 
         u32 m_line_modulo;          // bytes between each row of data
         u32 m_char_modulo;          // bytes between each element
-        ListBytesPointer m_srcdata;  //const u8 *   m_srcdata;              // pointer to the source data for decoding
+        Pointer<u8> m_srcdata;  //const u8 *   m_srcdata;              // pointer to the source data for decoding
         u32 m_dirtyseq;             // sequence number; incremented each time a tile is dirtied
 
-        ListBytesPointer m_gfxdata;  //u8 *         m_gfxdata;              // pointer to decoded pixel data, 8bpp
+        Pointer<u8> m_gfxdata;  //u8 *         m_gfxdata;              // pointer to decoded pixel data, 8bpp
         std.vector<u8> m_gfxdata_allocated = new std.vector<u8>();   // allocated decoded pixel data, 8bpp
         std.vector<u8> m_dirty = new std.vector<u8>();   // dirty array for detecting chars that need decoding
         std.vector<u32> m_pen_usage = new std.vector<u32>();   // bitmask of pens that are used (pens 0-31 only)
@@ -57,7 +55,7 @@ namespace mame
         //-------------------------------------------------
         //  gfx_element - constructor
         //-------------------------------------------------
-        public gfx_element(device_palette_interface palette, ListBytesPointer base_, /*u8 *base,*/ u16 width, u16 height, u32 rowbytes, u32 total_colors, u32 color_base, u32 color_granularity)
+        public gfx_element(device_palette_interface palette, Pointer<u8> base_, u16 width, u16 height, u32 rowbytes, u32 total_colors, u32 color_base, u32 color_granularity)  //gfx_element::gfx_element(device_palette_interface *palette, u8 *base, u16 width, u16 height, u32 rowbytes, u32 total_colors, u32 color_base, u32 color_granularity)
         {
             m_palette = palette;
             m_width = width;
@@ -82,7 +80,7 @@ namespace mame
             m_layout_charincrement = 0;
         }
 
-        public gfx_element(device_palette_interface palette, gfx_layout gl, ListBytesPointer srcdata, /*const u8 *srcdata,*/ u32 xormask, u32 total_colors, u32 color_base)
+        public gfx_element(device_palette_interface palette, gfx_layout gl, Pointer<u8> srcdata, u32 xormask, u32 total_colors, u32 color_base)  //gfx_element::gfx_element(device_palette_interface *palette, const gfx_layout &gl, const u8 *srcdata, u32 xormask, u32 total_colors, u32 color_base)
         {
             m_palette = palette;
             m_width = 0;
@@ -135,7 +133,7 @@ namespace mame
         //-------------------------------------------------
         //  set_layout - set the layout for a gfx_element
         //-------------------------------------------------
-        void set_layout(gfx_layout gl, ListBytesPointer srcdata)  //const u8 *srcdata)
+        void set_layout(gfx_layout gl, Pointer<u8> srcdata)  //void set_layout(const gfx_layout &gl, const u8 *srcdata)
         {
             m_srcdata = srcdata;
 
@@ -167,7 +165,7 @@ namespace mame
 
                 // RAW graphics must have a pointer up front
                 //assert(srcdata != NULL);
-                m_gfxdata = new ListBytesPointer(srcdata);  //m_gfxdata = const_cast<u8 *>(srcdata);
+                m_gfxdata = new Pointer<u8>(srcdata);  //m_gfxdata = const_cast<u8 *>(srcdata);
             }
 
             // decoded graphics case
@@ -191,7 +189,7 @@ namespace mame
 
                 // allocate memory for the data
                 m_gfxdata_allocated.resize((int)(m_total_elements * m_char_modulo));
-                m_gfxdata = new ListBytesPointer(m_gfxdata_allocated);  //m_gfxdata = &m_gfxdata_allocated[0];
+                m_gfxdata = new Pointer<u8>(m_gfxdata_allocated);  //m_gfxdata = &m_gfxdata_allocated[0];
             }
 
             // mark everything dirty
@@ -212,34 +210,34 @@ namespace mame
         //-------------------------------------------------
         // set_source - set the source data for a gfx_element
         //-------------------------------------------------
-        public void set_source(ListBytesPointer source)  //void gfx_element::set_source(const u8 *source)
+        public void set_source(Pointer<u8> source)  //void set_source(const u8 *source)
         {
             m_srcdata = source;
-            m_dirty.set(1, (int)elements());  //memset(&m_dirty[0], 1, elements());
-            if (m_layout_is_raw) m_gfxdata = source;  //const_cast<u8 *>(source);
+            memset(m_dirty, (u8)1, elements());  //memset(&m_dirty[0], 1, elements());
+            if (m_layout_is_raw) m_gfxdata = source;  //if (m_layout_is_raw) m_gfxdata = const_cast<u8 *>(source);
         }
 
 
-        //void set_source_and_total(const UINT8 *source, UINT32 total);
-        //void set_xormask(UINT32 xormask) { m_layout_xormask = xormask; }
-        //void set_palette(device_palette_interface *palette) { m_palette = palette; }
-        //void set_colors(UINT32 colors) { m_total_colors = colors; }
-        //void set_colorbase(UINT16 colorbase) { m_color_base = colorbase; }
-        //void set_granularity(UINT16 granularity) { m_color_granularity = granularity; }
-        //void set_source_clip(UINT32 xoffs, UINT32 width, UINT32 yoffs, UINT32 height);
+        //void set_source_and_total(const u8 *source, u32 total);
+        //void set_xormask(u32 xormask) { m_layout_xormask = xormask; }
+        //void set_palette(device_palette_interface &palette) { m_palette = &palette; }
+        public void set_colors(u32 colors) { m_total_colors = colors; }
+        public void set_colorbase(u16 colorbase) { m_color_base = colorbase; }
+        public void set_granularity(u16 granularity) { m_color_granularity = granularity; }
+        //void set_source_clip(u32 xoffs, u32 width, u32 yoffs, u32 height);
 
 
         // operations
         public void mark_dirty(u32 code) { if (code < elements()) { m_dirty[code] = 1; m_dirtyseq++; } }
         //void mark_all_dirty() { memset(&m_dirty[0], 1, elements()); }
 
-        public ListBytesPointer get_data(u32 code)  //const u8 *get_data(u32 code)
+        public Pointer<u8> get_data(u32 code)  //const u8 *get_data(u32 code)
         {
             //assert(code < elements());
             if (code < m_dirty.size() && m_dirty[(int)code] != 0)
                 decode(code);
 
-            return new ListBytesPointer(m_gfxdata, (int)(code * m_char_modulo + m_starty * m_line_modulo + m_startx));
+            return new Pointer<u8>(m_gfxdata, (int)(code * m_char_modulo + m_starty * m_line_modulo + m_startx));
         }
 
         u32 pen_usage(u32 code)
@@ -270,7 +268,7 @@ namespace mame
         {
             color = colorbase() + granularity() * (color % colors());
             code %= elements();
-            drawgfx_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_OPAQUE(color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_OPAQUE(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_OPAQUE(color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_OPAQUE(destp, srcp); });
         }
 
 
@@ -321,7 +319,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
         }
 
 
@@ -341,7 +339,7 @@ namespace mame
             if (has_pen_usage())
             {
                 // fully transparent; do nothing
-                UInt32 usage = pen_usage(code);
+                u32 usage = pen_usage(code);
                 if ((usage & ~(1 << (int)trans_pen)) == 0)
                     return;
 
@@ -354,13 +352,35 @@ namespace mame
             }
 
             // render
-            ListPointer<rgb_t> paldata = new ListPointer<rgb_t>(m_palette.pens(), (int)(colorbase() + granularity() * (color % colors())));  //const pen_t *paldata = m_palette.pens() + colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_rgb32, u32, UInt32BufferPointer>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REMAP_TRANSPEN(trans_pen, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSPEN(destp, srcp); });
+            Pointer<rgb_t> paldata = new Pointer<rgb_t>(m_palette.pens(), (int)(colorbase() + granularity() * (color % colors())));  //const pen_t *paldata = m_palette.pens() + colorbase() + granularity() * (color % colors());
+            drawgfx_core<bitmap_rgb32, u32, PointerU32>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REMAP_TRANSPEN(trans_pen, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSPEN(destp, srcp); });
         }
 
 
-        //void transpen_raw(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 transpen);
-        //void transpen_raw(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 transpen);
+        /*-------------------------------------------------
+            transpen_raw - render a gfx element
+            with a single transparent pen and no color
+            lookups
+        -------------------------------------------------*/
+        public void transpen_raw(bitmap_ind16 dest, rectangle cliprect,
+                u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty,
+                u32 trans_pen)
+        {
+            // early out if completely transparent
+            code %= elements();
+            if (has_pen_usage() && (pen_usage(code) & ~(1U << (int)trans_pen)) == 0)
+                return;
+
+            // render
+            drawgfx_core<bitmap_ind16, u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
+        }
+
+        public void transpen_raw(bitmap_rgb32 dest, rectangle cliprect,
+                u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty,
+                u32 trans_pen)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         /*-------------------------------------------------
@@ -384,7 +404,7 @@ namespace mame
             if (has_pen_usage())
             {
                 // fully transparent; do nothing
-                UInt32 usage = pen_usage(code);
+                u32 usage = pen_usage(code);
                 if ((usage & ~trans_mask) == 0)
                     return;
 
@@ -398,7 +418,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSMASK(color, trans_mask, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSMASK(color, trans_mask, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
         }
 
         public void transmask(bitmap_rgb32 dest, rectangle cliprect,
@@ -417,7 +437,7 @@ namespace mame
             if (has_pen_usage())
             {
                 // fully transparent; do nothing
-                UInt32 usage = pen_usage(code);
+                u32 usage = pen_usage(code);
                 if ((usage & ~trans_mask) == 0)
                     return;
 
@@ -513,7 +533,7 @@ namespace mame
             if (!m_layout_is_raw)
             {
                 // zap the data to 0
-                ListBytesPointer decode_base = new ListBytesPointer(m_gfxdata, (int)(code * m_char_modulo));  //u8 *decode_base = m_gfxdata + code * m_char_modulo;
+                Pointer<u8> decode_base = new Pointer<u8>(m_gfxdata, (int)(code * m_char_modulo));  //u8 *decode_base = m_gfxdata + code * m_char_modulo;
                 memset(decode_base, (u8)0, m_char_modulo);  //memset(decode_base, 0, m_char_modulo);
 
                 // iterate over planes
@@ -529,7 +549,7 @@ namespace mame
                     for (int y = 0; y < m_origheight; y++)
                     {
                         int yoffs = (int)(planeoffs + m_layout_yoffset[y]);
-                        ListBytesPointer dp = new ListBytesPointer(decode_base, (int)(y * m_line_modulo));  //u8 *dp = decode_base + y * m_line_modulo;
+                        Pointer<u8> dp = new Pointer<u8>(decode_base, (int)(y * m_line_modulo));  //u8 *dp = decode_base + y * m_line_modulo;
 
                         // iterate over columns
                         for (int x = 0; x < m_origwidth; x++)
@@ -545,7 +565,7 @@ namespace mame
             if (code < m_pen_usage.size())
             {
                 // iterate over data, creating a bitmask of live pens
-                ListBytesPointer dp = new ListBytesPointer(m_gfxdata, (int)(code * m_char_modulo));  //const u8 *dp = m_gfxdata + code * m_char_modulo;
+                Pointer<u8> dp = new Pointer<u8>(m_gfxdata, (int)(code * m_char_modulo));  //const u8 *dp = m_gfxdata + code * m_char_modulo;
                 u32 usage = 0;
                 for (int y = 0; y < m_origheight; y++)
                 {
@@ -570,7 +590,7 @@ namespace mame
                                     //device_gfx_interface
     {
         //DEFINE_DEVICE_TYPE(GFXDECODE, gfxdecode_device, "gfxdecode", "gfxdecode")
-        static device_t device_creator_gfxdecode_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gfxdecode_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_gfxdecode_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gfxdecode_device(mconfig, tag, owner, clock); }
         public static readonly device_type GFXDECODE = DEFINE_DEVICE_TYPE(device_creator_gfxdecode_device, "gfxdecode", "gfxdecode");
 
 
@@ -631,7 +651,7 @@ namespace mame
         // copy from one bitmap to another, copying all unclipped pixels
         static void copybitmap(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
         {
-            drawgfxt_global.copybitmap_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_OPAQUE(ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_OPAQUE(destp, srcp); });
+            drawgfxt_global.copybitmap_core<bitmap_ind16, u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_OPAQUE(ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_OPAQUE(destp, srcp); });
         }
 
         static void copybitmap(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
@@ -651,7 +671,7 @@ namespace mame
             if (trans_pen > 0xffff)
                 copybitmap(dest, src, flipx, flipy, destx, desty, cliprect);
             else
-                drawgfxt_global.copybitmap_core<bitmap_ind16, u16, UInt16BufferPointer>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_TRANSPEN(trans_pen, ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [trans_pen](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_TRANSPEN(destp, srcp); });
+                drawgfxt_global.copybitmap_core<bitmap_ind16, u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_TRANSPEN(trans_pen, ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [trans_pen](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_TRANSPEN(destp, srcp); });
         }
 
         static void copybitmap_trans(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 transpen)
@@ -746,7 +766,7 @@ namespace mame
 
                     // count consecutive columns scrolled by the same amount
                     for (groupcols = 1; col + groupcols < numcols; groupcols++)
-                            if (colscroll[col + groupcols] != yscroll)
+                        if (colscroll[col + groupcols] != yscroll)
                             break;
 
                     // iterate over reps of the columns in question
@@ -782,7 +802,7 @@ namespace mame
 
                     // count consecutive rows scrolled by the same amount
                     for (grouprows = 1; row + grouprows < numrows; grouprows++)
-                            if (rowscroll[row + grouprows] != xscroll)
+                        if (rowscroll[row + grouprows] != xscroll)
                             break;
 
                     // iterate over reps of the rows in question
@@ -838,7 +858,7 @@ namespace mame
             readbit - read a single bit from a base
             offset
         -------------------------------------------------*/
-        public static int readbit(ListBytesPointer src, /*const u8 *src,*/ UInt32 bitnum) { return src[bitnum / 8] & (0x80 >> (int)(bitnum % 8)); }
+        public static int readbit(Pointer<u8> src, UInt32 bitnum) { return src[bitnum / 8] & (0x80 >> (int)(bitnum % 8)); }  //static inline int readbit(const u8 *src, unsigned int bitnum)
 
 
         /*-------------------------------------------------

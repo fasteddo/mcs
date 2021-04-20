@@ -57,6 +57,7 @@ namespace mame
              1008000, /* 1.008_MHz_XTAL         Acorn Microcomputer (System 1) */
              1056000, /* 1.056_MHz_XTAL         Resonator - OKI M6295 on Trio The Punch h/w */
              1294400, /* 1.2944_MHz_XTAL        BBN BitGraph PSG */
+             1600000, /* 1.6_MHz_XTAL           Resonator - Roland TR-707 */
              1689600, /* 1.6896_MHz_XTAL        Diablo 1355WP Printer */
              1750000, /* 1.75_MHz_XTAL          RCA CDP1861 */
              1797100, /* 1.7971_MHz_XTAL        SWTPC 6800 (with MIKBUG) */
@@ -441,7 +442,7 @@ namespace mame
 
         public double dvalue() { return m_current_clock; }
         public u32 value() { return (u32)(m_current_clock + 1e-3); }
-        double base_get() { return m_base_clock; }
+        double base_() { return m_base_clock; }
 
         //template <typename T> constexpr XTAL operator *(T &&mult) const noexcept { return XTAL(m_base_clock, m_current_clock * mult); }
         public static XTAL operator* (XTAL lhs, int rhs) { return new XTAL(lhs.m_base_clock, lhs.m_current_clock * rhs); }
@@ -449,7 +450,7 @@ namespace mame
 
         //template <typename T> constexpr XTAL operator /(T &&div) const noexcept { return XTAL(m_base_clock, m_current_clock / div); }
         public static XTAL operator/ (XTAL lhs, int rhs) { return new XTAL(lhs.m_base_clock, lhs.m_current_clock / rhs); }
-        public static attoseconds_t operator/ (attoseconds_t lhs, XTAL rhs) { return lhs / (attoseconds_t)rhs.value(); }
+        public static attoseconds_t operator/ (attoseconds_t lhs, XTAL rhs) { return (attoseconds_t)((double)lhs / rhs.dvalue()); }
 
         //friend constexpr XTAL operator *(int          mult, const XTAL &xtal);
         //friend constexpr XTAL operator *(unsigned int mult, const XTAL &xtal);

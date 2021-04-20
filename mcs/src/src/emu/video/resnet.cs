@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using s16 = System.Int16;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -467,7 +466,7 @@ namespace mame
 
 
         /* compute all values */
-        public static void compute_res_net_all(out std.vector<rgb_t> rgb, ListBytesPointer prom, res_net_decode_info rdi, res_net_info di)  //std::vector<rgb_t> &rgb, const u8 *prom, const res_net_decode_info &rdi, const res_net_info &di);
+        public static void compute_res_net_all(out std.vector<rgb_t> rgb, Pointer<u8> prom, res_net_decode_info rdi, res_net_info di)  //std::vector<rgb_t> &rgb, const u8 *prom, const res_net_decode_info &rdi, const res_net_info &di);
         {
             u8 r;
             u8 g;

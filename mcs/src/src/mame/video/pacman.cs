@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
 using tilemap_memory_index = System.UInt32;
 using u8 = System.Byte;
@@ -78,7 +77,7 @@ namespace mame
 
         void pacman_palette(palette_device palette)
         {
-            ListBytesPointer color_prom = new ListBytesPointer(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
+            Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
             int [] resistances3 = new int [3] { 1000, 470, 220 };
             int [] resistances2 = new int [2] { 470, 220 };
 
@@ -115,7 +114,7 @@ namespace mame
                 bit1 = BIT(color_prom[i], 7);
                 int b = combine_weights(bweights, bit0, bit1);
 
-                palette.palette_interface.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
             }
 
             // color_prom now points to the beginning of the lookup table
@@ -127,10 +126,10 @@ namespace mame
                 uint8_t ctabentry = (uint8_t)(color_prom[i] & 0x0f);
 
                 // first palette bank
-                palette.palette_interface.set_pen_indirect((UInt32)i, ctabentry);
+                palette.dipalette.set_pen_indirect((UInt32)i, ctabentry);
 
                 // second palette bank
-                palette.palette_interface.set_pen_indirect((UInt32)(i + 64 * 4), (UInt16)(0x10 + ctabentry));
+                palette.dipalette.set_pen_indirect((UInt32)(i + 64 * 4), (UInt16)(0x10 + ctabentry));
             }
         }
 
@@ -156,19 +155,18 @@ namespace mame
             int code = m_videoram[tile_index] | (m_charbank << 8);
             int attr = (m_colorram[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6 );
 
-            //SET_TILE_INFO_MEMBER(0,code,attr,0);
-            tileinfo.set(0, (UInt32)code, (UInt32)attr, 0);
+            tileinfo.set(0, (u32)code, (u32)attr, 0);
         }
 
 
         void init_save_state()
         {
-            save_item(m_charbank, "m_charbank");
-            save_item(m_spritebank, "m_spritebank");
-            save_item(m_palettebank, "m_palettebank");
-            save_item(m_colortablebank, "m_colortablebank");
-            save_item(m_flipscreen, "m_flipscreen");
-            save_item(m_bgpriority, "m_bgpriority");
+            save_item(NAME(new { m_charbank }));
+            save_item(NAME(new { m_spritebank }));
+            save_item(NAME(new { m_palettebank }));
+            save_item(NAME(new { m_colortablebank }));
+            save_item(NAME(new { m_flipscreen }));
+            save_item(NAME(new { m_bgpriority }));
         }
 
 
@@ -226,8 +224,8 @@ namespace mame
 
             if ( m_spriteram != null )
             {
-                ListBytesPointer spriteram = m_spriteram.target;  //uint8_t *spriteram = m_spriteram;
-                ListBytesPointer spriteram_2 = m_spriteram2.target;  //uint8_t *spriteram_2 = m_spriteram2;
+                Pointer<uint8_t> spriteram = m_spriteram.target;  //uint8_t *spriteram = m_spriteram;
+                Pointer<uint8_t> spriteram_2 = m_spriteram2.target;  //uint8_t *spriteram_2 = m_spriteram2;
                 int offs;
 
                 rectangle spriteclip = new rectangle(2*8, 34*8-1, 0*8, 28*8-1);
@@ -264,7 +262,7 @@ namespace mame
                             (UInt32)color,
                             fx,fy,
                             sx,sy,
-                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
                     m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip,
@@ -272,7 +270,7 @@ namespace mame
                             (UInt32)color,
                             fx,fy,
                             sx - 256,sy,
-                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
                 }
 
                 /* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
@@ -306,7 +304,7 @@ namespace mame
                             (UInt32)color,
                             fx,fy,
                             sx,sy + m_xoffsethack,
-                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
                     m_gfxdecode.target.digfx.gfx(1).transmask(bitmap,spriteclip,
@@ -314,7 +312,7 @@ namespace mame
                             (UInt32)color,
                             fx,fy,
                             sx - 256,sy + m_xoffsethack,
-                            m_palette.target.palette_interface.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.target.dipalette.transpen_mask(m_gfxdecode.target.digfx.gfx(1), (UInt32)color & 0x3f, 0));
                 }
             }
 

@@ -2,11 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using space_config_vector = mame.std.vector<System.Collections.Generic.KeyValuePair<int, mame.address_space_config>>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -50,7 +49,7 @@ namespace mame
         }
 
 
-        protected class device_state_interface_m6805_base : device_state_interface
+        public class device_state_interface_m6805_base : device_state_interface
         {
             public device_state_interface_m6805_base(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
@@ -150,8 +149,8 @@ namespace mame
             for (int i = 0; i < hmos_ops.Length; i++)
             {
                 string methodName = hmos_ops[i];
-                System.Reflection.MethodInfo methodInfo = typeof(m6805_base_device).GetMethod(methodName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                s_hmos_ops[i] = (op_handler_func)Delegate.CreateDelegate(typeof(op_handler_func), null, methodInfo);
+                MethodInfo methodInfo = typeof(m6805_base_device).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+                s_hmos_ops[i] = (op_handler_func)methodInfo.CreateDelegate(typeof(op_handler_func), null);
             }
         }
 
@@ -235,7 +234,7 @@ namespace mame
 
 
         device_memory_interface_m6805_base m_dimemory;
-        device_state_interface_m6805_base m_distate;
+        public device_state_interface_m6805_base m_distate;
 
 
         configuration_params m_params;
@@ -260,7 +259,7 @@ namespace mame
         int m_nmi_state;
 
         // other internal states
-        protected intref m_icountRef = new intref();  //int     m_icount;
+        protected intref m_icount = new intref();  //int     m_icount;
 
         // address spaces
         address_space m_program;
@@ -353,7 +352,7 @@ namespace mame
             m_max_cycles = m_params.m_cycles.Max();
 
             // set our instruction counter
-            set_icountptr(m_icountRef);
+            set_icountptr(m_icount);
 
             // register our state for the debugger
             m_distate.state_add(STATE_GENPC,     "GENPC",     m_pc.w.l).noshow();
@@ -366,17 +365,17 @@ namespace mame
             m_distate.state_add(M6805_CC,        "CC",        m_cc).mask(0xff);
 
             // register for savestates
-            save_item(EA, "EA");
-            save_item(A, "A");
-            save_item(PC, "PC");
-            save_item(S, "S");
-            save_item(X, "X");
-            save_item(CC, "CC");
-            save_item(m_pending_interrupts, "m_pending_interrupts");
-            save_item(m_irq_state, "m_irq_state");
-            save_item(m_nmi_state, "m_nmi_state");
+            save_item(NAME(new { EA }));
+            save_item(NAME(new { A }));
+            save_item(NAME(new { PC }));
+            save_item(NAME(new { S }));
+            save_item(NAME(new { X }));
+            save_item(NAME(new { CC }));
+            save_item(NAME(new { m_pending_interrupts }));
+            save_item(NAME(new { m_irq_state }));
+            save_item(NAME(new { m_nmi_state }));
 
-            m_irq_state.Fill(CLEAR_LINE);  //std::fill(std::begin(m_irq_state), std::end(m_irq_state), CLEAR_LINE);
+            std.fill(m_irq_state, CLEAR_LINE);
         }
 
 
@@ -425,10 +424,10 @@ namespace mame
                 u8 ireg = (u8)rdop(PC++);
 
                 m_params.m_ops[ireg](this);
-                m_icountRef.i -= m_params.m_cycles[ireg];
+                m_icount.i -= m_params.m_cycles[ireg];
                 burn_cycles(m_params.m_cycles[ireg]);
             }
-            while (m_icountRef.i > 0);
+            while (m_icount.i > 0);
         }
 
         //virtual void execute_set_input(int inputnum, int state) override;

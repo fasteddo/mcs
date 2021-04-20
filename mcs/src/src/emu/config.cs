@@ -84,7 +84,7 @@ namespace mame
                 /* open the config file */
                 emu_file file = new emu_file(machine().options().ctrlr_path(), OPEN_FLAG_READ);
                 osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
-                osd_file.error filerr = file.open(controller, ".cfg");
+                osd_file.error filerr = file.open(controller + ".cfg");
 
                 if (filerr != osd_file.error.NONE)
                     throw new emu_fatalerror("Could not load controller file {0}.cfg", controller);
@@ -105,7 +105,7 @@ namespace mame
                     load_xml(file, config_type.DEFAULT);
 
                 /* finally, load the game-specific file */
-                filerr = file.open(machine().basename(), ".cfg");
+                filerr = file.open(machine().basename() + ".cfg");
                 osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
                 if (filerr == osd_file.error.NONE)
                     loaded = load_xml(file, config_type.GAME);
@@ -136,7 +136,7 @@ namespace mame
                 save_xml(file, config_type.DEFAULT);
 
             /* finally, save the game-specific file */
-            filerr = file.open(machine().basename(), ".cfg");
+            filerr = file.open(machine().basename() + ".cfg");
             if (filerr == osd_file.error.NONE)
                 save_xml(file, config_type.GAME);
 

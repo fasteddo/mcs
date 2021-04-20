@@ -1,9 +1,7 @@
-
-#if !NO_CRYPTO
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Security.Cryptography;
-using SharpCompress.Converters;
 
 namespace SharpCompress.Common.Zip
 {
@@ -120,7 +118,7 @@ namespace SharpCompress.Common.Zip
                                   : bytesRemaining;
 
             // update the counter
-            DataConverter.LittleEndian.PutBytes(_counter, 0, _nonce++);
+            BinaryPrimitives.WriteInt32LittleEndian(_counter, _nonce++);
 
             // Determine if this is the final block
             if ((bytesToRead == bytesRemaining) && (_totalBytesLeftToRead == 0))
@@ -181,4 +179,3 @@ namespace SharpCompress.Common.Zip
         }
     }
 }
-#endif

@@ -9,7 +9,7 @@ using uint8_t = System.Byte;
 
 namespace mame
 {
-    partial class m6502_device : cpu_device
+    public partial class m6502_device : cpu_device
     {
         void adc_aba_full()
         {
@@ -2265,7 +2265,7 @@ namespace mame
 
                 nmi_state = false;
 
-                m_diexec.standard_irq_callback(NMI_LINE);
+                standard_irq_callback(NMI_LINE);
 
             } else {
 
@@ -2279,7 +2279,7 @@ namespace mame
 
                 if(irq_taken)
 
-                    m_diexec.standard_irq_callback(IRQ_LINE);
+                    standard_irq_callback(IRQ_LINE);
 
             }
 
@@ -2381,7 +2381,7 @@ namespace mame
 
                 nmi_state = false;
 
-                m_diexec.standard_irq_callback(NMI_LINE);
+                standard_irq_callback(NMI_LINE);
 
             } else {
 
@@ -2397,7 +2397,7 @@ namespace mame
 
                 if(irq_taken)
 
-                    m_diexec.standard_irq_callback(IRQ_LINE);
+                    standard_irq_callback(IRQ_LINE);
 
             }
 
@@ -2418,7 +2418,7 @@ namespace mame
 
                 nmi_state = false;
 
-                m_diexec.standard_irq_callback(NMI_LINE);
+                standard_irq_callback(NMI_LINE);
 
 #if false
             } else {
@@ -2452,7 +2452,7 @@ namespace mame
 
                 nmi_state = false;
 
-                m_diexec.standard_irq_callback(NMI_LINE);
+                standard_irq_callback(NMI_LINE);
 
 #if false
             } else {
@@ -2491,7 +2491,7 @@ namespace mame
 
                 if(irq_taken)
 
-                    m_diexec.standard_irq_callback(IRQ_LINE);
+                    standard_irq_callback(IRQ_LINE);
 
             //}
 
@@ -2507,7 +2507,7 @@ namespace mame
 
                 if(irq_taken)
 
-                    m_diexec.standard_irq_callback(IRQ_LINE);
+                    standard_irq_callback(IRQ_LINE);
 
             //}
 
@@ -10254,14 +10254,34 @@ namespace mame
         {
 
             if(icount == 0) { inst_substate = 1; return; }
-            PC = read_arg(0xfffc);
+            read_pc_noinc();
             icount--;
 
             if(icount == 0) { inst_substate = 2; return; }
-            PC = set_h(PC, read_arg(0xfffd));
+            read_pc_noinc();
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
+            read(SP); dec_SP();
+            icount--;
+
+            if(icount == 0) { inst_substate = 4; return; }
+            read(SP); dec_SP();
+            icount--;
+
+            if(icount == 0) { inst_substate = 5; return; }
+            read(SP); dec_SP();
+            icount--;
+
+            if(icount == 0) { inst_substate = 6; return; }
+            P |= F_I; PC = read_arg(0xfffc);
+            icount--;
+
+            if(icount == 0) { inst_substate = 7; return; }
+            PC = set_h(PC, read_arg(0xfffd));
+            icount--;
+
+            if(icount == 0) { inst_substate = 8; return; }
             prefetch();
             icount--;
 
@@ -10277,18 +10297,48 @@ namespace mame
             if(icount == 0) { inst_substate = 1; return; }
             goto case 1;
         case 1:
-            PC = read_arg(0xfffc);
+            read_pc_noinc();
             icount--;
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
         case 2:
-            PC = set_h(PC, read_arg(0xfffd));
+            read_pc_noinc();
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
+            read(SP); dec_SP();
+            icount--;
+
+            if(icount == 0) { inst_substate = 4; return; }
+            goto case 4;
+        case 4:
+            read(SP); dec_SP();
+            icount--;
+
+            if(icount == 0) { inst_substate = 5; return; }
+            goto case 5;
+        case 5:
+            read(SP); dec_SP();
+            icount--;
+
+            if(icount == 0) { inst_substate = 6; return; }
+            goto case 6;
+        case 6:
+            P |= F_I; PC = read_arg(0xfffc);
+            icount--;
+
+            if(icount == 0) { inst_substate = 7; return; }
+            goto case 7;
+        case 7:
+            PC = set_h(PC, read_arg(0xfffd));
+            icount--;
+
+            if(icount == 0) { inst_substate = 8; return; }
+            goto case 8;
+        case 8:
             prefetch();
             icount--;
 

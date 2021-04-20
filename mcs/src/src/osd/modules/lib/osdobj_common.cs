@@ -347,7 +347,7 @@ namespace mame
 
 
         std.vector<string> m_video_names = new std.vector<string>();
-        Dictionary<string, string> m_option_descs = new Dictionary<string, string>();  //std::unordered_map<std::string, std::string> m_option_descs;
+        std.unordered_map<string, string> m_option_descs = new std.unordered_map<string, string>();
 
 
         // construction/destruction
@@ -667,7 +667,7 @@ namespace mame
         //  update_audio_stream - update the stereo audio
         //  stream
         //-------------------------------------------------
-        public virtual void update_audio_stream(ListPointer<int16_t> buffer, int samples_this_frame)  //const int16_t *buffer, int samples_this_frame)
+        public virtual void update_audio_stream(Pointer<int16_t> buffer, int samples_this_frame)  //const int16_t *buffer, int samples_this_frame)
         {
             //
             // This method is called whenever the system has new audio data to stream.
@@ -723,7 +723,7 @@ namespace mame
 
         // video overridables
 
-        public virtual void add_audio_to_recording(ListPointer<int16_t> buffer, int samples_this_frame)
+        public virtual void add_audio_to_recording(Pointer<int16_t> buffer, int samples_this_frame)
         {
         }
 
@@ -817,7 +817,7 @@ namespace mame
                 osd_printf_error("video_init: Initialization failed!\n\n\n");
                 //fflush(stderr);
                 //fflush(stdout);
-                Environment.Exit(-1);  // exit(-1);
+                throw new emu_fatalerror("video_init: Initialization failed!\n\n\n");  //Environment.Exit(-1);  // exit(-1);
             }
 
             m_keyboard_input = select_module_options<input_module>(options(), input_module.OSD_KEYBOARDINPUT_PROVIDER);
@@ -893,7 +893,7 @@ namespace mame
         protected virtual void video_options_add(string name, object type)  // void *type)
         {
             //m_video_options.add(name, type, false);
-            m_video_names.push_back(string.Copy(name));
+            m_video_names.push_back(name);
         }
 
 
@@ -966,7 +966,7 @@ namespace mame
         protected virtual void update_slider_list() { }
 
 
-        void update_option(string key, ListBase<string> values)
+        void update_option(string key, MemoryContainer<string> values)
         {
             string current_value = m_options.description(key);
             string new_option_value = "";

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
 using offs_t = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -25,7 +24,7 @@ namespace mame
     public class namco_54xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_54XX, namco_54xx_device, "namco54", "Namco 54xx")
-        static device_t device_creator_namco_54xx_device(device_type type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_54xx_device(mconfig, tag, owner, clock); }
+        static device_t device_creator_namco_54xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_54xx_device(mconfig, tag, owner, clock); }
         public static readonly device_type NAMCO_54XX = DEFINE_DEVICE_TYPE(device_creator_namco_54xx_device, "namco54", "Namco 54xx");
 
 
@@ -115,7 +114,7 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            save_item(m_latched_cmd, "m_latched_cmd");
+            save_item(NAME(new { m_latched_cmd }));
         }
 
         //-------------------------------------------------

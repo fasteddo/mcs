@@ -21,10 +21,7 @@ namespace mame.netlist
             public truthtable_base_element_t(string name, string classname, string def_param, string sourcefile)
                 : base(name, classname, def_param, sourcefile)
             {
-                throw new emu_unimplemented();
-#if false
-                m_family_desc = new logic_family_desc_t(family_TTL());
-#endif
+                m_family_desc = nl_base_global.family_TTL();
             }
         }
 

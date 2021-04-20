@@ -796,12 +796,12 @@ namespace mame
         //}
 
 
-        double I_ENABLE() { return m_input[0].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_ENABLE,  0);
-        double I_MOD() { return m_input[1].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_MOD,     1);
-        double I_RC() { return m_input[2].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_RC,      2);
-        double I_RP() { return m_input[3].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_RP,      3);
-        double I_C() { return m_input[4].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_C,       4);
-        double I_R2() { return m_input[5].m_listPtr[0]; }  //DISCRETE_CLASS_INPUT(I_R2,      5);
+        double I_ENABLE() { return m_input[0].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_ENABLE,  0);
+        double I_MOD() { return m_input[1].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_MOD,     1);
+        double I_RC() { return m_input[2].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_RC,      2);
+        double I_RP() { return m_input[3].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_RP,      3);
+        double I_C() { return m_input[4].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_C,       4);
+        double I_R2() { return m_input[5].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_R2,      5);
 
 
         double          mc_v_cap;

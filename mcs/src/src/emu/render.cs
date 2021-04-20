@@ -1,17 +1,15 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using SharpCompress.Archives.Zip;
-using SharpCompress.Archives;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 using element_map = mame.std.unordered_map<string, mame.layout_element>;
 using environment = mame.emu.render.detail.layout_environment;
 using ioport_value = System.UInt32;
 using item_list = mame.std.list<mame.layout_view.item>;
 using make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using render_screen_list = mame.std.list<mame.screen_device>;
 using s32 = System.Int32;
 using u8 = System.Byte;
@@ -279,14 +277,14 @@ namespace mame
     // render_texinfo - texture information
     public class render_texinfo
     {
-        public RawBufferPointer base_;  //void *              base;               // base of the data
+        public PointerU8 base_;  //void *              base;               // base of the data
         public u32 rowpixels;          // pixels per row
         public u32 width;              // width of the image
         public u32 height;             // height of the image
         public u32 seqid;              // sequence ID
         public u64 unique_id;          // unique identifier to pass to osd
         public u64 old_id;             // previously allocated id, if applicable
-        public ListBase<rgb_t> palette;  // const rgb_t *       palette;            // palette for PALETTE16 textures, bcg lookup table for RGB32/YUY16
+        public MemoryContainer<rgb_t> palette;  // const rgb_t *       palette;            // palette for PALETTE16 textures, bcg lookup table for RGB32/YUY16
         public u32 palette_length;
     }
 
@@ -591,7 +589,7 @@ namespace mame
         render_manager m_manager;                  // reference to our manager
         render_texture m_next;                     // next texture (for free list)
         bitmap_t m_bitmap;                   // pointer to the original bitmap
-        rectangle m_sbounds = new rectangle();                  // source bounds within the bitmap
+        rectangle m_sbounds;                  // source bounds within the bitmap
         texture_format m_format;                   // format of the texture data
         u64 m_osddata;                  // aux data to pass to osd
         u64 m_id;                       // unique id to pass to osd
@@ -840,7 +838,7 @@ namespace mame
         //  get_adjusted_palette - return the adjusted
         //  palette for a texture
         //-------------------------------------------------
-        public ListBase<rgb_t> get_adjusted_palette(render_container container, ref u32 out_length)  //const rgb_t *get_adjusted_palette(render_container &container, u32 &out_length);
+        public MemoryContainer<rgb_t> get_adjusted_palette(render_container container, ref u32 out_length)  //const rgb_t *get_adjusted_palette(render_container &container, u32 &out_length);
         {
             // override the palette with our adjusted palette
             switch (m_format)
@@ -914,13 +912,13 @@ namespace mame
         {
             // internal state
             item m_next;             // pointer to the next element in the list
-            u8 m_type;             // type of element
-            render_bounds m_bounds = new render_bounds();           // bounds of the element
-            render_color m_color = new render_color();            // RGBA factors
-            u32 m_flags;            // option flags
-            u32 m_internal;         // internal flags
-            float m_width;            // width of the line (lines only)
-            render_texture m_texture;          // pointer to the source texture (quads only)
+            public u8 m_type;             // type of element
+            public render_bounds m_bounds = new render_bounds();           // bounds of the element
+            public render_color m_color = new render_color();            // RGBA factors
+            public u32 m_flags;            // option flags
+            public u32 m_internal;         // internal flags
+            public float m_width;            // width of the line (lines only)
+            public render_texture m_texture;          // pointer to the source texture (quads only)
 
 
             public item()
@@ -946,14 +944,6 @@ namespace mame
             public u32 internal_flags() { return m_internal; }
             public float width() { return m_width; }
             public render_texture texture() { return m_texture; }
-
-            public u8 type_set { set { m_type = value; } }
-            public render_bounds bounds_set { set { m_bounds = value; } }
-            public render_color color_set { set { m_color = value; } }
-            public u32 flags_set { set { m_flags = value; } }
-            public u32 internal_flags_set { set { m_internal = value; } }
-            public float width_set { set { m_width = value; } }
-            public render_texture texture_set { set { m_texture = value; } }
         }
 
 
@@ -1083,8 +1073,8 @@ namespace mame
         public void add_line(float x0, float y0, float x1, float y1, float width, rgb_t argb, UInt32 flags)
         {
             item newitem = add_generic(render_global.CONTAINER_ITEM_LINE, x0, y0, x1, y1, argb);
-            newitem.width_set = width;
-            newitem.flags_set = flags;
+            newitem.m_width = width;
+            newitem.m_flags = flags;
         }
 
         //-------------------------------------------------
@@ -1093,8 +1083,8 @@ namespace mame
         public void add_quad(float x0, float y0, float x1, float y1, rgb_t argb, render_texture texture, UInt32 flags)
         {
             item newitem = add_generic(render_global.CONTAINER_ITEM_QUAD, x0, y0, x1, y1, argb);
-            newitem.texture_set = texture;
-            newitem.flags_set = flags;
+            newitem.m_texture = texture;
+            newitem.m_flags = flags;
         }
 
         //-------------------------------------------------
@@ -1110,9 +1100,9 @@ namespace mame
 
             // add it like a quad
             item newitem = add_generic(render_global.CONTAINER_ITEM_QUAD, bounds.x0, bounds.y0, bounds.x1, bounds.y1, argb);
-            newitem.texture_set = texture;
-            newitem.flags_set = render_global.PRIMFLAG_TEXORIENT(emucore_global.ROT0) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | render_global.PRIMFLAG_PACKABLE;
-            newitem.internal_flags_set = render_global.INTERNAL_FLAG_CHAR;
+            newitem.m_texture = texture;
+            newitem.m_flags = render_global.PRIMFLAG_TEXORIENT(emucore_global.ROT0) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | render_global.PRIMFLAG_PACKABLE;
+            newitem.m_internal = render_global.INTERNAL_FLAG_CHAR;
         }
 
         public void add_point(float x0, float y0, float diameter, rgb_t argb, UInt32 flags) { add_line(x0, y0, x0, y0, diameter, argb, flags); }
@@ -1143,7 +1133,7 @@ namespace mame
         //  brightness/contrast/gamma lookup table for a
         //  given texture mode
         //-------------------------------------------------
-        public ListBase<rgb_t> bcg_lookup_table(texture_format texformat, out u32 out_length, palette_t palette = null)  //const rgb_t *bcg_lookup_table(int texformat, u32 &out_length, palette_t *palette = nullptr);
+        public MemoryContainer<rgb_t> bcg_lookup_table(texture_format texformat, out u32 out_length, palette_t palette = null)  //const rgb_t *bcg_lookup_table(int texformat, u32 &out_length, palette_t *palette = nullptr);
         {
             switch (texformat)
             {
@@ -1211,29 +1201,33 @@ namespace mame
         {
             item newitem = m_item_allocator.alloc();
 
-            //global.assert(x0 == x0);
-            //global.assert(x1 == x1);
-            //global.assert(y0 == y0);
-            //global.assert(y1 == y1);
+            //throw new emu_unimplemented();
+#if false
+            assert(x0 == x0);
+            assert(x1 == x1);
+            assert(y0 == y0);
+            assert(y1 == y1);
+#endif
 
             // copy the data into the new item
-            newitem.type_set = type;
-            newitem.bounds().x0 = x0;
-            newitem.bounds().y0 = y0;
-            newitem.bounds().x1 = x1;
-            newitem.bounds().y1 = y1;
-            newitem.color().r = (float)argb.r() * (1.0f / 255.0f);
-            newitem.color().g = (float)argb.g() * (1.0f / 255.0f);
-            newitem.color().b = (float)argb.b() * (1.0f / 255.0f);
-            newitem.color().a = (float)argb.a() * (1.0f / 255.0f);
-            newitem.flags_set = 0;
-            newitem.internal_flags_set = 0;
-            newitem.width_set = 0;
-            newitem.texture_set = null;
+            newitem.m_type = type;
+            newitem.m_bounds.x0 = x0;
+            newitem.m_bounds.y0 = y0;
+            newitem.m_bounds.x1 = x1;
+            newitem.m_bounds.y1 = y1;
+            newitem.m_color.r = (float)argb.r() * (1.0f / 255.0f);
+            newitem.m_color.g = (float)argb.g() * (1.0f / 255.0f);
+            newitem.m_color.b = (float)argb.b() * (1.0f / 255.0f);
+            newitem.m_color.a = (float)argb.a() * (1.0f / 255.0f);
+            newitem.m_flags = 0;
+            newitem.m_internal = 0;
+            newitem.m_width = 0;
+            newitem.m_texture = null;
 
             // add the item to the container
             return m_itemlist.append(newitem);
         }
+
 
         //-------------------------------------------------
         //  recompute_lookups - recompute the lookup table
@@ -1255,7 +1249,7 @@ namespace mame
             if (m_palclient != null)
             {
                 palette_t palette = m_palclient.palette();
-                ListBase<rgb_t> adjusted_palette = palette.entry_list_adjusted();  //rgb_t *adjusted_palette = palette.entry_list_adjusted();
+                MemoryContainer<rgb_t> adjusted_palette = palette.entry_list_adjusted();  //rgb_t *adjusted_palette = palette.entry_list_adjusted();
                 int colors = palette.max_index();
 
                 if (has_brightness_contrast_gamma_changes())
@@ -1276,6 +1270,7 @@ namespace mame
             }
         }
 
+
         //-------------------------------------------------
         //  update_palette - update any dirty palette
         //  entries
@@ -1289,13 +1284,13 @@ namespace mame
             // get the dirty list
             u32 mindirty;
             u32 maxdirty;
-            ListBase<u32> dirty = m_palclient.dirty_list(out mindirty, out maxdirty);  //const u32 *dirty = m_palclient->dirty_list(mindirty, maxdirty);
+            MemoryContainer<u32> dirty = m_palclient.dirty_list(out mindirty, out maxdirty);  //const u32 *dirty = m_palclient->dirty_list(mindirty, maxdirty);
 
             // iterate over dirty items and update them
             if (dirty != null)
             {
                 palette_t palette = m_palclient.palette();
-                ListBase<rgb_t> adjusted_palette = palette.entry_list_adjusted();
+                MemoryContainer<rgb_t> adjusted_palette = palette.entry_list_adjusted();
 
                 if (has_brightness_contrast_gamma_changes())
                 {
@@ -1323,7 +1318,7 @@ namespace mame
                 }
                 else
                 {
-                    memcpy(new ListPointer<rgb_t>(m_bcglookup, (int)mindirty), new ListPointer<rgb_t>(adjusted_palette, (int)mindirty), (maxdirty - mindirty + 1));  //memcpy(&m_bcglookup[mindirty], &adjusted_palette[mindirty], (maxdirty - mindirty + 1) * sizeof(rgb_t));
+                    memcpy(new Pointer<rgb_t>(m_bcglookup, (int)mindirty), new Pointer<rgb_t>(adjusted_palette, (int)mindirty), (maxdirty - mindirty + 1));  //memcpy(&m_bcglookup[mindirty], &adjusted_palette[mindirty], (maxdirty - mindirty + 1) * sizeof(rgb_t));
                 }
             }
         }
@@ -2417,11 +2412,11 @@ namespace mame
             // if there's an explicit file, load that first
             string basename = m_manager.machine().basename();
             if (layoutfile != null)
-                have_artwork |= load_layout_file(basename, layoutfile);
+                have_artwork |= load_layout_file(basename.c_str(), layoutfile);
 
             // if we're only loading this file, we know our final result
             if (!singlefile)
-                load_additional_layout_files(basename, have_artwork);
+                load_additional_layout_files(basename.c_str(), have_artwork);
         }
 
         void load_layout_files(util.xml.data_node rootnode, bool singlefile)
@@ -2430,11 +2425,11 @@ namespace mame
 
             // if there's an explicit file, load that first
             string basename = m_manager.machine().basename();
-            have_artwork |= load_layout_file(m_manager.machine().root_device(), basename, rootnode);
+            have_artwork |= load_layout_file(m_manager.machine().root_device(), basename.c_str(), rootnode);
 
             // if we're only loading this file, we know our final result
             if (!singlefile)
-                load_additional_layout_files(basename, have_artwork);
+                load_additional_layout_files(basename.c_str(), have_artwork);
         }
 
 
@@ -2443,8 +2438,8 @@ namespace mame
         {
             screen_device m_device;  //std::reference_wrapper<screen_device const> m_device;
             bool m_rotated;
-            KeyValuePair<unsigned, unsigned> m_physical;  //std::pair<unsigned, unsigned> m_physical, m_native;
-            KeyValuePair<unsigned, unsigned> m_native;
+            std.pair<unsigned, unsigned> m_physical;
+            std.pair<unsigned, unsigned> m_native;
 
 
             public load_additional_layout_files_screen_info(screen_device screen)
@@ -2452,29 +2447,29 @@ namespace mame
                 m_device = screen;
                 m_rotated = (screen.orientation() & emucore_global.ORIENTATION_SWAP_XY) != 0;
                 m_physical = screen.physical_aspect();
-                m_native = new KeyValuePair<unsigned, unsigned>((unsigned)screen.visible_area().width(), (unsigned)screen.visible_area().height());
+                m_native = new std.pair<unsigned, unsigned>((unsigned)screen.visible_area().width(), (unsigned)screen.visible_area().height());
 
 
-                UInt32 tempFirst = m_native.first();
-                UInt32 tempSecond = m_native.second();
+                UInt32 tempFirst = m_native.first;
+                UInt32 tempSecond = m_native.second;
                 reduce_fraction(ref tempFirst, ref tempSecond);
-                m_native = new KeyValuePair<unsigned, unsigned>(tempFirst, tempSecond);
+                m_native = new std.pair<unsigned, unsigned>(tempFirst, tempSecond);
 
                 if (m_rotated)
                 {
-                    m_physical = new KeyValuePair<unsigned, unsigned>(m_physical.second(), m_physical.first());  // std.swap(m_physical.first, m_physical.second);
-                    m_native = new KeyValuePair<unsigned, unsigned>(m_native.second(), m_native.first());  // std.swap(m_native.first, m_native.second);
+                    m_physical = new std.pair<unsigned, unsigned>(m_physical.second, m_physical.first);  // std.swap(m_physical.first, m_physical.second);
+                    m_native = new std.pair<unsigned, unsigned>(m_native.second, m_native.first);  // std.swap(m_native.first, m_native.second);
                 }
             }
 
 
             //screen_device const &device() const { return m_device.get(); }
             //bool rotated() const { return m_rotated; }
-            public bool square() { return m_physical.first() == m_native.first() && m_physical.second() == m_native.second(); }
-            public unsigned physical_x() { return m_physical.first(); }
-            public unsigned physical_y() { return m_physical.second(); }
-            public unsigned native_x() { return m_native.first(); }
-            public unsigned native_y() { return m_native.second(); }
+            public bool square() { return m_physical.first == m_native.first && m_physical.second == m_native.second; }
+            public unsigned physical_x() { return m_physical.first; }
+            public unsigned physical_y() { return m_physical.second; }
+            public unsigned native_x() { return m_native.first; }
+            public unsigned native_y() { return m_native.second; }
 
             //std::pair<float, float> tiled_size() const
             //{

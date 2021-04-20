@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using device_type = mame.emu.detail.device_type_impl_base;
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using stream_sample_t = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -64,7 +62,7 @@ namespace mame
 
 
         // configuration access
-        public ListBase<sound_route> routes() { return m_route_list; }
+        public std.vector<sound_route> routes() { return m_route_list; }
 
 
         // configuration helpers
@@ -107,7 +105,7 @@ namespace mame
 
 
         // sound stream update overrides
-        public abstract void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples);
+        public abstract void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples);
 
 
         // stream creation
@@ -477,7 +475,7 @@ namespace mame
         //-------------------------------------------------
         //  mixer_update - mix all inputs to one output
         //-------------------------------------------------
-        public override void sound_stream_update(sound_stream stream, ListPointer<stream_sample_t> [] inputs, ListPointer<stream_sample_t> [] outputs, int samples)
+        public override void sound_stream_update(sound_stream stream, Pointer<stream_sample_t> [] inputs, Pointer<stream_sample_t> [] outputs, int samples)
         {
             // clear output buffers
             for (int output = 0; output < m_outputs; output++)
@@ -486,7 +484,7 @@ namespace mame
             }
 
             // loop over samples
-            ListBytesPointer outmap = new ListBytesPointer(m_outputmap);  //const u8 *outmap = &m_outputmap[0];
+            Pointer<u8> outmap = new Pointer<u8>(m_outputmap);  //const u8 *outmap = &m_outputmap[0];
             for (int pos = 0; pos < samples; pos++)
             {
                 // for each input, add it to the appropriate output

@@ -9,66 +9,50 @@ namespace mame.ui
 {
     public static class auditmenu_global
     {
-        public static int cs_stricmp(string s1, string s2)
+        public static bool sorted_game_list(game_driver x, game_driver y)
         {
-            //for (;;)
-            //{
-            //    int c1 = tolower((UINT8)*s1++);
-            //    int c2 = tolower((UINT8)*s2++);
-            //    if (c1 == 0 || c1 != c2)
-            //        return c1 - c2;
-            //}
-            return global_object.core_stricmp(s1, s2);
-        }
-
-
-        public static int sorted_game_list(game_driver x, game_driver y)
-        {
-            bool clonex = !string.IsNullOrEmpty(x.parent);
-            bool cloney = !string.IsNullOrEmpty(y.parent);
-
-            if (!clonex && !cloney)
-                return cs_stricmp(x.type.fullname(), y.type.fullname()); // < 0);
-
-            int cx = -1, cy = -1;
+            bool clonex = (x.parent[0] != '0') || string.IsNullOrEmpty(x.parent);
+            int cx = -1;
             if (clonex)
             {
                 cx = driver_list.find(x.parent);
-                if (cx == -1 || ((UInt64)driver_list.driver(cx).flags & global_object.MACHINE_IS_BIOS_ROOT) != 0)
+                if ((0 > cx) || ((driver_list.driver(cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0))
                     clonex = false;
             }
 
+            bool cloney = (y.parent[0] != '0') || string.IsNullOrEmpty(y.parent);
+            int cy = -1;
             if (cloney)
             {
                 cy = driver_list.find(y.parent);
-                if (cy == -1 || ((UInt64)driver_list.driver(cy).flags & global_object.MACHINE_IS_BIOS_ROOT) != 0)
+                if ((0 > cy) || ((driver_list.driver(cy).flags & machine_flags.type.IS_BIOS_ROOT) != 0))
                     cloney = false;
             }
 
             if (!clonex && !cloney)
             {
-                return cs_stricmp(x.type.fullname(), y.type.fullname()); // < 0);
+                return global_object.core_stricmp(x.type.fullname(), y.type.fullname()) < 0;
             }
             else if (clonex && cloney)
             {
-                if (cs_stricmp(x.parent, y.parent) == 0)
-                    return cs_stricmp(x.type.fullname(), y.type.fullname()); // < 0);
+                if (global_object.core_stricmp(x.parent, y.parent) == 0)
+                    return global_object.core_stricmp(x.type.fullname(), y.type.fullname()) < 0;
                 else
-                    return cs_stricmp(driver_list.driver(cx).type.fullname(), driver_list.driver(cy).type.fullname()); // < 0);
+                    return global_object.core_stricmp(driver_list.driver(cx).type.fullname(), driver_list.driver(cy).type.fullname()) < 0;
             }
             else if (!clonex && cloney)
             {
-                if (cs_stricmp(x.name, y.parent) == 0)
-                    return cs_stricmp(x.name, y.parent);
+                if (global_object.core_stricmp(x.name, y.parent) == 0)
+                    return true;
                 else
-                    return cs_stricmp(x.type.fullname(), driver_list.driver(cy).type.fullname()); // < 0);
+                    return global_object.core_stricmp(x.type.fullname(), driver_list.driver(cy).type.fullname()) < 0;
             }
             else
             {
-                if (cs_stricmp(x.parent, y.name) == 0)
-                    return cs_stricmp(x.parent, y.name);
+                if (global_object.core_stricmp(x.parent, y.name) == 0)
+                    return false;
                 else
-                    return cs_stricmp(driver_list.driver(cx).type.fullname(), y.type.fullname()); // < 0);
+                    return (global_object.core_stricmp(driver_list.driver(cx).type.fullname(), y.type.fullname()) < 0);
             }
         }
     }

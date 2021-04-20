@@ -4,9 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
 using offs_t = System.UInt32;
+using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -15,11 +16,11 @@ namespace mame
     {
         protected override void machine_start()
         {
-            membank("bank1").configure_entry(0, new ListBytesPointer(memregion("maincpu").base_(), 0x6000));
-            membank("bank1").configure_entry(1, new ListBytesPointer(memregion("maincpu").base_(), 0x10000));
+            membank("bank1").configure_entry(0, new PointerU8(memregion("maincpu").base_(), 0x6000));
+            membank("bank1").configure_entry(1, new PointerU8(memregion("maincpu").base_(), 0x10000));
 
-            save_item(m_spacecr_prot_value, "m_spacecr_prot_value");
-            save_item(m_protection_value, "m_protection_value");
+            save_item(NAME(new { m_spacecr_prot_value }));
+            save_item(NAME(new { m_protection_value }));
         }
 
 

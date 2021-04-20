@@ -1653,7 +1653,7 @@ namespace mame
                 if (curcomp.m_state == -1 || curcomp.m_state == elemtex.m_state)
                 {
                     // get the local scaled bounds
-                    rectangle bounds = new rectangle();
+                    rectangle bounds;
                     bounds.min_x = (int)rendutil_global.render_round_nearest(curcomp.bounds().x0 * dest.width());
                     bounds.min_y = (int)rendutil_global.render_round_nearest(curcomp.bounds().y0 * dest.height());
                     bounds.max_x = (int)rendutil_global.render_round_nearest(curcomp.bounds().x1 * dest.width());

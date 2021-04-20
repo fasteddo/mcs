@@ -6,7 +6,6 @@ using SharpCompress.Archives.SevenZip;
 using SharpCompress.Archives.Tar;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
-using SharpCompress.Compressors.LZMA;
 using SharpCompress.Readers;
 
 namespace SharpCompress.Archives
@@ -21,7 +20,7 @@ namespace SharpCompress.Archives
         /// <returns></returns>
         public static IArchive Open(Stream stream, ReaderOptions readerOptions = null)
         {
-            stream.CheckNotNull("stream");
+            stream.CheckNotNull(nameof(stream));
             if (!stream.CanRead || !stream.CanSeek)
             {
                 throw new ArgumentException("Stream should be readable and seekable");
@@ -82,8 +81,6 @@ namespace SharpCompress.Archives
             }
         }
 
-#if !NO_FILE
-
         /// <summary>
         /// Constructor expects a filepath to an existing file.
         /// </summary>
@@ -91,7 +88,7 @@ namespace SharpCompress.Archives
         /// <param name="options"></param>
         public static IArchive Open(string filePath, ReaderOptions options = null)
         {
-            filePath.CheckNotNullOrEmpty("filePath");
+            filePath.CheckNotNullOrEmpty(nameof(filePath));
             return Open(new FileInfo(filePath), options);
         }
 
@@ -102,7 +99,7 @@ namespace SharpCompress.Archives
         /// <param name="options"></param>
         public static IArchive Open(FileInfo fileInfo, ReaderOptions options = null)
         {
-            fileInfo.CheckNotNull("fileInfo");
+            fileInfo.CheckNotNull(nameof(fileInfo));
             options = options ?? new ReaderOptions { LeaveStreamOpen = false };
             using (var stream = fileInfo.OpenRead())
             {
@@ -148,6 +145,5 @@ namespace SharpCompress.Archives
                 }
             }
         }
-#endif
     }
 }
