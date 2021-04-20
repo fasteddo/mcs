@@ -12,6 +12,7 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -58,7 +59,7 @@ namespace mame
         }
 
 
-        public delegate int mcs48_ophandler(mcs48_cpu_device cpu);  //typedef int (mcs48_cpu_device::*mcs48_ophandler)();
+        public delegate void mcs48_ophandler(mcs48_cpu_device cpu);  //typedef void (mcs48_cpu_device::*mcs48_ophandler)();
 
 
         /***************************************************************************
@@ -189,7 +190,6 @@ namespace mame
         uint8_t       m_dbbo;               /* 8-bit output data buffer (UPI-41 only) */
 
         bool          m_irq_state;          /* true if the IRQ line is active */
-        bool          m_irq_polled;         /* true if last instruction was JNI (and not taken) */
         bool          m_irq_in_progress;    /* true if an IRQ is in progress */
         bool          m_timer_overflow;     /* true on a timer overflow; cleared by taking interrupt */
         bool          m_timer_flag;         /* true on a timer overflow; cleared on JTF */
@@ -220,79 +220,81 @@ namespace mame
             OPCODE HANDLERS
         ***************************************************************************/
 
-        //#define OPHANDLER(_name) int mcs48_cpu_device::_name()
+        //#define OPHANDLER(_name) void mcs48_cpu_device::_name()
 
-        int illegal()
+        void illegal()
         {
-            logerror("MCS-48 PC:{0} - Illegal opcode = {1}\n", m_pc - 1, program_r((offs_t)(m_pc - 1)));
-            return 1;
+            burn_cycles(1);
+            logerror("MCS-48 PC:{0} - Illegal opcode = {1}\n", m_prevpc, program_r(m_prevpc));
         }
 
-        int add_a_r0()       { execute_add(R0); return 1; }
-        int add_a_r1()       { execute_add(R1); return 1; }
-        int add_a_r2()       { execute_add(R2); return 1; }
-        int add_a_r3()       { execute_add(R3); return 1; }
-        int add_a_r4()       { execute_add(R4); return 1; }
-        int add_a_r5()       { execute_add(R5); return 1; }
-        int add_a_r6()       { execute_add(R6); return 1; }
-        int add_a_r7()       { execute_add(R7); return 1; }
-        int add_a_xr0()      { execute_add(ram_r(R0)); return 1; }
-        int add_a_xr1()      { execute_add(ram_r(R1)); return 1; }
-        int add_a_n()        { execute_add(argument_fetch()); return 2; }
+        void add_a_r0()       { burn_cycles(1); execute_add(R0); }
+        void add_a_r1()       { burn_cycles(1); execute_add(R1); }
+        void add_a_r2()       { burn_cycles(1); execute_add(R2); }
+        void add_a_r3()       { burn_cycles(1); execute_add(R3); }
+        void add_a_r4()       { burn_cycles(1); execute_add(R4); }
+        void add_a_r5()       { burn_cycles(1); execute_add(R5); }
+        void add_a_r6()       { burn_cycles(1); execute_add(R6); }
+        void add_a_r7()       { burn_cycles(1); execute_add(R7); }
+        void add_a_xr0()      { burn_cycles(1); execute_add(ram_r(R0)); }
+        void add_a_xr1()      { burn_cycles(1); execute_add(ram_r(R1)); }
+        void add_a_n()        { burn_cycles(2); execute_add(argument_fetch()); }
 
-        int adc_a_r0()       { execute_addc(R0); return 1; }
-        int adc_a_r1()       { execute_addc(R1); return 1; }
-        int adc_a_r2()       { execute_addc(R2); return 1; }
-        int adc_a_r3()       { execute_addc(R3); return 1; }
-        int adc_a_r4()       { execute_addc(R4); return 1; }
-        int adc_a_r5()       { execute_addc(R5); return 1; }
-        int adc_a_r6()       { execute_addc(R6); return 1; }
-        int adc_a_r7()       { execute_addc(R7); return 1; }
-        int adc_a_xr0()      { execute_addc(ram_r(R0)); return 1; }
-        int adc_a_xr1()      { execute_addc(ram_r(R1)); return 1; }
-        int adc_a_n()        { execute_addc(argument_fetch()); return 2; }
+        void adc_a_r0()       { burn_cycles(1); execute_addc(R0); }
+        void adc_a_r1()       { burn_cycles(1); execute_addc(R1); }
+        void adc_a_r2()       { burn_cycles(1); execute_addc(R2); }
+        void adc_a_r3()       { burn_cycles(1); execute_addc(R3); }
+        void adc_a_r4()       { burn_cycles(1); execute_addc(R4); }
+        void adc_a_r5()       { burn_cycles(1); execute_addc(R5); }
+        void adc_a_r6()       { burn_cycles(1); execute_addc(R6); }
+        void adc_a_r7()       { burn_cycles(1); execute_addc(R7); }
+        void adc_a_xr0()      { burn_cycles(1); execute_addc(ram_r(R0)); }
+        void adc_a_xr1()      { burn_cycles(1); execute_addc(ram_r(R1)); }
+        void adc_a_n()        { burn_cycles(2); execute_addc(argument_fetch()); }
 
-        int anl_a_r0()       { m_a &= R0; return 1; }
-        int anl_a_r1()       { m_a &= R1; return 1; }
-        int anl_a_r2()       { m_a &= R2; return 1; }
-        int anl_a_r3()       { m_a &= R3; return 1; }
-        int anl_a_r4()       { m_a &= R4; return 1; }
-        int anl_a_r5()       { m_a &= R5; return 1; }
-        int anl_a_r6()       { m_a &= R6; return 1; }
-        int anl_a_r7()       { m_a &= R7; return 1; }
-        int anl_a_xr0()      { m_a &= ram_r(R0); return 1; }
-        int anl_a_xr1()      { m_a &= ram_r(R1); return 1; }
-        int anl_a_n()        { m_a &= argument_fetch(); return 2; }
+        void anl_a_r0()       { burn_cycles(1); m_a &= R0; }
+        void anl_a_r1()       { burn_cycles(1); m_a &= R1; }
+        void anl_a_r2()       { burn_cycles(1); m_a &= R2; }
+        void anl_a_r3()       { burn_cycles(1); m_a &= R3; }
+        void anl_a_r4()       { burn_cycles(1); m_a &= R4; }
+        void anl_a_r5()       { burn_cycles(1); m_a &= R5; }
+        void anl_a_r6()       { burn_cycles(1); m_a &= R6; }
+        void anl_a_r7()       { burn_cycles(1); m_a &= R7; }
+        void anl_a_xr0()      { burn_cycles(1); m_a &= ram_r(R0); }
+        void anl_a_xr1()      { burn_cycles(1); m_a &= ram_r(R1); }
+        void anl_a_n()        { burn_cycles(2); m_a &= argument_fetch(); }
 
-        int anl_bus_n()      { bus_w((uint8_t)(bus_r() & argument_fetch())); return 2; }
-        int anl_p1_n()       { port_w(1, m_p1 &= argument_fetch()); return 2; }
-        int anl_p2_n()       { port_w(2, m_p2 &= (uint8_t)(argument_fetch() | ~p2_mask())); return 2; }
-        int anld_p4_a()      { expander_operation(expander_op.EXPANDER_OP_AND, 4); return 2; }
-        int anld_p5_a()      { expander_operation(expander_op.EXPANDER_OP_AND, 5); return 2; }
-        int anld_p6_a()      { expander_operation(expander_op.EXPANDER_OP_AND, 6); return 2; }
-        int anld_p7_a()      { expander_operation(expander_op.EXPANDER_OP_AND, 7); return 2; }
+        void anl_bus_n()      { burn_cycles(2); bus_w((uint8_t)(bus_r() & argument_fetch())); }
+        void anl_p1_n()       { burn_cycles(2); port_w(1, m_p1 &= argument_fetch()); }
+        void anl_p2_n()       { burn_cycles(2); port_w(2, m_p2 &= (uint8_t)(argument_fetch() | ~p2_mask())); }
+        void anld_p4_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_AND, 4); }
+        void anld_p5_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_AND, 5); }
+        void anld_p6_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_AND, 6); }
+        void anld_p7_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_AND, 7); }
 
-        int call_0()         { execute_call((uint16_t)(argument_fetch() | 0x000)); return 2; }
-        int call_1()         { execute_call((uint16_t)(argument_fetch() | 0x100)); return 2; }
-        int call_2()         { execute_call((uint16_t)(argument_fetch() | 0x200)); return 2; }
-        int call_3()         { execute_call((uint16_t)(argument_fetch() | 0x300)); return 2; }
-        int call_4()         { execute_call((uint16_t)(argument_fetch() | 0x400)); return 2; }
-        int call_5()         { execute_call((uint16_t)(argument_fetch() | 0x500)); return 2; }
-        int call_6()         { execute_call((uint16_t)(argument_fetch() | 0x600)); return 2; }
-        int call_7()         { execute_call((uint16_t)(argument_fetch() | 0x700)); return 2; }
+        void call_0()         { burn_cycles(2); execute_call((uint16_t)(argument_fetch() | 0x000)); }
+        void call_1()         { burn_cycles(2); execute_call((uint16_t)(argument_fetch() | 0x100)); }
+        void call_2()         { burn_cycles(2); execute_call((uint16_t)(argument_fetch() | 0x200)); }
+        void call_3()         { burn_cycles(2); execute_call((uint16_t)(argument_fetch() | 0x300)); }
+        void call_4()         { burn_cycles(2); execute_call((uint16_t)(argument_fetch() | 0x400)); }
+        void call_5()         { burn_cycles(2); execute_call((uint16_t)(argument_fetch() | 0x500)); }
+        void call_6()         { burn_cycles(2); execute_call((uint16_t)(argument_fetch() | 0x600)); }
+        void call_7()         { burn_cycles(2); execute_call((uint16_t)(argument_fetch() | 0x700)); }
 
-        int clr_a()          { m_a = 0; return 1; }
-        int clr_c()          { m_psw = (uint8_t)(m_psw & ~C_FLAG); return 1; }
-        int clr_f0()         { m_psw = (uint8_t)(m_psw & ~F_FLAG); m_sts = (uint8_t)(m_sts & ~STS_F0); return 1; }
-        int clr_f1()         { m_sts = (uint8_t)(m_sts & ~STS_F1); return 1; }
+        void clr_a()          { burn_cycles(1); m_a = 0; }
+        void clr_c()          { burn_cycles(1); m_psw = (uint8_t)(m_psw & ~C_FLAG); }
+        void clr_f0()         { burn_cycles(1); m_psw = (uint8_t)(m_psw & ~F_FLAG); m_sts = (uint8_t)(m_sts & ~STS_F0); }
+        void clr_f1()         { burn_cycles(1); m_sts = (uint8_t)(m_sts & ~STS_F1); }
 
-        int cpl_a()          { m_a ^= 0xff; return 1; }
-        int cpl_c()          { m_psw ^= C_FLAG; return 1; }
-        int cpl_f0()         { m_psw ^= F_FLAG; m_sts ^= STS_F0; return 1; }
-        int cpl_f1()         { m_sts ^= STS_F1; return 1; }
+        void cpl_a()          { burn_cycles(1); m_a ^= 0xff; }
+        void cpl_c()          { burn_cycles(1); m_psw ^= C_FLAG; }
+        void cpl_f0()         { burn_cycles(1); m_psw ^= F_FLAG; m_sts ^= STS_F0; }
+        void cpl_f1()         { burn_cycles(1); m_sts ^= STS_F1; }
 
-        int da_a()
+        void da_a()
         {
+            burn_cycles(1);
+
             if ((m_a & 0x0f) > 0x09 || (m_psw & A_FLAG) != 0)
             {
                 m_a += 0x06;
@@ -304,55 +306,52 @@ namespace mame
                 m_a += 0x60;
                 m_psw |= C_FLAG;
             }
-            else
-            {
-                m_psw = (uint8_t)(m_psw & ~C_FLAG);
-            }
-
-            return 1;
         }
 
-        int dec_a()          { m_a--; return 1; }
-        int dec_r0()         { R0--; return 1; }
-        int dec_r1()         { R1--; return 1; }
-        int dec_r2()         { R2--; return 1; }
-        int dec_r3()         { R3--; return 1; }
-        int dec_r4()         { R4--; return 1; }
-        int dec_r5()         { R5--; return 1; }
-        int dec_r6()         { R6--; return 1; }
-        int dec_r7()         { R7--; return 1; }
+        void dec_a()          { burn_cycles(1); m_a--; }
+        void dec_r0()         { burn_cycles(1); R0--; }
+        void dec_r1()         { burn_cycles(1); R1--; }
+        void dec_r2()         { burn_cycles(1); R2--; }
+        void dec_r3()         { burn_cycles(1); R3--; }
+        void dec_r4()         { burn_cycles(1); R4--; }
+        void dec_r5()         { burn_cycles(1); R5--; }
+        void dec_r6()         { burn_cycles(1); R6--; }
+        void dec_r7()         { burn_cycles(1); R7--; }
 
-        int dis_i()          { m_xirq_enabled = false; return 1; }
-        int dis_tcnti()      { m_tirq_enabled = false; m_timer_overflow = false; return 1; }
+        void dis_i()          { burn_cycles(1); m_xirq_enabled = false; }
+        void dis_tcnti()      { burn_cycles(1); m_tirq_enabled = false; m_timer_overflow = false; }
 
-        int djnz_r0()        { execute_jcc(--R0 != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int djnz_r1()        { execute_jcc(--R1 != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int djnz_r2()        { execute_jcc(--R2 != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int djnz_r3()        { execute_jcc(--R3 != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int djnz_r4()        { execute_jcc(--R4 != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int djnz_r5()        { execute_jcc(--R5 != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int djnz_r6()        { execute_jcc(--R6 != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int djnz_r7()        { execute_jcc(--R7 != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
+        void djnz_r0()        { burn_cycles(2); execute_jcc(--R0 != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void djnz_r1()        { burn_cycles(2); execute_jcc(--R1 != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void djnz_r2()        { burn_cycles(2); execute_jcc(--R2 != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void djnz_r3()        { burn_cycles(2); execute_jcc(--R3 != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void djnz_r4()        { burn_cycles(2); execute_jcc(--R4 != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void djnz_r5()        { burn_cycles(2); execute_jcc(--R5 != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void djnz_r6()        { burn_cycles(2); execute_jcc(--R6 != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void djnz_r7()        { burn_cycles(2); execute_jcc(--R7 != 0 ? (uint8_t)1 : (uint8_t)0); }
 
-        int en_i()           { m_xirq_enabled = true; return 1 + check_irqs(); }
-        int en_tcnti()       { m_tirq_enabled = true; return 1 + check_irqs(); }
-        int en_dma()         { m_dma_enabled = true; port_w(2, m_p2); return 1; }
-        int en_flags()       { m_flags_enabled = true; port_w(2, m_p2); return 1; }
-        int ent0_clk()
+        void en_i()           { burn_cycles(1); m_xirq_enabled = true; }
+        void en_tcnti()       { burn_cycles(1); m_tirq_enabled = true; }
+        void en_dma()         { burn_cycles(1); m_dma_enabled = true; port_w(2, m_p2); }
+        void en_flags()       { burn_cycles(1); m_flags_enabled = true; port_w(2, m_p2); }
+        void ent0_clk()
         {
+            burn_cycles(1);
+
             if (m_t0_clk_func != null)
                 m_t0_clk_func(clock() / 3);
             else
                 logerror("T0 clock enabled\n");
-            return 1;
         }
 
-        int in_a_p0()        { m_a = (uint8_t)(bus_r() & m_dbbo); return 2; }
-        int in_a_p1()        { m_a = (uint8_t)(port_r(1) & m_p1); return 2; }
-        int in_a_p2()        { m_a = (uint8_t)(port_r(2) & m_p2); return 2; }
-        int ins_a_bus()      { m_a = bus_r(); return 2; }
-        int in_a_dbb()
+        void in_a_p0()        { burn_cycles(2); m_a = (uint8_t)(bus_r() & m_dbbo); }
+        void in_a_p1()        { burn_cycles(2); m_a = (uint8_t)(port_r(1) & m_p1); }
+        void in_a_p2()        { burn_cycles(2); m_a = (uint8_t)(port_r(2) & m_p2); }
+        void ins_a_bus()      { burn_cycles(2); m_a = bus_r(); }
+        void in_a_dbb()
         {
+            burn_cycles(2);
+
             /* acknowledge the IBF IRQ and clear the bit in STS */
             if ((m_sts & STS_IBF) != 0)
                 standard_irq_callback(UPI41_INPUT_IBF);
@@ -362,138 +361,138 @@ namespace mame
             if (m_flags_enabled && (m_p2 & P2_NIBF) == 0)
                 port_w(2, m_p2 |= P2_NIBF);
             m_a = m_dbbi;
-
-            return 2;
         }
 
-        int inc_a()          { m_a++; return 1; }
-        int inc_r0()         { R0++; return 1; }
-        int inc_r1()         { R1++; return 1; }
-        int inc_r2()         { R2++; return 1; }
-        int inc_r3()         { R3++; return 1; }
-        int inc_r4()         { R4++; return 1; }
-        int inc_r5()         { R5++; return 1; }
-        int inc_r6()         { R6++; return 1; }
-        int inc_r7()         { R7++; return 1; }
-        int inc_xr0()        { ram_w(R0, (uint8_t)(ram_r(R0) + 1)); return 1; }
-        int inc_xr1()        { ram_w(R1, (uint8_t)(ram_r(R1) + 1)); return 1; }
+        void inc_a()          { burn_cycles(1); m_a++; }
+        void inc_r0()         { burn_cycles(1); R0++; }
+        void inc_r1()         { burn_cycles(1); R1++; }
+        void inc_r2()         { burn_cycles(1); R2++; }
+        void inc_r3()         { burn_cycles(1); R3++; }
+        void inc_r4()         { burn_cycles(1); R4++; }
+        void inc_r5()         { burn_cycles(1); R5++; }
+        void inc_r6()         { burn_cycles(1); R6++; }
+        void inc_r7()         { burn_cycles(1); R7++; }
+        void inc_xr0()        { burn_cycles(1); ram_w(R0, (uint8_t)(ram_r(R0) + 1)); }
+        void inc_xr1()        { burn_cycles(1); ram_w(R1, (uint8_t)(ram_r(R1) + 1)); }
 
-        int jb_0()           { execute_jcc((m_a & 0x01) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jb_1()           { execute_jcc((m_a & 0x02) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jb_2()           { execute_jcc((m_a & 0x04) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jb_3()           { execute_jcc((m_a & 0x08) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jb_4()           { execute_jcc((m_a & 0x10) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jb_5()           { execute_jcc((m_a & 0x20) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jb_6()           { execute_jcc((m_a & 0x40) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jb_7()           { execute_jcc((m_a & 0x80) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jc()             { execute_jcc((m_psw & C_FLAG) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jf0()            { execute_jcc((m_psw & F_FLAG) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jf1()            { execute_jcc((m_sts & STS_F1) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jnc()            { execute_jcc((m_psw & C_FLAG) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jni()            { m_irq_polled = m_irq_state == false; execute_jcc(m_irq_state ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jnibf()          { m_irq_polled = (m_sts & STS_IBF) != 0; execute_jcc((m_sts & STS_IBF) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jnt_0()          { execute_jcc(test_r(0) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jnt_1()          { execute_jcc(test_r(1) == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jnz()            { execute_jcc(m_a != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jobf()           { execute_jcc((m_sts & STS_OBF) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jtf()            { execute_jcc(m_timer_flag ? (uint8_t)1 : (uint8_t)0); m_timer_flag = false; return 2; }
-        int jt_0()           { execute_jcc(test_r(0) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jt_1()           { execute_jcc(test_r(1) != 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
-        int jz()             { execute_jcc(m_a == 0 ? (uint8_t)1 : (uint8_t)0); return 2; }
+        void jb_0()           { burn_cycles(2); execute_jcc((m_a & 0x01) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jb_1()           { burn_cycles(2); execute_jcc((m_a & 0x02) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jb_2()           { burn_cycles(2); execute_jcc((m_a & 0x04) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jb_3()           { burn_cycles(2); execute_jcc((m_a & 0x08) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jb_4()           { burn_cycles(2); execute_jcc((m_a & 0x10) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jb_5()           { burn_cycles(2); execute_jcc((m_a & 0x20) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jb_6()           { burn_cycles(2); execute_jcc((m_a & 0x40) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jb_7()           { burn_cycles(2); execute_jcc((m_a & 0x80) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jc()             { burn_cycles(2); execute_jcc((m_psw & C_FLAG) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jf0()            { burn_cycles(2); execute_jcc((m_psw & F_FLAG) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jf1()            { burn_cycles(2); execute_jcc((m_sts & STS_F1) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jnc()            { burn_cycles(2); execute_jcc((m_psw & C_FLAG) == 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jni()            { burn_cycles(2); execute_jcc(m_irq_state ? (uint8_t)1 : (uint8_t)0); }
+        void jnibf()          { burn_cycles(2); execute_jcc((m_sts & STS_IBF) == 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jnt_0()          { burn_cycles(2); execute_jcc(test_r(0) == 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jnt_1()          { burn_cycles(2); execute_jcc(test_r(1) == 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jnz()            { burn_cycles(2); execute_jcc(m_a != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jobf()           { burn_cycles(2); execute_jcc((m_sts & STS_OBF) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jtf()            { burn_cycles(2); execute_jcc(m_timer_flag ? (uint8_t)1 : (uint8_t)0); m_timer_flag = false; }
+        void jt_0()           { burn_cycles(2); execute_jcc(test_r(0) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jt_1()           { burn_cycles(2); execute_jcc(test_r(1) != 0 ? (uint8_t)1 : (uint8_t)0); }
+        void jz()             { burn_cycles(2); execute_jcc(m_a == 0 ? (uint8_t)1 : (uint8_t)0); }
 
-        int jmp_0()          { execute_jmp((uint16_t)(argument_fetch() | 0x000)); return 2; }
-        int jmp_1()          { execute_jmp((uint16_t)(argument_fetch() | 0x100)); return 2; }
-        int jmp_2()          { execute_jmp((uint16_t)(argument_fetch() | 0x200)); return 2; }
-        int jmp_3()          { execute_jmp((uint16_t)(argument_fetch() | 0x300)); return 2; }
-        int jmp_4()          { execute_jmp((uint16_t)(argument_fetch() | 0x400)); return 2; }
-        int jmp_5()          { execute_jmp((uint16_t)(argument_fetch() | 0x500)); return 2; }
-        int jmp_6()          { execute_jmp((uint16_t)(argument_fetch() | 0x600)); return 2; }
-        int jmp_7()          { execute_jmp((uint16_t)(argument_fetch() | 0x700)); return 2; }
-        int jmpp_xa()        { m_pc &= 0xf00; m_pc |= program_r((offs_t)(m_pc | m_a)); return 2; }
+        void jmp_0()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x000)); }
+        void jmp_1()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x100)); }
+        void jmp_2()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x200)); }
+        void jmp_3()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x300)); }
+        void jmp_4()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x400)); }
+        void jmp_5()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x500)); }
+        void jmp_6()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x600)); }
+        void jmp_7()          { burn_cycles(2); execute_jmp((uint16_t)(argument_fetch() | 0x700)); }
+        void jmpp_xa()        { burn_cycles(2); m_pc &= 0xf00; m_pc |= program_r((offs_t)(m_pc | m_a)); }
 
-        int mov_a_n()        { m_a = argument_fetch(); return 2; }
-        int mov_a_psw()      { m_a = m_psw; return 1; }
-        int mov_a_r0()       { m_a = R0; return 1; }
-        int mov_a_r1()       { m_a = R1; return 1; }
-        int mov_a_r2()       { m_a = R2; return 1; }
-        int mov_a_r3()       { m_a = R3; return 1; }
-        int mov_a_r4()       { m_a = R4; return 1; }
-        int mov_a_r5()       { m_a = R5; return 1; }
-        int mov_a_r6()       { m_a = R6; return 1; }
-        int mov_a_r7()       { m_a = R7; return 1; }
-        int mov_a_xr0()      { m_a = ram_r(R0); return 1; }
-        int mov_a_xr1()      { m_a = ram_r(R1); return 1; }
-        int mov_a_t()        { m_a = (uint8_t)(m_timer + ((m_timecount_enabled & TIMER_ENABLED) != 0 ? 1 : 0)); return 1; }
+        void mov_a_n()        { burn_cycles(2); m_a = argument_fetch(); }
+        void mov_a_psw()      { burn_cycles(1); m_a = (uint8_t)(m_psw | 0x08); }
+        void mov_a_r0()       { burn_cycles(1); m_a = R0; }
+        void mov_a_r1()       { burn_cycles(1); m_a = R1; }
+        void mov_a_r2()       { burn_cycles(1); m_a = R2; }
+        void mov_a_r3()       { burn_cycles(1); m_a = R3; }
+        void mov_a_r4()       { burn_cycles(1); m_a = R4; }
+        void mov_a_r5()       { burn_cycles(1); m_a = R5; }
+        void mov_a_r6()       { burn_cycles(1); m_a = R6; }
+        void mov_a_r7()       { burn_cycles(1); m_a = R7; }
+        void mov_a_xr0()      { burn_cycles(1); m_a = ram_r(R0); }
+        void mov_a_xr1()      { burn_cycles(1); m_a = ram_r(R1); }
+        void mov_a_t()        { burn_cycles(1); m_a = (uint8_t)(m_timer + ((m_timecount_enabled & TIMER_ENABLED) != 0 ? 1 : 0)); }
 
-        int mov_psw_a()      { m_psw = m_a; update_regptr(); return 1; }
-        int mov_sts_a()      { m_sts = (uint8_t)((m_sts & 0x0f) | (m_a & 0xf0)); return 1; }
-        int mov_r0_a()       { R0 = m_a; return 1; }
-        int mov_r1_a()       { R1 = m_a; return 1; }
-        int mov_r2_a()       { R2 = m_a; return 1; }
-        int mov_r3_a()       { R3 = m_a; return 1; }
-        int mov_r4_a()       { R4 = m_a; return 1; }
-        int mov_r5_a()       { R5 = m_a; return 1; }
-        int mov_r6_a()       { R6 = m_a; return 1; }
-        int mov_r7_a()       { R7 = m_a; return 1; }
-        int mov_r0_n()       { R0 = argument_fetch(); return 2; }
-        int mov_r1_n()       { R1 = argument_fetch(); return 2; }
-        int mov_r2_n()       { R2 = argument_fetch(); return 2; }
-        int mov_r3_n()       { R3 = argument_fetch(); return 2; }
-        int mov_r4_n()       { R4 = argument_fetch(); return 2; }
-        int mov_r5_n()       { R5 = argument_fetch(); return 2; }
-        int mov_r6_n()       { R6 = argument_fetch(); return 2; }
-        int mov_r7_n()       { R7 = argument_fetch(); return 2; }
-        int mov_t_a()        { m_timer = m_a; return 1; }
-        int mov_xr0_a()      { ram_w(R0, m_a); return 1; }
-        int mov_xr1_a()      { ram_w(R1, m_a); return 1; }
-        int mov_xr0_n()      { ram_w(R0, argument_fetch()); return 2; }
-        int mov_xr1_n()      { ram_w(R1, argument_fetch()); return 2; }
+        void mov_psw_a()      { burn_cycles(1); m_psw = (uint8_t)(m_a & ~0x08); update_regptr(); }
+        void mov_sts_a()      { burn_cycles(1); m_sts = (uint8_t)((m_sts & 0x0f) | (m_a & 0xf0)); }
+        void mov_r0_a()       { burn_cycles(1); R0 = m_a; }
+        void mov_r1_a()       { burn_cycles(1); R1 = m_a; }
+        void mov_r2_a()       { burn_cycles(1); R2 = m_a; }
+        void mov_r3_a()       { burn_cycles(1); R3 = m_a; }
+        void mov_r4_a()       { burn_cycles(1); R4 = m_a; }
+        void mov_r5_a()       { burn_cycles(1); R5 = m_a; }
+        void mov_r6_a()       { burn_cycles(1); R6 = m_a; }
+        void mov_r7_a()       { burn_cycles(1); R7 = m_a; }
+        void mov_r0_n()       { burn_cycles(2); R0 = argument_fetch(); }
+        void mov_r1_n()       { burn_cycles(2); R1 = argument_fetch(); }
+        void mov_r2_n()       { burn_cycles(2); R2 = argument_fetch(); }
+        void mov_r3_n()       { burn_cycles(2); R3 = argument_fetch(); }
+        void mov_r4_n()       { burn_cycles(2); R4 = argument_fetch(); }
+        void mov_r5_n()       { burn_cycles(2); R5 = argument_fetch(); }
+        void mov_r6_n()       { burn_cycles(2); R6 = argument_fetch(); }
+        void mov_r7_n()       { burn_cycles(2); R7 = argument_fetch(); }
+        void mov_t_a()        { burn_cycles(1); m_timer = m_a; }
+        void mov_xr0_a()      { burn_cycles(1); ram_w(R0, m_a); }
+        void mov_xr1_a()      { burn_cycles(1); ram_w(R1, m_a); }
+        void mov_xr0_n()      { burn_cycles(2); ram_w(R0, argument_fetch()); }
+        void mov_xr1_n()      { burn_cycles(2); ram_w(R1, argument_fetch()); }
 
-        int movd_a_p4()      { expander_operation(expander_op.EXPANDER_OP_READ, 4); return 2; }
-        int movd_a_p5()      { expander_operation(expander_op.EXPANDER_OP_READ, 5); return 2; }
-        int movd_a_p6()      { expander_operation(expander_op.EXPANDER_OP_READ, 6); return 2; }
-        int movd_a_p7()      { expander_operation(expander_op.EXPANDER_OP_READ, 7); return 2; }
-        int movd_p4_a()      { expander_operation(expander_op.EXPANDER_OP_WRITE, 4); return 2; }
-        int movd_p5_a()      { expander_operation(expander_op.EXPANDER_OP_WRITE, 5); return 2; }
-        int movd_p6_a()      { expander_operation(expander_op.EXPANDER_OP_WRITE, 6); return 2; }
-        int movd_p7_a()      { expander_operation(expander_op.EXPANDER_OP_WRITE, 7); return 2; }
+        void movd_a_p4()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_READ, 4); }
+        void movd_a_p5()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_READ, 5); }
+        void movd_a_p6()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_READ, 6); }
+        void movd_a_p7()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_READ, 7); }
+        void movd_p4_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_WRITE, 4); }
+        void movd_p5_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_WRITE, 5); }
+        void movd_p6_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_WRITE, 6); }
+        void movd_p7_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_WRITE, 7); }
 
-        int movp_a_xa()      { m_a = program_r((offs_t)((m_pc & 0xf00) | m_a)); return 2; }
-        int movp3_a_xa()     { m_a = program_r((offs_t)(0x300 | m_a)); return 2; }
+        void movp_a_xa()      { burn_cycles(2); m_a = program_r((offs_t)((m_pc & 0xf00) | m_a)); }
+        void movp3_a_xa()     { burn_cycles(2); m_a = program_r((offs_t)(0x300 | m_a)); }
 
-        int movx_a_xr0()     { m_a = ext_r(R0); return 2; }
-        int movx_a_xr1()     { m_a = ext_r(R1); return 2; }
-        int movx_xr0_a()     { ext_w(R0, m_a); return 2; }
-        int movx_xr1_a()     { ext_w(R1, m_a); return 2; }
+        void movx_a_xr0()     { burn_cycles(2); m_a = ext_r(R0); }
+        void movx_a_xr1()     { burn_cycles(2); m_a = ext_r(R1); }
+        void movx_xr0_a()     { burn_cycles(2); ext_w(R0, m_a); }
+        void movx_xr1_a()     { burn_cycles(2); ext_w(R1, m_a); }
 
-        int nop()            { return 1; }
+        void nop()            { burn_cycles(1); }
 
-        int orl_a_r0()       { m_a |= R0; return 1; }
-        int orl_a_r1()       { m_a |= R1; return 1; }
-        int orl_a_r2()       { m_a |= R2; return 1; }
-        int orl_a_r3()       { m_a |= R3; return 1; }
-        int orl_a_r4()       { m_a |= R4; return 1; }
-        int orl_a_r5()       { m_a |= R5; return 1; }
-        int orl_a_r6()       { m_a |= R6; return 1; }
-        int orl_a_r7()       { m_a |= R7; return 1; }
-        int orl_a_xr0()      { m_a |= ram_r(R0); return 1; }
-        int orl_a_xr1()      { m_a |= ram_r(R1); return 1; }
-        int orl_a_n()        { m_a |= argument_fetch(); return 2; }
+        void orl_a_r0()       { burn_cycles(1); m_a |= R0; }
+        void orl_a_r1()       { burn_cycles(1); m_a |= R1; }
+        void orl_a_r2()       { burn_cycles(1); m_a |= R2; }
+        void orl_a_r3()       { burn_cycles(1); m_a |= R3; }
+        void orl_a_r4()       { burn_cycles(1); m_a |= R4; }
+        void orl_a_r5()       { burn_cycles(1); m_a |= R5; }
+        void orl_a_r6()       { burn_cycles(1); m_a |= R6; }
+        void orl_a_r7()       { burn_cycles(1); m_a |= R7; }
+        void orl_a_xr0()      { burn_cycles(1); m_a |= ram_r(R0); }
+        void orl_a_xr1()      { burn_cycles(1); m_a |= ram_r(R1); }
+        void orl_a_n()        { burn_cycles(2); m_a |= argument_fetch(); }
 
-        int orl_bus_n()      { bus_w((uint8_t)(bus_r() | argument_fetch())); return 2; }
-        int orl_p1_n()       { port_w(1, m_p1 |= argument_fetch()); return 2; }
-        int orl_p2_n()       { port_w(2, m_p2 |= (uint8_t)(argument_fetch() & p2_mask())); return 2; }
-        int orld_p4_a()      { expander_operation(expander_op.EXPANDER_OP_OR, 4); return 2; }
-        int orld_p5_a()      { expander_operation(expander_op.EXPANDER_OP_OR, 5); return 2; }
-        int orld_p6_a()      { expander_operation(expander_op.EXPANDER_OP_OR, 6); return 2; }
-        int orld_p7_a()      { expander_operation(expander_op.EXPANDER_OP_OR, 7); return 2; }
+        void orl_bus_n()      { burn_cycles(2); bus_w((uint8_t)(bus_r() | argument_fetch())); }
+        void orl_p1_n()       { burn_cycles(2); port_w(1, m_p1 |= argument_fetch()); }
+        void orl_p2_n()       { burn_cycles(2); port_w(2, m_p2 |= (uint8_t)(argument_fetch() & p2_mask())); }
+        void orld_p4_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_OR, 4); }
+        void orld_p5_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_OR, 5); }
+        void orld_p6_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_OR, 6); }
+        void orld_p7_a()      { burn_cycles(2); expander_operation(expander_op.EXPANDER_OP_OR, 7); }
 
-        int outl_bus_a()     { bus_w(m_a); return 2; }
-        int outl_p0_a()      { bus_w(m_dbbo = m_a); return 2; }
-        int outl_p1_a()      { port_w(1, m_p1 = m_a); return 2; }
-        int outl_p2_a()      { uint8_t mask = p2_mask(); port_w(2, m_p2 = (uint8_t)((m_p2 & ~mask) | (m_a & mask))); return 2; }
-        int out_dbb_a()
+        void outl_bus_a()     { burn_cycles(2); bus_w(m_a); }
+        void outl_p0_a()      { burn_cycles(2); bus_w(m_dbbo = m_a); }
+        void outl_p1_a()      { burn_cycles(2); port_w(1, m_p1 = m_a); }
+        void outl_p2_a()      { burn_cycles(2); uint8_t mask = p2_mask(); port_w(2, m_p2 = (uint8_t)((m_p2 & ~mask) | (m_a & mask))); }
+        void out_dbb_a()
         {
+            burn_cycles(2);
+
             /* copy to the DBBO and update the bit in STS */
             m_dbbo = m_a;
             m_sts |= STS_OBF;
@@ -501,64 +500,63 @@ namespace mame
             /* if P2 flags are enabled, update the state of P2 */
             if (m_flags_enabled && (m_p2 & P2_OBF) == 0)
                 port_w(2, m_p2 |= P2_OBF);
-
-            return 2;
         }
 
-        int ret()            { pull_pc(); return 2; }
-        int retr()
+        void ret()            { burn_cycles(2); pull_pc(); }
+        void retr()
         {
+            burn_cycles(2);
+
             pull_pc_psw();
 
-            /* implicitly clear the IRQ in progress flip flop and re-check interrupts */
+            /* implicitly clear the IRQ in progress flip flop */
             m_irq_in_progress = false;
-            return 2 + check_irqs();
         }
 
-        int rl_a()           { m_a = (uint8_t)((m_a << 1) | (m_a >> 7)); return 1; }
-        int rlc_a()          { uint8_t newc = (uint8_t)(m_a & C_FLAG); m_a = (uint8_t)((m_a << 1) | (m_psw >> 7)); m_psw = (uint8_t)((m_psw & ~C_FLAG) | newc); return 1; }
+        void rl_a()           { burn_cycles(1); m_a = (uint8_t)((m_a << 1) | (m_a >> 7)); }
+        void rlc_a()          { burn_cycles(1); uint8_t newc = (uint8_t)(m_a & C_FLAG); m_a = (uint8_t)((m_a << 1) | (m_psw >> 7)); m_psw = (uint8_t)((m_psw & ~C_FLAG) | newc); }
 
-        int rr_a()           { m_a = (uint8_t)((m_a >> 1) | (m_a << 7)); return 1; }
-        int rrc_a()          { uint8_t newc = (uint8_t)((m_a << 7) & C_FLAG); m_a = (uint8_t)((m_a >> 1) | (m_psw & C_FLAG)); m_psw = (uint8_t)((m_psw & ~C_FLAG) | newc); return 1; }
+        void rr_a()           { burn_cycles(1); m_a = (uint8_t)((m_a >> 1) | (m_a << 7)); }
+        void rrc_a()          { burn_cycles(1); uint8_t newc = (uint8_t)((m_a << 7) & C_FLAG); m_a = (uint8_t)((m_a >> 1) | (m_psw & C_FLAG)); m_psw = (uint8_t)((m_psw & ~C_FLAG) | newc); }
 
-        int sel_mb0()        { m_a11 = 0x000; return 1; }
-        int sel_mb1()        { m_a11 = 0x800; return 1; }
+        void sel_mb0()        { burn_cycles(1); m_a11 = 0x000; }
+        void sel_mb1()        { burn_cycles(1); m_a11 = 0x800; }
 
-        int sel_rb0()        { m_psw = (uint8_t)(m_psw & ~B_FLAG); update_regptr(); return 1; }
-        int sel_rb1()        { m_psw |=  B_FLAG; update_regptr(); return 1; }
+        void sel_rb0()        { burn_cycles(1); m_psw = (uint8_t)(m_psw & ~B_FLAG); update_regptr(); }
+        void sel_rb1()        { burn_cycles(1); m_psw |=  B_FLAG; update_regptr(); }
 
-        int stop_tcnt()      { m_timecount_enabled = 0; return 1; }
+        void stop_tcnt()      { burn_cycles(1); m_timecount_enabled = 0; }
 
-        int strt_cnt()       { m_timecount_enabled = COUNTER_ENABLED; m_t1_history = (uint8_t)test_r(1); return 1; }
-        int strt_t()         { m_timecount_enabled = TIMER_ENABLED; m_prescaler = 0; return 1; }
+        void strt_cnt()       { burn_cycles(1); m_timecount_enabled = COUNTER_ENABLED; m_t1_history = (uint8_t)test_r(1); }
+        void strt_t()         { burn_cycles(1); m_timecount_enabled = TIMER_ENABLED; m_prescaler = 0; }
 
-        int swap_a()         { m_a = (uint8_t)((m_a << 4) | (m_a >> 4)); return 1; }
+        void swap_a()         { burn_cycles(1); m_a = (uint8_t)((m_a << 4) | (m_a >> 4)); }
 
-        int xch_a_r0()       { uint8_t tmp = m_a; m_a = R0; R0 = tmp; return 1; }
-        int xch_a_r1()       { uint8_t tmp = m_a; m_a = R1; R1 = tmp; return 1; }
-        int xch_a_r2()       { uint8_t tmp = m_a; m_a = R2; R2 = tmp; return 1; }
-        int xch_a_r3()       { uint8_t tmp = m_a; m_a = R3; R3 = tmp; return 1; }
-        int xch_a_r4()       { uint8_t tmp = m_a; m_a = R4; R4 = tmp; return 1; }
-        int xch_a_r5()       { uint8_t tmp = m_a; m_a = R5; R5 = tmp; return 1; }
-        int xch_a_r6()       { uint8_t tmp = m_a; m_a = R6; R6 = tmp; return 1; }
-        int xch_a_r7()       { uint8_t tmp = m_a; m_a = R7; R7 = tmp; return 1; }
-        int xch_a_xr0()      { uint8_t tmp = m_a; m_a = ram_r(R0); ram_w(R0, tmp); return 1; }
-        int xch_a_xr1()      { uint8_t tmp = m_a; m_a = ram_r(R1); ram_w(R1, tmp); return 1; }
+        void xch_a_r0()       { burn_cycles(1); uint8_t tmp = m_a; m_a = R0; R0 = tmp; }
+        void xch_a_r1()       { burn_cycles(1); uint8_t tmp = m_a; m_a = R1; R1 = tmp; }
+        void xch_a_r2()       { burn_cycles(1); uint8_t tmp = m_a; m_a = R2; R2 = tmp; }
+        void xch_a_r3()       { burn_cycles(1); uint8_t tmp = m_a; m_a = R3; R3 = tmp; }
+        void xch_a_r4()       { burn_cycles(1); uint8_t tmp = m_a; m_a = R4; R4 = tmp; }
+        void xch_a_r5()       { burn_cycles(1); uint8_t tmp = m_a; m_a = R5; R5 = tmp; }
+        void xch_a_r6()       { burn_cycles(1); uint8_t tmp = m_a; m_a = R6; R6 = tmp; }
+        void xch_a_r7()       { burn_cycles(1); uint8_t tmp = m_a; m_a = R7; R7 = tmp; }
+        void xch_a_xr0()      { burn_cycles(1); uint8_t tmp = m_a; m_a = ram_r(R0); ram_w(R0, tmp); }
+        void xch_a_xr1()      { burn_cycles(1); uint8_t tmp = m_a; m_a = ram_r(R1); ram_w(R1, tmp); }
 
-        int xchd_a_xr0()     { uint8_t oldram = ram_r(R0); ram_w(R0, (uint8_t)((oldram & 0xf0) | (m_a & 0x0f))); m_a = (uint8_t)((m_a & 0xf0) | (oldram & 0x0f)); return 1; }
-        int xchd_a_xr1()     { uint8_t oldram = ram_r(R1); ram_w(R1, (uint8_t)((oldram & 0xf0) | (m_a & 0x0f))); m_a = (uint8_t)((m_a & 0xf0) | (oldram & 0x0f)); return 1; }
+        void xchd_a_xr0()     { burn_cycles(1); uint8_t oldram = ram_r(R0); ram_w(R0, (uint8_t)((oldram & 0xf0) | (m_a & 0x0f))); m_a = (uint8_t)((m_a & 0xf0) | (oldram & 0x0f)); }
+        void xchd_a_xr1()     { burn_cycles(1); uint8_t oldram = ram_r(R1); ram_w(R1, (uint8_t)((oldram & 0xf0) | (m_a & 0x0f))); m_a = (uint8_t)((m_a & 0xf0) | (oldram & 0x0f)); }
 
-        int xrl_a_r0()       { m_a ^= R0; return 1; }
-        int xrl_a_r1()       { m_a ^= R1; return 1; }
-        int xrl_a_r2()       { m_a ^= R2; return 1; }
-        int xrl_a_r3()       { m_a ^= R3; return 1; }
-        int xrl_a_r4()       { m_a ^= R4; return 1; }
-        int xrl_a_r5()       { m_a ^= R5; return 1; }
-        int xrl_a_r6()       { m_a ^= R6; return 1; }
-        int xrl_a_r7()       { m_a ^= R7; return 1; }
-        int xrl_a_xr0()      { m_a ^= ram_r(R0); return 1; }
-        int xrl_a_xr1()      { m_a ^= ram_r(R1); return 1; }
-        int xrl_a_n()        { m_a ^= argument_fetch(); return 2; }
+        void xrl_a_r0()       { burn_cycles(1); m_a ^= R0; }
+        void xrl_a_r1()       { burn_cycles(1); m_a ^= R1; }
+        void xrl_a_r2()       { burn_cycles(1); m_a ^= R2; }
+        void xrl_a_r3()       { burn_cycles(1); m_a ^= R3; }
+        void xrl_a_r4()       { burn_cycles(1); m_a ^= R4; }
+        void xrl_a_r5()       { burn_cycles(1); m_a ^= R5; }
+        void xrl_a_r6()       { burn_cycles(1); m_a ^= R6; }
+        void xrl_a_r7()       { burn_cycles(1); m_a ^= R7; }
+        void xrl_a_xr0()      { burn_cycles(1); m_a ^= ram_r(R0); }
+        void xrl_a_xr1()      { burn_cycles(1); m_a ^= ram_r(R1); }
+        void xrl_a_n()        { burn_cycles(2); m_a ^= argument_fetch(); }
 
 
         /***************************************************************************
@@ -758,7 +756,6 @@ namespace mame
             m_dbbi = 0;
             m_dbbo = 0;
             m_irq_state = false;
-            m_irq_polled = false;
 
             /* FIXME: Current implementation suboptimal */
             m_ea = m_int_rom_size != 0 ? (uint8_t)0 : (uint8_t)1;
@@ -827,7 +824,6 @@ namespace mame
             save_item(NAME(new { m_dbbo }));
 
             save_item(NAME(new { m_irq_state }));
-            save_item(NAME(new { m_irq_polled }));
             save_item(NAME(new { m_irq_in_progress }));
             save_item(NAME(new { m_timer_overflow }));
             save_item(NAME(new { m_timer_flag }));
@@ -860,7 +856,8 @@ namespace mame
         {
             /* confirmed from reset description */
             m_pc = 0;
-            m_psw = (uint8_t)((m_psw & (C_FLAG | A_FLAG)) | 0x08);
+            m_psw = (uint8_t)(m_psw & (C_FLAG | A_FLAG));
+            update_regptr();
             m_a11 = 0x000;
             m_dbbo = 0xff;
             bus_w(0xff);
@@ -893,34 +890,20 @@ namespace mame
 
         void device_execute_interface_execute_run()
         {
-            int curcycles;
-
             update_regptr();
 
-            /* external interrupts may have been set since we last checked */
-            curcycles = check_irqs();
-            m_icount.i -= curcycles;
-            if (m_timecount_enabled != 0)
-                burn_cycles(curcycles);
-
-            /* iterate over remaining cycles, guaranteeing at least one instruction */
+            // iterate over remaining cycles, guaranteeing at least one instruction
             do
             {
-                uint32_t opcode;
-
-                /* fetch next opcode */
                 m_prevpc = m_pc;
-                m_irq_polled = false;
                 debugger_instruction_hook(m_pc);
-                opcode = opcode_fetch();
 
-                /* process opcode and count cycles */
-                curcycles = m_opcode_table[opcode](this);
+                // fetch and process opcode
+                unsigned opcode = opcode_fetch();
+                this.m_opcode_table[opcode](this);
 
-                /* burn the cycles */
-                m_icount.i -= curcycles;
-                if (m_timecount_enabled != 0)
-                    burn_cycles(curcycles);
+                // check interrupts
+                check_irqs();
 
             } while (m_icount.i > 0);
         }
@@ -1028,7 +1011,7 @@ namespace mame
             uint8_t sp = (uint8_t)(m_psw & 0x07);
             ram_w((offs_t)(8 + 2 * sp), (uint8_t)m_pc);
             ram_w((offs_t)(9 + 2 * sp), (uint8_t)(((m_pc >> 8) & 0x0f) | (m_psw & 0xf0)));
-            m_psw = (uint8_t)((m_psw & 0xf8) | ((sp + 1) & 0x07));
+            m_psw = (uint8_t)((m_psw & 0xf0) | ((sp + 1) & 0x07));
         }
 
 
@@ -1041,7 +1024,7 @@ namespace mame
             uint8_t sp = (uint8_t)((m_psw - 1) & 0x07);
             m_pc = ram_r((offs_t)(8 + 2 * sp));
             m_pc |= (uint16_t)(ram_r((offs_t)(9 + 2 * sp)) << 8);
-            m_psw = (uint8_t)(((m_pc >> 8) & 0xf0) | 0x08 | sp);
+            m_psw = (uint8_t)(((m_pc >> 8) & 0xf0) | sp);
             m_pc &= 0xfff;
             update_regptr();
         }
@@ -1057,7 +1040,7 @@ namespace mame
             m_pc = ram_r((offs_t)(8 + 2 * sp));
             m_pc |= (uint16_t)(ram_r((offs_t)(9 + 2 * sp)) << 8);
             m_pc &= 0xfff;
-            m_psw = (uint8_t)((m_psw & 0xf0) | 0x08 | sp);
+            m_psw = (uint8_t)((m_psw & 0xf0) | sp);
         }
 
 
@@ -1122,9 +1105,10 @@ namespace mame
         -------------------------------------------------*/
         void execute_jcc(uint8_t result)
         {
+            uint16_t pch = (uint16_t)(m_pc & 0xf00);
             uint8_t offset = argument_fetch();
             if (result != 0)
-                m_pc = (uint16_t)(((m_pc - 1) & 0xf00) | offset);
+                m_pc = (uint16_t)(pch | offset);
         }
 
 
@@ -1179,20 +1163,18 @@ namespace mame
         /*-------------------------------------------------
             check_irqs - check for and process IRQs
         -------------------------------------------------*/
-        int check_irqs()
+        void check_irqs()
         {
             /* if something is in progress, we do nothing */
             if (m_irq_in_progress)
-                return 0;
+                return;
 
             /* external interrupts take priority */
-            if ((m_irq_state || (m_sts & STS_IBF) != 0) && m_xirq_enabled)
+            else if ((m_irq_state || (m_sts & STS_IBF) != 0) && m_xirq_enabled)
             {
-                m_irq_in_progress = true;
+                burn_cycles(2);
 
-                // force JNI to be taken (hack)
-                if (m_irq_polled)
-                    m_pc = (uint16_t)(((m_pc - 1) & 0xf00) | m_program.read_byte(m_pc - 1U));
+                m_irq_in_progress = true;
 
                 /* transfer to location 0x03 */
                 push_pc_psw();
@@ -1200,12 +1182,13 @@ namespace mame
 
                 /* indicate we took the external IRQ */
                 standard_irq_callback(0);
-                return 2;
             }
 
             /* timer overflow interrupts follow */
-            if (m_timer_overflow && m_tirq_enabled)
+            else if (m_timer_overflow && m_tirq_enabled)
             {
+                burn_cycles(2);
+
                 m_irq_in_progress = true;
 
                 /* transfer to location 0x07 */
@@ -1214,10 +1197,7 @@ namespace mame
 
                 /* timer overflow flip-flop is reset once taken */
                 m_timer_overflow = false;
-                return 2;
             }
-
-            return 0;
         }
 
 
@@ -1227,6 +1207,9 @@ namespace mame
         -------------------------------------------------*/
         void burn_cycles(int count)
         {
+            if (count == 0)
+                return;
+
             bool timerover = false;
 
             /* if the timer is enabled, accumulate prescaler cycles */
@@ -1242,13 +1225,19 @@ namespace mame
             /* if the counter is enabled, poll the T1 test input once for each cycle */
             else if ((m_timecount_enabled & COUNTER_ENABLED) != 0)
             {
-                for ( ; count > 0; count--)
+                for ( ; count > 0; count--, m_icount.i--)
                 {
                     m_t1_history = (uint8_t)((m_t1_history << 1) | (test_r(1) & 1));
                     if ((m_t1_history & 3) == 2)
-                        timerover = (++m_timer == 0);
+                    {
+                        if (++m_timer == 0)
+                            timerover = true;
+                    }
                 }
             }
+
+            /* if timer counter was disabled, adjust icount here (otherwise count is 0) */
+            m_icount.i -= count;
 
             /* if either source caused a timer overflow, set the flags and check IRQs */
             if (timerover)
@@ -1257,10 +1246,7 @@ namespace mame
 
                 /* according to the docs, if an overflow occurs with interrupts disabled, the overflow is not stored */
                 if (m_tirq_enabled)
-                {
                     m_timer_overflow = true;
-                    check_irqs();
-                }
             }
         }
     }

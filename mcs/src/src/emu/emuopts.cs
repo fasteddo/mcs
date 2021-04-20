@@ -346,6 +346,7 @@ namespace mame
         const string OPTION_SAMPLERATE          = "samplerate";
         const string OPTION_SAMPLES             = "samples";
         const string OPTION_VOLUME              = "volume";
+        const string OPTION_SPEAKER_REPORT      = "speaker_report";
 
         // core input options
         const string OPTION_COIN_LOCKOUT        = "coin_lockout";
@@ -541,6 +542,7 @@ namespace mame
             new options_entry(OPTION_SAMPLERATE + ";sr(1000-1000000)",           "48000",     OPTION_INTEGER,    "set sound output sample rate"),
             new options_entry(OPTION_SAMPLES,                                    "1",         OPTION_BOOLEAN,    "enable the use of external samples if available"),
             new options_entry(OPTION_VOLUME + ";vol",                            "0",         OPTION_INTEGER,    "sound volume in decibels (-32 min, 0 max)"),
+            new options_entry(OPTION_SPEAKER_REPORT,                             "0",         OPTION_INTEGER,    "print report of speaker ouput maxima (0=none, or 1-4 for more detail)"),
 
             // input options
             new options_entry(null,                                              null,        OPTION_HEADER,     "CORE INPUT OPTIONS"),
@@ -850,6 +852,7 @@ namespace mame
         public int sample_rate() { return int_value(OPTION_SAMPLERATE); }
         public bool samples() { return bool_value(OPTION_SAMPLES); }
         public int volume() { return int_value(OPTION_VOLUME); }
+        public int speaker_report() { return int_value(OPTION_SPEAKER_REPORT); }
 
 
         // core input options

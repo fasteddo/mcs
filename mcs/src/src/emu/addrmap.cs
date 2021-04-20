@@ -1047,7 +1047,6 @@ namespace mame
 
         //void unmap_value_low() { m_unmapval = 0; }
         public void unmap_value_high() { m_unmapval = byte.MaxValue; }  // ~0; }
-        //void unmap_value(u8 value) { m_unmapval = value; }
 
 
         // add a new entry of the given type

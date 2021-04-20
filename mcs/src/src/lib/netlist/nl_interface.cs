@@ -63,22 +63,18 @@ namespace mame.netlist.interface_
 
     /// \brief Set parameters to buffers contents at regular intervals
     ///
-    /// This devices will set up to N parameters from buffers passed to the device.
+    /// This device will update a parameter from a buffers passed to the device.
     /// It is the responsibility of the controlling application to ensure that
-    /// buffers filled at regular intervals.
+    /// the buffer is filled at regular intervals.
     ///
     /// \tparam T The buffer type
     /// \tparam N Maximum number of supported buffers
     ///
-    //template <typename T, std::size_t N>
+    //template <typename T>
     //NETLIB_OBJECT(buffered_param_setter)
-    class nld_buffered_param_setter<T, size_t_N> : device_t
-        where size_t_N : size_t_constant, new()
+    class nld_buffered_param_setter<T> : device_t
     {
-        static size_t_constant N = new size_t_N();
-
-
-        static int MAX_INPUT_CHANNELS = (int)N.value;  //static const int MAX_INPUT_CHANNELS = N;
+        //using setter_t = plib::pmfp<void,nl_fptype>;
 
 
         netlist_time m_sample_time;
@@ -88,41 +84,38 @@ namespace mame.netlist.interface_
 
         size_t m_pos;
         size_t m_samples;
-        size_t m_num_channels;
 
-        object_array_t<param_str_t, size_t_N> m_param_names;  //object_array_t<param_str_t, MAX_INPUT_CHANNELS> m_param_names;
-        object_array_t<param_fp_t, size_t_N>  m_param_mults;  //object_array_t<param_fp_t, MAX_INPUT_CHANNELS>  m_param_mults;
-        object_array_t<param_fp_t, size_t_N>  m_param_offsets;  //object_array_t<param_fp_t, MAX_INPUT_CHANNELS>  m_param_offsets;
-        std.array<param_fp_t, size_t_N> m_params;  //std::array<param_fp_t *, MAX_INPUT_CHANNELS>             m_params;
-        std.array<Pointer<stream_sample_t>, size_t_N> m_buffers;  //std::array<T *, MAX_INPUT_CHANNELS>                               m_buffers;
+        //param_str_t m_param_name;
+        //param_fp_t  m_param_mult;
+        //param_fp_t  m_param_offset;
+        //param_t *   m_param;
+        //setter_t    m_param_setter;
+        //T *         m_buffer;
+        param_num_t<size_t, param_num_t_operators_uint32> m_id;
 
 
         //NETLIB_CONSTRUCTOR(buffered_param_setter)
         protected nld_buffered_param_setter(object owner, string name)
             : base(owner, name)
         {
-            m_params = new std.array<param_fp_t, size_t_N>();
-            m_buffers = new std.array<Pointer<stream_sample_t>, size_t_N>();
-
-
             m_sample_time = netlist_time.zero();
             m_feedback = new logic_input_t(this, "FB", feedback); // clock part
             m_Q = new logic_output_t(this, "Q");
             m_pos = 0;
             m_samples = 0;
-            m_num_channels = 0;
 
             throw new emu_unimplemented();
 #if false
-            , m_param_names(*this, 0, "CHAN{}", "")
-            , m_param_mults(*this, 0, "MULT{}", 1.0)
-            , m_param_offsets(*this, 0, "OFFSET{}", 0.0)
-#endif
+            , m_param_name(*this, "CHAN", "")
+            , m_param_mult(*this, "MULT", 1.0)
+            , m_param_offset(*this, "OFFSET", 0.0)
+            , m_param(nullptr)
+            , m_id(*this, "ID", 0)
 
 
             connect(m_feedback, m_Q);
-            for (int i = 0; i < m_buffers.Count; i++)  //for (auto & elem : m_buffers)
-                m_buffers[i] = null;  //elem = nullptr;
+            m_buffer = null;
+#endif
         }
 
 
@@ -137,17 +130,16 @@ namespace mame.netlist.interface_
         {
             if (m_pos < m_samples)
             {
-                for (size_t i = 0; i < m_num_channels; i++)
-                {
-                    if (m_buffers[i] == default)
-                        break; // stop, called outside of stream_update
-
-                    throw new emu_unimplemented();
+                throw new emu_unimplemented();
 #if false
-                    nl_fptype v = m_buffers[i][m_pos];
-                    m_params[i].set(v * m_param_mults[i]() + m_param_offsets[i]());
-#endif
+                // check if called outside of stream_update
+                if (m_buffer != null)
+                {
+                    const nl_fptype v = (*m_buffer)[m_pos];  //const nl_fptype v = (*m_buffer)[m_pos];
+                    //m_params[i]->set(v * m_param_mults[i]() + m_param_offsets[i]());
+                    m_param_setter(v * m_param_mult() + m_param_offset());
                 }
+#endif
             }
             else
             {
@@ -156,6 +148,7 @@ namespace mame.netlist.interface_
                 //        adds up to one samples every 13 seconds for 100 ps resolution.
                 //        Fixing this is possible but complicated and expensive.
             }
+
             m_pos++;
 
             m_Q.net().toggle_and_push_to_queue(m_sample_time);
@@ -170,35 +163,42 @@ namespace mame.netlist.interface_
         {
             m_pos = 0;
             m_sample_time = sample_time;
-            for (size_t i = 0; i < MAX_INPUT_CHANNELS; i++)
-            {
-                throw new emu_unimplemented();
-#if false
-                if (m_param_names[i]() != "")
-                {
-                    if (i != m_num_channels)
-                        state().log().fatal.op("sound input numbering has to be sequential!");
 
-                    m_num_channels++;
-                    m_params[i] = (param_fp_t)(state().setup().find_param(m_param_names[i]()).param());
-                }
-#endif
+            throw new emu_unimplemented();
+#if false
+            if (m_param_name() != "")
+            {
+                param_t *p = &state().setup().find_param(m_param_name()).param();
+                m_param = p;
+                if (dynamic_cast<param_fp_t *>(p) != nullptr)
+                    m_param_setter = setter_t(&NETLIB_NAME(buffered_param_setter)::setter<param_fp_t>, this);
+                else if (dynamic_cast<param_logic_t *>(p) != nullptr)
+                    m_param_setter = setter_t(&NETLIB_NAME(buffered_param_setter)::setter<param_logic_t>, this);
             }
+#endif
         }
 
 
-        public void buffer_reset(netlist_time sample_time, size_t num_samples, Pointer<stream_sample_t> [] inputs)  //void buffer_reset(netlist_time sample_time, std::size_t num_samples, T **inputs)
+        public void buffer_reset(netlist_time sample_time, size_t num_samples, object inputs)  //void buffer_reset(netlist_time sample_time, std::size_t num_samples, T *inputs)
         {
             m_samples = num_samples;
             m_sample_time = sample_time;
             m_pos = 0;
-            for (size_t i = 0; i < m_num_channels; i++)
-            {
-                m_buffers[i] = inputs[i];
-            }
+
+            throw new emu_unimplemented();
+#if false
+            m_buffer = inputs;
+#endif
         }
 
 
-        public int num_channels() { return (int)m_num_channels; }
+        public size_t id() { return m_id.op(); }
+
+
+        //template <typename S>
+        //void setter(nl_fptype v)
+        //{
+        //    static_cast<S *>(m_param)->set(v);
+        //}
     }
 } // namespace netlist

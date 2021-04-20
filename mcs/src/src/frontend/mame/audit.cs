@@ -214,10 +214,11 @@ namespace mame
 
                         string name = romload_global.ROM_GETNAME(rom[0]);
                         util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
-                        device_t shared_device = find_shared_device(device, name, hashes, romload_global.ROM_GETLENGTH(rom[0]));
+                        device_t shared_device = find_shared_device(device, name, hashes, romload_global.rom_file_size(rom));
+                        var dumped = !hashes.flag(util.hash_collection.FLAG_NO_DUMP);
 
                         // count the number of files with hashes
-                        if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP) && !romload_global.ROM_ISOPTIONAL(rom[0]))
+                        if (dumped && !romload_global.ROM_ISOPTIONAL(rom[0]))
                         {
                             required++;
                             if (shared_device != null)
@@ -236,7 +237,7 @@ namespace mame
                         if (record != null)
                         {
                             // count the number of files that are found.
-                            if (record.status() == audit_record.audit_status.STATUS_GOOD || (record.status() == audit_record.audit_status.STATUS_FOUND_INVALID && find_shared_device(device, name, record.actual_hashes(), record.actual_length()) == null))
+                            if (device.owner() == null && ((record.status() == audit_record.audit_status.STATUS_GOOD && dumped) || (record.status() == audit_record.audit_status.STATUS_FOUND_INVALID && find_shared_device(device, name, record.actual_hashes(), record.actual_length()) == null)))
                             {
                                 found++;
                                 if (shared_device != null)
@@ -667,7 +668,7 @@ namespace mame
                 {
                     for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
-                        if (romload_global.ROM_GETLENGTH(rom[0]) == romlength)
+                        if (romload_global.rom_file_size(rom) == romlength)
                         {
                             util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
                             if ((dumped && hashes == romhashes) || (!dumped && romload_global.ROM_GETNAME(rom[0]) == name))
@@ -687,7 +688,7 @@ namespace mame
                         {
                             for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                             {
-                                if (romload_global.ROM_GETLENGTH(rom[0]) == romlength)
+                                if (romload_global.rom_file_size(rom) == romlength)
                                 {
                                     util.hash_collection hashes = new util.hash_collection(romload_global.ROM_GETHASHDATA(rom[0]));
                                     if ((dumped && hashes == romhashes) || (!dumped && romload_global.ROM_GETNAME(rom[0]) == name))

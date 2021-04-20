@@ -35,6 +35,9 @@ namespace mame
         //#define TL081_DIP(name)                                                        \
         //        NET_REGISTER_DEV(TL081_DIP, name)
 
+        //#define TL082_DIP(name)                                                        \
+        //        NET_REGISTER_DEV(TL082_DIP, name)
+
         //#define TL084_DIP(name)                                                        \
         //        NET_REGISTER_DEV(TL084_DIP, name)
 
@@ -62,11 +65,20 @@ namespace mame
         //#define UA741_DIP14(name)                                                      \
         //        NET_REGISTER_DEV(UA741_DIP14, name)
 
+        //#define MC1558_DIP(name)                                                        \
+        //        NET_REGISTER_DEV(MC1558_DIP, name)
+
         //#define LM747_DIP(name)                                                        \
         //        NET_REGISTER_DEV(LM747_DIP, name)
 
         //#define LM747A_DIP(name)                                                       \
         //        NET_REGISTER_DEV(LM747A_DIP, name)
+
+        //#define MC3340_DIP(name)                                                       \
+        //        NET_REGISTER_DEV(MC3340_DIP, name)
+
+        //#define AN6551_SIL(name)                                                       \
+        //        NET_REGISTER_DEV(AN6551_SIL, name)
 
 #endif
 
@@ -239,6 +251,183 @@ namespace mame
         }
 
 
+        //static NETLIST_START(MC3340_DIP)
+        public static void netlist_MC3340_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            // A netlist description of the Motorola MC3340 Electronic Attenuator
+            // IC, a voltage-controlled amplifier/attenuator. It amplifies or
+            // attenuates an input signal according to the voltage of a second,
+            // control signal, with a maximum gain of about 12-13 dB (about a
+            // factor of 4 in voltage), and higher control voltages giving greater
+            // attenuation, which scales logarithmically.
+
+            // The netlist here is based on the circuit schematic given in
+            // Motorola's own data books, especially the most recent ones
+            // published in the 1990s (e.g. _Motorola Analog/Interface ICs Device
+            // Data, Vol. II_ (1996), p. 9-67), which are the only schematics that
+            // include resistor values. However, the 1990s schematics are missing
+            // one crossover connection which is present in older schematics
+            // published in the 1970s (e.g. _Motorola Linear Integrated Circuits_
+            // (1979), p. 5-130). This missing connection is clearly an error
+            // which has been fixed in this netlist; without it, the circuit won't
+            // amplify properly, generating only a very weak output signal.
+
+            // The 1990s schematics also omit a couple of diodes which are present
+            // in the 1970s schematics. Both of these diodes have been included
+            // here. One raises the minimum control voltage at which signal
+            // attenuation starts, so it makes the netlist's profile of
+            // attenuation vs. control voltage better match Motorola's charts for
+            // the device. The other affects the level of the input "midpoint",
+            // and including it makes the engine sound closer to that on real
+            // 280-ZZZAP machines.
+
+            // The Motorola schematics do not label components, so I've created my
+            // own labeling scheme based on numbering components on the schematics
+            // from top to bottom, left to right, with resistors also getting
+            // their value (expressed European-style to avoid decimal points) as
+            // part of the name. The netlist is also listed following the
+            // schematics in roughly top-to-bottom, left-to-right order.
+
+            // A very simple model is used for the transistors here, based on the
+            // generic NPN default but with a larger scale current. Again, this
+            // was chosen to better match the netlist's attenuation vs. control
+            // voltage profile to that given in Motorola's charts for the device.
+
+            // The MC3340 has the same circuit internally as an older Motorola
+            // device, the MFC6040, which was replaced by the MC3340 in the
+            // mid-1970s. The two chips differ only in packaging. Older arcade
+            // games which use the MFC6040 may also benefit from this netlist
+            // implementation.
+
+            netlist.nld_twoterm_global.RES(setup, "R1_5K1", rescap_global.RES_K(5.1));
+
+            netlist.nld_twoterm_global.DIODE(setup, "D1", "D(IS=1e-15 N=1)");
+
+            netlist.nld_twoterm_global.RES(setup, "R2_4K7", rescap_global.RES_K(4.7));
+
+            nld_bjt_global.QBJT_EB(setup, "Q1", "NPN(IS=1E-13 BF=100)");
+
+            netlist.nld_twoterm_global.RES(setup, "R3_750", rescap_global.RES_R(750));
+            netlist.nld_twoterm_global.RES(setup, "R4_10K", rescap_global.RES_K(10));
+
+            nld_bjt_global.QBJT_EB(setup, "Q2", "NPN(IS=1E-13 BF=100)");
+
+            netlist.nld_twoterm_global.RES(setup, "R5_750", rescap_global.RES_R(750));
+            netlist.nld_twoterm_global.RES(setup, "R6_3K9", rescap_global.RES_K(3.9));
+
+            netlist.nld_twoterm_global.RES(setup, "R7_5K1", rescap_global.RES_K(5.1));
+            netlist.nld_twoterm_global.RES(setup, "R8_20K", rescap_global.RES_K(20));
+
+            netlist.nld_twoterm_global.DIODE(setup, "D2", "D(IS=1e-15 N=1)");
+
+            netlist.nld_twoterm_global.RES(setup, "R9_510", rescap_global.RES_R(510));
+
+            nld_bjt_global.QBJT_EB(setup, "Q3", "NPN(IS=1E-13 BF=100)");
+
+            nld_bjt_global.QBJT_EB(setup, "Q4", "NPN(IS=1E-13 BF=100)");
+
+            nld_bjt_global.QBJT_EB(setup, "Q5", "NPN(IS=1E-13 BF=100)");
+
+            netlist.nld_twoterm_global.RES(setup, "R10_1K3", rescap_global.RES_K(1.3));
+
+            nld_bjt_global.QBJT_EB(setup, "Q6", "NPN(IS=1E-13 BF=100)");
+
+            netlist.nld_twoterm_global.RES(setup, "R11_5K1", rescap_global.RES_K(5.1));
+
+            nld_bjt_global.QBJT_EB(setup, "Q7", "NPN(IS=1E-13 BF=100)");
+
+            nld_bjt_global.QBJT_EB(setup, "Q8", "NPN(IS=1E-13 BF=100)");
+
+            netlist.nld_twoterm_global.RES(setup, "R12_1K5", rescap_global.RES_K(1.5));
+
+            netlist.nld_twoterm_global.RES(setup, "R13_6K2", rescap_global.RES_K(6.2));
+
+            nld_bjt_global.QBJT_EB(setup, "Q9", "NPN(IS=1E-13 BF=100)");
+
+            netlist.nld_twoterm_global.RES(setup, "R14_5K1", rescap_global.RES_K(5.1));
+
+            nld_bjt_global.QBJT_EB(setup, "Q10", "NPN(IS=1E-13 BF=100)");
+
+            netlist.nld_twoterm_global.RES(setup, "R15_5K1", rescap_global.RES_K(5.1));
+
+            netlist.nld_twoterm_global.RES(setup, "R16_200", rescap_global.RES_R(200));
+
+            netlist.nld_twoterm_global.RES(setup, "R17_5K1", rescap_global.RES_K(5.1));
+
+            netlist.nld_twoterm_global.DIODE(setup, "D3", "D(IS=1e-15 N=1)");
+
+            netlist.nld_twoterm_global.RES(setup, "R18_510", rescap_global.RES_R(510));
+
+            netlist.nl_setup_global.ALIAS(setup, "VCC", "R1_5K1.1");
+            netlist.nl_setup_global.NET_C(setup, "R1_5K1.1", "Q1.C", "Q2.C", "R7_5K1.1", "Q3.C", "Q4.C", "Q7.C",
+                "R13_6K2.1", "Q10.C", "R17_5K1.1");
+            // Location of first diode present on 1970s schematics but omitted on
+            // 1990s ones. Including it raises the control voltage threshold for
+            // attenuation significantly.
+            netlist.nl_setup_global.NET_C(setup, "R1_5K1.2", "D1.A", "Q1.B");
+            netlist.nl_setup_global.NET_C(setup, "D1.K", "R2_4K7.1");
+            netlist.nl_setup_global.NET_C(setup, "R2_4K7.2", "GND");
+
+            netlist.nl_setup_global.NET_C(setup, "Q1.E", "R3_750.1", "R5_750.1");
+            netlist.nl_setup_global.NET_C(setup, "R3_750.2", "R4_10K.1", "Q2.B");
+            netlist.nl_setup_global.NET_C(setup, "R4_10K.2", "GND");
+
+            netlist.nl_setup_global.NET_C(setup, "R5_750.2", "R6_3K9.1", "Q3.B");
+            netlist.nl_setup_global.ALIAS(setup, "CONTROL", "R6_3K9.2");
+
+            netlist.nl_setup_global.ALIAS(setup, "INPUT", "Q5.B");
+
+            netlist.nl_setup_global.NET_C(setup, "INPUT", "R8_20K.1");
+            // Location of second diode present on 1970s schematics but omitted on
+            // 1990s ones. Including it is critical to making the tone of the
+            // output engine sound match that of real 280-ZZZAP machines.
+            netlist.nl_setup_global.NET_C(setup, "R7_5K1.2", "R8_20K.2", "D2.A");
+            netlist.nl_setup_global.NET_C(setup, "D2.K", "R9_510.1");
+            netlist.nl_setup_global.NET_C(setup, "R9_510.2", "GND");
+
+            netlist.nl_setup_global.NET_C(setup, "Q4.E", "Q6.E", "Q5.C");
+            netlist.nl_setup_global.NET_C(setup, "Q5.E", "R10_1K3.1");
+            netlist.nl_setup_global.NET_C(setup, "R10_1K3.2", "GND");
+
+            netlist.nl_setup_global.NET_C(setup, "Q6.B", "Q7.B", "Q2.E", "R11_5K1.1");
+            netlist.nl_setup_global.NET_C(setup, "R11_5K1.2", "GND");
+
+            netlist.nl_setup_global.NET_C(setup, "Q7.E", "Q9.E", "Q8.C");
+            netlist.nl_setup_global.NET_C(setup, "Q8.E", "R12_1K5.1");
+            netlist.nl_setup_global.NET_C(setup, "R12_1K5.2", "GND");
+
+            netlist.nl_setup_global.NET_C(setup, "Q4.B", "Q9.B", "Q3.E", "R14_5K1.1");
+            netlist.nl_setup_global.NET_C(setup, "R14_5K1.2", "GND");
+
+            // This is where the cross-connection is erroneously omitted from
+            // 1990s schematics.
+            netlist.nl_setup_global.NET_C(setup, "Q6.C", "R13_6K2.2", "Q9.C", "Q10.B");
+
+            // Connection for external frequency compensation capacitor; unused
+            // here.
+            netlist.nl_setup_global.ALIAS(setup, "ROLLOFF", "Q10.B");
+
+            netlist.nl_setup_global.NET_C(setup, "Q10.E", "R16_200.1", "R15_5K1.1");
+            netlist.nl_setup_global.NET_C(setup, "R15_5K1.2", "GND");
+            netlist.nl_setup_global.ALIAS(setup, "OUTPUT", "R16_200.2");
+
+            netlist.nl_setup_global.NET_C(setup, "R17_5K1.2", "D3.A", "Q8.B");
+            netlist.nl_setup_global.NET_C(setup, "D3.K", "R18_510.1");
+            netlist.nl_setup_global.ALIAS(setup, "GND", "R18_510.2");
+
+            netlist.nl_setup_global.ALIAS(setup, "1", "INPUT");
+            netlist.nl_setup_global.ALIAS(setup, "2", "CONTROL");
+            netlist.nl_setup_global.ALIAS(setup, "3", "GND");
+            netlist.nl_setup_global.ALIAS(setup, "6", "ROLLOFF");
+            netlist.nl_setup_global.ALIAS(setup, "7", "OUTPUT");
+            netlist.nl_setup_global.ALIAS(setup, "8", "VCC");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
         //static NETLIST_START(TL081_DIP)
         public static void netlist_TL081_DIP(netlist.nlparse_t setup)
         {
@@ -247,6 +436,20 @@ namespace mame
             nld_opamps_global.OPAMP(setup, "A", "TL084");
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_7_4");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TL082_DIP)
+        public static void netlist_TL082_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            nld_opamps_global.OPAMP(setup, "A", "TL084");
+            nld_opamps_global.OPAMP(setup, "B", "TL084");
+
+            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_8_4");
 
             netlist.nl_setup_global.NETLIST_END();
         }
@@ -354,6 +557,20 @@ namespace mame
         }
 
 
+        //static NETLIST_START(MC1558_DIP)
+        public static void netlist_MC1558_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            nld_opamps_global.OPAMP(setup, "A", "UA741");
+            nld_opamps_global.OPAMP(setup, "B", "UA741");
+
+            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_8_4");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
         //static NETLIST_START(LM747_DIP)
         public static void netlist_LM747_DIP(netlist.nlparse_t setup)
         {
@@ -379,6 +596,45 @@ namespace mame
 
             netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_13_9_4");
             netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
+        //- Identifier: AN6551_SIL
+        //- Title: AN6551 Dual Operational Amplifier
+        //- Description: The AN6551 is a dual operational Amplifier with a
+        //-   phase compensation circuit built-in. It is suitable for application to
+        //-   various electronic circuits such as active filters and
+        //-   audio pre-amplifiers
+        //-
+        //-   Features: Phase compensation circuit, High gain, low noise,
+        //-   Output short-circuit protection, Two circuits symmetrically arranged in 9-pin SIL plastic package
+        //- Pinalias: VCC,A.OUT,A-,A+,GND,B+,B-,B.OUT,VCC
+        //- Package: SIL
+        //- NamingConvention: Naming conventions follow Panasonic datasheet
+        //- FunctionTable:
+        //-   https://datasheetspdf.com/pdf-file/182163/PanasonicSemiconductor/AN6551/1
+        //-
+        //static NETLIST_START(AN6551_SIL)
+        public static void netlist_AN6551_SIL(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            nld_opamps_global.OPAMP(setup, "A", "AN6551");
+            nld_opamps_global.OPAMP(setup, "B", "AN6551");
+
+            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+
+            netlist.nl_setup_global.ALIAS(setup, "1", "A.VCC");
+            netlist.nl_setup_global.ALIAS(setup, "2", "A.OUT");
+            netlist.nl_setup_global.ALIAS(setup, "3", "A.MINUS");
+            netlist.nl_setup_global.ALIAS(setup, "4", "A.PLUS");
+            netlist.nl_setup_global.ALIAS(setup, "5", "A.GND");
+            netlist.nl_setup_global.ALIAS(setup, "6", "B.PLUS");
+            netlist.nl_setup_global.ALIAS(setup, "7", "B.MINUS");
+            netlist.nl_setup_global.ALIAS(setup, "8", "B.OUT");
+            netlist.nl_setup_global.ALIAS(setup, "9", "B.VCC");
 
             netlist.nl_setup_global.NETLIST_END();
         }
@@ -434,8 +690,8 @@ namespace mame
 #endif
 
 
-        //NETLIST_START(OPAMP_lib)
-        public static void netlist_OPAMP_lib(netlist.nlparse_t setup)
+        //NETLIST_START(opamp_lib)
+        public static void netlist_opamp_lib(netlist.nlparse_t setup)
         {
             netlist.nl_setup_global.NETLIST_START();
 
@@ -457,16 +713,21 @@ namespace mame
             netlist.nl_setup_global.NET_MODEL(setup, "UA741       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=75 DAB=0.0017)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM747       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=50 DAB=0.0017)");
             netlist.nl_setup_global.NET_MODEL(setup, "LM747A      OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=1000k SLEW=0.7M RI=6000k RO=50 DAB=0.0015)");
+            // FIXME: LM748 values are calculated based on a documented schematic of the part and may be wrong.
             // TI and Motorola Datasheets differ - below are Motorola values, SLEW is average of LH and HL
             netlist.nl_setup_global.NET_MODEL(setup, "LM3900      OPAMP(TYPE=3 VLH=1.0 VLL=0.03 FPF=2k UGF=4M SLEW=10M RI=10M RO=2k DAB=0.0015)");
 
+            netlist.nl_setup_global.NET_MODEL(setup, "AN6551      OPAMP(TYPE=3 VLH=1.0 VLL=0.03 FPF=20 UGF=2M SLEW=1M RI=10M RO=200 DAB=0.0015)");
+
 #if USE_LM3900_MODEL_1
-            netlist.nl_setup_global.NET_MODEL(setup, "LM3900_NPN1 NPN(IS=1E-14 BF=150 TF=1E-9 CJC=1E-12 CJE=1E-12 VAF=150 RB=100 RE=5 IKF=0.002)");
-            netlist.nl_setup_global.NET_MODEL(setup, "LM3900_PNP1 PNP(IS=1E-14 BF=40 TF=1E-7 CJC=1E-12 CJE=1E-12 VAF=150 RB=100 RE=5)");
+            NET_MODEL("LM3900_NPN1 NPN(IS=1E-14 BF=150 TF=1E-9 CJC=1E-12 CJE=1E-12 VAF=150 RB=100 RE=5 IKF=0.002)")
+            NET_MODEL("LM3900_PNP1 PNP(IS=1E-14 BF=40 TF=1E-7 CJC=1E-12 CJE=1E-12 VAF=150 RB=100 RE=5)")
 #endif
 
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MB3614_DIP", netlist_MB3614_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MC3340_DIP", netlist_MC3340_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL081_DIP", netlist_TL081_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL082_DIP", netlist_TL082_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL084_DIP", netlist_TL084_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM324_DIP", netlist_LM324_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM358_DIP", netlist_LM358_DIP);
@@ -474,9 +735,11 @@ namespace mame
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP8", netlist_UA741_DIP8);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP10", netlist_UA741_DIP10);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP14", netlist_UA741_DIP14);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MC1558_DIP", netlist_MC1558_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747_DIP", netlist_LM747_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747A_DIP", netlist_LM747A_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM3900", netlist_LM3900);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "AN6551_SIL", netlist_AN6551_SIL);
 
             netlist.nl_setup_global.NETLIST_END();
         }

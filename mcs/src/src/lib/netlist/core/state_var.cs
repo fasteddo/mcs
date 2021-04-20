@@ -113,5 +113,11 @@ namespace mame.netlist
     //using state_var_s32 = state_var<std::int32_t>;
     /// \brief predefined state variable type for sig_t
     //using state_var_sig = state_var<netlist_sig_t>;
-
 } // namespace netlist
+
+
+namespace plib
+{
+    //template<typename X>
+    //struct ptype_traits<netlist::state_var<X>> : ptype_traits<X>
+} // namespace plib

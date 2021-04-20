@@ -166,4 +166,28 @@ namespace mame.netlist
 
 
     //struct desc_base
+
+
+    //============================================================
+    //  Exceptions
+    //============================================================
+
+    /// \brief Generic netlist exception.
+    ///  The exception is used in all events which are considered fatal.
+    class nl_exception : plib.pexception
+    {
+        /// \brief Constructor.
+        ///  Allows a descriptive text to be passed to the exception
+        public nl_exception(string text) //!< text to be passed
+            : base(text)
+        { }
+
+        /// \brief Constructor.
+        ///  Allows to use \ref plib::pfmt logic to be used in exception
+        //template<typename... Args>
+        public nl_exception(string fmt,      //!< format to be used
+                            params object [] args)  //!< arguments to be passed
+            : base(string.Format(fmt, args))
+        { }
+    }
 }

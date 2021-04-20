@@ -81,7 +81,7 @@ namespace mame.netlist
             nl_fptype m_gmin_();
             bool m_pivot_();
             nl_fptype m_nr_recalc_delay_();
-            size_t m_parallel_();
+            int m_parallel_();
 
             nl_fptype m_min_ts_ts_();
             // automatic time step
@@ -115,7 +115,7 @@ namespace mame.netlist
             public nl_fptype m_gmin_() { return nlconst.magic(1e-9); }
             public bool m_pivot_() { return false; }
             public nl_fptype m_nr_recalc_delay_(){ return netlist_time.quantum().as_fp(); }
-            public size_t m_parallel_() { return 0; }
+            public int m_parallel_() { return 0; }
 
             public nl_fptype m_min_ts_ts_() { return nlconst.magic(1e-9); }
             // automatic time step
@@ -231,7 +231,7 @@ namespace mame.netlist
             public nl_fptype m_gmin_() { return m_gmin.op(); }
             public bool m_pivot_() { return m_pivot.op(); }
             public nl_fptype m_nr_recalc_delay_() { return m_nr_recalc_delay.op(); }
-            public size_t m_parallel_() { return (size_t)m_parallel.op(); }
+            public int m_parallel_() { return m_parallel.op(); }
 
             public nl_fptype m_min_ts_ts_() { return m_min_ts_ts.op(); }
             // automatic time step

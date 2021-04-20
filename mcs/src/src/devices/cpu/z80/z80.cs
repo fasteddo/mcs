@@ -668,24 +668,30 @@ namespace mame
                 }
 
                 // check for interrupts before each instruction
-                if (m_nmi_pending)
-                    take_nmi();
-                else if (m_irq_state != CLEAR_LINE && m_iff1 != 0 && !m_after_ei)
-                    take_interrupt();
+                check_interrupts();
 
                 m_after_ei = false;
                 m_after_ldair = false;
 
                 PRVPC = PCD;
                 debugger_instruction_hook(PCD);
+
                 m_r++;
 
 
-                uint8_t r = rop();
+                uint8_t opcode = rop();
+
+
+                // when in HALT state, the fetched opcode is not dispatched (aka a NOP)
+                if (m_halt != 0)
+                {
+                    PC--;
+                    opcode = 0;
+                }
 
 
                 if (opcount % 200000 == 0)
-                    osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, r, A, B, C, F, HL);
+                    osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, opcode, A, B, C, F, HL);
 
                 //if (opcount >= 0 && opcount < 500)
                 //    global.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, r, A, B, C, F, HL);
@@ -694,7 +700,7 @@ namespace mame
                 opcount++;
 
 
-                EXEC_op(r);
+                EXEC_op(opcode);
 
             } while (m_icount.i > 0);
         }
@@ -3048,7 +3054,6 @@ namespace mame
          ***************************************************************/
         void halt()
         {
-            PC--;
             if (m_halt == 0)
             {
                 m_halt = 1;
@@ -3059,7 +3064,14 @@ namespace mame
         /***************************************************************
          * Leave halt state; write 0 to callback
          ***************************************************************/
-        public void leave_halt() { if ( m_halt > 0 ) { m_halt = 0; m_halt_cb.op(0); PC++; } }
+        public void leave_halt()
+        {
+            if (m_halt > 0)
+            {
+                m_halt = 0;
+                m_halt_cb.op(0);
+            }
+        }
 
         /***************************************************************
          * Input a byte from given I/O port
@@ -4010,6 +4022,14 @@ namespace mame
         {
             m_iff1 = m_iff2 = 1;
             m_after_ei = true;
+        }
+
+        protected virtual void check_interrupts()
+        {
+            if (m_nmi_pending)
+                take_nmi();
+            else if (m_irq_state != CLEAR_LINE && m_iff1 != 0 && !m_after_ei)
+                take_interrupt();
         }
 
         public void take_interrupt()

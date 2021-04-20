@@ -66,6 +66,7 @@ namespace mame
              2000000, /* 2_MHz_XTAL             - */
              2012160, /* 2.01216_MHz_XTAL       Cidelsa Draco sound board */
              2097152, /* 2.097152_MHz_XTAL      Icatel 1995 - Brazilian public payphone */
+             2376000, /* 2.376_MHz_XTAL         CIT-101 keyboard */
              2457600, /* 2.4576_MHz_XTAL        Atari ST MFP */
              2457600, /* 2.4576_MHz_XTAL        Atari ST MFP, NEC PC-98xx */
              2500000, /* 2.5_MHz_XTAL           Janken Man units */
@@ -76,6 +77,9 @@ namespace mame
              3120000, /* 3.12_MHz_XTAL          SP0250 clock on Gottlieb games */
              3276800, /* 3.2768_MHz_XTAL        SP0256 clock in Speech Synthesis for Dragon 32 */
              3521280, /* 3.52128_MHz_XTAL       RCA COSMAC VIP */
+             3546800, /* 3.5468_MHz_XTAL        Atari 400 PAL */
+             3547000, /* 3.547_MHz_XTAL         Philips G7200, Philips C7240 */
+             3562500, /* 3.5625_MHz_XTAL        Jopac JO7400 */
              3570000, /* 3.57_MHz_XTAL          Telmac TMC-600 */
              3578640, /* 3.57864_MHz_XTAL       Atari Portfolio PCD3311T */
              3579000, /* 3.579_MHz_XTAL         BeebOPL */
@@ -128,6 +132,7 @@ namespace mame
              8467200, /* 8.4672_MHz_XTAL        Subsino's Ying Hua Lian */
              8664000, /* 8.664_MHz_XTAL         Touchmaster */
              8700000, /* 8.7_MHz_XTAL           Tandberg TDV 2324 */
+             8867000, /* 8.867_MHz_XTAL         Philips G7400 (~2x PAL subcarrier) */
              8867236, /* 8.867236_MHz_XTAL      RCA CDP1869 PAL color clock (~2x PAL subcarrier) */
              8867238, /* 8.867238_MHz_XTAL      ETI-660 (~2x PAL subcarrier) */
              8945000, /* 8.945_MHz_XTAL         Hit Me */
@@ -248,8 +253,11 @@ namespace mame
             17430000, /* 17.43_MHz_XTAL         Videx Videoterm */
             17550000, /* 17.55_MHz_XTAL         HP 264x display clock (50 Hz configuration) */
             17600000, /* 17.6_MHz_XTAL          LSI Octopus */
-            17734470, /* 17.73447_MHz_XTAL      (~4x PAL subcarrier) */
-            17734472, /* 17.734472_MHz_XTAL     actually ~4x PAL subcarrier */
+            17734470, /* 17.73447_MHz_XTAL      4x PAL subcarrier */
+            17734472, /* 17.734472_MHz_XTAL     4x PAL subcarrier - All of these exist, exact 4x PAL is actually 17'734'475 */
+            17734475, /* 17.734475_MHz_XTAL     4x PAL subcarrier - " */
+            17734476, /* 17.734476_MHz_XTAL     4x PAL subcarrier - " */
+            17812000, /* 17.812_MHz_XTAL        Videopac C52 */
             17971200, /* 17.9712_MHz_XTAL       Compucolor II, Hazeltine Esprit III */
             18000000, /* 18_MHz_XTAL            S.A.R, Ikari Warriors 3 */
             18414000, /* 18.414_MHz_XTAL        Ann Arbor Ambassador */
@@ -283,7 +291,7 @@ namespace mame
             21300000, /* 21.3_MHz_XTAL          - */
             21328100, /* 21.3281_MHz_XTAL       Philips NMS8245 */
             21477272, /* 21.477272_MHz_XTAL     BMC bowling, some Data East 90's games, Vtech Socrates; (6x NTSC subcarrier) */
-            21667500, /* 21.6675_MHz_XTAL       AT&T 610 (80-column display clock) */
+            21667500, /* 21.6675_MHz_XTAL       AT&T 610 80-column display clock */
             22000000, /* 22_MHz_XTAL            - */
             22032000, /* 22.032_MHz_XTAL        Intellec Series II I/O controller */
             22096000, /* 22.096_MHz_XTAL        ADDS Viewpoint 122 */
@@ -299,6 +307,7 @@ namespace mame
             23961600, /* 23.9616_MHz_XTAL       Osborne 4 (Vixen) */
             24000000, /* 24_MHz_XTAL            Mario, 80's Data East games, 80's Konami games */
             24073400, /* 24.0734_MHz_XTAL       DEC Rainbow 100 */
+            24270000, /* 24.27_MHz_XTAL         CIT-101XL */
             24300000, /* 24.3_MHz_XTAL          ADM 36 132-column display clock */
             24576000, /* 24.576_MHz_XTAL        Pole Position h/w, Model 3 CPU board */
             24883200, /* 24.8832_MHz_XTAL       DEC VT100 */
@@ -326,7 +335,8 @@ namespace mame
             27164000, /* 27.164_MHz_XTAL        Typically used on 90's Taito PCBs to drive the custom chips */
             27210900, /* 27.2109_MHz_XTAL       LA Girl */
             27562000, /* 27.562_MHz_XTAL        Visual 220 */
-            27720000, /* 27.72_MHz_XTAL         AT&T 610 (132-column display clock) */
+            27720000, /* 27.72_MHz_XTAL         AT&T 610 132-column display clock */
+            27956000, /* 27.956_MHz_XTAL        CIT-101e 132-column display clock */
             28000000, /* 28_MHz_XTAL            - */
             28322000, /* 28.322_MHz_XTAL        Saitek RISC 2500, Mephisto Montreux */
             28375160, /* 28.37516_MHz_XTAL      Amiga PAL systems */

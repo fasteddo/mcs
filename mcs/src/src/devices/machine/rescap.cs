@@ -10,7 +10,7 @@ namespace mame
     public static class rescap_global
     {
         // Little helpers for magnitude conversions
-        //#define RES_R(res) ((double)(res))
+        public static double RES_R(double res) { return res; }
         public static double RES_K(double res) { return res * 1e3; }
         public static double RES_M(double res) { return res * 1e6; }
         //#define RES_INF    (-1)

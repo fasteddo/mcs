@@ -98,6 +98,10 @@ namespace mame.netlist
         //        setup.register_source_proc(# name, &NETLIST_NAME(name));
         public static void LOCAL_SOURCE(nlparse_t setup, string name, nlsetup_func netlist_name) { setup.register_source_proc(name, netlist_name); }
 
+        //#define EXTERNAL_SOURCE(name)                                                  \
+        //        setup.register_source_proc(# name, &NETLIST_NAME(name));
+        public static void EXTERNAL_SOURCE(nlparse_t setup, string name, nlsetup_func netlist_name) { setup.register_source_proc(name, netlist_name); }
+
         // FIXME: Need to pass in parameter definition
         //#define LOCAL_LIB_ENTRY_1(name)                                                  \
         //        LOCAL_SOURCE(name)                                                     \
@@ -224,6 +228,7 @@ namespace mame.netlist
         plib.psource_collection_t m_sources;  //plib::psource_collection_t<>                m_sources;
         detail.abstract_t m_abstract;
 
+        //std::unordered_map<pstring, parser_t::token_store>    m_source_cache;
         log_type m_log;
         unsigned m_frontier_cnt;
 
@@ -245,7 +250,12 @@ namespace mame.netlist
             string model = plib.pglobal.ucase(plib.pglobal.trim(plib.pglobal.left(model_in, pos)));
             string def = plib.pglobal.trim(model_in.substr(pos + 1));
             if (!m_abstract.m_models.insert(model, def))
-                throw new nl_exception(nl_errstr_global.MF_MODEL_ALREADY_EXISTS_1(model_in));
+            {
+                // FIXME: Add an directive MODEL_OVERWRITE to netlist language
+                //throw nl_exception(MF_MODEL_ALREADY_EXISTS_1(model_in));
+                log().info.op(nl_errstr_global.MI_MODEL_OVERWRITE_1(model, model_in));
+                m_abstract.m_models[model] = def;
+            }
         }
 
 
@@ -261,8 +271,8 @@ namespace mame.netlist
         {
             if (!m_abstract.m_alias.insert(alias, out_))
             {
-                log().fatal.op(nl_errstr_global.MF_ADDING_ALI1_TO_ALIAS_LIST(alias));
-                throw new nl_exception(nl_errstr_global.MF_ADDING_ALI1_TO_ALIAS_LIST(alias));
+                log().fatal.op(nl_errstr_global.MF_ALIAS_ALREAD_EXISTS_1(alias));
+                throw new nl_exception(nl_errstr_global.MF_ALIAS_ALREAD_EXISTS_1(alias));
             }
         }
 
@@ -303,8 +313,8 @@ namespace mame.netlist
             string key = build_fqn(name);
             if (device_exists(key))
             {
-                log().fatal.op(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
-                throw new nl_exception(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(name));
+                log().fatal.op(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(key));
+                throw new nl_exception(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(key));
             }
 
             m_abstract.m_device_factory.push_back(new std.pair<string, factory.element_t>(key, f));  //m_abstract.m_device_factory.insert(m_abstract.m_device_factory.end(), {key, f});
@@ -329,7 +339,7 @@ namespace mame.netlist
                         }
 
                         string output_name = params_and_connections[ptokIdx];  //pstring output_name = *ptok;
-                        log().debug.op("Link: {0} {1}\n", tp, output_name);
+                        log().debug.op("Link: {0} {1}", tp, output_name);
 
                         register_link(name + "." + tp.substr(1), output_name);
                         ++ptokIdx;  //++ptok;
@@ -337,7 +347,7 @@ namespace mame.netlist
                     else if (plib.pglobal.startsWith(tp, "@"))
                     {
                         string term = tp.substr(1);
-                        log().debug.op("Link: {0} {1}\n", tp, term);
+                        log().debug.op("Link: {0} {1}", tp, term);
 
                         register_link(name + "." + term, term);
                     }
@@ -579,6 +589,9 @@ namespace mame.netlist
         {
             throw new emu_unimplemented();
         }
+
+
+        //bool parse_tokens(const parser_t::token_store &tokens, const pstring &name);
 
 
         //template <typename S, typename... Args>

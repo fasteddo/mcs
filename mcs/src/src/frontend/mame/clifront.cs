@@ -1194,18 +1194,27 @@ namespace mame
         //-------------------------------------------------
         void display_help(string exename)
         {
-            osd_printf_info("{0} v{1}\n{2}\n\n", emulator_info.get_appname(), version_global.build_version, emulator_info.get_copyright_info());
-            osd_printf_info("This software reproduces, more or less faithfully, the behaviour of a wide range\n" +
-                            "of machines. But hardware is useless without software, so images of the ROMs and\n" +
-                            "other media which run on that hardware are also required.\n\n");
-            osd_printf_info("Usage:  {0} [machine] [media] [software] [options]", exename);
-            osd_printf_info("\n\n" +
-                    "        {0} -showusage    for a list of options\n" +
-                    "        {1} -showconfig   to show your current {2}.ini\n" +
-                    "        {3} -listmedia    for a full list of supported media\n" +
-                    "        {4} -createconfig to create a {5}.ini\n\n" +
-                    "For usage instructions, please visit https://docs.mamedev.org \n", exename,
-                    exename, emulator_info.get_configname(), exename, exename, emulator_info.get_configname());
+            osd_printf_info(
+                    "{2} v{1}\n" +  //"%3$s v%2$s\n"
+                    "{4}\n" +  //"%5$s\n"
+                    "\n" +
+                    "This software reproduces, more or less faithfully, the behaviour of a wide range\n" +
+                    "of machines. But hardware is useless without software, so images of the ROMs and\n" +
+                    "other media which run on that hardware are also required.\n" +
+                    "\n" +
+                    "Usage:  {0} [machine] [media] [software] [options]\n" +  //"Usage:  %1$s [machine] [media] [software] [options]\n"
+                    "\n" +
+                    "        {0} -showusage    for a list of options\n" +  //"        %1$s -showusage    for a list of options\n"
+                    "        {0} -showconfig   to show current configuration in {3}.ini format\n" +  //"        %1$s -showconfig   to show current configuration in %4$s.ini format\n"
+                    "        {0} -listmedia    for a full list of supported media\n" +  //"        %1$s -listmedia    for a full list of supported media\n"
+                    "        {0} -createconfig to create a {3}.ini file\n" +  //"        %1$s -createconfig to create a %4$s.ini file\n"
+                    "\n" +
+                    "For usage instructions, please visit https://docs.mamedev.org/\n",
+                    exename,
+                    version_global.build_version,
+                    emulator_info.get_appname(),
+                    emulator_info.get_configname(),
+                    emulator_info.get_copyright_info());
         }
 
 

@@ -318,7 +318,7 @@ namespace mame.netlist
                     {
                         throw new emu_unimplemented();
 #if false
-                        stats().m_stat_total_time.pause();
+                        stats().m_stat_total_time.stop();
                         for (size_t i = 0; i < p; i++)
                         {
                             tmp[i].stats().m_stat_call_count.inc();
@@ -326,7 +326,7 @@ namespace mame.netlist
                             nt[i] = tmp[i].solve(now, "no-parallel");
                         }
 
-                        stats().m_stat_total_time.cont();
+                        stats().m_stat_total_time.start();
 #endif
                     }
 

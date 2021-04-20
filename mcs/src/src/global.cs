@@ -1452,6 +1452,7 @@ namespace mame
 
 
             // std::map functions
+            public void clear() { m_dictionary.Clear(); }
             public bool emplace(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
             public void erase(K key) { m_dictionary.Remove(key); }
             public V find(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default; }

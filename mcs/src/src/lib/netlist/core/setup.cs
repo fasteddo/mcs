@@ -670,6 +670,7 @@ namespace mame.netlist
             // resolve inputs
             resolve_inputs();
 
+#if false
             log().verbose.op("looking for two terms connected to rail nets ...");
             foreach (var t in m_nlstate.get_device_list<analog.nld_twoterm>())
             {
@@ -682,6 +683,7 @@ namespace mame.netlist
                     m_nlstate.remove_device(t);
                 }
             }
+#endif
 
             log().verbose.op("looking for unused hints ...");
             foreach (var h in m_abstract.m_hints)
@@ -733,12 +735,14 @@ namespace mame.netlist
             {
                 foreach (var term in n.core_terms())
                 {
-                    if (term.delegate_() == null)  //if (!term->delegate().is_set())
+                    if (term.delegate_() == null)  //if (!term->delegate())
                     {
                         log().fatal.op(nl_errstr_global.MF_DELEGATE_NOT_SET_1(term.name()));
                         throw new nl_exception(nl_errstr_global.MF_DELEGATE_NOT_SET_1(term.name()));
                     }
                 }
+
+                n.rebuild_list();
             }
         }
 
@@ -1194,9 +1198,7 @@ namespace mame.netlist
                 return iter_proxy;
 
             log().debug.op("connect_terminal_input: connecting proxy\n");
-            string x = new plib.pfmt("proxy_ad_{0}_{1}").op(inp.name(), m_proxy_cnt);
-            var new_proxy = incast.logic_family().create_a_d_proxy(m_nlstate, x, incast);
-            //auto new_proxy = plib::owned_ptr<devices::nld_a_to_d_proxy>::Create(netlist(), x, &incast);
+            var new_proxy = incast.logic_family().create_a_d_proxy(m_nlstate, new plib.pfmt("proxy_ad_{0}_{1}").op(inp.name(), m_proxy_cnt), incast);
 
             var ret = new_proxy;
 
@@ -1209,20 +1211,27 @@ namespace mame.netlist
 
             if (inp.has_net())
             {
-                foreach (var p in inp.net().core_terms())
+                foreach (detail.core_terminal_t p in inp.net().core_terms())
                 {
-                    p.clear_net(); // de-link from all nets ...
-                    if (!connect(ret.proxy_term(), p))
+                    // inp may already belongs to the logic net. Thus skip it here.
+                    // It will be removed by the clear further down.
+                    if (p != inp)
                     {
-                        log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
-                        throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
-
+                        p.clear_net(); // de-link from all nets ...
+                        if (!connect(ret.proxy_term(), p))
+                        {
+                            log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(
+                                    ret.proxy_term().name(), p.name()));
+                            throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(
+                                    ret.proxy_term().name(), p.name()));
+                        }
                     }
                 }
 
                 inp.net().core_terms().clear(); // clear the list
             }
 
+            inp.clear_net();
             add_terminal(ret.out_().net(), inp);
             m_nlstate.register_device(new_proxy.name(), new_proxy);
             return ret;
@@ -1304,7 +1313,7 @@ namespace mame.netlist
         public virtual bool parse(nlparse_t setup, string name)
         {
             var strm = stream(name);
-            return strm != null ? setup.parse_stream(strm, name) : false;
+            return strm != null ? setup.parse_stream(strm, name) : false;  //return (!strm.empty()) ? setup.parse_stream(std::move(strm), name) : false;
         }
     }
 
@@ -1321,6 +1330,8 @@ namespace mame.netlist
     //class source_string_t : public source_netlist_t
 
     //class source_file_t : public source_netlist_t
+
+    //class source_pattern_t : public source_netlist_t
 
     //class source_mem_t : public source_netlist_t
 
@@ -1357,4 +1368,8 @@ namespace mame.netlist
             return p;
         }
     }
+
+
+    //class source_token_t : public source_netlist_t
+
 } // namespace netlist

@@ -343,7 +343,7 @@ namespace mame
                 screen_device screen = new screen_device_iterator(machine().root_device()).first();
                 bool debugger_enabled = (machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0;
                 bool within_instruction_hook = debugger_enabled && machine().debugger().within_instruction_hook();
-                if (screen != null && (machine().paused() || from_debugger || within_instruction_hook))
+                if (screen != null && ((machine().paused() && machine().options().update_in_pause()) || from_debugger || within_instruction_hook))
                     screen.reset_partial_updates();
             }
         }
@@ -612,7 +612,11 @@ namespace mame
             bool has_live_screen = false;
             foreach (screen_device screen in iter)
             {
-                screen.update_partial(screen.visible_area().bottom());
+                if (screen.partial_scan_hpos() >= 0) // previous update ended mid-scanline
+                    screen.update_now();
+
+                screen.update_partial(screen.visible_area().max_y);
+
                 if (machine().render().is_live(screen))
                     has_live_screen = true;
             }

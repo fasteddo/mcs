@@ -3548,96 +3548,79 @@ namespace mame
                 address_space_config spaceconfig = memory.space_config(spacenum);
                 if (spaceconfig != null)
                 {
+                    int level = emumem_global.handler_entry_dispatch_level(spaceconfig.addr_width());
                     // allocate one of the appropriate type
-                    switch (spaceconfig.data_width() | (spaceconfig.addr_shift() + 4))
+                    switch ((level << 8) | (spaceconfig.endianness() == endianness_t.ENDIANNESS_BIG ? 0x1000 : 0) | spaceconfig.data_width() | (spaceconfig.addr_shift() + 4))
                     {
-                        case  8|(4+1):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(0,  1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(0,  1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000| 8|(4+1): memory.allocate(new address_space_specific(0, 0,  1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000| 8|(4+1): memory.allocate(new address_space_specific(0, 0,  1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100| 8|(4+1): memory.allocate(new address_space_specific(1, 0,  1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100| 8|(4+1): memory.allocate(new address_space_specific(1, 0,  1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case  (8|(4-0)):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(0,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(0,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000| 8|(4-0): memory.allocate(new address_space_specific(0, 0,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000| 8|(4-0): memory.allocate(new address_space_specific(0, 0,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100| 8|(4-0): memory.allocate(new address_space_specific(1, 0,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100| 8|(4-0): memory.allocate(new address_space_specific(1, 0,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 16|(4+3):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(1,  3, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(1,  3, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|16|(4+3): memory.allocate(new address_space_specific(0, 1,  3, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|16|(4+3): memory.allocate(new address_space_specific(0, 1,  3, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|16|(4+3): memory.allocate(new address_space_specific(1, 1,  3, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|16|(4+3): memory.allocate(new address_space_specific(1, 1,  3, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 16|(4-0):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(1,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(1,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|16|(4-0): memory.allocate(new address_space_specific(0, 1,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|16|(4-0): memory.allocate(new address_space_specific(0, 1,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|16|(4-0): memory.allocate(new address_space_specific(1, 1,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|16|(4-0): memory.allocate(new address_space_specific(1, 1,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 16|(4-1):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(1, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(1, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|16|(4-1): memory.allocate(new address_space_specific(0, 1, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|16|(4-1): memory.allocate(new address_space_specific(0, 1, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|16|(4-1): memory.allocate(new address_space_specific(1, 1, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|16|(4-1): memory.allocate(new address_space_specific(1, 1, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 32|(4-0):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(2,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(2,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|32|(4+3): memory.allocate(new address_space_specific(0, 2,  3, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|32|(4+3): memory.allocate(new address_space_specific(0, 2,  3, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|32|(4+3): memory.allocate(new address_space_specific(1, 2,  3, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|32|(4+3): memory.allocate(new address_space_specific(1, 2,  3, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 32|(4-1):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(2, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(2, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|32|(4-0): memory.allocate(new address_space_specific(0, 2,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|32|(4-0): memory.allocate(new address_space_specific(0, 2,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|32|(4-0): memory.allocate(new address_space_specific(1, 2,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|32|(4-0): memory.allocate(new address_space_specific(1, 2,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 32|(4-2):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(2, -2, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(2, -2, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|32|(4-1): memory.allocate(new address_space_specific(0, 2, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|32|(4-1): memory.allocate(new address_space_specific(0, 2, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|32|(4-1): memory.allocate(new address_space_specific(1, 2, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|32|(4-1): memory.allocate(new address_space_specific(1, 2, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 64|(4-0):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(3,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(3,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|32|(4-2): memory.allocate(new address_space_specific(0, 2, -2, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|32|(4-2): memory.allocate(new address_space_specific(0, 2, -2, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|32|(4-2): memory.allocate(new address_space_specific(1, 2, -2, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|32|(4-2): memory.allocate(new address_space_specific(1, 2, -2, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 64|(4-1):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(3, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(3, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|64|(4-0): memory.allocate(new address_space_specific(0, 3,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|64|(4-0): memory.allocate(new address_space_specific(0, 3,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|64|(4-0): memory.allocate(new address_space_specific(1, 3,  0, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|64|(4-0): memory.allocate(new address_space_specific(1, 3,  0, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 64|(4-2):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(3, -2, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(3, -2, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|64|(4-1): memory.allocate(new address_space_specific(0, 3, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|64|(4-1): memory.allocate(new address_space_specific(0, 3, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|64|(4-1): memory.allocate(new address_space_specific(1, 3, -1, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|64|(4-1): memory.allocate(new address_space_specific(1, 3, -1, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 64|(4-3):
-                            if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                                memory.allocate(new address_space_specific(3, -3, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            else
-                                memory.allocate(new address_space_specific(3, -3, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum);
-                            break;
+                        case 0x0000|0x000|64|(4-2): memory.allocate(new address_space_specific(0, 3, -2, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|64|(4-2): memory.allocate(new address_space_specific(0, 3, -2, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|64|(4-2): memory.allocate(new address_space_specific(1, 3, -2, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|64|(4-2): memory.allocate(new address_space_specific(1, 3, -2, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+
+                        case 0x0000|0x000|64|(4-3): memory.allocate(new address_space_specific(0, 3, -3, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|64|(4-3): memory.allocate(new address_space_specific(0, 3, -3, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|64|(4-3): memory.allocate(new address_space_specific(1, 3, -3, endianness_t.ENDIANNESS_LITTLE, this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|64|(4-3): memory.allocate(new address_space_specific(1, 3, -3, endianness_t.ENDIANNESS_BIG   , this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
                         default:
-                            throw new emu_fatalerror("Invalid width {0}/shift {1} specified for address_space::allocate", spaceconfig.data_width(), spaceconfig.addr_shift());
+                            throw new emu_fatalerror("Invalid width {0}/shift {1} specified for address_space::allocate", spaceconfig.data_width(), spaceconfig.addr_shift());  //throw emu_fatalerror("Invalid width %d/shift %d specified for address_space::allocate", spaceconfig->data_width(), spaceconfig->addr_shift());
                     }
+
                 }
             }
         }
@@ -4205,7 +4188,7 @@ namespace mame
 
 
         // construction/destruction
-        public address_space_specific(int width, int addrShift, endianness_t endian, memory_manager manager, device_memory_interface memory, int spacenum, int address_width)
+        public address_space_specific(int level, int width, int addrShift, endianness_t endian, memory_manager manager, device_memory_interface memory, int spacenum, int address_width)
             : base(manager, memory, spacenum)
         {
             Width = width;

@@ -82,6 +82,12 @@ namespace mame.netlist
             }
 
 
+            // -----------------------------------------------------------------------------
+            // Hot section
+            //
+            // Any changes below will impact performance.
+            // -----------------------------------------------------------------------------
+
             public void toggle_new_Q() { m_new_Q.op = (m_cur_Q.op ^ 1); }
 
 
@@ -152,7 +158,10 @@ namespace mame.netlist
             //void add_to_active_list(core_terminal_t &term) noexcept;
             //void remove_from_active_list(core_terminal_t &term) noexcept;
 
-            // setup stuff
+
+            // -----------------------------------------------------------------------------
+            // setup stuff - cold
+            // -----------------------------------------------------------------------------
 
             //bool is_logic() const noexcept;
             public bool is_analog() { return this is analog_net_t; }  //return dynamic_cast<const analog_net_t *>(this) != nullptr;
@@ -214,6 +223,10 @@ namespace mame.netlist
             //inline void set_Q_time(const netlist_sig_t &newQ, const netlist_time_ext &at) noexcept
 
 
+            // -----------------------------------------------------------------------------
+            // Very hot
+            // -----------------------------------------------------------------------------
+
             //template <bool KEEP_STATS, typename T, typename S>
             void process(bool KEEP_STATS, UInt32 mask, netlist_sig_t sig)  //inline void detail::net_t::process(T mask, const S &sig) noexcept
             {
@@ -226,11 +239,11 @@ namespace mame.netlist
                         throw new emu_unimplemented();
 #if false
                         p.set_copied_input(sig);
-                        var stats = p.device().stats();
-                        stats.m_stat_call_count.inc();
+                        auto *stats(p.device().stats());
+                        stats->m_stat_call_count.inc();
                         if ((p.terminal_state() & mask))
                         {
-                            var g = stats.m_stat_total_time.guard();
+                            auto g(stats->m_stat_total_time.guard());
                             p.run_delegate();
                         }
 #endif

@@ -210,7 +210,7 @@ namespace mame.netlist
 
             protected override netlist_time compute_next_timestep(matrix_solver_t_fptype cur_ts, matrix_solver_t_fptype min_ts, matrix_solver_t_fptype max_ts)
             {
-                matrix_solver_t_fptype new_solver_timestep = max_ts;
+                matrix_solver_t_fptype new_solver_timestep_sq = max_ts * max_ts;
 
                 for (size_t k = 0; k < size(); k++)
                 {
@@ -223,23 +223,20 @@ namespace mame.netlist
                     matrix_solver_t_fptype hn = cur_ts;
 
                     matrix_solver_t_fptype DD2 = (DD_n / hn - ops.cast_double(m_DD_n_m_1[k]) / ops.cast_double(m_h_n_m_1[k])) / (hn + ops.cast_double(m_h_n_m_1[k]));  //fptype DD2 = (DD_n / hn - m_DD_n_m_1[k] / m_h_n_m_1[k]) / (hn + m_h_n_m_1[k]);
-                    matrix_solver_t_fptype new_net_timestep = 0;
 
                     m_h_n_m_1[k] = ops.cast(hn);
                     m_DD_n_m_1[k] = ops.cast(DD_n);
-                    if (plib.pglobal.abs<nl_fptype, nl_fptype_ops>(DD2) > fp_constants_double.TIMESTEP_MINDIV()) // avoid div-by-zero  //if (plib::abs(DD2) > fp_constants<fptype>::TIMESTEP_MINDIV()) // avoid div-by-zero
-                        new_net_timestep = plib.pglobal.sqrt<nl_fptype, nl_fptype_ops>(m_params.m_dynamic_lte.op() / plib.pglobal.abs<nl_fptype, nl_fptype_ops>(nlconst.half() * DD2));  //new_net_timestep = plib::sqrt(m_params.m_dynamic_lte / plib::abs(nlconst::half()*DD2));
-                    else
-                        new_net_timestep = max_ts;
-
-                    new_solver_timestep = std.min(new_net_timestep, new_solver_timestep);
+                    {
+                        // save the sqrt for the end
+                        matrix_solver_t_fptype new_net_timestep_sq = m_params.m_dynamic_lte.op() / plib.pglobal.abs<nl_fptype, nl_fptype_ops>(nlconst.half() * DD2);
+                        new_solver_timestep_sq = std.min(new_net_timestep_sq, new_solver_timestep_sq);
+                    }
                 }
 
-                //new_solver_timestep = std.max(new_solver_timestep, m_params.m_min_timestep);
-                new_solver_timestep = std.max(new_solver_timestep, min_ts);
+                new_solver_timestep_sq = std.max(plib.pglobal.sqrt<nl_fptype, nl_fptype_ops>(new_solver_timestep_sq), min_ts);
 
                 // FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
-                return std.max(netlist_time.from_fp(new_solver_timestep), netlist_time.quantum() * 2);
+                return std.max(netlist_time.from_fp(new_solver_timestep_sq), netlist_time.quantum() * 2);
             }
 
 

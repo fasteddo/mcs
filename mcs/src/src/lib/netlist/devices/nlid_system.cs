@@ -16,41 +16,6 @@ namespace mame.netlist
     namespace devices
     {
         // -----------------------------------------------------------------------------
-        // netlistparams
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(netlistparams)
-        public class nld_netlistparams : device_t
-        {
-            //NETLIB_DEVICE_IMPL(netlistparams,       "PARAMETER",              "")
-            public static readonly factory.constructor_ptr_t decl_netlistparams = NETLIB_DEVICE_IMPL<nld_netlistparams>("PARAMETER", "");
-
-
-            public param_logic_t m_use_deactivate;
-            public param_num_t<unsigned, param_num_t_operators_uint32> m_startup_strategy;
-            public param_num_t<unsigned, param_num_t_operators_uint32> m_mos_capmodel;
-            //! How many times do we try to resolve links (connections)
-            public param_num_t<unsigned, param_num_t_operators_uint32> m_max_link_loops;
-
-
-            //NETLIB_CONSTRUCTOR(netlistparams)
-            //detail.family_setter_t m_famsetter;
-            //template <class CLASS>
-            public nld_netlistparams(object owner, string name)
-                : base(owner, name)
-            {
-                m_use_deactivate = new param_logic_t(this, "USE_DEACTIVATE", false);
-                m_startup_strategy = new param_num_t<unsigned, param_num_t_operators_uint32>(this, "STARTUP_STRATEGY", 0);
-                m_mos_capmodel = new param_num_t<unsigned, param_num_t_operators_uint32>(this, "DEFAULT_MOS_CAPMODEL", 2);
-                m_max_link_loops = new param_num_t<unsigned, param_num_t_operators_uint32>(this, "MAX_LINK_RESOLVE_LOOPS", 100);
-            }
-
-
-            //NETLIB_RESETI() { }
-            //NETLIB_UPDATE_PARAMI() { }
-        }
-
-
-        // -----------------------------------------------------------------------------
         // clock
         // -----------------------------------------------------------------------------
         //NETLIB_OBJECT(clock)
@@ -142,75 +107,6 @@ namespace mame.netlist
 
             //NETLIB_UPDATE_PARAMI();
             public override void update_param() { m_Q.push(m_IN.op()); }
-        }
-
-
-        // -----------------------------------------------------------------------------
-        // nld_gnd
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(gnd)
-        class nld_gnd : device_t
-        {
-            //NETLIB_DEVICE_IMPL(gnd,                 "GNDA",                   "")
-            public static readonly factory.constructor_ptr_t decl_gnd = NETLIB_DEVICE_IMPL<nld_gnd>("GNDA", "");
-
-
-            analog_output_t m_Q;
-
-
-            //NETLIB_CONSTRUCTOR(gnd)
-            //detail.family_setter_t m_famsetter;
-            //template <class CLASS>
-            public nld_gnd(object owner, string name)
-                : base(owner, name)
-            {
-                m_Q = new analog_output_t(this, "Q");
-            }
-
-
-            //NETLIB_UPDATE_PARAMI()
-            public override void update_param()
-            {
-                m_Q.push(nlconst.zero());
-            }
-
-
-            //NETLIB_RESETI() { }
-        }
-
-
-        // -----------------------------------------------------------------------------
-        // nld_nc_pin
-        // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT(nc_pin)
-        class nld_nc_pin : device_t
-        {
-            //NETLIB_DEVICE_IMPL(nc_pin,              "NC_PIN",                 "")
-            public static readonly factory.constructor_ptr_t decl_nc_pin = NETLIB_DEVICE_IMPL<nld_nc_pin>("NC_PIN", "");
-
-
-            //analog_input_t m_I;
-
-
-            //NETLIB_CONSTRUCTOR(nc_pin)
-            //detail.family_setter_t m_famsetter;
-            //template <class CLASS>
-            nld_nc_pin(object owner, string name)
-                : base(owner, name)
-            {
-                throw new emu_unimplemented();
-#if false
-                , m_I(*this, "I", NETLIB_DELEGATE(noop))
-#endif
-            }
-
-
-            //NETLIB_RESETI() { }
-
-
-            //NETLIB_HANDLERI(noop)
-            void noop()
-            { }
         }
 
 

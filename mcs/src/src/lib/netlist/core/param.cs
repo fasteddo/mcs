@@ -54,12 +54,6 @@ namespace mame.netlist
         public abstract string valstr();
 
 
-        void update_param()
-        {
-            device().update_param();
-        }
-
-
         protected string get_initial(core_device_t dev, out bool found)
         {
             string res = dev.state().setup().get_initial_param_val(this.name(), "");
@@ -74,7 +68,7 @@ namespace mame.netlist
             if (p != v)
             {
                 p = v;
-                update_param();
+                device().update_param();
             }
         }
     }

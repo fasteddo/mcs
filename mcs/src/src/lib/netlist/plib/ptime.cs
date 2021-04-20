@@ -295,5 +295,6 @@ namespace mame.plib
 
 
         public static ptime<TYPE, TYPE_OPS, TYPE_RES> Max(ptime<TYPE, TYPE_OPS, TYPE_RES> lhs, ptime<TYPE, TYPE_OPS, TYPE_RES> rhs) { return ops.less_than(lhs.m_time, rhs.m_time) ? rhs : lhs; }
+        public static ptime<TYPE, TYPE_OPS, TYPE_RES> Min(ptime<TYPE, TYPE_OPS, TYPE_RES> lhs, ptime<TYPE, TYPE_OPS, TYPE_RES> rhs) { return ops.less_than(lhs.m_time, rhs.m_time) ? lhs : rhs; }
     }
 }
