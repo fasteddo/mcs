@@ -5,8 +5,11 @@ using System;
 using System.Collections.Generic;
 
 using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
-using nl_fptype = System.Double;
+using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
+using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nl_fptype_ops = mame.plib.constants_operators_double;
 using size_t = System.UInt32;
 using unsigned = System.UInt32;
 
@@ -15,11 +18,14 @@ namespace mame.netlist
 {
     namespace solver
     {
-
         //template <typename FT, int SIZE>
-        abstract class matrix_solver_ext_t_nl_fptype : matrix_solver_t
+        abstract class matrix_solver_ext_t<FT, FT_OPS, int_SIZE> : matrix_solver_t
+            where FT_OPS : plib.constants_operators<FT>, new()
+            where int_SIZE : int_constant, new()
         {
-            protected int SIZE;
+            protected static plib.constants_operators<FT> ops = new FT_OPS();
+            protected static int_constant SIZE = new int_SIZE();
+
 
             //using float_type = FT;
 
@@ -29,37 +35,34 @@ namespace mame.netlist
 
 
             //PALIGNAS_VECTOROPT() parrays define alignment already
-            protected nl_fptype [] m_new_V;  //plib::parray<float_type, SIZE> m_new_V;
+            protected FT [] m_new_V;  //plib::parray<float_type, SIZE> m_new_V;
             //PALIGNAS_VECTOROPT() parrays define alignment already
-            protected nl_fptype [] m_RHS;  //plib::parray<float_type, SIZE> m_RHS;
+            protected FT [] m_RHS;  //plib::parray<float_type, SIZE> m_RHS;
 
             //PALIGNAS_VECTOROPT() parrays define alignment already
-            protected plib.pmatrix2d_listpointer_nl_fptype m_mat_ptr;  //plib::pmatrix2d<float_type *> m_mat_ptr;
+            protected plib.pmatrix2d<Pointer<FT>> m_mat_ptr;  //plib::pmatrix2d<float_type *> m_mat_ptr;
 
 
             // state - variable time_stepping
             //PALIGNAS_VECTOROPT() parrays define alignment already
-            nl_fptype [] m_last_V;  //plib::parray<fptype, SIZE> m_last_V;
+            FT [] m_last_V;  //plib::parray<fptype, SIZE> m_last_V;
             // PALIGNAS_VECTOROPT() parrays define alignment already
-            nl_fptype [] m_DD_n_m_1;  //plib::parray<fptype, SIZE> m_DD_n_m_1;
+            FT [] m_DD_n_m_1;  //plib::parray<fptype, SIZE> m_DD_n_m_1;
             // PALIGNAS_VECTOROPT() parrays define alignment already
-            nl_fptype [] m_h_n_m_1;  //plib::parray<fptype, SIZE> m_h_n_m_1;
+            FT [] m_h_n_m_1;  //plib::parray<fptype, SIZE> m_h_n_m_1;
 
             size_t m_dim;  //const std::size_t m_dim;
 
 
-            public matrix_solver_ext_t_nl_fptype(int SIZE, netlist_state_t anetlist, string name, analog_net_t_list_t nets, solver_parameters_t params_, size_t size)
-                : base(anetlist, name, nets, params_)
+            protected matrix_solver_ext_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_, size_t size)
+                : base(main_solver, name, nets, params_)
             {
-                this.SIZE = SIZE;
-
-
-                m_new_V = new nl_fptype [size];
-                m_RHS = new nl_fptype [size];
-                m_mat_ptr = new plib.pmatrix2d_listpointer_nl_fptype(size, this.max_railstart() + 1);
-                m_last_V = new nl_fptype [size]; std.fill(m_last_V, nlconst.zero());
-                m_DD_n_m_1 = new nl_fptype [size]; std.fill(m_DD_n_m_1, nlconst.zero());
-                m_h_n_m_1 = new nl_fptype [size]; std.fill(m_h_n_m_1, nlconst.magic(1e-6)); // we need a non zero value here
+                m_new_V = new FT [size];
+                m_RHS = new FT [size];
+                m_mat_ptr = new plib.pmatrix2d<Pointer<FT>>(size, this.max_railstart() + 1);
+                m_last_V = new FT [size]; std.fill(m_last_V, ops.cast(nlconst.zero()));
+                m_DD_n_m_1 = new FT [size]; std.fill(m_DD_n_m_1, ops.cast(nlconst.zero()));
+                m_h_n_m_1 = new FT [size]; std.fill(m_h_n_m_1, ops.cast(nlconst.magic(1e-6))); // we need a non zero value here
                 m_dim = size;
 
 
@@ -69,16 +72,6 @@ namespace mame.netlist
                 state().save(this, m_last_V, this.name(), "m_last_V");
                 state().save(this, m_DD_n_m_1, this.name(), "m_DD_n_m_1");
                 state().save(this, m_h_n_m_1, this.name(), "m_h_n_m_1");
-            }
-
-
-            size_t max_railstart()
-            {
-                size_t max_rail = 0;
-                for (size_t k = 0; k < m_terms.size(); k++)
-                    max_rail = std.max(max_rail, m_terms[k].railstart());
-
-                return max_rail;
             }
 
 
@@ -151,7 +144,7 @@ namespace mame.netlist
 
             protected size_t size()
             {
-                return (SIZE > 0) ? (size_t)SIZE : m_dim;
+                return (SIZE.value > 0) ? (size_t)SIZE.value : m_dim;
             }
 
 
@@ -160,7 +153,7 @@ namespace mame.netlist
             {
                 size_t iN = size();
                 for (size_t i = 0; i < iN; i++)
-                    this.m_terms[i].setV((nl_fptype)m_new_V[i]);
+                    this.m_terms[i].setV(ops.cast_double(m_new_V[i]));  //this->m_terms[i].setV(static_cast<fptype>(m_new_V[i]));
             }
 #else
             // global tanh damping (4.197)
@@ -184,14 +177,14 @@ namespace mame.netlist
                 // and thus belong into a different calculation. This applies to all solvers.
 
                 size_t iN = size();
-                var reltol = (nl_fptype)m_params.m_reltol.op();
-                var vntol = (nl_fptype)m_params.m_vntol.op();
+                var reltol = ops.cast(m_params.m_reltol.op());  //const auto reltol(static_cast<float_type>(m_params.m_reltol));
+                var vntol = ops.cast(m_params.m_vntol.op());  //const auto vntol(static_cast<float_type>(m_params.m_vntol));
                 for (size_t i = 0; i < iN; i++)
                 {
-                    var vold = (nl_fptype)this.m_terms[i].getV();
+                    var vold = ops.cast(this.m_terms[i].getV());  //const auto vold(static_cast<float_type>(this->m_terms[i].getV()));
                     var vnew = m_new_V[i];
-                    var tol = vntol + reltol * std.max(plib.pglobal.abs(vnew), plib.pglobal.abs(vold));
-                    if (plib.pglobal.abs(vnew - vold) > tol)
+                    var tol = ops.add(vntol, ops.multiply(reltol, ops.max(plib.pglobal.abs<FT, FT_OPS>(vnew), plib.pglobal.abs<FT, FT_OPS>(vold))));  //const auto tol(vntol + reltol * std::max(plib::abs(vnew),plib::abs(vold)));
+                    if (ops.greater_than(plib.pglobal.abs<FT, FT_OPS>(ops.subtract(vnew, vold)), tol))  //if (plib::abs(vnew - vold) > tol)
                         return true;
                 }
 
@@ -199,35 +192,51 @@ namespace mame.netlist
             }
 
 
-            protected override netlist_time compute_next_timestep(nl_fptype cur_ts, nl_fptype max_ts)
+            protected override void backup()
             {
-                nl_fptype new_solver_timestep = max_ts;
+                size_t iN = size();
+                for (size_t i = 0; i < iN; i++)
+                    m_last_V[i] = ops.cast(this.m_terms[i].getV());  //m_last_V[i] = gsl::narrow_cast<fptype>(this->m_terms[i].getV());
+            }
+
+
+            protected override void restore()
+            {
+                size_t iN = size();
+                for (size_t i = 0; i < iN; i++)
+                    this.m_terms[i].setV(ops.cast_double(m_last_V[i]));  //this->m_terms[i].setV(static_cast<nl_fptype>(m_last_V[i]));
+            }
+
+
+            protected override netlist_time compute_next_timestep(matrix_solver_t_fptype cur_ts, matrix_solver_t_fptype min_ts, matrix_solver_t_fptype max_ts)
+            {
+                matrix_solver_t_fptype new_solver_timestep = max_ts;
 
                 for (size_t k = 0; k < size(); k++)
                 {
                     var t = m_terms[k];
-                    var v = (nl_fptype)t.getV();
+                    var v = (matrix_solver_t_fptype)t.getV();  //const auto v(static_cast<fptype>(t.getV()));
                     // avoid floating point exceptions
-                    nl_fptype DD_n = std.max(-fp_constants_double.TIMESTEP_MAXDIFF(),
-                        std.min(+fp_constants_double.TIMESTEP_MAXDIFF(), v - m_last_V[k]));
+                    matrix_solver_t_fptype DD_n = std.max(-fp_constants_double.TIMESTEP_MAXDIFF(), std.min(+fp_constants_double.TIMESTEP_MAXDIFF(), v - ops.cast_double(m_last_V[k])));  //const fptype DD_n = std::max(-fp_constants<fptype>::TIMESTEP_MAXDIFF(), std::min(+fp_constants<fptype>::TIMESTEP_MAXDIFF(),(v - m_last_V[k])));
 
-                    m_last_V[k] = v;
-                    nl_fptype hn = cur_ts;
+                    //m_last_V[k] = v;
+                    matrix_solver_t_fptype hn = cur_ts;
 
-                    nl_fptype DD2 = (DD_n / hn - m_DD_n_m_1[k] / m_h_n_m_1[k]) / (hn + m_h_n_m_1[k]);
-                    nl_fptype new_net_timestep = 0;
+                    matrix_solver_t_fptype DD2 = (DD_n / hn - ops.cast_double(m_DD_n_m_1[k]) / ops.cast_double(m_h_n_m_1[k])) / (hn + ops.cast_double(m_h_n_m_1[k]));  //fptype DD2 = (DD_n / hn - m_DD_n_m_1[k] / m_h_n_m_1[k]) / (hn + m_h_n_m_1[k]);
+                    matrix_solver_t_fptype new_net_timestep = 0;
 
-                    m_h_n_m_1[k] = hn;
-                    m_DD_n_m_1[k] = DD_n;
-                    if (plib.pglobal.abs(DD2) > fp_constants_double.TIMESTEP_MINDIV()) // avoid div-by-zero
-                        new_net_timestep = plib.pglobal.sqrt(m_params.m_dynamic_lte.op() / plib.pglobal.abs(nlconst.half() * DD2));
+                    m_h_n_m_1[k] = ops.cast(hn);
+                    m_DD_n_m_1[k] = ops.cast(DD_n);
+                    if (plib.pglobal.abs<nl_fptype, nl_fptype_ops>(DD2) > fp_constants_double.TIMESTEP_MINDIV()) // avoid div-by-zero  //if (plib::abs(DD2) > fp_constants<fptype>::TIMESTEP_MINDIV()) // avoid div-by-zero
+                        new_net_timestep = plib.pglobal.sqrt<nl_fptype, nl_fptype_ops>(m_params.m_dynamic_lte.op() / plib.pglobal.abs<nl_fptype, nl_fptype_ops>(nlconst.half() * DD2));  //new_net_timestep = plib::sqrt(m_params.m_dynamic_lte / plib::abs(nlconst::half()*DD2));
                     else
-                        new_net_timestep = m_params.m_max_timestep;
+                        new_net_timestep = max_ts;
 
                     new_solver_timestep = std.min(new_net_timestep, new_solver_timestep);
                 }
 
-                new_solver_timestep = std.max(new_solver_timestep, m_params.m_min_timestep);
+                //new_solver_timestep = std.max(new_solver_timestep, m_params.m_min_timestep);
+                new_solver_timestep = std.max(new_solver_timestep, min_ts);
 
                 // FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
                 return std.max(netlist_time.from_fp(new_solver_timestep), netlist_time.quantum() * 2);

@@ -4,8 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using netlist_sig_t = System.UInt32;
-using nl_fptype = System.Double;
+using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nl_fptype_ops = mame.plib.constants_operators_double;
 
 
 namespace mame.netlist
@@ -110,7 +111,7 @@ namespace mame.netlist
                 : base(anetlist, name, in_proxied)
             {
                 m_Q = new logic_output_t(this, "Q");
-                m_I = new analog_input_t(this, "I");
+                m_I = new analog_input_t(this, "I", input);
             }
 
 
@@ -124,14 +125,11 @@ namespace mame.netlist
 
 
             //NETLIB_RESETI();
-            public override void reset()
-            {
-                throw new emu_unimplemented();
-            }
 
 
-            //NETLIB_UPDATEI();
-            public override void update()
+            //NETLIB_HANDLERI(input);
+            //NETLIB_HANDLER(a_to_d_proxy, input)
+            void input()
             {
                 throw new emu_unimplemented();
             }
@@ -167,7 +165,7 @@ namespace mame.netlist
             public nld_d_to_a_proxy(netlist_state_t anetlist, string name, logic_output_t out_proxied)
                 : base(anetlist, name, out_proxied)
             {
-                m_I = new logic_input_t(this, "I");
+                m_I = new logic_input_t(this, "I", input);
                 m_RP = new analog.nld_twoterm(this, "RP");
                 m_RN = new analog.nld_twoterm(this, "RN");
                 m_last_state = new state_var<netlist_sig_t>(this, "m_last_var", terminal_t.OUT_TRISTATE());
@@ -209,16 +207,17 @@ namespace mame.netlist
                 m_last_state.op = terminal_t.OUT_TRISTATE();
                 m_RN.reset();
                 m_RP.reset();
-                m_RN.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_low()),
+                m_RN.set_G_V_I(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(logic_family().R_low()),
                         logic_family().low_offset_V(), nlconst.zero());
                 m_RP.set_G_V_I(G_OFF,
                     nlconst.zero(),
                     nlconst.zero());
             }
 
-            //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(d_to_a_proxy)
-            public override void update()
+
+            //NETLIB_HANDLERI(input);
+            //NETLIB_HANDLER(d_to_a_proxy ,input)
+            void input()
             {
                 var state = m_I.op();
                 if (state != m_last_state.op)
@@ -230,7 +229,7 @@ namespace mame.netlist
                         {
                             if (state == 0)  //case 0:
                             {
-                                m_RN.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_low()),
+                                m_RN.set_G_V_I(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(logic_family().R_low()),
                                         logic_family().low_offset_V(), nlconst.zero());
                                 m_RP.set_G_V_I(G_OFF,
                                     nlconst.zero(),
@@ -241,7 +240,7 @@ namespace mame.netlist
                                 m_RN.set_G_V_I(G_OFF,
                                     nlconst.zero(),
                                     nlconst.zero());
-                                m_RP.set_G_V_I(plib.pglobal.reciprocal(logic_family().R_high()),
+                                m_RP.set_G_V_I(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(logic_family().R_high()),
                                         logic_family().high_offset_V(), nlconst.zero());
                             }//    break;
                             else if (state == terminal_t.OUT_TRISTATE())  //case terminal_t.OUT_TRISTATE():

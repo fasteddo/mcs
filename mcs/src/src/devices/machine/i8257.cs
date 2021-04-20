@@ -94,9 +94,9 @@ namespace mame
         devcb_write8       m_out_memw_cb;
 
         // channel accessors
-        devcb_read8.array<devcb_read8> m_in_ior_cb;
-        devcb_write8.array<devcb_write8> m_out_iow_cb;
-        devcb_write_line.array<devcb_write_line> m_out_dack_cb;
+        devcb_read8.array<devcb_read8, uint32_constant_4> m_in_ior_cb;
+        devcb_write8.array<devcb_write8, uint32_constant_4> m_out_iow_cb;
+        devcb_write_line.array<devcb_write_line, uint32_constant_4> m_out_dack_cb;
 
         struct channel
         {
@@ -135,9 +135,9 @@ namespace mame
             m_out_tc_cb = new devcb_write_line(this);
             m_in_memr_cb = new devcb_read8(this);
             m_out_memw_cb = new devcb_write8(this);
-            m_in_ior_cb = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
-            m_out_iow_cb = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
-            m_out_dack_cb = new devcb_write_line.array<devcb_write_line>(4, this, () => { return new devcb_write_line(this); });
+            m_in_ior_cb = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_out_iow_cb = new devcb_write8.array<devcb_write8, uint32_constant_4>(this, () => { return new devcb_write8(this); });
+            m_out_dack_cb = new devcb_write_line.array<devcb_write_line, uint32_constant_4>(this, () => { return new devcb_write_line(this); });
         }
 
 

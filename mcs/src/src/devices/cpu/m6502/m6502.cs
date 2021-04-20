@@ -181,6 +181,7 @@ namespace mame
         bool irq_state;
         bool apu_irq_state;
         bool v_state;
+        bool nmi_pending;
         bool irq_taken;
         bool sync;
         bool inhibit_interrupts;
@@ -229,6 +230,7 @@ namespace mame
             irq_state = false;
             apu_irq_state = false;
             v_state = false;
+            nmi_pending = false;
             irq_taken = false;
             sync = false;
             inhibit_interrupts = false;
@@ -284,10 +286,11 @@ namespace mame
             save_item(NAME(new { irq_state }));
             save_item(NAME(new { apu_irq_state }));
             save_item(NAME(new { v_state }));
+            save_item(NAME(new { nmi_pending }));
+            save_item(NAME(new { irq_taken }));
             save_item(NAME(new { inst_state }));
             save_item(NAME(new { inst_substate }));
             save_item(NAME(new { inst_state_base }));
-            save_item(NAME(new { irq_taken }));
             save_item(NAME(new { inhibit_interrupts }));
 
             set_icountptr(icount_);
@@ -305,8 +308,9 @@ namespace mame
             nmi_state = false;
             irq_state = false;
             apu_irq_state = false;
-            irq_taken = false;
             v_state = false;
+            nmi_pending = false;
+            irq_taken = false;
             inst_state = STATE_RESET;
             inst_substate = 0;
             inst_state_base = 0;
@@ -340,11 +344,12 @@ namespace mame
             inst_state = STATE_RESET;
             inst_substate = 0;
             inst_state_base = 0;
-            nmi_state = false;
             irq_state = false;
+            nmi_state = false;
             apu_irq_state = false;
-            irq_taken = false;
             v_state = false;
+            nmi_pending = false;
+            irq_taken = false;
             sync = false;
             sync_w.op(CLEAR_LINE);
             inhibit_interrupts = false;
@@ -404,7 +409,11 @@ namespace mame
             {
             case IRQ_LINE: irq_state = state == ASSERT_LINE; break;
             case APU_IRQ_LINE: apu_irq_state = state == ASSERT_LINE; break;
-            case NMI_LINE: nmi_state = nmi_state || (state == ASSERT_LINE); break;
+            case NMI_LINE:
+                if (!nmi_state && state == ASSERT_LINE)
+                    nmi_pending = true;
+                nmi_state = state == ASSERT_LINE;
+                break;
             case V_LINE:
                 if (!v_state && state == ASSERT_LINE)
                     P |= F_V;
@@ -473,7 +482,7 @@ namespace mame
             sync = false;
             sync_w.op(CLEAR_LINE);
 
-            if ((nmi_state || ((irq_state || apu_irq_state) && (P & F_I) == 0)) && !inhibit_interrupts)
+            if ((nmi_pending || ((irq_state || apu_irq_state) && (P & F_I) == 0)) && !inhibit_interrupts)
             {
                 irq_taken = true;
                 IR = 0x00;

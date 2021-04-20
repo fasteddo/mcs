@@ -36,18 +36,17 @@ namespace mame
             MC14584B_GATE(setup, "E");
             MC14584B_GATE(setup, "F");
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
-
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
-                "A.A",   /*    A1 |1     ++    14| VCC  */ "A.VCC",
-                "A.Q",   /*    Y1 |2           13| A6   */ "F.A",
-                "B.A",   /*    A2 |3           12| Y6   */ "F.Q",
-                "B.Q",   /*    Y2 |4  MC14584B 11| A5   */ "E.A",
-                "C.A",   /*    A3 |5           10| Y5   */ "E.Q",
-                "C.Q",   /*    Y3 |6            9| A4   */ "D.A",
-                "A.GND", /*   GND |7            8| Y4   */ "D.Q"
-                         /*       +--------------+      */
+            netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD", "E.VDD", "F.VDD");
+            netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS", "E.VSS", "F.VSS");
+            netlist.nl_setup_global.DIPPINS(setup,  /*       +--------------+      */
+                "A.A",  /*    A1 |1     ++    14| VDD  */ "A.VDD",
+                "A.Q",  /*    Y1 |2           13| A6   */ "F.A",
+                "B.A",  /*    A2 |3           12| Y6   */ "F.Q",
+                "B.Q",  /*    Y2 |4  MC14584B 11| A5   */ "E.A",
+                "C.A",  /*    A3 |5           10| Y5   */ "E.Q",
+                "C.Q",  /*    Y3 |6            9| A4   */ "D.A",
+                "A.VSS",/*   VSS |7            8| Y4   */ "D.Q"
+                      /*       +--------------+      */
             );
 
             netlist.nl_setup_global.NETLIST_END();

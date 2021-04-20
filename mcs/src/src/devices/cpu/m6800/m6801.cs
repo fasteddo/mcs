@@ -169,8 +169,8 @@ namespace mame
         };
 
 
-        devcb_read8.array<devcb_read8> m_in_port_func;
-        devcb_write8.array<devcb_write8> m_out_port_func;
+        devcb_read8.array<devcb_read8, uint32_constant_4> m_in_port_func;
+        devcb_write8.array<devcb_write8, uint32_constant_4> m_out_port_func;
 
         devcb_write_line m_out_sc2_func;
         devcb_write_line m_out_sertx_func;
@@ -285,8 +285,8 @@ namespace mame
 
             init_m6803_insn();
 
-            m_in_port_func = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
-            m_out_port_func = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
+            m_in_port_func = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_out_port_func = new devcb_write8.array<devcb_write8, uint32_constant_4>(this, () => { return new devcb_write8(this); });
             m_out_sc2_func = new devcb_write_line(this);
             m_out_sertx_func = new devcb_write_line(this);
         }

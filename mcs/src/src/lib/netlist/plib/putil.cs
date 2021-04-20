@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using psource_t_stream_ptr = mame.std.istream;  //using stream_ptr = plib::unique_ptr<std::istream>;
 using size_t = System.UInt32;
 using unsigned = System.UInt32;
 
@@ -174,19 +175,6 @@ namespace mame.plib
     //class psource_collection_t
 
 
-    /// \brief copy type S to type D byte by byte
-    ///
-    /// The purpose of this copy function is to suppress compiler warnings.
-    /// Use at your own risk. This is dangerous.
-    ///
-    /// \param s Source object
-    /// \param d Destination object
-    /// \tparam S Type of source object
-    /// \tparam D Type of destination object
-    //template <typename S, typename D>
-    //void reinterpret_copy(S &s, D &d)
-
-
     //namespace util
     //{
     //    pstring basename(const pstring &filename, const pstring &suffix = "");
@@ -309,7 +297,7 @@ namespace mame.plib
 
         //virtual ~psource_t() noexcept = default;
 
-        public abstract std.istream stream(string name);  //virtual stream_ptr stream(const pstring &name) = 0;
+        public abstract psource_t_stream_ptr stream(string name);  //virtual stream_ptr stream(const pstring &name) = 0;
     }
 
 

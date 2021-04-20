@@ -32,7 +32,7 @@ namespace mame
         required_device<mb88_cpu_device> m_cpu;
         byte m_portO;
         devcb_read8 m_k;
-        devcb_read8.array<devcb_read8> m_in;
+        devcb_read8.array<devcb_read8, uint32_constant_4> m_in;
         devcb_write8 m_p;
 
 
@@ -42,7 +42,7 @@ namespace mame
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_portO = 0;
             m_k = new devcb_read8(this);
-            m_in = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
+            m_in = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
             m_p = new devcb_write8(this);
         }
 

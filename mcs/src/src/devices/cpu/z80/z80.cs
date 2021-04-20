@@ -3080,7 +3080,7 @@ namespace mame
         /***************************************************************
          * Read a byte from given memory location
          ***************************************************************/
-        public uint8_t rm(uint16_t addr)
+        public virtual uint8_t rm(uint16_t addr)
         {
             return m_data.read_byte(addr);
         }
@@ -3097,7 +3097,7 @@ namespace mame
         /***************************************************************
         * Write a byte to given memory location
         ***************************************************************/
-        public void wm(uint16_t addr, uint8_t value)
+        public virtual void wm(uint16_t addr, uint8_t value)
         {
             m_data.write_byte(addr, value);
         }
@@ -3116,7 +3116,7 @@ namespace mame
          * reading opcodes. In case of system with memory mapped I/O,
          * this function can be used to greatly speed up emulation
          ***************************************************************/
-        public uint8_t rop()
+        public virtual uint8_t rop()
         {
             UInt32 pc = PCD;
             PC++;
@@ -3133,14 +3133,14 @@ namespace mame
          * support systems that use different encoding mechanisms for
          * opcodes and opcode arguments
          ***************************************************************/
-        uint8_t arg()
+        protected virtual uint8_t arg()
         {
             UInt32 pc = PCD;
             PC++;
             return m_args.read_byte(pc);
         }
 
-        uint16_t arg16()
+        protected virtual uint16_t arg16()
         {
             UInt32 pc = PCD;
             PC += 2;

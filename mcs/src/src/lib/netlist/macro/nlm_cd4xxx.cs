@@ -49,6 +49,8 @@ namespace mame
         //#define CD4316_DIP(name)                                                      \
         //        NET_REGISTER_DEV(CD4016_DIP, name)
 
+        //#define CD4538_DIP(name)                                                        \
+        //        NET_REGISTER_DEV(CD4538_DIP, name)
 #endif
 
 
@@ -346,6 +348,39 @@ namespace mame
         }
 
 
+        //static NETLIST_START(CD4538_DIP)
+        public static void netlist_CD4538_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            netlist.nld_74123_global.CD4538(setup, "A");
+            netlist.nld_74123_global.CD4538(setup, "B");
+
+            netlist.nl_setup_global.ALIAS(setup, "1", "A.C"); // C1
+            netlist.nl_setup_global.ALIAS(setup, "2", "A.RC"); // RC1
+            netlist.nl_setup_global.ALIAS(setup, "3", "A.CLRQ");
+            netlist.nl_setup_global.ALIAS(setup, "4", "A.A");
+            netlist.nl_setup_global.ALIAS(setup, "5", "A.B");
+            netlist.nl_setup_global.ALIAS(setup, "6", "A.Q");
+            netlist.nl_setup_global.ALIAS(setup, "7", "A.QQ");
+            netlist.nl_setup_global.ALIAS(setup, "8", "A.VSS");
+
+            netlist.nl_setup_global.ALIAS(setup, "9", "B.QQ");
+            netlist.nl_setup_global.ALIAS(setup, "10", "B.Q");
+            netlist.nl_setup_global.ALIAS(setup, "11", "B.B");
+            netlist.nl_setup_global.ALIAS(setup, "12", "B.A");
+            netlist.nl_setup_global.ALIAS(setup, "13", "B.CLRQ");
+            netlist.nl_setup_global.ALIAS(setup, "14", "B.RC"); // RC2
+            netlist.nl_setup_global.ALIAS(setup, "15", "B.C"); // C2
+            netlist.nl_setup_global.ALIAS(setup, "16", "A.VDD");
+
+            netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD");
+            netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
         //NETLIST_START(CD4XXX_lib)
         public static void netlist_CD4XXX_lib(netlist.nlparse_t setup)
         {
@@ -384,6 +419,7 @@ namespace mame
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4016_DIP", netlist_CD4016_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4066_DIP", netlist_CD4066_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4316_DIP", netlist_CD4316_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "CD4538_DIP", netlist_CD4538_DIP);
 
             netlist.nl_setup_global.NETLIST_END();
         }

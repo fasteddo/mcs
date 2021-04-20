@@ -33,6 +33,9 @@ namespace mame.ui
 
             item_append("Machine Information", "", 0, menu_options.GAME_INFO);
 
+            if (ui().found_machine_warnings())
+                item_append("Warning Information", "", 0, menu_options.WARN_INFO);
+
             foreach (device_image_interface image in new image_interface_iterator(machine().root_device()))
             {
                 if (image.user_loadable())

@@ -16,8 +16,8 @@ namespace mame.netlist
             //#endif
             //#ifndef RES_R
             //#define RES_R(res) (res)
-            //#define RES_K(res) ((res) * 1e3)
-            //#define RES_M(res) ((res) * 1e6)
+            public static double RES_K(double res) { return res * 1e3; }
+            public static double RES_M(double res) { return res * 1e6; }
             //#define CAP_U(cap) ((cap) * 1e-6)
             //#define CAP_N(cap) ((cap) * 1e-9)
             public static double CAP_P(double cap) { return cap * 1e-12; }
@@ -131,8 +131,12 @@ namespace mame.netlist
                 //LIB_ENTRY(74107_dip)
 //#endif
                 //LIB_ENTRY(74107A)    // FIXME: implement missing DIP
+                //LIB_ENTRY(74113)
+                //LIB_ENTRY(74113_dip)
+                //LIB_ENTRY(74113A)
+                //LIB_ENTRY(74113A_dip)
+                //LIB_ENTRY(74121)
                 //LIB_ENTRY(74123)
-                //LIB_ENTRY(74123_dip)
                 //LIB_ENTRY(74125)
                 //LIB_ENTRY(74126)
                 //LIB_ENTRY(74153)
@@ -177,7 +181,7 @@ namespace mame.netlist
                 //LIB_ENTRY(CD4020)
                 LIB_ENTRY("CD4066_GATE", nld_CD4066_GATE.decl_CD4066_GATE);
                 //LIB_ENTRY(CD4316_GATE)
-                //LIB_ENTRY(4538_dip)
+                //LIB_ENTRY(4538)
                 //LIB_ENTRY(schmitt_trigger)
                 //// entries with suffix WI are legacy only
                 ////ENTRY(4066,                 CD_4066,              "+A,B")
@@ -198,7 +202,7 @@ namespace mame.netlist
                 //LIB_ENTRY(74365_dip)
                 //LIB_ENTRY(82S16_dip)
                 //LIB_ENTRY(82S115_dip)
-                //LIB_ENTRY(9602_dip)
+                //LIB_ENTRY(9602)
                 //LIB_ENTRY(9310_dip)
                 //LIB_ENTRY(9314_dip)
                 //LIB_ENTRY(9316_dip)

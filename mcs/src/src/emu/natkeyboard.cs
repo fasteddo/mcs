@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using keycode_map_list = mame.std.list<mame.natural_keyboard.keycode_map_entry>; //typedef std::list<keycode_map_entry> keycode_map_list;
-using keycode_map = mame.std.unordered_map<System.UInt32, mame.std.list<mame.natural_keyboard.keycode_map_entry>>;  //typedef std::unordered_map<char32_t, keycode_map_entry> keycode_map;
+using keycode_map_entries = mame.std.vector<mame.natural_keyboard.keycode_map_entry>; //typedef std::vector<keycode_map_entry> keycode_map_entries;
+using keycode_map = mame.std.unordered_map<System.UInt32, mame.std.vector<mame.natural_keyboard.keycode_map_entry>>;  //typedef std::unordered_map<char32_t, keycode_map_entries> keycode_map;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 
@@ -38,15 +38,19 @@ namespace mame
         //}
 
 
+        public class size_t_constant_SHIFT_COUNT : uint32_constant { public UInt32 value { get { return SHIFT_COUNT; } } }
+        public class size_t_constant_SHIFT_COUNT_1 : uint32_constant { public UInt32 value { get { return SHIFT_COUNT + 1; } } }
+
+
         // internal keyboard code information
         public class keycode_map_entry
         {
-            public std.array<ioport_field> field = new std.array<ioport_field>(SHIFT_COUNT + 1);
+            public std.array<ioport_field, size_t_constant_SHIFT_COUNT_1> field = new std.array<ioport_field, size_t_constant_SHIFT_COUNT_1>();
             public unsigned shift;
             public ioport_condition condition;
         }
-        //typedef std::list<keycode_map_entry> keycode_map_list;
-        //typedef std::unordered_map<char32_t, keycode_map_list> keycode_map;
+        //typedef std::vector<keycode_map_entry> keycode_map_entries;
+        //typedef std::unordered_map<char32_t, keycode_map_entries> keycode_map;
 
 
         const bool LOG_NATURAL_KEYBOARD = false;
@@ -183,7 +187,7 @@ namespace mame
         {
             // find all shift keys
             unsigned mask = 0;
-            std.array<ioport_field> shift = new std.array<ioport_field>(SHIFT_COUNT);
+            std.array<ioport_field, size_t_constant_SHIFT_COUNT> shift = new std.array<ioport_field, size_t_constant_SHIFT_COUNT>();
             std.fill(shift, null);
             foreach (var port in manager.ports())
             {
@@ -238,9 +242,9 @@ namespace mame
                                         newcode.field[fieldnum] = field;
                                         if (null == found)
                                         {
-                                            keycode_map_list map_list = new keycode_map_list();
-                                            map_list.emplace_back(newcode);
-                                            m_keycode_map.emplace(code, map_list);
+                                            keycode_map_entries entries = new keycode_map_entries();
+                                            entries.emplace_back(newcode);
+                                            m_keycode_map.emplace(code, entries);
                                         }
                                         else
                                         {
@@ -258,6 +262,16 @@ namespace mame
                         }
                     }
                 }
+            }
+
+            // sort mapping entries by shift state
+            foreach (var mapping in m_keycode_map)
+            {
+                //std::sort(
+                //        mapping.second.begin(),
+                //        mapping.second.end(),
+                //        [] (keycode_map_entry const &x, keycode_map_entry const &y) { return x.shift < y.shift; });
+                mapping.second().Sort((x, y) => { return x.shift < y.shift ? -1 : 1; });
             }
         }
 
@@ -396,12 +410,15 @@ namespace mame
         keycode_map_entry find_code(char32_t ch)
         {
             var found = m_keycode_map.find(ch);
-            if (null == found) return null;
+            if (null == found)
+                return null;
+
             foreach (keycode_map_entry entry in found)
             {
                 if (entry.condition.eval())
                     return entry;
             }
+
             return null;
         }
     }

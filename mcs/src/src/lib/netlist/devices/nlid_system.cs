@@ -4,8 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using netlist_sig_t = System.UInt32;
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
+using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
+using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
+using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
+using unsigned = System.UInt32;
 
 
 namespace mame.netlist
@@ -23,10 +26,10 @@ namespace mame.netlist
 
 
             public param_logic_t m_use_deactivate;
-            public param_num_t_unsigned m_startup_strategy;
-            public param_num_t_unsigned m_mos_capmodel;
+            public param_num_t<unsigned, param_num_t_operators_uint32> m_startup_strategy;
+            public param_num_t<unsigned, param_num_t_operators_uint32> m_mos_capmodel;
             //! How many times do we try to resolve links (connections)
-            public param_num_t_unsigned m_max_link_loops;
+            public param_num_t<unsigned, param_num_t_operators_uint32> m_max_link_loops;
 
 
             //NETLIB_CONSTRUCTOR(netlistparams)
@@ -36,14 +39,10 @@ namespace mame.netlist
                 : base(owner, name)
             {
                 m_use_deactivate = new param_logic_t(this, "USE_DEACTIVATE", false);
-                m_startup_strategy = new param_num_t_unsigned(this, "STARTUP_STRATEGY", 1);
-                m_mos_capmodel = new param_num_t_unsigned(this, "DEFAULT_MOS_CAPMODEL", 2);
-                m_max_link_loops = new param_num_t_unsigned(this, "MAX_LINK_RESOLVE_LOOPS", 100);
+                m_startup_strategy = new param_num_t<unsigned, param_num_t_operators_uint32>(this, "STARTUP_STRATEGY", 0);
+                m_mos_capmodel = new param_num_t<unsigned, param_num_t_operators_uint32>(this, "DEFAULT_MOS_CAPMODEL", 2);
+                m_max_link_loops = new param_num_t<unsigned, param_num_t_operators_uint32>(this, "MAX_LINK_RESOLVE_LOOPS", 100);
             }
-
-
-            //NETLIB_UPDATEI() { }
-            public override void update() { }
 
 
             //NETLIB_RESETI() { }
@@ -100,9 +99,6 @@ namespace mame.netlist
             }
 
 
-            //NETLIB_UPDATEI();
-            public override void update() { }
-
             //NETLIB_RESETI();
             public override void reset() { m_Q.initial(0); }
 
@@ -141,9 +137,6 @@ namespace mame.netlist
             }
 
 
-            //NETLIB_UPDATEI();
-            public override void update() { }
-
             //NETLIB_RESETI();
             public override void reset() { m_Q.initial(nlconst.zero()); }
 
@@ -174,14 +167,15 @@ namespace mame.netlist
                 m_Q = new analog_output_t(this, "Q");
             }
 
-            //NETLIB_UPDATEI()
-            public override void update()
+
+            //NETLIB_UPDATE_PARAMI()
+            public override void update_param()
             {
                 m_Q.push(nlconst.zero());
             }
 
+
             //NETLIB_RESETI() { }
-            public override void reset() { }
         }
 
 
@@ -206,15 +200,17 @@ namespace mame.netlist
             {
                 throw new emu_unimplemented();
 #if false
-                m_I(*this, "I")
+                , m_I(*this, "I", NETLIB_DELEGATE(noop))
 #endif
             }
 
 
             //NETLIB_RESETI() { }
-            public override void reset() { }
-            //NETLIB_UPDATEI() { }
-            public override void update() { }
+
+
+            //NETLIB_HANDLERI(noop)
+            void noop()
+            { }
         }
 
 

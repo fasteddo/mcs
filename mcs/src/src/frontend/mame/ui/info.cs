@@ -310,17 +310,15 @@ namespace mame.ui
                                 buf += string.Format("\n\nThere are working clones of this machine: {0}", driver.name);
                             else
                                 buf += string.Format(", {0}", driver.name);
+
                             foundworking = true;
                         }
                     }
                 }
+
                 if (foundworking)
                     buf += "\n";
             }
-
-            // add the 'press OK' string
-            if (!buf.str().empty())
-                buf += "\n\nPress any key to continue";
 
             return buf.str();
         }
@@ -479,27 +477,11 @@ namespace mame.ui
     }
 
 
-#if false
-    class menu_game_info : menu
-    {
-        //menu_game_info(mame_ui_manager &mui, render_container &container);
-        //virtual ~menu_game_info() override;
+    //class menu_game_info : menu
 
 
-        //virtual void populate(float &customtop, float &custombottom) override;
-        //virtual void handle() override;
-    }
+    //class menu_warn_info : public menu
 
 
-    class menu_image_info : menu
-    {
-        //menu_image_info(mame_ui_manager &mui, render_container &container);
-        //virtual ~menu_image_info() override;
-
-
-        //virtual void populate(float &customtop, float &custombottom) override;
-        //virtual void handle() override;
-        //void image_info(device_image_interface *image);
-    }
-#endif
+    //class menu_image_info : menu
 }

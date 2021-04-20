@@ -50,8 +50,9 @@ namespace mame.netlist
             //        NET_REGISTER_DEV(CLOCK, name)                                           \
             //        PARAM(name.FREQ, freq)
 
-            //#define VARCLOCK(name, func)                                                    \
+            //#define VARCLOCK(name, n, func)                                                 \
             //        NET_REGISTER_DEV(VARCLOCK, name)                                        \
+            //        PARAM(name.N, n)                                                        \
             //        PARAM(name.FUNC, func)
 
             //#define EXTCLOCK(name, freq, pattern)                                           \
@@ -107,22 +108,34 @@ namespace mame.netlist
             }
 
 
-            //NETLIB_DEVICE_IMPL(dummy_input, "DUMMY_INPUT",            "")
-            //NETLIB_DEVICE_IMPL(frontier, "FRONTIER_DEV",           "+I,+G,+Q")
-            //NETLIB_DEVICE_IMPL(function, "AFUNC",                  "N,FUNC")
+            //NETLIB_DEVICE_IMPL(netlistparams,       "PARAMETER",              "")
+            //NETLIB_DEVICE_IMPL(nc_pin,              "NC_PIN",                 "")
+
+            //NETLIB_DEVICE_IMPL(frontier,            "FRONTIER_DEV",           "+I,+G,+Q")
+            //NETLIB_DEVICE_IMPL(function,            "AFUNC",                  "N,FUNC")
             //NETLIB_DEVICE_IMPL(analog_input,        "ANALOG_INPUT",           "IN")
             //NETLIB_DEVICE_IMPL(clock,               "CLOCK",                  "FREQ")
-            //NETLIB_DEVICE_IMPL(varclock,            "VARCLOCK",               "FUNC")
+            //NETLIB_DEVICE_IMPL(varclock,            "VARCLOCK",               "N,FUNC")
             //NETLIB_DEVICE_IMPL(extclock,            "EXTCLOCK",               "FREQ,PATTERN")
-            //NETLIB_DEVICE_IMPL(res_sw,              "RES_SWITCH",             "+I,+1,+2")
+            //NETLIB_DEVICE_IMPL(sys_dsw1,            "SYS_DSW",                "+I,+1,+2")
+            //NETLIB_DEVICE_IMPL(sys_dsw2,            "SYS_DSW2",               "")
+            //NETLIB_DEVICE_IMPL(sys_compd,           "SYS_COMPD",              "")
+
+            //using NETLIB_NAME(sys_noise_mt_u) =
+            //    NETLIB_NAME(sys_noise)<plib::mt19937_64, plib::uniform_distribution_t>;
+            //NETLIB_DEVICE_IMPL(sys_noise_mt_u,      "SYS_NOISE_MT_U",         "SIGMA")
+
+            //using NETLIB_NAME(sys_noise_mt_n) =
+            //    NETLIB_NAME(sys_noise)<plib::mt19937_64, plib::normal_distribution_t>;
+            //NETLIB_DEVICE_IMPL(sys_noise_mt_n,      "SYS_NOISE_MT_N",         "SIGMA")
+
             //NETLIB_DEVICE_IMPL(mainclock,           "MAINCLOCK",              "FREQ")
-            //NETLIB_DEVICE_IMPL(gnd,                 "GND",                    "")
-            //NETLIB_DEVICE_IMPL(netlistparams,       "PARAMETER",              "")
+            //NETLIB_DEVICE_IMPL(gnd,                 "GNDA",                   "")
 
             //using NETLIB_NAME(logic_input8) = NETLIB_NAME(logic_inputN)<8>;
-            //NETLIB_DEVICE_IMPL(logic_input8,         "LOGIC_INPUT8",            "IN,FAMILY")
+            //NETLIB_DEVICE_IMPL(logic_input8,         "LOGIC_INPUT8",            "IN,MODEL")
 
-            //NETLIB_DEVICE_IMPL(logic_input, "LOGIC_INPUT", "IN,FAMILY")
+            //NETLIB_DEVICE_IMPL(logic_input,         "LOGIC_INPUT",            "IN,MODEL")
             //NETLIB_DEVICE_IMPL_ALIAS(logic_input_ttl, logic_input, "TTL_INPUT", "IN")
         }
     }

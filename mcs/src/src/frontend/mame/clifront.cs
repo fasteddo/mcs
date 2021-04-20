@@ -1204,7 +1204,7 @@ namespace mame
                     "        {1} -showconfig   to show your current {2}.ini\n" +
                     "        {3} -listmedia    for a full list of supported media\n" +
                     "        {4} -createconfig to create a {5}.ini\n\n" +
-                    "For usage instructions, please consult the files config.txt and windows.txt.\n", exename,
+                    "For usage instructions, please visit https://docs.mamedev.org \n", exename,
                     exename, emulator_info.get_configname(), exename, exename, emulator_info.get_configname());
         }
 

@@ -287,6 +287,15 @@ namespace mame
         //        NET_REGISTER_DEV(TTL_74107_DIP, name)
 //#endif
 
+        //#define TTL_74121_DIP(name)                                                    \
+        //        NET_REGISTER_DEV(TTL_74121_DIP, name)
+
+        //#define TTL_74123_DIP(name)                                                    \
+        //        NET_REGISTER_DEV(TTL_74123_DIP, name)
+
+        //#define TTL_9602_DIP(name)                                                     \
+        //        NET_REGISTER_DEV(TTL_9602_DIP, name)
+
         //#define TTL_74125_DIP(name)                                                    \
         //        NET_REGISTER_DEV(TTL_74125_DIP, name)
         public static void TTL_74125_DIP(netlist.nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74125_DIP", name); }
@@ -297,6 +306,8 @@ namespace mame
         //#define TTL_74156_DIP(name)                                                    \
         //        NET_REGISTER_DEV(TTL_74156_DIP, name)
 
+        //#define TTL_74157_DIP(name)                                                    \
+        //        NET_REGISTER_DEV(TTL_74157_DIP, name)
 
         //#define TTL_74260_GATE(name)                                                   \
         //        NET_REGISTER_DEV(TTL_74260_GATE, name)
@@ -1159,6 +1170,107 @@ namespace mame
         }
 
 
+        //static NETLIST_START(TTL_74121_DIP)
+        public static void netlist_TTL_74121_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            netlist.nld_74123_global.TTL_74121(setup, "A");
+            netlist.nld_twoterm_global.RES(setup, "RINT", netlist.devices.net_lib_global.RES_K(2));
+            netlist.nld_twoterm_global.RES(setup, "RD",   netlist.devices.net_lib_global.RES_M(1000));
+
+            netlist.nl_setup_global.ALIAS(setup, "1", "A.QQ");
+            //ALIAS(2", ); NC
+            netlist.nl_setup_global.ALIAS(setup, "3", "A.A1");
+            netlist.nl_setup_global.ALIAS(setup, "4", "A.A2");
+            netlist.nl_setup_global.ALIAS(setup, "5", "A.B");
+            netlist.nl_setup_global.ALIAS(setup, "6", "A.Q");
+            netlist.nl_setup_global.ALIAS(setup, "7", "A.GND");
+
+            //ALIAS(8", ); NC
+            netlist.nl_setup_global.ALIAS(setup, "9",  "RINT.1"); // RINT
+            netlist.nl_setup_global.ALIAS(setup, "10", "A.C"); // CEXT
+            netlist.nl_setup_global.ALIAS(setup, "11", "A.RC"); // REXT
+            //ALIAS(12", ); NC
+            //ALIAS(13", ); NC
+            netlist.nl_setup_global.ALIAS(setup, "14", "A.VCC");
+
+            netlist.nl_setup_global.NET_C(setup, "RINT.2", "A.RC");
+
+            // Avoid error messages if RINT is not used.
+            netlist.nl_setup_global.NET_C(setup, "RINT.1", "RD.2");
+            netlist.nl_setup_global.NET_C(setup, "RD.1", "A.GND");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_74123_DIP)
+        public static void netlist_TTL_74123_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            netlist.nld_74123_global.TTL_74123(setup, "A");
+            netlist.nld_74123_global.TTL_74123(setup, "B");
+
+            netlist.nl_setup_global.ALIAS(setup, "1", "A.A");
+            netlist.nl_setup_global.ALIAS(setup, "2", "A.B");
+            netlist.nl_setup_global.ALIAS(setup, "3", "A.CLRQ");
+            netlist.nl_setup_global.ALIAS(setup, "4", "A.QQ");
+            netlist.nl_setup_global.ALIAS(setup, "5", "B.Q");
+            netlist.nl_setup_global.ALIAS(setup, "6", "B.C"); // CEXT
+            netlist.nl_setup_global.ALIAS(setup, "7", "B.RC"); // REXT
+            netlist.nl_setup_global.ALIAS(setup, "8", "A.GND");
+
+            netlist.nl_setup_global.ALIAS(setup, "9", "B.A");
+            netlist.nl_setup_global.ALIAS(setup, "10", "B.B");
+            netlist.nl_setup_global.ALIAS(setup, "11", "B.CLRQ");
+            netlist.nl_setup_global.ALIAS(setup, "12", "B.QQ");
+            netlist.nl_setup_global.ALIAS(setup, "13", "A.Q");
+            netlist.nl_setup_global.ALIAS(setup, "14", "A.C"); // CEXT
+            netlist.nl_setup_global.ALIAS(setup, "15", "A.RC"); // REXT
+            netlist.nl_setup_global.ALIAS(setup, "16", "A.VCC");
+
+            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
+            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_9602_DIP)
+        public static void netlist_TTL_9602_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            netlist.nld_74123_global.TTL_9602(setup, "A");
+            netlist.nld_74123_global.TTL_9602(setup, "B");
+
+            netlist.nl_setup_global.ALIAS(setup, "1", "A.C"); // C1
+            netlist.nl_setup_global.ALIAS(setup, "2", "A.RC"); // RC1
+            netlist.nl_setup_global.ALIAS(setup, "3", "A.CLRQ");
+            netlist.nl_setup_global.ALIAS(setup, "4", "A.B");
+            netlist.nl_setup_global.ALIAS(setup, "5", "A.A");
+            netlist.nl_setup_global.ALIAS(setup, "6", "A.Q");
+            netlist.nl_setup_global.ALIAS(setup, "7", "A.QQ");
+            netlist.nl_setup_global.ALIAS(setup, "8", "A.GND");
+
+            netlist.nl_setup_global.ALIAS(setup, "9", "B.QQ");
+            netlist.nl_setup_global.ALIAS(setup, "10", "B.Q");
+            netlist.nl_setup_global.ALIAS(setup, "11", "B.A");
+            netlist.nl_setup_global.ALIAS(setup, "12", "B.B");
+            netlist.nl_setup_global.ALIAS(setup, "13", "B.CLRQ");
+            netlist.nl_setup_global.ALIAS(setup, "14", "B.RC"); // RC2
+            netlist.nl_setup_global.ALIAS(setup, "15", "B.C"); // C2
+            netlist.nl_setup_global.ALIAS(setup, "16", "A.VCC");
+
+            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
+            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
         /*
          * DM74155/DM74156: Dual 2-Line to 4-Line Decoders/Demultiplexers
          *
@@ -1359,6 +1471,38 @@ namespace mame
         }
 
 
+        //static NETLIST_START(TTL_74157_DIP)
+        public static void netlist_TTL_74157_DIP(netlist.nlparse_t setup)
+        {
+            netlist.nl_setup_global.NETLIST_START();
+
+            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74157_GATE", "A");
+            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74157_GATE", "B");
+            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74157_GATE", "C");
+            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74157_GATE", "D");
+
+            netlist.nl_setup_global.NET_C(setup, "A.E", "B.E", "C.E", "D.E");
+            netlist.nl_setup_global.NET_C(setup, "A.S", "B.S", "C.S", "D.S");
+
+            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+
+            netlist.nl_setup_global.DIPPINS(setup,  /*       +--------------+      */
+                "A.S",  /*     S |1     ++    16| VCC  */ "A.VCC",
+                "A.I",  /*   I0a |2           15| /E   */ "A.E",
+                "A.J",  /*   I1a |3           14| I0c  */ "C.I",
+                "A.O",  /*    Za |4   74157   13| I1c  */ "C.J",
+                "B.I",  /*   I0b |5           12| Zc   */ "C.O",
+                "B.J",  /*   I1b |6           11| I0d  */ "D.I",
+                "B.O",  /*    Zb |7           10| I1d  */ "D.J",
+                "A.GND",/*   GND |8            9| Zd   */ "D.O"
+                      /*       +--------------+      */
+            );
+
+            netlist.nl_setup_global.NETLIST_END();
+        }
+
+
         /*
          *  DM74260: Dual 5-Input NOR Gates
          *                 _________
@@ -1488,6 +1632,15 @@ namespace mame
             netlist.nl_setup_global.NET_C(setup, "A.CP", "B.CP", "C.CP", "D.CP", "E.CP", "F.CP", "G.CP", "H.CP");
             netlist.nl_setup_global.NET_C(setup, "A.E", "B.E", "C.E", "D.E", "E.E", "F.E", "G.E", "H.E");
 
+            netlist.nl_setup_global.HINT(setup, "A.QQ", "NC");
+            netlist.nl_setup_global.HINT(setup, "B.QQ", "NC");
+            netlist.nl_setup_global.HINT(setup, "C.QQ", "NC");
+            netlist.nl_setup_global.HINT(setup, "D.QQ", "NC");
+            netlist.nl_setup_global.HINT(setup, "E.QQ", "NC");
+            netlist.nl_setup_global.HINT(setup, "F.QQ", "NC");
+            netlist.nl_setup_global.HINT(setup, "G.QQ", "NC");
+            netlist.nl_setup_global.HINT(setup, "H.QQ", "NC");
+
             netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
                 "A.E",  /*    /E |1     ++    20| VCC  */ "A.VCC",
                 "A.Q",  /*    Q0 |2           19| Q7   */ "H.Q",
@@ -1497,7 +1650,7 @@ namespace mame
                 "C.Q",  /*    Q2 |6           15| Q5   */ "F.Q",
                 "C.D",  /*    D2 |7           14| D5   */ "F.D",
                 "D.D",  /*    D3 |8           13| D4   */ "E.D",
-                "D.Q",  /*    Q3 |9           12| Q4   */ "E.D",
+                "D.Q",  /*    Q3 |9           12| Q4   */ "E.Q",
                 "A.GND",/*   GND |10          11| CP   */ "A.CP"
                       /*       +--------------+      */
             );
@@ -1960,6 +2113,16 @@ namespace mame
                 netlist.nl_setup_global.TT_FAMILY("74XXOC");
             netlist.nl_setup_global.TRUTHTABLE_END(setup);
 
+            netlist.nl_setup_global.TRUTHTABLE_START("TTL_74157_GATE", 4, 4, "");
+                netlist.nl_setup_global.TT_HEAD("E,S,I,J|O");
+                netlist.nl_setup_global.TT_LINE("1,X,X,X|0|14");
+                netlist.nl_setup_global.TT_LINE("0,1,X,0|0|14");
+                netlist.nl_setup_global.TT_LINE("0,1,X,1|1|14");
+                netlist.nl_setup_global.TT_LINE("0,0,0,X|0|14");
+                netlist.nl_setup_global.TT_LINE("0,0,1,X|1|14");
+                netlist.nl_setup_global.TT_FAMILY("74XX");
+            netlist.nl_setup_global.TRUTHTABLE_END(setup);
+
             netlist.nl_setup_global.TRUTHTABLE_START("TTL_74260_GATE", 5, 1, "");
                 netlist.nl_setup_global.TT_HEAD("A,B,C,D,E|Q ");
                 netlist.nl_setup_global.TT_LINE("0,0,0,0,0|1|10");
@@ -2044,10 +2207,14 @@ namespace mame
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7432_DIP", netlist_TTL_7432_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7437_DIP", netlist_TTL_7437_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_7486_DIP", netlist_TTL_7486_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74121_DIP", netlist_TTL_74121_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74123_DIP", netlist_TTL_74123_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_9602_DIP", netlist_TTL_9602_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74125_DIP", netlist_TTL_74125_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74126_DIP", netlist_TTL_74126_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74155_DIP", netlist_TTL_74155_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74156_DIP", netlist_TTL_74156_DIP);
+            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74157_DIP", netlist_TTL_74157_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74260_DIP", netlist_TTL_74260_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74279_DIP", netlist_TTL_74279_DIP);
             netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_74377_DIP", netlist_TTL_74377_DIP);

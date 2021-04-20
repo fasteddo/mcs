@@ -68,6 +68,8 @@ namespace mame
         //SLIDER_ID_BEAM_WIDTH_MAX_LAST   = SLIDER_ID_BEAM_WIDTH_MAX + ui_global.SLIDER_SCREEN_SPACING,
         //SLIDER_ID_BEAM_INTENSITY,
         //SLIDER_ID_BEAM_INTENSITY_LAST   = SLIDER_ID_BEAM_INTENSITY + ui_global.SLIDER_SCREEN_SPACING,
+        //SLIDER_ID_BEAM_DOT_SIZE,
+        //SLIDER_ID_BEAM_DOT_SIZE_LAST    = SLIDER_ID_BEAM_DOT_SIZE + SLIDER_SCREEN_SPACING,
         //SLIDER_ID_CROSSHAIR_SCALE,
         //SLIDER_ID_CROSSHAIR_SCALE_LAST  = SLIDER_ID_CROSSHAIR_SCALE + ui_global.SLIDER_INPUT_SPACING,
         //SLIDER_ID_CROSSHAIR_OFFSET,
@@ -281,6 +283,7 @@ namespace mame
         ui_options m_ui_options = new ui_options();
         ui_colors m_ui_colors = new ui_colors();
         float m_target_font_height;
+        bool m_has_warnings;
 
         ui.machine_info m_machine_info;
 
@@ -317,6 +320,7 @@ namespace mame
             m_mouse_arrow_texture = null;
             m_mouse_show = false;
             m_target_font_height = 0;
+            m_has_warnings = false;
         }
 
 
@@ -650,22 +654,25 @@ namespace mame
                 switch (state)
                 {
                     case 0:
-                        if (show_warnings)
-                            messagebox_text = machine_info().warnings_string();
-
-                        if (!messagebox_text.empty())
-                        {
-                            set_handler(ui_callback_type.MODAL, handler_messagebox_anykey);
-                            messagebox_backcolor = machine_info().warnings_color();
-                        }
-                        break;
-
-                    case 1:
                         if (show_gameinfo)
                             messagebox_text = machine_info().game_info_string();
 
                         if (!messagebox_text.empty())
+                        {
+                            messagebox_text += "\n\nPress any key to continue";
                             set_handler(ui_callback_type.MODAL, handler_messagebox_anykey);
+                        }
+                        break;
+
+                    case 1:
+                        messagebox_text = machine_info().warnings_string();
+                        m_has_warnings = !messagebox_text.empty();
+                        if (m_has_warnings && show_warnings)
+                        {
+                            messagebox_text += "\n\nPress any key to continue";
+                            set_handler(ui_callback_type.MODAL, handler_messagebox_anykey);
+                            messagebox_backcolor = machine_info().warnings_color();
+                        }
                         break;
 
                     case 2:
@@ -1104,6 +1111,9 @@ namespace mame
         {
             throw new emu_unimplemented();
         }
+
+
+        public bool found_machine_warnings() { return m_has_warnings; }
 
 
         //-------------------------------------------------
@@ -1692,26 +1702,31 @@ namespace mame
         }
 
 
-        //static INT32 slider_volume(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_mixervol(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_adjuster(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_overclock(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_refresh(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_brightness(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_contrast(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_gamma(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_xscale(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_yscale(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_xoffset(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_yoffset(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_overxscale(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_overyscale(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_overxoffset(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_overyoffset(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_flicker(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_beam_width_min(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_beam_width_max(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
-        //static INT32 slider_beam_intensity_weight(running_machine &machine, void *arg, int id, std::string *str, INT32 newval);
+        // slider controls
+        //virtual int32_t slider_changed(running_machine &machine, void *arg, int id, std::string *str, int32_t newval) override;
+
+        //int32_t slider_volume(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_mixervol(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_adjuster(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_overclock(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_refresh(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_brightness(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_contrast(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_gamma(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_xscale(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_yscale(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_xoffset(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_yoffset(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_overxscale(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_overyscale(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_overxoffset(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_overyoffset(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_flicker(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_beam_width_min(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_beam_width_max(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_beam_dot_size(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+        //int32_t slider_beam_intensity_weight(running_machine &machine, void *arg, int id, std::string *str, int32_t newval);
+
 
         //-------------------------------------------------
         //  slider_get_screen_desc - returns the

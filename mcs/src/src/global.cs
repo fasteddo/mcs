@@ -15,10 +15,13 @@ using int16_t = System.Int16;
 using int32_t = System.Int32;
 using int64_t = System.Int64;
 using ioport_value = System.UInt32;
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
+using nlsetup_func = System.Action<mame.netlist.nlparse_t>;  //using nlsetup_func = void (*)(nlparse_t &);
 using offs_t = System.UInt32;
 using pen_t = System.UInt32;
 using s32 = System.Int32;
+using size_t = System.UInt32;
+using size_t_constant = mame.uint32_constant;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -31,6 +34,19 @@ using uint64_t = System.UInt64;
 
 namespace mame
 {
+    public interface int_constant { int value { get; } }
+    public class int_constant_1 : int_constant { public int value { get { return 1; } } }
+    public class int_constant_2 : int_constant { public int value { get { return 2; } } }
+
+    public interface uint32_constant { UInt32 value { get; } }
+    public class uint32_constant_2 : uint32_constant { public UInt32 value { get { return 2; } } }
+    public class uint32_constant_4 : uint32_constant { public UInt32 value { get { return 4; } } }
+    public class uint32_constant_5 : uint32_constant { public UInt32 value { get { return 5; } } }
+    public class uint32_constant_8 : uint32_constant { public UInt32 value { get { return 8; } } }
+    public class uint32_constant_16 : uint32_constant { public UInt32 value { get { return 16; } } }
+    public class uint32_constant_20 : uint32_constant { public UInt32 value { get { return 20; } } }
+
+
     public class global_object
     {
         // these are in a seperate class so they don't clutter the debug window
@@ -866,7 +882,7 @@ namespace mame
         // nl_setup
         protected void ALIAS(string alias, string name) { netlist.nl_setup_global.ALIAS(m_globals.helper_setup, alias, name); }
         protected void INCLUDE(string name) { netlist.nl_setup_global.INCLUDE(m_globals.helper_setup, name); }
-        protected void LOCAL_SOURCE(string name, netlist.source_proc_t.setup_func_delegate netlist_name) { netlist.nl_setup_global.LOCAL_SOURCE(m_globals.helper_setup, name, netlist_name); }
+        protected void LOCAL_SOURCE(string name, nlsetup_func netlist_name) { netlist.nl_setup_global.LOCAL_SOURCE(m_globals.helper_setup, name, netlist_name); }
         protected void NET_C(params string [] term1) { netlist.nl_setup_global.NET_C(m_globals.helper_setup, term1); }
         protected void PARAM(string name, int val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
         protected void PARAM(string name, double val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
@@ -1280,12 +1296,16 @@ namespace mame
 
 
         // c++ array
-        public class array<T> : IList<T>
+        public class array<T, size_t_N> : IList<T>
+            where size_t_N : size_t_constant, new()
         {
-            T [] m_data;
+            protected static size_t_constant N = new size_t_N();
 
 
-            public array(int N) { m_data = new T[N]; }
+            T [] m_data = new T[N.value];
+
+
+            public array() { }
 
 
             // IList
@@ -1303,7 +1323,7 @@ namespace mame
             IEnumerator<T> IEnumerable<T>.GetEnumerator() { return ((IEnumerable<T>)m_data).GetEnumerator(); }
 
 
-            public static bool operator ==(array<T> lhs, array<T> rhs)
+            public static bool operator ==(array<T, size_t_N> lhs, array<T, size_t_N> rhs)
             {
                 // TODO available in .NET 3.5 and higher
                 //return Enumerable.SequenceEquals(lhs, rhs);
@@ -1326,7 +1346,7 @@ namespace mame
                 return true;
             }
 
-            public static bool operator !=(array<T> lhs, array<T> rhs)
+            public static bool operator !=(array<T, size_t_N> lhs, array<T, size_t_N> rhs)
             {
                 return !(lhs == rhs);
             }
@@ -1334,7 +1354,7 @@ namespace mame
 
             public override bool Equals(object obj)
             {
-                return this == (array<T>)obj;
+                return this == (array<T, size_t_N>)obj;
             }
 
 

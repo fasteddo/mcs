@@ -4,10 +4,17 @@
 using System;
 using System.Collections.Generic;
 
-using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
-using netlist_time_ext = mame.plib.ptime_i64;  //netlist_time
-using nl_fptype = System.Double;
+using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
+using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
+using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nl_fptype_ops = mame.plib.constants_operators_double;
+using nldelegate_ts = System.Action<mame.netlist.timestep_type, System.Double>;  //using nldelegate_ts = plib::pmfp<void, timestep_type, nl_fptype>;
+using nldelegate_dyn = System.Action;  //using nldelegate_dyn = plib::pmfp<void>;
+using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
+using param_int_t = mame.netlist.param_num_t<int, mame.netlist.param_num_t_operators_int>;  //using param_int_t = param_num_t<int>;
+using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
 using size_t = System.UInt32;
 using unsigned = System.UInt32;
 
@@ -57,25 +64,101 @@ namespace mame.netlist
         //using static_compile_container = std::vector<std::pair<pstring, pstring>>;
 
 
-        public struct solver_parameters_t
+        public interface i_solver_parameter_defaults
+        {
+            nl_fptype m_freq_();
+
+            // iteration parameters
+            nl_fptype m_gs_sor_();
+            matrix_type_e m_method_();
+            matrix_fp_type_e m_fp_type_();
+            nl_fptype m_reltol_();
+            nl_fptype m_vntol_();
+            nl_fptype m_accuracy_();
+            size_t m_nr_loops_();
+            size_t m_gs_loops_();
+
+            nl_fptype m_gmin_();
+            bool m_pivot_();
+            nl_fptype m_nr_recalc_delay_();
+            size_t m_parallel_();
+
+            nl_fptype m_min_ts_ts_();
+            // automatic time step
+            bool m_dynamic_ts_();
+            nl_fptype m_dynamic_lte_();
+            nl_fptype m_dynamic_min_ts_();
+
+            // matrix sorting
+            matrix_sort_type_e m_sort_type_();
+
+            // special
+            bool m_use_gabs_();
+        }
+
+
+        struct solver_parameter_defaults : i_solver_parameter_defaults
+        {
+            public nl_fptype m_freq_() { return nlconst.magic(48000.0); }
+
+            // iteration parameters
+            public nl_fptype m_gs_sor_() { return nlconst.magic(1.059); }
+            public matrix_type_e m_method_() { return matrix_type_e.MAT_CR; }
+            public matrix_fp_type_e m_fp_type_() { return matrix_fp_type_e.DOUBLE; }
+            public nl_fptype m_reltol_() { return nlconst.magic(1e-3); }
+            public nl_fptype m_vntol_() { return nlconst.magic(1e-7); }
+            public nl_fptype m_accuracy_() { return nlconst.magic(1e-7); }
+            public size_t m_nr_loops_() { return 250; }
+            public size_t m_gs_loops_() { return 9; }
+
+            // general parameters
+            public nl_fptype m_gmin_() { return nlconst.magic(1e-9); }
+            public bool m_pivot_() { return false; }
+            public nl_fptype m_nr_recalc_delay_(){ return netlist_time.quantum().as_fp(); }
+            public size_t m_parallel_() { return 0; }
+
+            public nl_fptype m_min_ts_ts_() { return nlconst.magic(1e-9); }
+            // automatic time step
+            public bool m_dynamic_ts_() { return false; }
+            public nl_fptype m_dynamic_lte_() { return nlconst.magic(1e-5); }
+            public nl_fptype m_dynamic_min_ts_() { return nlconst.magic(1e-6); }
+
+            // matrix sorting
+            public matrix_sort_type_e m_sort_type_() { return matrix_sort_type_e.PREFER_IDENTITY_TOP_LEFT; }
+
+            // special
+            public bool m_use_gabs_() { return true; }
+
+
+            static solver_parameter_defaults s;
+
+            public static solver_parameter_defaults get_instance()
+            {
+                return s;
+            }
+        }
+
+
+        public struct solver_parameters_t : i_solver_parameter_defaults
         {
             param_fp_t m_freq;
             public param_fp_t m_gs_sor;
-            public param_enum_t_matrix_type_e m_method;
-            public param_enum_t_matrix_fp_type_e m_fp_type;
+            public param_enum_t<matrix_type_e, param_enum_t_operators_matrix_type_e> m_method;
+            public param_enum_t<matrix_fp_type_e, param_enum_t_operators_matrix_fp_type_e> m_fp_type;
             public param_fp_t m_reltol;
             public param_fp_t m_vntol;
             public param_fp_t m_accuracy;
-            public param_num_t_size_t m_nr_loops;
-            public param_num_t_size_t m_gs_loops;
+            public param_num_t<size_t, param_num_t_operators_uint32> m_nr_loops;
+            public param_num_t<size_t, param_num_t_operators_uint32> m_gs_loops;
             public param_fp_t m_gmin;
             public param_logic_t m_pivot;
             public param_fp_t m_nr_recalc_delay;
             public param_int_t m_parallel;
+            public param_fp_t m_min_ts_ts;
             public param_logic_t m_dynamic_ts;
             public param_fp_t m_dynamic_lte;
             param_fp_t m_dynamic_min_ts;
-            public param_enum_t_matrix_sort_type_e m_sort_type;
+            public param_enum_t<matrix_sort_type_e, param_enum_t_operators_matrix_sort_type_e> m_sort_type;
 
             public param_logic_t m_use_gabs;
 
@@ -83,52 +166,84 @@ namespace mame.netlist
             public nl_fptype m_max_timestep;
 
 
-            public solver_parameters_t(device_t parent)
+            //template <typename D>
+            public solver_parameters_t(device_t parent, string prefix, i_solver_parameter_defaults defaults)
             {
-                m_freq = new param_fp_t(parent, "FREQ", nlconst.magic(48000.0));
+                m_freq = new param_fp_t(parent, prefix + "FREQ", defaults.m_freq_());
 
                 // iteration parameters
-                m_gs_sor = new param_fp_t(parent, "SOR_FACTOR", nlconst.magic(1.059));
-                m_method = new param_enum_t_matrix_type_e(parent, "METHOD", matrix_type_e.MAT_CR);
-                m_fp_type = new param_enum_t_matrix_fp_type_e(parent, "FPTYPE", matrix_fp_type_e.DOUBLE);
-                m_reltol = new param_fp_t(parent, "RELTOL", nlconst.magic(1e-3));            ///< SPICE RELTOL parameter
-                m_vntol = new param_fp_t(parent, "VNTOL", nlconst.magic(1e-7));            ///< SPICE VNTOL parameter
-                m_accuracy = new param_fp_t(parent, "ACCURACY", nlconst.magic(1e-7));          ///< Iterative solver accuracy
-                m_nr_loops = new param_num_t_size_t(parent, "NR_LOOPS", 250);           ///< Maximum number of Newton-Raphson loops
-                m_gs_loops = new param_num_t_size_t(parent, "GS_LOOPS", 9);             ///< Maximum number of Gauss-Seidel loops
+                m_gs_sor = new param_fp_t(parent,   prefix + "SOR_FACTOR", defaults.m_gs_sor_());
+                m_method = new param_enum_t<matrix_type_e, param_enum_t_operators_matrix_type_e>(parent,   prefix + "METHOD", defaults.m_method_());
+                m_fp_type = new param_enum_t<matrix_fp_type_e, param_enum_t_operators_matrix_fp_type_e>(parent,  prefix + "FPTYPE", defaults.m_fp_type_());
+                m_reltol = new param_fp_t(parent,   prefix + "RELTOL", defaults.m_reltol_());            ///< SPICE RELTOL parameter
+                m_vntol = new param_fp_t(parent,    prefix + "VNTOL",  defaults.m_vntol_());            ///< SPICE VNTOL parameter
+                m_accuracy = new param_fp_t(parent, prefix + "ACCURACY", defaults.m_accuracy_());          ///< Iterative solver accuracy
+                m_nr_loops = new param_num_t<size_t, param_num_t_operators_uint32>(parent, prefix + "NR_LOOPS", defaults.m_nr_loops_());           ///< Maximum number of Newton-Raphson loops
+                m_gs_loops = new param_num_t<size_t, param_num_t_operators_uint32>(parent, prefix + "GS_LOOPS", defaults.m_gs_loops_());             ///< Maximum number of Gauss-Seidel loops
 
                 // general parameters
-                m_gmin = new param_fp_t(parent, "GMIN", nlconst.magic(1e-9));
-                m_pivot = new param_logic_t(parent, "PIVOT", false);               ///< use pivoting on supported solvers
-                m_nr_recalc_delay = new param_fp_t(parent, "NR_RECALC_DELAY", netlist_time.quantum().as_fp()); ///< Delay to next solve attempt if nr loops exceeded
-                m_parallel = new param_int_t(parent, "PARALLEL", 0);
+                m_gmin = new param_fp_t(parent, prefix + "GMIN", defaults.m_gmin_());
+                m_pivot = new param_logic_t(parent, prefix + "PIVOT", defaults.m_pivot_());               ///< use pivoting on supported solvers
+                m_nr_recalc_delay = new param_fp_t(parent, prefix + "NR_RECALC_DELAY", defaults.m_nr_recalc_delay_()); ///< Delay to next solve attempt if nr loops exceeded
+                m_parallel = new param_int_t(parent, prefix + "PARALLEL", (int)defaults.m_parallel_());
+                m_min_ts_ts = new param_fp_t(parent, prefix + "MIN_TS_TS", defaults.m_min_ts_ts_()); ///< The minimum time step for solvers with time stepping devices.
 
                 // automatic time step
-                m_dynamic_ts = new param_logic_t(parent, "DYNAMIC_TS", false);     ///< Use dynamic time stepping
-                m_dynamic_lte = new param_fp_t(parent, "DYNAMIC_LTE", nlconst.magic(1e-5));    ///< dynamic time stepping slope
-                m_dynamic_min_ts = new param_fp_t(parent, "DYNAMIC_MIN_TIMESTEP", nlconst.magic(1e-6)); ///< smallest time step allowed
+                m_dynamic_ts = new param_logic_t(parent, prefix + "DYNAMIC_TS", defaults.m_dynamic_ts_());     ///< Use dynamic time stepping
+                m_dynamic_lte = new param_fp_t(parent, prefix + "DYNAMIC_LTE", defaults.m_dynamic_lte_());    ///< dynamic time stepping slope
+                m_dynamic_min_ts = new param_fp_t(parent, prefix + "DYNAMIC_MIN_TIMESTEP", defaults.m_dynamic_min_ts_()); ///< smallest time step allowed
 
                 // matrix sorting
-                m_sort_type = new param_enum_t_matrix_sort_type_e(parent, "SORT_TYPE", matrix_sort_type_e.PREFER_IDENTITY_TOP_LEFT);
+                m_sort_type = new param_enum_t<matrix_sort_type_e, param_enum_t_operators_matrix_sort_type_e>(parent, prefix + "SORT_TYPE", defaults.m_sort_type_());
 
                 // special
-                m_use_gabs = new param_logic_t(parent, "USE_GABS", true);
+                m_use_gabs = new param_logic_t(parent, prefix + "USE_GABS", defaults.m_use_gabs_());
 
+
+                m_min_timestep = m_dynamic_min_ts.op();
+                m_max_timestep = netlist_time.from_fp(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_freq.op())).as_fp();  //m_max_timestep = netlist_time::from_fp(plib::reciprocal(m_freq())).as_fp<decltype(m_max_timestep)>();
+
+
+                if (m_dynamic_ts != null)
                 {
-                    m_min_timestep = m_dynamic_min_ts.op();
-                    m_max_timestep = netlist_time.from_fp(plib.pglobal.reciprocal(m_freq.op())).as_fp();  //m_max_timestep = netlist_time::from_fp(plib::reciprocal(m_freq())).as_fp<decltype(m_max_timestep)>();
-
-
-                    if (m_dynamic_ts != null)
-                    {
-                        m_max_timestep *= 1;//NL_FCONST(1000.0);
-                    }
-                    else
-                    {
-                        m_min_timestep = m_max_timestep;
-                    }
+                    m_max_timestep *= 1;//NL_FCONST(1000.0);
+                }
+                else
+                {
+                    m_min_timestep = m_max_timestep;
                 }
             }
+
+
+            public nl_fptype m_freq_() { return m_freq.op(); }
+
+            // iteration parameters
+            public nl_fptype m_gs_sor_() { return m_gs_sor.op(); }
+            public matrix_type_e m_method_() { return m_method.op(); }
+            public matrix_fp_type_e m_fp_type_() { return m_fp_type.op(); }
+            public nl_fptype m_reltol_() { return m_reltol.op(); }
+            public nl_fptype m_vntol_() { return m_vntol.op(); }
+            public nl_fptype m_accuracy_() { return m_accuracy.op(); }
+            public size_t m_nr_loops_() { return m_nr_loops.op(); }
+            public size_t m_gs_loops_() { return m_gs_loops.op(); }
+
+            // general parameters
+            public nl_fptype m_gmin_() { return m_gmin.op(); }
+            public bool m_pivot_() { return m_pivot.op(); }
+            public nl_fptype m_nr_recalc_delay_() { return m_nr_recalc_delay.op(); }
+            public size_t m_parallel_() { return (size_t)m_parallel.op(); }
+
+            public nl_fptype m_min_ts_ts_() { return m_min_ts_ts.op(); }
+            // automatic time step
+            public bool m_dynamic_ts_() { return m_dynamic_ts.op(); }
+            public nl_fptype m_dynamic_lte_() { return m_dynamic_lte.op(); }
+            public nl_fptype m_dynamic_min_ts_() { return m_dynamic_min_ts.op(); }
+
+            // matrix sorting
+            public matrix_sort_type_e m_sort_type_() { return m_sort_type.op(); }
+
+            // special
+            public bool m_use_gabs_() { return m_use_gabs.op(); }
         }
 
 
@@ -211,32 +326,33 @@ namespace mame.netlist
         {
             //using list_t = std::vector<matrix_solver_t *>;
             //using fptype = nl_fptype;
-            //using arena_type = plib::mempool_arena<plib::aligned_arena>;
+            //using arena_type = plib::mempool_arena<plib::aligned_arena, PALIGN_VECTOROPT>;
+            //using net_list_t =  plib::aligned_vector<analog_net_t *>;
 
-
-            protected plib.pmatrix2d_vrl_nl_fptype m_gonn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gonn;
-            protected plib.pmatrix2d_vrl_nl_fptype m_gtn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gtn;
-            protected plib.pmatrix2d_vrl_nl_fptype m_Idrn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_Idrn;
-            protected plib.pmatrix2d_vrl_listpointer_nl_fptype m_connected_net_Vn;  //plib::pmatrix2d_vrl<fptype *, arena_type>  m_connected_net_Vn;
 
             protected solver_parameters_t m_params;
+
+            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gonn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gonn;
+            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gtn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gtn;
+            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_Idrn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_Idrn;
+            protected plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>> m_connected_net_Vn;  //plib::pmatrix2d_vrl<fptype *, arena_type>  m_connected_net_Vn;
 
             protected state_var<size_t> m_iterative_fail;
             protected state_var<size_t> m_iterative_total;
 
             protected plib.aligned_vector<terms_for_net_t> m_terms = new plib.aligned_vector<terms_for_net_t>();  // setup only
 
+            devices.nld_solver m_main_solver;
+
             state_var<size_t> m_stat_calculations;
             state_var<size_t> m_stat_newton_raphson;
+            state_var<size_t> m_stat_newton_raphson_fail;
             state_var<size_t> m_stat_vsolver_calls;
 
             state_var<netlist_time_ext> m_last_step;
             plib.aligned_vector<nldelegate_ts> m_step_funcs;
             plib.aligned_vector<nldelegate_dyn> m_dynamic_funcs;
             plib.aligned_vector<proxied_analog_output_t> m_inps;  //plib::aligned_vector<device_arena::unique_ptr<proxied_analog_output_t>> m_inps;
-
-            logic_input_t m_fb_sync;
-            logic_output_t m_Q_sync;
 
             size_t m_ops;
 
@@ -246,86 +362,80 @@ namespace mame.netlist
             // ----------------------------------------------------------------------------------------
             // matrix_solver
             // ----------------------------------------------------------------------------------------
-            protected matrix_solver_t(netlist_state_t anetlist, string name, analog_net_t_list_t nets, solver_parameters_t params_)
-                : base(anetlist, name)
+            protected matrix_solver_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_)
+                : base((device_t)main_solver, name)
             {
                 m_params = params_;
                 m_iterative_fail = new state_var<size_t>(this, "m_iterative_fail", 0);
                 m_iterative_total = new state_var<size_t>(this, "m_iterative_total", 0);
+                m_main_solver = main_solver;
                 m_stat_calculations = new state_var<size_t>(this, "m_stat_calculations", 0);
                 m_stat_newton_raphson = new state_var<size_t>(this, "m_stat_newton_raphson", 0);
+                m_stat_newton_raphson_fail = new state_var<size_t>(this, "m_stat_newton_raphson_fail", 0);
                 m_stat_vsolver_calls = new state_var<size_t>(this, "m_stat_vsolver_calls", 0);
-                m_last_step = new state_var<netlist_time_ext>(this, "m_last_step", netlist_time_ext.zero());
-                m_fb_sync = new logic_input_t(this, "FB_sync");
-                m_Q_sync = new logic_output_t(this, "Q_sync");
+                m_last_step = new state_var<netlist_time>(this, "m_last_step", netlist_time_ext.zero());
                 m_ops = 0;
 
 
-                if (!anetlist.setup().connect(m_fb_sync, m_Q_sync))
-                {
-                    log().fatal.op(nl_errstr_global.MF_ERROR_CONNECTING_1_TO_2(m_fb_sync.name(), m_Q_sync.name()));
-                    throw new nl_exception(nl_errstr_global.MF_ERROR_CONNECTING_1_TO_2(m_fb_sync.name(), m_Q_sync.name()));
-                }
-                setup_base(anetlist.setup(), nets);
+                setup_base(this.state().setup(), nets);
 
                 // now setup the matrix
                 setup_matrix();
+                //printf("Freq: %f\n", m_params.m_freq());
             }
 
 
-            public netlist_time solve(netlist_time_ext now)
+            public netlist_time solve(netlist_time_ext now, string source)
             {
                 netlist_time_ext delta = now - m_last_step.op;
+
+                //throw new emu_unimplemented();
+#if false
+                PFDEBUG(printf("solve %.10f\n", delta.as_double());)
+#endif
+
+                //plib::unused_var(source);
 
                 // We are already up to date. Avoid oscillations.
                 // FIXME: Make this a parameter!
                 if (delta < netlist_time_ext.quantum())
-                    return netlist_time.zero();
+                {
+                    //printf("solve return %s at %f\n", source, now.as_double());
+                    return timestep_device_count() > 0 ? netlist_time.from_fp(m_params.m_min_timestep) : netlist_time.zero();
+                }
+
+                backup(); // save voltages for backup and timestep calculation
 
                 // update all terminals for new time step
                 m_last_step.op = now;
-                step((netlist_time)delta);
 
                 ++m_stat_vsolver_calls.op;
                 if (dynamic_device_count() != 0)
                 {
-                    bool this_resched = false;
-                    UInt32 newton_loops = 0;
-                    do
-                    {
-                        update_dynamic();
-                        // Gauss-Seidel will revert to Gaussian elemination if steps exceeded.
-                        this.m_stat_calculations.op++;
-                        this.vsolve_non_dynamic();
-                        this_resched = this.check_err();
-                        this.store();
-                    } while (this_resched && newton_loops < m_params.m_nr_loops.op());
+                    step(timestep_type.FORWARD, delta);
+                    var resched = solve_nr_base();
 
-                    m_stat_newton_raphson.op += newton_loops;
-                    // reschedule ....
-                    if (this_resched && !m_Q_sync.net().is_queued())
-                    {
-                        log().warning.op(nl_errstr_global.MW_NEWTON_LOOPS_EXCEEDED_ON_NET_1(this.name()));
-                        // FIXME: test and enable - this is working better, though not optimal yet
-#if false
-                        // Don't store, the result can not be used
-                        return netlist_time::from_fp(m_params.m_nr_recalc_delay());
-#else
-                        m_Q_sync.net().toggle_and_push_to_queue(netlist_time.from_fp(m_params.m_nr_recalc_delay.op()));
-#endif
-                    }
+                    if (resched)
+                        return newton_loops_exceeded(delta);
                 }
                 else
                 {
+                    step(timestep_type.FORWARD, delta);
                     this.m_stat_calculations.op++;
                     this.vsolve_non_dynamic();
                     this.store();
                 }
 
                 if (m_params.m_dynamic_ts.op())
-                    return compute_next_timestep(delta.as_fp(), m_params.m_max_timestep);
+                {
+                    if (timestep_device_count() > 0)
+                        return compute_next_timestep(delta.as_fp(), m_params.m_min_timestep, m_params.m_max_timestep);
+                }
 
-                return netlist_time.from_fp(m_params.m_max_timestep);
+                if (timestep_device_count() > 0)
+                    return netlist_time.from_fp(m_params.m_max_timestep);
+
+                return netlist_time.zero();
             }
 
 
@@ -349,6 +459,16 @@ namespace mame.netlist
             public int timestep_device_count() { return m_step_funcs.size(); }  //std::size_t timestep_device_count() const noexcept { return m_step_funcs.size(); }
 
 
+            /// \brief reschedule solver execution
+            ///
+            /// Calls reschedule on main solver
+            ///
+            void reschedule(netlist_time ts)
+            {
+                m_main_solver.reschedule(this, ts);
+            }
+
+
             /// \brief Immediately solve system at current time
             ///
             /// This should only be called from update and update_param events.
@@ -359,46 +479,42 @@ namespace mame.netlist
                 // this should only occur outside of execution and thus
                 // using time should be safe.
 
-                netlist_time new_timestep = solve(exec().time());
+                netlist_time new_timestep = solve(exec().time(), "solve_now");
                 //plib::unused_var(new_timestep);
 
                 update_inputs();
 
-                if (m_params.m_dynamic_ts.op() && (timestep_device_count() != 0))
+                if (timestep_device_count() > 0)
                 {
-                    m_Q_sync.net().toggle_and_push_to_queue(netlist_time.from_fp(m_params.m_min_timestep));
+                    this.reschedule(netlist_time.from_fp(m_params.m_dynamic_ts.op() ? m_params.m_min_timestep : m_params.m_max_timestep));
                 }
             }
 
 
             //template <typename F>
-            public void change_state(Action f) { change_state(f, netlist_time.quantum()); }
-            public void change_state(Action f, netlist_time delay)  //void change_state(F f, netlist_time delay = netlist_time::quantum())
+            public void change_state(Action f)  //void change_state(F f)
             {
                 // We only need to update the net first if this is a time stepping net
                 if (timestep_device_count() > 0)
                 {
-                    netlist_time new_timestep = solve(exec().time());
+                    netlist_time new_timestep = solve(exec().time(), "change_state");
                     //plib::unused_var(new_timestep);
                     update_inputs();
                 }
 
                 f();
 
-                m_Q_sync.net().toggle_and_push_to_queue(delay);
-            }
-
-
-            // netdevice functions
-            //NETLIB_UPDATEI();
-            public override void update()
-            {
-                netlist_time new_timestep = solve(exec().time());
-                update_inputs();
-
-                if (m_params.m_dynamic_ts.op() && (timestep_device_count() != 0) && new_timestep > netlist_time.zero())
+                if (timestep_device_count() > 0)
                 {
-                    m_Q_sync.net().toggle_and_push_to_queue(new_timestep);
+                    //throw new emu_unimplemented();
+#if false
+                    PFDEBUG(printf("here2\n");)
+#endif
+                    this.reschedule(netlist_time.from_fp(m_params.m_min_ts_ts.op()));
+                }
+                else
+                {
+                    this.reschedule(netlist_time.quantum());
                 }
             }
 
@@ -406,7 +522,7 @@ namespace mame.netlist
             //NETLIB_RESETI();
             public override void reset()
             {
-                m_last_step.op = netlist_time_ext.zero();
+                //m_last_step = netlist_time_ext::zero();
             }
 
 
@@ -430,13 +546,25 @@ namespace mame.netlist
 
 
             protected abstract void vsolve_non_dynamic();
-            protected abstract netlist_time compute_next_timestep(nl_fptype cur_ts, nl_fptype max_ts);
+            protected abstract netlist_time compute_next_timestep(nl_fptype cur_ts, matrix_solver_t_fptype min_ts, matrix_solver_t_fptype max_ts);
             protected abstract bool check_err();
             protected abstract void store();
+            protected abstract void backup();
+            protected abstract void restore();
+
+
+            protected size_t max_railstart()
+            {
+                size_t max_rail = 0;
+                for (size_t k = 0; k < m_terms.size(); k++)
+                    max_rail = std.max(max_rail, m_terms[k].railstart());
+
+                return max_rail;
+            }
 
 
             // base setup - called from constructor
-            protected void setup_base(setup_t setup, analog_net_t_list_t nets)
+            protected void setup_base(setup_t setup, matrix_solver_t_net_list_t nets)
             {
                 log().debug.op("New solver setup\n");
                 std.vector<core_device_t> step_devices = new std.vector<core_device_t>();
@@ -532,6 +660,76 @@ namespace mame.netlist
                 foreach (var d in dynamic_devices)
                     m_dynamic_funcs.emplace_back(d.update_terminals);
 #endif
+            }
+
+
+            bool solve_nr_base()
+            {
+                bool this_resched = false;
+                size_t newton_loops = 0;
+                do
+                {
+                    update_dynamic();
+                    // Gauss-Seidel will revert to Gaussian elemination if steps exceeded.
+                    this.m_stat_calculations.op++;
+                    this.vsolve_non_dynamic();
+                    this_resched = this.check_err();
+                    this.store();
+                    newton_loops++;
+                } while (this_resched && newton_loops < m_params.m_nr_loops.op());
+
+                m_stat_newton_raphson.op += newton_loops;
+                if (this_resched)
+                    m_stat_newton_raphson_fail.op++;
+
+                return this_resched;
+            }
+
+
+            netlist_time newton_loops_exceeded(netlist_time delta)
+            {
+                netlist_time next_time_step = new netlist_time();
+                bool resched = false;
+
+                restore();
+                step(timestep_type.RESTORE, delta);
+
+                for (size_t i = 0; i < 10; i++)
+                {
+                    backup();
+                    step(timestep_type.FORWARD, netlist_time.from_fp(m_params.m_min_ts_ts.op()));
+                    resched = solve_nr_base();
+                    // update timestep calculation
+                    next_time_step = compute_next_timestep(m_params.m_min_ts_ts.op(), m_params.m_min_ts_ts.op(), m_params.m_max_timestep);
+                    delta -= netlist_time_ext.from_fp(m_params.m_min_ts_ts.op());
+                }
+
+                // try remaining time using compute_next_timestep
+                while (delta > netlist_time.zero())
+                {
+                    if (next_time_step > delta)
+                        next_time_step = delta;
+
+                    backup();
+                    step(timestep_type.FORWARD, next_time_step);
+                    delta -= next_time_step;
+                    resched = solve_nr_base();
+                    next_time_step = compute_next_timestep(next_time_step.as_fp(), m_params.m_min_ts_ts.op(), m_params.m_max_timestep);
+                }
+
+                if (m_stat_newton_raphson.op % 100 == 0)
+                    log().warning.op(nl_errstr_global.MW_NEWTON_LOOPS_EXCEEDED_INVOCATION_3(100, this.name(), exec().time().as_double() * 1e6));
+
+                if (resched)
+                {
+                    // reschedule ....
+                    log().warning.op(nl_errstr_global.MW_NEWTON_LOOPS_EXCEEDED_ON_NET_2(this.name(), exec().time().as_double() * 1e6));
+                    return netlist_time.from_fp(m_params.m_nr_recalc_delay.op());
+                }
+                if (m_params.m_dynamic_ts.op())
+                    return next_time_step;
+
+                return netlist_time.from_fp(m_params.m_max_timestep);
             }
 
 
@@ -648,11 +846,11 @@ namespace mame.netlist
             }
 
 
-            void step(netlist_time delta)
+            void step(timestep_type ts_type, netlist_time delta)
             {
                 var dd = delta.as_fp();
                 foreach (var d in m_step_funcs)
-                    d(dd);
+                    d(ts_type, dd);
             }
 
 
@@ -723,7 +921,7 @@ namespace mame.netlist
                                 if (colu == row) colu = (UInt32)diag;
                                 else if (colu == diag) colu = (UInt32)row;
 
-                                weight = weight + plib.pglobal.abs((nl_fptype)colu - (nl_fptype)diag);
+                                weight = weight + plib.pglobal.abs<nl_fptype, nl_fptype_ops>((nl_fptype)colu - (nl_fptype)diag);
                                 touched[colu] = true;
                             }
                         }

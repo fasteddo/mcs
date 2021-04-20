@@ -1104,6 +1104,9 @@ namespace mame
     }
 
 
+    public class size_t_constant_SEQ_TYPE_TOTAL : uint32_constant { public UInt32 value { get { return (UInt32)input_seq_type.SEQ_TYPE_TOTAL; } } }
+
+
     // ======================> input_type_entry
     // describes a fundamental input type, including default input sequences
     public class input_type_entry
@@ -1114,8 +1117,8 @@ namespace mame
         u8 m_player;           // player number (0 is player 1)
         string m_token;            // token used to store settings
         string m_name;             // user-friendly name
-        std.array<input_seq> m_defseq = new std.array<input_seq>((int)input_seq_type.SEQ_TYPE_TOTAL); // default input sequence
-        std.array<input_seq> m_seq = new std.array<input_seq>((int)input_seq_type.SEQ_TYPE_TOTAL); // currently configured sequences
+        std.array<input_seq, size_t_constant_SEQ_TYPE_TOTAL> m_defseq = new std.array<input_seq, size_t_constant_SEQ_TYPE_TOTAL>(); // default input sequence
+        std.array<input_seq, size_t_constant_SEQ_TYPE_TOTAL> m_seq = new std.array<input_seq, size_t_constant_SEQ_TYPE_TOTAL>(); // currently configured sequences
 
 
         // construction/destruction
@@ -2306,7 +2309,7 @@ namespace mame
             if (field.type_class() == ioport_type_class.INPUT_CLASS_KEYBOARD && field.specific_name() == null)
             {
                 // loop through each character on the field
-                for (int which = 0; which < 4; which++)
+                for (int which = 0; which < (1 << (int)(ioport_global.UCHAR_SHIFT_END - ioport_global.UCHAR_SHIFT_BEGIN + 1)); which++)
                 {
                     std.vector<char32_t> codes = field.keyboard_codes(which);
                     if (codes.empty())

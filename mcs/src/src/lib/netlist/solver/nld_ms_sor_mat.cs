@@ -4,8 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
-using nl_fptype = System.Double;
+using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using size_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame.netlist
@@ -13,18 +15,20 @@ namespace mame.netlist
     namespace solver
     {
         //template <typename FT, int SIZE>
-        class matrix_solver_SOR_mat_t : matrix_solver_direct_t_nl_fptype  //class matrix_solver_SOR_mat_t: public matrix_solver_direct_t<FT, SIZE>
+        class matrix_solver_SOR_mat_t<FT, FT_OPS, int_SIZE> : matrix_solver_direct_t<FT, FT_OPS, int_SIZE>  //class matrix_solver_SOR_mat_t: public matrix_solver_direct_t<FT, SIZE>
+            where FT_OPS : plib.constants_operators<FT>, new()
+            where int_SIZE : int_constant, new()
         {
             //using float_type = FT;
 
 
-            state_var<double> m_omega;
+            state_var<FT> m_omega;
 
 
-            public matrix_solver_SOR_mat_t(int SIZE, netlist_state_t anetlist, string name, analog_net_t_list_t nets, solver_parameters_t params_, UInt32 size)
-                : base(SIZE, anetlist, name, nets, params_, size)
+            matrix_solver_SOR_mat_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver_parameters_t params_, size_t size)
+                : base(main_solver, name, nets, params_, size)
             {
-                m_omega = new state_var<double>(this, "m_omega", (double)params_.m_gs_sor.op());
+                m_omega = new state_var<FT>(this, "m_omega", ops.cast(params_.m_gs_sor.op()));
             }
 
 
@@ -34,14 +38,14 @@ namespace mame.netlist
                 // the optimized code which works directly on the data structures.
                 // Need something like that for gaussian elimination as well.
 
-                int iN = (int)this.size();
+                size_t iN = this.size();
 
                 this.clear_square_mat(this.m_A);
                 this.fill_matrix_and_rhs();
 
                 bool resched = false;
 
-                UInt32 resched_cnt = 0;
+                unsigned resched_cnt = 0;
 
 
 #if false
@@ -80,46 +84,46 @@ namespace mame.netlist
 
 
                 for (int k = 0; k < iN; k++)
-                    this.m_new_V[k] = (nl_fptype)this.m_terms[k].getV();
+                    this.m_new_V[k] = ops.cast(this.m_terms[k].getV());  //this->m_new_V[k] = static_cast<float_type>(this->m_terms[k].getV());
 
                 do
                 {
                     resched = false;
-                    double cerr = plib.constants_nl_fptype.zero();
+                    FT cerr = plib.constants<FT, FT_OPS>.zero();
 
-                    for (int k = 0; k < iN; k++)
+                    for (size_t k = 0; k < iN; k++)
                     {
-                        double Idrive = 0;
+                        FT Idrive = ops.cast(0);
 
                         var p = this.m_terms[k].m_nz;
-                        int e = this.m_terms[k].m_nz.size();
+                        size_t e = (size_t)this.m_terms[k].m_nz.size();
 
-                        for (int i = 0; i < e; i++)
-                            Idrive = Idrive + this.m_A[k][p[i]] * this.m_new_V[p[i]];
+                        for (size_t i = 0; i < e; i++)
+                            Idrive = ops.add(Idrive, ops.multiply(this.m_A[k][p[i]], this.m_new_V[p[i]]));  //Idrive = Idrive + this->m_A[k][p[i]] * this->m_new_V[p[i]];
 
-                        double w = m_omega.op / this.m_A[k][k];
+                        FT w = ops.divide(m_omega.op, this.m_A[k][k]);  //FT w = m_omega / this->m_A[k][k];
                         if (this.m_params.m_use_gabs.op())
                         {
-                            double gabs_t = plib.constants_nl_fptype.zero();
+                            FT gabs_t = plib.constants<FT, FT_OPS>.zero();
                             for (int i = 0; i < e; i++)
                             {
                                 if (p[i] != k)
-                                    gabs_t = gabs_t + plib.pglobal.abs(this.m_A[k][p[i]]);
+                                    gabs_t = ops.add(gabs_t, plib.pglobal.abs<FT, FT_OPS>(this.m_A[k][p[i]]));  //gabs_t = gabs_t + plib::abs(this->m_A[k][p[i]]);
                             }
 
-                            gabs_t *= plib.constants_nl_fptype.one(); // derived by try and error
-                            if (gabs_t > this.m_A[k][k])
+                            gabs_t = ops.multiply(gabs_t, plib.constants<FT, FT_OPS>.one()); // derived by try and error  //gabs_t *= plib::constants<FT>::one(); // derived by try and error
+                            if (ops.greater_than(gabs_t, this.m_A[k][k]))  //if (gabs_t > this->m_A[k][k])
                             {
-                                w = plib.constants_nl_fptype.one() / (this.m_A[k][k] + gabs_t);
+                                w = ops.divide(plib.constants<FT, FT_OPS>.one(), ops.add(this.m_A[k][k], gabs_t));  //w = plib::constants<FT>::one() / (this->m_A[k][k] + gabs_t);
                             }
                         }
 
-                        double delta = w * (this.m_RHS[k] - Idrive);
-                        cerr = std.max(cerr, plib.pglobal.abs(delta));
-                        this.m_new_V[k] += delta;
+                        FT delta = ops.multiply(w, ops.subtract(this.m_RHS[k], Idrive));  //const float_type delta = w * (this->m_RHS[k] - Idrive) ;
+                        cerr = ops.max(cerr, plib.pglobal.abs<FT, FT_OPS>(delta));  //cerr = std::max(cerr, plib::abs(delta));
+                        this.m_new_V[k] = ops.add(this.m_new_V[k], delta);  //this->m_new_V[k] += delta;
                     }
 
-                    if (cerr > (double)this.m_params.m_accuracy.op())
+                    if (ops.greater_than(cerr, ops.cast(this.m_params.m_accuracy.op())))  //if (cerr > static_cast<float_type>(this->m_params.m_accuracy))
                     {
                         resched = true;
                     }

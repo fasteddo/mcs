@@ -338,6 +338,7 @@ namespace mame
         // core vector options
         const string OPTION_BEAM_WIDTH_MIN      = "beam_width_min";
         const string OPTION_BEAM_WIDTH_MAX      = "beam_width_max";
+        const string OPTION_BEAM_DOT_SIZE       = "beam_dot_size";
         const string OPTION_BEAM_INTENSITY_WEIGHT = "beam_intensity_weight";
         const string OPTION_FLICKER             = "flicker";
 
@@ -531,6 +532,7 @@ namespace mame
             new options_entry(null,                                              null,        OPTION_HEADER,     "CORE VECTOR OPTIONS"),
             new options_entry(OPTION_BEAM_WIDTH_MIN,                             "1.0",       OPTION_FLOAT,      "set vector beam width minimum"),
             new options_entry(OPTION_BEAM_WIDTH_MAX,                             "1.0",       OPTION_FLOAT,      "set vector beam width maximum"),
+            new options_entry(OPTION_BEAM_DOT_SIZE,                              "1.0",       OPTION_FLOAT,      "set vector beam size for dots"),
             new options_entry(OPTION_BEAM_INTENSITY_WEIGHT,                      "0",         OPTION_FLOAT,      "set vector beam intensity weight "),
             new options_entry(OPTION_FLICKER,                                    "0",         OPTION_FLOAT,      "set vector flicker effect"),
 
@@ -839,6 +841,7 @@ namespace mame
         // core vector options
         //float beam_width_min() const { return float_value(OPTION_BEAM_WIDTH_MIN); }
         //float beam_width_max() const { return float_value(OPTION_BEAM_WIDTH_MAX); }
+        //float beam_dot_size() const { return float_value(OPTION_BEAM_DOT_SIZE); }
         //float beam_intensity_weight() const { return float_value(OPTION_BEAM_INTENSITY_WEIGHT); }
         //float flicker() const { return float_value(OPTION_FLICKER); }
 

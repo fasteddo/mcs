@@ -80,7 +80,7 @@ namespace mame
 
             netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
             netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(A.MODEL)");
+            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(@.A.MODEL)");
             netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
             netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
             netlist.nl_setup_global.PARAM(setup, "A.MODEL", "$(@.MODEL)");
@@ -146,7 +146,7 @@ namespace mame
 
             netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
             netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(A.MODEL)");
+            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(@.A.MODEL)");
             netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
             netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
             netlist.nl_setup_global.PARAM(setup, "A.MODEL", "$(@.MODEL)");
@@ -212,7 +212,7 @@ namespace mame
 
             netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
             netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(A.MODEL)");
+            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(@.A.MODEL)");
             netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
             netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
             netlist.nl_setup_global.PARAM(setup, "A.MODEL", "$(@.MODEL)");
@@ -289,7 +289,7 @@ namespace mame
 
             netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
             netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(A.MODEL)");
+            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(@.A.MODEL)");
             netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
             netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
             netlist.nl_setup_global.PARAM(setup, "A.MODEL", "$(@.MODEL)");

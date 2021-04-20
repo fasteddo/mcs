@@ -4,9 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
-using nl_fptype = System.Double;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using size_t = System.UInt32;
+using size_t_constant = mame.uint32_constant;
 using stream_sample_t = System.Int32;
 
 
@@ -69,9 +71,14 @@ namespace mame.netlist.interface_
     /// \tparam N Maximum number of supported buffers
     ///
     //template <typename T, std::size_t N>
-    class nld_buffered_param_setter_stream_sample_t : device_t
+    //NETLIB_OBJECT(buffered_param_setter)
+    class nld_buffered_param_setter<T, size_t_N> : device_t
+        where size_t_N : size_t_constant, new()
     {
-        int MAX_INPUT_CHANNELS;  //static const int MAX_INPUT_CHANNELS = N;
+        static size_t_constant N = new size_t_N();
+
+
+        static int MAX_INPUT_CHANNELS = (int)N.value;  //static const int MAX_INPUT_CHANNELS = N;
 
 
         netlist_time m_sample_time;
@@ -83,25 +90,23 @@ namespace mame.netlist.interface_
         size_t m_samples;
         size_t m_num_channels;
 
-        object_array_t<param_str_t> m_param_names;  //object_array_t<param_str_t, MAX_INPUT_CHANNELS> m_param_names;
-        object_array_t<param_fp_t>  m_param_mults;  //object_array_t<param_fp_t, MAX_INPUT_CHANNELS>  m_param_mults;
-        object_array_t<param_fp_t>  m_param_offsets;  //object_array_t<param_fp_t, MAX_INPUT_CHANNELS>  m_param_offsets;
-        std.array<param_fp_t> m_params;  //std::array<param_fp_t *, MAX_INPUT_CHANNELS>             m_params;
-        std.array<Pointer<stream_sample_t>> m_buffers;  //std::array<T *, MAX_INPUT_CHANNELS>                               m_buffers;
+        object_array_t<param_str_t, size_t_N> m_param_names;  //object_array_t<param_str_t, MAX_INPUT_CHANNELS> m_param_names;
+        object_array_t<param_fp_t, size_t_N>  m_param_mults;  //object_array_t<param_fp_t, MAX_INPUT_CHANNELS>  m_param_mults;
+        object_array_t<param_fp_t, size_t_N>  m_param_offsets;  //object_array_t<param_fp_t, MAX_INPUT_CHANNELS>  m_param_offsets;
+        std.array<param_fp_t, size_t_N> m_params;  //std::array<param_fp_t *, MAX_INPUT_CHANNELS>             m_params;
+        std.array<Pointer<stream_sample_t>, size_t_N> m_buffers;  //std::array<T *, MAX_INPUT_CHANNELS>                               m_buffers;
 
 
-        protected nld_buffered_param_setter_stream_sample_t(size_t N, netlist_state_t anetlist, string name)
-            : base(anetlist, name)
+        //NETLIB_CONSTRUCTOR(buffered_param_setter)
+        protected nld_buffered_param_setter(object owner, string name)
+            : base(owner, name)
         {
-            this.MAX_INPUT_CHANNELS = (int)N;
-
-
-            m_params = new std.array<param_fp_t>(MAX_INPUT_CHANNELS);
-            m_buffers = new std.array<Pointer<stream_sample_t>>(MAX_INPUT_CHANNELS);
+            m_params = new std.array<param_fp_t, size_t_N>();
+            m_buffers = new std.array<Pointer<stream_sample_t>, size_t_N>();
 
 
             m_sample_time = netlist_time.zero();
-            m_feedback = new logic_input_t(this, "FB"); // clock part
+            m_feedback = new logic_input_t(this, "FB", feedback); // clock part
             m_Q = new logic_output_t(this, "Q");
             m_pos = 0;
             m_samples = 0;
@@ -109,27 +114,26 @@ namespace mame.netlist.interface_
 
             throw new emu_unimplemented();
 #if false
-            m_param_names = new object_array_t<param_str_t>((size_t)MAX_INPUT_CHANNELS, this, 0, "CHAN{}", "");
-            m_param_mults = new object_array_t<param_fp_t>((size_t)MAX_INPUT_CHANNELS, this, 0, "MULT{}", 1.0);
-            m_param_offsets = new object_array_t<param_fp_t>((size_t)MAX_INPUT_CHANNELS, this, 0, "OFFSET{}", 0.0);
+            , m_param_names(*this, 0, "CHAN{}", "")
+            , m_param_mults(*this, 0, "MULT{}", 1.0)
+            , m_param_offsets(*this, 0, "OFFSET{}", 0.0)
 #endif
 
 
             connect(m_feedback, m_Q);
+            for (int i = 0; i < m_buffers.Count; i++)  //for (auto & elem : m_buffers)
+                m_buffers[i] = null;  //elem = nullptr;
         }
 
 
         //NETLIB_RESETI()
         public override void reset()
         {
-            m_pos = 0;
-            for (int i = 0; i < m_buffers.Count; i++)  //for (auto & elem : m_buffers)
-                m_buffers[i] = default;  //elem = nullptr;
         }
 
 
-        //NETLIB_UPDATEI()
-        public override void update()
+        //NETLIB_HANDLERI(feedback)
+        void feedback()
         {
             if (m_pos < m_samples)
             {

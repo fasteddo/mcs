@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using nl_fptype = System.Double;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nl_fptype_ops = mame.plib.constants_operators_double;
+using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 
 
 namespace mame.netlist
@@ -56,12 +58,12 @@ namespace mame.netlist
                 m_G = new param_fp_t(this, "G", nlconst.one());
                 m_RI = new param_fp_t(this, "RI", ri);
 
-                m_OP = new terminal_t(this, "OP");//, &m_IP);
-                m_ON = new terminal_t(this, "ON");//, &m_IP);
-                m_IP = new terminal_t(this, "IP");//, &m_IN);   // <= this should be NULL and terminal be filtered out prior to solving...
-                m_IN = new terminal_t(this, "IN");//, &m_IP);   // <= this should be NULL and terminal be filtered out prior to solving...
-                m_OP1 = new terminal_t(this, "_OP1");//, &m_IN);
-                m_ON1 = new terminal_t(this, "_ON1");//, &m_IN);
+                m_OP = new terminal_t(this, "OP", termhandler);//, &m_IP, NETLIB_DELEGATE(termhandler))
+                m_ON = new terminal_t(this, "ON", termhandler);//, &m_IP, NETLIB_DELEGATE(termhandler))
+                m_IP = new terminal_t(this, "IP", termhandler);//, &m_IN, NETLIB_DELEGATE(termhandler))   // <= this should be NULL and terminal be filtered out prior to solving...
+                m_IN = new terminal_t(this, "IN", termhandler);//, &m_IP, NETLIB_DELEGATE(termhandler))   // <= this should be NULL and terminal be filtered out prior to solving...
+                m_OP1 = new terminal_t(this, "_OP1", termhandler);//, &m_IN, NETLIB_DELEGATE(termhandler))
+                m_ON1 = new terminal_t(this, "_ON1", termhandler);//, &m_IN, NETLIB_DELEGATE(termhandler))
                 m_OP.terminal_t_after_ctor(m_IP);
                 m_ON.terminal_t_after_ctor(m_IP);
                 m_IP.terminal_t_after_ctor(m_IN);
@@ -82,7 +84,7 @@ namespace mame.netlist
             public override void reset()
             {
                 nl_fptype m_mult = m_G.op() * m_gfac; // 1.0 ==> 1V ==> 1A
-                nl_fptype GI = plib.pglobal.reciprocal(m_RI.op());
+                nl_fptype GI = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_RI.op());
 
                 m_IP.set_conductivity(GI);
                 m_IN.set_conductivity(GI);
@@ -95,19 +97,20 @@ namespace mame.netlist
             }
 
 
-            //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(VCCS)
-            public override void update()
+            //NETLIB_HANDLERI(termhandler);
+            //NETLIB_HANDLER(VCCS, termhandler)
+            protected void termhandler()
             {
+                solver.matrix_solver_t solv = null;
                 // only called if connected to a rail net ==> notify the solver to recalculate
-                if (!m_IP.net().is_rail_net())
-                    m_IP.solve_now();
-                else if (!m_IN.net().is_rail_net())
-                    m_IN.solve_now();
-                else if (!m_OP.net().is_rail_net())
-                    m_OP.solve_now();
-                else if (!m_ON.net().is_rail_net())
-                    m_ON.solve_now();
+                if ((solv = m_IP.solver()) != null)
+                    solv.solve_now();
+                else if ((solv = m_IN.solver()) != null)
+                    solv.solve_now();
+                else if ((solv = m_OP.solver()) != null)
+                    solv.solve_now();
+                else if ((solv = m_ON.solver()) != null)
+                    solv.solve_now();
             }
 
 
@@ -151,8 +154,8 @@ namespace mame.netlist
             { 
                 m_RO = new param_fp_t(this, "RO", nlconst.one());
 
-                m_OP2 = new terminal_t(this, "_OP2");//, &m_ON2);
-                m_ON2 = new terminal_t(this, "_ON2");//, &m_OP2);
+                m_OP2 = new terminal_t(this, "_OP2", termhandler);//, &m_ON2, NETLIB_DELEGATE(termhandler))
+                m_ON2 = new terminal_t(this, "_ON2", termhandler);//, &m_OP2, NETLIB_DELEGATE(termhandler))
                 m_OP2.terminal_t_after_ctor(m_ON2);
                 m_ON2.terminal_t_after_ctor(m_OP2);
 
@@ -166,7 +169,7 @@ namespace mame.netlist
             //NETLIB_RESET(VCVS)
             public override void reset()
             {
-                var gfac = plib.pglobal.reciprocal(m_RO.op());
+                var gfac = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_RO.op());
                 set_gfac(gfac);
 
                 base.reset();
@@ -176,8 +179,14 @@ namespace mame.netlist
             }
 
 
-            //NETLIB_UPDATEI();
             //NETLIB_UPDATE_PARAMI();
+
+
+            //NETLIB_HANDLERI(termhandler)
+            void termhandler()
+            {
+                base.termhandler();
+            }
         }
 
 

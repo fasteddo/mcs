@@ -267,6 +267,8 @@ namespace mame
 
         const int PORT_COUNT = 4;
 
+        public class uint32_constant_PORT_COUNT : uint32_constant { public UInt32 value { get { return PORT_COUNT; } } }
+
 
         // timer/counter
         m6805_timer m_timer;
@@ -277,8 +279,8 @@ namespace mame
         u8 [] m_port_input;  //u8              m_port_input[PORT_COUNT];
         u8 [] m_port_latch;  //u8              m_port_latch[PORT_COUNT];
         u8 [] m_port_ddr;  //u8              m_port_ddr[PORT_COUNT];
-        devcb_read8.array<devcb_read8> m_port_cb_r;
-        devcb_write8.array<devcb_write8> m_port_cb_w;
+        devcb_read8.array<devcb_read8, uint32_constant_PORT_COUNT> m_port_cb_r;
+        devcb_write8.array<devcb_write8, uint32_constant_PORT_COUNT> m_port_cb_w;
 
         // miscellaneous register
         //enum mr_mask : u8
@@ -306,8 +308,8 @@ namespace mame
             m_port_input = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_latch = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_ddr = new u8 [PORT_COUNT] { 0x00, 0x00, 0x00, 0x00 };
-            m_port_cb_r = new devcb_read8.array<devcb_read8>(PORT_COUNT, this, () => { return new devcb_read8(this); });
-            m_port_cb_w = new devcb_write8.array<devcb_write8>(PORT_COUNT, this, () => { return new devcb_write8(this); });
+            m_port_cb_r = new devcb_read8.array<devcb_read8, uint32_constant_PORT_COUNT>(this, () => { return new devcb_read8(this); });
+            m_port_cb_w = new devcb_write8.array<devcb_write8, uint32_constant_PORT_COUNT>(this, () => { return new devcb_write8(this); });
             m_ram_size = ram_size;
         }
 

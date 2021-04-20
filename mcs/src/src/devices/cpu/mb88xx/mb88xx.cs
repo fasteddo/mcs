@@ -188,8 +188,8 @@ namespace mame
         devcb_read8 m_read_k;
         devcb_write8 m_write_o;
         devcb_write8 m_write_p;
-        devcb_read8.array<devcb_read8> m_read_r;
-        devcb_write8.array<devcb_write8> m_write_r;
+        devcb_read8.array<devcb_read8, uint32_constant_4> m_read_r;
+        devcb_write8.array<devcb_write8, uint32_constant_4> m_write_r;
         devcb_read_line m_read_si;
         devcb_write_line m_write_so;
 
@@ -224,8 +224,8 @@ namespace mame
             m_read_k = new devcb_read8(this);
             m_write_o = new devcb_write8(this);
             m_write_p = new devcb_write8(this);
-            m_read_r = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
-            m_write_r = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
+            m_read_r = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_write_r = new devcb_write8.array<devcb_write8, uint32_constant_4>(this, () => { return new devcb_write8(this); });
             m_read_si = new devcb_read_line(this);
             m_write_so = new devcb_write_line(this);
         }

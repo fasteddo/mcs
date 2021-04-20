@@ -46,7 +46,7 @@ namespace mame
         offs_t m_handler_start;
         offs_t m_handler_mask;
         handler_entry m_handler;
-        std.array<u8> m_keymap = new std.array<u8>(4);  //std::array<u8, 4> m_keymap;
+        std.array<u8, uint32_constant_4> m_keymap = new std.array<u8, uint32_constant_4>();  //std::array<u8, 4> m_keymap;
         u8 m_access_width;
         u8 m_access_endian;
 

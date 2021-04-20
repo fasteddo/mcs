@@ -6,7 +6,9 @@ using System.Collections.Generic;
 
 using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
 using mat_index_type = System.UInt16;  //using mat_index_type = typename plib::matrix_compressed_rows_t<FT, SIZE>::index_type;
-using nl_fptype = System.Double;
+using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
+using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt32;
 using uint16_t = System.UInt16;
 using unsigned = System.UInt32;
@@ -17,7 +19,9 @@ namespace mame.netlist
     namespace solver
     {
         //template <typename FT, int SIZE>
-        abstract class matrix_solver_GCR_t_nl_fptype : matrix_solver_ext_t_nl_fptype  //class matrix_solver_GCR_t: public matrix_solver_ext_t<FT, SIZE>
+        abstract class matrix_solver_GCR_t<FT, FT_OPS, int_SIZE> : matrix_solver_ext_t<FT, FT_OPS, int_SIZE>  //class matrix_solver_GCR_t: public matrix_solver_ext_t<FT, SIZE>
+            where FT_OPS : plib.constants_operators<FT>, new()
+            where int_SIZE : int_constant, new()
         {
             //using mat_type = plib::pGEmatrix_cr_t<plib::pmatrix_cr_t<FT, SIZE>>;
             //using base_type = matrix_solver_ext_t<FT, SIZE>;
@@ -25,14 +29,14 @@ namespace mame.netlist
             //using mat_index_type = typename plib::pmatrix_cr_t<FT, SIZE>::index_type;
 
 
-            plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16 mat;  //mat_type mat;
+            plib.pGEmatrix_cr_t<FT, int_SIZE> mat;  //mat_type mat;
             plib.dynproc m_proc;  //plib::dynproc<void, FT *, nl_fptype *, nl_fptype *, nl_fptype *, nl_fptype ** > m_proc;
 
 
-            public matrix_solver_GCR_t_nl_fptype(int SIZE, netlist_state_t anetlist, string name, analog_net_t_list_t nets, solver_parameters_t params_, size_t size)
-                : base(SIZE, anetlist, name, nets, params_, size)
+            matrix_solver_GCR_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_, size_t size)
+                : base(main_solver, name, nets, params_, size)
             {
-                mat = new plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16(SIZE, (uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
+                mat = new plib.pGEmatrix_cr_t<FT, int_SIZE>((uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
                 m_proc = new plib.dynproc();
 
 
@@ -47,7 +51,7 @@ namespace mame.netlist
 
                 for (size_t k = 0; k < iN; k++)
                 {
-                    fill[k].resize((int)iN, (unsigned)plib.pGEmatrix_cr_t_pmatrix_cr_t_double_uint16.constants_e.FILL_INFINITY);
+                    fill[k].resize((int)iN, (unsigned)plib.pGEmatrix_cr_t<FT, int_SIZE>.constants_e.FILL_INFINITY);
                     foreach (var j in this.m_terms[k].m_nz)
                     {
                         fill[k][j] = 0;
@@ -89,11 +93,11 @@ namespace mame.netlist
 #endif
                 }
 
-                anetlist.log().verbose.op("maximum fill: {0}", gr.first);
-                anetlist.log().verbose.op("Post elimination occupancy ratio: {1} Ops: {0}", gr.second,
-                        (nl_fptype)mat.nz_num / (nl_fptype)(iN * iN));
-                anetlist.log().verbose.op(" Pre elimination occupancy ratio: {0}",
-                        (nl_fptype)raw_elements / (nl_fptype)(iN * iN));
+                this.state().log().verbose.op("maximum fill: {0}", gr.first);
+                this.state().log().verbose.op("Post elimination occupancy ratio: {1} Ops: {0}", gr.second,
+                        (matrix_solver_t_fptype)mat.nz_num / (matrix_solver_t_fptype)(iN * iN));
+                this.state().log().verbose.op(" Pre elimination occupancy ratio: {0}",
+                        (matrix_solver_t_fptype)raw_elements / (matrix_solver_t_fptype)(iN * iN));
 
                 // FIXME: Move me
                 //
@@ -101,17 +105,17 @@ namespace mame.netlist
                 // During extended validation there is no reason to check for
                 // differences in the generated code since during
                 // extended validation this will be different (and non-functional)
-                if (!anetlist.is_extended_validation() && anetlist.lib().isLoaded())
+                if (!this.state().is_extended_validation() && this.state().lib().isLoaded())
                 {
                     string symname = static_compile_name();
-                    m_proc.load(anetlist.lib(), symname);
+                    m_proc.load(this.state().lib(), symname);
                     if (m_proc.resolved())
                     {
-                        anetlist.log().info.op("External static solver {0} found ...", symname);
+                        this.state().log().info.op("External static solver {0} found ...", symname);
                     }
                     else
                     {
-                        anetlist.log().warning.op("External static solver {0} not found ...", symname);
+                        this.state().log().warning.op("External static solver {0} not found ...", symname);
                     }
                 }
             }
@@ -132,7 +136,7 @@ namespace mame.netlist
                 else
                 {
                     //  clear matrix
-                    mat.set_scalar(plib.constants_nl_fptype.zero());
+                    mat.set_scalar(plib.constants<FT, FT_OPS>.zero());
 
                     // populate matrix
                     this.fill_matrix_and_rhs();
@@ -164,6 +168,9 @@ namespace mame.netlist
                 size_t iN = (size_t)this.size();
                 string fptype = fp_constants_double.name();  //pstring fptype(fp_constants<FT>::name());
                 string fpsuffix = fp_constants_double.suffix();  //pstring fpsuffix(fp_constants<FT>::suffix());
+
+                // avoid unused variable warnings
+                strm += string.Format("\tplib::unused_var({0});\n", "cnV");
 
                 for (size_t i = 0; i < mat.nz_num; i++)
                     strm += string.Format("\t{0} m_A{1}(0.0);\n", fptype, i, i);
@@ -229,9 +236,14 @@ namespace mame.netlist
 
                 for (size_t i = 0; i < iN - 1; i++)
                 {
-                    var nzbd = this.m_terms[i].m_nzbd;
+                    throw new emu_unimplemented();
+#if false
+                    //old var nzbd = this.m_terms[i].m_nzbd;
+                    //const auto &nzbd = this->m_terms[i].m_nzbd;
+                    var nzbd = mat.nzbd(i);
+                    var nzbd_count = mat.nzbd_count(i);
 
-                    if (!nzbd.empty())
+                    if (nzbd_count > 0)
                     {
                         size_t pi = mat.diag[i];
 
@@ -241,8 +253,11 @@ namespace mame.netlist
                         size_t piie = mat.row_idx[i+1];
 
                         //for (auto & j : nzbd)
-                        foreach (size_t j in nzbd)
+                        //old foreach (size_t j in nzbd)
+                        for (size_t jj = 0; jj < nzbd_count; jj++)
                         {
+                            size_t j = nzbd[jj];
+
                             // proceed to column i
                             size_t pj = mat.row_idx[j];
 
@@ -266,6 +281,7 @@ namespace mame.netlist
                             strm += string.Format("\tRHS{0} += f{1}_{2} * RHS{3};\n", j, i, j, i);
                         }
                     }
+#endif
                 }
 
                 //new_V[iN - 1] = RHS[iN - 1] / mat.A[mat.diag[iN - 1]];

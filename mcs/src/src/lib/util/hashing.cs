@@ -48,39 +48,39 @@ namespace mame.util
             return r;
         }
 
-        static void sha1_r0(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r0(const uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        static void sha1_r0(PointerU32 data, std.array<uint32_t, uint32_constant_5> d, unsigned i)  //inline void sha1_r0(const uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
         {
             d[i % 5] = d[i % 5] + ((d[(i + 3) % 5] & (d[(i + 2) % 5] ^ d[(i + 1) % 5])) ^ d[(i + 1) % 5]) + data[i] + 0x5a827999U + sha1_rol(d[(i + 4) % 5], 5);
             d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
         }
 
-        static void sha1_r1(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r1(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        static void sha1_r1(PointerU32 data, std.array<uint32_t, uint32_constant_5> d, unsigned i)  //inline void sha1_r1(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
         {
             d[i % 5] = d[i % 5] + ((d[(i + 3) % 5] & (d[(i + 2) % 5] ^ d[(i + 1) % 5])) ^ d[(i + 1) % 5])+ sha1_b(data, i) + 0x5a827999U + sha1_rol(d[(i + 4) % 5], 5);
             d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
         }
 
-        static void sha1_r2(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r2(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        static void sha1_r2(PointerU32 data, std.array<uint32_t, uint32_constant_5> d, unsigned i)  //inline void sha1_r2(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
         {
             d[i % 5] = d[i % 5] + (d[(i + 3) % 5] ^ d[(i + 2) % 5] ^ d[(i + 1) % 5]) + sha1_b(data, i) + 0x6ed9eba1U + sha1_rol(d[(i + 4) % 5], 5);
             d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
         }
 
-        static void sha1_r3(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r3(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        static void sha1_r3(PointerU32 data, std.array<uint32_t, uint32_constant_5> d, unsigned i)  //inline void sha1_r3(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
         {
             d[i % 5] = d[i % 5] + (((d[(i + 3) % 5] | d[(i + 2) % 5]) & d[(i + 1) % 5]) | (d[(i + 3) % 5] & d[(i + 2) % 5])) + sha1_b(data, i) + 0x8f1bbcdcU + sha1_rol(d[(i + 4) % 5], 5);
             d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
         }
 
-        static void sha1_r4(PointerU32 data, std.array<uint32_t> d, unsigned i)  //inline void sha1_r4(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
+        static void sha1_r4(PointerU32 data, std.array<uint32_t, uint32_constant_5> d, unsigned i)  //inline void sha1_r4(uint32_t *data, std::array<uint32_t, 5> &d, unsigned i)
         {
             d[i % 5] = d[i % 5] + (d[(i + 3) % 5] ^ d[(i + 2) % 5] ^ d[(i + 1) % 5]) + sha1_b(data, i) + 0xca62c1d6U + sha1_rol(d[(i + 4) % 5], 5);
             d[(i + 3) % 5] = sha1_rol(d[(i + 3) % 5], 30);
         }
 
-        public static void sha1_process(std.array<uint32_t> st, PointerU32 data)  //inline void sha1_process(std::array<uint32_t, 5> &st, uint32_t *data)
+        public static void sha1_process(std.array<uint32_t, uint32_constant_5> st, PointerU32 data)  //inline void sha1_process(std::array<uint32_t, 5> &st, uint32_t *data)
         {
-            std.array<uint32_t> d = st;
+            std.array<uint32_t, uint32_constant_5> d = st;
             unsigned i = 0U;
             while (i < 16U)
                 sha1_r0(data, d, i++);
@@ -164,7 +164,7 @@ namespace mame.util
     {
         // internal state
         uint64_t m_cnt;
-        std.array<uint32_t> m_st = new std.array<uint32_t>(5);  //std::array<uint32_t, 5> m_st;
+        std.array<uint32_t, uint32_constant_5> m_st = new std.array<uint32_t, uint32_constant_5>();  //std::array<uint32_t, 5> m_st;
         MemoryU8 m_buf = new MemoryU8(16 * 4, true);  //uint32_t m_buf[16];
 
 

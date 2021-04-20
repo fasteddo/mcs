@@ -4,8 +4,13 @@
 using System;
 using System.Collections.Generic;
 
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
-using nl_fptype = System.Double;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nl_fptype_ops = mame.plib.constants_operators_double;
+using nldelegate = System.Action;  //using nldelegate = plib::pmfp<void>;
+using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
+using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
+using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
 
 
 // -----------------------------------------------------------------------------
@@ -49,15 +54,26 @@ namespace mame.netlist
             public terminal_t m_N;
 
 
-            // FIXME locate use case of owned = true and eliminate them if possible
-            //NETLIB_CONSTRUCTOR_EX(twoterm, bool terminals_owned = false)
-            //detail.family_setter_t m_famsetter;
-            //template <class CLASS>
-            public nld_twoterm(base_device_t owner, string name, bool terminals_owned = false)
+            //NETLIB_CONSTRUCTOR(twoterm)
+            public nld_twoterm(object owner, string name)
                 : base(owner, name)
             {
-                m_P = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "1");//, m_N);
-                m_N = new terminal_t(nlid_twoterm_global.bselect(terminals_owned, owner, this), (terminals_owned ? name + "." : "") + "2");//, m_P);
+                m_P = new terminal_t(this, "1", termhandler);//, &m_N, NETLIB_DELEGATE(termhandler));
+                m_N = new terminal_t(this, "2", termhandler);//, &m_P, NETLIB_DELEGATE(termhandler));
+                m_P.terminal_t_after_ctor(m_N);
+                m_N.terminal_t_after_ctor(m_P);
+            }
+
+
+            //NETLIB_CONSTRUCTOR_EX(twoterm, nldelegate owner_delegate)
+            //template <class C>
+            //NETLIB_NAME(twoterm)(C &owner, const pstring &name, nldelegate owner_delegate) \
+            //        : base_type(owner, name)
+            public nld_twoterm(core_device_t owner, string name, nldelegate owner_delegate)
+                : base(owner, name)
+            {
+                m_P = new terminal_t(owner, name + ".1", owner_delegate);//, &m_N, owner_delegate);
+                m_N = new terminal_t(owner, name + ".2", owner_delegate);//, &m_P, owner_delegate);
                 m_P.terminal_t_after_ctor(m_N);
                 m_N.terminal_t_after_ctor(m_P);
             }
@@ -67,11 +83,12 @@ namespace mame.netlist
             //NETLIB_RESETI() { }
 
 
-            //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(twoterm)
-            public override void update()
+            //NETLIB_HANDLERI(termhandler);
+            //NETLIB_HANDLER(twoterm, termhandler)
+            void termhandler()
             {
-                /* only called if connected to a rail net ==> notify the solver to recalculate */
+                // only called if connected to a rail net ==> notify the solver to recalculate
+                //printf("%s update\n", this->name().c_str());
                 solve_now();
             }
 
@@ -94,12 +111,11 @@ namespace mame.netlist
 
 
             //template <typename F>
-            public void change_state(Action f) { change_state(f, netlist_time.quantum()); }
-            public void change_state(Action f, netlist_time delay)  //void change_state(F f, netlist_time delay = netlist_time::quantum())
+            public void change_state(Action f)  //void change_state(F f) const
             {
                 var solv = solver();
                 if (solv != null)
-                    solv.change_state(f, delay);
+                    solv.change_state(f);
             }
 
 
@@ -134,6 +150,15 @@ namespace mame.netlist
                 //               GO,  GT,     I
                 m_P.set_go_gt_I(a12, a11, rhs1);
                 m_N.set_go_gt_I(a21, a22, rhs2);
+            }
+
+
+            protected void clear_mat()
+            {
+                var z = nlconst.zero();
+                //               GO,  GT,     I
+                m_P.set_go_gt_I(z, z, z);
+                m_N.set_go_gt_I(z, z, z);
             }
 
 
@@ -188,7 +213,7 @@ namespace mame.netlist
 
             public void set_R(nl_fptype R)
             {
-                nl_fptype G = plib.pglobal.reciprocal(R);
+                nl_fptype G = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(R);
                 set_mat( G, -G, nlconst.zero(),
                         -G,  G, nlconst.zero());
             }
@@ -200,14 +225,6 @@ namespace mame.netlist
             //            -G,  G, nlconst::zero());
             //}
 
-
-            //NETLIB_RESETI();
-            //NETLIB_RESET(R_base)
-            public override void reset()
-            {
-                base.reset();  //NETLIB_NAME(twoterm)::reset();
-                set_R(plib.pglobal.reciprocal(exec().gmin()));
-            }
 
             //NETLIB_UPDATEI();
         }
@@ -310,7 +327,7 @@ namespace mame.netlist
             {
                 nl_fptype v = m_Dial.op();
                 if (m_DialIsLog.op())
-                    v = (plib.pglobal.exp(v) - nlconst.one()) / (plib.pglobal.exp(nlconst.one()) - nlconst.one());
+                    v = (plib.pglobal.exp<nl_fptype, nl_fptype_ops>(v) - nlconst.one()) / (plib.pglobal.exp<nl_fptype, nl_fptype_ops>(nlconst.one()) - nlconst.one());
 
                 m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
                 m_R2.set_R(std.max(m_R.op() * (nlconst.one() - v), exec().gmin()));
@@ -322,7 +339,7 @@ namespace mame.netlist
             {
                 nl_fptype v = m_Dial.op();
                 if (m_DialIsLog.op())
-                    v = (plib.pglobal.exp(v) - nlconst.one()) / (plib.pglobal.exp(nlconst.one()) - nlconst.one());
+                    v = (plib.pglobal.exp<nl_fptype, nl_fptype_ops>(v) - nlconst.one()) / (plib.pglobal.exp<nl_fptype, nl_fptype_ops>(nlconst.one()) - nlconst.one());
                 if (m_Reverse.op())
                     v = nlconst.one() - v;
 
@@ -372,14 +389,21 @@ namespace mame.netlist
 
 
             //NETLIB_TIMESTEPI()
-            protected override void timestep(nl_fptype step)
+            protected override void timestep(timestep_type ts_type, nl_fptype step)
             {
-                // G, Ieq
-                var res = m_cap.timestep(m_C.op(), deltaV(), step);
-                nl_fptype G = res.first;
-                nl_fptype I = res.second;
-                set_mat( G, -G, -I,
-                        -G,  G,  I);
+                if (ts_type == timestep_type.FORWARD)
+                {
+                    // G, Ieq
+                    var res = m_cap.timestep(m_C.op(), deltaV(), step);
+                    nl_fptype G = res.first;
+                    nl_fptype I = res.second;
+                    set_mat( G, -G, -I,
+                            -G,  G,  I);
+                }
+                else
+                {
+                    m_cap.restore_state();
+                }
             }
 
 
@@ -387,6 +411,7 @@ namespace mame.netlist
             public override void reset()
             {
                 m_cap.setparams(exec().gmin());
+                clear_mat();
             }
 
 
@@ -414,14 +439,14 @@ namespace mame.netlist
 
         class diode_model_t
         {
-            public param_model_t.value_t m_IS;    //!< saturation current.
-            public param_model_t.value_t m_N;     //!< emission coefficient.
+            public param_model_t_value_t m_IS;    //!< saturation current.
+            public param_model_t_value_t m_N;     //!< emission coefficient.
 
 
             public diode_model_t(param_model_t model)
             {
-                m_IS = new param_model_t.value_t(model, "IS");
-                m_N = new param_model_t.value_t(model, "N");
+                m_IS = new param_model_t_value_t(model, "IS");
+                m_N = new param_model_t_value_t(model, "N");
             }
         }
 

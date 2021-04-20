@@ -29,7 +29,7 @@ namespace mame
         // callbacks
         devcb_write_line m_eoc_cb;
         devcb_write_line m_eoc_ff_cb;
-        devcb_read8.array<devcb_read8>/*<8>*/ m_in_cb;
+        devcb_read8.array<devcb_read8, uint32_constant_8> m_in_cb;
 
         enum state  //enum state : int
         {
@@ -60,7 +60,7 @@ namespace mame
         {
             m_eoc_cb = new devcb_write_line(this);
             m_eoc_ff_cb = new devcb_write_line(this);
-            m_in_cb = new devcb_read.array<devcb_read8>(8, this, () => { return new devcb_read8(this); });
+            m_in_cb = new devcb_read.array<devcb_read8, uint32_constant_8>(this, () => { return new devcb_read8(this); });
             m_state = state.STATE_IDLE;
             m_cycle_timer = null;
             m_start = 0;

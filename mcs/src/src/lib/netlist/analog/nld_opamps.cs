@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using nl_fptype = System.Double;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nl_fptype_ops = mame.plib.constants_operators_double;
+using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
 
 
 namespace mame
@@ -29,28 +31,28 @@ namespace mame
     {
         class opamp_model_t
         {
-            public param_model_t.value_t m_TYPE;   //!< Model Type, 1 and 3 are supported
-            public param_model_t.value_t m_FPF;    //!< frequency of first pole
-            public param_model_t.value_t m_SLEW;   //!< unity gain slew rate
-            public param_model_t.value_t m_RI;     //!< input resistance
-            public param_model_t.value_t m_RO;     //!< output resistance
-            public param_model_t.value_t m_UGF;    //!< unity gain frequency (transition frequency)
-            public param_model_t.value_t m_VLL;    //!< low output swing minus low supply rail
-            public param_model_t.value_t m_VLH;    //!< high supply rail minus high output swing
-            public param_model_t.value_t m_DAB;    //!< Differential Amp Bias - total quiescent current
+            public param_model_t_value_t m_TYPE;   //!< Model Type, 1 and 3 are supported
+            public param_model_t_value_t m_FPF;    //!< frequency of first pole
+            public param_model_t_value_t m_SLEW;   //!< unity gain slew rate
+            public param_model_t_value_t m_RI;     //!< input resistance
+            public param_model_t_value_t m_RO;     //!< output resistance
+            public param_model_t_value_t m_UGF;    //!< unity gain frequency (transition frequency)
+            public param_model_t_value_t m_VLL;    //!< low output swing minus low supply rail
+            public param_model_t_value_t m_VLH;    //!< high supply rail minus high output swing
+            public param_model_t_value_t m_DAB;    //!< Differential Amp Bias - total quiescent current
 
 
             public opamp_model_t(param_model_t model)
             {
-                m_TYPE = new param_model_t.value_t(model, "TYPE");
-                m_FPF = new param_model_t.value_t(model, "FPF");
-                m_SLEW = new param_model_t.value_t(model, "SLEW");
-                m_RI = new param_model_t.value_t(model, "RI");
-                m_RO = new param_model_t.value_t(model, "RO");
-                m_UGF = new param_model_t.value_t(model, "UGF");
-                m_VLL = new param_model_t.value_t(model, "VLL");
-                m_VLH = new param_model_t.value_t(model, "VLH");
-                m_DAB = new param_model_t.value_t(model, "DAB");
+                m_TYPE = new param_model_t_value_t(model, "TYPE");
+                m_FPF = new param_model_t_value_t(model, "FPF");
+                m_SLEW = new param_model_t_value_t(model, "SLEW");
+                m_RI = new param_model_t_value_t(model, "RI");
+                m_RO = new param_model_t_value_t(model, "RO");
+                m_UGF = new param_model_t_value_t(model, "UGF");
+                m_VLL = new param_model_t_value_t(model, "VLL");
+                m_VLH = new param_model_t_value_t(model, "VLH");
+                m_DAB = new param_model_t_value_t(model, "DAB");
             }
         }
 
@@ -91,8 +93,8 @@ namespace mame
             {
                 m_RP = new nld_R_base(this, "RP1");
                 m_G1 = new nld_VCCS(this, "G1");
-                m_VCC = new analog_input_t(this, "VCC");
-                m_GND = new analog_input_t(this, "GND");
+                m_VCC = new analog_input_t(this, "VCC", supply);
+                m_GND = new analog_input_t(this, "GND", supply);
                 m_model = new param_model_t(this, "MODEL", "LM324");
                 m_modacc = new opamp_model_t(m_model);
                 m_VH = new analog_output_t(this, "VH");
@@ -165,17 +167,15 @@ namespace mame
                     register_subalias("OUT", "EBUF.OP");
 #endif
                 }
-
             }
 
 
-            //NETLIB_UPDATEI();
-            //NETLIB_UPDATE(opamp)
-            public override void update()
+            //NETLIB_HANDLERI(supply)
+            void supply()
             {
                 nl_fptype cVt = nlconst.np_VT(nlconst.one()); // * m_n;
                 nl_fptype cId = m_modacc.m_DAB.op(); // 3 mA
-                nl_fptype cVd = cVt * plib.pglobal.log(cId / nlconst.np_Is() + nlconst.one());
+                nl_fptype cVd = cVt * plib.pglobal.log<nl_fptype, nl_fptype_ops>(cId / nlconst.np_Is() + nlconst.one());
 
                 m_VH.push(m_VCC.op() - m_modacc.m_VLH.op() - cVd);
                 m_VL.push(m_GND.op() + m_modacc.m_VLL.op() + cVd);

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using nl_fptype = System.Double;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt32;
 
 
@@ -17,16 +17,16 @@ namespace mame.plib
 
 
         // pmath
-        public static nl_fptype reciprocal(nl_fptype v) { return pmath_global.reciprocal(v); }
-        public static nl_fptype abs(nl_fptype v) { return pmath_global.abs(v); }
-        public static nl_fptype cos(nl_fptype v) { return pmath_global.cos(v); }
-        public static nl_fptype log(nl_fptype v) { return pmath_global.log(v); }
-        public static nl_fptype pow(nl_fptype v, nl_fptype p) { return pmath_global.pow(v, p); }
-        public static nl_fptype sin(nl_fptype v) { return pmath_global.sin(v); }
-        public static nl_fptype sqrt(nl_fptype v) { return pmath_global.sqrt(v); }
-        public static nl_fptype trunc(nl_fptype v) { return pmath_global.trunc(v); }
-        public static nl_fptype exp(nl_fptype v) { return pmath_global.exp(v); }
-        public static nl_fptype floor(nl_fptype v) { return pmath_global.floor(v); }
+        public static T reciprocal<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.reciprocal<T, OPS>(v); }
+        public static T abs<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.abs<T, OPS>(v); }
+        public static T sqrt<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.sqrt<T, OPS>(v); }
+        public static T exp<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.exp<T, OPS>(v); }
+        public static T log<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.log<T, OPS>(v); }
+        public static T floor<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.floor<T, OPS>(v); }
+        public static T sin<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.sin<T, OPS>(v); }
+        public static T cos<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.cos<T, OPS>(v); }
+        public static T trunc<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.trunc<T, OPS>(v); }
+        public static T pow<T, OPS>(T v, T p) where OPS : constants_operators<T>, new() { return pmath_global.pow<T, OPS>(v, p); }
 
 
         // pstonum
@@ -53,6 +53,6 @@ namespace mame.plib
 
 
         // vector_ops
-        public static void vec_add_mult_scalar_p(int n, Pointer<double> result, Pointer<double> v, double scalar) { vector_ops_global.vec_add_mult_scalar_p(n, result, v, scalar); }
+        public static void vec_add_mult_scalar_p<T, T_OPS>(int n, Pointer<T> result, Pointer<T> v, T scalar) where T_OPS : plib.constants_operators<T>, new() { vector_ops_global.vec_add_mult_scalar_p<T, T_OPS>(n, result, v, scalar); }
     }
 }

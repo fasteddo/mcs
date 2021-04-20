@@ -1,0 +1,425 @@
+// license:BSD-3-Clause
+// copyright-holders:Edward Fast
+
+using System;
+using System.Collections.Generic;
+
+using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
+using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nldelegate = System.Action;  //using nldelegate = plib::pmfp<void>;
+using object_t_props = mame.netlist.detail.property_store_t<mame.netlist.detail.object_t, string>;  //using props = property_store_t<object_t, pstring>;
+using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
+using unsigned = System.UInt32;
+
+
+namespace mame.netlist
+{
+    //============================================================
+    //  Exceptions
+    //============================================================
+
+    /// \brief Generic netlist exception.
+    ///  The exception is used in all events which are considered fatal.
+    class nl_exception : plib.pexception
+    {
+        /// \brief Constructor.
+        ///  Allows a descriptive text to be passed to the exception
+        public nl_exception(string text)  //!< text to be passed
+            : base(text)
+        { }
+
+        /// \brief Constructor.
+        ///  Allows to use \ref plib::pfmt logic to be used in exception
+        //template<typename... Args>
+        public nl_exception(string fmt,      //!< format to be used
+                            params object [] args)  //!< arguments to be passed
+            : base(string.Format(fmt, args))
+        { }
+    }
+
+
+    namespace detail
+    {
+        //template <typename C, typename T>
+        static class property_store_t<C, T> where T : class
+        {
+            //using value_type = T;
+            //using key_type = const C *;
+
+
+            public static void add(C obj, T aname)
+            {
+                store().insert(obj, aname);
+            }
+
+
+            public static T get(C obj)
+            {
+                try
+                {
+                    var ret = store().find(obj);
+                    if (ret == default)
+                        return null;
+                    return ret;
+                }
+                catch (Exception)
+                {
+                    plib.pglobal.terminate("exception in property_store_t.get()");
+                    return null;
+                }
+            }
+
+
+            //static void remove(key_type obj) noexcept
+
+
+            static std.unordered_map<C, T> lstore;
+
+            static std.unordered_map<C, T> store()
+            {
+                return lstore;
+            }
+        }
+
+
+        // -----------------------------------------------------------------------------
+        // object_t
+        // -----------------------------------------------------------------------------
+        /// \brief The base class for netlist devices, terminals and parameters.
+        ///
+        ///  This class serves as the base class for all device, terminal and
+        ///  objects.
+        public class object_t : global_object
+        {
+            //using props = property_store_t<object_t, pstring>;
+
+
+            /// \brief Constructor.
+            /// Every class derived from the object_t class must have a name.
+            ///
+            /// \param aname string containing name of the object
+
+            protected object_t(string aname)
+            {
+                object_t_props.add(this, aname);
+            }
+
+            //PCOPYASSIGNMOVE(object_t, delete)
+            /// \brief return name of the object
+            ///
+            /// \returns name of the object.
+
+            public string name()
+            {
+                return object_t_props.get(this);
+            }
+
+            // only childs should be destructible
+            //~object_t() noexcept
+        }
+
+
+        /// \brief Base class for all objects bejng owned by a netlist
+        ///
+        /// The object provides adds \ref netlist_state_t and \ref netlist_t
+        /// accessors.
+        ///
+        public class netlist_object_t : object_t, netlist_interface_plus_name
+        {
+            netlist_t m_netlist;
+
+
+            protected netlist_object_t(netlist_t nl, string name)
+                : base(name)
+            {
+                m_netlist = nl;
+            }
+
+            //~netlist_object_t() = default;
+
+            //PCOPYASSIGNMOVE(netlist_object_t, delete)
+
+
+            public netlist_state_t state() { return m_netlist.nlstate(); }
+
+
+            public netlist_t exec() { return m_netlist; }
+
+
+            // to ease template design
+            //template<typename T, typename... Args>
+            //device_arena::unique_ptr<T> make_pool_object(Args&&... args);
+        }
+
+
+        // -----------------------------------------------------------------------------
+        // device_object_t
+        // -----------------------------------------------------------------------------
+        /// \brief Base class for all objects being owned by a device.
+        ///
+        /// Serves as the base class of all objects being owned by a device.
+        ///
+        /// The class also supports device-less objects. In this case,
+        /// nullptr is passed in as the device object.
+        ///
+        public class device_object_t : object_t, netlist_interface_plus_name
+        {
+            core_device_t m_device;
+
+
+            /// \brief Constructor.
+            ///
+            /// \param dev  pointer to device owning the object.
+            /// \param name string holding the name of the device
+            protected device_object_t(core_device_t dev, string aname)
+                : base(aname)
+            {
+                m_device = dev;
+            }
+
+
+            /// \brief returns reference to owning device.
+            /// \returns reference to owning device.
+            public core_device_t device() { return m_device; }
+
+
+            /// \brief The netlist owning the owner of this object.
+            /// \returns reference to netlist object.
+            public netlist_state_t state()
+            {
+                return m_device.state();
+            }
+
+
+            public netlist_t exec()
+            {
+                return m_device.exec();
+            }
+        }
+
+
+        // -----------------------------------------------------------------------------
+        // core_terminal_t
+        // -----------------------------------------------------------------------------
+        /// \brief Base class for all terminals.
+        ///
+        /// All terminals are derived from this class.
+        ///
+        public class core_terminal_t : device_object_t
+                                       //public plib::linkedlist_t<core_terminal_t>::element_t
+        {
+            /// \brief Number of signal bits
+            ///
+            /// Going forward setting this to 8 will allow 8-bit signal
+            /// busses to be used in netlist, e.g. for more complex memory
+            /// arrangements.
+            /// Mimimum value is 2 here to support tristate output on proxies.
+            const unsigned INP_BITS = 2;
+
+            const unsigned INP_MASK = (1 << (int)INP_BITS) - 1;
+            public const unsigned INP_HL_SHIFT = 0;
+            public const unsigned INP_LH_SHIFT = INP_BITS;
+
+
+            public static netlist_sig_t OUT_TRISTATE() { return INP_MASK; }
+
+
+            //static_assert(INP_BITS * 2 <= sizeof(netlist_sig_t) * 8, "netlist_sig_t size not sufficient");
+
+
+            public enum state_e : unsigned
+            {
+                STATE_INP_PASSIVE = 0,
+                STATE_INP_HL      = INP_MASK << (int)INP_HL_SHIFT,
+                STATE_INP_LH      = INP_MASK << (int)INP_LH_SHIFT,
+                STATE_INP_ACTIVE  = STATE_INP_HL | STATE_INP_LH,
+                STATE_OUT         = 1 << (int)(2 * INP_BITS),
+                STATE_BIDIR       = 1 << (int)(2 * INP_BITS + 1)
+            }
+
+
+            nldelegate m_delegate;
+            net_t m_net;
+            state_var<state_e> m_state;
+
+
+            protected core_terminal_t(core_device_t dev, string aname, state_e state, nldelegate delegate_)
+                : base(dev, dev.name() + "." + aname)
+            {
+#if NL_USE_COPY_INSTEAD_OF_REFERENCE
+                , m_Q(*this, "m_Q", 0)
+#endif
+                m_delegate = delegate_;
+                m_net = null;
+                m_state = new state_var<state_e>(this, "m_state", state);
+            }
+
+
+            //virtual ~core_terminal_t() noexcept = default;
+
+            //PCOPYASSIGNMOVE(core_terminal_t, delete)
+
+
+            /// \brief The object type.
+            /// \returns type of the object
+            public terminal_type type()
+            {
+                if (this is terminal_t)  //if (dynamic_cast<const terminal_t *>(this) != nullptr)
+                    return terminal_type.TERMINAL;
+                if (this is logic_input_t  //if (dynamic_cast<const logic_input_t *>(this) != nullptr
+                    || this is analog_input_t)  //|| dynamic_cast<const analog_input_t *>(this) != nullptr)
+                    return terminal_type.INPUT;
+                if (this is logic_output_t  //if (dynamic_cast<const logic_output_t *>(this) != nullptr
+                    || this is analog_output_t)  //|| dynamic_cast<const analog_output_t *>(this) != nullptr)
+                    return terminal_type.OUTPUT;
+
+                state().log().fatal.op(nl_errstr_global.MF_UNKNOWN_TYPE_FOR_OBJECT(name()));
+                throw new nl_exception(nl_errstr_global.MF_UNKNOWN_TYPE_FOR_OBJECT(name()));
+                //return terminal_type::TERMINAL; // please compiler
+            }
+
+
+            /// \brief Checks if object is of specified type.
+            /// \param atype type to check object against.
+            /// \returns true if object is of specified type else false.
+            public bool is_type(terminal_type atype) { return type() == atype; }
+
+
+            public void set_net(net_t anet) { m_net = anet; }
+            public void clear_net() { m_net = null; }
+            public bool has_net() { return m_net != null; }
+
+
+            public net_t net() { return m_net;}
+
+
+            public bool is_logic() { return this is logic_t; }  //return dynamic_cast<const logic_t *>(this) != nullptr;
+            public bool is_logic_input() { return this is logic_input_t; }  //return dynamic_cast<const logic_input_t *>(this) != nullptr;
+            public bool is_logic_output() { return this is logic_output_t; }  //return dynamic_cast<const logic_output_t *>(this) != nullptr;
+            public bool is_tristate_output() { return this is tristate_output_t; }  //return dynamic_cast<const tristate_output_t *>(this) != nullptr;
+            public bool is_analog() { return this is analog_t; }  //return dynamic_cast<const analog_t *>(this) != nullptr;
+            //bool is_analog_input() const noexcept;
+            public bool is_analog_output() { return this is analog_output_t; }  //return dynamic_cast<const analog_output_t *>(this) != nullptr;
+
+
+            //bool is_state(state_e astate) const noexcept { return (m_state == astate); }
+            public state_e terminal_state() { return m_state.op; }
+            void set_state(state_e astate) { m_state.op = astate; }
+
+
+            public void reset() { set_state(is_type(terminal_type.OUTPUT) ? state_e.STATE_OUT : state_e.STATE_INP_ACTIVE); }
+
+
+#if NL_USE_COPY_INSTEAD_OF_REFERENCE
+            void set_copied_input(netlist_sig_t val) noexcept
+            {
+                m_Q = val;
+            }
+
+            state_var_sig m_Q;
+#else
+            public void set_copied_input(netlist_sig_t val) { }// plib::unused_var(val); } // NOLINT: static means more message elsewhere
+#endif
+
+            public void set_delegate(nldelegate delegate_) { m_delegate = delegate_; }
+            public nldelegate delegate_() { return m_delegate; }
+            public void run_delegate() { m_delegate(); }
+        }
+    } // namespace detail
+
+
+    // -----------------------------------------------------------------------------
+    // core_device_t
+    // -----------------------------------------------------------------------------
+    // FIXME: belongs into detail namespace
+    public class core_device_t : detail.netlist_object_t
+    {
+        bool m_hint_deactivate;
+        state_var_s32 m_active_outputs;
+        stats_t m_stats;  //device_arena::unique_ptr<stats_t> m_stats;
+
+
+        protected core_device_t(object owner, string name)
+            : base(owner is netlist_state_t ? ((netlist_state_t)owner).exec() : ((core_device_t)owner).state().exec(),
+                   owner is netlist_state_t ? name : ((core_device_t)owner).name() + "." + name)
+        {
+            if (owner is netlist_state_t) core_device_t_after_ctor((netlist_state_t)owner, name);
+            else if (owner is core_device_t) core_device_t_after_ctor((core_device_t)owner, name);
+            else throw new emu_unimplemented();
+        }
+
+
+        void core_device_t_after_ctor(netlist_state_t owner, string name)
+        {
+            m_hint_deactivate = false;
+            m_active_outputs = new state_var_s32(this, "m_active_outputs", 1);
+
+
+            if (exec().stats_enabled())
+                m_stats = new stats_t();  //m_stats = owner.make_pool_object<stats_t>();
+        }
+
+
+        void core_device_t_after_ctor(core_device_t owner, string name)
+        {
+            m_hint_deactivate = false;
+            m_active_outputs = new state_var_s32(this, "m_active_outputs", 1);
+
+
+            //printf("owned device: %s\n", this->name().c_str());
+            owner.state().register_device(this.name(), this);  //owner.state().register_device(this->name(), device_arena::owned_ptr<core_device_t>(this, false));
+            if (exec().stats_enabled())
+                m_stats = new stats_t();  //m_stats = owner.state().make_pool_object<stats_t>();
+        }
+
+
+        //PCOPYASSIGNMOVE(core_device_t, delete)
+
+        //virtual ~core_device_t() noexcept = default;
+
+
+        //void do_inc_active() noexcept
+
+        //void do_dec_active() noexcept
+
+        public void set_hint_deactivate(bool v) { m_hint_deactivate = v; }
+        //bool get_hint_deactivate() const noexcept { return m_hint_deactivate; }
+        // Has to be set in device reset
+        //void set_active_outputs(int n) noexcept { m_active_outputs = n; }
+
+
+        // stats
+        public struct stats_t
+        {
+            // NL_KEEP_STATISTICS
+            //plib::pperftime_t<true>  m_stat_total_time;
+            //plib::pperfcount_t<true> m_stat_call_count;
+            //plib::pperfcount_t<true> m_stat_inc_active;
+        }
+
+
+        public stats_t stats() { return m_stats; }
+
+
+#if false
+        virtual void update() noexcept { }
+#endif
+
+        public virtual void reset() { }
+
+        protected virtual void inc_active() {  }
+        protected virtual void dec_active() {  }
+
+
+        protected log_type log() { return state().log(); }
+
+
+        protected virtual void timestep(timestep_type ts_type, nl_fptype st) { }  // plib::unused_var(ts_type, st); }
+        public virtual void update_terminals() { }
+
+        public virtual void update_param() {}
+        protected virtual bool is_dynamic() { return false; }
+        protected virtual bool is_timestep() { return false; }
+    }
+} // namespace netlist

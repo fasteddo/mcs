@@ -20,7 +20,7 @@ namespace mame
 
 
         // device callbacks
-        devcb_write_line.array<devcb_write_line> m_q_out_cb;      // output line callback array
+        devcb_write_line.array<devcb_write_line, uint32_constant_8> m_q_out_cb;      // output line callback array
         devcb_write8 m_parallel_out_cb;  // parallel output option
 
         // miscellaneous configuration
@@ -38,7 +38,7 @@ namespace mame
         protected addressable_latch_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock, bool clear_active)
             : base(mconfig, type, tag, owner, clock)
         {
-            m_q_out_cb = new devcb_write_line.array<devcb_write_line>(8, this, () => { return new devcb_write_line(this); });
+            m_q_out_cb = new devcb_write_line.array<devcb_write_line, uint32_constant_8>(this, () => { return new devcb_write_line(this); });
             m_parallel_out_cb = new devcb_write8(this);
             m_clear_active = clear_active;
         }

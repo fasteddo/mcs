@@ -281,7 +281,7 @@ namespace mame
         uint32_t m_p9;              /* poly9 index */
         uint32_t m_p17;             /* poly17 index */
 
-        devcb_read8.array<devcb_read8> m_pot_r_cb;
+        devcb_read8.array<devcb_read8, uint32_constant_8> m_pot_r_cb;
         devcb_read8 m_allpot_r_cb;
         devcb_read8 m_serin_r_cb;
         devcb_write8 m_serout_w_cb;
@@ -336,7 +336,7 @@ namespace mame
 
             m_icount.i = 0;  //m_icount = 0;
             m_stream = null;
-            m_pot_r_cb = new devcb_read8.array<devcb_read8>(8, this, () => { return new devcb_read8(this); });
+            m_pot_r_cb = new devcb_read8.array<devcb_read8, uint32_constant_8>(this, () => { return new devcb_read8(this); });
             m_allpot_r_cb = new devcb_read8(this);
             m_serin_r_cb = new devcb_read8(this);
             m_serout_w_cb = new devcb_write8(this);

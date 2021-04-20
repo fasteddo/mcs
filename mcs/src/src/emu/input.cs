@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using size_t = System.UInt32;
+using size_t_constant_16 = mame.uint32_constant_16;
 using u32 = System.UInt32;
 
 
@@ -403,7 +405,7 @@ namespace mame
 
 
         // internal state
-        std.array<input_code> m_code = new std.array<input_code>(16);
+        std.array<input_code, size_t_constant_16> m_code = new std.array<input_code, size_t_constant_16>();
 
 
         // construction/destruction
@@ -542,6 +544,9 @@ namespace mame
     }
 
 
+    public class size_t_constant_DEVICE_CLASS_MAXIMUM : uint32_constant { public UInt32 value { get { return (UInt32)input_device_class.DEVICE_CLASS_MAXIMUM; } } }
+
+
     // ======================> input_manager
     // global machine-level information about devices
     public class input_manager : global_object
@@ -551,7 +556,7 @@ namespace mame
         input_code [] m_switch_memory = new input_code[64];
 
         // classes
-        std.array<input_class> m_class = new std.array<input_class>((int)input_device_class.DEVICE_CLASS_MAXIMUM);  //std::array<std::unique_ptr<input_class>, DEVICE_CLASS_MAXIMUM> m_class;
+        std.array<input_class, size_t_constant_DEVICE_CLASS_MAXIMUM> m_class = new std.array<input_class, size_t_constant_DEVICE_CLASS_MAXIMUM>();  //std::array<std::unique_ptr<input_class>, DEVICE_CLASS_MAXIMUM> m_class;
 
 
         // construction/destruction

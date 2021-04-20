@@ -48,6 +48,7 @@ namespace mame.ui
             ANALOG,
             BOOKKEEPING,
             GAME_INFO,
+            WARN_INFO,
             IMAGE_MENU_IMAGE_INFO,
             IMAGE_MENU_FILE_MANAGER,
             TAPE_CONTROL,

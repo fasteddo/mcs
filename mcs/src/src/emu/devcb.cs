@@ -10,6 +10,8 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using unsigned = System.UInt32;
+using unsigned_constant = mame.uint32_constant;
 
 
 namespace mame
@@ -158,19 +160,21 @@ namespace mame
         ///
         /// Simplifies construction and resolution of arrays of callbacks.
         //template <typename T, unsigned Count>
-        public class array<T> : std.array<T> where T : IResolve  //class array : public std::array<T, Count>
+        public class array<T, unsigned_Count> : std.array<T, unsigned_Count>  //class array : public std::array<T, Count>
+            where T : IResolve
+            where unsigned_Count : unsigned_constant, new()
         {
             //using std::array<T, Count>::array;
 
             //template <unsigned... V>
-            array(int Count, device_t owner, int unused, Func<T> add_function)  //array(device_t &owner, std::integer_sequence<unsigned, V...> const &)
-                : base(Count)  //: std::array<T, Count>{{ { make_one<V>(owner) }... }}
+            array(device_t owner, int unused, Func<T> add_function)  //array(device_t &owner, std::integer_sequence<unsigned, V...> const &)
+                : base()  //: std::array<T, Count>{{ { make_one<V>(owner) }... }}
             {
                 for (int i = 0; i < this.size(); i++)
                     this[i] = add_function();
             }
 
-            protected array(int Count, device_t owner, Func<T> add_function) : this(Count, owner, 0, add_function) { }  //array(device_t &owner) : array(owner, std::make_integer_sequence<unsigned, Count>()) { }
+            protected array(device_t owner, Func<T> add_function) : this(owner, 0, add_function) { }  //array(device_t &owner) : array(owner, std::make_integer_sequence<unsigned, Count>()) { }
 
             //template <unsigned N> device_t &make_one(device_t &owner) { return owner; }
 
@@ -1011,11 +1015,13 @@ namespace mame
 
 
         //template <unsigned Count>
-        public new class array<devcb_read_type> : devcb_read_base.array<devcb_read_type> where devcb_read_type : devcb_read  //class array : public devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>
+        public new class array<devcb_read_type, unsigned_Count> : devcb_read_base.array<devcb_read_type, unsigned_Count>  //class array : public devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>
+            where devcb_read_type : devcb_read
+            where unsigned_Count : unsigned_constant, new()
         {
             //using devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>::array;
 
-            public array(int Count, device_t owner, Func<devcb_read_type> add_function) : base(Count, owner, add_function) { }
+            public array(device_t owner, Func<devcb_read_type> add_function) : base(owner, add_function) { }
 
             public override void resolve_all()
             {
@@ -2023,11 +2029,13 @@ namespace mame
 
 
         //template <unsigned Count>
-        public new class array<devcb_write_type> : devcb_write_base.array<devcb_write_type> where devcb_write_type : devcb_write  //class array : public devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>
+        public new class array<devcb_write_type, unsigned_Count> : devcb_write_base.array<devcb_write_type, unsigned_Count>  //class array : public devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>
+            where devcb_write_type : devcb_write
+            where unsigned_Count : unsigned_constant, new()
         {
             //using devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>::array;
 
-            public array(int Count, device_t owner, Func<devcb_write_type> add_function) : base(Count, owner, add_function) { }
+            public array(device_t owner, Func<devcb_write_type> add_function) : base(owner, add_function) { }
 
             public override void resolve_all()
             {

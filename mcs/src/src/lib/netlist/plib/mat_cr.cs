@@ -4,7 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using nl_fptype = System.Double;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nl_fptype_ops = mame.plib.constants_operators_double;
 using uint16_t = System.UInt16;
 using size_t = System.UInt32;
 
@@ -12,8 +13,12 @@ using size_t = System.UInt32;
 namespace mame.plib
 {
     //template<typename T, int N, typename C = uint16_t>
-    class pmatrix_cr_t_double_uint16_t  //struct pmatrix_cr_t
+    class pmatrix_cr_t<T, int_N>  //struct pmatrix_cr_t
+        where int_N : int_constant, new()
     {
+        static int_N N = new int_N();
+
+
         //using index_type = C;
         //using value_type = T;
 
@@ -31,33 +36,27 @@ namespace mame.plib
         }
 
 
-        int N;
-
-
         public uint16_t [] diag; //parray<index_type, N> diag;      // diagonal index pointer n
         public uint16_t [] row_idx;  //parray<index_type, Np1> row_idx;      // row index pointer n + 1
         public uint16_t [] col_idx;  //parray<index_type, NSQ> col_idx;       // column index array nz_num, initially (n * n)
-        public MemoryContainer<double> A;  //parray<value_type, NSQ> A;    // Matrix elements nz_num, initially (n * n)
+        public MemoryContainer<T> A;  //parray<value_type, NSQ> A;    // Matrix elements nz_num, initially (n * n)
 
         public size_t nz_num;
 
-        std.vector<uint16_t> [] nzbd;  //parray<std::vector<index_type>, N > nzbd;    // Support for gaussian elimination
-        //parray<C, N < 0 ? -N * (N-1) / 2 : N * (N+1) / 2 > nzbd;    // Support for gaussian elimination
+        ////parray<std::vector<index_type>, N > m_nzbd;    // Support for gaussian elimination
+        pmatrix2d_vrl<uint16_t> m_nzbd;    // Support for gaussian elimination  //pmatrix2d_vrl<index_type> m_nzbd;    // Support for gaussian elimination
         size_t m_size;
 
 
-        public pmatrix_cr_t_double_uint16_t(int N, size_t n)
+        public pmatrix_cr_t(size_t n)
         {
-            this.N = N;
-
             diag = new uint16_t [n];  //diag(n)
             row_idx = new uint16_t [n + 1];  //row_idx(n+1)
             col_idx = new uint16_t [n * n];  //col_idx(n*n)
-            A = new MemoryContainer<double>((int)(n * n), true);  //A(n*n)
+            A = new MemoryContainer<T>((int)(n * n), true);  //A(n*n)
             nz_num = 0;
-            //, nzbd(n * (n+1) / 2)
-            nzbd = new std.vector<uint16_t> [n];
-            nzbd.Fill(() => { return new std.vector<uint16_t>(); });
+            ////, nzbd(n * (n+1) / 2)
+            m_nzbd = new pmatrix2d_vrl<uint16_t>(n, n);
             m_size = n;
 
 
@@ -70,11 +69,11 @@ namespace mame.plib
         //~pmatrix_cr_t() = default;
 
 
-        protected size_t size() { return (N > 0) ? (size_t)N : m_size; }  //constexpr std::size_t size() const noexcept { return (N>0) ? static_cast<std::size_t>(N) : m_size; }
+        protected size_t size() { return (N.value > 0) ? (size_t)N.value : m_size; }  //constexpr std::size_t size() const noexcept { return (N>0) ? static_cast<std::size_t>(N) : m_size; }
 
         //void clear()
 
-        public void set_scalar(nl_fptype scalar) { throw new emu_unimplemented(); }  //void set_scalar(T scalar) noexcept
+        public void set_scalar(T scalar) { throw new emu_unimplemented(); }  //void set_scalar(T scalar) noexcept
 
         //void set_row_scalar(C r, T val) noexcept
 
@@ -94,7 +93,7 @@ namespace mame.plib
 
                 for (size_t j = 0; j < size(); j++)
                 {
-                    if (f[k][j] <= max_fill && plib.pglobal.abs((int)k - (int)j) <= (int)band_width)
+                    if (f[k][j] <= max_fill && plib.pglobal.abs<nl_fptype, nl_fptype_ops>((int)k - (int)j) <= (int)band_width)
                     {
                         col_idx[nz] = (uint16_t)j;  //col_idx[nz] = static_cast<C>(j);
                         if (j == k)
@@ -111,11 +110,17 @@ namespace mame.plib
 
             for (size_t k = 0; k < size(); k++)
             {
+#if false
+                for (std::size_t j=k + 1; j < size(); j++)
+                    if (f[j][k] < FILL_INFINITY)
+                        m_nzbd[k].push_back(narrow_cast<C>(j));
+                m_nzbd[k].push_back(0); // end of sequence
+#else
                 for (size_t j = k + 1; j < size(); j++)
                     if (f[j][k] < (size_t)constants_e.FILL_INFINITY)
-                        nzbd[k].push_back((uint16_t)j);  //nzbd[k].push_back(static_cast<C>(j));
-
-                nzbd[k].push_back(0); // end of sequence
+                        m_nzbd.set(k, m_nzbd.colcount(k), (uint16_t)j);
+                m_nzbd.set(k, m_nzbd.colcount(k), 0); // end of sequence
+#endif
             }
         }
 
@@ -134,16 +139,21 @@ namespace mame.plib
         // no checks at all - may crash
         //template <typename LUMAT>
         //void raw_copy_from(LUMAT & src)
+
+
+        public uint16_t nzbd(size_t row) { return m_nzbd.op(row); }
+        public size_t nzbd_count(size_t row) { return m_nzbd.colcount(row) - 1; }
     }
 
 
     //template<typename B>
-    class pGEmatrix_cr_t_pmatrix_cr_t_double_uint16 : pmatrix_cr_t_double_uint16_t  //struct pGEmatrix_cr_t : public B
+    class pGEmatrix_cr_t<B, int_N> : pmatrix_cr_t<B, int_N>  //struct pGEmatrix_cr_t : public B
+        where int_N : int_constant, new()
     {
         public std.vector<std.vector<size_t>> m_ge_par = new std.vector<std.vector<size_t>>();  // parallel execution support for Gauss
 
 
-        public pGEmatrix_cr_t_pmatrix_cr_t_double_uint16(int N, size_t n) : base(N, n) { }
+        public pGEmatrix_cr_t(size_t n) : base(n) { }
 
 
         //template <typename M>
@@ -157,14 +167,14 @@ namespace mame.plib
                 ops++; // 1/A(k,k)
                 for (size_t row = k + 1; row < fill.size(); row++)
                 {
-                    if (fill[row][k] < (size_t)pmatrix_cr_t_double_uint16_t.constants_e.FILL_INFINITY)
+                    if (fill[row][k] < (size_t)pmatrix_cr_t<B, int_N>.constants_e.FILL_INFINITY)
                     {
                         ops++;
                         for (size_t col = k + 1; col < fill[row].size(); col++)
                             //if (fill[k][col] < FILL_INFINITY)
                             {
                                 var f = std.min(fill[row][col], 1 + fill[row][k] + fill[k][col]);
-                                if (f < (size_t)pmatrix_cr_t_double_uint16_t.constants_e.FILL_INFINITY)
+                                if (f < (size_t)pmatrix_cr_t<B, int_N>.constants_e.FILL_INFINITY)
                                 {
                                     if (f > fill_max)
                                         fill_max = f;
@@ -183,7 +193,7 @@ namespace mame.plib
 
 
         //template <typename V>
-        public void gaussian_elimination(nl_fptype [] RHS) { throw new emu_unimplemented(); }  //void gaussian_elimination(V & RHS)
+        public void gaussian_elimination(B [] RHS) { throw new emu_unimplemented(); }  //void gaussian_elimination(V & RHS)
 
 
         //int get_parallel_level(std::size_t k) const
@@ -209,7 +219,7 @@ namespace mame.plib
                 rt[k] = new std.vector<size_t>();
                 for (size_t j = k + 1; j < base.size(); j++)
                 {
-                    if (fill[j][k] < (size_t)pmatrix_cr_t_double_uint16_t.constants_e.FILL_INFINITY)
+                    if (fill[j][k] < (size_t)pmatrix_cr_t<B, int_N>.constants_e.FILL_INFINITY)
                     {
                         rt[k].push_back(j);
                     }

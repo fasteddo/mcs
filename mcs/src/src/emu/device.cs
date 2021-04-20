@@ -1719,7 +1719,7 @@ namespace mame
         protected virtual void device_pre_save() { }
 
         //-------------------------------------------------
-        //  device_post_load - called after the loading a
+        //  device_post_load - called after loading a
         //  saved state, so that registered variables can
         //  be expanded as necessary
         //-------------------------------------------------
@@ -2030,7 +2030,7 @@ namespace mame
         public virtual void interface_pre_save() { }
 
         //-------------------------------------------------
-        //  interface_post_load - called after the loading a
+        //  interface_post_load - called after loading a
         //  saved state, so that registered variables can
         //  be expanded as necessary
         //-------------------------------------------------

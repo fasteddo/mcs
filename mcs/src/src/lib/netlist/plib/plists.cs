@@ -5,21 +5,23 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using size_t = System.UInt32;
+using size_t_constant = mame.uint32_constant;
+using static_vector_size_type = System.UInt32;  //using size_type = std::size_t;
 using unsigned = System.UInt32;
 
 
 namespace mame.plib
 {
-    /// \brief fixed size array allowing to override constructor and initialize members by placement new.
+    /// \brief Array holding uninitialized elements
     ///
     /// Use with care. This template is provided to improve locality of storage
     /// in high frequency applications. It should not be used for anything else.
     ///
-    ///
     //template <class C, std::size_t N>
-    class uninitialised_array_t<C>
+    class uninitialised_array<C, size_t_N>
+        where size_t_N : size_t_constant, new()
     {
         //using value_type = C;
         //using pointer = value_type *;
@@ -36,15 +38,12 @@ namespace mame.plib
 
         // ensure proper alignment
         //PALIGNAS_VECTOROPT()
-        std.array<C> m_buf;  //std::array<typename std::aligned_storage<sizeof(C), alignof(C)>::type, N> m_buf;
+        std.array<C, size_t_N> m_buf;  //std::array<typename std::aligned_storage<sizeof(C), alignof(C)>::type, N> m_buf;
         unsigned m_initialized;
 
 
         //uninitialised_array_t() noexcept = default;
-        protected uninitialised_array_t()
-        {
-            m_initialized = 0;
-        }
+        public uninitialised_array() { }
 
 
         //PCOPYASSIGNMOVE(uninitialised_array_t, delete)
@@ -63,17 +62,24 @@ namespace mame.plib
         //reference operator[](size_type index) noexcept
 
         //constexpr const_reference operator[](size_type index) const noexcept
+        public C this[int index] { get { return m_buf[index]; } set { m_buf[index] = value; } }
+        public C this[UInt32 index] { get { return m_buf[(int)index]; } set { m_buf[(int)index] = value; } }
 
-        //template<typename... Args>
-        protected void emplace(size_t index)  //void emplace(size_type index, Args&&... args)
-        {
-            m_initialized++;
-            // allocate on buffer
-            throw new emu_unimplemented();
-#if false
-            m_buf[index] = new C();  //new (&m_buf[index]) C(std::forward<Args>(args)...);
-#endif
-        }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator begin() const noexcept { return reinterpret_cast<iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator end() const noexcept { return reinterpret_cast<iterator>(&m_buf[0] + N); }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator begin() noexcept { return reinterpret_cast<iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator end() noexcept { return reinterpret_cast<iterator>(&m_buf[0] + N); }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //const_iterator cbegin() const noexcept { return reinterpret_cast<const_iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //const_iterator cend() const noexcept { return reinterpret_cast<const_iterator>(&m_buf[0] + N); }
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         //iterator begin() const noexcept { return reinterpret_cast<iterator>(&m_buf[0]); }
@@ -92,190 +98,116 @@ namespace mame.plib
     }
 
 
-    //OLD
-#if false
-    //template <class Element, class Time>
-    public class pqentry_t<Element, Time>
+    /// \brief fixed allocation vector
+    ///
+    /// Currently only emplace_back and clear are supported.
+    ///
+    /// Use with care. This template is provided to improve locality of storage
+    /// in high frequency applications. It should not be used for anything else.
+    ///
+    //template <class C, std::size_t N>
+    class static_vector<C, size_t_N>
+        where size_t_N : size_t_constant, new()
     {
-        netlist_time m_exec_time;  //Time m_exec_time;
-        Element m_object;
+        protected static size_t_constant N = new size_t_N();
 
 
-        public pqentry_t() { m_exec_time = new netlist_time();  m_object = default; }  //constexpr pqentry_t() noexcept : m_exec_time(), m_object(nullptr) { }
-        public pqentry_t(netlist_time t, Element o) { m_exec_time = t;  m_object = o; }  //constexpr pqentry_t(const Time &t, const Element &o) noexcept : m_exec_time(t), m_object(o) { }
-        //~pqentry_t() = default;
-        //constexpr pqentry_t(const pqentry_t &e) noexcept = default;
-        //constexpr pqentry_t(pqentry_t &&e) = default;
+        //using value_type = C;
+        //using pointer = value_type *;
+        //using const_pointer = const value_type *;
+        //using reference = value_type &;
+        //using const_reference = const value_type &;
+        //using iterator = value_type *;
+        //using const_iterator = const value_type *;
+        //using size_type = std::size_t;
+        //using difference_type = std::ptrdiff_t;
+        //using reverse_iterator = std::reverse_iterator<iterator>;
+        //using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 
-        public static bool operator ==(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_object.Equals(rhs.m_object); }
-        public static bool operator !=(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return !lhs.m_object.Equals(rhs.m_object); }
-
-        public static bool operator ==(pqentry_t<Element, Time> lhs, Element rhs) { return lhs.m_object.Equals(rhs); }
-        public static bool operator !=(pqentry_t<Element, Time> lhs, Element rhs) { return !lhs.m_object.Equals(rhs); }
-
-        //inline bool operator <=(const pqentry_t &rhs) const noexcept
-        //{
-        //    return (m_exec_time <= rhs.m_exec_time);
-        //}
-
-        public static bool operator >(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_exec_time > rhs.m_exec_time; }
-        public static bool operator <(pqentry_t<Element, Time> lhs, pqentry_t<Element, Time> rhs) { return lhs.m_exec_time < rhs.m_exec_time; }
+        std.array<C, size_t_N> m_buf;
+        static_vector_size_type m_pos;
 
 
-        public static pqentry_t<Element, Time> never() { return new pqentry_t<Element, Time>(netlist_time.never(), default); }
+        protected static_vector()
+        {
+            m_pos = 0;
+        }
 
 
-        public netlist_time exec_time() { return m_exec_time; }  //Time exec_time() const noexcept { return m_exec_time; }
-        public Element object_()  { return m_object; }
+        //PCOPYASSIGNMOVE(static_vector, delete)
+        //~static_vector() noexcept
+
+        //constexpr size_t size() const noexcept { return m_pos; }
+
+        //constexpr bool empty() const noexcept { return size() == 0; }
+
+        //void clear()
+
+        //template<typename... Args>
+        //void emplace_back(Args&&... args)
+
+        //reference operator[](size_type index) noexcept
+
+        //constexpr const_reference operator[](size_type index) const noexcept
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator begin() const noexcept { return reinterpret_cast<iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator end() const noexcept { return reinterpret_cast<iterator>(&m_buf[0] + m_pos); }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator begin() noexcept { return reinterpret_cast<iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //iterator end() noexcept { return reinterpret_cast<iterator>(&m_buf[0] + m_pos); }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //const_iterator cbegin() const noexcept { return reinterpret_cast<const_iterator>(&m_buf[0]); }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        //const_iterator cend() const noexcept { return reinterpret_cast<const_iterator>(&m_buf[0] + m_pos); }
     }
 
 
-    /* Use TS = true for a threadsafe queue */
-    //template <class T, bool TS, bool KEEPSTAT, class QueueOp = typename T::QueueOp>
-    public class timed_queue_linear  //: plib::nocopyassignmove
+    /// \brief a simple linked list.
+    ///
+    /// The list allows insertions deletions whilst being processed.
+    ///
+    //template <class LC>
+    class linkedlist_t<LC>
     {
-        //using mutex_type = pspin_mutex<TS>;
-        //using lock_guard_type = std::lock_guard<mutex_type>;
+        //struct element_t
+
+        //struct iter_t final : public std::iterator<std::forward_iterator_tag, LC>
 
 
-        // template parameters
-        bool TS;
+        //LC *m_head;
+        LinkedList<LC> m_list;
 
 
-        object m_lock = new object();  //mutex_type      m_lock;
-        int m_endIdx;  //T * m_end;
-        std.vector<pqentry_t<netlist.detail.net_t, netlist_time>> m_list;  //std::vector<T> m_list;
+        linkedlist_t() { }  //constexpr element_t() : m_next(nullptr), m_prev(nullptr) {}
 
 
-        // profiling
-        //nperfcount_t<KEEPSTAT> m_prof_sortmove;
-        //nperfcount_t<KEEPSTAT> m_prof_call;
-        //nperfcount_t<KEEPSTAT> m_prof_remove;
-        //nperfcount_t<KEEPSTAT> m_prof_retime;
+        //constexpr iter_t begin() const noexcept { return iter_t(m_head); }
+        //constexpr iter_t end() const noexcept { return iter_t(nullptr); }
+
+        //void push_front(LC *elem) noexcept
 
 
-        public timed_queue_linear(bool TS, bool KEEPSTAT, UInt32 list_size)
+        public void push_back(LC elem)
         {
-            this.TS = TS;
-
-
-            m_list = new std.vector<pqentry_t<netlist.detail.net_t, netlist_time>>(list_size);
-            for (int i = 0; i < list_size; i++)
-                m_list[i] = new pqentry_t<netlist.detail.net_t, netlist_time>();
-
-
-            clear();
+            m_list.AddLast(elem);
         }
 
 
-        //constexpr std::size_t capacity() const noexcept { return m_list.capacity() - 1; }
-        //constexpr bool empty() const noexcept { return (m_end == &m_list[1]); }
+        //void remove(const LC *elem) noexcept
+
+        //constexpr LC *front() const noexcept { return m_head; }
+
+        public bool empty() { return m_list.Count == 0; }
+
+        public void clear() { m_list.Clear(); }
 
 
-        //template<bool KEEPSTAT>
-        public void push(bool KEEPSTAT, pqentry_t<netlist.detail.net_t, netlist_time> e)  //void push(T && e) noexcept
-        {
-            /* Lock */
-            lock (m_lock)  //lock_guard_type lck(m_lock);
-            {
-                int iIdx = m_endIdx++;  //T * i(m_end++);
-                m_list[iIdx] = e;  //*i = std::move(e);
-                for (; m_list[iIdx - 1] < m_list[iIdx]; --iIdx)  //for (; *(i-1) < *i; --i)
-                {
-                    //std::swap(*(i-1), *(i));
-                    var temp = m_list[iIdx - 1];
-                    m_list[iIdx - 1] = m_list[iIdx];
-                    m_list[iIdx] = temp;
-
-                    //throw new emu_unimplemented();
-#if false
-                    if (KEEPSTAT)
-                        m_prof_sortmove.inc();
-#endif
-                }
-
-                //throw new emu_unimplemented();
-#if false
-                if (KEEPSTAT)
-                    m_prof_call.inc();
-#endif
-            }
-        }
-
-
-        public pqentry_t<netlist.detail.net_t, netlist_time> pop() { return m_list[--m_endIdx]; }  //{ return *(--m_end); }
-        public pqentry_t<netlist.detail.net_t, netlist_time> top() { return m_list[m_endIdx - 1]; }  //{ return *(m_end-1); }
-
-
-        //template <bool KEEPSTAT, class R>
-        public void remove(bool KEEPSTAT, netlist.detail.net_t elem)  //void remove(const R &elem) noexcept
-        {
-            // Lock
-            lock (m_lock)  //lock_guard_type lck(m_lock);
-            {
-                //throw new emu_unimplemented();
-#if false
-                if (KEEPSTAT)
-                    m_prof_remove.inc();
-#endif
-
-                for (int iIdx = m_endIdx - 1; m_list[iIdx] > m_list[0]; --iIdx)  //for (T * i = m_end - 1; i > &m_list[0]; --i)
-                {
-                    // == operator ignores time!
-                    if (m_list[iIdx] == elem)  //if (*i == elem)
-                    {
-                        m_list.CopyTo(iIdx + 1, m_list, iIdx, m_endIdx-- - (iIdx + 1));  //std::copy(i+1, m_end--, i);
-                        return;
-                    }
-                }
-            }
-        }
-
-
-        //void retime(const T &elem) noexcept
-        //{
-        //    /* Lock */
-        //    tqlock lck(m_lock);
-        //    for (T * i = m_end - 1; i > &m_list[0]; --i)
-        //    {
-        //        if (QueueOp::equal(*i, elem)) // partial equal!
-        //        {
-        //            *i = elem;
-        //            while (QueueOp::less(*(i-1), *i))
-        //            {
-        //                std::swap(*(i-1), *i);
-        //                --i;
-        //            }
-        //            while (i < m_end && QueueOp::less(*i, *(i+1)))
-        //            {
-        //                std::swap(*(i+1), *i);
-        //                ++i;
-        //            }
-        //            return;
-        //        }
-        //    }
-        //}
-
-        public void clear()
-        {
-            lock (m_lock)  //lock_guard_type lck(m_lock);
-            {
-                m_endIdx = 0;  //m_end = m_list[0];
-                // put an empty element with maximum time into the queue.
-                // the insert algo above will run into this element and doesn't
-                // need a comparison with queue start.
-                //
-                m_list[0] = pqentry_t<netlist.detail.net_t, netlist_time>.never();  //m_list[0] = T::never();
-                m_endIdx++;  //m_end++;
-            }
-        }
-
-        // save state support & mame disasm
-
-        //const T *listptr() const noexcept { return &m_list[1]; }
-        //std::size_t size() const noexcept { return static_cast<std::size_t>(m_end - &m_list[1]); }
-        //const T & operator[](const std::size_t index) const noexcept { return m_list[ 1 + index]; }
+        public IEnumerator<LC> GetEnumerator() { return m_list.GetEnumerator(); }
     }
-#endif
 }

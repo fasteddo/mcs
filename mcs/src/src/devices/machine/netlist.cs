@@ -6,14 +6,17 @@ using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;
 using int64_t = System.Int64;
-using netlist_time = mame.plib.ptime_i64;  //using netlist_time = plib::ptime<std::int64_t, NETLIST_INTERNAL_RES>;
-using netlist_time_ext = mame.plib.ptime_i64;  //netlist_time
-using nl_fptype = System.Double;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
+using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using offs_t = System.UInt32;
+using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
 using size_t = System.UInt32;
+using sound_in_type = mame.netlist.interface_.nld_buffered_param_setter<System.Int32, mame.uint32_constant_16>;  //using sound_in_type = netlist::interface::NETLIB_NAME(buffered_param_setter)<stream_sample_t, 16>;
 using stream_sample_t = System.Int32;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -190,6 +193,7 @@ namespace mame
         netlist_mame_t m_netlist;  //std::unique_ptr<netlist_mame_t> m_netlist;
 
         func_type m_setup_func;
+        bool m_device_reset_called;
 
 
         // construction/destruction
@@ -206,6 +210,7 @@ namespace mame
             m_attotime_per_clock = attotime.zero;
             m_old = netlist_time_ext.zero();
             m_setup_func = null;
+            m_device_reset_called = false;
         }
 
         //virtual ~netlist_mame_device()
@@ -236,13 +241,13 @@ namespace mame
         //static void register_memregion_source(netlist::nlparse_t &parser, device_t &dev, const char *name);
 
 
-        protected netlist_time_ext nltime_ext_from_clocks(UInt32 c)
+        protected netlist_time_ext nltime_ext_from_clocks(unsigned c)
         {
             return (m_div * c).shr(MDIV_SHIFT);
         }
 
 
-        protected netlist_time nltime_from_clocks(UInt32 c)
+        protected netlist_time nltime_from_clocks(unsigned c)
         {
             return (netlist_time)((m_div * c).shr(MDIV_SHIFT));
         }
@@ -299,6 +304,10 @@ namespace mame
             m_old = netlist_time_ext.zero();
             m_rem = netlist_time_ext.zero();
 
+            m_cur_time = attotime.zero;
+
+            m_device_reset_called = false;
+
             netlist_global.LOGDEVCALLS(this, "device_start exit\n");
         }
 
@@ -314,11 +323,17 @@ namespace mame
         protected override void device_reset()
         {
             netlist_global.LOGDEVCALLS(this, "device_reset\n");
-
-            m_cur_time = attotime.zero;
-            m_old = netlist_time_ext.zero();
-            m_rem = netlist_time_ext.zero();
-            netlist().exec().reset();
+            if (!m_device_reset_called)
+            {
+                // netlists don't have a reset line, doing a soft-reset is pointless
+                // the only reason we call these here once after device_start
+                // is that netlist input devices may be started after the netlist device
+                // and because the startup code may trigger actions which need all
+                // devices set up.
+                netlist().free_setup_resources();
+                netlist().exec().reset();
+                m_device_reset_called = true;
+            }
         }
 
 
@@ -953,7 +968,7 @@ namespace mame
         public static readonly device_type NETLIST_LOGIC_INPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_logic_input_device, "nl_logic_in",  "Netlist Logic Input");
 
 
-        netlist.param_num_t_bool m_param;
+        netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool> m_param;
         uint32_t m_shift;
         string m_param_name;
 
@@ -1019,7 +1034,7 @@ namespace mame
             netlist_global.LOGDEVCALLS(this, "start\n");
 
             netlist.param_ref_t p = ((netlist_mame_device)this.owner()).setup().find_param(m_param_name);  //netlist::param_ref_t p = downcast<netlist_mame_device *>(this->owner())->setup().find_param(pstring(m_param_name));
-            m_param = (netlist.param_logic_t)p.param();  //m_param = dynamic_cast<netlist::param_logic_t *>(&p.param());
+            m_param = (param_logic_t)p.param();  //m_param = dynamic_cast<netlist::param_logic_t *>(&p.param());
             if (m_param == null)
             {
                 fatalerror("device {0} wrong parameter type for {1}\n", basetag(), m_param_name);
@@ -1231,8 +1246,10 @@ namespace mame
         protected override void device_reset()
         {
             netlist_global.LOGDEVCALLS(this, "reset {0}\n", name());
+#if false
             m_cur = 0.0;
             m_last_buffer_time = netlist_time_ext.zero();
+#endif
         }
 
 
@@ -1304,12 +1321,7 @@ namespace mame
     // ----------------------------------------------------------------------------------------
 
     //using sound_in_type = netlist::interface::NETLIB_NAME(buffered_param_setter)<stream_sample_t, 16>;
-    class sound_in_type : netlist.interface_.nld_buffered_param_setter_stream_sample_t//<stream_sample_t, 16>
-    {
-        protected sound_in_type(netlist.netlist_state_t anetlist, string name)
-            : base(16, anetlist, name)
-        { }
-    }
+
 
     //class NETLIB_NAME(sound_in) : public sound_in_type
     class nld_sound_in : sound_in_type
@@ -1318,8 +1330,8 @@ namespace mame
         //using base_type::base_type;
 
 
-        public nld_sound_in(netlist.netlist_state_t anetlist, string name)
-            : base(anetlist, name)
+        protected nld_sound_in(object owner, string name)
+            : base(owner, name)
         { }
     }
 }

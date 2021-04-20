@@ -10,8 +10,8 @@ namespace mame.netlist
     public static class nl_errstr_global
     {
         public const string sHINT_NO_DEACTIVATE = ".HINT_NO_DEACTIVATE";
-        public const string sPowerGND = "GND";
-        public const string sPowerVCC = "VCC";
+        public const string sHINT_NC = ".HINT_NC";
+
 
 
         static string PERRMSGV(int narg, string format, params object [] args) { return plib.pfmtlog_global.PERRMSGV(narg, format, args); }
@@ -26,7 +26,6 @@ namespace mame.netlist
         public static string MF_REMOVE_TERMINAL_1_FROM_NET_2(params object [] args) { return PERRMSGV(2, "Can not remove terminal {0} from net {1}.", args); }
         public static string MF_UNKNOWN_PARAM_TYPE(params object [] args)           { return PERRMSGV(1, "Can not determine param_type for {0}", args); }
         public static string MF_ERROR_CONNECTING_1_TO_2(params object [] args)      { return PERRMSGV(2, "Error connecting {0} to {1}", args); }
-        public static string MF_NO_SOLVER(params object [] args)                    { return PERRMSGV(0, "No solver found for this netlist although analog elements are present", args); }
         public static string ME_HND_VAL_NOT_SUPPORTED(params object [] args)        { return PERRMSGV(1, "HINT_NO_DEACTIVATE value not supported: <{0}>", args); }
         //PERRMSGV(MW_ROM_NOT_FOUND,                      1, "Rom {1} not found")
 
@@ -56,6 +55,8 @@ namespace mame.netlist
         public static string MF_UNABLE_TO_PARSE_MODEL_1(params object [] args)      { return PERRMSGV(1, "Unable to parse model: {0}", args); }
         public static string MF_MODEL_ALREADY_EXISTS_1(params object [] args)       { return PERRMSGV(1, "Model already exists: {0}", args); }
         public static string MF_DEVICE_ALREADY_EXISTS_1(params object [] args)      { return PERRMSGV(1, "Device already exists: {0}", args); }
+        public static string MF_UNUSED_HINT_1(params object [] args)                { return PERRMSGV(1, "Error hint {0} is not used", args); }
+        public static string MF_ADDING_HINT_1(params object [] args)                { return PERRMSGV(1, "Error adding hint {0} to hint list", args); }
         public static string MF_ADDING_ALI1_TO_ALIAS_LIST(params object [] args)    { return PERRMSGV(1, "Error adding alias {0} to alias list", args); }
         public static string MF_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1(params object [] args) { return PERRMSGV(1, "You must pass an equal number of pins to DIPPINS {0}", args); }
         public static string MF_PARAM_COUNT_MISMATCH_2(params object [] args)       { return PERRMSGV(2, "Parameter count mismatch for {0} - only found {1}", args); }
@@ -89,7 +90,10 @@ namespace mame.netlist
 
         public static string MI_OVERWRITING_PARAM_1_OLD_2_NEW_3(params object [] args) { return PERRMSGV(3, "Overwriting {0} old <{1}> new <{2}>", args); }
         public static string MW_CONNECTING_1_TO_ITSELF(params object [] args)       { return PERRMSGV(1, "Connecting net {0} to itself.", args); }
-        public static string MW_CONNECTING_1_TO_2_SAME_NET(params object [] args)       { return PERRMSGV(3, "Connecting terminals {0} and {1} which are already both on net {2}", args); }
+        public static string MI_CONNECTING_1_TO_2_SAME_NET(params object [] args)       { return PERRMSGV(3, "Connecting terminals {0} and {1} which are already both on net {2}. " +
+            "It is ok if you read this warning and it relates to pin which is connected internally to GND and the schematics " +
+            "show an external connection as well. Onde example is the CD4538. In other cases this warning may indicate " +
+            "an error in your netlist.", args); }
         public static string ME_NC_PIN_1_WITH_CONNECTIONS(params object [] args)    { return PERRMSGV(1, "Found NC (not connected) terminal {0} with connections", args); }
         public static string MI_ANALOG_OUTPUT_1_WITHOUT_CONNECTIONS(params object [] args) { return PERRMSGV(1, "Found analog output {0} without connections", args); }
         public static string MI_LOGIC_OUTPUT_1_WITHOUT_CONNECTIONS(params object [] args) { return PERRMSGV(1, "Found logic output {0} without connections", args); }
@@ -116,6 +120,9 @@ namespace mame.netlist
         public static string ME_UNKNOWN_PARAMETER(params object [] args) { return PERRMSGV(1, "Unknown parameter {0}", args); }
         public static string MF_ERRORS_FOUND(params object [] args) { return PERRMSGV(1, "Counted {0} errors which need to be fixed", args); }
 
+        public static string MF_NO_SOLVER(params object [] args) { return PERRMSGV(0, "No solver found for this netlist although analog elements are present"); }
+        public static string MF_DELEGATE_NOT_SET_1(params object [] args) { return PERRMSGV(1, "delegate not set for terminal {0}", args); }
+
         // nlid_proxy.cpp
 
         public static string MF_NO_POWER_TERMINALS_ON_DEVICE_2(params object [] args) { return PERRMSGV(2, "D/A Proxy {0}: Found no valid combination of power terminals on device {1}", args); }
@@ -127,7 +134,8 @@ namespace mame.netlist
         public static string MF_UNHANDLED_ELEMENT_1_FOUND(params object [] args) { return PERRMSGV(1, "setup_base:unhandled element <{0}> found", args); }
         public static string MF_FOUND_TERM_WITH_MISSING_OTHERNET(params object [] args) { return PERRMSGV(1, "found term with missing othernet {0}", args); }
 
-        public static string MW_NEWTON_LOOPS_EXCEEDED_ON_NET_1(params object [] args) { return PERRMSGV(1, "NEWTON_LOOPS exceeded on net {0}... reschedule", args); }
+        public static string MW_NEWTON_LOOPS_EXCEEDED_INVOCATION_3(params object [] args) { return PERRMSGV(3, "NEWTON_LOOPS exceeded resolution invoked {0} times on net {1} at {2} us", args); }
+        public static string MW_NEWTON_LOOPS_EXCEEDED_ON_NET_2(params object [] args) { return PERRMSGV(2, "NEWTON_LOOPS exceeded resolution failed on net {0} ... reschedule  at {1} us", args); }
 
         // nld_solver.cpp
 

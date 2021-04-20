@@ -24,12 +24,12 @@ namespace mame.plib.omp
         //    }
         //}
 
-        //inline void set_num_threads(const int threads)
-        //{
-        //#if HAS_OPENMP && USE_OPENMP
-        //    omp_set_num_threads(threads);
-        //#endif
-        //}
+        public static void set_num_threads(int threads)
+        {
+//#if HAS_OPENMP && USE_OPENMP
+            //omp_set_num_threads(threads);
+//#endif
+        }
 
         public static int get_max_threads()
         {

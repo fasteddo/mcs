@@ -34,10 +34,10 @@ namespace mame
 
         required_device<cpu_device> m_nmicpu;
 
-        devcb_write_line.array<devcb_write_line> m_chipsel;  //devcb_write_line::array<4> m_chipsel;
-        devcb_write_line.array<devcb_write_line> m_rw;  //devcb_write_line::array<4> m_rw;
-        devcb_read8.array<devcb_read8> m_read;
-        devcb_write8.array<devcb_write8> m_write;
+        devcb_write_line.array<devcb_write_line, uint32_constant_4> m_chipsel;  //devcb_write_line::array<4> m_chipsel;
+        devcb_write_line.array<devcb_write_line, uint32_constant_4> m_rw;  //devcb_write_line::array<4> m_rw;
+        devcb_read8.array<devcb_read8, uint32_constant_4> m_read;
+        devcb_write8.array<devcb_write8, uint32_constant_4> m_write;
 
 
         namco_06xx_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -49,10 +49,10 @@ namespace mame
             m_rw_stretch = false;
             m_rw_change = false;
             m_nmicpu = new required_device<cpu_device>(this, finder_base.DUMMY_TAG);
-            m_chipsel = new devcb_write.array<devcb_write_line>(4, this, () => { return new devcb_write_line(this); });
-            m_rw = new devcb_write.array<devcb_write_line>(4, this, () => { return new devcb_write_line(this); });
-            m_read = new devcb_read8.array<devcb_read8>(4, this, () => { return new devcb_read8(this); });
-            m_write = new devcb_write8.array<devcb_write8>(4, this, () => { return new devcb_write8(this); });
+            m_chipsel = new devcb_write.array<devcb_write_line, uint32_constant_4>(this, () => { return new devcb_write_line(this); });
+            m_rw = new devcb_write.array<devcb_write_line, uint32_constant_4>(this, () => { return new devcb_write_line(this); });
+            m_read = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_write = new devcb_write8.array<devcb_write8, uint32_constant_4>(this, () => { return new devcb_write8(this); });
         }
 
 

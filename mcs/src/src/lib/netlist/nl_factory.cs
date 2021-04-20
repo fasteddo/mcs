@@ -4,15 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;//, NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.callbacks_t>;  //using log_type =  plib::plog_base<callbacks_t, NL_DEBUG>;
 
 
 namespace mame.netlist
 {
-    //class netlist_t;
-    //class device_t;
-    //class setup_t;
-
     namespace factory
     {
         public static class nl_factory_global
@@ -106,8 +102,7 @@ namespace mame.netlist
             }
 
 
-            public override void reset() { }  //NETLIB_RESETI() { }
-            public override void update() { }  //NETLIB_UPDATEI() { }
+            //NETLIB_RESETI() { }
         }
 
 

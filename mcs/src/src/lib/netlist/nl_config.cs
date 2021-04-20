@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using int64_t = System.Int64;
-using nl_fptype = System.Double;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt32;
 
 
@@ -46,6 +46,17 @@ namespace mame.netlist
         //#define NL_USE_MEMPOOL                 (0)
         //#endif
 
+        /// brief default minimum alignment of mempool_arena
+        ///
+        /// 256 is the best compromise between logic applications like MAME
+        /// TTL games (e.g. pong) and analog applications like e.g. kidnikik sound.
+        ///
+        /// Best performance for pong is achieved with a value of 16, but this degrades
+        /// kidniki performance by ~10%.
+        ///
+        /// More work is needed here.
+        //#define NL_MEMPOOL_ALIGN            (16)
+
         /// \brief  Enable queue statistics.
         ///
         /// Queue statistics come at a performance cost. Although
@@ -83,6 +94,19 @@ namespace mame.netlist
         ///
         //#ifndef NL_USE_COPY_INSTEAD_OF_REFERENCE
         //#define NL_USE_COPY_INSTEAD_OF_REFERENCE (0)
+        //#endif
+
+        /// \brief Use backward Euler integration
+        ///
+        /// This will use backward Euler instead of trapezoidal integration.
+        ///
+        /// FIXME: Longterm this will become a runtime setting. Only the capacitor model
+        /// currently has a trapezoidal version and there is no support currently for
+        /// variable capacitors.
+        /// The change will have impact on timings since trapezoidal improves timing
+        /// accuracy.
+        //#ifndef NL_USE_BACKWARD_EULER
+        //#define NL_USE_BACKWARD_EULER (1)
         //#endif
 
         /// \brief  Use the truthtable implementation of 7448 instead of the coded device
@@ -178,7 +202,7 @@ namespace mame.netlist
         ///  |  63  |   100,000,000,000 |    92,233,720 |   1,068|   2.9 |
         ///  |  63  | 1,000,000,000,000 |     9,223,372 |     107|   0.3 |
         ///
-        public const int64_t NETLIST_INTERNAL_RES = 10000000000L;  //using INTERNAL_RES = std::integral_constant<long long int, 10'000'000'000LL>; // NOLINT
+        public const int64_t INTERNAL_RES = 10000000000L;  //using INTERNAL_RES = std::integral_constant<long long int, 10'000'000'000LL>; // NOLINT
 
         /// \brief Recommended clock to be used
         ///
@@ -197,6 +221,11 @@ namespace mame.netlist
         /// \brief Maximum queue size
         ///
         public const size_t MAX_QUEUE_SIZE = 512;  //using MAX_QUEUE_SIZE = std::integral_constant<std::size_t, 512>; // NOLINT
+
+
+        /// \brief Maximum queue size for solvers
+        ///
+        public const size_t MAX_SOLVER_QUEUE_SIZE = 64;  //using MAX_SOLVER_QUEUE_SIZE = std::integral_constant<std::size_t, 64>; // NOLINT
 
 
         public const bool use_float_matrix = nl_config_global.NL_USE_FLOAT_MATRIX;  //using use_float_matrix = std::integral_constant<bool, NL_USE_FLOAT_MATRIX>;
@@ -219,18 +248,13 @@ namespace mame.netlist
     }
 
 
-    public static partial class nl_config_global
-    {
-        //using nl_fptype = double;
-        ////using nl_fptype = long double;
-        ////using nl_fptype = float;
-    }
+    //using nl_fptype = config::fptype;
 
 
     /// \brief  Specific constants for double floating point type
     ///
     //template <>
-    static class fp_constants_double
+    static class fp_constants_double  //struct fp_constants<double>
     {
         public static double DIODE_MAXDIFF() { return  1e100; }
         public static double DIODE_MAXVOLT() { return  300.0; }

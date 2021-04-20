@@ -163,12 +163,12 @@ namespace mame
         address_space_config m_data_config;
         address_space_config m_io_config;
 
-        devcb_read8.array<devcb_read8> m_port_in_cb;
-        devcb_write8.array<devcb_write8> m_port_out_cb;
+        devcb_read8.array<devcb_read8, uint32_constant_2> m_port_in_cb;
+        devcb_write8.array<devcb_write8, uint32_constant_2> m_port_out_cb;
         devcb_read8 m_bus_in_cb;
         devcb_write8 m_bus_out_cb;
 
-        devcb_read_line.array<devcb_read_line> m_test_in_cb;
+        devcb_read_line.array<devcb_read_line, uint32_constant_2> m_test_in_cb;
         clock_update_delegate m_t0_clk_func;
         devcb_write_line m_prog_out_cb;
 
@@ -646,11 +646,11 @@ namespace mame
             m_data_config = new address_space_config("data", endianness_t.ENDIANNESS_LITTLE, 8, ( ( ram_size == 64 ) ? (u8)6 : ( ( ram_size == 128 ) ? (u8)7 : (u8)8 ) ), 0
                             , (ram_size == 64) ? data_6bit : (ram_size == 128) ? data_7bit : (address_map_constructor)data_8bit);
             m_io_config = new address_space_config("io", endianness_t.ENDIANNESS_LITTLE, 8, 8, 0);
-            m_port_in_cb = new devcb_read8.array<devcb_read8>(2, this, () => { return new devcb_read8(this); });
-            m_port_out_cb = new devcb_write8.array<devcb_write8>(2, this, () => { return new devcb_write8(this); });
+            m_port_in_cb = new devcb_read8.array<devcb_read8, uint32_constant_2>(this, () => { return new devcb_read8(this); });
+            m_port_out_cb = new devcb_write8.array<devcb_write8, uint32_constant_2>(this, () => { return new devcb_write8(this); });
             m_bus_in_cb = new devcb_read8(this);
             m_bus_out_cb = new devcb_write8(this);
-            m_test_in_cb = new devcb_read_line.array<devcb_read_line>(2, this, () => { return new devcb_read_line(this); });
+            m_test_in_cb = new devcb_read_line.array<devcb_read_line, uint32_constant_2>(this, () => { return new devcb_read_line(this); });
             m_t0_clk_func = null;
             m_prog_out_cb = new devcb_write_line(this);
             m_psw = 0;

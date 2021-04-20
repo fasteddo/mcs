@@ -536,14 +536,14 @@ namespace mame
 
         // drawing
 
-        public void draw(screen_device screen, bitmap_ind16 dest, rectangle cliprect, u32 flags, u8 priority = 0, u8 priority_mask = 0xff)
+        public void draw(screen_device screen, bitmap_ind16 dest, rectangle cliprect, u32 flags = tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES, u8 priority = 0, u8 priority_mask = 0xff)
         { draw_common<bitmap_ind16, u16, PointerU16>(screen, dest, cliprect, flags, priority, priority_mask); }
 
-        public void draw(screen_device screen, bitmap_rgb32 dest, rectangle cliprect, u32 flags, u8 priority = 0, u8 priority_mask = 0xff)
+        public void draw(screen_device screen, bitmap_rgb32 dest, rectangle cliprect, u32 flags = tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES, u8 priority = 0, u8 priority_mask = 0xff)
         { draw_common<bitmap_rgb32, u32, PointerU32>(screen, dest, cliprect, flags, priority, priority_mask); }
 
-        //void draw_roz(screen_device &screen, bitmap_ind16 &dest, const rectangle &cliprect, UINT32 startx, UINT32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, UINT32 flags, UINT8 priority = 0, UINT8 priority_mask = 0xff);
-        //void draw_roz(screen_device &screen, bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 startx, UINT32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, UINT32 flags, UINT8 priority = 0, UINT8 priority_mask = 0xff);
+        //void draw_roz(screen_device &screen, bitmap_ind16 &dest, const rectangle &cliprect, u32 startx, u32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, u32 flags = TILEMAP_DRAW_ALL_CATEGORIES, u8 priority = 0, u8 priority_mask = 0xff);
+        //void draw_roz(screen_device &screen, bitmap_rgb32 &dest, const rectangle &cliprect, u32 startx, u32 starty, int incxx, int incxy, int incyx, int incyy, bool wraparound, u32 flags = TILEMAP_DRAW_ALL_CATEGORIES, u8 priority = 0, u8 priority_mask = 0xff);
 
         //-------------------------------------------------
         //  draw_debug - draw a debug version without any
