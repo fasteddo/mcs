@@ -129,7 +129,7 @@ namespace mame
             }
 
             // if the filename is 'default' default to 'ui.bdf' for backwards compatibility
-            if (filename != null && core_stricmp(filename, "default") == 0)
+            if (filename != null && g.core_stricmp(filename, "default") == 0)
                 filename = "ui.bdf";
 
             // attempt to load an external BDF font first

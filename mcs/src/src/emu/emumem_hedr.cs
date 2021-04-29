@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -57,10 +57,10 @@ namespace mame
         static readonly u32 LowBits  = (u32)emumem_global.handler_entry_dispatch_lowbits(HighBits, Width, AddrShift);
         static readonly u32 BITCOUNT = (u32)HighBits > LowBits ? (u32)HighBits - LowBits : 0;
         static readonly u32 COUNT    = 1U << (int)BITCOUNT;
-        static readonly offs_t BITMASK  = global_object.make_bitmask32(BITCOUNT);
-        static readonly offs_t LOWMASK  = global_object.make_bitmask32(LowBits);
-        static readonly offs_t HIGHMASK = global_object.make_bitmask32(HighBits) ^ LOWMASK;
-        static readonly offs_t UPMASK   = ~global_object.make_bitmask32(HighBits);
+        static readonly offs_t BITMASK  = g.make_bitmask32(BITCOUNT);
+        static readonly offs_t LOWMASK  = g.make_bitmask32(LowBits);
+        static readonly offs_t HIGHMASK = g.make_bitmask32(HighBits) ^ LOWMASK;
+        static readonly offs_t UPMASK   = ~g.make_bitmask32(HighBits);
 
         public class int_constant_Level : int_constant { public int value { get { return Level; } } }
         public class int_constant_LowBits : int_constant { public int value { get { return (int)LowBits; } } }
@@ -470,7 +470,7 @@ namespace mame
         }
 
 
-        protected override void select_a(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::select_a(int id)
+        public override void select_a(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::select_a(int id)
         {
             u32 i = (u32)id + 1;
             if (i >= m_dispatch_array.size())
@@ -481,7 +481,7 @@ namespace mame
         }
 
 
-        protected override void select_u(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::select_u(int id)
+        public override void select_u(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::select_u(int id)
         {
             u32 i = (u32)id + 1;
             if (i > m_dispatch_array.size())
@@ -542,7 +542,7 @@ namespace mame
                 u32 ne = 1U << (int)dt;
                 for (offs_t entry = start_entry; entry <= end_entry; entry++)
                 {
-                    m_u_dispatch[entry].ref_((int)ne);
+                    dispatch[entry].ref_((int)ne);
                     u32 e0 = (entry << (int)dt) & BITMASK;
                     for (offs_t e = 0; e != ne; e++)
                     {

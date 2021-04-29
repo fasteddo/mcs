@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using nvram_interface_enumerator = mame.device_interface_enumerator<mame.device_nvram_interface>;  //typedef device_interface_enumerator<device_nvram_interface> nvram_interface_enumerator;
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using s64 = System.Int64;
 using time_t = System.Int64;
 using u8 = System.Byte;

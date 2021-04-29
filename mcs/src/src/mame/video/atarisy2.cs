@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
-using tilemap_memory_index = System.UInt32;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;

@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 
 using int8_t = System.SByte;
-using offs_t = System.UInt32;
-using pen_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s16 = System.Int16;
-using tilemap_memory_index = System.UInt32;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -202,11 +202,11 @@ namespace mame
             // Grid
             for (int i = 0; i < 8; i++)
             {
-                int r = compute_res_net( BIT(i, 0), 0, radarscp_grid_net_info );
-                int g = compute_res_net( BIT(i, 1), 1, radarscp_grid_net_info );
-                int b = compute_res_net( BIT(i, 2), 2, radarscp_grid_net_info );
+                int r = compute_res_net( g.BIT(i, 0), 0, radarscp_grid_net_info );
+                int gr = compute_res_net( g.BIT(i, 1), 1, radarscp_grid_net_info );
+                int b = compute_res_net( g.BIT(i, 2), 2, radarscp_grid_net_info );
 
-                palette.dipalette.set_pen_color(RADARSCP_GRID_COL_OFFSET + (pen_t)i, (u8)r, (u8)g, (u8)b);
+                palette.dipalette.set_pen_color(RADARSCP_GRID_COL_OFFSET + (pen_t)i, (u8)r, (u8)gr, (u8)b);
             }
 
             palette.dipalette.palette().normalize_range(0, RADARSCP_GRID_COL_OFFSET + 7);
@@ -477,6 +477,7 @@ namespace mame
             m_palette_bank = 0;
             m_sprite_bank = 0;
             m_vidhw = -1;
+            m_grid_col = 0;
 
             save_item(NAME(new { m_vidhw }));
             save_item(NAME(new { m_gfx_bank }));

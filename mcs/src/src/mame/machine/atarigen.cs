@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using device_timer_id = System.UInt32;
-using offs_t = System.UInt32;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -56,7 +56,7 @@ namespace mame
             {
                 // unhalt the CPU that was passed as a pointer
                 case TID_UNHALT_CPU:
-                    ((device_t)ptr).execute().set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
+                    ((device_t)ptr).execute().set_input_line(g.INPUT_LINE_HALT, g.CLEAR_LINE);
                     break;
             }
         }

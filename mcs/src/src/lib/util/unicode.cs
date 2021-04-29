@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using size_t = System.UInt32;
-using std_string_view = System.String;
 
 
 namespace mame
@@ -64,7 +63,7 @@ namespace mame
         //  uchar_from_utf8 - convert a UTF-8 sequence
         //  into a unicode character
         //-----------------------------------------------
-        public static int uchar_from_utf8(out char uchar, std_string_view utf8str)
+        public static int uchar_from_utf8(out char uchar, string utf8str)
         {
             return uchar_from_utf8(out uchar, utf8str, (size_t)utf8str.length());
         }

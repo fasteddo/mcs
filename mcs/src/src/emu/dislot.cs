@@ -59,7 +59,7 @@ namespace mame
         protected device_slot_interface(machine_config mconfig, device_t device)
             : base(device, "slot")
         {
-            m_default_clock = DERIVED_CLOCK(1, 1);
+            m_default_clock = g.DERIVED_CLOCK(1, 1);
             m_default_option = null;
             m_fixed = false;
             m_card_device = null;

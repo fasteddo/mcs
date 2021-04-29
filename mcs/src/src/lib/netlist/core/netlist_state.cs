@@ -8,8 +8,6 @@ using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant
 using netlist_state_t_devices_collection_type = mame.std.vector<mame.std.pair<string, mame.netlist.core_device_t>>;  //using devices_collection_type = std::vector<std::pair<pstring, poolptr<core_device_t>>>;
 using netlist_state_t_family_collection_type = mame.std.unordered_map<string, mame.netlist.logic_family_desc_t>;  //using family_collection_type = std::unordered_map<pstring, host_arena::unique_ptr<logic_family_desc_t>>;
 using netlist_state_t_nets_collection_type = mame.std.vector<mame.netlist.detail.net_t>;  //using nets_collection_type = std::vector<poolptr<detail::net_t>>;
-using nldelegate = System.Action;  //using nldelegate = plib::pmfp<void>;
-using plog_delegate = System.Action<mame.plib.plog_level, string>;  //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
 using size_t = System.UInt32;
 
 
@@ -97,7 +95,7 @@ namespace mame.netlist
 #endif
         }
 
-        public void netlist_state_t_after_ctor(plog_delegate logger)
+        public void netlist_state_t_after_ctor(plib.plog_delegate logger)
         {
             m_log = new log_type(logger);
         }

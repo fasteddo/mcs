@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using std_string = System.String;
 using uint32_t = System.UInt32;
 
 
@@ -123,8 +122,8 @@ namespace mame.util.xml
 
         // ----- XML node management -----
 
-        public string get_name() { return m_name.empty() ? null : m_name.c_str(); }
-        public string get_value() { return m_value.empty() ? null : m_value.c_str(); }
+        public string get_name() { return m_name.empty() ? null : m_name; }
+        public string get_value() { return m_value.empty() ? null : m_value; }
         //void set_value(char const *value);
         //void append_value(char const *value, int length);
         //void trim_whitespace();
@@ -214,7 +213,7 @@ namespace mame.util.xml
         //  the string value of the specified attribute;
         //  if not found, return = nullptr
         //-------------------------------------------------
-        public std_string get_attribute_string_ptr(string attribute)
+        public string get_attribute_string_ptr(string attribute)
         {
             attribute_node attr = get_attribute(attribute);
             return attr != null ? attr.value : null;
@@ -225,7 +224,7 @@ namespace mame.util.xml
         public string get_attribute_string(string attribute, string defvalue)
         {
             attribute_node attr = get_attribute(attribute);
-            return attr != null ? attr.value.c_str() : defvalue;
+            return attr != null ? attr.value : defvalue;
         }
 
 
@@ -235,7 +234,7 @@ namespace mame.util.xml
             attribute_node attr = get_attribute(attribute);
             if (attr == null)
                 return defvalue;
-            std_string string_ = attr.value;
+            string string_ = attr.value;
 
             //std::istringstream stream;
             //stream.imbue(f_portable_locale);
@@ -325,10 +324,10 @@ namespace mame.util.xml
         }
 
         // set the integer value of an attribute
-        public void set_attribute_int(string name, Int64 value) { set_attribute(name, string_format("{0}", value).c_str()); }  //void set_attribute_int(const char *name, long long value);
+        public void set_attribute_int(string name, Int64 value) { set_attribute(name, string_format("{0}", value)); }  //void set_attribute_int(const char *name, long long value);
 
         // set the float value of an attribute
-        public void set_attribute_float(string name, float value) { set_attribute(name, string_format("{0}", value).c_str()); }
+        public void set_attribute_float(string name, float value) { set_attribute(name, string_format("{0}", value)); }
 
 
         // add an attribute even if an attribute with the same name already exists
@@ -366,7 +365,7 @@ namespace mame.util.xml
             // loop over attributes and find a match
             foreach (attribute_node anode in m_attributes)
             {
-                if (strcmp(anode.name.c_str(), attribute) == 0)
+                if (strcmp(anode.name, attribute) == 0)
                     return anode;
             }
 
@@ -397,7 +396,7 @@ namespace mame.util.xml
 
 
         // parse an XML file into its nodes
-        public static file read(util.core_file file, parse_options opts)  //static ptr read(util::core_file &file, parse_options const *opts);
+        public static file read(util_.core_file file, parse_options opts)  //static ptr read(util::core_file &file, parse_options const *opts);
         {
             throw new emu_unimplemented();
         }

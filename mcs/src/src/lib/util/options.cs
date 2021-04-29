@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using std_string = System.String;
-
 
 namespace mame
 {
@@ -171,6 +169,8 @@ namespace mame
                 // it is invalid to set the value on a header
                 assert(type() != option_type.HEADER);
 
+                validate(newvalue);
+
                 // only set the value if we have priority
                 if (always_override || priority_value >= priority())
                 {
@@ -213,7 +213,10 @@ namespace mame
             protected abstract void internal_set_value(string newvalue);
 
 
-            //void validate(const std::string &value);
+            void validate(string value)
+            {
+                //throw new emu_unimplemented();
+            }
         }
 
 
@@ -257,7 +260,7 @@ namespace mame
                 case option_type.INTEGER:
                 case option_type.FLOAT:
                 case option_type.STRING:
-                    return m_data.c_str();
+                    return m_data;
 
                 default:
                     // this is an option type for which returning a value is
@@ -271,7 +274,7 @@ namespace mame
             //-------------------------------------------------
             protected override string minimum()
             {
-                return m_minimum.c_str();
+                return m_minimum;
             }
 
             //-------------------------------------------------
@@ -279,7 +282,7 @@ namespace mame
             //-------------------------------------------------
             protected override string maximum()
             {
-                return m_maximum.c_str();
+                return m_maximum;
             }
 
             //-------------------------------------------------
@@ -415,7 +418,7 @@ namespace mame
             if (opt.name != null)
             {
                 // first extract any range
-                std_string namestr = opt.name;
+                string namestr = opt.name;
                 int lparen = namestr.find_first_of('(', 0);
                 if (lparen != -1)
                 {
@@ -581,7 +584,7 @@ namespace mame
         {
             foreach (entry curentry in m_entries)
             {
-                if (curentry.type() != option_type.HEADER)
+                if (curentry.type() != option_type.HEADER && curentry.type() != option_type.COMMAND)
                     curentry.revert(priority_hi, priority_lo);
             }
         }
@@ -679,7 +682,7 @@ namespace mame
         //  parse_ini_file - parse a series of entries in
         //  an INI file
         //-------------------------------------------------
-        public void parse_ini_file(util.core_file inifile, int priority, bool ignore_unknown_options, bool always_override)
+        public void parse_ini_file(util_.core_file inifile, int priority, bool ignore_unknown_options, bool always_override)
         {
             throw new emu_unimplemented();
         }
@@ -731,7 +734,7 @@ namespace mame
                     if (value != null)
                     {
                         // look up counterpart in diff, if diff is specified
-                        if (diff == null || strcmp(value, diff.value(name.c_str())) != 0)
+                        if (diff == null || strcmp(value, diff.value(name)) != 0)
                         {
                             // output header, if we have one
                             if (last_header != null)
@@ -923,10 +926,10 @@ namespace mame
                 break;
 
             case condition_type.WARN:
-                throw new options_warning_exception(error_stream.str());
+                throw new options_warning_exception(error_stream);
 
             case condition_type.ERR:
-                throw new options_error_exception(error_stream.str());
+                throw new options_error_exception(error_stream);
 
             default:
                 // should not get here

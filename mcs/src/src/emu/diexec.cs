@@ -4,12 +4,12 @@
 using System;
 using System.Collections.Generic;
 
-using attoseconds_t = System.Int64;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using execute_interface_enumerator = mame.device_interface_enumerator<mame.device_execute_interface>;  //typedef device_interface_enumerator<device_execute_interface> execute_interface_enumerator;
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
-using seconds_t = System.Int32;
+using seconds_t = System.Int32;  //typedef s32 seconds_t;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -18,45 +18,28 @@ using u64 = System.UInt64;
 namespace mame
 {
     // interrupt callback for VBLANK and timed interrupts
-    //typedef device_delegate<void (device_t &)> device_interrupt_delegate;
-    public delegate void device_interrupt_delegate(device_t device);
+    public delegate void device_interrupt_delegate(device_t device);  //typedef device_delegate<void (device_t &)> device_interrupt_delegate;
 
     // IRQ callback to be called by executing devices when an IRQ is actually taken
-    //typedef device_delegate<int (device_t &, int)> device_irq_acknowledge_delegate;
-    public delegate int device_irq_acknowledge_delegate(device_t device, int irqline);
-
-
-    // I/O line states
-    public enum line_state
-    {
-        CLEAR_LINE = 0,             // clear (a fired or held) line
-        ASSERT_LINE,                // assert an interrupt immediately
-        HOLD_LINE                   // hold interrupt line until acknowledged
-    }
+    public delegate int device_irq_acknowledge_delegate(device_t device, int irqline);  //typedef device_delegate<int (device_t &, int)> device_irq_acknowledge_delegate;
 
 
     public static class diexec_global
     {
-        //**************************************************************************
-        //  MACROS
-        //**************************************************************************
-
-        // IRQ callback to be called by device implementations when an IRQ is actually taken
-        //#define IRQ_CALLBACK_MEMBER(func)       int func(device_t &device, int irqline)
-
-        // interrupt generator callback called as a VBLANK or periodic interrupt
-        //#define INTERRUPT_GEN_MEMBER(func)      void func(device_t &device)
-    }
+        // I/O line states
+        //public enum line_state
+        //{
+        public const int CLEAR_LINE  = 0;             // clear (a fired or held) line
+        public const int ASSERT_LINE = 1;                // assert an interrupt immediately
+        public const int HOLD_LINE   = 2;                   // hold interrupt line until acknowledged
+        //}
 
 
-    // ======================> device_execute_interface
-    public abstract class device_execute_interface : device_interface
-    {
         // I/O line definitions
         //enum
         //{
         // input lines
-        const int MAX_INPUT_LINES = 64 + 3;
+        public const int MAX_INPUT_LINES = 64 + 3;
         public const int INPUT_LINE_IRQ0 = 0;
         public const int INPUT_LINE_IRQ1 = 1;
         const int INPUT_LINE_IRQ2 = 2;
@@ -73,8 +56,12 @@ namespace mame
         public const int INPUT_LINE_RESET = MAX_INPUT_LINES - 2;
         public const int INPUT_LINE_HALT = MAX_INPUT_LINES - 1;
         //}
+    }
 
 
+    // ======================> device_execute_interface
+    public abstract class device_execute_interface : device_interface
+    {
         const bool VERBOSE = false;
         const bool TEMPLOG = false;
 
@@ -107,7 +94,7 @@ namespace mame
                 m_linenum = 0;
                 m_stored_vector = 0;
                 m_curvector = 0;
-                m_curstate = (u8)line_state.CLEAR_LINE;
+                m_curstate = (u8)g.CLEAR_LINE;
                 m_qindex = 0;
 
 
@@ -148,7 +135,7 @@ namespace mame
 
                 if (TEMPLOG) osd_printf_info("setline({0},{1},{2},{3})\n", m_execute.device().tag(), m_linenum, state, (vector == USE_STORED_VECTOR) ? 0 : vector);
 
-                assert(state == (int)line_state.ASSERT_LINE || state == (int)line_state.HOLD_LINE || state == (int)line_state.CLEAR_LINE);
+                assert(state == (int)g.ASSERT_LINE || state == (int)g.HOLD_LINE || state == (int)g.CLEAR_LINE);
 
                 // if we're full of events, flush the queue and log a message
                 int event_index = m_qindex++;
@@ -184,11 +171,11 @@ namespace mame
                 int vector = m_curvector;
 
                 // if the IRQ state is HOLD_LINE, clear it
-                if (m_curstate == (u8)line_state.HOLD_LINE)
+                if (m_curstate == (u8)g.HOLD_LINE)
                 {
-                    LOG("->set_irq_line('{0}',{1},{2})\n", m_execute.device().tag(), m_linenum, line_state.CLEAR_LINE);
-                    m_execute.execute_set_input(m_linenum, (int)line_state.CLEAR_LINE);
-                    m_curstate = (u8)line_state.CLEAR_LINE;
+                    LOG("->set_irq_line('{0}',{1},{2})\n", m_execute.device().tag(), m_linenum, g.CLEAR_LINE);
+                    m_execute.execute_set_input(m_linenum, (int)g.CLEAR_LINE);
+                    m_curstate = (u8)g.CLEAR_LINE;
                 }
                 return vector;
             }
@@ -213,14 +200,14 @@ namespace mame
 
                     if (TEMPLOG) osd_printf_info(" ({0},{1})\n", m_curstate, m_curvector);
 
-                    assert(m_curstate == (u8)line_state.ASSERT_LINE || m_curstate == (u8)line_state.HOLD_LINE || m_curstate == (u8)line_state.CLEAR_LINE);
+                    assert(m_curstate == (u8)g.ASSERT_LINE || m_curstate == (u8)g.HOLD_LINE || m_curstate == (u8)g.CLEAR_LINE);
 
                     // special case: RESET
-                    if (m_linenum == INPUT_LINE_RESET)
+                    if (m_linenum == g.INPUT_LINE_RESET)
                     {
                         // if we're asserting the line, just halt the device
                         // FIXME: outputs of onboard peripherals also need to be deactivated at this time
-                        if (m_curstate == (u8)line_state.ASSERT_LINE)
+                        if (m_curstate == (u8)g.ASSERT_LINE)
                             m_execute.suspend(SUSPEND_REASON_RESET, true);
 
                         // if we're clearing the line that was previously asserted, reset the device
@@ -232,14 +219,14 @@ namespace mame
                     }
 
                     // special case: HALT
-                    else if (m_linenum == INPUT_LINE_HALT)
+                    else if (m_linenum == g.INPUT_LINE_HALT)
                     {
                         // if asserting, halt the device
-                        if (m_curstate == (u8)line_state.ASSERT_LINE)
+                        if (m_curstate == g.ASSERT_LINE)
                             m_execute.suspend(SUSPEND_REASON_HALT, true);
 
                         // if clearing, unhalt the device
-                        else if (m_curstate == (u8)line_state.CLEAR_LINE)
+                        else if (m_curstate == (u8)g.CLEAR_LINE)
                             m_execute.resume(SUSPEND_REASON_HALT);
                     }
 
@@ -249,13 +236,13 @@ namespace mame
                         // switch off the requested state
                         switch (m_curstate)
                         {
-                            case (u8)line_state.HOLD_LINE:
-                            case (u8)line_state.ASSERT_LINE:
-                                m_execute.execute_set_input(m_linenum, (int)line_state.ASSERT_LINE);
+                            case g.HOLD_LINE:
+                            case g.ASSERT_LINE:
+                                m_execute.execute_set_input(m_linenum, g.ASSERT_LINE);
                                 break;
 
-                            case (u8)line_state.CLEAR_LINE:
-                                m_execute.execute_set_input(m_linenum, (int)line_state.CLEAR_LINE);
+                            case g.CLEAR_LINE:
+                                m_execute.execute_set_input(m_linenum, g.CLEAR_LINE);
                                 break;
 
                             default:
@@ -264,7 +251,7 @@ namespace mame
                         }
 
                         // generate a trigger to unsuspend any devices waiting on the interrupt
-                        if (m_curstate != (u8)line_state.CLEAR_LINE)
+                        if (m_curstate != g.CLEAR_LINE)
                             m_execute.signal_interrupt_trigger();
                     }
                 }
@@ -305,7 +292,7 @@ namespace mame
 
         // input states and IRQ callbacks
         device_irq_acknowledge_delegate m_driver_irq;       // driver-specific IRQ callback
-        device_input [] m_input = new device_input[MAX_INPUT_LINES];   // data about inputs
+        device_input [] m_input = new device_input[g.MAX_INPUT_LINES];   // data about inputs
         emu_timer m_timedint_timer;           // reference to this device's periodic interrupt timer
 
         // cycle counting and executing
@@ -504,15 +491,15 @@ namespace mame
             // treat instantaneous pulses as ASSERT+CLEAR
             if (duration == attotime.zero)
             {
-                if (irqline != INPUT_LINE_RESET && !input_edge_triggered(irqline))
+                if (irqline != g.INPUT_LINE_RESET && !input_edge_triggered(irqline))
                     throw new emu_fatalerror("device '{0}': zero-width pulse is not allowed for input line {1}\n", device().tag(), irqline);
 
-                set_input_line(irqline, (int)line_state.ASSERT_LINE);
-                set_input_line(irqline, (int)line_state.CLEAR_LINE);
+                set_input_line(irqline, g.ASSERT_LINE);
+                set_input_line(irqline, g.CLEAR_LINE);
             }
             else
             {
-                set_input_line(irqline, (int)line_state.ASSERT_LINE);
+                set_input_line(irqline, g.ASSERT_LINE);
 
                 attotime target_time = local_time() + duration;
                 m_scheduler.timer_set(target_time - m_scheduler.time(), irq_pulse_clear, irqline);
@@ -958,7 +945,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(irq_pulse_clear) { set_input_line(int(param), CLEAR_LINE); }
-        void irq_pulse_clear(object ptr, s32 param) { set_input_line((int)param, (int)line_state.CLEAR_LINE); }
+        void irq_pulse_clear(object ptr, s32 param) { set_input_line(param, g.CLEAR_LINE); }
 
 
         //-------------------------------------------------

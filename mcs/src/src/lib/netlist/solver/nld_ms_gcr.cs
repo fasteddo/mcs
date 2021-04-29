@@ -326,7 +326,7 @@ namespace mame.netlist
                 var t = w;
 
                 ////std::hash<typename std::remove_const<std::remove_reference<decltype(t.str())>::type>::type> h;
-                return new plib.pfmt("nl_gcr_{0:x}_{1}_{2}_{3}").op(plib.pglobal.hash(t.str().c_str(), (size_t)t.str().size()), mat.nz_num, str_fptype, str_floattype);
+                return new plib.pfmt("nl_gcr_{0:x}_{1}_{2}_{3}").op(plib.pglobal.hash(t, (size_t)t.size()), mat.nz_num, str_fptype, str_floattype);
             }
         }
     }

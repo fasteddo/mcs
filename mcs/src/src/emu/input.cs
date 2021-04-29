@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using size_t = System.UInt32;
-using size_t_constant_16 = mame.uint32_constant_16;
 using u32 = System.UInt32;
 
 
@@ -319,7 +318,8 @@ namespace mame
 
     // ======================> input_code
     // a combined code that describes a particular input on a particular device
-    public class input_code : global_object
+    public class input_code : global_object,
+                              IComparable<input_code>
     {
         public static readonly input_code INPUT_CODE_INVALID = new input_code();
 
@@ -351,6 +351,7 @@ namespace mame
         public static bool operator ==(input_code left, input_code right) { return left.m_internal == right.m_internal; }
         public static bool operator !=(input_code left, input_code right) { return left.m_internal != right.m_internal; }
         //constexpr bool operator<(const input_code &rhs) const noexcept { return m_internal < rhs.m_internal; }
+        public int CompareTo(input_code other) { return m_internal.CompareTo(other.m_internal); }
 
 
         // getters
@@ -406,7 +407,7 @@ namespace mame
 
 
         // internal state
-        std.array<input_code, size_t_constant_16> m_code = new std.array<input_code, size_t_constant_16>();
+        std.array<input_code, uint32_constant_16> m_code = new std.array<input_code, uint32_constant_16>();
 
 
         // construction/destruction

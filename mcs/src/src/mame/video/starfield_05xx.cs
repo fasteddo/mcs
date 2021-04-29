@@ -146,7 +146,7 @@ namespace mame
                     // Check lfsr for hit
                     if ((m_lfsr&LFSR_HIT_MASK) == LFSR_HIT_VALUE)
                     {
-                        uint8_t star_set = (uint8_t)bitswap(m_lfsr, 10, 8);
+                        uint8_t star_set = (uint8_t)g.bitswap(m_lfsr, 10, 8);
 
                         if ((m_set_a == star_set) || (m_set_b == star_set))
                         {

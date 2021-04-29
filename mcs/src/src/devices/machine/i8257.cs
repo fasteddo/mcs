@@ -4,7 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -46,11 +49,11 @@ namespace mame
         //};
 
 
-        bool MODE_CHAN_ENABLE(int x) { return BIT(m_transfer_mode, x) != 0; }
-        bool MODE_ROTATING_PRIORITY { get { return BIT(m_transfer_mode, 4) != 0; } }
-        bool MODE_EXTENDED_WRITE { get { return BIT(m_transfer_mode, 5) != 0; } }
-        bool MODE_TC_STOP { get { return BIT(m_transfer_mode, 6) != 0; } }
-        bool MODE_AUTOLOAD { get { return BIT(m_transfer_mode, 7) != 0; } }
+        bool MODE_CHAN_ENABLE(int x) { return g.BIT(m_transfer_mode, x) != 0; }
+        bool MODE_ROTATING_PRIORITY { get { return g.BIT(m_transfer_mode, 4) != 0; } }
+        bool MODE_EXTENDED_WRITE { get { return g.BIT(m_transfer_mode, 5) != 0; } }
+        bool MODE_TC_STOP { get { return g.BIT(m_transfer_mode, 6) != 0; } }
+        bool MODE_AUTOLOAD { get { return g.BIT(m_transfer_mode, 7) != 0; } }
         uint8_t MODE_TRANSFER_MASK { get { return m_channel[m_current_channel].m_mode; } }
         const uint8_t MODE_TRANSFER_VERIFY     = 0;
         const uint8_t MODE_TRANSFER_WRITE      = 1;
@@ -86,17 +89,17 @@ namespace mame
         uint8_t m_request;
         uint8_t m_temp;
 
-        devcb_write_line   m_out_hrq_cb;
-        devcb_write_line   m_out_tc_cb;
+        devcb_write_line m_out_hrq_cb;
+        devcb_write_line m_out_tc_cb;
 
         // accessors to main memory
-        devcb_read8        m_in_memr_cb;
-        devcb_write8       m_out_memw_cb;
+        devcb_read8 m_in_memr_cb;
+        devcb_write8 m_out_memw_cb;
 
         // channel accessors
-        devcb_read8.array<devcb_read8, uint32_constant_4> m_in_ior_cb;
-        devcb_write8.array<devcb_write8, uint32_constant_4> m_out_iow_cb;
-        devcb_write_line.array<devcb_write_line, uint32_constant_4> m_out_dack_cb;
+        devcb_read8.array<uint32_constant_4> m_in_ior_cb;
+        devcb_write8.array<uint32_constant_4> m_out_iow_cb;
+        devcb_write_line.array<uint32_constant_4> m_out_dack_cb;
 
         struct channel
         {
@@ -121,7 +124,7 @@ namespace mame
             m_reverse_rw = false;
             m_tc = false;
             m_msb = 0;
-            m_hreq = CLEAR_LINE;
+            m_hreq = g.CLEAR_LINE;
             m_hack = 0;
             m_ready = 1;
             m_state = 0;
@@ -135,9 +138,9 @@ namespace mame
             m_out_tc_cb = new devcb_write_line(this);
             m_in_memr_cb = new devcb_read8(this);
             m_out_memw_cb = new devcb_write8(this);
-            m_in_ior_cb = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
-            m_out_iow_cb = new devcb_write8.array<devcb_write8, uint32_constant_4>(this, () => { return new devcb_write8(this); });
-            m_out_dack_cb = new devcb_write_line.array<devcb_write_line, uint32_constant_4>(this, () => { return new devcb_write_line(this); });
+            m_in_ior_cb = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_out_iow_cb = new devcb_write8.array<uint32_constant_4>(this, () => { return new devcb_write8(this); });
+            m_out_dack_cb = new devcb_write_line.array<uint32_constant_4>(this, () => { return new devcb_write_line(this); });
         }
 
 
@@ -150,7 +153,7 @@ namespace mame
         public void write(offs_t offset, uint8_t data)
         {
             LOG("{0} \n", "write");
-            if (BIT(offset, 3) == 0)
+            if (g.BIT(offset, 3) == 0)
             {
                 int channel = (int)((offset >> 1) & 0x03);
 
@@ -242,12 +245,12 @@ namespace mame
         //void dreq3_w(int state);
 
 
-        public devcb_write.binder out_hrq_cb() { return m_out_hrq_cb.bind(); }
+        public devcb_write_line.binder out_hrq_cb() { return m_out_hrq_cb.bind(); }
         //auto out_tc_cb() { return m_out_tc_cb.bind(); }
-        public devcb_read.binder in_memr_cb() { return m_in_memr_cb.bind(); }
-        public devcb_write.binder out_memw_cb() { return m_out_memw_cb.bind(); }
-        public devcb_read.binder in_ior_cb(int Ch) { return m_in_ior_cb[Ch].bind(); }
-        public devcb_write.binder out_iow_cb(int Ch) { return m_out_iow_cb[Ch].bind(); }
+        public devcb_read8.binder in_memr_cb() { return m_in_memr_cb.bind(); }
+        public devcb_write8.binder out_memw_cb() { return m_out_memw_cb.bind(); }
+        public devcb_read8.binder in_ior_cb(int Ch) { return m_in_ior_cb[Ch].bind(); }
+        public devcb_write8.binder out_iow_cb(int Ch) { return m_out_iow_cb[Ch].bind(); }
         //template <unsigned Ch> auto out_dack_cb() { return m_out_dack_cb[Ch].bind(); }
 
         // This should be set for systems that map the DMAC registers into the memory space rather than as I/O ports (e.g. radio86)
@@ -446,7 +449,7 @@ namespace mame
         bool is_request_active(int channel)
         {
             LOG("{0} Channel {1}: {2} && MODE_CHAN_ENABLE:{3}\n", "is_request_active", channel, m_request, MODE_CHAN_ENABLE(channel));
-            return BIT(m_request, channel) != 0 && MODE_CHAN_ENABLE(channel);
+            return g.BIT(m_request, channel) != 0 && MODE_CHAN_ENABLE(channel);
         }
 
 

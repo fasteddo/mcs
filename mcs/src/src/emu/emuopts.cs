@@ -703,10 +703,10 @@ namespace mame
             {
                 // if so, first extract the base name (the reason for this is drag-and-drop on Windows; a side
                 // effect is a command line like 'mame pacman.foo' will work correctly, but so be it)
-                string new_system_base_name = core_filename_extract_base(m_attempted_system_name, true);
+                string new_system_base_name = g.core_filename_extract_base(m_attempted_system_name, true);
 
                 // perform the lookup (and error if it cannot be found)
-                int index = driver_list.find(new_system_base_name.c_str());
+                int index = driver_list.find(new_system_base_name);
                 if (index < 0)
                     throw new options_error_exception("Unknown system '{0}'", m_attempted_system_name);
                 new_system = driver_list.driver(index);
@@ -970,7 +970,7 @@ namespace mame
         protected override void command_argument_processed()
         {
             // some command line arguments require that the system name be set, so we can get slot options
-            if (command_arguments().size() == 1 && !core_iswildstr(command_arguments()[0].c_str()) &&
+            if (command_arguments().size() == 1 && !g.core_iswildstr(command_arguments()[0]) &&
                 (command() == "listdevices" || (command() == "listslots") || (command() == "listmedia") || (command() == "listsoftware")))
             {
                 set_system_name(command_arguments()[0]);
@@ -1105,7 +1105,7 @@ namespace mame
                 // In reality, I want to really return std::optional<std::string> here
                 // FIXME: the std::string assignment can throw exceptions, and returning std::optional<std::string> also isn't safe in noexcept
                 m_temp = m_host.specified_value();
-                result = m_temp.c_str();
+                result = m_temp;
             }
             return result;
         }
@@ -1129,7 +1129,7 @@ namespace mame
 
         public override string value()
         {
-            return m_host.value().c_str();
+            return m_host.value();
         }
 
         protected override void internal_set_value(string newvalue)

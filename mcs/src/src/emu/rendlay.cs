@@ -7,7 +7,7 @@ using System.Linq;
 
 using emu_render_detail_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = std::vector<bounds_step>;
 using emu_render_detail_color_vector = mame.std.vector<mame.emu.render.detail.color_step>;  //using color_vector = std::vector<color_step>;
-using ioport_value = System.UInt32;
+using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using layout_element_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
 using layout_element_make_component_map = mame.std.map<string, mame.layout_element.make_component_func>;  //typedef std::map<std::string, make_component_func> make_component_map;
 using layout_environment_entry_vector = mame.std.vector<mame.emu.render.detail.layout_environment.entry>;  //using entry_vector = std::vector<entry>;
@@ -32,8 +32,6 @@ using layout_view_visibility_toggle_vector = mame.std.vector<mame.layout_view.vi
 using s32 = System.Int32;
 using s64 = System.Int64;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
-using std_string = System.String;
-using std_string_view = System.String;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
@@ -189,7 +187,7 @@ namespace mame
         {
             var iIdx = 0;  //auto i(steps.begin());
             var i = steps[iIdx];
-            render_bounds result = i.bounds;
+            render_bounds result = new render_bounds(i.bounds);
             while (steps.Count != ++iIdx)  //while (steps.end() != ++i)
                 result |= i.bounds;
 
@@ -207,14 +205,14 @@ namespace mame
             if (0 == posIdx)  //if (steps.begin() == pos)
             {
                 var pos = steps[posIdx];
-                return pos.bounds;
+                return new render_bounds(pos.bounds);
             }
             else
             {
                 //--pos;
                 --posIdx;
                 var pos = steps[posIdx];
-                render_bounds result = pos.bounds;
+                render_bounds result = new render_bounds(pos.bounds);
                 result.x0 += pos.delta.x0 * (state - pos.state);
                 result.x1 += pos.delta.x1 * (state - pos.state);
                 result.y0 += pos.delta.y0 * (state - pos.state);
@@ -1498,7 +1496,7 @@ namespace mame
             }
 
             // apply to bounds and force into destination rectangle
-            render_bounds bounds = m_bounds;
+            render_bounds bounds = new render_bounds(m_bounds);
             rendlay_global.render_bounds_transform(ref bounds, result);
             result[0][0] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
             result[0][1] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
@@ -1567,7 +1565,7 @@ namespace mame
                 foreach (layout_group group in seen)
                     path += ' ' + group.m_groupnode.get_attribute_string("name", "");  //path << ' ' << group->m_groupnode.get_attribute_string("name", "");
                 path += ' ' + m_groupnode.get_attribute_string("name", "");  //path << ' ' << m_groupnode.get_attribute_string("name", "");
-                throw new layout_syntax_error(string_format("recursively nested groups {0}", path.str()));
+                throw new layout_syntax_error(string_format("recursively nested groups {0}", path));
             }
 
             seen.push_back(this);
@@ -1675,7 +1673,7 @@ namespace mame
                     }
                     else
                     {
-                        std_string ref_ = env.get_attribute_string(itemnode, "ref");
+                        string ref_ = env.get_attribute_string(itemnode, "ref");
                         if (ref_.empty())
                             throw new layout_syntax_error("nested group must have non-empty ref attribute");
 
@@ -1817,9 +1815,9 @@ namespace mame
             public u32 m_visibility_mask;  // combined mask of parent visibility groups
 
             // cold items
-            std_string m_id;               // optional unique item identifier
-            std_string m_input_tag;        // input tag of this item
-            std_string m_animinput_tag;    // tag of input port for animation state
+            string m_id;               // optional unique item identifier
+            string m_input_tag;        // input tag of this item
+            string m_animinput_tag;    // tag of input port for animation state
             public emu_render_detail_bounds_vector m_rawbounds;        // raw (original) bounds of the item
             bool m_have_output;      // whether we actually have an output
             bool m_input_raw;        // get raw data from input port
@@ -1904,7 +1902,7 @@ namespace mame
 
 
             // getters
-            public std_string id() { return m_id; }
+            public string id() { return m_id; }
             public layout_element element() { return m_element; }
             public screen_device screen() { return m_screen; }
             //bool bounds_animated() const { return m_bounds.size() > 1U; }
@@ -2052,7 +2050,7 @@ namespace mame
             color_delegate default_get_color()
             {
                 return (m_color.size() == 1U)
-                        ? (color_delegate)((out render_color result) => { m_color.front().get(out result); })  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
+                        ? (out render_color result) => { m_color.front().get(out result); }  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
                         : (color_delegate)get_interpolated_color;  //: color_delegate(&item::get_interpolated_color, this);
             }
 
@@ -2285,7 +2283,7 @@ namespace mame
             //---------------------------------------------
             //  make_input_tag - get absolute input tag
             //---------------------------------------------
-            static std_string make_input_tag(layout_view_view_environment env, util.xml.data_node itemnode)
+            static string make_input_tag(layout_view_view_environment env, util.xml.data_node itemnode)
             {
                 return env.get_attribute_subtag(itemnode, "inputtag");
             }
@@ -2297,7 +2295,7 @@ namespace mame
             static int get_blend_mode(layout_view_view_environment env, util.xml.data_node itemnode)
             {
                 // see if there's a blend mode attribute
-                std_string mode = itemnode.get_attribute_string_ptr("blend");
+                string mode = itemnode.get_attribute_string_ptr("blend");
                 if (mode != null)
                 {
                     if (mode == "none")
@@ -2328,7 +2326,7 @@ namespace mame
             static unsigned get_state_shift(ioport_value mask)
             {
                 unsigned result = 0;
-                while (mask != 0 && BIT(mask, 0) == 0)
+                while (mask != 0 && g.BIT(mask, 0) == 0)
                 {
                     ++result;
                     mask >>= 1;
@@ -2359,12 +2357,12 @@ namespace mame
         /// of a view.
         public class visibility_toggle : global_object
         {
-            std_string m_name;             // display name for the toggle
+            string m_name;             // display name for the toggle
             u32 m_mask;             // toggle combination to show
 
 
             // construction/destruction/assignment
-            public visibility_toggle(std_string name, u32 mask)
+            public visibility_toggle(string name, u32 mask)
             {
                 m_name = name;
                 m_mask = mask;
@@ -2382,7 +2380,7 @@ namespace mame
 
 
             // getters
-            public std_string name() { return m_name; }
+            public string name() { return m_name; }
             //u32 mask() const { return m_mask; }
         }
 
@@ -2440,8 +2438,8 @@ namespace mame
         recomputed_delegate m_recomputed;       // additional actions on resizing/visibility change
 
         // cold items
-        std_string m_name;             // display name for the view
-        std_string m_unqualified_name; // the name exactly as specified in the layout file
+        string m_name;             // display name for the view
+        string m_unqualified_name; // the name exactly as specified in the layout file
         layout_view_item_id_map m_items_by_id;      // items with non-empty ID indexed by ID
         layout_view_visibility_toggle_vector m_vistoggles = new layout_view_visibility_toggle_vector();       // collections of items that can be shown/hidden
         render_bounds m_expbounds = new render_bounds();        // explicit bounds of the view
@@ -2468,7 +2466,7 @@ namespace mame
 
             // parse the layout
             m_expbounds.x0 = m_expbounds.y0 = m_expbounds.x1 = m_expbounds.y1 = 0;
-            layout_view_view_environment local = new layout_view_view_environment(env, m_name.c_str());
+            layout_view_view_environment local = new layout_view_view_environment(env, m_name);
             layer_lists layers = new layer_lists();
             local.set_parameter("viewname", m_name);
             add_items(layers, local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
@@ -2589,7 +2587,7 @@ namespace mame
         }
 
 
-        public std_string name() { return m_name; }
+        public string name() { return m_name; }
         //const std::string &unqualified_name() const { return m_unqualified_name; }
         //size_t visible_screen_count() const { return m_screens.size(); }
         public float effective_aspect() { return m_effaspect; }
@@ -2717,6 +2715,7 @@ namespace mame
                 assert(curitem.m_rawbounds.size() == curitem.m_bounds.size());
 
                 //std::copy(curitem.m_rawbounds.begin(), curitem.m_rawbounds.end(), curitem.m_bounds.begin());
+                curitem.m_bounds = new emu_render_detail_bounds_vector();
                 foreach (var it in curitem.m_rawbounds)
                     curitem.m_bounds.Add(it);
 
@@ -2875,7 +2874,7 @@ namespace mame
                 }
                 else if (strcmp(itemnode.get_name(), "group") == 0)
                 {
-                    std_string ref_ = env.get_attribute_string(itemnode, "ref");
+                    string ref_ = env.get_attribute_string(itemnode, "ref");
                     if (ref_.empty())
                         throw new layout_syntax_error("group instantiation must have non-empty ref attribute");
 
@@ -2935,7 +2934,7 @@ namespace mame
                 }
                 else if (strcmp(itemnode.get_name(), "collection") == 0)
                 {
-                    std_string_view name = env.get_attribute_string(itemnode, "name");
+                    string name = env.get_attribute_string(itemnode, "name");
                     if (name.empty())
                         throw new layout_syntax_error("collection must have non-empty name attribute");
 
@@ -2962,9 +2961,9 @@ namespace mame
         }
 
 
-        static std_string make_name(emu.render.detail.layout_environment env, util.xml.data_node viewnode)
+        static string make_name(emu.render.detail.layout_environment env, util.xml.data_node viewnode)
         {
-            std_string_view name = env.get_attribute_string(viewnode, "name");
+            string name = env.get_attribute_string(viewnode, "name");
             if (name.empty())
                 throw new layout_syntax_error("view must have non-empty name attribute");
 
@@ -3391,7 +3390,7 @@ namespace mame
                     else
                     {
                         // looks like a variable reference - try to look it up
-                        std.pair<std_string_view, bool> text = get_variable_text(str.substr(pos + 1, termIdx - (pos + 1)));  //std::pair<std::string_view, bool> text = get_variable_text(str.substr(pos + 1, term - (str.begin() + pos + 1)));
+                        std.pair<string, bool> text = get_variable_text(str.substr(pos + 1, termIdx - (pos + 1)));  //std::pair<std::string_view, bool> text = get_variable_text(str.substr(pos + 1, term - (str.begin() + pos + 1)));
                         if (text.second)
                         {
                             // variable found
@@ -3423,12 +3422,12 @@ namespace mame
             }
 
 
-            static unsigned hex_prefix(std_string_view s)
+            static unsigned hex_prefix(string s)
             {
                 return ((0 != s.length()) && (s[0] == '$')) ? 1U : ((2 <= s.length()) && (s[0] == '0') && ((s[1] == 'x') || (s[1] == 'X'))) ? 2U : 0U;
             }
 
-            static unsigned dec_prefix(std_string_view s)
+            static unsigned dec_prefix(string s)
             {
                 return ((0 != s.length()) && (s[0] == '#')) ? 1U : 0U;
             }
@@ -3474,7 +3473,7 @@ namespace mame
 
             string parameter_name(util.xml.data_node node)
             {
-                std_string attrib = node.get_attribute_string_ptr("name");
+                string attrib = node.get_attribute_string_ptr("name");
                 if (attrib == null)
                     throw new layout_syntax_error("parameter lacks name attribute");
                 return expand(attrib);
@@ -3539,7 +3538,7 @@ namespace mame
                 string name = parameter_name(node);
                 if (node.has_attribute("start") || node.has_attribute("increment") || node.has_attribute("lshift") || node.has_attribute("rshift"))
                     throw new layout_syntax_error("start/increment/lshift/rshift attributes are only allowed for repeat parameters");
-                std_string value = node.get_attribute_string_ptr("value");
+                string value = node.get_attribute_string_ptr("value");
                 if (value == null)
                     throw new layout_syntax_error("parameter lacks value attribute");
 
@@ -3552,7 +3551,7 @@ namespace mame
             {
                 // two types are allowed here - static value, and start/increment/lshift/rshift
                 string name = parameter_name(node);
-                std_string start = node.get_attribute_string_ptr("start");
+                string start = node.get_attribute_string_ptr("start");
                 if (start != null)
                 {
                     // simple validity checks
@@ -3567,10 +3566,10 @@ namespace mame
                     // increment is more complex - it may be an integer or a floating-point number
                     s64 intincrement = 0;
                     double floatincrement = 0;
-                    std_string increment = node.get_attribute_string_ptr("increment");
+                    string increment = node.get_attribute_string_ptr("increment");
                     if (increment != null)
                     {
-                        std_string_view expanded = expand(increment);
+                        string expanded = expand(increment);
                         unsigned hexprefix = hex_prefix(expanded);
                         unsigned decprefix = dec_prefix(expanded);
                         bool floatchars = expanded.find_first_of(".eE") != -1;
@@ -3634,7 +3633,7 @@ namespace mame
                 }
                 else
                 {
-                    std_string value = node.get_attribute_string_ptr("value");
+                    string value = node.get_attribute_string_ptr("value");
                     if (value == null)
                         throw new layout_syntax_error("parameter lacks value attribute");
                     //entry_vector::iterator const pos(
@@ -3672,23 +3671,23 @@ namespace mame
             }
 
 
-            public std_string_view get_attribute_string(util.xml.data_node node, string name, std_string_view defvalue = "")
+            public string get_attribute_string(util.xml.data_node node, string name, string defvalue = "")
             {
-                std_string attrib = node.get_attribute_string_ptr(name);
+                string attrib = node.get_attribute_string_ptr(name);
                 return attrib != null ? expand(attrib) : defvalue;
             }
 
 
-            public std_string get_attribute_subtag(util.xml.data_node node, string name)
+            public string get_attribute_subtag(util.xml.data_node node, string name)
             {
-                std_string attrib = node.get_attribute_string_ptr(name);
+                string attrib = node.get_attribute_string_ptr(name);
                 return attrib != null ? device().subtag(expand(attrib)) : "";
             }
 
 
             public int get_attribute_int(util.xml.data_node node, string name, int defvalue)
             {
-                std_string attrib = node.get_attribute_string_ptr(name);
+                string attrib = node.get_attribute_string_ptr(name);
                 if (attrib == null)
                     return defvalue;
 
@@ -3699,7 +3698,7 @@ namespace mame
 
             float get_attribute_float(util.xml.data_node node, string name, float defvalue)
             {
-                std_string attrib = node.get_attribute_string_ptr(name);
+                string attrib = node.get_attribute_string_ptr(name);
                 if (attrib == null)
                     return defvalue;
 
@@ -3716,12 +3715,12 @@ namespace mame
 
             public bool get_attribute_bool(util.xml.data_node node, string name, bool defvalue)
             {
-                std_string attrib = node.get_attribute_string_ptr(name);
+                string attrib = node.get_attribute_string_ptr(name);
                 if (string.IsNullOrEmpty(attrib))
                     return defvalue;
 
                 // first try yes/no strings
-                std_string_view expanded = expand(attrib);
+                string expanded = expand(attrib);
                 if ("yes" == expanded || "true" == expanded)
                     return true;
                 if ("no" == expanded || "false" == expanded)

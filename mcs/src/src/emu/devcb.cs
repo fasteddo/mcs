@@ -4,8 +4,15 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_read_line = mame.devcb_read<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_read_line = devcb_read<int, 1U>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using ioport_value = System.UInt32;  //typedef u32 ioport_value;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using s8 = System.SByte;
 using s32 = System.Int32;
+using s64 = System.Int64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -20,21 +27,20 @@ namespace mame
     //  DELEGATE TYPES
     //**************************************************************************
 
-    //typedef device_delegate<int ()> read_line_delegate;
-    public delegate int read_line_delegate();
-
-    //typedef device_delegate<void (int)> write_line_delegate;
-    public delegate void write_line_delegate(int param);
+    public delegate int read_line_delegate();  //typedef device_delegate<int ()> read_line_delegate;
+    public delegate void write_line_delegate(int param);  //typedef device_delegate<void (int)> write_line_delegate;
 
 
-#if false
-    namespace emu::detail {
+    //namespace emu::detail {
+    //template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read_line_delegate, std::remove_reference_t<T> > > > { using type = read_line_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+    //template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write_line_delegate, std::remove_reference_t<T> > > > { using type = write_line_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+    //} // namespace emu::detail
 
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read_line_delegate, std::remove_reference_t<T> > > > { using type = read_line_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write_line_delegate, std::remove_reference_t<T> > > > { using type = write_line_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
 
-    } // namespace emu::detail
-#endif
+    public interface IResolve
+    {
+        void resolve();
+    }
 
 
     //**************************************************************************
@@ -47,13 +53,10 @@ namespace mame
     /// signatures, and the base exclusive-or/mask transform methods.
     public abstract class devcb_base : global_object
     {
-        public delegate u32 transform_func(offs_t offset, u32 data, ref u32 mem_mask);
-
-
         device_t m_owner;
 
 
-        //virtual void validity_check(validity_checker &valid) const = 0;
+        protected abstract void validity_check(validity_checker valid);
 
 
         // This is in C++17 but not C++14
@@ -94,7 +97,6 @@ namespace mame
         //template <typename Input, typename Result, typename T> static std::enable_if_t<is_transform_form3<Input, Result, T>::value, mask_t<transform_result_t<Input, Result, T>, Result> > invoke_transform(T const &cb, offs_t &offset, Input data, std::make_unsigned_t<Input> &mem_mask) { return std::make_unsigned_t<transform_result_t<Input, Result, T> >(cb(offset, data, mem_mask)); }
         //template <typename Input, typename Result, typename T> static std::enable_if_t<is_transform_form4<Input, Result, T>::value, mask_t<transform_result_t<Input, Result, T>, Result> > invoke_transform(T const &cb, offs_t &offset, Input data, std::make_unsigned_t<Input> &mem_mask) { return std::make_unsigned_t<transform_result_t<Input, Result, T> >(cb(offset, data)); }
         //template <typename Input, typename Result, typename T> static std::enable_if_t<is_transform_form6<Input, Result, T>::value, mask_t<transform_result_t<Input, Result, T>, Result> > invoke_transform(T const &cb, offs_t &offset, Input data, std::make_unsigned_t<Input> &mem_mask) { return std::make_unsigned_t<transform_result_t<Input, Result, T> >(cb(data)); }
-        protected static u32 invoke_transform(transform_func cb, offs_t offset, u32 data, ref u32 mem_mask) { return cb(offset, data, ref mem_mask); }
 
         // Working with devices and interfaces
         //template <typename T> static std::enable_if_t<emu::detail::is_device_implementation<T>::value, const char *> get_tag(T &obj) { return obj.tag(); }
@@ -115,12 +117,19 @@ namespace mame
         /// that the implementation supports lamba transforms to allow
         /// shifts.
         //template <typename T, typename Impl>
-        class transform_base
+        public class transform_base<T, T_unsigned, T_unsigned_OPS, Impl>
+            where T_unsigned_OPS : devcb_operators<T_unsigned, T>, new()
         {
-            //std::make_unsigned_t<T> m_exor = std::make_unsigned_t<T>(0);
-            //std::make_unsigned_t<T> m_mask;
-            bool m_inherited_mask = true;
+            static readonly T_unsigned_OPS ops = new T_unsigned_OPS();
 
+
+            public T_unsigned m_exor = ops.cast(0);  //std::make_unsigned_t<T> m_exor = std::make_unsigned_t<T>(0);
+            public T_unsigned m_mask;  //std::make_unsigned_t<T> m_mask;
+            public bool m_inherited_mask = true;
+
+
+
+            // EDF - moved to child class
 
             //Impl &exor(std::make_unsigned_t<T> val) { m_exor ^= val; return static_cast<Impl &>(*this); }
             //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
@@ -136,28 +145,24 @@ namespace mame
             //    auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask <<= val; return data << val; }));
             //    return inherited_mask() ? std::move(trans) : std::move(trans.mask(m_mask << val));
             //}
+
             //auto bit(unsigned val) { return std::move(rshift(val).mask(T(1U))); }
 
-            //constexpr std::make_unsigned_t<T> exor() const { return m_exor & m_mask; }
-            //constexpr std::make_unsigned_t<T> mask() const { return m_mask; }
+
+            public T_unsigned exor() { return ops.and(m_exor, m_mask); }  //constexpr std::make_unsigned_t<T> exor() const { return m_exor & m_mask; }
+            public T_unsigned mask() { return m_mask; }  //constexpr std::make_unsigned_t<T> mask() const { return m_mask; }
 
             //constexpr bool need_exor() const { return std::make_unsigned_t<T>(0) != (m_exor & m_mask); }
             //constexpr bool need_mask() const { return std::make_unsigned_t<T>(~std::make_unsigned_t<T>(0)) != m_mask; }
 
-            //constexpr bool inherited_mask() const { return m_inherited_mask; }
+            public bool inherited_mask() { return m_inherited_mask; }
 
 
-            //constexpr transform_base(std::make_unsigned_t<T> mask) : m_mask(mask) { }
+            public transform_base(T_unsigned mask) { m_mask = mask; }
             //constexpr transform_base(transform_base const &) = default;
             //transform_base(transform_base &&) = default;
             //transform_base &operator=(transform_base const &) = default;
             //transform_base &operator=(transform_base &&) = default;
-        }
-
-
-        public interface IResolve
-        {
-            void resolve();
         }
 
 
@@ -171,17 +176,21 @@ namespace mame
         {
             //using std::array<T, Count>::array;
 
+
             //template <unsigned... V>
-            array(device_t owner, int unused, Func<T> add_function)  //array(device_t &owner, std::integer_sequence<unsigned, V...> const &)
+            public array(device_t owner, int unused, Func<T> add_function)  //array(device_t &owner, std::integer_sequence<unsigned, V...> const &)
                 : base()  //: std::array<T, Count>{{ { make_one<V>(owner) }... }}
             {
                 for (int i = 0; i < this.size(); i++)
                     this[i] = add_function();
             }
 
-            protected array(device_t owner, Func<T> add_function) : this(owner, 0, add_function) { }  //array(device_t &owner) : array(owner, std::make_integer_sequence<unsigned, Count>()) { }
+
+            public array(device_t owner, Func<T> add_function) : this(owner, 0, add_function) { }  //array(device_t &owner) : array(owner, std::make_integer_sequence<unsigned, Count>()) { }
+
 
             //template <unsigned N> device_t &make_one(device_t &owner) { return owner; }
+
 
             public virtual void resolve_all()
             {
@@ -208,7 +217,7 @@ namespace mame
     /// \brief Read callback utilities
     ///
     /// Helpers that don't need to be templated on callback type.
-    public class devcb_read_base : devcb_base
+    public abstract class devcb_read_base : devcb_base
     {
         // Detecting candidates for read functions
         //template <typename Result, typename Func, typename Enable = void> struct is_read_form1 { static constexpr bool value = false; };
@@ -246,9 +255,7 @@ namespace mame
         //template <typename Result, typename T> static std::enable_if_t<is_read_form1<Result, T>::value, mask_t<read_result_t<Result, T>, Result> > invoke_read(T const &cb, offs_t offset, std::make_unsigned_t<Result> mem_mask) { return std::make_unsigned_t<read_result_t<Result, T> >(cb(offset, mem_mask)); }
         //template <typename Result, typename T> static std::enable_if_t<is_read_form2<Result, T>::value, mask_t<read_result_t<Result, T>, Result> > invoke_read(T const &cb, offs_t offset, std::make_unsigned_t<Result> mem_mask) { return std::make_unsigned_t<read_result_t<Result, T> >(cb(offset)); }
         //template <typename Result, typename T> static std::enable_if_t<is_read_form3<Result, T>::value, mask_t<read_result_t<Result, T>, Result> > invoke_read(T const &cb, offs_t offset, std::make_unsigned_t<Result> mem_mask) { return std::make_unsigned_t<read_result_t<Result, T> >(cb()); }
-        protected static u8 invoke_read(read8sm_delegate cb, offs_t offset) { return cb(offset); }
-        protected static u8 invoke_read(read8smo_delegate cb) { return cb(); }
-        protected static int invoke_read(read_line_delegate cb) { return cb(); }
+        protected static Input invoke_read<Input, Input_unsigned, T>(T cb, offs_t offset, Input_unsigned mem_mask) { throw new emu_unimplemented(); }
 
         // Delegate characteristics
         //template <typename T, typename Dummy = void> struct delegate_traits;
@@ -275,7 +282,7 @@ namespace mame
     /// \brief Write callback utilities
     ///
     /// Helpers that don't need to be templated on callback type.
-    public class devcb_write_base : devcb_base
+    public abstract class devcb_write_base : devcb_base
     {
         // Detecting candidates for write functions
         //template <typename Input, typename Func, typename Enable = void> struct is_write_form1 { static constexpr bool value = false; };
@@ -306,9 +313,43 @@ namespace mame
         //template <typename Input, typename T> static std::enable_if_t<is_write_form1<Input, T>::value> invoke_write(T const &cb, offs_t &offset, Input data, std::make_unsigned_t<Input> mem_mask) { return cb(offset, data, mem_mask); }
         //template <typename Input, typename T> static std::enable_if_t<is_write_form2<Input, T>::value> invoke_write(T const &cb, offs_t &offset, Input data, std::make_unsigned_t<Input> mem_mask) { return cb(offset, data); }
         //template <typename Input, typename T> static std::enable_if_t<is_write_form3<Input, T>::value> invoke_write(T const &cb, offs_t &offset, Input data, std::make_unsigned_t<Input> mem_mask) { return cb(data); }
-        protected static void invoke_write(write8sm_delegate cb, offs_t offset, u8 data) { cb(offset, data); }
-        protected static void invoke_write(write8smo_delegate cb, u8 data) { cb(data); }
-        protected static void invoke_write(write_line_delegate cb, int param) { cb(param); }
+        //template <typename Input, typename T>
+        protected static void invoke_write<Input, Input_unsigned, T>(T cb, offs_t offset, Input data, Input_unsigned mem_mask)
+            where T : Delegate
+        {
+            //return cb(offset, data, mem_mask);
+            switch (cb)
+            {
+                case write8s_delegate t1:
+                case write16s_delegate t2:
+                case write32s_delegate t3:
+                case write64s_delegate t4:
+                    cb.DynamicInvoke(offset, data, mem_mask);
+                    break;
+
+                case write8sm_delegate t5:
+                case write16sm_delegate t6:
+                case write32sm_delegate t7:
+                case write64sm_delegate t8:
+                    cb.DynamicInvoke(offset, data);
+                    break;
+
+                case write8smo_delegate t9:
+                case write16smo_delegate t10:
+                case write32smo_delegate t11:
+                case write64smo_delegate t12:
+                    cb.DynamicInvoke(data);
+                    break;
+
+                case write_line_delegate t13:
+                    cb.DynamicInvoke(data);
+                    break;
+
+                default:
+                    throw new emu_unimplemented();
+            }
+        }
+
 
         // Delegate characteristics
         //template <typename T, typename Dummy = void> struct delegate_traits;
@@ -332,15 +373,117 @@ namespace mame
     }
 
 
+    public interface devcb_constant<T> { T value { get; } }
+
+    public class devcb_constant_1<T, T2, T_OPS> : devcb_constant<T>
+        where T_OPS : devcb_operators<T, T2>, new()
+    {
+        static readonly T_OPS ops = new T_OPS();
+        public T value { get { return ops.cast(1); } }
+    }
+
+    public class devcb_constant_MaxValue<T, T2, T_OPS> : devcb_constant<T>
+        where T_OPS : devcb_operators<T, T2>, new()
+    {
+        static readonly T_OPS ops = new T_OPS();
+        public T value { get { return ops.MaxValue; } }
+    }
+
+
+    public interface devcb_operators<T, T2>
+    {
+        T MaxValue { get; }
+        T cast(u64 value);
+        T cast(s64 value);
+        T cast_T2(T2 value);
+        s32 cast_s32(T value);
+        T and(T a, T b);
+        T or(T a, T b);
+        T xor(T a, T b);
+        T lshift(T value, s32 shift);
+        T rshift(T value, s32 shift);
+    }
+
+    public abstract class devcb_operators_u8<T2> : devcb_operators<u8, T2>
+    {
+        public abstract u8 cast_T2(T2 value);
+
+        public u8 MaxValue { get { return u8.MaxValue; } }
+        public u8 cast(u64 value) { return (u8)value; }
+        public u8 cast(s64 value) { return (u8)value; }
+        public s32 cast_s32(u8 value) { return (s32)value; }
+        public u8 and(u8 a, u8 b) { return (u8)(a & b); }
+        public u8 or(u8 a, u8 b) { return (u8)(a | b); }
+        public u8 xor(u8 a, u8 b) { return (u8)(a ^ b); }
+        public u8 lshift(u8 value, s32 shift) { return (u8)(value << shift); }
+        public u8 rshift(u8 value, s32 shift) { return (u8)(value >> shift); }
+    }
+
+    public class devcb_operators_u8_u8 : devcb_operators_u8<u8> { public override u8 cast_T2(u8 value) { return (u8)value; } }
+    public class devcb_operators_u8_s8 : devcb_operators_u8<s8> { public override u8 cast_T2(s8 value) { return (u8)value; } }
+
+
+    public abstract class devcb_operators_u32<T2> : devcb_operators<u32, T2>
+    {
+        public abstract u32 cast_T2(T2 value);
+
+        public u32 MaxValue { get { return u32.MaxValue; } }
+        public u32 cast(u64 value) { return (u32)value; }
+        public u32 cast(s64 value) { return (u32)value; }
+        public s32 cast_s32(u32 value) { return (s32)value; }
+        public u32 and(u32 a, u32 b) { return a & b; }
+        public u32 or(u32 a, u32 b) { return (u32)(a | b); }
+        public u32 xor(u32 a, u32 b) { return a ^ b; }
+        public u32 lshift(u32 value, s32 shift) { return (u32)(value << shift); }
+        public u32 rshift(u32 value, s32 shift) { return (u32)(value >> shift); }
+    }
+
+    public class devcb_operators_u32_u32 : devcb_operators_u32<u32> { public override u32 cast_T2(u32 value) { return (u32)value; } }
+    public class devcb_operators_u32_s32 : devcb_operators_u32<s32> { public override u32 cast_T2(s32 value) { return (u32)value; } }
+
+
+    public abstract class devcb_operators_s32<T2> : devcb_operators<s32, T2>
+    {
+        public abstract s32 cast_T2(T2 value);
+
+        public s32 MaxValue { get { return s32.MaxValue; } }
+        public s32 cast(u64 value) { return (s32)value; }
+        public s32 cast(s64 value) { return (s32)value; }
+        public s32 cast_s32(s32 value) { return (s32)value; }
+        public s32 and(s32 a, s32 b) { throw new emu_unimplemented(); }
+        public s32 or(s32 a, s32 b) { throw new emu_unimplemented(); }
+        public s32 xor(s32 a, s32 b) { throw new emu_unimplemented(); }
+        public s32 lshift(s32 value, s32 shift) { throw new emu_unimplemented(); }
+        public s32 rshift(s32 value, s32 shift) { throw new emu_unimplemented(); }
+    }
+
+    public class devcb_operators_s32_u32 : devcb_operators_s32<u32> { public override s32 cast_T2(u32 value) { return (s32)value; } }
+
+
+    public class devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS> : devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, devcb_constant_MaxValue<Result_unsigned, Result, Result_unsigned_OPS>>
+        where Result_OPS : devcb_operators<Result, Result_unsigned>, new()
+        where Result_unsigned_OPS : devcb_operators<Result_unsigned, Result>, new()
+    {
+        public devcb_read(device_t owner) : base(owner) { }
+    }
+
     /// \brief Read callback helper
     ///
     /// Allows binding a variety of signatures, composing a result from
     /// multiple callbacks, and chained arbitrary transforms.  Transforms
     /// may modify the offset and mask.
     //template <typename Result, std::make_unsigned_t<Result> DefaultMask = std::make_unsigned_t<Result>(~std::make_unsigned_t<Result>(0))>
-    public class devcb_read : devcb_read_base, devcb_base.IResolve
+    public class devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> : devcb_read_base, IResolve
+        where Result_OPS : devcb_operators<Result, Result_unsigned>, new()
+        where Result_unsigned_OPS : devcb_operators<Result_unsigned, Result>, new()
+        where Result_unsigned_DefaultMask : devcb_constant<Result_unsigned>, new()
     {
-        //using func_t = std::function<Result (offs_t, std::make_unsigned_t<Result>)>;
+        static readonly Result_OPS result_ops = new Result_OPS();
+        static readonly Result_unsigned_OPS result_unsigned_ops = new Result_unsigned_OPS();
+        static readonly Result_unsigned DefaultMask = new Result_unsigned_DefaultMask().value;
+
+
+        public delegate Result func_t(offs_t param1, Result_unsigned mem_mask);  //using func_t = std::function<Result (offs_t, std::make_unsigned_t<Result>)>;
 
 
         protected abstract class creator
@@ -348,49 +491,55 @@ namespace mame
             //using ptr = std::unique_ptr<creator>;
 
 
-            u32 m_mask;  //std::make_unsigned_t<Result> m_mask;
+            Result_unsigned m_mask;  //std::make_unsigned_t<Result> m_mask;
 
 
-            protected creator(u32 mask) { m_mask = mask; }
-            //~creator() { }
+            protected creator(Result_unsigned mask) { m_mask = mask; }
+            //virtual ~creator() { }
 
-            //protected abstract void validity_check(validity_checker valid);
-            public abstract read8sm_delegate create_r8sm();  // virtual func_t create() = 0;
-            public abstract read8smo_delegate create_r8smo();  // virtual func_t create() = 0;
-            public abstract read_line_delegate create_rl();  // virtual func_t create() = 0;
 
-            u32 mask() { return m_mask; }
+            protected abstract void validity_check(validity_checker valid);
+
+
+            public abstract func_t create();
+
+
+            Result_unsigned mask() { return m_mask; }  //std::make_unsigned_t<Result> mask() const { return m_mask; }
+        }
+
+
+        public interface creator_impl_builder<T, T_unsigned>
+        {
+            T_unsigned mask();
+            void build<F>(Action<F> chain);
+        }
+
+        public delegate Result transform_function_delegate(offs_t offset, Result data, ref Result_unsigned mem_mask);
+
+        public interface creator_impl_transform<Impl>
+            where Impl : builder_base_with_transform_base<Impl>
+        {
+            transform_builder<Impl, transform_function_delegate> transform(transform_function_delegate cb);
         }
 
 
         //template <typename T>
-        protected class creator_impl : creator
+        protected class creator_impl<T> : creator
+            where T : creator_impl_builder<Result, Result_unsigned>
         {
-            builder_base_with_transform_base m_builder;  //T m_builder;
+            T m_builder;
 
 
-            public creator_impl(builder_base_with_transform_base builder) : base(builder.mask()) { m_builder = builder; }
+            public creator_impl(T builder) : base(builder.mask()) { m_builder = builder; }
 
-            //protected override void validity_check(validity_checker valid) { m_builder.validity_check(valid); }
 
-            public override read8sm_delegate create_r8sm()
+            protected override void validity_check(validity_checker valid) { throw new emu_unimplemented(); }  //virtual void validity_check(validity_checker &valid) const override { m_builder.validity_check(valid); }
+
+
+            public override func_t create()
             {
-                read8sm_delegate result = null;  // func_t result;
-                m_builder.build_r8sm((read8sm_delegate f) => { var cb = f;  result = (offs_t offset) => { return cb(offset); }; });  //m_builder.build([&result] (auto &&f) { result = [cb = std::move(f)] (offs_t offset, typename T::input_mask_t mem_mask) { return cb(offset, mem_mask); }; });
-                return result;
-            }
-
-            public override read8smo_delegate create_r8smo()
-            {
-                read8smo_delegate result = null;  // func_t result;
-                m_builder.build_r8smo((read8smo_delegate f) => { var cb = f;  result = () => { return cb(); }; });  //m_builder.build([&result] (auto &&f) { result = [cb = std::move(f)] (offs_t offset, typename T::input_mask_t mem_mask) { return cb(offset, mem_mask); }; });
-                return result;
-            }
-
-            public override read_line_delegate create_rl()
-            {
-                read_line_delegate result = null;  // func_t result;
-                m_builder.build_rl((read_line_delegate f) => { var cb = f;  result = () => { return cb(); }; });  //m_builder.build([&result] (auto &&f) { result = [cb = std::move(f)] (offs_t offset, typename T::input_mask_t mem_mask) { return cb(offset, mem_mask); }; });
+                func_t result = null;
+                m_builder.build<Func<offs_t, Result_unsigned, Result>>((f) => { var cb = f;  result = (offs_t offset, Result_unsigned mem_mask) => { return cb(offset, mem_mask); }; });  //m_builder.build([&result] (auto &&f) { result = [cb = std::move(f)] (offs_t offset, typename T::input_mask_t mem_mask) { return cb(offset, mem_mask); }; });
                 return result;
             }
         }
@@ -399,31 +548,30 @@ namespace mame
         //class log_creator : public creator
 
 
-        //template <typename Source, typename Func> class transform_builder; // workaround for MSVC
-
-
-        public class builder_base : IDisposable
+        public abstract class builder_base : IDisposable
         {
-            //template <typename T, typename U> friend class transform_builder; // workaround for MSVC
-
             bool m_disposedValue = false; // To detect redundant calls
 
-            protected devcb_read m_target;
+
+            protected devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> m_target;
             protected bool m_append;
             protected bool m_consumed = false;
             bool m_built = false;
 
 
-            public builder_base(devcb_read target, bool append) { m_target = target;  m_append = append; }
+            public builder_base(devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> target, bool append) { m_target = target;  m_append = append; }
             //builder_base(builder_base const &) = delete;
             //builder_base(builder_base &&) = default;
+
             ~builder_base()
             {
-                //global_object.osd_printf_debug("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name());
-                assert(m_consumed);
+                assert(m_consumed, string.Format("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name()));
             }
+
+
             //builder_base &operator=(builder_base const &) = delete;
             //builder_base &operator=(builder_base &&) = default;
+
 
             protected virtual void Dispose(bool disposing)
             {
@@ -446,22 +594,16 @@ namespace mame
             public void reg() { Dispose(); }
 
 
-            public delegate void build_chain_func_r8(read8_delegate chain);
-            public delegate void build_chain_func_r8sm(read8sm_delegate chain);
-            public delegate void build_chain_func_r8smo(read8smo_delegate chain);
-            public delegate void build_chain_func_rl(read_line_delegate chain);
-
-            public virtual void build_r8(build_chain_func_r8 chain) { }
-            public virtual void build_r8sm(build_chain_func_r8sm chain) { }
-            public virtual void build_r8smo(build_chain_func_r8smo chain) { }
-            public virtual void build_rl(build_chain_func_rl chain) { }
+            public abstract void build<F>(Action<F> chain);
 
 
             public void consume() { m_consumed = true; }
-            protected void built() { /*global.assert(!m_built);*/ m_built = true; }
+            protected void built() { assert(!m_built); m_built = true; }
+
 
             //template <typename T>
-            protected void register_creator()
+            protected void register_creator<T>()
+                where T : creator_impl_builder<Result, Result_unsigned>
             {
                 if (!m_consumed)
                 {
@@ -470,61 +612,58 @@ namespace mame
 
                     consume();
 
-                    m_target.m_creators.emplace_back(new creator_impl((builder_base_with_transform_base)this));
+                    m_target.m_creators.emplace_back(new creator_impl<T>((T)(creator_impl_builder<Result, Result_unsigned>)this));  //m_target.m_creators.emplace_back(std::make_unique<creator_impl<T> >(std::move(static_cast<T &>(*this))));
                 }
             }
         }
 
 
-        public abstract class builder_base_with_transform_base : builder_base
+        public abstract class builder_base_with_transform_base<Impl> : builder_base, creator_impl_builder<Result, Result_unsigned>, creator_impl_transform<Impl>
+            where Impl : builder_base_with_transform_base<Impl>
         {
-            /////// transform_base
-
-            u32 m_exor = 0;  //std::make_unsigned_t<T> m_exor = std::make_unsigned_t<T>(0);
-            u32 m_mask;  //std::make_unsigned_t<T> m_mask;
-            bool m_inherited_mask = true;
+            transform_base<Result, Result_unsigned, Result_unsigned_OPS, Impl> m_transform_base;
 
 
-            protected builder_base_with_transform_base(devcb_read target, bool append, u32 mask) : base(target, append) { m_mask = mask; }
-            //constexpr transform_base(transform_base const &) = default;
-            //transform_base(transform_base &&) = default;
-            //transform_base &operator=(transform_base const &) = default;
-            //transform_base &operator=(transform_base &&) = default;
-
-
-            protected abstract builder_base_with_transform_base transform(transform_func cb);
-
-
-            //Impl &exor(std::make_unsigned_t<T> val) { m_exor ^= val; return static_cast<Impl &>(*this); }
-            public builder_base_with_transform_base mask(u8 val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return this; }  //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
-            //Impl &invert() { return exor(~std::make_unsigned_t<T>(0)); }
-
-            public builder_base_with_transform_base rshift(u32 val)  //auto rshift(unsigned val)
+            protected builder_base_with_transform_base(devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> target, bool append, Result_unsigned mask) : base(target, append)
             {
-                var trans = transform((offs_t offset, u32 data, ref u32 mem_mask) => { mem_mask >>= (int)val; return data >> (int)val; });  //auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask >>= val; return data >> val; }));
-                return inherited_mask() ? trans : trans.mask((byte)(m_mask >> (int)val));
+                m_transform_base = new transform_base<Result, Result_unsigned, Result_unsigned_OPS, Impl>(mask);
             }
 
-            public builder_base_with_transform_base lshift(u32 val)  //auto lshift(unsigned val)
+
+            // transform_base
+
+            public Impl mask(Result_unsigned val) { m_transform_base.m_mask = m_transform_base.m_inherited_mask ? val : result_unsigned_ops.and(m_transform_base.m_mask, val); m_transform_base.m_inherited_mask = false; return (Impl)this; }  //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
+
+            public transform_builder<Impl, transform_function_delegate> rshift(unsigned val)  //auto rshift(unsigned val)
             {
-                var trans = transform((offs_t offset, u32 data, ref u32 mem_mask) => { mem_mask <<= (int)val; return data << (int)val; });  //auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask <<= val; return data << val; }));
-                return inherited_mask() ? trans : trans.mask((byte)(m_mask << (int)val));
+                var trans = ((Impl)this).transform((offs_t offset, Result data, ref Result_unsigned mem_mask) => { mem_mask = result_unsigned_ops.rshift(mem_mask, (int)val); return result_ops.rshift(data, (int)val); });  //auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask >>= val; return data >> val; }));
+                return m_transform_base.inherited_mask() ? trans : trans.mask(result_unsigned_ops.rshift(m_transform_base.m_mask, (int)val));  //return inherited_mask() ? std::move(trans) : std::move(trans.mask(m_mask >> val));
             }
+
+            public transform_builder<Impl, transform_function_delegate> lshift(unsigned val)  //auto lshift(unsigned val)
+            {
+                var trans = ((Impl)this).transform((offs_t offset, Result data, ref Result_unsigned mem_mask) => { mem_mask = result_unsigned_ops.lshift(mem_mask, (int)val); return result_ops.lshift(data, (int)val); });  //auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask <<= val; return data << val; }));
+                return m_transform_base.inherited_mask() ? trans : trans.mask(result_unsigned_ops.lshift(m_transform_base.m_mask, (int)val));  //return inherited_mask() ? std::move(trans) : std::move(trans.mask(m_mask << val));
+            }
+
+
+            public virtual transform_builder<Impl, transform_function_delegate> transform(transform_function_delegate cb) { throw new emu_unimplemented(); }
 
             //auto bit(unsigned val) { return std::move(rshift(val).mask(T(1U))); }
 
-            protected u32 exor() { return m_exor & m_mask; }  //constexpr std::make_unsigned_t<T> exor() const { return m_exor & m_mask; }
-            public u32 mask() { return m_mask; }  //constexpr std::make_unsigned_t<T> mask() const { return m_mask; }
+            protected Result_unsigned exor() { return m_transform_base.exor(); }  //constexpr std::make_unsigned_t<T> exor() const { return m_exor & m_mask; }
+            public Result_unsigned mask() { return m_transform_base.mask(); }  //constexpr std::make_unsigned_t<T> mask() const { return m_mask; }
 
             //constexpr bool need_exor() const { return std::make_unsigned_t<T>(0) != (m_exor & m_mask); }
             //constexpr bool need_mask() const { return std::make_unsigned_t<T>(~std::make_unsigned_t<T>(0)) != m_mask; }
 
-            protected bool inherited_mask() { return m_inherited_mask; }
+            protected bool inherited_mask() { return m_transform_base.m_inherited_mask; }
         }
 
 
         //template <typename Source, typename Func>
-        class transform_builder : builder_base_with_transform_base//builder_base, public transform_base<mask_t<transform_result_t<typename Source::output_t, Result, Func>, Result>, transform_builder<Source, Func> >
+        public class transform_builder<Source, Func_> : builder_base_with_transform_base<transform_builder<Source, Func_>>, IDisposable  //class transform_builder : public builder_base, public transform_base<mask_t<transform_result_t<typename Source::output_t, Result, Func>, Result>, transform_builder<Source, Func> >
+            where Source : builder_base
         {
             //template <typename T, typename U> friend class transform_builder;
 
@@ -533,20 +672,24 @@ namespace mame
             //using input_mask_t = mask_t<input_t, typename Source::input_mask_t>;
 
 
-            builder_base m_src;  //Source m_src;
-            transform_func m_cb;  //Func m_cb;
+            Source m_src;
+            Func_ m_cb;
 
 
             //template <typename T>
-            public transform_builder(devcb_read target, bool append, builder_base src, transform_func cb, u32 mask)  //, Source &&src, T &&cb, output_t mask)
+            public transform_builder(devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> target, bool append, Source src, Func_ cb, Result_unsigned mask)  //transform_builder(devcb_read &target, bool append, Source &&src, T &&cb, output_t mask)
                 : base(target, append, mask)
             {
-                //transform_base<output_t, transform_builder>(mask)
+                //, transform_base<output_t, transform_builder>(mask)
+
+
                 m_src = src;
                 m_cb = cb;
 
+
                 m_src.consume();
             }
+
 
             //transform_builder(transform_builder &&that)
             //    : builder_base(std::move(that))
@@ -559,41 +702,30 @@ namespace mame
             //    that.built();
             //}
 
+
             //~transform_builder() { this->template register_creator<transform_builder>(); }
-            protected override void Dispose(bool disposing) { register_creator(); base.Dispose(disposing); }
+            protected override void Dispose(bool disposing) { register_creator<transform_builder<Source, Func_>>(); base.Dispose(disposing); }
 
 
             //template <typename T>
-            //std::enable_if_t<is_transform<output_t, Result, T>::value, transform_builder<transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
-            protected override builder_base_with_transform_base transform(transform_func cb)
+            protected transform_builder<transform_builder<Source, Func_>, F> transform<F>(F cb)  //std::enable_if_t<is_transform<output_t, Result, T>::value, transform_builder<transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
-                u32 /*output_t*/ m = mask();
-                if (inherited_mask())
-                    mask(u8.MaxValue);  //this.mask(std::make_unsigned_t<transform_result_t<typename Source::output_t, Result, Func> >(~std::make_unsigned_t<transform_result_t<typename Source::output_t, Result, Func> >(0)));
-                return new transform_builder(m_target, m_append, this, cb, m);  //return transform_builder<transform_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, std::move(*this), std::forward<T>(cb), m);
+                throw new emu_unimplemented();
             }
+
 
             //void validity_check(validity_checker &valid) const { m_src.validity_check(valid); }
 
-            //template <typename T>
-            //void build(T &&chain)
-            public override void build_r8(build_chain_func_r8 chain)
-            {
-                throw new emu_unimplemented();
-#if false
-                assert(m_consumed);
-                var c = chain;
-                build_chain_func_r8 wrap = (read8_delegate f) => { build_r8(c, f); };  // auto wrap([this, c = std::forward<T>(chain)] (auto &&f) mutable { this->build(std::move(c), std::move(f)); });
-                m_src.build_r8(wrap);
-#endif
-            }
 
-            public override void build_rl(build_chain_func_rl chain)
+            //template <typename T>
+            public override void build<F>(Action<F> chain)  //void build(T &&chain)
             {
-                assert(m_consumed);
+                assert(this.m_consumed);
+
                 var c = chain;
-                build_chain_func_rl wrap = (read_line_delegate f) => { build_rl(c, f); };  // auto wrap([this, c = std::forward<T>(chain)] (auto &&f) mutable { this->build(std::move(c), std::move(f)); });
-                m_src.build_rl(wrap);
+                Action<F> wrap = (f) => { this.build(c, f); };  //auto wrap([this, c = std::forward<T>(chain)] (auto &&f) mutable { this->build(std::move(c), std::move(f)); });
+
+                m_src.build(wrap);
             }
 
 
@@ -601,25 +733,12 @@ namespace mame
             //transform_builder &operator=(transform_builder const &) = delete;
             //transform_builder &operator=(transform_builder &&that) = delete;
 
+
             //template <typename T, typename U>
-            //void build(T &&chain, U &&f)
-            void build_rl(build_chain_func_rl chain, read_line_delegate f)
+            void build<T, U>(T chain, U f)  //void build(T &&chain, U &&f)
+                where T : Delegate
             {
-                assert(m_consumed);
-                built();
-                var src = f;
-                var cb = m_cb;
-                var exor_ = exor();
-                var mask_ = mask();
-                chain(
-                        () =>  //[src = std::forward<U>(f), cb = std::move(this->m_cb), exor = this->exor(), mask = this->mask()] (offs_t &offset, input_mask_t &mem_mask)
-                        {
-                            u8 source_mask = u8.MaxValue;  // mem_mask;
-                            var data = src();
-                            var mem_mask = (u8)(source_mask & mask_);
-                            u32 mem_mask_u32 = mem_mask;
-                            return (int)((invoke_transform(cb, 0, (u32)data, ref mem_mask_u32) ^ exor_) & mask_);  //return (devcb_read::invoke_transform<input_t, Result>(cb, offset, data, mem_mask) ^ exor) & mask;
-                        });
+                throw new emu_unimplemented();
             }
         }
 
@@ -629,48 +748,27 @@ namespace mame
 
 
         //template <typename Delegate>
-        public class delegate_builder : builder_base_with_transform_base//builder_base, transform_base<mask_t<read_result_t<Result, Delegate_>, Result>, delegate_builder<Delegate_> >
+        public class delegate_builder<Delegate_> : builder_base_with_transform_base<delegate_builder<Delegate_>>, creator_impl_builder<Result, Result_unsigned>, IDisposable  //class delegate_builder : public builder_base, public transform_base<mask_t<read_result_t<Result, Delegate>, Result>, delegate_builder<Delegate> >
+            where Delegate_ : Delegate
         {
             //template <typename T, typename U> friend class transform_builder;
+
 
             //using output_t = mask_t<read_result_t<Result, Delegate>, Result>;
             //using input_mask_t = std::make_unsigned_t<Result>;
 
 
-            read8_delegate m_delegate_r8;
-            read8sm_delegate m_delegate_r8sm;
-            read8smo_delegate m_delegate_r8smo;
-            read_line_delegate m_delegate_rl;
+            Delegate_ m_delegate;
 
 
             //template <typename T>
-            public delegate_builder(devcb_read target, bool append, device_t devbase, string tag, read8_delegate func)//, string name)
-                : base(target, append, u32.MaxValue)
+            public delegate_builder(devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> target, bool append, device_t devbase, string tag, Delegate_ func)  //delegate_builder(devcb_read &target, bool append, device_t &devbase, char const *tag, T &&func, char const *name)
+                : base(target, append, result_unsigned_ops.and(DefaultMask, result_unsigned_ops.MaxValue))
             {
-                //transform_base<output_t, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
-                m_delegate_r8 = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
-            }
+                //, transform_base<output_t, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
 
-            public delegate_builder(devcb_read target, bool append, device_t devbase, string tag, read8sm_delegate func)//, string name)
-                : base(target, append, u32.MaxValue)
-            {
-                //transform_base<output_t, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
-                m_delegate_r8sm = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
-            }
 
-            public delegate_builder(devcb_read target, bool append, device_t devbase, string tag, read8smo_delegate func)//, string name)
-                : base(target, append, u32.MaxValue)
-            {
-                //transform_base<output_t, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
-                m_delegate_r8smo = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
-            }
-
-            //template <typename T>
-            public delegate_builder(devcb_read target, bool append, device_t devbase, string tag, read_line_delegate func)//, string name)
-                : base(target, append, u32.MaxValue)
-            {
-                //transform_base<output_t, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
-                m_delegate_rl = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
+                m_delegate = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
             }
 
             //template <typename T>
@@ -693,17 +791,16 @@ namespace mame
             //}
 
             //~delegate_builder() { this->template register_creator<delegate_builder>(); }
-            protected override void Dispose(bool disposing) { register_creator(); base.Dispose(disposing); }
+            protected override void Dispose(bool disposing) { register_creator<delegate_builder<Delegate_>>(); base.Dispose(disposing); }
 
 
             //template <typename T>
-            //std::enable_if_t<is_transform<output_t, Result, T>::value, transform_builder<delegate_builder, std::remove_reference_t<T> > > transform(T &&cb)
-            protected override builder_base_with_transform_base transform(transform_func cb)
+            public override transform_builder<delegate_builder<Delegate_>, transform_function_delegate> transform(transform_function_delegate cb)  //std::enable_if_t<is_transform<output_t, Result, T>::value, transform_builder<delegate_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
-                u32 /*output_t*/ m = mask();
-                if (inherited_mask())
-                    mask();  //delegate_traits<Delegate>::default_mask);
-                return new transform_builder(m_target, m_append, this, cb, m);  //return transform_builder<delegate_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, std::move(*this), std::forward<T>(cb), m);
+                Result_unsigned m = this.mask();  //output_t const m(this->mask());
+                if (this.inherited_mask())
+                    this.mask(DefaultMask);  //this->mask(delegate_traits<Delegate>::default_mask);
+                return new transform_builder<delegate_builder<Delegate_>, transform_function_delegate>(this.m_target, this.m_append, this, cb, m);  //return transform_builder<delegate_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, std::move(*this), std::forward<T>(cb), m);
             }
 
 
@@ -713,54 +810,19 @@ namespace mame
             //        osd_printf_error("Read callback bound to non-existent object tag %s (%s)\n", m_delegate.device_name(), m_delegate.name());
             //}
 
+
             //template <typename T>
-            //void build(T &&chain)
-            public override void build_r8sm(build_chain_func_r8sm chain)
+            public override void build<F>(Action<F> chain)  //void build(T &&chain)
             {
-                if (m_delegate_r8sm == null)
-                    return;  // return without calling the chain callback, which keeps 'result' == null
-
-                assert(m_consumed);
-                built();
+                assert(this.m_consumed);
+                this.built();
                 //m_delegate.resolve();
-                var cb = m_delegate_r8sm;
-                var exor_ = exor();
-                var mask_ = mask();
-                chain(
-                        (offs_t offset) =>  //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (offs_t offset, input_mask_t mem_mask)
-                        { return (u8)((invoke_read(cb, offset) ^ exor_) & mask_); });  //{ return (devcb_read::invoke_read<Result>(cb, offset, mem_mask & mask) ^ exor) & mask; });
-            }
-
-            public override void build_r8smo(build_chain_func_r8smo chain)
-            {
-                if (m_delegate_r8smo == null)
-                    return;  // return without calling the chain callback, which keeps 'result' == null
-
-                assert(m_consumed);
-                built();
-                //m_delegate.resolve();
-                var cb = m_delegate_r8smo;
-                var exor_ = exor();
-                var mask_ = mask();
-                chain(
-                        () =>  //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (offs_t offset, input_mask_t mem_mask)
-                        { return (u8)((invoke_read(cb) ^ exor_) & mask_); });  //{ return (devcb_read::invoke_read<Result>(cb, offset, mem_mask & mask) ^ exor) & mask; });
-            }
-
-            public override void build_rl(build_chain_func_rl chain)
-            {
-                if (m_delegate_rl == null)
-                    return;  // return without calling the chain callback, which keeps 'result' == null
-
-                assert(m_consumed);
-                built();
-                //m_delegate.resolve();
-                var cb = m_delegate_rl;
-                var exor_ = exor();
-                var mask_ = mask();
-                chain(
-                        () =>  //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (offs_t offset, input_mask_t mem_mask)
-                        { return invoke_read(cb) & (int)mask_; });  //{ return (devcb_read::invoke_read<Result>(cb, offset, mem_mask & mask) ^ exor) & mask; });
+                var cb = this.m_delegate;
+                var exor = this.exor();
+                var mask = this.mask();
+                chain.DynamicInvoke(  //chain(
+                        (Func<offs_t, Result_unsigned, Result>)((offs_t offset, Result_unsigned mem_mask) =>  //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (offs_t offset, input_mask_t mem_mask)
+                        { return result_ops.cast_T2(result_unsigned_ops.and(result_unsigned_ops.xor(result_unsigned_ops.cast_T2(invoke_read<Result, Result_unsigned, Delegate_>(cb, offset, result_unsigned_ops.and(mem_mask, mask))), exor), mask)); }));  //{ return (devcb_read::invoke_read<Result>(cb, offset, mem_mask & mask) ^ exor) & mask; });
             }
 
 
@@ -770,7 +832,7 @@ namespace mame
         }
 
 
-        public class ioport_builder : builder_base_with_transform_base//builder_base, public transform_base<mask_t<ioport_value, Result>, ioport_builder>
+        public class ioport_builder : builder_base_with_transform_base<ioport_builder>, IDisposable  //class ioport_builder : public builder_base, public transform_base<mask_t<ioport_value, Result>, ioport_builder>
         {
             //template <typename T, typename U> friend class transform_builder;
 
@@ -782,10 +844,12 @@ namespace mame
             string m_tag;
 
 
-            public ioport_builder(devcb_read target, bool append, device_t devbase, string tag)
-                : base(target, append, u32.MaxValue)
+            public ioport_builder(devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> target, bool append, device_t devbase, string tag)
+                : base(target, append, DefaultMask)
             {
-                //transform_base<output_t, ioport_builder>(DefaultMask)
+                //, transform_base<output_t, ioport_builder>(DefaultMask)
+
+
                 m_devbase = devbase;
                 m_tag = tag;
             }
@@ -801,37 +865,37 @@ namespace mame
             //}
 
             //~ioport_builder() { this->template register_creator<ioport_builder>(); }
-            protected override void Dispose(bool disposing) { register_creator(); base.Dispose(disposing); }
+            protected override void Dispose(bool disposing) { register_creator<ioport_builder>(); base.Dispose(disposing); }
 
 
             //template <typename T>
-            //std::enable_if_t<is_transform<output_t, Result, T>::value, transform_builder<ioport_builder, std::remove_reference_t<T> > > transform(T &&cb)
-            protected override builder_base_with_transform_base transform(transform_func cb)
+            public override transform_builder<ioport_builder, transform_function_delegate> transform(transform_function_delegate cb)  //std::enable_if_t<is_transform<output_t, Result, T>::value, transform_builder<ioport_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
-                u32 /*output_t*/ m = mask();
-                if (inherited_mask())
-                    mask(u8.MaxValue);  //this->mask(std::make_unsigned_t<ioport_value>(~std::make_unsigned_t<ioport_value>(0)));
-                return new transform_builder(m_target, m_append, this, cb, m);  //return transform_builder<ioport_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, std::move(*this), std::forward<T>(cb), m);
+                Result_unsigned m = this.mask();  //output_t const m(this->mask());
+                if (this.inherited_mask())
+                    this.mask(result_unsigned_ops.cast(ioport_value.MaxValue));  //this->mask(std::make_unsigned_t<ioport_value>(~std::make_unsigned_t<ioport_value>(0)));
+                return new transform_builder<ioport_builder, transform_function_delegate>(this.m_target, this.m_append, this, cb, m);  //return transform_builder<ioport_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, std::move(*this), std::forward<T>(cb), m);
             }
+
 
             //void validity_check(validity_checker &valid) const { }
 
+
             //template <typename T>
-            //void build(T &&chain)
-            public override void build_rl(build_chain_func_rl chain)
+            public override void build<F>(Action<F> chain)  //void build(T &&chain)
             {
-                assert(m_consumed);
-                built();
-                ioport_port ioport = m_devbase.ioport(m_tag.c_str());
+                assert(this.m_consumed);
+                this.built();
+                ioport_port ioport = m_devbase.ioport(m_tag);
                 if (ioport == null)
-                    throw new emu_fatalerror("Read callback bound to non-existent I/O port {0} of device {1} ({2})\n", m_tag.c_str(), m_devbase.tag(), m_devbase.name());
+                    throw new emu_fatalerror("Read callback bound to non-existent I/O port {0} of device {1} ({2})\n", m_tag, m_devbase.tag(), m_devbase.name());
 
                 var port = ioport;
-                var exor_ = exor();
-                var mask_ = mask();
-                chain(
-                        () =>  //[&port = *ioport, exor = this->exor(), mask = this->mask()] (offs_t offset, input_mask_t mem_mask)
-                        { return (int)((port.read() ^ exor_) & mask_); });  //{ return (port.read() ^ exor) & mask; });
+                var exor = this.exor();
+                var mask = this.mask();
+                chain.DynamicInvoke(  //chain(
+                        (Func<offs_t, Result_unsigned, Result>)((offs_t offset, Result_unsigned mem_mask) =>  //[&port = *ioport, exor = this->exor(), mask = this->mask()] (offs_t offset, input_mask_t mem_mask)
+                        { return result_ops.cast_T2(result_unsigned_ops.and(result_unsigned_ops.xor(result_unsigned_ops.cast(port.read()), exor), mask)); }));  //{ return (port.read() ^ exor) & mask; });
             }
 
 
@@ -843,180 +907,151 @@ namespace mame
 
         public class binder
         {
-            devcb_read m_target;
+            devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> m_target;
             bool m_append = false;
             bool m_used = false;
 
 
-            public binder(devcb_read target) { m_target = target; }
+            public binder(devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask> target) { m_target = target; }
             //binder(binder const &) = delete;
             binder(binder that) { m_target = that.m_target; m_append = that.m_append; m_used = that.m_used;   that.m_used = true; }
             //binder &operator=(binder const &) = delete;
             //binder &operator=(binder &&) = delete;
 
-            //template <typename T>
-            //std::enable_if_t<is_read<Result, T>::value, functoid_builder<std::remove_reference_t<T> > > set(T &&cb)
-            public delegate_builder set(read8_delegate func)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
-            }
-
-            public delegate_builder set(read8sm_delegate func)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
-            }
-
-            public delegate_builder set(read8smo_delegate func)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
-            }
-
-            public delegate_builder set(read_line_delegate func)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
-            }
-
-#if false
-            template <typename T>
-            std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(T &&func, char const *name)
-            {
-                set_used();
-                return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
-            }
-#endif
 
             //template <typename T>
-            //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(char const *tag, T &&func, char const *name)
-            public delegate_builder set(string tag, read8_delegate func)//, char const *name)
+            public delegate_builder<T> set_internal<T>(T func)  //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(T &&func, char const *name)
+                where T : Delegate
             {
                 set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);//, name);
+                return new delegate_builder<T>(m_target, m_append, m_target.owner().mconfig().current_device(), g.DEVICE_SELF, func);
             }
 
-            public delegate_builder set(string tag, read8sm_delegate func)
+            public delegate_builder<read8sm_delegate> set(read8sm_delegate func) { return set_internal(func); }
+            public delegate_builder<read8smo_delegate> set(read8smo_delegate func) { return set_internal(func); }
+            public delegate_builder<read_line_delegate> set(read_line_delegate func) { return set_internal(func); }
+
+
+            //template <typename T>
+            public delegate_builder<T> set_internal<T>(string tag, T func)  //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(char const *tag, T &&func, char const *name)
+                where T : Delegate
             {
                 set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);//, name);
+                return new delegate_builder<T>(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);
             }
 
-            public delegate_builder set(string tag, read_line_delegate func)//, char const *name)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);//, name);
-            }
+            public delegate_builder<read8sm_delegate> set(string tag, read8sm_delegate func) { return set_internal(tag, func); }
+            public delegate_builder<read_line_delegate> set(string tag, read_line_delegate func) { return set_internal(tag, func); }
 
-#if false
-            template <typename T, typename U>
-            std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(U &obj, T &&func, char const *name)
-            {
-                set_used();
-                return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner(), devcb_read::cast_reference<delegate_device_class_t<T> >(obj), std::forward<T>(func), name);
-            }
-#endif
+
+            //template <typename T, typename U>
+            //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(U &obj, T &&func, char const *name)
+            //{
+            //    set_used();
+            //    return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner(), devcb_read::cast_reference<delegate_device_class_t<T> >(obj), std::forward<T>(func), name);
+            //}
+
 
             //template <typename T, typename U, bool R>
-            //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
-            //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
-            public delegate_builder set<U, bool_R>(device_finder<U, bool_R> finder, read8_delegate func)  //, char const *name)
-                where U : class
+            public delegate_builder<T> set_internal<T, U, bool_R>(device_finder<U, bool_R> finder, T func)  //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
+                where T : Delegate
                 where bool_R : bool_constant, new()
             {
                 set_used();
-                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+                std.pair<device_t, string> target = finder.finder_target();
+                return new delegate_builder<T>(m_target, m_append, target.first, target.second, func);
             }
 
-            public delegate_builder set<U, bool_R>(device_finder<U, bool_R> finder, read_line_delegate func)  //, char const *name)
-                where U : class
-                where bool_R : bool_constant, new()
-            {
-                set_used();
-                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
-            }
+            //template <typename T, typename U, bool R>
+            //std::enable_if_t<is_read_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+            //}
+
+            public delegate_builder<read8sm_delegate> set<U, bool_R>(device_finder<U, bool_R> finder, read8sm_delegate func) where bool_R : bool_constant, new() { return set_internal(func); }
+            public delegate_builder<read_line_delegate> set<U, bool_R>(device_finder<U, bool_R> finder, read_line_delegate func) where bool_R : bool_constant, new() { return set_internal(func); }
 
 
             //template <typename... Params>
-            //auto append(Params &&... args)
-            public delegate_builder append(string tag, read_line_delegate func)
+            public delegate_builder<T> append_internal<T>(string tag, T func)  //auto append(Params &&... args)
+                where T : Delegate
             {
                 m_append = true;
-                return set(tag, func);
+                return set_internal(tag, func);  //return set(std::forward<Params>(args)...);
             }
+
+            public delegate_builder<read_line_delegate> append(string tag, read_line_delegate func) { return append_internal(tag, func); }
 
 
             //template <typename... Params>
-            public ioport_builder set_ioport(string args)
+            public ioport_builder set_ioport(string args)  //ioport_builder set_ioport(Params &&... args)
             {
                 set_used();
                 return new ioport_builder(m_target, m_append, m_target.owner().mconfig().current_device(), args);
             }
 
-#if false
-            template <bool R>
-            ioport_builder set_ioport(ioport_finder<R> &finder)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return ioport_builder(m_target, m_append, target.first, std::string(target.second));
-            }
 
-            template <bool R>
-            ioport_builder set_ioport(ioport_finder<R> const &finder)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return ioport_builder(m_target, m_append, target.first, std::string(target.second));
-            }
+            //template <bool R>
+            //ioport_builder set_ioport(ioport_finder<R> &finder)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return ioport_builder(m_target, m_append, target.first, std::string(target.second));
+            //}
 
-            template <typename... Params>
-            ioport_builder append_ioport(Params &&... args)
-            {
-                m_append = true;
-                return set_ioport(std::forward<Params>(args)...);
-            }
+            //template <bool R>
+            //ioport_builder set_ioport(ioport_finder<R> const &finder)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return ioport_builder(m_target, m_append, target.first, std::string(target.second));
+            //}
 
-            template <typename... Params>
-            void set_log(device_t &devbase, Params &&... args)
-            {
-                set_used();
-                if (!m_append)
-                    m_target.m_creators.clear();
-                m_target.m_creators.emplace_back(std::make_unique<log_creator>(devbase, std::string(std::forward<Params>(args)...)));
-            }
+            //template <typename... Params>
+            //ioport_builder append_ioport(Params &&... args)
+            //{
+            //    m_append = true;
+            //    return set_ioport(std::forward<Params>(args)...);
+            //}
 
-            template <typename T, typename... Params>
-            std::enable_if_t<emu::detail::is_device_implementation<std::remove_reference_t<T> >::value> set_log(T &devbase, Params &&... args)
-            {
-                set_log(static_cast<device_t &>(devbase), std::forward<Params>(args)...);
-            }
+            //template <typename... Params>
+            //void set_log(device_t &devbase, Params &&... args)
+            //{
+            //    set_used();
+            //    if (!m_append)
+            //        m_target.m_creators.clear();
+            //    m_target.m_creators.emplace_back(std::make_unique<log_creator>(devbase, std::string(std::forward<Params>(args)...)));
+            //}
 
-            template <typename T, typename... Params>
-            std::enable_if_t<emu::detail::is_device_interface<std::remove_reference_t<T> >::value> set_log(T &devbase, Params &&... args)
-            {
-                set_log(devbase.device(), std::forward<Params>(args)...);
-            }
+            //template <typename T, typename... Params>
+            //std::enable_if_t<emu::detail::is_device_implementation<std::remove_reference_t<T> >::value> set_log(T &devbase, Params &&... args)
+            //{
+            //    set_log(static_cast<device_t &>(devbase), std::forward<Params>(args)...);
+            //}
 
-            template <typename... Params>
-            void set_log(Params &&... args)
-            {
-                set_log(m_target.owner().mconfig().current_device(), std::forward<Params>(args)...);
-            }
+            //template <typename T, typename... Params>
+            //std::enable_if_t<emu::detail::is_device_interface<std::remove_reference_t<T> >::value> set_log(T &devbase, Params &&... args)
+            //{
+            //    set_log(devbase.device(), std::forward<Params>(args)...);
+            //}
 
-            template <typename... Params>
-            void append_log(Params &&... args)
-            {
-                m_append = true;
-                set_log(std::forward<Params>(args)...);
-            }
+            //template <typename... Params>
+            //void set_log(Params &&... args)
+            //{
+            //    set_log(m_target.owner().mconfig().current_device(), std::forward<Params>(args)...);
+            //}
 
-            auto set_constant(Result val) { return set([val] () { return val; }); }
-            auto append_constant(Result val) { return append([val] () { return val; }); }
-#endif
+            //template <typename... Params>
+            //void append_log(Params &&... args)
+            //{
+            //    m_append = true;
+            //    set_log(std::forward<Params>(args)...);
+            //}
+
+            //auto set_constant(Result val) { return set([val] () { return val; }); }
+            //auto append_constant(Result val) { return append([val] () { return val; }); }
 
 
             void set_used() { assert(!m_used); m_used = true; }
@@ -1024,40 +1059,30 @@ namespace mame
 
 
         //template <unsigned Count>
-        public new class array<devcb_read_type, unsigned_Count> : devcb_read_base.array<devcb_read_type, unsigned_Count>  //class array : public devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>
-            where devcb_read_type : devcb_read
+        public class array<unsigned_Count> : devcb_read_base.array<devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask>, unsigned_Count>  //class array : public devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>
             where unsigned_Count : unsigned_constant, new()
         {
             //using devcb_read_base::array<devcb_read<Result, DefaultMask>, Count>::array;
 
-            public array(device_t owner, Func<devcb_read_type> add_function) : base(owner, add_function) { }
 
-            public override void resolve_all()
-            {
-                foreach (devcb_read_type elem in this)
-                {
-                    elem.resolve();
-                }
-            }
+            public array(device_t owner, Func<devcb_read<Result, Result_unsigned, Result_OPS, Result_unsigned_OPS, Result_unsigned_DefaultMask>> add_function) : base(owner, add_function) { }
+
 
             public void resolve_all_safe(int dflt)  //void resolve_all_safe(Result dflt)
             {
-                foreach (devcb_read_type elem in this)  //for (devcb_read<Result, DefaultMask> &elem : *this)
-                    elem.resolve_safe(dflt);
+                foreach (var elem in this)  //for (devcb_read<Result, DefaultMask> &elem : *this)
+                    elem.resolve_safe(result_ops.cast(dflt));
             }
         }
 
 
-        protected std.vector<read8sm_delegate> m_functions_r8sm = new std.vector<read8sm_delegate>();  //std::vector<func_t> m_functions;
-        protected std.vector<read8smo_delegate> m_functions_r8smo = new std.vector<read8smo_delegate>();  //std::vector<func_t> m_functions;
-        protected std.vector<read_line_delegate> m_functions_rl = new std.vector<read_line_delegate>();  //std::vector<func_t> m_functions;
-        protected std.vector<creator_impl> m_creators = new std.vector<creator_impl>();  //std::vector<typename creator::ptr> m_creators;
+        std.vector<func_t> m_functions;
+        std.vector<creator> m_creators = new std.vector<creator>();  //std::vector<typename creator::ptr> m_creators;
 
 
         //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
-        //devcb_read<Result, DefaultMask>::devcb_read(device_t &owner)
-        protected devcb_read(device_t owner)
-        : base(owner)
+        public devcb_read(device_t owner)  //devcb_read<Result, DefaultMask>::devcb_read(device_t &owner)
+            : base(owner)
         {
         }
 
@@ -1068,59 +1093,65 @@ namespace mame
             return new binder(this);
         }
 
+
         //void reset();
 
 
-        //virtual void validity_check(validity_checker &valid) const override;
+        protected override void validity_check(validity_checker valid)  //virtual void validity_check(validity_checker &valid) const override;
+        {
+            throw new emu_unimplemented();
+        }
 
 
         //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
         public void resolve()
         {
-            assert(m_functions_r8sm.empty());
-            assert(m_functions_r8smo.empty());
-            assert(m_functions_rl.empty());
-
-            m_functions_r8sm.reserve(m_creators.size());
-            m_functions_r8smo.reserve(m_creators.size());
-            m_functions_rl.reserve(m_creators.size());
-
+            assert(m_functions.empty());
+            m_functions.reserve(m_creators.size());
             foreach (var c in m_creators)  //for (typename creator::ptr const &c : m_creators)
-            {
-                var create_r8sm = c.create_r8sm();
-                if (create_r8sm != null) m_functions_r8sm.emplace_back(create_r8sm);
-                var create_r8smo = c.create_r8smo();
-                if (create_r8smo != null) m_functions_r8smo.emplace_back(create_r8smo);
-                var create_rl = c.create_rl();
-                if (create_rl != null) m_functions_rl.emplace_back(create_rl);
-            }
-
+                m_functions.emplace_back(c.create());
             m_creators.clear();
         }
 
 
         //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
-        //void devcb_read<Result, DefaultMask>::resolve_safe(Result dflt)
-        public void resolve_safe(int dflt)
+        public void resolve_safe(Result dflt)  //void devcb_read<Result, DefaultMask>::resolve_safe(Result dflt)
         {
             resolve();
-
-            if (m_functions_r8sm.empty())
-                m_functions_r8sm.emplace_back((offs_t offset) => { return (u8)dflt; });
-            if (m_functions_r8smo.empty())
-                m_functions_r8smo.emplace_back(() => { return (u8)dflt; });
-            if (m_functions_rl.empty())
-                m_functions_rl.emplace_back(() => { return dflt; });
+            if (m_functions.empty())
+                m_functions.emplace_back((offs_t offset, Result_unsigned mem_mask) => { return dflt; });  //m_functions.emplace_back([dflt] (offs_t offset, std::make_unsigned_t<Result> mem_mask) { return dflt; });
         }
 
 
         //Result operator()(offs_t offset, std::make_unsigned_t<Result> mem_mask = DefaultMask);
+        public Result op(offs_t offset) { return op(offset, DefaultMask); }
+
+        //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
+        public Result op(offs_t offset, Result_unsigned mem_mask)  //Result devcb_read<Result, DefaultMask>::operator()(offs_t offset, std::make_unsigned_t<Result> mem_mask)
+        {
+            assert(m_creators.empty() && !m_functions.empty());
+            //typename std::vector<func_t>::const_iterator it(m_functions.begin());
+            //std::make_unsigned_t<Result> result((*it)(offset, mem_mask));
+            //while (m_functions.end() != ++it)
+            //    result |= (*it)(offset, mem_mask);
+            Result_unsigned result = result_unsigned_ops.cast(0);
+            foreach (var it in m_functions)
+                result = result_unsigned_ops.or(result, result_unsigned_ops.cast_T2(it(offset, mem_mask)));
+            return result_ops.cast_T2(result);
+        }
+
         //Result operator()();
+        //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
+        public Result op()  //Result devcb_read<Result, DefaultMask>::operator()()
+        {
+            return this.op(0U, DefaultMask);  //return this->operator()(0U, DefaultMask);
+        }
 
 
-        public bool isnull() { return m_functions_r8sm.empty() && m_functions_r8sm.empty() && m_functions_rl.empty() && m_creators.empty(); }
+        public bool isnull() { return m_functions.empty() && m_creators.empty(); }
 
-        //explicit operator bool() const { return !m_functions.empty(); }
+
+        public bool bool_ { get { return !m_functions.empty(); } }  //explicit operator bool() const { return !m_functions.empty(); }
     }
 
 
@@ -1129,11 +1160,27 @@ namespace mame
     /// Allows binding a variety of signatures, sending the value to
     /// multiple callbacks, and chained arbitrary transforms.  Transforms
     /// may modify the offset and mask.
-    //template <typename Input, std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>
-    public class devcb_write : devcb_write_base, devcb_base.IResolve
+
+    public class devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS> : devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, devcb_constant_MaxValue<Input_unsigned, Input, Input_unsigned_OPS>>
+        where Input_OPS : devcb_operators<Input, Input_unsigned>, new()
+        where Input_unsigned_OPS : devcb_operators<Input_unsigned, Input>, new()
     {
-        //using func_t = std::function<void (offs_t, Input, std::make_unsigned_t<Input>)>;
-        public delegate void func_t();
+        public devcb_write(device_t owner) : base(owner) { }
+    }
+
+
+    //template <typename Input, std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>
+    public class devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> : devcb_write_base, IResolve
+        where Input_OPS : devcb_operators<Input, Input_unsigned>, new()
+        where Input_unsigned_OPS : devcb_operators<Input_unsigned, Input>, new()
+        where Input_unsigned_DefaultMask : devcb_constant<Input_unsigned>, new()
+    {
+        static readonly Input_OPS input_ops = new Input_OPS();
+        static readonly Input_unsigned_OPS input_unsigned_ops = new Input_unsigned_OPS();
+        static readonly Input_unsigned DefaultMask = new Input_unsigned_DefaultMask().value;
+
+
+        public delegate void func_t(offs_t param1, Input data, Input_unsigned mem_mask);  //using func_t = std::function<void (offs_t, Input, std::make_unsigned_t<Input>)>;
 
 
         protected abstract class creator
@@ -1142,101 +1189,64 @@ namespace mame
 
             //~creator() { }
 
-            //protected abstract void validity_check(validity_checker valid);
-            public abstract write8sm_delegate create_w8sm();
-            public abstract write8smo_delegate create_w8smo();
-            public abstract write_line_delegate create_wl();
+            protected abstract void validity_check(validity_checker valid);
+
+
+            public abstract func_t create();  //virtual func_t create() = 0;
+        }
+
+
+        public interface creator_impl_builder<T, T_unsigned>
+        {
+            Action<offs_t, T, T_unsigned> build();
         }
 
 
         //template <typename T>
-        protected class creator_impl : creator
+        protected class creator_impl<T> : creator
+            where T : creator_impl_builder<Input, Input_unsigned>
         {
-            builder_base m_builder;  //T m_builder;
+            T m_builder;
 
 
-            public creator_impl(builder_base builder) { m_builder = builder; }
+            public creator_impl(T builder) { m_builder = builder; }
 
-            //protected override void validity_check(validity_checker valid) { m_builder.validity_check(valid); }
 
-            public override write8sm_delegate create_w8sm()
+            protected override void validity_check(validity_checker valid) { throw new emu_unimplemented(); }
+
+
+            public override func_t create()
             {
-                var cb = m_builder.build_w8sm();
-
-                if (cb == null)
-                    return null;
-
-                return (offs_t offset, u8 data) => { cb(offset, data); };  //return [cb = m_builder.build()] (offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(offset, data, mem_mask); };
-            }
-
-            public override write8smo_delegate create_w8smo()
-            {
-                var cb = m_builder.build_w8smo();
-
-                if (cb == null)
-                    return null;
-
-                return (u8 data) => { cb(data); };  //return [cb = m_builder.build()] (offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(offset, data, mem_mask); };
-            }
-
-            public override write_line_delegate create_wl()
-            {
-                var cb = m_builder.build_wl();
-
-                if (cb == null)
-                    return null;
-
-                return (int param) => { cb(param); };  //return [cb = m_builder.build()] (offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(offset, data, mem_mask); };
+                var cb = m_builder.build();
+                return (offs_t offset, Input data, Input_unsigned mem_mask) => { cb(offset, data, mem_mask); };  //return [cb = m_builder.build()] (offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { cb(offset, data, mem_mask); };
             }
         }
 
 
         class nop_creator : creator
         {
-            //virtual void validity_check(validity_checker &valid) const override { }
+            protected override void validity_check(validity_checker valid) { }
 
-            //virtual func_t create() override { return [] (offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask) { }; }
-            public override write8sm_delegate create_w8sm()
-            {
-                return (offs_t offset, u8 data) => { };
-            }
 
-            public override write8smo_delegate create_w8smo()
-            {
-                return (u8 data) => { };
-            }
-
-            public override write_line_delegate create_wl()
-            {
-                return (int param) => { };
-            }
+            public override func_t create() { return (offs_t offset, Input data, Input_unsigned mem_mask) => { }; }
         }
 
 
-        //template <typename Source, typename Func> class transform_builder; // workaround for MSVC
-        //template <typename Sink, typename Func> class first_transform_builder; // workaround for MSVC
-        //template <typename Func> class functoid_builder; // workaround for MSVC
-
-
-        public class builder_base : IDisposable
+        public abstract class builder_base : creator_impl_builder<Input, Input_unsigned>, IDisposable
         {
-            //template <typename T, typename U> friend class transform_builder; // workaround for MSVC
-            //template <typename T, typename U> friend class first_transform_builder; // workaround for MSVC
-            //template <typename Func> friend class functoid_builder; // workaround for MSVC
-
-
             bool m_disposedValue = false; // To detect redundant calls
 
 
-            devcb_write m_target;
-            bool m_append;
+            protected devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> m_target;
+            protected bool m_append;
             protected bool m_consumed = false;
             bool m_built = false;
 
 
-            public builder_base(devcb_write target, bool append) { m_target = target;  m_append = append; }
-            //builder_base(builder_base const &) = delete;
-            //builder_base(builder_base &&) = default;
+            public builder_base(devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> target, bool append) { m_target = target;  m_append = append; }
+
+            public builder_base(builder_base that) { m_disposedValue = that.m_disposedValue; m_target = that.m_target; m_append = that.m_append; m_consumed = that.m_consumed; m_built = that.m_built; }
+
             ~builder_base()
             {
                 assert(m_consumed, string.Format("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name()));
@@ -1267,17 +1277,17 @@ namespace mame
             //builder_base &operator=(builder_base const &) = delete;
             //builder_base &operator=(builder_base &&) = default;
 
-            public virtual write8_delegate build_w8() { return null; }
-            public virtual write8sm_delegate build_w8sm() { return null; }
-            public virtual write8smo_delegate build_w8smo() { return null; }
-            public virtual write32_delegate build_w32() { return null; }
-            public virtual write_line_delegate build_wl() { return null; }
 
-            void consume() { m_consumed = true; }
-            protected void built() { /*global.assert(!m_built);*/ m_built = true; }
+            public abstract Action<offs_t, Input, Input_unsigned> build();
+
+
+            public void consume() { m_consumed = true; }
+            protected void built() { assert(!m_built); m_built = true; }
+
 
             //template <typename T>
-            protected void register_creator()
+            protected void register_creator<T>()
+                where T : creator_impl_builder<Input, Input_unsigned>
             {
                 if (!m_consumed)
                 {
@@ -1286,137 +1296,237 @@ namespace mame
 
                     consume();
 
-                    m_target.m_creators.emplace_back(new creator_impl(this));
+                    m_target.m_creators.emplace_back(new creator_impl<T>((T)(creator_impl_builder<Input, Input_unsigned>)this));  //m_target.m_creators.emplace_back(std::make_unique<creator_impl<T> >(std::move(static_cast<T &>(*this))));
                 }
             }
         }
 
 
-        public abstract class builder_base_with_transform_base : builder_base
+        public abstract class builder_base_with_transform_base<Impl> : builder_base, IDisposable
+            where Impl : builder_base
         {
-            /////// transform_base
-
-            u32 m_exor = 0;  //std::make_unsigned_t<T> m_exor = std::make_unsigned_t<T>(0);
-            u32 m_mask;  //std::make_unsigned_t<T> m_mask;
-            bool m_inherited_mask = true;
+            public delegate Input transform_function_delegate(offs_t offset, Input data, ref Input_unsigned mem_mask);
 
 
-            protected builder_base_with_transform_base(devcb_write target, bool append, u32 mask) : base(target, append) { m_mask = mask; }
+            transform_base<Input, Input_unsigned, Input_unsigned_OPS, Impl> m_transform_base;
+
+
+            protected builder_base_with_transform_base(devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> target, bool append, Input_unsigned mask) : base(target, append)
+            {
+                m_transform_base = new transform_base<Input, Input_unsigned, Input_unsigned_OPS, Impl>(mask);
+            }
+
             //constexpr transform_base(transform_base const &) = default;
             //transform_base(transform_base &&) = default;
             //transform_base &operator=(transform_base const &) = default;
             //transform_base &operator=(transform_base &&) = default;
 
 
-            //protected abstract builder_base_with_transform_base transform(transform_func cb);
+            builder_base_with_transform_base<Impl> exor(Input_unsigned val) { m_transform_base.m_exor = input_unsigned_ops.xor(m_transform_base.m_exor, val); return this; }  //Impl &exor(std::make_unsigned_t<T> val) { m_exor ^= val; return static_cast<Impl &>(*this); }
+            public builder_base_with_transform_base<Impl> mask(Input_unsigned val) { m_transform_base.m_mask = m_transform_base.m_inherited_mask ? val : input_unsigned_ops.and(m_transform_base.m_mask, val); m_transform_base.m_inherited_mask = false; return this; }  //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
+            public builder_base_with_transform_base<Impl> invert() { return exor(input_unsigned_ops.MaxValue); }  //Impl &invert() { return exor(~std::make_unsigned_t<T>(0)); }
 
 
-            public builder_base_with_transform_base exor(u32 val) { m_exor ^= val; return this; }  //Impl &exor(std::make_unsigned_t<T> val) { m_exor ^= val; return static_cast<Impl &>(*this); }
-            public builder_base_with_transform_base mask(u8 val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return this; }  //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
-            public builder_base_with_transform_base invert() { return exor(u32.MaxValue); }  //Impl &invert() { return exor(~std::make_unsigned_t<T>(0)); }
+            public transform_builder<Impl, transform_function_delegate> rshift(unsigned val)  //auto rshift(unsigned val)
+            {
+                throw new emu_unimplemented();
+            }
 
-            //auto rshift(unsigned val)
-            //{
-            //    auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask >>= val; return data >> val; }));
-            //    return inherited_mask() ? std::move(trans) : std::move(trans.mask(m_mask >> val));
-            //}
-            //auto lshift(unsigned val)
-            //{
-            //    auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask <<= val; return data << val; }));
-            //    return inherited_mask() ? std::move(trans) : std::move(trans.mask(m_mask << val));
-            //}
+            public transform_builder<Impl, transform_function_delegate> lshift(unsigned val)  //auto lshift(unsigned val)
+            {
+                throw new emu_unimplemented();
+            }
+
+
             //auto bit(unsigned val) { return std::move(rshift(val).mask(T(1U))); }
 
-            protected u32 exor() { return m_exor & m_mask; }
-            protected u32 mask() { return m_mask; }
+
+            protected Input_unsigned exor() { return m_transform_base.exor(); }
+            protected Input_unsigned mask() { return m_transform_base.mask(); }
+
 
             //constexpr bool need_exor() const { return std::make_unsigned_t<T>(0) != (m_exor & m_mask); }
             //constexpr bool need_mask() const { return std::make_unsigned_t<T>(~std::make_unsigned_t<T>(0)) != m_mask; }
 
-            //constexpr bool inherited_mask() const { return m_inherited_mask; }
+            protected bool inherited_mask() { return m_transform_base.m_inherited_mask; }
         }
 
 
-#if false
-        template <typename Source, typename Func>
-        class transform_builder : public builder_base, public transform_base<mask_t<transform_result_t<typename Source::output_t, typename Source::output_t, Func>, typename Source::output_t>, transform_builder<Source, Func> >
+        //template <typename Source, typename Func>
+        public class transform_builder<Source, Func_> : builder_base_with_transform_base<transform_builder<Source, Func_>>, IDisposable  //class transform_builder : public builder_base, public transform_base<mask_t<transform_result_t<typename Source::output_t, typename Source::output_t, Func>, typename Source::output_t>, transform_builder<Source, Func> >
+            where Source : builder_base
         {
-        public:
-            template <typename T, typename U> friend class transform_builder;
+            //template <typename T, typename U> friend class transform_builder;
 
-            using input_t = typename Source::output_t;
-            using output_t = mask_t<transform_result_t<typename Source::output_t, typename Source::output_t, Func>, typename Source::output_t>;
+            //using input_t = typename Source::output_t;
+            //using output_t = mask_t<transform_result_t<typename Source::output_t, typename Source::output_t, Func>, typename Source::output_t>;
 
-            template <typename T>
-            transform_builder(devcb_write &target, bool append, Source &&src, T &&cb, output_t mask)
-                : builder_base(target, append)
-                , transform_base<output_t, transform_builder>(mask)
-                , m_src(std::move(src))
-                , m_cb(std::forward<T>(cb))
-            { m_src.consume(); }
-            transform_builder(transform_builder &&that)
-                : builder_base(std::move(that))
-                , transform_base<output_t, transform_builder>(std::move(that))
-                , m_src(std::move(that.m_src))
-                , m_cb(std::move(that.m_cb))
-            {
-                m_src.consume();
-                that.consume();
-                that.built();
-            }
-            ~transform_builder() { this->template register_creator<transform_builder>(); }
-
-            template <typename T>
-            std::enable_if_t<is_transform<output_t, output_t, T>::value, transform_builder<transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
-            {
-                output_t const m(this->mask());
-                if (this->inherited_mask())
-                    this->mask(output_t(~output_t(0)));
-                return transform_builder<transform_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, std::move(*this), std::forward<T>(cb), m);
-            }
-
-            auto build()
-            {
-                assert(this->m_consumed);
-                this->built();
-                return m_src.build(
-                        [cb = std::move(m_cb), exor = this->exor(), mask = this->mask()] (offs_t &offset, input_t data, std::make_unsigned_t<input_t> &mem_mask)
-                        {
-                            auto const trans(devcb_write::invoke_transform<input_t, output_t>(cb, offset, data, mem_mask));
-                            mem_mask &= mask;
-                            return (trans ^ exor) & mask;
-                        });
-            }
-
-            void validity_check(validity_checker &valid) const { m_src.validity_check(valid); }
-
-        private:
-            transform_builder(transform_builder const &) = delete;
-            transform_builder &operator=(transform_builder const &) = delete;
-            transform_builder &operator=(transform_builder &&that) = delete;
-
-            template <typename T>
-            auto build(T &&chain)
-            {
-                assert(this->m_consumed);
-                this->built();
-                return m_src.build(
-                        [f = std::move(chain), cb = std::move(this->m_cb), exor = this->exor(), mask = this->mask()] (offs_t &offset, input_t data, std::make_unsigned_t<input_t> &mem_mask)
-                        {
-                            auto const trans(devcb_write::invoke_transform<input_t, output_t>(cb, offset, data, mem_mask));
-                            output_t out_mask(mem_mask & mask);
-                            return f(offset, (trans ^ exor) & mask, out_mask);
-                        });
-            }
 
             Source m_src;
-            Func m_cb;
-        };
-#endif
+            Func_ m_cb;
+
+
+            //template <typename T>
+            public transform_builder(devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> target, bool append, Source src, Func_ cb, Input_unsigned mask)  //transform_builder(devcb_write &target, bool append, Source &&src, T &&cb, output_t mask)
+                : base(target, append, mask)
+            {
+                //, transform_base<output_t, transform_builder>(mask)
+
+
+                m_src = src;
+                m_cb = cb;
+
+
+                m_src.consume();
+            }
+
+            //transform_builder(transform_builder &&that)
+            //    : builder_base(std::move(that))
+            //    , transform_base<output_t, transform_builder>(std::move(that))
+            //    , m_src(std::move(that.m_src))
+            //    , m_cb(std::move(that.m_cb))
+            //{
+            //    m_src.consume();
+            //    that.consume();
+            //    that.built();
+            //}
+
+            //~transform_builder() { this->template register_creator<transform_builder>(); }
+            protected override void Dispose(bool disposing) { register_creator<transform_builder<Source, Func_>>(); base.Dispose(disposing); }
+
+
+            //template <typename T>
+            protected transform_builder<transform_builder<Source, Func_>, F> transform<F>(F cb)  //std::enable_if_t<is_transform<output_t, output_t, T>::value, transform_builder<transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            public override Action<offs_t, Input, Input_unsigned> build()  //auto build()
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            //void validity_check(validity_checker &valid) const { m_src.validity_check(valid); }
+
+
+            //transform_builder(transform_builder const &) = delete;
+            //transform_builder &operator=(transform_builder const &) = delete;
+            //transform_builder &operator=(transform_builder &&that) = delete;
+
+
+            //template <typename T>
+            //auto build(T &&chain)
+            //{
+            //    assert(this->m_consumed);
+            //    this->built();
+            //    return m_src.build(
+            //            [f = std::move(chain), cb = std::move(this->m_cb), exor = this->exor(), mask = this->mask()] (offs_t &offset, input_t data, std::make_unsigned_t<input_t> &mem_mask)
+            //            {
+            //                auto const trans(devcb_write::invoke_transform<input_t, output_t>(cb, offset, data, mem_mask));
+            //                output_t out_mask(mem_mask & mask);
+            //                return f(offset, (trans ^ exor) & mask, out_mask);
+            //            });
+            //}
+        }
 
 
         //template <typename Sink, typename Func>
-        //class first_transform_builder : public builder_base, public transform_base<mask_t<transform_result_t<typename Sink::input_t, typename Sink::input_t, Func>, typename Sink::input_t>, first_transform_builder<Sink, Func> >
+        public class first_transform_builder<Sink, Func_> : builder_base_with_transform_base<first_transform_builder<Sink, Func_>>, IDisposable  //class first_transform_builder : public builder_base, public transform_base<mask_t<transform_result_t<typename Sink::input_t, typename Sink::input_t, Func>, typename Sink::input_t>, first_transform_builder<Sink, Func> >
+            where Sink : builder_base
+        {
+            //template <typename T, typename U> friend class transform_builder;
+
+            //using input_t = typename Sink::input_t;
+            //using output_t = mask_t<transform_result_t<typename Sink::input_t, typename Sink::input_t, Func>, typename Sink::input_t>;
+
+
+            Sink m_sink;
+            Func_ m_cb;
+            Input_unsigned m_in_exor;
+            Input_unsigned m_in_mask;
+
+
+            public first_transform_builder(devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> target, bool append, Sink sink, Func_ cb, Input_unsigned in_exor, Input_unsigned in_mask, Input_unsigned mask)  //first_transform_builder(devcb_write &target, bool append, Sink &&sink, T &&cb, std::make_unsigned_t<Input> in_exor, std::make_unsigned_t<Input> in_mask, std::make_unsigned_t<output_t> mask)
+                : base(target, append, mask)
+            {
+                //, transform_base<output_t, first_transform_builder>(mask)
+
+
+                m_sink = sink;
+                m_cb = cb;
+                m_in_exor = input_unsigned_ops.and(in_exor, in_mask);
+                m_in_mask = in_mask;
+
+
+                m_sink.consume();
+            }
+
+            //first_transform_builder(first_transform_builder &&that)
+            //    : builder_base(std::move(that))
+            //    , transform_base<output_t, first_transform_builder>(std::move(that))
+            //    , m_sink(std::move(that.m_sink))
+            //    , m_cb(std::move(that.m_cb))
+            //    , m_in_exor(that.m_in_exor)
+            //    , m_in_mask(that.m_in_mask)
+            //{
+            //    m_sink.consume();
+            //    that.consume();
+            //    that.built();
+            //}
+
+            //~first_transform_builder() { this->template register_creator<first_transform_builder>(); }
+            protected override void Dispose(bool disposing) { register_creator<first_transform_builder<Sink, Func_>>(); base.Dispose(disposing); }
+
+
+            //void validity_check(validity_checker &valid) const { m_sink.validity_check(valid); }
+
+
+            //template <typename T>
+            protected transform_builder<first_transform_builder<Sink, Func_>, T> transform<T>(T cb)  //std::enable_if_t<is_transform<output_t, output_t, T>::value, transform_builder<first_transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            public override Action<offs_t, Input, Input_unsigned> build()  //auto build()
+            {
+                assert(this.m_consumed);
+                this.built();
+
+                var sink = m_sink.build();
+                var cb = this.m_cb;
+                var in_exor = m_in_exor;
+                var in_mask = m_in_mask;
+                var exor = this.exor();
+                var mask = this.mask();
+                throw new emu_unimplemented();
+            }
+
+
+            //first_transform_builder(first_transform_builder const &) = delete;
+            //first_transform_builder operator=(first_transform_builder const &) = delete;
+            //first_transform_builder operator=(first_transform_builder &&that) = delete;
+
+
+            //template <typename T>
+            //auto build(T &&chain)
+            //{
+            //    assert(this->m_consumed);
+            //    this->built();
+            //    return
+            //            [f = std::move(chain), sink = m_sink.build(), cb = std::move(this->m_cb), in_exor = m_in_exor, in_mask = m_in_mask, exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+            //            {
+            //                data = (data ^ in_exor) & in_mask;
+            //                mem_mask &= in_mask;
+            //                auto const trans_1(devcb_write::invoke_transform<input_t, output_t>(cb, offset, data, mem_mask));
+            //                output_t out_mask(mem_mask & mask);
+            //                auto const trans_n(f(offset, (trans_1 ^ exor) & mask, out_mask));
+            //                sink(offset, trans_n, out_mask);
+            //            };
+            //}
+        }
 
 
         //template <typename Func>
@@ -1424,11 +1534,58 @@ namespace mame
 
 
         //template <typename Delegate>
-        public class delegate_builder : builder_base_with_transform_base//builder_base, transform_base<mask_t<Input, typename delegate_traits<Delegate_>::input_t>, delegate_builder<Delegate_> >
+        public class delegate_builder<Delegate_> : builder_base_with_transform_base<delegate_builder<Delegate_>>, creator_impl_builder<Input, Input_unsigned>, IDisposable  //class delegate_builder : public builder_base, public transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder<Delegate> >
+            where Delegate_ : Delegate
         {
-            //class wrapped_builder : builder_base
+            public class wrapped_builder : builder_base
+            {
+                //template <typename T, typename U> friend class first_transform_builder;
 
-            //friend class wrapped_builder; // workaround for MSVC
+                //using input_t = intermediate_t<Input, typename delegate_traits<Delegate>::input_t>;
+
+
+                Delegate_ m_delegate;
+
+
+                wrapped_builder(delegate_builder<Delegate_> that)
+                    : base(that)
+                {
+                    m_delegate = that.m_delegate;
+
+
+                    that.consume();
+                    that.built();
+                }
+
+                wrapped_builder(wrapped_builder that)
+                    : base(that)
+                {
+                    m_delegate = that.m_delegate;
+
+
+                    that.consume();
+                    that.built();
+                }
+
+
+                //void validity_check(validity_checker &valid) const
+                //{
+                //    auto const target(m_delegate.finder_target());
+                //    if (target.second && !target.first.subdevice(target.second))
+                //        osd_printf_error("Write callback bound to non-existent object tag %s (%s)\n", target.first.subtag(target.second), m_delegate.name());
+                //}
+
+
+                public override Action<offs_t, Input, Input_unsigned> build()  //auto build()
+                {
+                    throw new emu_unimplemented();
+                }
+
+
+                //wrapped_builder(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder &&that) = delete;
+            }
 
 
             //delegate_builder(delegate_builder const &) = delete;
@@ -1436,71 +1593,47 @@ namespace mame
             //delegate_builder &operator=(delegate_builder &&that) = delete;
 
 
-            write8_delegate m_delegate_w8;  //Delegate_ m_delegate;
-            write8sm_delegate m_delegate_w8sm;  //Delegate_ m_delegate;
-            write8smo_delegate m_delegate_w8smo;  //Delegate_ m_delegate;
-            write_line_delegate m_delegate_wl;  //Delegate_ m_delegate;
+            Delegate_ m_delegate;
 
 
             //using input_t = intermediate_t<Input, typename delegate_traits<Delegate>::input_t>;
 
-            //template <typename T>
-            public delegate_builder(devcb_write target, bool append, device_t devbase, string tag, write_line_delegate func)
-                : base(target, append, u32.MaxValue)
-            {
-                //transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
-                m_delegate_wl = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
-            }
 
-            public delegate_builder(devcb_write target, bool append, device_t devbase, string tag, write8_delegate func)
-                : base(target, append, u32.MaxValue)
+            //template <typename T>
+            public delegate_builder(devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> target, bool append, device_t devbase, string tag, Delegate_ func)  //delegate_builder(devcb_write &target, bool append, device_t &devbase, char const *tag, T &&func, char const *name)
+                : base(target, append, input_unsigned_ops.and(DefaultMask, input_unsigned_ops.MaxValue))
             {
                 //transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
-                m_delegate_w8 = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
-            }
-            public delegate_builder(devcb_write target, bool append, device_t devbase, string tag, write8sm_delegate func)
-                : base(target, append, u32.MaxValue)
-            {
-                //transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
-                m_delegate_w8sm = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
-            }
-            public delegate_builder(devcb_write target, bool append, device_t devbase, string tag, write8smo_delegate func)
-                : base(target, append, u32.MaxValue)
-            {
-                //transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
-                m_delegate_w8smo = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
+
+
+                m_delegate = func;  //, m_delegate(devbase, tag, std::forward<T>(func), name)
             }
 
             //template <typename T>
-            //delegate_builder(devcb_write target, bool append, device_t devbase, devcb_write::delegate_device_class_t<T> obj, T func, string name)
-            //{
-            //    builder_base(target, append)
-            //    transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
+            //delegate_builder(devcb_write &target, bool append, device_t &devbase, devcb_write::delegate_device_class_t<T> &obj, T &&func, char const *name)
+            //    : builder_base(target, append)
+            //    , transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(DefaultMask & delegate_traits<Delegate>::default_mask)
             //    , m_delegate(obj, std::forward<T>(func), name)
-            //}
-
-            //delegate_builder(delegate_builder that)
+            //{ }
+            //delegate_builder(delegate_builder &&that)
+            //    : builder_base(std::move(that))
+            //    , transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(std::move(that))
+            //    , m_delegate(std::move(that.m_delegate))
             //{
-            //    builder_base(std::move(that))
-            //    transform_base<mask_t<Input, typename delegate_traits<Delegate>::input_t>, delegate_builder>(std::move(that))
-            //    m_delegate(std::move(that.m_delegate))
-            //
-            //
             //    that.consume();
             //    that.built();
             //}
 
             //~delegate_builder() { this->template register_creator<delegate_builder>(); }
-            protected override void Dispose(bool disposing) { register_creator(); base.Dispose(disposing); }
+            protected override void Dispose(bool disposing) { register_creator<delegate_builder<Delegate_>>(); base.Dispose(disposing); }
 
 
             //template <typename T>
-            //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
-            //{
-            //    std::make_unsigned_t<Input> const in_mask(this->inherited_mask() ? DefaultMask : this->mask());
-            //    mask_t<Input, typename delegate_traits<Delegate>::input_t> const out_mask(DefaultMask & delegate_traits<Delegate>::default_mask);
-            //    return first_transform_builder<wrapped_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, wrapped_builder(std::move(*this)), std::forward<T>(cb), this->exor(), in_mask, out_mask);
-            //}
+            protected first_transform_builder<wrapped_builder, F> transform<F>(F cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            {
+                throw new emu_unimplemented();
+            }
+
 
             //void validity_check(validity_checker &valid) const
             //{
@@ -1509,70 +1642,108 @@ namespace mame
             //}
 
 
-            //auto build()
-            public override write8sm_delegate build_w8sm()
+            public override Action<offs_t, Input, Input_unsigned> build()  //auto build()
             {
-                assert(m_consumed);
-                built();
+                assert(this.m_consumed);
+                this.built();
                 //m_delegate.resolve();
-
-                if (m_delegate_w8sm == null)
-                    return null;
-
-                var cb = m_delegate_w8sm;
-                var exor_ = exor();
-                var mask_ = mask();
+                var cb = this.m_delegate;
+                var exor = this.exor();
+                var mask = this.mask();
                 return
-                        (offs_t offset, u8 data) =>  //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
-                        { invoke_write(cb, offset, (u8)((data ^ exor_) & mask_)); };  //{ devcb_write::invoke_write<Input>(cb, offset, (data ^ exor) & mask, mem_mask & mask); };
-            }
-
-            public override write8smo_delegate build_w8smo()
-            {
-                assert(m_consumed);
-                built();
-                //m_delegate.resolve();
-
-                if (m_delegate_w8smo == null)
-                    return null;
-
-                var cb = m_delegate_w8smo;
-                var exor_ = exor();
-                var mask_ = mask();
-                return
-                        (u8 data) =>  //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
-                        { invoke_write(cb, (u8)((data ^ exor_) & mask_)); };  //{ devcb_write::invoke_write<Input>(cb, offset, (data ^ exor) & mask, mem_mask & mask); };
-            }
-
-            public override write_line_delegate build_wl()
-            {
-                assert(m_consumed);
-                built();
-                //m_delegate.bind_relative_to(m_devbase);
-
-                if (m_delegate_wl == null)
-                    return null;
-
-                var cb = m_delegate_wl;
-                var exor_ = exor();
-                var mask_ = mask();
-                return
-                        (int param) => //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
-                        { invoke_write(cb, param); };  //{ devcb_write::invoke_write<Input>(cb, offset, (data ^ exor) & mask, mem_mask & mask); };
+                        (offs_t offset, Input data, Input_unsigned mem_mask) =>  //[cb = std::move(this->m_delegate), exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                        { invoke_write<Input, Input_unsigned, Delegate_>(cb, offset, input_ops.cast_T2(input_unsigned_ops.and(input_unsigned_ops.xor(input_unsigned_ops.cast_T2(data), exor), mask)), input_unsigned_ops.and(mem_mask, mask)); };  //{ devcb_write::invoke_write<Input>(cb, offset, (data ^ exor) & mask, mem_mask & mask); };
             }
         }
 
 
-        public class inputline_builder : builder_base_with_transform_base//builder_base, public transform_base<mask_t<Input, int>, inputline_builder>
+        public class inputline_builder : builder_base_with_transform_base<inputline_builder>, creator_impl_builder<Input, Input_unsigned>  //class inputline_builder : public builder_base, public transform_base<mask_t<Input, int>, inputline_builder>
         {
-            //class wrapped_builder : public builder_base
+            public class wrapped_builder : builder_base
+            {
+                //template <typename T, typename U> friend class first_transform_builder;
 
-            //friend class wrapped_builder; // workaround for MSVC
+                //using input_t = intermediate_t<Input, int>;
+
+
+                device_t m_devbase;
+                string m_tag;
+                device_execute_interface m_exec;
+                int m_linenum;
+
+
+                wrapped_builder(inputline_builder that)
+                    : base(that)
+                {
+                    m_devbase = that.m_devbase;
+                    m_tag = that.m_tag;
+                    m_exec = that.m_exec;
+                    m_linenum = that.m_linenum;
+
+
+                    that.consume();
+                    that.built();
+                }
+
+                wrapped_builder(wrapped_builder that)
+                    : base(that)
+                {
+                    m_devbase = that.m_devbase;
+                    m_tag = that.m_tag;
+                    m_exec = that.m_exec;
+                    m_linenum = that.m_linenum;
+
+
+                    that.consume();
+                    that.built();
+                }
+
+
+                //void validity_check(validity_checker &valid) const
+                //{
+                //    if (!m_exec)
+                //    {
+                //        device_t *const device(m_devbase.subdevice(m_tag));
+                //        if (!device)
+                //            osd_printf_error("Write callback bound to non-existent object tag %s\n", m_tag);
+                //        else if (!dynamic_cast<device_execute_interface *>(device))
+                //            osd_printf_error("Write callback bound to device %s (%s) that does not implement device_execute_interface\n", device->tag(), device->name());
+                //    }
+                //}
+
+
+                public override Action<offs_t, Input, Input_unsigned> build()  //auto build()
+                {
+                    assert(this.m_consumed);
+                    this.built();
+                    if (m_exec == null)
+                    {
+                        device_t device = m_devbase.subdevice(m_tag);
+                        if (device == null)
+                            throw new emu_fatalerror("Write callback bound to non-existent object tag {0}\n", m_tag);
+
+                        m_exec = device.GetClassInterface<device_execute_interface>();  //m_exec = dynamic_cast<device_execute_interface *>(device);
+                        if (m_exec == null)
+                            throw new emu_fatalerror("Write callback bound to device {0} ({1}) that does not implement device_execute_interface\n", device.tag(), device.name());
+                    }
+
+                    var exec = m_exec;
+                    var linenum = m_linenum;
+                    throw new emu_unimplemented();
+                }
+
+
+                //wrapped_builder(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder &&that) = delete;
+            }
+
 
 
             //inputline_builder(inputline_builder const &) = delete;
             //inputline_builder &operator=(inputline_builder const &) = delete;
             //inputline_builder &operator=(inputline_builder &&that) = delete;
+
 
             device_t m_devbase;
             string m_tag;
@@ -1582,50 +1753,48 @@ namespace mame
 
             //using input_t = intermediate_t<Input, int>;
 
-            public inputline_builder(devcb_write target, bool append, device_t devbase, string tag, int linenum)
-                : base(target, append, 1)
+            public inputline_builder(devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> target, bool append, device_t devbase, string tag, int linenum)
+                : base(target, append, input_unsigned_ops.cast(1U))
             {
                 //transform_base<mask_t<Input, int>, inputline_builder>(1U)
+
+
                 m_devbase = devbase;
                 m_tag = tag;
                 m_exec = null;
                 m_linenum = linenum;
             }
 
-            //inputline_builder(devcb_write target, bool append, device_execute_interface exec, int linenum)
+            //inputline_builder(devcb_write &target, bool append, device_execute_interface &exec, int linenum)
             //    : builder_base(target, append)
-            //{
-            //    transform_base<mask_t<Input, int>, inputline_builder>(1U)
-            //    m_devbase(exec.device())
-            //    m_tag(exec.device().tag())
-            //    m_exec(&exec)
-            //    m_linenum(linenum)
-            //}
+            //    , transform_base<mask_t<Input, int>, inputline_builder>(1U)
+            //    , m_devbase(exec.device())
+            //    , m_tag(exec.device().tag())
+            //    , m_exec(&exec)
+            //    , m_linenum(linenum)
+            //{ }
 
-            //inputline_builder(inputline_builder that)
+            //inputline_builder(inputline_builder &&that)
             //    : builder_base(std::move(that))
+            //    , transform_base<mask_t<Input, int>, inputline_builder>(std::move(that))
+            //    , m_devbase(that.m_devbase)
+            //    , m_tag(that.m_tag)
+            //    , m_exec(that.m_exec)
+            //    , m_linenum(that.m_linenum)
             //{
-            //    transform_base<mask_t<Input, int>, inputline_builder>(std::move(that))
-            //    m_devbase(that.m_devbase)
-            //    m_tag(that.m_tag)
-            //    m_exec(that.m_exec)
-            //    m_linenum(that.m_linenum)
-            //
-            //
             //    that.consume();
             //    that.built();
             //}
 
             //~inputline_builder() { this->template register_creator<inputline_builder>(); }
-            protected override void Dispose(bool disposing) { register_creator(); base.Dispose(disposing); }
+            protected override void Dispose(bool disposing) { register_creator<inputline_builder>(); base.Dispose(disposing); }
 
 
             //template <typename T>
-            //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
-            //{
-            //    std::make_unsigned_t<Input> const in_mask(this->inherited_mask() ? DefaultMask : this->mask());
-            //    return first_transform_builder<wrapped_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, wrapped_builder(std::move(*this)), std::forward<T>(cb), this->exor(), in_mask, 1U);
-            //}
+            protected first_transform_builder<wrapped_builder, T> transform<T>(T cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            {
+                throw new emu_unimplemented();
+            }
 
 
             //void validity_check(validity_checker &valid) const
@@ -1641,29 +1810,27 @@ namespace mame
             //}
 
 
-            //auto build()
-            public override write_line_delegate build_wl()
+            public override Action<offs_t, Input, Input_unsigned> build()  //auto build()
             {
-                assert(m_consumed);
-                built();
+                assert(this.m_consumed);
+                this.built();
                 if (m_exec == null)
                 {
                     device_t device = m_devbase.subdevice(m_tag);
                     if (device == null)
                         throw new emu_fatalerror("Write callback bound to non-existent object tag {0}\n", m_tag);
-
-                    m_exec = device.GetClassInterface<device_execute_interface>();  // m_exec = dynamic_cast<device_execute_interface *>(device);
+                    m_exec = device.GetClassInterface<device_execute_interface>();  //m_exec = dynamic_cast<device_execute_interface *>(device);
                     if (m_exec == null)
                         throw new emu_fatalerror("Write callback bound to device {0} ({1}) that does not implement device_execute_interface\n", device.tag(), device.name());
                 }
 
                 var exec = m_exec;
                 var linenum = m_linenum;
-                //var exor_ = exor();
-                //var mask_ = mask();
+                var exor = this.exor();
+                var mask = this.mask();
                 return
-                        (int data) =>  //[&exec = *m_exec, linenum = m_linenum, exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
-                        { var exor_ = exor(); var mask_ = mask(); exec.set_input_line(linenum, (int)((data ^ exor_) & mask_)); };
+                        (offs_t offset, Input data, Input_unsigned mem_mask) =>  //[&exec = *m_exec, linenum = m_linenum, exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                        { exec.set_input_line(linenum, input_unsigned_ops.cast_s32(input_unsigned_ops.and(input_unsigned_ops.xor(input_unsigned_ops.cast_T2(data), exor), mask))); };  //{ exec.set_input_line(linenum, (data ^ exor) & mask); };
             }
         }
 
@@ -1677,11 +1844,59 @@ namespace mame
         //class membank_builder : public builder_base, public transform_base<mask_t<Input, int>, membank_builder>
 
 
-        public class output_builder : builder_base_with_transform_base//builder_base, public transform_base<mask_t<Input, s32>, output_builder>
+        public class output_builder : builder_base_with_transform_base<output_builder>, creator_impl_builder<Input, Input_unsigned>  //class output_builder : public builder_base, public transform_base<mask_t<Input, s32>, output_builder>
         {
-            //class wrapped_builder : public builder_base
+            public class wrapped_builder : builder_base
+            {
+                //template <typename T, typename U> friend class first_transform_builder;
 
-            //friend class wrapped_builder; // workaround for MSVC
+                //using input_t = intermediate_t<Input, s32>;
+
+
+                device_t m_devbase;
+                string m_tag;
+
+
+                public wrapped_builder(output_builder that)
+                    : base(that)
+                {
+                    m_devbase = that.m_devbase;
+                    m_tag = that.m_tag;
+
+
+                    that.consume();
+                    that.built();
+                }
+
+                public wrapped_builder(wrapped_builder that)
+                    : base(that)
+                {
+                    m_devbase = that.m_devbase;
+                    m_tag = that.m_tag;
+
+
+                    that.consume();
+                    that.built();
+                }
+
+
+                //void validity_check(validity_checker &valid) const { }
+
+
+                public override Action<offs_t, Input, Input_unsigned> build()  //auto build()
+                {
+                    assert(this.m_consumed);
+                    this.built();
+
+                    var item = m_devbase.machine().output().find_or_create_item(m_tag, 0);
+                    throw new emu_unimplemented();
+                }
+
+
+                //wrapped_builder(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder &&that) = delete;
+            }
 
 
             //output_builder(output_builder const &) = delete;
@@ -1696,10 +1911,12 @@ namespace mame
             //using input_t = intermediate_t<Input, s32>;
 
 
-            public output_builder(devcb_write target, bool append, device_t devbase, string tag)
-                : base(target, append, u32.MaxValue)
+            public output_builder(devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> target, bool append, device_t devbase, string tag)
+                : base(target, append, DefaultMask)
             {
                 //transform_base<mask_t<Input, s32>, output_builder>(DefaultMask)
+
+
                 m_devbase = devbase;
                 m_tag = tag;
             }
@@ -1715,36 +1932,30 @@ namespace mame
             //}
 
             //~output_builder() { this->template register_creator<output_builder>(); }
-            protected override void Dispose(bool disposing) { register_creator(); base.Dispose(disposing); }
+            protected override void Dispose(bool disposing) { register_creator<output_builder>(); base.Dispose(disposing); }
 
 
             //template <typename T>
-            //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
-            //{
-            //    return first_transform_builder<wrapped_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, wrapped_builder(std::move(*this)), std::forward<T>(cb), this->exor(), this->mask(), DefaultMask);
-            //}
+            protected first_transform_builder<wrapped_builder, T> transform<T>(T cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            {
+                throw new emu_unimplemented();
+            }
+
 
             //void validity_check(validity_checker &valid) const { }
 
-            //auto build()
-            //{
-            //    assert(this->m_consumed);
-            //    this->built();
-            //    return
-            //            [&item = m_devbase.machine().output().find_or_create_item(m_tag.c_str(), 0), exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
-            //            { item.set((data ^ exor) & mask); };
-            //}
-            public override write_line_delegate build_wl()
-            {
-                assert(m_consumed);
-                built();
 
-                var item = m_devbase.machine().output().find_or_create_item(m_tag.c_str(), 0);
-                var exor_ = exor();
-                var mask_ = mask();
+            public override Action<offs_t, Input, Input_unsigned> build()  //auto build()
+            {
+                assert(this.m_consumed);
+                this.built();
+
+                var item = m_devbase.machine().output().find_or_create_item(m_tag, 0);
+                var exor = this.exor();
+                var mask = this.mask();
                 return
-                        (int param) =>  //[&item = m_devbase.machine().output().find_or_create_item(m_tag.c_str(), 0), exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
-                        { item.set((s32)((param ^ exor_) & mask_)); };  //{ item.set((data ^ exor) & mask); };
+                        (offs_t offset, Input data, Input_unsigned mem_mask) =>  //[&item = m_devbase.machine().output().find_or_create_item(m_tag, 0), exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                        { item.set(input_unsigned_ops.cast_s32(input_unsigned_ops.and(input_unsigned_ops.xor(input_unsigned_ops.cast_T2(data), exor), mask))); };  //{ item.set((data ^ exor) & mask); };
             }
         }
 
@@ -1754,113 +1965,95 @@ namespace mame
 
         public class binder
         {
-            devcb_write m_target;
+            devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> m_target;
             bool m_append = false;
             bool m_used = false;
 
 
-            public binder(devcb_write target) { m_target = target; }
+            public binder(devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask> target) { m_target = target; }
             //binder(binder const &) = delete;
             binder(binder that) { m_target = that.m_target; m_append = that.m_append; m_used = that.m_used;  that.m_used = true; }
             //binder &operator=(binder const &) = delete;
             //binder &operator=(binder &&) = delete;
 
-#if false
-            template <typename T>
-            std::enable_if_t<is_write<Input, T>::value, functoid_builder<std::remove_reference_t<T> > > set(T &&cb)
-            {
-                set_used();
-                return functoid_builder<std::remove_reference_t<T> >(m_target, m_append, std::forward<T>(cb));
-            }
-#endif
 
             //template <typename T>
-            //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(T &&func, char const *name)
-            public delegate_builder set(write8_delegate func)//, string name)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  // delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
-            }
+            //std::enable_if_t<is_write<Input, T>::value, functoid_builder<std::remove_reference_t<T> > > set(T &&cb)
+            //{
+            //    set_used();
+            //    return functoid_builder<std::remove_reference_t<T> >(m_target, m_append, std::forward<T>(cb));
+            //}
 
-            public delegate_builder set(write8sm_delegate func)//, string name)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  // delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
-            }
-
-            public delegate_builder set(write8smo_delegate func)//, string name)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  // delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
-            }
-
-            public delegate_builder set(write_line_delegate func)//, string name)
-            {
-                set_used();
-                return new delegate_builder(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  // delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
-            }
 
             //template <typename T>
-            //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(char const *tag, T &&func, char const *name)
-            public delegate_builder set(string tag, write8_delegate func)//, string name)
-            {
-                return set(func);
-            }
-
-            public delegate_builder set(string tag, write8sm_delegate func)//, string name)
-            {
-                return set(func);
-            }
-
-            public delegate_builder set(string tag, write8smo_delegate func)//, string name)
-            {
-                return set(func);
-            }
-
-            public delegate_builder set(string tag, write_line_delegate func)//, string name)
-            {
-                return set(func);
-            }
-
-#if false
-            template <typename T, typename U>
-            std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(U &obj, T &&func, char const *name)
+            public delegate_builder<T> set_internal<T>(T func)  //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(T &&func, char const *name)
+                where T : Delegate
             {
                 set_used();
-                return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner(), devcb_write::cast_reference<delegate_device_class_t<T> >(obj), std::forward<T>(func), name);
+                return new delegate_builder<T>(m_target, m_append, m_target.owner().mconfig().current_device(), g.DEVICE_SELF, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
             }
-#endif
+
+            public delegate_builder<write8sm_delegate> set(write8sm_delegate func) { return set_internal(func); }
+            public delegate_builder<write8smo_delegate> set(write8smo_delegate func) { return set_internal(func); }
+            public delegate_builder<write_line_delegate> set(write_line_delegate func) { return set_internal(func); }
+
+
+            //template <typename T>
+            public delegate_builder<T> set_internal<T>(string tag, T func)  //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(char const *tag, T &&func, char const *name)
+                where T : Delegate
+            {
+                set_used();
+                return new delegate_builder<T>(m_target, m_append, m_target.owner().mconfig().current_device(), tag, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), tag, std::forward<T>(func), name);
+            }
+
+            public delegate_builder<write8sm_delegate> set(string tag, write8sm_delegate func) { return set_internal(tag, func); }
+            public delegate_builder<write8smo_delegate> set(string tag, write8smo_delegate func) { return set_internal(tag, func); }
+            public delegate_builder<write_line_delegate> set(string tag, write_line_delegate func) { return set_internal(tag, func); }
+
+
+            //template <typename T, typename U>
+            //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(U &obj, T &&func, char const *name)
+            //{
+            //    set_used();
+            //    return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner(), devcb_write::cast_reference<delegate_device_class_t<T> >(obj), std::forward<T>(func), name);
+            //}
+
 
             //template <typename T, typename U, bool R>
-            //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
-            //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
-            public delegate_builder set<U, bool_R>(device_finder<U, bool_R> finder, write8_delegate func)  //, string name)
-                where U : class
+            public delegate_builder<T> set_internal<T, U, bool_R>(device_finder<U, bool_R> finder, T func)  //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> &finder, T &&func, char const *name)
+                where T : Delegate
                 where bool_R : bool_constant, new()
             {
                 set_used();
-                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+                std.pair<device_t, string> target = finder.finder_target();
+                return new delegate_builder<T>(m_target, m_append, target.first, target.second, func);
             }
 
-            public delegate_builder set<U, bool_R>(device_finder<U, bool_R> finder, write_line_delegate func)  //, string name)
-                where U : class
-                where bool_R : bool_constant, new()
-            {
-                set_used();
-                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                return new delegate_builder(m_target, m_append, target.first, target.second, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
-            }
+            //template <typename T, typename U, bool R>
+            //std::enable_if_t<is_write_method<T>::value, delegate_builder<delegate_type_t<T> > > set(device_finder<U, R> const &finder, T &&func, char const *name)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
+            //}
+
+            public delegate_builder<write8smo_delegate> set<U, bool_R>(device_finder<U, bool_R> finder, write8smo_delegate func) where bool_R : bool_constant, new() { return set_internal(finder, func); }
+            public delegate_builder<write_line_delegate> set<U, bool_R>(device_finder<U, bool_R> finder, write_line_delegate func) where bool_R : bool_constant, new() { return set_internal(finder, func); }
 
 
             //template <typename... Params>
             //auto append(Params &&... args)
-            public delegate_builder append(string tag, write_line_delegate func) { return append(func); }
-            public delegate_builder append(write_line_delegate func)
+            public delegate_builder<T> append_internal<T>(string tag, T func) where T : Delegate { return append_internal(func); }
+            public delegate_builder<T> append_internal<T>(T func)
+                where T : Delegate
             {
                 m_append = true;
-                return set(func);
+                return set_internal(func);
             }
+
+            public delegate_builder<write_line_delegate> append(string tag, write_line_delegate func) { return append_internal(tag, func); }
+
+            public delegate_builder<write_line_delegate> append(write_line_delegate func) { return append_internal(func); }
 
 
             public inputline_builder set_inputline(string tag, int linenum)
@@ -1869,166 +2062,160 @@ namespace mame
                 return new inputline_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, linenum);
             }
 
-#if false
-            latched_inputline_builder set_inputline(char const *tag, int linenum, int value)
-            {
-                set_used();
-                return latched_inputline_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, linenum, value);
-            }
 
-            inputline_builder set_inputline(device_execute_interface &obj, int linenum)
-            {
-                set_used();
-                return inputline_builder(m_target, m_append, obj, linenum);
-            }
+            //latched_inputline_builder set_inputline(char const *tag, int linenum, int value)
+            //{
+            //    set_used();
+            //    return latched_inputline_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag, linenum, value);
+            //}
 
-            latched_inputline_builder set_inputline(device_execute_interface &obj, int linenum, int value)
-            {
-                set_used();
-                return latched_inputline_builder(m_target, m_append, obj, linenum, value);
-            }
-#endif
+            //inputline_builder set_inputline(device_execute_interface &obj, int linenum)
+            //{
+            //    set_used();
+            //    return inputline_builder(m_target, m_append, obj, linenum);
+            //}
+
+            //latched_inputline_builder set_inputline(device_execute_interface &obj, int linenum, int value)
+            //{
+            //    set_used();
+            //    return latched_inputline_builder(m_target, m_append, obj, linenum, value);
+            //}
 
 
             //template <typename T, bool R>
-            public inputline_builder set_inputline<T, bool_R>(device_finder<T, bool_R> finder, int linenum)
-                where T : class
+            public inputline_builder set_inputline<T, bool_R>(device_finder<T, bool_R> finder, int linenum)  //inputline_builder set_inputline(device_finder<T, R> const &finder, int linenum)
                 where bool_R : bool_constant, new()
             {
-                //set_used();
-                std.pair<device_t, string> target = finder.finder_target();
-                return new inputline_builder(m_target, m_append, target.first, target.second, linenum);
-            }
-
-
-#if false
-            template <typename T, bool R>
-            latched_inputline_builder set_inputline(device_finder<T, R> const &finder, int linenum, int value)
-            {
                 set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return latched_inputline_builder(m_target, m_append, target.first, target.second, linenum, value);
+                std.pair<device_t, string> target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
+                return new inputline_builder(m_target, m_append, target.first, target.second, linenum);  //return inputline_builder(m_target, m_append, target.first, target.second, linenum);
             }
-#endif
+
+
+            //template <typename T, bool R>
+            //latched_inputline_builder set_inputline(device_finder<T, R> const &finder, int linenum, int value)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return latched_inputline_builder(m_target, m_append, target.first, target.second, linenum, value);
+            //}
+
 
             //template <typename... Params>
-            //auto append_inputline(Params &&... args)
-            public inputline_builder append_inputline(string tag, int linenum)
+            public inputline_builder append_inputline(string tag, int linenum)  //auto append_inputline(Params &&... args)
             {
                 m_append = true;
                 return set_inputline(tag, linenum);
             }
 
-#if false
-            template <typename... Params>
-            ioport_builder set_ioport(Params &&... args)
-            {
-                set_used();
-                return ioport_builder(m_target, m_append, m_target.owner().mconfig().current_device(), std::string(std::forward<Params>(args)...));
-            }
-
-            template <bool R>
-            ioport_builder set_ioport(ioport_finder<R> &finder)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return ioport_builder(m_target, m_append, target.first, std::string(target.second));
-            }
-
-            template <bool R>
-            ioport_builder set_ioport(ioport_finder<R> const &finder)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return ioport_builder(m_target, m_append, target.first, std::string(target.second));
-            }
-
-            template <typename... Params>
-            ioport_builder append_ioport(Params &&... args)
-            {
-                m_append = true;
-                return set_ioport(std::forward<Params>(args)...);
-            }
-
-            template <typename... Params>
-            membank_builder set_membank(Params &&... args)
-            {
-                set_used();
-                return membank_builder(m_target, m_append, m_target.owner().mconfig().current_device(), std::string(std::forward<Params>(args)...));
-            }
-
-            template <bool R>
-            membank_builder set_membank(memory_bank_finder<R> &finder)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return membank_builder(m_target, m_append, target.first, std::string(target.second));
-            }
-
-            template <bool R>
-            membank_builder set_membank(memory_bank_finder<R> const &finder)
-            {
-                set_used();
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                return membank_builder(m_target, m_append, target.first, std::string(target.second));
-            }
-
-            template <typename... Params>
-            membank_builder append_membank(Params &&... args)
-            {
-                m_append = true;
-                return set_membank(std::forward<Params>(args)...);
-            }
-#endif
 
             //template <typename... Params>
-            //output_builder set_output(Params &&... args)
-            public output_builder set_output(string tag)
+            //ioport_builder set_ioport(Params &&... args)
+            //{
+            //    set_used();
+            //    return ioport_builder(m_target, m_append, m_target.owner().mconfig().current_device(), std::string(std::forward<Params>(args)...));
+            //}
+
+            //template <bool R>
+            //ioport_builder set_ioport(ioport_finder<R> &finder)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return ioport_builder(m_target, m_append, target.first, std::string(target.second));
+            //}
+
+            //template <bool R>
+            //ioport_builder set_ioport(ioport_finder<R> const &finder)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return ioport_builder(m_target, m_append, target.first, std::string(target.second));
+            //}
+
+            //template <typename... Params>
+            //ioport_builder append_ioport(Params &&... args)
+            //{
+            //    m_append = true;
+            //    return set_ioport(std::forward<Params>(args)...);
+            //}
+
+            //template <typename... Params>
+            //membank_builder set_membank(Params &&... args)
+            //{
+            //    set_used();
+            //    return membank_builder(m_target, m_append, m_target.owner().mconfig().current_device(), std::string(std::forward<Params>(args)...));
+            //}
+
+            //template <bool R>
+            //membank_builder set_membank(memory_bank_finder<R> &finder)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return membank_builder(m_target, m_append, target.first, std::string(target.second));
+            //}
+
+            //template <bool R>
+            //membank_builder set_membank(memory_bank_finder<R> const &finder)
+            //{
+            //    set_used();
+            //    std::pair<device_t &, char const *> const target(finder.finder_target());
+            //    return membank_builder(m_target, m_append, target.first, std::string(target.second));
+            //}
+
+            //template <typename... Params>
+            //membank_builder append_membank(Params &&... args)
+            //{
+            //    m_append = true;
+            //    return set_membank(std::forward<Params>(args)...);
+            //}
+
+
+            //template <typename... Params>
+            public output_builder set_output(string tag)  //output_builder set_output(Params &&... args)
             {
                 set_used();
-                return new output_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag);
+                return new output_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag);  //return output_builder(m_target, m_append, m_target.owner().mconfig().current_device(), std::string(std::forward<Params>(args)...));
             }
 
-#if false
-            template <typename... Params>
-            output_builder append_output(Params &&... args)
-            {
-                m_append = true;
-                return set_output(std::forward<Params>(args)...);
-            }
 
-            template <typename... Params>
-            log_builder set_log(device_t &devbase, Params &&... args)
-            {
-                set_used();
-                return log_builder(m_target, m_append, devbase, std::string(std::forward<Params>(args)...));
-            }
+            //template <typename... Params>
+            //output_builder append_output(Params &&... args)
+            //{
+            //    m_append = true;
+            //    return set_output(std::forward<Params>(args)...);
+            //}
 
-            template <typename T, typename... Params>
-            std::enable_if_t<emu::detail::is_device_implementation<std::remove_reference_t<T> >::value, log_builder> set_log(T &devbase, Params &&... args)
-            {
-                return set_log(static_cast<device_t &>(devbase), std::forward<Params>(args)...);
-            }
+            //template <typename... Params>
+            //log_builder set_log(device_t &devbase, Params &&... args)
+            //{
+            //    set_used();
+            //    return log_builder(m_target, m_append, devbase, std::string(std::forward<Params>(args)...));
+            //}
 
-            template <typename T, typename... Params>
-            std::enable_if_t<emu::detail::is_device_interface<std::remove_reference_t<T> >::value, log_builder> set_log(T &devbase, Params &&... args)
-            {
-                return set_log(devbase.device(), std::forward<Params>(args)...);
-            }
+            //template <typename T, typename... Params>
+            //std::enable_if_t<emu::detail::is_device_implementation<std::remove_reference_t<T> >::value, log_builder> set_log(T &devbase, Params &&... args)
+            //{
+            //    return set_log(static_cast<device_t &>(devbase), std::forward<Params>(args)...);
+            //}
 
-            template <typename... Params>
-            log_builder set_log(Params &&... args)
-            {
-                return set_log(m_target.owner().mconfig().current_device(), std::forward<Params>(args)...);
-            }
+            //template <typename T, typename... Params>
+            //std::enable_if_t<emu::detail::is_device_interface<std::remove_reference_t<T> >::value, log_builder> set_log(T &devbase, Params &&... args)
+            //{
+            //    return set_log(devbase.device(), std::forward<Params>(args)...);
+            //}
 
-            template <typename... Params>
-            log_builder append_log(Params &&... args)
-            {
-                m_append = true;
-                return set_log(std::forward<Params>(args)...);
-            }
-#endif
+            //template <typename... Params>
+            //log_builder set_log(Params &&... args)
+            //{
+            //    return set_log(m_target.owner().mconfig().current_device(), std::forward<Params>(args)...);
+            //}
+
+            //template <typename... Params>
+            //log_builder append_log(Params &&... args)
+            //{
+            //    m_append = true;
+            //    return set_log(std::forward<Params>(args)...);
+            //}
 
 
             public void set_nop()
@@ -2044,40 +2231,30 @@ namespace mame
 
 
         //template <unsigned Count>
-        public new class array<devcb_write_type, unsigned_Count> : devcb_write_base.array<devcb_write_type, unsigned_Count>  //class array : public devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>
-            where devcb_write_type : devcb_write
+        public class array<unsigned_Count> : devcb_write_base.array<devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask>, unsigned_Count>  //class array : public devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>
             where unsigned_Count : unsigned_constant, new()
         {
             //using devcb_write_base::array<devcb_write<Input, DefaultMask>, Count>::array;
 
-            public array(device_t owner, Func<devcb_write_type> add_function) : base(owner, add_function) { }
 
-            public override void resolve_all()
-            {
-                foreach (devcb_write_type elem in this)
-                {
-                    elem.resolve();
-                }
-            }
+            public array(device_t owner, Func<devcb_write<Input, Input_unsigned, Input_OPS, Input_unsigned_OPS, Input_unsigned_DefaultMask>> add_function) : base(owner, add_function) { }
+
 
             public void resolve_all_safe()
             {
-                foreach (devcb_write elem in this)  //for (devcb_write<Input, DefaultMask> &elem : *this)
+                foreach (var elem in this)  //for (devcb_write<Input, DefaultMask> &elem : *this)
                     elem.resolve_safe();
             }
         }
 
 
-        protected std.vector<write8sm_delegate> m_functions_w8sm = new std.vector<write8sm_delegate>();  //std::vector<func_t> m_functions;
-        protected std.vector<write8smo_delegate> m_functions_w8smo = new std.vector<write8smo_delegate>();  //std::vector<func_t> m_functions;
-        protected std.vector<write_line_delegate> m_functions_wl = new std.vector<write_line_delegate>();  //std::vector<func_t> m_functions;
-        protected std.vector<creator> m_creators = new std.vector<creator>();  //std::vector<typename creator::ptr> m_creators;
+        std.vector<func_t> m_functions = new std.vector<func_t>();
+        std.vector<creator> m_creators = new std.vector<creator>();  //std::vector<typename creator::ptr> m_creators;
 
 
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
-        //devcb_write<Input, DefaultMask>::devcb_write(device_t &owner)
-        protected devcb_write(device_t owner)
-        : base(owner)
+        public devcb_write(device_t owner)  //devcb_write<Input, DefaultMask>::devcb_write(device_t &owner)
+            : base(owner)
         {
         }
 
@@ -2088,202 +2265,78 @@ namespace mame
             return new binder(this);
         }
 
+
         //void reset();
 
 
-        //virtual void validity_check(validity_checker &valid) const override;
+        protected override void validity_check(validity_checker valid)  //virtual void validity_check(validity_checker &valid) const override;
+        {
+            throw new emu_unimplemented();
+        }
 
 
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
         public void resolve()
         {
-            assert(m_functions_w8sm.empty());
-            assert(m_functions_w8smo.empty());
-            assert(m_functions_wl.empty());
-
-            m_functions_w8sm.reserve(m_creators.size());
-            m_functions_w8smo.reserve(m_creators.size());
-            m_functions_wl.reserve(m_creators.size());
-
-            foreach (var c in m_creators)
-            {
-                var create_w8sm = c.create_w8sm();
-                if (create_w8sm != null) m_functions_w8sm.emplace_back(create_w8sm);
-                var create_w8smo = c.create_w8smo();
-                if (create_w8smo != null) m_functions_w8smo.emplace_back(create_w8smo);
-                var create_wl = c.create_wl();
-                if (create_wl != null) m_functions_wl.emplace_back(create_wl);
-            }
-
+            assert(m_functions.empty());
+            m_functions.reserve(m_creators.size());
+            foreach (creator c in m_creators)  //for (typename creator::ptr const &c : m_creators)
+                m_functions.emplace_back(c.create());
             m_creators.clear();
         }
 
 
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
-        public void resolve_safe()  //void devcb_write<Input, DefaultMask>::resolve_safe()
+        public void resolve_safe()
         {
             resolve();
-
-            if (m_functions_w8sm.empty())
-                m_functions_w8sm.emplace_back((offs_t offset, u8 data) => { });
-            if (m_functions_w8smo.empty())
-                m_functions_w8smo.emplace_back((u8 data) => { });
-            if (m_functions_wl.empty())
-                m_functions_wl.emplace_back((int data) => { });
+            if (m_functions.empty())
+                m_functions.emplace_back((offs_t offset, Input data, Input_unsigned mem_mask) => { });
         }
 
 
         //void operator()(offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask = DefaultMask);
-        //void operator()(Input data);
+        //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
+        public void op(offs_t offset, Input data) { op(offset, data, DefaultMask); }
 
-
-        public bool isnull() { return m_functions_w8sm.empty() && m_functions_w8smo.empty() && m_functions_wl.empty() && m_creators.empty(); }
-
-        //explicit operator bool() const { return !m_functions.empty(); }
-    }
-
-
-    class devcb_read8 : devcb_read/*<u8>*/
-    {
-        const u8 DefaultMask = u8.MaxValue;  //std::make_unsigned_t<Result> DefaultMask = std::make_unsigned_t<Result>(~std::make_unsigned_t<Result>(0))>
-
-        public devcb_read8(device_t owner) : base(owner) { }
-
-        //Result operator()(offs_t offset, std::make_unsigned_t<Result> mem_mask = DefaultMask);
-        //Result operator()();
-        public u8 op(offs_t offset = 0, u8 mem_mask = DefaultMask)
+        //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
+        public void op(offs_t offset, Input data, Input_unsigned mem_mask)
         {
-            //throw new emu_unimplemented();
-#if false
-            assert(m_creators.empty() && !m_functions_r8.empty());  //assert(m_creators.empty() && !m_functions.empty());
-#endif
-
-            // need to revisit all the m_functions
-            throw new emu_unimplemented();
-#if false
+            assert(m_creators.empty() && !m_functions.empty());
             //typename std::vector<func_t>::const_iterator it(m_functions.begin());
-            //std::make_unsigned_t<Result> result((*it)(space, offset, mem_mask));
+            //(*it)(offset, data, mem_mask);
             //while (m_functions.end() != ++it)
-            //    result |= (*it)(space, offset, mem_mask);
-            u8 result = 0;
-            foreach (var func in m_functions_r8)
-                result |= func(space, offset, mem_mask);
-            foreach (var func in m_functions_r8sm)
-                result |= func(offset);
-            foreach (var func in m_functions_r8smo)
-                result |= func();
-
-            return result;
-#endif
+            //    (*it)(offset, data, mem_mask);
+            foreach (var it in m_functions)
+                it(offset, data, mem_mask);
         }
-        public u8 op() { return op(0, DefaultMask); }  // return this->operator()(0U, DefaultMask);
+
+
+        //void operator()(Input data);
+        //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
+        public void op(Input data)
+        {
+            this.op(0U, data, DefaultMask);
+        }
+
+
+        public bool isnull() { return m_functions.empty() && m_creators.empty(); }
+
+        public bool bool_ { get { return !m_functions.empty(); } }  //explicit operator bool() const { return !m_functions.empty(); }
     }
+
+
+    //using devcb_read8 = devcb_read<u8>;
     //using devcb_read16 = devcb_read<u16>;
     //using devcb_read32 = devcb_read<u32>;
     //using devcb_read64 = devcb_read<u64>;
-    class devcb_read_line : devcb_read/*<int, 1U>*/
-    {
-        const u32 DefaultMask = 1;  // std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>
+    //using devcb_read_line = devcb_read<int, 1U>;
 
-        public devcb_read_line(device_t owner) : base(owner) { }
-
-        //Result operator()(offs_t offset, std::make_unsigned_t<Result> mem_mask = DefaultMask);
-        //Result operator()();
-        public int op(offs_t offset = 0, u32 mem_mask = DefaultMask)
-        {
-            assert(m_creators.empty() && !m_functions_rl.empty());  //assert(m_creators.empty() && !m_functions.empty());
-
-            //typename std::vector<func_t>::const_iterator it(m_functions.begin());
-            //std::make_unsigned_t<Result> result((*it)(space, offset, mem_mask));
-            //while (m_functions.end() != ++it)
-            //    result |= (*it)(space, offset, mem_mask);
-            int result = 0;
-            foreach (var func in m_functions_rl)
-                result |= func();
-
-            return result;
-        }
-        public int op() { return op(0, DefaultMask); }  // return this->operator()(0U, DefaultMask);
-    }
-
-    class devcb_write8 : devcb_write/*<u8>*/
-    {
-        const u8 DefaultMask = u8.MaxValue;  // std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>
-
-        public devcb_write8(device_t owner) : base(owner) { }
-
-        //void operator()(offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask = DefaultMask);
-        //void operator()(Input data);
-        public void op(offs_t offset, u8 data, u8 mem_mask = DefaultMask)
-        {
-            //throw new emu_unimplemented();
-#if false
-            assert(m_creators.empty() && !m_functions.empty());
-#endif
-
-            //typename std::vector<func_t>::const_iterator it(m_functions.begin());
-            //(*it)(space, offset, data, mem_mask);
-            //while (m_functions.end() != ++it)
-            //    (*it)(space, offset, data, mem_mask);
-            foreach (var func in m_functions_w8sm)
-                func(offset, data);
-            foreach (var func in m_functions_w8smo)
-                func(data);
-        }
-        public void op(u8 data) { op(0U, data, DefaultMask); }
-    }
-
+    //using devcb_write8 = devcb_write<u8>;
     //using devcb_write16 = devcb_write<u16>;
-
-    class devcb_write32 : devcb_write/*<u32>*/
-    {
-        const u32 DefaultMask = u32.MaxValue;  // std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>
-
-        public devcb_write32(device_t owner) : base(owner) { }
-
-        //void operator()(offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask = DefaultMask);
-        //void operator()(Input data);
-        public void op(offs_t offset, u32 data, u32 mem_mask = DefaultMask)
-        {
-            // need to revisit the list of m_functions
-            throw new emu_unimplemented();
-#if false
-            assert(m_creators.empty() && !m_functions_w32.empty());  //assert(m_creators.empty() && !m_functions.empty());
-
-            //typename std::vector<func_t>::const_iterator it(m_functions.begin());
-            //(*it)(space, offset, data, mem_mask);
-            //while (m_functions.end() != ++it)
-            //    (*it)(space, offset, data, mem_mask);
-            foreach (var func in m_functions_w32)
-                func(space, offset, data, mem_mask);
-#endif
-        }
-        public void op(u32 data) { op(0U, data, DefaultMask); }
-    }
-
+    //using devcb_write32 = devcb_write<u32>;
     //using devcb_write64 = devcb_write<u64>;
-
-    public class devcb_write_line : devcb_write/*<int, 1U>*/
-    {
-        const u32 DefaultMask = 1;  // std::make_unsigned_t<Input> DefaultMask = std::make_unsigned_t<Input>(~std::make_unsigned_t<Input>(0))>
-
-        public devcb_write_line(device_t owner) : base(owner) { }
-
-        //void operator()(offs_t offset, Input data, std::make_unsigned_t<Input> mem_mask = DefaultMask);
-        //void operator()(Input data);
-        public void op(offs_t offset, int data, u32 mem_mask = DefaultMask)
-        {
-            assert(m_creators.empty() && !m_functions_wl.empty());  //assert(m_creators.empty() && !m_functions.empty());
-
-            //typename std::vector<func_t>::const_iterator it(m_functions.begin());
-            //(*it)(space, offset, data, mem_mask);
-            //while (m_functions.end() != ++it)
-            //    (*it)(space, offset, data, mem_mask);
-            foreach (var func in m_functions_wl)
-                func(data);
-        }
-        public void op(int data) { op(0U, data, DefaultMask); }
-    }
+    //using devcb_write_line = devcb_write<int, 1U>;
 
 
     //**************************************************************************
@@ -2618,4 +2671,4 @@ namespace mame
     extern template class devcb_write_line::creator_impl<devcb_write_line::output_builder>;
     extern template class devcb_write_line::creator_impl<devcb_write_line::log_builder>;
 #endif
-    }
+}

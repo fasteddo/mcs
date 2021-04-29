@@ -56,7 +56,7 @@ namespace mame
         //DISCRETE_RESET(dss_counter)
         public override void reset()
         {
-            if (((int)DSS_COUNTER__CLOCK_TYPE & DISC_COUNTER_IS_7492) != 0)
+            if (((int)DSS_COUNTER__CLOCK_TYPE & g.DISC_COUNTER_IS_7492) != 0)
             {
                 m_is_7492    = 1;
                 m_clock_type = (int)DSS_7492__CLOCK_TYPE;
@@ -77,8 +77,8 @@ namespace mame
             if (m_is_7492 == 0 && (DSS_COUNTER__MAX < DSS_COUNTER__MIN))
                 fatalerror("MAX < MIN in NODE_{0}\n", this.index());
 
-            m_out_type    = m_clock_type & DISC_OUT_MASK;
-            m_clock_type &= DISC_CLK_MASK;
+            m_out_type    = m_clock_type & g.DISC_OUT_MASK;
+            m_clock_type &= g.DISC_CLK_MASK;
 
             m_t_left = 0;
             m_last_count = 0;
@@ -108,7 +108,7 @@ namespace mame
             uint32_t count = last_count;
 
             ds_clock = DSS_COUNTER__CLOCK;
-            if (m_clock_type == DISC_CLK_IS_FREQ)
+            if (m_clock_type == g.DISC_CLK_IS_FREQ)
             {
                 /* We need to keep clocking the internal clock even if disabled. */
                 cycles = (m_t_left + this.sample_time()) * ds_clock;
@@ -142,8 +142,8 @@ namespace mame
 
                 switch (m_clock_type)
                 {
-                    case DISC_CLK_ON_F_EDGE:
-                    case DISC_CLK_ON_R_EDGE:
+                    case g.DISC_CLK_ON_F_EDGE:
+                    case g.DISC_CLK_ON_R_EDGE:
                         /* See if the clock has toggled to the proper edge */
                         clock = (clock != 0) ? 1 : 0;
                         if (m_last_clock != clock)
@@ -157,7 +157,7 @@ namespace mame
                         }
                         break;
 
-                    case DISC_CLK_BY_COUNT:
+                    case g.DISC_CLK_BY_COUNT:
                         /* Clock number of times specified. */
                         inc = clock;
                         break;
@@ -189,10 +189,10 @@ namespace mame
                     /* the x_time is only output if the output changed. */
                     switch (m_out_type)
                     {
-                        case DISC_OUT_HAS_XTIME:
+                        case g.DISC_OUT_HAS_XTIME:
                             v_out += x_time;
                             break;
-                        case DISC_OUT_IS_ENERGY:
+                        case g.DISC_OUT_IS_ENERGY:
                             if (x_time == 0) x_time = 1.0;
                             v_out = last_count;
                             if (count > last_count)
@@ -265,16 +265,16 @@ namespace mame
             int fbresult;
             double v_out;
 
-            m_reset_on_high = ((info.flags & DISC_LFSR_FLAG_RESET_TYPE_H) != 0) ? (uint8_t)1 : (uint8_t)0;
-            m_invert_output = (uint8_t)(info.flags & DISC_LFSR_FLAG_OUT_INVERT);
-            m_out_is_f0 = ((info.flags & DISC_LFSR_FLAG_OUTPUT_F0) != 0) ? (uint8_t)1 : (uint8_t)0;
-            m_out_lfsr_reg = ((info.flags & DISC_LFSR_FLAG_OUTPUT_SR_SN1) != 0) ? (uint8_t)1 : (uint8_t)0;
+            m_reset_on_high = ((info.flags & g.DISC_LFSR_FLAG_RESET_TYPE_H) != 0) ? (uint8_t)1 : (uint8_t)0;
+            m_invert_output = (uint8_t)(info.flags & g.DISC_LFSR_FLAG_OUT_INVERT);
+            m_out_is_f0 = ((info.flags & g.DISC_LFSR_FLAG_OUTPUT_F0) != 0) ? (uint8_t)1 : (uint8_t)0;
+            m_out_lfsr_reg = ((info.flags & g.DISC_LFSR_FLAG_OUTPUT_SR_SN1) != 0) ? (uint8_t)1 : (uint8_t)0;
 
-            if ((info.clock_type < DISC_CLK_ON_F_EDGE) || (info.clock_type > DISC_CLK_IS_FREQ))
+            if ((info.clock_type < g.DISC_CLK_ON_F_EDGE) || (info.clock_type > g.DISC_CLK_IS_FREQ))
                 m_device.discrete_log("Invalid clock type passed in NODE_{0}\n", this.index());
 
             m_last = (DSS_COUNTER__CLOCK != 0) ? 1 : 0;
-            if (info.clock_type == DISC_CLK_IS_FREQ) m_t_clock = 1.0 / DSS_LFSR_NOISE__CLOCK;
+            if (info.clock_type == g.DISC_CLK_IS_FREQ) m_t_clock = 1.0 / DSS_LFSR_NOISE__CLOCK;
             m_t_left = 0;
 
             m_lfsr_reg = (UInt32)info.reset_value;
@@ -285,13 +285,13 @@ namespace mame
             fb1 = (int)((m_lfsr_reg >> info.feedback_bitsel1) & 0x01);
             /* Now do the combo on them */
             fbresult = dss_lfsr_function(m_device, info.feedback_function0, fb0, fb1, 0x01);
-            m_lfsr_reg = (UInt32)dss_lfsr_function(m_device, DISC_LFSR_REPLACE, (int)m_lfsr_reg, fbresult << info.bitlength, (2 << info.bitlength ) - 1);
+            m_lfsr_reg = (UInt32)dss_lfsr_function(m_device, g.DISC_LFSR_REPLACE, (int)m_lfsr_reg, fbresult << info.bitlength, (2 << info.bitlength ) - 1);
 
             /* Now select and setup the output bit */
             v_out = (m_lfsr_reg >> info.output_bit) & 0x01;
 
             /* Final inversion if required */
-            if ((info.flags & DISC_LFSR_FLAG_OUT_INVERT) != 0) v_out = (v_out != 0) ? 0 : 1;
+            if ((info.flags & g.DISC_LFSR_FLAG_OUT_INVERT) != 0) v_out = (v_out != 0) ? 0 : 1;
 
             /* Gain stage */
             v_out = (v_out != 0) ? DSS_LFSR_NOISE__AMP / 2 : -DSS_LFSR_NOISE__AMP / 2;
@@ -325,7 +325,7 @@ namespace mame
             int fbresult = 0;
             int noise_feed;
 
-            if (info.clock_type == DISC_CLK_IS_FREQ)
+            if (info.clock_type == g.DISC_CLK_IS_FREQ)
             {
                 /* We need to keep clocking the internal clock even if disabled. */
                 cycles = (m_t_left + this.sample_time()) / m_t_clock;
@@ -342,8 +342,8 @@ namespace mame
 
             switch (info.clock_type)
             {
-                case DISC_CLK_ON_F_EDGE:
-                case DISC_CLK_ON_R_EDGE:
+                case g.DISC_CLK_ON_F_EDGE:
+                case g.DISC_CLK_ON_R_EDGE:
                     /* See if the clock has toggled to the proper edge */
                     clock = (DSS_LFSR_NOISE__CLOCK != 0) ? 1 : 0;
                     if (m_last != clock)
@@ -357,7 +357,7 @@ namespace mame
                     }
                     break;
 
-                case DISC_CLK_BY_COUNT:
+                case g.DISC_CLK_BY_COUNT:
                     /* Clock number of times specified. */
                     inc = (int)DSS_LFSR_NOISE__CLOCK;
                     break;
@@ -389,7 +389,7 @@ namespace mame
                     fb1 = (int)((m_lfsr_reg >> info.feedback_bitsel1) & 0x01);
                     /* Now do the combo on them */
                     fbresult = dss_lfsr_function(m_device, info.feedback_function0, fb0, fb1, 0x01);
-                    m_lfsr_reg = (UInt32)dss_lfsr_function(m_device, DISC_LFSR_REPLACE, (int)m_lfsr_reg, fbresult << info.bitlength, (2 << info.bitlength) - 1);
+                    m_lfsr_reg = (UInt32)dss_lfsr_function(m_device, g.DISC_LFSR_REPLACE, (int)m_lfsr_reg, fbresult << info.bitlength, (2 << info.bitlength) - 1);
 
                 }
                 /* Now select the output bit */
@@ -429,48 +429,48 @@ namespace mame
 
             switch (myfunc)
             {
-                case DISC_LFSR_XOR:
+                case g.DISC_LFSR_XOR:
                     retval = in0 ^ in1;
                     break;
-                case DISC_LFSR_OR:
+                case g.DISC_LFSR_OR:
                     retval = in0 | in1;
                     break;
-                case DISC_LFSR_AND:
+                case g.DISC_LFSR_AND:
                     retval = in0 & in1;
                     break;
-                case DISC_LFSR_XNOR:
+                case g.DISC_LFSR_XNOR:
                     retval = in0 ^ in1;
                     retval = retval ^ bitmask;  /* Invert output */
                     break;
-                case DISC_LFSR_NOR:
+                case g.DISC_LFSR_NOR:
                     retval = in0 | in1;
                     retval = retval ^ bitmask;  /* Invert output */
                     break;
-                case DISC_LFSR_NAND:
+                case g.DISC_LFSR_NAND:
                     retval = in0 & in1;
                     retval = retval ^ bitmask;  /* Invert output */
                     break;
-                case DISC_LFSR_IN0:
+                case g.DISC_LFSR_IN0:
                     retval = in0;
                     break;
-                case DISC_LFSR_IN1:
+                case g.DISC_LFSR_IN1:
                     retval = in1;
                     break;
-                case DISC_LFSR_NOT_IN0:
+                case g.DISC_LFSR_NOT_IN0:
                     retval = in0 ^ bitmask;
                     break;
-                case DISC_LFSR_NOT_IN1:
+                case g.DISC_LFSR_NOT_IN1:
                     retval = in1 ^ bitmask;
                     break;
-                case DISC_LFSR_REPLACE:
+                case g.DISC_LFSR_REPLACE:
                     retval = in0 & ~in1;
                     retval = retval | in1;
                     break;
-                case DISC_LFSR_XOR_INV_IN0:
+                case g.DISC_LFSR_XOR_INV_IN0:
                     retval = in0 ^ bitmask; /* invert in0 */
                     retval = retval ^ in1;  /* xor in1 */
                     break;
-                case DISC_LFSR_XOR_INV_IN1:
+                case g.DISC_LFSR_XOR_INV_IN1:
                     retval = in1 ^ bitmask; /* invert in1 */
                     retval = retval ^ in0;  /* xor in0 */
                     break;
@@ -530,8 +530,8 @@ namespace mame
         //DISCRETE_RESET(dss_note)
         public override void reset()
         {
-            m_clock_type = (int)DSS_NOTE__CLOCK_TYPE & DISC_CLK_MASK;
-            m_out_type   = (int)DSS_NOTE__CLOCK_TYPE & DISC_OUT_MASK;
+            m_clock_type = (int)DSS_NOTE__CLOCK_TYPE & g.DISC_CLK_MASK;
+            m_out_type   = (int)DSS_NOTE__CLOCK_TYPE & g.DISC_OUT_MASK;
 
             m_last    = (DSS_NOTE__CLOCK != 0) ? 1 : 0;
             m_t_left  = 0;
@@ -564,7 +564,7 @@ namespace mame
             double  x_time = 0;
             double  v_out;
 
-            if (m_clock_type == DISC_CLK_IS_FREQ)
+            if (m_clock_type == g.DISC_CLK_IS_FREQ)
             {
                 /* We need to keep clocking the internal clock even if disabled. */
                 cycles = (m_t_left + this.sample_time()) / m_t_clock;
@@ -585,8 +585,8 @@ namespace mame
 
                 switch (m_clock_type)
                 {
-                    case DISC_CLK_ON_F_EDGE:
-                    case DISC_CLK_ON_R_EDGE:
+                    case g.DISC_CLK_ON_F_EDGE:
+                    case g.DISC_CLK_ON_R_EDGE:
                         /* See if the clock has toggled to the proper edge */
                         clock = (clock != 0) ? 1 : 0;
                         if (m_last != clock)
@@ -600,7 +600,7 @@ namespace mame
                         }
                         break;
 
-                    case DISC_CLK_BY_COUNT:
+                    case g.DISC_CLK_BY_COUNT:
                         /* Clock number of times specified. */
                         inc = clock;
                         break;
@@ -628,7 +628,7 @@ namespace mame
                     /* the x_time is only output if the output changed. */
                     switch (m_out_type)
                     {
-                        case DISC_OUT_IS_ENERGY:
+                        case g.DISC_OUT_IS_ENERGY:
                             if (x_time == 0) x_time = 1.0;
                             v_out = last_count2;
                             if (m_count2 > last_count2)
@@ -636,7 +636,7 @@ namespace mame
                             else
                                 v_out -= (last_count2 - m_count2) * x_time;
                             break;
-                        case DISC_OUT_HAS_XTIME:
+                        case g.DISC_OUT_HAS_XTIME:
                             v_out += x_time;
                             break;
                     }

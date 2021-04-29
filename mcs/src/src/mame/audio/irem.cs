@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -65,7 +65,7 @@ namespace mame
         {
             m_soundlatch = data;
             if ((data & 0x80) == 0)
-                m_cpu.op[0].set_input_line(0, ASSERT_LINE);
+                m_cpu.op[0].set_input_line(0, g.ASSERT_LINE);
         }
 
 
@@ -144,7 +144,7 @@ namespace mame
         protected void sound_irq_ack_w(uint8_t data)
         {
             if ((m_soundlatch & 0x80) != 0)
-                m_cpu.op[0].set_input_line(0, CLEAR_LINE);
+                m_cpu.op[0].set_input_line(0, g.CLEAR_LINE);
         }
 
 
@@ -240,7 +240,7 @@ namespace mame
 
 
         static readonly discrete_mixer_desc m52_sound_c_stage1 = new discrete_mixer_desc
-            (DISC_MIXER_IS_RESISTOR,
+            (g.DISC_MIXER_IS_RESISTOR,
                 new double [] {M52_R19, M52_R22, M52_R23 },
                 new int []    {      0,       0,       0 },   /* variable resistors   */
                 new double [] {M52_C37,       0,       0 },   /* node capacitors      */
@@ -255,7 +255,7 @@ namespace mame
             );
 
         static readonly discrete_mixer_desc m52_sound_c_mix1 = new discrete_mixer_desc
-            (DISC_MIXER_IS_RESISTOR,
+            (g.DISC_MIXER_IS_RESISTOR,
                 new double [] {M52_R25, M52_R15 },
                 new int []    {      0,       0 },    /* variable resistors   */
                 new double [] {      0,       0 },    /* node capacitors      */
@@ -269,31 +269,31 @@ namespace mame
         protected static readonly discrete_block [] m52_sound_c_discrete = new discrete_block []
         {
             /* Chip AY8910/1 */
-            DISCRETE_INPUTX_STREAM(NODE_01, 0, 1.0, 0),
+            g.DISCRETE_INPUTX_STREAM(g.NODE_01, 0, 1.0, 0),
             /* Chip AY8910/2 */
-            DISCRETE_INPUTX_STREAM(NODE_02, 1, 1.0, 0),
+            g.DISCRETE_INPUTX_STREAM(g.NODE_02, 1, 1.0, 0),
             /* Chip MSM5250 */
-            DISCRETE_INPUTX_STREAM(NODE_03, 2, 1.0, 0),
+            g.DISCRETE_INPUTX_STREAM(g.NODE_03, 2, 1.0, 0),
 
             /* Just mix the two AY8910s */
-            DISCRETE_ADDER2(NODE_09, 1, NODE_01, NODE_02),
-            DISCRETE_DIVIDE(NODE_10, 1, NODE_09, 2.0),
+            g.DISCRETE_ADDER2(g.NODE_09, 1, g.NODE_01, g.NODE_02),
+            g.DISCRETE_DIVIDE(g.NODE_10, 1, g.NODE_09, 2.0),
 
             /* Mix in 5 V to MSM5250 signal */
-            DISCRETE_MIXER3(NODE_20, 1, NODE_03, 32767.0, 0, m52_sound_c_stage1),
+            g.DISCRETE_MIXER3(g.NODE_20, 1, g.NODE_03, 32767.0, 0, m52_sound_c_stage1),
 
             /* Sallen - Key Filter */
             /* TODO: R12, C30: This looks like a band pass */
-            DISCRETE_RCFILTER(NODE_25, NODE_20, M52_R12, M52_C30),
-            DISCRETE_SALLEN_KEY_FILTER(NODE_30, 1, NODE_25, DISC_SALLEN_KEY_LOW_PASS, m52_sound_c_sallen_key),
+            g.DISCRETE_RCFILTER(g.NODE_25, g.NODE_20, M52_R12, M52_C30),
+            g.DISCRETE_SALLEN_KEY_FILTER(g.NODE_30, 1, g.NODE_25, g.DISC_SALLEN_KEY_LOW_PASS, m52_sound_c_sallen_key),
 
             /* Mix signals */
-            DISCRETE_MIXER2(NODE_40, 1, NODE_10, NODE_25, m52_sound_c_mix1),
-            DISCRETE_CRFILTER(NODE_45, NODE_40, M52_R10+M52_R9, M52_C28),
+            g.DISCRETE_MIXER2(g.NODE_40, 1, g.NODE_10, g.NODE_25, m52_sound_c_mix1),
+            g.DISCRETE_CRFILTER(g.NODE_45, g.NODE_40, M52_R10+M52_R9, M52_C28),
 
-            DISCRETE_OUTPUT(NODE_40, 18.0),
+            g.DISCRETE_OUTPUT(g.NODE_40, 18.0),
 
-            DISCRETE_SOUND_END,
+            g.DISCRETE_SOUND_END,
         };
 
 
@@ -337,7 +337,7 @@ namespace mame
             m_port1 = 0; // ?
             m_port2 = 0; // ?
             m_soundlatch = 0;
-            m_cpu.op[0].set_input_line(0, ASSERT_LINE);
+            m_cpu.op[0].set_input_line(0, g.ASSERT_LINE);
         }
     }
 
@@ -382,11 +382,11 @@ namespace mame
             m_ay_45L.op[0].disound.add_route(0, "filtermix", 1.0, 1);
 
             MSM5205(config, m_adpcm1, new XTAL(384000)); /* verified on pcb */
-            m_adpcm1.op[0].vck_callback().set_inputline(m_cpu, device_execute_interface.INPUT_LINE_NMI).reg(); // driven through NPN inverter
+            m_adpcm1.op[0].vck_callback().set_inputline(m_cpu, g.INPUT_LINE_NMI).reg(); // driven through NPN inverter
             m_adpcm1.op[0].set_prescaler_selector(msm5205_device.S96_4B);      /* default to 4KHz, but can be changed at run time */
             m_adpcm1.op[0].disound.add_route(0, "filtermix", 1.0, 2);
 
-            DISCRETE(config, "filtermix", m52_sound_c_discrete).disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+            DISCRETE(config, "filtermix", m52_sound_c_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 1.0);
         }
     }
 }

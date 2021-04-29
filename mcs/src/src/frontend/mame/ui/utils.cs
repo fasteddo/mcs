@@ -6,9 +6,7 @@ using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using filter_map = mame.std.map<mame.ui.machine_filter.type, mame.ui.machine_filter>;
-using std_string = System.String;
-using std_string_view = System.String;
-using std_string_view_size_type = System.UInt32;
+using size_t = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -265,7 +263,7 @@ namespace mame
             // use heuristics to extract meaningful parts from software list fields
             public static string extract_region(string longname)
             {
-                std_string fullname = longname.ToLower();  //std::string fullname(strmakelower(longname));
+                string fullname = longname.ToLower();  //std::string fullname(strmakelower(longname));
                 int found = fullname.IndexOf("(");  //std::string::size_type const found(fullname.find('('));
                 if (found != -1)
                 {
@@ -481,8 +479,8 @@ namespace mame
                     return null;
 
                 // split it into a key/value or bail
-                std_string_view key = buffer;
-                for (std_string_view_size_type i = 0; (2 * indent) > i; ++i)
+                string key = buffer;
+                for (size_t i = 0; (2 * indent) > i; ++i)
                 {
                     if ((key.length() <= i) || (' ' != key[(int)i]))
                         return null;
@@ -499,7 +497,7 @@ namespace mame
                 for (type n = type.FIRST; type.COUNT > n; ++n)
                 {
                     if (key == config_name(n))
-                        return create(n, data, value.c_str(), file, indent);
+                        return create(n, data, value, file, indent);
                 }
 
                 return null;
@@ -631,8 +629,8 @@ namespace mame
                     return null;
 
                 // split it into a key/value or bail
-                std_string_view key = buffer;
-                for (std_string_view_size_type i = 0; (2 * indent) > i; ++i)
+                string key = buffer;
+                for (size_t i = 0; (2 * indent) > i; ++i)
                 {
                     if ((key.length() <= i) || (' ' != key[(int)i]))
                         return null;
@@ -649,7 +647,7 @@ namespace mame
                 for (type n = type.FIRST; type.COUNT > n; ++n)
                 {
                     if (key == config_name(n))
-                        return create(n, data, value.c_str(), file, indent);
+                        return create(n, data, value, file, indent);
                 }
 
                 return null;
@@ -906,13 +904,13 @@ namespace mame
 
             public override bool wants_adjuster() { return false; }
             public override string adjust_text() { return filter_text(); }
-            public override UInt32 arrow_flags() { return 0; }
+            public override uint32_t arrow_flags() { return 0; }
             public override bool adjust_left() { return false; }
             public override bool adjust_right() { return false; }
 
             public override void save_ini(emu_file file, UInt32 indent)
             {
-                file.puts(string.Format("{0}{1}{2} = 1\n", 2 * indent, "", config_name()).c_str());  // %2$*1$s%3$s = 1\n
+                file.puts(string.Format("{0}{1}{2} = 1\n", 2 * indent, "", config_name()));  // %2$*1$s%3$s = 1\n
             }
 
             public override type get_type() { return Type; }
@@ -954,13 +952,13 @@ namespace mame
 
             public override bool wants_adjuster() { return false; }
             public override string adjust_text() { return filter_text(); }
-            public override UInt32 arrow_flags() { return 0; }
+            public override uint32_t arrow_flags() { return 0; }
             public override bool adjust_left() { return false; }
             public override bool adjust_right() { return false; }
 
             public override void save_ini(emu_file file, UInt32 indent)
             {
-                file.puts(string.Format("{0}{1}{2} = 1\n", 2 * indent, "", config_name()).c_str());  // %2$*1$s%3$s = 1\n
+                file.puts(string.Format("{0}{1}{2} = 1\n", 2 * indent, "", config_name()));  // %2$*1$s%3$s = 1\n
             }
 
             public override type get_type() { return Type; }
@@ -986,7 +984,7 @@ namespace mame
         abstract class choice_filter_impl_base_machine_filter : simple_filter_impl_base_machine_filter //<Base, Type>
         {
             std.vector<string> m_choices;
-            UInt32 m_selection;
+            unsigned m_selection;
 
 
             protected choice_filter_impl_base_machine_filter(std.vector<string> choices, string value, machine_filter.type Type)
@@ -1000,12 +998,12 @@ namespace mame
                 {
                     var found = choices.IndexOf(value);  //List<string> const_iterator_found = std::find(choices.begin(), choices.end(), value);
                     if (-1 != found)
-                        m_selection = (UInt32)found;  // std::distance(choices.begin(), found);
+                        m_selection = (unsigned)found;  // std::distance(choices.begin(), found);
                 }
             }
 
 
-            public override string filter_text() { return selection_valid() ? selection_text().c_str() : null; }
+            public override string filter_text() { return selection_valid() ? selection_text() : null; }
 
             public override void show_ui(mame_ui_manager mui, render_container container, Action<machine_filter> handler)  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Base &)> &&handler) override
             {
@@ -1021,9 +1019,9 @@ namespace mame
 
             public override bool wants_adjuster() { return have_choices(); }
 
-            public override UInt32 arrow_flags()
+            public override uint32_t arrow_flags()
             {
-                return (UInt32)(((have_choices() && m_selection != 0) ? menu.FLAG_LEFT_ARROW : 0) | ((m_choices.size() > (m_selection + 1)) ? menu.FLAG_RIGHT_ARROW : 0));
+                return (uint32_t)(((have_choices() && m_selection != 0) ? menu.FLAG_LEFT_ARROW : 0) | ((m_choices.size() > (m_selection + 1)) ? menu.FLAG_RIGHT_ARROW : 0));
             }
 
             public override bool adjust_left()
@@ -1042,16 +1040,16 @@ namespace mame
                 return true;
             }
 
-            public override void save_ini(emu_file file, UInt32 indent)
+            public override void save_ini(emu_file file, unsigned indent)
             {
                 string text = filter_text();
-                file.puts(string.Format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : "").c_str());  // %2$*1$s%3$s = %4$s\n
+                file.puts(string.Format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
             }
 
 
             protected bool have_choices() { return !m_choices.empty(); }
             protected bool selection_valid() { return m_choices.size() > m_selection; }
-            UInt32 selection_index() { return m_selection; }
+            unsigned selection_index() { return m_selection; }
             protected string selection_text() { return m_choices[(int)m_selection]; }
         }
 
@@ -1060,7 +1058,7 @@ namespace mame
         abstract class choice_filter_impl_base_software_filter : simple_filter_impl_base_software_filter //<Base, Type>
         {
             std.vector<string> m_choices;
-            UInt32 m_selection;
+            unsigned m_selection;
 
 
             protected choice_filter_impl_base_software_filter(std.vector<string> choices, string value, software_filter.type Type)
@@ -1079,7 +1077,7 @@ namespace mame
             }
 
 
-            public override string filter_text() { return selection_valid() ? selection_text().c_str() : null; }
+            public override string filter_text() { return selection_valid() ? selection_text() : null; }
 
             public override void show_ui(mame_ui_manager mui, render_container container, Action<software_filter> handler)  //virtual void show_ui(mame_ui_manager &mui, render_container &container, std::function<void (Base &)> &&handler) override
             {
@@ -1095,9 +1093,9 @@ namespace mame
 
             public override bool wants_adjuster() { return have_choices(); }
 
-            public override UInt32 arrow_flags()
+            public override uint32_t arrow_flags()
             {
-                return (UInt32)(((have_choices() && m_selection != 0) ? menu.FLAG_LEFT_ARROW : 0) | ((m_choices.size() > (m_selection + 1)) ? menu.FLAG_RIGHT_ARROW : 0));
+                return (uint32_t)(((have_choices() && m_selection != 0) ? menu.FLAG_LEFT_ARROW : 0) | ((m_choices.size() > (m_selection + 1)) ? menu.FLAG_RIGHT_ARROW : 0));
             }
 
             public override bool adjust_left()
@@ -1116,16 +1114,16 @@ namespace mame
                 return true;
             }
 
-            public override void save_ini(emu_file file, UInt32 indent)
+            public override void save_ini(emu_file file, unsigned indent)
             {
                 string text = filter_text();
-                file.puts(string.Format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : "").c_str());  // %2$*1$s%3$s = %4$s\n
+                file.puts(string.Format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
             }
 
 
             protected bool have_choices() { return !m_choices.empty(); }
             protected bool selection_valid() { return m_choices.size() > m_selection; }
-            protected UInt32 selection_index() { return m_selection; }
+            protected unsigned selection_index() { return m_selection; }
             protected string selection_text() { return m_choices[(int)m_selection]; }
         }
 
@@ -1190,7 +1188,7 @@ namespace mame
                             text,  //std::begin(text), std::end(text),
                             x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), g.UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -1206,7 +1204,7 @@ namespace mame
 
                         if (m_parent.m_filters[i].wants_adjuster())
                         {
-                            std_string name = "^!";
+                            string name = "^!";
                             render_font.convert_command_glyph(ref name);
                             item_append(name, m_parent.m_filters[i].adjust_text(), m_parent.m_filters[i].arrow_flags(), (UInt32)FILTER.ADJUST_FIRST + i);
                         }
@@ -1319,7 +1317,7 @@ namespace mame
                 }
 
 
-                uint32_t get_arrow_flags(UInt32 pos)
+                uint32_t get_arrow_flags(unsigned pos)
                 {
                     uint32_t result = 0;
                     type current = m_parent.m_filters[pos].get_type();
@@ -1359,7 +1357,7 @@ namespace mame
             public override bool wants_adjuster() { return true; }
             public override string adjust_text() { return "<set up filters>"; }
 
-            public override void save_ini(emu_file file, UInt32 indent)
+            public override void save_ini(emu_file file, unsigned indent)
             {
                 throw new emu_unimplemented();
             }
@@ -1395,7 +1393,7 @@ namespace mame
             }
 
 
-            protected void populate(string value, emu_file file, UInt32 indent)
+            protected void populate(string value, emu_file file, unsigned indent)
             {
                 // try to load filters from a file
                 if (value != null && file != null)
@@ -1479,7 +1477,7 @@ namespace mame
                             text,  //std::begin(text), std::end(text),
                             x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), g.UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -1593,7 +1591,7 @@ namespace mame
                 }
 
 
-                uint32_t get_arrow_flags(UInt32 pos)
+                uint32_t get_arrow_flags(unsigned pos)
                 {
                     uint32_t result = 0;
                     type current = m_parent.m_filters[pos].get_type();
@@ -1992,7 +1990,7 @@ namespace mame
                             text,  //std::begin(text), std::end(text),
                             x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), g.UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -2049,9 +2047,9 @@ namespace mame
                 inifile_manager mgr = mame_machine_manager.instance().inifile();
                 if (value != null)
                 {
-                    std_string_view s = value;
-                    std_string_view_size_type split = (std_string_view_size_type)s.find('/');
-                    std_string_view ini = s.substr(0, (int)split);
+                    string s = value;
+                    int split = s.find('/');
+                    string ini = s.substr(0, (int)split);
 
                     for (unsigned i = 0; mgr.get_file_count() > i; ++i)
                     {
@@ -2060,7 +2058,7 @@ namespace mame
                             m_ini = i;
                             if (UInt32.MaxValue != split)  //if (std::string_view::npos != split)
                             {
-                                std_string_view group = s.substr((int)split + 1);
+                                string group = s.substr((int)split + 1);
                                 for (unsigned j = 0; mgr.get_category_count(i) > j; ++j)
                                 {
                                     if (mgr.get_category_name(i, j) == group)
@@ -2084,7 +2082,7 @@ namespace mame
             public override string filter_text()
             {
                 inifile_manager mgr = mame_machine_manager.instance().inifile();
-                return ((mgr.get_file_count() > m_ini) && (mgr.get_category_count(m_ini) > m_group)) ? m_adjust_text.c_str() : null;
+                return ((mgr.get_file_count() > m_ini) && (mgr.get_category_count(m_ini) > m_group)) ? m_adjust_text : null;
             }
 
             public override void show_ui(mame_ui_manager mui, render_container container, Action<machine_filter> handler)  //, std::function<void (machine_filter &)> &&handler) override;
@@ -2093,12 +2091,12 @@ namespace mame
             }
 
             public override bool wants_adjuster() { return mame_machine_manager.instance().inifile().get_file_count() != 0; }
-            public override string adjust_text() { return m_adjust_text.c_str(); }
+            public override string adjust_text() { return m_adjust_text; }
 
             public override void save_ini(emu_file file, UInt32 indent)
             {
                 string text = filter_text();
-                file.puts(string.Format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : "").c_str());  // %2$*1$s%3$s = %4$s\n
+                file.puts(string.Format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
             }
 
             public override bool apply(ui_system_info system)
@@ -2139,7 +2137,7 @@ namespace mame
 
             static bool include_clones_default(string name)
             {
-                return core_stricmp(name.c_str(), "category.ini") == 0 || core_stricmp(name.c_str(), "alltime.ini") == 0;
+                return g.core_stricmp(name, "category.ini") == 0 || g.core_stricmp(name, "alltime.ini") == 0;
             }
         }
 

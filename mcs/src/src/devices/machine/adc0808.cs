@@ -4,8 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using device_timer_id = System.UInt32;
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using size_t = System.UInt32;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -29,7 +32,7 @@ namespace mame
         // callbacks
         devcb_write_line m_eoc_cb;
         devcb_write_line m_eoc_ff_cb;
-        devcb_read8.array<devcb_read8, uint32_constant_8> m_in_cb;
+        devcb_read8.array<uint32_constant_8> m_in_cb;
 
         enum state  //enum state : int
         {
@@ -60,7 +63,7 @@ namespace mame
         {
             m_eoc_cb = new devcb_write_line(this);
             m_eoc_ff_cb = new devcb_write_line(this);
-            m_in_cb = new devcb_read.array<devcb_read8, uint32_constant_8>(this, () => { return new devcb_read8(this); });
+            m_in_cb = new devcb_read8.array<uint32_constant_8>(this, () => { return new devcb_read8(this); });
             m_state = state.STATE_IDLE;
             m_cycle_timer = null;
             m_start = 0;
@@ -72,7 +75,7 @@ namespace mame
 
         //auto eoc_callback() { return m_eoc_cb.bind(); }
         //auto eoc_ff_callback() { return m_eoc_ff_cb.bind(); }
-        public devcb_read.binder in_callback(int Bit) { return m_in_cb[Bit].bind(); }  //template <std::size_t Bit> auto in_callback() { return m_in_cb[Bit].bind(); }
+        public devcb_read8.binder in_callback<std_size_t_Bit>() where std_size_t_Bit : uint32_constant, new() { size_t Bit = new std_size_t_Bit().value;  return m_in_cb[Bit].bind(); }  //template <std::size_t Bit> auto in_callback() { return m_in_cb[Bit].bind(); }
 
 
         //**************************************************************************

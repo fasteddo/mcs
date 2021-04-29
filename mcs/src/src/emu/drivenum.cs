@@ -74,7 +74,7 @@ namespace mame
                 return false;
 
             // match everything else normally
-            return wildstring == null || core_strwildcmp(wildstring, str) == 0;
+            return wildstring == null || g.core_strwildcmp(wildstring, str) == 0;
         }
     }
 
@@ -362,13 +362,13 @@ namespace mame
                         int namelen = std.strlen(drv.name);
                         //candidate.resize(namelen);
                         candidate = drv.name;  //std.copy_n(drv.name, namelen, candidate.begin());
-                        double curpenalty = corestr_global.edit_distance(search, candidate);
+                        double curpenalty = util_.edit_distance(search, candidate);
 
                         // if it's not a perfect match, try the description
                         if (curpenalty != 0)
                         {
                             candidate = unicode_global.ustr_from_utf8(unicode_global.normalize_unicode(drv.type.fullname(), unicode_global.unicode_normalization_form.D, true));
-                            double p = corestr_global.edit_distance(search, candidate);
+                            double p = util_.edit_distance(search, candidate);
                             if (p < curpenalty)
                                 curpenalty = p;
                         }
@@ -380,7 +380,7 @@ namespace mame
                             composed += ' ';
                             composed += drv.type.fullname();
                             candidate = unicode_global.ustr_from_utf8(unicode_global.normalize_unicode(composed, unicode_global.unicode_normalization_form.D, true));
-                            double p = corestr_global.edit_distance(search, candidate);
+                            double p = util_.edit_distance(search, candidate);
                             if (p < curpenalty)
                                 curpenalty = p;
                         }

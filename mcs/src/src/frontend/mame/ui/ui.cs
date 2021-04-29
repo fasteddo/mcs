@@ -12,7 +12,6 @@ using int32_t = System.Int32;
 using mame_ui_manager_device_feature_set = mame.std.set<mame.std.pair<string, string>>;  //using device_feature_set = std::set<std::pair<std::string, std::string> >;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
-using std_string = System.String;
 using std_time_t = System.Int64;
 using uint32_t = System.UInt32;
 
@@ -230,6 +229,7 @@ namespace mame
         ui_colors m_ui_colors = new ui_colors();
         float m_target_font_height;
         bool m_has_warnings;
+        bool m_unthrottle_mute;
 
         ui.machine_info m_machine_info;
         mame_ui_manager_device_feature_set m_unemulated_features;
@@ -270,6 +270,7 @@ namespace mame
             m_mouse_show = false;
             m_target_font_height = 0;
             m_has_warnings = false;
+            m_unthrottle_mute = false;
             m_machine_info = null;
             m_unemulated_features = null;
             m_imperfect_features = null;
@@ -365,6 +366,13 @@ namespace mame
                     }
                 }
             }
+
+            // handle throttle-related options and initial muting state now that the sound manager has been brought up
+            bool starting_throttle = machine.options().throttle();
+            machine.video().set_throttled(starting_throttle);
+            m_unthrottle_mute = options().unthrottle_mute();
+            if (!starting_throttle && m_unthrottle_mute)
+                machine.sound().ui_mute(true);
         }
 
 
@@ -446,7 +454,7 @@ namespace mame
             // set up event handlers
             //using namespace std::placeholders;
             switch_code_poller poller = new switch_code_poller(machine().input());
-            std_string warning_text = "";
+            string warning_text = "";
             rgb_t warning_color = new rgb_t();
             handler_callback_func handler_messagebox_anykey =
                 (render_container container, mame_ui_manager mui) =>
@@ -458,12 +466,12 @@ namespace mame
                     {
                         // if the user cancels, exit out completely
                         machine().schedule_exit();
-                        return UI_HANDLER_CANCEL;
+                        return g.UI_HANDLER_CANCEL;
                     }
                     else if (poller.poll() != input_code.INPUT_CODE_INVALID)
                     {
                         // if any key is pressed, just exit
-                        return UI_HANDLER_CANCEL;
+                        return g.UI_HANDLER_CANCEL;
                     }
 
                     return 0;
@@ -591,7 +599,7 @@ namespace mame
                             (img) => { warning += "\"" + img + "\""; },  //    [&warning](const std::reference_wrapper<const std::string> &img)    { warning << "\"" << img.get() << "\""; },
                             () =>    { warning += ","; });  //    [&warning]()                                                        { warning << ","; });
 
-                            ui.menu_file_manager.force_file_manager(this, machine().render().ui_container(), warning.str().c_str());
+                            ui.menu_file_manager.force_file_manager(this, machine().render().ui_container(), warning);
                         }
                         break;
                 }
@@ -696,7 +704,7 @@ namespace mame
             }
 
             // cancel takes us back to the ingame handler
-            if (m_handler_param == UI_HANDLER_CANCEL)
+            if (m_handler_param == g.UI_HANDLER_CANCEL)
             {
                 //using namespace std::placeholders;
                 set_handler(ui_callback_type.GENERAL, handler_ingame);
@@ -739,7 +747,7 @@ namespace mame
                 // do we want to scale smaller? only do so if we exceed the threshold
                 if (scale_factor <= 1.0f)
                 {
-                    if (one_to_one_line_height < UI_MAX_FONT_HEIGHT || raw_font_pixel_height < 12)
+                    if (one_to_one_line_height < g.UI_MAX_FONT_HEIGHT || raw_font_pixel_height < 12)
                         scale_factor = 1.0f;
                 }
 
@@ -794,10 +802,10 @@ namespace mame
         public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t fgcolor, rgb_t bgcolor)
         {
             container.add_rect(x0, y0, x1, y1, bgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, g.UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, g.UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, g.UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, g.UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
         }
 
         //-------------------------------------------------
@@ -1035,7 +1043,7 @@ namespace mame
                     string str = image.call_display();
                     if (!str.empty())
                     {
-                        layout.add_text(str.c_str());
+                        layout.add_text(str);
                         layout.add_text("\n");
                     }
                 }
@@ -1100,7 +1108,7 @@ namespace mame
         {
             float unused1;
             float unused2;
-            draw_text_full(container, machine().video().speed_text().c_str(), 0.0f, 0.0f, 1.0f,
+            draw_text_full(container, machine().video().speed_text(), 0.0f, 0.0f, 1.0f,
                 ui.text_layout.text_justify.RIGHT, ui.text_layout.word_wrapping.WORD, draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out unused1, out unused2);
         }
 
@@ -1113,7 +1121,7 @@ namespace mame
             string tempstring;
             float unused1;
             float unused2;
-            draw_text_full(container, machine().video().timecode_text(out tempstring).c_str(), 0.0f, 0.0f, 1.0f,
+            draw_text_full(container, machine().video().timecode_text(out tempstring), 0.0f, 0.0f, 1.0f,
                 ui.text_layout.text_justify.RIGHT, ui.text_layout.word_wrapping.WORD, draw_mode.OPAQUE_, new rgb_t(0xf0, 0xf0, 0x10, 0x10), rgb_t.black(), out unused1, out unused2);
         }
 
@@ -1126,7 +1134,7 @@ namespace mame
             string tempstring;
             float unused1;
             float unused2;
-            draw_text_full(container, machine().video().timecode_total_text(out tempstring).c_str(), 0.0f, 0.0f, 1.0f,
+            draw_text_full(container, machine().video().timecode_total_text(out tempstring), 0.0f, 0.0f, 1.0f,
                 ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD, draw_mode.OPAQUE_, new rgb_t(0xf0, 0x10, 0xf0, 0x10), rgb_t.black(), out unused1, out unused2);
         }
 
@@ -1219,10 +1227,10 @@ namespace mame
         public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture, UInt32 flags)  // render_texture texture = null, UInt32 flags = render_global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA))
         {
             container.add_quad(x0, y0, x1, y1, backcolor, texture, flags);
-            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, g.UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, g.UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, g.UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, g.UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
         }
 
 
@@ -1288,26 +1296,11 @@ namespace mame
                     machine().set_ui_active(!machine().ui_active());
 
                     // display a popup indicating the new status
+                    string name = machine().input().seq_name(machine().ioport().type_seq(ioport_type.IPT_UI_TOGGLE_UI));
                     if (machine().ui_active())
-                    {
-                        popup_time(2, string.Format("{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n",
-                            "Keyboard Emulation Status",
-                            "-------------------------",
-                            "Mode: PARTIAL Emulation",
-                            "UI:   Enabled",
-                            "-------------------------",
-                            "**Use ScrLock to toggle**"));
-                    }
+                        popup_time(2, __("UI controls enabled\nUse {0} to toggle"), name);
                     else
-                    {
-                        popup_time(2, string.Format("{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n",
-                            "Keyboard Emulation Status",
-                            "-------------------------",
-                            "Mode: FULL Emulation",
-                            "UI:   Disabled",
-                            "-------------------------",
-                            "**Use ScrLock to toggle**"));
-                    }
+                        popup_time(2, __("UI controls disabled\nUse {0} to toggle"), name);
                 }
             }
 
@@ -1328,7 +1321,8 @@ namespace mame
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_TIMECODE))
                 machine().video().save_input_timecode();
 
-            if (ui_disabled) return ui_disabled ? 1U : 0U;
+            if (ui_disabled)
+                return ui_disabled ? 1U : 0U;
 
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL))
             {
@@ -1456,7 +1450,12 @@ namespace mame
 
             // toggle throttle?
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_THROTTLE))
-                machine().video().set_throttled(!machine().video().throttled());
+            {
+                bool new_throttle_state = !machine().video().throttled();
+                machine().video().set_throttled(new_throttle_state);
+                if (m_unthrottle_mute)
+                    machine().sound().ui_mute(!new_throttle_state);
+            }
 
             // check for fast forward
             if (machine().ioport().type_pressed(ioport_type.IPT_UI_FAST_FORWARD))
@@ -1492,7 +1491,7 @@ namespace mame
                                                 "Press ''{0}'' to quit,\n" + 
                                                 "Press ''{1}'' to return to emulation.", ui_select_text, ui_cancel_text);
 
-            draw_text_box(container, quit_message, ui.text_layout.text_justify.CENTER, 0.5f, 0.5f, UI_RED_COLOR);
+            draw_text_box(container, quit_message, ui.text_layout.text_justify.CENTER, 0.5f, 0.5f, g.UI_RED_COLOR);
             machine().pause();
 
             // if the user press ENTER, quit the game
@@ -1503,7 +1502,7 @@ namespace mame
             else if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL))
             {
                 machine().resume();
-                state = UI_HANDLER_CANCEL;
+                state = g.UI_HANDLER_CANCEL;
             }
 
             return state;
@@ -1589,16 +1588,16 @@ namespace mame
                 foreach (var feature in m_unemulated_features)
                 {
                     util.xml.data_node feature_node = parentnode.add_child("feature", null);
-                    feature_node.set_attribute("device", feature.first.c_str());
-                    feature_node.set_attribute("type", feature.second.c_str());
+                    feature_node.set_attribute("device", feature.first);
+                    feature_node.set_attribute("type", feature.second);
                     feature_node.set_attribute("status", "unemulated");
                 }
 
                 foreach (var feature in m_imperfect_features)
                 {
                     util.xml.data_node feature_node = parentnode.add_child("feature", null);
-                    feature_node.set_attribute("device", feature.first.c_str());
-                    feature_node.set_attribute("type", feature.second.c_str());
+                    feature_node.set_attribute("device", feature.first);
+                    feature_node.set_attribute("type", feature.second);
                     feature_node.set_attribute("status", "imperfect");
                 }
             }

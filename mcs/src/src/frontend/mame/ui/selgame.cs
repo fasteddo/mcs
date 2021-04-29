@@ -296,7 +296,7 @@ namespace mame.ui
                 emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
 
                 MemoryU8 temp = new MemoryU8();
-                foreach (var s in fake_ini.c_str()) temp.Add(Convert.ToByte(s));
+                foreach (var s in fake_ini) temp.Add(Convert.ToByte(s));
 
                 if (file.open_ram(temp, (UInt32)fake_ini.Length) == osd_file.error.NONE)  // fake_ini.c_str()
                 {
@@ -898,7 +898,7 @@ namespace mame.ui
             {
                 m_searched_fields |= (UInt32)persistent_data.available.AVAIL_UCS_SHORTNAME;
                 for (int i = 0; i < m_searchlist.Count; i++)  //for (std::pair<double, std::reference_wrapper<ui_system_info const> > &info : m_searchlist)
-                    m_searchlist[i] = new std.pair<double, ui_system_info>(corestr_global.edit_distance(ucs_search, m_searchlist[i].second.ucs_shortname), m_searchlist[i].second);  //info.first = util::edit_distance(ucs_search, info.second.get().ucs_shortname);
+                    m_searchlist[i] = new std.pair<double, ui_system_info>(util_.edit_distance(ucs_search, m_searchlist[i].second.ucs_shortname), m_searchlist[i].second);  //info.first = util::edit_distance(ucs_search, info.second.get().ucs_shortname);
             }
 
             // match descriptions
@@ -909,7 +909,7 @@ namespace mame.ui
                 {
                     if (m_searchlist[i].first != 0)  //if (info.first)
                     {
-                        double penalty = corestr_global.edit_distance(ucs_search, m_searchlist[i].second.ucs_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_description));
+                        double penalty = util_.edit_distance(ucs_search, m_searchlist[i].second.ucs_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_description));
                         m_searchlist[i] = new std.pair<double, ui_system_info>(std.min(penalty, m_searchlist[i].first), m_searchlist[i].second);  //info.first = (std::min)(penalty, info.first);
                     }
                 }
@@ -923,7 +923,7 @@ namespace mame.ui
                 {
                     if (m_searchlist[i].first != 0)  //if (info.first)
                     {
-                        double penalty = corestr_global.edit_distance(ucs_search, m_searchlist[i].second.ucs_manufacturer_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_manufacturer_description));
+                        double penalty = util_.edit_distance(ucs_search, m_searchlist[i].second.ucs_manufacturer_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_manufacturer_description));
                         m_searchlist[i] = new std.pair<double, ui_system_info>(std.min(penalty, m_searchlist[i].first), m_searchlist[i].second);  //info.first = (std::min)(penalty, info.first);
                     }
                 }

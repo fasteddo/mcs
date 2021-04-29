@@ -48,7 +48,7 @@ namespace mame
 
 
         // INI functionality
-        public void parse_ini_file(util.core_file inifile)
+        public void parse_ini_file(util_.core_file inifile)
         {
             throw new emu_unimplemented();
         }

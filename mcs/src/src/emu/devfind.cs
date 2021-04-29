@@ -569,49 +569,99 @@ namespace mame
     public interface object_finder_operations<T>
     {
         T cast(device_t device);
+        T cast(device_interface device);
         Pointer<T> cast(PointerU8 memory);
     }
-
 
     public class object_finder_operations_null<T> : object_finder_operations<T>
     {
         public T cast(device_t device) { throw new emu_unimplemented(); }
+        public T cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<T> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
-
     public class object_finder_operations_device_palette_interface : object_finder_operations<device_palette_interface>
     {
-        public device_palette_interface cast(device_t device) { return null; }
+        public device_palette_interface cast(device_t device) { throw new emu_unimplemented(); }
+        public device_palette_interface cast(device_interface device) { return (device_palette_interface)device; }
         public Pointer<device_palette_interface> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
-
-
-    public class object_finder_operations_memory_region : object_finder_operations<memory_region>
-    {
-        public memory_region cast(device_t device) { throw new emu_unimplemented(); }
-        public Pointer<memory_region> cast(PointerU8 memory) { throw new emu_unimplemented(); }
-    }
-
 
     public class object_finder_operations_memory_bank : object_finder_operations<memory_bank>
     {
         public memory_bank cast(device_t device) { throw new emu_unimplemented(); }
+        public memory_bank cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<memory_bank> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_memory_region : object_finder_operations<memory_region>
+    {
+        public memory_region cast(device_t device) { throw new emu_unimplemented(); }
+        public memory_region cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<memory_region> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
 
     public class object_finder_operations_ioport_port : object_finder_operations<ioport_port>
     {
         public ioport_port cast(device_t device) { throw new emu_unimplemented(); }
+        public ioport_port cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<ioport_port> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_cpu_device : object_finder_operations<cpu_device>
+    {
+        public cpu_device cast(device_t device) { return (cpu_device)device; }
+        public cpu_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<cpu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_gfxdecode_device : object_finder_operations<gfxdecode_device>
+    {
+        public gfxdecode_device cast(device_t device) { return (gfxdecode_device)device; }
+        public gfxdecode_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<gfxdecode_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_ls259_device : object_finder_operations<ls259_device>
+    {
+        public ls259_device cast(device_t device) { return (ls259_device)device; }
+        public ls259_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<ls259_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_namco_device : object_finder_operations<namco_device>
+    {
+        public namco_device cast(device_t device) { return (namco_device)device; }
+        public namco_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<namco_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_palette_device : object_finder_operations<palette_device>
+    {
+        public palette_device cast(device_t device) { return (palette_device)device; }
+        public palette_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<palette_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_screen_device : object_finder_operations<screen_device>
+    {
+        public screen_device cast(device_t device) { return (screen_device)device; }
+        public screen_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<screen_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_watchdog_timer_device : object_finder_operations<watchdog_timer_device>
+    {
+        public watchdog_timer_device cast(device_t device) { return (watchdog_timer_device)device; }
+        public watchdog_timer_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<watchdog_timer_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
 
     public class object_finder_operations_u8 : object_finder_operations<u8>
     {
         public u8 cast(device_t device) { throw new emu_unimplemented(); }
-        public Pointer<u8> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+        public u8 cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<u8> cast(PointerU8 memory) { return (Pointer<u8>)memory; }
     }
 
 
@@ -631,6 +681,14 @@ namespace mame
         {
             if      (typeof(ObjectClass) == typeof(device_palette_interface)) return (object_finder_operations<ObjectClass>)new object_finder_operations_device_palette_interface();
             else if (typeof(ObjectClass) == typeof(memory_region))            return (object_finder_operations<ObjectClass>)new object_finder_operations_memory_region();
+            else if (typeof(ObjectClass) == typeof(cpu_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_cpu_device();
+            else if (typeof(ObjectClass) == typeof(gfxdecode_device))         return (object_finder_operations<ObjectClass>)new object_finder_operations_gfxdecode_device();
+            else if (typeof(ObjectClass) == typeof(ls259_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_ls259_device();
+            else if (typeof(ObjectClass) == typeof(namco_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_namco_device();
+            else if (typeof(ObjectClass) == typeof(palette_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_palette_device();
+            else if (typeof(ObjectClass) == typeof(screen_device))            return (object_finder_operations<ObjectClass>)new object_finder_operations_screen_device();
+            else if (typeof(ObjectClass) == typeof(watchdog_timer_device))    return (object_finder_operations<ObjectClass>)new object_finder_operations_watchdog_timer_device();
+            else if (typeof(ObjectClass) == typeof(u8))                       return (object_finder_operations<ObjectClass>)new object_finder_operations_u8();
             else return new object_finder_operations_null<ObjectClass>();
         }
         protected static readonly object_finder_operations<ObjectClass> ops = create_object_finder_operations();
@@ -723,7 +781,7 @@ namespace mame
         /// the object, similar to pointers and various C++ standard
         /// library objects.
         /// \return True if safe to dereference, or false otherwise.
-        //explicit operator bool() const { return this->m_target != nullptr; }
+        public bool bool_ { get { return this.m_target != null; } }  //explicit operator bool() const { return this->m_target != nullptr; }
     }
 
 
@@ -836,7 +894,14 @@ namespace mame
             }
 
             device_t device = this.m_base.get().subdevice(this.m_tag);  //device_t *const device = this->m_base.get().subdevice(this->m_tag);
-            this.m_target = new Pointer<DeviceClass>(new MemoryContainer<DeviceClass>() { ops.cast(device) });  //this->m_target = dynamic_cast<DeviceClass *>(device);
+
+            if (device == null)
+                this.m_target = new Pointer<DeviceClass>(new MemoryContainer<DeviceClass>() { default });  //this->m_target = dynamic_cast<DeviceClass *>(device);
+            else if (typeof(DeviceClass) == typeof(device_palette_interface) && device is palette_device)
+                this.m_target = new Pointer<DeviceClass>(new MemoryContainer<DeviceClass>() { ops.cast(((palette_device)device).dipalette) });  //this->m_target = dynamic_cast<DeviceClass *>(device);
+            else
+                this.m_target = new Pointer<DeviceClass>(new MemoryContainer<DeviceClass>() { ops.cast(device) });  //this->m_target = dynamic_cast<DeviceClass *>(device);
+
             if (device != null && this.m_target == default)
             {
                 osd_printf_warning("Device '{0}' found but is of incorrect type (actual type is {1})\n", this.m_tag, device.name());
@@ -1156,7 +1221,7 @@ namespace mame
         public override bool findit(validity_checker valid)
         {
             if (valid != null)
-                return base.report_missing(!valid.ioport_missing(this.m_base.get().subtag(this.m_tag).c_str()), "I/O port", Required);
+                return base.report_missing(!valid.ioport_missing(this.m_base.get().subtag(this.m_tag)), "I/O port", Required);
 
             assert(!this.m_resolved);
             this.m_resolved = true;

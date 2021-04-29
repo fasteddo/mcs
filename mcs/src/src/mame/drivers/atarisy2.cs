@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -32,24 +32,24 @@ namespace mame
         protected void update_interrupts()
         {
             if (m_video_int_state)
-                m_maincpu.op[0].set_input_line(3, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(3, g.ASSERT_LINE);
             else
-                m_maincpu.op[0].set_input_line(3, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(3, g.CLEAR_LINE);
 
             if (m_scanline_int_state)
-                m_maincpu.op[0].set_input_line(2, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(2, g.ASSERT_LINE);
             else
-                m_maincpu.op[0].set_input_line(2, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(2, g.CLEAR_LINE);
 
             if (m_p2portwr_state)
-                m_maincpu.op[0].set_input_line(1, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(1, g.ASSERT_LINE);
             else
-                m_maincpu.op[0].set_input_line(1, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(1, g.CLEAR_LINE);
 
             if (m_p2portrd_state)
-                m_maincpu.op[0].set_input_line(0, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(0, g.ASSERT_LINE);
             else
-                m_maincpu.op[0].set_input_line(0, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(0, g.CLEAR_LINE);
         }
 
 
@@ -83,7 +83,7 @@ namespace mame
                 if ((scanline % 64) == 0)
                 {
                     // clock the state through
-                    m_scanline_int_state = BIT(m_interrupt_enable, 2) != 0;
+                    m_scanline_int_state = g.BIT(m_interrupt_enable, 2) != 0;
                     update_interrupts();
                 }
             }
@@ -135,7 +135,7 @@ namespace mame
             if (state != 0)
             {
                 // clock the VBLANK through
-                m_video_int_state = BIT(m_interrupt_enable, 3) != 0;
+                m_video_int_state = g.BIT(m_interrupt_enable, 3) != 0;
                 update_interrupts();
             }
         }
@@ -152,7 +152,7 @@ namespace mame
         void sound_reset_w(uint8_t data)
         {
             // reset sound CPU
-            m_audiocpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_RESET, BIT(data, 0) != 0 ? ASSERT_LINE : CLEAR_LINE);
+            m_audiocpu.op[0].set_input_line(g.INPUT_LINE_RESET, g.BIT(data, 0) != 0 ? g.ASSERT_LINE : g.CLEAR_LINE);
 
             sndrst_6502_w(0);
             coincount_w(0);
@@ -176,13 +176,13 @@ namespace mame
         //INTERRUPT_GEN_MEMBER(atarisy2_state::sound_irq_gen)
         void sound_irq_gen(device_t device)
         {
-            m_audiocpu.op[0].set_input_line(m6502_device.IRQ_LINE, ASSERT_LINE);
+            m_audiocpu.op[0].set_input_line(m6502_device.IRQ_LINE, g.ASSERT_LINE);
         }
 
 
         void sound_irq_ack_w(uint8_t data)
         {
-            m_audiocpu.op[0].set_input_line(m6502_device.IRQ_LINE, CLEAR_LINE);
+            m_audiocpu.op[0].set_input_line(m6502_device.IRQ_LINE, g.CLEAR_LINE);
         }
 
 
@@ -224,7 +224,7 @@ namespace mame
             };*/
 
             uint8_t banknumber = (uint8_t)((((uint32_t)data >> 10) & 077) ^ 0x03);
-            banknumber = (uint8_t)bitswap(banknumber, 5, 4, 1, 0, 3, 2);  //banknumber = bitswap<6>(banknumber, 5, 4, 1, 0, 3, 2);
+            banknumber = (uint8_t)g.bitswap(banknumber, 5, 4, 1, 0, 3, 2);  //banknumber = bitswap<6>(banknumber, 5, 4, 1, 0, 3, 2);
 
             m_rombank.op((int)offset).op[0].set_entry(banknumber);
         }
@@ -261,8 +261,8 @@ namespace mame
 
         void switch_6502_w(uint8_t data)
         {
-            m_leds[0] = BIT(data, 2);
-            m_leds[1] = BIT(data, 3);
+            m_leds[0] = g.BIT(data, 2);
+            m_leds[1] = g.BIT(data, 3);
             if (m_tms5220.found())
             {
                 data = (uint8_t)(12 | (((uint32_t)data >> 5) & 1));
@@ -307,7 +307,7 @@ namespace mame
             if ((data & 0x02) == 0) rbott += 1.0 / 47;
             if ((data & 0x04) == 0) rbott += 1.0 / 22;
             gain = (rbott == 0) ? 1.0 : ((1.0 / rbott) / (rtop + (1.0 / rbott)));
-            m_ym2151.op[0].disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+            m_ym2151.op[0].disound.set_output_gain(g.ALL_OUTPUTS, (float)gain);
 
             // bits 3-4 control the volume of the POKEYs, using 47k and 100k resistors
             rtop = 1.0 / (1.0 / 100 + 1.0 / 100);
@@ -315,8 +315,8 @@ namespace mame
             if ((data & 0x08) == 0) rbott += 1.0 / 47;
             if ((data & 0x10) == 0) rbott += 1.0 / 22;
             gain = (rbott == 0) ? 1.0 : ((1.0 / rbott) / (rtop + (1.0 / rbott)));
-            m_pokey.op(0).op[0].disound.set_output_gain(ALL_OUTPUTS, (float)gain);
-            m_pokey.op(1).op[0].disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+            m_pokey.op(0).op[0].disound.set_output_gain(g.ALL_OUTPUTS, (float)gain);
+            m_pokey.op(1).op[0].disound.set_output_gain(g.ALL_OUTPUTS, (float)gain);
 
             // bits 5-7 control the volume of the TMS5220, using 22k, 47k, and 100k resistors
             if (m_tms5220.found())
@@ -327,7 +327,7 @@ namespace mame
                 if ((data & 0x40) == 0) rbott += 1.0 / 47;
                 if ((data & 0x80) == 0) rbott += 1.0 / 22;
                 gain = (rbott == 0) ? 1.0 : ((1.0 / rbott) / (rtop + (1.0 / rbott)));
-                m_tms5220.op[0].disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+                m_tms5220.op[0].disound.set_output_gain(g.ALL_OUTPUTS, (float)gain);
             }
         }
 
@@ -371,7 +371,7 @@ namespace mame
         void sound_6502_w(uint8_t data)
         {
             // clock the state through
-            m_p2portwr_state = BIT(m_interrupt_enable, 1) != 0;
+            m_p2portwr_state = g.BIT(m_interrupt_enable, 1) != 0;
             update_interrupts();
 
             // handle it normally otherwise
@@ -384,7 +384,7 @@ namespace mame
             if (!machine().side_effects_disabled())
             {
                 // clock the state through
-                m_p2portrd_state = BIT(m_interrupt_enable, 0) != 0;
+                m_p2portrd_state = g.BIT(m_interrupt_enable, 0) != 0;
                 update_interrupts();
             }
 
@@ -689,33 +689,33 @@ namespace mame
         static readonly gfx_layout anlayout = new gfx_layout
         (
             8,8,
-            RGN_FRAC(1,1),
+            g.RGN_FRAC(1,1),
             2,
-            ArrayCombineUInt32(0, 4),
-            ArrayCombineUInt32(STEP4(0, 1), STEP4(8, 1)),
-            ArrayCombineUInt32(STEP8(0, 8 * 2)),
+            g.ArrayCombineUInt32(0, 4),
+            g.ArrayCombineUInt32(g.STEP4(0, 1), g.STEP4(8, 1)),
+            g.ArrayCombineUInt32(g.STEP8(0, 8 * 2)),
             8*8*2
         );
 
         static readonly gfx_layout pflayout = new gfx_layout
         (
             8,8,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             4,
-            ArrayCombineUInt32(0, 4, RGN_FRAC(1, 2) + 0, RGN_FRAC(1, 2) + 4),
-            ArrayCombineUInt32(STEP4(0, 1), STEP4(8, 1)),
-            ArrayCombineUInt32(STEP8(0, 8 * 2)),
+            g.ArrayCombineUInt32(0, 4, g.RGN_FRAC(1, 2) + 0, g.RGN_FRAC(1, 2) + 4),
+            g.ArrayCombineUInt32(g.STEP4(0, 1), g.STEP4(8, 1)),
+            g.ArrayCombineUInt32(g.STEP8(0, 8 * 2)),
             8*8*2
         );
 
         static readonly gfx_layout molayout = new gfx_layout
         (
             16,16,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             4,
-            ArrayCombineUInt32(0, 4, RGN_FRAC(1, 2) + 0, RGN_FRAC(1, 2) + 4),
-            ArrayCombineUInt32(STEP4(8 * 0, 1), STEP4(8 * 1, 1), STEP4(8 * 2, 1), STEP4(8 * 3, 1)),
-            ArrayCombineUInt32(STEP16(0, 8 * 4)),
+            g.ArrayCombineUInt32(0, 4, g.RGN_FRAC(1, 2) + 0, g.RGN_FRAC(1, 2) + 4),
+            g.ArrayCombineUInt32(g.STEP4(8 * 0, 1), g.STEP4(8 * 1, 1), g.STEP4(8 * 2, 1), g.STEP4(8 * 3, 1)),
+            g.ArrayCombineUInt32(g.STEP16(0, 8 * 4)),
             16*16*2
         );
 
@@ -723,9 +723,9 @@ namespace mame
         //static GFXDECODE_START( gfx_atarisy2 )
         static readonly gfx_decode_entry [] gfx_atarisy2 = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY( "gfx1", 0, pflayout, 128, 8 ),
-            GFXDECODE_ENTRY( "gfx2", 0, molayout,   0, 4 ),
-            GFXDECODE_ENTRY( "gfx3", 0, anlayout,  64, 8 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0, pflayout, 128, 8 ),
+            g.GFXDECODE_ENTRY( "gfx2", 0, molayout,   0, 4 ),
+            g.GFXDECODE_ENTRY( "gfx3", 0, anlayout,  64, 8 ),
             //GFXDECODE_END
         };
 
@@ -748,10 +748,10 @@ namespace mame
             m_audiocpu.op[0].execute().set_periodic_int(sound_irq_gen, attotime.from_hz(MASTER_CLOCK/2/16/16/16/10));
 
             adc0809_device adc = ADC0809(config, "adc", MASTER_CLOCK / 32); // 625 kHz
-            adc.in_callback(0).set_ioport("ADC0").reg(); // J102 pin 5 (POT1)
-            adc.in_callback(1).set_ioport("ADC1").reg(); // J102 pin 7 (POT2)
-            adc.in_callback(2).set_ioport("ADC2").reg(); // J102 pin 9 (POT3)
-            adc.in_callback(3).set_ioport("ADC3").reg(); // J102 pin 8 (POT4)
+            adc.in_callback<uint32_constant_0>().set_ioport("ADC0").reg(); // J102 pin 5 (POT1)
+            adc.in_callback<uint32_constant_1>().set_ioport("ADC1").reg(); // J102 pin 7 (POT2)
+            adc.in_callback<uint32_constant_2>().set_ioport("ADC2").reg(); // J102 pin 9 (POT3)
+            adc.in_callback<uint32_constant_3>().set_ioport("ADC3").reg(); // J102 pin 8 (POT4)
             // IN4 = J102 pin 6 (unused)
             // IN5 = J102 pin 4 (unused)
             // IN6 = J102 pin 2 (unused)
@@ -796,15 +796,15 @@ namespace mame
 
             POKEY(config, m_pokey.op(0), SOUND_CLOCK / 8);
             m_pokey.op(0).op[0].allpot_r().set_ioport("DSW0").reg();
-            m_pokey.op(0).op[0].disound.add_route(ALL_OUTPUTS, "lspeaker", 1.35);
+            m_pokey.op(0).op[0].disound.add_route(g.ALL_OUTPUTS, "lspeaker", 1.35);
 
             POKEY(config, m_pokey.op(1), SOUND_CLOCK / 8);
             m_pokey.op(1).op[0].allpot_r().set_ioport("DSW1").reg();
-            m_pokey.op(1).op[0].disound.add_route(ALL_OUTPUTS, "rspeaker", 1.35);
+            m_pokey.op(1).op[0].disound.add_route(g.ALL_OUTPUTS, "rspeaker", 1.35);
 
             TMS5220C(config, m_tms5220, MASTER_CLOCK / 4 / 4 / 2);
-            m_tms5220.op[0].disound.add_route(ALL_OUTPUTS, "lspeaker", 0.75);
-            m_tms5220.op[0].disound.add_route(ALL_OUTPUTS, "rspeaker", 0.75);
+            m_tms5220.op[0].disound.add_route(g.ALL_OUTPUTS, "lspeaker", 0.75);
+            m_tms5220.op[0].disound.add_route(g.ALL_OUTPUTS, "rspeaker", 0.75);
         }
 
 

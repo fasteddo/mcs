@@ -14,197 +14,6 @@ using u64 = System.UInt64;
 
 namespace mame
 {
-    public static class coretmpl_global
-    {
-        /// \defgroup bitutils Useful functions for bit shuffling
-        /// \{
-
-        /// \brief Generate a right-aligned bit mask
-        ///
-        /// Generates a right aligned mask of the specified width.  Works with
-        /// signed and unsigned integer types.
-        /// \tparam T Desired output type.
-        /// \tparam U Type of the input (generally resolved by the compiler).
-        /// \param [in] n Width of the mask to generate in bits.
-        /// \return Right-aligned mask of the specified width.
-        //template <typename T, typename U> constexpr T make_bitmask(U n)
-        //{
-        //    return T((n < (8 * sizeof(T)) ? (std::make_unsigned_t<T>(1) << n) : std::make_unsigned_t<T>(0)) - 1);
-        //}
-        //template <typename T, typename U>
-        public static u8 make_bitmask8(u32 n) { return make_bitmask8((s32)n); }
-        public static u8 make_bitmask8(s32 n) { return (u8)((n < (8 * 1) ? (1U << n) : 0U) - 1); }
-        public static u16 make_bitmask16(u32 n) { return make_bitmask16((s32)n); }
-        public static u16 make_bitmask16(s32 n) { return (u16)((n < (8 * 2) ? (1U << n) : 0U) - 1); }
-        public static u32 make_bitmask32(u32 n) { return make_bitmask32((s32)n); }
-        public static u32 make_bitmask32(s32 n) { return (u32)((n < (8 * 4) ? (1U << n) : 0U) - 1); }
-        public static u64 make_bitmask64(u32 n) { return make_bitmask64((s32)n); }
-        public static u64 make_bitmask64(s32 n) { return (u64)((n < (8 * 8) ? (1U << n) : 0U) - 1); }
-        public static uX make_bitmask_uX(int width, u32 n) { return make_bitmask_uX(width, (s32)n); }
-        public static uX make_bitmask_uX(int width, s32 n) { return new uX(width, (u64)((n < (8 * 8) ? (1U << n) : 0U) - 1)); }
-
-
-        /// \brief Extract a single bit from an integer
-        ///
-        /// Extracts a single bit from an integer into the least significant bit
-        /// position.
-        ///
-        /// \param [in] x The integer to extract the bit from.
-        /// \param [in] n The bit to extract, where zero is the least
-        ///   significant bit of the input.
-        /// \return Zero if the specified bit is unset, or one if it is set.
-        /// \sa bitswap
-        //template <typename T, typename U> constexpr T BIT(T x, U n) { return (x >> n) & T(1); }
-        public static int BIT(int x, int n) { return (x >> n) & 1; }
-        public static UInt32 BIT(UInt32 x, int n) { return (x >> n) & 1; }
-
-        /// \brief Extract a bit field from an integer
-        ///
-        /// Extracts and right-aligns a bit field from an integer.
-        ///
-        /// \param [in] x The integer to extract the bit field from.
-        /// \param [in] n The least significant bit position of the field to
-        ///   extract, where zero is the least significant bit of the input.
-        /// \param [in] w The width of the field to extract in bits.
-        /// \return The field [n..(n+w-1)] from the input.
-        /// \sa bitswap
-        //template <typename T, typename U, typename V> constexpr T BIT(T x, U n, V w)
-        //{
-        //    return (x >> n) & make_bitmask<T>(w);
-        //}
-
-        /// \brief Extract and right-align a single bit field
-        ///
-        /// This overload is used to terminate a recursive template
-        /// implementation.  It is functionally equivalent to the BIT
-        /// function for extracting a single bit.
-        ///
-        /// \param [in] val The integer to extract the bit from.
-        /// \param [in] b The bit to extract, where zero is the least
-        ///   significant bit of the input.
-        /// \return The specified bit of the input extracted to the least
-        ///   significant position.
-        //template <typename T, typename U> constexpr T bitswap(T val, U b) noexcept { return BIT(val, b) << 0U; }
-
-        /// \brief Extract bits in arbitrary order
-        ///
-        /// Extracts bits from an integer.  Specify the bits in the order they
-        /// should be arranged in the output, from most significant to least
-        /// significant.  The extracted bits will be packed into a right-aligned
-        /// field in the output.
-        ///
-        /// \param [in] val The integer to extract bits from.
-        /// \param [in] b The first bit to extract from the input
-        ///   extract, where zero is the least significant bit of the input.
-        ///   This bit will appear in the most significant position of the
-        ///   right-aligned output field.
-        /// \param [in] c The remaining bits to extract, where zero is the
-        ///   least significant bit of the input.
-        /// \return The extracted bits packed into a right-aligned field.
-        //template <typename T, typename U, typename... V> constexpr T bitswap(T val, U b, V... c) noexcept
-        //{
-        //    return (BIT(val, b) << sizeof...(c)) | bitswap(val, c...);
-        //}
-
-        /// \brief Extract bits in arbitrary order with explicit count
-        ///
-        /// Extracts bits from an integer.  Specify the bits in the order they
-        /// should be arranged in the output, from most significant to least
-        /// significant.  The extracted bits will be packed into a right-aligned
-        /// field in the output.  The number of bits to extract must be supplied
-        /// as a template argument.
-        ///
-        /// A compile error will be generated if the number of bit positions
-        /// supplied does not match the specified number of bits to extract, or
-        /// if the output type is too small to hold the extracted bits.  This
-        /// guards against some simple errors.
-        ///
-        /// \tparam B The number of bits to extract.  Must match the number of
-        ///   bit positions supplied.
-        /// \param [in] val The integer to extract bits from.
-        /// \param [in] b Bits to extract, where zero is the least significant
-        ///   bit of the input.  Specify bits in the order they should appear in
-        ///   the output field, from most significant to least significant.
-        /// \return The extracted bits packed into a right-aligned field.
-        //template <unsigned B, typename T, typename... U> T bitswap(T val, U... b) noexcept
-        //{
-        //    static_assert(sizeof...(b) == B, "wrong number of bits");
-        //    static_assert((sizeof(std::remove_reference_t<T>) * 8) >= B, "return type too small for result");
-        //    return bitswap(val, b...);
-        //}
-
-        public static int bitswap(int val, int B1, int B0)
-        {
-            return ((BIT(val,B1) << 1) | (BIT(val,B0) << 0));
-        }
-
-        public static int bitswap(int val, int B3, int B2, int B1, int B0)
-        {
-            return ((BIT(val,B3) << 3) | (BIT(val,B2) << 2) | (BIT(val,B1) << 1) | (BIT(val,B0) << 0));
-        }
-
-        public static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0)
-        {
-            return ((BIT(val,B5) << 5) | (BIT(val,B4) << 4) | (BIT(val,B3) << 3) | (BIT(val,B2) << 2) |
-                    (BIT(val,B1) << 1) | (BIT(val,B0) << 0));
-        }
-
-        public static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0)
-        {
-            return ((BIT(val,B7) << 7) | (BIT(val,B6) << 6) | (BIT(val,B5) << 5) | (BIT(val,B4) << 4) |
-                    (BIT(val,B3) << 3) | (BIT(val,B2) << 2) | (BIT(val,B1) << 1) | (BIT(val,B0) << 0));
-        }
-
-        public static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0)
-        {
-            return ((BIT(val,B15) << 15) | (BIT(val,B14) << 14) | (BIT(val,B13) << 13) | (BIT(val,B12) << 12) |
-                    (BIT(val,B11) << 11) | (BIT(val,B10) << 10) | (BIT(val, B9) <<  9) | (BIT(val, B8) <<  8) |
-                    (BIT(val, B7) <<  7) | (BIT(val, B6) <<  6) | (BIT(val, B5) <<  5) | (BIT(val, B4) <<  4) |
-                    (BIT(val, B3) <<  3) | (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0));
-        }
-
-        //define BITSWAP24(val,B23,B22,B21,B20,B19,B18,B17,B16,B15,B14,B13,B12,B11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0) \
-        //    ((BIT(val,B23) << 23) | (BIT(val,B22) << 22) | (BIT(val,B21) << 21) | (BIT(val,B20) << 20) | \
-        //        (BIT(val,B19) << 19) | (BIT(val,B18) << 18) | (BIT(val,B17) << 17) | (BIT(val,B16) << 16) | \
-        //        (BIT(val,B15) << 15) | (BIT(val,B14) << 14) | (BIT(val,B13) << 13) | (BIT(val,B12) << 12) | \
-        //        (BIT(val,B11) << 11) | (BIT(val,B10) << 10) | (BIT(val, B9) <<  9) | (BIT(val, B8) <<  8) | \
-        //        (BIT(val, B7) <<  7) | (BIT(val, B6) <<  6) | (BIT(val, B5) <<  5) | (BIT(val, B4) <<  4) | \
-        //        (BIT(val, B3) <<  3) | (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0))
-
-        //define BITSWAP32(val,B31,B30,B29,B28,B27,B26,B25,B24,B23,B22,B21,B20,B19,B18,B17,B16,B15,B14,B13,B12,B11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0) \
-        //    ((BIT(val,B31) << 31) | (BIT(val,B30) << 30) | (BIT(val,B29) << 29) | (BIT(val,B28) << 28) | \
-        //        (BIT(val,B27) << 27) | (BIT(val,B26) << 26) | (BIT(val,B25) << 25) | (BIT(val,B24) << 24) | \
-        //        (BIT(val,B23) << 23) | (BIT(val,B22) << 22) | (BIT(val,B21) << 21) | (BIT(val,B20) << 20) | \
-        //        (BIT(val,B19) << 19) | (BIT(val,B18) << 18) | (BIT(val,B17) << 17) | (BIT(val,B16) << 16) | \
-        //        (BIT(val,B15) << 15) | (BIT(val,B14) << 14) | (BIT(val,B13) << 13) | (BIT(val,B12) << 12) | \
-        //        (BIT(val,B11) << 11) | (BIT(val,B10) << 10) | (BIT(val, B9) <<  9) | (BIT(val, B8) <<  8) | \
-        //        (BIT(val, B7) <<  7) | (BIT(val, B6) <<  6) | (BIT(val, B5) <<  5) | (BIT(val, B4) <<  4) | \
-        //        (BIT(val, B3) <<  3) | (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0))
-
-
-        // constexpr absolute value of an integer
-        //template <typename T>
-        //constexpr std::enable_if_t<std::is_signed<T>::value, T> iabs(T v)
-        public static sbyte iabs(sbyte v) { return Math.Abs(v); }
-        public static short iabs(short v) { return Math.Abs(v); }
-        public static int iabs(int v) { return Math.Abs(v); }
-        public static Int64 iabs(Int64 v) { return Math.Abs(v); }
-
-
-        // reduce a fraction
-        //template <typename M, typename N>
-        public static void reduce_fraction(ref UInt32 num, ref UInt32 den)
-        {
-            var div = std.gcd(num, den);
-            if (div != 0)
-            {
-                num /= div;
-                den /= div;
-            }
-        }
-    }
-
-
     public interface simple_list_item<ElementType>
     {
         ElementType next();
@@ -498,5 +307,229 @@ namespace mame
 
         // reclaim all items from a list
         public void reclaim_all(simple_list<ItemType> _list) { _list.detach_all(); }
+    }
+
+
+    //template<typename T>
+    //class contiguous_sequence_wrapper
+
+    //template <typename T, std::size_t N, bool WriteWrap = false, bool ReadWrap = WriteWrap>
+    //class fifo : protected std::array<T, N>
+
+
+    public static partial class util_
+    {
+        //template <typename CharT, typename Traits, typename Allocator>
+        //std::basic_string_view<CharT, Traits> buf_to_string_view(basic_ovectorstream<CharT, Traits, Allocator> &stream)
+
+        // For declaring an array of the same dimensions as another array (including multi-dimensional arrays)
+        //template <typename T, typename U> struct equivalent_array_or_type { typedef T type; };
+        //template <typename T, typename U, std::size_t N> struct equivalent_array_or_type<T, U[N]> { typedef typename equivalent_array_or_type<T, U>::type type[N]; };
+        //template <typename T, typename U> using equivalent_array_or_type_t = typename equivalent_array_or_type<T, U>::type;
+        //template <typename T, typename U> struct equivalent_array { };
+        //template <typename T, typename U, std::size_t N> struct equivalent_array<T, U[N]> { typedef equivalent_array_or_type_t<T, U> type[N]; };
+        //template <typename T, typename U> using equivalent_array_t = typename equivalent_array<T, U>::type;
+        //#define EQUIVALENT_ARRAY(a, T) util::equivalent_array_t<T, std::remove_reference_t<decltype(a)> >
+
+        //template <typename E>
+        //using enable_enum_t = typename std::enable_if_t<std::is_enum<E>::value, typename std::underlying_type_t<E> >;
+
+        // template function which takes a strongly typed enumerator and returns its value as a compile-time constant
+        //template <typename E>
+        //constexpr enable_enum_t<E> underlying_value(E e) noexcept
+
+        // template function which takes an integral value and returns its representation as enumerator (even strongly typed)
+        //template <typename E , typename T>
+        //constexpr typename std::enable_if_t<std::is_enum<E>::value && std::is_integral<T>::value, E> enum_value(T value) noexcept
+
+
+        /// \defgroup bitutils Useful functions for bit shuffling
+        /// \{
+
+        /// \brief Generate a right-aligned bit mask
+        ///
+        /// Generates a right aligned mask of the specified width.  Works with
+        /// signed and unsigned integer types.
+        /// \tparam T Desired output type.
+        /// \tparam U Type of the input (generally resolved by the compiler).
+        /// \param [in] n Width of the mask to generate in bits.
+        /// \return Right-aligned mask of the specified width.
+        //template <typename T, typename U> constexpr T make_bitmask(U n)
+        //{
+        //    return T((n < (8 * sizeof(T)) ? (std::make_unsigned_t<T>(1) << n) : std::make_unsigned_t<T>(0)) - 1);
+        //}
+        //template <typename T, typename U>
+        public static u8 make_bitmask8(u32 n) { return make_bitmask8((s32)n); }
+        public static u8 make_bitmask8(s32 n) { return (u8)((n < (8 * 1) ? (1U << n) : 0U) - 1); }
+        public static u16 make_bitmask16(u32 n) { return make_bitmask16((s32)n); }
+        public static u16 make_bitmask16(s32 n) { return (u16)((n < (8 * 2) ? (1U << n) : 0U) - 1); }
+        public static u32 make_bitmask32(u32 n) { return make_bitmask32((s32)n); }
+        public static u32 make_bitmask32(s32 n) { return (u32)((n < (8 * 4) ? (1U << n) : 0U) - 1); }
+        public static u64 make_bitmask64(u32 n) { return make_bitmask64((s32)n); }
+        public static u64 make_bitmask64(s32 n) { return (u64)((n < (8 * 8) ? (1U << n) : 0U) - 1); }
+        public static uX make_bitmask_uX(int width, u32 n) { return make_bitmask_uX(width, (s32)n); }
+        public static uX make_bitmask_uX(int width, s32 n) { return new uX(width, (u64)((n < (8 * 8) ? (1U << n) : 0U) - 1)); }
+
+
+        /// \brief Extract a single bit from an integer
+        ///
+        /// Extracts a single bit from an integer into the least significant bit
+        /// position.
+        ///
+        /// \param [in] x The integer to extract the bit from.
+        /// \param [in] n The bit to extract, where zero is the least
+        ///   significant bit of the input.
+        /// \return Zero if the specified bit is unset, or one if it is set.
+        /// \sa bitswap
+        //template <typename T, typename U> constexpr T BIT(T x, U n) { return (x >> n) & T(1); }
+        public static int BIT(int x, int n) { return (x >> n) & 1; }
+        public static UInt32 BIT(UInt32 x, int n) { return (x >> n) & 1; }
+
+        /// \brief Extract a bit field from an integer
+        ///
+        /// Extracts and right-aligns a bit field from an integer.
+        ///
+        /// \param [in] x The integer to extract the bit field from.
+        /// \param [in] n The least significant bit position of the field to
+        ///   extract, where zero is the least significant bit of the input.
+        /// \param [in] w The width of the field to extract in bits.
+        /// \return The field [n..(n+w-1)] from the input.
+        /// \sa bitswap
+        //template <typename T, typename U, typename V>
+        public static UInt32 BIT(UInt32 x, UInt32 n, UInt32 w)  //template <typename T, typename U, typename V> constexpr T BIT(T x, U n, V w)
+        {
+            return (x >> (int)n) & make_bitmask32(w);
+        }
+
+
+        /// \brief Extract and right-align a single bit field
+        ///
+        /// This overload is used to terminate a recursive template
+        /// implementation.  It is functionally equivalent to the BIT
+        /// function for extracting a single bit.
+        ///
+        /// \param [in] val The integer to extract the bit from.
+        /// \param [in] b The bit to extract, where zero is the least
+        ///   significant bit of the input.
+        /// \return The specified bit of the input extracted to the least
+        ///   significant position.
+        //template <typename T, typename U> constexpr T bitswap(T val, U b) noexcept { return BIT(val, b) << 0U; }
+
+        /// \brief Extract bits in arbitrary order
+        ///
+        /// Extracts bits from an integer.  Specify the bits in the order they
+        /// should be arranged in the output, from most significant to least
+        /// significant.  The extracted bits will be packed into a right-aligned
+        /// field in the output.
+        ///
+        /// \param [in] val The integer to extract bits from.
+        /// \param [in] b The first bit to extract from the input
+        ///   extract, where zero is the least significant bit of the input.
+        ///   This bit will appear in the most significant position of the
+        ///   right-aligned output field.
+        /// \param [in] c The remaining bits to extract, where zero is the
+        ///   least significant bit of the input.
+        /// \return The extracted bits packed into a right-aligned field.
+        //template <typename T, typename U, typename... V> constexpr T bitswap(T val, U b, V... c) noexcept
+        //{
+        //    return (BIT(val, b) << sizeof...(c)) | bitswap(val, c...);
+        //}
+
+        /// \brief Extract bits in arbitrary order with explicit count
+        ///
+        /// Extracts bits from an integer.  Specify the bits in the order they
+        /// should be arranged in the output, from most significant to least
+        /// significant.  The extracted bits will be packed into a right-aligned
+        /// field in the output.  The number of bits to extract must be supplied
+        /// as a template argument.
+        ///
+        /// A compile error will be generated if the number of bit positions
+        /// supplied does not match the specified number of bits to extract, or
+        /// if the output type is too small to hold the extracted bits.  This
+        /// guards against some simple errors.
+        ///
+        /// \tparam B The number of bits to extract.  Must match the number of
+        ///   bit positions supplied.
+        /// \param [in] val The integer to extract bits from.
+        /// \param [in] b Bits to extract, where zero is the least significant
+        ///   bit of the input.  Specify bits in the order they should appear in
+        ///   the output field, from most significant to least significant.
+        /// \return The extracted bits packed into a right-aligned field.
+        //template <unsigned B, typename T, typename... U> T bitswap(T val, U... b) noexcept
+        //{
+        //    static_assert(sizeof...(b) == B, "wrong number of bits");
+        //    static_assert((sizeof(std::remove_reference_t<T>) * 8) >= B, "return type too small for result");
+        //    return bitswap(val, b...);
+        //}
+
+        public static int bitswap(int val, int B1, int B0)
+        {
+            return ((BIT(val,B1) << 1) | (BIT(val,B0) << 0));
+        }
+
+        public static int bitswap(int val, int B3, int B2, int B1, int B0)
+        {
+            return ((BIT(val,B3) << 3) | (BIT(val,B2) << 2) | (BIT(val,B1) << 1) | (BIT(val,B0) << 0));
+        }
+
+        public static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0)
+        {
+            return ((BIT(val,B5) << 5) | (BIT(val,B4) << 4) | (BIT(val,B3) << 3) | (BIT(val,B2) << 2) |
+                    (BIT(val,B1) << 1) | (BIT(val,B0) << 0));
+        }
+
+        public static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0)
+        {
+            return ((BIT(val,B7) << 7) | (BIT(val,B6) << 6) | (BIT(val,B5) << 5) | (BIT(val,B4) << 4) |
+                    (BIT(val,B3) << 3) | (BIT(val,B2) << 2) | (BIT(val,B1) << 1) | (BIT(val,B0) << 0));
+        }
+
+        public static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0)
+        {
+            return ((BIT(val,B15) << 15) | (BIT(val,B14) << 14) | (BIT(val,B13) << 13) | (BIT(val,B12) << 12) |
+                    (BIT(val,B11) << 11) | (BIT(val,B10) << 10) | (BIT(val, B9) <<  9) | (BIT(val, B8) <<  8) |
+                    (BIT(val, B7) <<  7) | (BIT(val, B6) <<  6) | (BIT(val, B5) <<  5) | (BIT(val, B4) <<  4) |
+                    (BIT(val, B3) <<  3) | (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0));
+        }
+
+        //define BITSWAP24(val,B23,B22,B21,B20,B19,B18,B17,B16,B15,B14,B13,B12,B11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0) \
+        //    ((BIT(val,B23) << 23) | (BIT(val,B22) << 22) | (BIT(val,B21) << 21) | (BIT(val,B20) << 20) | \
+        //        (BIT(val,B19) << 19) | (BIT(val,B18) << 18) | (BIT(val,B17) << 17) | (BIT(val,B16) << 16) | \
+        //        (BIT(val,B15) << 15) | (BIT(val,B14) << 14) | (BIT(val,B13) << 13) | (BIT(val,B12) << 12) | \
+        //        (BIT(val,B11) << 11) | (BIT(val,B10) << 10) | (BIT(val, B9) <<  9) | (BIT(val, B8) <<  8) | \
+        //        (BIT(val, B7) <<  7) | (BIT(val, B6) <<  6) | (BIT(val, B5) <<  5) | (BIT(val, B4) <<  4) | \
+        //        (BIT(val, B3) <<  3) | (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0))
+
+        //define BITSWAP32(val,B31,B30,B29,B28,B27,B26,B25,B24,B23,B22,B21,B20,B19,B18,B17,B16,B15,B14,B13,B12,B11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0) \
+        //    ((BIT(val,B31) << 31) | (BIT(val,B30) << 30) | (BIT(val,B29) << 29) | (BIT(val,B28) << 28) | \
+        //        (BIT(val,B27) << 27) | (BIT(val,B26) << 26) | (BIT(val,B25) << 25) | (BIT(val,B24) << 24) | \
+        //        (BIT(val,B23) << 23) | (BIT(val,B22) << 22) | (BIT(val,B21) << 21) | (BIT(val,B20) << 20) | \
+        //        (BIT(val,B19) << 19) | (BIT(val,B18) << 18) | (BIT(val,B17) << 17) | (BIT(val,B16) << 16) | \
+        //        (BIT(val,B15) << 15) | (BIT(val,B14) << 14) | (BIT(val,B13) << 13) | (BIT(val,B12) << 12) | \
+        //        (BIT(val,B11) << 11) | (BIT(val,B10) << 10) | (BIT(val, B9) <<  9) | (BIT(val, B8) <<  8) | \
+        //        (BIT(val, B7) <<  7) | (BIT(val, B6) <<  6) | (BIT(val, B5) <<  5) | (BIT(val, B4) <<  4) | \
+        //        (BIT(val, B3) <<  3) | (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0))
+
+
+        // constexpr absolute value of an integer
+        //template <typename T>
+        //constexpr std::enable_if_t<std::is_signed<T>::value, T> iabs(T v)
+        public static sbyte iabs(sbyte v) { return Math.Abs(v); }
+        public static short iabs(short v) { return Math.Abs(v); }
+        public static int iabs(int v) { return Math.Abs(v); }
+        public static Int64 iabs(Int64 v) { return Math.Abs(v); }
+
+
+        // reduce a fraction
+        //template <typename M, typename N>
+        public static void reduce_fraction(ref UInt32 num, ref UInt32 den)
+        {
+            var div = std.gcd(num, den);
+            if (div != 0)
+            {
+                num /= div;
+                den /= div;
+            }
+        }
     }
 }

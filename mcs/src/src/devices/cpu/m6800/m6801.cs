@@ -5,7 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -169,8 +172,8 @@ namespace mame
         };
 
 
-        devcb_read8.array<devcb_read8, uint32_constant_4> m_in_port_func;
-        devcb_write8.array<devcb_write8, uint32_constant_4> m_out_port_func;
+        devcb_read8.array<uint32_constant_4> m_in_port_func;
+        devcb_write8.array<uint32_constant_4> m_out_port_func;
 
         devcb_write_line m_out_sc2_func;
         devcb_write_line m_out_sertx_func;
@@ -285,8 +288,8 @@ namespace mame
 
             init_m6803_insn();
 
-            m_in_port_func = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
-            m_out_port_func = new devcb_write8.array<devcb_write8, uint32_constant_4>(this, () => { return new devcb_write8(this); });
+            m_in_port_func = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_out_port_func = new devcb_write8.array<uint32_constant_4>(this, () => { return new devcb_write8(this); });
             m_out_sc2_func = new devcb_write_line(this);
             m_out_sertx_func = new devcb_write_line(this);
         }
@@ -451,7 +454,7 @@ namespace mame
             switch (irqline)
             {
             case M6801_SC1_LINE:
-                if (m_sc1_state == 0 && (CLEAR_LINE != state))
+                if (m_sc1_state == 0 && (g.CLEAR_LINE != state))
                 {
                     if (m_port3_latched == 0 && (m_p3csr & M6801_P3CSR_LE) != 0)
                     {
@@ -469,8 +472,8 @@ namespace mame
                     }
                 }
 
-                m_sc1_state = ASSERT_LINE == state ? 1 : 0;
-                if (CLEAR_LINE != state)
+                m_sc1_state = g.ASSERT_LINE == state ? 1 : 0;
+                if (g.CLEAR_LINE != state)
                     standard_irq_callback(M6801_SC1_LINE); // re-entrant - do it after setting m_sc1_state
 
                 break;
@@ -481,7 +484,7 @@ namespace mame
                 if (state != irq_state[M6801_TIN_LINE])
                 {
                     //edge = (state == CLEAR_LINE ) ? 2 : 0;
-                    if (((m_tcsr & TCSR_IEDG) ^ (state == CLEAR_LINE ? TCSR_IEDG : 0)) == 0)
+                    if (((m_tcsr & TCSR_IEDG) ^ (state == g.CLEAR_LINE ? TCSR_IEDG : 0)) == 0)
                         return;
 
                     /* active edge in */
@@ -591,7 +594,7 @@ namespace mame
 
                 if ((m_p3csr & M6801_P3CSR_OSS) == 0)
                 {
-                    set_os3(ASSERT_LINE);
+                    set_os3(g.ASSERT_LINE);
                 }
             }
 
@@ -607,7 +610,7 @@ namespace mame
 
                 if ((m_p3csr & M6801_P3CSR_OSS) == 0)
                 {
-                    set_os3(CLEAR_LINE);
+                    set_os3(g.CLEAR_LINE);
                 }
             }
 
@@ -628,7 +631,7 @@ namespace mame
 
             if ((m_p3csr & M6801_P3CSR_OSS) != 0)
             {
-                set_os3(ASSERT_LINE);
+                set_os3(g.ASSERT_LINE);
             }
 
             m_port_data[2] = data;
@@ -636,7 +639,7 @@ namespace mame
 
             if ((m_p3csr & M6801_P3CSR_OSS) != 0)
             {
-                set_os3(CLEAR_LINE);
+                set_os3(g.CLEAR_LINE);
             }
         }
 

@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 
 
-namespace mame.util
+namespace mame
+{
+public static partial class util_
 {
     /* Error types */
     public enum png_error
@@ -24,16 +26,13 @@ namespace mame.util
     }
 
 
-    public static class png_global
-    {
-        //png_error png_read_bitmap(core_file &fp, bitmap_argb32 &bitmap);
+    //png_error png_read_bitmap(core_file &fp, bitmap_argb32 &bitmap);
 
-        //png_error png_write_bitmap(core_file &fp, png_info *info, bitmap_t &bitmap, int palette_length, const rgb_t *palette);
+    //png_error png_write_bitmap(core_file &fp, png_info *info, bitmap_t &bitmap, int palette_length, const rgb_t *palette);
 
-        //png_error mng_capture_start(core_file &fp, bitmap_t &bitmap, unsigned rate);
-        public static png_error mng_capture_frame(core_file fp, png_info info, bitmap_t bitmap, int palette_length, List<rgb_t> palette) { throw new emu_unimplemented(); }
-        public static png_error mng_capture_stop(core_file fp) { throw new emu_unimplemented(); }
-    }
+    //png_error mng_capture_start(core_file &fp, bitmap_t &bitmap, unsigned rate);
+    public static png_error mng_capture_frame(core_file fp, png_info info, bitmap_t bitmap, int palette_length, List<rgb_t> palette) { throw new emu_unimplemented(); }
+    public static png_error mng_capture_stop(core_file fp) { throw new emu_unimplemented(); }
 
 
     public class png_info
@@ -76,4 +75,5 @@ namespace mame.util
 
         //png_info &operator=(png_info &&) = default;
     }
+}
 }

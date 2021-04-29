@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
@@ -20,7 +22,7 @@ namespace mame
 
 
         // device callbacks
-        devcb_write_line.array<devcb_write_line, uint32_constant_8> m_q_out_cb;      // output line callback array
+        devcb_write_line.array<uint32_constant_8> m_q_out_cb;      // output line callback array
         devcb_write8 m_parallel_out_cb;  // parallel output option
 
         // miscellaneous configuration
@@ -38,7 +40,7 @@ namespace mame
         protected addressable_latch_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock, bool clear_active)
             : base(mconfig, type, tag, owner, clock)
         {
-            m_q_out_cb = new devcb_write_line.array<devcb_write_line, uint32_constant_8>(this, () => { return new devcb_write_line(this); });
+            m_q_out_cb = new devcb_write_line.array<uint32_constant_8>(this, () => { return new devcb_write_line(this); });
             m_parallel_out_cb = new devcb_write8(this);
             m_clear_active = clear_active;
         }
@@ -90,15 +92,15 @@ namespace mame
             if (LOG_MYSTERY_BITS && data != 0x00 && data != 0x01 && data != 0xff)
                 logerror("Mystery bits written to Q{0}:{1}{2}{3}{4}{5}{6}{7}\n",  // %d:%s%s%s%s%s%s%s\n",
                     offset,
-                    BIT(data, 7) != 0 ? " D7" : "",
-                    BIT(data, 6) != 0 ? " D6" : "",
-                    BIT(data, 5) != 0 ? " D5" : "",
-                    BIT(data, 4) != 0 ? " D4" : "",
-                    BIT(data, 3) != 0 ? " D3" : "",
-                    BIT(data, 2) != 0 ? " D2" : "",
-                    BIT(data, 1) != 0 ? " D1" : "");
+                    g.BIT(data, 7) != 0 ? " D7" : "",
+                    g.BIT(data, 6) != 0 ? " D6" : "",
+                    g.BIT(data, 5) != 0 ? " D5" : "",
+                    g.BIT(data, 4) != 0 ? " D4" : "",
+                    g.BIT(data, 3) != 0 ? " D3" : "",
+                    g.BIT(data, 2) != 0 ? " D2" : "",
+                    g.BIT(data, 1) != 0 ? " D1" : "");
 
-            write_bit(offset, BIT(data, 0) != 0);
+            write_bit(offset, g.BIT(data, 0) != 0);
         }
 
 
@@ -114,15 +116,15 @@ namespace mame
             if (LOG_MYSTERY_BITS && data != 0x00 && data != 0x80 && data != 0xff)
                 logerror("Mystery bits written to Q{0}:{1}{2}{3}{4}{5}{6}{7}\n",  // %d:%s%s%s%s%s%s%s\n",
                     offset,
-                    BIT(data, 6) != 0 ? " D6" : "",
-                    BIT(data, 5) != 0 ? " D5" : "",
-                    BIT(data, 4) != 0 ? " D4" : "",
-                    BIT(data, 3) != 0 ? " D3" : "",
-                    BIT(data, 2) != 0 ? " D2" : "",
-                    BIT(data, 1) != 0 ? " D1" : "",
-                    BIT(data, 0) != 0 ? " D0" : "");
+                    g.BIT(data, 6) != 0 ? " D6" : "",
+                    g.BIT(data, 5) != 0 ? " D5" : "",
+                    g.BIT(data, 4) != 0 ? " D4" : "",
+                    g.BIT(data, 3) != 0 ? " D3" : "",
+                    g.BIT(data, 2) != 0 ? " D2" : "",
+                    g.BIT(data, 1) != 0 ? " D1" : "",
+                    g.BIT(data, 0) != 0 ? " D0" : "");
 
-            write_bit(offset, BIT(data, 7) != 0);
+            write_bit(offset, g.BIT(data, 7) != 0);
         }
 
 
@@ -134,14 +136,14 @@ namespace mame
 
 
         // read handlers (inlined for the sake of optimization)
-        public int q0_r() { return BIT(m_q, 0); }  //DECLARE_READ_LINE_MEMBER(q0_r) { return BIT(m_q, 0); }
-        public int q1_r() { return BIT(m_q, 1); }  //DECLARE_READ_LINE_MEMBER(q1_r) { return BIT(m_q, 1); }
-        public int q2_r() { return BIT(m_q, 2); }  //DECLARE_READ_LINE_MEMBER(q2_r) { return BIT(m_q, 2); }
-        public int q3_r() { return BIT(m_q, 3); }  //DECLARE_READ_LINE_MEMBER(q3_r) { return BIT(m_q, 3); }
-        public int q4_r() { return BIT(m_q, 4); }  //DECLARE_READ_LINE_MEMBER(q4_r) { return BIT(m_q, 4); }
-        public int q5_r() { return BIT(m_q, 5); }  //DECLARE_READ_LINE_MEMBER(q5_r) { return BIT(m_q, 5); }
-        public int q6_r() { return BIT(m_q, 6); }  //DECLARE_READ_LINE_MEMBER(q6_r) { return BIT(m_q, 6); }
-        public int q7_r() { return BIT(m_q, 7); }  //DECLARE_READ_LINE_MEMBER(q7_r) { return BIT(m_q, 7); }
+        public int q0_r() { return g.BIT(m_q, 0); }  //DECLARE_READ_LINE_MEMBER(q0_r) { return BIT(m_q, 0); }
+        public int q1_r() { return g.BIT(m_q, 1); }  //DECLARE_READ_LINE_MEMBER(q1_r) { return BIT(m_q, 1); }
+        public int q2_r() { return g.BIT(m_q, 2); }  //DECLARE_READ_LINE_MEMBER(q2_r) { return BIT(m_q, 2); }
+        public int q3_r() { return g.BIT(m_q, 3); }  //DECLARE_READ_LINE_MEMBER(q3_r) { return BIT(m_q, 3); }
+        public int q4_r() { return g.BIT(m_q, 4); }  //DECLARE_READ_LINE_MEMBER(q4_r) { return BIT(m_q, 4); }
+        public int q5_r() { return g.BIT(m_q, 5); }  //DECLARE_READ_LINE_MEMBER(q5_r) { return BIT(m_q, 5); }
+        public int q6_r() { return g.BIT(m_q, 6); }  //DECLARE_READ_LINE_MEMBER(q6_r) { return BIT(m_q, 6); }
+        public int q7_r() { return g.BIT(m_q, 7); }  //DECLARE_READ_LINE_MEMBER(q7_r) { return BIT(m_q, 7); }
         //u8 output_state() const { return m_q; }
 
         // control inputs
@@ -209,7 +211,7 @@ namespace mame
         void update_bit()
         {
             // first verify that the selected bit is actually changing
-            if (BIT(m_q, m_address) == (m_data ? 1 : 0))
+            if (g.BIT(m_q, m_address) == (m_data ? 1 : 0))
                 return;
 
             if (!m_clear)
@@ -252,8 +254,8 @@ namespace mame
             // return any previously set output lines to clear state
             for (int bit = 0; bit < 8; bit++)
             {
-                if (BIT(bits_changed, bit) != 0 && !m_q_out_cb[bit].isnull())
-                    m_q_out_cb[bit].op(BIT(new_q, bit));
+                if (g.BIT(bits_changed, bit) != 0 && !m_q_out_cb[bit].isnull())
+                    m_q_out_cb[bit].op(g.BIT(new_q, bit));
             }
 
             // update parallel output

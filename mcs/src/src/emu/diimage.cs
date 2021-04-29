@@ -215,9 +215,9 @@ namespace mame
 
 
         public bool exists() { return !m_image_name.empty(); }
-        public string filename() { return m_image_name.empty() ? null : m_image_name.c_str(); }
+        public string filename() { return m_image_name.empty() ? null : m_image_name; }
         //string basename() { return m_basename.empty() ? null : m_basename.c_str(); }
-        public string basename_noext() { return m_basename_noext.empty() ? null : m_basename_noext.c_str(); }
+        public string basename_noext() { return m_basename_noext.empty() ? null : m_basename_noext; }
         //string filetype() { return m_filetype; }
         //bool is_filetype(const std::string &candidate_filetype) { return !core_stricmp(filetype().c_str(), candidate_filetype.c_str()); }
         //bool is_open() const noexcept { return bool(m_file); }

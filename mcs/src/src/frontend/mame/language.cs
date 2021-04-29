@@ -73,9 +73,9 @@ namespace mame
             if (name.empty())
                 return;
 
-            global_object.strreplace(ref name, " ", "_");
-            global_object.strreplace(ref name, "(", "");
-            global_object.strreplace(ref name, ")", "");
+            g.strreplace(ref name, " ", "_");
+            g.strreplace(ref name, "(", "");
+            g.strreplace(ref name, ")", "");
             emu_file file = new emu_file(m_options.language_path(), global_object.OPEN_FLAG_READ);
             if (file.open(name + global_object.PATH_SEPARATOR + "strings.mo") != osd_file.error.NONE)
             {

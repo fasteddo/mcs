@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -47,7 +47,7 @@ namespace mame
         {
             m_main_irq_mask = (byte)state;
             if (m_main_irq_mask == 0)
-                m_maincpu.op[0].set_input_line(0, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(0, g.CLEAR_LINE);
         }
 
         //WRITE_LINE_MEMBER(galaga_state::irq2_clear_w)
@@ -55,7 +55,7 @@ namespace mame
         {
             m_sub_irq_mask = (byte)state;
             if (m_sub_irq_mask == 0)
-                m_subcpu.op[0].set_input_line(0, CLEAR_LINE);
+                m_subcpu.op[0].set_input_line(0, g.CLEAR_LINE);
         }
 
         //WRITE_LINE_MEMBER(galaga_state::nmion_w)
@@ -67,8 +67,8 @@ namespace mame
 
         protected void out_(uint8_t data)
         {
-            m_leds[1] = BIT(data, 0);
-            m_leds[0] = BIT(data, 1);
+            m_leds[1] = g.BIT(data, 0);
+            m_leds[0] = g.BIT(data, 1);
             machine().bookkeeping().coin_counter_w(1,~data & 4);
             machine().bookkeeping().coin_counter_w(0,~data & 8);
         }
@@ -86,7 +86,7 @@ namespace mame
             int scanline = param;
 
             if (m_sub2_nmi_mask != 0)
-                m_subcpu2.op[0].pulse_input_line(device_execute_interface.INPUT_LINE_NMI, attotime.zero);
+                m_subcpu2.op[0].pulse_input_line(g.INPUT_LINE_NMI, attotime.zero);
 
             scanline = scanline + 128;
             if (scanline >= 272)
@@ -116,8 +116,8 @@ namespace mame
         void earom_control_w(uint8_t data)
         {
             // CK = DB0, C1 = /DB1, C2 = DB2, CS1 = DB3, /CS2 = GND
-            m_earom.op[0].set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
-            m_earom.op[0].set_clk(BIT(data, 0));
+            m_earom.op[0].set_control((uint8_t)g.BIT(data, 3), 1, g.BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)g.BIT(data, 2));
+            m_earom.op[0].set_clk(g.BIT(data, 0));
         }
     }
 
@@ -478,66 +478,66 @@ namespace mame
     {
         static readonly gfx_layout charlayout_2bpp = new gfx_layout(
             8,8,
-            RGN_FRAC(1,1),
+            g.RGN_FRAC(1,1),
             2,
-            ArrayCombineUInt32(0, 4),
-            ArrayCombineUInt32(STEP4(8*8,1), STEP4(0*8,1)),
-            ArrayCombineUInt32(STEP8(0*8,8)),
+            g.ArrayCombineUInt32(0, 4),
+            g.ArrayCombineUInt32(g.STEP4(8*8,1), g.STEP4(0*8,1)),
+            g.ArrayCombineUInt32(g.STEP8(0*8,8)),
             16*8
         );
 
 
         static readonly gfx_layout spritelayout_galaga = new gfx_layout(
             16,16,
-            RGN_FRAC(1,1),
+            g.RGN_FRAC(1,1),
             2,
-            ArrayCombineUInt32(0, 4),
-            ArrayCombineUInt32(STEP4(0*8,1), STEP4(8*8,1), STEP4(16*8,1), STEP4(24*8,1)),
-            ArrayCombineUInt32(STEP8(0*8,8), STEP8(32*8,8)),
+            g.ArrayCombineUInt32(0, 4),
+            g.ArrayCombineUInt32(g.STEP4(0*8,1), g.STEP4(8*8,1), g.STEP4(16*8,1), g.STEP4(24*8,1)),
+            g.ArrayCombineUInt32(g.STEP8(0*8,8), g.STEP8(32*8,8)),
             64*8
         );
 
 
         static readonly gfx_layout spritelayout_xevious = new gfx_layout(
             16,16,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             3,
-            ArrayCombineUInt32(RGN_FRAC(1,2)+4, 0, 4),
-            ArrayCombineUInt32(STEP4(0*8,1), STEP4(8*8,1), STEP4(16*8,1), STEP4(24*8,1)),
-            ArrayCombineUInt32(STEP8(0*8,8), STEP8(32*8,8)),
+            g.ArrayCombineUInt32(g.RGN_FRAC(1,2)+4, 0, 4),
+            g.ArrayCombineUInt32(g.STEP4(0*8,1), g.STEP4(8*8,1), g.STEP4(16*8,1), g.STEP4(24*8,1)),
+            g.ArrayCombineUInt32(g.STEP8(0*8,8), g.STEP8(32*8,8)),
             64*8
         );
 
 
         static readonly gfx_layout charlayout_xevious = new gfx_layout(
             8,8,
-            RGN_FRAC(1,1),
+            g.RGN_FRAC(1,1),
             1,
-            ArrayCombineUInt32(0),
-            ArrayCombineUInt32(STEP8(0,1)),
-            ArrayCombineUInt32(STEP8(0,8)),
+            g.ArrayCombineUInt32(0),
+            g.ArrayCombineUInt32(g.STEP8(0,1)),
+            g.ArrayCombineUInt32(g.STEP8(0,8)),
             8*8
         );
 
 
         static readonly gfx_layout charlayout_digdug = new gfx_layout(
             8,8,
-            RGN_FRAC(1,1),
+            g.RGN_FRAC(1,1),
             1,
-            ArrayCombineUInt32(0),
-            ArrayCombineUInt32(STEP8(7,-1)),
-            ArrayCombineUInt32(STEP8(0,8)),
+            g.ArrayCombineUInt32(0),
+            g.ArrayCombineUInt32(g.STEP8(7,-1)),
+            g.ArrayCombineUInt32(g.STEP8(0,8)),
             8*8
         );
 
 
         static readonly gfx_layout bgcharlayout = new gfx_layout(
             8,8,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             2,
-            ArrayCombineUInt32(0, RGN_FRAC(1,2)),
-            ArrayCombineUInt32(STEP8(0,1)),
-            ArrayCombineUInt32(STEP8(0,8)),
+            g.ArrayCombineUInt32(0, g.RGN_FRAC(1,2)),
+            g.ArrayCombineUInt32(g.STEP8(0,1)),
+            g.ArrayCombineUInt32(g.STEP8(0,8)),
             8*8
         );
 
@@ -545,8 +545,8 @@ namespace mame
         //static GFXDECODE_START( gfx_galaga )
         static readonly gfx_decode_entry [] gfx_galaga = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout_2bpp,        0, 64 ),
-            GFXDECODE_ENTRY( "gfx2", 0, spritelayout_galaga, 64*4, 64 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0, charlayout_2bpp,        0, 64 ),
+            g.GFXDECODE_ENTRY( "gfx2", 0, spritelayout_galaga, 64*4, 64 ),
             //GFXDECODE_END
         };
 
@@ -554,9 +554,9 @@ namespace mame
         //static GFXDECODE_START( gfx_xevious )
         protected static readonly gfx_decode_entry [] gfx_xevious = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout_xevious, 128*4+64*8,  64 ),
-            GFXDECODE_ENTRY( "gfx2", 0, bgcharlayout,                0, 128 ),
-            GFXDECODE_ENTRY( "gfx3", 0, spritelayout_xevious,    128*4,  64 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0, charlayout_xevious, 128*4+64*8,  64 ),
+            g.GFXDECODE_ENTRY( "gfx2", 0, bgcharlayout,                0, 128 ),
+            g.GFXDECODE_ENTRY( "gfx3", 0, spritelayout_xevious,    128*4,  64 ),
             //GFXDECODE_END
         };
 
@@ -564,9 +564,9 @@ namespace mame
         //static GFXDECODE_START( gfx_digdug )
         protected static readonly gfx_decode_entry [] gfx_digdug = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout_digdug,         0, 16 ),
-            GFXDECODE_ENTRY( "gfx2", 0, spritelayout_galaga,    16*2, 64 ),
-            GFXDECODE_ENTRY( "gfx3", 0, charlayout_2bpp, 64*4 + 16*2, 64 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0, charlayout_digdug,         0, 16 ),
+            g.GFXDECODE_ENTRY( "gfx2", 0, spritelayout_galaga,    16*2, 64 ),
+            g.GFXDECODE_ENTRY( "gfx3", 0, charlayout_2bpp, 64*4 + 16*2, 64 ),
             //GFXDECODE_END
         };
 
@@ -575,10 +575,10 @@ namespace mame
         protected void vblank_irq(int state)
         {
             if (state != 0 && m_main_irq_mask != 0)
-                m_maincpu.op[0].set_input_line(0, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(0, g.ASSERT_LINE);
 
             if (state != 0 && m_sub_irq_mask != 0)
-                m_subcpu.op[0].set_input_line(0, ASSERT_LINE);
+                m_subcpu.op[0].set_input_line(0, g.ASSERT_LINE);
         }
 
 
@@ -598,8 +598,8 @@ namespace mame
             misclatch.q_out_cb(0).set((write_line_delegate)irq1_clear_w).reg();
             misclatch.q_out_cb(1).set((write_line_delegate)irq2_clear_w).reg();
             misclatch.q_out_cb(2).set((write_line_delegate)nmion_w).reg();
-            misclatch.q_out_cb(3).set_inputline("sub", device_execute_interface.INPUT_LINE_RESET).invert().reg();
-            misclatch.q_out_cb(3).append_inputline("sub2", device_execute_interface.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).set_inputline("sub", g.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).append_inputline("sub2", g.INPUT_LINE_RESET).invert().reg();
             misclatch.q_out_cb(3).append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).reset(state); }).reg();
             misclatch.q_out_cb(3).append("54xx", (state) => { ((namco_54xx_device)subdevice("54xx")).reset(state); }).reg();
 
@@ -613,7 +613,7 @@ namespace mame
 
             namco_54xx_device n54xx = NAMCO_54XX(config, "54xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
             n54xx.set_discrete("discrete");
-            n54xx.set_basenote(NODE_01);
+            n54xx.set_basenote(g.NODE_01);
 
             namco_06xx_device n06xx = NAMCO_06XX(config, "06xx", MASTER_CLOCK/6/64);
             n06xx.set_maincpu(m_maincpu);
@@ -655,10 +655,10 @@ namespace mame
 
             NAMCO(config, m_namco_sound, MASTER_CLOCK/6/32);
             m_namco_sound.op[0].set_voices(3);
-            m_namco_sound.op[0].disound.add_route(ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0);
+            m_namco_sound.op[0].disound.add_route(g.ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0);
 
             /* discrete circuit on the 54XX outputs */
-            DISCRETE(config, "discrete", galaga_discrete).disound.add_route(ALL_OUTPUTS, "mono", 0.90);
+            DISCRETE(config, "discrete", galaga_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 0.90);
         }
     }
 
@@ -681,8 +681,8 @@ namespace mame
             misclatch.q_out_cb(0).set((write_line_delegate)irq1_clear_w).reg();
             misclatch.q_out_cb(1).set((write_line_delegate)irq2_clear_w).reg();
             misclatch.q_out_cb(2).set((write_line_delegate)nmion_w).reg();
-            misclatch.q_out_cb(3).set_inputline("sub", device_execute_interface.INPUT_LINE_RESET).invert().reg();
-            misclatch.q_out_cb(3).append_inputline("sub2", device_execute_interface.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).set_inputline("sub", g.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).append_inputline("sub2", g.INPUT_LINE_RESET).invert().reg();
             misclatch.q_out_cb(3).append("50xx", (state) => { ((namco_50xx_device)subdevice("50xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("50xx", FUNC(namco_50xx_device::reset));
             misclatch.q_out_cb(3).append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("51xx", FUNC(namco_51xx_device::reset));
             misclatch.q_out_cb(3).append("54xx", (state) => { ((namco_54xx_device)subdevice("54xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("54xx", FUNC(namco_54xx_device::reset));
@@ -699,7 +699,7 @@ namespace mame
 
             namco_54xx_device n54xx = NAMCO_54XX(config, "54xx", MASTER_CLOCK/6/2);      /* 1.536 MHz */
             n54xx.set_discrete("discrete");
-            n54xx.set_basenote(NODE_01);
+            n54xx.set_basenote(g.NODE_01);
 
             namco_06xx_device n06xx = NAMCO_06XX(config, "06xx", MASTER_CLOCK/6/64);
             n06xx.set_maincpu(m_maincpu);
@@ -736,10 +736,10 @@ namespace mame
 
             NAMCO(config, m_namco_sound, MASTER_CLOCK/6/32);
             m_namco_sound.op[0].set_voices(3);
-            m_namco_sound.op[0].disound.add_route(ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0);
+            m_namco_sound.op[0].disound.add_route(g.ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0);
 
             /* discrete circuit on the 54XX outputs */
-            DISCRETE(config, "discrete", galaga_discrete).disound.add_route(ALL_OUTPUTS, "mono", 0.90);
+            DISCRETE(config, "discrete", galaga_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 0.90);
         }
     }
 
@@ -762,8 +762,8 @@ namespace mame
             misclatch.q_out_cb(0).set((write_line_delegate)irq1_clear_w).reg();
             misclatch.q_out_cb(1).set((write_line_delegate)irq2_clear_w).reg();
             misclatch.q_out_cb(2).set((write_line_delegate)nmion_w).reg();
-            misclatch.q_out_cb(3).set_inputline("sub", device_execute_interface.INPUT_LINE_RESET).invert().reg();
-            misclatch.q_out_cb(3).append_inputline("sub2", device_execute_interface.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).set_inputline("sub", g.INPUT_LINE_RESET).invert().reg();
+            misclatch.q_out_cb(3).append_inputline("sub2", g.INPUT_LINE_RESET).invert().reg();
             misclatch.q_out_cb(3).append("51xx", (state) => { ((namco_51xx_device)subdevice("51xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("51xx", FUNC(namco_51xx_device::reset));
             misclatch.q_out_cb(3).append("53xx", (state) => { ((namco_53xx_device)subdevice("53xx")).reset(state); }).reg();  //misclatch.q_out_cb<3>().append("53xx", FUNC(namco_53xx_device::reset));
             // Q5-Q7 also used (see below)
@@ -825,7 +825,7 @@ namespace mame
 
             NAMCO(config, m_namco_sound, MASTER_CLOCK/6/32);
             m_namco_sound.op[0].set_voices(3);
-            m_namco_sound.op[0].disound.add_route(ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0);
+            m_namco_sound.op[0].disound.add_route(g.ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0);
         }
     }
 

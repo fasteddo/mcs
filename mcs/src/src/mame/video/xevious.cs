@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
-using pen_t = System.UInt32;
-using tilemap_memory_index = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -47,25 +47,25 @@ namespace mame
                 int bit3;
 
                 // red component
-                bit0 = BIT(color_prom[0], 0);
-                bit1 = BIT(color_prom[0], 1);
-                bit2 = BIT(color_prom[0], 2);
-                bit3 = BIT(color_prom[0], 3);
+                bit0 = g.BIT(color_prom[0], 0);
+                bit1 = g.BIT(color_prom[0], 1);
+                bit2 = g.BIT(color_prom[0], 2);
+                bit3 = g.BIT(color_prom[0], 3);
                 int r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 // green component
-                bit0 = BIT(color_prom[256], 0);
-                bit1 = BIT(color_prom[256], 1);
-                bit2 = BIT(color_prom[256], 2);
-                bit3 = BIT(color_prom[256], 3);
-                int g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+                bit0 = g.BIT(color_prom[256], 0);
+                bit1 = g.BIT(color_prom[256], 1);
+                bit2 = g.BIT(color_prom[256], 2);
+                bit3 = g.BIT(color_prom[256], 3);
+                int gr = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 // blue component
-                bit0 = BIT(color_prom[2*256], 0);
-                bit1 = BIT(color_prom[2*256], 1);
-                bit2 = BIT(color_prom[2*256], 2);
-                bit3 = BIT(color_prom[2*256], 3);
+                bit0 = g.BIT(color_prom[2*256], 0);
+                bit1 = g.BIT(color_prom[2*256], 1);
+                bit2 = g.BIT(color_prom[2*256], 2);
+                bit3 = g.BIT(color_prom[2*256], 3);
                 int b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r, (byte)gr, (byte)b));
                 color_prom++;
             }
 
@@ -107,7 +107,7 @@ namespace mame
             {
                 palette.dipalette.set_pen_indirect(
                         (pen_t)(m_gfxdecode.op[0].digfx.gfx(0).colorbase() + i),
-                        BIT(i, 0) != 0 ? (UInt16)(i >> 1) : (UInt16)0x80);
+                        g.BIT(i, 0) != 0 ? (UInt16)(i >> 1) : (UInt16)0x80);
             }
         }
 
@@ -368,7 +368,7 @@ namespace mame
                 /* return BB0 */
                 dat2 = rom2c[adr_2c];
                 /* swap bit 6 & 7 */
-                dat2 = bitswap(dat2, 6,7,5,4,3,2,1,0);
+                dat2 = g.bitswap(dat2, 6,7,5,4,3,2,1,0);
                 /* flip x & y */
                 if ((dat1 & 0x400) != 0) dat2 ^= 0x40;
                 if ((dat1 & 0x200) != 0) dat2 ^= 0x80;

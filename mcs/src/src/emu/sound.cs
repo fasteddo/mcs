@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using attoseconds_t = System.Int64;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using mixer_interface_enumerator = mame.device_interface_enumerator<mame.device_mixer_interface>;  //typedef device_interface_enumerator<device_mixer_interface> mixer_interface_enumerator;
 using s16 = System.Int16;
 using s32 = System.Int32;
@@ -12,7 +12,6 @@ using s64 = System.Int64;
 using sound_interface_enumerator = mame.device_interface_enumerator<mame.device_sound_interface>;  //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
 using speaker_device_enumerator = mame.device_type_enumerator<mame.speaker_device>;  //using speaker_device_enumerator = device_type_enumerator<speaker_device>;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
-using stream_update_delegate = System.Action<mame.sound_stream, mame.std.vector<mame.read_stream_view>, mame.std.vector<mame.write_stream_view>>;  //using stream_update_delegate = delegate<void (sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs)>;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -602,7 +601,7 @@ namespace mame
         //read_stream_view &set_gain(float gain) { m_gain = gain; return *this; }
 
         // apply an additional gain factor
-        //read_stream_view &apply_gain(float gain) { m_gain *= gain; return *this; }
+        public read_stream_view apply_gain(float gain) { m_gain *= gain; return this; }
 
         // safely fetch a gain-scaled sample from the buffer
         public stream_buffer_sample_t get(s32 index)
@@ -649,20 +648,20 @@ namespace mame
     public class write_stream_view : read_stream_view
     {
         // empty constructor so we can live in an array or vector
-        write_stream_view()
+        public write_stream_view()
         {
         }
 
 
         // constructor that covers the given time period
-        write_stream_view(stream_buffer buffer, attotime start, attotime end)
+        public write_stream_view(stream_buffer buffer, attotime start, attotime end)
             : base(buffer, start, end)
         {
         }
 
 
         // constructor that converts from a read_stream_view
-        write_stream_view(read_stream_view src)
+        public write_stream_view(read_stream_view src)
             : base(src)
         {
         }
@@ -795,7 +794,7 @@ namespace mame
         stream_buffer m_buffer = new stream_buffer();               // output buffer
         u32 m_index;                          // output index within the stream
         stream_buffer_sample_t m_gain;       // gain to apply to the output
-        //std.vector<sound_stream_output> m_resampler_list; // list of resamplers we're connected to
+        std.vector<sound_stream_output> m_resampler_list = new std.vector<sound_stream_output>(); // list of resamplers we're connected to
 
 
         // construction/destruction
@@ -854,8 +853,8 @@ namespace mame
 
         public attotime end_time() { return m_buffer.end_time(); }
         public u32 index() { return m_index; }
-        //stream_buffer::sample_t gain() const { return m_gain; }
-        //u32 buffer_sample_rate() const { return m_buffer.sample_rate(); }
+        public stream_buffer_sample_t gain() { return m_gain; }
+        u32 buffer_sample_rate() { return m_buffer.sample_rate(); }
 
         // simple setters
         public void set_gain(float gain) { m_gain = gain; }
@@ -867,13 +866,35 @@ namespace mame
         public void sample_rate_changed(u32 rate) { m_buffer.set_sample_rate(rate, true); }
 
         // return an output view covering a time period
-        //write_stream_view view(attotime start, attotime end) { return write_stream_view(m_buffer, start, end); }
+        public write_stream_view view(attotime start, attotime end) { return new write_stream_view(m_buffer, start, end); }
 
         // resync the buffer to the given end time
         public void set_end_time(attotime end) { m_buffer.set_end_time(end); }
 
+
         // attempt to optimize resamplers by reusing them where possible
-        //sound_stream_output &optimize_resampler(sound_stream_output *input_resampler);
+        //-------------------------------------------------
+        //  optimize_resampler - optimize resamplers by
+        //  either returning the native rate or another
+        //  input's resampler if they can be reused
+        //-------------------------------------------------
+        public sound_stream_output optimize_resampler(sound_stream_output input_resampler)
+        {
+            // if no resampler, or if the resampler rate matches our rate, return ourself
+            if (input_resampler == null || buffer_sample_rate() == input_resampler.buffer_sample_rate())
+                return this;
+
+            // scan our list of resamplers to see if there's another match
+            foreach (var resampler in m_resampler_list)
+            {
+                if (resampler.buffer_sample_rate() == input_resampler.buffer_sample_rate())
+                    return resampler;
+            }
+
+            // add the input to our list and return the one we were given back
+            m_resampler_list.push_back(input_resampler);
+            return input_resampler;
+        }
     }
 
 
@@ -966,7 +987,29 @@ namespace mame
 
 
         // update and return an reading view
-        //read_stream_view update(attotime start, attotime end);
+        //-------------------------------------------------
+        //  update - update our source's stream to the
+        //  current end time and return a view to its
+        //  contents
+        //-------------------------------------------------
+        public read_stream_view update(attotime start, attotime end)
+        {
+            //throw new emu_unimplemented();
+#if false
+            // shouldn't get here unless valid
+            sound_assert(valid());
+#endif
+
+            // pick an optimized resampler
+            sound_stream_output source = m_native_source.optimize_resampler(m_resampler_source);
+
+            // if not using our own resampler, keep it up to date in case we need to invoke it later
+            if (m_resampler_source != null && source != m_resampler_source)
+                m_resampler_source.set_end_time(end);
+
+            // update the source, returning a view of the needed output over the start and end times
+            return source.stream().update_view(start, end, source.index()).apply_gain(m_gain * m_user_gain * source.gain());
+        }
 
 
         // tell inputs to apply sample rate changes
@@ -997,7 +1040,7 @@ namespace mame
     // ======================> stream_update_delegate
 
     // new-style callback
-    //using stream_update_delegate = delegate<void (sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs)>;
+    public delegate void stream_update_delegate(sound_stream stream, std.vector<read_stream_view> read_views, std.vector<write_stream_view> write_views);  //using stream_update_delegate = delegate<void (sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs)>;
 
 
     // ======================> sound_stream_flags
@@ -1111,12 +1154,12 @@ namespace mame
                 }
 
                 // add the new input
-                m_input[inputnum].init(this, inputnum, state_tag.c_str(), resampler);
+                m_input[inputnum].init(this, inputnum, state_tag, resampler);
             }
 
             // initialize all outputs
             for (unsigned outputnum = 0; outputnum < m_output.size(); outputnum++)
-                m_output[outputnum].init(this, outputnum, state_tag.c_str());
+                m_output[outputnum].init(this, outputnum, state_tag);
 
             // create an update timer for synchronous streams
             if (synchronous())
@@ -1239,9 +1282,93 @@ namespace mame
 
 
         // force an update to the current time, returning a view covering the given time period
+        //-------------------------------------------------
+        //  update_view - force a stream to update to
+        //  the current emulated time and return a view
+        //  to the generated samples from the given
+        //  output number
+        //-------------------------------------------------
         public read_stream_view update_view(attotime start, attotime end, u32 outputnum = 0)
         {
-            throw new emu_unimplemented();
+            //throw new emu_unimplemented();
+#if false
+            sound_assert(start <= end);
+            sound_assert(outputnum < m_output.size());
+#endif
+
+            // clean up parameters for when the asserts go away
+            if (outputnum >= m_output.size())
+                outputnum = 0;
+
+            if (start > end)
+                start = end;
+
+            profiler_global.g_profiler.start(profile_type.PROFILER_SOUND);
+
+            // reposition our start to coincide with the current buffer end
+            attotime update_start = m_output[outputnum].end_time();
+            if (update_start <= end)
+            {
+                // create views for all the outputs
+                for (unsigned outindex = 0; outindex < m_output.size(); outindex++)
+                    m_output_view[outindex] = m_output[outindex].view(update_start, end);
+
+                // skip if nothing to do
+                u32 samples = m_output_view[0].samples();
+
+                //throw new emu_unimplemented();
+#if false
+                sound_assert(samples >= 0);
+#endif
+
+                if (samples != 0 && m_sample_rate >= sound_global.SAMPLE_RATE_MINIMUM)
+                {
+                    //throw new emu_unimplemented();
+#if false
+                    sound_assert(!synchronous() || samples == 1);
+#endif
+
+                    // ensure all input streams are up to date, and create views for them as well
+                    for (unsigned inputnum = 0; inputnum < m_input.size(); inputnum++)
+                    {
+                        if (m_input[inputnum].valid())
+                            m_input_view[inputnum] = m_input[inputnum].update(update_start, end);
+                        else
+                            m_input_view[inputnum] = empty_view(update_start, end);
+
+                        //throw new emu_unimplemented();
+#if false
+                        sound_assert(m_input_view[inputnum].samples() > 0);
+                        sound_assert(m_resampling_disabled || m_input_view[inputnum].sample_rate() == m_sample_rate);
+#endif
+                    }
+
+#if (SOUND_DEBUG)
+                    // clear each output view to NANs before we call the callback
+                    for (unsigned int outindex = 0; outindex < m_output.size(); outindex++)
+                        m_output_view[outindex].fill(NAN);
+#endif
+
+                    // if we have an extended callback, that's all we need
+                    if (m_callback_ex != null)
+                        m_callback_ex(this, m_input_view, m_output_view);
+
+#if (SOUND_DEBUG)
+                    // make sure everything was overwritten
+                    for (unsigned int outindex = 0; outindex < m_output.size(); outindex++)
+                        for (int sampindex = 0; sampindex < m_output_view[outindex].samples(); sampindex++)
+                            m_output_view[outindex].get(sampindex);
+
+                    for (unsigned int outindex = 0; outindex < m_output.size(); outindex++)
+                        m_output[outindex].m_buffer.flush_wav();
+#endif
+                }
+            }
+
+            profiler_global.g_profiler.stop();
+
+            // return the requested view
+            return new read_stream_view(m_output_view[outputnum], start);
         }
 
 
@@ -1377,7 +1504,21 @@ namespace mame
 
 
         // return a view of 0 data covering the given time period
-        //read_stream_view empty_view(attotime start, attotime end);
+        //-------------------------------------------------
+        //  empty_view - return an empty view covering the
+        //  given time period as a substitute for invalid
+        //  inputs
+        //-------------------------------------------------
+        read_stream_view empty_view(attotime start, attotime end)
+        {
+            // if our dummy buffer doesn't match our sample rate, update and clear it
+            if (m_empty_buffer.sample_rate() != m_sample_rate)
+                m_empty_buffer.set_sample_rate(m_sample_rate, false);
+
+            // allocate a write view so that it can expand, and convert back to a read view
+            // on the return
+            return new write_stream_view(m_empty_buffer, start, end);
+        }
     }
 
 
@@ -1586,7 +1727,7 @@ namespace mame
         // internal state
         running_machine m_machine;           // reference to the running machine  //running_machine &m_machine;           // reference to the running machine
         emu_timer m_update_timer;            // timer that runs the update function  //emu_timer *m_update_timer;            // timer that runs the update function
-        std.vector<speaker_device> m_speakers;  //std::vector<std::reference_wrapper<speaker_device> > m_speakers;
+        std.vector<speaker_device> m_speakers = new std.vector<speaker_device>();  //std::vector<std::reference_wrapper<speaker_device> > m_speakers;
 
         u32 m_update_number;                  // current update index; used for sample rate updates
         attotime m_last_update;               // time of the last update
@@ -1708,7 +1849,7 @@ namespace mame
         {
             // open the output WAV file if specified
             string filename = machine().options().wav_write();
-            return filename != null ? start_recording(filename) : false;
+            return !string.IsNullOrEmpty(filename) ? start_recording(filename) : false;
         }
 
 
@@ -1989,13 +2130,191 @@ namespace mame
 
 
         // helper to adjust scale factor toward a goal
-        //stream_buffer::sample_t adjust_toward_compressor_scale(stream_buffer::sample_t curscale, stream_buffer::sample_t prevsample, stream_buffer::sample_t rawsample);
+        //-------------------------------------------------
+        //  adjust_toward_compressor_scale - adjust the
+        //  current scale factor toward the current goal,
+        //  in small increments
+        //-------------------------------------------------
+        stream_buffer_sample_t adjust_toward_compressor_scale(stream_buffer_sample_t curscale, stream_buffer_sample_t prevsample, stream_buffer_sample_t rawsample)  //stream_buffer::sample_t adjust_toward_compressor_scale(stream_buffer::sample_t curscale, stream_buffer::sample_t prevsample, stream_buffer::sample_t rawsample);
+        {
+            stream_buffer_sample_t proposed_scale = curscale;
+
+            // if we want to get larger, increment by 0.01
+            if (curscale < m_compressor_scale)
+            {
+                proposed_scale += 0.01f;
+                if (proposed_scale > m_compressor_scale)
+                    proposed_scale = m_compressor_scale;
+            }
+
+            // otherwise, decrement by 0.01
+            else
+            {
+                proposed_scale -= 0.01f;
+                if (proposed_scale < m_compressor_scale)
+                    proposed_scale = m_compressor_scale;
+            }
+
+            // compute the sample at the current scale and at the proposed scale
+            stream_buffer_sample_t cursample = rawsample * curscale;
+            stream_buffer_sample_t proposed_sample = rawsample * proposed_scale;
+
+            // if they trend in the same direction, it's ok to take the step
+            if ((cursample < prevsample && proposed_sample < prevsample) || (cursample > prevsample && proposed_sample > prevsample))
+                curscale = proposed_scale;
+
+            // return the current scale
+            return curscale;
+        }
 
 
         // periodic sound update, called STREAMS_UPDATE_FREQUENCY per second
+        //-------------------------------------------------
+        //  update - mix everything down to its final form
+        //  and send it to the OSD layer
+        //-------------------------------------------------
         void update(object ptr = null, s32 param = 0)  //void update(void *ptr = nullptr, s32 param = 0);
         {
-            throw new emu_unimplemented();
+            sound_global.VPRINTF("sound_update\n");
+
+            profiler_global.g_profiler.start(profile_type.PROFILER_SOUND);
+
+            // determine the duration of this update
+            attotime update_period = machine().time() - m_last_update;
+
+            //throw new emu_unimplemented();
+#if false
+            sound_assert(update_period.seconds() == 0);
+#endif
+
+            // use that to compute the number of samples we need from the speakers
+            attoseconds_t sample_rate_attos = attotime.HZ_TO_ATTOSECONDS(machine().sample_rate());
+            m_samples_this_update = (u32)(update_period.attoseconds() / sample_rate_attos);
+
+            // recompute the end time to an even sample boundary
+            attotime endtime = m_last_update + new attotime(0, m_samples_this_update * sample_rate_attos);
+
+            // clear out the mix bufers
+            std.fill_n(m_leftmix, (int)m_samples_this_update, 0);  //std::fill_n(&m_leftmix[0], m_samples_this_update, 0);
+            std.fill_n(m_rightmix, (int)m_samples_this_update, 0);  //std::fill_n(&m_rightmix[0], m_samples_this_update, 0);
+
+            // force all the speaker streams to generate the proper number of samples
+            foreach (speaker_device speaker in m_speakers)
+                speaker.mix(new Pointer<stream_buffer_sample_t>(m_leftmix), new Pointer<stream_buffer_sample_t>(m_rightmix), m_last_update, endtime, (int)m_samples_this_update, (m_muted & MUTE_REASON_SYSTEM) != 0);  //speaker.mix(&m_leftmix[0], &m_rightmix[0], m_last_update, endtime, m_samples_this_update, (m_muted & MUTE_REASON_SYSTEM));
+
+            // determine the maximum in this section
+            stream_buffer_sample_t curmax = 0;
+            for (int sampindex = 0; sampindex < m_samples_this_update; sampindex++)
+            {
+                var sample2 = m_leftmix[sampindex];
+                if (sample2 < 0)
+                    sample2 = -sample2;
+                if (sample2 > curmax)
+                    curmax = sample2;
+
+                sample2 = m_rightmix[sampindex];
+                if (sample2 < 0)
+                    sample2 = -sample2;
+                if (sample2 > curmax)
+                    curmax = sample2;
+            }
+
+            // pull in current compressor scale factor before modifying
+            stream_buffer_sample_t lscale = m_compressor_scale;
+            stream_buffer_sample_t rscale = m_compressor_scale;
+
+            // if we're above what the compressor will handle, adjust the compression
+            if (curmax * m_compressor_scale > 1.0)
+            {
+                m_compressor_scale = (stream_buffer_sample_t)1.0 / curmax;
+                m_compressor_counter = STREAMS_UPDATE_FREQUENCY / 5;
+            }
+
+            // if we're currently scaled, wait a bit to see if we can trend back toward 1.0
+            else if (m_compressor_counter != 0)
+                m_compressor_counter--;
+
+            // try to migrate toward 0 unless we're going to introduce clipping
+            else if (m_compressor_scale < 1.0 && curmax * 1.01 * m_compressor_scale < 1.0)
+            {
+                m_compressor_scale *= 1.01f;
+                if (m_compressor_scale > 1.0)
+                    m_compressor_scale = (stream_buffer_sample_t)1.0;
+            }
+
+#if (SOUND_DEBUG)
+            if (lscale != m_compressor_scale)
+            printf("scale=%.5f\n", m_compressor_scale);
+#endif
+
+            // track whether there are pending scale changes in left/right
+            stream_buffer_sample_t lprev = 0;
+            stream_buffer_sample_t rprev = 0;
+
+            // now downmix the final result
+            u32 finalmix_step = (u32)machine().video().speed_factor();
+            u32 finalmix_offset = 0;
+            Pointer<s16> finalmix = new Pointer<s16>(m_finalmix);  //s16 *finalmix = &m_finalmix[0];
+            int sample;
+            for (sample = (int)m_finalmix_leftover; sample < m_samples_this_update * 1000; sample += (int)finalmix_step)
+            {
+                int sampindex = sample / 1000;
+
+                // ensure that changing the compression won't reverse direction to reduce "pops"
+                stream_buffer_sample_t lsamp = m_leftmix[sampindex];
+                if (lscale != m_compressor_scale && sample != m_finalmix_leftover)
+                    lscale = adjust_toward_compressor_scale(lscale, lprev, lsamp);
+
+                // clamp the left side
+                lprev = lsamp *= lscale;
+                if (lsamp > 1.0)
+                    lsamp = (stream_buffer_sample_t)1.0;
+                else if (lsamp < -1.0)
+                    lsamp = (stream_buffer_sample_t)(-1.0);
+                finalmix[finalmix_offset++] = (s16)(lsamp * 32767.0);
+
+                // ensure that changing the compression won't reverse direction to reduce "pops"
+                stream_buffer_sample_t rsamp = m_rightmix[sampindex];
+                if (rscale != m_compressor_scale && sample != m_finalmix_leftover)
+                    rscale = adjust_toward_compressor_scale(rscale, rprev, rsamp);
+
+                // clamp the left side
+                rprev = rsamp *= rscale;
+                if (rsamp > 1.0)
+                    rsamp = (stream_buffer_sample_t)1.0;
+                else if (rsamp < -1.0)
+                    rsamp = (stream_buffer_sample_t)(-1.0);
+                finalmix[finalmix_offset++] = (s16)(rsamp * 32767.0);
+            }
+
+            m_finalmix_leftover = (u32)sample - m_samples_this_update * 1000;
+
+            // play the result
+            if (finalmix_offset > 0)
+            {
+                if (!m_nosound_mode)
+                    machine().osd().update_audio_stream(finalmix, (int)finalmix_offset / 2);
+                machine().osd().add_audio_to_recording(finalmix, (int)finalmix_offset / 2);
+                machine().video().add_sound_to_recording(finalmix, (int)finalmix_offset / 2);
+                if (m_wavfile != null)
+                    wavwrite_global.wav_add_data_16(m_wavfile, finalmix, (int)finalmix_offset);
+            }
+
+            // update any orphaned streams so they don't get too far behind
+            foreach (var stream in m_orphan_stream_list)
+                stream.first().update();
+
+            // remember the update time
+            m_last_update = endtime;
+            m_update_number++;
+
+            // apply sample rate changes
+            apply_sample_rate_changes();
+
+            // notify that new samples have been generated
+            emulator_info.sound_hook();
+
+            profiler_global.g_profiler.stop();
         }
     }
 }

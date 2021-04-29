@@ -14,70 +14,69 @@ using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
 
-namespace mame.util
+namespace mame
 {
-    public static class corefile_global
+public static partial class util_
+{
+    public const int EOF = -1;  // taken from stdio.h
+
+    /***************************************************************************
+        ADDITIONAL OPEN FLAGS
+    ***************************************************************************/
+
+    //#define OPEN_FLAG_NO_BOM        0x0100      /* don't output BOM */
+
+    public const int FCOMPRESS_NONE   = 0;           /* no compression */
+    public const int FCOMPRESS_MIN    = 1;           /* minimal compression */
+    public const int FCOMPRESS_MEDIUM = 6;           /* standard compression */
+    public const int FCOMPRESS_MAX    = 9;           /* maximum compression */
+
+
+    public const int FILE_BUFFER_SIZE        = 512;
+
+    //#define OPEN_FLAG_HAS_CRC       0x10000
+
+
+    /* ----- filename utilities ----- */
+
+    /* extract the base part of a filename (remove extensions and paths) */
+    /*-------------------------------------------------
+        core_filename_extract_base - extract the base
+        name from a filename; note that this makes
+        assumptions about path separators
+    -------------------------------------------------*/
+    public static string core_filename_extract_base(string name, bool strip_extension = false)
     {
-        public const int EOF = -1;  // taken from stdio.h
-
-        /***************************************************************************
-            ADDITIONAL OPEN FLAGS
-        ***************************************************************************/
-
-        //#define OPEN_FLAG_NO_BOM        0x0100      /* don't output BOM */
-
-        public const int FCOMPRESS_NONE   = 0;           /* no compression */
-        public const int FCOMPRESS_MIN    = 1;           /* minimal compression */
-        public const int FCOMPRESS_MEDIUM = 6;           /* standard compression */
-        public const int FCOMPRESS_MAX    = 9;           /* maximum compression */
+        if (strip_extension)
+            return Path.GetFileNameWithoutExtension(name);
+        else
+            return Path.GetFileName(name);
+    }
 
 
-        public const int FILE_BUFFER_SIZE        = 512;
-
-        //#define OPEN_FLAG_HAS_CRC       0x10000
-
-
-        /* ----- filename utilities ----- */
-
-        /* extract the base part of a filename (remove extensions and paths) */
-        /*-------------------------------------------------
-            core_filename_extract_base - extract the base
-            name from a filename; note that this makes
-            assumptions about path separators
-        -------------------------------------------------*/
-        public static string core_filename_extract_base(string name, bool strip_extension = false)
-        {
-            if (strip_extension)
-                return Path.GetFileNameWithoutExtension(name);
-            else
-                return Path.GetFileName(name);
-        }
+    // extracts the file extension from a filename
+    //std::string core_filename_extract_extension(const std::string &filename, bool strip_period = false);
 
 
-        // extracts the file extension from a filename
-        //std::string core_filename_extract_extension(const std::string &filename, bool strip_period = false);
+    /* true if the given filename ends with a particular extension */
+    public static bool core_filename_ends_with(string filename, string extension)
+    {
+        return filename.EndsWith(extension);
+    }
 
 
-        /* true if the given filename ends with a particular extension */
-        public static bool core_filename_ends_with(string filename, string extension)
-        {
-            return filename.EndsWith(extension);
-        }
-
-
-        /*-------------------------------------------------
-            is_directory_separator - is a given character
-            a directory separator? The following logic
-            works for most platforms
-        -------------------------------------------------*/
-        public static bool is_directory_separator(char c)
-        {
+    /*-------------------------------------------------
+        is_directory_separator - is a given character
+        a directory separator? The following logic
+        works for most platforms
+    -------------------------------------------------*/
+    public static bool is_directory_separator(char c)
+    {
 //#if defined(WIN32)
-            return ('\\' == c) || ('/' == c) || (':' == c);
+        return ('\\' == c) || ('/' == c) || (':' == c);
 //#else
 //            return '/' == c;
 //#endif
-        }
     }
 
 
@@ -457,7 +456,7 @@ namespace mame.util
             // now read from the ring buffer
             if (m_back_char_head == m_back_char_tail)
             {
-                result = corefile_global.EOF;
+                result = EOF;
             }
             else
             {
@@ -495,7 +494,7 @@ namespace mame.util
             while (n > 0)
             {
                 int c = getc();
-                if (c == corefile_global.EOF)
+                if (c == EOF)
                 {
                     break;
                 }
@@ -755,7 +754,7 @@ namespace mame.util
         {
             // close files and free memory
             if (m_zdata != null)
-                compress(corefile_global.FCOMPRESS_NONE);
+                compress(FCOMPRESS_NONE);
 
             m_isDisposed = true;
         }
@@ -775,7 +774,7 @@ namespace mame.util
                 return osd_file.error.INVALID_ACCESS;
 
             // if we have been compressing, flush and free the data
-            if (m_zdata != null && (level == corefile_global.FCOMPRESS_NONE))
+            if (m_zdata != null && (level == FCOMPRESS_NONE))
             {
                 int zerr = zlib_global.Z_OK;
 
@@ -807,7 +806,7 @@ namespace mame.util
             }
 
             // if we are just starting to compress, allocate a new buffer
-            if (m_zdata == null && (level > corefile_global.FCOMPRESS_NONE))
+            if (m_zdata == null && (level > FCOMPRESS_NONE))
             {
                 int zerr;
 
@@ -1061,4 +1060,5 @@ namespace mame.util
             return osd_file.error.NONE;
         }
     }
+}
 }

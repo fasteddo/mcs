@@ -11,7 +11,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
@@ -31,30 +31,30 @@ namespace mame
 
         /* Discrete sound inputs */
 
-        const int DS_SOUND0_INV       = NODE_01;
-        const int DS_SOUND1_INV       = NODE_02;
-        const int DS_SOUND2_INV       = NODE_03;
-        const int DS_SOUND6_INV       = NODE_04;
-        const int DS_SOUND7_INV       = NODE_05;
+        const int DS_SOUND0_INV       = g.NODE_01;
+        const int DS_SOUND1_INV       = g.NODE_02;
+        const int DS_SOUND2_INV       = g.NODE_03;
+        const int DS_SOUND6_INV       = g.NODE_04;
+        const int DS_SOUND7_INV       = g.NODE_05;
         //#define DS_SOUND9_INV       NODE_06
-        const int DS_DAC              = NODE_07;
-        const int DS_DISCHARGE_INV    = NODE_08;
+        const int DS_DAC              = g.NODE_07;
+        const int DS_DISCHARGE_INV    = g.NODE_08;
 
-        const int DS_SOUND0           = NODE_208;
-        const int DS_SOUND1           = NODE_209;
+        const int DS_SOUND0           = g.NODE_208;
+        const int DS_SOUND1           = g.NODE_209;
         //#define DS_SOUND6           NODE_210
         //#define DS_SOUND7           NODE_211
         //#define DS_SOUND9           NODE_212
 
-        const int DS_ADJ_DAC          = NODE_240;
+        const int DS_ADJ_DAC          = g.NODE_240;
 
-        const int DS_OUT_SOUND0       = NODE_241;
-        const int DS_OUT_SOUND1       = NODE_242;
-        const int DS_OUT_SOUND2       = NODE_243;
+        const int DS_OUT_SOUND0       = g.NODE_241;
+        const int DS_OUT_SOUND1       = g.NODE_242;
+        const int DS_OUT_SOUND2       = g.NODE_243;
         //#define DS_OUT_SOUND6       NODE_247
         //#define DS_OUT_SOUND7       NODE_248
         //#define DS_OUT_SOUND9       NODE_249
-        const int DS_OUT_DAC          = NODE_250;
+        const int DS_OUT_DAC          = g.NODE_250;
 
         /* Input definitions for write handlers */
 
@@ -64,6 +64,15 @@ namespace mame
         const int DS_SOUND6_INP       = DS_SOUND6_INV;
         const int DS_SOUND7_INP       = DS_SOUND7_INV;
         //#define DS_SOUND9_INP       DS_SOUND9_INV
+
+
+        public class int_constant_DS_DISCHARGE_INV : int_constant { public int value { get { return DS_DISCHARGE_INV; } } }
+        public class int_constant_DS_SOUND0_INP : int_constant { public int value { get { return DS_SOUND0_INP; } } }
+        public class int_constant_DS_SOUND1_INP : int_constant { public int value { get { return DS_SOUND1_INP; } } }
+        public class int_constant_DS_SOUND2_INP : int_constant { public int value { get { return DS_SOUND2_INP; } } }
+        public class int_constant_DS_SOUND6_INP : int_constant { public int value { get { return DS_SOUND6_INP; } } }
+        public class int_constant_DS_SOUND7_INP : int_constant { public int value { get { return DS_SOUND7_INP; } } }
+
 
         /* General defines */
 
@@ -148,16 +157,16 @@ namespace mame
 
         static readonly discrete_lfsr_desc dkong_lfsr = new discrete_lfsr_desc
         (
-            DISC_CLK_IS_FREQ,
+            g.DISC_CLK_IS_FREQ,
             24,                   /* Bit Length */
             0,                    /* Reset Value */
             10,                   /* Use Bit 10 (QC of second LS164) as F0 input 0 */
             23,                   /* Use Bit 23 (QH of third LS164) as F0 input 1 */
-            DISC_LFSR_XOR,        /* F0 is XOR */
-            DISC_LFSR_NOT_IN0,    /* F1 is inverted F0*/
-            DISC_LFSR_REPLACE,    /* F2 replaces the shifted register contents */
+            g.DISC_LFSR_XOR,        /* F0 is XOR */
+            g.DISC_LFSR_NOT_IN0,    /* F1 is inverted F0*/
+            g.DISC_LFSR_REPLACE,    /* F2 replaces the shifted register contents */
             0x000001,             /* Everything is shifted into the first bit only */
-            DISC_LFSR_FLAG_OUTPUT_F0, /* Output is result of F0 */
+            g.DISC_LFSR_FLAG_OUTPUT_F0, /* Output is result of F0 */
             0                     /* Output bit */
         );
 
@@ -166,7 +175,7 @@ namespace mame
 
         static readonly discrete_mixer_desc dkong_mixer_desc = new discrete_mixer_desc
         (
-            DISC_MIXER_IS_RESISTOR,
+            g.DISC_MIXER_IS_RESISTOR,
             new double [] { DK_R2, DK_R24, DK_R1, DK_R14 },
             new int [] { 0, 0, 0 },  /* no variable resistors */
             new double [] { 0, 0, 0 },  /* no node capacitors */
@@ -185,9 +194,9 @@ namespace mame
 
         static readonly discrete_555_desc dkong_555_vco_desc = new discrete_555_desc
         (
-            DISC_555_OUT_ENERGY | DISC_555_OUT_DC,
+            g.DISC_555_OUT_ENERGY | g.DISC_555_OUT_DC,
             DK_SUP_V,
-            DEFAULT_555_CHARGE,
+            g.DEFAULT_555_CHARGE,
             DK_SUP_V - 0.5
         );
 
@@ -330,45 +339,45 @@ namespace mame
             /************************************************/
 
             /* DISCRETE_INPUT_DATA */
-            DISCRETE_INPUT_NOT(DS_SOUND2_INV),
-                DISCRETE_INPUT_NOT(DS_SOUND1_INV),   /* IC 6J, pin 12 */
-                DISCRETE_INPUT_NOT(DS_SOUND0_INV),   /* IC 6J, pin 2 */
-                DISCRETE_INPUT_NOT(DS_DISCHARGE_INV),
+            g.DISCRETE_INPUT_NOT(DS_SOUND2_INV),
+                g.DISCRETE_INPUT_NOT(DS_SOUND1_INV),   /* IC 6J, pin 12 */
+                g.DISCRETE_INPUT_NOT(DS_SOUND0_INV),   /* IC 6J, pin 2 */
+                g.DISCRETE_INPUT_NOT(DS_DISCHARGE_INV),
                 //DISCRETE_INPUT_DATA(DS_DAC)
 
                 /************************************************/
                 /* Stomp                                        */
                 /************************************************/
                 /* Noise */
-                DISCRETE_TASK_START(1),
-                DISCRETE_LFSR_NOISE(NODE_11, 1, 1, CLOCK_2VF.dvalue(), 1.0, 0, 0.5, dkong_lfsr),
-                DISCRETE_COUNTER(NODE_12, 1, 0, NODE_11, 0, 7, DISC_COUNT_UP, 0, DISC_CLK_ON_R_EDGE),    /* LS161, IC 3J */
-                DISCRETE_TRANSFORM3(NODE_13,NODE_12,3,DK_SUP_V,"01>2*"),
+                g.DISCRETE_TASK_START(1),
+                g.DISCRETE_LFSR_NOISE(g.NODE_11, 1, 1, CLOCK_2VF.dvalue(), 1.0, 0, 0.5, dkong_lfsr),
+                g.DISCRETE_COUNTER(g.NODE_12, 1, 0, g.NODE_11, 0, 7, g.DISC_COUNT_UP, 0, g.DISC_CLK_ON_R_EDGE),    /* LS161, IC 3J */
+                g.DISCRETE_TRANSFORM3(g.NODE_13,g.NODE_12,3,DK_SUP_V,"01>2*"),
 
                 /* Stomp */
                 /* C21 is discharged via Q5 BE */
-                DISCRETE_RCDISC_MODULATED(NODE_15,DS_SOUND2_INV,0,DK_R10,0,0,DK_R9,DK_C21,DK_SUP_V),
+                g.DISCRETE_RCDISC_MODULATED(g.NODE_15,DS_SOUND2_INV,0,DK_R10,0,0,DK_R9,DK_C21,DK_SUP_V),
                 /* Q5 */
-                DISCRETE_TRANSFORM2(NODE_16, NODE_15, 0.6, "01>"),
-                DISCRETE_RCDISC2(NODE_17,NODE_16,DK_SUP_V,DK_R8+DK_R7,0.0,DK_R7,DK_C20),
+                g.DISCRETE_TRANSFORM2(g.NODE_16, g.NODE_15, 0.6, "01>"),
+                g.DISCRETE_RCDISC2(g.NODE_17,g.NODE_16,DK_SUP_V,DK_R8+DK_R7,0.0,DK_R7,DK_C20),
 
-                DISCRETE_DIODE_MIXER2(NODE_20, NODE_17, NODE_13, dkong_diode_mix_table), /* D1, D2 + D3 */
+                g.DISCRETE_DIODE_MIXER2(g.NODE_20, g.NODE_17, g.NODE_13, dkong_diode_mix_table), /* D1, D2 + D3 */
 
-                DISCRETE_RCINTEGRATE(NODE_22,NODE_20,DK_R5, RES_2_PARALLEL(DK_R4+DK_R3,DK_R6),0,DK_C19,DK_SUP_V,DISC_RC_INTEGRATE_TYPE1),
-                DISCRETE_MULTIPLY(DS_OUT_SOUND0, NODE_22, DK_R3 / R_SERIES(DK_R3, DK_R4)),
-                DISCRETE_TASK_END(),
+                g.DISCRETE_RCINTEGRATE(g.NODE_22,g.NODE_20,DK_R5, RES_2_PARALLEL(DK_R4+DK_R3,DK_R6),0,DK_C19,DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE1),
+                g.DISCRETE_MULTIPLY(DS_OUT_SOUND0, g.NODE_22, DK_R3 / R_SERIES(DK_R3, DK_R4)),
+                g.DISCRETE_TASK_END(),
 
                 /************************************************/
                 /* Jump                                         */
                 /************************************************/
                 /*  tt */
                 /* 4049B Inverter Oscillator build from 3 inverters */
-                DISCRETE_TASK_START(1),
-                DISCRETE_INVERTER_OSC(NODE_25, 1, 0, DK_R38, DK_R39, DK_C26, 0, dkong_inverter_osc_desc_jump),
+                g.DISCRETE_TASK_START(1),
+                g.DISCRETE_INVERTER_OSC(g.NODE_25, 1, 0, DK_R38, DK_R39, DK_C26, 0, dkong_inverter_osc_desc_jump),
 
 #if DK_USE_CUSTOM
                 /* custom mixer for 555 CV voltage */
-                DISCRETE_CUSTOM8<discrete_dkong_custom_mixer_node>(NODE_28, DS_SOUND1_INV, NODE_25,
+                g.DISCRETE_CUSTOM8<discrete_dkong_custom_mixer_node>(g.NODE_28, DS_SOUND1_INV, g.NODE_25,
                             DK_R32, DK_R50, DK_R51, DK_R49, DK_C24, DK_SUP_V, null),
 #else
                 DISCRETE_LOGIC_INVERT(DS_SOUND1,DS_SOUND1_INV),
@@ -377,30 +386,30 @@ namespace mame
                 DISCRETE_MIXER4(NODE_28, 1, NODE_24, NODE_25, DK_SUP_V, 0, &dkong_rc_jump_desc),
 #endif
                 /* 555 Voltage controlled */
-                DISCRETE_555_ASTABLE_CV(NODE_29, 1, RES_K(47), RES_K(27), CAP_N(47), NODE_28,
+                g.DISCRETE_555_ASTABLE_CV(g.NODE_29, 1, RES_K(47), RES_K(27), CAP_N(47), g.NODE_28,
                                         dkong_555_vco_desc),
 
                 /* Jump trigger */
-                DISCRETE_RCDISC_MODULATED(NODE_33,DS_SOUND1_INV,0,DK_R32,0,0,DK_R31,DK_C18,DK_SUP_V),
+                g.DISCRETE_RCDISC_MODULATED(g.NODE_33,DS_SOUND1_INV,0,DK_R32,0,0,DK_R31,DK_C18,DK_SUP_V),
 
-                DISCRETE_TRANSFORM2(NODE_34, NODE_33, 0.6, "01>"),
-                DISCRETE_RCDISC2(NODE_35, NODE_34,DK_SUP_V,R_SERIES(DK_R30,DK_R29),0.0,DK_R29,DK_C17),
+                g.DISCRETE_TRANSFORM2(g.NODE_34, g.NODE_33, 0.6, "01>"),
+                g.DISCRETE_RCDISC2(g.NODE_35, g.NODE_34,DK_SUP_V,R_SERIES(DK_R30,DK_R29),0.0,DK_R29,DK_C17),
 
-                DISCRETE_DIODE_MIXER2(NODE_38, NODE_35, NODE_29, dkong_diode_mix_table),
+                g.DISCRETE_DIODE_MIXER2(g.NODE_38, g.NODE_35, g.NODE_29, dkong_diode_mix_table),
 
-                DISCRETE_RCINTEGRATE(NODE_39,NODE_38,DK_R27, RES_2_PARALLEL(DK_R28,DK_R26+DK_R25),0,DK_C16,DK_SUP_V,DISC_RC_INTEGRATE_TYPE1),
-                DISCRETE_MULTIPLY(DS_OUT_SOUND1,NODE_39,DK_R25/(DK_R26+DK_R25)),
-                DISCRETE_TASK_END(),
+                g.DISCRETE_RCINTEGRATE(g.NODE_39,g.NODE_38,DK_R27, RES_2_PARALLEL(DK_R28,DK_R26+DK_R25),0,DK_C16,DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE1),
+                g.DISCRETE_MULTIPLY(DS_OUT_SOUND1,g.NODE_39,DK_R25/(DK_R26+DK_R25)),
+                g.DISCRETE_TASK_END(),
 
                 /************************************************/
                 /* Walk                                         */
                 /************************************************/
-                DISCRETE_TASK_START(1),
-                DISCRETE_INVERTER_OSC(NODE_51,1,0,DK_R47,DK_R48,DK_C30,0,dkong_inverter_osc_desc_walk),
+                g.DISCRETE_TASK_START(1),
+                g.DISCRETE_INVERTER_OSC(g.NODE_51,1,0,DK_R47,DK_R48,DK_C30,0,dkong_inverter_osc_desc_walk),
 
 #if DK_USE_CUSTOM
                 /* custom mixer for 555 CV voltage */
-                DISCRETE_CUSTOM8<discrete_dkong_custom_mixer_node>(NODE_54, DS_SOUND0_INV, NODE_51,
+                g.DISCRETE_CUSTOM8<discrete_dkong_custom_mixer_node>(g.NODE_54, DS_SOUND0_INV, g.NODE_51,
                             DK_R36, DK_R45, DK_R46, DK_R44, DK_C29, DK_SUP_V, null),
 #else
                 DISCRETE_LOGIC_INVERT(DS_SOUND0,DS_SOUND0_INV),
@@ -410,28 +419,28 @@ namespace mame
 #endif
 
                 /* 555 Voltage controlled */
-                DISCRETE_555_ASTABLE_CV(NODE_55, 1, RES_K(47), RES_K(27), CAP_N(33), NODE_54, dkong_555_vco_desc),
+                g.DISCRETE_555_ASTABLE_CV(g.NODE_55, 1, RES_K(47), RES_K(27), CAP_N(33), g.NODE_54, dkong_555_vco_desc),
                 /* Trigger */
-                DISCRETE_RCDISC_MODULATED(NODE_60,DS_SOUND0_INV,NODE_55,DK_R36,DK_R18,DK_R35,DK_R17,DK_C25,DK_SUP_V),
+                g.DISCRETE_RCDISC_MODULATED(g.NODE_60,DS_SOUND0_INV,g.NODE_55,DK_R36,DK_R18,DK_R35,DK_R17,DK_C25,DK_SUP_V),
                 /* Filter and divide - omitted C22 */
-                DISCRETE_CRFILTER(NODE_61, NODE_60, DK_R15+DK_R16, DK_C23),
-                DISCRETE_MULTIPLY(DS_OUT_SOUND2, NODE_61, DK_R15/(DK_R15+DK_R16)),
-                DISCRETE_TASK_END(),
+                g.DISCRETE_CRFILTER(g.NODE_61, g.NODE_60, DK_R15+DK_R16, DK_C23),
+                g.DISCRETE_MULTIPLY(DS_OUT_SOUND2, g.NODE_61, DK_R15/(DK_R15+DK_R16)),
+                g.DISCRETE_TASK_END(),
 
                 /************************************************/
                 /* DAC                                          */
                 /************************************************/
 
-                DISCRETE_TASK_START(1),
+                g.DISCRETE_TASK_START(1),
                 /* Mixing - DAC */
-                DISCRETE_ADJUSTMENT(DS_ADJ_DAC, 0, 1, DISC_LINADJ, "VR2"),
+                g.DISCRETE_ADJUSTMENT(DS_ADJ_DAC, 0, 1, g.DISC_LINADJ, "VR2"),
 
                 /* Buffer DAC first to input stream 0 */
-                DISCRETE_INPUT_BUFFER(DS_DAC, 0),
+                g.DISCRETE_INPUT_BUFFER(DS_DAC, 0),
                 //DISCRETE_INPUT_DATA(DS_DAC)
                 /* Signal decay circuit Q7, R20, C32 */
-                DISCRETE_RCDISC(NODE_70, DS_DISCHARGE_INV, 1, DK_R20, DK_C32),
-                DISCRETE_TRANSFORM4(NODE_71, DS_DAC,  DK_SUP_V/256.0, NODE_70, DS_DISCHARGE_INV, "01*3!2+*"),
+                g.DISCRETE_RCDISC(g.NODE_70, DS_DISCHARGE_INV, 1, DK_R20, DK_C32),
+                g.DISCRETE_TRANSFORM4(g.NODE_71, DS_DAC,  DK_SUP_V/256.0, g.NODE_70, DS_DISCHARGE_INV, "01*3!2+*"),
 
                 /* following the DAC are two opamps. The first is a current-to-voltage changer
                  * for the DAC08 which delivers a variable output current.
@@ -441,42 +450,42 @@ namespace mame
                  * f = w / 2 / pi  = 1 / ( 2 * pi * 5.6k*sqrt(22n*10n)) = 1916 Hz
                  * Q = 1/2 * sqrt(22n/10n)= 0.74
                  */
-                DISCRETE_SALLEN_KEY_FILTER(NODE_73, 1, NODE_71, DISC_SALLEN_KEY_LOW_PASS, dkong_sallen_key_info),
+                g.DISCRETE_SALLEN_KEY_FILTER(g.NODE_73, 1, g.NODE_71, g.DISC_SALLEN_KEY_LOW_PASS, dkong_sallen_key_info),
 
                 /* Adjustment VR2 */
 #if DK_NO_FILTERS
                 DISCRETE_MULTIPLY(DS_OUT_DAC, NODE_71, DS_ADJ_DAC)
 #else
-                DISCRETE_MULTIPLY(DS_OUT_DAC, NODE_73, DS_ADJ_DAC),
+                g.DISCRETE_MULTIPLY(DS_OUT_DAC, g.NODE_73, DS_ADJ_DAC),
 #endif
-                DISCRETE_TASK_END(),
+                g.DISCRETE_TASK_END(),
 
                 /************************************************/
                 /* Amplifier                                    */
                 /************************************************/
 
-                DISCRETE_TASK_START(2),
+                g.DISCRETE_TASK_START(2),
 
-                DISCRETE_MIXER4(NODE_288, 1, DS_OUT_SOUND0, DS_OUT_SOUND1, DS_OUT_DAC, DS_OUT_SOUND2, dkong_mixer_desc),
+                g.DISCRETE_MIXER4(g.NODE_288, 1, DS_OUT_SOUND0, DS_OUT_SOUND1, DS_OUT_DAC, DS_OUT_SOUND2, dkong_mixer_desc),
 
                 /* Amplifier: internal amplifier */
-                DISCRETE_ADDER2(NODE_289,1,NODE_288,5.0*43.0/(100.0+43.0)),
-                DISCRETE_RCINTEGRATE(NODE_294,NODE_289,0,150,1000, CAP_U(33),DK_SUP_V,DISC_RC_INTEGRATE_TYPE3),
-                DISCRETE_CRFILTER(NODE_295,NODE_294, RES_K(50), DK_C13),
+                g.DISCRETE_ADDER2(g.NODE_289,1,g.NODE_288,5.0*43.0/(100.0+43.0)),
+                g.DISCRETE_RCINTEGRATE(g.NODE_294,g.NODE_289,0,150,1000, CAP_U(33),DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE3),
+                g.DISCRETE_CRFILTER(g.NODE_295,g.NODE_294, RES_K(50), DK_C13),
                 /*DISCRETE_CRFILTER(NODE_295,1,NODE_294, 1000, DK_C13) */
                 /* EZV20 equivalent filter circuit ... */
-                DISCRETE_CRFILTER(NODE_296,NODE_295, RES_K(1), CAP_U(4.7)),
+                g.DISCRETE_CRFILTER(g.NODE_296,g.NODE_295, RES_K(1), CAP_U(4.7)),
 #if DK_NO_FILTERS
                 DISCRETE_OUTPUT(NODE_288, 32767.0/5.0 * 10)
 #else
-                DISCRETE_OUTPUT(NODE_296, 32767.0/5.0 * 3.41),
+                g.DISCRETE_OUTPUT(g.NODE_296, 32767.0/5.0 * 3.41),
                 /* Test */
                 //DISCRETE_CSVLOG2(NODE_296, NODE_288)
                 //DISCRETE_WAVELOG1(NODE_296, 32767.0/5.0 * 3.41)
 #endif
-                DISCRETE_TASK_END(),
+                g.DISCRETE_TASK_END(),
 
-            DISCRETE_SOUND_END,
+            g.DISCRETE_SOUND_END,
         };
 
 
@@ -535,9 +544,9 @@ namespace mame
         void dkong_audio_irq_w(uint8_t data)
         {
             if (data != 0)
-                m_soundcpu.op[0].set_input_line(0, ASSERT_LINE);
+                m_soundcpu.op[0].set_input_line(0, g.ASSERT_LINE);
             else
-                m_soundcpu.op[0].set_input_line(0, CLEAR_LINE);
+                m_soundcpu.op[0].set_input_line(0, g.CLEAR_LINE);
         }
 
 
@@ -571,11 +580,11 @@ namespace mame
             m_ls175_3d.op[0].set_xorvalue(0x0f);
 
             LATCH8(config, m_dev_6h);
-            m_dev_6h.op[0].write_cb(0).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND0_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND0_INP>));
-            m_dev_6h.op[0].write_cb(1).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND1_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND1_INP>));
-            m_dev_6h.op[0].write_cb(2).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND2_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND2_INP>));
-            m_dev_6h.op[0].write_cb(6).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND6_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND6_INP>));
-            m_dev_6h.op[0].write_cb(7).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line(DS_SOUND7_INP, state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND7_INP>));
+            m_dev_6h.op[0].write_cb(0).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND0_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND0_INP>));
+            m_dev_6h.op[0].write_cb(1).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND1_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND1_INP>));
+            m_dev_6h.op[0].write_cb(2).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND2_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND2_INP>));
+            m_dev_6h.op[0].write_cb(6).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND6_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND6_INP>));
+            m_dev_6h.op[0].write_cb(7).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND7_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND7_INP>));
 
             /*   If P2.Bit7 -> is apparently an external signal decay or other output control
              *   If P2.Bit6 -> activates the external compressed sample ROM (not radarscp1)
@@ -587,7 +596,7 @@ namespace mame
             LATCH8(config, m_dev_vp2);      /* virtual latch for port B */
             m_dev_vp2.op[0].set_xorvalue(0x20);  /* signal is inverted       */
             m_dev_vp2.op[0].read_cb(5).set(m_dev_6h, () => { return m_dev_6h.op[0].bit3_r(); }).reg();  //FUNC(latch8_device::bit3_r));
-            m_dev_vp2.op[0].write_cb(7).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line(DS_DISCHARGE_INV, state); }).reg();  //FUNC(discrete_device::write_line<DS_DISCHARGE_INV>));
+            m_dev_vp2.op[0].write_cb(7).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_DISCHARGE_INV>(state); }).reg();  //FUNC(discrete_device::write_line<DS_DISCHARGE_INV>));
 
             MB8884(config, m_soundcpu, I8035_CLOCK);
             m_soundcpu.op[0].memory().set_addrmap(AS_PROGRAM, dkong_sound_map);
@@ -601,7 +610,7 @@ namespace mame
             m_soundcpu.op[0].t1_in_cb().set("ls259.6h", () => { return ((latch8_device)subdevice("ls259.6h")).bit4_q_r(); }).reg();  //FUNC(latch8_device::bit4_q_r));
 
             SPEAKER(config, "mono").front_center();
-            DISCRETE(config, "discrete", dkong2b_discrete).disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+            DISCRETE(config, "discrete", dkong2b_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 1.0);
         }
     }
 }

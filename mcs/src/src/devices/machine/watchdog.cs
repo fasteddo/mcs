@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using int32_t = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -21,13 +22,13 @@ namespace mame
 
 
         // configuration data
-        int m_vblank_count; // number of VBLANKs until resetting the machine
+        int32_t m_vblank_count; // number of VBLANKs until resetting the machine
         attotime m_time;         // length of time until resetting the machine
         optional_device<screen_device> m_screen; // the tag of the screen this timer tracks
 
         // internal state
         bool m_enabled;      // is the watchdog enabled?
-        int m_counter;      // counter for VBLANK tracking
+        int32_t m_counter;      // counter for VBLANK tracking
         emu_timer m_timer;        // timer for triggering reset
 
 
@@ -50,8 +51,8 @@ namespace mame
         //  to set the number of VBLANKs
         //-------------------------------------------------
         //template <typename T>
-        public void set_vblank_count(string screen_tag, int count) { m_screen.set_tag(screen_tag); m_vblank_count = count; }  //void set_vblank_count(T &&screen_tag, int32_t count) { m_screen.set_tag(std::forward<T>(screen_tag)); m_vblank_count = count; }
-        public void set_vblank_count(finder_base screen, int count) { m_screen.set_tag(screen); m_vblank_count = count; }  //void set_vblank_count(T &&screen_tag, int32_t count) { m_screen.set_tag(std::forward<T>(screen_tag)); m_vblank_count = count; }
+        public void set_vblank_count(string screen_tag, int32_t count) { m_screen.set_tag(screen_tag); m_vblank_count = count; }  //void set_vblank_count(T &&screen_tag, int32_t count) { m_screen.set_tag(std::forward<T>(screen_tag)); m_vblank_count = count; }
+        public void set_vblank_count(finder_base screen, int32_t count) { m_screen.set_tag(screen); m_vblank_count = count; }  //void set_vblank_count(T &&screen_tag, int32_t count) { m_screen.set_tag(std::forward<T>(screen_tag)); m_vblank_count = count; }
 
 
         public void set_time(attotime time) { m_time = time; }

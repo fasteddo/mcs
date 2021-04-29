@@ -9,7 +9,6 @@ using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
 using models_t_raw_map_t = mame.std.unordered_map<string, string>;  //using raw_map_t = std::unordered_map<pstring, pstring>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using nlsetup_func = System.Action<mame.netlist.nlparse_t>;  //using nlsetup_func = void (*)(nlparse_t &);
 using psource_t_stream_ptr = mame.std.istream;  //using stream_ptr = plib::unique_ptr<std::istream>;
 using size_t = System.UInt32;
 using unsigned = System.UInt32;

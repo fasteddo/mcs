@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
-using pen_t = System.UInt32;
-using tilemap_memory_index = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -45,19 +45,19 @@ namespace mame
                 int bit1;
                 int bit2;
 
-                bit0 = BIT(color_prom[0], 0);
-                bit1 = BIT(color_prom[0], 1);
-                bit2 = BIT(color_prom[0], 2);
+                bit0 = g.BIT(color_prom[0], 0);
+                bit1 = g.BIT(color_prom[0], 1);
+                bit2 = g.BIT(color_prom[0], 2);
                 int r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                bit0 = BIT(color_prom[0], 3);
-                bit1 = BIT(color_prom[0], 4);
-                bit2 = BIT(color_prom[0], 5);
-                int g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+                bit0 = g.BIT(color_prom[0], 3);
+                bit1 = g.BIT(color_prom[0], 4);
+                bit2 = g.BIT(color_prom[0], 5);
+                int gr = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
                 bit0 = 0;
-                bit1 = BIT(color_prom[0], 6);
-                bit2 = BIT(color_prom[0], 7);
+                bit1 = g.BIT(color_prom[0], 6);
+                bit2 = g.BIT(color_prom[0], 7);
                 int b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r,(byte)g,(byte)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r,(byte)gr,(byte)b));
                 color_prom++;
             }
 

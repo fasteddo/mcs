@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 

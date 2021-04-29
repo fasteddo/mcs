@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -68,18 +70,18 @@ namespace mame
 
         //enum
         //{
-        const int NSC800_RSTA = device_execute_interface.INPUT_LINE_IRQ0 + 1;
-        const int NSC800_RSTB = device_execute_interface.INPUT_LINE_IRQ0 + 2;
-        const int NSC800_RSTC = device_execute_interface.INPUT_LINE_IRQ0 + 3;
-        const int Z80_INPUT_LINE_WAIT  = device_execute_interface.INPUT_LINE_IRQ0 + 4;
-        const int Z80_INPUT_LINE_BOGUSWAIT = device_execute_interface.INPUT_LINE_IRQ0 + 5; /* WAIT pin implementation used to be nonexistent, please remove this when all drivers are updated with Z80_INPUT_LINE_WAIT */
-        public const int Z80_INPUT_LINE_BUSRQ = device_execute_interface.INPUT_LINE_IRQ0 + 6;
+        const int NSC800_RSTA = g.INPUT_LINE_IRQ0 + 1;
+        const int NSC800_RSTB = g.INPUT_LINE_IRQ0 + 2;
+        const int NSC800_RSTC = g.INPUT_LINE_IRQ0 + 3;
+        const int Z80_INPUT_LINE_WAIT  = g.INPUT_LINE_IRQ0 + 4;
+        const int Z80_INPUT_LINE_BOGUSWAIT = g.INPUT_LINE_IRQ0 + 5; /* WAIT pin implementation used to be nonexistent, please remove this when all drivers are updated with Z80_INPUT_LINE_WAIT */
+        public const int Z80_INPUT_LINE_BUSRQ = g.INPUT_LINE_IRQ0 + 6;
         //}
 
 
         //enum
         //{
-        const int Z80_PC   =  STATE_GENPC;
+        const int Z80_PC   =  g.STATE_GENPC;
         const int Z80_SP   =  1;
         const int Z80_A    =  2;
         const int Z80_B    =  3;
@@ -572,35 +574,35 @@ namespace mame
             F = ZF;           /* Zero flag is set */
 
             /* set up the state table */
-            m_distate.state_add(STATE_GENPC,     "PC",        m_pc.w.l).callimport();
-            m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_prvpc.w.l).callimport().noshow();
-            m_distate.state_add(Z80_SP,          "SP",        SP);
-            m_distate.state_add(STATE_GENSP,     "GENSP",     SP).noshow();
-            m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  F).noshow().formatstr("%8s");
-            m_distate.state_add(Z80_A,           "A",         A).noshow();
-            m_distate.state_add(Z80_B,           "B",         B).noshow();
-            m_distate.state_add(Z80_C,           "C",         C).noshow();
-            m_distate.state_add(Z80_D,           "D",         D).noshow();
-            m_distate.state_add(Z80_E,           "E",         E).noshow();
-            m_distate.state_add(Z80_H,           "H",         H).noshow();
-            m_distate.state_add(Z80_L,           "L",         L).noshow();
-            m_distate.state_add(Z80_AF,          "AF",        AF);
-            m_distate.state_add(Z80_BC,          "BC",        BC);
-            m_distate.state_add(Z80_DE,          "DE",        DE);
-            m_distate.state_add(Z80_HL,          "HL",        HL);
-            m_distate.state_add(Z80_IX,          "IX",        IX);
-            m_distate.state_add(Z80_IY,          "IY",        IY);
-            m_distate.state_add(Z80_AF2,         "AF2",       m_af2.w.l);
-            m_distate.state_add(Z80_BC2,         "BC2",       m_bc2.w.l);
-            m_distate.state_add(Z80_DE2,         "DE2",       m_de2.w.l);
-            m_distate.state_add(Z80_HL2,         "HL2",       m_hl2.w.l);
-            m_distate.state_add(Z80_WZ,          "WZ",        WZ);
-            m_distate.state_add(Z80_R,           "R",         m_rtemp).callimport().callexport();
-            m_distate.state_add(Z80_I,           "I",         m_i);
-            m_distate.state_add(Z80_IM,          "IM",        m_im).mask(0x3);
-            m_distate.state_add(Z80_IFF1,        "IFF1",      m_iff1).mask(0x1);
-            m_distate.state_add(Z80_IFF2,        "IFF2",      m_iff2).mask(0x1);
-            m_distate.state_add(Z80_HALT,        "HALT",      m_halt).mask(0x1);
+            m_distate.state_add(g.STATE_GENPC,     "PC",        m_pc.w.l).callimport();
+            m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     m_prvpc.w.l).callimport().noshow();
+            m_distate.state_add(Z80_SP,            "SP",        SP);
+            m_distate.state_add(g.STATE_GENSP,     "GENSP",     SP).noshow();
+            m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  F).noshow().formatstr("%8s");
+            m_distate.state_add(Z80_A,             "A",         A).noshow();
+            m_distate.state_add(Z80_B,             "B",         B).noshow();
+            m_distate.state_add(Z80_C,             "C",         C).noshow();
+            m_distate.state_add(Z80_D,             "D",         D).noshow();
+            m_distate.state_add(Z80_E,             "E",         E).noshow();
+            m_distate.state_add(Z80_H,             "H",         H).noshow();
+            m_distate.state_add(Z80_L,             "L",         L).noshow();
+            m_distate.state_add(Z80_AF,            "AF",        AF);
+            m_distate.state_add(Z80_BC,            "BC",        BC);
+            m_distate.state_add(Z80_DE,            "DE",        DE);
+            m_distate.state_add(Z80_HL,            "HL",        HL);
+            m_distate.state_add(Z80_IX,            "IX",        IX);
+            m_distate.state_add(Z80_IY,            "IY",        IY);
+            m_distate.state_add(Z80_AF2,           "AF2",       m_af2.w.l);
+            m_distate.state_add(Z80_BC2,           "BC2",       m_bc2.w.l);
+            m_distate.state_add(Z80_DE2,           "DE2",       m_de2.w.l);
+            m_distate.state_add(Z80_HL2,           "HL2",       m_hl2.w.l);
+            m_distate.state_add(Z80_WZ,            "WZ",        WZ);
+            m_distate.state_add(Z80_R,             "R",         m_rtemp).callimport().callexport();
+            m_distate.state_add(Z80_I,             "I",         m_i);
+            m_distate.state_add(Z80_IM,            "IM",        m_im).mask(0x3);
+            m_distate.state_add(Z80_IFF1,          "IFF1",      m_iff1).mask(0x1);
+            m_distate.state_add(Z80_IFF2,          "IFF2",      m_iff2).mask(0x1);
+            m_distate.state_add(Z80_HALT,          "HALT",      m_halt).mask(0x1);
 
             // set our instruction counter
             set_icountptr(m_icount);
@@ -652,7 +654,7 @@ namespace mame
         //virtual UINT32 execute_max_cycles() const { return 16; }
         //virtual UINT32 execute_input_lines() const { return 4; }
         //virtual uint32_t execute_default_irq_vector(int inputnum) const override { return 0xff; }
-        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == device_execute_interface.INPUT_LINE_NMI; }
+        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == g.INPUT_LINE_NMI; }
 
         static int opcount = 0;  // for debugging purposes
 
@@ -713,18 +715,18 @@ namespace mame
                     m_busrq_state = state;
                     break;
 
-                case device_execute_interface.INPUT_LINE_NMI:
+                case g.INPUT_LINE_NMI:
                     /* mark an NMI pending on the rising edge */
-                    if (m_nmi_state == CLEAR_LINE && state != CLEAR_LINE)
+                    if (m_nmi_state == g.CLEAR_LINE && state != g.CLEAR_LINE)
                         m_nmi_pending = true;
                     m_nmi_state = (byte)state;
                     break;
 
-                case device_execute_interface.INPUT_LINE_IRQ0:
+                case g.INPUT_LINE_IRQ0:
                     /* update the IRQ state via the daisy chain */
                     m_irq_state = (byte)state;
                     if (m_daisy.daisy_chain_present())
-                        m_irq_state = (m_daisy.daisy_update_irq_state() == ASSERT_LINE) ? (byte)ASSERT_LINE : m_irq_state;
+                        m_irq_state = (m_daisy.daisy_update_irq_state() == g.ASSERT_LINE) ? (byte)g.ASSERT_LINE : m_irq_state;
 
                     /* the main execute loop will take the interrupt */
                     break;
@@ -796,7 +798,7 @@ namespace mame
 
             switch (entry.index())
             {
-                case STATE_GENFLAGS:
+                case g.STATE_GENFLAGS:
                     str = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}",  // %c%c%c%c%c%c%c%c
                         (F & 0x80) > 0 ? 'S':'.',
                         (F & 0x40) > 0 ? 'Z':'.',
@@ -4028,7 +4030,7 @@ namespace mame
         {
             if (m_nmi_pending)
                 take_nmi();
-            else if (m_irq_state != CLEAR_LINE && m_iff1 != 0 && !m_after_ei)
+            else if (m_irq_state != g.CLEAR_LINE && m_iff1 != 0 && !m_after_ei)
                 take_interrupt();
         }
 

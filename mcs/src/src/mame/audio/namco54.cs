@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -15,10 +15,10 @@ namespace mame
     public static class namco54_global
     {
         /* discrete nodes */
-        public static int NAMCO_54XX_0_DATA(int base_node) { return global_object.NODE_RELATIVE(base_node, 0); }
-        public static int NAMCO_54XX_1_DATA(int base_node) { return global_object.NODE_RELATIVE(base_node, 1); }
-        public static int NAMCO_54XX_2_DATA(int base_node) { return global_object.NODE_RELATIVE(base_node, 2); }
-        public static int NAMCO_54XX_P_DATA(int base_node) { return global_object.NODE_RELATIVE(base_node, 3); }
+        public static int NAMCO_54XX_0_DATA(int base_node) { return g.NODE_RELATIVE(base_node, 0); }
+        public static int NAMCO_54XX_1_DATA(int base_node) { return g.NODE_RELATIVE(base_node, 1); }
+        public static int NAMCO_54XX_2_DATA(int base_node) { return g.NODE_RELATIVE(base_node, 2); }
+        public static int NAMCO_54XX_P_DATA(int base_node) { return g.NODE_RELATIVE(base_node, 3); }
     }
 
 
@@ -70,7 +70,7 @@ namespace mame
         public void reset(int state)
         {
             // The incoming signal is active low
-            m_cpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+            m_cpu.op[0].set_input_line(g.INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
 
@@ -142,7 +142,7 @@ namespace mame
         //-------------------------------------------------
         protected override void device_add_mconfig(machine_config config)
         {
-            MB8844(config, m_cpu, DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
+            MB8844(config, m_cpu, g.DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
             m_cpu.op[0].read_k().set(K_r).reg();
             m_cpu.op[0].write_o().set(O_w).reg();
             m_cpu.op[0].read_r(0).set(R0_r).reg();

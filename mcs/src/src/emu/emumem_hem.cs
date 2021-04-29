@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -74,7 +74,7 @@ namespace mame
 
         public handler_entry_write_memory(address_space space, object base_) : base(space, 0)  //handler_entry_write_memory(address_space *space, void *base) : handler_entry_write_address<Width, AddrShift, Endian>(space, 0), m_base(reinterpret_cast<uX *>(base)) {}
         {
-            m_base = (PointerRef<u8>)base_;  //m_base(reinterpret_cast<uX *>(base))
+            m_base = new PointerRef<u8>((Pointer<u8>)base_);  //m_base(reinterpret_cast<uX *>(base))
         }
 
         //~handler_entry_write_memory() = default;

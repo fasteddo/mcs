@@ -8,7 +8,6 @@ using System.Linq;
 using default_layout_map = mame.std.map<string, mame.internal_layout>;  //std::map<char const *, internal_layout const *, bool (*)(char const *, char const *)> default_layout_map;
 using maximum_quantum_map = mame.std.map<string, mame.attotime>;  //std::map<char const *, attotime, bool (*)(char const *, char const *)> maximum_quantum_map;
 using slot_interface_enumerator = mame.device_interface_enumerator<mame.device_slot_interface>;  //typedef device_interface_enumerator<device_slot_interface> slot_interface_enumerator;
-using std_string_view = System.String;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
@@ -166,7 +165,7 @@ namespace mame
                 else
                 {
                     slot_option opt = options.slot_option(slot_option_name);
-                    selval = opt.value().c_str();
+                    selval = opt.value();
                     is_default = !opt.specified();
                 }
 
@@ -238,7 +237,7 @@ namespace mame
             if (m_perfect_quantum_device.first == null)
                 return null;
 
-            device_t found = m_perfect_quantum_device.first.subdevice(m_perfect_quantum_device.second.c_str());
+            device_t found = m_perfect_quantum_device.first.subdevice(m_perfect_quantum_device.second);
             if (found == null)
             {
                 throw new emu_fatalerror(
@@ -459,10 +458,10 @@ namespace mame
             {
                 string next = tag.Substring(tag.IndexOf(':', 0));  //const char *next = strchr(tag, ':');
                 assert(next != tag);
-                std_string_view part = tag.Substring(0, tag.IndexOf(':', 0));  //std::string_view part(tag, next - tag);
+                string part = tag.Substring(0, tag.IndexOf(':', 0));  //std::string_view part(tag, next - tag);
                 owner = owner.subdevices().find(part);
                 if (owner == null)
-                    throw new emu_fatalerror("Could not find {0} when looking up path for device {1}\n", part.c_str(), orig_tag);
+                    throw new emu_fatalerror("Could not find {0} when looking up path for device {1}\n", part, orig_tag);
                 tag = next.Substring(1);  //tag = next + 1;
             }
             assert(!string.IsNullOrEmpty(tag));  //global.assert(tag[0] != '\0');

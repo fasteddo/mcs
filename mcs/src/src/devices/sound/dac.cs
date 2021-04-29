@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
@@ -96,7 +96,7 @@ namespace mame
         }
 
 
-        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return m_disound.add_route(output, target, gain, input, mixoutput); }
+        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = g.AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return m_disound.add_route(output, target, gain, input, mixoutput); }
         protected virtual void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { m_disound.sound_stream_update(stream, inputs, outputs); }
         protected sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate) { return m_disound.stream_alloc(inputs, outputs, sample_rate); }
         protected sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate, sound_stream_flags flags) { return m_disound.stream_alloc(inputs, outputs, sample_rate, flags); }
@@ -179,14 +179,14 @@ namespace mame
             var lo = inputs[dac_global.DAC_INPUT_RANGE_LO];
 
             // constant lo, streaming hi
-            if (BIT(m_specified_inputs_mask, dac_global.DAC_INPUT_RANGE_LO) == 0)
+            if (g.BIT(m_specified_inputs_mask, dac_global.DAC_INPUT_RANGE_LO) == 0)
             {
                 for (int sampindex = 0; sampindex < out_.samples(); sampindex++)
                     out_.put(sampindex, m_range_min + m_curval * (hi.get(sampindex) - m_range_min));
             }
 
             // constant hi, streaming lo
-            else if (BIT(m_specified_inputs_mask, dac_global.DAC_INPUT_RANGE_HI) == 0)
+            else if (g.BIT(m_specified_inputs_mask, dac_global.DAC_INPUT_RANGE_HI) == 0)
             {
                 for (int sampindex = 0; sampindex < out_.samples(); sampindex++)
                     out_.put(sampindex, lo.get(sampindex) + m_curval * (m_range_max - lo.get(sampindex)));

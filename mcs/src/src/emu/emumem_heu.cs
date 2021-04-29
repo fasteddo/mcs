@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using s8 = System.SByte;
 using u8 = System.Byte;
 using u16 = System.UInt16;

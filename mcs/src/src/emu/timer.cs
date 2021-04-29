@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using device_timer_id = System.UInt32;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using s32 = System.Int32;
 using u32 = System.UInt32;
 

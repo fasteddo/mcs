@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using plog_delegate = System.Action<mame.plib.plog_level, string>;  //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
-
 
 namespace mame.plib
 {
@@ -155,7 +153,7 @@ namespace mame.plib
     }
 
 
-    //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
+    public delegate void plog_delegate(plog_level level, string log);  //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
 
 
     public class plog_channel<plog_level_L> : plog_channel<plog_level_L, bool_constant_true>

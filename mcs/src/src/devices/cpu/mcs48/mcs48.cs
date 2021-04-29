@@ -5,7 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_read_line = mame.devcb_read<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_read_line = devcb_read<int, 1U>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -162,12 +166,12 @@ namespace mame
         address_space_config m_data_config;
         address_space_config m_io_config;
 
-        devcb_read8.array<devcb_read8, uint32_constant_2> m_port_in_cb;
-        devcb_write8.array<devcb_write8, uint32_constant_2> m_port_out_cb;
+        devcb_read8.array<uint32_constant_2> m_port_in_cb;
+        devcb_write8.array<uint32_constant_2> m_port_out_cb;
         devcb_read8 m_bus_in_cb;
         devcb_write8 m_bus_out_cb;
 
-        devcb_read_line.array<devcb_read_line, uint32_constant_2> m_test_in_cb;
+        devcb_read_line.array<uint32_constant_2> m_test_in_cb;
         clock_update_delegate m_t0_clk_func;
         devcb_write_line m_prog_out_cb;
 
@@ -651,11 +655,11 @@ namespace mame
             m_data_config = new address_space_config("data", endianness_t.ENDIANNESS_LITTLE, 8, ( ( ram_size == 64 ) ? (u8)6 : ( ( ram_size == 128 ) ? (u8)7 : (u8)8 ) ), 0
                             , (ram_size == 64) ? data_6bit : (ram_size == 128) ? data_7bit : (address_map_constructor)data_8bit);
             m_io_config = new address_space_config("io", endianness_t.ENDIANNESS_LITTLE, 8, 8, 0);
-            m_port_in_cb = new devcb_read8.array<devcb_read8, uint32_constant_2>(this, () => { return new devcb_read8(this); });
-            m_port_out_cb = new devcb_write8.array<devcb_write8, uint32_constant_2>(this, () => { return new devcb_write8(this); });
+            m_port_in_cb = new devcb_read8.array<uint32_constant_2>(this, () => { return new devcb_read8(this); });
+            m_port_out_cb = new devcb_write8.array<uint32_constant_2>(this, () => { return new devcb_write8(this); });
             m_bus_in_cb = new devcb_read8(this);
             m_bus_out_cb = new devcb_write8(this);
-            m_test_in_cb = new devcb_read_line.array<devcb_read_line, uint32_constant_2>(this, () => { return new devcb_read_line(this); });
+            m_test_in_cb = new devcb_read_line.array<uint32_constant_2>(this, () => { return new devcb_read_line(this); });
             m_t0_clk_func = null;
             m_prog_out_cb = new devcb_write_line(this);
             m_psw = 0;
@@ -688,13 +692,13 @@ namespace mame
 
         // configuration
         //auto p1_in_cb() { return m_port_in_cb[0].bind(); }
-        public devcb_read.binder p2_in_cb() { return m_port_in_cb[1].bind(); }
-        public devcb_write.binder p1_out_cb() { return m_port_out_cb[0].bind(); }
-        public devcb_write.binder p2_out_cb() { return m_port_out_cb[1].bind(); }
-        public devcb_read.binder bus_in_cb() { return m_bus_in_cb.bind(); }
-        public devcb_write.binder bus_out_cb() { return m_bus_out_cb.bind(); }
-        public devcb_read.binder t0_in_cb() { return m_test_in_cb[0].bind(); }
-        public devcb_read.binder t1_in_cb() { return m_test_in_cb[1].bind(); }
+        public devcb_read8.binder p2_in_cb() { return m_port_in_cb[1].bind(); }
+        public devcb_write8.binder p1_out_cb() { return m_port_out_cb[0].bind(); }
+        public devcb_write8.binder p2_out_cb() { return m_port_out_cb[1].bind(); }
+        public devcb_read8.binder bus_in_cb() { return m_bus_in_cb.bind(); }
+        public devcb_write8.binder bus_out_cb() { return m_bus_out_cb.bind(); }
+        public devcb_read_line.binder t0_in_cb() { return m_test_in_cb[0].bind(); }
+        public devcb_read_line.binder t1_in_cb() { return m_test_in_cb[1].bind(); }
 
         // PROG line to 8243 expander
         //auto prog_out_cb() { return m_prog_out_cb.bind(); }
@@ -800,14 +804,14 @@ namespace mame
 
             // set up the state table
             {
-                m_distate.state_add(MCS48_PC,        "PC",        m_pc).mask(0xfff);
-                m_distate.state_add(STATE_GENPC,     "GENPC",     m_pc).mask(0xfff).noshow();
-                m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_prevpc).mask(0xfff).noshow();
-                m_distate.state_add(STATE_GENSP,     "GENSP",     m_psw).mask(0x7).noshow();
-                m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  m_psw).noshow().formatstr("%11s");
-                m_distate.state_add(MCS48_A,         "A",         m_a);
-                m_distate.state_add(MCS48_TC,        "TC",        m_timer);
-                m_distate.state_add(MCS48_TPRE,      "TPRE",      m_prescaler).mask(0x1f);
+                m_distate.state_add(MCS48_PC,          "PC",        m_pc).mask(0xfff);
+                m_distate.state_add(g.STATE_GENPC,     "GENPC",     m_pc).mask(0xfff).noshow();
+                m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     m_prevpc).mask(0xfff).noshow();
+                m_distate.state_add(g.STATE_GENSP,     "GENSP",     m_psw).mask(0x7).noshow();
+                m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  m_psw).noshow().formatstr("%11s");
+                m_distate.state_add(MCS48_A,           "A",         m_a);
+                m_distate.state_add(MCS48_TC,          "TC",        m_timer);
+                m_distate.state_add(MCS48_TPRE,        "TPRE",      m_prescaler).mask(0x1f);
 
                 if ((m_feature_mask & I802X_FEATURE) != 0)
                     m_distate.state_add(MCS48_P0,    "P0",        m_dbbo);
@@ -816,7 +820,7 @@ namespace mame
 
                 for (int regnum = 0; regnum < 8; regnum++)
                 {
-                    m_distate.state_add(MCS48_R0 + regnum, string_format("R{0}", regnum).c_str(), m_rtemp).callimport().callexport();
+                    m_distate.state_add(MCS48_R0 + regnum, string_format("R{0}", regnum), m_rtemp).callimport().callexport();
                 }
 
                 if ((m_feature_mask & EXT_BUS_FEATURE) != 0)
@@ -945,11 +949,11 @@ namespace mame
             switch (inputnum)
             {
                 case MCS48_INPUT_IRQ:
-                    m_irq_state = (state != CLEAR_LINE);
+                    m_irq_state = (state != g.CLEAR_LINE);
                     break;
 
                 case MCS48_INPUT_EA:
-                    m_ea = (state != CLEAR_LINE) ? (uint8_t)1 : (uint8_t)0;
+                    m_ea = (state != g.CLEAR_LINE) ? (uint8_t)1 : (uint8_t)0;
                     break;
             }
         }

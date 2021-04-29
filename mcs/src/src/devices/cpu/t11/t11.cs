@@ -6,7 +6,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -297,9 +299,9 @@ namespace mame
             m_distate.state_add( T11_R4,  "R4",  m_reg[4].w.l).formatstr("%06O");
             m_distate.state_add( T11_R5,  "R5",  m_reg[5].w.l).formatstr("%06O");
 
-            m_distate.state_add(STATE_GENPC, "GENPC", m_reg[7].w.l).noshow();
-            m_distate.state_add(STATE_GENPCBASE, "CURPC", m_ppc.w.l).noshow();
-            m_distate.state_add(STATE_GENFLAGS, "GENFLAGS", m_psw.b.l).formatstr("%8s").noshow();
+            m_distate.state_add(g.STATE_GENPC, "GENPC", m_reg[7].w.l).noshow();
+            m_distate.state_add(g.STATE_GENPCBASE, "CURPC", m_ppc.w.l).noshow();
+            m_distate.state_add(g.STATE_GENFLAGS, "GENFLAGS", m_psw.b.l).formatstr("%8s").noshow();
 
             set_icountptr(m_icount);
         }
@@ -394,26 +396,26 @@ namespace mame
             case CP2_LINE:
             case CP3_LINE:
                 // set the appropriate bit
-                if (state == CLEAR_LINE)
+                if (state == g.CLEAR_LINE)
                     m_cp_state &= (uint8_t)(~(1 << irqline));
                 else
                     m_cp_state |= (uint8_t)(1 << irqline);
                 break;
 
             case VEC_LINE:
-                m_vec_active = (state != CLEAR_LINE);
+                m_vec_active = (state != g.CLEAR_LINE);
                 break;
 
             case PF_LINE:
-                if (state != CLEAR_LINE && !m_pf_active)
+                if (state != g.CLEAR_LINE && !m_pf_active)
                     m_power_fail = true;
-                m_pf_active = (state != CLEAR_LINE);
+                m_pf_active = (state != g.CLEAR_LINE);
                 break;
 
             case HLT_LINE:
-                if (state != CLEAR_LINE && !m_hlt_active)
+                if (state != g.CLEAR_LINE && !m_hlt_active)
                     m_ext_halt = true;
-                m_hlt_active = (state != CLEAR_LINE);
+                m_hlt_active = (state != g.CLEAR_LINE);
                 break;
             }
         }
@@ -570,7 +572,7 @@ namespace mame
                 standard_irq_callback(m_cp_state & 15);
 
                 // T11 encodes the interrupt level on DAL<12:8>
-                uint8_t iaddr = (uint8_t)bitswap(~m_cp_state & 15, 0, 1, 2, 3);
+                uint8_t iaddr = (uint8_t)g.bitswap(~m_cp_state & 15, 0, 1, 2, 3);
                 if (!m_vec_active)
                     iaddr |= 16;
 
@@ -578,7 +580,7 @@ namespace mame
                 uint8_t vector = m_in_iack_func.op(iaddr);
 
                 // nonvectored or vectored interrupt depending on VEC
-                if (BIT(iaddr, 4) != 0)
+                if (g.BIT(iaddr, 4) != 0)
                     take_interrupt(irq.vector);
                 else
                     take_interrupt((uint8_t)(vector & ~3));

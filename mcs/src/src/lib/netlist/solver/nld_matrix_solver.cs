@@ -10,8 +10,6 @@ using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
-using nldelegate_ts = System.Action<mame.netlist.timestep_type, System.Double>;  //using nldelegate_ts = plib::pmfp<void, timestep_type, nl_fptype>;
-using nldelegate_dyn = System.Action;  //using nldelegate_dyn = plib::pmfp<void>;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using param_int_t = mame.netlist.param_num_t<int, mame.netlist.param_num_t_operators_int>;  //using param_int_t = param_num_t<int>;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;

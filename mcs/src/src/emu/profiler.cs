@@ -268,7 +268,7 @@ namespace mame
 
             // reset data set to 0
             memset<osd_ticks_t>(m_data, 0, (UInt32)m_data.Length);
-            m_text = stream.str();
+            m_text = stream;
         }
 
         //-------------------------------------------------

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -39,21 +39,21 @@ namespace mame
             int scanline = param;
 
             if (scanline == 0x2c) // audio irq point 1
-                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
+                m_audiocpu.op[0].set_input_line(0, g.HOLD_LINE);
 
             if (scanline == 0x6d) // periodic irq (writes to the soundlatch and drives freeze dip-switch), + audio irq point 2
             {
-                m_maincpu.op[0].set_input_line_and_vector(0, HOLD_LINE, 0xcf);   /* Z80 - RST 08h */
-                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
+                m_maincpu.op[0].set_input_line_and_vector(0, g.HOLD_LINE, 0xcf);   /* Z80 - RST 08h */
+                m_audiocpu.op[0].set_input_line(0, g.HOLD_LINE);
             }
 
             if (scanline == 0xaf) // audio irq point 3
-                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
+                m_audiocpu.op[0].set_input_line(0, g.HOLD_LINE);
 
             if (scanline == 0xf0) // vblank-out irq, audio irq point 4
             {
-                m_maincpu.op[0].set_input_line_and_vector(0, HOLD_LINE, 0xd7);   /* Z80 - RST 10h - vblank */
-                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
+                m_maincpu.op[0].set_input_line_and_vector(0, g.HOLD_LINE, 0xd7);   /* Z80 - RST 10h - vblank */
+                m_audiocpu.op[0].set_input_line(0, g.HOLD_LINE);
             }
         }
 
@@ -180,7 +180,7 @@ namespace mame
     {
         static readonly gfx_layout charlayout = new gfx_layout(
             8,8,
-            RGN_FRAC(1,1),
+            g.RGN_FRAC(1,1),
             2,
             new UInt32[] { 4, 0 },
             new UInt32[] { 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
@@ -191,9 +191,9 @@ namespace mame
 
         static readonly gfx_layout tilelayout = new gfx_layout(
             16,16,
-            RGN_FRAC(1,3),
+            g.RGN_FRAC(1,3),
             3,
-            new UInt32[] { RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
+            new UInt32[] { g.RGN_FRAC(0,3), g.RGN_FRAC(1,3), g.RGN_FRAC(2,3) },
             new UInt32[] { 0, 1, 2, 3, 4, 5, 6, 7,
                     16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
             new UInt32[] { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -204,9 +204,9 @@ namespace mame
 
         static readonly gfx_layout spritelayout = new gfx_layout(
             16,16,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             4,
-            new UInt32[] { RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
+            new UInt32[] { g.RGN_FRAC(1,2)+4, g.RGN_FRAC(1,2)+0, 4, 0 },
             new UInt32[] { 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
                     16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
             new UInt32[] { 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -218,9 +218,9 @@ namespace mame
         //static GFXDECODE_START( gfx_1942 )
         static readonly gfx_decode_entry [] gfx_1942 = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout,             0, 64 ),
-            GFXDECODE_ENTRY( "gfx2", 0, tilelayout,          64*4, 4*32 ),
-            GFXDECODE_ENTRY( "gfx3", 0, spritelayout, 64*4+4*32*8, 16 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0, charlayout,             0, 64 ),
+            g.GFXDECODE_ENTRY( "gfx2", 0, tilelayout,          64*4, 4*32 ),
+            g.GFXDECODE_ENTRY( "gfx3", 0, spritelayout, 64*4+4*32*8, 16 ),
 
             //GFXDECODE_END
         };
@@ -259,7 +259,7 @@ namespace mame
 
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
             m_screen.op[0].set_refresh_hz(60);
-            m_screen.op[0].set_vblank_time(ATTOSECONDS_IN_USEC(0));
+            m_screen.op[0].set_vblank_time(g.ATTOSECONDS_IN_USEC(0));
             m_screen.op[0].set_size(32*8, 32*8);
             m_screen.op[0].set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
             m_screen.op[0].set_screen_update(screen_update);
@@ -289,7 +289,7 @@ namespace mame
             /* Minimize resampling between ay8910 and netlist */
             NETLIST_SOUND(config, "snd_nl", AUDIO_CLOCK / 8 / 2)
                 .set_source(netlist_1942)
-                .disound.add_route(ALL_OUTPUTS, "mono", 5.0);
+                .disound.add_route(g.ALL_OUTPUTS, "mono", 5.0);
             NETLIST_STREAM_INPUT(config, "snd_nl:cin0", 0, "R_AY1_1.R");
             NETLIST_STREAM_INPUT(config, "snd_nl:cin1", 1, "R_AY1_2.R");
             NETLIST_STREAM_INPUT(config, "snd_nl:cin2", 2, "R_AY1_3.R");

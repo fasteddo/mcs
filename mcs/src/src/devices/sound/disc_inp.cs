@@ -33,7 +33,7 @@ namespace mame
             double min;
             double max;
 
-            m_port = m_device.machine().root_device().ioport(m_device.siblingtag((string)this.custom_data()).c_str());
+            m_port = m_device.machine().root_device().ioport(m_device.siblingtag((string)this.custom_data()));
             if (m_port == null)
                 fatalerror("DISCRETE_ADJUSTMENT - NODE_{0} has invalid tag\n", this.index());
 

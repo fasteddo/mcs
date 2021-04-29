@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
-using pen_t = System.UInt32;
-using tilemap_memory_index = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -45,11 +45,11 @@ namespace mame
             for (int i = 0; i < 512; i++)
             {
                 uint8_t promval = char_pal[i];
-                int r = combine_weights(weights_r, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
-                int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
-                int b = combine_weights(weights_b, BIT(promval, 6), BIT(promval, 7));
+                int r  = combine_weights(weights_r, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
+                int gr = combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
+                int b  = combine_weights(weights_b, g.BIT(promval, 6), g.BIT(promval, 7));
 
-                m_tx_palette.op[0].dipalette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
+                m_tx_palette.op[0].dipalette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
 
             /* background palette */
@@ -57,11 +57,11 @@ namespace mame
             for (int i = 0; i < 32; i++)
             {
                 uint8_t promval = back_pal[i];
-                int r = combine_weights(weights_r, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
-                int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
-                int b = combine_weights(weights_b, BIT(promval, 6), BIT(promval, 7));
+                int r  = combine_weights(weights_r, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
+                int gr = combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
+                int b  = combine_weights(weights_b, g.BIT(promval, 6), g.BIT(promval, 7));
 
-                m_bg_palette.op[0].dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
+                m_bg_palette.op[0].dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
 
             /* background
@@ -107,11 +107,11 @@ namespace mame
             for (int i = 0; i < 32; i++)
             {
                 uint8_t promval = sprite_pal[i];
-                int r = combine_weights(weights_r, BIT(promval, 6), BIT(promval, 7));
-                int g = combine_weights(weights_g, BIT(promval, 3), BIT(promval, 4), BIT(promval, 5));
-                int b = combine_weights(weights_b, BIT(promval, 0), BIT(promval, 1), BIT(promval, 2));
+                int r  = combine_weights(weights_r, g.BIT(promval, 6), g.BIT(promval, 7));
+                int gr = combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
+                int b  = combine_weights(weights_b, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
 
-                m_sp_palette.op[0].dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
+                m_sp_palette.op[0].dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
 
             /* sprite lookup table */

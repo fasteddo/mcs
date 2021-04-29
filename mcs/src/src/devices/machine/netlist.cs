@@ -4,14 +4,13 @@
 using System;
 using System.Collections.Generic;
 
-using device_timer_id = System.UInt32;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using int64_t = System.Int64;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
-using plog_delegate = System.Action<mame.plib.plog_level, string>;  //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
 using size_t = System.UInt32;
 using sound_in_type = mame.netlist.interface_.nld_buffered_param_setter<mame.netlist_mame_sound_input_buffer>;  //using sound_in_type = netlist::interface::NETLIB_NAME(buffered_param_setter)<netlist_mame_sound_input_buffer>;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
@@ -106,22 +105,22 @@ namespace mame
                 switch (l)
                 {
                 case plib.plog_level.DEBUG:
-                    m_parent.logerror("netlist DEBUG: {0}\n", ls.c_str());
+                    m_parent.logerror("netlist DEBUG: {0}\n", ls);
                     break;
                 case plib.plog_level.VERBOSE:
-                    m_parent.logerror("netlist VERBOSE: {0}\n", ls.c_str());
+                    m_parent.logerror("netlist VERBOSE: {0}\n", ls);
                     break;
                 case plib.plog_level.INFO:
-                    m_parent.logerror("netlist INFO: {0}\n", ls.c_str());
+                    m_parent.logerror("netlist INFO: {0}\n", ls);
                     break;
                 case plib.plog_level.WARNING:
-                    m_parent.logerror("netlist WARNING: {0}\n", ls.c_str());
+                    m_parent.logerror("netlist WARNING: {0}\n", ls);
                     break;
                 case plib.plog_level.ERROR:
-                    m_parent.logerror("netlist ERROR: {0}\n", ls.c_str());
+                    m_parent.logerror("netlist ERROR: {0}\n", ls);
                     break;
                 case plib.plog_level.FATAL:
-                    m_parent.logerror("netlist FATAL: {0}\n", ls.c_str());
+                    m_parent.logerror("netlist FATAL: {0}\n", ls);
                     break;
                 }
             }
@@ -1140,7 +1139,7 @@ namespace mame
         //template<typename T, typename X = void *>
         public void save_item<T>(T item, string name)  //void save_item(T &&item, const pstring &name, X = nullptr)
         {
-            m_device.save_item(new Tuple<T, string>(item, (m_prefix + "_" + name).c_str()));  //m_device->save_item(item, (m_prefix + "_" + name).c_str());
+            m_device.save_item(new Tuple<T, string>(item, (m_prefix + "_" + name)));  //m_device->save_item(item, (m_prefix + "_" + name).c_str());
         }
 
 

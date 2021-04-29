@@ -191,11 +191,11 @@ namespace mame.ui
         public rgb_t status_color()
         {
             if (has_severe_warnings())
-                return UI_RED_COLOR;
+                return g.UI_RED_COLOR;
             else if ((machine_flags_get() & MACHINE_WARNINGS & ~machine_flags.type.REQUIRES_ARTWORK) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
-                return UI_YELLOW_COLOR;
+                return g.UI_YELLOW_COLOR;
             else
-                return UI_GREEN_COLOR;
+                return g.UI_GREEN_COLOR;
         }
 
 
@@ -206,9 +206,9 @@ namespace mame.ui
         public rgb_t warnings_color()
         {
             if (has_severe_warnings())
-                return UI_RED_COLOR;
+                return g.UI_RED_COLOR;
             else if ((machine_flags_get() & MACHINE_WARNINGS) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
-                return UI_YELLOW_COLOR;
+                return g.UI_YELLOW_COLOR;
             else
                 return m_options.background_color();
         }
@@ -250,7 +250,7 @@ namespace mame.ui
             // if we have at least one warning flag, print the general header
             if ((m_machine.rom_load().knownbad() > 0) || (machine_flags_get() & (MACHINE_ERRORS | MACHINE_WARNINGS | MACHINE_BTANB)) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
             {
-                if (!buf.str().empty())
+                if (!buf.empty())
                     buf += "\n";
                 buf += "There are known problems with this machine\n\n";
             }
@@ -340,7 +340,7 @@ namespace mame.ui
                     buf += "\n";
             }
 
-            return buf.str();
+            return buf;
         }
 
 
@@ -356,7 +356,7 @@ namespace mame.ui
                     m_machine.system().type.fullname(),
                     m_machine.system().year,
                     m_machine.system().manufacturer,
-                    core_filename_extract_base(m_machine.system().type.source()));
+                    g.core_filename_extract_base(m_machine.system().type.source()));
 
             // loop over all CPUs
             execute_interface_enumerator execiter = new execute_interface_enumerator(m_machine.root_device());
@@ -479,7 +479,7 @@ namespace mame.ui
                 }
             }
 
-            return buf.str();
+            return buf;
         }
 
 

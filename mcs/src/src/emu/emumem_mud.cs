@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using s8 = System.SByte;
 using s32 = System.Int32;
 using u8 = System.Byte;
@@ -63,7 +63,7 @@ namespace mame
 
 
             u32 bits_per_access = 8U << access_width;
-            u32 NATIVE_MASK = Width + AddrShift >= 0 ? coretmpl_global.make_bitmask32(Width + AddrShift) : 0;
+            u32 NATIVE_MASK = Width + AddrShift >= 0 ? g.make_bitmask32(Width + AddrShift) : 0;
 
             // Compute the real base addresses
             m_addrstart = addrstart & ~NATIVE_MASK;
@@ -77,13 +77,13 @@ namespace mame
             uX emask;
             if (Endian == endianness_t.ENDIANNESS_BIG)
             {
-                smask = coretmpl_global.make_bitmask_uX(Width, 8 * new uX(Width, 0).sizeof_() - ((addrstart - m_addrstart) << (3 - AddrShift)));  //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
-                emask = ~coretmpl_global.make_bitmask_uX(Width, 8 * new uX(Width, 0).sizeof_() - ((addrend - m_addrend + 1) << (3 - AddrShift)));  //emask = ~make_bitmask<uX>(8 * sizeof(uX) - ((addrend - m_addrend + 1) << (3 - AddrShift)));
+                smask = g.make_bitmask_uX(Width, 8 * new uX(Width, 0).sizeof_() - ((addrstart - m_addrstart) << (3 - AddrShift)));  //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
+                emask = ~g.make_bitmask_uX(Width, 8 * new uX(Width, 0).sizeof_() - ((addrend - m_addrend + 1) << (3 - AddrShift)));  //emask = ~make_bitmask<uX>(8 * sizeof(uX) - ((addrend - m_addrend + 1) << (3 - AddrShift)));
             }
             else
             {
-                smask = ~coretmpl_global.make_bitmask_uX(Width, (addrstart - m_addrstart) << (3 - AddrShift));  //smask = ~make_bitmask<uX>((addrstart - m_addrstart) << (3 - AddrShift));
-                emask = coretmpl_global.make_bitmask_uX(Width, (addrend - m_addrend + 1) << (3 - AddrShift));  //emask =  make_bitmask<uX>((addrend - m_addrend + 1) << (3 - AddrShift));
+                smask = ~g.make_bitmask_uX(Width, (addrstart - m_addrstart) << (3 - AddrShift));  //smask = ~make_bitmask<uX>((addrstart - m_addrstart) << (3 - AddrShift));
+                emask = g.make_bitmask_uX(Width, (addrend - m_addrend + 1) << (3 - AddrShift));  //emask =  make_bitmask<uX>((addrend - m_addrend + 1) << (3 - AddrShift));
             }
 
             umasks[handler_entry.START]                     &= smask;
@@ -94,7 +94,7 @@ namespace mame
                 m_keymap[i] = mask_to_ukey(umasks[i]);  //m_keymap[i] = mask_to_ukey<uX>(umasks[i]);
 
             // Compute the shift
-            uX dmask = coretmpl_global.make_bitmask_uX(Width, bits_per_access);  //uX dmask = make_bitmask<uX>(bits_per_access);
+            uX dmask = g.make_bitmask_uX(Width, bits_per_access);  //uX dmask = make_bitmask<uX>(bits_per_access);
             u32 active_count = 0;
             for (u32 i = 0; i != 8 << Width; i += (u32)bits_per_access)
             {
@@ -112,7 +112,7 @@ namespace mame
 
             // Build the handler characteristics
             m_handler_start = shift < 0 ? addrstart << -shift : addrstart >> shift;
-            m_handler_mask = shift < 0 ? (mask << -shift) | make_bitmask32(-shift) : mask >> shift;  //m_handler_mask = shift < 0 ? (mask << -shift) | make_bitmask<offs_t>(-shift) : mask >> shift;
+            m_handler_mask = shift < 0 ? (mask << -shift) | g.make_bitmask32(-shift) : mask >> shift;  //m_handler_mask = shift < 0 ? (mask << -shift) | make_bitmask<offs_t>(-shift) : mask >> shift;
 
             for (u32 i = 0; i < 4; i++)
             {
@@ -148,8 +148,8 @@ namespace mame
             if (cswidth == 0)
                 cswidth = bits_per_access;
 
-            uX csmask = coretmpl_global.make_bitmask_uX(Width, cswidth);  //uX csmask = make_bitmask<uX>(cswidth);
-            uX dmask = coretmpl_global.make_bitmask_uX(Width, bits_per_access);  //uX dmask = make_bitmask<uX>(bits_per_access);
+            uX csmask = g.make_bitmask_uX(Width, cswidth);  //uX csmask = make_bitmask<uX>(cswidth);
+            uX dmask = g.make_bitmask_uX(Width, bits_per_access);  //uX dmask = make_bitmask<uX>(bits_per_access);
 
             u32 offset = 0;
 

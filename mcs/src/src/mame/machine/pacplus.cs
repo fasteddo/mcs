@@ -45,7 +45,7 @@ namespace mame
                 method ^= 1;
 
             //tbl = swap_xor_table[method];
-            return (byte)(bitswap(e,swap_xor_table[method,0],swap_xor_table[method,1],swap_xor_table[method,2],swap_xor_table[method,3],swap_xor_table[method,4],swap_xor_table[method,5],swap_xor_table[method,6],swap_xor_table[method,7]) ^ swap_xor_table[method,8]);
+            return (byte)(g.bitswap(e,swap_xor_table[method,0],swap_xor_table[method,1],swap_xor_table[method,2],swap_xor_table[method,3],swap_xor_table[method,4],swap_xor_table[method,5],swap_xor_table[method,6],swap_xor_table[method,7]) ^ swap_xor_table[method,8]);
         }
 
         void pacplus_decode()

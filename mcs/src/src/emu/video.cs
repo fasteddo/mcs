@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using attoseconds_t = System.Int64;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s8 = System.SByte;
 using s16 = System.Int16;
@@ -129,7 +129,7 @@ namespace mame
             m_overall_emutime = attotime.zero;
             m_overall_valid_counter = 0;
             m_frame_update_counter = 0;
-            m_throttled = machine.options().throttle();
+            m_throttled = true;
             m_throttle_rate = 1.0f;
             m_fastforward = false;
             m_seconds_to_run = (UInt32)machine.options().seconds_to_run();
@@ -1028,13 +1028,13 @@ namespace mame
             {
                 //typedef software_renderer<u32, 0,0,0, 16,8,0, false, true> snap_renderer_bilinear;
                 //snap_renderer_bilinear::draw_primitives(primlist, &m_snap_bitmap.pix(0), width, height, m_snap_bitmap.rowpixels());
-                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, true), primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
+                software_renderer<u32,  int_constant_0, int_constant_0, int_constant_0,  int_constant_16, int_constant_8, int_constant_0, bool_constant_false, bool_constant_true>.draw_primitives(primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
             }
             else
             {
                 //typedef software_renderer<u32, 0,0,0, 16,8,0, false, false> snap_renderer;
                 //snap_renderer::draw_primitives(primlist, &m_snap_bitmap.pix(0), width, height, m_snap_bitmap.rowpixels());
-                software_renderer<u32>.draw_primitives(new software_renderer<u32>.TemplateParams(32, 0,0,0, 16,8,0, false, false), primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
+                software_renderer<u32,  int_constant_0, int_constant_0, int_constant_0,  int_constant_16, int_constant_8, int_constant_0, bool_constant_false, bool_constant_false>.draw_primitives(primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
             }
             primlist.release_lock();
         }

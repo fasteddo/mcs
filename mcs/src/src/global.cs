@@ -11,20 +11,18 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
-using attoseconds_t = System.Int64;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using int64_t = System.Int64;
-using ioport_value = System.UInt32;
+using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
-using nlsetup_func = System.Action<mame.netlist.nlparse_t>;  //using nlsetup_func = void (*)(nlparse_t &);
-using offs_t = System.UInt32;
-using pen_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using size_t = System.UInt32;
-using size_t_constant = mame.uint32_constant;
 using std_time_t = System.Int64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -99,6 +97,348 @@ namespace mame
     public class endianness_t_constant_ENDIANNESS_BIG : endianness_t_constant { public endianness_t value { get { return endianness_t.ENDIANNESS_BIG; } } }
 
 
+    // global functions
+    public class g
+    {
+        // attotime
+        public static attoseconds_t ATTOSECONDS_IN_USEC(u32 x) { return attotime.ATTOSECONDS_IN_USEC(x); }
+
+
+        // corefile
+        public static string core_filename_extract_base(string name, bool strip_extension = false) { return util_.core_filename_extract_base(name, strip_extension); }
+        public static bool core_filename_ends_with(string filename, string extension) { return util_.core_filename_ends_with(filename, extension); }
+
+
+        // corestr
+        public static int core_stricmp(string s1, string s2) { return corestr_global.core_stricmp(s1, s2); }
+        public static int core_strnicmp(string s1, string s2, size_t n) { return corestr_global.core_strnicmp(s1, s2, n); }
+        public static int core_strwildcmp(string sp1, string sp2) { return corestr_global.core_strwildcmp(sp1, sp2); }
+        public static bool core_iswildstr(string sp) { return corestr_global.core_iswildstr(sp); }
+        public static string strtrimspace(string str) { return corestr_global.strtrimspace(str); }
+        public static int strreplace(ref string str, string search, string replace) { return corestr_global.strreplace(ref str, search, replace); }
+
+
+        // coretmpl
+        public static u8 make_bitmask8(u32 n) { return util_.make_bitmask8(n); }
+        public static u8 make_bitmask8(s32 n) { return util_.make_bitmask8(n); }
+        public static u16 make_bitmask16(s32 n) { return util_.make_bitmask16(n); }
+        public static u16 make_bitmask16(u32 n) { return util_.make_bitmask16(n); }
+        public static u32 make_bitmask32(s32 n) { return util_.make_bitmask32(n); }
+        public static u32 make_bitmask32(u32 n) { return util_.make_bitmask32(n); }
+        public static u64 make_bitmask64(s32 n) { return util_.make_bitmask64(n); }
+        public static u64 make_bitmask64(u32 n) { return util_.make_bitmask64(n); }
+        public static uX make_bitmask_uX(int width, u32 n) { return util_.make_bitmask_uX(width, n); }
+        public static uX make_bitmask_uX(int width, s32 n) { return util_.make_bitmask_uX(width, n); }
+        public static int BIT(int x, int n) { return util_.BIT(x, n); }
+        public static UInt32 BIT(UInt32 x, int n) { return util_.BIT(x, n); }
+        public static UInt32 BIT(UInt32 x, UInt32 n, UInt32 w) { return util_.BIT(x, n, w); }
+        public static int bitswap(int val, int B1, int B0) { return util_.bitswap(val, B1, B0); }
+        public static int bitswap(int val, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B3, B2, B1, B0); }
+        public static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B5, B4, B3, B2, B1, B0); }
+        public static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B7, B6, B5, B4, B3, B2, B1, B0); }
+        public static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B15, B14, B13, B12, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
+        public static sbyte iabs(sbyte v) { return util_.iabs(v); }
+        public static short iabs(short v) { return util_.iabs(v); }
+        public static int iabs(int v) { return util_.iabs(v); }
+        public static Int64 iabs(Int64 v) { return util_.iabs(v); }
+        public static void reduce_fraction(ref UInt32 num, ref UInt32 den) { util_.reduce_fraction(ref num, ref den); }
+
+
+        // crsshair
+        public const int CROSSHAIR_VISIBILITY_OFF = crsshair_global.CROSSHAIR_VISIBILITY_OFF;
+        public const int CROSSHAIR_VISIBILITY_DEFAULT = crsshair_global.CROSSHAIR_VISIBILITY_DEFAULT;
+        public const int CROSSHAIR_VISIBILITY_AUTOTIME_DEFAULT = crsshair_global.CROSSHAIR_VISIBILITY_AUTOTIME_DEFAULT;
+        public const int CROSSHAIR_RAW_SIZE = crsshair_global.CROSSHAIR_RAW_SIZE;
+        public const int CROSSHAIR_RAW_ROWBYTES = crsshair_global.CROSSHAIR_RAW_ROWBYTES;
+
+
+        // device
+        public const string DEVICE_SELF = device_global.DEVICE_SELF;
+        public const string DEVICE_SELF_OWNER = device_global.DEVICE_SELF_OWNER;
+        public static u32 DERIVED_CLOCK(u32 num, u32 den) { return device_global.DERIVED_CLOCK(num, den); }
+
+
+        // diexec
+        public const int CLEAR_LINE = diexec_global.CLEAR_LINE;
+        public const int ASSERT_LINE = diexec_global.ASSERT_LINE;
+        public const int HOLD_LINE = diexec_global.HOLD_LINE;
+        public const int MAX_INPUT_LINES = diexec_global.MAX_INPUT_LINES;
+        public const int INPUT_LINE_IRQ0 = diexec_global.INPUT_LINE_IRQ0;
+        public const int INPUT_LINE_IRQ1 = diexec_global.INPUT_LINE_IRQ1;
+        public const int INPUT_LINE_NMI = diexec_global.INPUT_LINE_NMI;
+        public const int INPUT_LINE_RESET = diexec_global.INPUT_LINE_RESET;
+        public const int INPUT_LINE_HALT = diexec_global.INPUT_LINE_HALT;
+
+
+        // digfx
+        public static readonly u32 [] EXTENDED_XOFFS = digfx_global.EXTENDED_XOFFS;
+        public static readonly u32 [] EXTENDED_YOFFS = digfx_global.EXTENDED_YOFFS;
+        public static UInt32 RGN_FRAC(UInt32 num, UInt32 den) { return digfx_global.RGN_FRAC(num, den); }
+        public static bool IS_FRAC(UInt32 offset) { return digfx_global.IS_FRAC(offset); }
+        public static UInt32 FRAC_NUM(UInt32 offset) { return digfx_global.FRAC_NUM(offset); }
+        public static UInt32 FRAC_DEN(UInt32 offset) { return digfx_global.FRAC_DEN(offset); }
+        public static UInt32 FRAC_OFFSET(UInt32 offset) { return digfx_global.FRAC_OFFSET(offset); }
+        public static UInt32 [] ArrayCombineUInt32(params object [] objects) { return digfx_global.ArrayCombineUInt32(objects); }
+        public static UInt32 [] STEP2(int START, int STEP) { return digfx_global.STEP2(START, STEP); }
+        public static UInt32 [] STEP4(int START, int STEP) { return digfx_global.STEP4(START, STEP); }
+        public static UInt32 [] STEP8(int START, int STEP) { return digfx_global.STEP8(START, STEP); }
+        public static UInt32 [] STEP16(int START, int STEP) { return digfx_global.STEP16(START, STEP); }
+        public static UInt32 [] STEP32(int START, int STEP) { return digfx_global.STEP32(START, STEP); }
+        public static UInt32 GFXENTRY_GETXSCALE(UInt32 x) { return digfx_global.GFXENTRY_GETXSCALE(x); }
+        public static UInt32 GFXENTRY_GETYSCALE(UInt32 x) { return digfx_global.GFXENTRY_GETYSCALE(x); }
+        public static bool GFXENTRY_ISROM(UInt32 x) { return digfx_global.GFXENTRY_ISROM(x); }
+        public static bool GFXENTRY_ISRAM(UInt32 x) { return digfx_global.GFXENTRY_ISRAM(x); }
+        public static bool GFXENTRY_ISDEVICE(UInt32 x) { return digfx_global.GFXENTRY_ISDEVICE(x); }
+        public static bool GFXENTRY_ISREVERSE(UInt32 x) { return digfx_global.GFXENTRY_ISREVERSE(x); }
+        public static gfx_decode_entry GFXDECODE_ENTRY(string region, u32 offset, gfx_layout layout, u16 start, u16 colors) { return digfx_global.GFXDECODE_ENTRY(region, offset, layout, start, colors); }
+        public static gfx_decode_entry GFXDECODE_SCALE(string region, u32 offset, gfx_layout layout, u16 start, u16 colors, u32 x, u32 y) { return digfx_global.GFXDECODE_SCALE(region, offset, layout, start, colors, x, y); }
+
+
+        // discrete
+        public const int NODE_00 = discrete_global.NODE_00;
+        public const int NODE_01 = discrete_global.NODE_01;
+        public const int NODE_02 = discrete_global.NODE_02;
+        public const int NODE_03 = discrete_global.NODE_03;
+        public const int NODE_04 = discrete_global.NODE_04;
+        public const int NODE_05 = discrete_global.NODE_05;
+        public const int NODE_06 = discrete_global.NODE_06;
+        public const int NODE_07 = discrete_global.NODE_07;
+        public const int NODE_08 = discrete_global.NODE_08;
+        public const int NODE_09 = discrete_global.NODE_09;
+        public const int NODE_10 = discrete_global.NODE_10;
+        public const int NODE_11 = discrete_global.NODE_11;
+        public const int NODE_12 = discrete_global.NODE_12;
+        public const int NODE_13 = discrete_global.NODE_13;
+        public const int NODE_14 = discrete_global.NODE_14;
+        public const int NODE_15 = discrete_global.NODE_15;
+        public const int NODE_16 = discrete_global.NODE_16;
+        public const int NODE_17 = discrete_global.NODE_17;
+        public const int NODE_20 = discrete_global.NODE_20;
+        public const int NODE_21 = discrete_global.NODE_21;
+        public const int NODE_22 = discrete_global.NODE_22;
+        public const int NODE_23 = discrete_global.NODE_23;
+        public const int NODE_24 = discrete_global.NODE_24;
+        public const int NODE_25 = discrete_global.NODE_25;
+        public const int NODE_26 = discrete_global.NODE_26;
+        public const int NODE_27 = discrete_global.NODE_27;
+        public const int NODE_28 = discrete_global.NODE_28;
+        public const int NODE_29 = discrete_global.NODE_29;
+        public const int NODE_30 = discrete_global.NODE_30;
+        public const int NODE_33 = discrete_global.NODE_33;
+        public const int NODE_34 = discrete_global.NODE_34;
+        public const int NODE_35 = discrete_global.NODE_35;
+        public const int NODE_38 = discrete_global.NODE_38;
+        public const int NODE_39 = discrete_global.NODE_39;
+        public const int NODE_40 = discrete_global.NODE_40;
+        public const int NODE_45 = discrete_global.NODE_45;
+        public const int NODE_50 = discrete_global.NODE_50;
+        public const int NODE_51 = discrete_global.NODE_51;
+        public const int NODE_52 = discrete_global.NODE_52;
+        public const int NODE_54 = discrete_global.NODE_54;
+        public const int NODE_55 = discrete_global.NODE_55;
+        public const int NODE_60 = discrete_global.NODE_60;
+        public const int NODE_61 = discrete_global.NODE_61;
+        public const int NODE_70 = discrete_global.NODE_70;
+        public const int NODE_71 = discrete_global.NODE_71;
+        public const int NODE_73 = discrete_global.NODE_73;
+        public const int NODE_90 = discrete_global.NODE_90;
+        public const int NODE_100 = discrete_global.NODE_100;
+        public const int NODE_105 = discrete_global.NODE_105;
+        public const int NODE_110 = discrete_global.NODE_110;
+        public const int NODE_111 = discrete_global.NODE_111;
+        public const int NODE_115 = discrete_global.NODE_115;
+        public const int NODE_116 = discrete_global.NODE_116;
+        public const int NODE_117 = discrete_global.NODE_117;
+        public const int NODE_120 = discrete_global.NODE_120;
+        public const int NODE_132 = discrete_global.NODE_132;
+        public const int NODE_133 = discrete_global.NODE_133;
+        public const int NODE_133_00 = discrete_global.NODE_133_00;
+        public const int NODE_133_02 = discrete_global.NODE_133_02;
+        public const int NODE_133_03 = discrete_global.NODE_133_03;
+        public const int NODE_150 = discrete_global.NODE_150;
+        public const int NODE_151 = discrete_global.NODE_151;
+        public const int NODE_152 = discrete_global.NODE_152;
+        public const int NODE_155 = discrete_global.NODE_155;
+        public const int NODE_157 = discrete_global.NODE_157;
+        public const int NODE_170 = discrete_global.NODE_170;
+        public const int NODE_171 = discrete_global.NODE_171;
+        public const int NODE_172 = discrete_global.NODE_172;
+        public const int NODE_173 = discrete_global.NODE_173;
+        public const int NODE_177 = discrete_global.NODE_177;
+        public const int NODE_178 = discrete_global.NODE_178;
+        public const int NODE_181 = discrete_global.NODE_181;
+        public const int NODE_182 = discrete_global.NODE_182;
+        public const int NODE_208 = discrete_global.NODE_208;
+        public const int NODE_209 = discrete_global.NODE_209;
+        public const int NODE_240 = discrete_global.NODE_240;
+        public const int NODE_241 = discrete_global.NODE_241;
+        public const int NODE_242 = discrete_global.NODE_242;
+        public const int NODE_243 = discrete_global.NODE_243;
+        public const int NODE_250 = discrete_global.NODE_250;
+        public const int NODE_279 = discrete_global.NODE_279;
+        public const int NODE_280 = discrete_global.NODE_280;
+        public const int NODE_288 = discrete_global.NODE_288;
+        public const int NODE_289 = discrete_global.NODE_289;
+        public const int NODE_294 = discrete_global.NODE_294;
+        public const int NODE_295 = discrete_global.NODE_295;
+        public const int NODE_296 = discrete_global.NODE_296;
+        public const int DISCRETE_MAX_NODES = discrete_global.DISCRETE_MAX_NODES;
+        public const int DISCRETE_MAX_INPUTS = discrete_global.DISCRETE_MAX_INPUTS;
+        public const int DISCRETE_MAX_OUTPUTS = discrete_global.DISCRETE_MAX_OUTPUTS;
+        public const int DISCRETE_MAX_TASK_GROUPS = discrete_global.DISCRETE_MAX_TASK_GROUPS;
+        public static double RC_CHARGE_EXP_DT(double rc, double dt) { return discrete_global.RC_CHARGE_EXP_DT(rc, dt); }
+        public const double DEFAULT_TTL_V_LOGIC_1 = discrete_global.DEFAULT_TTL_V_LOGIC_1;
+        public const double DISC_LINADJ = discrete_global.DISC_LINADJ;
+        public const int DISC_CLK_MASK = discrete_global.DISC_CLK_MASK;
+        public const int DISC_CLK_ON_F_EDGE = discrete_global.DISC_CLK_ON_F_EDGE;
+        public const int DISC_CLK_ON_R_EDGE =  discrete_global.DISC_CLK_ON_R_EDGE;
+        public const int DISC_CLK_BY_COUNT = discrete_global.DISC_CLK_BY_COUNT;
+        public const int DISC_CLK_IS_FREQ = discrete_global.DISC_CLK_IS_FREQ;
+        public const int DISC_COUNT_UP = discrete_global.DISC_COUNT_UP;
+        public const int DISC_COUNTER_IS_7492 = discrete_global.DISC_COUNTER_IS_7492;
+        public const int DISC_OUT_MASK = discrete_global.DISC_OUT_MASK;
+        public const int DISC_OUT_IS_ENERGY = discrete_global.DISC_OUT_IS_ENERGY;
+        public const int DISC_OUT_HAS_XTIME = discrete_global.DISC_OUT_HAS_XTIME;
+        public const int DISC_LFSR_OR = discrete_global.DISC_LFSR_OR;
+        public const int DISC_LFSR_AND = discrete_global.DISC_LFSR_AND;
+        public const int DISC_LFSR_XNOR = discrete_global.DISC_LFSR_XNOR;
+        public const int DISC_LFSR_NOR = discrete_global.DISC_LFSR_NOR;
+        public const int DISC_LFSR_NAND = discrete_global.DISC_LFSR_NAND;
+        public const int DISC_LFSR_IN1 = discrete_global.DISC_LFSR_IN1;
+        public const int DISC_LFSR_NOT_IN1 = discrete_global.DISC_LFSR_NOT_IN1;
+        public const int DISC_LFSR_XOR_INV_IN0 = discrete_global.DISC_LFSR_XOR_INV_IN0;
+        public const int DISC_LFSR_IN0 = discrete_global.DISC_LFSR_IN0;
+        public const int DISC_LFSR_REPLACE = discrete_global.DISC_LFSR_REPLACE;
+        public const int DISC_LFSR_XOR = discrete_global.DISC_LFSR_XOR;
+        public const int DISC_LFSR_NOT_IN0 = discrete_global.DISC_LFSR_NOT_IN0;
+        public const int DISC_LFSR_XOR_INV_IN1 = discrete_global.DISC_LFSR_XOR_INV_IN1;
+        public const int DISC_LFSR_FLAG_OUT_INVERT = discrete_global.DISC_LFSR_FLAG_OUT_INVERT;
+        public const int DISC_LFSR_FLAG_RESET_TYPE_H = discrete_global.DISC_LFSR_FLAG_RESET_TYPE_H;
+        public const int DISC_LFSR_FLAG_OUTPUT_F0 = discrete_global.DISC_LFSR_FLAG_OUTPUT_F0;
+        public const int DISC_LFSR_FLAG_OUTPUT_SR_SN1 = discrete_global.DISC_LFSR_FLAG_OUTPUT_SR_SN1;
+        public const int DISC_LADDER_MAXRES = discrete_global.DISC_LADDER_MAXRES;
+        public const int DISC_FILTER_LOWPASS = discrete_global.DISC_FILTER_LOWPASS;
+        public const int DISC_FILTER_HIGHPASS = discrete_global.DISC_FILTER_HIGHPASS;
+        public const int DISC_FILTER_BANDPASS = discrete_global.DISC_FILTER_BANDPASS;
+        public const int DISC_MIXER_IS_RESISTOR = discrete_global.DISC_MIXER_IS_RESISTOR;
+        public const int DISC_MIXER_IS_OP_AMP = discrete_global.DISC_MIXER_IS_OP_AMP;
+        public const int DISC_MIXER_IS_OP_AMP_WITH_RI = discrete_global.DISC_MIXER_IS_OP_AMP_WITH_RI;
+        public static readonly int NODE_SPECIAL = discrete_global.NODE_SPECIAL;
+        public const int NODE_START = discrete_global.NODE_START;
+        public static readonly int NODE_END = discrete_global.NODE_END;
+        public static int NODE_(int x) { return discrete_global.NODE_(x); }
+        public static int NODE_CHILD_NODE_NUM(int x) { return discrete_global.NODE_CHILD_NODE_NUM(x); }
+        public static int NODE_DEFAULT_NODE(int x) { return discrete_global.NODE_DEFAULT_NODE(x); }
+        public static int NODE_INDEX(int x) { return discrete_global.NODE_INDEX(x); }
+        public static int NODE_RELATIVE(int x, int y) { return discrete_global.NODE_RELATIVE(x, y); }
+        public static bool IS_VALUE_A_NODE(int val) { return discrete_global.IS_VALUE_A_NODE(val); }
+        public const int DISC_OP_AMP_IS_NORTON = discrete_global.DISC_OP_AMP_IS_NORTON;
+        public const double OP_AMP_NORTON_VBE = discrete_global.OP_AMP_NORTON_VBE;
+        public const double OP_AMP_VP_RAIL_OFFSET = discrete_global.OP_AMP_VP_RAIL_OFFSET;
+        public const int DISC_OP_AMP_FILTER_IS_LOW_PASS_1 = discrete_global.DISC_OP_AMP_FILTER_IS_LOW_PASS_1;
+        public const int DISC_OP_AMP_FILTER_IS_HIGH_PASS_1 = discrete_global.DISC_OP_AMP_FILTER_IS_HIGH_PASS_1;
+        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_1 = discrete_global.DISC_OP_AMP_FILTER_IS_BAND_PASS_1;
+        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_1M = discrete_global.DISC_OP_AMP_FILTER_IS_BAND_PASS_1M;
+        public const int DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 = discrete_global.DISC_OP_AMP_FILTER_IS_HIGH_PASS_0;
+        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_0 = discrete_global.DISC_OP_AMP_FILTER_IS_BAND_PASS_0;
+        public const int DISC_OP_AMP_FILTER_IS_LOW_PASS_1_A = discrete_global.DISC_OP_AMP_FILTER_IS_LOW_PASS_1_A;
+        public const int DISC_OP_AMP_FILTER_TYPE_MASK = discrete_global.DISC_OP_AMP_FILTER_TYPE_MASK;
+        public const int DISC_SALLEN_KEY_LOW_PASS = discrete_global.DISC_SALLEN_KEY_LOW_PASS;
+        public const int DISC_555_OUT_DC = discrete_global.DISC_555_OUT_DC;
+        public const int DISC_555_OUT_AC = discrete_global.DISC_555_OUT_AC;
+        public const int DISC_555_OUT_SQW = discrete_global.DISC_555_OUT_SQW;
+        public const int DISC_555_OUT_CAP = discrete_global.DISC_555_OUT_CAP;
+        public const int DISC_555_OUT_COUNT_F = discrete_global.DISC_555_OUT_COUNT_F;
+        public const int DISC_555_OUT_COUNT_R = discrete_global.DISC_555_OUT_COUNT_R;
+        public const int DISC_555_OUT_ENERGY = discrete_global.DISC_555_OUT_ENERGY;
+        public const int DISC_555_OUT_LOGIC_X = discrete_global.DISC_555_OUT_LOGIC_X;
+        public const int DISC_555_OUT_COUNT_F_X = discrete_global.DISC_555_OUT_COUNT_F_X;
+        public const int DISC_555_OUT_COUNT_R_X = discrete_global.DISC_555_OUT_COUNT_R_X;
+        public const int DISC_555_OUT_MASK = discrete_global.DISC_555_OUT_MASK;
+        public const int DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE = discrete_global.DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE;
+        public const int DISCRETE_555_CC_TO_CAP = discrete_global.DISCRETE_555_CC_TO_CAP;
+        public const int DISC_RC_INTEGRATE_TYPE1 = discrete_global.DISC_RC_INTEGRATE_TYPE1;
+        public const int DISC_RC_INTEGRATE_TYPE2 = discrete_global.DISC_RC_INTEGRATE_TYPE2;
+        public const int DISC_RC_INTEGRATE_TYPE3 = discrete_global.DISC_RC_INTEGRATE_TYPE3;
+        public const int DEFAULT_555_CHARGE = discrete_global.DEFAULT_555_CHARGE;
+        public const int DEFAULT_555_HIGH = discrete_global.DEFAULT_555_HIGH;
+        public const int DEFAULT_555_VALUES_1 = discrete_global.DEFAULT_555_VALUES_1;
+        public const int DEFAULT_555_VALUES_2 = discrete_global.DEFAULT_555_VALUES_2;
+        public const int DEFAULT_555_CC_SOURCE = discrete_global.DEFAULT_555_CC_SOURCE;
+        public static discrete_block DISCRETE_SOUND_END { get { return discrete_global.DISCRETE_SOUND_END; } }
+        public static discrete_block DISCRETE_ADJUSTMENT(int NODE, double MIN, double MAX, double LOGLIN, string TAG)  { return discrete_global.DISCRETE_ADJUSTMENT(NODE, MIN, MAX, LOGLIN, TAG); }
+        public static discrete_block DISCRETE_INPUT_DATA(int NODE) { return discrete_global.DISCRETE_INPUT_DATA(NODE); }
+        public static discrete_block DISCRETE_INPUTX_DATA(int NODE, double GAIN, double OFFSET, double INIT) { return discrete_global.DISCRETE_INPUTX_DATA(NODE, GAIN, OFFSET, INIT); }
+        public static discrete_block DISCRETE_INPUT_LOGIC(int NODE) { return discrete_global.DISCRETE_INPUT_LOGIC(NODE); }
+        public static discrete_block DISCRETE_INPUT_NOT(int NODE) { return discrete_global.DISCRETE_INPUT_NOT(NODE); }
+        public static discrete_block DISCRETE_INPUTX_STREAM(int NODE, double NUM, double GAIN, double OFFSET) { return discrete_global.DISCRETE_INPUTX_STREAM(NODE, NUM, GAIN, OFFSET); }
+        public static discrete_block DISCRETE_INPUT_BUFFER(int NODE, double NUM) { return discrete_global.DISCRETE_INPUT_BUFFER(NODE, NUM); }
+        public static discrete_block DISCRETE_COUNTER(int NODE, double ENAB, double RESET, double CLK, double MIN, double MAX, double DIR, double INIT0, double CLKTYPE) { return discrete_global.DISCRETE_COUNTER(NODE, ENAB, RESET, CLK, MIN, MAX, DIR, INIT0, CLKTYPE); }
+        public static discrete_block DISCRETE_LFSR_NOISE(int NODE, double ENAB, double RESET, double CLK, double AMPL, double FEED, double BIAS, discrete_lfsr_desc LFSRTB) { return discrete_global.DISCRETE_LFSR_NOISE(NODE, ENAB, RESET, CLK, AMPL, FEED, BIAS, LFSRTB); }
+        public static discrete_block DISCRETE_NOTE(int NODE, double ENAB, double CLK, double DATA, double MAX1, double MAX2, double CLKTYPE) { return discrete_global.DISCRETE_NOTE(NODE, ENAB, CLK, DATA, MAX1, MAX2, CLKTYPE); }
+        public static discrete_block DISCRETE_SQUAREWFIX(int NODE, double ENAB, double FREQ, double AMPL, double DUTY, double BIAS, double PHASE) { return discrete_global.DISCRETE_SQUAREWFIX(NODE, ENAB, FREQ, AMPL, DUTY, BIAS, PHASE); }
+        public static discrete_block DISCRETE_INVERTER_OSC(int NODE, double ENAB, double MOD, double RCHARGE, double RP, double C, double R2, discrete_dss_inverter_osc_node.description INFO) { return discrete_global.DISCRETE_INVERTER_OSC(NODE, ENAB, MOD, RCHARGE, RP, C, R2, INFO); }
+        public static discrete_block DISCRETE_ADDER2(int NODE, double ENAB, double INP0, double INP1) { return discrete_global.DISCRETE_ADDER2(NODE, ENAB, INP0, INP1); }
+        public static discrete_block DISCRETE_CLAMP(int NODE, double INP0, double MIN, double MAX) { return discrete_global.DISCRETE_CLAMP(NODE, INP0, MIN, MAX); }
+        public static discrete_block DISCRETE_DIVIDE(int NODE, double ENAB, double INP0, double INP1) { return discrete_global.DISCRETE_DIVIDE(NODE, ENAB, INP0, INP1); }
+        public static discrete_block DISCRETE_LOGIC_INVERT(int NODE, double INP0) {return discrete_global.DISCRETE_LOGIC_INVERT(NODE, INP0); }
+        public static discrete_block DISCRETE_BITS_DECODE(int NODE, double INP, double BIT_FROM, double BIT_TO, double VOUT) { return discrete_global.DISCRETE_BITS_DECODE(NODE, INP, BIT_FROM, BIT_TO, VOUT); }
+        public static discrete_block DISCRETE_LOGIC_DFLIPFLOP(int NODE, double RESET, double SET, double CLK, double INP) { return discrete_global.DISCRETE_LOGIC_DFLIPFLOP(NODE, RESET, SET, CLK, INP); }
+        public static discrete_block DISCRETE_MULTIPLY(int NODE, double INP0, double INP1) { return discrete_global.DISCRETE_MULTIPLY(NODE, INP0, INP1); }
+        public static discrete_block DISCRETE_MULTADD(int NODE, double INP0, double INP1, double INP2) { return discrete_global.DISCRETE_MULTADD(NODE, INP0, INP1, INP2); }
+        public static discrete_block DISCRETE_TRANSFORM2(int NODE, double INP0, double INP1, string FUNCT) { return discrete_global.DISCRETE_TRANSFORM2(NODE, INP0, INP1, FUNCT); }
+        public static discrete_block DISCRETE_TRANSFORM3(int NODE, double INP0, double INP1, double INP2, string FUNCT) { return discrete_global.DISCRETE_TRANSFORM3(NODE, INP0, INP1, INP2, FUNCT); }
+        public static discrete_block DISCRETE_TRANSFORM4(int NODE, double INP0, double INP1, double INP2, double INP3, string FUNCT) { return discrete_global.DISCRETE_TRANSFORM4(NODE, INP0, INP1, INP2, INP3, FUNCT); }
+        public static discrete_block DISCRETE_TRANSFORM5(int NODE, double INP0, double INP1, double INP2, double INP3, double INP4, string FUNCT) {return discrete_global.DISCRETE_TRANSFORM5(NODE, INP0, INP1, INP2, INP3, INP4, FUNCT); }
+        public static discrete_block DISCRETE_DAC_R1(int NODE, double DATA, double VDATA, discrete_dac_r1_ladder LADDER) { return discrete_global.DISCRETE_DAC_R1(NODE, DATA, VDATA, LADDER); }
+        public static discrete_block DISCRETE_DIODE_MIXER2(int NODE, double IN0, double IN1, double [] TABLE) { return discrete_global.DISCRETE_DIODE_MIXER2(NODE, IN0, IN1, TABLE); }
+        public static discrete_block DISCRETE_MIXER2(int NODE, double ENAB, double IN0, double IN1, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER2(NODE, ENAB, IN0, IN1, INFO); }
+        public static discrete_block DISCRETE_MIXER3(int NODE, double ENAB, double IN0, double IN1, double IN2, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER3(NODE, ENAB, IN0, IN1, IN2, INFO); }
+        public static discrete_block DISCRETE_MIXER4(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER4(NODE, ENAB, IN0, IN1, IN2, IN3, INFO); }
+        public static discrete_block DISCRETE_MIXER5(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, double IN4, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER5(NODE, ENAB, IN0, IN1, IN2, IN3, IN4, INFO); }
+        public static discrete_block DISCRETE_MIXER6(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER6(NODE, ENAB, IN0, IN1, IN2, IN3, IN4, IN5, INFO); }
+        public static discrete_block DISCRETE_SALLEN_KEY_FILTER(int NODE, double ENAB, double INP0, double TYPE, discrete_op_amp_filt_info INFO) { return discrete_global.DISCRETE_SALLEN_KEY_FILTER(NODE, ENAB, INP0, TYPE, INFO); }
+        public static discrete_block DISCRETE_CRFILTER(int NODE, int INP0, double RVAL, double CVAL) { return discrete_global.DISCRETE_CRFILTER(NODE, INP0, RVAL, CVAL); }
+        public static discrete_block DISCRETE_OP_AMP_FILTER(int NODE, double ENAB, double INP0, double INP1, double TYPE, discrete_op_amp_filt_info INFO) { return discrete_global.DISCRETE_OP_AMP_FILTER(NODE, ENAB, INP0, INP1, TYPE, INFO); }
+        public static discrete_block DISCRETE_RCDISC(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return discrete_global.DISCRETE_RCDISC(NODE, ENAB, INP0, RVAL, CVAL); }
+        public static discrete_block DISCRETE_RCDISC2(int NODE, double SWITCH, double INP0, double RVAL0, double INP1, double RVAL1, double CVAL) { return discrete_global.DISCRETE_RCDISC2(NODE, SWITCH, INP0, RVAL0, INP1, RVAL1, CVAL); }
+        public static discrete_block DISCRETE_RCDISC5(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return discrete_global.DISCRETE_RCDISC5(NODE, ENAB, INP0, RVAL, CVAL); }
+        public static discrete_block DISCRETE_RCDISC_MODULATED(int NODE, double INP0, double INP1, double RVAL0, double RVAL1, double RVAL2, double RVAL3, double CVAL, double VP) { return discrete_global.DISCRETE_RCDISC_MODULATED(NODE, INP0, INP1, RVAL0, RVAL1, RVAL2, RVAL3, CVAL, VP); }
+        public static discrete_block DISCRETE_RCFILTER(int NODE, double INP0, double RVAL, double CVAL) { return discrete_global.DISCRETE_RCFILTER(NODE, INP0, RVAL, CVAL); }
+        public static discrete_block DISCRETE_RCFILTER_SW(int NODE, double ENAB, double INP0, double SW, double RVAL, double CVAL1, double CVAL2, double CVAL3, double CVAL4) { return discrete_global.DISCRETE_RCFILTER_SW(NODE, ENAB, INP0, SW, RVAL, CVAL1, CVAL2, CVAL3, CVAL4); }
+        public static discrete_block DISCRETE_RCINTEGRATE(int NODE, double INP0, double RVAL0, double RVAL1, double RVAL2, double CVAL, double vP, double TYPE) { return discrete_global.DISCRETE_RCINTEGRATE(NODE, INP0, RVAL0, RVAL1, RVAL2, CVAL, vP, TYPE); }
+        public static discrete_block DISCRETE_CUSTOM8<CLASS>(int NODE, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, double IN6, double IN7, object INFO) where CLASS : discrete_base_node, new() { return discrete_global.DISCRETE_CUSTOM8<CLASS>(NODE, IN0, IN1, IN2, IN3, IN4, IN5, IN6, IN7, INFO); }
+        public static discrete_block DISCRETE_555_ASTABLE_CV(int NODE, double RESET, double R1, double R2, double C, double CTRLV, discrete_555_desc OPTIONS) { return discrete_global.DISCRETE_555_ASTABLE_CV(NODE, RESET, R1, R2, C, CTRLV, OPTIONS); }
+        public static discrete_block DISCRETE_555_CC(int NODE, double RESET, double VIN, double R, double C, double RBIAS, double RGND, double RDIS, discrete_555_cc_desc OPTIONS) { return discrete_global.DISCRETE_555_CC(NODE, RESET, VIN, R, C, RBIAS, RGND, RDIS, OPTIONS); }
+        public static discrete_block DISCRETE_TASK_START(double TASK_GROUP) { return discrete_global.DISCRETE_TASK_START(TASK_GROUP); }
+        public static discrete_block DISCRETE_TASK_END() { return discrete_global.DISCRETE_TASK_END(); }
+        public static discrete_block DISCRETE_OUTPUT(double OPNODE, double GAIN) { return discrete_global.DISCRETE_OUTPUT(OPNODE, GAIN); }
+        public const int MAX_SAMPLES_PER_TASK_SLICE = discrete_global.MAX_SAMPLES_PER_TASK_SLICE;
+        public const int USE_DISCRETE_TASKS = discrete_global.USE_DISCRETE_TASKS;
+
+
+        // disound
+        public const int ALL_OUTPUTS = disound_global.ALL_OUTPUTS;
+        public const int AUTO_ALLOC_INPUT = disound_global.AUTO_ALLOC_INPUT;
+
+
+        // distate
+        public const int STATE_GENPC     = distate_global.STATE_GENPC;
+        public const int STATE_GENPCBASE = distate_global.STATE_GENPCBASE;
+        public const int STATE_GENSP     = distate_global.STATE_GENSP;
+        public const int STATE_GENFLAGS  = distate_global.STATE_GENFLAGS;
+
+
+        // ui
+        public const float UI_MAX_FONT_HEIGHT = ui_global.UI_MAX_FONT_HEIGHT;
+        public const float UI_LINE_WIDTH = ui_global.UI_LINE_WIDTH;
+        public static readonly rgb_t UI_GREEN_COLOR = ui_global.UI_GREEN_COLOR;
+        public static readonly rgb_t UI_YELLOW_COLOR = ui_global.UI_YELLOW_COLOR;
+        public static readonly rgb_t UI_RED_COLOR = ui_global.UI_RED_COLOR;
+        public const uint32_t UI_HANDLER_CANCEL = ui_global.UI_HANDLER_CANCEL;
+    }
+
+
     public class global_object
     {
         // these are in a seperate class so they don't clutter the debug window
@@ -151,12 +491,7 @@ namespace mame
         }
 
 
-        // attotime
-        protected static attoseconds_t ATTOSECONDS_IN_USEC(u32 x) { return attotime.ATTOSECONDS_IN_USEC(x); }
-
-
         // ay8910
-        protected const int AY8910_INTERNAL_RESISTANCE = ay8910_global.AY8910_INTERNAL_RESISTANCE;
         protected static ay8910_device AY8910(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
         protected static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
         protected static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, u32 clock = 0)
@@ -171,52 +506,6 @@ namespace mame
         protected static address_map_bank_device ADDRESS_MAP_BANK(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<address_map_bank_device>(mconfig, tag, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
 
 
-        // corefile
-        protected static string core_filename_extract_base(string name, bool strip_extension = false) { return util.corefile_global.core_filename_extract_base(name, strip_extension); }
-        protected static bool core_filename_ends_with(string filename, string extension) { return util.corefile_global.core_filename_ends_with(filename, extension); }
-        protected static bool is_directory_separator(char c) { return util.corefile_global.is_directory_separator(c); }
-
-
-        // corestr
-        public static int core_stricmp(string s1, string s2) { return corestr_global.core_stricmp(s1, s2); }
-        public static int core_strnicmp(string s1, string s2, size_t n) { return corestr_global.core_strnicmp(s1, s2, n); }
-        protected static int core_strwildcmp(string sp1, string sp2) { return corestr_global.core_strwildcmp(sp1, sp2); }
-        protected static bool core_iswildstr(string sp) { return corestr_global.core_iswildstr(sp); }
-        protected static string strtrimspace(string str) { return corestr_global.strtrimspace(str); }
-        public static int strreplace(ref string str, string search, string replace) { return corestr_global.strreplace(ref str, search, replace); }
-
-
-        // coretmpl
-        protected static u8 make_bitmask8(u32 n) { return coretmpl_global.make_bitmask8(n); }
-        protected static u8 make_bitmask8(s32 n) { return coretmpl_global.make_bitmask8(n); }
-        protected static u16 make_bitmask16(s32 n) { return coretmpl_global.make_bitmask16(n); }
-        protected static u16 make_bitmask16(u32 n) { return coretmpl_global.make_bitmask16(n); }
-        protected static u32 make_bitmask32(s32 n) { return coretmpl_global.make_bitmask32(n); }
-        protected static u32 make_bitmask32(u32 n) { return coretmpl_global.make_bitmask32(n); }
-        protected static u64 make_bitmask64(s32 n) { return coretmpl_global.make_bitmask64(n); }
-        protected static u64 make_bitmask64(u32 n) { return coretmpl_global.make_bitmask64(n); }
-        protected static int BIT(int x, int n) { return coretmpl_global.BIT(x, n); }
-        protected static UInt32 BIT(UInt32 x, int n)  { return coretmpl_global.BIT(x, n); }
-        protected static int bitswap(int val, int B1, int B0) { return coretmpl_global.bitswap(val, B1, B0); }
-        protected static int bitswap(int val, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B3, B2, B1, B0); }
-        protected static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B5, B4, B3, B2, B1, B0); }
-        protected static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B7, B6, B5, B4, B3, B2, B1, B0); }
-        protected static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return coretmpl_global.bitswap(val, B15, B14, B13, B12, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
-        public static sbyte iabs(sbyte v) { return coretmpl_global.iabs(v); }
-        public static short iabs(short v) { return coretmpl_global.iabs(v); }
-        public static int iabs(int v) { return coretmpl_global.iabs(v); }
-        public static Int64 iabs(Int64 v) { return coretmpl_global.iabs(v); }
-        protected static void reduce_fraction(ref UInt32 num, ref UInt32 den) { coretmpl_global.reduce_fraction(ref num, ref den); }
-
-
-        // crsshair
-        protected const int CROSSHAIR_VISIBILITY_OFF = crsshair_global.CROSSHAIR_VISIBILITY_OFF;
-        protected const int CROSSHAIR_VISIBILITY_DEFAULT = crsshair_global.CROSSHAIR_VISIBILITY_DEFAULT;
-        protected const int CROSSHAIR_VISIBILITY_AUTOTIME_DEFAULT = crsshair_global.CROSSHAIR_VISIBILITY_AUTOTIME_DEFAULT;
-        protected const int CROSSHAIR_RAW_SIZE = crsshair_global.CROSSHAIR_RAW_SIZE;
-        protected const int CROSSHAIR_RAW_ROWBYTES = crsshair_global.CROSSHAIR_RAW_ROWBYTES;
-
-
         // dac
         protected static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock = 0)
             where bool_Required : bool_constant, new()
@@ -224,41 +513,7 @@ namespace mame
 
 
         // device
-        public const string DEVICE_SELF = device_global.DEVICE_SELF;
-        protected const string DEVICE_SELF_OWNER = device_global.DEVICE_SELF_OWNER;
-        protected static u32 DERIVED_CLOCK(u32 num, u32 den) { return device_global.DERIVED_CLOCK(num, den); }
         protected static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname) { return device_global.DEFINE_DEVICE_TYPE(func, shortname, fullname); }
-
-
-        // diexec
-        protected const int CLEAR_LINE = (int)line_state.CLEAR_LINE;
-        protected const int ASSERT_LINE = (int)line_state.ASSERT_LINE;
-        protected const int HOLD_LINE = (int)line_state.HOLD_LINE;
-        protected const int INPUT_LINE_HALT = device_execute_interface.INPUT_LINE_HALT;
-
-
-        // digfx
-        protected static readonly u32 [] EXTENDED_XOFFS = digfx_global.EXTENDED_XOFFS;
-        protected static readonly u32 [] EXTENDED_YOFFS = digfx_global.EXTENDED_YOFFS;
-        public static UInt32 RGN_FRAC(UInt32 num, UInt32 den) { return digfx_global.RGN_FRAC(num, den); }
-        protected static bool IS_FRAC(UInt32 offset) { return digfx_global.IS_FRAC(offset); }
-        protected static UInt32 FRAC_NUM(UInt32 offset) { return digfx_global.FRAC_NUM(offset); }
-        protected static UInt32 FRAC_DEN(UInt32 offset) { return digfx_global.FRAC_DEN(offset); }
-        protected static UInt32 FRAC_OFFSET(UInt32 offset) { return digfx_global.FRAC_OFFSET(offset); }
-        protected static UInt32 [] ArrayCombineUInt32(params object [] objects) { return digfx_global.ArrayCombineUInt32(objects); }
-        protected static UInt32 [] STEP2(int START, int STEP) { return digfx_global.STEP2(START, STEP); }
-        protected static UInt32 [] STEP4(int START, int STEP) { return digfx_global.STEP4(START, STEP); }
-        public static UInt32 [] STEP8(int START, int STEP) { return digfx_global.STEP8(START, STEP); }
-        protected static UInt32 [] STEP16(int START, int STEP) { return digfx_global.STEP16(START, STEP); }
-        protected static UInt32 [] STEP32(int START, int STEP) { return digfx_global.STEP32(START, STEP); }
-        protected static UInt32 GFXENTRY_GETXSCALE(UInt32 x) { return digfx_global.GFXENTRY_GETXSCALE(x); }
-        protected static UInt32 GFXENTRY_GETYSCALE(UInt32 x) { return digfx_global.GFXENTRY_GETYSCALE(x); }
-        protected static bool GFXENTRY_ISROM(UInt32 x) { return digfx_global.GFXENTRY_ISROM(x); }
-        protected static bool GFXENTRY_ISRAM(UInt32 x) { return digfx_global.GFXENTRY_ISRAM(x); }
-        protected static bool GFXENTRY_ISDEVICE(UInt32 x) { return digfx_global.GFXENTRY_ISDEVICE(x); }
-        protected static bool GFXENTRY_ISREVERSE(UInt32 x) { return digfx_global.GFXENTRY_ISREVERSE(x); }
-        protected static gfx_decode_entry GFXDECODE_ENTRY(string region, u32 offset, gfx_layout layout, u16 start, u16 colors) { return digfx_global.GFXDECODE_ENTRY(region, offset, layout, start, colors); }
-        protected static gfx_decode_entry GFXDECODE_SCALE(string region, u32 offset, gfx_layout layout, u16 start, u16 colors, u32 x, u32 y) { return digfx_global.GFXDECODE_SCALE(region, offset, layout, start, colors, x, y); }
 
 
         // disc_flt
@@ -282,238 +537,6 @@ namespace mame
             device.set_intf(intf);
             return device;
         }
-        protected const int NODE_00 = discrete_global.NODE_00;
-        protected const int NODE_01 = discrete_global.NODE_01;
-        protected const int NODE_02 = discrete_global.NODE_02;
-        protected const int NODE_03 = discrete_global.NODE_03;
-        protected const int NODE_04 = discrete_global.NODE_04;
-        protected const int NODE_05 = discrete_global.NODE_05;
-        protected const int NODE_06 = discrete_global.NODE_06;
-        protected const int NODE_07 = discrete_global.NODE_07;
-        protected const int NODE_08 = discrete_global.NODE_08;
-        protected const int NODE_09 = discrete_global.NODE_09;
-        protected const int NODE_10 = discrete_global.NODE_10;
-        protected const int NODE_11 = discrete_global.NODE_11;
-        protected const int NODE_12 = discrete_global.NODE_12;
-        protected const int NODE_13 = discrete_global.NODE_13;
-        protected const int NODE_14 = discrete_global.NODE_14;
-        protected const int NODE_15 = discrete_global.NODE_15;
-        protected const int NODE_16 = discrete_global.NODE_16;
-        protected const int NODE_17 = discrete_global.NODE_17;
-        protected const int NODE_20 = discrete_global.NODE_20;
-        protected const int NODE_21 = discrete_global.NODE_21;
-        protected const int NODE_22 = discrete_global.NODE_22;
-        protected const int NODE_23 = discrete_global.NODE_23;
-        protected const int NODE_24 = discrete_global.NODE_24;
-        protected const int NODE_25 = discrete_global.NODE_25;
-        protected const int NODE_26 = discrete_global.NODE_26;
-        protected const int NODE_27 = discrete_global.NODE_27;
-        protected const int NODE_28 = discrete_global.NODE_28;
-        protected const int NODE_29 = discrete_global.NODE_29;
-        protected const int NODE_30 = discrete_global.NODE_30;
-        protected const int NODE_33 = discrete_global.NODE_33;
-        protected const int NODE_34 = discrete_global.NODE_34;
-        protected const int NODE_35 = discrete_global.NODE_35;
-        protected const int NODE_38 = discrete_global.NODE_38;
-        protected const int NODE_39 = discrete_global.NODE_39;
-        protected const int NODE_40 = discrete_global.NODE_40;
-        protected const int NODE_45 = discrete_global.NODE_45;
-        protected const int NODE_50 = discrete_global.NODE_50;
-        protected const int NODE_51 = discrete_global.NODE_51;
-        protected const int NODE_52 = discrete_global.NODE_52;
-        protected const int NODE_54 = discrete_global.NODE_54;
-        protected const int NODE_55 = discrete_global.NODE_55;
-        protected const int NODE_60 = discrete_global.NODE_60;
-        protected const int NODE_61 = discrete_global.NODE_61;
-        protected const int NODE_70 = discrete_global.NODE_70;
-        protected const int NODE_71 = discrete_global.NODE_71;
-        protected const int NODE_73 = discrete_global.NODE_73;
-        protected const int NODE_90 = discrete_global.NODE_90;
-        protected const int NODE_100 = discrete_global.NODE_100;
-        protected const int NODE_105 = discrete_global.NODE_105;
-        protected const int NODE_110 = discrete_global.NODE_110;
-        protected const int NODE_111 = discrete_global.NODE_111;
-        protected const int NODE_115 = discrete_global.NODE_115;
-        protected const int NODE_116 = discrete_global.NODE_116;
-        protected const int NODE_117 = discrete_global.NODE_117;
-        protected const int NODE_120 = discrete_global.NODE_120;
-        protected const int NODE_132 = discrete_global.NODE_132;
-        protected const int NODE_133 = discrete_global.NODE_133;
-        protected const int NODE_133_00 = discrete_global.NODE_133_00;
-        protected const int NODE_133_02 = discrete_global.NODE_133_02;
-        protected const int NODE_133_03 = discrete_global.NODE_133_03;
-        protected const int NODE_150 = discrete_global.NODE_150;
-        protected const int NODE_151 = discrete_global.NODE_151;
-        protected const int NODE_152 = discrete_global.NODE_152;
-        protected const int NODE_155 = discrete_global.NODE_155;
-        protected const int NODE_157 = discrete_global.NODE_157;
-        protected const int NODE_170 = discrete_global.NODE_170;
-        protected const int NODE_171 = discrete_global.NODE_171;
-        protected const int NODE_172 = discrete_global.NODE_172;
-        protected const int NODE_173 = discrete_global.NODE_173;
-        protected const int NODE_177 = discrete_global.NODE_177;
-        protected const int NODE_178 = discrete_global.NODE_178;
-        protected const int NODE_181 = discrete_global.NODE_181;
-        protected const int NODE_182 = discrete_global.NODE_182;
-        protected const int NODE_208 = discrete_global.NODE_208;
-        protected const int NODE_209 = discrete_global.NODE_209;
-        protected const int NODE_240 = discrete_global.NODE_240;
-        protected const int NODE_241 = discrete_global.NODE_241;
-        protected const int NODE_242 = discrete_global.NODE_242;
-        protected const int NODE_243 = discrete_global.NODE_243;
-        protected const int NODE_250 = discrete_global.NODE_250;
-        protected const int NODE_279 = discrete_global.NODE_279;
-        protected const int NODE_280 = discrete_global.NODE_280;
-        protected const int NODE_288 = discrete_global.NODE_288;
-        protected const int NODE_289 = discrete_global.NODE_289;
-        protected const int NODE_294 = discrete_global.NODE_294;
-        protected const int NODE_295 = discrete_global.NODE_295;
-        protected const int NODE_296 = discrete_global.NODE_296;
-        protected const int DISCRETE_MAX_NODES = discrete_global.DISCRETE_MAX_NODES;
-        protected const int DISCRETE_MAX_INPUTS = discrete_global.DISCRETE_MAX_INPUTS;
-        protected const int DISCRETE_MAX_OUTPUTS = discrete_global.DISCRETE_MAX_OUTPUTS;
-        protected const int DISCRETE_MAX_TASK_GROUPS = discrete_global.DISCRETE_MAX_TASK_GROUPS;
-        protected static double RC_CHARGE_EXP_DT(double rc, double dt) { return discrete_global.RC_CHARGE_EXP_DT(rc, dt); }
-        protected const double DEFAULT_TTL_V_LOGIC_1 = discrete_global.DEFAULT_TTL_V_LOGIC_1;
-        protected const double DISC_LINADJ = discrete_global.DISC_LINADJ;
-        protected const int DISC_CLK_MASK = discrete_global.DISC_CLK_MASK;
-        protected const int DISC_CLK_ON_F_EDGE = discrete_global.DISC_CLK_ON_F_EDGE;
-        protected const int DISC_CLK_ON_R_EDGE =  discrete_global.DISC_CLK_ON_R_EDGE;
-        protected const int DISC_CLK_BY_COUNT = discrete_global.DISC_CLK_BY_COUNT;
-        protected const int DISC_CLK_IS_FREQ = discrete_global.DISC_CLK_IS_FREQ;
-        protected const int DISC_COUNT_UP = discrete_global.DISC_COUNT_UP;
-        protected const int DISC_COUNTER_IS_7492 = discrete_global.DISC_COUNTER_IS_7492;
-        protected const int DISC_OUT_MASK = discrete_global.DISC_OUT_MASK;
-        protected const int DISC_OUT_IS_ENERGY = discrete_global.DISC_OUT_IS_ENERGY;
-        protected const int DISC_OUT_HAS_XTIME = discrete_global.DISC_OUT_HAS_XTIME;
-        protected const int DISC_LFSR_OR = discrete_global.DISC_LFSR_OR;
-        protected const int DISC_LFSR_AND = discrete_global.DISC_LFSR_AND;
-        protected const int DISC_LFSR_XNOR = discrete_global.DISC_LFSR_XNOR;
-        protected const int DISC_LFSR_NOR = discrete_global.DISC_LFSR_NOR;
-        protected const int DISC_LFSR_NAND = discrete_global.DISC_LFSR_NAND;
-        protected const int DISC_LFSR_IN1 = discrete_global.DISC_LFSR_IN1;
-        protected const int DISC_LFSR_NOT_IN1 = discrete_global.DISC_LFSR_NOT_IN1;
-        protected const int DISC_LFSR_XOR_INV_IN0 = discrete_global.DISC_LFSR_XOR_INV_IN0;
-        protected const int DISC_LFSR_IN0 = discrete_global.DISC_LFSR_IN0;
-        protected const int DISC_LFSR_REPLACE = discrete_global.DISC_LFSR_REPLACE;
-        protected const int DISC_LFSR_XOR = discrete_global.DISC_LFSR_XOR;
-        protected const int DISC_LFSR_NOT_IN0 = discrete_global.DISC_LFSR_NOT_IN0;
-        protected const int DISC_LFSR_XOR_INV_IN1 = discrete_global.DISC_LFSR_XOR_INV_IN1;
-        protected const int DISC_LFSR_FLAG_OUT_INVERT = discrete_global.DISC_LFSR_FLAG_OUT_INVERT;
-        protected const int DISC_LFSR_FLAG_RESET_TYPE_H = discrete_global.DISC_LFSR_FLAG_RESET_TYPE_H;
-        protected const int DISC_LFSR_FLAG_OUTPUT_F0 = discrete_global.DISC_LFSR_FLAG_OUTPUT_F0;
-        protected const int DISC_LFSR_FLAG_OUTPUT_SR_SN1 = discrete_global.DISC_LFSR_FLAG_OUTPUT_SR_SN1;
-        protected const int DISC_LADDER_MAXRES = discrete_global.DISC_LADDER_MAXRES;
-        public const int DISC_FILTER_LOWPASS = discrete_global.DISC_FILTER_LOWPASS;
-        public const int DISC_FILTER_HIGHPASS = discrete_global.DISC_FILTER_HIGHPASS;
-        public const int DISC_FILTER_BANDPASS = discrete_global.DISC_FILTER_BANDPASS;
-        protected const int DISC_MIXER_IS_RESISTOR = discrete_global.DISC_MIXER_IS_RESISTOR;
-        protected const int DISC_MIXER_IS_OP_AMP = discrete_global.DISC_MIXER_IS_OP_AMP;
-        protected const int DISC_MIXER_IS_OP_AMP_WITH_RI = discrete_global.DISC_MIXER_IS_OP_AMP_WITH_RI;
-        protected static readonly int NODE_SPECIAL = discrete_global.NODE_SPECIAL;
-        protected const int NODE_START = discrete_global.NODE_START;
-        protected static readonly int NODE_END = discrete_global.NODE_END;
-        protected static int NODE_(int x) { return discrete_global.NODE_(x); }
-        protected static int NODE_CHILD_NODE_NUM(int x) { return discrete_global.NODE_CHILD_NODE_NUM(x); }
-        protected static int NODE_DEFAULT_NODE(int x) { return discrete_global.NODE_DEFAULT_NODE(x); }
-        protected static int NODE_INDEX(int x) { return discrete_global.NODE_INDEX(x); }
-        public static int NODE_RELATIVE(int x, int y) { return discrete_global.NODE_RELATIVE(x, y); }
-        protected static bool IS_VALUE_A_NODE(int val) { return discrete_global.IS_VALUE_A_NODE(val); }
-        protected const int DISC_OP_AMP_IS_NORTON = discrete_global.DISC_OP_AMP_IS_NORTON;
-        protected const double OP_AMP_NORTON_VBE = discrete_global.OP_AMP_NORTON_VBE;
-        protected const double OP_AMP_VP_RAIL_OFFSET = discrete_global.OP_AMP_VP_RAIL_OFFSET;
-        protected const int DISC_OP_AMP_FILTER_IS_LOW_PASS_1 = discrete_global.DISC_OP_AMP_FILTER_IS_LOW_PASS_1;
-        protected const int DISC_OP_AMP_FILTER_IS_HIGH_PASS_1 = discrete_global.DISC_OP_AMP_FILTER_IS_HIGH_PASS_1;
-        protected const int DISC_OP_AMP_FILTER_IS_BAND_PASS_1 = discrete_global.DISC_OP_AMP_FILTER_IS_BAND_PASS_1;
-        protected const int DISC_OP_AMP_FILTER_IS_BAND_PASS_1M = discrete_global.DISC_OP_AMP_FILTER_IS_BAND_PASS_1M;
-        protected const int DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 = discrete_global.DISC_OP_AMP_FILTER_IS_HIGH_PASS_0;
-        protected const int DISC_OP_AMP_FILTER_IS_BAND_PASS_0 = discrete_global.DISC_OP_AMP_FILTER_IS_BAND_PASS_0;
-        protected const int DISC_OP_AMP_FILTER_IS_LOW_PASS_1_A = discrete_global.DISC_OP_AMP_FILTER_IS_LOW_PASS_1_A;
-        protected const int DISC_OP_AMP_FILTER_TYPE_MASK = discrete_global.DISC_OP_AMP_FILTER_TYPE_MASK;
-        protected const int DISC_SALLEN_KEY_LOW_PASS = discrete_global.DISC_SALLEN_KEY_LOW_PASS;
-        protected const int DISC_555_OUT_DC = discrete_global.DISC_555_OUT_DC;
-        protected const int DISC_555_OUT_AC = discrete_global.DISC_555_OUT_AC;
-        protected const int DISC_555_OUT_SQW = discrete_global.DISC_555_OUT_SQW;
-        protected const int DISC_555_OUT_CAP = discrete_global.DISC_555_OUT_CAP;
-        protected const int DISC_555_OUT_COUNT_F = discrete_global.DISC_555_OUT_COUNT_F;
-        protected const int DISC_555_OUT_COUNT_R = discrete_global.DISC_555_OUT_COUNT_R;
-        protected const int DISC_555_OUT_ENERGY = discrete_global.DISC_555_OUT_ENERGY;
-        protected const int DISC_555_OUT_LOGIC_X = discrete_global.DISC_555_OUT_LOGIC_X;
-        protected const int DISC_555_OUT_COUNT_F_X = discrete_global.DISC_555_OUT_COUNT_F_X;
-        protected const int DISC_555_OUT_COUNT_R_X = discrete_global.DISC_555_OUT_COUNT_R_X;
-        protected const int DISC_555_OUT_MASK = discrete_global.DISC_555_OUT_MASK;
-        protected const int DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE = discrete_global.DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE;
-        protected const int DISCRETE_555_CC_TO_CAP = discrete_global.DISCRETE_555_CC_TO_CAP;
-        protected const int DISC_RC_INTEGRATE_TYPE1 = discrete_global.DISC_RC_INTEGRATE_TYPE1;
-        protected const int DISC_RC_INTEGRATE_TYPE2 = discrete_global.DISC_RC_INTEGRATE_TYPE2;
-        protected const int DISC_RC_INTEGRATE_TYPE3 = discrete_global.DISC_RC_INTEGRATE_TYPE3;
-        protected const int DEFAULT_555_CHARGE = discrete_global.DEFAULT_555_CHARGE;
-        protected const int DEFAULT_555_HIGH = discrete_global.DEFAULT_555_HIGH;
-        protected const int DEFAULT_555_VALUES_1 = discrete_global.DEFAULT_555_VALUES_1;
-        protected const int DEFAULT_555_VALUES_2 = discrete_global.DEFAULT_555_VALUES_2;
-        protected const int DEFAULT_555_CC_SOURCE = discrete_global.DEFAULT_555_CC_SOURCE;
-        protected static discrete_block DISCRETE_SOUND_END { get { return discrete_global.DISCRETE_SOUND_END; } }
-        protected static discrete_block DISCRETE_ADJUSTMENT(int NODE, double MIN, double MAX, double LOGLIN, string TAG)  { return discrete_global.DISCRETE_ADJUSTMENT(NODE, MIN, MAX, LOGLIN, TAG); }
-        protected static discrete_block DISCRETE_INPUT_DATA(int NODE) { return discrete_global.DISCRETE_INPUT_DATA(NODE); }
-        protected static discrete_block DISCRETE_INPUTX_DATA(int NODE, double GAIN, double OFFSET, double INIT) { return discrete_global.DISCRETE_INPUTX_DATA(NODE, GAIN, OFFSET, INIT); }
-        protected static discrete_block DISCRETE_INPUT_LOGIC(int NODE) { return discrete_global.DISCRETE_INPUT_LOGIC(NODE); }
-        protected static discrete_block DISCRETE_INPUT_NOT(int NODE) { return discrete_global.DISCRETE_INPUT_NOT(NODE); }
-        protected static discrete_block DISCRETE_INPUTX_STREAM(int NODE, double NUM, double GAIN, double OFFSET) { return discrete_global.DISCRETE_INPUTX_STREAM(NODE, NUM, GAIN, OFFSET); }
-        protected static discrete_block DISCRETE_INPUT_BUFFER(int NODE, double NUM) { return discrete_global.DISCRETE_INPUT_BUFFER(NODE, NUM); }
-        protected static discrete_block DISCRETE_COUNTER(int NODE, double ENAB, double RESET, double CLK, double MIN, double MAX, double DIR, double INIT0, double CLKTYPE) { return discrete_global.DISCRETE_COUNTER(NODE, ENAB, RESET, CLK, MIN, MAX, DIR, INIT0, CLKTYPE); }
-        protected static discrete_block DISCRETE_LFSR_NOISE(int NODE, double ENAB, double RESET, double CLK, double AMPL, double FEED, double BIAS, discrete_lfsr_desc LFSRTB) { return discrete_global.DISCRETE_LFSR_NOISE(NODE, ENAB, RESET, CLK, AMPL, FEED, BIAS, LFSRTB); }
-        protected static discrete_block DISCRETE_NOTE(int NODE, double ENAB, double CLK, double DATA, double MAX1, double MAX2, double CLKTYPE) { return discrete_global.DISCRETE_NOTE(NODE, ENAB, CLK, DATA, MAX1, MAX2, CLKTYPE); }
-        protected static discrete_block DISCRETE_SQUAREWFIX(int NODE, double ENAB, double FREQ, double AMPL, double DUTY, double BIAS, double PHASE) { return discrete_global.DISCRETE_SQUAREWFIX(NODE, ENAB, FREQ, AMPL, DUTY, BIAS, PHASE); }
-        protected static discrete_block DISCRETE_INVERTER_OSC(int NODE, double ENAB, double MOD, double RCHARGE, double RP, double C, double R2, discrete_dss_inverter_osc_node.description INFO) { return discrete_global.DISCRETE_INVERTER_OSC(NODE, ENAB, MOD, RCHARGE, RP, C, R2, INFO); }
-        protected static discrete_block DISCRETE_ADDER2(int NODE, double ENAB, double INP0, double INP1) { return discrete_global.DISCRETE_ADDER2(NODE, ENAB, INP0, INP1); }
-        protected static discrete_block DISCRETE_CLAMP(int NODE, double INP0, double MIN, double MAX) { return discrete_global.DISCRETE_CLAMP(NODE, INP0, MIN, MAX); }
-        protected static discrete_block DISCRETE_DIVIDE(int NODE, double ENAB, double INP0, double INP1) { return discrete_global.DISCRETE_DIVIDE(NODE, ENAB, INP0, INP1); }
-        protected static discrete_block DISCRETE_LOGIC_INVERT(int NODE, double INP0) {return discrete_global.DISCRETE_LOGIC_INVERT(NODE, INP0); }
-        protected static discrete_block DISCRETE_BITS_DECODE(int NODE, double INP, double BIT_FROM, double BIT_TO, double VOUT) { return discrete_global.DISCRETE_BITS_DECODE(NODE, INP, BIT_FROM, BIT_TO, VOUT); }
-        protected static discrete_block DISCRETE_LOGIC_DFLIPFLOP(int NODE, double RESET, double SET, double CLK, double INP) { return discrete_global.DISCRETE_LOGIC_DFLIPFLOP(NODE, RESET, SET, CLK, INP); }
-        protected static discrete_block DISCRETE_MULTIPLY(int NODE, double INP0, double INP1) { return discrete_global.DISCRETE_MULTIPLY(NODE, INP0, INP1); }
-        protected static discrete_block DISCRETE_MULTADD(int NODE, double INP0, double INP1, double INP2) { return discrete_global.DISCRETE_MULTADD(NODE, INP0, INP1, INP2); }
-        protected static discrete_block DISCRETE_TRANSFORM2(int NODE, double INP0, double INP1, string FUNCT) { return discrete_global.DISCRETE_TRANSFORM2(NODE, INP0, INP1, FUNCT); }
-        protected static discrete_block DISCRETE_TRANSFORM3(int NODE, double INP0, double INP1, double INP2, string FUNCT) { return discrete_global.DISCRETE_TRANSFORM3(NODE, INP0, INP1, INP2, FUNCT); }
-        protected static discrete_block DISCRETE_TRANSFORM4(int NODE, double INP0, double INP1, double INP2, double INP3, string FUNCT) { return discrete_global.DISCRETE_TRANSFORM4(NODE, INP0, INP1, INP2, INP3, FUNCT); }
-        protected static discrete_block DISCRETE_TRANSFORM5(int NODE, double INP0, double INP1, double INP2, double INP3, double INP4, string FUNCT) {return discrete_global.DISCRETE_TRANSFORM5(NODE, INP0, INP1, INP2, INP3, INP4, FUNCT); }
-        protected static discrete_block DISCRETE_DAC_R1(int NODE, double DATA, double VDATA, discrete_dac_r1_ladder LADDER) { return discrete_global.DISCRETE_DAC_R1(NODE, DATA, VDATA, LADDER); }
-        protected static discrete_block DISCRETE_DIODE_MIXER2(int NODE, double IN0, double IN1, double [] TABLE) { return discrete_global.DISCRETE_DIODE_MIXER2(NODE, IN0, IN1, TABLE); }
-        protected static discrete_block DISCRETE_MIXER2(int NODE, double ENAB, double IN0, double IN1, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER2(NODE, ENAB, IN0, IN1, INFO); }
-        protected static discrete_block DISCRETE_MIXER3(int NODE, double ENAB, double IN0, double IN1, double IN2, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER3(NODE, ENAB, IN0, IN1, IN2, INFO); }
-        protected static discrete_block DISCRETE_MIXER4(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER4(NODE, ENAB, IN0, IN1, IN2, IN3, INFO); }
-        protected static discrete_block DISCRETE_MIXER5(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, double IN4, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER5(NODE, ENAB, IN0, IN1, IN2, IN3, IN4, INFO); }
-        protected static discrete_block DISCRETE_MIXER6(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, discrete_mixer_desc INFO) { return discrete_global.DISCRETE_MIXER6(NODE, ENAB, IN0, IN1, IN2, IN3, IN4, IN5, INFO); }
-        protected static discrete_block DISCRETE_SALLEN_KEY_FILTER(int NODE, double ENAB, double INP0, double TYPE, discrete_op_amp_filt_info INFO) { return discrete_global.DISCRETE_SALLEN_KEY_FILTER(NODE, ENAB, INP0, TYPE, INFO); }
-        protected static discrete_block DISCRETE_CRFILTER(int NODE, int INP0, double RVAL, double CVAL) { return discrete_global.DISCRETE_CRFILTER(NODE, INP0, RVAL, CVAL); }
-        protected static discrete_block DISCRETE_OP_AMP_FILTER(int NODE, double ENAB, double INP0, double INP1, double TYPE, discrete_op_amp_filt_info INFO) { return discrete_global.DISCRETE_OP_AMP_FILTER(NODE, ENAB, INP0, INP1, TYPE, INFO); }
-        protected static discrete_block DISCRETE_RCDISC(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return discrete_global.DISCRETE_RCDISC(NODE, ENAB, INP0, RVAL, CVAL); }
-        protected static discrete_block DISCRETE_RCDISC2(int NODE, double SWITCH, double INP0, double RVAL0, double INP1, double RVAL1, double CVAL) { return discrete_global.DISCRETE_RCDISC2(NODE, SWITCH, INP0, RVAL0, INP1, RVAL1, CVAL); }
-        protected static discrete_block DISCRETE_RCDISC5(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return discrete_global.DISCRETE_RCDISC5(NODE, ENAB, INP0, RVAL, CVAL); }
-        protected static discrete_block DISCRETE_RCDISC_MODULATED(int NODE, double INP0, double INP1, double RVAL0, double RVAL1, double RVAL2, double RVAL3, double CVAL, double VP) { return discrete_global.DISCRETE_RCDISC_MODULATED(NODE, INP0, INP1, RVAL0, RVAL1, RVAL2, RVAL3, CVAL, VP); }
-        protected static discrete_block DISCRETE_RCFILTER(int NODE, double INP0, double RVAL, double CVAL) { return discrete_global.DISCRETE_RCFILTER(NODE, INP0, RVAL, CVAL); }
-        protected static discrete_block DISCRETE_RCFILTER_SW(int NODE, double ENAB, double INP0, double SW, double RVAL, double CVAL1, double CVAL2, double CVAL3, double CVAL4) { return discrete_global.DISCRETE_RCFILTER_SW(NODE, ENAB, INP0, SW, RVAL, CVAL1, CVAL2, CVAL3, CVAL4); }
-        protected static discrete_block DISCRETE_RCINTEGRATE(int NODE, double INP0, double RVAL0, double RVAL1, double RVAL2, double CVAL, double vP, double TYPE) { return discrete_global.DISCRETE_RCINTEGRATE(NODE, INP0, RVAL0, RVAL1, RVAL2, CVAL, vP, TYPE); }
-        protected static discrete_block DISCRETE_CUSTOM8<CLASS>(int NODE, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, double IN6, double IN7, object INFO) where CLASS : discrete_base_node, new() { return discrete_global.DISCRETE_CUSTOM8<CLASS>(NODE, IN0, IN1, IN2, IN3, IN4, IN5, IN6, IN7, INFO); }
-        protected static discrete_block DISCRETE_555_ASTABLE_CV(int NODE, double RESET, double R1, double R2, double C, double CTRLV, discrete_555_desc OPTIONS) { return discrete_global.DISCRETE_555_ASTABLE_CV(NODE, RESET, R1, R2, C, CTRLV, OPTIONS); }
-        protected static discrete_block DISCRETE_555_CC(int NODE, double RESET, double VIN, double R, double C, double RBIAS, double RGND, double RDIS, discrete_555_cc_desc OPTIONS) { return discrete_global.DISCRETE_555_CC(NODE, RESET, VIN, R, C, RBIAS, RGND, RDIS, OPTIONS); }
-        protected static discrete_block DISCRETE_TASK_START(double TASK_GROUP) { return discrete_global.DISCRETE_TASK_START(TASK_GROUP); }
-        protected static discrete_block DISCRETE_TASK_END() { return discrete_global.DISCRETE_TASK_END(); }
-        protected static discrete_block DISCRETE_OUTPUT(double OPNODE, double GAIN) { return discrete_global.DISCRETE_OUTPUT(OPNODE, GAIN); }
-        protected const int MAX_SAMPLES_PER_TASK_SLICE = discrete_global.MAX_SAMPLES_PER_TASK_SLICE;
-        protected const int USE_DISCRETE_TASKS = discrete_global.USE_DISCRETE_TASKS;
-
-
-        // disound
-        protected const int ALL_OUTPUTS = disound_global.ALL_OUTPUTS;
-        protected const int AUTO_ALLOC_INPUT = disound_global.AUTO_ALLOC_INPUT;
-
-
-        // distate
-        protected const int STATE_GENPC     = device_state_interface.STATE_GENPC;
-        protected const int STATE_GENPCBASE = device_state_interface.STATE_GENPCBASE;
-        protected const int STATE_GENSP     = device_state_interface.STATE_GENSP;
-        protected const int STATE_GENFLAGS  = device_state_interface.STATE_GENFLAGS;
 
 
         // drawgfx
@@ -983,7 +1006,7 @@ namespace mame
         // nl_setup
         protected void ALIAS(string alias, string name) { netlist.nl_setup_global.ALIAS(m_globals.helper_setup, alias, name); }
         protected void INCLUDE(string name) { netlist.nl_setup_global.INCLUDE(m_globals.helper_setup, name); }
-        protected void LOCAL_SOURCE(string name, nlsetup_func netlist_name) { netlist.nl_setup_global.LOCAL_SOURCE(m_globals.helper_setup, name, netlist_name); }
+        protected void LOCAL_SOURCE(string name, netlist.nlsetup_func netlist_name) { netlist.nl_setup_global.LOCAL_SOURCE(m_globals.helper_setup, name, netlist_name); }
         protected void NET_C(params string [] term1) { netlist.nl_setup_global.NET_C(m_globals.helper_setup, term1); }
         protected void PARAM(string name, int val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
         protected void PARAM(string name, double val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
@@ -1047,8 +1070,8 @@ namespace mame
 
 
         // rendutil
-        protected static void render_load_jpeg(out bitmap_argb32 bitmap, util.core_file file) { rendutil_global.render_load_jpeg(out bitmap, file); }
-        protected static bool render_load_png(out bitmap_argb32 bitmap, util.core_file file, bool load_as_alpha_to_existing = false) { return rendutil_global.render_load_png(out bitmap, file, load_as_alpha_to_existing); }
+        protected static void render_load_jpeg(out bitmap_argb32 bitmap, util_.core_file file) { rendutil_global.render_load_jpeg(out bitmap, file); }
+        protected static bool render_load_png(out bitmap_argb32 bitmap, util_.core_file file, bool load_as_alpha_to_existing = false) { return rendutil_global.render_load_png(out bitmap, file, load_as_alpha_to_existing); }
 
 
         // rescap
@@ -1193,15 +1216,6 @@ namespace mame
         { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
 
 
-        // ui
-        protected const float UI_MAX_FONT_HEIGHT = ui_global.UI_MAX_FONT_HEIGHT;
-        public const float UI_LINE_WIDTH = ui_global.UI_LINE_WIDTH;
-        protected static readonly rgb_t UI_GREEN_COLOR = ui_global.UI_GREEN_COLOR;
-        protected static readonly rgb_t UI_YELLOW_COLOR = ui_global.UI_YELLOW_COLOR;
-        protected static readonly rgb_t UI_RED_COLOR = ui_global.UI_RED_COLOR;
-        public const uint32_t UI_HANDLER_CANCEL = ui_global.UI_HANDLER_CANCEL;
-
-
         // watchdog
         protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
         protected static watchdog_timer_device WATCHDOG_TIMER<bool_Required>(machine_config mconfig, device_finder<watchdog_timer_device, bool_Required> finder)
@@ -1230,27 +1244,28 @@ namespace mame
         {
             // alternative to System.Runtime.InteropServices.Marshal.SizeOf(typeof(NativeType)); ?
 
-            if (value is sbyte)       return 1;
-            else if (value is byte)   return 1;
-            else if (value is Int16)  return 2;
-            else if (value is UInt16) return 2;
-            else if (value is Int32)  return 4;
-            else if (value is UInt32) return 4;
-            else if (value is Int64)  return 8;
-            else if (value is UInt64) return 8;
-            else if (value is Type)
+            switch (value)
             {
-                if ((Type)value == typeof(sbyte))       return 1;
-                else if ((Type)value == typeof(byte))   return 1;
-                else if ((Type)value == typeof(Int16))  return 2;
-                else if ((Type)value == typeof(UInt16)) return 2;
-                else if ((Type)value == typeof(Int32))  return 4;
-                else if ((Type)value == typeof(UInt32)) return 4;
-                else if ((Type)value == typeof(Int64))  return 8;
-                else if ((Type)value == typeof(UInt64)) return 8;
-                else throw new emu_unimplemented();
+                case sbyte  t: return 1;
+                case byte   t: return 1;
+                case Int16  t: return 2;
+                case UInt16 t: return 2;
+                case Int32  t: return 4;
+                case UInt32 t: return 4;
+                case Int64  t: return 8;
+                case UInt64 t: return 8;
+                case Type   t:
+                    if      ((Type)value == typeof(sbyte))  return 1;
+                    else if ((Type)value == typeof(byte))   return 1;
+                    else if ((Type)value == typeof(Int16))  return 2;
+                    else if ((Type)value == typeof(UInt16)) return 2;
+                    else if ((Type)value == typeof(Int32))  return 4;
+                    else if ((Type)value == typeof(UInt32)) return 4;
+                    else if ((Type)value == typeof(Int64))  return 8;
+                    else if ((Type)value == typeof(UInt64)) return 8;
+                    else throw new emu_unimplemented();
+                default: throw new emu_unimplemented();
             }
-            else throw new emu_unimplemented();
         }
 
 
@@ -1330,6 +1345,7 @@ namespace mame
         public static void fill_n(PointerU64 destination, int count, UInt64 value) { std.memset(destination, value, (UInt32)count); }
         public static void fill_n<T>(IList<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
         public static T find_if<T>(IEnumerable<T> list, Func<T, bool> pred) { foreach (var item in list) { if (pred(item)) return item; } return default;  }
+        public static int lower_bound<C, V>(C collection, V value) where C : IList<V> where V : IComparable<V> { return lower_bound<C, V, V>(collection, value, (i, v) => { return i.CompareTo(v) < 0; }); }
         public static int lower_bound<C, I, V>(C collection, V value, Func<I, V, bool> func)
             where C : IList<I>
         {
@@ -1376,6 +1392,8 @@ namespace mame
         public static int abs(int arg) { return Math.Abs(arg); }
         public static float abs(float arg) { return Math.Abs(arg); }
         public static double abs(double arg) { return Math.Abs(arg); }
+        public static float atan(float arg) { return (float)Math.Atan(arg); }
+        public static double atan(double arg) { return Math.Atan(arg); }
         public static float cos(float arg) { return (float)Math.Cos(arg); }
         public static double cos(double arg) { return Math.Cos(arg); }
         public static double exp(double x) { return Math.Exp(x); }
@@ -1461,9 +1479,9 @@ namespace mame
 
         // c++ array
         public class array<T, size_t_N> : IList<T>
-            where size_t_N : size_t_constant, new()
+            where size_t_N : uint32_constant, new()
         {
-            protected static size_t_constant N = new size_t_N();
+            protected static uint32_constant N = new size_t_N();
 
 
             MemoryContainer<T> m_data = new MemoryContainer<T>((int)N.value, true);

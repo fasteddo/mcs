@@ -80,7 +80,6 @@ namespace mame
 
         public static string append_(this String str, string s) { return str + s; }
         public static char back(this String str) { return str.Length > 0 ? str[str.Length - 1] : '\0'; }
-        public static string c_str(this String str) { return str; }
         public static string clear_(this String str) { return string.Empty; }
         public static int compare(this String str, string s) { return str.CompareTo(s); }
         public static int compare(this String str, int pos, int len, string s) { return (pos + len) <= str.Length ? str.Substring(pos, len).CompareTo(s) : str.CompareTo(s); }
@@ -102,7 +101,6 @@ namespace mame
         public static int rfind(this String str, char c) { return str.LastIndexOf(c); }
         public static int rfind(this String str, string s) { return str.LastIndexOf(s); }
         public static int size(this String str) { return str.Length; }
-        public static string str(this String str) { return str; }
         public static string substr(this String str, int pos) { return str.Substring(pos); }
         public static string substr(this String str, int pos, int count) { return str.Substring(pos, count); }
     }

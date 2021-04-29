@@ -219,7 +219,7 @@ namespace mame
             render_load_msdib - load a Microsoft DIB file
             into a bitmap
         -------------------------------------------------*/
-        public static void render_load_msdib(out bitmap_argb32 bitmap, util.core_file file)
+        public static void render_load_msdib(out bitmap_argb32 bitmap, util_.core_file file)
         {
             bitmap = new bitmap_argb32();
 
@@ -236,7 +236,7 @@ namespace mame
             render_load_jpeg - load a JPEG file into a
             bitmap
         -------------------------------------------------*/
-        public static void render_load_jpeg(out bitmap_argb32 bitmap, util.core_file file)
+        public static void render_load_jpeg(out bitmap_argb32 bitmap, util_.core_file file)
         {
             bitmap = new bitmap_argb32();
 
@@ -253,7 +253,7 @@ namespace mame
             render_load_png - load a PNG file into a
             bitmap
         -------------------------------------------------*/
-        public static bool render_load_png(out bitmap_argb32 bitmap, util.core_file file, bool load_as_alpha_to_existing = false)
+        public static bool render_load_png(out bitmap_argb32 bitmap, util_.core_file file, bool load_as_alpha_to_existing = false)
         {
             bitmap = new bitmap_argb32();
 

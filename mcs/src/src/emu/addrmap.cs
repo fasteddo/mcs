@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -276,6 +276,12 @@ namespace mame
             return share(target.second);
         }
 
+        //template<typename _ptrt> address_map_entry &share(const memory_share_creator<_ptrt> &finder) {
+        //    const std::pair<device_t &, const char *> target(finder.finder_target());
+        //    assert(&target.first == &m_devbase);
+        //    return share(target.second);
+        //}
+
 
         public address_map_entry rom() { m_read.m_type = map_handler_type.AMH_ROM; return this; }
         public address_map_entry ram() { m_read.m_type = map_handler_type.AMH_RAM; m_write.m_type = map_handler_type.AMH_RAM; return this; }
@@ -314,6 +320,22 @@ namespace mame
         //address_map_entry &bankw(const char *tag) { m_write.m_type = AMH_BANK; m_write.m_tag = tag; return *this; }
         //address_map_entry &bankrw(const char *tag) { read_bank(tag); write_bank(tag); return *this; }
 
+
+        //address_map_entry &bankr(const memory_bank_creator &finder) {
+        //    const std::pair<device_t &, const char *> target(finder.finder_target());
+        //    assert(&target.first == &m_devbase);
+        //    return bankr(target.second);
+        //}
+        //address_map_entry &bankw(const memory_bank_creator &finder) {
+        //    const std::pair<device_t &, const char *> target(finder.finder_target());
+        //    assert(&target.first == &m_devbase);
+        //    return bankw(target.second);
+        //}
+        //address_map_entry &bankrw(const memory_bank_creator &finder) {
+        //    const std::pair<device_t &, const char *> target(finder.finder_target());
+        //    assert(&target.first == &m_devbase);
+        //    return bankrw(target.second);
+        //}
 
         //template<bool _reqd> address_map_entry &bankr(const memory_bank_finder<_reqd> &finder) {
         //    const std::pair<device_t &, const char *> target(finder.finder_target());
@@ -1112,7 +1134,7 @@ namespace mame
             m_globalmask = space.addrmask();
 
 
-            op(start, end).m(DEVICE_SELF, submap_delegate).umask64(unitmask).cswidth(cswidth);
+            op(start, end).m(g.DEVICE_SELF, submap_delegate).umask64(unitmask).cswidth(cswidth);
         }
 
 
@@ -1159,7 +1181,7 @@ namespace mame
                     {
                         mapdevice = owner.subdevice(entry.m_read.m_tag);
                         if (mapdevice == null)
-                            throw new emu_fatalerror("Attempted to submap a non-existent device '{0}' in space {1} of device '{2}'\n", owner.subtag(entry.m_read.m_tag).c_str(), m_spacenum, m_device.basetag());
+                            throw new emu_fatalerror("Attempted to submap a non-existent device '{0}' in space {1} of device '{2}'\n", owner.subtag(entry.m_read.m_tag), m_spacenum, m_device.basetag());
                     }
 
                     // Grab the submap

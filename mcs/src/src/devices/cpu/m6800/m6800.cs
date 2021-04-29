@@ -405,9 +405,9 @@ namespace mame
             m_distate.state_add( M6800_CC,        "CC", m_cc).formatstr("%02X");
             m_distate.state_add( M6800_WAI_STATE, "WAI", m_wai_state).formatstr("%01X");
 
-            m_distate.state_add( STATE_GENPC, "GENPC", m_pc.w.l).noshow();
-            m_distate.state_add( STATE_GENPCBASE, "CURPC", m_pc.w.l).noshow();
-            m_distate.state_add( STATE_GENFLAGS, "GENFLAGS", m_cc).formatstr("%8s").noshow();
+            m_distate.state_add( g.STATE_GENPC, "GENPC", m_pc.w.l).noshow();
+            m_distate.state_add( g.STATE_GENPCBASE, "CURPC", m_pc.w.l).noshow();
+            m_distate.state_add( g.STATE_GENFLAGS, "GENFLAGS", m_cc).formatstr("%8s").noshow();
 
             set_icountptr(m_icount);
         }
@@ -435,7 +435,7 @@ namespace mame
         //virtual uint32_t execute_min_cycles() const override { return 1; }
         //virtual uint32_t execute_max_cycles() const override { return 12; }
         //virtual uint32_t execute_input_lines() const override { return 2; }
-        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == device_execute_interface.INPUT_LINE_NMI; }
+        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == g.INPUT_LINE_NMI; }
 
         void device_execute_interface_execute_run()
         {
@@ -467,8 +467,8 @@ namespace mame
         {
             switch (irqline)
             {
-            case device_execute_interface.INPUT_LINE_NMI:
-                if (m_nmi_state == 0 && state != CLEAR_LINE)
+            case g.INPUT_LINE_NMI:
+                if (m_nmi_state == 0 && state != g.CLEAR_LINE)
                     m_nmi_pending = 1;
 
                 m_nmi_state = (uint8_t)state;
@@ -569,7 +569,7 @@ namespace mame
             }
             else
             {
-                if (m_irq_state[M6800_IRQ_LINE] != CLEAR_LINE)
+                if (m_irq_state[M6800_IRQ_LINE] != g.CLEAR_LINE)
                 {
                     /* standard IRQ */
                     if ((m_wai_state & M6800_SLP) != 0)

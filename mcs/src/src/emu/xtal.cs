@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using u32 = System.UInt32;
-using attoseconds_t = System.Int64;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 
 
 namespace mame
@@ -246,6 +246,7 @@ namespace mame
             16400000, /* 16.4_MHz_XTAL          MS 6102 */
             16572000, /* 16.572_MHz_XTAL        Micro-Term ACT-5A */
             16588800, /* 16.5888_MHz_XTAL       SM 7238 */
+            16666600, /* 16.6666_MHz_XTAL       Firebeat GCU */
             16669800, /* 16.6698_MHz_XTAL       Qume QVT-102 */
             16670000, /* 16.67_MHz_XTAL         - */
             16777216, /* 16.777216_MHz_XTAL     Nintendo Game Boy Advance */
@@ -307,6 +308,7 @@ namespace mame
             22248000, /* 22.248_MHz_XTAL        Quantel DPB-7000 */
             22321000, /* 22.321_MHz_XTAL        Apple LaserWriter II NT */
             22464000, /* 22.464_MHz_XTAL        CIT-101 132-column display clock */
+            22579000, /* 22.579_MHz_XTAL        Sega System H1 SCSP clock */
             22656000, /* 22.656_MHz_XTAL        Super Pinball Action (~1440x NTSC line rate) */
             22896000, /* 22.896_MHz_XTAL        DEC VT220 132-column display clock */
             23200000, /* 23.2_MHz_XTAL          Roland JV-80 & JV-880 PCM clock */
@@ -346,6 +348,7 @@ namespace mame
             27562000, /* 27.562_MHz_XTAL        Visual 220 */
             27720000, /* 27.72_MHz_XTAL         AT&T 610 132-column display clock */
             27956000, /* 27.956_MHz_XTAL        CIT-101e 132-column display clock */
+            28000000, /* 28_MHz_XTAL            Sega System H1 SH2 clock */
             28000000, /* 28_MHz_XTAL            - */
             28224000, /* 28.224_MHz_XTAL        Roland JD-800 */
             28322000, /* 28.322_MHz_XTAL        Saitek RISC 2500, Mephisto Montreux */
@@ -385,6 +388,7 @@ namespace mame
             34291712, /* 34.291712_MHz_XTAL     Fairlight CMI master card */
             34846000, /* 34.846_MHz_XTAL        Visual 550 */
             35834400, /* 35.8344_MHz_XTAL       Tab Products E-22 132-column display clock */
+            35840000, /* 35.84_MHz_XTAL         Akai MPC 60 voice PCB */
             35904000, /* 35.904_MHz_XTAL        Used on HP98543 graphics board */
             36000000, /* 36_MHz_XTAL            Sega Model 1 video board */
             36864000, /* 36.864_MHz_XTAL        Unidesa Cirsa Rock 'n' Roll */
@@ -507,7 +511,7 @@ namespace mame
 
             full_message += string_format(" Context: {0}\n", message);
 
-            fatalerror("{0}\n", full_message.c_str());
+            fatalerror("{0}\n", full_message);
         }
 
 

@@ -9,7 +9,6 @@ using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detai
 using media_auditor_record_list = mame.std.list<mame.media_auditor.audit_record>;  //using record_list = std::list<audit_record>;
 using samples_device_enumerator = mame.device_type_enumerator<mame.samples_device>;  //typedef device_type_enumerator<samples_device> samples_device_enumerator;
 using size_t = System.UInt32;
-using std_string = System.String;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
@@ -249,7 +248,7 @@ namespace mame
                         }
 
                         // look for a matching parent or device ROM
-                        std_string name = rom[0].name();
+                        string name = rom[0].name();
                         util.hash_collection hashes = new util.hash_collection(rom[0].hashdata());
                         bool dumped = !hashes.flag(util.hash_collection.FLAG_NO_DUMP);
                         device_type shared_device = parentroms.find_shared_device(device, name, hashes, romload_global.rom_file_size(rom));

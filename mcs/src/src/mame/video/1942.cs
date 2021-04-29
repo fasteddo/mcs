@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using indirect_pen_t = System.UInt16;
-using offs_t = System.UInt32;
-using pen_t = System.UInt32;
-using tilemap_memory_index = System.UInt32;
+using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -25,25 +25,25 @@ namespace mame
             for (int i = 0; i < 256; i++)
             {
                 /* red component */
-                int bit0 = BIT(color_prom[i + 0 * 256], 0);
-                int bit1 = BIT(color_prom[i + 0 * 256], 1);
-                int bit2 = BIT(color_prom[i + 0 * 256], 2);
-                int bit3 = BIT(color_prom[i + 0 * 256], 3);
+                int bit0 = g.BIT(color_prom[i + 0 * 256], 0);
+                int bit1 = g.BIT(color_prom[i + 0 * 256], 1);
+                int bit2 = g.BIT(color_prom[i + 0 * 256], 2);
+                int bit3 = g.BIT(color_prom[i + 0 * 256], 3);
                 int r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 /* green component */
-                bit0 = BIT(color_prom[i + 1 * 256], 0);
-                bit1 = BIT(color_prom[i + 1 * 256], 1);
-                bit2 = BIT(color_prom[i + 1 * 256], 2);
-                bit3 = BIT(color_prom[i + 1 * 256], 3);
-                int g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+                bit0 = g.BIT(color_prom[i + 1 * 256], 0);
+                bit1 = g.BIT(color_prom[i + 1 * 256], 1);
+                bit2 = g.BIT(color_prom[i + 1 * 256], 2);
+                bit3 = g.BIT(color_prom[i + 1 * 256], 3);
+                int gr = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 /* blue component */
-                bit0 = BIT(color_prom[i + 2 * 256], 0);
-                bit1 = BIT(color_prom[i + 2 * 256], 1);
-                bit2 = BIT(color_prom[i + 2 * 256], 2);
-                bit3 = BIT(color_prom[i + 2 * 256], 3);
+                bit0 = g.BIT(color_prom[i + 2 * 256], 0);
+                bit1 = g.BIT(color_prom[i + 2 * 256], 1);
+                bit2 = g.BIT(color_prom[i + 2 * 256], 2);
+                bit3 = g.BIT(color_prom[i + 2 * 256], 3);
                 int b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-                palette.dipalette.set_indirect_color(i, new rgb_t((u8)r, (u8)g, (u8)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((u8)r, (u8)gr, (u8)b));
             }
         }
 
@@ -171,7 +171,7 @@ namespace mame
 
             machine().bookkeeping().coin_counter_w(0, data & 0x01);
 
-            m_audiocpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_RESET, (data & 0x10) != 0 ? ASSERT_LINE : CLEAR_LINE);
+            m_audiocpu.op[0].set_input_line(g.INPUT_LINE_RESET, (data & 0x10) != 0 ? g.ASSERT_LINE : g.CLEAR_LINE);
 
             flip_screen_set((u32)(data & 0x80));
         }
@@ -210,8 +210,8 @@ namespace mame
                 uint8_t v = flip_screen() != 0 ? (uint8_t)(~(y - 1)) : (uint8_t)(y - 1);
                 for (int h = 496; h >= 128; h -= 16)
                 {
-                    bool objcnt4 = BIT(h, 8) != BIT(~h, 7);
-                    bool objcnt3 = ((BIT(v, 7) != 0) && objcnt4) != (BIT(~h, 7) != 0);
+                    bool objcnt4 = g.BIT(h, 8) != g.BIT(~h, 7);
+                    bool objcnt3 = ((g.BIT(v, 7) != 0) && objcnt4) != (g.BIT(~h, 7) != 0);
                     uint8_t obj_idx = (uint8_t)((h >> 4) & 7);
                     obj_idx |= objcnt3 ? (uint8_t)0x08 : (uint8_t)0x00;
                     obj_idx |= objcnt4 ? (uint8_t)0x10 : (uint8_t)0x00;
@@ -235,13 +235,13 @@ namespace mame
                     switch (vlen & 3)
                     {
                     case 0:
-                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0) && (BIT(lvbeta, 5) != 0) && (BIT(lvbeta, 4) != 0);
+                        vinlen = (g.BIT(lvbeta, 7) != 0) && (g.BIT(lvbeta, 6) != 0) && (g.BIT(lvbeta, 5) != 0) && (g.BIT(lvbeta, 4) != 0);
                         break;
                     case 1:
-                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0) && (BIT(lvbeta, 5) != 0);
+                        vinlen = (g.BIT(lvbeta, 7) != 0) && (g.BIT(lvbeta, 6) != 0) && (g.BIT(lvbeta, 5) != 0);
                         break;
                     case 2:
-                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0);
+                        vinlen = (g.BIT(lvbeta, 7) != 0) && (g.BIT(lvbeta, 6) != 0);
                         break;
                     case 3:
                         vinlen = true;

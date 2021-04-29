@@ -4,7 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -35,7 +38,7 @@ namespace mame
         required_device<mb88_cpu_device> m_cpu;
         uint8_t m_portO;
         uint8_t m_rw;
-        devcb_read8.array<devcb_read8, uint32_constant_4> m_in;
+        devcb_read8.array<uint32_constant_4> m_in;
         devcb_write8 m_out;
         devcb_write_line m_lockout;
 
@@ -46,22 +49,22 @@ namespace mame
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_portO = 0;
             m_rw = 0;
-            m_in = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_in = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
             m_out = new devcb_write8(this);
             m_lockout = new devcb_write_line(this);
         }
 
 
-        public devcb_read.binder input_callback(int N) { return m_in[N].bind(); }  //template <unsigned N> auto input_callback() { return m_in[N].bind(); }
-        public devcb_write.binder output_callback() { return m_out.bind(); }  //auto output_callback() { return m_out.bind(); }
-        public devcb_write.binder lockout_callback() { return m_lockout.bind(); }  //auto lockout_callback() { return m_lockout.bind(); }
+        public devcb_read8.binder input_callback(int N) { return m_in[N].bind(); }  //template <unsigned N> auto input_callback() { return m_in[N].bind(); }
+        public devcb_write8.binder output_callback() { return m_out.bind(); }  //auto output_callback() { return m_out.bind(); }
+        public devcb_write_line.binder lockout_callback() { return m_lockout.bind(); }  //auto lockout_callback() { return m_lockout.bind(); }
 
 
         //WRITE_LINE_MEMBER( namco_51xx_device::reset )
         public void reset(int state)
         {
             // Reset line is active low.
-            m_cpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+            m_cpu.op[0].set_input_line(g.INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
 
@@ -131,7 +134,7 @@ namespace mame
         //-------------------------------------------------
         protected override void device_add_mconfig(machine_config config)
         {
-            MB8843(config, m_cpu, DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
+            MB8843(config, m_cpu, g.DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
             m_cpu.op[0].read_k().set(K_r).reg();
             m_cpu.op[0].read_r(0).set(R0_r).reg();
             m_cpu.op[0].read_r(1).set(R1_r).reg();

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -27,7 +27,7 @@ namespace mame
 
             /* IRQ is clocked on the rising edge of 16V, equal to the previous 32V */
             if ((scanline & 16) != 0)
-                m_maincpu.op[0].set_input_line(0, ((scanline - 1) & 32) != 0 ? ASSERT_LINE : CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(0, ((scanline - 1) & 32) != 0 ? g.ASSERT_LINE : g.CLEAR_LINE);
 
             /* do a partial update now to handle sprite multiplexing (Maze Invaders) */
             m_screen.op[0].update_partial(scanline);
@@ -49,7 +49,7 @@ namespace mame
         //MACHINE_RESET_MEMBER(centiped_state,centiped)
         void machine_reset_centiped()
         {
-            m_maincpu.op[0].set_input_line(0, CLEAR_LINE);
+            m_maincpu.op[0].set_input_line(0, g.CLEAR_LINE);
 
             if (m_earom.found())
                 earom_control_w(0);
@@ -58,7 +58,7 @@ namespace mame
 
         void irq_ack_w(uint8_t data)
         {
-            m_maincpu.op[0].set_input_line(0, CLEAR_LINE);
+            m_maincpu.op[0].set_input_line(0, g.CLEAR_LINE);
         }
 
 
@@ -205,8 +205,8 @@ namespace mame
         void earom_control_w(uint8_t data)
         {
             // CK = DB0, C1 = /DB1, C2 = DB2, CS1 = DB3, /CS2 = GND
-            m_earom.op[0].set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
-            m_earom.op[0].set_clk(BIT(data, 0));
+            m_earom.op[0].set_control((uint8_t)g.BIT(data, 3), 1, g.BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)g.BIT(data, 2));
+            m_earom.op[0].set_clk(g.BIT(data, 0));
         }
 
 
@@ -370,21 +370,21 @@ namespace mame
 
         static readonly gfx_layout charlayout = new gfx_layout(
             8,8,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             2,
-            ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
-            ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
-            ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ),
+            g.ArrayCombineUInt32( g.RGN_FRAC(1,2), 0 ),
+            g.ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
+            g.ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ),
             8*8
         );
 
         static readonly gfx_layout spritelayout = new gfx_layout(
             8,16,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             2,
-            ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
-            ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
-            ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+            g.ArrayCombineUInt32( g.RGN_FRAC(1,2), 0 ),
+            g.ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
+            g.ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
                     8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 ),
             16*8
         );
@@ -392,8 +392,8 @@ namespace mame
         //static GFXDECODE_START( gfx_centiped )
         static readonly gfx_decode_entry [] gfx_centiped = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout,     0, 1 ),
-            GFXDECODE_ENTRY( "gfx1", 0, spritelayout,   4, 4*4*4 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0, charlayout,     0, 1 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0, spritelayout,   4, 4*4*4 ),
             //GFXDECODE_END
         };
 
@@ -461,7 +461,7 @@ namespace mame
 
             pokey_device pokey = POKEY(config, "pokey", 12096000/8);
             pokey.set_output_opamp_low_pass(RES_K(3.3), CAP_U(0.01), 5.0);
-            pokey.disound.add_route(ALL_OUTPUTS, "mono", 0.5);
+            pokey.disound.add_route(g.ALL_OUTPUTS, "mono", 0.5);
         }
     }
 

@@ -112,7 +112,7 @@ namespace mame
             // find our interface at the beginning of the list or immediately following a comma
             while (true)
             {
-                int foundIdx = std.strstr(interface_list, m_interface.c_str());  //char const *const found(std::strstr(interface_list, m_interface.c_str()));
+                int foundIdx = std.strstr(interface_list, m_interface);  //char const *const found(std::strstr(interface_list, m_interface.c_str()));
                 if (foundIdx == -1)  //if (!found)
                     return false;
                 if (((foundIdx == 0) || (',' == interface_list[foundIdx - 1])) && ((',' == interface_list[foundIdx + m_interface.size()]) || interface_list[foundIdx + m_interface.size()] != 0))  //if (((found == interface_list) || (',' == found[-1])) && ((',' == found[m_interface.size()]) || !found[m_interface.size()]))

@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using char32_t = System.UInt32;
 using cleanup_callback_vector = mame.std.vector<mame.ui.menu.cleanup_callback>;
 using global_state_map = mame.std.map<mame.running_machine, mame.ui.menu.global_state>;
-using std_string = System.String;
-using std_string_view = System.String;
 using texture_ptr = mame.render_texture;
 using uint32_t = System.UInt32;
 
@@ -339,10 +337,10 @@ namespace mame.ui
         //  item_append - append a new item to the
         //  end of the menu
         //-------------------------------------------------
-        protected void item_append(std_string text, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN) { item_append(text, std_string.Empty, flags, ref_, type); }  //void item_append(const std::string &text, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(std::string(text), std::string(), flags, ref, type); }
+        protected void item_append(string text, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN) { item_append(text, string.Empty, flags, ref_, type); }  //void item_append(const std::string &text, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(std::string(text), std::string(), flags, ref, type); }
         //void item_append(const std::string &text, const std::string &subtext, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(std::string(text), std::string(subtext), flags, ref, type); }
         //void item_append(std::string &&text, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(text, std::string(), flags, ref, type); }
-        protected void item_append(std_string text, std_string subtext, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN)  //void item_append(std::string &&text, std::string &&subtext, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN);
+        protected void item_append(string text, string subtext, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN)  //void item_append(std::string &&text, std::string &&subtext, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN);
         {
             // only allow multiline as the first item
             if ((flags & FLAG_MULTILINE) != 0)
@@ -478,7 +476,7 @@ namespace mame.ui
 
             // if the menus are to be hidden, return a cancel here
             if (mui.is_menu_active() && ((mui.machine().ui_input().pressed((int)ioport_type.IPT_UI_CONFIGURE) && !state.stack_has_special_main_menu()) || state.topmost_menu<menu>() == null))
-                return UI_HANDLER_CANCEL;
+                return g.UI_HANDLER_CANCEL;
 
             return 0;
         }
@@ -639,8 +637,8 @@ namespace mame.ui
             // loop over visible lines
             m_hover = m_items.size() + 1;
             bool selected_subitem_too_big = false;
-            float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
-            float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
+            float line_x0 = x1 + 0.5f * g.UI_LINE_WIDTH;
+            float line_x1 = x2 - 0.5f * g.UI_LINE_WIDTH;
             if (!customonly)
             {
                 for (int linenum = 0; linenum < m_visible_lines; linenum++)
@@ -706,7 +704,7 @@ namespace mame.ui
                     else if (itemtext == menu_item.MENU_SEPARATOR_ITEM)
                     {
                         // if we're just a divider, draw a line
-                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                     }
                     else if (pitem.subtext == null)
                     {
@@ -714,8 +712,8 @@ namespace mame.ui
                         if ((pitem.flags & FLAG_UI_HEADING) != 0)
                         {
                             float heading_width = ui().get_string_width(itemtext);
-                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                         }
 
                         ui().draw_text_full(container(), itemtext, effective_left, line_y0, effective_width,
@@ -744,7 +742,7 @@ namespace mame.ui
                         }
                         else
                         {
-                            std_string_view subitem_text = pitem.subtext;
+                            string subitem_text = pitem.subtext;
 
                             // give 2 spaces worth of padding
                             item_width += 2.0f * gutter_width;
@@ -758,13 +756,13 @@ namespace mame.ui
                             }
 
                             // customize subitem text color
-                            if (core_stricmp(pitem.subtext, "On") == 0)
+                            if (g.core_stricmp(pitem.subtext, "On") == 0)
                                 fgcolor2 = new rgb_t(0x00,0xff,0x00);
 
-                            if (core_stricmp(pitem.subtext, "Off") == 0)
+                            if (g.core_stricmp(pitem.subtext, "Off") == 0)
                                 fgcolor2 = new rgb_t(0xff,0x00,0x00);
 
-                            if (core_stricmp(pitem.subtext, "Auto") == 0)
+                            if (g.core_stricmp(pitem.subtext, "Auto") == 0)
                                 fgcolor2 = new rgb_t(0xff,0xff,0x00);
 
                             // draw the subitem right-justified
@@ -882,16 +880,16 @@ namespace mame.ui
                                     target_y - ui().box_tb_border(),
                                     target_x + target_width + gutter_width + lr_border,
                                     target_y + target_height + ui().box_tb_border(),
-                                    (m_items[0].flags & FLAG_REDTEXT) != 0 ? UI_RED_COLOR : ui().colors().background_color());
+                                    (m_items[0].flags & FLAG_REDTEXT) != 0 ? g.UI_RED_COLOR : ui().colors().background_color());
 
             ui().draw_text_full(container(), text, target_x, target_y, target_width,
                         text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out _, out _);
 
             // draw the "return to prior menu" text with a hilight behind it
             highlight(
-                        target_x + 0.5f * UI_LINE_WIDTH,
+                        target_x + 0.5f * g.UI_LINE_WIDTH,
                         target_y + target_height - line_height,
-                        target_x + target_width - 0.5f * UI_LINE_WIDTH,
+                        target_x + target_width - 0.5f * g.UI_LINE_WIDTH,
                         target_y + target_height,
                         ui().colors().selected_bg_color());
 

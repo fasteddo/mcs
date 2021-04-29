@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 using notify_vector = mame.std.vector<mame.output_manager.output_notify>;
 using s32 = System.Int32;
-using std_string = System.String;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 
@@ -80,11 +79,11 @@ namespace mame
 
                 // call the local notifiers first
                 foreach (var notify in m_notifylist)
-                    notify.notify(m_name.c_str(), value);
+                    notify.notify(m_name, value);
 
                 // call the global notifiers next
                 foreach (var notify in m_manager.m_global_notifylist)
-                    notify.notify(m_name.c_str(), value);
+                    notify.notify(m_name, value);
             }
 
             public void set_notifier(notifier_func callback, object param) { m_notifylist.emplace_back(new output_notify(callback, param)); }
@@ -103,7 +102,7 @@ namespace mame
             public void resolve(device_t device, string name)
             {
                 assert(m_item == null);
-                m_item = device.machine().output().find_or_create_item(name.c_str(), 0);
+                m_item = device.machine().output().find_or_create_item(name, 0);
             }
 
             //operator s32() const { return m_item->get(); }
@@ -124,14 +123,14 @@ namespace mame
 
 
             device_t m_device;
-            std_string m_format;
+            string m_format;
             u32 m_start;
             unsigned [] m_start_args;  //unsigned const              m_start_args[sizeof...(N)];
             item_proxy [] m_proxies;  //item_proxy_array_t<N...>    m_proxies;
 
 
             //template <typename... T>
-            public output_finder(device_t device, std_string format, u32 start)
+            public output_finder(device_t device, string format, u32 start)
             {
                 m_device = device;
                 m_format = format;

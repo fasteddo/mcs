@@ -261,7 +261,7 @@ namespace mame.ui
 
                 // determine the text height
                 float unused;
-                ui().draw_text_full(container(), tempstring.c_str(), 0, 0, x2 - x1 - 2.0f * lr_border,
+                ui().draw_text_full(container(), tempstring, 0, 0, x2 - x1 - 2.0f * lr_border,
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out unused, out text_height);
 
                 // draw the thermometer
@@ -280,15 +280,15 @@ namespace mame.ui
                 container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui().colors().slider_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                 // draw the top and bottom lines
-                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                 // draw default marker
-                container().add_line(default_x, bar_area_top, default_x, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_area_top, default_x, bar_top, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                 // draw the actual text
-                ui().draw_text_full(container(), tempstring.c_str(), x1 + lr_border, y1 + line_height, x2 - x1 - 2.0f * lr_border,
+                ui().draw_text_full(container(), tempstring, x1 + lr_border, y1 + line_height, x2 - x1 - 2.0f * lr_border,
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out unused, out text_height);
             }
         }

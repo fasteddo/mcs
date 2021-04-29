@@ -4,14 +4,13 @@
 using System;
 using System.Collections.Generic;
 
-using attoseconds_t = System.Int64;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using char32_t = System.UInt32;
-using ioport_value = System.UInt32;
+using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using s64 = System.Int64;
-using std_string = System.String;
 using time_t = System.Int64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -3332,8 +3331,8 @@ namespace mame
             string fulltag = m_owner.subtag(tag);
 
             // add it to the list, and reset current field/setting
-            if (m_portlist.find(fulltag) != null) throw new tag_add_exception(fulltag.c_str());
-            m_portlist.emplace(fulltag, new ioport_port(m_owner, fulltag.c_str()));
+            if (m_portlist.find(fulltag) != null) throw new tag_add_exception(fulltag);
+            m_portlist.emplace(fulltag, new ioport_port(m_owner, fulltag));
             m_curport = m_portlist.find(fulltag);
             m_curfield = null;
             m_cursetting = null;
@@ -3353,7 +3352,7 @@ namespace mame
             // find the existing port
             m_curport = m_portlist.find(fulltag);
             if (m_curport == null)
-                throw new emu_fatalerror("Requested to modify nonexistent port '{0}'", fulltag.c_str());
+                throw new emu_fatalerror("Requested to modify nonexistent port '{0}'", fulltag);
 
             // bump the modification count, and reset current field/setting
             m_curport.modcount_set(m_curport.modcount() + 1);  //m_curport.m_modcount++;
@@ -3863,7 +3862,7 @@ namespace mame
         }
 
 
-        public ioport_port port(std_string tag) { var search = m_portlist.find(tag); if (search != default) return search; else return null; }
+        public ioport_port port(string tag) { var search = m_portlist.find(tag); if (search != default) return search; else return null; }
 
 
         //-------------------------------------------------
@@ -3985,7 +3984,7 @@ namespace mame
                 osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
 
             // enable compression
-            m_playback_file.compress(util.corefile_global.FCOMPRESS_MEDIUM);
+            m_playback_file.compress(util_.FCOMPRESS_MEDIUM);
             return basetime;
         }
 
@@ -4093,7 +4092,7 @@ namespace mame
             header.write(m_record_file);
 
             // enable compression
-            m_record_file.compress(util.corefile_global.FCOMPRESS_MEDIUM);
+            m_record_file.compress(util_.FCOMPRESS_MEDIUM);
         }
 
 

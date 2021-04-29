@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
 using PointerU8 = mame.Pointer<System.Byte>;
 using uint8_t = System.Byte;
@@ -72,7 +72,7 @@ namespace mame
             m_nvram_interface = GetClassInterface<device_nvram_interface_eeprom>();
 
 
-            m_region = new optional_memory_region(this, DEVICE_SELF);
+            m_region = new optional_memory_region(this, g.DEVICE_SELF);
             m_cells = 0;
             m_address_bits = 0;
             m_data_bits = 0;

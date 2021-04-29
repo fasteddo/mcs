@@ -210,7 +210,7 @@ namespace mame
 
                     // generate the string
                     output += string.Format(format, args);
-                    m_error_text = m_error_text.append_(output.str());
+                    m_error_text = m_error_text.append_(output);
                     break;
 
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING:
@@ -222,7 +222,7 @@ namespace mame
 
                     // generate the string and output to the original target
                     output += string.Format(format, args);
-                    m_warning_text = m_warning_text.append_(output.str());
+                    m_warning_text = m_warning_text.append_(output);
                     break;
 
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE:
@@ -234,7 +234,7 @@ namespace mame
 
                     // generate the string and output to the original target
                     output += string.Format(format, args);
-                    m_verbose_text = m_verbose_text.append_(output.str());
+                    m_verbose_text = m_verbose_text.append_(output);
                     break;
 
                 default:
@@ -304,7 +304,7 @@ namespace mame
         {
             // help verbose validation detect configuration-related crashes
             if (m_print_verbose)
-                output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "Validating driver {0} ({1})...\n", driver.name, core_filename_extract_base(driver.type.source()).c_str());
+                output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "Validating driver {0} ({1})...\n", driver.name, g.core_filename_extract_base(driver.type.source()));
 
             // set the current driver
             m_current_driver = driver;
@@ -340,7 +340,7 @@ namespace mame
             if (m_errors > start_errors || m_warnings > start_warnings || !string.IsNullOrEmpty(m_verbose_text))
             {
                 if (!m_print_verbose)
-                    output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "Driver {0} (file {1}): {2} errors, {3} warnings\n", driver.name, core_filename_extract_base(driver.type.source()), m_errors - start_errors, m_warnings - start_warnings);
+                    output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "Driver {0} (file {1}): {2} errors, {3} warnings\n", driver.name, g.core_filename_extract_base(driver.type.source()), m_errors - start_errors, m_warnings - start_warnings);
 
                 output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "{0} errors, {1} warnings\n", m_errors - start_errors, m_warnings - start_warnings);
 

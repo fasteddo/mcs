@@ -177,47 +177,47 @@ namespace mame
 
         static readonly gfx_layout charlayout = new gfx_layout(
             8,8,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             2,
-            new u32[] { RGN_FRAC(0,2), RGN_FRAC(1,2) },
-            STEP8(0,1),
-            STEP8(0,8),
+            new u32[] { g.RGN_FRAC(0,2), g.RGN_FRAC(1,2) },
+            g.STEP8(0,1),
+            g.STEP8(0,8),
             8 * 8
         );
 
 
         static readonly gfx_layout spritelayout = new gfx_layout(
             16,16,
-            RGN_FRAC(1,3),
+            g.RGN_FRAC(1,3),
             3,
-            new u32[] { RGN_FRAC(2,3), RGN_FRAC(0,3), RGN_FRAC(1,3) },
-            ArrayCombineUInt32(STEP8(0,1), STEP8(16 * 8,1)),
-            STEP16(0,8),
+            new u32[] { g.RGN_FRAC(2,3), g.RGN_FRAC(0,3), g.RGN_FRAC(1,3) },
+            g.ArrayCombineUInt32(g.STEP8(0,1), g.STEP8(16 * 8,1)),
+            g.STEP16(0,8),
             32 * 8
         );
 
 
-        static readonly uint32_t [] bgcharlayout_xoffset = ArrayCombineUInt32(
-            STEP4(0x000,1), STEP4(0x008,1), STEP4(0x010,1), STEP4(0x018,1),
-            STEP4(0x020,1), STEP4(0x028,1), STEP4(0x030,1), STEP4(0x038,1),
-            STEP4(0x040,1), STEP4(0x048,1), STEP4(0x050,1), STEP4(0x058,1),
-            STEP4(0x060,1), STEP4(0x068,1), STEP4(0x070,1), STEP4(0x078,1),
-            STEP4(0x080,1), STEP4(0x088,1), STEP4(0x090,1), STEP4(0x098,1),
-            STEP4(0x0a0,1), STEP4(0x0a8,1), STEP4(0x0b0,1), STEP4(0x0b8,1),
-            STEP4(0x0c0,1), STEP4(0x0c8,1), STEP4(0x0d0,1), STEP4(0x0d8,1),
-            STEP4(0x0e0,1), STEP4(0x0e8,1), STEP4(0x0f0,1), STEP4(0x0f8,1),
-            STEP4(0x100,1), STEP4(0x108,1), STEP4(0x110,1), STEP4(0x118,1),
-            STEP4(0x120,1), STEP4(0x128,1), STEP4(0x130,1), STEP4(0x138,1),
-            STEP4(0x140,1), STEP4(0x148,1), STEP4(0x150,1), STEP4(0x158,1),
-            STEP4(0x160,1), STEP4(0x168,1), STEP4(0x170,1), STEP4(0x178,1),
-            STEP4(0x180,1), STEP4(0x188,1), STEP4(0x190,1), STEP4(0x198,1),
-            STEP4(0x1a0,1), STEP4(0x1a8,1), STEP4(0x1b0,1), STEP4(0x1b8,1),
-            STEP4(0x1c0,1), STEP4(0x1c8,1), STEP4(0x1d0,1), STEP4(0x1d8,1),
-            STEP4(0x1e0,1), STEP4(0x1e8,1), STEP4(0x1f0,1), STEP4(0x1f8,1));
+        static readonly uint32_t [] bgcharlayout_xoffset = g.ArrayCombineUInt32(
+            g.STEP4(0x000,1), g.STEP4(0x008,1), g.STEP4(0x010,1), g.STEP4(0x018,1),
+            g.STEP4(0x020,1), g.STEP4(0x028,1), g.STEP4(0x030,1), g.STEP4(0x038,1),
+            g.STEP4(0x040,1), g.STEP4(0x048,1), g.STEP4(0x050,1), g.STEP4(0x058,1),
+            g.STEP4(0x060,1), g.STEP4(0x068,1), g.STEP4(0x070,1), g.STEP4(0x078,1),
+            g.STEP4(0x080,1), g.STEP4(0x088,1), g.STEP4(0x090,1), g.STEP4(0x098,1),
+            g.STEP4(0x0a0,1), g.STEP4(0x0a8,1), g.STEP4(0x0b0,1), g.STEP4(0x0b8,1),
+            g.STEP4(0x0c0,1), g.STEP4(0x0c8,1), g.STEP4(0x0d0,1), g.STEP4(0x0d8,1),
+            g.STEP4(0x0e0,1), g.STEP4(0x0e8,1), g.STEP4(0x0f0,1), g.STEP4(0x0f8,1),
+            g.STEP4(0x100,1), g.STEP4(0x108,1), g.STEP4(0x110,1), g.STEP4(0x118,1),
+            g.STEP4(0x120,1), g.STEP4(0x128,1), g.STEP4(0x130,1), g.STEP4(0x138,1),
+            g.STEP4(0x140,1), g.STEP4(0x148,1), g.STEP4(0x150,1), g.STEP4(0x158,1),
+            g.STEP4(0x160,1), g.STEP4(0x168,1), g.STEP4(0x170,1), g.STEP4(0x178,1),
+            g.STEP4(0x180,1), g.STEP4(0x188,1), g.STEP4(0x190,1), g.STEP4(0x198,1),
+            g.STEP4(0x1a0,1), g.STEP4(0x1a8,1), g.STEP4(0x1b0,1), g.STEP4(0x1b8,1),
+            g.STEP4(0x1c0,1), g.STEP4(0x1c8,1), g.STEP4(0x1d0,1), g.STEP4(0x1d8,1),
+            g.STEP4(0x1e0,1), g.STEP4(0x1e8,1), g.STEP4(0x1f0,1), g.STEP4(0x1f8,1));
 
 
-        static readonly uint32_t [] bgcharlayout_yoffset = ArrayCombineUInt32(
-            STEP32(0x0000,0x200), STEP32(0x4000,0x200), STEP32(0x8000,0x200), STEP32(0xc000,0x200));
+        static readonly uint32_t [] bgcharlayout_yoffset = g.ArrayCombineUInt32(
+            g.STEP32(0x0000,0x200), g.STEP32(0x4000,0x200), g.STEP32(0x8000,0x200), g.STEP32(0xc000,0x200));
 
 
         static readonly gfx_layout bgcharlayout = new gfx_layout(
@@ -225,8 +225,8 @@ namespace mame
             1,       /* 1 image */
             2,       /* 2 bits per pixel */
             new u32[] { 4, 0 },       /* the two bitplanes for 4 pixels are packed into one byte */
-            EXTENDED_XOFFS,
-            EXTENDED_YOFFS,
+            g.EXTENDED_XOFFS,
+            g.EXTENDED_YOFFS,
             0x8000,
             new MemoryContainer<u32>(bgcharlayout_xoffset),
             new MemoryContainer<u32>(bgcharlayout_yoffset)
@@ -236,7 +236,7 @@ namespace mame
         //static GFXDECODE_START(gfx_m52_sp)
         static readonly gfx_decode_entry [] gfx_m52_sp = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY("sp", 0x0000, spritelayout, 0, 16),
+            g.GFXDECODE_ENTRY("sp", 0x0000, spritelayout, 0, 16),
 
             //GFXDECODE_END
         };
@@ -244,7 +244,7 @@ namespace mame
         //static GFXDECODE_START(gfx_m52_tx)
         static readonly gfx_decode_entry [] gfx_m52_tx = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY("tx", 0x0000, charlayout, 0, 128),
+            g.GFXDECODE_ENTRY("tx", 0x0000, charlayout, 0, 128),
 
             //GFXDECODE_END
         };
@@ -252,9 +252,9 @@ namespace mame
         //static GFXDECODE_START(gfx_m52_bg)
         static readonly gfx_decode_entry [] gfx_m52_bg = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY("bg0", 0x0000, bgcharlayout, 0 * 4, 1),
-            GFXDECODE_ENTRY("bg1", 0x0000, bgcharlayout, 1 * 4, 1),
-            GFXDECODE_ENTRY("bg2", 0x0000, bgcharlayout, 2 * 4, 1),
+            g.GFXDECODE_ENTRY("bg0", 0x0000, bgcharlayout, 0 * 4, 1),
+            g.GFXDECODE_ENTRY("bg1", 0x0000, bgcharlayout, 1 * 4, 1),
+            g.GFXDECODE_ENTRY("bg2", 0x0000, bgcharlayout, 2 * 4, 1),
 
             //GFXDECODE_END
         };

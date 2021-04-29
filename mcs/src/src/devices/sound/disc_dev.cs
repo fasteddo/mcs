@@ -32,7 +32,7 @@ namespace mame
         /* charge/discharge constants */
         double DSD_555_ASTBL_T_RC_BLEED { get { return DEFAULT_555_BLEED_R * DSD_555_ASTBL__C; } }
         /* Use quick charge if specified. */
-        double DSD_555_ASTBL_T_RC_CHARGE(discrete_555_desc info) { return (DSD_555_ASTBL__R1 + (((info.options & DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) ? 0 : DSD_555_ASTBL__R2)) * DSD_555_ASTBL__C; }
+        double DSD_555_ASTBL_T_RC_CHARGE(discrete_555_desc info) { return (DSD_555_ASTBL__R1 + (((info.options & g.DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) ? 0 : DSD_555_ASTBL__R2)) * DSD_555_ASTBL__C; }
         double DSD_555_ASTBL_T_RC_DISCHARGE { get { return DSD_555_ASTBL__R2 * DSD_555_ASTBL__C; } }
 
 
@@ -74,18 +74,18 @@ namespace mame
             discrete_555_desc info = (discrete_555_desc)this.custom_data();  //DISCRETE_DECLARE_INFO(discrete_555_desc)
 
             m_use_ctrlv   = (this.input_is_node() >> 4) & 1;
-            m_output_type = info.options & DISC_555_OUT_MASK;
+            m_output_type = info.options & g.DISC_555_OUT_MASK;
 
             /* Use the defaults or supplied values. */
-            m_v_out_high = (info.v_out_high == DEFAULT_555_HIGH) ? info.v_pos - 1.2 : info.v_out_high;
+            m_v_out_high = (info.v_out_high == g.DEFAULT_555_HIGH) ? info.v_pos - 1.2 : info.v_out_high;
 
             /* setup v_charge or node */
             m_v_charge_node = m_device.node_output_ptr((int)info.v_charge);
             if (m_v_charge_node == null)
             {
-                m_v_charge = (info.v_charge == DEFAULT_555_CHARGE) ? info.v_pos : info.v_charge;
+                m_v_charge = (info.v_charge == g.DEFAULT_555_CHARGE) ? info.v_pos : info.v_charge;
 
-                if ((info.options & DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) m_v_charge -= 0.5;
+                if ((info.options & g.DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) m_v_charge -= 0.5;
             }
 
             if ((DSD_555_ASTBL__CTRLV != -1) && m_use_ctrlv == 0)
@@ -117,7 +117,7 @@ namespace mame
                 m_exp_discharge  = RC_CHARGE_EXP(m_t_rc_discharge);
             }
 
-            m_output_is_ac = info.options & DISC_555_OUT_AC;
+            m_output_is_ac = info.options & g.DISC_555_OUT_AC;
             /* Calculate DC shift needed to make squarewave waveform AC */
             m_ac_shift = (m_output_is_ac != 0) ? -m_v_out_high / 2.0 : 0;
 
@@ -193,7 +193,7 @@ namespace mame
             if (m_v_charge_node != null)
             {
                 v_charge = m_v_charge_node[0];  // v_charge = *m_v_charge_node;
-                if ((info.options & DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) v_charge -= 0.5;
+                if ((info.options & g.DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) v_charge -= 0.5;
             }
             else
             {
@@ -257,7 +257,7 @@ namespace mame
                             /* Oscillation disabled because there is no longer any charge resistor. */
                             /* Bleed the cap due to circuit losses. */
                             if (update_exponent != 0)
-                                exponent = RC_CHARGE_EXP_DT(m_t_rc_bleed, dt);
+                                exponent = g.RC_CHARGE_EXP_DT(m_t_rc_bleed, dt);
                             else
                                 exponent = m_exp_bleed;
                             v_cap_next = v_cap - (v_cap * exponent);
@@ -267,7 +267,7 @@ namespace mame
                         {
                             /* Charging */
                             if (update_exponent != 0)
-                                exponent = RC_CHARGE_EXP_DT(m_t_rc_charge, dt);
+                                exponent = g.RC_CHARGE_EXP_DT(m_t_rc_charge, dt);
                             else
                                 exponent = m_exp_charge;
                             v_cap_next = v_cap + ((v_charge - v_cap) * exponent);
@@ -292,7 +292,7 @@ namespace mame
                         if(DSD_555_ASTBL__R2 != 0)
                         {
                             if (update_exponent != 0)
-                                exponent = RC_CHARGE_EXP_DT(m_t_rc_discharge, dt);
+                                exponent = g.RC_CHARGE_EXP_DT(m_t_rc_discharge, dt);
                             else
                                 exponent = m_exp_discharge;
                             v_cap_next = v_cap - (v_cap * exponent);
@@ -328,7 +328,7 @@ namespace mame
 
             switch (m_output_type)
             {
-                case DISC_555_OUT_SQW:
+                case g.DISC_555_OUT_SQW:
                     if (count_f + count_r >= 2)
                         /* force at least 1 toggle */
                         v_out =  m_flip_flop != 0 ? 0 : m_v_out_high;
@@ -336,30 +336,30 @@ namespace mame
                         v_out =  flip_flop * m_v_out_high;
                     v_out += m_ac_shift;
                     break;
-                case DISC_555_OUT_CAP:
+                case g.DISC_555_OUT_CAP:
                     v_out =  v_cap;
                     /* Fake it to AC if needed */
                     if (m_output_is_ac != 0)
                         v_out -= threshold * 3.0 /4.0;
                     break;
-                case DISC_555_OUT_ENERGY:
+                case g.DISC_555_OUT_ENERGY:
                     if (x_time == 0) x_time = 1.0;
                     v_out = m_v_out_high * (flip_flop != 0 ? x_time : (1.0 - x_time));
                     v_out += m_ac_shift;
                     break;
-                case DISC_555_OUT_LOGIC_X:
+                case g.DISC_555_OUT_LOGIC_X:
                     v_out =  flip_flop + x_time;
                     break;
-                case DISC_555_OUT_COUNT_F_X:
+                case g.DISC_555_OUT_COUNT_F_X:
                     v_out = count_f != 0 ? count_f + x_time : count_f;
                     break;
-                case DISC_555_OUT_COUNT_R_X:
+                case g.DISC_555_OUT_COUNT_R_X:
                     v_out =  count_r != 0 ? count_r + x_time : count_r;
                     break;
-                case DISC_555_OUT_COUNT_F:
+                case g.DISC_555_OUT_COUNT_F:
                     v_out =  count_f;
                     break;
-                case DISC_555_OUT_COUNT_R:
+                case g.DISC_555_OUT_COUNT_R:
                     v_out =  count_r;
                     break;
             }
@@ -459,17 +459,17 @@ namespace mame
             m_flip_flop   = 1;
             m_cap_voltage = 0;
 
-            m_output_type = info.options & DISC_555_OUT_MASK;
+            m_output_type = info.options & g.DISC_555_OUT_MASK;
 
             /* Use the defaults or supplied values. */
-            m_v_out_high  = (info.v_out_high  == DEFAULT_555_HIGH) ? info.v_pos - 1.2 : info.v_out_high;
-            m_v_cc_source = (info.v_cc_source == DEFAULT_555_CC_SOURCE) ? info.v_pos : info.v_cc_source;
+            m_v_out_high  = (info.v_out_high  == g.DEFAULT_555_HIGH) ? info.v_pos - 1.2 : info.v_out_high;
+            m_v_cc_source = (info.v_cc_source == g.DEFAULT_555_CC_SOURCE) ? info.v_pos : info.v_cc_source;
 
             /* Setup based on v_pos power source */
             m_threshold = info.v_pos * 2.0 / 3.0;
             m_trigger   = info.v_pos / 3.0;
 
-            m_output_is_ac = info.options & DISC_555_OUT_AC;
+            m_output_is_ac = info.options & g.DISC_555_OUT_AC;
             /* Calculate DC shift needed to make squarewave waveform AC */
             m_ac_shift     = (m_output_is_ac != 0) ? -m_v_out_high / 2.0 : 0;
 
@@ -722,7 +722,7 @@ namespace mame
 
             if ( i < 0) i = 0;
 
-            if ((info.options & DISCRETE_555_CC_TO_CAP) != 0)
+            if ((info.options & g.DISCRETE_555_CC_TO_CAP) != 0)
             {
                 vi = i * DSD_555_CC__RDIS;
             }
@@ -788,7 +788,7 @@ namespace mame
                             if (update_exponent != 0)
                             {
                                 t_rc     = DSD_555_CC_T_RC_BLEED;
-                                exponent = RC_CHARGE_EXP_DT(t_rc, dt);
+                                exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
                             }
                             else
                             {
@@ -834,11 +834,11 @@ namespace mame
                             t_rc = m_t_rc_discharge_01;
 
                         if (update_exponent != 0)
-                            exponent = RC_CHARGE_EXP_DT(t_rc, dt);
+                            exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
                         else
                             exponent = m_exp_discharge_01;
 
-                        if ((info.options & DISCRETE_555_CC_TO_CAP) != 0)
+                        if ((info.options & g.DISCRETE_555_CC_TO_CAP) != 0)
                         {
                             /* Asteroids - Special Case */
                             /* Charging in discharge mode */
@@ -888,7 +888,7 @@ namespace mame
                                 t_rc = m_t_rc_discharge_no_i;
 
                             if (update_exponent != 0)
-                                exponent = RC_CHARGE_EXP_DT(t_rc, dt);
+                                exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
                             else
                                 exponent = m_exp_discharge_no_i;
 
@@ -910,7 +910,7 @@ namespace mame
                                 t_rc = m_t_rc_charge;
 
                             if (update_exponent != 0)
-                                exponent = RC_CHARGE_EXP_DT(t_rc, dt);
+                                exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
                             else
                                 exponent = m_exp_charge;
 
@@ -938,7 +938,7 @@ namespace mame
                             t_rc = m_t_rc_discharge;
 
                         if (update_exponent != 0)
-                            exponent = RC_CHARGE_EXP_DT(t_rc, dt);
+                            exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
                         else
                             exponent = m_exp_discharge;
 
@@ -977,7 +977,7 @@ namespace mame
 
             switch (m_output_type)
             {
-                case DISC_555_OUT_SQW:
+                case g.DISC_555_OUT_SQW:
                     if (count_f + count_r >= 2)
                         /* force at least 1 toggle */
                         v_out =  (m_flip_flop != 0) ? 0 : m_v_out_high;
@@ -986,27 +986,27 @@ namespace mame
                     /* Fake it to AC if needed */
                     v_out += m_ac_shift;
                     break;
-                case DISC_555_OUT_CAP:
+                case g.DISC_555_OUT_CAP:
                     v_out = v_cap + m_ac_shift;
                     break;
-                case DISC_555_OUT_ENERGY:
+                case g.DISC_555_OUT_ENERGY:
                     if (x_time == 0) x_time = 1.0;
                     v_out = m_v_out_high * ((flip_flop != 0) ? x_time : (1.0 - x_time));
                     v_out += m_ac_shift;
                     break;
-                case DISC_555_OUT_LOGIC_X:
+                case g.DISC_555_OUT_LOGIC_X:
                     v_out = flip_flop + x_time;
                     break;
-                case DISC_555_OUT_COUNT_F_X:
+                case g.DISC_555_OUT_COUNT_F_X:
                     v_out = (count_f != 0) ? count_f + x_time : count_f;
                     break;
-                case DISC_555_OUT_COUNT_R_X:
+                case g.DISC_555_OUT_COUNT_R_X:
                     v_out = (count_r != 0) ? count_r + x_time : count_r;
                     break;
-                case DISC_555_OUT_COUNT_F:
+                case g.DISC_555_OUT_COUNT_F:
                     v_out = count_f;
                     break;
-                case DISC_555_OUT_COUNT_R:
+                case g.DISC_555_OUT_COUNT_R:
                     v_out = count_r;
                     break;
             }

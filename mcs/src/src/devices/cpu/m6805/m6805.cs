@@ -415,14 +415,14 @@ namespace mame
             set_icountptr(m_icount);
 
             // register our state for the debugger
-            m_distate.state_add(STATE_GENPC,     "GENPC",     m_pc.w.l).noshow();
-            m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_pc.w.l).noshow();
-            m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  m_cc).callimport().callexport().formatstr("%8s").noshow();
-            m_distate.state_add(M6805_A,         "A",         m_a).mask(0xff);
-            m_distate.state_add(M6805_PC,        "PC",        m_pc.w.l).mask(0xffff);
-            m_distate.state_add(M6805_S,         "S",         m_s.w.l).mask(0xff);
-            m_distate.state_add(M6805_X,         "X",         m_x).mask(0xff);
-            m_distate.state_add(M6805_CC,        "CC",        m_cc).mask(0xff);
+            m_distate.state_add(g.STATE_GENPC,     "GENPC",     m_pc.w.l).noshow();
+            m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     m_pc.w.l).noshow();
+            m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  m_cc).callimport().callexport().formatstr("%8s").noshow();
+            m_distate.state_add(M6805_A,           "A",         m_a).mask(0xff);
+            m_distate.state_add(M6805_PC,          "PC",        m_pc.w.l).mask(0xffff);
+            m_distate.state_add(M6805_S,           "S",         m_s.w.l).mask(0xff);
+            m_distate.state_add(M6805_X,           "X",         m_x).mask(0xff);
+            m_distate.state_add(M6805_CC,          "CC",        m_cc).mask(0xff);
 
             // register for savestates
             save_item(NAME(new { EA }));
@@ -435,7 +435,7 @@ namespace mame
             save_item(NAME(new { m_irq_state }));
             save_item(NAME(new { m_nmi_state }));
 
-            std.fill(m_irq_state, CLEAR_LINE);
+            std.fill(m_irq_state, g.CLEAR_LINE);
         }
 
 
@@ -528,7 +528,7 @@ namespace mame
         void set_z8(u8 a)                       { if (a == 0) m_cc |= ZFLAG; }
         void set_n8(u8 a)                       { m_cc |= (u8)((a & 0x80) >> 5); }
         void set_h(u8 a, u8 b, u8 r)            { m_cc |= (u8)((a ^ b ^ r) & 0x10); }
-        void set_c8(u16 a)                      { m_cc |= (u8)BIT(a, 8); }
+        void set_c8(u16 a)                      { m_cc |= (u8)g.BIT(a, 8); }
 
         // combos
         void set_nz8(u8 a)                      { set_n8(a); set_z8(a); }
@@ -551,6 +551,6 @@ namespace mame
         protected virtual void interrupt_vector() { throw new emu_unimplemented(); }
 
 
-        protected virtual bool test_il() { return CLEAR_LINE != m_irq_state[m6805_global.M6805_IRQ_LINE]; }
+        protected virtual bool test_il() { return g.CLEAR_LINE != m_irq_state[m6805_global.M6805_IRQ_LINE]; }
     }
 }

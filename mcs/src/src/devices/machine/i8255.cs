@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -221,7 +223,7 @@ namespace mame
                 else
                 {
                     int bit = (data >> 1) & 0x07;
-                    int state = BIT(data, 0);
+                    int state = g.BIT(data, 0);
 
                     LOG("I8255 {0} Port C Bit {1}\n", state != 0 ? "Set" : "Reset", bit);  // %s %u
 

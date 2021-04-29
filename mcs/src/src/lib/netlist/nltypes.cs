@@ -10,9 +10,6 @@ using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
-using nldelegate = System.Action;  //using nldelegate = plib::pmfp<void>;
-using nldelegate_ts = System.Action<mame.netlist.timestep_type, System.Double>;  //using nldelegate_ts = plib::pmfp<void, timestep_type, nl_fptype>;
-using nldelegate_dyn = System.Action;  //using nldelegate_dyn = plib::pmfp<void>;
 
 
 namespace mame.netlist
@@ -103,9 +100,9 @@ namespace mame.netlist
 
     /// \brief Delegate type for device notification.
     ///
-    //using nldelegate = plib::pmfp<void>;
-    //using nldelegate_ts = plib::pmfp<void, timestep_type, nl_fptype>;
-    //using nldelegate_dyn = plib::pmfp<void>;
+    public delegate void nldelegate();  //using nldelegate = plib::pmfp<void>;
+    public delegate void nldelegate_ts(timestep_type param1, double param2);  //using nldelegate_ts = plib::pmfp<void, timestep_type, nl_fptype>;
+    public delegate void nldelegate_dyn();  //using nldelegate_dyn = plib::pmfp<void>;
 
 
     namespace detail

@@ -7,7 +7,6 @@ using System.Diagnostics;
 
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using size_t = System.UInt32;
-using size_t_constant = mame.uint32_constant;
 using static_vector_size_type = System.UInt32;  //using size_type = std::size_t;
 using unsigned = System.UInt32;
 
@@ -21,7 +20,7 @@ namespace mame.plib
     ///
     //template <class C, std::size_t N>
     class uninitialised_array<C, size_t_N>
-        where size_t_N : size_t_constant, new()
+        where size_t_N : uint32_constant, new()
     {
         //using value_type = C;
         //using pointer = value_type *;
@@ -107,9 +106,9 @@ namespace mame.plib
     ///
     //template <class C, std::size_t N>
     class static_vector<C, size_t_N>
-        where size_t_N : size_t_constant, new()
+        where size_t_N : uint32_constant, new()
     {
-        protected static size_t_constant N = new size_t_N();
+        protected static uint32_constant N = new size_t_N();
 
 
         //using value_type = C;

@@ -984,14 +984,14 @@ namespace mame
             }
 
             m_option_descs[key] = current_value + new_option_value;
-            m_options.set_description(key.c_str(), m_option_descs[key].c_str());
+            m_options.set_description(key, m_option_descs[key]);
         }
 
 
         // FIXME: should be elsewhere
         object select_module_options(core_options opts, string opt_name)
         {
-            string opt_val = opts.exists(opt_name) ? opts.value(opt_name.c_str()) : "";
+            string opt_val = opts.exists(opt_name) ? opts.value(opt_name) : "";
             if (opt_val == "auto")
             {
                 opt_val = "";

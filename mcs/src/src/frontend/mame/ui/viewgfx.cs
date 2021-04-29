@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using gfx_interface_enumerator = mame.device_interface_enumerator<mame.device_gfx_interface>;  //typedef device_interface_enumerator<device_gfx_interface> gfx_interface_enumerator;
 using palette_interface_enumerator = mame.device_interface_enumerator<mame.device_palette_interface>;  //typedef device_interface_enumerator<device_palette_interface> palette_interface_enumerator;
-using pen_t = System.UInt32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -260,7 +260,7 @@ cancel:
 
             state.bitmap_dirty = true;
 
-            return global_object.UI_HANDLER_CANCEL;
+            return g.UI_HANDLER_CANCEL;
         }
 
 
@@ -425,7 +425,7 @@ cancel:
 
             // expand the outer box to fit the title
             string title = title_buf;
-            titlewidth = ui_font.string_width(chheight, aspect, title.c_str());
+            titlewidth = ui_font.string_width(chheight, aspect, title);
             x0 = 0.0f;
             if (boxbounds.x1 - boxbounds.x0 < titlewidth + chwidth)
                 x0 = boxbounds.x0 - (0.5f - 0.5f * (titlewidth + chwidth));
@@ -453,7 +453,7 @@ cancel:
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
                 if (skip != 0)
-                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), g.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
             }
 
             // draw the side column headers
@@ -470,7 +470,7 @@ cancel:
                     x0 = boxbounds.x0 + 5.5f * chwidth;
                     y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
                     if (skip != 0)
-                        container.add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                        container.add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, g.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                     // draw the row header
                     buffer = string.Format("{0:X5}", state.palette.offset + y * state.palette.columns);  // %5X
@@ -729,7 +729,7 @@ cancel:
 
             // expand the outer box to fit the title
             string title = title_buf;
-            float titlewidth = ui_font.string_width(chheight, aspect, title.c_str());
+            float titlewidth = ui_font.string_width(chheight, aspect, title);
             x0 = 0.0f;
 
             if (boxbounds.x1 - boxbounds.x0 < titlewidth + chwidth)
@@ -758,7 +758,7 @@ cancel:
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
                 if (skip != 0)
-                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), g.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
             }
 
             // draw the side column headers
@@ -775,7 +775,7 @@ cancel:
                     x0 = boxbounds.x0 + 5.5f * chwidth;
                     y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
                     if (skip != 0)
-                        container.add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, global_object.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                        container.add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, g.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
                     // draw the row header
                     buffer = string.Format("{0:X5}", info.offset[set] + y * xcells);
@@ -1144,7 +1144,7 @@ cancel:
 
             // expand the outer box to fit the title
             string title = title_buf;
-            titlewidth = ui_font.string_width(chheight, aspect, title.c_str());
+            titlewidth = ui_font.string_width(chheight, aspect, title);
             if (boxbounds.x1 - boxbounds.x0 < titlewidth + chwidth)
             {
                 boxbounds.x0 = 0.5f - 0.5f * (titlewidth + chwidth);

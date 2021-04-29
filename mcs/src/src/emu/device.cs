@@ -4,13 +4,12 @@
 using System;
 using System.Collections.Generic;
 
-using attoseconds_t = System.Int64;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
-using device_timer_id = System.UInt32;
-using offs_t = System.UInt32;
-using seconds_t = System.Int32;
-using std_string_view = System.String;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using seconds_t = System.Int32;  //typedef s32 seconds_t;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -19,7 +18,7 @@ using u64 = System.UInt64;
 namespace mame
 {
     // timer IDs for devices
-    //typedef UInt32 device_timer_id;
+    //typedef u32 device_timer_id;
 
     //typedef emu::detail::device_type_impl_base const &device_type;
     public class device_type : emu.detail.device_type_impl_base
@@ -994,7 +993,7 @@ namespace mame
         public ioport_port ioport(string tag)
         {
             // build a fully-qualified name and look it up
-            return machine().ioport().port(subtag(tag).c_str());
+            return machine().ioport().port(subtag(tag));
         }
 
         //-------------------------------------------------
@@ -1095,7 +1094,7 @@ namespace mame
             if (roms != null)
             {
                 // first pass: try to find default BIOS from ROM region or machine configuration
-                string defbios = m_default_bios_tag.empty() ? null : m_default_bios_tag.c_str();
+                string defbios = m_default_bios_tag.empty() ? null : m_default_bios_tag;
                 bool twopass = false;
                 bool havebios = false;
                 u8 firstbios = 0;
@@ -1806,7 +1805,7 @@ namespace mame
 
             // walk the device list to the final path
             device_t curdevice = mconfig().root_device();
-            std_string_view part = fulltag.substr(1);
+            string part = fulltag.substr(1);
             while (!part.empty() && curdevice != null)
             {
                 int end = part.find_first_of(':');

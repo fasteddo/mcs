@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using attoseconds_t = System.Int64;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using s32 = System.Int32;
 using s64 = System.Int64;
-using seconds_t = System.Int32;
+using seconds_t = System.Int32;  //typedef s32 seconds_t;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
@@ -17,6 +17,7 @@ namespace mame
     // core components of the attotime structure
     //typedef s64 attoseconds_t;
     //typedef s32 seconds_t;
+
 
     public struct attotime
     {

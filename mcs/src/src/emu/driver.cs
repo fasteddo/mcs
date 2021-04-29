@@ -116,14 +116,14 @@ namespace mame
         //  NMI callbacks
         //-------------------------------------------------
         //INTERRUPT_GEN_MEMBER( driver_device::nmi_line_pulse )   { device.execute().pulse_input_line(INPUT_LINE_NMI, attotime::zero); }
-        public void nmi_line_pulse(device_t device) { device.execute().pulse_input_line(device_execute_interface.INPUT_LINE_NMI, attotime.zero); }
+        public void nmi_line_pulse(device_t device) { device.execute().pulse_input_line(g.INPUT_LINE_NMI, attotime.zero); }
 
         //INTERRUPT_GEN_MEMBER( driver_device::nmi_line_assert )  { device.execute().set_input_line(INPUT_LINE_NMI, ASSERT_LINE); }
-        void nmi_line_assert(device_t device) { device.execute().set_input_line(device_execute_interface.INPUT_LINE_NMI, ASSERT_LINE); }
+        void nmi_line_assert(device_t device) { device.execute().set_input_line(g.INPUT_LINE_NMI, g.ASSERT_LINE); }
 
 
         //INTERRUPT_GEN_MEMBER( driver_device::irq0_line_hold )   { device.execute().set_input_line(0, HOLD_LINE); }
-        public void irq0_line_hold(device_t device) { device.execute().set_input_line(0, HOLD_LINE); }
+        public void irq0_line_hold(device_t device) { device.execute().set_input_line(0, g.HOLD_LINE); }
 
         //void irq0_line_assert(device_t &device);
 

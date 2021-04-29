@@ -31,28 +31,28 @@ namespace mame.ui
 
             if (!clonex && !cloney)
             {
-                return global_object.core_stricmp(x.type.fullname(), y.type.fullname()) < 0;
+                return g.core_stricmp(x.type.fullname(), y.type.fullname()) < 0;
             }
             else if (clonex && cloney)
             {
-                if (global_object.core_stricmp(x.parent, y.parent) == 0)
-                    return global_object.core_stricmp(x.type.fullname(), y.type.fullname()) < 0;
+                if (g.core_stricmp(x.parent, y.parent) == 0)
+                    return g.core_stricmp(x.type.fullname(), y.type.fullname()) < 0;
                 else
-                    return global_object.core_stricmp(driver_list.driver(cx).type.fullname(), driver_list.driver(cy).type.fullname()) < 0;
+                    return g.core_stricmp(driver_list.driver(cx).type.fullname(), driver_list.driver(cy).type.fullname()) < 0;
             }
             else if (!clonex && cloney)
             {
-                if (global_object.core_stricmp(x.name, y.parent) == 0)
+                if (g.core_stricmp(x.name, y.parent) == 0)
                     return true;
                 else
-                    return global_object.core_stricmp(x.type.fullname(), driver_list.driver(cy).type.fullname()) < 0;
+                    return g.core_stricmp(x.type.fullname(), driver_list.driver(cy).type.fullname()) < 0;
             }
             else
             {
-                if (global_object.core_stricmp(x.parent, y.name) == 0)
+                if (g.core_stricmp(x.parent, y.name) == 0)
                     return false;
                 else
-                    return (global_object.core_stricmp(driver_list.driver(cx).type.fullname(), y.type.fullname()) < 0);
+                    return (g.core_stricmp(driver_list.driver(cx).type.fullname(), y.type.fullname()) < 0);
             }
         }
     }

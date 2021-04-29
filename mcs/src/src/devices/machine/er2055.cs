@@ -55,7 +55,7 @@ namespace mame
         {
             m_class_interfaces.Add(new device_nvram_interface_er2055(mconfig, this));  //device_nvram_interface(mconfig, *this),
 
-            m_default_data = new optional_region_ptr<uint8_t>(this, DEVICE_SELF);
+            m_default_data = new optional_region_ptr<uint8_t>(this, g.DEVICE_SELF);
             m_control_state = 0;
             m_address = 0;
             m_data = 0;

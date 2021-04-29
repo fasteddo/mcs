@@ -382,7 +382,7 @@ namespace mame.util
                 bool crcmatch = crc == search_crc;  //const bool crcmatch(SzBitArray_Check(m_db.CRCs.Defs, i) && (crc == search_crc));
                 //auto const partialoffset(m_utf8_buf.size() - 1 - search_filename.length());
                 //bool const partialpossible((m_utf8_buf.size() > (search_filename.length() + 1)) && (m_utf8_buf[partialoffset - 1] == '/'));
-                bool namematch = core_stricmp(search_filename.c_str(), entry.Key) == 0;  //const bool namematch( !core_stricmp(search_filename.c_str(), &m_utf8_buf[0]) || (partialpath && partialpossible && !core_stricmp(search_filename.c_str(), &m_utf8_buf[partialoffset])));
+                bool namematch = g.core_stricmp(search_filename, entry.Key) == 0;  //const bool namematch( !core_stricmp(search_filename.c_str(), &m_utf8_buf[0]) || (partialpath && partialpossible && !core_stricmp(search_filename.c_str(), &m_utf8_buf[partialoffset])));
 
                 bool found = ((!matchcrc && !matchname) || !is_dir) && (!matchcrc || crcmatch) && (!matchname || namematch);
                 if (found)

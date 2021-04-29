@@ -81,7 +81,26 @@ namespace mame
 
         protected bool code_pressed_once(input_code code, bool moved)
         {
-            throw new emu_unimplemented();
+            // look for the code in the memory
+            bool pressed = m_manager.code_pressed(code);
+            var found = std.lower_bound(m_switch_memory, code);  //auto const found(std::lower_bound(m_switch_memory.begin(), m_switch_memory.end(), code));
+            if ((-1 != found) && (m_switch_memory[found] == code))  //if ((m_switch_memory.end() != found) && (*found == code))
+            {
+                // if no longer pressed, clear entry
+                if (!pressed)
+                    m_switch_memory.erase(found);
+
+                // always return false
+                return false;
+            }
+
+            // if we get here, we were not previously pressed; if still not pressed, return false
+            if (!pressed || !moved)
+                return false;
+
+            // otherwise, add the code to the memory and return true
+            m_switch_memory.emplace(found, code);
+            return true;
         }
     }
 

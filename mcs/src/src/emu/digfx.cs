@@ -226,7 +226,7 @@ namespace mame
 
 
         // getters
-        public device_palette_interface palette() { assert(m_palette != null); return m_palette.op[0]; }  //{ assert(m_palette); return *m_palette; }
+        public device_palette_interface palette() { assert(m_palette.bool_); return m_palette.op[0]; }  //{ assert(m_palette); return *m_palette; }
         public gfx_element gfx(int index) { assert(index < digfx_global.MAX_GFX_ELEMENTS); return m_gfx[index]; }
 
 
@@ -252,9 +252,9 @@ namespace mame
                 gfx_decode_entry gfx = gfxdecodeinfo[curgfx];
 
                 // extract the scale factors and xormask
-                u32 xscale = GFXENTRY_GETXSCALE(gfx.flags);
-                u32 yscale = GFXENTRY_GETYSCALE(gfx.flags);
-                u32 xormask = GFXENTRY_ISREVERSE(gfx.flags) ? 7U : 0U;
+                u32 xscale = g.GFXENTRY_GETXSCALE(gfx.flags);
+                u32 yscale = g.GFXENTRY_GETYSCALE(gfx.flags);
+                u32 xormask = g.GFXENTRY_ISREVERSE(gfx.flags) ? 7U : 0U;
 
                 // resolve the region
                 u32 region_length;
@@ -264,8 +264,8 @@ namespace mame
 
                 if (gfx.memory_region != null)
                 {
-                    device_t basedevice = (GFXENTRY_ISDEVICE(gfx.flags)) ? device() : device().owner();
-                    if (GFXENTRY_ISRAM(gfx.flags))
+                    device_t basedevice = (g.GFXENTRY_ISDEVICE(gfx.flags)) ? device() : device().owner();
+                    if (g.GFXENTRY_ISRAM(gfx.flags))
                     {
                         memory_share share = basedevice.memshare(gfx.memory_region);
                         //assert(share != NULL);
@@ -314,10 +314,10 @@ namespace mame
 
 
                 // if the character count is a region fraction, compute the effective total
-                if (IS_FRAC(glcopy.total))
+                if (g.IS_FRAC(glcopy.total))
                 {
                     //assert(region_length != 0);
-                    glcopy.total = region_length / glcopy.charincrement * FRAC_NUM(glcopy.total) / FRAC_DEN(glcopy.total);
+                    glcopy.total = region_length / glcopy.charincrement * g.FRAC_NUM(glcopy.total) / g.FRAC_DEN(glcopy.total);
                 }
 
                 // for non-raw graphics, decode the X and Y offsets
@@ -357,10 +357,10 @@ namespace mame
                     for (int j = 0; j < glcopy.planes; j++)
                     {
                         u32 value1 = glcopy.planeoffset[j];
-                        if (IS_FRAC(value1))
+                        if (g.IS_FRAC(value1))
                         {
                             //assert(region_length != 0);
-                            glcopy.planeoffset[j] = FRAC_OFFSET(value1) + region_length * FRAC_NUM(value1) / FRAC_DEN(value1);
+                            glcopy.planeoffset[j] = g.FRAC_OFFSET(value1) + region_length * g.FRAC_NUM(value1) / g.FRAC_DEN(value1);
                         }
                     }
 
@@ -371,17 +371,17 @@ namespace mame
                         if (digfx_global.IS_FRAC(value2))
                         {
                             //assert(region_length != 0);
-                            extxoffs[j] = FRAC_OFFSET(value2) + region_length * FRAC_NUM(value2) / FRAC_DEN(value2);
+                            extxoffs[j] = g.FRAC_OFFSET(value2) + region_length * g.FRAC_NUM(value2) / g.FRAC_DEN(value2);
                         }
                     }
 
                     for (int j = 0; j < glcopy.height; j++)
                     {
                         u32 value3 = extyoffs[j];
-                        if (IS_FRAC(value3))
+                        if (g.IS_FRAC(value3))
                         {
                             //assert(region_length != 0);
-                            extyoffs[j] = FRAC_OFFSET(value3) + region_length * FRAC_NUM(value3) / FRAC_DEN(value3);
+                            extyoffs[j] = g.FRAC_OFFSET(value3) + region_length * g.FRAC_NUM(value3) / g.FRAC_DEN(value3);
                         }
                     }
                 }
@@ -423,7 +423,7 @@ namespace mame
         //-------------------------------------------------
         protected override void interface_validity_check(validity_checker valid)
         {
-            if (!m_palette_is_disabled && m_palette == null)
+            if (!m_palette_is_disabled && !m_palette.bool_)
             {
                 std.pair<device_t, string> target = m_palette.finder_target();
                 if (target.second == finder_base.DUMMY_TAG)
@@ -451,11 +451,11 @@ namespace mame
 
                 // currently we are unable to validate RAM-based entries
                 string region = gfx.memory_region;
-                if (region != null && GFXENTRY_ISROM(gfx.flags))
+                if (region != null && g.GFXENTRY_ISROM(gfx.flags))
                 {
                     // resolve the region
                     string gfxregion;
-                    if (GFXENTRY_ISDEVICE(gfx.flags))
+                    if (g.GFXENTRY_ISDEVICE(gfx.flags))
                         gfxregion = device().subtag(region);
                     else
                         gfxregion = device().owner().subtag(region);
@@ -465,7 +465,7 @@ namespace mame
                         osd_printf_error("gfx[{0}] references nonexistent region '{1}'\n", gfxnum, gfxregion);
 
                     // if we have a valid region, and we're not using auto-sizing, check the decode against the region length
-                    else if (!IS_FRAC(layout.total))
+                    else if (!g.IS_FRAC(layout.total))
                     {
                         // determine which plane is at the largest offset
                         int start = 0;
@@ -488,13 +488,13 @@ namespace mame
                     }
                 }
 
-                int xscale = (int)GFXENTRY_GETXSCALE(gfx.flags);
-                int yscale = (int)GFXENTRY_GETYSCALE(gfx.flags);
+                int xscale = (int)g.GFXENTRY_GETXSCALE(gfx.flags);
+                int yscale = (int)g.GFXENTRY_GETYSCALE(gfx.flags);
 
                 // verify raw decode, which can only be full-region and have no scaling
                 if (layout.planeoffset[0] == digfx_global.GFX_RAW)
                 {
-                    if (layout.total != RGN_FRAC(1,1))
+                    if (layout.total != g.RGN_FRAC(1,1))
                         osd_printf_error("gfx[{0}] RAW layouts can only be RGN_FRAC(1,1)\n", gfxnum);
                     if (xscale != 1 || yscale != 1)
                         osd_printf_error("gfx[{0}] RAW layouts do not support xscale/yscale\n", gfxnum);
@@ -515,7 +515,7 @@ namespace mame
         //-------------------------------------------------
         public override void interface_pre_start()
         {
-            if (!m_palette_is_disabled && m_palette == null)
+            if (!m_palette_is_disabled && !m_palette.bool_)
             {
                 std.pair<device_t, string> target = m_palette.finder_target();
                 if (target.second == finder_base.DUMMY_TAG)

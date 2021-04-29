@@ -164,8 +164,11 @@ namespace mame
 
             return matches;
         }
+    }
 
 
+    public static partial class util_
+    {
         /**
          * @fn  double edit_distance(std::u32string const &lhs, std::u32string const &rhs)
          *

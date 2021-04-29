@@ -4,8 +4,10 @@
 using System;
 using System.Collections.Generic;
 
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -51,11 +53,11 @@ namespace mame
 
 
         // callback
-        public devcb_write.binder output_handler() { return m_output_handler.bind(); }
+        public devcb_write_line.binder output_handler() { return m_output_handler.bind(); }
 
         // input lines
         //template <unsigned Bit>
-        public void in_w(int Bit, int state) { static_assert(Bit < 32, "invalid bit"); machine().scheduler().synchronize(update_state, (Bit << 1) | (state != 0 ? 1 : 0)); }  //DECLARE_WRITE_LINE_MEMBER(in_w) { static_assert(Bit < 32, "invalid bit"); machine().scheduler().synchronize(timer_expired_delegate(FUNC(input_merger_device::update_state), this), (Bit << 1) | (state ? 1U : 0U)); }
+        public void in_w<unsigned_Bit>(int state) where unsigned_Bit : uint32_constant, new() { unsigned Bit = new unsigned_Bit().value;  static_assert(Bit < 32, "invalid bit"); machine().scheduler().synchronize(update_state, ((int)Bit << 1) | (state != 0 ? 1 : 0)); }  //DECLARE_WRITE_LINE_MEMBER(in_w) { static_assert(Bit < 32, "invalid bit"); machine().scheduler().synchronize(timer_expired_delegate(FUNC(input_merger_device::update_state), this), (Bit << 1) | (state ? 1U : 0U)); }
         //template <unsigned Bit> void in_set(u8 data) { in_w<Bit>(1); }
         //template <unsigned Bit> void in_clear(u8 data) { in_w<Bit>(0); }
 
@@ -66,9 +68,9 @@ namespace mame
         //TIMER_CALLBACK_MEMBER(input_merger_device::update_state)
         void update_state(object ptr, int param)
         {
-            if (BIT(m_state, param >> 1) != BIT(param, 0))
+            if (g.BIT(m_state, param >> 1) != g.BIT(param, 0))
             {
-                LOG("state[{0}] = {1}\n", param >> 1, BIT(param, 0));
+                LOG("state[{0}] = {1}\n", param >> 1, g.BIT(param, 0));
                 m_state ^= (u32)(1 << (param >> 1));
                 m_output_handler.op((m_state ^ m_xorval) != 0 ? m_active : m_active == 0 ? 1 : 0);
             }

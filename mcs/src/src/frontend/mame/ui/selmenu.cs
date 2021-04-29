@@ -11,7 +11,6 @@ using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s_bios = mame.std.vector<System.Collections.Generic.KeyValuePair<string, int>>;
 using s_parts = mame.std.unordered_map<string, string>;
 using size_t = System.UInt32;
-using std_string = System.String;
 using texture_ptr = mame.render_texture;
 using texture_ptr_vector = mame.std.vector<mame.render_texture>;
 using uint8_t = System.Byte;
@@ -655,17 +654,17 @@ namespace mame.ui
                 if (swinfo.supported == softlist_global.SOFTWARE_SUPPORTED_NO)
                 {
                     tempbuf[3] = "Supported: No";
-                    color = UI_RED_COLOR;
+                    color = g.UI_RED_COLOR;
                 }
                 else if (swinfo.supported == softlist_global.SOFTWARE_SUPPORTED_PARTIAL)
                 {
                     tempbuf[3] = "Supported: Partial";
-                    color = UI_YELLOW_COLOR;
+                    color = g.UI_YELLOW_COLOR;
                 }
                 else
                 {
                     tempbuf[3] = "Supported: Yes";
-                    color = UI_GREEN_COLOR;
+                    color = g.UI_GREEN_COLOR;
                 }
 
                 // last line is romset name
@@ -911,7 +910,7 @@ namespace mame.ui
         protected bool draw_error_text()
         {
             if (m_ui_error)
-                ui().draw_text_box(container(), m_error_text.c_str(), text_layout.text_justify.CENTER, 0.5f, 0.5f, UI_RED_COLOR);
+                ui().draw_text_box(container(), m_error_text, text_layout.text_justify.CENTER, 0.5f, 0.5f, g.UI_RED_COLOR);
 
             return m_ui_error;
         }
@@ -939,7 +938,7 @@ namespace mame.ui
 
             // calculate horizontal offset for unadorned names
             //std::string tmp(convert_command_glyph("_# "));
-            std_string tmp = "_# ";
+            string tmp = "_# ";
             tmp = render_font.convert_command_glyph(ref tmp);
             float text_sign = ui().get_string_width(tmp, text_size);
 
@@ -1008,7 +1007,7 @@ namespace mame.ui
                 float unused1;
                 float unused2;
                 ui().draw_text_full(
-                        container(), str.c_str(),
+                        container(), str,
                         x1t, y1, x2 - x1,
                         text_layout.text_justify.LEFT, text_layout.word_wrapping.NEVER,
                         mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
@@ -1059,7 +1058,7 @@ namespace mame.ui
                 // if we're doing a software list, append it to the configured path
                 if (listname != null)
                 {
-                    if (!current.empty() && !is_directory_separator(current.back()))
+                    if (!current.empty() && !util_.is_directory_separator(current.back()))
                         current = current.append_(PATH_SEPARATOR);
                     current = current.append_(listname);
                 }
@@ -1166,7 +1165,7 @@ namespace mame.ui
             {
                 str += "System media audit failed:\n";
                 auditor.summarize(null, ref str);
-                osd_printf_info(str.str());
+                osd_printf_info(str);
                 str = "";
             }
 
@@ -1183,7 +1182,7 @@ namespace mame.ui
             {
                 str += "System media audit failed:\n";
                 auditor.summarize(null, ref str);
-                osd_printf_info(str.str());
+                osd_printf_info(str);
                 str = "";
             }
             str += __("Required ROM/disk images for the selected software are missing or incorrect. Please select a different software item.\n\n");
@@ -1351,13 +1350,13 @@ namespace mame.ui
             float ud_arrow_width = line_height * aspect;
             float oy1 = origy1 + line_height;
 
-            string snaptext = m_info_view != 0 ? m_items_list[m_info_view - 1].c_str() : first;
+            string snaptext = m_info_view != 0 ? m_items_list[m_info_view - 1] : first;
 
             // get width of widest title
             float title_size = 0.0f;
             for (UInt32 x = 0; total > x; ++x)
             {
-                string name = x != 0 ? m_items_list[(int)x - 1].c_str() : first;
+                string name = x != 0 ? m_items_list[(int)x - 1] : first;
                 float txt_length = 0.0f;
                 float unused;
                 ui().draw_text_full(
@@ -1393,7 +1392,7 @@ namespace mame.ui
 
             float unused1;
             float unused2;
-            ui().draw_text_full(container(), snaptext.c_str(), origx1, origy1, origx2 - origx1, text_layout.text_justify.CENTER,
+            ui().draw_text_full(container(), snaptext, origx1, origy1, origx2 - origx1, text_layout.text_justify.CENTER,
                     text_layout.word_wrapping.NEVER, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out unused1, out unused2, tmp_size);
 
             char justify = 'l'; // left justify
@@ -1407,7 +1406,7 @@ namespace mame.ui
             if (justify == 'f')
             {
                 m_total_lines = ui().wrap_text(
-                        container(), m_info_buffer.c_str(),
+                        container(), m_info_buffer,
                         0.0f, 0.0f, 1.0f - (2.0f * gutter_width),
                         out xstart, out xend,
                         text_size);
@@ -1415,7 +1414,7 @@ namespace mame.ui
             else
             {
                 m_total_lines = ui().wrap_text(
-                        container(), m_info_buffer.c_str(),
+                        container(), m_info_buffer,
                         origx1, origy1, origx2 - origx1 - (2.0f * gutter_width),
                         out xstart, out xend,
                         text_size);
@@ -1456,21 +1455,21 @@ namespace mame.ui
                     string rightcol = tempbuf.substr((-1 == splitpos) ? 0 : (splitpos + 1));
 
                     // measure space needed, condense if necessary
-                    float leftlen = ui().get_string_width(leftcol.c_str(), text_size);
-                    float rightlen = ui().get_string_width(rightcol.c_str(), text_size);
+                    float leftlen = ui().get_string_width(leftcol, text_size);
+                    float rightlen = ui().get_string_width(rightcol, text_size);
                     float textlen = leftlen + rightlen;
                     float tmp_size3 = (textlen > sc) ? (text_size * (sc / textlen)) : text_size;
 
                     // draw in two parts
                     ui().draw_text_full(
-                            container(), leftcol.c_str(),
+                            container(), leftcol,
                             origx1 + gutter_width, oy1, sc,
                             text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
                             mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
                             out unused1, out unused2,
                             tmp_size3);
                     ui().draw_text_full(
-                            container(), rightcol.c_str(),
+                            container(), rightcol,
                             origx1 + gutter_width, oy1, sc,
                             text_layout.text_justify.RIGHT, text_layout.word_wrapping.TRUNCATE,
                             mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
@@ -1480,10 +1479,10 @@ namespace mame.ui
                 else if (justify == 'f' || justify == 'p') // full or partial justify
                 {
                     // check size
-                    float textlen = ui().get_string_width(tempbuf.c_str(), text_size);
+                    float textlen = ui().get_string_width(tempbuf, text_size);
                     float tmp_size3 = (textlen > sc) ? text_size * (sc / textlen) : text_size;
                     ui().draw_text_full(
-                            container(), tempbuf.c_str(),
+                            container(), tempbuf,
                             origx1 + gutter_width, oy1, origx2 - origx1,
                             text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
                             mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
@@ -1493,7 +1492,7 @@ namespace mame.ui
                 else
                 {
                     ui().draw_text_full(
-                            container(), tempbuf.c_str(),
+                            container(), tempbuf,
                             origx1 + gutter_width, oy1, origx2 - origx1,
                             text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
                             mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
@@ -2234,13 +2233,13 @@ namespace mame.ui
                 float line_y = visible_top + (float)linenum * line_height;
                 int itemnum = top_line + linenum;
                 menu_item pitem = item(itemnum);
-                string itemtext = pitem.text.c_str();
+                string itemtext = pitem.text;
                 rgb_t fgcolor = ui().colors().text_color();
                 rgb_t bgcolor = ui().colors().text_bg_color();
                 rgb_t fgcolor3 = ui().colors().clone_color();
-                float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
+                float line_x0 = x1 + 0.5f * g.UI_LINE_WIDTH;
                 float line_y0 = line_y;
-                float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
+                float line_x1 = x2 - 0.5f * g.UI_LINE_WIDTH;
                 float line_y1 = line_y + line_height;
 
                 // set the hover if this is our item
@@ -2296,7 +2295,7 @@ namespace mame.ui
                 {
                     // if we're just a divider, draw a line
                     container().add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height,
-                            UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                            g.UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                 }
                 else if (pitem.subtext.empty())
                 {
@@ -2318,7 +2317,7 @@ namespace mame.ui
                 else
                 {
                     bool item_invert = (pitem.flags & FLAG_INVERT) != 0;
-                    string subitem_text = pitem.subtext.c_str();
+                    string subitem_text = pitem.subtext;
                     float item_width;
                     float subitem_width;
                     float unused1;
@@ -2328,7 +2327,7 @@ namespace mame.ui
                     ui().draw_text_full(
                             container(),
                             subitem_text,
-                            effective_left + icon_offset, line_y, ui().get_string_width(pitem.subtext.c_str()),
+                            effective_left + icon_offset, line_y, ui().get_string_width(pitem.subtext),
                             text_layout.text_justify.RIGHT, text_layout.word_wrapping.NEVER, 
                             mame_ui_manager.draw_mode.NONE, item_invert ? fgcolor3 : fgcolor, bgcolor, 
                             out subitem_width, out unused1);
@@ -2360,10 +2359,10 @@ namespace mame.ui
             for (int count = m_available_items; count < item_count(); count++)
             {
                 menu_item pitem = item((int)count);
-                string itemtext = pitem.text.c_str();
-                float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
+                string itemtext = pitem.text;
+                float line_x0 = x1 + 0.5f * g.UI_LINE_WIDTH;
                 float line_y0 = line;
-                float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
+                float line_x1 = x2 - 0.5f * g.UI_LINE_WIDTH;
                 float line_y1 = line + line_height;
                 rgb_t fgcolor = ui().colors().text_color();
                 rgb_t bgcolor = ui().colors().text_bg_color();
@@ -2390,7 +2389,7 @@ namespace mame.ui
                 if (pitem.type == menu_item_type.SEPARATOR)
                 {
                     container().add_line(visible_left, line + 0.5f * line_height, visible_left + visible_width, line + 0.5f * line_height,
-                            UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                            g.UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                 }
                 else
                 {
@@ -2484,7 +2483,7 @@ namespace mame.ui
             ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
             // add separator line
-            container().add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container().add_line(x1 + midl, y1, x1 + midl, y1 + line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
 
             string [] buffer = new string[utils_global.RP_LAST + 1];
             buffer[utils_global.RP_IMAGES] = "Images";
@@ -2494,7 +2493,7 @@ namespace mame.ui
             float text_size = 1.0f;
             foreach (var elem in buffer)
             {
-                var textlen = ui().get_string_width(elem.c_str()) + 0.01f;
+                var textlen = ui().get_string_width(elem) + 0.01f;
                 float tmp_size = (textlen > midl) ? (midl / textlen) : 1.0f;
                 text_size = Math.Min(text_size, tmp_size);
             }
@@ -2516,7 +2515,7 @@ namespace mame.ui
 
                 if (ui_globals.rpanel != cells)
                 {
-                    container().add_line(x1, y1 + line_height, x1 + midl, y1 + line_height, UI_LINE_WIDTH,
+                    container().add_line(x1, y1 + line_height, x1 + midl, y1 + line_height, g.UI_LINE_WIDTH,
                             ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
                     if (fgcolor != ui().colors().mouseover_color())
                         fgcolor = ui().colors().clone_color();
@@ -2526,24 +2525,24 @@ namespace mame.ui
                 {
                     fgcolor = new rgb_t(0xff, 0xff, 0x00);
                     bgcolor = new rgb_t(0xff, 0xff, 0xff);
-                    ui().draw_textured_box(container(), x1 + UI_LINE_WIDTH, y1 + UI_LINE_WIDTH, x1 + midl - UI_LINE_WIDTH, y1 + line_height,
+                    ui().draw_textured_box(container(), x1 + g.UI_LINE_WIDTH, y1 + g.UI_LINE_WIDTH, x1 + midl - g.UI_LINE_WIDTH, y1 + line_height,
                             bgcolor, new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
                 else if (bgcolor == ui().colors().mouseover_bg_color())
                 {
-                    container().add_rect(x1 + UI_LINE_WIDTH, y1 + UI_LINE_WIDTH, x1 + midl - UI_LINE_WIDTH, y1 + line_height,
+                    container().add_rect(x1 + g.UI_LINE_WIDTH, y1 + g.UI_LINE_WIDTH, x1 + midl - g.UI_LINE_WIDTH, y1 + line_height,
                             bgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
                 }
 
                 float unused1;
                 float unused2;
-                ui().draw_text_full(container(), buffer[cells].c_str(), x1 + UI_LINE_WIDTH, y1, midl - UI_LINE_WIDTH,
+                ui().draw_text_full(container(), buffer[cells], x1 + g.UI_LINE_WIDTH, y1, midl - g.UI_LINE_WIDTH,
                         text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out unused1, out unused2, text_size);
 
                 x1 += midl;
             }
 
-            return y1 + line_height + UI_LINE_WIDTH;
+            return y1 + line_height + g.UI_LINE_WIDTH;
         }
 
 
@@ -2571,7 +2570,7 @@ namespace mame.ui
                 // loads the image if necessary
                 if (!m_cache.snapx_software_is(software) || !snapx_valid() || m_switch_image)
                 {
-                    emu_file snapfile = new emu_file(searchstr.c_str(), OPEN_FLAG_READ);
+                    emu_file snapfile = new emu_file(searchstr, OPEN_FLAG_READ);
                     bitmap_argb32 tmp_bitmap;
 
                     if (software.startempty == 1)
@@ -2671,7 +2670,7 @@ namespace mame.ui
             float unused1;
             float unused2;
             ui().draw_text_full(container(),
-                    snaptext.c_str(), origx1, origy1 + ui().box_tb_border(), origx2 - origx1,
+                    snaptext, origx1, origy1 + ui().box_tb_border(), origx2 - origx1,
                     text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
                     out unused1, out unused2, tmp_size);
 

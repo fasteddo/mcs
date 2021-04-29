@@ -97,7 +97,7 @@ namespace mame
         //-------------------------------------------------
         //  mix - mix in samples from the speaker's stream
         //-------------------------------------------------
-        void mix(Pointer<stream_buffer_sample_t> leftmix, Pointer<stream_buffer_sample_t> rightmix, attotime start, attotime end, int expected_samples, bool suppress)  //void mix(stream_buffer::sample_t *leftmix, stream_buffer::sample_t *rightmix, attotime start, attotime end, int expected_samples, bool suppress)
+        public void mix(Pointer<stream_buffer_sample_t> leftmix, Pointer<stream_buffer_sample_t> rightmix, attotime start, attotime end, int expected_samples, bool suppress)  //void mix(stream_buffer::sample_t *leftmix, stream_buffer::sample_t *rightmix, attotime start, attotime end, int expected_samples, bool suppress)
         {
             // skip if no stream
             if (m_dimixer.m_mixer_stream == null)
@@ -110,7 +110,7 @@ namespace mame
             // get a view on the desired range
             read_stream_view view = m_dimixer.m_mixer_stream.update_view(start, end);
 
-            throw new emu_unimplemented();
+            //throw new emu_unimplemented();
 #if false
             sound_assert(view.samples() >= expected_samples);
 #endif

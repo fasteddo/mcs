@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using ioport_value = System.UInt32;
+using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s32 = System.Int32;
 using u8 = System.Byte;
@@ -18,6 +18,8 @@ namespace mame
         public enum type
         {
             NONE,
+            WINDOW_FOCUS,
+            WINDOW_DEFOCUS,
             MOUSE_MOVE,
             MOUSE_LEAVE,
             MOUSE_DOWN,
@@ -351,6 +353,10 @@ namespace mame
 
 
         // queueing events
+
+        //void push_window_focus_event(render_target *target);
+        //void push_window_defocus_event(render_target *target);
+
 
         /*-------------------------------------------------
             push_mouse_move_event - pushes a mouse

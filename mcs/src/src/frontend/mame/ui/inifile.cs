@@ -44,7 +44,7 @@ namespace mame
             for (osd.directory.entry dir = path.next(); dir != null; dir = path.next())
             {
                 string name = dir.name;
-                if (core_filename_ends_with(name, ".ini"))
+                if (g.core_filename_ends_with(name, ".ini"))
                 {
                     emu_file file = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
                     if (file.open(name) == osd_file.error.NONE)
@@ -56,7 +56,7 @@ namespace mame
             }
 
             //std::stable_sort(m_ini_index.begin(), m_ini_index.end());//, [] (auto const &x, auto const &y) { return 0 > core_stricmp(x.first.c_str(), y.first.c_str()); });
-            m_ini_index.Sort((x, y) => { return core_stricmp(x.first.c_str(), y.first.c_str()); });
+            m_ini_index.Sort((x, y) => { return g.core_stricmp(x.first, y.first); });
         }
 
 

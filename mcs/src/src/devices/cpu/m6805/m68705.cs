@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -196,7 +198,7 @@ namespace mame
                 m_tcr |= (u8)tcr_mask.TCR_TIR;
 
                 if ((m_tcr & (u8)tcr_mask.TCR_TIM) == 0)
-                    m_parent.set_input_line(m68705_global.M6805_INT_TIMER, ASSERT_LINE);
+                    m_parent.set_input_line(m68705_global.M6805_INT_TIMER, g.ASSERT_LINE);
             }
         }
 
@@ -282,7 +284,7 @@ namespace mame
         u8 [] m_port_latch;  //u8              m_port_latch[PORT_COUNT];
         u8 [] m_port_ddr;  //u8              m_port_ddr[PORT_COUNT];
         devcb_read8.array<devcb_read8, uint32_constant_PORT_COUNT> m_port_cb_r;
-        devcb_write8.array<devcb_write8, uint32_constant_PORT_COUNT> m_port_cb_w;
+        devcb_write8.array<uint32_constant_PORT_COUNT> m_port_cb_w;
 
         // miscellaneous register
         //enum mr_mask : u8
@@ -311,7 +313,7 @@ namespace mame
             m_port_latch = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_ddr = new u8 [PORT_COUNT] { 0x00, 0x00, 0x00, 0x00 };
             m_port_cb_r = new devcb_read8.array<devcb_read8, uint32_constant_PORT_COUNT>(this, () => { return new devcb_read8(this); });
-            m_port_cb_w = new devcb_write8.array<devcb_write8, uint32_constant_PORT_COUNT>(this, () => { return new devcb_write8(this); });
+            m_port_cb_w = new devcb_write8.array<uint32_constant_PORT_COUNT>(this, () => { return new devcb_write8(this); });
             m_ram_size = ram_size;
         }
 
@@ -320,12 +322,12 @@ namespace mame
 
 
         // configuration helpers
-        public devcb_read.binder porta_r() { return m_port_cb_r[0].bind(); }
+        public devcb_read8.binder porta_r() { return m_port_cb_r[0].bind(); }
         //devcb_read.binder portb_r() { throw new emu_unimplemented(); } //return m_port_cb_r[1].bind(); }
-        public devcb_read.binder portc_r() { return m_port_cb_r[2].bind(); }
+        public devcb_read8.binder portc_r() { return m_port_cb_r[2].bind(); }
         //devcb_read.binder portd_r() { throw new emu_unimplemented(); } //return m_port_cb_r[3].bind(); }
-        public devcb_write.binder porta_w() { return m_port_cb_w[0].bind(); }
-        public devcb_write.binder portb_w() { return m_port_cb_w[1].bind(); }
+        public devcb_write8.binder porta_w() { return m_port_cb_w[0].bind(); }
+        public devcb_write8.binder portb_w() { return m_port_cb_w[1].bind(); }
         //devcb_write.binder portc_w() { throw new emu_unimplemented(); } //return m_port_cb_w[2].bind(); }
 
         //WRITE_LINE_MEMBER(timer_w) { m_timer.timer_w(state); }
@@ -502,9 +504,9 @@ namespace mame
         {
             if (irq_state[inputnum] != state)
             {
-                irq_state[inputnum] = (state == ASSERT_LINE) ? ASSERT_LINE : CLEAR_LINE;
+                irq_state[inputnum] = (state == g.ASSERT_LINE) ? g.ASSERT_LINE : g.CLEAR_LINE;
 
-                if (state != CLEAR_LINE)
+                if (state != g.CLEAR_LINE)
                     pending_interrupts |= (uint16_t)(1 << inputnum);
                 else if (m68705_global.M6805_INT_TIMER == inputnum)
                     pending_interrupts &= (uint16_t)(~(1 << inputnum)); // this one is level-sensitive
@@ -536,7 +538,7 @@ namespace mame
                     SEI();
                     standard_irq_callback(0);
 
-                    if (BIT(pending_interrupts, m6805_global.M6805_IRQ_LINE) != 0)
+                    if (g.BIT(pending_interrupts, m6805_global.M6805_IRQ_LINE) != 0)
                     {
                         LOGINT("servicing /INT interrupt\n");
                         pending_interrupts = (uint16_t)(pending_interrupts & ~(1 << m6805_global.M6805_IRQ_LINE));
@@ -545,7 +547,7 @@ namespace mame
                         else
                             rm16(false, m68705_global.M6805_VECTOR_INT, ref m_pc);
                     }
-                    else if (BIT(pending_interrupts, m68705_global.M6805_INT_TIMER) != 0)
+                    else if (g.BIT(pending_interrupts, m68705_global.M6805_INT_TIMER) != 0)
                     {
                         LOGINT("servicing timer/counter interrupt\n");
                         if (m_params.m_addr_width > 13)
@@ -651,8 +653,8 @@ namespace mame
             m_nvram_interface = GetClassInterface<device_nvram_interface_m68705>();
 
 
-            m_user_rom = new required_region_ptr<u8>(this, DEVICE_SELF);
-            m_vihtp = CLEAR_LINE;
+            m_user_rom = new required_region_ptr<u8>(this, g.DEVICE_SELF);
+            m_vihtp = g.CLEAR_LINE;
             m_pcr = 0xff;
             m_pl_data = 0xff;
             m_pl_addr = 0xffff;
@@ -690,7 +692,7 @@ namespace mame
             }
 
             // initialise EPROM control
-            m_vihtp = CLEAR_LINE;
+            m_vihtp = g.CLEAR_LINE;
             m_pcr = 0xff;
             m_pl_data = 0xff;
             m_pl_addr = 0xffff;
@@ -712,7 +714,7 @@ namespace mame
             // reset EPROM control
             m_pcr |= 0xfb; // b2 (/VPON) is driven by external input and hence unaffected by reset
 
-            if (CLEAR_LINE != m_vihtp)
+            if (g.CLEAR_LINE != m_vihtp)
             {
                 LOG("loading bootstrap vector\n");
                 if (m_params.m_addr_width > 13)
@@ -737,11 +739,11 @@ namespace mame
             switch (inputnum)
             {
                 case m68705_global.M68705_VPP_LINE:
-                    m_pcr = (u8)((m_pcr & 0xfb) | (ASSERT_LINE == state ? 0x00 : 0x04));
+                    m_pcr = (u8)((m_pcr & 0xfb) | (g.ASSERT_LINE == state ? 0x00 : 0x04));
                     break;
                 case m68705_global.M68705_VIHTP_LINE:
                     // TODO: this is actually the same physical pin as the timer input, so they should be tied up
-                    m_vihtp = ASSERT_LINE == state ? (u8)ASSERT_LINE : (u8)CLEAR_LINE;
+                    m_vihtp = g.ASSERT_LINE == state ? (u8)g.ASSERT_LINE : (u8)g.CLEAR_LINE;
                     break;
                 default:
                     base.device_execute_interface_execute_set_input(inputnum, state);
@@ -794,9 +796,9 @@ namespace mame
         protected abstract u8 get_mask_options();
 
 
-        bool pcr_vpon() { return BIT(m_pcr, 2) == 0; }
-        bool pcr_pge()  { return BIT(m_pcr, 1) == 0; }
-        bool pcr_ple()  { return BIT(m_pcr, 0) == 0; }
+        bool pcr_vpon() { return g.BIT(m_pcr, 2) == 0; }
+        bool pcr_pge()  { return g.BIT(m_pcr, 1) == 0; }
+        bool pcr_ple()  { return g.BIT(m_pcr, 0) == 0; }
     }
 
 

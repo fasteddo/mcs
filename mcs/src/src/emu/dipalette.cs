@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using indirect_pen_t = System.UInt16;
+using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using palette_interface_enumerator = mame.device_interface_enumerator<mame.device_palette_interface>;  //typedef device_interface_enumerator<device_palette_interface> palette_interface_enumerator;
-using pen_t = System.UInt32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -14,6 +14,9 @@ using uint8_t = System.Byte;
 
 namespace mame
 {
+    //typedef u16 indirect_pen_t;
+
+
     // ======================> device_palette_interface
     public abstract class device_palette_interface : device_interface
     {

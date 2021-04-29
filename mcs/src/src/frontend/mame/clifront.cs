@@ -212,7 +212,7 @@ namespace mame
 
         void listsource(std.vector<string> args)
         {
-            listsource_list_system_source list_system_source = (type) => { osd_printf_info("{0} {1}\n", type.shortname(), core_filename_extract_base(type.source())); };
+            listsource_list_system_source list_system_source = (type) => { osd_printf_info("{0} {1}\n", type.shortname(), g.core_filename_extract_base(type.source())); };
 
             apply_action(
                     args,
@@ -228,7 +228,7 @@ namespace mame
         //-------------------------------------------------
         void listclones(std.vector<string> args)
         {
-            string gamename = args.empty() ? null : args[0].c_str();
+            string gamename = args.empty() ? null : args[0];
 
             // start with a filtered list of drivers
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
@@ -279,7 +279,7 @@ namespace mame
         //-------------------------------------------------
         void listbrothers(std.vector<string> args)
         {
-            string gamename = args.empty() ? null : args[0].c_str();
+            string gamename = args.empty() ? null : args[0];
 
             // start with a filtered list of drivers; return an error if none found
             driver_enumerator initial_drivlist = new driver_enumerator(m_options, gamename);
@@ -315,9 +315,9 @@ namespace mame
             {
                 int clone_of = drivlist.clone();
                 if (clone_of != -1)
-                    osd_printf_info("{0} {1} {2}\n", core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name, (clone_of == -1 ? "" : driver_list.driver(clone_of).name));  // %-20s %-16s %-16s\n
+                    osd_printf_info("{0} {1} {2}\n", g.core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name, (clone_of == -1 ? "" : driver_list.driver(clone_of).name));  // %-20s %-16s %-16s\n
                 else
-                    osd_printf_info("{0} {1}\n", core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name);  // %-20s %s
+                    osd_printf_info("{0} {1}\n", g.core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name);  // %-20s %s
             }
         }
 
@@ -425,7 +425,7 @@ namespace mame
         //-------------------------------------------------
         void listsamples(std.vector<string> args)
         {
-            string gamename = args.empty() ? null : args[0].c_str();
+            string gamename = args.empty() ? null : args[0];
 
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
@@ -464,7 +464,7 @@ namespace mame
         //-------------------------------------------------
         void listdevices(std.vector<string> args)
         {
-            string gamename = args.empty() ? null : args[0].c_str();
+            string gamename = args.empty() ? null : args[0];
 
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
@@ -554,7 +554,7 @@ namespace mame
         //-------------------------------------------------
         void listslots(std.vector<string> args)
         {
-            string gamename = args.empty() ? null : args[0].c_str();
+            string gamename = args.empty() ? null : args[0];
 
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
@@ -626,7 +626,7 @@ namespace mame
         //-------------------------------------------------
         void listmedia(std.vector<string> args)
         {
-            string gamename = args.empty() ? null : args[0].c_str();
+            string gamename = args.empty() ? null : args[0];
 
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
@@ -635,7 +635,7 @@ namespace mame
 
             // print header
             osd_printf_info("{0} {1} {2} {3}\n", "SYSTEM", "MEDIA NAME", "(brief)", "IMAGE FILE EXTENSIONS SUPPORTED");  // %-16s %-16s %-10s %s\n
-            osd_printf_info("{0} {1}-{2} {3}\n", new string('-', 16).c_str(), new string('-', 16).c_str(), new string('-', 10).c_str(), new string('-', 31).c_str());
+            osd_printf_info("{0} {1}-{2} {3}\n", new string('-', 16), new string('-', 16), new string('-', 10), new string('-', 31));
 
             // iterate over drivers
             while (drivlist.next())
@@ -690,7 +690,7 @@ namespace mame
                 var itIdx = 0;
                 foreach (string pat in args)
                 {
-                    if (core_strwildcmp(pat.c_str(), name) == 0)
+                    if (g.core_strwildcmp(pat, name) == 0)
                     {
                         ++matchcount;
                         result = true;
@@ -709,7 +709,7 @@ namespace mame
         //-------------------------------------------------
         void verifyroms(std.vector<string> args)
         {
-            bool iswild = ((1U != args.size()) || core_iswildstr(args[0].c_str()));
+            bool iswild = ((1U != args.size()) || g.core_iswildstr(args[0]));
             std.vector<bool> matched = new std.vector<bool>(args.size());
             matched.resize(args.size(), false);
             UInt32 matchcount = 0;
@@ -780,7 +780,7 @@ namespace mame
             foreach (string pat in args)
             {
                 if (!it.Current)
-                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat.c_str());
+                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat);
 
                 it.MoveNext();
             }
@@ -789,9 +789,9 @@ namespace mame
             {
                 // if we didn't get anything at all, display a generic end message
                 if (notfound > 0)
-                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "romset \"{0}\" not found!\n", args[0].c_str());
+                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "romset \"{0}\" not found!\n", args[0]);
                 else
-                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "romset \"{0}\" has no roms!\n", args[0].c_str());
+                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "romset \"{0}\" has no roms!\n", args[0]);
             }
             else
             {
@@ -810,7 +810,7 @@ namespace mame
         //-------------------------------------------------
         void verifysamples(std.vector<string> args)
         {
-            string gamename = args.empty() ? "*" : args[0].c_str();
+            string gamename = args.empty() ? "*" : args[0];
 
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
@@ -884,7 +884,7 @@ namespace mame
         -------------------------------------------------*/
         void verifysoftware(std.vector<string> args)
         {
-            string gamename = args.empty() ? "*" : args[0].c_str();
+            string gamename = args.empty() ? "*" : args[0];
 
             std.unordered_set<string> list_map = new std.unordered_set<string>();
 
@@ -939,7 +939,7 @@ namespace mame
         -------------------------------------------------*/
         void verifysoftlist(std.vector<string> args)
         {
-            string gamename = args.empty() ? "*" : args[0].c_str();
+            string gamename = args.empty() ? "*" : args[0];
 
             std.unordered_set<string> list_map;
             int correct = 0;
@@ -1009,7 +1009,7 @@ namespace mame
         //template <typename T, typename U>
         void apply_action(std.vector<string> args, Action<driver_enumerator, bool> drvact, Action<device_type, bool> devact)  //void cli_frontend::apply_action(const std::vector<std::string> &args, T &&drvact, U &&devact)
         {
-            bool iswild = (1U != args.size()) || core_iswildstr(args[0].c_str());
+            bool iswild = (1U != args.size()) || g.core_iswildstr(args[0]);
             std.vector<bool> matched = new std.vector<bool>(args.size(), false);
             Func<string, bool> included = (name) =>
             {
@@ -1020,7 +1020,7 @@ namespace mame
                 int itIdx = 0;  //auto it = matched.begin();
                 foreach (string pat in args)
                 {
-                    if (core_strwildcmp(pat.c_str(), name) == 0)
+                    if (g.core_strwildcmp(pat, name) == 0)
                     {
                         result = true;
                         matched[itIdx] = true;  //*it = true;
@@ -1070,7 +1070,7 @@ namespace mame
                 foreach (string pat in args)
                 {
                     if (!matched[itIdx])  //if (!*it)
-                        throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat.c_str());
+                        throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat);
 
                     ++itIdx;  //++it;
                 }
@@ -1134,7 +1134,7 @@ namespace mame
                 }
 
                 validity_checker valid = new validity_checker(m_options, false);
-                string sysname = m_options.command_arguments().empty() ? null : m_options.command_arguments()[0].c_str();
+                string sysname = m_options.command_arguments().empty() ? null : m_options.command_arguments()[0];
                 bool result = valid.check_all_matching(sysname);
                 if (!result)
                     throw new emu_fatalerror(EMU_ERR_FAILED_VALIDITY, "Validity check failed ({0} errors, {1} warnings in total)\n", valid.errors(), valid.warnings());
@@ -1147,7 +1147,7 @@ namespace mame
             string option_errors;
             mame_options.parse_standard_inis(m_options, out option_errors);
             if (option_errors.Length > 0)
-                osd_printf_error("{0}\n", option_errors.str());
+                osd_printf_error("{0}\n", option_errors);
 
             // createconfig?
             if (m_options.command() == cli_options.CLICOMMAND_CREATECONFIG)
@@ -1234,25 +1234,30 @@ namespace mame
             try
             {
                 m_options.parse_command_line(args, emu_options.OPTION_PRIORITY_CMDLINE);
-                m_osd.set_verbose(m_options.verbose());
+            }
+            catch (options_warning_exception ex)
+            {
+                osd_printf_error("{0}", ex.message());
             }
             catch (options_exception ex)
             {
                 // if we failed, check for no command and a system name first; in that case error on the name
                 if (m_options.command().empty() && mame_options.system(m_options) == null && !m_options.attempted_system_name().empty())
-                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "Unknown system '{0}'", m_options.attempted_system_name().c_str());
+                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "Unknown system '{0}'", m_options.attempted_system_name());
 
                 // otherwise, error on the options
-                throw new emu_fatalerror(global_object.EMU_ERR_INVALID_CONFIG, "{0}", ex.message().c_str());
+                throw new emu_fatalerror(global_object.EMU_ERR_INVALID_CONFIG, "{0}", ex.message());
             }
 
+            m_osd.set_verbose(m_options.verbose());
+
             // determine the base name of the EXE
-            string exename = core_filename_extract_base(args[0], true);
+            string exename = g.core_filename_extract_base(args[0], true);
 
             // if we have a command, execute that
             if (!m_options.command().empty())
             {
-                execute_commands(exename.c_str());
+                execute_commands(exename);
                 return;
             }
 
@@ -1271,7 +1276,7 @@ namespace mame
             manager.start_luaengine();
 
             if (option_errors.Length > 0)  //if (option_errors.tellp() > 0)
-                osd_printf_error("Error in command line:\n{0}\n", strtrimspace(option_errors.str()));
+                osd_printf_error("Error in command line:\n{0}\n", g.strtrimspace(option_errors));
 
             // if we can't find it, give an appropriate error
             game_driver system = mame_options.system(m_options);

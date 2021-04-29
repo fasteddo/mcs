@@ -180,6 +180,7 @@ namespace mame
             m_snd_rom = new optional_region_ptr<uint8_t>(this, "soundcpu");
             m_vidhw = DKONG_BOARD;
             m_sig30Hz = 0;
+            m_star_ff = 0;
             m_blue_level = 0;
             m_cv1 = 0;
             m_cv2 = 0;
@@ -188,6 +189,8 @@ namespace mame
             m_vg3 = 0;
             m_cv3 = 0;
             m_cv4 = 0;
+            m_vc17 = 0;
+            m_pixelcnt = 0;
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new required_device<screen_device>(this, "screen");
             m_palette = new required_device<palette_device>(this, "palette");

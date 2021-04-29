@@ -4,9 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using device_timer_id = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using int32_t = System.Int32;
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -281,7 +283,7 @@ namespace mame
         uint32_t m_p9;              /* poly9 index */
         uint32_t m_p17;             /* poly17 index */
 
-        devcb_read8.array<devcb_read8, uint32_constant_8> m_pot_r_cb;
+        devcb_read8.array<uint32_constant_8> m_pot_r_cb;
         devcb_read8 m_allpot_r_cb;
         devcb_read8 m_serin_r_cb;
         devcb_write8 m_serout_w_cb;
@@ -336,7 +338,7 @@ namespace mame
 
             m_icount.i = 0;  //m_icount = 0;
             m_stream = null;
-            m_pot_r_cb = new devcb_read8.array<devcb_read8, uint32_constant_8>(this, () => { return new devcb_read8(this); });
+            m_pot_r_cb = new devcb_read8.array<uint32_constant_8>(this, () => { return new devcb_read8(this); });
             m_allpot_r_cb = new devcb_read8(this);
             m_serin_r_cb = new devcb_read8(this);
             m_serout_w_cb = new devcb_write8(this);
@@ -352,7 +354,7 @@ namespace mame
         //template <unsigned N> auto pot_r() { return m_pot_r_cb[N].bind(); }
 
 
-        public devcb_read.binder allpot_r() { return m_allpot_r_cb.bind(); }  //auto allpot_r() { return m_allpot_r_cb.bind(); }
+        public devcb_read8.binder allpot_r() { return m_allpot_r_cb.bind(); }  //auto allpot_r() { return m_allpot_r_cb.bind(); }
 
 
         //auto serin_r() { return m_serin_r_cb.bind(); }

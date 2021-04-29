@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
-using tilemap_memory_index = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -98,23 +98,23 @@ namespace mame
                 int bit2;
 
                 // red component
-                bit0 = BIT(color_prom[i], 0);
-                bit1 = BIT(color_prom[i], 1);
-                bit2 = BIT(color_prom[i], 2);
+                bit0 = g.BIT(color_prom[i], 0);
+                bit1 = g.BIT(color_prom[i], 1);
+                bit2 = g.BIT(color_prom[i], 2);
                 int r = combine_weights(rweights, bit0, bit1, bit2);
 
                 // green component
-                bit0 = BIT(color_prom[i], 3);
-                bit1 = BIT(color_prom[i], 4);
-                bit2 = BIT(color_prom[i], 5);
-                int g = combine_weights(gweights, bit0, bit1, bit2);
+                bit0 = g.BIT(color_prom[i], 3);
+                bit1 = g.BIT(color_prom[i], 4);
+                bit2 = g.BIT(color_prom[i], 5);
+                int gr = combine_weights(gweights, bit0, bit1, bit2);
 
                 // blue component
-                bit0 = BIT(color_prom[i], 6);
-                bit1 = BIT(color_prom[i], 7);
+                bit0 = g.BIT(color_prom[i], 6);
+                bit1 = g.BIT(color_prom[i], 7);
                 int b = combine_weights(bweights, bit0, bit1);
 
-                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r, (byte)g, (byte)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r, (byte)gr, (byte)b));
             }
 
             // color_prom now points to the beginning of the lookup table

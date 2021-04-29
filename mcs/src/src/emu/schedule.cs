@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using attoseconds_t = System.Int64;
-using device_timer_id = System.UInt32;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using execute_interface_enumerator = mame.device_interface_enumerator<mame.device_execute_interface>;  //typedef device_interface_enumerator<device_execute_interface> execute_interface_enumerator;
 using s32 = System.Int32;
 using u32 = System.UInt32;

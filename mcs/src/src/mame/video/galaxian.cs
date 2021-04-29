@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
-using pen_t = System.UInt32;
-using tilemap_memory_index = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -87,23 +87,23 @@ namespace mame
                 uint8_t bit2;
 
                 /* red component */
-                bit0 = (uint8_t)BIT(color_prom[i], 0);
-                bit1 = (uint8_t)BIT(color_prom[i], 1);
-                bit2 = (uint8_t)BIT(color_prom[i], 2);
+                bit0 = (uint8_t)g.BIT(color_prom[i], 0);
+                bit1 = (uint8_t)g.BIT(color_prom[i], 1);
+                bit2 = (uint8_t)g.BIT(color_prom[i], 2);
                 int r = combine_weights(rweights, bit0, bit1, bit2);
 
                 /* green component */
-                bit0 = (uint8_t)BIT(color_prom[i], 3);
-                bit1 = (uint8_t)BIT(color_prom[i], 4);
-                bit2 = (uint8_t)BIT(color_prom[i], 5);
-                int g = combine_weights(gweights, bit0, bit1, bit2);
+                bit0 = (uint8_t)g.BIT(color_prom[i], 3);
+                bit1 = (uint8_t)g.BIT(color_prom[i], 4);
+                bit2 = (uint8_t)g.BIT(color_prom[i], 5);
+                int gr = combine_weights(gweights, bit0, bit1, bit2);
 
                 /* blue component */
-                bit0 = (uint8_t)BIT(color_prom[i], 6);
-                bit1 = (uint8_t)BIT(color_prom[i], 7);
+                bit0 = (uint8_t)g.BIT(color_prom[i], 6);
+                bit1 = (uint8_t)g.BIT(color_prom[i], 7);
                 int b = combine_weights(bweights, bit0, bit1);
 
-                palette.dipalette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
+                palette.dipalette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
 
             /*
@@ -141,22 +141,22 @@ namespace mame
                 uint8_t bit1;
 
                 // bit 5 = red @ 150 Ohm, bit 4 = red @ 100 Ohm
-                bit0 = (uint8_t)BIT(i,5);
-                bit1 = (uint8_t)BIT(i,4);
+                bit0 = (uint8_t)g.BIT(i,5);
+                bit1 = (uint8_t)g.BIT(i,4);
                 int r = starmap[(bit1 << 1) | bit0];
 
                 // bit 3 = green @ 150 Ohm, bit 2 = green @ 100 Ohm
-                bit0 = (uint8_t)BIT(i,3);
-                bit1 = (uint8_t)BIT(i,2);
-                int g = starmap[(bit1 << 1) | bit0];
+                bit0 = (uint8_t)g.BIT(i,3);
+                bit1 = (uint8_t)g.BIT(i,2);
+                int gr = starmap[(bit1 << 1) | bit0];
 
                 // bit 1 = blue @ 150 Ohm, bit 0 = blue @ 100 Ohm
-                bit0 = (uint8_t)BIT(i,1);
-                bit1 = (uint8_t)BIT(i,0);
+                bit0 = (uint8_t)g.BIT(i,1);
+                bit1 = (uint8_t)g.BIT(i,0);
                 int b = starmap[(bit1 << 1) | bit0];
 
                 // set the RGB color
-                m_star_color[i] = new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b);
+                m_star_color[i] = new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b);
             }
 
             // default bullet colors are white for the first 7, and yellow for the last one
@@ -196,6 +196,7 @@ namespace mame
             m_background_blue = 0;
             m_background_red = 0;
             m_background_green = 0;
+            std.fill(m_gfxbank, (uint8_t)0);
 
             /* initialize stars */
             stars_init();

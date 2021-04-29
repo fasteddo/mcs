@@ -262,7 +262,7 @@ namespace mame
         public input_device device() { return m_device; }
         input_manager manager() { return m_device.manager(); }
         //running_machine &machine() const;
-        public string name() { return m_name.c_str(); }
+        public string name() { return m_name; }
         object internalobj() { return m_internal; }
         protected input_item_id itemid() { return m_itemid; }
         public input_item_class itemclass() { return m_itemclass; }
@@ -337,8 +337,8 @@ namespace mame
         public input_manager manager() { return m_manager; }
         running_machine machine() { return m_manager.machine(); }
         public input_device_class devclass() { return device_class(); }
-        public string name() { return m_name.c_str(); }
-        public string id() { return m_id.c_str(); }
+        public string name() { return m_name; }
+        public string id() { return m_id; }
         public int devindex() { return m_devindex; }
         public input_device_item item(input_item_id index) { return m_item[(int)index]; }
         public input_item_id maxitem() { return m_maxitem; }

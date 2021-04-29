@@ -4,13 +4,13 @@
 using System;
 using System.Collections.Generic;
 
-using indirect_pen_t = System.UInt16;
-using logical_index = System.UInt32;
-using offs_t = System.UInt32;
+using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
+using tilemap_t_logical_index = System.UInt32;  //typedef u32 logical_index;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
-using pen_t = System.UInt32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s32 = System.Int32;
-using tilemap_memory_index = System.UInt32;
+using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -19,12 +19,13 @@ using u64 = System.UInt64;
 
 namespace mame
 {
-    // modern delegates
-    //typedef device_delegate<void (tilemap_t &, tile_data &, tilemap_memory_index)> tilemap_get_info_delegate;
-    public delegate void tilemap_get_info_delegate(tilemap_t tilemap, ref tile_data tiledata, tilemap_memory_index index);
+    // global types
+    //typedef u32 tilemap_memory_index;
 
-    //typedef device_delegate<tilemap_memory_index (UINT32, UINT32, UINT32, UINT32)> tilemap_mapper_delegate;
-    public delegate tilemap_memory_index tilemap_mapper_delegate(UInt32 col, UInt32 row, UInt32 num_cols, UInt32 num_rows);
+
+    // modern delegates
+    public delegate void tilemap_get_info_delegate(tilemap_t tilemap, ref tile_data tiledata, tilemap_memory_index index);  //typedef device_delegate<void (tilemap_t &, tile_data &, tilemap_memory_index)> tilemap_get_info_delegate;
+    public delegate tilemap_memory_index tilemap_mapper_delegate(u32 col, u32 row, u32 num_cols, u32 num_rows);  //typedef device_delegate<tilemap_memory_index (u32, u32, u32, u32)> tilemap_mapper_delegate;
 
 
     // standard mappers
@@ -138,8 +139,6 @@ namespace mame
         //friend class simple_list<tilemap_t>;
         //friend resource_pool_object<tilemap_t>::~resource_pool_object();
 
-        // global types
-        //typedef u32 tilemap_memory_index;
 
         // logical index
         //typedef u32 logical_index;
@@ -170,7 +169,7 @@ namespace mame
         const byte TILE_FLAG_DIRTY = 0xff;
 
         // invalid logical index
-        const logical_index INVALID_LOGICAL_INDEX = logical_index.MaxValue;
+        const tilemap_t_logical_index INVALID_LOGICAL_INDEX = tilemap_t_logical_index.MaxValue;
 
         // maximum index in each array
         const pen_t MAX_PEN_TO_FLAGS = 256;
@@ -193,7 +192,7 @@ namespace mame
 
         // logical <-> memory mappings
         tilemap_mapper_delegate m_mapper;               // callback to map a row/column to a memory index
-        std.vector<logical_index> m_memory_to_logical = new std.vector<logical_index>();   // map from memory index to logical index
+        std.vector<tilemap_t_logical_index> m_memory_to_logical = new std.vector<tilemap_t_logical_index>();   // map from memory index to logical index
         std.vector<tilemap_memory_index> m_logical_to_memory = new std.vector<tilemap_memory_index>();   // map from logical index to memory index
 
         // callback to interpret video RAM for the tilemap
@@ -437,7 +436,7 @@ namespace mame
             if (memindex < m_memory_to_logical.size())
             {
                 // there may be no logical index for a given memory index
-                logical_index logindex = m_memory_to_logical[memindex];
+                tilemap_t_logical_index logindex = m_memory_to_logical[memindex];
                 if (logindex != INVALID_LOGICAL_INDEX)
                 {
                     m_tileflags[logindex] = TILE_FLAG_DIRTY;
@@ -487,7 +486,7 @@ namespace mame
                 mark_all_dirty();
         }
 
-        void map_pen_to_layer(int group, pen_t pen, u8 layermask) { map_pens_to_layer(group, pen, logical_index.MaxValue /* ~0*/, layermask); }
+        void map_pen_to_layer(int group, pen_t pen, u8 layermask) { map_pens_to_layer(group, pen, tilemap_t_logical_index.MaxValue /* ~0*/, layermask); }
 
         //-------------------------------------------------
         //  set_transparent_pen - set a single transparent
@@ -961,7 +960,7 @@ namespace mame
         void mappings_create()
         {
             // compute the maximum logical index
-            logical_index max_logical_index = m_rows * m_cols;
+            tilemap_t_logical_index max_logical_index = m_rows * m_cols;
 
             // compute the maximum memory index
             tilemap_memory_index max_memory_index = 0;
@@ -994,7 +993,7 @@ namespace mame
             memset(m_memory_to_logical, (UInt32)0xff, (UInt32)m_memory_to_logical.size());  //memset(&m_memory_to_logical[0], 0xff, m_memory_to_logical.size() * sizeof(m_memory_to_logical[0]));
 
             // now iterate over all logical indexes and populate the memory index
-            for (logical_index logindex = 0; logindex < m_logical_to_memory.size(); logindex++)
+            for (tilemap_t_logical_index logindex = 0; logindex < m_logical_to_memory.size(); logindex++)
             {
                 UInt32 logical_col = logindex % m_cols;
                 UInt32 logical_row = logindex / m_cols;
@@ -1039,7 +1038,7 @@ namespace mame
         //-------------------------------------------------
         //  tile_update - update a single dirty tile
         //-------------------------------------------------
-        void tile_update(logical_index logindex, u32 col, u32 row)
+        void tile_update(tilemap_t_logical_index logindex, u32 col, u32 row)
         {
             profiler_global.g_profiler.start(profile_type.PROFILER_TILEMAP_UPDATE);
 
@@ -1463,7 +1462,7 @@ namespace mame
                     // for other columns we look up the transparency information
                     else
                     {
-                        logical_index logindex = (logical_index)(row * m_cols + column);
+                        tilemap_t_logical_index logindex = (tilemap_t_logical_index)(row * m_cols + column);
 
                         // if the current tile is dirty, fix it
                         if (m_tileflags[logindex] == TILE_FLAG_DIRTY)

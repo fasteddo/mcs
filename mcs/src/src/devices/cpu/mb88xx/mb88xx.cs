@@ -4,7 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_read_line = mame.devcb_read<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_read_line = devcb_read<int, 1U>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -188,8 +192,8 @@ namespace mame
         devcb_read8 m_read_k;
         devcb_write8 m_write_o;
         devcb_write8 m_write_p;
-        devcb_read8.array<devcb_read8, uint32_constant_4> m_read_r;
-        devcb_write8.array<devcb_write8, uint32_constant_4> m_write_r;
+        devcb_read8.array<uint32_constant_4> m_read_r;
+        devcb_write8.array<uint32_constant_4> m_write_r;
         devcb_read_line m_read_si;
         devcb_write_line m_write_so;
 
@@ -224,8 +228,8 @@ namespace mame
             m_read_k = new devcb_read8(this);
             m_write_o = new devcb_write8(this);
             m_write_p = new devcb_write8(this);
-            m_read_r = new devcb_read8.array<devcb_read8, uint32_constant_4>(this, () => { return new devcb_read8(this); });
-            m_write_r = new devcb_write8.array<devcb_write8, uint32_constant_4>(this, () => { return new devcb_write8(this); });
+            m_read_r = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_write_r = new devcb_write8.array<uint32_constant_4>(this, () => { return new devcb_write8(this); });
             m_read_si = new devcb_read_line(this);
             m_write_so = new devcb_write_line(this);
         }
@@ -234,17 +238,17 @@ namespace mame
         // configuration helpers
 
         // K (K3-K0): input-only port
-        public devcb_read.binder read_k() { return m_read_k.bind(); }  //auto read_k() { return m_read_k.bind(); }
+        public devcb_read8.binder read_k() { return m_read_k.bind(); }  //auto read_k() { return m_read_k.bind(); }
 
         // O (O7-O4 = OH, O3-O0 = OL): output through PLA
-        public devcb_write.binder write_o() { return m_write_o.bind(); }  //auto write_o() { return m_write_o.bind(); }
+        public devcb_write8.binder write_o() { return m_write_o.bind(); }  //auto write_o() { return m_write_o.bind(); }
 
         // P (P3-P0): output-only port
-        public devcb_write.binder write_p() { return m_write_p.bind(); }  //auto write_p() { return m_write_p.bind(); }
+        public devcb_write8.binder write_p() { return m_write_p.bind(); }  //auto write_p() { return m_write_p.bind(); }
 
         // R0 (R3-R0): input/output port
-        public devcb_read.binder read_r(int Port) { return m_read_r[Port].bind(); }  //template <std::size_t Port> auto read_r() { return m_read_r[Port].bind(); }
-        public devcb_write.binder write_r(int Port) { return m_write_r[Port].bind(); }  //template <std::size_t Port> auto write_r() { return m_write_r[Port].bind(); }
+        public devcb_read8.binder read_r(int Port) { return m_read_r[Port].bind(); }  //template <std::size_t Port> auto read_r() { return m_read_r[Port].bind(); }
+        public devcb_write8.binder write_r(int Port) { return m_write_r[Port].bind(); }  //template <std::size_t Port> auto write_r() { return m_write_r[Port].bind(); }
 
         // SI: serial input
         //auto read_si() { return m_read_si.bind(); }
@@ -343,9 +347,9 @@ namespace mame
             m_distate.state_add( MB88_TL,  "TL",  m_TL).formatstr("%01X");
             m_distate.state_add( MB88_SB,  "SB",  m_SB).formatstr("%01X");
 
-            m_distate.state_add( STATE_GENPC, "GENPC", m_debugger_pc).callimport().callexport().noshow();
-            m_distate.state_add( STATE_GENPCBASE, "CURPC", m_debugger_pc ).callimport().callexport().noshow();
-            m_distate.state_add( STATE_GENFLAGS, "GENFLAGS", m_debugger_flags).callimport().callexport().formatstr("%6s").noshow();
+            m_distate.state_add( g.STATE_GENPC, "GENPC", m_debugger_pc).callimport().callexport().noshow();
+            m_distate.state_add( g.STATE_GENPCBASE, "CURPC", m_debugger_pc ).callimport().callexport().noshow();
+            m_distate.state_add( g.STATE_GENFLAGS, "GENFLAGS", m_debugger_flags).callimport().callexport().formatstr("%6s").noshow();
 
             set_icountptr(m_icount);
         }
@@ -912,12 +916,12 @@ namespace mame
         void device_execute_interface_execute_set_input(int state)
         {
             /* on rising edge trigger interrupt */
-            if ( (m_pio & 0x04) != 0 && m_nf == 0 && state != CLEAR_LINE )
+            if ( (m_pio & 0x04) != 0 && m_nf == 0 && state != g.CLEAR_LINE )
             {
                 m_pending_interrupt |= INT_CAUSE_EXTERNAL;
             }
 
-            m_nf = state != CLEAR_LINE ? (uint8_t)1 : (uint8_t)0;
+            m_nf = state != g.CLEAR_LINE ? (uint8_t)1 : (uint8_t)0;
         }
 
         //virtual uint64_t execute_clocks_to_cycles(uint64_t clocks) const noexcept override { return (clocks + 6 - 1) / 6; }
@@ -940,7 +944,7 @@ namespace mame
         {
             switch (entry.index())
             {
-                case STATE_GENFLAGS:
+                case g.STATE_GENFLAGS:
                     m_st = (m_debugger_flags & 0x01) != 0 ? (byte)1 : (byte)0;
                     m_zf = (m_debugger_flags & 0x02) != 0 ? (byte)1 : (byte)0;
                     m_cf = (m_debugger_flags & 0x04) != 0 ? (byte)1 : (byte)0;
@@ -949,8 +953,8 @@ namespace mame
                     m_nf = (m_debugger_flags & 0x20) != 0 ? (byte)1 : (byte)0;
                     break;
 
-                case STATE_GENPC:
-                case STATE_GENPCBASE:
+                case g.STATE_GENPC:
+                case g.STATE_GENPCBASE:
                     m_PC = (byte)(m_debugger_pc & 0x3f);
                     m_PA = (byte)(( m_debugger_pc >> 6 ) & 0x1f);
                     break;
@@ -961,7 +965,7 @@ namespace mame
         {
             switch (entry.index())
             {
-                case STATE_GENFLAGS:
+                case g.STATE_GENFLAGS:
                     m_debugger_flags = 0;
                     if (TEST_ST() != 0) m_debugger_flags |= 0x01;
                     if (TEST_ZF() != 0) m_debugger_flags |= 0x02;
@@ -971,8 +975,8 @@ namespace mame
                     if (TEST_NF() != 0) m_debugger_flags |= 0x20;
                     break;
 
-                case STATE_GENPC:
-                case STATE_GENPCBASE:
+                case g.STATE_GENPC:
+                case g.STATE_GENPCBASE:
                     m_debugger_pc = GETPC();
                     break;
             }
@@ -983,7 +987,7 @@ namespace mame
             str = "";
             switch (entry.index())
             {
-                case STATE_GENFLAGS:
+                case g.STATE_GENFLAGS:
                     str = string.Format("{0}{1}{2}{3}{4}{5}",
                             TEST_ST() != 0 ? 'T' : 't',
                             TEST_ZF() != 0 ? 'Z' : 'z',

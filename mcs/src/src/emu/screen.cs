@@ -4,8 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using attoseconds_t = System.Int64;
-using device_timer_id = System.UInt32;
+using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
+using devcb_write32 = mame.devcb_write<uint, uint, mame.devcb_operators_u32_u32, mame.devcb_operators_u32_u32>;  //using devcb_write32 = devcb_write<u32>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
 using s8  = System.SByte;
 using s16 = System.Int16;
@@ -320,7 +322,7 @@ namespace mame
             m_scanline_cb = new devcb_write32(this);
             m_palette = new optional_device<device_palette_interface>(this, finder_base.DUMMY_TAG);
             m_video_attributes = 0;
-            m_svg_region = new optional_memory_region(this, DEVICE_SELF);
+            m_svg_region = new optional_memory_region(this, g.DEVICE_SELF);
             m_container = null;
             m_max_width = 100;
             m_width = 100;
@@ -425,7 +427,7 @@ namespace mame
             // always keep this in reduced form
             UInt32 tempFirst = phys_aspect.first;
             UInt32 tempSecond = phys_aspect.second;
-            reduce_fraction(ref tempFirst, ref tempSecond);
+            g.reduce_fraction(ref tempFirst, ref tempSecond);
             phys_aspect = new std.pair<UInt32, UInt32>(tempFirst, tempSecond);
 
             return phys_aspect;
@@ -609,7 +611,7 @@ namespace mame
         }
 
 
-        public devcb_write.binder screen_vblank() { return m_screen_vblank.bind(); }  //auto screen_vblank() { return m_screen_vblank.bind(); }
+        public devcb_write_line.binder screen_vblank() { return m_screen_vblank.bind(); }  //auto screen_vblank() { return m_screen_vblank.bind(); }
         //auto scanline() { m_video_attributes |= VIDEO_UPDATE_SCANLINE; return m_scanline_cb.bind(); }
 
         //template<typename T>
@@ -1312,7 +1314,7 @@ namespace mame
             m_scanline0_timer = timer_alloc(TID_SCANLINE0);
 
             // allocate a timer to generate per-scanline updates
-            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb != null)
+            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb.bool_)
                 m_scanline_timer = timer_alloc(TID_SCANLINE);
 
             // configure the screen with the default parameters
@@ -1323,7 +1325,7 @@ namespace mame
             m_vblank_end_time = new attotime(0, m_vblank_period);
 
             // start the timer to generate per-scanline updates
-            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb != null)
+            if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb.bool_)
                 m_scanline_timer.adjust(time_until_pos(0));
 
             // create burn-in bitmap
@@ -1439,7 +1441,7 @@ namespace mame
                         update_partial(param);
                     }
 
-                    if (m_scanline_cb != null)
+                    if (m_scanline_cb.bool_)
                         m_scanline_cb.op((UInt32)param);
 
                     // compute the next visible scanline

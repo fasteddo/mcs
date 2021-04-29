@@ -127,7 +127,7 @@ namespace mame
             m_machine = machine;
             m_player = player;
             m_used = false;
-            m_mode = CROSSHAIR_VISIBILITY_OFF;
+            m_mode = g.CROSSHAIR_VISIBILITY_OFF;
             m_visible = false;
             m_texture = null;
             m_x = 0.0f;
@@ -242,20 +242,20 @@ namespace mame
             if (!m_bitmap.valid())
             {
                 /* allocate a blank bitmap to start with */
-                m_bitmap.allocate(CROSSHAIR_RAW_SIZE, CROSSHAIR_RAW_SIZE);
+                m_bitmap.allocate(g.CROSSHAIR_RAW_SIZE, g.CROSSHAIR_RAW_SIZE);
                 m_bitmap.fill(new rgb_t(0x00,0xff,0xff,0xff));
 
                 /* extract the raw source data to it */
-                for (int y = 0; y < CROSSHAIR_RAW_SIZE / 2; y++)
+                for (int y = 0; y < g.CROSSHAIR_RAW_SIZE / 2; y++)
                 {
                     /* assume it is mirrored vertically */
                     PointerU32 dest0 = m_bitmap.pix(y);  //u32 *dest0 = &m_bitmap->pix(y);
-                    PointerU32 dest1 = m_bitmap.pix(CROSSHAIR_RAW_SIZE - 1 - y);  //u32 *dest1 = &m_bitmap->pix(CROSSHAIR_RAW_SIZE - 1 - y);
+                    PointerU32 dest1 = m_bitmap.pix(g.CROSSHAIR_RAW_SIZE - 1 - y);  //u32 *dest1 = &m_bitmap->pix(CROSSHAIR_RAW_SIZE - 1 - y);
 
                     /* extract to two rows simultaneously */
-                    for (int x = 0; x < CROSSHAIR_RAW_SIZE; x++)
+                    for (int x = 0; x < g.CROSSHAIR_RAW_SIZE; x++)
                     {
-                        if (((crosshair_raw_top[y * CROSSHAIR_RAW_ROWBYTES + x / 8] << (x % 8)) & 0x80) != 0)
+                        if (((crosshair_raw_top[y * g.CROSSHAIR_RAW_ROWBYTES + x / 8] << (x % 8)) & 0x80) != 0)
                         {
                             dest0[x] = dest1[x] = new rgb_t(0xff,0x00,0x00,0x00) | color;
                         }
@@ -294,7 +294,7 @@ namespace mame
             m_machine = machine;
             m_usage = false;
             m_animation_counter = 0;
-            m_auto_time = CROSSHAIR_VISIBILITY_AUTOTIME_DEFAULT;
+            m_auto_time = g.CROSSHAIR_VISIBILITY_AUTOTIME_DEFAULT;
 
 
             /* request a callback upon exiting */
@@ -317,8 +317,8 @@ namespace mame
                         /* mark as used and set the default visibility and mode */
                         m_usage = true;
                         m_crosshair[player].set_used(true);
-                        m_crosshair[player].set_mode(CROSSHAIR_VISIBILITY_DEFAULT);
-                        m_crosshair[player].set_visible(CROSSHAIR_VISIBILITY_DEFAULT != CROSSHAIR_VISIBILITY_OFF);
+                        m_crosshair[player].set_mode(g.CROSSHAIR_VISIBILITY_DEFAULT);
+                        m_crosshair[player].set_visible(g.CROSSHAIR_VISIBILITY_DEFAULT != g.CROSSHAIR_VISIBILITY_OFF);
                         m_crosshair[player].set_default_bitmap();
                     }
                 }

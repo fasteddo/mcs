@@ -7,7 +7,6 @@ using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt32;
-using size_t_constant_20 = mame.uint32_constant_20;
 using uint16_t = System.UInt16;
 
 

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -13,6 +13,19 @@ using u64 = System.UInt64;
 
 namespace mame
 {
+    public static class distate_global
+    {
+        // standard state indexes
+        //enum
+        //{
+        public const int STATE_GENPC     = -1;           // generic program counter (live)
+        public const int STATE_GENPCBASE = -2;           // generic program counter (base of current instruction)
+        public const int STATE_GENSP     = -3;           // generic stack pointer
+        public const int STATE_GENFLAGS  = -4;           // generic flags
+        //}
+    }
+
+
     // ======================> device_state_entry
     // class describing a single item of exposed device state
     public class device_state_entry : global_object
@@ -62,11 +75,11 @@ namespace mame
             format_from_mask();
 
             // override well-known symbols
-            if (index == device_state_interface.STATE_GENPCBASE)
+            if (index == g.STATE_GENPCBASE)
                 m_symbol = "CURPC";
-            else if (index == device_state_interface.STATE_GENSP)
+            else if (index == g.STATE_GENSP)
                 m_symbol = "CURSP";
-            else if (index == device_state_interface.STATE_GENFLAGS)
+            else if (index == g.STATE_GENFLAGS)
                 m_symbol = "CURFLAGS";
         }
 
@@ -227,7 +240,7 @@ namespace mame
 
             // make up a format based on the mask
             if (m_datamask == 0)
-                throw new emu_fatalerror("{0} state entry requires a nonzero mask\n", m_symbol.c_str());
+                throw new emu_fatalerror("{0} state entry requires a nonzero mask\n", m_symbol);
 
             int width = 0;
             for (u64 tempmask = m_datamask; tempmask != 0; tempmask >>= 4)
@@ -321,53 +334,13 @@ namespace mame
     }
 
 
-#if false
     // class template representing a boolean state register
-    template<>
-    class device_state_register<bool> : public device_state_entry
-    {
-    public:
-        // construction/destruction
-        device_state_register(int index, const char *symbol, bool &data, device_state_interface *dev)
-            : device_state_entry(index, symbol, sizeof(bool), 1, 0, dev),
-                m_data(data)
-        {
-        }
-
-    protected:
-        // device_state_entry overrides
-        virtual void *entry_baseptr() const override { return &m_data; }
-        virtual u64 entry_value() const override { return m_data; }
-        virtual void entry_set_value(u64 value) const override { m_data = bool(value); }
-
-    private:
-        bool &                  m_data;                 // reference to where the data lives
-    };
+    //template<>
+    //class device_state_register<bool> : public device_state_entry
 
     // class template representing a floating-point state register
-    template<>
-    class device_state_register<double> : public device_state_entry
-    {
-    public:
-        // construction/destruction
-        device_state_register(int index, const char *symbol, double &data, device_state_interface *dev)
-            : device_state_entry(index, symbol, sizeof(double), ~u64(0), DSF_FLOATING_POINT, dev),
-                m_data(data)
-        {
-        }
-
-    protected:
-        // device_state_entry overrides
-        virtual void *entry_baseptr() const override { return &m_data; }
-        virtual u64 entry_value() const override { return u64(m_data); }
-        virtual void entry_set_value(u64 value) const override { m_data = double(value); }
-        virtual double entry_dvalue() const override { return m_data; }
-        virtual void entry_set_dvalue(double value) const override { m_data = value; }
-
-    private:
-        double &                m_data;                 // reference to where the data lives
-    };
-#endif
+    //template<>
+    //class device_state_register<double> : public device_state_entry
 
 
     // ======================> device_latched_functional_state_register
@@ -441,50 +414,14 @@ namespace mame
     }
 
 
-#if false
-    template<>
-    class device_functional_state_register<double> : public device_state_entry
-    {
-    public:
-        typedef typename std::function<double ()> getter_func;
-        typedef typename std::function<void (double)> setter_func;
-
-        // construction/destruction
-        device_functional_state_register(int index, const char *symbol, getter_func &&getter, setter_func &&setter, device_state_interface *dev)
-            : device_state_entry(index, symbol, sizeof(double), ~u64(0), DSF_FLOATING_POINT, dev),
-                m_getter(std::move(getter)),
-                m_setter(std::move(setter))
-        {
-        }
-
-    protected:
-        // device_state_entry overrides
-        virtual u64 entry_value() const override { return u64(m_getter()); }
-        virtual void entry_set_value(u64 value) const override { m_setter(double(value)); }
-        virtual double entry_dvalue() const override { return m_getter(); }
-        virtual void entry_set_dvalue(double value) const override { m_setter(value); }
-
-    private:
-        getter_func             m_getter;               // function to retrieve the data
-        setter_func             m_setter;               // function to store the data
-    };
-#endif
+    //template<>
+    //class device_functional_state_register<double> : public device_state_entry
 
 
     // ======================> device_state_interface
     // class representing interface-specific live state
     public class device_state_interface : device_interface
     {
-        // standard state indexes
-        //enum
-        //{
-        public const int STATE_GENPC     = -1;           // generic program counter (live)
-        public const int STATE_GENPCBASE = -2;           // generic program counter (base of current instruction)
-        public const int STATE_GENSP     = -3;           // generic stack pointer
-        public const int STATE_GENFLAGS  = -4;           // generic flags
-        //}
-
-
         // constants
         const int FAST_STATE_MIN = -4;                           // range for fast state
         const int FAST_STATE_MAX = 256;                          // lookups
@@ -519,7 +456,7 @@ namespace mame
 
 
         //astring &state_string(int index, astring &dest);
-        public offs_t pc() { return (offs_t)state_int(STATE_GENPC); }
+        public offs_t pc() { return (offs_t)state_int(g.STATE_GENPC); }
         //offs_t pcbase() { return state_int(STATE_GENPCBASE); }
         //offs_t sp() { return state_int(STATE_GENSP); }
         //UINT64 flags() { return state_int(STATE_GENFLAGS); }

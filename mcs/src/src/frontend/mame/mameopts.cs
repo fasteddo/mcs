@@ -108,7 +108,7 @@ namespace mame
             }
 
             // next parse "source/<sourcefile>.ini"
-            string sourcename = core_filename_extract_base(cursystem.type.source(), true).Insert(0, "source" + PATH_SEPARATOR);
+            string sourcename = g.core_filename_extract_base(cursystem.type.source(), true).Insert(0, "source" + PATH_SEPARATOR);
             parse_one_ini(options, sourcename, OPTION_PRIORITY_SOURCE_INI, ref error_stream);
 
             // then parse the grandparent, parent, and system-specific INIs
@@ -129,7 +129,7 @@ namespace mame
         //-------------------------------------------------
         public static game_driver system(emu_options options)
         {
-            int index = driver_list.find(core_filename_extract_base(options.system_name(), true).c_str());
+            int index = driver_list.find(g.core_filename_extract_base(options.system_name(), true));
             return (index != -1) ? driver_list.driver(index) : null;
         }
 

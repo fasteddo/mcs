@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using ioport_value = System.UInt32;
+using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using PointerU8 = mame.Pointer<System.Byte>;
 using render_target_view_mask_vector = mame.std.vector<mame.std.pair<mame.layout_view, System.UInt32>>;  //using view_mask_vector = std::vector<view_mask_pair>;
 using s32 = System.Int32;
@@ -1472,7 +1472,7 @@ namespace mame
                 size_t viewlen = (size_t)strlen(viewname);
                 for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
                 {
-                    if (core_strnicmp(m_views[i].first.name().c_str(), viewname, viewlen) == 0)
+                    if (g.core_strnicmp(m_views[i].first.name(), viewname, viewlen) == 0)
                         view = m_views[i].first;
                 }
             }
@@ -2037,11 +2037,11 @@ namespace mame
             // if there's an explicit file, load that first
             string basename = m_manager.machine().basename();
             if (layoutfile != null)
-                have_artwork |= load_layout_file(basename.c_str(), layoutfile);
+                have_artwork |= load_layout_file(basename, layoutfile);
 
             // if we're only loading this file, we know our final result
             if (!singlefile)
-                load_additional_layout_files(basename.c_str(), have_artwork);
+                load_additional_layout_files(basename, have_artwork);
         }
 
         void load_layout_files(util.xml.data_node rootnode, bool singlefile)
@@ -2050,11 +2050,11 @@ namespace mame
 
             // if there's an explicit file, load that first
             string basename = m_manager.machine().basename();
-            have_artwork |= load_layout_file(m_manager.machine().root_device(), rootnode, m_manager.machine().options().art_path(), basename.c_str());
+            have_artwork |= load_layout_file(m_manager.machine().root_device(), rootnode, m_manager.machine().options().art_path(), basename);
 
             // if we're only loading this file, we know our final result
             if (!singlefile)
-                load_additional_layout_files(basename.c_str(), have_artwork);
+                load_additional_layout_files(basename, have_artwork);
         }
 
 
@@ -2077,7 +2077,7 @@ namespace mame
 
                 UInt32 tempFirst = m_native.first;
                 UInt32 tempSecond = m_native.second;
-                reduce_fraction(ref tempFirst, ref tempSecond);
+                g.reduce_fraction(ref tempFirst, ref tempSecond);
                 m_native = new std.pair<unsigned, unsigned>(tempFirst, tempSecond);
 
                 if (m_rotated)
@@ -2225,7 +2225,7 @@ namespace mame
                             "name",
                             string_format(
                                 "Screen {0} Standard ({1}:{2})",
-                                i, screens[i].physical_x(), screens[i].physical_y()).c_str());
+                                i, screens[i].physical_x(), screens[i].physical_y()));
                     util.xml.data_node screennode = viewnode.add_child("screen", null);
                     if (screennode == null)
                         throw new emu_fatalerror("Couldn't create XML node??");
@@ -2255,7 +2255,7 @@ namespace mame
                                 "name",
                                 string_format(
                                     "Screen {0} Pixel Aspect ({1}:{2})",
-                                    i, screens[i].native_x(), screens[i].native_y()).c_str());
+                                    i, screens[i].native_x(), screens[i].native_y()));
 
                         util.xml.data_node screennode = viewnode.add_child("screen", null);
                         if (screennode == null)
@@ -2391,7 +2391,7 @@ namespace mame
                     artdir = artdir.Substring(0, dirsep);  //artdir.erase(dirsep.base(), artdir.end());
 
                     // record a warning if we didn't get a properly-formatted XML file
-                    if (!load_layout_file(m_manager.machine().root_device(), rootnode, null, artdir.c_str()))
+                    if (!load_layout_file(m_manager.machine().root_device(), rootnode, null, artdir))
                         osd_printf_warning("Improperly formatted XML layout file '{0}', ignoring\n", filename);
                     else
                         result = true;
@@ -2582,8 +2582,8 @@ namespace mame
                             // based on the swap values, get the scaled final texture
                             int width = (finalorient & emucore_global.ORIENTATION_SWAP_XY) != 0 ? (int)(prim.bounds.y1 - prim.bounds.y0) : (int)(prim.bounds.x1 - prim.bounds.x0);
                             int height = (finalorient & emucore_global.ORIENTATION_SWAP_XY) != 0 ? (int)(prim.bounds.x1 - prim.bounds.x0) : (int)(prim.bounds.y1 - prim.bounds.y0);
-                            width = Math.Min(width, m_maxtexwidth);
-                            height = Math.Min(height, m_maxtexheight);
+                            width = std.min(width, m_maxtexwidth);
+                            height = std.min(height, m_maxtexheight);
 
                             curitem.texture().get_scaled((UInt32)width, (UInt32)height, prim.texture, list, curitem.flags());
 

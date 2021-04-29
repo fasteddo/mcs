@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using int8_t = System.SByte;
-using offs_t = System.UInt32;
-using pen_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;

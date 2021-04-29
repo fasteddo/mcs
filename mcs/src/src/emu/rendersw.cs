@@ -14,26 +14,46 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-    public class software_renderer<_PixelType> : global_object
-    {
-        // template parameters
-        public class TemplateParams
-        {
-            public int _bpp;  // bits per pixel
-            public int _Bpp;  // bytes per pixel
-            public int _SrcShiftR;
-            public int _SrcShiftG;
-            public int _SrcShiftB;
-            public int _DstShiftR;
-            public int _DstShiftG;
-            public int _DstShiftB;
-            public bool _NoDestRead;
-            public bool _BilinearFilter;
+    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB> : software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool_constant_false, bool_constant_false>
+        where int__SrcShiftR : int_constant, new()
+        where int__SrcShiftG : int_constant, new()
+        where int__SrcShiftB : int_constant, new()
+        where int__DstShiftR : int_constant, new()
+        where int__DstShiftG : int_constant, new()
+        where int__DstShiftB : int_constant, new()
+    { }
 
-            public TemplateParams(int bpp, int SrcShiftR, int SrcShiftG, int SrcShiftB, int DstShiftR, int DstShiftG, int DstShiftB, bool NoDestRead = false, bool BilinearFilter = false)
-            { _bpp = bpp; _Bpp = _bpp / 8; _SrcShiftR = SrcShiftR; _SrcShiftG = SrcShiftG; _SrcShiftB = SrcShiftB; _DstShiftR = DstShiftR; _DstShiftG = DstShiftG; _DstShiftB = DstShiftB; _NoDestRead = NoDestRead; _BilinearFilter = BilinearFilter; }
-        }
+    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead> : software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead, bool_constant_false>
+        where int__SrcShiftR : int_constant, new()
+        where int__SrcShiftG : int_constant, new()
+        where int__SrcShiftB : int_constant, new()
+        where int__DstShiftR : int_constant, new()
+        where int__DstShiftG : int_constant, new()
+        where int__DstShiftB : int_constant, new()
+        where bool__NoDestRead : bool_constant, new()
+    { }
+
+    //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
+    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead, bool__BilinearFilter> : global_object
+        where int__SrcShiftR : int_constant, new()
+        where int__SrcShiftG : int_constant, new()
+        where int__SrcShiftB : int_constant, new()
+        where int__DstShiftR : int_constant, new()
+        where int__DstShiftG : int_constant, new()
+        where int__DstShiftB : int_constant, new()
+        where bool__NoDestRead : bool_constant, new()
+        where bool__BilinearFilter : bool_constant, new()
+    {
+        static readonly int _SrcShiftR = new int__SrcShiftR().value;
+        static readonly int _SrcShiftG = new int__SrcShiftG().value;
+        static readonly int _SrcShiftB = new int__SrcShiftB().value;
+        static readonly int _DstShiftR = new int__DstShiftR().value;
+        static readonly int _DstShiftG = new int__DstShiftG().value;
+        static readonly int _DstShiftB = new int__DstShiftB().value;
+        static readonly bool _NoDestRead = new bool__NoDestRead().value;
+        static readonly bool _BilinearFilter = new bool__BilinearFilter().value;
+
+        static readonly int _bpp = sizeof_(typeof(_PixelType)) * 8;
 
 
         // internal structs
@@ -53,8 +73,8 @@ namespace mame
 
 
         // internal helpers
-        static bool is_opaque(TemplateParams t, float alpha) { return alpha >= (t._NoDestRead ? 0.5f : 1.0f); }
-        static bool is_transparent(TemplateParams t, float alpha) { return alpha < (t._NoDestRead ? 0.5f : 0.0001f); }
+        static bool is_opaque(float alpha) { return alpha >= (_NoDestRead ? 0.5f : 1.0f); }
+        static bool is_transparent(float alpha) { return alpha < (_NoDestRead ? 0.5f : 0.0001f); }
         static rgb_t apply_intensity(int intensity, rgb_t color) { return color.scale8((u8)intensity); }
         static float round_nearest(float f) { return floor(f + 0.5f); }
 
@@ -62,33 +82,33 @@ namespace mame
         // destination pixels are written based on the values of the template parameters
         //static inline _PixelType dest_assemble_rgb(u32 r, u32 g, u32 b) { return (r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB); }
         //static inline _PixelType dest_rgb_to_pixel(u32 r, u32 g, u32 b) { return dest_assemble_rgb(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
-        static u8 dest_assemble_rgb8(TemplateParams t, u32 r, u32 g, u32 b) { return (u8)((r << t._DstShiftR) | (g << t._DstShiftG) | (b << t._DstShiftB)); }
-        static u16 dest_assemble_rgb16(TemplateParams t, u32 r, u32 g, u32 b) { return (u16)((r << t._DstShiftR) | (g << t._DstShiftG) | (b << t._DstShiftB)); }
-        static u32 dest_assemble_rgb32(TemplateParams t, u32 r, u32 g, u32 b) { return (r << t._DstShiftR) | (g << t._DstShiftG) | (b << t._DstShiftB); }
-        static u8 dest_rgb_to_pixel8(TemplateParams t, u32 r, u32 g, u32 b) { return dest_assemble_rgb8(t, r >> t._SrcShiftR, g >> t._SrcShiftG, b >> t._SrcShiftB); }
-        static u16 dest_rgb_to_pixel16(TemplateParams t, u32 r, u32 g, u32 b) { return dest_assemble_rgb16(t, r >> t._SrcShiftR, g >> t._SrcShiftG, b >> t._SrcShiftB); }
-        static u32 dest_rgb_to_pixel32(TemplateParams t, u32 r, u32 g, u32 b) { return dest_assemble_rgb32(t, r >> t._SrcShiftR, g >> t._SrcShiftG, b >> t._SrcShiftB); }
+        static u8 dest_assemble_rgb8(u32 r, u32 g, u32 b) { return (u8)((r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB)); }
+        static u16 dest_assemble_rgb16(u32 r, u32 g, u32 b) { return (u16)((r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB)); }
+        static u32 dest_assemble_rgb32(u32 r, u32 g, u32 b) { return (r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB); }
+        static u8 dest_rgb_to_pixel8(u32 r, u32 g, u32 b) { return dest_assemble_rgb8(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
+        static u16 dest_rgb_to_pixel16(u32 r, u32 g, u32 b) { return dest_assemble_rgb16(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
+        static u32 dest_rgb_to_pixel32(u32 r, u32 g, u32 b) { return dest_assemble_rgb32(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB); }
 
 
         // source 32-bit pixels are in MAME standardized format
-        static u32 source32_r(TemplateParams t, u32 pixel) { return (u32)((pixel >> (16 + t._SrcShiftR)) & (0xff >> t._SrcShiftR)); }
-        static u32 source32_g(TemplateParams t, u32 pixel) { return (u32)((pixel >> ( 8 + t._SrcShiftG)) & (0xff >> t._SrcShiftG)); }
-        static u32 source32_b(TemplateParams t, u32 pixel) { return (u32)((pixel >> ( 0 + t._SrcShiftB)) & (0xff >> t._SrcShiftB)); }
+        static u32 source32_r(u32 pixel) { return (u32)((pixel >> (16 + _SrcShiftR)) & (0xff >> _SrcShiftR)); }
+        static u32 source32_g(u32 pixel) { return (u32)((pixel >> ( 8 + _SrcShiftG)) & (0xff >> _SrcShiftG)); }
+        static u32 source32_b(u32 pixel) { return (u32)((pixel >> ( 0 + _SrcShiftB)) & (0xff >> _SrcShiftB)); }
 
 
         // destination pixel masks are based on the template parameters as well
         //static inline u32 dest_r(_PixelType pixel) { return (pixel >> _DstShiftR) & (0xff >> _SrcShiftR); }
-        static u32 dest_r8(TemplateParams t, u8 pixel) { return ((u32)pixel >> t._DstShiftR) & ((u32)0xff >> t._SrcShiftR); }
-        static u32 dest_r16(TemplateParams t, u16 pixel) { return ((u32)pixel >> t._DstShiftR) & ((u32)0xff >> t._SrcShiftR); }
-        static u32 dest_r32(TemplateParams t, u32 pixel) { return ((u32)pixel >> t._DstShiftR) & ((u32)0xff >> t._SrcShiftR); }
+        static u32 dest_r8(u8 pixel) { return ((u32)pixel >> _DstShiftR) & ((u32)0xff >> _SrcShiftR); }
+        static u32 dest_r16(u16 pixel) { return ((u32)pixel >> _DstShiftR) & ((u32)0xff >> _SrcShiftR); }
+        static u32 dest_r32(u32 pixel) { return ((u32)pixel >> _DstShiftR) & ((u32)0xff >> _SrcShiftR); }
         //static inline u32 dest_g(_PixelType pixel) { return (pixel >> _DstShiftG) & (0xff >> _SrcShiftG); }
-        static u32 dest_g8(TemplateParams t, u8 pixel) { return ((u32)pixel >> t._DstShiftG) & ((u32)0xff >> t._SrcShiftG); }
-        static u32 dest_g16(TemplateParams t, u16 pixel) { return ((u32)pixel >> t._DstShiftG) & ((u32)0xff >> t._SrcShiftG); }
-        static u32 dest_g32(TemplateParams t, u32 pixel) { return ((u32)pixel >> t._DstShiftG) & ((u32)0xff >> t._SrcShiftG); }
+        static u32 dest_g8(u8 pixel) { return ((u32)pixel >> _DstShiftG) & ((u32)0xff >> _SrcShiftG); }
+        static u32 dest_g16(u16 pixel) { return ((u32)pixel >> _DstShiftG) & ((u32)0xff >> _SrcShiftG); }
+        static u32 dest_g32(u32 pixel) { return ((u32)pixel >> _DstShiftG) & ((u32)0xff >> _SrcShiftG); }
         //static inline u32 dest_b(_PixelType pixel) { return (pixel >> _DstShiftB) & (0xff >> _SrcShiftB); }
-        static u32 dest_b8(TemplateParams t, u8 pixel) { return ((u32)pixel >> t._DstShiftB) & ((u32)0xff >> t._SrcShiftB); }
-        static u32 dest_b16(TemplateParams t, u16 pixel) { return ((u32)pixel >> t._DstShiftB) & ((u32)0xff >> t._SrcShiftB); }
-        static u32 dest_b32(TemplateParams t, u32 pixel) { return ((u32)pixel >> t._DstShiftB) & ((u32)0xff >> t._SrcShiftB); }
+        static u32 dest_b8(u8 pixel) { return ((u32)pixel >> _DstShiftB) & ((u32)0xff >> _SrcShiftB); }
+        static u32 dest_b16(u16 pixel) { return ((u32)pixel >> _DstShiftB) & ((u32)0xff >> _SrcShiftB); }
+        static u32 dest_b32(u32 pixel) { return ((u32)pixel >> _DstShiftB) & ((u32)0xff >> _SrcShiftB); }
 
 
         // generic conversion with special optimization for destinations in the standard format
@@ -99,26 +119,26 @@ namespace mame
         //    else
         //        return dest_assemble_rgb(source32_r(pixel), source32_g(pixel), source32_b(pixel));
         //}
-        static u8 source32_to_dest8(TemplateParams t, u32 pixel)
+        static u8 source32_to_dest8(u32 pixel)
         {
-            if (t._SrcShiftR == 0 && t._SrcShiftG == 0 && t._SrcShiftB == 0 && t._DstShiftR == 16 && t._DstShiftG == 8 && t._DstShiftB == 0)
+            if (_SrcShiftR == 0 && _SrcShiftG == 0 && _SrcShiftB == 0 && _DstShiftR == 16 && _DstShiftG == 8 && _DstShiftB == 0)
                 return (u8)pixel;
             else
-                return dest_assemble_rgb8(t, source32_r(t, pixel), source32_g(t, pixel), source32_b(t, pixel));
+                return dest_assemble_rgb8(source32_r(pixel), source32_g(pixel), source32_b(pixel));
         }
-        static u16 source32_to_dest16(TemplateParams t, u32 pixel)
+        static u16 source32_to_dest16(u32 pixel)
         {
-            if (t._SrcShiftR == 0 && t._SrcShiftG == 0 && t._SrcShiftB == 0 && t._DstShiftR == 16 && t._DstShiftG == 8 && t._DstShiftB == 0)
+            if (_SrcShiftR == 0 && _SrcShiftG == 0 && _SrcShiftB == 0 && _DstShiftR == 16 && _DstShiftG == 8 && _DstShiftB == 0)
                 return (u16)pixel;
             else
-                return dest_assemble_rgb16(t, source32_r(t, pixel), source32_g(t, pixel), source32_b(t, pixel));
+                return dest_assemble_rgb16(source32_r(pixel), source32_g(pixel), source32_b(pixel));
         }
-        static u32 source32_to_dest32(TemplateParams t, u32 pixel)
+        static u32 source32_to_dest32(u32 pixel)
         {
-            if (t._SrcShiftR == 0 && t._SrcShiftG == 0 && t._SrcShiftB == 0 && t._DstShiftR == 16 && t._DstShiftG == 8 && t._DstShiftB == 0)
+            if (_SrcShiftR == 0 && _SrcShiftG == 0 && _SrcShiftB == 0 && _DstShiftR == 16 && _DstShiftG == 8 && _DstShiftB == 0)
                 return pixel;
             else
-                return dest_assemble_rgb32(t, source32_r(t, pixel), source32_g(t, pixel), source32_b(t, pixel));
+                return dest_assemble_rgb32(source32_r(pixel), source32_g(pixel), source32_b(pixel));
         }
 
 
@@ -191,10 +211,10 @@ namespace mame
         //  get_texel_palette16 - return a texel from a
         //  palettized 16bpp source
         //-------------------------------------------------
-        static u32 get_texel_palette16(TemplateParams t, render_texinfo texture, s32 curu, s32 curv)
+        static u32 get_texel_palette16(render_texinfo texture, s32 curu, s32 curv)
         {
             MemoryContainer<rgb_t> palbase = texture.palette;  //const rgb_t *palbase = texture.palette;
-            if (t._BilinearFilter)
+            if (_BilinearFilter)
             {
                 s32 u0 = curu >> 16;
                 s32 u1 = 1;
@@ -258,9 +278,9 @@ namespace mame
         //  get_texel_rgb32 - return a texel from a 32bpp
         //  RGB source
         //-------------------------------------------------
-        static u32 get_texel_rgb32(TemplateParams t, render_texinfo texture, s32 curu, s32 curv)
+        static u32 get_texel_rgb32(render_texinfo texture, s32 curu, s32 curv)
         {
-            if (t._BilinearFilter)
+            if (_BilinearFilter)
             {
                 s32 u0 = curu >> 16;
                 s32 u1 = 1;
@@ -302,9 +322,9 @@ namespace mame
         //  get_texel_argb32 - return a texel from a 32bpp
         //  ARGB source
         //-------------------------------------------------
-        static u32 get_texel_argb32(TemplateParams t, render_texinfo texture, s32 curu, s32 curv)
+        static u32 get_texel_argb32(render_texinfo texture, s32 curu, s32 curv)
         {
-            if (t._BilinearFilter)
+            if (_BilinearFilter)
             {
                 s32 u0 = curu >> 16;
                 s32 u1 = 1;
@@ -345,46 +365,45 @@ namespace mame
         //-------------------------------------------------
         //  draw_aa_pixel - draw an antialiased pixel
         //-------------------------------------------------
-        //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-        static void draw_aa_pixel(TemplateParams t, PointerU8 dstdata, u32 pitch, int x, int y, u32 col)  // _PixelType *dstdata
+        static void draw_aa_pixel(PointerU8 dstdata, u32 pitch, int x, int y, u32 col)  //static inline void draw_aa_pixel(_PixelType *dstdata, u32 pitch, int x, int y, u32 col)
         {
             //_PixelType *dest = dstdata + y * pitch + x;
             PointerU8 dest8 = null;
             PointerU16 dest16 = null;
             PointerU32 dest32 = null;
-            switch (t._bpp)
+            switch (_bpp)
             {
                 case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + x); break;
                 case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + x); break;
                 case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + x); break;
-                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", t._bpp);
+                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", _bpp);
             }
 
             //u32 dpix = _NoDestRead ? 0 : *dest;
             u32 dpix;
-            switch (t._bpp)
+            switch (_bpp)
             {
-                case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", t._bpp);
+                case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", _bpp);
             }
 
-            u32 dr = source32_r(t, col) + dest_r32(t, dpix);
-            u32 dg = source32_g(t, col) + dest_g32(t, dpix);
-            u32 db = source32_b(t, col) + dest_b32(t, dpix);
+            u32 dr = source32_r(col) + dest_r32(dpix);
+            u32 dg = source32_g(col) + dest_g32(dpix);
+            u32 db = source32_b(col) + dest_b32(dpix);
 
-            dr = (u32)((dr | -(dr >> (8 - t._SrcShiftR))) & (0xff >> t._SrcShiftR));
-            dg = (u32)((dg | -(dg >> (8 - t._SrcShiftG))) & (0xff >> t._SrcShiftG));
-            db = (u32)((db | -(db >> (8 - t._SrcShiftB))) & (0xff >> t._SrcShiftB));
+            dr = (u32)((dr | -(dr >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR));
+            dg = (u32)((dg | -(dg >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG));
+            db = (u32)((db | -(db >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB));
 
             //*dest = dest_assemble_rgb(dr, dg, db);
-            switch (t._bpp)
+            switch (_bpp)
             {
-                case 8:  dest8[0] = dest_assemble_rgb8(t, dr, dg, db); break;
-                case 16: dest16[0] = dest_assemble_rgb16(t, dr, dg, db); break;
-                case 32: dest32[0] = dest_assemble_rgb32(t, dr, dg, db); break;
-                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", t._bpp);
+                case 8:  dest8[0] = dest_assemble_rgb8(dr, dg, db); break;
+                case 16: dest16[0] = dest_assemble_rgb16(dr, dg, db); break;
+                case 32: dest32[0] = dest_assemble_rgb32(dr, dg, db); break;
+                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", _bpp);
             }
         }
 
@@ -396,7 +415,7 @@ namespace mame
         //-------------------------------------------------
         //  draw_line - draw a line or point
         //-------------------------------------------------
-        static void draw_line(TemplateParams t, render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  // _PixelType *dstdata
+        static void draw_line(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_line(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
             // compute the start/end coordinates
             int x1 = (int)(prim.bounds.x0 * 65536.0f);
@@ -412,7 +431,7 @@ namespace mame
                 // build up the cosine table if we haven't yet
                 if (s_cosine_table[0] == 0)
                     for (int entry = 0; entry <= 2048; entry++)
-                        s_cosine_table[entry] = (u32)((double)(1.0 / Math.Cos(Math.Atan((double)(entry) / 2048.0))) * 0x10000000 + 0.5);
+                        s_cosine_table[entry] = (u32)(int)((double)(1.0 / std.cos(std.atan((double)(entry) / 2048.0))) * 0x10000000 + 0.5);
 
                 int beam = (int)(prim.width * 65536.0f);
                 if (beam < 0x00010000)
@@ -429,7 +448,7 @@ namespace mame
                         dy--;
                     x1 >>= 16;
                     int xx = x2 >> 16;
-                    int bwidth = eminline_global.mul_32x32_hi(beam << 4, (int)s_cosine_table[Math.Abs(sy) >> 5]);
+                    int bwidth = eminline_global.mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sy) >> 5]);
                     y1 -= bwidth >> 1; // start back half the diameter
                     for (;;)
                     {
@@ -438,7 +457,7 @@ namespace mame
                             dx = bwidth;    // init diameter of beam
                             dy = y1 >> 16;
                             if (dy >= 0 && dy < height)
-                                draw_aa_pixel(t, dstdata, pitch, x1, dy, apply_intensity(0xff & (~y1 >> 8), new rgb_t(col)));
+                                draw_aa_pixel(dstdata, pitch, x1, dy, apply_intensity(0xff & (~y1 >> 8), new rgb_t(col)));
                             dy++;
                             dx -= 0x10000 - (0xffff & y1); // take off amount plotted
                             u8 a1 = (byte)((dx >> 8) & 0xff);   // calc remainder pixel
@@ -446,11 +465,11 @@ namespace mame
                             while (dx-- != 0)                 // plot rest of pixels
                             {
                                 if (dy >= 0 && dy < height)
-                                    draw_aa_pixel(t, dstdata, pitch, x1, dy, col);
+                                    draw_aa_pixel(dstdata, pitch, x1, dy, col);
                                 dy++;
                             }
                             if (dy >= 0 && dy < height)
-                                draw_aa_pixel(t, dstdata, pitch, x1, dy, apply_intensity(a1, new rgb_t(col)));
+                                draw_aa_pixel(dstdata, pitch, x1, dy, apply_intensity(a1, new rgb_t(col)));
                         }
                         if (x1 == xx) break;
                         x1 += sx;
@@ -465,7 +484,7 @@ namespace mame
                         dx--;
                     y1 >>= 16;
                     int yy = y2 >> 16;
-                    int bwidth = eminline_global.mul_32x32_hi(beam << 4, (int)s_cosine_table[Math.Abs(sx) >> 5]);
+                    int bwidth = eminline_global.mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sx) >> 5]);
                     x1 -= bwidth >> 1; // start back half the width
                     for (;;)
                     {
@@ -474,7 +493,7 @@ namespace mame
                             dy = bwidth;    // calc diameter of beam
                             dx = x1 >> 16;
                             if (dx >= 0 && dx < width)
-                                draw_aa_pixel(t, dstdata, pitch, dx, y1, apply_intensity(0xff & (~x1 >> 8), new rgb_t(col)));
+                                draw_aa_pixel(dstdata, pitch, dx, y1, apply_intensity(0xff & (~x1 >> 8), new rgb_t(col)));
                             dx++;
                             dy -= 0x10000 - (0xffff & x1); // take off amount plotted
                             u8 a1 = (byte)((dy >> 8) & 0xff);   // remainder pixel
@@ -482,11 +501,11 @@ namespace mame
                             while (dy-- != 0)                 // plot rest of pixels
                             {
                                 if (dx >= 0 && dx < width)
-                                    draw_aa_pixel(t, dstdata, pitch, dx, y1, col);
+                                    draw_aa_pixel(dstdata, pitch, dx, y1, col);
                                 dx++;
                             }
                             if (dx >= 0 && dx < width)
-                                draw_aa_pixel(t, dstdata, pitch, dx, y1, apply_intensity(a1, new rgb_t(col)));
+                                draw_aa_pixel(dstdata, pitch, dx, y1, apply_intensity(a1, new rgb_t(col)));
                         }
                         if (y1 == yy) break;
                         y1 += sy;
@@ -513,7 +532,7 @@ namespace mame
                     for (;;)
                     {
                         if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
-                            draw_aa_pixel(t, dstdata, pitch, x1, y1, col);
+                            draw_aa_pixel(dstdata, pitch, x1, y1, col);
                         if (x1 == x2) break;
                         x1 += sx;
                         cx -= dy;
@@ -529,7 +548,7 @@ namespace mame
                     for (;;)
                     {
                         if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
-                            draw_aa_pixel(t, dstdata, pitch, x1, y1, col);
+                            draw_aa_pixel(dstdata, pitch, x1, y1, col);
                         if (y1 == y2) break;
                         y1 += sy;
                         cy -= dx;
@@ -550,7 +569,7 @@ namespace mame
         //-------------------------------------------------
         //  draw_rect - draw a solid rectangle
         //-------------------------------------------------
-        static void draw_rect(TemplateParams t, render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_rect(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
+        static void draw_rect(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_rect(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
             render_bounds fpos = prim.bounds;
 
@@ -581,7 +600,7 @@ namespace mame
             assert(render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_NONE || render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_ALPHA);
 
             // fast case: no alpha
-            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_NONE || is_opaque(t, prim.color.a))
+            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_NONE || is_opaque(prim.color.a))
             {
                 u32 r = (u32)(256.0f * prim.color.r);
                 u32 g = (u32)(256.0f * prim.color.g);
@@ -592,7 +611,7 @@ namespace mame
                 if (r > 0xff) { if ((int)r < 0) r = 0; else r = 0xff; }
                 if (g > 0xff) { if ((int)g < 0) g = 0; else g = 0xff; }
                 if (b > 0xff) { if ((int)b < 0) b = 0; else b = 0xff; }
-                pix = dest_rgb_to_pixel32(t, r, g, b);
+                pix = dest_rgb_to_pixel32(r, g, b);
 
                 // loop over rows
                 for (s32 y = starty; y < endy; y++)
@@ -601,35 +620,35 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + startx); break;
-                        default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
                     }
 
                     // loop over cols
                     for (s32 x = startx; x < endx; x++)
                     {
                         //*dest++ = pix;
-                        switch (t._bpp)
+                        switch (_bpp)
                         {
                             case 8:  dest8[0] = (u8)pix;  dest8++;  break;
                             case 16: dest16[0] = (u16)pix;  dest16++;  break;
                             case 32: dest32[0] = pix;  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", t._bpp);
+                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
                         }
                     }
                 }
             }
 
             // alpha and/or coloring case
-            else if (!is_transparent(t, prim.color.a))
+            else if (!is_transparent(prim.color.a))
             {
-                u32 rmask = dest_rgb_to_pixel32(t, 0xff, 0x00, 0x00);
-                u32 gmask = dest_rgb_to_pixel32(t, 0x00, 0xff, 0x00);
-                u32 bmask = dest_rgb_to_pixel32(t, 0x00, 0x00, 0xff);
+                u32 rmask = dest_rgb_to_pixel32(0xff, 0x00, 0x00);
+                u32 gmask = dest_rgb_to_pixel32(0x00, 0xff, 0x00);
+                u32 bmask = dest_rgb_to_pixel32(0x00, 0x00, 0xff);
                 u32 r = (u32)(256.0f * prim.color.r * prim.color.a);
                 u32 g = (u32)(256.0f * prim.color.g * prim.color.a);
                 u32 b = (u32)(256.0f * prim.color.b * prim.color.a);
@@ -642,9 +661,9 @@ namespace mame
                 if (inva > 0x100) { if ((s32)(inva) < 0) inva = 0; else inva = 0x100; }
 
                 // pre-shift the RGBA pieces
-                r = dest_rgb_to_pixel32(t, r, 0, 0) << 8;
-                g = dest_rgb_to_pixel32(t, 0, g, 0) << 8;
-                b = dest_rgb_to_pixel32(t, 0, 0, b) << 8;
+                r = dest_rgb_to_pixel32(r, 0, 0) << 8;
+                g = dest_rgb_to_pixel32(0, g, 0) << 8;
+                b = dest_rgb_to_pixel32(0, 0, b) << 8;
 
                 // loop over rows
                 for (s32 y = starty; y < endy; y++)
@@ -653,12 +672,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + startx); break;
-                        default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
                     }
 
                     // loop over cols
@@ -666,12 +685,12 @@ namespace mame
                     {
                         //u32 dpix = _NoDestRead ? 0 : *dest;
                         u32 dpix;
-                        switch (t._bpp)
+                        switch (_bpp)
                         {
-                            case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                            case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                            case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", t._bpp);
+                            case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                            case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                            case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
                         }
 
                         u32 dr = (r + ((dpix & rmask) * inva)) & (rmask << 8);
@@ -679,12 +698,12 @@ namespace mame
                         u32 db = (b + ((dpix & bmask) * inva)) & (bmask << 8);
 
                         //*dest++ = (dr | dg | db) >> 8;
-                        switch (t._bpp)
+                        switch (_bpp)
                         {
                             case 8:  dest8[0] = (u8)((dr | dg | db) >> 8);  dest8++;  break;
                             case 16: dest16[0] = (u16)((dr | dg | db) >> 8);  dest16++;  break;
                             case 32: dest32[0] = (dr | dg | db) >> 8;  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", t._bpp);
+                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
                         }
                     }
                 }
@@ -700,13 +719,13 @@ namespace mame
         //  draw_quad_palette16_none - perform
         //  rasterization of a 16bpp palettized texture
         //-------------------------------------------------
-        static void draw_quad_palette16_none(TemplateParams t, render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //_PixelType *dstdata
+        static void draw_quad_palette16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_none(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data &setup)
         {
             // ensure all parameters are valid
             assert(prim.texture.palette != null);
 
             // fast case: no coloring, no alpha
-            if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(t, prim.color.a))
+            if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
@@ -715,12 +734,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
                     }
 
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
@@ -729,15 +748,15 @@ namespace mame
                     // loop over cols
                     for (s32 x = setup.startx; x < setup.endx; x++)
                     {
-                        u32 pix = get_texel_palette16(t, prim.texture, curu, curv);
+                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
 
                         //*dest++ = source32_to_dest(pix);
-                        switch (t._bpp)
+                        switch (_bpp)
                         {
-                            case 8:  dest8[0] = source32_to_dest8(t, pix);  dest8++;  break;
-                            case 16: dest16[0] = source32_to_dest16(t, pix);  dest16++;  break;
-                            case 32: dest32[0] = source32_to_dest32(t, pix);  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
+                            case 8:  dest8[0] = source32_to_dest8(pix);  dest8++;  break;
+                            case 16: dest16[0] = source32_to_dest16(pix);  dest16++;  break;
+                            case 32: dest32[0] = source32_to_dest32(pix);  dest32++;  break;
+                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
                         }
 
                         curu += setup.dudx;
@@ -746,7 +765,7 @@ namespace mame
                 }
             }
             // coloring-only case
-            else if (is_opaque(t, prim.color.a))
+            else if (is_opaque(prim.color.a))
             {
                 u32 sr = (u32)(256.0f * prim.color.r);
                 u32 sg = (u32)(256.0f * prim.color.g);
@@ -764,12 +783,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
                     }
 
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
@@ -778,18 +797,18 @@ namespace mame
                     // loop over cols
                     for (s32 x = setup.startx; x < setup.endx; x++)
                     {
-                        u32 pix = get_texel_palette16(t, prim.texture, curu, curv);
-                        u32 r = (source32_r(t, pix) * sr) >> 8;
-                        u32 g = (source32_g(t, pix) * sg) >> 8;
-                        u32 b = (source32_b(t, pix) * sb) >> 8;
+                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
+                        u32 r = (source32_r(pix) * sr) >> 8;
+                        u32 g = (source32_g(pix) * sg) >> 8;
+                        u32 b = (source32_b(pix) * sb) >> 8;
 
                         //*dest++ = dest_assemble_rgb(r, g, b);
-                        switch (t._bpp)
+                        switch (_bpp)
                         {
-                            case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  dest8++;  break;
-                            case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  dest16++;  break;
-                            case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
+                            case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
+                            case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
+                            case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
+                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
                         }
 
                         curu += setup.dudx;
@@ -798,7 +817,7 @@ namespace mame
                 }
             }
             // alpha and/or coloring case
-            else if (!is_transparent(t, prim.color.a))
+            else if (!is_transparent(prim.color.a))
             {
                 u32 sr = (u32)(256.0f * prim.color.r * prim.color.a);
                 u32 sg = (u32)(256.0f * prim.color.g * prim.color.a);
@@ -818,12 +837,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
                     }
 
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
@@ -832,29 +851,29 @@ namespace mame
                     // loop over cols
                     for (s32 x = setup.startx; x < setup.endx; x++)
                     {
-                        u32 pix = get_texel_palette16(t, prim.texture, curu, curv);
+                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
 
                         //u32 dpix = _NoDestRead ? 0 : *dest;
                         u32 dpix;
-                        switch (t._bpp)
+                        switch (_bpp)
                         {
-                            case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                            case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                            case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
+                            case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                            case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                            case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
                         }
 
-                        u32 r = (source32_r(t, pix) * sr + dest_r32(t, dpix) * invsa) >> 8;
-                        u32 g = (source32_g(t, pix) * sg + dest_g32(t, dpix) * invsa) >> 8;
-                        u32 b = (source32_b(t, pix) * sb + dest_b32(t, dpix) * invsa) >> 8;
+                        u32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
+                        u32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
+                        u32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
 
                         //*dest++ = dest_assemble_rgb(r, g, b);
-                        switch (t._bpp)
+                        switch (_bpp)
                         {
-                            case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  dest8++;  break;
-                            case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  dest16++;  break;
-                            case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", t._bpp);
+                            case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
+                            case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
+                            case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
+                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
                         }
 
                         curu += setup.dudx;
@@ -910,12 +929,12 @@ namespace mame
         //  draw_quad_rgb32 - perform rasterization of
         //  a 32bpp RGB texture
         //-------------------------------------------------
-        static void draw_quad_rgb32(TemplateParams t, render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_rgb32(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
+        static void draw_quad_rgb32(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_rgb32(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             MemoryContainer<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
 
             // fast case: no coloring, no alpha
-            if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(t, prim.color.a))
+            if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
@@ -924,12 +943,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                     }
 
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
@@ -941,15 +960,15 @@ namespace mame
                         // loop over cols
                         for (int x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
 
                             //*dest++ = source32_to_dest(pix);
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
-                                case 8:  dest8[0] = source32_to_dest8(t, pix);  dest8++;  break;
-                                case 16: dest16[0] = source32_to_dest16(t, pix);  dest16++;  break;
-                                case 32: dest32[0] = source32_to_dest32(t, pix);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                                case 8:  dest8[0] = source32_to_dest8(pix);  dest8++;  break;
+                                case 16: dest16[0] = source32_to_dest16(pix);  dest16++;  break;
+                                case 32: dest32[0] = source32_to_dest32(pix);  dest32++;  break;
+                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -963,18 +982,18 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
-                            u32 r = palbase[(int)((pix >> 16) & 0xff)] >> t._SrcShiftR;
-                            u32 g = palbase[(int)((pix >> 8) & 0xff)] >> t._SrcShiftG;
-                            u32 b = palbase[(int)((pix >> 0) & 0xff)] >> t._SrcShiftB;
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 r = palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR;
+                            u32 g = palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG;
+                            u32 b = palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB;
 
                             //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
-                                case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
+                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
+                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
+                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -985,7 +1004,7 @@ namespace mame
             }
 
             // coloring-only case
-            else if (is_opaque(t, prim.color.a))
+            else if (is_opaque(prim.color.a))
             {
                 u32 sr = (u32)(256.0f * prim.color.r);
                 u32 sg = (u32)(256.0f * prim.color.g);
@@ -1003,12 +1022,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                     }
 
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
@@ -1020,18 +1039,18 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
-                            u32 r = (source32_r(t, pix) * sr) >> 8;
-                            u32 g = (source32_g(t, pix) * sg) >> 8;
-                            u32 b = (source32_b(t, pix) * sb) >> 8;
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 r = (source32_r(pix) * sr) >> 8;
+                            u32 g = (source32_g(pix) * sg) >> 8;
+                            u32 b = (source32_b(pix) * sb) >> 8;
 
                             //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
-                                case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
+                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
+                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
+                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -1045,18 +1064,18 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
-                            u32 r = (palbase[(int)((pix >> 16) & 0xff)] * sr) >> (8 + t._SrcShiftR);
-                            u32 g = (palbase[(int)((pix >> 8) & 0xff)] * sg) >> (8 + t._SrcShiftG);
-                            u32 b = (palbase[(int)((pix >> 0) & 0xff)] * sb) >> (8 + t._SrcShiftB);
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
+                            u32 r = (palbase[(int)((pix >> 16) & 0xff)] * sr) >> (8 + _SrcShiftR);
+                            u32 g = (palbase[(int)((pix >> 8) & 0xff)] * sg) >> (8 + _SrcShiftG);
+                            u32 b = (palbase[(int)((pix >> 0) & 0xff)] * sb) >> (8 + _SrcShiftB);
 
                             //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
-                                case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
+                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
+                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
+                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -1067,7 +1086,7 @@ namespace mame
             }
 
             // alpha and/or coloring case
-            else if (!is_transparent(t, prim.color.a))
+            else if (!is_transparent(prim.color.a))
             {
                 u32 sr = (u32)(256.0f * prim.color.r * prim.color.a);
                 u32 sg = (u32)(256.0f * prim.color.g * prim.color.a);
@@ -1087,12 +1106,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                     }
 
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
@@ -1104,29 +1123,29 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
 
                             //u32 dpix = _NoDestRead ? 0 : *dest;
                             u32 dpix;
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
-                                case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                                case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                                case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                                case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                                case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                                case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                             }
 
-                            u32 r = (source32_r(t, pix) * sr + dest_r32(t, dpix) * invsa) >> 8;
-                            u32 g = (source32_g(t, pix) * sg + dest_g32(t, dpix) * invsa) >> 8;
-                            u32 b = (source32_b(t, pix) * sb + dest_b32(t, dpix) * invsa) >> 8;
+                            u32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
+                            u32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
+                            u32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
 
                             //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
-                                case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
+                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
+                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
+                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -1140,29 +1159,29 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_rgb32(t, prim.texture, curu, curv);
+                            u32 pix = get_texel_rgb32(prim.texture, curu, curv);
 
                             //u32 dpix = _NoDestRead ? 0 : *dest;
                             u32 dpix;
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
-                                case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                                case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                                case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                                case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                                case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                                case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                             }
 
-                            u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> t._SrcShiftR) * sr + dest_r32(t, dpix) * invsa) >> 8;
-                            u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> t._SrcShiftG) * sg + dest_g32(t, dpix) * invsa) >> 8;
-                            u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> t._SrcShiftB) * sb + dest_b32(t, dpix) * invsa) >> 8;
+                            u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * sr + dest_r32(dpix) * invsa) >> 8;
+                            u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * sg + dest_g32(dpix) * invsa) >> 8;
+                            u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * sb + dest_b32(dpix) * invsa) >> 8;
 
                             //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
-                                case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", t._bpp);
+                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
+                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
+                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
+                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -1202,12 +1221,12 @@ namespace mame
         //  draw_quad_argb32_alpha - perform
         //  rasterization using standard alpha blending
         //-------------------------------------------------
-        static void draw_quad_argb32_alpha(TemplateParams t, render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_alpha(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
+        static void draw_quad_argb32_alpha(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_alpha(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             MemoryContainer<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
 
             // fast case: no coloring, no alpha
-            if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(t, prim.color.a))
+            if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
@@ -1216,12 +1235,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                     }
 
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
@@ -1233,42 +1252,42 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_argb32(t, prim.texture, curu, curv);
+                            u32 pix = get_texel_argb32(prim.texture, curu, curv);
                             u32 ta = pix >> 24;
                             if (ta != 0)
                             {
                                 //u32 dpix = _NoDestRead ? 0 : *dest;
                                 u32 dpix;
-                                switch (t._bpp)
+                                switch (_bpp)
                                 {
-                                    case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                                    case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                                    case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                    case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                                    case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                                    case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                                 }
 
                                 u32 invta = 0x100 - ta;
-                                u32 r = (source32_r(t, pix) * ta + dest_r32(t, dpix) * invta) >> 8;
-                                u32 g = (source32_g(t, pix) * ta + dest_g32(t, dpix) * invta) >> 8;
-                                u32 b = (source32_b(t, pix) * ta + dest_b32(t, dpix) * invta) >> 8;
+                                u32 r = (source32_r(pix) * ta + dest_r32(dpix) * invta) >> 8;
+                                u32 g = (source32_g(pix) * ta + dest_g32(dpix) * invta) >> 8;
+                                u32 b = (source32_b(pix) * ta + dest_b32(dpix) * invta) >> 8;
 
                                 //*dest = dest_assemble_rgb(r, g, b);
-                                switch (t._bpp)
+                                switch (_bpp)
                                 {
-                                    case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  break;
-                                    case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  break;
-                                    case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                    case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  break;
+                                    case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  break;
+                                    case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  break;
+                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                                 }
                             }
 
                             //dest++;
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
                                 case 8:  dest8++;  break;
                                 case 16: dest16++;  break;
                                 case 32: dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -1282,42 +1301,42 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_argb32(t, prim.texture, curu, curv);
+                            u32 pix = get_texel_argb32(prim.texture, curu, curv);
                             u32 ta = pix >> 24;
                             if (ta != 0)
                             {
                                 //u32 dpix = _NoDestRead ? 0 : *dest;
                                 u32 dpix;
-                                switch (t._bpp)
+                                switch (_bpp)
                                 {
-                                    case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                                    case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                                    case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                    case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                                    case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                                    case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                                 }
 
                                 u32 invta = 0x100 - ta;
-                                u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> t._SrcShiftR) * ta + dest_r32(t, dpix) * invta) >> 8;
-                                u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> t._SrcShiftG) * ta + dest_g32(t, dpix) * invta) >> 8;
-                                u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> t._SrcShiftB) * ta + dest_b32(t, dpix) * invta) >> 8;
+                                u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * ta + dest_r32(dpix) * invta) >> 8;
+                                u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * ta + dest_g32(dpix) * invta) >> 8;
+                                u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * ta + dest_b32(dpix) * invta) >> 8;
 
                                 //*dest = dest_assemble_rgb(r, g, b);
-                                switch (t._bpp)
+                                switch (_bpp)
                                 {
-                                    case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  break;
-                                    case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  break;
-                                    case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                    case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  break;
+                                    case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  break;
+                                    case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  break;
+                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                                 }
                             }
 
                             //dest++;
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
                                 case 8:  dest8++;  break;
                                 case 16: dest16++;  break;
                                 case 32: dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -1348,12 +1367,12 @@ namespace mame
                     PointerU8 dest8 = null;
                     PointerU16 dest16 = null;
                     PointerU32 dest32 = null;
-                    switch (t._bpp)
+                    switch (_bpp)
                     {
                         case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
                         case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
                         case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                        default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                     }
 
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
@@ -1365,42 +1384,42 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_argb32(t, prim.texture, curu, curv);
+                            u32 pix = get_texel_argb32(prim.texture, curu, curv);
                             u32 ta = (pix >> 24) * sa;
                             if (ta != 0)
                             {
                                 //u32 dpix = _NoDestRead ? 0 : *dest;
                                 u32 dpix;
-                                switch (t._bpp)
+                                switch (_bpp)
                                 {
-                                    case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                                    case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                                    case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                    case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                                    case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                                    case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                                 }
 
                                 u32 invsta = (0x10000 - ta) << 8;
-                                u32 r = (source32_r(t, pix) * sr * ta + dest_r32(t, dpix) * invsta) >> 24;
-                                u32 g = (source32_g(t, pix) * sg * ta + dest_g32(t, dpix) * invsta) >> 24;
-                                u32 b = (source32_b(t, pix) * sb * ta + dest_b32(t, dpix) * invsta) >> 24;
+                                u32 r = (source32_r(pix) * sr * ta + dest_r32(dpix) * invsta) >> 24;
+                                u32 g = (source32_g(pix) * sg * ta + dest_g32(dpix) * invsta) >> 24;
+                                u32 b = (source32_b(pix) * sb * ta + dest_b32(dpix) * invsta) >> 24;
 
                                 //*dest = dest_assemble_rgb(r, g, b);
-                                switch (t._bpp)
+                                switch (_bpp)
                                 {
-                                    case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  break;
-                                    case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  break;
-                                    case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                    case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  break;
+                                    case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  break;
+                                    case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  break;
+                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                                 }
                             }
 
                             //dest++;
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
                                 case 8:  dest8++;  break;
                                 case 16: dest16++;  break;
                                 case 32: dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -1414,42 +1433,42 @@ namespace mame
                         // loop over cols
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
-                            u32 pix = get_texel_argb32(t, prim.texture, curu, curv);
+                            u32 pix = get_texel_argb32(prim.texture, curu, curv);
                             u32 ta = (pix >> 24) * sa;
                             if (ta != 0)
                             {
                                 //u32 dpix = _NoDestRead ? 0 : *dest;
                                 u32 dpix;
-                                switch (t._bpp)
+                                switch (_bpp)
                                 {
-                                    case 8:  dpix = t._NoDestRead ? 0U : dest8[0]; break;
-                                    case 16: dpix = t._NoDestRead ? 0U : dest16[0]; break;
-                                    case 32: dpix = t._NoDestRead ? 0U : dest32[0]; break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                    case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
+                                    case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
+                                    case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
+                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                                 }
 
                                 u32 invsta = (0x10000 - ta) << 8;
-                                u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> t._SrcShiftR) * sr * ta + dest_r32(t, dpix) * invsta) >> 24;
-                                u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> t._SrcShiftG) * sg * ta + dest_g32(t, dpix) * invsta) >> 24;
-                                u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> t._SrcShiftB) * sb * ta + dest_b32(t, dpix) * invsta) >> 24;
+                                u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * sr * ta + dest_r32(dpix) * invsta) >> 24;
+                                u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * sg * ta + dest_g32(dpix) * invsta) >> 24;
+                                u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * sb * ta + dest_b32(dpix) * invsta) >> 24;
 
                                 //*dest = dest_assemble_rgb(r, g, b);
-                                switch (t._bpp)
+                                switch (_bpp)
                                 {
-                                    case 8:  dest8[0] = dest_assemble_rgb8(t, r, g, b);  break;
-                                    case 16: dest16[0] = dest_assemble_rgb16(t, r, g, b);  break;
-                                    case 32: dest32[0] = dest_assemble_rgb32(t, r, g, b);  break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                    case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  break;
+                                    case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  break;
+                                    case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  break;
+                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                                 }
                             }
 
                             //dest++;
-                            switch (t._bpp)
+                            switch (_bpp)
                             {
                                 case 8:  dest8++;  break;
                                 case 16: dest16++;  break;
                                 case 32: dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", t._bpp);
+                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
                             }
 
                             curu += setup.dudx;
@@ -1480,7 +1499,7 @@ namespace mame
         //  and then dispatch to a texture-mode-specific
         //  drawing routine
         //-------------------------------------------------
-        static void setup_and_draw_textured_quad(TemplateParams t, render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void setup_and_draw_textured_quad(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
+        static void setup_and_draw_textured_quad(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void setup_and_draw_textured_quad(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
             assert(prim.bounds.x0 <= prim.bounds.x1);
             assert(prim.bounds.y0 <= prim.bounds.y1);
@@ -1521,7 +1540,7 @@ namespace mame
             setup.startv += (setup.dvdx + setup.dvdy) / 2;
 
             // if we're bilinear filtering, we need to offset u/v by half a texel
-            if (t._BilinearFilter)
+            if (_BilinearFilter)
             {
                 setup.startu -= 0x8000;
                 setup.startv -= 0x8000;
@@ -1533,7 +1552,7 @@ namespace mame
             {
                 if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)) ||
                     primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)))
-                    draw_quad_palette16_none(t, prim, dstdata, pitch, setup);
+                    draw_quad_palette16_none(prim, dstdata, pitch, setup);
 
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
                     draw_quad_palette16_add(prim, dstdata, pitch, setup);
@@ -1548,7 +1567,7 @@ namespace mame
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)) ||
                          primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)) ||
                          primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)))
-                    draw_quad_rgb32(t, prim, dstdata, pitch, setup);
+                    draw_quad_rgb32(prim, dstdata, pitch, setup);
 
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_RGB_MULTIPLY)) ||
                          primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_RGB_MULTIPLY)))
@@ -1558,7 +1577,7 @@ namespace mame
                     draw_quad_rgb32_add(prim, dstdata, pitch, setup);
 
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)))
-                    draw_quad_argb32_alpha(t, prim, dstdata, pitch, setup);
+                    draw_quad_argb32_alpha(prim, dstdata, pitch, setup);
 
                 else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
                     draw_quad_argb32_add(prim, dstdata, pitch, setup);
@@ -1577,8 +1596,7 @@ namespace mame
         //  draw_primitives - draw a series of primitives
         //  using a software rasterizer
         //-------------------------------------------------
-        //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-        public static void draw_primitives(TemplateParams t, render_primitive_list primlist, PointerU8 dstdata, u32 width, u32 height, u32 pitch)  //static void draw_primitives(const render_primitive_list &primlist, void *dstdata, u32 width, u32 height, u32 pitch)
+        public static void draw_primitives(render_primitive_list primlist, PointerU8 dstdata, u32 width, u32 height, u32 pitch)  //static void draw_primitives(const render_primitive_list &primlist, void *dstdata, u32 width, u32 height, u32 pitch)
         {
             // loop over the list and render each element
             for (render_primitive prim = primlist.first(); prim != null; prim = prim.next())
@@ -1586,14 +1604,14 @@ namespace mame
                 switch (prim.type)
                 {
                     case render_primitive.primitive_type.LINE:
-                        draw_line(t, prim, dstdata, (int)width, (int)height, pitch);  //draw_line(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
+                        draw_line(prim, dstdata, (int)width, (int)height, pitch);  //draw_line(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
                         break;
 
                     case render_primitive.primitive_type.QUAD:
                         if (prim.texture.base_ == null)
-                            draw_rect(t, prim, dstdata, (int)width, (int)height, pitch);  //draw_rect(prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
+                            draw_rect(prim, dstdata, (int)width, (int)height, pitch);  //draw_rect(prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
                         else
-                            setup_and_draw_textured_quad(t, prim, dstdata, (int)width, (int)height, pitch);  //setup_and_draw_textured_quad(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
+                            setup_and_draw_textured_quad(prim, dstdata, (int)width, (int)height, pitch);  //setup_and_draw_textured_quad(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
                         break;
 
                     default:

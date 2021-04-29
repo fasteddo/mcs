@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s8 = System.SByte;
 using s16 = System.Int16;
 using s32 = System.Int32;
@@ -295,7 +296,7 @@ namespace mame
         string m_tag;
 
         public tag_add_exception(string tag) : base() { m_tag = tag; }
-        string tag() { return m_tag.c_str(); }
+        string tag() { return m_tag; }
     }
 
 

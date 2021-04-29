@@ -4,7 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using device_timer_id = System.UInt32;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
@@ -100,13 +101,13 @@ namespace mame
 
         public void set_prescaler_selector(int select)
         {
-            m_s1 = BIT(select, 1) != 0;
-            m_s2 = BIT(select, 0) != 0;
+            m_s1 = g.BIT(select, 1) != 0;
+            m_s2 = g.BIT(select, 0) != 0;
             m_bitwidth = ((select & 4) != 0) ? (u8)4 : (u8)3;
         }
 
 
-        public devcb_write.binder vck_callback() { return m_vck_cb.bind(); }
+        public devcb_write_line.binder vck_callback() { return m_vck_cb.bind(); }
         //auto vck_legacy_callback() { return m_vck_legacy_cb.bind(); }
 
 
@@ -148,8 +149,8 @@ namespace mame
             {
                 m_stream.update();
 
-                m_s1 = BIT(select, 1) != 0;
-                m_s2 = BIT(select, 0) != 0;
+                m_s1 = g.BIT(select, 1) != 0;
+                m_s2 = g.BIT(select, 0) != 0;
 
                 /* timer set */
                 notify_clock_changed();

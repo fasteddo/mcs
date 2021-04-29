@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -40,7 +40,7 @@ namespace mame
         void vblank_irq(int state)
         {
             if (state != 0 && m_irq_mask)
-                m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_IRQ0, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(g.INPUT_LINE_IRQ0, g.ASSERT_LINE);
         }
 
         //INTERRUPT_GEN_MEMBER(periodic_irq);
@@ -52,7 +52,7 @@ namespace mame
         {
             m_irq_mask = state != 0;
             if (state == 0)
-                m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_IRQ0, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(g.INPUT_LINE_IRQ0, g.CLEAR_LINE);
         }
 
         void pacman_interrupt_vector_w(uint8_t data)
@@ -331,7 +331,7 @@ namespace mame
 
         static readonly gfx_layout tilelayout = new gfx_layout(
             8, 8,    /* 8*8 characters */
-            RGN_FRAC(1,2),    /* 256 characters */
+            g.RGN_FRAC(1,2),    /* 256 characters */
             2,  /* 2 bits per pixel */
             new UInt32[] { 0, 4 },   /* the two bitplanes for 4 pixels are packed into one byte */
             new UInt32[] { 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 }, /* bits are packed in groups of four */
@@ -342,7 +342,7 @@ namespace mame
 
         static readonly gfx_layout spritelayout = new gfx_layout(
             16,16,  /* 16*16 sprites */
-            RGN_FRAC(1,2),  /* 64 sprites */
+            g.RGN_FRAC(1,2),  /* 64 sprites */
             2,  /* 2 bits per pixel */
             new UInt32[] { 0, 4 },   /* the two bitplanes for 4 pixels are packed into one byte */
             new UInt32[] { 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
@@ -356,8 +356,8 @@ namespace mame
         //static GFXDECODE_START( gfx_pacman )
         static readonly gfx_decode_entry [] gfx_pacman = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY( "gfx1", 0x0000, tilelayout,   0, 128 ),
-            GFXDECODE_ENTRY( "gfx1", 0x1000, spritelayout, 0, 128 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0x0000, tilelayout,   0, 128 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0x1000, spritelayout, 0, 128 ),
 
             //GFXDECODE_END
         };
@@ -415,7 +415,7 @@ namespace mame
 
             NAMCO(config, m_namco_sound, MASTER_CLOCK/6/32);
             m_namco_sound.op[0].set_voices(3);
-            m_namco_sound.op[0].disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+            m_namco_sound.op[0].disound.add_route(g.ALL_OUTPUTS, "mono", 1.0);
         }
 
 
@@ -558,8 +558,8 @@ namespace mame
          *************************************/
 
 
-        static int BITSWAP12(int val, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return bitswap(val,15,14,13,12,B11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0); }
-        static int BITSWAP11(int val, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return bitswap(val,15,14,13,12,11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0); }
+        static int BITSWAP12(int val, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return g.bitswap(val,15,14,13,12,B11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0); }
+        static int BITSWAP11(int val, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return g.bitswap(val,15,14,13,12,11,B10,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0); }
 
 
         void mspacman_install_patches(Pointer<uint8_t> ROM)  //void mspacman_install_patches(uint8_t *ROM)
@@ -631,14 +631,14 @@ namespace mame
                 DROM[0x0000+i] = ROM[0x0000+i]; /* pacman.6e */
                 DROM[0x1000+i] = ROM[0x1000+i]; /* pacman.6f */
                 DROM[0x2000+i] = ROM[0x2000+i]; /* pacman.6h */
-                DROM[0x3000+i] = (byte)bitswap(ROM[0xb000+BITSWAP12(i,11,3,7,9,10,8,6,5,4,2,1,0)],0,4,5,7,6,3,2,1);  /* decrypt u7 */
+                DROM[0x3000+i] = (byte)g.bitswap(ROM[0xb000+BITSWAP12(i,11,3,7,9,10,8,6,5,4,2,1,0)],0,4,5,7,6,3,2,1);  /* decrypt u7 */
             }
 
             for (int i = 0; i < 0x800; i++)
             {
-                DROM[0x8000+i] = (byte)bitswap(ROM[0x8000+BITSWAP11(i,   8,7,5,9,10,6,3,4,2,1,0)],0,4,5,7,6,3,2,1);  /* decrypt u5 */
-                DROM[0x8800+i] = (byte)bitswap(ROM[0x9800+BITSWAP12(i,11,3,7,9,10,8,6,5,4,2,1,0)],0,4,5,7,6,3,2,1);  /* decrypt half of u6 */
-                DROM[0x9000+i] = (byte)bitswap(ROM[0x9000+BITSWAP12(i,11,3,7,9,10,8,6,5,4,2,1,0)],0,4,5,7,6,3,2,1);  /* decrypt half of u6 */
+                DROM[0x8000+i] = (byte)g.bitswap(ROM[0x8000+BITSWAP11(i,   8,7,5,9,10,6,3,4,2,1,0)],0,4,5,7,6,3,2,1);  /* decrypt u5 */
+                DROM[0x8800+i] = (byte)g.bitswap(ROM[0x9800+BITSWAP12(i,11,3,7,9,10,8,6,5,4,2,1,0)],0,4,5,7,6,3,2,1);  /* decrypt half of u6 */
+                DROM[0x9000+i] = (byte)g.bitswap(ROM[0x9000+BITSWAP12(i,11,3,7,9,10,8,6,5,4,2,1,0)],0,4,5,7,6,3,2,1);  /* decrypt half of u6 */
                 DROM[0x9800+i] = ROM[0x1800+i];     /* mirror of pacman.6f high */
             }
 

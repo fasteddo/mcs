@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
@@ -105,7 +105,7 @@ namespace mame
         void mcu_intrq_w(int state)
         {
             // FIXME: there's a logic network here that makes this edge sensitive or something and mixes it with other interrupt sources
-            if (CLEAR_LINE != state)
+            if (g.CLEAR_LINE != state)
                 LOG("68705  68INTRQ **NOT SUPPORTED**!\n");
         }
 

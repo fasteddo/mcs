@@ -4,19 +4,16 @@
 using System;
 using System.Collections.Generic;
 
-using indirect_pen_t = System.UInt16;
-using offs_t = System.UInt32;
+using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
-using pen_t = System.UInt32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
 
 namespace mame
 {
-    //typedef u16 indirect_pen_t;
-
-
     // ======================> raw_to_rgb_converter
     public class raw_to_rgb_converter
     {

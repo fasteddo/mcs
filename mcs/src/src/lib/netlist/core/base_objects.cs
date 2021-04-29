@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using nldelegate = System.Action;  //using nldelegate = plib::pmfp<void>;
 using object_t_props = mame.netlist.detail.property_store_t<mame.netlist.detail.object_t, string>;  //using props = property_store_t<object_t, pstring>;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
 using unsigned = System.UInt32;

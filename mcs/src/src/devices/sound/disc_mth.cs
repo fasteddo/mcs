@@ -670,7 +670,7 @@ namespace mame
                 m_device.discrete_log("dst_dac_r1_reset - Ladder length too small");
             }
 
-            if (ladderLength > DISC_LADDER_MAXRES)
+            if (ladderLength > g.DISC_LADDER_MAXRES)
             {
                 m_device.discrete_log("dst_dac_r1_reset - Ladder length exceeds DISC_LADDER_MAXRES");
             }
@@ -994,8 +994,8 @@ namespace mame
              */
 
             m_type = info.type;
-            if ((info.type == DISC_MIXER_IS_OP_AMP) && (info.rI != 0))
-                m_type = DISC_MIXER_IS_OP_AMP_WITH_RI;
+            if ((info.type == g.DISC_MIXER_IS_OP_AMP) && (info.rI != 0))
+                m_type = g.DISC_MIXER_IS_OP_AMP_WITH_RI;
 
             /*
              * Calculate the total of all resistors in parallel.
@@ -1016,7 +1016,7 @@ namespace mame
                 {
                     switch (m_type)
                     {
-                        case DISC_MIXER_IS_RESISTOR:
+                        case g.DISC_MIXER_IS_RESISTOR:
                             /* is there an rF? */
                             if (info.rF != 0)
                             {
@@ -1024,13 +1024,13 @@ namespace mame
                                 break;
                             }
                             /* else, fall through and just use the resistor value */
-                            goto case DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
+                            goto case g.DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
 
-                        case DISC_MIXER_IS_OP_AMP:
+                        case g.DISC_MIXER_IS_OP_AMP:
                             rTemp = info.r[bit];
                             break;
 
-                        case DISC_MIXER_IS_OP_AMP_WITH_RI:
+                        case g.DISC_MIXER_IS_OP_AMP_WITH_RI:
                             rTemp = info.r[bit] + info.rI;
                             break;
                     }
@@ -1042,17 +1042,17 @@ namespace mame
 
             if (info.rF != 0)
             {
-                if (m_type == DISC_MIXER_IS_RESISTOR) m_r_total += 1.0 / info.rF;
+                if (m_type == g.DISC_MIXER_IS_RESISTOR) m_r_total += 1.0 / info.rF;
             }
 
-            if (m_type == DISC_MIXER_IS_OP_AMP_WITH_RI) m_r_total += 1.0 / info.rI;
+            if (m_type == g.DISC_MIXER_IS_OP_AMP_WITH_RI) m_r_total += 1.0 / info.rI;
 
             m_v_cap_f      = 0;
             m_exponent_c_f = 0;
             if (info.cF != 0)
             {
                 /* Setup filter constants */
-                m_exponent_c_f = RC_CHARGE_EXP(((info.type == DISC_MIXER_IS_OP_AMP) ? info.rF : (1.0 / m_r_total)) * info.cF);
+                m_exponent_c_f = RC_CHARGE_EXP(((info.type == g.DISC_MIXER_IS_OP_AMP) ? info.rF : (1.0 / m_r_total)) * info.cF);
             }
 
             m_v_cap_amp      = 0;
@@ -1065,7 +1065,7 @@ namespace mame
                 m_exponent_c_amp = RC_CHARGE_EXP(RES_K(100) * info.cAmp);
             }
 
-            if (m_type == DISC_MIXER_IS_OP_AMP_WITH_RI) m_gain = info.rF / info.rI;
+            if (m_type == g.DISC_MIXER_IS_OP_AMP_WITH_RI) m_gain = info.rF / info.rI;
 
             set_output(0, 0);
         }
@@ -1138,7 +1138,7 @@ namespace mame
                                 {
                                     switch (type)
                                     {
-                                        case DISC_MIXER_IS_RESISTOR:
+                                        case g.DISC_MIXER_IS_RESISTOR:
                                             /* is there an rF? */
                                             if (has_rF != 0)
                                             {
@@ -1146,13 +1146,13 @@ namespace mame
                                                 break;
                                             }
                                             /* else, fall through and just use the resistor value */
-                                            goto case DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
+                                            goto case g.DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
 
-                                        case DISC_MIXER_IS_OP_AMP:
+                                        case g.DISC_MIXER_IS_OP_AMP:
                                             rTemp2 = rTemp;
                                             break;
 
-                                        case DISC_MIXER_IS_OP_AMP_WITH_RI:
+                                        case g.DISC_MIXER_IS_OP_AMP_WITH_RI:
                                             rTemp2 = rTemp + rI;
                                             break;
                                     }
@@ -1177,7 +1177,7 @@ namespace mame
                                 vTemp -= m_v_cap[bit];
                             }
 
-                            i += ((type == DISC_MIXER_IS_OP_AMP) ? v_ref - vTemp : vTemp) / rTemp;
+                            i += ((type == g.DISC_MIXER_IS_OP_AMP) ? v_ref - vTemp : vTemp) / rTemp;
                         }
 
                         bit_mask = bit_mask << 1;
@@ -1197,13 +1197,13 @@ namespace mame
                             vTemp -= m_v_cap[bit];
                         }
 
-                        i += ((type == DISC_MIXER_IS_OP_AMP) ? v_ref - vTemp : vTemp) / info.r[bit];
+                        i += ((type == g.DISC_MIXER_IS_OP_AMP) ? v_ref - vTemp : vTemp) / info.r[bit];
                     }
                 }
                 else
                 {
                     /* no r_nodes or c_nodes, mixing only */
-                    if (type == DISC_MIXER_IS_OP_AMP)
+                    if (type == g.DISC_MIXER_IS_OP_AMP)
                     {
                         for (bit = 0; bit < m_size; bit++)
                             i += ( v_ref - DST_MIXER__IN(bit) ) / info.r[bit];
@@ -1215,16 +1215,16 @@ namespace mame
                     }
                 }
 
-                if (type == DISC_MIXER_IS_OP_AMP_WITH_RI)
+                if (type == g.DISC_MIXER_IS_OP_AMP_WITH_RI)
                     i += v_ref / rI;
 
                 r_total = 1.0 / r_total;
 
                 /* If resistor network or has rI then Millman is used.
                  * If op-amp then summing formula is used. */
-                v = i * ((type == DISC_MIXER_IS_OP_AMP) ? info.rF : r_total);
+                v = i * ((type == g.DISC_MIXER_IS_OP_AMP) ? info.rF : r_total);
 
-                if (type == DISC_MIXER_IS_OP_AMP_WITH_RI)
+                if (type == g.DISC_MIXER_IS_OP_AMP_WITH_RI)
                     v = v_ref + (m_gain * (v_ref - v));
 
                 /* Do the low pass filtering for cF */

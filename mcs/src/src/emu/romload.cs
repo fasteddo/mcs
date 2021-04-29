@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
-using std_string = System.String;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -750,7 +749,7 @@ namespace mame
         void determine_bios_rom(device_t device, string specbios)
         {
             // default is applied by the device at config complete time
-            if (!string.IsNullOrEmpty(specbios) && core_stricmp(specbios, "default") != 0)  // (specbios && *specbios && core_stricmp(specbios, "default"))
+            if (!string.IsNullOrEmpty(specbios) && g.core_stricmp(specbios, "default") != 0)  // (specbios && *specbios && core_stricmp(specbios, "default"))
             {
                 bool found = false;
                 foreach (rom_entry rom in device.rom_region_vector())
@@ -764,7 +763,7 @@ namespace mame
                         // Allow '-bios n' to still be used
                         //sprintf(bios_number, "%d", bios_flags - 1);
                         bios_number = string.Format("{0}", bios_flags - 1);
-                        if (core_stricmp(bios_number, specbios) == 0 || core_stricmp(biosname, specbios) == 0)
+                        if (g.core_stricmp(bios_number, specbios) == 0 || g.core_stricmp(biosname, specbios) == 0)
                         {
                             found = true;
                             device.set_system_bios((u8)bios_flags);
@@ -850,7 +849,7 @@ namespace mame
             }
 
             bool is_chd = chderr != chd_error.CHDERR_NONE;
-            std_string name = is_chd ? romp.name() + ".chd" : romp.name();
+            string name = is_chd ? romp.name() + ".chd" : romp.name();
 
             bool is_chd_error = is_chd && chderr != chd_error.CHDERR_FILE_NOT_FOUND;
             if (is_chd_error)
@@ -919,7 +918,7 @@ namespace mame
             else
             {
                 // verify checksums
-                util.hash_collection acthashes = file.hashes(hashes.hash_types().c_str());
+                util.hash_collection acthashes = file.hashes(hashes.hash_types());
                 if (hashes != acthashes)
                 {
                     // otherwise, it's just bad
@@ -954,7 +953,7 @@ namespace mame
                 buffer = "Loading Complete";
 
             if (!machine().ui().is_menu_active())
-                machine().ui().set_startup_text(buffer.c_str(), false);
+                machine().ui().set_startup_text(buffer, false);
         }
 
 
@@ -1271,7 +1270,7 @@ namespace mame
                 throw new emu_fatalerror("Error in RomModule definition: FILL has an invalid length\n");
 
             // for fill bytes, the byte that gets filled is the first byte of the hashdata string
-            u8 fill_byte = (u8)Convert.ToInt64(romp.hashdata().c_str());  //u8 fill_byte = u8(strtol(romp->hashdata().c_str(), nullptr, 0));
+            u8 fill_byte = (u8)Convert.ToInt64(romp.hashdata());  //u8 fill_byte = u8(strtol(romp->hashdata().c_str(), nullptr, 0));
 
             // fill the data (filling value is stored in place of the hashdata)
             if (skip != 0)
@@ -1292,9 +1291,9 @@ namespace mame
         void copy_rom_data(rom_entry romp)
         {
             Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
-            std_string srcrgntag = romp.name();
+            string srcrgntag = romp.name();
             u32 numbytes = romload_global.ROM_GETLENGTH(romp);
-            u32 srcoffs = (u32)Convert.ToInt64(romp.hashdata().c_str());  /* srcoffset in place of hashdata */  //u32 srcoffs = u32(strtol(romp->hashdata().c_str(), nullptr, 0));  /* srcoffset in place of hashdata */
+            u32 srcoffs = (u32)Convert.ToInt64(romp.hashdata());  /* srcoffset in place of hashdata */  //u32 srcoffs = u32(strtol(romp->hashdata().c_str(), nullptr, 0));  /* srcoffset in place of hashdata */
 
             // make sure we copy within the region space
             if (romload_global.ROM_GETOFFSET(romp) + numbytes > m_region.bytes())
@@ -1458,7 +1457,7 @@ namespace mame
                     chd_error err;
 
                     /* make the filename of the source */
-                    std_string filename = romp[0].name() + ".chd";
+                    string filename = romp[0].name() + ".chd";
 
                     /* first open the source drive */
                     // FIXME: we've lost the ability to search parents here
@@ -1564,7 +1563,7 @@ namespace mame
                 {
                     u32 regionlength = romload_global.ROMREGION_GETLENGTH(region[0]);
 
-                    std_string regiontag = device.subtag(region[0].name());
+                    string regiontag = device.subtag(region[0].name());
                     LOG("Processing region \"{0}\" (length={1})\n", regiontag, regionlength);
 
                     // the first entry must be a region
@@ -1610,7 +1609,7 @@ namespace mame
                             else
                                 next_parent = () => { return null; };
                         }
-                        process_disk_entries(new std.vector<string> [] { searchpath }, regiontag.c_str(), region + 1, next_parent);  //process_disk_entries({ searchpath }, regiontag.c_str(), region + 1, next_parent);
+                        process_disk_entries(new std.vector<string> [] { searchpath }, regiontag, region + 1, next_parent);  //process_disk_entries({ searchpath }, regiontag.c_str(), region + 1, next_parent);
                     }
                 }
             }
@@ -1630,7 +1629,7 @@ namespace mame
                 int curIndex = 0;
                 for (rom_entry param = romload_global.rom_first_parameter(device, ref curIndex); param != null; param = romload_global.rom_next_parameter(device, ref curIndex))
                 {
-                    string regiontag = device.subtag(param.name().c_str());
+                    string regiontag = device.subtag(param.name());
                     machine().parameters().add(regiontag, param.hashdata());
                 }
             }

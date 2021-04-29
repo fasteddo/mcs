@@ -46,6 +46,7 @@ namespace mame
         public const string OPTION_LAST_USED_MACHINE     = "last_used_machine";
         const string OPTION_INFO_AUTO_AUDIT       = "info_audit_enabled";
         const string OPTION_HIDE_ROMLESS          = "hide_romless";
+        const string OPTION_UNTHROTTLE_MUTE       = "unthrottle_mute";
 
         // core UI options
         const string OPTION_INFOS_SIZE            = "infos_text_size";
@@ -113,6 +114,7 @@ namespace mame
             new options_entry(OPTION_LAST_USED_MACHINE,             "",         OPTION_STRING,      "latest used machine"),
             new options_entry(OPTION_INFO_AUTO_AUDIT,               "0",        OPTION_BOOLEAN,     "enable auto audit in the general info panel"),
             new options_entry(OPTION_HIDE_ROMLESS,                  "1",        OPTION_BOOLEAN,     "hide romless machine from available list"),
+            new options_entry(OPTION_UNTHROTTLE_MUTE + ";utm",      "0",        OPTION_BOOLEAN,     "mute audio when running unthrottled" ),
 
             // UI options
             new options_entry(null,                                 null,           OPTION_HEADER,      "UI OPTIONS"),
@@ -182,6 +184,7 @@ namespace mame
         public int last_right_panel() { return int_value(OPTION_LAST_RIGHT_PANEL); }
         public bool info_audit() { return bool_value(OPTION_INFO_AUTO_AUDIT); }
         public bool hide_romless() { return bool_value(OPTION_HIDE_ROMLESS); }
+        public bool unthrottle_mute() { return bool_value(OPTION_UNTHROTTLE_MUTE); }
 
 
         // UI options
@@ -219,7 +222,7 @@ namespace mame
             string value = entry.value();
             int len = strlen(value);
             if (len != 8)
-                value = entry.default_value().c_str();
+                value = entry.default_value();
 
             // convert to an rgb_t
             return new rgb_t((uint32_t)std.strtoul(value, null, 16));

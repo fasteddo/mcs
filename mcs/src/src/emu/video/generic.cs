@@ -27,11 +27,11 @@ namespace mame
         public static readonly gfx_layout gfx_8x8x2_planar = new gfx_layout
         (
             8,8,
-            global_object.RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             2,
-            digfx_global.ArrayCombineUInt32( global_object.RGN_FRAC(1,2), global_object.RGN_FRAC(0,2) ),
-            digfx_global.ArrayCombineUInt32( global_object.STEP8(0,1) ),
-            digfx_global.ArrayCombineUInt32( global_object.STEP8(0,8) ),
+            digfx_global.ArrayCombineUInt32( g.RGN_FRAC(1,2), g.RGN_FRAC(0,2) ),
+            digfx_global.ArrayCombineUInt32( g.STEP8(0,1) ),
+            digfx_global.ArrayCombineUInt32( g.STEP8(0,8) ),
             8*8
         );
     }

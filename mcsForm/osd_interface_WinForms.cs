@@ -639,7 +639,7 @@ namespace mcsForm
                 lock (osdlock)
                 {
                     //software_renderer<typeof(UInt32), 0,0,0, 16,8,0>.draw_primitives(list, g_state.screenbuffer, width, height, pitch);
-                    software_renderer<UInt32>.draw_primitives(new software_renderer<UInt32>.TemplateParams(32, 0,0,0, 16,8,0), list, screenbufferptr, width, height, pitch);
+                    software_renderer<UInt32, int_constant_0, int_constant_0, int_constant_0,  int_constant_16, int_constant_8, int_constant_0>.draw_primitives(list, screenbufferptr, width, height, pitch);
                 }
 
                 list.release_lock();

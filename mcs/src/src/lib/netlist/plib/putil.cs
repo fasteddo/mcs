@@ -28,8 +28,8 @@ namespace mame.plib
 
         public static string environment(string var, string default_val)
         {
-            return (std.getenv(var.c_str()) == null) ? default_val
-                : std.getenv(var.c_str());
+            return (std.getenv(var) == null) ? default_val
+                : std.getenv(var);
         }
 
 

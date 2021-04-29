@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read_line = mame.devcb_read<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_read_line = devcb_read<int, 1U>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -30,8 +32,8 @@ namespace mame
         uint32_t           m_xorvalue;  /* after mask */
         uint32_t           m_nosync;
 
-        devcb_write_line.array<devcb_write_line, uint32_constant_8> m_write_cb;
-        devcb_read_line.array<devcb_read_line, uint32_constant_8> m_read_cb;
+        devcb_write_line.array<uint32_constant_8> m_write_cb;
+        devcb_read_line.array<uint32_constant_8> m_read_cb;
 
 
         latch8_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)
@@ -43,8 +45,8 @@ namespace mame
             m_maskout = 0;
             m_xorvalue = 0;
             m_nosync = 0;
-            m_write_cb = new devcb_write_line.array<devcb_write_line, uint32_constant_8>(this, () => { return new devcb_write_line(this); });
-            m_read_cb = new devcb_read_line.array<devcb_read_line, uint32_constant_8>(this, () => { return new devcb_read_line(this); });
+            m_write_cb = new devcb_write_line.array<uint32_constant_8>(this, () => { return new devcb_write_line(this); });
+            m_read_cb = new devcb_read_line.array<uint32_constant_8>(this, () => { return new devcb_read_line(this); });
         }
 
 
@@ -90,7 +92,7 @@ namespace mame
         //DECLARE_READ_LINE_MEMBER( bit0_r ) { return BIT(m_value, 0); }
         //DECLARE_READ_LINE_MEMBER( bit1_r ) { return BIT(m_value, 1); }
         //DECLARE_READ_LINE_MEMBER( bit2_r ) { return BIT(m_value, 2); }
-        public int bit3_r() { return BIT(m_value, 3); }  //DECLARE_READ_LINE_MEMBER( bit3_r ) { return BIT(m_value, 3); }
+        public int bit3_r() { return g.BIT(m_value, 3); }  //DECLARE_READ_LINE_MEMBER( bit3_r ) { return BIT(m_value, 3); }
         //DECLARE_READ_LINE_MEMBER( bit4_r ) { return BIT(m_value, 4); }
         //DECLARE_READ_LINE_MEMBER( bit5_r ) { return BIT(m_value, 5); }
         //DECLARE_READ_LINE_MEMBER( bit6_r ) { return BIT(m_value, 6); }
@@ -103,8 +105,8 @@ namespace mame
         //DECLARE_READ_LINE_MEMBER( bit1_q_r ) { return BIT(m_value, 1) ^ 1; }
         //DECLARE_READ_LINE_MEMBER( bit2_q_r ) { return BIT(m_value, 2) ^ 1; }
         //DECLARE_READ_LINE_MEMBER( bit3_q_r ) { return BIT(m_value, 3) ^ 1; }
-        public int bit4_q_r() { return BIT(m_value, 4) ^ 1; }  //DECLARE_READ_LINE_MEMBER( bit4_q_r ) { return BIT(m_value, 4) ^ 1; }
-        public int bit5_q_r() { return BIT(m_value, 5) ^ 1; }  //DECLARE_READ_LINE_MEMBER( bit5_q_r ) { return BIT(m_value, 5) ^ 1; }
+        public int bit4_q_r() { return g.BIT(m_value, 4) ^ 1; }  //DECLARE_READ_LINE_MEMBER( bit4_q_r ) { return BIT(m_value, 4) ^ 1; }
+        public int bit5_q_r() { return g.BIT(m_value, 5) ^ 1; }  //DECLARE_READ_LINE_MEMBER( bit5_q_r ) { return BIT(m_value, 5) ^ 1; }
         //DECLARE_READ_LINE_MEMBER( bit6_q_r ) { return BIT(m_value, 6) ^ 1; }
         //DECLARE_READ_LINE_MEMBER( bit7_q_r ) { return BIT(m_value, 7) ^ 1; }
 
@@ -130,10 +132,10 @@ namespace mame
         //void set_nosync(uint32_t nosync) { m_nosync = nosync; }
 
         /* Write bit to discrete node */
-        public devcb_write.binder write_cb(int N) { return m_write_cb[N].bind(); }
+        public devcb_write_line.binder write_cb(int N) { return m_write_cb[N].bind(); }
 
         /* Upon read, replace bits by reading from another device handler */
-        public devcb_read.binder read_cb(int N) { return m_read_cb[N].bind(); }
+        public devcb_read_line.binder read_cb(int N) { return m_read_cb[N].bind(); }
 
 
         // device-level overrides
@@ -188,8 +190,8 @@ namespace mame
                 uint8_t changed = (uint8_t)(old_val ^ m_value);
                 for (int i = 0; i < 8; i++)
                 {
-                    if (BIT(changed, i) != 0 && !m_write_cb[i].isnull())
-                        m_write_cb[i].op(BIT(m_value, i));
+                    if (g.BIT(changed, i) != 0 && !m_write_cb[i].isnull())
+                        m_write_cb[i].op(g.BIT(m_value, i));
                 }
             }
         }

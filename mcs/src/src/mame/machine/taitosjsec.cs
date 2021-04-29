@@ -4,7 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -121,13 +124,13 @@ namespace mame
             m_zaccept = true;
             m_zready = false;
             if (int_mode.LATCH == m_int_mode)
-                m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, CLEAR_LINE);
+                m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, g.CLEAR_LINE);
         }
 
 
         protected override void device_add_mconfig(machine_config config)
         {
-            M68705P5(config, m_mcu, DERIVED_CLOCK(1, 1));
+            M68705P5(config, m_mcu, g.DERIVED_CLOCK(1, 1));
             m_mcu.op[0].porta_r().set(mcu_pa_r).reg();
             m_mcu.op[0].portc_r().set(mcu_pc_r).reg();
             m_mcu.op[0].porta_w().set(mcu_pa_w).reg();
@@ -137,7 +140,7 @@ namespace mame
 
         public u8 data_r(address_space space, offs_t offset)
         {
-            if (BIT(offset, 0) != 0)
+            if (g.BIT(offset, 0) != 0)
             {
                 // ZLSTATUS
                 machine().scheduler().boost_interleave(attotime.zero, attotime.from_usec(10));
@@ -159,13 +162,13 @@ namespace mame
 
         public void data_w(offs_t offset, u8 data)
         {
-            if (BIT(offset, 0) != 0)
+            if (g.BIT(offset, 0) != 0)
             {
                 // ZINTRQ
                 // if jumpered this way, the Z80 write strobe pulses the MCU interrupt line
                 // should be PULSE_LINE because it's edge sensitive, but diexec only allows PULSE_LINE on reset and NMI
                 if (int_mode.WRITE == m_int_mode)
-                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, HOLD_LINE);
+                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, g.HOLD_LINE);
             }
             else
             {
@@ -178,16 +181,16 @@ namespace mame
 
 
         public void set_int_mode(int_mode mode) { m_int_mode = mode; }
-        public devcb_read.binder m68read_cb() { return m_68read_cb.bind(); }
-        public devcb_write.binder m68write_cb() { return m_68write_cb.bind(); }
-        public devcb_write.binder m68intrq_cb() { return m_68intrq_cb.bind(); }
-        public devcb_write.binder busrq_cb() { return m_busrq_cb.bind(); }
+        public devcb_read8.binder m68read_cb() { return m_68read_cb.bind(); }
+        public devcb_write8.binder m68write_cb() { return m_68write_cb.bind(); }
+        public devcb_write_line.binder m68intrq_cb() { return m_68intrq_cb.bind(); }
+        public devcb_write_line.binder busrq_cb() { return m_busrq_cb.bind(); }
 
 
         //WRITE_LINE_MEMBER(taito_sj_security_mcu_device::busak_w)
         public void busak_w(int state)
         {
-            m_busak = (ASSERT_LINE == state);
+            m_busak = (g.ASSERT_LINE == state);
         }
 
 
@@ -206,7 +209,7 @@ namespace mame
         void mcu_pa_w(u8 data)
         {
             m_pa_val = data;
-            if (BIT(~m_pb_val, 6) != 0)
+            if (g.BIT(~m_pb_val, 6) != 0)
                 m_addr = (u16)((m_addr & 0xff00U) | (u16)get_bus_val());
         }
 
@@ -217,59 +220,59 @@ namespace mame
             u8 diff = (u8)(m_pb_val ^ data);
 
             // 68INTRQ
-            if (BIT(diff, 0) != 0)
-                m_68intrq_cb.op(BIT(data, 0) != 0 ? CLEAR_LINE : ASSERT_LINE);
+            if (g.BIT(diff, 0) != 0)
+                m_68intrq_cb.op(g.BIT(data, 0) != 0 ? g.CLEAR_LINE : g.ASSERT_LINE);
 
             // 68LRD
             u8 bus_val = get_bus_val();
-            if (BIT(diff & data, 1) != 0)
+            if (g.BIT(diff & data, 1) != 0)
             {
                 machine().scheduler().synchronize(do_mcu_read);
                 if (int_mode.LATCH == m_int_mode)
-                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, CLEAR_LINE);
+                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, g.CLEAR_LINE);
             }
 
             // 68LWR
-            if (BIT(diff & data, 2) != 0)
+            if (g.BIT(diff & data, 2) != 0)
                 machine().scheduler().synchronize(do_mcu_write, bus_val);
 
             // BUSRQ
-            if (BIT(diff, 3) != 0)
-                m_busrq_cb.op(BIT(data, 3) != 0 ? CLEAR_LINE : ASSERT_LINE);
+            if (g.BIT(diff, 3) != 0)
+                m_busrq_cb.op(g.BIT(data, 3) != 0 ? g.CLEAR_LINE : g.ASSERT_LINE);
 
             // 68WRITE
-            if (BIT(diff, 4) != 0)
+            if (g.BIT(diff, 4) != 0)
             {
-                if (BIT(~data, 4) != 0)
+                if (g.BIT(~data, 4) != 0)
                     m_68write_cb.op(m_addr, bus_val);
-                else if (BIT(data, 5) != 0)
+                else if (g.BIT(data, 5) != 0)
                     inc_addr = true;
             }
 
             // 68READ
-            if (BIT(diff, 5) != 0)
+            if (g.BIT(diff, 5) != 0)
             {
-                if (BIT(~data, 5) != 0)
+                if (g.BIT(~data, 5) != 0)
                     m_read_data = m_68read_cb.op(m_addr);
-                else if (BIT(data, 4) != 0)
+                else if (g.BIT(data, 4) != 0)
                     inc_addr = true;
             }
 
             // LAL
-            if (BIT(~data, 6) != 0)
+            if (g.BIT(~data, 6) != 0)
                 m_addr = (u16)((m_addr & 0xff00) | (u16)bus_val);
             else if (inc_addr)
                 m_addr = (u16)((m_addr & 0xff00) | ((m_addr + 1) & 0x00ff));
 
             // UAL
-            if (BIT(~data, 7) != 0)
+            if (g.BIT(~data, 7) != 0)
                 m_addr = (u16)((m_addr & 0x00ff) | ((u16)bus_val << 8));
 
             m_pb_val = data;
         }
 
 
-        u8 get_bus_val() { return (u8)((BIT(~m_pb_val, 1) != 0 ? m_host_data : 0xffU) & m_pa_val & ((m_busak && BIT(~m_pb_val, 5) != 0) ? m_read_data : 0xffU)); }
+        u8 get_bus_val() { return (u8)((g.BIT(~m_pb_val, 1) != 0 ? m_host_data : 0xffU) & m_pa_val & ((m_busak && g.BIT(~m_pb_val, 5) != 0) ? m_read_data : 0xffU)); }
 
 
         //TIMER_CALLBACK_MEMBER(taito_sj_security_mcu_device::do_mcu_read)
@@ -296,7 +299,7 @@ namespace mame
             {
                 m_zready = true;
                 if (int_mode.LATCH == m_int_mode)
-                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, ASSERT_LINE);
+                    m_mcu.op[0].set_input_line(m68705_global.M68705_IRQ_LINE, g.ASSERT_LINE);
             }
         }
     }

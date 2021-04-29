@@ -6,7 +6,8 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -84,10 +85,10 @@ namespace mame
 
         //enum
         //{
-        public const int IRQ_LINE = device_execute_interface.INPUT_LINE_IRQ0;
-        const int APU_IRQ_LINE = device_execute_interface.INPUT_LINE_IRQ1;
-        public const int NMI_LINE = device_execute_interface.INPUT_LINE_NMI;
-        const int V_LINE   = device_execute_interface.INPUT_LINE_IRQ0 + 16;
+        public const int IRQ_LINE = g.INPUT_LINE_IRQ0;
+        const int APU_IRQ_LINE = g.INPUT_LINE_IRQ1;
+        public const int NMI_LINE = g.INPUT_LINE_NMI;
+        const int V_LINE   = g.INPUT_LINE_IRQ0 + 16;
         //}
 
 
@@ -259,17 +260,17 @@ namespace mame
 
             XPC = 0;
 
-            m_distate.state_add(STATE_GENPC,     "GENPC",     XPC).callexport().noshow();
-            m_distate.state_add(STATE_GENPCBASE, "CURPC",     XPC).callexport().noshow();
-            m_distate.state_add(STATE_GENSP,     "GENSP",     SP).noshow();
-            m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  P).callimport().formatstr("%6s").noshow();
-            m_distate.state_add(M6502_PC,        "PC",        NPC).callimport();
-            m_distate.state_add(M6502_A,         "A",         A);
-            m_distate.state_add(M6502_X,         "X",         X);
-            m_distate.state_add(M6502_Y,         "Y",         Y);
-            m_distate.state_add(M6502_P,         "P",         P).callimport();
-            m_distate.state_add(M6502_S,         "SP",        SP);
-            m_distate.state_add(M6502_IR,        "IR",        IR);
+            m_distate.state_add(g.STATE_GENPC,     "GENPC",     XPC).callexport().noshow();
+            m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     XPC).callexport().noshow();
+            m_distate.state_add(g.STATE_GENSP,     "GENSP",     SP).noshow();
+            m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  P).callimport().formatstr("%6s").noshow();
+            m_distate.state_add(M6502_PC,          "PC",        NPC).callimport();
+            m_distate.state_add(M6502_A,           "A",         A);
+            m_distate.state_add(M6502_X,           "X",         X);
+            m_distate.state_add(M6502_Y,           "Y",         Y);
+            m_distate.state_add(M6502_P,           "P",         P).callimport();
+            m_distate.state_add(M6502_S,           "SP",        SP);
+            m_distate.state_add(M6502_IR,          "IR",        IR);
 
             save_item(NAME(new { PC }));
             save_item(NAME(new { NPC }));
@@ -351,7 +352,7 @@ namespace mame
             nmi_pending = false;
             irq_taken = false;
             sync = false;
-            sync_w.op(CLEAR_LINE);
+            sync_w.op(g.CLEAR_LINE);
             inhibit_interrupts = false;
         }
 
@@ -407,17 +408,17 @@ namespace mame
         {
             switch (inputnum)
             {
-            case IRQ_LINE: irq_state = state == ASSERT_LINE; break;
-            case APU_IRQ_LINE: apu_irq_state = state == ASSERT_LINE; break;
+            case IRQ_LINE: irq_state = state == g.ASSERT_LINE; break;
+            case APU_IRQ_LINE: apu_irq_state = state == g.ASSERT_LINE; break;
             case NMI_LINE:
-                if (!nmi_state && state == ASSERT_LINE)
+                if (!nmi_state && state == g.ASSERT_LINE)
                     nmi_pending = true;
-                nmi_state = state == ASSERT_LINE;
+                nmi_state = state == g.ASSERT_LINE;
                 break;
             case V_LINE:
-                if (!v_state && state == ASSERT_LINE)
+                if (!v_state && state == g.ASSERT_LINE)
                     P |= F_V;
-                v_state = state == ASSERT_LINE;
+                v_state = state == g.ASSERT_LINE;
                 break;
             }
         }
@@ -453,8 +454,8 @@ namespace mame
         {
             switch (entry.index())
             {
-                case STATE_GENPC:     XPC = pc_to_external(PPC); break;
-                case STATE_GENPCBASE: XPC = pc_to_external(NPC); break;
+                case g.STATE_GENPC:     XPC = pc_to_external(PPC); break;
+                case g.STATE_GENPCBASE: XPC = pc_to_external(NPC); break;
             }
         }
 
@@ -476,11 +477,11 @@ namespace mame
         void prefetch()
         {
             sync = true;
-            sync_w.op(ASSERT_LINE);
+            sync_w.op(g.ASSERT_LINE);
             NPC = PC;
             IR = mintf.read_sync(PC);
             sync = false;
-            sync_w.op(CLEAR_LINE);
+            sync_w.op(g.CLEAR_LINE);
 
             if ((nmi_pending || ((irq_state || apu_irq_state) && (P & F_I) == 0)) && !inhibit_interrupts)
             {

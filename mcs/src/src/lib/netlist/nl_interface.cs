@@ -8,7 +8,6 @@ using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using size_t = System.UInt32;
-using size_t_constant = mame.uint32_constant;
 
 
 namespace mame.netlist.interface_

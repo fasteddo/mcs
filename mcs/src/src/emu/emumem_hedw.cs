@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -57,10 +57,13 @@ namespace mame
         static readonly u32 LowBits  = (u32)emumem_global.handler_entry_dispatch_lowbits(HighBits, Width, AddrShift);
         static readonly u32 BITCOUNT = (u32)HighBits > LowBits ? (u32)HighBits - LowBits : 0;
         static readonly u32 COUNT    = 1U << (int)BITCOUNT;
-        static readonly offs_t BITMASK  = global_object.make_bitmask32(BITCOUNT);
-        static readonly offs_t LOWMASK  = global_object.make_bitmask32(LowBits);
-        static readonly offs_t HIGHMASK = global_object.make_bitmask32(HighBits) ^ LOWMASK;
-        static readonly offs_t UPMASK   = ~global_object.make_bitmask32(HighBits);
+        static readonly offs_t BITMASK  = g.make_bitmask32(BITCOUNT);
+        static readonly offs_t LOWMASK  = g.make_bitmask32(LowBits);
+        static readonly offs_t HIGHMASK = g.make_bitmask32(HighBits) ^ LOWMASK;
+        static readonly offs_t UPMASK   = ~g.make_bitmask32(HighBits);
+
+        public class int_constant_Level : int_constant { public int value { get { return Level; } } }
+        public class int_constant_LowBits : int_constant { public int value { get { return (int)LowBits; } } }
 
 
         memory_view m_view;
@@ -147,10 +150,7 @@ namespace mame
 
         public override void write(offs_t offset, uX data, uX mem_mask)
         {
-            throw new emu_unimplemented();
-#if false
-            dispatch_write<Level, Width, AddrShift, Endian>(HIGHMASK, offset, data, mem_mask, m_dispatch);
-#endif
+            emumem_global.dispatch_write<int_constant_Level, int_Width, int_AddrShift, endianness_t_Endian>(HIGHMASK, offset, data, mem_mask, m_a_dispatch);
         }
 
 
@@ -418,7 +418,7 @@ namespace mame
             {
                 if ((int)LowBits > -AddrShift && m_u_dispatch[start].is_dispatch())
                 {
-                    ((handler_entry_write_dispatch<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian>)m_u_dispatch[start]).range_cut_before(address);  //static_cast<handler_entry_write_dispatch<LowBits, Width, AddrShift, Endian> *>(m_dispatch[start])->range_cut_before(address);
+                    ((handler_entry_write_dispatch<int_constant_LowBits, int_Width, int_AddrShift, endianness_t_Endian>)m_u_dispatch[start]).range_cut_before(address);  //static_cast<handler_entry_write_dispatch<LowBits, Width, AddrShift, Endian> *>(m_dispatch[start])->range_cut_before(address);
                     break;
                 }
 
@@ -435,7 +435,7 @@ namespace mame
             {
                 if ((int)LowBits > -AddrShift && m_u_dispatch[start].is_dispatch())
                 {
-                    ((handler_entry_write_dispatch<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian>)m_u_dispatch[start]).range_cut_after(address);  //static_cast<handler_entry_write_dispatch<LowBits, Width, AddrShift, Endian> *>(m_dispatch[start])->range_cut_after(address);
+                    ((handler_entry_write_dispatch<int_constant_LowBits, int_Width, int_AddrShift, endianness_t_Endian>)m_u_dispatch[start]).range_cut_after(address);  //static_cast<handler_entry_write_dispatch<LowBits, Width, AddrShift, Endian> *>(m_dispatch[start])->range_cut_after(address);
                     break;
                 }
 
@@ -460,7 +460,7 @@ namespace mame
         }
 
 
-        protected override void select_a(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_write_dispatch<HighBits, Width, AddrShift, Endian>::select_a(int id)
+        public override void select_a(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_write_dispatch<HighBits, Width, AddrShift, Endian>::select_a(int id)
         {
             u32 i = (u32)id + 1;
             if (i >= m_dispatch_array.size())
@@ -471,7 +471,7 @@ namespace mame
         }
 
 
-        protected override void select_u(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_write_dispatch<HighBits, Width, AddrShift, Endian>::select_u(int id)
+        public override void select_u(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_write_dispatch<HighBits, Width, AddrShift, Endian>::select_u(int id)
         {
             u32 i = (u32)id + 1;
             if (i > m_dispatch_array.size())
@@ -532,7 +532,7 @@ namespace mame
                 u32 ne = 1U << (int)dt;
                 for (offs_t entry = start_entry; entry <= end_entry; entry++)
                 {
-                    m_u_dispatch[entry].ref_((int)ne);
+                    dispatch[entry].ref_((int)ne);
                     u32 e0 = (entry << (int)dt) & BITMASK;
                     for (offs_t e = 0; e != ne; e++)
                     {
@@ -574,7 +574,7 @@ namespace mame
             }
             else
             {
-                var subdispatch = new handler_entry_write_dispatch<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);
+                var subdispatch = new handler_entry_write_dispatch<int_constant_LowBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_nomirror(start, end, ostart, oend, handler);
@@ -591,7 +591,7 @@ namespace mame
             }
             else
             {
-                var subdispatch = new handler_entry_write_dispatch<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);
+                var subdispatch = new handler_entry_write_dispatch<int_constant_LowBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_mirror(start, end, ostart, oend, mirror, handler);
@@ -608,7 +608,7 @@ namespace mame
             }
             else
             {
-                var subdispatch = new handler_entry_write_dispatch<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);
+                var subdispatch = new handler_entry_write_dispatch<int_constant_LowBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_mismatched_nomirror(start, end, ostart, oend, descriptor, rkey, mappings);

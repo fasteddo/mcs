@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using int16_t = System.Int16;
 using int32_t = System.Int32;
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -96,7 +96,7 @@ namespace mame
             m_class_interfaces.Add(new device_sound_interface_namco_audio(mconfig, this));  //device_sound_interface(mconfig, *this),
             m_disound = GetClassInterface<device_sound_interface_namco_audio>();
 
-            m_wave_ptr = new optional_region_ptr<uint8_t>(this, DEVICE_SELF);
+            m_wave_ptr = new optional_region_ptr<uint8_t>(this, g.DEVICE_SELF);
             m_last_channel = null;
             m_wavedata = null;
             m_wave_size = 0;

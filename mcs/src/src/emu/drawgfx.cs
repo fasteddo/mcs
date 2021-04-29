@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using pen_t = System.UInt32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;

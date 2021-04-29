@@ -318,7 +318,7 @@ namespace mame
                                         unsigned fieldnum = 0;
                                         for (unsigned i = 0, bits = curshift; (i < SHIFT_COUNT) && (bits != 0); ++i, bits >>= 1)
                                         {
-                                            if (BIT(bits, 0) != 0)
+                                            if (g.BIT(bits, 0) != 0)
                                                 newcode.field[fieldnum++] = shift[i];
                                         }
 

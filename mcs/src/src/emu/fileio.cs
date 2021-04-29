@@ -73,7 +73,7 @@ namespace mame
             if (name != null)
             {
                 // compute the full pathname
-                if (!buffer.empty() && !is_directory_separator(buffer.back()))
+                if (!buffer.empty() && !util_.is_directory_separator(buffer.back()))
                     buffer += PATH_SEPARATOR;
 
                 buffer += name;
@@ -184,7 +184,7 @@ namespace mame
         // internal state
         string m_filename;                     // original filename provided
         string m_fullpath;                     // full filename
-        util.core_file m_file;  //util::core_file::ptr    m_file;                 // core file pointer
+        util_.core_file m_file;  //util::core_file::ptr    m_file;                 // core file pointer
         searchpath_vector m_iterator;             // iterator for paths
         searchpath_vector m_mediapaths;           // media-path iterator
         bool m_first;                // true if this is the start of iteration
@@ -269,7 +269,7 @@ namespace mame
 
         // getters
         //operator core_file &();
-        public util.core_file core_file_get()
+        public util_.core_file core_file_get()
         {
             // load the ZIP file now if we haven't yet
             if (compressed_file_ready())
@@ -312,7 +312,7 @@ namespace mame
             // if we have ZIP data, just hash that directly
             if (!m_zipdata.empty())
             {
-                m_hashes.compute(new Pointer<u8>(m_zipdata), (UInt32)m_zipdata.size(), needed.c_str());  //m_hashes.compute(&m_zipdata[0], m_zipdata.size(), needed.c_str());
+                m_hashes.compute(new Pointer<u8>(m_zipdata), (UInt32)m_zipdata.size(), needed);  //m_hashes.compute(&m_zipdata[0], m_zipdata.size(), needed.c_str());
                 return m_hashes;
             }
 
@@ -435,14 +435,14 @@ namespace mame
                 foreach (var path in m_iterator)  //for (searchpath_vector::value_type const &path : m_iterator)
                 {
                     m_fullpath = m_fullpath.append_(path.second);
-                    if (!m_fullpath.empty() && !is_directory_separator(m_fullpath.back()))
+                    if (!m_fullpath.empty() && !util_.is_directory_separator(m_fullpath.back()))
                         m_fullpath = m_fullpath.append_(PATH_SEPARATOR);
                 }
                 m_fullpath = m_fullpath.append_(m_filename);
 
                 // attempt to open the file directly
                 LOG(null, "emu_file: attempting to open '{0}' directly\n", m_fullpath);
-                filerr = util.core_file.open(m_fullpath, m_openflags, out m_file);
+                filerr = util_.core_file.open(m_fullpath, m_openflags, out m_file);
 
                 // if we're opening for read-only we have other options
                 if ((osd_file.error.NONE != filerr) && ((m_openflags & (OPEN_FLAG_READ | OPEN_FLAG_WRITE)) == OPEN_FLAG_READ))
@@ -467,7 +467,7 @@ namespace mame
             m_crc = 0;
 
             // use the core_file's built-in RAM support
-            return util.core_file.open_ram(data, length, m_openflags, out m_file);
+            return util_.core_file.open_ram(data, length, m_openflags, out m_file);
         }
 
 
@@ -712,7 +712,7 @@ namespace mame
                 for (size_t i = 0U; (m_mediapaths.size() > i) && ((0 > m_restrict_to_mediapath) || (i < m_restrict_to_mediapath)); i++)
                 {
                     mediapath = mediapath.append_(m_mediapaths[i].second);
-                    if (!mediapath.empty() && !is_directory_separator(mediapath.back()))
+                    if (!mediapath.empty() && !util_.is_directory_separator(mediapath.back()))
                         mediapath = mediapath.append_(PATH_SEPARATOR);
                 }
 
@@ -889,7 +889,7 @@ namespace mame
             }
 
             // convert to RAM file
-            osd_file.error filerr = util.core_file.open_ram(m_zipdata, (UInt32)m_zipdata.size(), m_openflags, out m_file);
+            osd_file.error filerr = util_.core_file.open_ram(m_zipdata, (UInt32)m_zipdata.size(), m_openflags, out m_file);
             if (filerr != osd_file.error.NONE)
             {
                 m_zipdata.clear();

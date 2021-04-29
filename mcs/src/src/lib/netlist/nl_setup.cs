@@ -10,7 +10,6 @@ using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = 
 using models_t_raw_map_t = mame.std.unordered_map<string, string>;  //using raw_map_t = std::unordered_map<pstring, pstring>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
-using nlsetup_func = System.Action<mame.netlist.nlparse_t>;  //using nlsetup_func = void (*)(nlparse_t &);
 using param_model_t_value_str_t = mame.netlist.param_model_t.value_base_t<string, mame.netlist.param_model_t.value_base_t_operators_string>;  //using value_str_t = value_base_t<pstring>;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
 using size_t = System.UInt32;
@@ -214,7 +213,7 @@ namespace mame.netlist
     // static compiled netlist.
     // ----------------------------------------------------------------------------------------
 
-    //using nlsetup_func = void (*)(nlparse_t &);
+    public delegate void nlsetup_func(nlparse_t parse);  //using nlsetup_func = void (*)(nlparse_t &);
 
 
     // ----------------------------------------------------------------------------------------

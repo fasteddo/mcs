@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -126,7 +126,7 @@ namespace mame
         {
             m_nmi_mask = (uint8_t)(data & 1);
             if (m_nmi_mask == 0)
-                m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_NMI, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(g.INPUT_LINE_NMI, g.CLEAR_LINE);
         }
 
 
@@ -312,11 +312,11 @@ namespace mame
         static readonly gfx_layout spritelayout = new gfx_layout
         (
             16,16,                                  /* 16*16 sprites */
-            RGN_FRAC(1,4),                          /* 128 sprites */
+            g.RGN_FRAC(1,4),                          /* 128 sprites */
             2,                                      /* 2 bits per pixel */
-            ArrayCombineUInt32( RGN_FRAC(1,2), RGN_FRAC(0,2) ),       /* the two bitplanes are separated */
-            ArrayCombineUInt32( STEP8(0,1), STEP8((int)RGN_FRAC(1,4), 1) ), /* the two halves of the sprite are separated */
-            ArrayCombineUInt32( STEP16(0,8) ),
+            g.ArrayCombineUInt32( g.RGN_FRAC(1,2), g.RGN_FRAC(0,2) ),       /* the two bitplanes are separated */
+            g.ArrayCombineUInt32( g.STEP8(0,1), g.STEP8((int)g.RGN_FRAC(1,4), 1) ), /* the two halves of the sprite are separated */
+            g.ArrayCombineUInt32( g.STEP16(0,8) ),
             16*8                                    /* every sprite takes 16 consecutive bytes */
         );
 
@@ -324,8 +324,8 @@ namespace mame
         //static GFXDECODE_START( gfx_dkong )
         static readonly gfx_decode_entry [] gfx_dkong = new gfx_decode_entry[]
         {
-            GFXDECODE_ENTRY( "gfx1", 0x0000, generic_global.gfx_8x8x2_planar,   0, 64 ),
-            GFXDECODE_ENTRY( "gfx2", 0x0000, spritelayout,       0, 64 ),
+            g.GFXDECODE_ENTRY( "gfx1", 0x0000, generic_global.gfx_8x8x2_planar,   0, 64 ),
+            g.GFXDECODE_ENTRY( "gfx2", 0x0000, spritelayout,       0, 64 ),
             //GFXDECODE_END
         };
 
@@ -340,7 +340,7 @@ namespace mame
         void vblank_irq(int state)
         {
             if (state != 0 && m_nmi_mask != 0)
-                m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_NMI, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(g.INPUT_LINE_NMI, g.ASSERT_LINE);
         }
 
 
@@ -349,7 +349,7 @@ namespace mame
         {
             // since our Z80 has no support for BUSACK, we assume it is granted immediately
             m_maincpu.op[0].set_input_line(z80_device.Z80_INPUT_LINE_BUSRQ, state);
-            m_maincpu.op[0].set_input_line(device_execute_interface.INPUT_LINE_HALT, state); // do we need this?
+            m_maincpu.op[0].set_input_line(g.INPUT_LINE_HALT, state); // do we need this?
 
             if (m_z80dma.op[0] != null)
                 throw new emu_unimplemented();

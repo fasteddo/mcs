@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using offs_t = System.UInt32;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -28,7 +28,7 @@ namespace mame
             /* interrupt line is clocked at VBLANK */
             /* a flip-flop at 6F is held in the preset state based on the NMI ON signal */
             if (state != 0 && m_irq_enabled != 0)
-                m_maincpu.op[0].set_input_line(m_irq_line, ASSERT_LINE);
+                m_maincpu.op[0].set_input_line(m_irq_line, g.ASSERT_LINE);
         }
 
 
@@ -42,7 +42,7 @@ namespace mame
 
             /* if CLEAR is held low, we must make sure the interrupt signal is clear */
             if (m_irq_enabled == 0)
-                m_maincpu.op[0].set_input_line(m_irq_line, CLEAR_LINE);
+                m_maincpu.op[0].set_input_line(m_irq_line, g.CLEAR_LINE);
         }
 
 
@@ -56,7 +56,7 @@ namespace mame
         {
             /* offset 0 = 1P START LAMP */
             /* offset 1 = 2P START LAMP */
-            m_lamps[offset] = BIT(data, 0);
+            m_lamps[offset] = g.BIT(data, 0);
         }
 
 
@@ -97,7 +97,7 @@ namespace mame
             /* the inverse of bit 3 clocks the flip flop to signal an INT */
             /* it is automatically cleared on the acknowledge */
             if ((old & 0x08) != 0 && (data & 0x08) == 0)
-                m_audiocpu.op[0].set_input_line(0, HOLD_LINE);
+                m_audiocpu.op[0].set_input_line(0, g.HOLD_LINE);
 
             /* bit 4 is sound disable */
             machine().sound().system_mute((data & 0x10) != 0);
@@ -133,9 +133,9 @@ namespace mame
 
             /* the top bits of the counter index map to various bits here */
             return (uint8_t)((hibit << 7) |           /* B7 is the output of the final divide-by-2 counter */
-                    (BIT(cycles,14) << 6) | /* B6 is the high bit of the divide-by-5 counter */
-                    (BIT(cycles,13) << 5) | /* B5 is the 2nd highest bit of the divide-by-5 counter */
-                    (BIT(cycles,11) << 4) | /* B4 is the high bit of the divide-by-8 counter */
+                    (g.BIT(cycles,14) << 6) | /* B6 is the high bit of the divide-by-5 counter */
+                    (g.BIT(cycles,13) << 5) | /* B5 is the 2nd highest bit of the divide-by-5 counter */
+                    (g.BIT(cycles,11) << 4) | /* B4 is the high bit of the divide-by-8 counter */
                     0x0e);                   /* assume remaining bits are high, except B0 which is grounded */
         }
 
@@ -228,7 +228,7 @@ namespace mame
         {
             /* same as regular Konami sound but with bits 3,5 swapped */
             uint8_t konami_value = konami_sound_timer_r();
-            return (uint8_t)bitswap(konami_value, 7,6,3,4,5,2,1,0);
+            return (uint8_t)g.bitswap(konami_value, 7,6,3,4,5,2,1,0);
         }
 
 
@@ -348,7 +348,7 @@ namespace mame
 
             /* the first ROM of the sound CPU has data lines D0 and D1 swapped */
             for (offs = 0; offs < 0x800; offs++)
-                rombase[offs] = (byte)bitswap(rombase[offs], 7,6,5,4,3,2,0,1);
+                rombase[offs] = (byte)g.bitswap(rombase[offs], 7,6,5,4,3,2,0,1);
         }
 
 #if false
@@ -371,7 +371,7 @@ namespace mame
 
             /* the 2nd gfx ROM has data lines D0 and D1 swapped */
             for (offs = 0x0800; offs < 0x1000; offs++)
-                rombase[offs] = (byte)bitswap(rombase[offs], 7,6,5,4,3,2,0,1);
+                rombase[offs] = (byte)g.bitswap(rombase[offs], 7,6,5,4,3,2,0,1);
         }
 
 
@@ -641,22 +641,22 @@ namespace mame
         static readonly gfx_layout galaxian_charlayout = new gfx_layout
         (
             8,8,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             2,
-            ArrayCombineUInt32( RGN_FRAC(0,2), RGN_FRAC(1,2) ),
-            ArrayCombineUInt32( STEP8(0,1) ),
-            ArrayCombineUInt32( STEP8(0,8) ),
+            g.ArrayCombineUInt32( g.RGN_FRAC(0,2), g.RGN_FRAC(1,2) ),
+            g.ArrayCombineUInt32( g.STEP8(0,1) ),
+            g.ArrayCombineUInt32( g.STEP8(0,8) ),
             8*8
         );
 
         static readonly gfx_layout galaxian_spritelayout = new gfx_layout
         (
             16,16,
-            RGN_FRAC(1,2),
+            g.RGN_FRAC(1,2),
             2,
-            ArrayCombineUInt32( RGN_FRAC(0,2), RGN_FRAC(1,2) ),
-            ArrayCombineUInt32( STEP8(0,1), STEP8(8*8,1) ),
-            ArrayCombineUInt32( STEP8(0,8), STEP8(16*8,8) ),
+            g.ArrayCombineUInt32( g.RGN_FRAC(0,2), g.RGN_FRAC(1,2) ),
+            g.ArrayCombineUInt32( g.STEP8(0,1), g.STEP8(8*8,1) ),
+            g.ArrayCombineUInt32( g.STEP8(0,8), g.STEP8(16*8,8) ),
             16*16
         );
 
@@ -693,8 +693,8 @@ namespace mame
         //static GFXDECODE_START(gfx_galaxian)
         static readonly gfx_decode_entry [] gfx_galaxian = new gfx_decode_entry[]
         {
-            GFXDECODE_SCALE("gfx1", 0x0000, galaxian_charlayout,   0, 8, galaxian_state.GALAXIAN_XSCALE,1),
-            GFXDECODE_SCALE("gfx1", 0x0000, galaxian_spritelayout, 0, 8, galaxian_state.GALAXIAN_XSCALE,1),
+            g.GFXDECODE_SCALE("gfx1", 0x0000, galaxian_charlayout,   0, 8, galaxian_state.GALAXIAN_XSCALE,1),
+            g.GFXDECODE_SCALE("gfx1", 0x0000, galaxian_spritelayout, 0, 8, galaxian_state.GALAXIAN_XSCALE,1),
             //GFXDECODE_END
         };
 
@@ -739,7 +739,7 @@ namespace mame
             m_ppi8255.op(0).op[0].out_pc_callback().set(konami_portc_0_w).reg();
 
             I8255A(config, m_ppi8255.op(1));
-            m_ppi8255.op(1).op[0].out_pa_callback().set(m_soundlatch, (space, offset, data, mem_mask) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); }).reg();  //FUNC(generic_latch_8_device::write));
+            m_ppi8255.op(1).op[0].out_pa_callback().set(m_soundlatch, (u8 data) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); }).reg();  //FUNC(generic_latch_8_device::write));
             m_ppi8255.op(1).op[0].out_pb_callback().set(konami_sound_control_w).reg();
             m_ppi8255.op(1).op[0].in_pc_callback().set_ioport("IN3").reg();
             m_ppi8255.op(1).op[0].out_pc_callback().set(konami_portc_1_w).reg();
@@ -759,7 +759,7 @@ namespace mame
             AY8910(config, m_ay8910.op(0), KONAMI_SOUND_CLOCK/8);
             m_ay8910.op(0).op[0].set_flags(ay8910_global.AY8910_RESISTOR_OUTPUT);
             m_ay8910.op(0).op[0].set_resistors_load((int)1000.0, (int)1000.0, (int)1000.0);
-            m_ay8910.op(0).op[0].port_a_read_callback().set(m_soundlatch, (space, offset, mem_mask) => { return ((generic_latch_8_device)subdevice("soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
+            m_ay8910.op(0).op[0].port_a_read_callback().set(m_soundlatch, () => { return ((generic_latch_8_device)subdevice("soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
             m_ay8910.op(0).op[0].port_b_read_callback().set(frogger_sound_timer_r).reg();
             m_ay8910.op(0).op[0].disound.add_route(0, "konami", 1.0, 0);
             m_ay8910.op(0).op[0].disound.add_route(1, "konami", 1.0, 1);
@@ -767,7 +767,7 @@ namespace mame
 
             NETLIST_SOUND(config, "konami", 48000)
                 .set_source(netlist_konami1x)
-                .disound.add_route(ALL_OUTPUTS, "speaker", 1.0);
+                .disound.add_route(g.ALL_OUTPUTS, "speaker", 1.0);
 
             // Filter
             NETLIST_LOGIC_INPUT(config, "konami:ctl0", "CTL0.IN", 0);
@@ -822,7 +822,7 @@ namespace mame
             m_x_scale = GALAXIAN_XSCALE;
             m_h0_start = GALAXIAN_H0START;
             m_irq_enabled = 0;
-            m_irq_line = device_execute_interface.INPUT_LINE_NMI;
+            m_irq_line = g.INPUT_LINE_NMI;
             m_numspritegens = 1;
             m_bullets_base = 0x60;
             m_sprites_base = 0x40;
